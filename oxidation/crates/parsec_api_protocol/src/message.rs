@@ -36,4 +36,5 @@ pub struct Message {
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum MessageGetRep {
     Ok { messages: Vec<Message> },
+    UnknownError { error: String },
 }

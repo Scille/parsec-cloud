@@ -50,6 +50,9 @@ pub enum UserGetRep {
         trustchain: Trustchain,
     },
     NotFound,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*** User creation API ***/
@@ -100,6 +103,9 @@ pub enum UserCreateRep {
         #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
     },
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -133,6 +139,9 @@ pub enum UserRevokeRep {
     AlreadyRevoked {
         #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
+    },
+    UnknownError {
+        error: String,
     },
 }
 
@@ -175,6 +184,9 @@ pub enum DeviceCreateRep {
     AlreadyExists {
         #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
+    },
+    UnknownError {
+        error: String,
     },
 }
 
@@ -220,5 +232,8 @@ pub enum HumanFindRep {
     NotAllowed {
         #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
+    },
+    UnknownError {
+        error: String,
     },
 }

@@ -60,6 +60,9 @@ pub enum InviteNewRep {
     NotAllowed,
     AlreadyMember,
     NotAvailable,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -94,6 +97,7 @@ pub enum InviteDeleteRep {
     Ok,
     NotFound,
     AlreadyDeleted,
+    UnknownError { error: String },
 }
 
 /*
@@ -144,6 +148,7 @@ pub enum InviteListItem {
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum InviteListRep {
     Ok { invitations: Vec<InviteListItem> },
+    UnknownError { error: String },
 }
 
 /*
@@ -180,6 +185,7 @@ pub enum InviteInfoUserOrDeviceRep {
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum InviteInfoRep {
     Ok(InviteInfoUserOrDeviceRep),
+    UnknownError { error: String },
 }
 
 /*
@@ -201,6 +207,7 @@ pub enum Invite1ClaimerWaitPeerRep {
     Ok { greeter_public_key: PublicKey },
     NotFound,
     InvalidState,
+    UnknownError { error: String },
 }
 
 /*
@@ -224,6 +231,7 @@ pub enum Invite1GreeterWaitPeerRep {
     NotFound,
     AlreadyDeleted,
     InvalidState,
+    UnknownError { error: String },
 }
 
 /*
@@ -250,6 +258,9 @@ pub enum Invite2aClaimerSendHashedNonceHashNonceRep {
     NotFound,
     AlreadyDeleted,
     InvalidState,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -272,6 +283,7 @@ pub enum Invite2aGreeterGetHashedNonceRep {
     NotFound,
     AlreadyDeleted,
     InvalidState,
+    UnknownError { error: String },
 }
 
 /*
@@ -301,6 +313,9 @@ pub enum Invite2bGreeterSendNonceRep {
     NotFound,
     AlreadyDeleted,
     InvalidState,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -324,6 +339,7 @@ pub enum Invite2bClaimerSendNonceRep {
     Ok,
     NotFound,
     InvalidState,
+    UnknownError { error: String },
 }
 
 /*
@@ -346,6 +362,7 @@ pub enum Invite3aGreeterWaitPeerTrustRep {
     NotFound,
     AlreadyDeleted,
     InvalidState,
+    UnknownError { error: String },
 }
 
 /*
@@ -365,6 +382,7 @@ pub enum Invite3bClaimerWaitPeerTrustRep {
     Ok,
     NotFound,
     InvalidState,
+    UnknownError { error: String },
 }
 
 /*
@@ -387,6 +405,7 @@ pub enum Invite3bGreeterSignifyTrustRep {
     NotFound,
     AlreadyDeleted,
     InvalidState,
+    UnknownError { error: String },
 }
 
 /*
@@ -406,6 +425,7 @@ pub enum Invite3aClaimerSignifyTrustRep {
     Ok,
     NotFound,
     InvalidState,
+    UnknownError { error: String },
 }
 
 /*
@@ -435,6 +455,9 @@ pub enum Invite4GreeterCommunicateRep {
     NotFound,
     AlreadyDeleted,
     InvalidState,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -462,4 +485,7 @@ pub enum Invite4ClaimerCommunicateRep {
     },
     NotFound,
     InvalidState,
+    UnknownError {
+        error: String,
+    },
 }

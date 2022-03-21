@@ -60,6 +60,9 @@ pub enum EventsListenRep {
         reason: Option<String>,
     },
     NoEvents,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -77,4 +80,5 @@ pub struct EventsSubscribeReq;
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum EventsSubscribeRep {
     Ok,
+    UnknownError { error: String },
 }

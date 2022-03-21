@@ -31,6 +31,7 @@ pub enum BlockCreateRep {
     Timeout,
     NotAllowed,
     InMaintenance,
+    UnknownError { error: String },
 }
 
 /*
@@ -58,4 +59,7 @@ pub enum BlockReadRep {
     Timeout,
     NotAllowed,
     InMaintenance,
+    UnknownError {
+        error: String,
+    },
 }

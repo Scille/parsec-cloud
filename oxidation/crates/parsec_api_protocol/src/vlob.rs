@@ -42,6 +42,9 @@ pub enum VlobCreateRep {
     NotAllowed,
     BadEncryptionRevision,
     InMaintenance,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -84,6 +87,9 @@ pub enum VlobReadRep {
     BadVersion,
     BadEncryptionRevision,
     InMaintenance,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -117,6 +123,9 @@ pub enum VlobUpdateRep {
     BadVersion,
     BadEncryptionRevision,
     InMaintenance,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -146,6 +155,9 @@ pub enum VlobPollChangesRep {
         reason: Option<String>,
     },
     InMaintenance,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -173,6 +185,9 @@ pub enum VlobListVersionsRep {
         reason: Option<String>,
     },
     InMaintenance,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -223,6 +238,9 @@ pub enum VlobMaintenanceGetReencryptionBatchRep {
         #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
     },
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -260,5 +278,8 @@ pub enum VlobMaintenanceSaveReencryptionBatchRep {
     MaintenanceError {
         #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
+    },
+    UnknownError {
+        error: String,
     },
 }

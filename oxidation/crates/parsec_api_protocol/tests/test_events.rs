@@ -193,14 +193,14 @@ fn serde_events_listen_req() {
 fn serde_events_listen_rep(#[case] raw_expected: (&[u8], authenticated_cmds::events_listen::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::events_listen::Rep::loads(&raw).unwrap();
+    let data = authenticated_cmds::events_listen::Rep::loads(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dumps().unwrap();
 
-    let data2 = authenticated_cmds::events_listen::Rep::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::events_listen::Rep::loads(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -237,14 +237,14 @@ fn serde_events_subscribe_rep() {
 
     let expected = authenticated_cmds::events_subscribe::Rep::Ok;
 
-    let data = authenticated_cmds::events_subscribe::Rep::loads(&raw).unwrap();
+    let data = authenticated_cmds::events_subscribe::Rep::loads(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dumps().unwrap();
 
-    let data2 = authenticated_cmds::events_subscribe::Rep::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::events_subscribe::Rep::loads(&raw2);
 
     assert_eq!(data2, expected);
 }

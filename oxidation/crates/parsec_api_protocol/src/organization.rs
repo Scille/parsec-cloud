@@ -55,6 +55,9 @@ pub enum OrganizationStatsRep {
         reason: Option<String>,
     },
     NotFound,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -76,4 +79,7 @@ pub enum OrganizationConfigRep {
         active_users_limit: Option<u64>,
     },
     NotFound,
+    UnknownError {
+        error: String,
+    },
 }

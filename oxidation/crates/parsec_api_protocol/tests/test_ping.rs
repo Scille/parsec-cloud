@@ -43,14 +43,14 @@ fn serde_authenticated_ping_rep() {
         pong: "pong".to_owned(),
     };
 
-    let data = authenticated_cmds::ping::Rep::loads(&raw).unwrap();
+    let data = authenticated_cmds::ping::Rep::loads(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dumps().unwrap();
 
-    let data2 = authenticated_cmds::ping::Rep::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::ping::Rep::loads(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -93,14 +93,14 @@ fn serde_invited_ping_rep() {
         pong: "pong".to_owned(),
     };
 
-    let data = invited_cmds::ping::Rep::loads(&raw).unwrap();
+    let data = invited_cmds::ping::Rep::loads(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dumps().unwrap();
 
-    let data2 = invited_cmds::ping::Rep::loads(&raw2).unwrap();
+    let data2 = invited_cmds::ping::Rep::loads(&raw2);
 
     assert_eq!(data2, expected);
 }

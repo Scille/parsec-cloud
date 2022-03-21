@@ -91,14 +91,14 @@ fn serde_organization_stats_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::organization_stats::Rep::loads(&raw).unwrap();
+    let data = authenticated_cmds::organization_stats::Rep::loads(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dumps().unwrap();
 
-    let data2 = authenticated_cmds::organization_stats::Rep::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::organization_stats::Rep::loads(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -160,14 +160,14 @@ fn serde_organization_config_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::organization_config::Rep::loads(&raw).unwrap();
+    let data = authenticated_cmds::organization_config::Rep::loads(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dumps().unwrap();
 
-    let data2 = authenticated_cmds::organization_config::Rep::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::organization_config::Rep::loads(&raw2);
 
     assert_eq!(data2, expected);
 }

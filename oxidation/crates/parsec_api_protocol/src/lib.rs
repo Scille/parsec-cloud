@@ -41,10 +41,30 @@ macro_rules! impl_dumps_loads {
             }
 
             pub fn loads(buf: &[u8]) -> Result<Self, &'static str> {
-                ::rmp_serde::from_read_ref::<_, Self>(buf).map_err(|_| "Deserialization failed")
+                ::rmp_serde::from_read_ref(buf).map_err(|_| "Deserialization failed")
+            }
+        }
+    };
+}
+
+macro_rules! impl_dumps_loads_for_rep {
+    ($name:ident) => {
+        impl $name {
+            pub fn dumps(&self) -> Result<Vec<u8>, &'static str> {
+                ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
+            }
+
+            pub fn loads(buf: &[u8]) -> Self {
+                match ::rmp_serde::from_read_ref(buf) {
+                    Ok(res) => res,
+                    Err(e) => Self::UnknownError {
+                        error: e.to_string(),
+                    },
+                }
             }
         }
     };
 }
 
 pub(crate) use impl_dumps_loads;
+pub(crate) use impl_dumps_loads_for_rep;

@@ -57,14 +57,14 @@ fn serde_message_get_rep() {
         }],
     };
 
-    let data = authenticated_cmds::message_get::Rep::loads(&raw).unwrap();
+    let data = authenticated_cmds::message_get::Rep::loads(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dumps().unwrap();
 
-    let data2 = authenticated_cmds::message_get::Rep::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::message_get::Rep::loads(&raw2);
 
     assert_eq!(data2, expected);
 }

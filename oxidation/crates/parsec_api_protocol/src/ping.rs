@@ -24,10 +24,12 @@ pub struct InvitedPingReq {
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum AuthenticatedPingRep {
     Ok { pong: String },
+    UnknownError { error: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum InvitedPingRep {
     Ok { pong: String },
+    UnknownError { error: String },
 }

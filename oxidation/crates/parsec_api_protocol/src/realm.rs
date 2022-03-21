@@ -45,6 +45,9 @@ pub enum RealmCreateRep {
         reason: Option<String>,
     },
     AlreadyExists,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -76,6 +79,9 @@ pub enum RealmStatusRep {
         #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
     },
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -102,6 +108,9 @@ pub enum RealmStatsRep {
     NotFound {
         #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
+    },
+    UnknownError {
+        error: String,
     },
 }
 
@@ -132,6 +141,9 @@ pub enum RealmGetRoleCertificatesRep {
     NotFound {
         #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
+    },
+    UnknownError {
+        error: String,
     },
 }
 
@@ -177,6 +189,9 @@ pub enum RealmUpdateRolesRep {
         reason: Option<String>,
     },
     InMaintenance,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -216,6 +231,9 @@ pub enum RealmStartReencryptionMaintenanceRep {
         reason: Option<String>,
     },
     InMaintenance,
+    UnknownError {
+        error: String,
+    },
 }
 
 /*
@@ -249,5 +267,8 @@ pub enum RealmFinishReencryptionMaintenanceRep {
     MaintenanceError {
         #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
+    },
+    UnknownError {
+        error: String,
     },
 }
