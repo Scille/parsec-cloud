@@ -123,14 +123,15 @@ class WorkspaceFile:
                     # Flush the file (typically causes the manifest to be reshaped)
                     await self._transactions.fd_flush(self.fileno())
                 except FSLocalStorageClosedError:
-                    return
+                    pass
             finally:
                 # Ignore storage closed exceptions, since it follows an operational error
                 try:
                     # Close the file
                     await self._transactions.fd_close(self.fileno())
                 except FSLocalStorageClosedError:
-                    return
+                    # Careful here: do not return as this would silence a possible exception raised during the flush
+                    pass
         finally:
             self._state = FileState.CLOSED
 

@@ -34,7 +34,14 @@ else:
     @click.option("--diagnose", "-d", is_flag=True)
     @core_config_options
     @gui_command_base_options
-    def run_gui(config: CoreConfig, url: str, diagnose: bool, sentry_url: str, **kwargs) -> None:
+    def run_gui(
+        config: CoreConfig,
+        url: str,
+        diagnose: bool,
+        sentry_dsn: Optional[str],
+        sentry_environment: str,
+        **kwargs,
+    ) -> None:
         """
         Run parsec GUI
         """
@@ -43,8 +50,8 @@ else:
         multiprocessing.set_start_method("spawn")
 
         with cli_exception_handler(config.debug):
-            if config.telemetry_enabled and sentry_url:
-                configure_sentry_logging(sentry_url)
+            if config.telemetry_enabled and sentry_dsn:
+                configure_sentry_logging(dsn=sentry_dsn, environment=sentry_environment)
 
             config = config.evolve(mountpoint_enabled=True)
             _run_gui(config, start_arg=url, diagnose=diagnose)

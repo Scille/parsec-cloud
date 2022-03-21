@@ -1,0 +1,1 @@
+Fix telemetry support, replace --sentry-url by --sentry-dsn/--sentry-environment parameters for client and server.

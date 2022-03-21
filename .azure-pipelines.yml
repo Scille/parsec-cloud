@@ -214,7 +214,7 @@ jobs:
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow \
+        tests --runmountpoint --runslow --rundiskfull \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-memory.xml
     displayName: 'Tests memory'

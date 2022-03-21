@@ -578,6 +578,11 @@ msgstr ""
 "There has been an error while importing the files. Some files may not "
 "have been imported."
 
+msgid "TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"
+msgstr ""
+"There has been an error while writing to the disk. It might be already full, "
+"please check your disk space."
+
 msgid "TEXT_FILE_CREATE_FOLDER_TITLE"
 msgstr "Create a folder"
 
@@ -2515,19 +2520,19 @@ msgid "TEXT_FILE_INFO_UPDATED_BY"
 msgstr "Updated by"
 
 msgid "TEXT_FILE_INFO_AVAILABILITY"
-msgstr "Availability"
+msgstr "Available offline"
 
 msgid "TEXT_FILE_INFO_UPLOADED"
 msgstr "Uploaded"
 
 msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
-msgstr "Local only blocks"
+msgstr "Local blocks"
 
 msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
-msgstr "Remote only blocks"
+msgstr "Remote blocks"
 
-msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
-msgstr "Local and remote blocks"
+msgid "TEXT_FILE_INFO_DEFAULT_BLOCK_SIZE"
+msgstr "Default block size"
 
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Return to the list of workspaces."

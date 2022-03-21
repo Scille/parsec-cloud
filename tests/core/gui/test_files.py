@@ -7,6 +7,8 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QGuiApplication
 
 from parsec.api.data import EntryName
+from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
+from parsec.core.gui.file_size import get_filesize
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FsPath
 
@@ -780,9 +782,9 @@ async def test_show_file_status(
         assert file_status_w.label_last_updated_by.text() == "Boby McBobFace"
         assert file_status_w.label_availability.text() == _("TEXT_YES")
         assert file_status_w.label_uploaded.text() == _("TEXT_YES")
-        assert file_status_w.label_local.text() == "0"
-        assert file_status_w.label_remote.text() == "0"
-        assert file_status_w.label_both.text() == "0"
+        assert file_status_w.label_local.text() == "0/0 (100%)"
+        assert file_status_w.label_remote.text() == "0/0 (100%)"
+        assert file_status_w.label_default_block_size.text() == get_filesize(DEFAULT_BLOCK_SIZE)
 
     await aqtbot.wait_until(_wait_status_shown)
     file_status_w.dialog.accept()
@@ -813,6 +815,51 @@ async def test_show_file_status(
         assert file_status_w.label_uploaded.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
         assert file_status_w.label_local.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
         assert file_status_w.label_remote.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
-        assert file_status_w.label_both.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
+        assert file_status_w.label_default_block_size.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
 
     await aqtbot.wait_until(_wait_status_shown)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_import_file_disk_full(
+    monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
+):
+    tb = files_widget_testbed
+    f_w = files_widget_testbed.files_widget
+
+    # Populate some files for import
+    out_of_parsec_data = Path(tmpdir) / "out_of_parsec_data"
+    out_of_parsec_data.mkdir(parents=True)
+    file1 = out_of_parsec_data / "file1.txt"
+    file2 = out_of_parsec_data / "file2.txt"
+    file1.touch()
+    file2.touch()
+
+    @staticmethod
+    async def run_in_thread_patched(fn, *args):
+        if fn.__name__ == "commit":
+            import sqlite3
+
+            raise sqlite3.OperationalError("database or disk is full")
+        return fn(*args)
+
+    # Patch `run_in_thread` to raise an OperationError at the next commit
+    monkeypatch.setattr(
+        "parsec.core.fs.storage.local_database.LocalDatabase.run_in_thread", run_in_thread_patched
+    )
+
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
+        classmethod(lambda *args, **kwargs: ([file1], True)),
+    )
+
+    async with aqtbot.wait_signal(f_w.button_import_files.clicked):
+        aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+
+    def _import_failed():
+        assert autoclose_dialog.dialogs == [("Error", _("TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"))]
+        assert tb.ls() == []
+        assert tb.pwd() == "/"
+
+    await aqtbot.wait_until(_import_failed)
