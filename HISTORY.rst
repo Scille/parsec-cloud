@@ -5,6 +5,28 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.7.0-rc4 (2022-03-21)
+------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Updated the documentation (in particular, a lot of missing French translations
+  were added) (`#2080 <https://github.com/Scille/parsec-cloud/issues/2080>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Show a dedicated message when getting a local storage error during file import
+  indicating that the disk might be full  (`#2083
+  <https://github.com/Scille/parsec-cloud/issues/2083>`__)
+* Fix connection reset on client side in case of internal server errors.
+  (`#2100 <https://github.com/Scille/parsec-cloud/issues/2100>`__)
+* Fix telemetry support, replace --sentry-url by --sentry-dsn/--sentry-
+  environment parameters for client and server.  (`#2102
+  <https://github.com/Scille/parsec-cloud/issues/2102>`__)
+
+
 Parsec v2.7.0-rc1 (2022-03-14)
 ------------------------------
 

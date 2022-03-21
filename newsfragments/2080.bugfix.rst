@@ -1,1 +1,0 @@
-Updated the documentation (in particular, a lot of missing French translations were added)
