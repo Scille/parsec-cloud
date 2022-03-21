@@ -250,7 +250,6 @@ def test_folder_manifest():
     _assert_folder_manifest_eq(py_wm, rs_wm)
 
 
-@pytest.mark.xfail(reason="Waiting for a fix on datetimes serialization")
 @pytest.mark.rust
 def test_workspace_manifest():
     from parsec.api.data.manifest import (
@@ -318,3 +317,80 @@ def test_workspace_manifest():
         py_signed_and_encrypted, secret_key, signing_key.verify_key, py_wm.author, py_wm.timestamp
     )
     _assert_workspace_manifest_eq(py_decrypted_and_verified, rs_decrypted_and_verified)
+
+
+@pytest.mark.rust
+def test_user_manifest():
+    from parsec.api.data.manifest import _RsUserManifest, UserManifest, _PyUserManifest, WorkspaceEntry
+
+    assert UserManifest is _RsUserManifest
+
+    def _assert_user_manifest_eq(py, rs):
+        py.author == rs.author
+        py.version == rs.version
+        py.id == rs.id
+        py.timestamp == rs.timestamp
+        py.created == rs.created
+        py.updated == rs.updated
+        py.last_processed_message == rs.last_processed_message
+        py.workspaces == rs.workspaces
+
+    kwargs = {
+        "author": DeviceID("user@device"),
+        "id": EntryID.new(),
+        "version": 42,
+        "timestamp": pendulum.now(),
+        "created": pendulum.now(),
+        "updated": pendulum.now(),
+        "last_processed_message": 4,
+        "workspaces": [
+            WorkspaceEntry(**{
+                "name": EntryName("name"),
+                "id": EntryID.new(),
+                "key": SecretKey.generate(),
+                "encryption_revision": 1,
+                "encrypted_on": pendulum.now(),
+                "role_cached_on": pendulum.now(),
+                "role": RealmRole.OWNER,
+            })
+        ],
+    }
+
+    py_um = _PyUserManifest(**kwargs)
+    rs_um = UserManifest(**kwargs)
+    _assert_user_manifest_eq(py_um, rs_um)
+
+    kwargs = {
+        "author": DeviceID("a@b"),
+        "id": EntryID.new(),
+        "version": 1337,
+        "timestamp": pendulum.now(),
+        "created": pendulum.now(),
+        "updated": pendulum.now(),
+        "last_processed_message": 7,
+        "workspaces": [
+            WorkspaceEntry(**{
+                "name": EntryName("name"),
+                "id": EntryID.new(),
+                "key": SecretKey.generate(),
+                "encryption_revision": 1,
+                "encrypted_on": pendulum.now(),
+                "role_cached_on": pendulum.now(),
+                "role": RealmRole.OWNER,
+            }),
+            WorkspaceEntry(**{
+                "name": EntryName("other_name"),
+                "id": EntryID.new(),
+                "key": SecretKey.generate(),
+                "encryption_revision": 2,
+                "encrypted_on": pendulum.now(),
+                "role_cached_on": pendulum.now(),
+                "role": RealmRole.CONTRIBUTOR,
+            })
+        ],
+
+    }
+
+    py_wm = py_um.evolve(**kwargs)
+    rs_wm = rs_um.evolve(**kwargs)
+    _assert_user_manifest_eq(py_um, rs_um)

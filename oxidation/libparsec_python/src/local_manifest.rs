@@ -866,7 +866,6 @@ impl LocalFolderManifest {
     }
 
     fn asdict<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
-        let id = EntryID(self.0.base.id).into_py(py);
         let parent = EntryID(self.0.base.parent).into_py(py);
         let created = rs_to_py_datetime(py, self.0.base.created)?;
         let updated = rs_to_py_datetime(py, self.0.updated)?;
@@ -895,7 +894,6 @@ impl LocalFolderManifest {
             .collect::<Vec<_>>()
             .into_py(py);
         Ok([
-            ("id", id.to_object(py)),
             ("parent", parent.to_object(py)),
             ("created", created.to_object(py)),
             ("updated", updated.to_object(py)),
@@ -1428,7 +1426,6 @@ impl LocalWorkspaceManifest {
     }
 
     fn asdict<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
-        let id = EntryID(self.0.base.id).into_py(py);
         let created = rs_to_py_datetime(py, self.0.base.created)?;
         let updated = rs_to_py_datetime(py, self.0.updated)?;
         let children = self
@@ -1456,7 +1453,6 @@ impl LocalWorkspaceManifest {
             .collect::<Vec<_>>()
             .into_py(py);
         Ok([
-            ("id", id.to_object(py)),
             ("created", created.to_object(py)),
             ("updated", updated.to_object(py)),
             ("base_version", self.0.base.version.to_object(py)),
@@ -1721,6 +1717,19 @@ impl LocalUserManifest {
         )))
     }
 
+    #[classmethod]
+    // Python signature includes variables that are unused in LocalFileManifest
+    #[allow(unused_variables)]
+    fn from_remote_with_local_context(
+        _cls: &PyType,
+        remote: UserManifest,
+        prevent_sync_pattern: &PyAny,
+        local_manifest: Self,
+        timestamp: &PyAny,
+    ) -> PyResult<Self> {
+        Self::from_remote(_cls, remote)
+    }
+
     fn to_remote(&self, author: DeviceID, timestamp: &PyAny) -> PyResult<UserManifest> {
         let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(UserManifest(self.0.to_remote(author.0, timestamp)))
@@ -1776,5 +1785,34 @@ impl LocalUserManifest {
     #[getter]
     fn speculative(&self) -> PyResult<bool> {
         Ok(self.0.speculative)
+    }
+
+    fn asdict<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
+        let created = rs_to_py_datetime(py, self.0.base.created)?;
+        let updated = rs_to_py_datetime(py, self.0.updated)?;
+        let workspaces: Vec<PyObject> = self
+            .0
+            .workspaces
+            .iter()
+            .map(|x| WorkspaceEntry(x.clone()).into_py(py))
+            .collect();
+        Ok([
+            ("base_version", self.0.base.version.to_object(py)),
+            ("is_placeholder", (self.0.base.version == 0).to_object(py)),
+            ("need_sync", self.0.need_sync.to_object(py)),
+            ("created", created.to_object(py)),
+            ("updated", updated.to_object(py)),
+            (
+                "last_processed_message",
+                self.0.last_processed_message.to_object(py),
+            ),
+            ("speculative", self.0.speculative.to_object(py)),
+            ("workspaces", workspaces.to_object(py)),
+        ]
+        .into_py_dict(py))
+    }
+
+    fn match_remote(&self, remote_manifest: &UserManifest) -> PyResult<bool> {
+        Ok(self.0.match_remote(&remote_manifest.0))
     }
 }

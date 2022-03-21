@@ -3,6 +3,7 @@
 import pytest
 
 import pendulum
+import re
 
 from parsec.api.data import EntryID, BlockID, EntryName
 from parsec.api.data.manifest import (
@@ -180,6 +181,16 @@ def test_local_file_manifest():
     rs_lfm = rs_lfm.evolve(**kwargs)
     _assert_local_file_manifest_eq(py_lfm, rs_lfm)
 
+    sk = SecretKey.generate()
+
+    py_enc = py_lfm.dump_and_encrypt(sk)
+    rs_enc = py_lfm.dump_and_encrypt(sk)
+
+    # Decrypt rust encrypted with Python and vice versa
+    py_lfm = _PyLocalFileManifest.decrypt_and_load(rs_enc, sk)
+    rs_lfm = LocalFileManifest.decrypt_and_load(py_enc, sk)
+    _assert_local_file_manifest_eq(py_lfm, rs_lfm)
+
     with pytest.raises(AssertionError):
         py_lfm.assert_integrity()
     with pytest.raises(AssertionError):
@@ -239,8 +250,11 @@ def test_local_folder_manifest():
 
     assert LocalFolderManifest is _RsLocalFolderManifest
 
-    def _assert_local_folder_manifest_eq(py, rs):
-        assert py.base == rs.base
+    def _assert_local_folder_manifest_eq(py, rs, exclude_base=False, exclude_id=False):
+        if not exclude_base:
+            assert py.base == rs.base
+        if not exclude_id:
+            assert py.id == rs.id
         assert py.need_sync == rs.need_sync
         assert py.updated == rs.updated
         assert len(py.children) == len(rs.children)
@@ -261,6 +275,15 @@ def test_local_folder_manifest():
             isinstance(rcp1, EntryID) and rcp1 == rcp2
             for (rcp1, rcp2) in zip(py.remote_confinement_points, rs.remote_confinement_points)
         )
+
+    def _assert_folder_manifest_eq(py, rs):
+        assert py.author == rs.author
+        assert py.parent == rs.parent
+        assert py.version == rs.version
+        assert py.timestamp == rs.timestamp
+        assert py.created == rs.created
+        assert py.updated == rs.updated
+        assert py.children == rs.children
 
     kwargs = {
         "base": FolderManifest(
@@ -310,6 +333,83 @@ def test_local_folder_manifest():
     rs_lfm = rs_lfm.evolve(**kwargs)
     _assert_local_folder_manifest_eq(py_lfm, rs_lfm)
 
+    sk = SecretKey.generate()
+
+    py_enc = py_lfm.dump_and_encrypt(sk)
+    rs_enc = py_lfm.dump_and_encrypt(sk)
+
+    # Decrypt rust encrypted with Python and vice versa
+    py_lfm = _PyLocalFolderManifest.decrypt_and_load(rs_enc, sk)
+    rs_lfm = LocalFolderManifest.decrypt_and_load(py_enc, sk)
+    _assert_local_folder_manifest_eq(py_lfm, rs_lfm)
+
+    assert py_lfm.to_stats() == rs_lfm.to_stats()
+    assert py_lfm.parent == rs_lfm.parent
+    assert py_lfm.asdict() == rs_lfm.asdict()
+
+    ts = pendulum.now()
+    ei = EntryID.new()
+    di = DeviceID("a@b")
+
+    py_lfm = _PyLocalFolderManifest.new_placeholder(author=di, parent=ei, timestamp=ts)
+    rs_lfm = LocalFolderManifest.new_placeholder(author=di, parent=ei, timestamp=ts)
+    _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
+
+    py_rfm = py_lfm.to_remote(author=di, timestamp=ts)
+    rs_rfm = rs_lfm.to_remote(author=di, timestamp=ts)
+    _assert_folder_manifest_eq(py_rfm, rs_rfm)
+
+    py_lfm2 = _PyLocalFolderManifest.from_remote(py_rfm, r".+")
+    rs_lfm2 = LocalFolderManifest.from_remote(rs_rfm, r".+")
+    _assert_local_folder_manifest_eq(py_lfm2, rs_lfm2, exclude_base=True, exclude_id=True)
+
+    py_lfm2 = _PyLocalFolderManifest.from_remote_with_local_context(
+        remote=py_rfm, prevent_sync_pattern=r".+", local_manifest=py_lfm2, timestamp=ts
+    )
+    rs_lfm2 = LocalFolderManifest.from_remote_with_local_context(
+        remote=rs_rfm, prevent_sync_pattern=r".+", local_manifest=rs_lfm2, timestamp=ts
+    )
+
+    assert py_lfm.match_remote(py_rfm) == rs_lfm.match_remote(rs_rfm)
+
+    py_lfm = py_lfm.evolve_and_mark_updated(timestamp=ts, **{"need_sync": True})
+    rs_lfm = rs_lfm.evolve_and_mark_updated(timestamp=ts, **{"need_sync": True})
+
+    _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
+
+    ei = EntryID.new()
+    py_lfm = py_lfm.evolve_children_and_mark_updated(
+        data={EntryName("file1.txt"): ei}, prevent_sync_pattern=re.compile(r".+"), timestamp=ts
+    )
+    rs_lfm = rs_lfm.evolve_children_and_mark_updated(
+        data={EntryName("file1.txt"): ei}, prevent_sync_pattern=re.compile(r".+"), timestamp=ts
+    )
+    _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
+
+    py_lfm = py_lfm._filter_local_confinement_points()
+    rs_lfm = rs_lfm._filter_local_confinement_points()
+    _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
+
+    py_lfm = py_lfm._restore_local_confinement_points(
+        other=py_lfm2, prevent_sync_pattern=re.compile(r".+"), timestamp=ts
+    )
+    rs_lfm = rs_lfm._restore_local_confinement_points(
+        other=rs_lfm2, prevent_sync_pattern=re.compile(r".+"), timestamp=ts
+    )
+    _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
+
+    py_lfm = py_lfm._filter_remote_entries(prevent_sync_pattern=re.compile(".+"))
+    rs_lfm = rs_lfm._filter_remote_entries(prevent_sync_pattern=re.compile(".+"))
+    _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
+
+    py_lfm = py_lfm._restore_remote_confinement_points()
+    rs_lfm = rs_lfm._restore_remote_confinement_points()
+    _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
+
+    py_lfm = py_lfm.apply_prevent_sync_pattern(re.compile(".+"), timestamp=ts)
+    rs_lfm = rs_lfm.apply_prevent_sync_pattern(re.compile(".+"), timestamp=ts)
+    _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
+
 
 @pytest.mark.rust
 def test_local_workspace_manifest():
@@ -321,8 +421,11 @@ def test_local_workspace_manifest():
 
     assert LocalWorkspaceManifest is _RsLocalWorkspaceManifest
 
-    def _assert_local_workspace_manifest_eq(py, rs):
-        assert py.base == rs.base
+    def _assert_local_workspace_manifest_eq(py, rs, exclude_base=False, exclude_id=False):
+        if not exclude_base:
+            assert py.base == rs.base
+        if not exclude_id:
+            assert py.id == rs.id
         assert py.need_sync == rs.need_sync
         assert py.updated == rs.updated
         assert py.speculative == rs.speculative
@@ -345,6 +448,14 @@ def test_local_workspace_manifest():
             for (rcp1, rcp2) in zip(py.remote_confinement_points, rs.remote_confinement_points)
         )
 
+    def _assert_workspace_manifest_eq(py, rs):
+        assert py.author == rs.author
+        assert py.version == rs.version
+        assert py.timestamp == rs.timestamp
+        assert py.created == rs.created
+        assert py.updated == rs.updated
+        assert py.children == rs.children
+
     kwargs = {
         "base": WorkspaceManifest(
             **{
@@ -363,7 +474,7 @@ def test_local_workspace_manifest():
         "children": {EntryName("wksp2"): EntryID.new()},
         "local_confinement_points": frozenset({EntryID.new()}),
         "remote_confinement_points": frozenset({EntryID.new()}),
-        "speculative": False,
+        "speculative": True,
     }
 
     py_lwm = _PyLocalWorkspaceManifest(**kwargs)
@@ -388,12 +499,60 @@ def test_local_workspace_manifest():
         "children": {EntryName("wksp1"): EntryID.new()},
         "local_confinement_points": {EntryID.new()},
         "remote_confinement_points": {EntryID.new()},
-        "speculative": True,
+        "speculative": False,
     }
 
     py_lwm = py_lwm.evolve(**kwargs)
     rs_lwm = rs_lwm.evolve(**kwargs)
     _assert_local_workspace_manifest_eq(py_lwm, rs_lwm)
+
+    sk = SecretKey.generate()
+
+    py_enc = py_lwm.dump_and_encrypt(sk)
+    rs_enc = py_lwm.dump_and_encrypt(sk)
+
+    # Decrypt rust encrypted with Python and vice versa
+    py_lwm = _PyLocalWorkspaceManifest.decrypt_and_load(rs_enc, sk)
+    rs_lwm = LocalWorkspaceManifest.decrypt_and_load(py_enc, sk)
+    _assert_local_workspace_manifest_eq(py_lwm, rs_lwm)
+
+    assert py_lwm.to_stats() == rs_lwm.to_stats()
+    assert py_lwm.asdict() == rs_lwm.asdict()
+
+    ts = pendulum.now()
+    ei = EntryID.new()
+    di = DeviceID("a@b")
+
+    # With optional parameters
+    py_lwm = _PyLocalWorkspaceManifest.new_placeholder(
+        author=di, id=ei, timestamp=ts, speculative=True
+    )
+    rs_lwm = LocalWorkspaceManifest.new_placeholder(
+        author=di, id=ei, timestamp=ts, speculative=True
+    )
+    _assert_local_workspace_manifest_eq(py_lwm, rs_lwm, exclude_base=True, exclude_id=True)
+
+    # Without optional parameters
+    py_lwm = _PyLocalWorkspaceManifest.new_placeholder(author=di, timestamp=ts)
+    rs_lwm = LocalWorkspaceManifest.new_placeholder(author=di, timestamp=ts)
+    _assert_local_workspace_manifest_eq(py_lwm, rs_lwm, exclude_base=True, exclude_id=True)
+
+    py_rwm = py_lwm.to_remote(author=di, timestamp=ts)
+    rs_rwm = rs_lwm.to_remote(author=di, timestamp=ts)
+    _assert_workspace_manifest_eq(py_rwm, rs_rwm)
+
+    py_lwm2 = _PyLocalWorkspaceManifest.from_remote(py_rwm, r".+")
+    rs_lwm2 = LocalWorkspaceManifest.from_remote(rs_rwm, r".+")
+    _assert_local_workspace_manifest_eq(py_lwm2, rs_lwm2, exclude_base=True, exclude_id=True)
+
+    py_lwm2 = _PyLocalWorkspaceManifest.from_remote_with_local_context(
+        remote=py_rwm, prevent_sync_pattern=r".+", local_manifest=py_lwm2, timestamp=ts
+    )
+    rs_lwm2 = LocalWorkspaceManifest.from_remote_with_local_context(
+        remote=rs_rwm, prevent_sync_pattern=r".+", local_manifest=rs_lwm2, timestamp=ts
+    )
+
+    assert py_lwm.match_remote(py_rwm) == rs_lwm.match_remote(rs_rwm)
 
 
 @pytest.mark.rust
@@ -406,11 +565,27 @@ def test_local_user_manifest():
 
     assert LocalUserManifest is _RsLocalUserManifest
 
-    def _assert_local_user_manifest_eq(py, rs):
-        assert py.base == rs.base
+    def _assert_local_user_manifest_eq(py, rs, exclude_base=False, exclude_id=False):
+        if not exclude_base:
+            assert py.base == rs.base
+        if not exclude_id:
+            assert py.id == rs.id
         assert py.need_sync == rs.need_sync
         assert py.updated == rs.updated
+        assert py.last_processed_message == rs.last_processed_message
+        assert len(py.workspaces) == len(rs.workspaces)
+        assert all(a == b for (a, b) in zip(py.workspaces, rs.workspaces))
         assert py.speculative == rs.speculative
+
+    def _assert_user_manifest_eq(py, rs):
+        py.author == rs.author
+        py.version == rs.version
+        py.id == rs.id
+        py.timestamp == rs.timestamp
+        py.created == rs.created
+        py.updated == rs.updated
+        py.last_processed_message == rs.last_processed_message
+        py.workspaces == rs.workspaces
 
     kwargs = {
         "base": UserManifest(
@@ -429,13 +604,13 @@ def test_local_user_manifest():
         "need_sync": True,
         "updated": pendulum.now(),
         "last_processed_message": 0,
-        "workspaces": (WorkspaceEntry.new(EntryName("user"), pendulum.now()),),
-        "speculative": False,
+        "workspaces": (),
+        "speculative": True,
     }
 
-    py_lwm = _PyLocalUserManifest(**kwargs)
-    rs_lwm = LocalUserManifest(**kwargs)
-    _assert_local_user_manifest_eq(py_lwm, rs_lwm)
+    py_lum = _PyLocalUserManifest(**kwargs)
+    rs_lum = LocalUserManifest(**kwargs)
+    _assert_local_user_manifest_eq(py_lum, rs_lum)
 
     kwargs = {
         "base": kwargs["base"].evolve(
@@ -448,16 +623,60 @@ def test_local_user_manifest():
                 "created": pendulum.now(),
                 "updated": pendulum.now(),
                 "last_processed_message": 1,
-                "workspaces": (),
+                "workspaces": (WorkspaceEntry.new(EntryName("user"), pendulum.now()),),
             }
         ),
         "need_sync": False,
         "updated": pendulum.now(),
         "last_processed_message": 1,
-        "workspaces": (),
-        "speculative": True,
+        "workspaces": (WorkspaceEntry.new(EntryName("wk"), pendulum.now()),),
+        "speculative": False,
     }
 
-    py_lwm = py_lwm.evolve(**kwargs)
-    rs_lwm = rs_lwm.evolve(**kwargs)
-    _assert_local_user_manifest_eq(py_lwm, rs_lwm)
+    py_lum = py_lum.evolve(**kwargs)
+    rs_lum = rs_lum.evolve(**kwargs)
+    _assert_local_user_manifest_eq(py_lum, rs_lum)
+
+    sk = SecretKey.generate()
+
+    py_enc = py_lum.dump_and_encrypt(sk)
+    rs_enc = py_lum.dump_and_encrypt(sk)
+
+    # Decrypt rust encrypted with Python and vice versa
+    py_lum = _PyLocalUserManifest.decrypt_and_load(rs_enc, sk)
+    rs_lum = LocalUserManifest.decrypt_and_load(py_enc, sk)
+    _assert_local_user_manifest_eq(py_lum, rs_lum)
+
+    assert py_lum.to_stats() == rs_lum.to_stats()
+    assert py_lum.asdict() == rs_lum.asdict()
+
+    ts = pendulum.now()
+    ei = EntryID.new()
+    di = DeviceID("a@b")
+
+    # With optional parameters
+    py_lum = _PyLocalUserManifest.new_placeholder(author=di, id=ei, timestamp=ts, speculative=True)
+    rs_lum = LocalUserManifest.new_placeholder(author=di, id=ei, timestamp=ts, speculative=True)
+    _assert_local_user_manifest_eq(py_lum, rs_lum, exclude_base=True, exclude_id=True)
+
+    # Without optional parameters
+    py_lum = _PyLocalUserManifest.new_placeholder(author=di, timestamp=ts)
+    rs_lum = LocalUserManifest.new_placeholder(author=di, timestamp=ts)
+    _assert_local_user_manifest_eq(py_lum, rs_lum, exclude_base=True, exclude_id=True)
+
+    py_rum = py_lum.to_remote(author=di, timestamp=ts)
+    rs_rum = rs_lum.to_remote(author=di, timestamp=ts)
+    _assert_user_manifest_eq(py_rum, rs_rum)
+
+    py_lum2 = _PyLocalUserManifest.from_remote(py_rum)
+    rs_lum2 = LocalUserManifest.from_remote(rs_rum)
+    _assert_local_user_manifest_eq(py_lum2, rs_lum2, exclude_base=True, exclude_id=True)
+
+    py_lwm2 = _PyLocalUserManifest.from_remote_with_local_context(
+        remote=py_rum, prevent_sync_pattern=r".+", local_manifest=py_lum2, timestamp=ts
+    )
+    rs_lwm2 = LocalUserManifest.from_remote_with_local_context(
+        remote=rs_rum, prevent_sync_pattern=r".+", local_manifest=rs_lum2, timestamp=ts
+    )
+
+    assert py_lum.match_remote(py_rum) == rs_lum.match_remote(rs_rum)

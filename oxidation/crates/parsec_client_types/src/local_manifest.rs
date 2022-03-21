@@ -664,4 +664,11 @@ impl LocalUserManifest {
             workspaces: self.workspaces.clone(),
         }
     }
+
+    pub fn match_remote(&self, remote_manifest: &UserManifest) -> bool {
+        let mut reference =
+            self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
+        reference.version = remote_manifest.version;
+        reference == *remote_manifest
+    }
 }
