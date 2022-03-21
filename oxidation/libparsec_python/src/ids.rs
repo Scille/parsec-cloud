@@ -630,6 +630,14 @@ impl ChunkID {
         }
     }
 
+    #[classmethod]
+    fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
+        match hex.to_string().parse::<parsec_api_types::ChunkID>() {
+            Ok(entry_id) => Ok(Self(entry_id)),
+            Err(err) => Err(PyValueError::new_err(err)),
+        }
+    }
+
     fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
         match op {
             CompareOp::Eq => (self.0 == other.0).into_py(py),
