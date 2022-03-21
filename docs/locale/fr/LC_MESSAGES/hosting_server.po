@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 1.7.2+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-21 08:06+0100\n"
+"POT-Creation-Date: 2022-03-21 10:55+0100\n"
 "PO-Revision-Date: 2020-02-27 17:39+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
@@ -119,11 +119,11 @@ msgstr "Hôte"
 
 #: ../../hosting_server.rst:68
 msgid "``--host <host>, -H <host>``"
-msgstr ""
+msgstr "``--host <host>, -H <host>``"
 
 #: ../../hosting_server.rst:69
 msgid "Environ: ``PARSEC_HOST``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_HOST``"
 
 #: ../../hosting_server.rst:70
 msgid "Default: ``127.0.0.1``"
@@ -135,15 +135,15 @@ msgstr "Host sur lequel écouter."
 
 #: ../../hosting_server.rst:75
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: ../../hosting_server.rst:77
 msgid "``--port <port>, -P <port>``"
-msgstr ""
+msgstr "``--port <port>, -P <port>``"
 
 #: ../../hosting_server.rst:78
 msgid "Environ: ``PARSEC_PORT``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_PORT``"
 
 #: ../../hosting_server.rst:79
 msgid "Default: ``6777``"
@@ -159,11 +159,11 @@ msgstr "URL de la base de données"
 
 #: ../../hosting_server.rst:86
 msgid "``--db <url>``"
-msgstr ""
+msgstr "``--db <url>``"
 
 #: ../../hosting_server.rst:87
 msgid "Environ: ``PARSEC_DB``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_DB``"
 
 #: ../../hosting_server.rst:89
 msgid "Database configuration."
@@ -195,11 +195,11 @@ msgstr "Connexion à la Base de données"
 
 #: ../../hosting_server.rst:103
 msgid "``--db-min-connections <int>``"
-msgstr ""
+msgstr "``--db-min-connections <int>``"
 
 #: ../../hosting_server.rst:104
 msgid "Environ: ``PARSEC_DB_MIN_CONNECTIONS``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_DB_MIN_CONNECTIONS``"
 
 #: ../../hosting_server.rst:105
 msgid "Default: ``5``"
@@ -211,11 +211,11 @@ msgstr "Nombre minimal de connexions à la base de données PostgreSQL."
 
 #: ../../hosting_server.rst:109
 msgid "``--db-max-connections <int>``"
-msgstr ""
+msgstr "``--db-max-connections <int>``"
 
 #: ../../hosting_server.rst:110
 msgid "Environ: ``PARSEC_DB_MAX_CONNECTIONS``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_DB_MAX_CONNECTIONS``"
 
 #: ../../hosting_server.rst:111
 msgid "Default: ``7``"
@@ -231,11 +231,11 @@ msgstr "URL de stockage des blocs"
 
 #: ../../hosting_server.rst:118
 msgid "``--blockstore <url>, -b <url>``"
-msgstr ""
+msgstr "``--blockstore <url>, -b <url>``"
 
 #: ../../hosting_server.rst:119
 msgid "Environ: ``PARSEC_BLOCKSTORE``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_BLOCKSTORE``"
 
 #: ../../hosting_server.rst:121
 msgid "Blockstore configuration."
@@ -314,11 +314,11 @@ msgstr "Jeton d'administration"
 
 #: ../../hosting_server.rst:153
 msgid "``--administration-token <token>``"
-msgstr ""
+msgstr "``--administration-token <token>``"
 
 #: ../../hosting_server.rst:154
 msgid "Environ: ``PARSEC_ADMINISTRATION_TOKEN``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_ADMINISTRATION_TOKEN``"
 
 #: ../../hosting_server.rst:156
 msgid "Secret token to access the administration api."
@@ -326,15 +326,15 @@ msgstr "Jeton secret pour accéder à l'api d'administration."
 
 #: ../../hosting_server.rst:159
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: ../../hosting_server.rst:161
 msgid "``--ssl-keyfile <file>``"
-msgstr ""
+msgstr "``--ssl-keyfile <file>``"
 
 #: ../../hosting_server.rst:162
 msgid "Environ: ``PARSEC_SSL_KEYFILE``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_SSL_KEYFILE``"
 
 #: ../../hosting_server.rst:164
 msgid "SSL key file. This setting enables serving Parsec over SSL."
@@ -342,11 +342,11 @@ msgstr "Fichier de clé SSF. Permet d'utiliser Parsec au-dessus de SSL."
 
 #: ../../hosting_server.rst:166
 msgid "``--ssl-certfile <file>``"
-msgstr ""
+msgstr "``--ssl-certfile <file>``"
 
 #: ../../hosting_server.rst:167
 msgid "Environ: ``PARSEC_SSL_CERTFILE``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_SSL_CERTFILE``"
 
 #: ../../hosting_server.rst:169
 msgid "SSL certificate file. This setting enables serving Parsec over SSL."
@@ -354,11 +354,11 @@ msgstr "Fichier de certificat SSL. Permet d'utiliser Parsec au-dessus de SSL."
 
 #: ../../hosting_server.rst:171
 msgid "``--forward-proto-enforce-https``"
-msgstr ""
+msgstr "``--forward-proto-enforce-https``"
 
 #: ../../hosting_server.rst:172
 msgid "Environ: ``PARSEC_FORWARD_PROTO_ENFORCE_HTTPS``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_FORWARD_PROTO_ENFORCE_HTTPS``"
 
 #: ../../hosting_server.rst:174
 msgid ""
@@ -381,11 +381,11 @@ msgstr "Logs"
 
 #: ../../hosting_server.rst:183
 msgid "``--log-level <level>, -l <level>``"
-msgstr ""
+msgstr "``--log-level <level>, -l <level>``"
 
 #: ../../hosting_server.rst:184
 msgid "Environ: ``PARSEC_LOG_LEVEL``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_LOG_LEVEL``"
 
 #: ../../hosting_server.rst:185
 msgid "Default: ``WARNING``"
@@ -401,11 +401,11 @@ msgstr "Doit être ``DEBUG``, ``INFO``, ``WARNING``, ``ERROR`` ou ``CRITICAL``."
 
 #: ../../hosting_server.rst:191
 msgid "``--log-format <format>, -f <format>``"
-msgstr ""
+msgstr "``--log-format <format>, -f <format>``"
 
 #: ../../hosting_server.rst:192
 msgid "Environ: ``PARSEC_LOG_FORMAT``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_LOG_FORMAT``"
 
 #: ../../hosting_server.rst:193
 msgid "Default: ``CONSOLE``"
@@ -417,11 +417,11 @@ msgstr "Format de log utilisé. Doit être ``CONSOLE`` ou ``JSON``."
 
 #: ../../hosting_server.rst:198
 msgid "``--log-file <file>, -o <file>``"
-msgstr ""
+msgstr "``--log-file <file>, -o <file>``"
 
 #: ../../hosting_server.rst:199
 msgid "Environ: ``PARSEC_LOG_FILE``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_LOG_FILE``"
 
 #: ../../hosting_server.rst:200
 msgid "Default: log to stderr"
@@ -433,15 +433,15 @@ msgstr "Le fichier de log dans lequel écrire."
 
 #: ../../hosting_server.rst:205
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: ../../hosting_server.rst:207
 msgid "``--backend-addr``"
-msgstr ""
+msgstr "``--backend-addr``"
 
 #: ../../hosting_server.rst:208
 msgid "Environ: ``PARSEC_BACKEND_ADDR``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_BACKEND_ADDR``"
 
 #: ../../hosting_server.rst:210
 msgid "URL to reach this server (typically used in invitation emails)."
@@ -451,11 +451,11 @@ msgstr ""
 
 #: ../../hosting_server.rst:212
 msgid "``--email-host``"
-msgstr ""
+msgstr "``--email-host``"
 
 #: ../../hosting_server.rst:213
 msgid "Environ: ``PARSEC_EMAIL_HOST``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_EMAIL_HOST``"
 
 #: ../../hosting_server.rst:215
 msgid "The host to use for sending email."
@@ -463,11 +463,11 @@ msgstr "L'hôte à utiliser pour l'envoi d'email."
 
 #: ../../hosting_server.rst:217
 msgid "``--email-port``"
-msgstr ""
+msgstr "``--email-port``"
 
 #: ../../hosting_server.rst:218
 msgid "Environ: ``PARSEC_EMAIL_PORT``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_EMAIL_PORT``"
 
 #: ../../hosting_server.rst:219
 #, fuzzy
@@ -480,11 +480,11 @@ msgstr "Le port à utiliser pour le serveur STMP défini dans EMAIL_HOST."
 
 #: ../../hosting_server.rst:223
 msgid "``--email-host-user``"
-msgstr ""
+msgstr "``--email-host-user``"
 
 #: ../../hosting_server.rst:224
 msgid "Environ: ``PARSEC_EMAIL_HOST_USER``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_EMAIL_HOST_USER``"
 
 #: ../../hosting_server.rst:226
 msgid "Username to use for the SMTP server defined in EMAIL_HOST."
@@ -494,11 +494,11 @@ msgstr ""
 
 #: ../../hosting_server.rst:228
 msgid "``--email-host-password``"
-msgstr ""
+msgstr "``--email-host-password``"
 
 #: ../../hosting_server.rst:229
 msgid "Environ: ``PARSEC_EMAIL_HOST_PASSWORD``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_EMAIL_HOST_PASSWORD``"
 
 #: ../../hosting_server.rst:231
 msgid ""
@@ -512,11 +512,11 @@ msgstr ""
 
 #: ../../hosting_server.rst:234
 msgid "``--email-use-ssl``"
-msgstr ""
+msgstr "``--email-use-ssl``"
 
 #: ../../hosting_server.rst:235
 msgid "Environ: ``PARSEC_EMAIL_USE_SSL``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_EMAIL_USE_SSL``"
 
 #: ../../hosting_server.rst:237
 msgid ""
@@ -529,11 +529,11 @@ msgstr ""
 
 #: ../../hosting_server.rst:240
 msgid "``--email-use-tls``"
-msgstr ""
+msgstr "``--email-use-tls``"
 
 #: ../../hosting_server.rst:241
 msgid "Environ: ``PARSEC_EMAIL_USE_TLS``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_EMAIL_USE_TLS``"
 
 #: ../../hosting_server.rst:243
 msgid ""
@@ -551,11 +551,11 @@ msgstr ""
 
 #: ../../hosting_server.rst:248
 msgid "``--email-language``"
-msgstr ""
+msgstr "``--email-language``"
 
 #: ../../hosting_server.rst:249
 msgid "Environ: ``PARSEC_EMAIL_LANGUAGE``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_EMAIL_LANGUAGE``"
 
 #: ../../hosting_server.rst:250
 #, fuzzy
@@ -570,15 +570,15 @@ msgstr ""
 
 #: ../../hosting_server.rst:255
 msgid "Webhooks"
-msgstr ""
+msgstr "Webhooks"
 
 #: ../../hosting_server.rst:257
 msgid "``--spontaneous-organization-bootstrap``"
-msgstr ""
+msgstr "``--spontaneous-organization-bootstrap``"
 
 #: ../../hosting_server.rst:258
 msgid "Environ: ``PARSEC_SPONTANEOUS_ORGANIZATION_BOOTSTRAP``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_SPONTANEOUS_ORGANIZATION_BOOTSTRAP``"
 
 #: ../../hosting_server.rst:260
 msgid "Allow organization bootstrap without prior creation."
@@ -610,11 +610,11 @@ msgstr ""
 
 #: ../../hosting_server.rst:270
 msgid "``--organization-bootstrap-webhook``"
-msgstr ""
+msgstr "``--organization-bootstrap-webhook``"
 
 #: ../../hosting_server.rst:271
 msgid "Environ: ``PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK``"
 
 #: ../../hosting_server.rst:273
 msgid ""
@@ -646,38 +646,55 @@ msgid "Sentry"
 msgstr "Sentry"
 
 #: ../../hosting_server.rst:294
-msgid "``--sentry-url <url>``"
-msgstr ""
+msgid "``--sentry-dsn <url>``"
+msgstr "``--sentry-dsn <url>``"
 
 #: ../../hosting_server.rst:295
-msgid "Environ: ``PARSEC_SENTRY_URL``"
-msgstr ""
+msgid "Environ: ``PARSEC_SENTRY_DSN``"
+msgstr "Environnement: ``PARSEC_SENTRY_DSN``"
 
 #: ../../hosting_server.rst:297
 msgid "`Sentry <https://sentry.io/>`_ URL for telemetry report."
 msgstr "URL de `Sentry <https://sentry.io/>`_ utilisé pour la télémétrie."
 
+#: ../../hosting_server.rst:299
+msgid "``--sentry-environment <name>``"
+msgstr "``--sentry-environment <name>``"
+
 #: ../../hosting_server.rst:300
+msgid "Environ: ``PARSEC_SENTRY_ENVIRONMENT``"
+msgstr "Environnement: ``PARSEC_SENTRY_ENVIRONMENT``"
+
+#: ../../hosting_server.rst:301
+#, fuzzy
+msgid "Default: ``production``"
+msgstr "Défaut: ``7``"
+
+#: ../../hosting_server.rst:303
+msgid "Customize environment name for Sentry's telemetry reports."
+msgstr "Paramètre de nom d'environnement de Sentry pour la télémetrie."
+
+#: ../../hosting_server.rst:306
 msgid "Debug"
 msgstr "Débogage"
 
-#: ../../hosting_server.rst:302
+#: ../../hosting_server.rst:308
 msgid "``--debug``"
-msgstr ""
+msgstr "``--debug``"
 
-#: ../../hosting_server.rst:303
+#: ../../hosting_server.rst:309
 msgid "Environ: ``PARSEC_DEBUG``"
-msgstr ""
+msgstr "Environnement: ``PARSEC_DEBUG``"
 
-#: ../../hosting_server.rst:305
+#: ../../hosting_server.rst:311
 msgid "Enable debug informations."
 msgstr "Active les informations de débogage."
 
-#: ../../hosting_server.rst:307
+#: ../../hosting_server.rst:313
 msgid "``--dev``"
-msgstr ""
+msgstr "``--dev``"
 
-#: ../../hosting_server.rst:309
+#: ../../hosting_server.rst:315
 #, fuzzy
 msgid ""
 "Equivalent to ``--debug --db=MOCKED --blockstore=MOCKED --administration-"
@@ -689,24 +706,3 @@ msgstr ""
 "token=s3cr3t --email-sender=no-reply@parsec.com --email-host=MOCKED "
 "--backend-addr=parsec://localhost:<port>(?no_ssl=False si le SSL n'est "
 "pas activé)``."
-
-#~ msgid "Custom SSL key file."
-#~ msgstr "Fichier de clé SSL"
-
-#~ msgid "Custom SSL certificate file."
-#~ msgstr "Fichier de certificat SSL"
-
-#~ msgid ""
-#~ "Equivalent to ``--debug --db=MOCKED "
-#~ "--blockstore=MOCKED --administration-token=s3cr3t``."
-#~ msgstr ""
-#~ "Équivalent à ``--debug --db=MOCKED "
-#~ "--blockstore=MOCKED --administration-token=s3cr3t``."
-
-#~ msgid "``--sentry-environment <env>``"
-#~ msgstr ""
-
-#~ msgid "Environ: ``PARSEC_SENTRY_ENVIRONMENT``"
-#~ msgstr ""
-
-

@@ -68,6 +68,8 @@ class MockedBlockStoreConfig(BaseBlockStoreConfig):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class SmtpEmailConfig:
+    type = "SMTP"
+
     host: str
     port: int
     host_user: Optional[str]
@@ -82,6 +84,8 @@ class SmtpEmailConfig:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class MockedEmailConfig:
+    type = "MOCKED"
+
     sender: str
     tmpdir: str
 
