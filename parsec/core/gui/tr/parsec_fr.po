@@ -2582,19 +2582,19 @@ msgid "TEXT_FILE_INFO_UPDATED_BY"
 msgstr "Mise à jour par"
 
 msgid "TEXT_FILE_INFO_AVAILABILITY"
-msgstr "Disponibilité"
+msgstr "Disponible hors-ligne"
 
 msgid "TEXT_FILE_INFO_UPLOADED"
-msgstr "Téléchargé"
+msgstr "Envoyé sur le Cloud"
 
 msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
-msgstr "Blocs locaux uniquement"
+msgstr "Blocs locaux"
 
 msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
-msgstr "Blocs distants uniquement"
+msgstr "Blocs distants"
 
-msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
-msgstr "Blocs locaux et distants"
+msgid "TEXT_FILE_INFO_DEFAULT_BLOCK_SIZE"
+msgstr "Taille de bloc par défaut"
 
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Retour à la liste des espaces de travail"
@@ -2869,4 +2869,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
