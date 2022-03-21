@@ -1,7 +1,8 @@
+import libParsec = require('../libparsec');
 class LibParsec {
-    submitJob = require("../libparsec").submitJob
+  submitJob = libParsec.submitJob;
 }
 
 export const plugins = {
-    // LibParsec
-}
+  // LibParsec
+};

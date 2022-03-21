@@ -2,11 +2,9 @@ import { randomBytes } from 'crypto';
 import { ipcRenderer, contextBridge } from 'electron';
 import { EventEmitter } from 'events';
 
-////////////////////////////////////////////////////////
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const plugins = require('./electron-plugins');
+import plugins = require('./electron-plugins');
 
-const randomId = (length = 5) => randomBytes(length).toString('hex');
+const randomId = (length = 5): string => randomBytes(length).toString('hex');
 
 const contextApi: {
   [plugin: string]: { [functionName: string]: () => Promise<any> };
@@ -26,14 +24,14 @@ Object.keys(plugins).forEach((pluginKey) => {
 
       functionList.forEach((functionName) => {
         if (!contextApi[classKey][functionName]) {
-          contextApi[classKey][functionName] = (...args) => ipcRenderer.invoke(`${classKey}-${functionName}`, ...args);
+          contextApi[classKey][functionName] = (...args): Promise<any> => ipcRenderer.invoke(`${classKey}-${functionName}`, ...args);
         }
       });
 
       // Events
       if (plugins[pluginKey][classKey].prototype instanceof EventEmitter) {
         const listeners: { [key: string]: { type: string; listener: (...args: any[]) => void } } = {};
-        const listenersOfTypeExist = (type) =>
+        const listenersOfTypeExist = (type): boolean =>
           !!Object.values(listeners).find((listenerObj) => listenerObj.type === type);
 
         Object.assign(contextApi[classKey], {
@@ -45,7 +43,7 @@ Object.keys(plugins).forEach((pluginKey) => {
               ipcRenderer.send(`event-add-${classKey}`, type);
             }
 
-            const eventHandler = (_, ...args) => callback(...args);
+            const eventHandler = (_, ...args): void => callback(...args);
 
             ipcRenderer.addListener(`event-${classKey}-${type}`, eventHandler);
             listeners[id] = { type, listener: eventHandler };
@@ -76,7 +74,7 @@ Object.keys(plugins).forEach((pluginKey) => {
             });
 
             ipcRenderer.send(`event-remove-${classKey}-${type}`);
-          },
+          }
         });
       }
     });
@@ -84,6 +82,5 @@ Object.keys(plugins).forEach((pluginKey) => {
 
 contextBridge.exposeInMainWorld('CapacitorCustomPlatform', {
   name: 'electron',
-  plugins: contextApi,
+  plugins: contextApi
 });
-////////////////////////////////////////////////////////
