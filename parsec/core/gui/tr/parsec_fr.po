@@ -603,6 +603,11 @@ msgstr ""
 "Un problème est survenu lors de l'import des fichiers. Certains fichiers "
 "n'ont peut-être pas été importés."
 
+msgid "TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"
+msgstr ""
+"Un problème est survenu lors d'une écriture sur le disque. Il est peut-être déjà plein, "
+"veuillez vérifier l'espace disponible sur le disque."
+
 msgid "TEXT_FILE_CREATE_FOLDER_TITLE"
 msgstr "Créer un répertoire"
 
