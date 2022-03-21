@@ -219,7 +219,11 @@ def test_folder_operations(tmpdir, caplog, hypothesis_settings, mountpoint_servi
                 expected_exc = exc
 
             with expect_raises(expected_exc):
-                children = {x.name for x in path.to_parsec().iterdir()}
+                children = {
+                    x.name
+                    for x in path.to_parsec().iterdir()
+                    if not x.name.startswith(".fuse_hidden")
+                }
 
             if not expected_exc:
                 assert children == expected_children

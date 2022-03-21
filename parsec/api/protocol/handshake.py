@@ -140,6 +140,7 @@ handshake_answer_version_only_serializer = serializer_factory(HandshakeAnswerVer
 
 
 class AnswerSchema(BaseSchema):
+    type = fields.CheckedConstant("signed_answer", required=True)
     answer = fields.Bytes(required=True)
 
 
@@ -481,7 +482,9 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
         # TO-DO remove the else for the next release
         if self.backend_api_version >= (2, 5):
             # TO-DO Need to use "BaseSignedData" ?
-            answer = self.user_signkey.sign(answer_serializer.dumps({"answer": challenge}))
+            answer = self.user_signkey.sign(
+                answer_serializer.dumps({"type": "signed_answer", "answer": challenge})
+            )
         else:
             answer = self.user_signkey.sign(challenge)
 

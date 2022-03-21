@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::{TimeZone, Utc};
 use hex_literal::hex;
 use rstest::rstest;
 
@@ -164,7 +163,7 @@ fn serde_invite_list_rep() {
         invitations: vec![InviteListItemSchema(InviteListItemUserOrDevice::User(
             InviteListItemUserSchema {
                 token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
-                created_on: Utc.ymd(2000, 1, 2).and_hms(1, 0, 0),
+                created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 claimer_email: "alice@dev1".to_owned(),
                 status: InvitationStatus::Idle,
             },

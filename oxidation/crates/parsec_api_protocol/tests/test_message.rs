@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::{TimeZone, Utc};
 use hex_literal::hex;
 use rstest::rstest;
 
@@ -54,7 +53,7 @@ fn serde_message_get_rep() {
         messages: vec![MessageSchema {
             count: 1,
             sender: "alice@dev1".parse().unwrap(),
-            timestamp: Utc.ymd(2000, 1, 2).and_hms(1, 0, 0),
+            timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
             body: b"foobar".to_vec(),
         }],
     };

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-03-04 09:52+0100\n"
+"POT-Creation-Date: 2022-03-10 09:19+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -67,35 +67,35 @@ msgstr ""
 "You do not have access to the workspace containing the file. It may not "
 "have been shared with you."
 
-msgid "NOTIF_INFO_WORKSPACE_READ_ONLY"
+msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "Server address has been copied to the clipboard."
+
+msgid "TEXT_NOTIF_INFO_WORKSPACE_READ_ONLY"
 msgstr "This workspace is read-only"
 
-msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
-msgstr ""
+msgid "TEXT_NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_workspace"
+msgstr "Read access to <b>{workspace}</b> has been lost."
 
-msgid "NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}"
-msgstr ""
+msgid "TEXT_NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_workspace"
+msgstr "Write access to <b>{workspace}</b> has been lost."
 
-msgid "NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}"
-msgstr ""
+msgid "TEXT_NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_workspace"
+msgstr "The workspace <b>{workspace}</b> is in maintenance."
 
-msgid "NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}"
-msgstr ""
+msgid "TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error"
+msgstr "Error with the mountpoint for <b>{workspace}</b>."
 
-msgid "NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}"
-msgstr ""
+msgid "TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error"
+msgstr "Error with the mountpoint for <b>{workspace}</b>."
 
-msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}"
-msgstr ""
+msgid "TEXT_NOTIF_INFO_WORKSPACE_SHARED_workspace"
+msgstr "The workspace <b>{workspace}</b> has been shared with you."
 
-msgid "NOTIF_INFO_WORKSPACE_SHARED_{}"
-msgstr ""
+msgid "TEXT_NOTIF_INFO_WORKSPACE_ROLE_UPDATED_workspace"
+msgstr "Your role on the workspace <b>{workspace}</b> has changed."
 
-msgid "NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}"
-msgstr ""
-
-msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
-msgstr ""
+msgid "TEXT_NOTIF_INFO_WORKSPACE_UNSHARED_workspace"
+msgstr "The workspace <b>{workspace}</b> is no longer shared with you."
 
 msgid "TEXT_BACKEND_STATE_CONNECTED"
 msgstr "Connected"
@@ -654,6 +654,9 @@ msgstr "The invitation link has been copied to the clipboard"
 
 msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
 msgstr "Email sent"
+
+msgid "TEXT_GREET_DEVICE_EMAIL_SENT_email"
+msgstr "Email sent to <b>{email}</b>"
 
 msgid "TEXT_EMAIL_FAILED_TO_SEND_TITLE"
 msgstr "Failed to send email"
@@ -1924,6 +1927,12 @@ msgstr "Copy invitation link"
 msgid "ACTION_USER_INVITE_COPY_EMAIL"
 msgstr "Copy email"
 
+msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "The invitation link has been copied to the clipboard"
+
+msgid "TEXT_GREET_USER_EMAIL_COPIED_TO_CLIPBOARD"
+msgstr "The email has been copied to the clipboard"
+
 msgid "TEXT_USER_IS_CURRENT"
 msgstr "you"
 
@@ -1999,6 +2008,9 @@ msgstr ""
 
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the user list from the server."
+
+msgid "TEXT_USER_INVITATION_CANCELLED"
+msgstr "The invitation has been cancelled."
 
 msgid "TEXT_INVITE_USER_CANCEL_ERROR"
 msgstr "Could not cancel the invitation."
@@ -2088,6 +2100,15 @@ msgstr "This user has been revoked."
 
 msgid "NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Role not allowed for the outsider users."
+
+msgid "TEXT_WORKSPACE_SHARING_NEW_OK_workspace-user"
+msgstr "The workspace <b>{workspace}</b> has been shared with <b>{user}</b>."
+
+msgid "TEXT_WORKSPACE_SHARING_REMOVED_OK_workspace-user"
+msgstr "The workspace <b>{workspace}</b> is no longer shared with <b>{user}</b>."
+
+msgid "TEXT_WORKSPACE_SHARING_UPDATED_workspace-user"
+msgstr "<b>{user}</b>'s role on the workspace <b>{workspace}</b> has been updated."
 
 msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
@@ -2772,4 +2793,5 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
 

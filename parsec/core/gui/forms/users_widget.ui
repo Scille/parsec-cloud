@@ -194,6 +194,12 @@
    </item>
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_3">
+     <property name="topMargin">
+      <number>15</number>
+     </property>
+     <property name="bottomMargin">
+      <number>15</number>
+     </property>
      <item>
       <widget class="QScrollArea" name="scrollArea">
        <property name="frameShape">
@@ -216,8 +222,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>931</width>
-          <height>567</height>
+          <width>622</width>
+          <height>428</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">

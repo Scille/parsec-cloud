@@ -589,7 +589,7 @@ impl DeviceID {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub(crate) struct HumanHandle(pub parsec_api_types::HumanHandle);
 
 #[pymethods]

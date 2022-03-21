@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import re
-from typing import Optional, Tuple, List, Dict, Any
+from typing import Optional, Tuple, List, Dict, Any, TYPE_CHECKING
 from random import randint, shuffle
 
 from parsec.crypto import VerifyKey, PublicKey, PrivateKey, SecretKey
@@ -13,6 +13,7 @@ from parsec.api.protocol import (
     HumanHandleField,
     DeviceLabel,
     DeviceLabelField,
+    StrBased,
 )
 from parsec.api.data.base import BaseAPIData, BaseSchema
 from parsec.api.data.entry import EntryID, EntryIDField
@@ -20,30 +21,32 @@ from parsec.api.data.certif import UserProfile, UserProfileField
 import attr
 
 
-class SASCode(str):
-    __slots__ = ()
-    length = 4
-    symbols = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-    regex = re.compile(rf"^[{symbols}]{{{length}}}$")
-
-    def __init__(self, raw: str):
-        if not isinstance(raw, str) or not self.regex.match(raw):
-            raise ValueError("Invalid SAS code")
-
-    def __repr__(self) -> str:
-        return f"<SASCode {super().__repr__()}>"
+class SASCode(StrBased):
+    MAX_BYTE_SIZE = 4
+    SYMBOLS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    REGEX = re.compile(rf"^[{SYMBOLS}]{{{MAX_BYTE_SIZE}}}$")
 
     @classmethod
     def from_int(cls, num: int) -> "SASCode":
         if num < 0:
             raise ValueError("Provided integer is negative")
         result = ""
-        for _ in range(cls.length):
-            result += cls.symbols[num % len(cls.symbols)]
-            num //= len(cls.symbols)
+        for _ in range(cls.MAX_BYTE_SIZE):
+            result += cls.SYMBOLS[num % len(cls.SYMBOLS)]
+            num //= len(cls.SYMBOLS)
         if num != 0:
             raise ValueError("Provided integer is too large")
         return cls(result)
+
+
+_PySASCode = SASCode
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import SASCode as _RsSASCode
+    except:
+        pass
+    else:
+        SASCode = _RsSASCode
 
 
 def generate_sas_codes(
@@ -63,13 +66,33 @@ def generate_sas_codes(
     return SASCode.from_int(claimer_sas), SASCode.from_int(greeter_sas)
 
 
-def generate_sas_code_candidates(valid_sas: SASCode, size: int = 3) -> List[SASCode]:
+_Py_generate_sas_codes = generate_sas_codes
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import generate_sas_codes as _Rs_generate_sas_codes
+    except:
+        pass
+    else:
+        generate_sas_codes = _Rs_generate_sas_codes
+
+
+def generate_sas_code_candidates(valid_sas: SASCode, size: int) -> List[SASCode]:
     candidates = {valid_sas}
     while len(candidates) < size:
         candidates.add(SASCode.from_int(randint(0, 2 ** 20 - 1)))
     ordered_candidates = list(candidates)
     shuffle(ordered_candidates)
     return ordered_candidates
+
+
+_Py_generate_sas_code_candidates = generate_sas_code_candidates
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import generate_sas_code_candidates as _Rs_generate_sas_code_candidates
+    except:
+        pass
+    else:
+        generate_sas_code_candidates = _Rs_generate_sas_code_candidates
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
@@ -95,6 +118,16 @@ class InviteUserData(BaseAPIData):
     verify_key: VerifyKey
 
 
+_PyInviteUserData = InviteUserData
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import InviteUserData as _RsInviteUserData
+    except:
+        pass
+    else:
+        InviteUserData = _RsInviteUserData
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class InviteUserConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
@@ -117,6 +150,16 @@ class InviteUserConfirmation(BaseAPIData):
     root_verify_key: VerifyKey
 
 
+_PyInviteUserConfirmation = InviteUserConfirmation
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import InviteUserConfirmation as _RsInviteUserConfirmation
+    except:
+        pass
+    else:
+        InviteUserConfirmation = _RsInviteUserConfirmation
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class InviteDeviceData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
@@ -132,6 +175,16 @@ class InviteDeviceData(BaseAPIData):
 
     requested_device_label: Optional[DeviceLabel]
     verify_key: VerifyKey
+
+
+_PyInviteDeviceData = InviteDeviceData
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import InviteDeviceData as _RsInviteDeviceData
+    except:
+        pass
+    else:
+        InviteDeviceData = _RsInviteDeviceData
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
@@ -162,3 +215,13 @@ class InviteDeviceConfirmation(BaseAPIData):
     user_manifest_id: EntryID
     user_manifest_key: SecretKey
     root_verify_key: VerifyKey
+
+
+_PyInviteDeviceConfirmation = InviteDeviceConfirmation
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import InviteDeviceConfirmation as _RsInviteDeviceConfirmation
+    except:
+        pass
+    else:
+        InviteDeviceConfirmation = _RsInviteDeviceConfirmation

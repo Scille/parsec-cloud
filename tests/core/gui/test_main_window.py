@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 
 from parsec.api.protocol import InvitationType, OrganizationID
 from parsec.api.data import UserProfile, EntryName
@@ -476,6 +476,19 @@ async def test_tab_login_logout(gui_factory, core_config, alice, monkeypatch):
     assert gui.tab_center.tabText(0) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
     assert not gui.add_tab_button.isEnabled()
     assert gui.test_get_tab() != first_created_tab
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_copy_backend_addr(aqtbot, logged_gui, snackbar_catcher):
+    c_w = logged_gui.test_get_central_widget()
+    assert c_w is not None
+    c_w.button_user.menu().actions()[0].trigger()
+    assert snackbar_catcher.snackbars == [
+        ("INFO", translate("TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"))
+    ]
+    clipboard = QtGui.QGuiApplication.clipboard()
+    assert clipboard.text() == c_w.core.device.organization_addr.to_url()
 
 
 @pytest.mark.gui

@@ -67,7 +67,6 @@ FORMS += forms/main_window.ui \
     forms/password_authentication_widget.ui \
     forms/temporary_workspace_widget.ui \
     forms/key_widget.ui \
-    forms/keys_widget.ui \
     forms/qrcode_widget.ui \
     forms/device_recovery_export_widget.ui \
     forms/device_recovery_export_page1_widget.ui \

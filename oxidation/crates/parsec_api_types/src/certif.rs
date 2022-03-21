@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::prelude::*;
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use serde::{Deserialize, Serialize};
@@ -10,8 +9,10 @@ use std::io::{Read, Write};
 use parsec_api_crypto::{PublicKey, SigningKey, VerifyKey};
 
 use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
-use crate::ext_types::{maybe_field, DateTimeExtFormat};
-use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile};
+use crate::ext_types::maybe_field;
+use crate::{
+    DateTime, DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile,
+};
 
 #[allow(unused_macros)]
 macro_rules! impl_verify_and_load_allow_root {
@@ -165,7 +166,7 @@ impl From<CertificateSignerOwned> for Option<DeviceID> {
 #[serde(into = "UserCertificateData", from = "UserCertificateData")]
 pub struct UserCertificate {
     pub author: CertificateSignerOwned,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub user_id: UserID,
     // Human handle can be none in case of redacted certificate
@@ -183,8 +184,7 @@ new_data_struct_type!(
     type: "user_certificate",
 
     author: CertificateSignerOwned,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
 
     user_id: UserID,
     // Added in Parsec v1.13
@@ -242,7 +242,7 @@ impl From<UserCertificate> for UserCertificateData {
 )]
 pub struct RevokedUserCertificate {
     pub author: DeviceID,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub user_id: UserID,
 }
@@ -256,8 +256,7 @@ new_data_struct_type!(
     type: "revoked_user_certificate",
 
     author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
 
     user_id: UserID,
 );
@@ -278,7 +277,7 @@ impl_transparent_data_format_conversion!(
 #[serde(into = "DeviceCertificateData", from = "DeviceCertificateData")]
 pub struct DeviceCertificate {
     pub author: CertificateSignerOwned,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub device_id: DeviceID,
     // Device label can be none in case of redacted certificate
@@ -295,8 +294,7 @@ new_data_struct_type!(
     type: "device_certificate",
 
     author: CertificateSignerOwned,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
 
     device_id: DeviceID,
     // Added in Parsec v1.14
@@ -338,7 +336,7 @@ impl From<DeviceCertificate> for DeviceCertificateData {
 #[serde(into = "RealmRoleCertificateData", from = "RealmRoleCertificateData")]
 pub struct RealmRoleCertificate {
     pub author: DeviceID,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub realm_id: EntryID,
     pub user_id: UserID,
@@ -355,8 +353,7 @@ new_data_struct_type!(
     type: "realm_role_certificate",
 
     author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
 
     realm_id: EntryID,
     user_id: UserID,
