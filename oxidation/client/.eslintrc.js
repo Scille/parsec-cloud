@@ -14,7 +14,7 @@ module.exports = {
     ecmaVersion: 2020
   },
   plugins: [
-      'cypress'
+    'cypress'
   ],
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
