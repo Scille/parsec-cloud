@@ -323,7 +323,6 @@ class FileTable(QTableWidget):
     def add_folder(self, folder_name, entry_id, is_synced, is_confined, selected=False):
         if is_confined and not self.config.gui_show_confined:
             return
-        folder_name = folder_name.str
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FolderTableItem(is_synced, is_confined)
@@ -370,10 +369,9 @@ class FileTable(QTableWidget):
     ):
         if is_confined and not self.config.gui_show_confined:
             return
-        file_name = file_name.str
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = FileTableItem(is_synced, is_confined, file_name)
+        item = FileTableItem(is_synced, is_confined, file_name.str)
         item.setData(NAME_DATA_INDEX, 1)
         item.setData(TYPE_DATA_INDEX, FileType.File)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
