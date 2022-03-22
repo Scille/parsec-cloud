@@ -41,6 +41,17 @@ macro_rules! cmds_bundle {
                         }
 
                         crate::impl_dumps_loads_for_rep!(Rep);
+
+                        #[test]
+                        fn test_unknown_error() {
+                            let raw = b"foobar";
+                            let data = Rep::loads(raw);
+
+                            match data {
+                                Rep::UnknownError { .. } => assert!(true),
+                                _ => assert!(false),
+                            }
+                        }
                     }
                 )*
             }
@@ -192,14 +203,3 @@ cmds_bundle!(
         ),
     ]
 );
-
-#[test]
-fn test_cmds_bundle_unknown_error() {
-    let raw = b"foobar";
-    let data = authenticated_cmds::block_create::Rep::loads(raw);
-
-    match data {
-        authenticated_cmds::block_create::Rep::UnknownError { .. } => assert!(true),
-        _ => assert!(false),
-    }
-}
