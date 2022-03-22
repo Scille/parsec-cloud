@@ -72,7 +72,7 @@ random_seed
 *.ui.autosave
 
 # Qt's translation files
-*.ts
+parsec/core/gui/tr/**/*.ts
 
 # History html file, automatically generated
 /parsec/core/gui/rc/generated_misc/

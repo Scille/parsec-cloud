@@ -10,6 +10,7 @@ trigger:
 
 variables:
   python.version: '3.7'
+  node.version: '16.x'
   # pyinstaller is picky on the version to use
   python.version_for_macos_packaging: '3.8'
   postgresql.version: '12'
@@ -70,13 +71,20 @@ jobs:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '$(node.version)'
   - bash: |
       set -eux
       sudo apt-get update
       python --version
+      pip --version
+      node --version
+      npm --version
       pip install pre-commit
       # Rust stuff (needed by pre-commit)
       curl https://sh.rustup.rs -sSf | sh -s -- -y
+      rustup --version
       echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
       rustup component add rustfmt clippy
     displayName: 'Bootstrap'
