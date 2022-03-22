@@ -6,6 +6,8 @@ use ed25519_dalek::{
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 
+use crate::CryptoError;
+
 /*
  * SigningKey
  */
@@ -57,9 +59,9 @@ impl AsRef<[u8]> for SigningKey {
 }
 
 impl TryFrom<&[u8]> for SigningKey {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        let sk = ed25519_dalek::SecretKey::from_bytes(data).map_err(|_| ("Invalid data size"))?;
+        let sk = ed25519_dalek::SecretKey::from_bytes(data).map_err(|_| Self::Error::DataSize)?;
         let pk = ed25519_dalek::PublicKey::from(&sk);
         Ok(Self(Keypair {
             secret: sk,
@@ -76,7 +78,7 @@ impl From<[u8; Self::SIZE]> for SigningKey {
 }
 
 impl TryFrom<ByteBuf> for SigningKey {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
         // TODO: zerocopy
         Self::try_from(data.into_vec().as_ref())
@@ -107,17 +109,17 @@ impl VerifyKey {
         signed.get(SIGNATURE_LENGTH..)
     }
 
-    pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, &'static str> {
+    pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {
         // Signature::try_from expects a [u8;64] and I have no idea how to get
         // one except by slicing, so we make sure the array is large enough before slicing.
         if signed.len() < SIGNATURE_LENGTH {
-            return Err("Invalid signature");
+            return Err(CryptoError::Signature);
         }
         let signature = Signature::try_from(&signed[..SIGNATURE_LENGTH]).unwrap();
         let message = &signed[SIGNATURE_LENGTH..];
         self.0
             .verify(message, &signature)
-            .map_err(|_| "Signature verification error")?;
+            .map_err(|_| CryptoError::SignatureVerification)?;
         Ok(message.into())
     }
 }
@@ -130,9 +132,9 @@ impl AsRef<[u8]> for VerifyKey {
 }
 
 impl TryFrom<&[u8]> for VerifyKey {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        let pk = ed25519_dalek::PublicKey::from_bytes(data).map_err(|_| ("Invalid data size"))?;
+        let pk = ed25519_dalek::PublicKey::from_bytes(data).map_err(|_| Self::Error::DataSize)?;
         Ok(Self(pk))
     }
 }
@@ -145,7 +147,7 @@ impl From<[u8; Self::SIZE]> for VerifyKey {
 }
 
 impl TryFrom<ByteBuf> for VerifyKey {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
         // TODO: zerocopy
         Self::try_from(data.into_vec().as_ref())

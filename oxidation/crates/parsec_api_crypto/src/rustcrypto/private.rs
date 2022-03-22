@@ -94,7 +94,7 @@ use serde_bytes::ByteBuf;
 use std::convert::TryInto;
 use x25519_dalek::x25519;
 
-use crate::SecretKey;
+use crate::{CryptoError, SecretKey};
 
 /*
  * PrivateKey
@@ -125,8 +125,8 @@ impl PrivateKey {
         Self(crypto_box::SecretKey::generate(&mut rand_08::thread_rng()))
     }
 
-    pub fn decrypt_from_self(&self, ciphered: &[u8]) -> Result<Vec<u8>, &'static str> {
-        sealed_box::open(ciphered, &self.0).ok_or("Decryption error")
+    pub fn decrypt_from_self(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
+        sealed_box::open(ciphered, &self.0).ok_or(CryptoError::Decryption)
     }
 
     pub fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
@@ -152,9 +152,9 @@ impl AsRef<[u8]> for PrivateKey {
 }
 
 impl TryFrom<&[u8]> for PrivateKey {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        let key: [u8; KEY_SIZE] = data.try_into().map_err(|_| ("Invalid data size"))?;
+        let key: [u8; KEY_SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
         Ok(Self(crypto_box::SecretKey::from(key)))
     }
 }
@@ -167,12 +167,12 @@ impl From<[u8; Self::SIZE]> for PrivateKey {
 }
 
 impl TryFrom<ByteBuf> for PrivateKey {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
         let key: [u8; KEY_SIZE] = data
             .to_vec()
             .try_into()
-            .map_err(|_| ("Invalid data size"))?;
+            .map_err(|_| CryptoError::DataSize)?;
         Ok(Self(crypto_box::SecretKey::from(key)))
     }
 }
@@ -217,9 +217,9 @@ impl AsRef<[u8]> for PublicKey {
 }
 
 impl TryFrom<&[u8]> for PublicKey {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        let key: [u8; KEY_SIZE] = data.try_into().map_err(|_| ("Invalid data size"))?;
+        let key: [u8; KEY_SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
         Ok(Self(crypto_box::PublicKey::from(key)))
     }
 }
@@ -232,12 +232,12 @@ impl From<[u8; Self::SIZE]> for PublicKey {
 }
 
 impl TryFrom<ByteBuf> for PublicKey {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
         let key: [u8; KEY_SIZE] = data
             .to_vec()
             .try_into()
-            .map_err(|_| ("Invalid data size"))?;
+            .map_err(|_| CryptoError::DataSize)?;
         Ok(Self(crypto_box::PublicKey::from(key)))
     }
 }

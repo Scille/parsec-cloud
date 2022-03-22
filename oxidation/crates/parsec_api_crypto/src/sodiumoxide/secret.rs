@@ -7,6 +7,8 @@ use sodiumoxide::crypto::secretbox::xsalsa20poly1305::{
 };
 use sodiumoxide::crypto::secretbox::{gen_nonce, open, seal, Nonce};
 
+use crate::CryptoError;
+
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct SecretKey(Key);
@@ -32,13 +34,11 @@ impl SecretKey {
         ciphered
     }
 
-    pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, &'static str> {
-        let nonce_slice = ciphered
-            .get(..NONCEBYTES)
-            .ok_or("The nonce must be exactly 24 bytes long")?;
-        let nonce = Nonce::from_slice(nonce_slice).ok_or("Invalid data size")?;
+    pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
+        let nonce_slice = ciphered.get(..NONCEBYTES).ok_or(CryptoError::Nonce)?;
+        let nonce = Nonce::from_slice(nonce_slice).ok_or(CryptoError::DataSize)?;
         let plaintext =
-            open(&ciphered[NONCEBYTES..], &nonce, &self.0).or(Err("Decryption error"))?;
+            open(&ciphered[NONCEBYTES..], &nonce, &self.0).or(Err(CryptoError::Decryption))?;
         Ok(plaintext)
     }
 
