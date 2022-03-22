@@ -48,6 +48,9 @@ jobs:
   - bash: |
       set -eux
       python -m build --wheel
+    env:
+      # oxidation extra_requirements referes to a local path which is forbidden by pypi
+      IGNORE_OXIDATION: "true"
     displayName: 'Build Wheel'
   - publish: dist/
     artifact: wheel
