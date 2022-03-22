@@ -3,7 +3,6 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
-use crate::{impl_api_protocol_dump_load, Status};
 use parsec_api_crypto::{HashDigest, PublicKey};
 use parsec_api_types::{DateTime, HumanHandle, InvitationToken, UserID};
 
@@ -19,54 +18,21 @@ pub enum InvitationType {
 }
 
 /*
- * InviteNewUserReqSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteNewUserReqSchema {
-    pub cmd: String,
-    pub claimer_email: String,
-    pub send_email: bool,
-}
-
-/*
- * InviteNewDeviceReqSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteNewDeviceReqSchema {
-    pub cmd: String,
-    pub send_email: bool,
-}
-
-/*
- * Type
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename = "type")]
-pub struct Type;
-
-/*
- * InviteNewUserOrDeviceReq
+ * InviteNewReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type")]
 #[serde(rename_all = "UPPERCASE")]
-pub enum InviteNewUserOrDeviceReq {
-    User(InviteNewUserReqSchema),
-    Device(InviteNewDeviceReqSchema),
+pub enum InviteNewReq {
+    User {
+        claimer_email: String,
+        send_email: bool,
+    },
+    Device {
+        send_email: bool,
+    },
 }
-
-/*
- * InviteNewReqSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteNewReqSchema(pub InviteNewUserOrDeviceReq);
-
-impl_api_protocol_dump_load!(InviteNewReqSchema);
 
 /*
  * InvitationEmailSentStatus
@@ -81,17 +47,23 @@ pub enum InvitationEmailSentStatus {
 }
 
 /*
- * InviteNewRepSchema
+ * InviteNewRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteNewRepSchema {
-    pub status: Status,
-    pub token: InvitationToken,
-    pub email_sent: InvitationEmailSentStatus,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum InviteNewRep {
+    Ok {
+        token: InvitationToken,
+        email_sent: InvitationEmailSentStatus,
+    },
+    NotAllowed,
+    AlreadyMember,
+    NotAvailable,
+    UnknownError {
+        error: String,
+    },
 }
-
-impl_api_protocol_dump_load!(InviteNewRepSchema);
 
 /*
  * InvitationDeletedReason
@@ -106,39 +78,34 @@ pub enum InvitationDeletedReason {
 }
 
 /*
- * InviteDeleteReqSchema
+ * InviteDeleteReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteDeleteReqSchema {
-    pub cmd: String,
+pub struct InviteDeleteReq {
     pub token: InvitationToken,
     pub reason: InvitationDeletedReason,
 }
 
-impl_api_protocol_dump_load!(InviteDeleteReqSchema);
-
 /*
- * InviteDeleteRepSchema
+ * InviteDeleteRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteDeleteRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum InviteDeleteRep {
+    Ok,
+    NotFound,
+    AlreadyDeleted,
+    UnknownError { error: String },
 }
 
-impl_api_protocol_dump_load!(InviteDeleteRepSchema);
-
 /*
- * InviteListReqSchema
+ * InviteListReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteListReqSchema {
-    pub cmd: String,
-}
-
-impl_api_protocol_dump_load!(InviteListReqSchema);
+pub struct InviteListReq;
 
 /*
  * InvitationStatus
@@ -153,93 +120,43 @@ pub enum InvitationStatus {
 }
 
 /*
- * InviteListItemUserSchema
- */
-
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-
-pub struct InviteListItemUserSchema {
-    pub token: InvitationToken,
-    pub created_on: DateTime,
-    pub claimer_email: String,
-    pub status: InvitationStatus,
-}
-
-/*
- * InviteListItemDeviceSchema
- */
-
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteListItemDeviceSchema {
-    pub token: InvitationToken,
-    pub created_on: DateTime,
-    pub status: InvitationStatus,
-}
-
-/*
  * InviteUserOrDevice
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type")]
 #[serde(rename_all = "UPPERCASE")]
-pub enum InviteListItemUserOrDevice {
-    User(InviteListItemUserSchema),
-    Device(InviteListItemDeviceSchema),
+pub enum InviteListItem {
+    User {
+        token: InvitationToken,
+        created_on: DateTime,
+        claimer_email: String,
+        status: InvitationStatus,
+    },
+    Device {
+        token: InvitationToken,
+        created_on: DateTime,
+        status: InvitationStatus,
+    },
 }
 
 /*
- * InviteListItemSchema
+ * InviteListRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteListItemSchema(pub InviteListItemUserOrDevice);
-
-/*
- * InviteListRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteListRepSchema {
-    pub status: Status,
-    pub invitations: Vec<InviteListItemSchema>,
-}
-
-impl_api_protocol_dump_load!(InviteListRepSchema);
-
-/*
- * InviteInfoReqSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteInfoReqSchema {
-    pub cmd: String,
-}
-
-impl_api_protocol_dump_load!(InviteInfoReqSchema);
-
-/*
- * InviteInfoUserRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteInfoUserRepSchema {
-    pub claimer_email: String,
-    pub greeter_user_id: UserID,
-    pub greeter_human_handle: HumanHandle,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum InviteListRep {
+    Ok { invitations: Vec<InviteListItem> },
+    UnknownError { error: String },
 }
 
 /*
- * InviteInfoDeviceRepSchema
+ * InviteInfoReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteInfoDeviceRepSchema {
-    pub greeter_user_id: UserID,
-    pub greeter_human_handle: HumanHandle,
-}
+pub struct InviteInfoReq;
 
 /*
  * InviteUserOrDeviceRep
@@ -249,288 +166,326 @@ pub struct InviteInfoDeviceRepSchema {
 #[serde(tag = "type")]
 #[serde(rename_all = "UPPERCASE")]
 pub enum InviteInfoUserOrDeviceRep {
-    User(InviteInfoUserRepSchema),
-    Device(InviteInfoDeviceRepSchema),
+    User {
+        claimer_email: String,
+        greeter_user_id: UserID,
+        greeter_human_handle: HumanHandle,
+    },
+    Device {
+        greeter_user_id: UserID,
+        greeter_human_handle: HumanHandle,
+    },
 }
 
 /*
- * InviteInfoRepSchema
+ * InviteInfoRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InviteInfoRepSchema(pub InviteInfoUserOrDeviceRep);
-
-impl_api_protocol_dump_load!(InviteInfoRepSchema);
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum InviteInfoRep {
+    Ok(InviteInfoUserOrDeviceRep),
+    UnknownError { error: String },
+}
 
 /*
- * Invite1ClaimerWaitPeerReqSchema
+ * Invite1ClaimerWaitPeerReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite1ClaimerWaitPeerReqSchema {
-    pub cmd: String,
+pub struct Invite1ClaimerWaitPeerReq {
     pub claimer_public_key: PublicKey,
 }
 
-impl_api_protocol_dump_load!(Invite1ClaimerWaitPeerReqSchema);
-
 /*
- * Invite1ClaimerWaitPeerRepSchema
+ * Invite1ClaimerWaitPeerRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite1ClaimerWaitPeerRepSchema {
-    pub status: Status,
-    pub greeter_public_key: PublicKey,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum Invite1ClaimerWaitPeerRep {
+    Ok { greeter_public_key: PublicKey },
+    NotFound,
+    InvalidState,
+    UnknownError { error: String },
 }
 
-impl_api_protocol_dump_load!(Invite1ClaimerWaitPeerRepSchema);
-
 /*
- * Invite1GreeterWaitPeerReqSchema
+ * Invite1GreeterWaitPeerReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite1GreeterWaitPeerReqSchema {
-    pub cmd: String,
+pub struct Invite1GreeterWaitPeerReq {
     pub token: InvitationToken,
     pub greeter_public_key: PublicKey,
 }
 
-impl_api_protocol_dump_load!(Invite1GreeterWaitPeerReqSchema);
-
 /*
- * Invite1GreeterWaitPeerRepSchema
+ * Invite1GreeterWaitPeerRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite1GreeterWaitPeerRepSchema {
-    pub status: Status,
-    pub claimer_public_key: PublicKey,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum Invite1GreeterWaitPeerRep {
+    Ok { claimer_public_key: PublicKey },
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
+    UnknownError { error: String },
 }
 
-impl_api_protocol_dump_load!(Invite1GreeterWaitPeerRepSchema);
-
 /*
- * Invite2aClaimerSendHashedNonceHashNonceReqSchema
+ * Invite2aClaimerSendHashedNonceHashNonceReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite2aClaimerSendHashedNonceHashNonceReqSchema {
-    pub cmd: String,
+pub struct Invite2aClaimerSendHashedNonceHashNonceReq {
     pub claimer_hashed_nonce: HashDigest,
 }
 
-impl_api_protocol_dump_load!(Invite2aClaimerSendHashedNonceHashNonceReqSchema);
-
 /*
- * Invite2aClaimerSendHashedNonceHashNonceRepSchema
+ * Invite2aClaimerSendHashedNonceHashNonceRep
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite2aClaimerSendHashedNonceHashNonceRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum Invite2aClaimerSendHashedNonceHashNonceRep {
+    Ok {
+        #[serde_as(as = "Bytes")]
+        greeter_nonce: Vec<u8>,
+    },
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
+    UnknownError {
+        error: String,
+    },
+}
+
+/*
+ * Invite2aGreeterGetHashedNonceReq
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Invite2aGreeterGetHashedNonceReq {
+    pub token: InvitationToken,
+}
+
+/*
+ * Invite2aGreeterGetHashedNonceRep
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum Invite2aGreeterGetHashedNonceRep {
+    Ok { claimer_hashed_nonce: HashDigest },
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
+    UnknownError { error: String },
+}
+
+/*
+ * Invite2bGreeterSendNonceReq
+ */
+
+#[serde_as]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Invite2bGreeterSendNonceReq {
+    pub token: InvitationToken,
     #[serde_as(as = "Bytes")]
     pub greeter_nonce: Vec<u8>,
 }
 
-impl_api_protocol_dump_load!(Invite2aClaimerSendHashedNonceHashNonceRepSchema);
-
 /*
- * Invite2aGreeterGetHashedNonceRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite2aGreeterGetHashedNonceRepSchema {
-    pub status: Status,
-    pub claimer_hashed_nonce: HashDigest,
-}
-
-impl_api_protocol_dump_load!(Invite2aGreeterGetHashedNonceRepSchema);
-
-/*
- * Invite2bGreeterSendNonceRepSchema
+ * Invite2bGreeterSendNonceRep
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite2bGreeterSendNonceRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum Invite2bGreeterSendNonceRep {
+    Ok {
+        #[serde_as(as = "Bytes")]
+        claimer_nonce: Vec<u8>,
+    },
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
+    UnknownError {
+        error: String,
+    },
+}
+
+/*
+ * Invite2bClaimerSendNonceReq
+ */
+
+#[serde_as]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Invite2bClaimerSendNonceReq {
     #[serde_as(as = "Bytes")]
     pub claimer_nonce: Vec<u8>,
 }
 
-impl_api_protocol_dump_load!(Invite2bGreeterSendNonceRepSchema);
+/*
+ * Invite2bClaimerSendNonceRep
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum Invite2bClaimerSendNonceRep {
+    Ok,
+    NotFound,
+    InvalidState,
+    UnknownError { error: String },
+}
 
 /*
- * Invite2bClaimerSendNonceReqSchema
+ * Invite2bClaimerSendNonceReq
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Invite3aGreeterWaitPeerTrustReq {
+    pub token: InvitationToken,
+}
+
+/*
+ * Invite3aGreeterWaitPeerTrustRep
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum Invite3aGreeterWaitPeerTrustRep {
+    Ok,
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
+    UnknownError { error: String },
+}
+
+/*
+ * Invite3bClaimerWaitPeerTrustReq
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Invite3bClaimerWaitPeerTrustReq;
+
+/*
+ * Invite3bClaimerWaitPeerTrustRep
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum Invite3bClaimerWaitPeerTrustRep {
+    Ok,
+    NotFound,
+    InvalidState,
+    UnknownError { error: String },
+}
+
+/*
+ * Invite3bGreeterSignifyTrustReq
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Invite3bGreeterSignifyTrustReq {
+    pub token: InvitationToken,
+}
+
+/*
+ * Invite3bGreeterSignifyTrustRep
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum Invite3bGreeterSignifyTrustRep {
+    Ok,
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
+    UnknownError { error: String },
+}
+
+/*
+ * Invite3aClaimerSignifyTrustReq
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Invite3aClaimerSignifyTrustReq;
+
+/*
+ * Invite3aClaimerSignifyTrustRep
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum Invite3aClaimerSignifyTrustRep {
+    Ok,
+    NotFound,
+    InvalidState,
+    UnknownError { error: String },
+}
+
+/*
+ * Invite4GreeterCommunicateReq
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite2bClaimerSendNonceReqSchema {
-    pub cmd: String,
-    #[serde_as(as = "Bytes")]
-    pub claimer_nonce: Vec<u8>,
-}
-
-impl_api_protocol_dump_load!(Invite2bClaimerSendNonceReqSchema);
-
-/*
- * Invite2bClaimerSendNonceRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite2bClaimerSendNonceRepSchema {
-    pub status: Status,
-}
-
-impl_api_protocol_dump_load!(Invite2bClaimerSendNonceRepSchema);
-
-/*
- * Invite2bClaimerSendNonceReqSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite3aGreeterWaitPeerTrustReqSchema {
-    pub cmd: String,
-    pub token: InvitationToken,
-}
-
-impl_api_protocol_dump_load!(Invite3aGreeterWaitPeerTrustReqSchema);
-
-/*
- * Invite3aGreeterWaitPeerTrustRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite3aGreeterWaitPeerTrustRepSchema {
-    pub status: Status,
-}
-
-impl_api_protocol_dump_load!(Invite3aGreeterWaitPeerTrustRepSchema);
-
-/*
- * Invite3bClaimerWaitPeerTrustReqSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite3bClaimerWaitPeerTrustReqSchema {
-    pub cmd: String,
-}
-
-impl_api_protocol_dump_load!(Invite3bClaimerWaitPeerTrustReqSchema);
-
-/*
- * Invite3bClaimerWaitPeerTrustRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite3bClaimerWaitPeerTrustRepSchema {
-    pub status: Status,
-}
-
-impl_api_protocol_dump_load!(Invite3bClaimerWaitPeerTrustRepSchema);
-
-/*
- * Invite3bGreeterSignifyTrustReqSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite3bGreeterSignifyTrustReqSchema {
-    pub cmd: String,
-    pub token: InvitationToken,
-}
-
-impl_api_protocol_dump_load!(Invite3bGreeterSignifyTrustReqSchema);
-
-/*
- * Invite3bGreeterSignifyTrustRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite3bGreeterSignifyTrustRepSchema {
-    pub status: Status,
-}
-
-impl_api_protocol_dump_load!(Invite3bGreeterSignifyTrustRepSchema);
-
-/*
- * Invite3aClaimerSignifyTrustReqSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite3aClaimerSignifyTrustReqSchema {
-    pub cmd: String,
-}
-
-impl_api_protocol_dump_load!(Invite3aClaimerSignifyTrustReqSchema);
-
-/*
- * Invite3aClaimerSignifyTrustRepSchema
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite3aClaimerSignifyTrustRepSchema {
-    pub status: Status,
-}
-
-impl_api_protocol_dump_load!(Invite3aClaimerSignifyTrustRepSchema);
-
-/*
- * Invite4GreeterCommunicateReqSchema
- */
-
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite4GreeterCommunicateReqSchema {
-    pub cmd: String,
+pub struct Invite4GreeterCommunicateReq {
     pub token: InvitationToken,
     #[serde_as(as = "Bytes")]
     pub payload: Vec<u8>,
 }
 
-impl_api_protocol_dump_load!(Invite4GreeterCommunicateReqSchema);
-
 /*
- * Invite4GreeterCommunicateRepSchema
+ * Invite4GreeterCommunicateRep
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite4GreeterCommunicateRepSchema {
-    pub status: Status,
-    #[serde_as(as = "Bytes")]
-    pub payload: Vec<u8>,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum Invite4GreeterCommunicateRep {
+    Ok {
+        #[serde_as(as = "Bytes")]
+        payload: Vec<u8>,
+    },
+    NotFound,
+    AlreadyDeleted,
+    InvalidState,
+    UnknownError {
+        error: String,
+    },
 }
 
-impl_api_protocol_dump_load!(Invite4GreeterCommunicateRepSchema);
-
 /*
- * Invite4GreeterCommunicateRepSchema
+ * Invite4GreeterCommunicateRep
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite4ClaimerCommunicateReqSchema {
-    pub cmd: String,
+pub struct Invite4ClaimerCommunicateReq {
     #[serde_as(as = "Bytes")]
     pub payload: Vec<u8>,
 }
 
-impl_api_protocol_dump_load!(Invite4ClaimerCommunicateReqSchema);
-
 /*
- * Invite4GreeterCommunicateRepSchema
+ * Invite4GreeterCommunicateRep
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Invite4ClaimerCommunicateRepSchema {
-    pub status: Status,
-    #[serde_as(as = "Bytes")]
-    pub payload: Vec<u8>,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum Invite4ClaimerCommunicateRep {
+    Ok {
+        #[serde_as(as = "Bytes")]
+        payload: Vec<u8>,
+    },
+    NotFound,
+    InvalidState,
+    UnknownError {
+        error: String,
+    },
 }
-
-impl_api_protocol_dump_load!(Invite4ClaimerCommunicateRepSchema);

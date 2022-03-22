@@ -2,28 +2,34 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{impl_api_protocol_dump_load, Status};
-
 /*
- * PingReqSchema
+ * PingReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct PingReqSchema {
-    pub cmd: String,
+pub struct AuthenticatedPingReq {
     pub ping: String,
 }
 
-impl_api_protocol_dump_load!(PingReqSchema);
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct InvitedPingReq {
+    pub ping: String,
+}
 
 /*
- * PingRepSchema
+ * PingRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct PingRepSchema {
-    pub status: Status,
-    pub pong: String,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum AuthenticatedPingRep {
+    Ok { pong: String },
+    UnknownError { error: String },
 }
 
-impl_api_protocol_dump_load!(PingRepSchema);
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum InvitedPingRep {
+    Ok { pong: String },
+    UnknownError { error: String },
+}

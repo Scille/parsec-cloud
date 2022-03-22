@@ -8,7 +8,7 @@ use parsec_api_types::data_macros::new_data_struct_type;
 use parsec_api_types::*;
 
 /*
- * Schema for legacy device files where the filename contains complementary information.
+ *  for legacy device files where the filename contains complementary information.
  */
 
 new_data_struct_type!(
@@ -37,11 +37,11 @@ new_data_struct_type!(
 );
 
 /*
- * Schemas for device files that does not rely on the filename for complementary information.
+ * s for device files that does not rely on the filename for complementary information.
  */
 
 new_data_struct_type!(
-    PasswordDeviceFileSchema,
+    PasswordDeviceFile,
     type: "password",
 
     ciphertext: Vec<u8>,
@@ -61,7 +61,7 @@ new_data_struct_type!(
 );
 
 new_data_struct_type!(
-    RecoveryDeviceFileSchema,
+    RecoveryDeviceFile,
     type: "recovery",
 
     ciphertext: Vec<u8>,
@@ -80,7 +80,7 @@ new_data_struct_type!(
 );
 
 new_data_struct_type!(
-    SmartcardDeviceFileSchema,
+    SmartcardDeviceFile,
     type: "smartcard",
 
     ciphertext: Vec<u8>,
@@ -101,7 +101,7 @@ new_data_struct_type!(
     certificate_sha1: Option<Vec<u8>>,
 );
 
-/// Schema for device files that does not rely on the filename for complementary information.
+///  for device files that does not rely on the filename for complementary information.
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type", rename_all = "lowercase")]

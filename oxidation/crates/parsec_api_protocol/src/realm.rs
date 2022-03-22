@@ -4,9 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 use std::collections::HashMap;
 
-use parsec_api_types::{DateTime, DeviceID, RealmID, UserID};
-
-use crate::{impl_api_protocol_dump_load, Status};
+use parsec_api_types::{maybe_field, DateTime, DeviceID, RealmID, UserID};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -16,147 +14,193 @@ pub enum MaintenanceType {
 }
 
 /*
- * RealmCreateReqSchema
+ * RealmCreateReq
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmCreateReqSchema {
-    pub cmd: String,
+pub struct RealmCreateReq {
     #[serde_as(as = "Bytes")]
     pub role_certificate: Vec<u8>,
 }
 
-impl_api_protocol_dump_load!(RealmCreateReqSchema);
-
 /*
- * RealmCreateRepSchema
+ * RealmCreateRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmCreateRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmCreateRep {
+    Ok,
+    InvalidCertification {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    InvalidData {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    NotFound {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    AlreadyExists,
+    UnknownError {
+        error: String,
+    },
 }
 
-impl_api_protocol_dump_load!(RealmCreateRepSchema);
-
 /*
- * RealmStatusReqSchema
+ * RealmStatusReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmStatusReqSchema {
-    pub cmd: String,
+pub struct RealmStatusReq {
     pub realm_id: RealmID,
 }
 
-impl_api_protocol_dump_load!(RealmStatusReqSchema);
-
 /*
- * RealmStatusRepSchema
+ * RealmStatusRep
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmStatusRepSchema {
-    pub status: Status,
-    pub in_maintenance: bool,
-    pub maintenance_type: Option<MaintenanceType>,
-    pub maintenance_started_on: Option<DateTime>,
-    pub maintenance_started_by: Option<DeviceID>,
-    pub encryption_revision: u64,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmStatusRep {
+    Ok {
+        in_maintenance: bool,
+        maintenance_type: Option<MaintenanceType>,
+        maintenance_started_on: Option<DateTime>,
+        maintenance_started_by: Option<DeviceID>,
+        encryption_revision: u64,
+    },
+    NotAllowed,
+    NotFound {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    UnknownError {
+        error: String,
+    },
 }
 
-impl_api_protocol_dump_load!(RealmStatusRepSchema);
-
 /*
- * RealmStatsReqSchema
+ * RealmStatsReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmStatsReqSchema {
-    pub cmd: String,
+pub struct RealmStatsReq {
     pub realm_id: RealmID,
 }
 
-impl_api_protocol_dump_load!(RealmStatsReqSchema);
-
 /*
- * RealmStatsRepSchema
+ * RealmStatsRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmStatsRepSchema {
-    pub status: Status,
-    pub blocks_size: u64,
-    pub vlobs_size: u64,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmStatsRep {
+    Ok {
+        blocks_size: u64,
+        vlobs_size: u64,
+    },
+    NotAllowed,
+    NotFound {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    UnknownError {
+        error: String,
+    },
 }
 
-impl_api_protocol_dump_load!(RealmStatsRepSchema);
-
 /*
- * RealmGetRoleCertificatesReqSchema
+ * RealmGetRoleCertificatesReq
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmGetRoleCertificatesReqSchema {
-    pub cmd: String,
+pub struct RealmGetRoleCertificatesReq {
     pub realm_id: RealmID,
     pub since: Option<DateTime>,
 }
 
-impl_api_protocol_dump_load!(RealmGetRoleCertificatesReqSchema);
-
 /*
- * RealmGetRoleCertificatesRepSchema
+ * RealmGetRoleCertificatesRep
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmGetRoleCertificatesRepSchema {
-    pub status: Status,
-    #[serde_as(as = "Vec<Bytes>")]
-    pub certificates: Vec<Vec<u8>>,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmGetRoleCertificatesRep {
+    Ok {
+        #[serde_as(as = "Vec<Bytes>")]
+        certificates: Vec<Vec<u8>>,
+    },
+    NotAllowed,
+    NotFound {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    UnknownError {
+        error: String,
+    },
 }
 
-impl_api_protocol_dump_load!(RealmGetRoleCertificatesRepSchema);
-
 /*
- * RealmUpdateRolesReqSchema
+ * RealmUpdateRolesReq
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmUpdateRolesReqSchema {
-    pub cmd: String,
+pub struct RealmUpdateRolesReq {
     #[serde_as(as = "Bytes")]
     pub role_certificate: Vec<u8>,
     #[serde_as(as = "Option<Bytes>")]
     pub recipient_message: Option<Vec<u8>>,
 }
 
-impl_api_protocol_dump_load!(RealmUpdateRolesReqSchema);
-
 /*
- * RealmUpdateRolesRepSchema
+ * RealmUpdateRolesRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmUpdateRolesRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmUpdateRolesRep {
+    Ok,
+    NotAllowed {
+        reason: Option<String>,
+    },
+    InvalidCertification {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    InvalidData {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    AlreadyGranted,
+    IncompatibleProfile {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    NotFound {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    InMaintenance,
+    UnknownError {
+        error: String,
+    },
 }
 
-impl_api_protocol_dump_load!(RealmUpdateRolesRepSchema);
-
 /*
- * RealmStartReencryptionMaintenanceReqSchema
+ * RealmStartReencryptionMaintenanceReq
  */
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmStartReencryptionMaintenanceReqSchema {
-    pub cmd: String,
+pub struct RealmStartReencryptionMaintenanceReq {
     pub realm_id: RealmID,
     pub encryption_revision: u64,
     pub timestamp: DateTime,
@@ -164,39 +208,67 @@ pub struct RealmStartReencryptionMaintenanceReqSchema {
     pub per_participant_message: HashMap<UserID, Vec<u8>>,
 }
 
-impl_api_protocol_dump_load!(RealmStartReencryptionMaintenanceReqSchema);
-
 /*
- * RealmStartReencryptionMaintenanceRepSchema
+ * RealmStartReencryptionMaintenanceRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmStartReencryptionMaintenanceRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmStartReencryptionMaintenanceRep {
+    Ok,
+    NotAllowed,
+    NotFound {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    BadEncryptionRevision,
+    ParticipantMismatch {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    MaintenanceError {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    InMaintenance,
+    UnknownError {
+        error: String,
+    },
 }
 
-impl_api_protocol_dump_load!(RealmStartReencryptionMaintenanceRepSchema);
-
 /*
- * RealmFinishReencryptionMaintenanceReqSchema
+ * RealmFinishReencryptionMaintenanceReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmFinishReencryptionMaintenanceReqSchema {
-    pub cmd: String,
+pub struct RealmFinishReencryptionMaintenanceReq {
     pub realm_id: RealmID,
     pub encryption_revision: u64,
 }
 
-impl_api_protocol_dump_load!(RealmFinishReencryptionMaintenanceReqSchema);
-
 /*
- * RealmFinishReencryptionMaintenanceRepSchema
+ * RealmFinishReencryptionMaintenanceRep
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RealmFinishReencryptionMaintenanceRepSchema {
-    pub status: Status,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RealmFinishReencryptionMaintenanceRep {
+    Ok,
+    NotAllowed,
+    NotFound {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    BadEncryptionRevision,
+    NotInMaintenance {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    MaintenanceError {
+        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+        reason: Option<String>,
+    },
+    UnknownError {
+        error: String,
+    },
 }
-
-impl_api_protocol_dump_load!(RealmFinishReencryptionMaintenanceRepSchema);

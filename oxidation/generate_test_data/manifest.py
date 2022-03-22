@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 # flake8: noqa
 
-from utils import *
+from protocol.utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
 from parsec.api.data import *
@@ -81,7 +81,7 @@ film = FileManifest(
     updated=NOW,
     size=700,
     blocksize=512,
-    blocks=[
+    blocks=(
         BlockAccess(
             id=BlockID.from_hex("b82954f1138b4d719b7f5bd78915d20f"),
             key=SecretKey(
@@ -104,7 +104,7 @@ film = FileManifest(
                 unhexlify("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
             ),
         ),
-    ],
+    ),
 ).dump_sign_and_encrypt(author_signkey=ALICE.signing_key, key=KEY)
 display("file manifest", film, [KEY, ALICE.verify_key, "zip"])
 

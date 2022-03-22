@@ -22,7 +22,8 @@ macro_rules! impl_manifest_dump_load {
                 author_signkey: &SigningKey,
                 key: &SecretKey,
             ) -> Vec<u8> {
-                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                let serialized =
+                    ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
                 e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
                 let compressed = e.finish().unwrap_or_else(|_| unreachable!());
@@ -47,7 +48,7 @@ macro_rules! impl_manifest_dump_load {
                     .read_to_end(&mut serialized)
                     .map_err(|_| "Invalid compression")?;
 
-                let obj = rmp_serde::from_read_ref::<_, Self>(&serialized)
+                let obj = ::rmp_serde::from_read_ref::<_, Self>(&serialized)
                     .map_err(|_| "Invalid serialization")?;
 
                 if obj.author != *expected_author {

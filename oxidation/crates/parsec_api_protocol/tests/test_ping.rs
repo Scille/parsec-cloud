@@ -6,49 +6,101 @@ use rstest::rstest;
 use parsec_api_protocol::*;
 
 #[rstest]
-fn serde_ping_req() {
+fn serde_authenticated_ping_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   cmd: "ping"
     //   ping: "ping"
-    let data = hex!("82a3636d64a470696e67a470696e67a470696e67");
+    let raw = hex!("82a3636d64a470696e67a470696e67a470696e67");
 
-    let expected = PingReqSchema {
-        cmd: "ping".to_owned(),
+    let req = authenticated_cmds::ping::Req {
         ping: "ping".to_owned(),
     };
 
-    let schema = PingReqSchema::load(&data).unwrap();
+    let expected = authenticated_cmds::AnyCmdReq::AuthenticatedPing(req.clone());
 
-    assert_eq!(schema, expected);
+    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    // Note we cannot just compare with `data` due to signature and keys order
-    let schema2 = PingReqSchema::load(&data2).unwrap();
-    assert_eq!(schema2, expected);
+    let raw2 = data.dumps().unwrap();
+
+    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
 }
 
 #[rstest]
-fn serde_ping_rep() {
+fn serde_authenticated_ping_rep() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   pong: "pong"
     //   status: "ok"
-    let data = hex!("82a4706f6e67a4706f6e67a6737461747573a26f6b");
+    let raw = hex!("82a4706f6e67a4706f6e67a6737461747573a26f6b");
 
-    let expected = PingRepSchema {
-        status: Status::Ok,
+    let expected = authenticated_cmds::ping::Rep::Ok {
         pong: "pong".to_owned(),
     };
 
-    let schema = PingRepSchema::load(&data).unwrap();
+    let data = authenticated_cmds::ping::Rep::loads(&raw);
 
-    assert_eq!(schema, expected);
+    assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let data2 = schema.dump();
-    // Note we cannot just compare with `data` due to signature and keys order
-    let schema2 = PingRepSchema::load(&data2).unwrap();
-    assert_eq!(schema2, expected);
+    let raw2 = data.dumps().unwrap();
+
+    let data2 = authenticated_cmds::ping::Rep::loads(&raw2);
+
+    assert_eq!(data2, expected);
+}
+
+#[rstest]
+fn serde_invited_ping_req() {
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   cmd: "ping"
+    //   ping: "ping"
+    let raw = hex!("82a3636d64a470696e67a470696e67a470696e67");
+
+    let req = invited_cmds::ping::Req {
+        ping: "ping".to_owned(),
+    };
+
+    let expected = invited_cmds::AnyCmdReq::InvitedPing(req.clone());
+
+    let data = invited_cmds::AnyCmdReq::loads(&raw).unwrap();
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dumps().unwrap();
+
+    let data2 = invited_cmds::AnyCmdReq::loads(&raw2).unwrap();
+
+    assert_eq!(data2, expected);
+}
+
+#[rstest]
+fn serde_invited_ping_rep() {
+    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Content:
+    //   pong: "pong"
+    //   status: "ok"
+    let raw = hex!("82a4706f6e67a4706f6e67a6737461747573a26f6b");
+
+    let expected = invited_cmds::ping::Rep::Ok {
+        pong: "pong".to_owned(),
+    };
+
+    let data = invited_cmds::ping::Rep::loads(&raw);
+
+    assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dumps().unwrap();
+
+    let data2 = invited_cmds::ping::Rep::loads(&raw2);
+
+    assert_eq!(data2, expected);
 }

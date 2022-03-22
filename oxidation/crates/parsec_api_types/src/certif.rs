@@ -31,7 +31,7 @@ macro_rules! impl_verify_and_load_allow_root {
                     .read_to_end(&mut serialized)
                     .map_err(|_| "Invalid compression")?;
                 let obj: $name =
-                    rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+                    ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
                 match (&obj.author, expected_author) {
                     (CertificateSignerOwned::User(ref a_id), CertificateSignerRef::User(ea_id))
                         if a_id == ea_id =>
@@ -62,7 +62,7 @@ macro_rules! impl_verify_and_load_no_root {
                     .read_to_end(&mut serialized)
                     .map_err(|_| "Invalid compression")?;
                 let obj: $name =
-                    rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+                    ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
                 if &obj.author != expected_author {
                     Err("Unexpected author")
                 } else {
@@ -82,7 +82,7 @@ macro_rules! impl_unsecure_load {
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
                     .map_err(|_| "Invalid compression")?;
-                rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")
+                ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")
             }
         }
     };
@@ -92,7 +92,8 @@ macro_rules! impl_dump_and_sign {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
-                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                let serialized =
+                    ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
                 e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
                 let compressed = e.finish().unwrap_or_else(|_| unreachable!());
