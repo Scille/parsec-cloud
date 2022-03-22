@@ -2,7 +2,9 @@
 
 mod block;
 mod cmds;
+mod error;
 mod events;
+mod handshake;
 mod invite;
 mod message;
 mod organization;
@@ -13,7 +15,9 @@ mod vlob;
 
 use block::*;
 pub use cmds::*;
+pub use error::*;
 use events::*;
+pub use handshake::*;
 use invite::*;
 use message::*;
 use organization::*;

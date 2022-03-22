@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::{TimeZone, Timelike};
+use chrono::{Duration, TimeZone, Timelike};
+use core::ops::Sub;
 use serde_bytes::ByteBuf;
 
 pub(crate) const DATETIME_EXT_ID: i8 = 1;
@@ -137,6 +138,13 @@ impl<'de> serde::Deserialize<'de> for DateTime {
         // rmp_serde this should be treated as an extension type
         deserializer
             .deserialize_newtype_struct(rmp_serde::MSGPACK_EXT_STRUCT_NAME, DateTimeExtVisitor)
+    }
+}
+
+impl Sub for DateTime {
+    type Output = Duration;
+    fn sub(self, rhs: Self) -> Self::Output {
+        self.0 - rhs.0
     }
 }
 
