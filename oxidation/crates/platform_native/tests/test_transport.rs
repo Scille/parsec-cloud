@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use async_std::net::{TcpListener, TcpStream};
+use async_std::net::TcpListener;
 use async_std::task;
 use libparsec_platform_native::Transport;
 use rstest::rstest;
@@ -21,9 +21,7 @@ fn test_transport() {
             server.send(b"foobar".to_vec()).await.unwrap();
         });
 
-        let client_stream = TcpStream::connect(addr).await.unwrap();
-        let mut client =
-            Transport::init_for_client(client_stream, "ws://".to_string() + addr).await;
+        let mut client = Transport::init_for_client("ws://".to_string() + addr).await;
 
         client.send(b"foobar".to_vec()).await.unwrap();
 
