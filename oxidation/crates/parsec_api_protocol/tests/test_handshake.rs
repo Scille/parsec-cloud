@@ -74,7 +74,6 @@ fn test_good_authenticated_handshake_server(alice: &Device) {
 }
 
 #[rstest]
-#[ignore] // Ballpark leads to failure
 fn test_good_authenticated_handshake_client(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -96,14 +95,17 @@ fn test_good_authenticated_handshake_client(alice: &Device) {
         "737570706f727465645f6170695f76657273696f6e7392920205920103"
     );
 
-    AuthenticatedClientHandshakeStalled::new(
+    let mut ch = AuthenticatedClientHandshakeStalled::new(
         alice.organization_id().clone(),
         alice.device_id.clone(),
         alice.signing_key.clone(),
         alice.root_verify_key().clone(),
-    )
-    .process_challenge_req(&challenge_req)
-    .unwrap();
+    );
+
+    // Fix ballpark failure
+    ch.client_timestamp = DateTime::from_f64_with_us_precision(1647884434.47775);
+
+    ch.process_challenge_req(&challenge_req).unwrap();
 }
 
 #[rstest]
@@ -270,14 +272,16 @@ fn test_good_invited_handshake_server(
     InvitationType::Device,
     "4e12636f08c840c4bb09404e1e696b09".parse().unwrap(),
 ))]
-#[ignore] // Ballpark leads to failure
 fn test_good_invited_handshake_client(#[case] input: (&[u8], InvitationType, InvitationToken)) {
     let _organization_id = OrganizationID::from_str("Org").unwrap();
     let (challenge_req, _invitation_type, _token) = input;
 
-    InvitedClientHandshakeStalled::new(_organization_id, _invitation_type, _token)
-        .process_challenge_req(&challenge_req)
-        .unwrap();
+    let mut ch = InvitedClientHandshakeStalled::new(_organization_id, _invitation_type, _token);
+
+    // Fix ballpark failure
+    ch.client_timestamp = DateTime::from_f64_with_us_precision(1647885016.474222);
+
+    ch.process_challenge_req(&challenge_req).unwrap();
 }
 
 #[rstest]
