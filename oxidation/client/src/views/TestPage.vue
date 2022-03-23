@@ -1,45 +1,23 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS -->
+<!-- This page serve only for test purposes -->
 
 <template>
   <ion-page>
     <ion-header :translucent="true">
-      <ion-toolbar color="primary">
-        <ion-buttons slot="start">
-          <ion-menu-button auto-hide="false" />
-        </ion-buttons>
-        <ion-buttons slot="primary">
-          <ion-button>
-            <ion-icon
-              slot="icon-only"
-              ios="ellipsis-horizontal"
-              md="ellipsis-vertical"
-            />
-          </ion-button>
-        </ion-buttons>
+      <ion-toolbar>
         <ion-title>Parsec</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content :fullscreen="true">
       <ion-header collapse="condense">
-        <ion-toolbar color="primary">
-          <ion-buttons slot="start">
-            <ion-menu-button auto-hide="false" />
-          </ion-buttons>
-          <ion-buttons slot="primary">
-            <ion-button>
-              <ion-icon
-                slot="icon-only"
-                ios="ellipsis-horizontal"
-                md="ellipsis-vertical"
-              />
-            </ion-button>
-          </ion-buttons>
+        <ion-toolbar>
           <ion-title size="large">
             Parsec
           </ion-title>
         </ion-toolbar>
       </ion-header>
+
       <div id="container">
         <strong>Ready to create Parsec?</strong>
         <div>
