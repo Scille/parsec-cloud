@@ -8,6 +8,7 @@ mod message;
 mod organization;
 mod ping;
 mod realm;
+mod transport;
 mod user;
 mod vlob;
 
@@ -19,6 +20,7 @@ use message::*;
 use organization::*;
 use ping::*;
 use realm::*;
+pub use transport::*;
 use user::*;
 use vlob::*;
 
