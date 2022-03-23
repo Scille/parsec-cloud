@@ -21,7 +21,6 @@ from wsproto.events import (
 )
 
 from parsec._version import __version__
-from parsec.api.protocol.handshake import ServerHandshake
 
 
 __all__ = ("TransportError", "Transport")
@@ -55,23 +54,6 @@ class Transport:
         self.conn_id = uuid4().hex
         self.logger = logger.bind(conn_id=self.conn_id)
         self._ws_events = ws.events()
-        self._handshake: Optional[ServerHandshake] = None
-
-    # Application handshake interface
-    # TODO: Investigate a better place for providing an access to the peer API version
-    # Note: This should not be confused with the websocket handshake
-
-    @property
-    def handshake(self) -> ServerHandshake:
-        if self._handshake is None:
-            raise TypeError("The handshake has not been set")
-        return self._handshake
-
-    @handshake.setter
-    def handshake(self, handshake: ServerHandshake) -> None:
-        if self._handshake is not None:
-            raise TypeError("The handshake has already been set")
-        self._handshake = handshake
 
     async def _next_ws_event(self) -> Event:
         try:
