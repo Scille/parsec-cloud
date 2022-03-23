@@ -13,8 +13,8 @@ use futures::{
 use http::{Request, Uri};
 
 pub struct Transport {
-    pub write: SplitSink<WebSocketStream<TcpStream>, Message>,
-    pub read: SplitStream<WebSocketStream<TcpStream>>,
+    write: SplitSink<WebSocketStream<TcpStream>, Message>,
+    read: SplitStream<WebSocketStream<TcpStream>>,
 }
 
 // Only because we need user-agent
