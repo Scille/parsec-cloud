@@ -458,13 +458,13 @@ fn test_process_challenge_req_good_api_version(
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 3, revision: 33 }],
     vec![ApiVersion { version: 2, revision: 222 }, ApiVersion { version: 3, revision: 333 }],
     Some(ApiVersion { version: 3, revision: 33 }),
-    Some( ApiVersion { version: 3, revision: 333 }),
+    Some(ApiVersion { version: 3, revision: 333 }),
 ))]
 #[case((
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 3, revision: 33 }],
     vec![ApiVersion { version: 3, revision: 333 }, ApiVersion { version: 4, revision: 444 }],
     Some(ApiVersion { version: 3, revision: 33 }),
-    Some( ApiVersion { version: 3, revision: 333 }),
+    Some(ApiVersion { version: 3, revision: 333 }),
 ))]
 #[case((
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 3, revision: 33 }],
@@ -476,7 +476,7 @@ fn test_process_challenge_req_good_api_version(
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 4, revision: 44 }],
     vec![ApiVersion { version: 1, revision: 111 }, ApiVersion { version: 2, revision: 222 }],
     Some(ApiVersion { version: 2, revision: 22 }),
-    Some( ApiVersion { version: 2, revision: 222 }),
+    Some(ApiVersion { version: 2, revision: 222 }),
 ))]
 #[case((
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 4, revision: 44 }],
@@ -488,19 +488,19 @@ fn test_process_challenge_req_good_api_version(
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 4, revision: 44 }],
     vec![ApiVersion { version: 2, revision: 222 }, ApiVersion { version: 3, revision: 333 }],
     Some(ApiVersion { version: 2, revision: 22 }),
-    Some( ApiVersion { version: 2, revision: 222 }),
+    Some(ApiVersion { version: 2, revision: 222 }),
 ))]
 #[case((
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 4, revision: 44 }],
     vec![ApiVersion { version: 2, revision: 222 }, ApiVersion { version: 4, revision: 444 }],
     Some(ApiVersion { version: 4, revision: 44 }),
-    Some( ApiVersion { version: 4, revision: 444 }),
+    Some(ApiVersion { version: 4, revision: 444 }),
 ))]
 #[case((
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 4, revision: 44 }],
     vec![ApiVersion { version: 3, revision: 333 }, ApiVersion { version: 4, revision: 444 }],
     Some(ApiVersion { version: 4, revision: 44 }),
-    Some( ApiVersion { version: 4, revision: 444 }),
+    Some(ApiVersion { version: 4, revision: 444 }),
 ))]
 #[case((
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 4, revision: 44 }],
@@ -512,13 +512,13 @@ fn test_process_challenge_req_good_api_version(
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 4, revision: 44 }],
     vec![ApiVersion { version: 4, revision: 444 }, ApiVersion { version: 5, revision: 555 }],
     Some(ApiVersion { version: 4, revision: 44 }),
-    Some( ApiVersion { version: 4, revision: 444 }),
+    Some(ApiVersion { version: 4, revision: 444 }),
 ))]
 #[case((
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 4, revision: 44 }],
     vec![ApiVersion { version: 4, revision: 444 }, ApiVersion { version: 6, revision: 666 }],
     Some(ApiVersion { version: 4, revision: 44 }),
-    Some( ApiVersion { version: 4, revision: 444 }),
+    Some(ApiVersion { version: 4, revision: 444 }),
 ))]
 #[case((
     vec![ApiVersion { version: 2, revision: 22 }, ApiVersion { version: 4, revision: 44 }],

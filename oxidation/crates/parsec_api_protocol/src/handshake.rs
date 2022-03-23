@@ -35,65 +35,6 @@ pub fn timestamps_in_the_ballpark(
     -ballpark_client_early_offset < seconds && seconds < ballpark_client_late_offset
 }
 
-fn load_challenge_req(
-    req: &[u8],
-    _supported_api_versions: &[ApiVersion],
-    client_timestamp: DateTime,
-) -> Result<(Vec<u8>, ApiVersion, ApiVersion, Vec<ApiVersion>), HandshakeError> {
-    let challenge_data = Handshake::loads(req)?;
-
-    if let Handshake::Challenge {
-        challenge,
-        supported_api_versions,
-        backend_timestamp,
-        ballpark_client_early_offset,
-        ballpark_client_late_offset,
-    } = challenge_data
-    {
-        // API version matching
-        let (backend_api_version, client_api_version) =
-            _settle_compatible_versions(&supported_api_versions, _supported_api_versions)?;
-
-        // Those fields are missing with parsec API 2.3 and lower
-        if let (
-            Some(backend_timestamp),
-            Some(ballpark_client_early_offset),
-            Some(ballpark_client_late_offset),
-        ) = (
-            backend_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-        ) {
-            // Check whether our system clock is in sync with the backend
-            if !timestamps_in_the_ballpark(
-                client_timestamp,
-                backend_timestamp,
-                // The client is a bit less tolerant than the backend
-                ballpark_client_early_offset * BALLPARK_CLIENT_TOLERANCE,
-                ballpark_client_late_offset * BALLPARK_CLIENT_TOLERANCE,
-            ) {
-                // Add `client_timestamp` to challenge data
-                // so the dictionnary exposes the same fields as `TimestampOutOfBallparkRepSchema`
-                return Err(HandshakeError::OutOfBallpark(ChallengeDataReport {
-                    challenge,
-                    supported_api_versions,
-                    backend_timestamp,
-                    client_timestamp,
-                    ballpark_client_early_offset,
-                    ballpark_client_late_offset,
-                }));
-            }
-        }
-        return Ok((
-            challenge,
-            backend_api_version,
-            client_api_version,
-            supported_api_versions,
-        ));
-    }
-    Err(HandshakeError::InvalidMessage("Invalid data".into()))
-}
-
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ApiVersion {
     pub version: u32,
@@ -113,23 +54,6 @@ impl Ord for ApiVersion {
             order => order,
         }
     }
-}
-
-fn _settle_compatible_versions(
-    backend_versions: &[ApiVersion],
-    client_versions: &[ApiVersion],
-) -> Result<(ApiVersion, ApiVersion), HandshakeError> {
-    // Try to use the newest version first
-    for cv in client_versions.iter().rev() {
-        // No need to compare `revision` because only `version` field breaks compatibility
-        if let Some(bv) = backend_versions.iter().find(|bv| bv.version == cv.version) {
-            return Ok((*bv, *cv));
-        }
-    }
-    Err(HandshakeError::APIVersion {
-        backend_versions: backend_versions.to_vec(),
-        client_versions: client_versions.to_vec(),
-    })
 }
 
 #[serde_as]
@@ -512,6 +436,82 @@ pub struct AuthenticatedClientHandshakeStalled {
     pub root_verify_key: VerifyKey,
     pub supported_api_versions: Vec<ApiVersion>,
     pub client_timestamp: DateTime,
+}
+
+fn _settle_compatible_versions(
+    backend_versions: &[ApiVersion],
+    client_versions: &[ApiVersion],
+) -> Result<(ApiVersion, ApiVersion), HandshakeError> {
+    // Try to use the newest version first
+    for cv in client_versions.iter().rev() {
+        // No need to compare `revision` because only `version` field breaks compatibility
+        if let Some(bv) = backend_versions.iter().find(|bv| bv.version == cv.version) {
+            return Ok((*bv, *cv));
+        }
+    }
+    Err(HandshakeError::APIVersion {
+        backend_versions: backend_versions.to_vec(),
+        client_versions: client_versions.to_vec(),
+    })
+}
+
+fn load_challenge_req(
+    req: &[u8],
+    _supported_api_versions: &[ApiVersion],
+    client_timestamp: DateTime,
+) -> Result<(Vec<u8>, ApiVersion, ApiVersion, Vec<ApiVersion>), HandshakeError> {
+    let challenge_data = Handshake::loads(req)?;
+
+    if let Handshake::Challenge {
+        challenge,
+        supported_api_versions,
+        backend_timestamp,
+        ballpark_client_early_offset,
+        ballpark_client_late_offset,
+    } = challenge_data
+    {
+        // API version matching
+        let (backend_api_version, client_api_version) =
+            _settle_compatible_versions(&supported_api_versions, _supported_api_versions)?;
+
+        // Those fields are missing with parsec API 2.3 and lower
+        if let (
+            Some(backend_timestamp),
+            Some(ballpark_client_early_offset),
+            Some(ballpark_client_late_offset),
+        ) = (
+            backend_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+        ) {
+            // Check whether our system clock is in sync with the backend
+            if !timestamps_in_the_ballpark(
+                client_timestamp,
+                backend_timestamp,
+                // The client is a bit less tolerant than the backend
+                ballpark_client_early_offset * BALLPARK_CLIENT_TOLERANCE,
+                ballpark_client_late_offset * BALLPARK_CLIENT_TOLERANCE,
+            ) {
+                // Add `client_timestamp` to challenge data
+                // so the dictionnary exposes the same fields as `TimestampOutOfBallparkRepSchema`
+                return Err(HandshakeError::OutOfBallpark(ChallengeDataReport {
+                    challenge,
+                    supported_api_versions,
+                    backend_timestamp,
+                    client_timestamp,
+                    ballpark_client_early_offset,
+                    ballpark_client_late_offset,
+                }));
+            }
+        }
+        return Ok((
+            challenge,
+            backend_api_version,
+            client_api_version,
+            supported_api_versions,
+        ));
+    }
+    Err(HandshakeError::InvalidMessage("Invalid data".into()))
 }
 
 impl AuthenticatedClientHandshakeStalled {
