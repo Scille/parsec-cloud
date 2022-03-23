@@ -18,33 +18,35 @@ pub struct Transport {
 }
 
 // Only because we need user-agent
-fn build_request_from_uri<T: AsRef<str>>(uri: T) -> Request<()> {
+async fn build_client_from_uri(uri: Uri) -> (TcpStream, Request<()>) {
     dotenv::dotenv().ok();
     let version = std::env::var("VERSION").unwrap();
     let user_agent = format!("parsec/{version}");
-
-    let uri = uri.as_ref().parse::<Uri>().unwrap();
     let authority = uri.authority().unwrap().as_str();
     let host = authority
         .find('@')
         .map(|idx| authority.split_at(idx + 1).1)
         .unwrap_or_else(|| authority);
 
-    Request::builder()
-        .header("Host", host)
-        .header("Connection", "Upgrade")
-        .header("Upgrade", "websocket")
-        .header("Sec-WebSocket-Version", "13")
-        .header("Sec-WebSocket-Key", generate_key())
-        .header("User-Agent", user_agent)
-        .uri(uri)
-        .body(())
-        .unwrap()
+    (
+        TcpStream::connect(host).await.unwrap(),
+        Request::builder()
+            .header("Host", host)
+            .header("Connection", "Upgrade")
+            .header("Upgrade", "websocket")
+            .header("Sec-WebSocket-Version", "13")
+            .header("Sec-WebSocket-Key", generate_key())
+            .header("User-Agent", user_agent)
+            .uri(uri)
+            .body(())
+            .unwrap(),
+    )
 }
 
 impl Transport {
-    pub async fn init_for_client<T: AsRef<str>>(stream: TcpStream, uri: T) -> Self {
-        let request = build_request_from_uri(uri);
+    pub async fn init_for_client<T: AsRef<str>>(uri: T) -> Self {
+        let uri = uri.as_ref().parse::<Uri>().unwrap();
+        let (stream, request) = build_client_from_uri(uri).await;
         let (ws_stream, _) = client_async(request, stream).await.unwrap();
         let (write, read) = ws_stream.split();
 
