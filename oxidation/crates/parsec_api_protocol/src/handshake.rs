@@ -10,6 +10,8 @@ use serde_with::{serde_as, Bytes};
 use crate::{impl_dumps_loads, ChallengeDataReport, HandshakeError, InvitationType};
 use parsec_api_types::{maybe_field, DateTime, DeviceID, InvitationToken, OrganizationID};
 
+const HANDSHAKE_CHALLENGE_SIZE: usize = 48;
+
 pub const API_V1_VERSION: ApiVersion = ApiVersion {
     version: 1,
     revision: 3,
@@ -136,7 +138,7 @@ pub struct ServerHandshakeStalled {
 impl Default for ServerHandshakeStalled {
     fn default() -> Self {
         Self {
-            challenge_size: 48,
+            challenge_size: HANDSHAKE_CHALLENGE_SIZE,
             supported_api_version: vec![API_V2_VERSION, API_V1_VERSION],
         }
     }
@@ -260,26 +262,28 @@ impl ServerHandshakeAnswer {
             match verify_key {
                 Some(verify_key) => {
                     let returned_challenge = if client_api_version >= Self::VERSION {
-                        let answer = verify_key.verify(&answer).map_err(|_| {
-                            HandshakeError::FailedChallenge("Invalid answer signature".into())
-                        })?;
+                        let answer = verify_key
+                            .verify(&answer)
+                            .map_err(|_| HandshakeError::FailedChallenge)?;
                         match Answer::loads(&answer)? {
                             Answer::SignedAnswer { answer } => answer,
                             _ => return Err(HandshakeError::InvalidMessage("Invalid data".into())),
                         }
                     } else {
-                        verify_key.verify(&answer).map_err(|_| {
-                            HandshakeError::FailedChallenge("Invalid answer signature".into())
-                        })?
+                        verify_key
+                            .verify(&answer)
+                            .map_err(|_| HandshakeError::FailedChallenge)?
                     };
 
                     if returned_challenge != self.challenge {
-                        return Err(HandshakeError::FailedChallenge(
-                            "Invalid returned challenge".into(),
-                        ));
+                        return Err(HandshakeError::FailedChallenge);
                     }
                 }
-                _ => return Err(HandshakeError::Authenticated),
+                _ => {
+                    return Err(HandshakeError::InvalidMessage(
+                        "`verify_key` param must be provided for authenticated handshake".into(),
+                    ))
+                }
             }
         }
 

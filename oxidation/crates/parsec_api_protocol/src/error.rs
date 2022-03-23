@@ -7,8 +7,8 @@ use crate::ApiVersion;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum HandshakeError {
-    #[error("Failed chalenge {0:?}")]
-    FailedChallenge(String),
+    #[error("Handshake invalid answer (bad signature or challenge value)")]
+    FailedChallenge,
     #[error("Handshake bad administration token")]
     BadAdministrationToken,
     #[error("Handshake bad identity")]
@@ -26,10 +26,8 @@ pub enum HandshakeError {
         client_versions: Vec<ApiVersion>,
         backend_versions: Vec<ApiVersion>,
     },
-    #[error("{0}")]
+    #[error("Handshake invalid message: {0}")]
     InvalidMessage(String),
-    #[error("`verify_key` param must be provided for authenticated handshake")]
-    Authenticated,
 }
 
 impl From<&'static str> for HandshakeError {

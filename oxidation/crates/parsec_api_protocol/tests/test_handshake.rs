@@ -716,7 +716,7 @@ fn test_build_result_req_bad_key(alice: &Device, bob: &Device) {
         .unwrap_err();
 
     match err {
-        HandshakeError::FailedChallenge(_) => assert!(true),
+        HandshakeError::FailedChallenge => assert!(true),
         _ => assert!(false),
     }
 }
@@ -747,7 +747,7 @@ fn test_build_result_req_bad_challenge(alice: &Device) {
         .unwrap_err();
 
     match err {
-        HandshakeError::FailedChallenge(_) => assert!(true),
+        HandshakeError::FailedChallenge => assert!(true),
         _ => assert!(false),
     }
 }
