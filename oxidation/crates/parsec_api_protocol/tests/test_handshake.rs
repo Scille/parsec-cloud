@@ -836,11 +836,11 @@ fn test_process_result_req_bad_format(#[case] req: Value) {
 }
 
 #[rstest]
-#[case(("bad_identity", HandshakeError::BadIdentity(None)))]
-#[case(("organization_expired", HandshakeError::OrganizationExpired(None)))]
-#[case(("rvk_mismatch", HandshakeError::RVKMismatch(None)))]
-#[case(("revoked_device", HandshakeError::RevokedDevice(None)))]
-#[case(("bad_admin_token", HandshakeError::BadAdministrationToken(None)))]
+#[case(("bad_identity", HandshakeError::BadIdentity))]
+#[case(("organization_expired", HandshakeError::OrganizationExpired))]
+#[case(("rvk_mismatch", HandshakeError::RVKMismatch))]
+#[case(("revoked_device", HandshakeError::RevokedDevice))]
+#[case(("bad_admin_token", HandshakeError::BadAdministrationToken))]
 #[case(("dummy", HandshakeError::InvalidMessage("Deserialization failed".into())))]
 fn test_process_result_req_bad_outcome(#[case] result_expected: (&str, HandshakeError)) {
     let (result, expected) = result_expected;

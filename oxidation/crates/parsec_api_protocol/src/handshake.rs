@@ -143,33 +143,7 @@ impl Default for ServerHandshakeStalled {
 }
 
 impl ServerHandshakeStalled {
-    pub fn new(challenge_size: usize) -> Self {
-        Self {
-            challenge_size,
-            supported_api_version: vec![API_V2_VERSION, API_V1_VERSION],
-        }
-    }
-    pub fn build_challenge_req(self) -> Result<ServerHandshakeChallenge, HandshakeError> {
-        let mut challenge = vec![0; self.challenge_size];
-        thread_rng().fill(&mut challenge[..]);
-
-        let raw = Handshake::Challenge {
-            challenge: challenge.clone(),
-            supported_api_versions: self.supported_api_version.clone(),
-            ballpark_client_early_offset: Some(BALLPARK_CLIENT_EARLY_OFFSET),
-            ballpark_client_late_offset: Some(BALLPARK_CLIENT_LATE_OFFSET),
-            backend_timestamp: Some(DateTime::now()),
-        }
-        .dumps()?;
-
-        Ok(ServerHandshakeChallenge {
-            supported_api_version: self.supported_api_version,
-            challenge,
-            raw,
-        })
-    }
-    #[cfg(feature = "test")]
-    pub fn build_challenge_req_with_challenge(
+    fn _build_challenge_req_with_challenge(
         self,
         challenge: Vec<u8>,
     ) -> Result<ServerHandshakeChallenge, HandshakeError> {
@@ -187,6 +161,20 @@ impl ServerHandshakeStalled {
             challenge,
             raw,
         })
+    }
+
+    pub fn build_challenge_req(self) -> Result<ServerHandshakeChallenge, HandshakeError> {
+        let mut challenge = vec![0; self.challenge_size];
+        thread_rng().fill(&mut challenge[..]);
+        self._build_challenge_req_with_challenge(challenge)
+    }
+
+    #[cfg(feature = "test")]
+    pub fn build_challenge_req_with_challenge(
+        self,
+        challenge: Vec<u8>,
+    ) -> Result<ServerHandshakeChallenge, HandshakeError> {
+        self._build_challenge_req_with_challenge(challenge)
     }
 }
 
@@ -514,6 +502,24 @@ fn load_challenge_req(
     Err(HandshakeError::InvalidMessage("Invalid data".into()))
 }
 
+fn process_result_req(req: &[u8]) -> Result<(), HandshakeError> {
+    if let Handshake::Result { result, help } = Handshake::loads(req)? {
+        match result {
+            HandshakeResult::BadIdentity => Err(HandshakeError::BadIdentity),
+            HandshakeResult::OrganizationExpired => Err(HandshakeError::OrganizationExpired),
+            HandshakeResult::RvkMismatch => Err(HandshakeError::RVKMismatch),
+            HandshakeResult::RevokedDevice => Err(HandshakeError::RevokedDevice),
+            HandshakeResult::BadAdminToken => Err(HandshakeError::BadAdministrationToken),
+            HandshakeResult::Ok => Ok(()),
+            _ => Err(HandshakeError::InvalidMessage(format!(
+                "Bad `result` handshake: {result:?} ({help:?})"
+            ))),
+        }
+    } else {
+        Err(HandshakeError::InvalidMessage("Invalid data".into()))
+    }
+}
+
 impl AuthenticatedClientHandshakeStalled {
     const VERSION: ApiVersion = ApiVersion {
         version: 2,
@@ -569,6 +575,10 @@ impl AuthenticatedClientHandshakeStalled {
             .dumps()?,
         });
     }
+
+    pub fn process_result_req(self, req: &[u8]) -> Result<(), HandshakeError> {
+        process_result_req(req)
+    }
 }
 
 #[derive(Debug)]
@@ -605,6 +615,7 @@ impl InvitedClientHandshakeStalled {
             client_timestamp: DateTime::now(),
         }
     }
+
     pub fn process_challenge_req(
         self,
         req: &[u8],
@@ -624,6 +635,10 @@ impl InvitedClientHandshakeStalled {
             .dumps()?,
         });
     }
+
+    pub fn process_result_req(self, req: &[u8]) -> Result<(), HandshakeError> {
+        process_result_req(req)
+    }
 }
 
 #[derive(Debug)]
@@ -632,28 +647,3 @@ pub struct InvitedClientHandshakeChallenge {
     pub client_api_version: ApiVersion,
     pub raw: Vec<u8>,
 }
-
-pub trait BaseClientHandshake: Sized {
-    fn process_result_req(self, req: &[u8]) -> Result<(), HandshakeError> {
-        if let Handshake::Result { result, help } = Handshake::loads(req)? {
-            match result {
-                HandshakeResult::BadIdentity => Err(HandshakeError::BadIdentity(help)),
-                HandshakeResult::OrganizationExpired => {
-                    Err(HandshakeError::OrganizationExpired(help))
-                }
-                HandshakeResult::RvkMismatch => Err(HandshakeError::RVKMismatch(help)),
-                HandshakeResult::RevokedDevice => Err(HandshakeError::RevokedDevice(help)),
-                HandshakeResult::BadAdminToken => Err(HandshakeError::BadAdministrationToken(help)),
-                HandshakeResult::Ok => Ok(()),
-                _ => Err(HandshakeError::InvalidMessage(format!(
-                    "Bad `result` handshake: {result:?} ({help:?})"
-                ))),
-            }
-        } else {
-            Err(HandshakeError::InvalidMessage("Invalid data".into()))
-        }
-    }
-}
-
-impl BaseClientHandshake for AuthenticatedClientHandshakeStalled {}
-impl BaseClientHandshake for InvitedClientHandshakeStalled {}

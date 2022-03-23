@@ -7,18 +7,18 @@ use crate::ApiVersion;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum HandshakeError {
-    #[error("{0}")]
+    #[error("Failed chalenge {0:?}")]
     FailedChallenge(String),
-    #[error("Handshake bad administration token {0:?}")]
-    BadAdministrationToken(Option<String>),
-    #[error("Handshake bad identity {0:?}")]
-    BadIdentity(Option<String>),
-    #[error("Handshake organization expired {0:?}")]
-    OrganizationExpired(Option<String>),
-    #[error("Handshake rvk mismatch {0:?}")]
-    RVKMismatch(Option<String>),
-    #[error("Handshake revoked device {0:?}")]
-    RevokedDevice(Option<String>),
+    #[error("Handshake bad administration token")]
+    BadAdministrationToken,
+    #[error("Handshake bad identity")]
+    BadIdentity,
+    #[error("Handshake organization expired")]
+    OrganizationExpired,
+    #[error("Handshake rvk mismatch")]
+    RVKMismatch,
+    #[error("Handshake revoked device")]
+    RevokedDevice,
     #[error("Handshake out of ballpark {0:x?}")]
     OutOfBallpark(ChallengeDataReport),
     #[error("No overlap between client API versions {client_versions:?} and backend API versions {backend_versions:?}")]
