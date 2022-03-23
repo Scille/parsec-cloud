@@ -2,7 +2,7 @@
 
 use async_std::net::{TcpListener, TcpStream};
 use async_std::task;
-use parsec_api_protocol::Transport;
+use libparsec_platform_native::Transport;
 use rstest::rstest;
 
 #[rstest]

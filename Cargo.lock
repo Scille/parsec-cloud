@@ -1111,6 +1111,16 @@ dependencies = [
 [[package]]
 name = "libparsec_platform_native"
 version = "0.0.0"
+dependencies = [
+ "async-std",
+ "async-tungstenite",
+ "dotenv",
+ "futures",
+ "http",
+ "parsec_api_protocol",
+ "rstest",
+ "smol",
+]
 
 [[package]]
 name = "libparsec_platform_web"
