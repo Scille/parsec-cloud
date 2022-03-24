@@ -11,8 +11,9 @@
           <ion-button>
             <ion-icon
               slot="icon-only"
-              ios="ellipsis-horizontal"
-              md="ellipsis-vertical"
+              :ios="ellipsisHorizontal"
+              :icon="ellipsisVertical"
+              :md="ellipsisVertical"
             />
           </ion-button>
         </ion-buttons>
@@ -30,8 +31,9 @@
             <ion-button>
               <ion-icon
                 slot="icon-only"
-                ios="ellipsis-horizontal"
-                md="ellipsis-vertical"
+                :ios="ellipsisHorizontal"
+                :icon="ellipsisVertical"
+                :md="ellipsisVertical"
               />
             </ion-button>
           </ion-buttons>
@@ -63,8 +65,15 @@ import {
   IonTitle,
   IonToolbar,
   IonButton,
+  IonIcon,
+  IonMenuButton,
+  IonButtons,
   toastController
 } from '@ionic/vue';
+import {
+  ellipsisVertical,
+  ellipsisHorizontal
+} from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { ref } from 'vue';
 import { libparsec } from '../plugins/libparsec';
 
