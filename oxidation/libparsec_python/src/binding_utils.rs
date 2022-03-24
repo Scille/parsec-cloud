@@ -70,8 +70,14 @@ pub fn kwargs_extract_required<'a, T: FromPyObject<'a>>(
     args: &'a PyDict,
     name: &str,
 ) -> PyResult<T> {
-    match kwargs_extract_optional::<T>(args, name)? {
-        Some(v) => Ok(v),
+    match args.get_item(name) {
+        Some(item) => match item.extract::<T>() {
+            Ok(v) => Ok(v),
+            Err(err) => Err(PyValueError::new_err(format!(
+                "Invalid `{}` argument: {}",
+                name, err
+            ))),
+        },
         None => Err(PyValueError::new_err(format!(
             "Missing `{}` argument",
             name

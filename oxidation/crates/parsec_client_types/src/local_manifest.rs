@@ -110,10 +110,13 @@ impl Chunk {
     }
 
     pub fn is_pseudo_block(&self) -> bool {
-        // Not left aligned
-        !self.start != self.raw_offset
-            // Not right aligned
-            || u64::from(self.stop) != self.raw_offset + u64::from(self.raw_size)
+        if self.start != self.raw_offset {
+            return false;
+        }
+        if u64::from(self.stop) != self.raw_offset + u64::from(self.raw_size) {
+            return false;
+        }
+        true
     }
 
     pub fn get_block_access(&self) -> Result<Option<BlockAccess>, &'static str> {

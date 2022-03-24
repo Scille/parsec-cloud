@@ -1090,13 +1090,14 @@ impl UserManifest {
     }
 
     #[getter]
-    fn workspaces(&self) -> PyResult<Vec<WorkspaceEntry>> {
-        Ok(self
+    fn workspaces<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
+        let elems: Vec<PyObject> = self
             .0
             .workspaces
             .clone()
             .into_iter()
-            .map(WorkspaceEntry)
-            .collect())
+            .map(|x| WorkspaceEntry(x).into_py(py))
+            .collect();
+        Ok(PyTuple::new(py, elems))
     }
 }

@@ -507,14 +507,18 @@ impl LocalFileManifest {
     }
 
     #[getter]
-    fn blocks(&self) -> PyResult<Vec<Vec<Chunk>>> {
-        Ok(self
-            .0
-            .blocks
-            .clone()
-            .into_iter()
-            .map(|b| b.into_iter().map(Chunk).collect())
-            .collect())
+    fn blocks<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
+        let mut elems: Vec<&PyTuple> = vec![];
+
+        for chunks in &self.0.blocks {
+            let mut chunk_tuple: Vec<PyObject> = vec![];
+            for c in chunks {
+                chunk_tuple.push(Chunk(c.clone()).into_py(py));
+            }
+            elems.push(PyTuple::new(py, chunk_tuple));
+        }
+
+        Ok(PyTuple::new(py, elems))
     }
 }
 
@@ -1488,14 +1492,19 @@ impl LocalWorkspaceManifest {
     }
 
     #[getter]
-    fn children(&self) -> PyResult<HashMap<EntryName, EntryID>> {
-        Ok(self
+    fn children(&self, py: Python) -> PyResult<PyObject> {
+        let types_mod = PyModule::import(py, "parsec.types")?;
+        let frozen_dict = types_mod.getattr("FrozenDict")?;
+
+        let children: HashMap<EntryName, EntryID> = self
             .0
             .children
             .clone()
             .into_iter()
             .map(|(name, id)| (EntryName(name), EntryID(id)))
-            .collect())
+            .collect();
+
+        Ok(frozen_dict.call1((children,))?.into_py(py))
     }
 
     #[getter]
