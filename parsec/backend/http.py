@@ -154,6 +154,11 @@ class HTTPComponent:
                 {"GET", "POST"},
                 self._http_api_pki_enrollement_request,
             ),
+            (
+                re.compile(r"^/anonymous/pki/(?P<organization_id>[^/]*)/enrollment_get_reply$"),
+                {"GET", "POST"},
+                self._http_api_pki_enrollement_get_reply,
+            ),
         ]
 
     def register_components(self, **other_components):
@@ -376,5 +381,21 @@ class HTTPComponent:
             return HTTPResponse.build_msgpack(200, data=b"")
 
         body = await req.get_body()
-        rep = await self._pki_component.api_pki_enrollment_request(None, body)
+        rep = await self._pki_component.api_pki_enrollment_request(body)
+        return HTTPResponse.build_msgpack(200, data=rep)
+
+    async def _http_api_pki_enrollement_get_reply(
+        self, req: HTTPRequest, **kwargs: str
+    ) -> HTTPResponse:
+        try:
+            organization_name = req.path.split("/")[-2]
+            await self._organization_component.get(OrganizationID(organization_name))
+        except (IndexError, OrganizationNotFoundError):
+            return HTTPResponse.build_msgpack(404, data=b"")
+
+        if req.method == "GET":
+            return HTTPResponse.build_msgpack(200, data=b"")
+
+        body = await req.get_body()
+        rep = await self._pki_component.api_pki_enrollment_get_reply(body)
         return HTTPResponse.build_msgpack(200, data=rep)
