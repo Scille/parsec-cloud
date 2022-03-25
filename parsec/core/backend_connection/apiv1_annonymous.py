@@ -19,6 +19,8 @@ class APIV1_BackendAnonymousCmds:
 
     ping = expose_cmds(cmds.ping)
     organization_bootstrap = expose_cmds(cmds.organization_bootstrap)
+    pki_enrollment_request = expose_cmds(cmds.pki_enrollment_request)
+    pki_enrollment_get_reply = expose_cmds(cmds.pki_enrollment_get_reply)
 
 
 for cmd in APIV1_ANONYMOUS_CMDS:

@@ -93,6 +93,8 @@ class BackendAuthenticatedCmds:
     )
     organization_stats = expose_cmds_with_retrier(cmds.organization_stats)
     organization_config = expose_cmds_with_retrier(cmds.organization_config)
+    pki_enrollment_get_requests = expose_cmds_with_retrier(cmds.pki_enrollment_get_requests)
+    pki_enrollment_reply = expose_cmds_with_retrier(cmds.pki_enrollment_reply)
 
 
 for cmd in AUTHENTICATED_CMDS:
