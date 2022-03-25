@@ -85,7 +85,9 @@ class BasePkiCertificateComponent:
         reply = msg["reply"]
         try:
             timestamp = await self.pki_enrollment_reply(certificate_id, request_id, reply, user_id)
-            return pki_enrollment_reply_serializer.rep_dump({"timestamp": timestamp})
+            return pki_enrollment_reply_serializer.rep_dump(
+                {"status": "ok", "timestamp": timestamp}
+            )
         except PkiCertificateNotFoundError:
             return pki_enrollment_reply_serializer.rep_dump({"status": "certificate not found"})
         except PkiCertificateRequestNotFoundError:
