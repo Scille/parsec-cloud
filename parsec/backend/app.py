@@ -465,7 +465,6 @@ class BackendApp:
                     # when the peer send a new request
                     raw_req = exc.new_raw_req
                     continue
-
             client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
             raw_rep = packb(rep)
             await transport.send(raw_rep)

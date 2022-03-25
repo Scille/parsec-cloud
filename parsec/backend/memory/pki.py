@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 from typing import Dict, List, Optional, Tuple
+from uuid import UUID
 
 import attr
 
@@ -18,8 +19,8 @@ from parsec.backend.pki import (
 
 @attr.s
 class PkiCertificate:
-    certificate_id: str = attr.ib()
-    request_id: str = attr.ib()
+    certificate_id: bytes = attr.ib()
+    request_id: UUID = attr.ib()
     request_object: PkiRequest = attr.ib()
     request_timestamp: DateTime = attr.ib()
     reply_user_id: Optional[str] = attr.ib(default=None)
@@ -30,15 +31,15 @@ class PkiCertificate:
 class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
     def __init__(self, send_event):
         self._send_event = send_event
-        self._pki_certificates: Dict[str, PkiCertificate] = {}
+        self._pki_certificates: Dict[bytes, PkiCertificate] = {}
 
     def register_components(self, **other_components):
         pass
 
     async def pki_enrollment_request(
         self,
-        certificate_id: str,
-        request_id: str,
+        certificate_id: bytes,
+        request_id: UUID,
         request_object: PkiRequest,
         force_flag: bool = False,
     ) -> DateTime:
@@ -47,13 +48,13 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
             if existing_certificate.reply_object and existing_certificate.reply_user_id:
                 raise PkiCertificateAlreadyEnrolledError(
                     existing_certificate.request_timestamp,
-                    f"Certificate {certificate_id} already attributed",
+                    f"Certificate {str(certificate_id)} already attributed",
                 )
 
             if not force_flag:
                 raise PkiCertificateAlreadyRequestedError(
                     existing_certificate.reply_timestamp,
-                    f"Certificate {certificate_id} already used in request {request_id}",
+                    f"Certificate {str(certificate_id)} already used in request {request_id}",
                 )
         # Check human handle already used
         for pki_certificate in self._pki_certificates.values():
@@ -77,7 +78,7 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
         self._pki_certificates[certificate_id] = new_pki_certificate
         return new_pki_certificate.request_timestamp
 
-    async def pki_enrollment_get_requests(self) -> List[Tuple[str, str, PkiRequest]]:
+    async def pki_enrollment_get_requests(self) -> List[Tuple[bytes, UUID, PkiRequest]]:
         return [
             (
                 pki_certificate.certificate_id,
@@ -89,18 +90,18 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
 
     async def pki_enrollment_reply(
         self,
-        certificate_id: str,
-        request_id: str,
+        certificate_id: bytes,
+        request_id: UUID,
         reply_object: PkiReply,
         user_id: Optional[str] = None,
     ) -> DateTime:
         try:
             pki_certificate = self._pki_certificates[certificate_id]
         except KeyError:
-            raise PkiCertificateNotFoundError(f"Certificate {certificate_id} not found")
+            raise PkiCertificateNotFoundError(f"Certificate {str(certificate_id)} not found")
         if pki_certificate.request_id != request_id:
             raise PkiCertificateRequestNotFoundError(
-                f"Request {request_id} not found for certificate {certificate_id}"
+                f"Request {request_id} not found for certificate {str(certificate_id)}"
             )
         pki_certificate.reply_object = reply_object
         pki_certificate.reply_user_id = user_id

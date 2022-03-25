@@ -61,9 +61,4 @@ INVITED_CMDS = {
 }
 
 # TODO: remove me once API v1 is deprecated
-APIV1_ANONYMOUS_CMDS = {
-    "ping",
-    "organization_bootstrap",
-    "pki_enrollment_request",
-    "pki_enrollment_get_reply",
-}
+APIV1_ANONYMOUS_CMDS = {"ping", "organization_bootstrap"}

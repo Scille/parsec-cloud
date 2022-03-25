@@ -1,17 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from uuid import uuid4
 import pendulum
 import pytest
 
 from parsec.api.protocol.types import DeviceID, HumanHandle, UserProfile
 
 
-from parsec.core.backend_connection.cmds import (
-    pki_enrollment_get_reply,
-    pki_enrollment_get_requests,
-    pki_enrollment_reply,
-    pki_enrollment_request,
-)
+from parsec.core.backend_connection.cmds import pki_enrollment_get_requests, pki_enrollment_reply
 from parsec.api.protocol.pki import PkiRequest, PkiReply
 
 
@@ -38,21 +34,14 @@ async def test_pki_send_request_and_reply(
         requested_device_name="some_name",
     )
     certificate_id = b"certificate_id"
-    request_id = b"request_id"
+    request_id = uuid4()
 
-    rep = await pki_enrollment_request(
-        transport=bob_backend_sock.transport,
-        request=pki_request,
-        certificate_id=certificate_id,
-        request_id=request_id,
-        force_flag=False,
-    )
+    await backend.pki.pki_enrollment_request(certificate_id, request_id, pki_request, False)
+    rep = await pki_enrollment_get_requests(alice_backend_sock.transport)
+
     assert rep["status"] == "ok"
-    returned_request_timestamp = rep["timestamp"]
-    assert returned_request_timestamp
-
-    rep = await pki_enrollment_get_reply(bob_backend_sock.transport, certificate_id, request_id)
-    assert rep["status"] == "pending"
+    assert len(rep["requests"]) == 1
+    assert rep["requests"][0][0] == certificate_id
 
     raw = "ali-c_e@d-e_v"
     pki_reply = PkiReply(
@@ -73,15 +62,3 @@ async def test_pki_send_request_and_reply(
 
     assert rep["status"] == "ok"
     assert rep["timestamp"] > ref_time
-    assert rep["timestamp"] > returned_request_timestamp
-
-    rep = await pki_enrollment_get_requests(alice_backend_sock.transport)
-    assert rep["status"] == "ok"
-    assert len(rep["requests"]) == 1
-    rep = rep["requests"][0]
-    # assert rep[0] == certificate_id  # TODO Diff type str/byte
-    # assert rep[1] == request_id
-    # assert rep[2] == pki_request
-
-    rep = await pki_enrollment_get_reply(bob_backend_sock.transport, certificate_id, request_id)
-    assert rep["status"] == "already enrolled on other device"
