@@ -70,7 +70,7 @@ from parsec.core.backend_connection.exceptions import (
     BackendProtocolError,
     BackendOutOfBallparkError,
 )
-from parsec.api.data.pki import PkiReply
+from parsec.api.data.pki import PkiEnrollmentReply
 
 
 async def _send_cmd(transport: Transport, serializer, **req) -> dict:
@@ -598,7 +598,11 @@ async def pki_enrollment_get_requests(transport: Transport):
 
 
 async def pki_enrollment_reply(
-    transport: Transport, certificate_id: str, request_id: str, reply: PkiReply, user_id: str
+    transport: Transport,
+    certificate_id: str,
+    request_id: str,
+    reply: PkiEnrollmentReply,
+    user_id: str,
 ):
     return await _send_cmd(
         transport,

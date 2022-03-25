@@ -4,7 +4,7 @@ from collections import namedtuple
 from typing import List, Optional, Tuple
 
 import pendulum
-from parsec.api.data.pki import PkiReply, PkiRequest
+from parsec.api.data.pki import PkiEnrollmentReply, PkiEnrollmentRequest
 from parsec.backend.pki import (
     BasePkiCertificateComponent,
     PkiCertificateAlreadyEnrolledError,
@@ -103,7 +103,7 @@ class PGCertificateComponent(BasePkiCertificateComponent):
         self,
         certificate_id: str,
         request_id: str,
-        request_object: PkiRequest,
+        request_object: PkiEnrollmentRequest,
         force_flag: bool = False,
     ) -> DateTime:
 
@@ -155,7 +155,7 @@ class PGCertificateComponent(BasePkiCertificateComponent):
                 )
                 return request_timestamp
 
-    async def pki_enrollment_get_requests(self) -> List[Tuple[str, str, PkiRequest]]:
+    async def pki_enrollment_get_requests(self) -> List[Tuple[str, str, PkiEnrollmentRequest]]:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             data = await conn.fetch(*_q_get_certificates())
 
@@ -165,7 +165,7 @@ class PGCertificateComponent(BasePkiCertificateComponent):
         self,
         certificate_id: str,
         request_id: str,
-        reply_object: PkiReply,
+        reply_object: PkiEnrollmentReply,
         user_id: Optional[str] = None,
     ) -> DateTime:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
@@ -190,7 +190,7 @@ class PGCertificateComponent(BasePkiCertificateComponent):
 
     async def pki_enrollment_get_reply(
         self, certificate_id, request_id
-    ) -> Tuple[Optional[PkiReply], Optional[DateTime], DateTime, Optional[str]]:
+    ) -> Tuple[Optional[PkiEnrollmentReply], Optional[DateTime], DateTime, Optional[str]]:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             data = await conn.fetch(*_q_get_certificate(certificate_id=certificate_id))
             if not len(data):
