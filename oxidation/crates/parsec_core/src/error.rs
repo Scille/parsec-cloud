@@ -40,6 +40,6 @@ pub enum TrustchainError {
 
 pub type TrustchainResult<T> = Result<T, TrustchainError>;
 
-pub fn build_signature_path(sign_chain: &[String]) -> String {
+pub(crate) fn build_signature_path(sign_chain: &[String]) -> String {
     sign_chain.join(" <-sign- ")
 }
