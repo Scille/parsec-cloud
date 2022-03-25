@@ -109,7 +109,7 @@ new_string_based_id_type!(pub DeviceLabel, 255, r"^.+$");
  * DeviceID
  */
 
-#[derive(Default, Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq)]
+#[derive(Default, Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, Hash)]
 pub struct DeviceID {
     pub user_id: UserID,
     pub device_name: DeviceName,

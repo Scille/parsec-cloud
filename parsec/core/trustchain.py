@@ -229,7 +229,7 @@ class TrustchainContext:
                 elif author_user.profile != UserProfile.ADMIN:
                     path = _build_signature_path(*sign_chain, author_id)
                     raise TrustchainError(
-                        f"{path}:  Invalid signature given {author_user.user_id} is not admin"
+                        f"{path}: Invalid signature given {author_user.user_id} is not admin"
                     )
             # Also make sure author wasn't revoked at creation time
             author_revoked_user = _get_eventually_verified_revoked_user(author_id.user_id)

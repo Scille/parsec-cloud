@@ -1248,6 +1248,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "parsec_core"
+version = "0.0.0"
+dependencies = [
+ "parsec_api_crypto",
+ "parsec_api_protocol",
+ "parsec_api_types",
+ "thiserror",
+]
+
+[[package]]
 name = "paste"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
