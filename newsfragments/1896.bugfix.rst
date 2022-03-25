@@ -1,1 +1,0 @@
-Logging out of one tab now correctly update the list of available login device

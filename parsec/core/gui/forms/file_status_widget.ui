@@ -13,6 +13,15 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">#line, #line_2 {
+	color: #333333;
+}
+
+#FileInfoWidget {
+	background-color: #FFFFFF;
+}</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
     <number>5</number>

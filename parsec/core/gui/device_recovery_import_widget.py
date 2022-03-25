@@ -193,7 +193,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
     def show_modal(cls, config, jobs_ctx, parent, on_finished):
         w = cls(config=config, jobs_ctx=jobs_ctx)
         d = GreyedDialog(
-            w, translate("TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"), parent=parent, width=800
+            w, translate("TEXT_DEVICE_RECOVERY_IMPORT_WIZARD_TITLE"), parent=parent, width=800
         )
         w.dialog = d
 

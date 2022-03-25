@@ -111,6 +111,7 @@ class WorkspaceNameValidator(QValidator):
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
             EntryName(string)
+            return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Invalid, string, pos
 
