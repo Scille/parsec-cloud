@@ -59,11 +59,20 @@ from parsec.api.protocol import (
     user_revoke_serializer,
     device_create_serializer,
 )
+from parsec.api.protocol.pki import (
+    pki_enrollment_get_reply_serializer,
+    pki_enrollment_get_requests_serializer,
+    pki_enrollment_reply_serializer,
+    pki_enrollment_request_serializer,
+)
+
+
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
     BackendProtocolError,
     BackendOutOfBallparkError,
 )
+from parsec.api.data.pki import PkiReply, PkiRequest
 
 
 async def _send_cmd(transport: Transport, serializer, **req) -> dict:
@@ -578,4 +587,53 @@ async def organization_bootstrap(
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
+    )
+
+
+### Pki enrollment cmds ###
+async def pki_enrollment_request(
+    transport: Transport,
+    request: PkiRequest,
+    certificate_id: str,
+    request_id: str,
+    force_flag: bool,
+):
+    return await _send_cmd(
+        transport,
+        pki_enrollment_request_serializer,
+        cmd="pki_enrollment_request",
+        request=request,
+        certificate_id=certificate_id,
+        force_flag=force_flag,
+        request_id=request_id,
+    )
+
+
+async def pki_enrollment_get_requests(transport: Transport):
+    return await _send_cmd(
+        transport, pki_enrollment_get_requests_serializer, cmd="pki_enrollment_get_requests"
+    )
+
+
+async def pki_enrollment_reply(
+    transport: Transport, certificate_id: str, request_id: str, reply: PkiReply, user_id: str
+):
+    return await _send_cmd(
+        transport,
+        pki_enrollment_reply_serializer,
+        cmd="pki_enrollment_reply",
+        certificate_id=certificate_id,
+        request_id=request_id,
+        reply=reply,
+        user_id=user_id,
+    )
+
+
+async def pki_enrollment_get_reply(transport: Transport, certificate_id: str, request_id: str):
+    return await _send_cmd(
+        transport,
+        pki_enrollment_get_reply_serializer,
+        cmd="pki_enrollment_get_reply",
+        certificate_id=certificate_id,
+        request_id=request_id,
     )
