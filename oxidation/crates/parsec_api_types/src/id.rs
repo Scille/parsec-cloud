@@ -114,7 +114,7 @@ impl_from_maybe!(Option<DeviceLabel>);
  * DeviceID
  */
 
-#[derive(Default, Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DeviceID {
     pub user_id: UserID,
     pub device_name: DeviceName,
