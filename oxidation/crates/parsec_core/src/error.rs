@@ -7,9 +7,6 @@ use parsec_api_types::{DeviceID, UserID};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum TrustchainError {
-    #[error("Unexpected certificate: expected `{expected}` but got `{got}`")]
-    UnexpectedCertificate { expected: UserID, got: UserID },
-
     #[error("{path}: Invalid certificate: {exc}")]
     InvalidCertificate { path: String, exc: String },
 
@@ -36,6 +33,9 @@ pub enum TrustchainError {
         verified_timestamp: DateTime,
         user_timestamp: DateTime,
     },
+
+    #[error("Unexpected certificate: expected `{expected}` but got `{got}`")]
+    UnexpectedCertificate { expected: UserID, got: UserID },
 }
 
 pub type TrustchainResult<T> = Result<T, TrustchainError>;
