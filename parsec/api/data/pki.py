@@ -11,41 +11,62 @@ from parsec.api.protocol import (
     UserProfile,
     UserProfileField,
 )
+from parsec.api.protocol.types import DeviceLabel, DeviceLabelField
 from parsec.crypto import PublicKey, VerifyKey
 from parsec.serde import BaseSchema, fields
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class PkiRequest(BaseAPIData):
+class PkiEnrollmentRequestInfo(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
-        der_x509_certificate = fields.Bytes(require=True)
         verify_key = fields.VerifyKey(required=True)
         public_key = fields.PublicKey(required=True)
-        signature = fields.Bytes(required=True)
         requested_human_handle = HumanHandleField(required=True)
-        requested_device_name = fields.String(required=True)
+        requested_device_name = DeviceLabelField(required=True)
 
-    der_x509_certificate: bytes
     verify_key: VerifyKey
     public_key: PublicKey
-    signature: bytes
     requested_human_handle: HumanHandle
-    requested_device_name: str
+    requested_device_name: DeviceLabel
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class PkiReply(BaseAPIData):
+class PkiEnrollmentRequest(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
-        der_x509_admin_certificate = fields.Bytes(required=True)
+        der_x509_certificate = fields.Bytes(require=True)
+        signature = fields.Bytes(required=True)
+        pki_request_info = fields.Nested(PkiEnrollmentRequestInfo.SCHEMA_CLS, required=True)
+        requested_human_handle = HumanHandleField(required=True)
+
+    der_x509_certificate: bytes
+    signature: bytes
+    pki_request_info: PkiEnrollmentRequestInfo
+    requested_human_handle: HumanHandle
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class PkiEnrollmentReplyInfo(BaseAPIData):
+    class SCHEMA_CLS(BaseSchema):
         device_id = DeviceIDField(required=True)
         root_verify_key = fields.VerifyKey(required=True)
-        device_label = fields.String(required=True)
+        device_label = DeviceLabelField(required=True)
         human_handle = HumanHandleField(required=True)
         profile = UserProfileField(required=True)
 
-    der_x509_admin_certificate: bytes
     device_id: DeviceID
     root_verify_key: VerifyKey
-    device_label: str
+    device_label: DeviceLabel
     human_handle: HumanHandle
     profile: UserProfile
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class PkiEnrollmentReply(BaseAPIData):
+    class SCHEMA_CLS(BaseSchema):
+        der_x509_admin_certificate = fields.Bytes(required=True)
+        signature = fields.Bytes(required=True)
+        pki_reply_info = fields.Nested(PkiEnrollmentReplyInfo.SCHEMA_CLS, required=True)
+
+    der_x509_admin_certificate: bytes
+    signature: bytes
+    pki_reply_info: PkiEnrollmentReplyInfo

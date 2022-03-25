@@ -6,7 +6,7 @@ import attr
 
 import pendulum
 from pendulum.datetime import DateTime
-from parsec.api.data.pki import PkiReply, PkiRequest
+from parsec.api.data.pki import PkiEnrollmentReply, PkiEnrollmentRequest
 from parsec.backend.pki import (
     BasePkiCertificateComponent,
     PkiCertificateAlreadyEnrolledError,
@@ -21,11 +21,11 @@ from parsec.backend.pki import (
 class PkiCertificate:
     certificate_id: bytes = attr.ib()
     request_id: UUID = attr.ib()
-    request_object: PkiRequest = attr.ib()
+    request_object: PkiEnrollmentRequest = attr.ib()
     request_timestamp: DateTime = attr.ib()
     reply_user_id: Optional[str] = attr.ib(default=None)
     reply_timestamp: Optional[DateTime] = attr.ib(default=None)
-    reply_object: Optional[PkiReply] = attr.ib(default=None)
+    reply_object: Optional[PkiEnrollmentReply] = attr.ib(default=None)
 
 
 class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
@@ -40,7 +40,7 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
         self,
         certificate_id: bytes,
         request_id: UUID,
-        request_object: PkiRequest,
+        request_object: PkiEnrollmentRequest,
         force_flag: bool = False,
     ) -> DateTime:
         existing_certificate = self._pki_certificates.get(certificate_id, None)
@@ -78,7 +78,7 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
         self._pki_certificates[certificate_id] = new_pki_certificate
         return new_pki_certificate.request_timestamp
 
-    async def pki_enrollment_get_requests(self) -> List[Tuple[bytes, UUID, PkiRequest]]:
+    async def pki_enrollment_get_requests(self) -> List[Tuple[bytes, UUID, PkiEnrollmentRequest]]:
         return [
             (
                 pki_certificate.certificate_id,
@@ -92,7 +92,7 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
         self,
         certificate_id: bytes,
         request_id: UUID,
-        reply_object: PkiReply,
+        reply_object: PkiEnrollmentReply,
         user_id: Optional[str] = None,
     ) -> DateTime:
         try:
@@ -110,7 +110,7 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
 
     async def pki_enrollment_get_reply(
         self, certificate_id, request_id
-    ) -> Tuple[Optional[PkiReply], Optional[DateTime], DateTime, Optional[str]]:
+    ) -> Tuple[Optional[PkiEnrollmentReply], Optional[DateTime], DateTime, Optional[str]]:
         try:
             pki_certificate = self._pki_certificates[certificate_id]
         except KeyError:

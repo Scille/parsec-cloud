@@ -3,12 +3,13 @@
 from uuid import uuid4
 import pendulum
 import pytest
+from parsec.api.data.pki import PkiEnrollmentRequestInfo, PkiEnrollmentReplyInfo
 
-from parsec.api.protocol.types import DeviceID, HumanHandle, UserProfile
+from parsec.api.protocol.types import DeviceID, DeviceLabel, HumanHandle, UserProfile
 
 
 from parsec.core.backend_connection.cmds import pki_enrollment_get_requests, pki_enrollment_reply
-from parsec.api.protocol.pki import PkiRequest, PkiReply
+from parsec.api.protocol.pki import PkiEnrollmentRequest, PkiEnrollmentReply
 
 
 @pytest.mark.trio
@@ -25,13 +26,17 @@ async def test_pki_send_request_and_reply(
     backend, alice, bob, alice_backend_sock, bob_backend_sock
 ):
     ref_time = pendulum.now()
-    pki_request = PkiRequest(
-        der_x509_certificate=b"1234567890ABCDEF",
+    pki_request_info = PkiEnrollmentRequestInfo(
         verify_key=bob.verify_key,
         public_key=bob.public_key,
+        requested_human_handle=HumanHandle(email="t@t.t", label="t"),
+        requested_device_name=DeviceLabel("label"),
+    )
+    pki_request = PkiEnrollmentRequest(
+        der_x509_certificate=b"1234567890ABCDEF",
         signature=b"123",
         requested_human_handle=HumanHandle(email="t@t.t", label="t"),
-        requested_device_name="some_name",
+        pki_request_info=pki_request_info,
     )
     certificate_id = b"certificate_id"
     request_id = uuid4()
@@ -44,13 +49,15 @@ async def test_pki_send_request_and_reply(
     assert rep["requests"][0][0] == certificate_id
 
     raw = "ali-c_e@d-e_v"
-    pki_reply = PkiReply(
-        der_x509_admin_certificate=b"admin_cert",
+    pki_reply_info = PkiEnrollmentReplyInfo(
         device_id=DeviceID(raw),
         root_verify_key=alice.verify_key,
-        device_label="device_label",
+        device_label=DeviceLabel("device"),
         human_handle=HumanHandle(email="t@t.t", label="t"),
         profile=UserProfile.ADMIN,
+    )
+    pki_reply = PkiEnrollmentReply(
+        der_x509_admin_certificate=b"admin_cert", signature=b"123", pki_reply_info=pki_reply_info
     )
     rep = await pki_enrollment_reply(
         alice_backend_sock.transport,

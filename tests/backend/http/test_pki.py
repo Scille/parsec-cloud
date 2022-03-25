@@ -2,14 +2,15 @@
 from uuid import uuid4
 import pendulum
 import pytest
+from parsec.api.data.pki import PkiEnrollmentRequestInfo
 from parsec.api.protocol.pki import (
     pki_enrollment_request_req_serializer,
     pki_enrollment_request_rep_serializer,
     pki_enrollment_get_reply_req_serializer,
     pki_enrollment_get_reply_rep_serializer,
-    PkiRequest,
+    PkiEnrollmentRequest,
 )
-from parsec.api.protocol.types import HumanHandle
+from parsec.api.protocol.types import DeviceLabel, HumanHandle
 from parsec.crypto import VerifyKey, PublicKey, generate_nonce
 
 
@@ -46,13 +47,17 @@ async def test_pki_rest_wrong_organisation(alice, backend, backend_http_send, ba
 async def test_pki_rest_send_request_and_get_reply(alice, backend, backend_http_send, backend_addr):
     organization_id = alice.organization_id
     ref_timestamp = pendulum.now()
-    pki_request = PkiRequest(
-        der_x509_certificate=b"1234567890ABCDEF",
+    pki_request_info = PkiEnrollmentRequestInfo(
         verify_key=VerifyKey(generate_nonce(32)),
         public_key=PublicKey(generate_nonce(32)),
+        requested_human_handle=HumanHandle(email="t@t.t", label="t"),
+        requested_device_name=DeviceLabel("test"),
+    )
+    pki_request = PkiEnrollmentRequest(
+        der_x509_certificate=b"1234567890ABCDEF",
         signature=b"123",
         requested_human_handle=HumanHandle(email="t@t.t", label="t"),
-        requested_device_name="some_name",
+        pki_request_info=pki_request_info,
     )
     certificate_id = b"certificate_id"
     request_id = uuid4()

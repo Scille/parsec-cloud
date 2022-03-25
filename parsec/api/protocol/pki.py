@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.api.data.pki import PkiRequest
-from parsec.api.data.pki import PkiReply
+from parsec.api.data.pki import PkiEnrollmentRequest
+from parsec.api.data.pki import PkiEnrollmentReply
 from parsec.api.protocol.base import BaseRepSchema, BaseReqSchema, CmdSerializer
 from parsec.serde import fields
 from parsec.serde.schema import BaseSchema
@@ -12,7 +12,7 @@ from parsec.serde.serializer import MsgpackSerializer
 
 
 class PkiEnrollmentRequestReqSchema(BaseSchema):
-    request = fields.Nested(PkiRequest.SCHEMA_CLS, required=True)
+    request = fields.Nested(PkiEnrollmentRequest.SCHEMA_CLS, required=True)
     certificate_id = fields.Bytes(required=True)
     request_id = fields.UUID(required=True)
     force_flag = fields.Boolean(required=True)
@@ -38,7 +38,7 @@ class PkiEnrollmentGetRequestsRepSchema(BaseRepSchema):
         fields.Tuple(
             fields.Bytes(required=True),
             fields.UUID(required=True),
-            fields.Nested(PkiRequest.SCHEMA_CLS, required=True),
+            fields.Nested(PkiEnrollmentRequest.SCHEMA_CLS, required=True),
         ),
         required=True,
     )
@@ -54,7 +54,7 @@ pki_enrollment_get_requests_serializer = CmdSerializer(
 class PkiEnrollmentReplyReqSchema(BaseReqSchema):
     certificate_id = fields.Bytes(required=True)
     request_id = fields.UUID(required=True)
-    reply = fields.Nested(PkiReply.SCHEMA_CLS, Required=True)
+    reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, Required=True)
     user_id = fields.String(required=False)  # TODO Move to userid ?
 
 
@@ -76,7 +76,7 @@ class PkiEnrollmentGetReplyReqSchema(BaseSchema):
 
 class PkiEnrollmentGetReplyRepSchema(BaseSchema):
     status = fields.String(Required=True)
-    reply = fields.Nested(PkiReply.SCHEMA_CLS, Required=True)
+    reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, Required=True)
     timestamp = fields.DateTime(Required=False)
 
 
