@@ -2,13 +2,32 @@
 
 <template>
   <ion-page>
+    <ion-menu content-id="main">
+      <ion-header>
+        <ion-toolbar translucent>
+          <ion-title>Parsec</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <ion-list>
+          <ion-item button @click="presentPatchNote()">
+            <ion-icon :icon="newspaperSharp" slot="start"/>
+            <ion-label>Journal des modifications</ion-label>
+          </ion-item>
+          <ion-item button @click="presentAbout()">
+            <ion-icon :icon="helpCircleOutline" slot="start"/>
+            <ion-label>À propos</ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-content>
+    </ion-menu>
     <ion-header :translucent="true">
       <ion-toolbar color="primary">
         <ion-buttons slot="start">
           <ion-menu-button auto-hide="false" />
         </ion-buttons>
         <ion-buttons slot="primary">
-          <ion-button>
+          <ion-button @click="presentOrganizationActionSheet">
             <ion-icon
               slot="icon-only"
               :ios="ellipsisHorizontal"
@@ -21,14 +40,14 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
+    <ion-content :fullscreen="true" id="main">
       <ion-header collapse="condense">
         <ion-toolbar color="primary">
           <ion-buttons slot="start">
             <ion-menu-button auto-hide="false" />
           </ion-buttons>
           <ion-buttons slot="primary">
-            <ion-button>
+            <ion-button @click="presentOrganizationActionSheet">
               <ion-icon
                 slot="icon-only"
                 :ios="ellipsisHorizontal"
@@ -43,15 +62,8 @@
         </ion-toolbar>
       </ion-header>
       <div id="container">
-        <strong>Ready to create Parsec?</strong>
-        <div>
-          <ion-button @click="onSubmit">
-            Let's go!
-          </ion-button>
-        </div>
-        <div>
-          status: {{ status }}
-        </div>
+        <p>Vous n'avez pas d'appareils sur ce téléphone.</p>
+        <p>Pour ajouter un appareil, invitez-le depuis une organisation existante, ou créez une nouvelle organisation.</p>
       </div>
     </ion-content>
   </ion-page>
@@ -67,56 +79,69 @@ import {
   IonButton,
   IonIcon,
   IonMenuButton,
+  IonItem,
+  IonList,
+  IonMenu,
+  IonLabel,
   IonButtons,
-  toastController
+  actionSheetController
 } from '@ionic/vue';
 import {
   ellipsisVertical,
-  ellipsisHorizontal
+  ellipsisHorizontal,
+  add,
+  link,
+  qrCodeSharp,
+  helpCircleOutline,
+  newspaperSharp
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
-import { ref } from 'vue';
-import { libparsec } from '../plugins/libparsec';
 
-const status = ref('uninitialized');
-const key = ref('1UT2bs6chdW4AnXbkSS18EuwOAgWIr7ROcHnicUhdAA=');
-const message = ref('Ym9ueW91ciE=');
+function presentAbout(): void {
+  console.log('presentAbout');
+}
 
-async function onSubmit(): Promise<any> {
-  console.log('onSubmit !');
-  // Avoid concurrency modification
-  const keyValue = key.value;
-  const messageValue = message.value;
-  let encrypted = '';
+function presentPatchNote(): void {
+  console.log('presentPatchNote');
+}
 
-  try {
-    console.log('calling encrypt...');
-    encrypted = await libparsec.encrypt(keyValue, messageValue);
-
-    console.log('calling decrypt...');
-    const decrypted = await libparsec.decrypt(keyValue, encrypted);
-
-    if (decrypted !== messageValue) {
-      throw `Decrypted data differs from original data !\nDecrypted: ${decrypted}\nEncrypted: ${encrypted}`;
-    }
-  } catch (error) {
-    const errmsg = `Error: ${error}`;
-    status.value = errmsg;
-    console.log(errmsg);
-    const errtoast = await toastController.create({
-      message: 'Encryption/decryption error :\'-(',
-      duration: 2000
+async function presentOrganizationActionSheet(): Promise<void> {
+  const actionSheet = await actionSheetController
+    .create({
+      header: 'Organisation',
+      cssClass: 'organization-action-sheet',
+      buttons: [
+        {
+          text: 'Créer',
+          icon: add,
+          data: {
+            type: 'delete'
+          },
+          handler: (): void => {
+            console.log('Create clicked');
+          }
+        },
+        {
+          text: 'Rejoindre par lien',
+          icon: link,
+          data: 10,
+          handler: (): void => {
+            console.log('Join by link clicked');
+          }
+        },
+        {
+          text: 'Rejoindre par QR code',
+          icon: qrCodeSharp,
+          data: 'Data value',
+          handler: (): void => {
+            console.log('Join by QR code clicked');
+          }
+        }
+      ]
     });
-    errtoast.present();
-    return;
-  }
+  await actionSheet.present();
 
-  const okmsg = `Encrypted message: ${encrypted}`;
-  status.value = okmsg;
-  const oktoast = await toastController.create({
-    message: 'All good ;-)',
-    duration: 2000
-  });
-  oktoast.present();
+  const { role, data } = await actionSheet.onDidDismiss();
+  console.log('onDidDismiss resolved with role and data', role, data);
 }
 </script>
 
@@ -129,13 +154,8 @@ async function onSubmit(): Promise<any> {
     top: 50%;
     transform: translateY(-50%);
 
-    strong {
-        font-size: 20px;
-        line-height: 26px;
-    }
-
-    a {
-        text-decoration: none;
+    p {
+        font-weight: bold;
     }
 }
 </style>
