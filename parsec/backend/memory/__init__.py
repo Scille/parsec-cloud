@@ -7,6 +7,7 @@ from parsec.backend.memory.invite import MemoryInviteComponent
 from parsec.backend.memory.message import MemoryMessageComponent
 from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.memory.vlob import MemoryVlobComponent
+from parsec.backend.memory.pki import MemoryPkiCertificateComponent
 from parsec.backend.memory.block import MemoryBlockComponent, MemoryBlockStoreComponent
 from parsec.backend.memory.factory import components_factory
 
@@ -20,6 +21,7 @@ __all__ = [
     "MemoryVlobComponent",
     "MemoryEventsComponent",
     "MemoryBlockComponent",
+    "MemoryPkiCertificateComponent",
     "MemoryBlockStoreComponent",
     "components_factory",
 ]
