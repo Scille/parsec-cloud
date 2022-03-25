@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 from math import ceil
@@ -189,7 +189,7 @@ async def _do_list_users_and_invitations(
     core, page, pattern=None, omit_revoked=False, omit_invitation=False
 ):
     try:
-        if pattern is None:
+        if not pattern:
             users, total = await core.find_humans(
                 page=page, per_page=USERS_PER_PAGE, omit_revoked=omit_revoked
             )
@@ -255,11 +255,14 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             self.button_add_user.clicked.connect(self.invite_user)
         else:
             self.button_add_user.hide()
+        self.search_timer = QTimer()
+        self.search_timer.setInterval(300)
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(self.on_filter)
         self.button_previous_page.clicked.connect(self.show_previous_page)
         self.button_next_page.clicked.connect(self.show_next_page)
-        self.button_users_filter.clicked.connect(self.on_filter)
-        self.line_edit_search.textChanged.connect(lambda: self.on_filter(text_changed=True))
-        self.line_edit_search.editingFinished.connect(lambda: self.on_filter(editing_finished=True))
+        self.line_edit_search.textChanged.connect(self._search_changed)
+        self.line_edit_search.clear_clicked.connect(self.on_filter)
         self.revoke_success.connect(self._on_revoke_success)
         self.revoke_error.connect(self._on_revoke_error)
         self.list_success.connect(self._on_list_success)
@@ -268,8 +271,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.invite_user_error.connect(self._on_invite_user_error)
         self.cancel_invitation_success.connect(self._on_cancel_invitation_success)
         self.cancel_invitation_error.connect(self._on_cancel_invitation_error)
-        self.checkbox_filter_revoked.clicked.connect(lambda: self.reset(True))
-        self.checkbox_filter_invitation.clicked.connect(lambda: self.reset(True))
+        self.checkbox_filter_revoked.clicked.connect(self.reset)
+        self.checkbox_filter_invitation.clicked.connect(self.reset)
 
     def show(self):
         self._page = 1
@@ -285,25 +288,14 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             self._page -= 1
         self.on_filter(change_page=True)
 
-    def on_filter(self, editing_finished=False, text_changed=False, change_page=False):
+    def _search_changed(self):
+        self.search_timer.start()
+
+    def on_filter(self, change_page=False):
+        self.search_timer.stop()
         if change_page is False:
             self._page = 1
-        pattern = self.line_edit_search.text()
-        if text_changed and len(pattern) <= 0:
-            return self.reset()
-        elif text_changed:
-            return
-        self.spinner.show()
-        self.button_users_filter.setEnabled(False)
-        self.line_edit_search.setEnabled(False)
-        self.jobs_ctx.submit_job(
-            self.list_success,
-            self.list_error,
-            _do_list_users_and_invitations,
-            core=self.core,
-            page=self._page,
-            pattern=pattern,
-        )
+        self.reset()
 
     def invite_user(self):
         user_email = get_text_input(
@@ -421,16 +413,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             user_info=user_info,
         )
 
-    def _flush_users_list(self):
-        self.users = []
-        while self.layout_users.count() != 0:
-            item = self.layout_users.takeAt(0)
-            if item:
-                w = item.widget()
-                self.layout_users.removeWidget(w)
-                w.hide()
-                w.setParent(None)
-
     def pagination(self, total: int, users_on_page: int):
         """Show/activate or hide/deactivate previous and next page button"""
         self.label_page_info.show()
@@ -467,12 +449,13 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.is_finished()
         assert job.status == "ok"
 
+        self.layout_users.clear()
+
         total, users, invitations = job.ret
         # Securing if page go to far
         if total == 0 and self._page > 1:
             self._page -= 1
             self.reset()
-        self._flush_users_list()
 
         current_user = self.core.device.user_id
 
@@ -489,16 +472,16 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.spinner.hide()
 
         self.pagination(total=total, users_on_page=len(users))
-        self.button_users_filter.setEnabled(True)
-        self.line_edit_search.setEnabled(True)
+        self.line_edit_search.setFocus()
 
     def _on_list_error(self, job):
         assert job.is_finished()
         assert job.status != "ok"
 
+        self.layout_users.clear()
+
         status = job.status
         if status in ["error", "offline"]:
-            self._flush_users_list()
             label = QLabel(_("TEXT_USER_LIST_RETRIEVABLE_FAILURE"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             self.layout_users.addWidget(label)
@@ -506,6 +489,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         else:
             errmsg = _("TEXT_USER_LIST_RETRIEVABLE_FAILURE")
         self.spinner.hide()
+
         show_error(self, errmsg, exception=job.exc)
 
     def _on_cancel_invitation_success(self, job):
@@ -564,14 +548,12 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         show_error(self, errmsg, exception=job.exc)
 
-    def reset(self, disable_filters=False):
-        self.layout_users.clear()
+    def reset(self):
         self.label_page_info.hide()
-        self.button_users_filter.setEnabled(disable_filters)
-        self.line_edit_search.setEnabled(disable_filters)
         self.button_previous_page.hide()
         self.button_next_page.hide()
         self.spinner.show()
+        pattern = self.line_edit_search.text()
         self.jobs_ctx.submit_job(
             self.list_success,
             self.list_error,
@@ -580,4 +562,5 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             page=self._page,
             omit_revoked=self.checkbox_filter_revoked.isChecked(),
             omit_invitation=self.checkbox_filter_invitation.isChecked(),
+            pattern=pattern,
         )

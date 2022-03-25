@@ -5,7 +5,6 @@ import pytest
 from tests.common import customize_fixtures
 from PyQt5.QtWidgets import QLabel
 from PyQt5 import QtCore
-from PyQt5.Qt import Qt
 
 from parsec.core.gui.lang import translate
 
@@ -105,7 +104,6 @@ async def test_filter_users(aqtbot, running_backend, logged_gui, str_len_limiter
 
     async with aqtbot.wait_signal(u_w.list_success):
         aqtbot.key_clicks(u_w.line_edit_search, "bo")
-        aqtbot.mouse_click(u_w.button_users_filter, QtCore.Qt.LeftButton)
 
     await aqtbot.wait_until(lambda: _users_shown(count=1))
 
@@ -117,14 +115,13 @@ async def test_filter_users(aqtbot, running_backend, logged_gui, str_len_limiter
     assert u_w.layout_users.count() == 1
 
     async with aqtbot.wait_signal(u_w.list_success):
-        await aqtbot.wait_until(lambda: u_w.line_edit_search.setText(""))
+        aqtbot.mouse_click(u_w.line_edit_search.button_clear, QtCore.Qt.LeftButton)
 
     await aqtbot.wait_until(lambda: _assert_all_users_visible(u_w=u_w))
 
     # Test find()
     async with aqtbot.wait_signal(u_w.list_success):
         aqtbot.key_clicks(u_w.line_edit_search, "McA")
-        aqtbot.key_press(u_w.line_edit_search, Qt.Key_Enter)
 
     assert u_w.layout_users.count() == 2
 
