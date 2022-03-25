@@ -4,10 +4,8 @@ import pendulum
 import pytest
 from parsec.api.data.pki import PkiEnrollmentRequestInfo
 from parsec.api.protocol.pki import (
-    pki_enrollment_request_req_serializer,
-    pki_enrollment_request_rep_serializer,
-    pki_enrollment_get_reply_req_serializer,
-    pki_enrollment_get_reply_rep_serializer,
+    pki_enrollment_request_serializer,
+    pki_enrollment_get_reply_serializer,
     PkiEnrollmentRequest,
 )
 from parsec.api.protocol.types import DeviceLabel, HumanHandle
@@ -62,7 +60,7 @@ async def test_pki_rest_send_request_and_get_reply(alice, backend, backend_http_
     certificate_id = b"certificate_id"
     request_id = uuid4()
 
-    data = pki_enrollment_request_req_serializer.dumps(
+    data = pki_enrollment_request_serializer.req_dumps(
         {
             "certificate_id": certificate_id,
             "request_id": request_id,
@@ -79,12 +77,12 @@ async def test_pki_rest_send_request_and_get_reply(alice, backend, backend_http_
         body=data,
     )
     assert status == (200, "OK")
-    rep = pki_enrollment_request_rep_serializer.loads(body)
+    rep = pki_enrollment_request_serializer.rep_loads(body)
     assert rep["status"] == "ok"
     request_timestamp = rep["timestamp"]
     assert ref_timestamp < request_timestamp < pendulum.now()
 
-    data = pki_enrollment_get_reply_req_serializer.dumps(
+    data = pki_enrollment_get_reply_serializer.req_dumps(
         {"certificate_id": certificate_id, "request_id": request_id}
     )
     status, body = await send_pki_http_post_request(
@@ -95,7 +93,6 @@ async def test_pki_rest_send_request_and_get_reply(alice, backend, backend_http_
         body=data,
     )
     assert status == (200, "OK")
-
-    rep = pki_enrollment_get_reply_rep_serializer.loads(body)
+    rep = pki_enrollment_get_reply_serializer.rep_loads(body)
     assert rep["status"] == "pending"
     assert request_timestamp == rep["timestamp"]

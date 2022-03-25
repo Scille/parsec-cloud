@@ -4,27 +4,26 @@ from parsec.api.data.pki import PkiEnrollmentRequest
 from parsec.api.data.pki import PkiEnrollmentReply
 from parsec.api.protocol.base import BaseRepSchema, BaseReqSchema, CmdSerializer
 from parsec.serde import fields
-from parsec.serde.schema import BaseSchema
-from parsec.serde.serializer import MsgpackSerializer
 
 
 # pki_enrolement_request
 
 
-class PkiEnrollmentRequestReqSchema(BaseSchema):
+class PkiEnrollmentRequestReqSchema(BaseReqSchema):
     request = fields.Nested(PkiEnrollmentRequest.SCHEMA_CLS, required=True)
     certificate_id = fields.Bytes(required=True)
     request_id = fields.UUID(required=True)
     force_flag = fields.Boolean(required=True)
 
 
-class PkiEnrollmentRequestRepSchema(BaseSchema):
+class PkiEnrollmentRequestRepSchema(BaseRepSchema):
     status = fields.String(Required=True)
     timestamp = fields.DateTime(required=True)
 
 
-pki_enrollment_request_req_serializer = MsgpackSerializer(PkiEnrollmentRequestReqSchema)
-pki_enrollment_request_rep_serializer = MsgpackSerializer(PkiEnrollmentRequestRepSchema)
+pki_enrollment_request_serializer = CmdSerializer(
+    PkiEnrollmentRequestReqSchema, PkiEnrollmentRequestRepSchema
+)
 
 # pki_enrolement_get_requests
 
@@ -66,19 +65,22 @@ class PkiEnrollmentReplyRepSchema(BaseRepSchema):
 pki_enrollment_reply_serializer = CmdSerializer(
     PkiEnrollmentReplyReqSchema, PkiEnrollmentReplyRepSchema
 )
+
+
 # pki_enrolement_get_reply
 
 
-class PkiEnrollmentGetReplyReqSchema(BaseSchema):
+class PkiEnrollmentGetReplyReqSchema(BaseReqSchema):
     certificate_id = fields.Bytes(required=True)
     request_id = fields.UUID(required=True)
 
 
-class PkiEnrollmentGetReplyRepSchema(BaseSchema):
-    status = fields.String(Required=True)
-    reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, Required=True)
-    timestamp = fields.DateTime(Required=False)
+class PkiEnrollmentGetReplyRepSchema(BaseRepSchema):
+    status = fields.String(required=True)
+    reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, required=True)
+    timestamp = fields.DateTime(required=False)
 
 
-pki_enrollment_get_reply_req_serializer = MsgpackSerializer(PkiEnrollmentGetReplyReqSchema)
-pki_enrollment_get_reply_rep_serializer = MsgpackSerializer(PkiEnrollmentGetReplyRepSchema)
+pki_enrollment_get_reply_serializer = CmdSerializer(
+    PkiEnrollmentGetReplyReqSchema, PkiEnrollmentGetReplyRepSchema
+)

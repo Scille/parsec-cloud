@@ -8,8 +8,10 @@ import mimetypes
 from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode, unquote_plus
 import importlib_resources
 import h11
+
 from parsec.backend.pki import BasePkiCertificateComponent
 
+from parsec.serde.packing import packb, unpackb
 from parsec.serde import SerdeValidationError
 from parsec.api.protocol import OrganizationID
 from parsec.api.rest import (
@@ -372,7 +374,7 @@ class HTTPComponent:
         self, req: HTTPRequest, **kwargs: str
     ) -> HTTPResponse:
         try:
-            organization_name = req.path.split("/")[-2]
+            organization_name = kwargs["organization_id"]
             await self._organization_component.get(OrganizationID(organization_name))
         except (IndexError, OrganizationNotFoundError):
             return HTTPResponse.build_msgpack(404, data=b"")
@@ -381,14 +383,16 @@ class HTTPComponent:
             return HTTPResponse.build_msgpack(200, data=b"")
 
         body = await req.get_body()
-        rep = await self._pki_component.api_pki_enrollment_request(body)
-        return HTTPResponse.build_msgpack(200, data=rep)
+        msg = unpackb(body)
+        msg["cmd"] = "pki_enrollement_request"
+        rep = await self._pki_component.api_pki_enrollment_request(msg)
+        return HTTPResponse.build_msgpack(200, data=packb(rep))
 
     async def _http_api_pki_enrollement_get_reply(
         self, req: HTTPRequest, **kwargs: str
     ) -> HTTPResponse:
         try:
-            organization_name = req.path.split("/")[-2]
+            organization_name = kwargs["organization_id"]
             await self._organization_component.get(OrganizationID(organization_name))
         except (IndexError, OrganizationNotFoundError):
             return HTTPResponse.build_msgpack(404, data=b"")
@@ -397,5 +401,7 @@ class HTTPComponent:
             return HTTPResponse.build_msgpack(200, data=b"")
 
         body = await req.get_body()
-        rep = await self._pki_component.api_pki_enrollment_get_reply(body)
-        return HTTPResponse.build_msgpack(200, data=rep)
+        msg = unpackb(body)
+        msg["cmd"] = "pki_enrollement_get_reply"
+        rep = await self._pki_component.api_pki_enrollment_get_reply(msg)
+        return HTTPResponse.build_msgpack(200, data=packb(rep))
