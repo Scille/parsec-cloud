@@ -121,7 +121,7 @@ impl Chunk {
 
     pub fn get_block_access(&self) -> Result<Option<BlockAccess>, &'static str> {
         if !self.is_block() {
-            return Err("This chunk does not coresspond to a block");
+            return Err("This chunk does not correspond to a block");
         }
         Ok(self.access.clone())
     }
