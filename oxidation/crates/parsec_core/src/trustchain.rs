@@ -11,8 +11,8 @@ use parsec_api_types::{
     RevokedUserCertificate, UserCertificate, UserID, UserProfile,
 };
 
-struct CertifState<T> {
-    certif: Vec<u8>,
+struct CertifState<'a, T> {
+    certif: &'a [u8],
     content: T,
     verified: bool,
 }
@@ -100,7 +100,7 @@ impl TrustchainContext {
 
         match &state.content.author {
             CertificateSignerOwned::Root => DeviceCertificate::verify_and_load(
-                &state.certif,
+                state.certif,
                 &self.root_verify_key,
                 CertificateSignerRef::Root,
             )
@@ -120,7 +120,7 @@ impl TrustchainContext {
                 sign_chain.push(author.to_string());
 
                 let verified = DeviceCertificate::verify_and_load(
-                    &state.certif,
+                    state.certif,
                     &author_device.verify_key,
                     CertificateSignerRef::User(&author_device.device_id),
                 )
@@ -320,9 +320,9 @@ impl TrustchainContext {
 
     pub fn load_trustchain(
         &mut self,
-        users: Vec<Vec<u8>>,
-        revoked_users: Vec<Vec<u8>>,
-        devices: Vec<Vec<u8>>,
+        users: &[Vec<u8>],
+        revoked_users: &[Vec<u8>],
+        devices: &[Vec<u8>],
         now: Option<DateTime>,
     ) -> TrustchainResult<(
         Vec<UserCertificate>,
@@ -338,7 +338,7 @@ impl TrustchainContext {
         // Deserialize the certificates and filter the ones we already have in cache
         for certif in devices {
             let unverified_device =
-                DeviceCertificate::unsecure_load(&certif).unwrap_or_else(|_| unreachable!());
+                DeviceCertificate::unsecure_load(certif).unwrap_or_else(|_| unreachable!());
             match self.get_device(&unverified_device.device_id, Some(now)) {
                 Some(verified_device) => {
                     devices_states.insert(
@@ -365,7 +365,7 @@ impl TrustchainContext {
 
         for certif in users {
             let unverified_user =
-                UserCertificate::unsecure_load(&certif).unwrap_or_else(|_| unreachable!());
+                UserCertificate::unsecure_load(certif).unwrap_or_else(|_| unreachable!());
             match self.get_user(&unverified_user.user_id, Some(now)) {
                 Some(verified_user) => {
                     users_states.insert(
@@ -392,7 +392,7 @@ impl TrustchainContext {
 
         for certif in revoked_users {
             let unverified_revoked_user =
-                RevokedUserCertificate::unsecure_load(&certif).unwrap_or_else(|_| unreachable!());
+                RevokedUserCertificate::unsecure_load(certif).unwrap_or_else(|_| unreachable!());
             match self.get_revoked_user(&unverified_revoked_user.user_id, Some(now)) {
                 Some(verified_revoked_user) => {
                     revoked_users_states.insert(
@@ -439,7 +439,7 @@ impl TrustchainContext {
                     &devices_states,
                     &revoked_users_states,
                     &certif_state.borrow().content,
-                    &certif_state.borrow().certif,
+                    certif_state.borrow().certif,
                 )?;
             }
         }
@@ -451,7 +451,7 @@ impl TrustchainContext {
                     &devices_states,
                     &revoked_users_states,
                     &certif_state.borrow().content,
-                    &certif_state.borrow().certif,
+                    certif_state.borrow().certif,
                 )?;
             }
         }
@@ -534,7 +534,7 @@ impl TrustchainContext {
         devices.extend(trustchain.devices);
 
         let (mut verified_users, mut verified_revoked_users, mut verified_devices) =
-            self.load_trustchain(users, revoked_users, devices, Some(now))?;
+            self.load_trustchain(&users, &revoked_users, &devices, Some(now))?;
 
         let verified_user = verified_users.remove(0);
         if let Some(expected_user_id) = &expected_user_id {
