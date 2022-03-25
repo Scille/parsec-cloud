@@ -25,7 +25,8 @@ class PkiEnrollmentRequestReqSchema(BaseSchema):
     force_flag = fields.Boolean(required=True)
 
 
-class PkiEnrollmentRequestRepSchema(BaseRepSchema):
+class PkiEnrollmentRequestRepSchema(BaseSchema):
+    status = fields.String(Required=True)
     timestamp = fields.DateTime(required=True)
 
 
@@ -65,12 +66,13 @@ class PkiEnrollmentReplyRepSchema(BaseRepSchema):
 # pki_enrolement_get_reply
 
 
-class PkiEnrollmentGetReplyReqSchema(BaseReqSchema):
+class PkiEnrollmentGetReplyReqSchema(BaseSchema):
     certificate_id = fields.String(required=True)
     request_id = fields.String(required=True)
 
 
-class PkiEnrollmentGetReplyRepSchema(BaseRepSchema):
+class PkiEnrollmentGetReplyRepSchema(BaseSchema):
+    status = fields.String(Required=True)
     reply = fields.Nested(PkiReply.SCHEMA_CLS, Required=True)
     timestamp = fields.DateTime(Required=False)
 
@@ -82,8 +84,8 @@ pki_enrollment_request_req_serializer = MsgpackSerializer(PkiEnrollmentRequestRe
 
 pki_enrollment_request_rep_serializer = MsgpackSerializer(PkiEnrollmentRequestRepSchema)
 
-pki_enrollment_get_reply_serializer = CmdSerializer(
-    PkiEnrollmentGetReplyReqSchema, PkiEnrollmentGetReplyRepSchema
+pki_enrollment_reply_serializer = CmdSerializer(
+    PkiEnrollmentReplyReqSchema, PkiEnrollmentReplyRepSchema
 )
 
 
@@ -91,6 +93,6 @@ pki_enrollment_get_requests_serializer = CmdSerializer(
     PkiEnrollmentGetRequestsReqSchema, PkiEnrollmentGetRequestsRepSchema
 )
 
-pki_enrollment_reply_serializer = MsgpackSerializer(
-    PkiEnrollmentReplyReqSchema, PkiEnrollmentReplyRepSchema
-)
+pki_enrollment_get_reply_serializer = None
+pki_enrollment_get_reply_req_serializer = MsgpackSerializer(PkiEnrollmentGetReplyReqSchema)
+pki_enrollment_get_reply_rep_serializer = MsgpackSerializer(PkiEnrollmentGetReplyRepSchema)
