@@ -35,12 +35,12 @@ class PkiEnrollmentRequest(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         der_x509_certificate = fields.Bytes(require=True)
         signature = fields.Bytes(required=True)
-        pki_request_info = fields.Nested(PkiEnrollmentRequestInfo.SCHEMA_CLS, required=True)
+        pki_request_info = fields.Bytes(required=True)  # Signature should be checked before loading
         requested_human_handle = HumanHandleField(required=True)
 
     der_x509_certificate: bytes
     signature: bytes
-    pki_request_info: PkiEnrollmentRequestInfo
+    pki_request_info: bytes
     requested_human_handle: HumanHandle
 
 
@@ -65,8 +65,8 @@ class PkiEnrollmentReply(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         der_x509_admin_certificate = fields.Bytes(required=True)
         signature = fields.Bytes(required=True)
-        pki_reply_info = fields.Nested(PkiEnrollmentReplyInfo.SCHEMA_CLS, required=True)
+        pki_reply_info = fields.Bytes(required=True)  # Signature should be checked before loading
 
     der_x509_admin_certificate: bytes
     signature: bytes
-    pki_reply_info: PkiEnrollmentReplyInfo
+    pki_reply_info: bytes

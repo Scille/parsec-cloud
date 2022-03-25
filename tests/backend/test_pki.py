@@ -36,7 +36,7 @@ async def test_pki_send_request_and_reply(
         der_x509_certificate=b"1234567890ABCDEF",
         signature=b"123",
         requested_human_handle=HumanHandle(email="t@t.t", label="t"),
-        pki_request_info=pki_request_info,
+        pki_request_info=pki_request_info.dump(),
     )
     certificate_id = b"certificate_id"
     request_id = uuid4()
@@ -57,7 +57,9 @@ async def test_pki_send_request_and_reply(
         profile=UserProfile.ADMIN,
     )
     pki_reply = PkiEnrollmentReply(
-        der_x509_admin_certificate=b"admin_cert", signature=b"123", pki_reply_info=pki_reply_info
+        der_x509_admin_certificate=b"admin_cert",
+        signature=b"123",
+        pki_reply_info=pki_reply_info.dump(),
     )
     rep = await pki_enrollment_reply(
         alice_backend_sock.transport,

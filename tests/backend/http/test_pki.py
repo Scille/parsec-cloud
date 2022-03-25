@@ -55,7 +55,7 @@ async def test_pki_rest_send_request_and_get_reply(alice, backend, backend_http_
         der_x509_certificate=b"1234567890ABCDEF",
         signature=b"123",
         requested_human_handle=HumanHandle(email="t@t.t", label="t"),
-        pki_request_info=pki_request_info,
+        pki_request_info=pki_request_info.dump(),
     )
     certificate_id = b"certificate_id"
     request_id = uuid4()
