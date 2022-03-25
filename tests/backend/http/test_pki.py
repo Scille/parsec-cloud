@@ -49,7 +49,7 @@ async def test_pki_rest_send_request_and_get_reply(alice, backend, backend_http_
         verify_key=VerifyKey(generate_nonce(32)),
         public_key=PublicKey(generate_nonce(32)),
         requested_human_handle=HumanHandle(email="t@t.t", label="t"),
-        requested_device_name=DeviceLabel("test"),
+        requested_device_label=DeviceLabel("test"),
     )
     pki_request = PkiEnrollmentRequest(
         der_x509_certificate=b"1234567890ABCDEF",

@@ -22,12 +22,12 @@ class PkiEnrollmentRequestInfo(BaseAPIData):
         verify_key = fields.VerifyKey(required=True)
         public_key = fields.PublicKey(required=True)
         requested_human_handle = HumanHandleField(required=True)
-        requested_device_name = DeviceLabelField(required=True)
+        requested_device_label = DeviceLabelField(required=True)
 
     verify_key: VerifyKey
     public_key: PublicKey
     requested_human_handle: HumanHandle
-    requested_device_name: DeviceLabel
+    requested_device_label: DeviceLabel
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)

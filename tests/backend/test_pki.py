@@ -30,7 +30,7 @@ async def test_pki_send_request_and_reply(
         verify_key=bob.verify_key,
         public_key=bob.public_key,
         requested_human_handle=HumanHandle(email="t@t.t", label="t"),
-        requested_device_name=DeviceLabel("label"),
+        requested_device_label=DeviceLabel("label"),
     )
     pki_request = PkiEnrollmentRequest(
         der_x509_certificate=b"1234567890ABCDEF",
