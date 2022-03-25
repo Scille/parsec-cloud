@@ -4,10 +4,8 @@
 from parsec.api.protocol.pki import (
     pki_enrollment_get_requests_serializer,
     pki_enrollment_reply_serializer,
-    pki_enrollment_request_req_serializer,
-    pki_enrollment_request_rep_serializer,
-    pki_enrollment_get_reply_rep_serializer,
-    pki_enrollment_get_reply_req_serializer,
+    pki_enrollment_request_serializer,
+    pki_enrollment_get_reply_serializer,
 )
 from parsec.backend.utils import api, catch_protocol_errors
 
@@ -43,7 +41,7 @@ class PkiCertificateRequestNotFoundError(PkiCertificateError):
 class BasePkiCertificateComponent:
     @catch_protocol_errors
     async def api_pki_enrollment_request(self, msg):
-        msg = pki_enrollment_request_req_serializer.loads(msg)
+        msg = pki_enrollment_request_serializer.req_load(msg)
         certifiate_id = msg["certificate_id"]
         request = msg["request"]
         request_id = msg["request_id"]
@@ -52,19 +50,17 @@ class BasePkiCertificateComponent:
             result = await self.pki_enrollment_request(
                 certifiate_id, request_id, request, force_flag
             )
-            return pki_enrollment_request_rep_serializer.dumps(
-                {"status": "ok", "timestamp": result}
-            )
+            return pki_enrollment_request_serializer.rep_dump({"status": "ok", "timestamp": result})
         except PkiCertificateAlreadyRequestedError as err:
-            return pki_enrollment_request_rep_serializer.dumps(
+            return pki_enrollment_request_serializer.rep_dump(
                 {"status": "already_requested", "timestamp": err.request_timestamp}
             )
         except PkiCertificateAlreadyEnrolledError as err:
-            return pki_enrollment_request_rep_serializer.dumps(
+            return pki_enrollment_request_serializer.rep_dump(
                 {"status": "already_enrolled", "timestamp": err.reply_timestamp}
             )
         except PkiCertificateEmailAlreadyAttributedError:
-            return pki_enrollment_request_rep_serializer.dumps(
+            return pki_enrollment_request_serializer.rep_dump(
                 {"status": "email_already_attributed"}
             )
 
@@ -95,7 +91,7 @@ class BasePkiCertificateComponent:
 
     @catch_protocol_errors
     async def api_pki_enrollment_get_reply(self, msg):
-        msg = pki_enrollment_get_reply_req_serializer.loads(msg)
+        msg = pki_enrollment_get_reply_serializer.req_load(msg)
         certificate_id = msg["certificate_id"]
         request_id = msg["request_id"]
         try:
@@ -106,20 +102,18 @@ class BasePkiCertificateComponent:
                 user_id,
             ) = await self.pki_enrollment_get_reply(certificate_id, request_id)
             if not reply:
-                return pki_enrollment_get_reply_rep_serializer.dumps(
+                return pki_enrollment_get_reply_serializer.rep_dump(
                     {"status": "pending", "timestamp": request_timestamp}
                 )
             if user_id:
-                return pki_enrollment_get_reply_rep_serializer.dumps(
+                return pki_enrollment_get_reply_serializer.rep_dump(
                     {"status": "already enrolled on other device", "timestamp": reply_timestamp}
                 )
             else:
-                return pki_enrollment_get_reply_rep_serializer.dumps(
+                return pki_enrollment_get_reply_serializer.rep_dump(
                     {"status": "ok", "reply": reply, "timestamp": reply_timestamp}
                 )
         except PkiCertificateNotFoundError:
-            return pki_enrollment_get_reply_rep_serializer.dumps(
-                {"status": "certificate not found"}
-            )
+            return pki_enrollment_get_reply_serializer.rep_dump({"status": "certificate not found"})
         except PkiCertificateRequestNotFoundError:
-            return pki_enrollment_get_reply_rep_serializer.dumps({"status": "request not found"})
+            return pki_enrollment_get_reply_serializer.rep_dump({"status": "request not found"})
