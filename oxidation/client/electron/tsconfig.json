@@ -10,6 +10,7 @@
     "esModuleInterop": true,
     "typeRoots": ["./node_modules/@types"],
     "allowJs": true,
-    "rootDir": "."
+    "rootDir": ".",
+    "rootDirs": [".", "build/generated-ts/"]
   }
 }
