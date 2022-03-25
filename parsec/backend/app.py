@@ -70,6 +70,7 @@ async def backend_app_factory(config: BackendConfig, event_bus: Optional[EventBu
             message=components["message"],
             realm=components["realm"],
             vlob=components["vlob"],
+            pki=components["pki"],
             ping=components["ping"],
             blockstore=components["blockstore"],
             block=components["block"],
@@ -90,6 +91,7 @@ class BackendApp:
         message,
         realm,
         vlob,
+        pki,
         ping,
         blockstore,
         block,
@@ -107,12 +109,13 @@ class BackendApp:
         self.realm = realm
         self.vlob = vlob
         self.ping = ping
+        self.pki = pki
         self.blockstore = blockstore
         self.block = block
         self.events = events
 
         self.apis = collect_apis(
-            user, invite, organization, message, realm, vlob, ping, blockstore, block, events
+            user, invite, organization, message, realm, vlob, ping, pki, blockstore, block, events
         )
 
         if self.config.debug:
