@@ -5,7 +5,8 @@ from parsec.api.protocol.pki import (
     pki_enrollment_get_reply_serializer,
     pki_enrollment_get_requests_serializer,
     pki_enrollment_reply_serializer,
-    pki_enrollment_request_serializer,
+    pki_enrollment_request_req_serializer,
+    pki_enrollment_request_rep_serializer,
 )
 from parsec.backend.utils import api, catch_protocol_errors
 
@@ -42,7 +43,7 @@ class BasePkiCertificateComponent:
     @api("pki_enrollment_request")
     @catch_protocol_errors
     async def api_pki_enrollment_request(self, client_ctx, msg):
-        msg = pki_enrollment_request_serializer.req_load(msg)
+        msg = pki_enrollment_request_req_serializer.loads(msg)
         certifiate_id = msg["certificate_id"]
         request = msg["request"]
         request_id = msg["request_id"]
@@ -51,17 +52,19 @@ class BasePkiCertificateComponent:
             result = await self.pki_enrollment_request(
                 certifiate_id, request_id, request, force_flag
             )
-            return pki_enrollment_request_serializer.rep_dump({"timestamp": result})
+            return pki_enrollment_request_rep_serializer.dumps(
+                {"status": "ok", "timestamp": result}
+            )
         except PkiCertificateAlreadyRequestedError as err:
-            return pki_enrollment_request_serializer.rep_dump(
+            return pki_enrollment_request_rep_serializer.dumps(
                 {"status": "already_requested", "timestamp": err.request_timestamp}
             )
         except PkiCertificateAlreadyEnrolledError as err:
-            return pki_enrollment_request_serializer.rep_dump(
+            return pki_enrollment_request_rep_serializer.dumps(
                 {"status": "already_enrolled", "timestamp": err.reply_timestamp}
             )
         except PkiCertificateEmailAlreadyAttributedError:
-            return pki_enrollment_request_serializer.rep_dump(
+            return pki_enrollment_request_rep_serializer.dumps(
                 {"status": "email_already_attributed"}
             )
 

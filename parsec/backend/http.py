@@ -8,8 +8,9 @@ import mimetypes
 from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode, unquote_plus
 import importlib_resources
 import h11
+from parsec.backend.pki import BasePkiCertificateComponent
 
-from parsec.serde import SerdeValidationError, SerdePackingError
+from parsec.serde import SerdeValidationError
 from parsec.api.protocol import OrganizationID
 from parsec.api.rest import (
     organization_config_req_serializer,
@@ -30,6 +31,7 @@ from parsec.backend.organization import (
     OrganizationNotFoundError,
     generate_bootstrap_token,
 )
+from parsec.serde.exceptions import SerdePackingError
 
 try:
     from typing import Protocol
@@ -105,6 +107,14 @@ class HTTPResponse:
         )
 
     @classmethod
+    def build_msgpack(
+        cls, status_code: int, data: bytes, headers: Optional[Dict[bytes, bytes]] = None
+    ) -> "HTTPResponse":
+        headers = headers or {}
+        headers[b"content-type"] = b"application/msgpack"
+        return cls.build(status_code=status_code, headers=headers, data=data)
+
+    @classmethod
     def build(
         cls,
         status_code: int,
@@ -119,6 +129,7 @@ class HTTPComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
         self._organization_component: BaseOrganizationComponent
+        self._pki_component: BasePkiCertificateComponent
         self.route_mapping: List[Tuple[Pattern[str], Set[str], RequestHandler]] = [
             (re.compile(r"^/?$"), {"GET"}, self._http_root),
             (re.compile(r"^/redirect/(?P<path>.*)$"), {"GET"}, self._http_redirect),
@@ -138,10 +149,16 @@ class HTTPComponent:
                 {"GET", "PATCH"},
                 self._http_api_organization_stats,
             ),
+            (
+                re.compile(r"^/anonymous/pki/(?P<organization_id>[^/]*)/enrollment_request$"),
+                {"GET", "POST"},
+                self._http_api_pki_enrollement_request,
+            ),
         ]
 
     def register_components(self, **other_components):
         self._organization_component = other_components["organization"]
+        self._pki_component = other_components["pki"]
 
     async def _http_404(self, req: HTTPRequest, **kwargs: str) -> HTTPResponse:
         data = get_template("404.html").render()
@@ -345,3 +362,19 @@ class HTTPComponent:
             )
 
         return None, data
+
+    async def _http_api_pki_enrollement_request(
+        self, req: HTTPRequest, **kwargs: str
+    ) -> HTTPResponse:
+        try:
+            organization_name = req.path.split("/")[-2]
+            await self._organization_component.get(OrganizationID(organization_name))
+        except (IndexError, OrganizationNotFoundError):
+            return HTTPResponse.build_msgpack(404, data=b"")
+
+        if req.method == "GET":
+            return HTTPResponse.build_msgpack(200, data=b"")
+
+        body = await req.get_body()
+        rep = await self._pki_component.api_pki_enrollment_request(None, body)
+        return HTTPResponse.build_msgpack(200, data=rep)
