@@ -489,6 +489,20 @@ class BackendOrganizationAddrField(fields.Field):
         return value.to_url()
 
 
+class BackendAddrField(fields.Field):
+    def _deserialize(self, value, attr, data):
+        try:
+            return BackendAddr.from_url(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+    def _serialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        return value.to_url()
+
+
 class BackendInvitationAddr(_PyBackendActionAddr):
     """
     Represent the URL to invite a user or a device
