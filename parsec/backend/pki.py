@@ -1,12 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 
+from uuid import UUID
+
+from pendulum import DateTime
+from parsec.api.data.pki import PkiEnrollmentRequest
 from parsec.api.protocol.pki import (
     pki_enrollment_get_requests_serializer,
     pki_enrollment_reply_serializer,
     pki_enrollment_request_serializer,
     pki_enrollment_get_reply_serializer,
 )
+from parsec.api.protocol.types import OrganizationID
 from parsec.backend.utils import api, catch_protocol_errors
 
 
@@ -40,7 +45,7 @@ class PkiCertificateRequestNotFoundError(PkiCertificateError):
 
 class BasePkiCertificateComponent:
     @catch_protocol_errors
-    async def api_pki_enrollment_request(self, msg):
+    async def api_pki_enrollment_request(self, msg, organization_id: OrganizationID):
         msg = pki_enrollment_request_serializer.req_load(msg)
         certifiate_id = msg["certificate_id"]
         request = msg["request"]
@@ -48,7 +53,7 @@ class BasePkiCertificateComponent:
         force_flag = msg["force_flag"]
         try:
             result = await self.pki_enrollment_request(
-                certifiate_id, request_id, request, force_flag
+                organization_id, certifiate_id, request_id, request, force_flag
             )
             return pki_enrollment_request_serializer.rep_dump({"status": "ok", "timestamp": result})
         except PkiCertificateAlreadyRequestedError as err:
@@ -63,6 +68,16 @@ class BasePkiCertificateComponent:
             return pki_enrollment_request_serializer.rep_dump(
                 {"status": "email_already_attributed"}
             )
+
+    async def pki_enrollment_request(
+        self,
+        organization_id: OrganizationID,
+        certificate_id: bytes,
+        request_id: UUID,
+        request_object: PkiEnrollmentRequest,
+        force_flag: bool = False,
+    ) -> DateTime:
+        raise NotImplementedError()
 
     @api("pki_enrollment_get_requests")
     @catch_protocol_errors
