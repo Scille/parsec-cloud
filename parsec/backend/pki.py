@@ -5,13 +5,14 @@ from uuid import UUID
 
 from pendulum import DateTime
 from parsec.api.data.pki import PkiEnrollmentRequest
+from parsec.api.protocol.handshake import HandshakeType
 from parsec.api.protocol.pki import (
     pki_enrollment_get_requests_serializer,
     pki_enrollment_reply_serializer,
     pki_enrollment_request_serializer,
     pki_enrollment_get_reply_serializer,
 )
-from parsec.api.protocol.types import OrganizationID
+from parsec.api.protocol.types import OrganizationID, UserProfile
 from parsec.backend.utils import api, catch_protocol_errors
 
 
@@ -79,23 +80,35 @@ class BasePkiCertificateComponent:
     ) -> DateTime:
         raise NotImplementedError()
 
-    @api("pki_enrollment_get_requests")
+    @api("pki_enrollment_get_requests", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_pki_enrollment_get_requests(self, client_ctx, msg):
+        if client_ctx.profile != UserProfile.ADMIN:
+            return {
+                "status": "not_allowed",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
         msg = pki_enrollment_get_requests_serializer.req_load(msg)
         requested_pki_cert = await self.pki_enrollment_get_requests()
         return pki_enrollment_get_requests_serializer.rep_dump({"requests": requested_pki_cert})
 
-    @api("pki_enrollment_reply")
+    @api("pki_enrollment_reply", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_pki_enrollment_reply(self, client_ctx, msg):
+        if client_ctx.profile != UserProfile.ADMIN:
+            return {
+                "status": "not_allowed",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
         msg = pki_enrollment_reply_serializer.req_load(msg)
         certificate_id = msg["certificate_id"]
         request_id = msg["request_id"]
         user_id = msg["user_id"]
         reply = msg["reply"]
         try:
-            timestamp = await self.pki_enrollment_reply(certificate_id, request_id, reply, user_id)
+            timestamp = await self.pki_enrollment_reply(
+                certificate_id, request_id, reply, client_ctx.human_handle, user_id
+            )
             return pki_enrollment_reply_serializer.rep_dump(
                 {"status": "ok", "timestamp": timestamp}
             )
@@ -115,6 +128,7 @@ class BasePkiCertificateComponent:
                 reply_timestamp,
                 request_timestamp,
                 user_id,
+                admin_user,
             ) = await self.pki_enrollment_get_reply(certificate_id, request_id)
             if not reply:
                 return pki_enrollment_get_reply_serializer.rep_dump(
@@ -126,7 +140,12 @@ class BasePkiCertificateComponent:
                 )
             else:
                 return pki_enrollment_get_reply_serializer.rep_dump(
-                    {"status": "ok", "reply": reply, "timestamp": reply_timestamp}
+                    {
+                        "status": "ok",
+                        "reply": reply,
+                        "timestamp": reply_timestamp,
+                        "admin_human_handle": admin_user,
+                    }
                 )
         except PkiCertificateNotFoundError:
             return pki_enrollment_get_reply_serializer.rep_dump({"status": "certificate not found"})

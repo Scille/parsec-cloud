@@ -73,3 +73,9 @@ async def test_pki_send_request_and_reply(
 
     assert rep["status"] == "ok"
     assert rep["timestamp"] > ref_time
+
+    (rep_object, _, _, _, rep_admin) = await backend.pki.pki_enrollment_get_reply(
+        certificate_id, request_id
+    )
+    assert rep_object == pki_reply
+    assert rep_admin == alice.human_handle

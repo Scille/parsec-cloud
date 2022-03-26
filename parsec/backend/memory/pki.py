@@ -7,7 +7,7 @@ import attr
 import pendulum
 from pendulum.datetime import DateTime
 from parsec.api.data.pki import PkiEnrollmentReply, PkiEnrollmentRequest
-from parsec.api.protocol.types import OrganizationID
+from parsec.api.protocol.types import HumanHandle, OrganizationID
 from parsec.backend.memory.user import MemoryUserComponent
 from parsec.backend.pki import (
     BasePkiCertificateComponent,
@@ -28,6 +28,7 @@ class PkiCertificate:
     reply_user_id: Optional[str] = attr.ib(default=None)
     reply_timestamp: Optional[DateTime] = attr.ib(default=None)
     reply_object: Optional[PkiEnrollmentReply] = attr.ib(default=None)
+    reply_admin_user: Optional[HumanHandle] = attr.ib(default=None)
 
 
 class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
@@ -98,6 +99,7 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
         certificate_id: bytes,
         request_id: UUID,
         reply_object: PkiEnrollmentReply,
+        admin_human_handle: HumanHandle,
         user_id: Optional[str] = None,
     ) -> DateTime:
         try:
@@ -111,11 +113,18 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
         pki_certificate.reply_object = reply_object
         pki_certificate.reply_user_id = user_id
         pki_certificate.reply_timestamp = pendulum.now()
+        pki_certificate.reply_admin_user = admin_human_handle
         return pki_certificate.reply_timestamp
 
     async def pki_enrollment_get_reply(
         self, certificate_id, request_id
-    ) -> Tuple[Optional[PkiEnrollmentReply], Optional[DateTime], DateTime, Optional[str]]:
+    ) -> Tuple[
+        Optional[PkiEnrollmentReply],
+        Optional[DateTime],
+        DateTime,
+        Optional[str],
+        Optional[HumanHandle],
+    ]:
         try:
             pki_certificate = self._pki_certificates[certificate_id]
         except KeyError:
@@ -129,4 +138,5 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
             pki_certificate.reply_timestamp,
             pki_certificate.request_timestamp,
             pki_certificate.reply_user_id,
+            pki_certificate.reply_admin_user,
         )
