@@ -121,6 +121,21 @@ def invite_user(
         trio_run(_invite_user, config, device, email, send_email)
 
 
+async def ask_info_new_user(requested_device_label, requested_human_handle):
+    granted_label = await aprompt("New user label", default=requested_human_handle.label)
+    granted_email = await aprompt("New user email", default=requested_human_handle.email)
+    granted_device_label = await aprompt("New user device label", default=requested_device_label)
+    choices = list(UserProfile)
+    for i, choice in enumerate(UserProfile):
+        display_choice = click.style(choice.value, fg="yellow")
+        click.echo(f" {i} - {display_choice}")
+    choice_index = await aprompt(
+        "New user profile", default="0", type=click.Choice([str(i) for i, _ in enumerate(choices)])
+    )
+    granted_profile = choices[int(choice_index)]
+    return granted_label, granted_email, granted_device_label, granted_profile
+
+
 async def _do_greet_user(device: LocalDevice, initial_ctx: UserGreetInitialCtx) -> bool:
     async with spinner("Waiting for claimer"):
         in_progress_ctx = await initial_ctx.do_wait_peer()
@@ -146,23 +161,10 @@ async def _do_greet_user(device: LocalDevice, initial_ctx: UserGreetInitialCtx) 
         in_progress_ctx = await in_progress_ctx.do_signify_trust()
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
-    granted_label = await aprompt(
-        "New user label", default=in_progress_ctx.requested_human_handle.label
+    granted_label, granted_email, granted_device_label, granted_profile = ask_info_new_user(
+        in_progress_ctx.requested_device_label, in_progress_ctx.requested_human_handle
     )
-    granted_email = await aprompt(
-        "New user email", default=in_progress_ctx.requested_human_handle.email
-    )
-    granted_device_label = await aprompt(
-        "New user device label", default=in_progress_ctx.requested_device_label
-    )
-    choices = list(UserProfile)
-    for i, choice in enumerate(UserProfile):
-        display_choice = click.style(choice.value, fg="yellow")
-        click.echo(f" {i} - {display_choice}")
-    choice_index = await aprompt(
-        "New user profile", default="0", type=click.Choice([str(i) for i, _ in enumerate(choices)])
-    )
-    granted_profile = choices[int(choice_index)]
+
     async with spinner("Creating the user in the backend"):
         await in_progress_ctx.do_create_new_user(
             author=device,
