@@ -25,6 +25,10 @@ class PkiEnrollmentRequestInfo(BaseAPIData):
         requested_human_handle = HumanHandleField(required=True)
         requested_device_label = DeviceLabelField(required=True)
 
+        @post_load
+        def make_obj(self, data: Dict[str, Any]) -> "PkiEnrollmentRequestInfo":
+            return PkiEnrollmentRequestInfo(**data)
+
     verify_key: VerifyKey
     public_key: PublicKey
     requested_human_handle: HumanHandle
@@ -57,6 +61,10 @@ class PkiEnrollmentReplyInfo(BaseAPIData):
         device_label = DeviceLabelField(required=True)
         human_handle = HumanHandleField(required=True)
         profile = UserProfileField(required=True)
+
+        @post_load
+        def make_obj(self, data: Dict[str, Any]) -> "PkiEnrollmentReplyInfo":
+            return PkiEnrollmentReplyInfo(**data)
 
     device_id: DeviceID
     root_verify_key: VerifyKey
