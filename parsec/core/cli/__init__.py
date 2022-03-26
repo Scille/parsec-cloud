@@ -14,6 +14,7 @@ from parsec.core.cli import share_workspace
 from parsec.core.cli import bootstrap_organization
 from parsec.core.cli import rsync
 from parsec.core.cli import run
+from parsec.core.cli import pki
 
 
 __all__ = ("core_cmd",)
@@ -45,3 +46,8 @@ core_cmd.add_command(create_organization.create_organization, "create_organizati
 core_cmd.add_command(stats_organization.stats_organization, "stats_organization")
 core_cmd.add_command(status_organization.status_organization, "status_organization")
 core_cmd.add_command(bootstrap_organization.bootstrap_organization, "bootstrap_organization")
+
+core_cmd.add_command(pki.pki_enrollment_request, "pki_enrollment_request")
+core_cmd.add_command(pki.pki_enrollment_get_reply, "pki_enrollment_get_reply")
+core_cmd.add_command(pki.pki_enrollment_get_requests, "pki_enrollment_get_requests")
+core_cmd.add_command(pki.pki_enrollment_reply, "pki_enrollment_reply")
