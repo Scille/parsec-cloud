@@ -54,8 +54,8 @@ pki_enrollment_get_requests_serializer = CmdSerializer(
 class PkiEnrollmentReplyReqSchema(BaseReqSchema):
     certificate_id = fields.Bytes(required=True)
     request_id = fields.UUID(required=True)
-    reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, required=True)
-    user_id = fields.String(required=False)  # TODO Move to userid ?
+    reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, required=True, allow_none=True)
+    user_id = fields.String(required=True, allow_none=True)  # TODO Move to userid ?
 
 
 class PkiEnrollmentReplyRepSchema(BaseRepSchema):
@@ -80,7 +80,7 @@ class PkiEnrollmentGetReplyRepSchema(BaseRepSchema):
     status = fields.String(required=True)
     reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, required=True, allow_none=True)
     timestamp = fields.DateTime(required=True)
-    admin_human_handle = HumanHandleField(required=True)
+    admin_human_handle = HumanHandleField(required=True, allow_none=True)
 
 
 pki_enrollment_get_reply_serializer = CmdSerializer(
