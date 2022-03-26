@@ -7,6 +7,8 @@ import attr
 import pendulum
 from pendulum.datetime import DateTime
 from parsec.api.data.pki import PkiEnrollmentReply, PkiEnrollmentRequest
+from parsec.api.protocol.types import OrganizationID
+from parsec.backend.memory.user import MemoryUserComponent
 from parsec.backend.pki import (
     BasePkiCertificateComponent,
     PkiCertificateAlreadyEnrolledError,
@@ -32,39 +34,42 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
     def __init__(self, send_event):
         self._send_event = send_event
         self._pki_certificates: Dict[bytes, PkiCertificate] = {}
+        self._user_component: MemoryUserComponent = None
 
     def register_components(self, **other_components):
-        pass
+        self._user_component = other_components["user"]
 
     async def pki_enrollment_request(
         self,
+        organization_id: OrganizationID,
         certificate_id: bytes,
         request_id: UUID,
         request_object: PkiEnrollmentRequest,
         force_flag: bool = False,
     ) -> DateTime:
-        existing_certificate = self._pki_certificates.get(certificate_id, None)
-        if existing_certificate:
-            if existing_certificate.reply_object and existing_certificate.reply_user_id:
-                raise PkiCertificateAlreadyEnrolledError(
-                    existing_certificate.request_timestamp,
-                    f"Certificate {str(certificate_id)} already attributed",
-                )
 
-            if not force_flag:
-                raise PkiCertificateAlreadyRequestedError(
-                    existing_certificate.reply_timestamp,
-                    f"Certificate {str(certificate_id)} already used in request {request_id}",
-                )
-        # Check human handle already used
-        for pki_certificate in self._pki_certificates.values():
-            if (
-                pki_certificate.request_object.requested_human_handle
-                == request_object.requested_human_handle
-            ):
-                raise PkiCertificateEmailAlreadyAttributedError(
-                    f"email f{request_object.requested_human_handle} already attributed"
-                )
+        humans, _ = await self._user_component.find_humans(
+            organization_id=organization_id, query=request_object.requested_human_handle.email
+        )
+        if humans and not humans[0].revoked:
+            raise PkiCertificateEmailAlreadyAttributedError(
+                f"email f{request_object.requested_human_handle} already attributed"
+            )
+        # Revoked user certificate can be overwritten
+        elif not humans:
+            existing_certificate = self._pki_certificates.get(certificate_id, None)
+            if existing_certificate:
+                if existing_certificate.reply_object and existing_certificate.reply_user_id:
+                    raise PkiCertificateAlreadyEnrolledError(
+                        existing_certificate.request_timestamp,
+                        f"Certificate {str(certificate_id)} already attributed",
+                    )
+
+                if not force_flag:
+                    raise PkiCertificateAlreadyRequestedError(
+                        existing_certificate.reply_timestamp,
+                        f"Certificate {str(certificate_id)} already used in request {request_id}",
+                    )
 
         new_pki_certificate = PkiCertificate(
             certificate_id=certificate_id,

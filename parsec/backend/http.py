@@ -385,7 +385,9 @@ class HTTPComponent:
         body = await req.get_body()
         msg = unpackb(body)
         msg["cmd"] = "pki_enrollement_request"
-        rep = await self._pki_component.api_pki_enrollment_request(msg)
+        rep = await self._pki_component.api_pki_enrollment_request(
+            msg, OrganizationID(organization_name)
+        )
         return HTTPResponse.build_msgpack(200, data=packb(rep))
 
     async def _http_api_pki_enrollement_get_reply(

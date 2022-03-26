@@ -41,7 +41,9 @@ async def test_pki_send_request_and_reply(
     certificate_id = b"certificate_id"
     request_id = uuid4()
 
-    await backend.pki.pki_enrollment_request(certificate_id, request_id, pki_request, False)
+    await backend.pki.pki_enrollment_request(
+        alice.organization_id, certificate_id, request_id, pki_request, False
+    )
     rep = await pki_enrollment_get_requests(alice_backend_sock.transport)
 
     assert rep["status"] == "ok"

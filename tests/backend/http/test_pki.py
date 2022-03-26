@@ -96,3 +96,41 @@ async def test_pki_rest_send_request_and_get_reply(alice, backend, backend_http_
     rep = pki_enrollment_get_reply_serializer.rep_loads(body)
     assert rep["status"] == "pending"
     assert request_timestamp == rep["timestamp"]
+
+
+@pytest.mark.trio
+async def test_pki_rest_get_request_certificate(alice, backend, backend_http_send, backend_addr):
+    pki_request_info = PkiEnrollmentRequestInfo(
+        verify_key=VerifyKey(generate_nonce(32)),
+        public_key=PublicKey(generate_nonce(32)),
+        requested_human_handle=alice.human_handle,
+        requested_device_label=DeviceLabel("test"),
+    )
+    pki_request = PkiEnrollmentRequest(
+        der_x509_certificate=b"1234567890ABCDEF",
+        signature=b"123",
+        requested_human_handle=alice.human_handle,
+        pki_request_info=pki_request_info.dump(),
+    )
+    certificate_id = b"certificate_id"
+    request_id = uuid4()
+
+    data = pki_enrollment_request_serializer.req_dumps(
+        {
+            "certificate_id": certificate_id,
+            "request_id": request_id,
+            "request": pki_request,
+            "force_flag": False,
+        }
+    )
+
+    status, body = await send_pki_http_post_request(
+        backend_http_send=backend_http_send,
+        backend_addr=backend_addr,
+        organization_id=alice.organization_id,
+        cmd="enrollment_request",
+        body=data,
+    )
+    assert status == (200, "OK")
+    rep = pki_enrollment_get_reply_serializer.rep_loads(body)
+    assert rep["status"] == "email_already_attributed"

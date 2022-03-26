@@ -2,9 +2,11 @@
 
 from collections import namedtuple
 from typing import List, Optional, Tuple
+from uuid import UUID
 
 import pendulum
 from parsec.api.data.pki import PkiEnrollmentReply, PkiEnrollmentRequest
+from parsec.api.protocol.types import OrganizationID
 from parsec.backend.pki import (
     BasePkiCertificateComponent,
     PkiCertificateAlreadyEnrolledError,
@@ -101,8 +103,9 @@ class PGCertificateComponent(BasePkiCertificateComponent):
 
     async def pki_enrollment_request(
         self,
-        certificate_id: str,
-        request_id: str,
+        organization_id: OrganizationID,
+        certificate_id: bytes,
+        request_id: UUID,
         request_object: PkiEnrollmentRequest,
         force_flag: bool = False,
     ) -> DateTime:
@@ -114,13 +117,13 @@ class PGCertificateComponent(BasePkiCertificateComponent):
                 if existing_certificate.reply_object and existing_certificate.reply_user_id:
                     raise PkiCertificateAlreadyEnrolledError(
                         existing_certificate.request_timestamp,
-                        f"Certificate {certificate_id} already attributed",
+                        f"Certificate {str(certificate_id)} already attributed",
                     )
 
                 if not force_flag:
                     raise PkiCertificateAlreadyRequestedError(
                         existing_certificate.reply_timestamp,
-                        f"Certificate {certificate_id} already used in request {request_id}",
+                        f"Certificate {str(certificate_id)} already used in request {request_id}",
                     )
                 else:
                     request_timestamp = pendulum.now()
