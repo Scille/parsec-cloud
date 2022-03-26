@@ -541,7 +541,12 @@ def load_device_with_smartcard(key_file: Path) -> LocalDevice:
     return _load_smartcard_extension().load_device_with_smartcard(key_file)
 
 
-def save_device_with_smartcard_in_config(config_dir: Path, device: LocalDevice) -> Path:
+def save_device_with_smartcard_in_config(
+    config_dir: Path,
+    device: LocalDevice,
+    certificate_id: Optional[str] = None,
+    certificate_sha1: Optional[bytes] = None,
+) -> Path:
     """
     Raises:
         LocalDeviceError
@@ -561,7 +566,13 @@ def save_device_with_smartcard_in_config(config_dir: Path, device: LocalDevice) 
     #   not possible in theory, but could occur in case of a rollback in the
     #   Parsec server), in this case the old device object is now invalid
     #   and it's a good thing to replace it.
-    _load_smartcard_extension().save_device_with_smartcard(key_file, device, force=True)
+    _load_smartcard_extension().save_device_with_smartcard(
+        key_file,
+        device,
+        force=True,
+        certificate_id=certificate_id,
+        certificate_sha1=certificate_sha1,
+    )
     return key_file
 
 
