@@ -4,14 +4,7 @@ import attr
 from typing import Dict, Any
 
 from parsec.api.data.base import BaseAPIData
-from parsec.api.protocol import (
-    DeviceID,
-    DeviceIDField,
-    HumanHandle,
-    HumanHandleField,
-    UserProfile,
-    UserProfileField,
-)
+from parsec.api.protocol import HumanHandle, HumanHandleField
 from parsec.api.protocol.types import DeviceLabel, DeviceLabelField
 from parsec.crypto import PublicKey, VerifyKey
 from parsec.serde import BaseSchema, fields, post_load
@@ -51,26 +44,6 @@ class PkiEnrollmentRequest(BaseAPIData):
     signature: bytes
     pki_request_info: bytes
     requested_human_handle: HumanHandle
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class PkiEnrollmentReplyInfo(BaseAPIData):
-    class SCHEMA_CLS(BaseSchema):
-        device_id = DeviceIDField(required=True)
-        root_verify_key = fields.VerifyKey(required=True)
-        device_label = DeviceLabelField(required=True)
-        human_handle = HumanHandleField(required=True)
-        profile = UserProfileField(required=True)
-
-        @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "PkiEnrollmentReplyInfo":
-            return PkiEnrollmentReplyInfo(**data)
-
-    device_id: DeviceID
-    root_verify_key: VerifyKey
-    device_label: DeviceLabel
-    human_handle: HumanHandle
-    profile: UserProfile
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
