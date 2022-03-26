@@ -68,7 +68,11 @@ async def test_pki_send_request_and_reply(
         certificate_id=certificate_id,
         request_id=request_id,
         reply=pki_reply,
-        user_id="Hello",
+        user_id=None,
+        device_certificate=None,
+        user_certificate=None,
+        redacted_user_certificate=None,
+        redacted_device_certificate=None,
     )
 
     assert rep["status"] == "ok"

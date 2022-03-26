@@ -602,7 +602,11 @@ async def pki_enrollment_reply(
     certificate_id: str,
     request_id: str,
     reply: PkiEnrollmentReply,
-    user_id: str,
+    user_id: str = None,
+    device_certificate: bytes = None,
+    user_certificate: bytes = None,
+    redacted_user_certificate: bytes = None,
+    redacted_device_certificate: bytes = None,
 ):
     return await _send_cmd(
         transport,
@@ -612,4 +616,8 @@ async def pki_enrollment_reply(
         request_id=request_id,
         reply=reply,
         user_id=user_id,
+        device_certificate=device_certificate,
+        user_certificate=user_certificate,
+        redacted_device_certificate=redacted_device_certificate,
+        redacted_user_certificate=redacted_user_certificate,
     )

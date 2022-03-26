@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 
+from typing import Optional
 from uuid import UUID
+import attr
 
 from pendulum import DateTime
-from parsec.api.data.pki import PkiEnrollmentRequest
+from parsec.api.data.pki import PkiEnrollmentReply, PkiEnrollmentRequest
 from parsec.api.protocol.handshake import HandshakeType
 from parsec.api.protocol.pki import (
     pki_enrollment_get_requests_serializer,
@@ -12,7 +14,7 @@ from parsec.api.protocol.pki import (
     pki_enrollment_request_serializer,
     pki_enrollment_get_reply_serializer,
 )
-from parsec.api.protocol.types import OrganizationID, UserProfile
+from parsec.api.protocol.types import HumanHandle, OrganizationID, UserProfile
 from parsec.backend.utils import api, catch_protocol_errors
 
 
@@ -42,6 +44,15 @@ class PkiCertificateNotFoundError(PkiCertificateError):
 
 class PkiCertificateRequestNotFoundError(PkiCertificateError):
     pass
+
+
+@attr.s
+class PkiEnrollementReplyBundle:
+    certificate_id: bytes = attr.ib()
+    request_id: UUID = attr.ib()
+    reply_user_id: Optional[str] = attr.ib(default=None)
+    reply_object: Optional[PkiEnrollmentReply] = attr.ib(default=None)
+    reply_admin_user: Optional[HumanHandle] = attr.ib(default=None)
 
 
 class BasePkiCertificateComponent:
@@ -101,14 +112,21 @@ class BasePkiCertificateComponent:
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
             }
         msg = pki_enrollment_reply_serializer.req_load(msg)
-        certificate_id = msg["certificate_id"]
-        request_id = msg["request_id"]
-        user_id = msg["user_id"]
-        reply = msg["reply"]
+        pki_reply_bundle = PkiEnrollementReplyBundle(
+            certificate_id=msg["certificate_id"],
+            request_id=msg["request_id"],
+            reply_user_id=msg["user_id"],
+            reply_object=msg["reply"],
+            reply_admin_user=client_ctx.human_handle,
+        )
+
         try:
-            timestamp = await self.pki_enrollment_reply(
-                certificate_id, request_id, reply, client_ctx.human_handle, user_id
-            )
+            if msg["user_id"]:
+                timestamp = await self.pki_enrollment_reply_approve_user(
+                    pki_reply_bundle, msg, client_ctx
+                )
+            else:
+                timestamp = await self.pki_enrollrment_reply_reject_user(pki_reply_bundle)
             return pki_enrollment_reply_serializer.rep_dump(
                 {"status": "ok", "timestamp": timestamp}
             )

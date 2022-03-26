@@ -3,6 +3,7 @@
 import attr
 from typing import List, Optional, Tuple
 import pendulum
+from parsec.backend.pki import PkiEnrollementReplyBundle
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey, PublicKey
@@ -199,7 +200,12 @@ class BaseUserComponent:
         rep = await self._api_user_create(client_ctx, msg)
         return user_create_serializer.rep_dump(rep)
 
-    async def _api_user_create(self, client_ctx, msg):
+    async def _api_user_create(
+        self,
+        client_ctx,
+        msg,
+        pki_enrollement_reply_bundle: Optional[PkiEnrollementReplyBundle] = None,
+    ):
         try:
             d_data = DeviceCertificateContent.verify_and_load(
                 msg["device_certificate"],
@@ -289,7 +295,9 @@ class BaseUserComponent:
                 device_certifier=d_data.author,
                 created_on=d_data.timestamp,
             )
-            await self.create_user(client_ctx.organization_id, user, first_device)
+            await self.create_user(
+                client_ctx.organization_id, user, first_device, pki_enrollement_reply_bundle
+            )
 
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
@@ -414,7 +422,11 @@ class BaseUserComponent:
     #### Virtual methods ####
 
     async def create_user(
-        self, organization_id: OrganizationID, user: User, first_device: Device
+        self,
+        organization_id: OrganizationID,
+        user: User,
+        first_device: Device,
+        pki_enrollement_reply_bundle: Optional[PkiEnrollementReplyBundle] = None,
     ) -> None:
         """
         Raises:
