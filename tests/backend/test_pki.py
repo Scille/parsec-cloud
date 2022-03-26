@@ -3,10 +3,10 @@
 from uuid import uuid4
 import pendulum
 import pytest
-from parsec.api.data.pki import PkiEnrollmentRequestInfo, PkiEnrollmentReplyInfo
+from parsec.api.data.pki import PkiEnrollmentRequestInfo
 
 from parsec.api.protocol.types import DeviceID, DeviceLabel, HumanHandle, UserProfile
-
+from parsec.api.data import InviteUserConfirmation
 
 from parsec.core.backend_connection.cmds import pki_enrollment_get_requests, pki_enrollment_reply
 from parsec.api.protocol.pki import PkiEnrollmentRequest, PkiEnrollmentReply
@@ -51,7 +51,7 @@ async def test_pki_send_request_and_reply(
     assert rep["requests"][0][0] == certificate_id
 
     raw = "ali-c_e@d-e_v"
-    pki_reply_info = PkiEnrollmentReplyInfo(
+    pki_reply_info = InviteUserConfirmation(
         device_id=DeviceID(raw),
         root_verify_key=alice.verify_key,
         device_label=DeviceLabel("device"),
