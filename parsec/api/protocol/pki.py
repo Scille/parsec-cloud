@@ -17,7 +17,7 @@ class PkiEnrollmentRequestReqSchema(BaseReqSchema):
 
 
 class PkiEnrollmentRequestRepSchema(BaseRepSchema):
-    status = fields.String(Required=True)
+    status = fields.String(required=True)
     timestamp = fields.DateTime(required=True)
 
 
@@ -53,7 +53,7 @@ pki_enrollment_get_requests_serializer = CmdSerializer(
 class PkiEnrollmentReplyReqSchema(BaseReqSchema):
     certificate_id = fields.Bytes(required=True)
     request_id = fields.UUID(required=True)
-    reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, Required=True)
+    reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, required=True)
     user_id = fields.String(required=False)  # TODO Move to userid ?
 
 
