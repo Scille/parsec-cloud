@@ -3,6 +3,7 @@
 from parsec.api.data.pki import PkiEnrollmentRequest
 from parsec.api.data.pki import PkiEnrollmentReply
 from parsec.api.protocol.base import BaseRepSchema, BaseReqSchema, CmdSerializer
+from parsec.api.protocol.types import HumanHandleField
 from parsec.serde import fields
 
 
@@ -77,8 +78,9 @@ class PkiEnrollmentGetReplyReqSchema(BaseReqSchema):
 
 class PkiEnrollmentGetReplyRepSchema(BaseRepSchema):
     status = fields.String(required=True)
-    reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, required=True)
-    timestamp = fields.DateTime(required=False)
+    reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, required=True, allow_none=True)
+    timestamp = fields.DateTime(required=True)
+    admin_human_handle = HumanHandleField(required=True)
 
 
 pki_enrollment_get_reply_serializer = CmdSerializer(
