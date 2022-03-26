@@ -56,6 +56,10 @@ class PkiEnrollmentReplyReqSchema(BaseReqSchema):
     request_id = fields.UUID(required=True)
     reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, required=True, allow_none=True)
     user_id = fields.String(required=True, allow_none=True)  # TODO Move to userid ?
+    device_certificate = fields.Bytes(required=True, allow_none=True)
+    user_certificate = fields.Bytes(required=True, allow_none=True)
+    redacted_user_certificate = fields.Bytes(required=True, allow_none=True)
+    redacted_device_certificate = fields.Bytes(required=True, allow_none=True)
 
 
 class PkiEnrollmentReplyRepSchema(BaseRepSchema):

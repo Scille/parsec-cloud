@@ -16,6 +16,7 @@ from parsec.backend.pki import (
     PkiCertificateEmailAlreadyAttributedError,
     PkiCertificateNotFoundError,
     PkiCertificateRequestNotFoundError,
+    PkiEnrollementReplyBundle,
 )
 
 
@@ -94,26 +95,35 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
             for pki_certificate in self._pki_certificates.values()
         ]
 
-    async def pki_enrollment_reply(
-        self,
-        certificate_id: bytes,
-        request_id: UUID,
-        reply_object: PkiEnrollmentReply,
-        admin_human_handle: HumanHandle,
-        user_id: Optional[str] = None,
+    async def pki_enrollrment_reply_reject_user(
+        self, pki_reply_bundle: PkiEnrollementReplyBundle
     ) -> DateTime:
+        return await self._pki_enrollment_reply(pki_reply_bundle)
+
+    async def pki_enrollment_reply_approve_user(
+        self, pki_reply_bundle: PkiEnrollementReplyBundle, client_ctx, msg
+    ) -> DateTime:
+        self._user_component._api_user_create(client_ctx, msg, pki_reply_bundle)
+        timestamp = self._pki_certificates[pki_reply_bundle.certificate_id].reply_timestamp
+        assert timestamp
+        return timestamp
+
+    async def _pki_enrollment_reply(self, pki_reply_bundle: PkiEnrollementReplyBundle) -> DateTime:
         try:
-            pki_certificate = self._pki_certificates[certificate_id]
+            pki_certificate = self._pki_certificates[pki_reply_bundle.certificate_id]
         except KeyError:
-            raise PkiCertificateNotFoundError(f"Certificate {str(certificate_id)} not found")
-        if pki_certificate.request_id != request_id:
-            raise PkiCertificateRequestNotFoundError(
-                f"Request {request_id} not found for certificate {str(certificate_id)}"
+            raise PkiCertificateNotFoundError(
+                f"Certificate {str(pki_reply_bundle.certificate_id)} not found"
             )
-        pki_certificate.reply_object = reply_object
-        pki_certificate.reply_user_id = user_id
+        if pki_certificate.request_id != pki_reply_bundle.request_id:
+            raise PkiCertificateRequestNotFoundError(
+                f"Request {pki_reply_bundle.request_id} not found for certificate {str(pki_reply_bundle.certificate_id)}"
+            )
+
+        pki_certificate.reply_object = pki_reply_bundle.reply_object
+        pki_certificate.reply_user_id = pki_reply_bundle.reply_user_id
         pki_certificate.reply_timestamp = pendulum.now()
-        pki_certificate.reply_admin_user = admin_human_handle
+        pki_certificate.reply_admin_user = pki_reply_bundle.reply_admin_user
         return pki_certificate.reply_timestamp
 
     async def pki_enrollment_get_reply(
