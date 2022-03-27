@@ -25,11 +25,13 @@ class StrBased:
     REGEX: Pattern[str]
     MAX_BYTE_SIZE: int
 
-    def __init__(self, raw: str):
+    def __init__(self, raw: Union[str, "StrBased"]):
+        if isinstance(raw, StrBased):
+            raw = raw._str
         raw = normalize("NFC", raw)
         if not self.REGEX.match(raw) or _bytes_size(raw) > self.MAX_BYTE_SIZE:
             raise ValueError("Invalid data")
-        self._str = raw
+        self._str: str = raw
 
     def __str__(self) -> str:
         return self._str
