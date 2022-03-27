@@ -63,6 +63,7 @@ async def _pki_enrollment_request(config, invitation_address, device_label, forc
 
     # Get HTTP route for POST request and make sure it's available
     organization_id = invitation_address.organization_id
+    backend_address = invitation_address.generate_backend_addr()
     url = invitation_address.to_http_domain_url(
         f"/anonymous/pki/{organization_id}/enrollment_request"
     )
@@ -80,7 +81,7 @@ async def _pki_enrollment_request(config, invitation_address, device_label, forc
         private_key,
         signing_key,
         device_label,
-        invitation_address,
+        backend_address,
         organization_id,
     )
 
@@ -92,6 +93,11 @@ async def _pki_enrollment_request(config, invitation_address, device_label, forc
             "request_id": request_id,
             "force_flag": force,
         }
+    )
+
+    # Show the request
+    click.echo(
+        f"[Request {request_id}]: {local_request.human_handle} on device {local_request.device_label}"
     )
 
     # Make sure the backend is available before saving to the disk
@@ -108,6 +114,10 @@ async def _pki_enrollment_request(config, invitation_address, device_label, forc
 
     # Echo the status
     click.echo(f"Status: {click.style(rep['status'],fg='yellow')}")
+
+    # Remove the local request if status is not OK
+    if rep["status"] != "ok":
+        await local_request.get_path(config.config_dir).unlink()
 
 
 @click.command(short_help="Perform a PKI-based enrolement request")
