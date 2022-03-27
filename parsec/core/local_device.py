@@ -39,6 +39,15 @@ DEVICE_FILE_SUFFIX = ".keys"
 RECOVERY_DEVICE_FILE_SUFFIX = ".psrk"
 
 
+# Save key file data for later user
+_KEY_FILE_DATA: Dict[DeviceID, Dict] = {}
+
+
+def get_key_file_data(device_id: DeviceID) -> Dict:
+    """Retrieve key file data for a given device"""
+    return _KEY_FILE_DATA.get(device_id, {})
+
+
 class LocalDeviceError(Exception):
     pass
 
@@ -334,10 +343,13 @@ def _load_device(key_file: Path, decrypt_ciphertext: Callable[[dict], bytes]) ->
     plaintext = decrypt_ciphertext(data)
 
     try:
-        return LocalDevice.load(plaintext)
+        local_device = LocalDevice.load(plaintext)
 
     except DataError as exc:
         raise LocalDeviceValidationError(f"Cannot load local device: {exc}") from exc
+
+    _KEY_FILE_DATA[local_device.device_id] = data
+    return local_device
 
 
 def save_device_with_password_in_config(
