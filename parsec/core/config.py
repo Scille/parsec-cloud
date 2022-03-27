@@ -63,6 +63,7 @@ class CoreConfig:
     sentry_environment: str = ""
     telemetry_enabled: bool = True
     workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
+    pki_extra_trust_roots: FrozenSet[Path] = frozenset()
 
     gui_last_device: Optional[str] = None
     gui_tray_enabled: bool = True
@@ -100,6 +101,7 @@ def config_factory(
     sentry_environment: str = "",
     telemetry_enabled: bool = True,
     workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
+    pki_extra_trust_roots: FrozenSet[Path] = frozenset(),
     debug: bool = False,
     gui_last_device: str = None,
     gui_tray_enabled: bool = True,
@@ -143,6 +145,7 @@ def config_factory(
         backend_max_connections=backend_max_connections,
         telemetry_enabled=telemetry_enabled,
         workspace_storage_cache_size=workspace_storage_cache_size,
+        pki_extra_trust_roots=pki_extra_trust_roots,
         debug=debug,
         sentry_dsn=sentry_dsn,
         sentry_environment=sentry_environment,
@@ -207,6 +210,13 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
         pass
 
     try:
+        data_conf["pki_extra_trust_roots"] = frozenset(
+            map(Path, data_conf["pki_extra_trust_roots"])
+        )
+    except (KeyError, ValueError):
+        pass
+
+    try:
         data_conf["preferred_org_creation_backend_addr"] = BackendAddr.from_url(
             data_conf["preferred_org_creation_backend_addr"]
         )
@@ -250,6 +260,7 @@ def save_config(config: CoreConfig):
                 "backend_max_cooldown": config.backend_max_cooldown,
                 "backend_connection_keepalive": config.backend_connection_keepalive,
                 "workspace_storage_cache_size": config.workspace_storage_cache_size,
+                "pki_extra_trust_roots": list(map(str, config.pki_extra_trust_roots)),
                 "gui_last_device": config.gui_last_device,
                 "gui_tray_enabled": config.gui_tray_enabled,
                 "gui_language": config.gui_language,
