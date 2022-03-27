@@ -10,13 +10,13 @@ import click
 
 
 from parsec.api.protocol import HumanHandle
-from parsec.api.protocol.types import DeviceLabel, OrganizationID
+from parsec.api.protocol.types import DeviceLabel
 from parsec.cli_utils import cli_exception_handler, aconfirm, aprompt
 from parsec.core.backend_connection.authenticated import backend_authenticated_cmds_factory
 from parsec.core.cli.invitation import ask_info_new_user
 from parsec.core.invite.greeter import _create_new_user_certificates
 
-from parsec.core.types.backend_address import BackendAddr
+from parsec.core.types.backend_address import BackendInvitationAddr, InvitationType
 
 from parsec.core.cli.utils import (
     cli_command_base_options,
@@ -53,14 +53,19 @@ async def _http_request(url, method="GET", data=None):
     return await trio.to_thread.run_sync(_do_req)
 
 
-async def _pki_enrollment_request(
-    config, backend_address, organization_id, device_label, human_label, human_email, force
-):
+async def _pki_enrollment_request(config, invitation_address, device_label, force):
     # Get smartcard module
     smartcard = get_smartcard_module()
 
+    # Check invitation address
+    if invitation_address.invitation_type != InvitationType.PKI:
+        raise ValueError("The invitation address must correspond to a PKI invitation")
+
     # Get HTTP route for POST request and make sure it's available
-    url = backend_address.to_http_domain_url(f"/anonymous/pki/{organization_id}/enrollment_request")
+    organization_id = invitation_address.organization_id
+    url = invitation_address.to_http_domain_url(
+        f"/anonymous/pki/{organization_id}/enrollment_request"
+    )
     await _http_request(url)
 
     # Generate information for the new device
@@ -69,15 +74,13 @@ async def _pki_enrollment_request(
     signing_key = SigningKey.generate()
 
     # Get the X.509 certificate and sign the keys
-    human_handle = HumanHandle(human_email, human_label)
     enrollment_request, local_request, certificate_id, certificate_sha1 = await trio.to_thread.run_sync(
         smartcard.prepare_enrollment_request,
         request_id,
         private_key,
         signing_key,
-        human_handle,
         device_label,
-        backend_address,
+        invitation_address,
         organization_id,
     )
 
@@ -108,36 +111,17 @@ async def _pki_enrollment_request(
 
 
 @click.command(short_help="Perform a PKI-based enrolement request")
-@click.argument("backend_address", type=BackendAddr.from_url)
-@click.argument("organization_id", required=True, type=OrganizationID)
-@click.option("--device-label", prompt="Device label", default=platform.node, type=DeviceLabel)
-@click.option("--human-label", prompt="Human label")
-@click.option("--human-email", prompt="Human email")
+@click.argument("backend-invitation", type=BackendInvitationAddr.from_url)
+@click.option(
+    "--device-label", prompt="Device label", default=lambda: platform.node(), type=DeviceLabel
+)
 @click.option("--force/--no-force")
 @core_config_options
 @cli_command_base_options
-def pki_enrollment_request(
-    config,
-    backend_address,
-    organization_id,
-    device_label,
-    human_label,
-    human_email,
-    force,
-    **kwargs,
-):
+def pki_enrollment_request(config, backend_invitation, device_label, force, **kwargs):
     """Perform a PKI-based enrolement request"""
     with cli_exception_handler(config.debug):
-        trio_run(
-            _pki_enrollment_request,
-            config,
-            backend_address,
-            organization_id,
-            device_label,
-            human_label,
-            human_email,
-            force,
-        )
+        trio_run(_pki_enrollment_request, config, backend_invitation, device_label, force)
 
 
 async def _pki_enrollment_get_replies(config, request_prefix, extra_trust_roots):
