@@ -93,6 +93,7 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
                 pki_certificate.request_object,
             )
             for pki_certificate in self._pki_certificates.values()
+            if pki_certificate.reply_admin_user is None
         ]
 
     async def pki_enrollrment_reply_reject_user(
@@ -103,7 +104,7 @@ class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
     async def pki_enrollment_reply_approve_user(
         self, pki_reply_bundle: PkiEnrollementReplyBundle, client_ctx, msg
     ) -> DateTime:
-        self._user_component._api_user_create(client_ctx, msg, pki_reply_bundle)
+        await self._user_component._api_user_create(client_ctx, msg, pki_reply_bundle)
         timestamp = self._pki_certificates[pki_reply_bundle.certificate_id].reply_timestamp
         assert timestamp
         return timestamp

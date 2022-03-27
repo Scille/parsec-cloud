@@ -123,7 +123,7 @@ class BasePkiCertificateComponent:
         try:
             if msg["user_id"]:
                 timestamp = await self.pki_enrollment_reply_approve_user(
-                    pki_reply_bundle, msg, client_ctx
+                    pki_reply_bundle, client_ctx, msg
                 )
             else:
                 timestamp = await self.pki_enrollrment_reply_reject_user(pki_reply_bundle)
@@ -148,13 +148,17 @@ class BasePkiCertificateComponent:
                 user_id,
                 admin_user,
             ) = await self.pki_enrollment_get_reply(certificate_id, request_id)
-            if not reply:
+            if not admin_user:
                 return pki_enrollment_get_reply_serializer.rep_dump(
                     {"status": "pending", "timestamp": request_timestamp}
                 )
-            if user_id:
+            if not user_id:
                 return pki_enrollment_get_reply_serializer.rep_dump(
-                    {"status": "already enrolled on other device", "timestamp": reply_timestamp}
+                    {
+                        "status": "rejected",
+                        "reason": f"Rejected by {admin_user}",
+                        "timestamp": reply_timestamp,
+                    }
                 )
             else:
                 return pki_enrollment_get_reply_serializer.rep_dump(

@@ -71,6 +71,7 @@ from parsec.core.backend_connection.exceptions import (
     BackendOutOfBallparkError,
 )
 from parsec.api.data.pki import PkiEnrollmentReply
+from parsec.serde.fields import UUID
 
 
 async def _send_cmd(transport: Transport, serializer, **req) -> dict:
@@ -599,14 +600,14 @@ async def pki_enrollment_get_requests(transport: Transport):
 
 async def pki_enrollment_reply(
     transport: Transport,
-    certificate_id: str,
-    request_id: str,
+    certificate_id: bytes,
+    request_id: UUID,
     reply: PkiEnrollmentReply,
-    user_id: str = None,
-    device_certificate: bytes = None,
-    user_certificate: bytes = None,
-    redacted_user_certificate: bytes = None,
-    redacted_device_certificate: bytes = None,
+    user_id: Optional[UserID] = None,
+    device_certificate: Optional[bytes] = None,
+    user_certificate: Optional[bytes] = None,
+    redacted_user_certificate: Optional[bytes] = None,
+    redacted_device_certificate: Optional[bytes] = None,
 ):
     return await _send_cmd(
         transport,
