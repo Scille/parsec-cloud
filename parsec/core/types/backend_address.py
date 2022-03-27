@@ -602,6 +602,9 @@ class BackendInvitationAddr(_PyBackendActionAddr):
             backend_addr=self, organization_id=self.organization_id, root_verify_key=root_verify_key
         )
 
+    def generate_backend_addr(self) -> _PyBackendAddr:
+        return _PyBackendAddr(self.hostname, self.port, self.use_ssl)
+
     @property
     def organization_id(self) -> OrganizationID:
         return self._organization_id
