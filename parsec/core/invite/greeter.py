@@ -263,6 +263,63 @@ class DeviceGreetInProgress3Ctx:
         )
 
 
+def _create_new_user_certificates(
+    author: LocalDevice,
+    device_label: Optional[DeviceLabel],
+    human_handle: Optional[HumanHandle],
+    profile: UserProfile,
+    public_key: PublicKey,
+    verify_key: VerifyKey,
+) -> Tuple[bytes, bytes, bytes, bytes, InviteUserConfirmation]:
+    """Helper to prepare the creation of a new user."""
+    device_id = DeviceID.new()
+    try:
+        timestamp = author.timestamp()
+
+        user_certificate = UserCertificateContent(
+            author=author.device_id,
+            timestamp=timestamp,
+            user_id=device_id.user_id,
+            human_handle=human_handle,
+            public_key=public_key,
+            profile=profile,
+        )
+        redacted_user_certificate = user_certificate.evolve(human_handle=None)
+
+        device_certificate = DeviceCertificateContent(
+            author=author.device_id,
+            timestamp=timestamp,
+            device_id=device_id,
+            device_label=device_label,
+            verify_key=verify_key,
+        )
+        redacted_device_certificate = device_certificate.evolve(device_label=None)
+
+        user_certificate = user_certificate.dump_and_sign(author.signing_key)
+        redacted_user_certificate = redacted_user_certificate.dump_and_sign(author.signing_key)
+        device_certificate = device_certificate.dump_and_sign(author.signing_key)
+        redacted_device_certificate = redacted_device_certificate.dump_and_sign(author.signing_key)
+
+    except DataError as exc:
+        raise InviteError(f"Cannot generate device certificate: {exc}") from exc
+
+    invite_user_confirmation = InviteUserConfirmation(
+        device_id=device_id,
+        device_label=device_label,
+        human_handle=human_handle,
+        profile=profile,
+        root_verify_key=author.root_verify_key,
+    )
+
+    return (
+        user_certificate,
+        redacted_user_certificate,
+        device_certificate,
+        redacted_device_certificate,
+        invite_user_confirmation,
+    )
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserGreetInProgress4Ctx:
     token: InvitationToken
@@ -281,38 +338,10 @@ class UserGreetInProgress4Ctx:
         human_handle: Optional[HumanHandle],
         profile: UserProfile,
     ) -> None:
-        device_id = DeviceID.new()
-        try:
-            timestamp = author.timestamp()
 
-            user_certificate = UserCertificateContent(
-                author=author.device_id,
-                timestamp=timestamp,
-                user_id=device_id.user_id,
-                human_handle=human_handle,
-                public_key=self._public_key,
-                profile=profile,
-            )
-            redacted_user_certificate = user_certificate.evolve(human_handle=None)
-
-            device_certificate = DeviceCertificateContent(
-                author=author.device_id,
-                timestamp=timestamp,
-                device_id=device_id,
-                device_label=device_label,
-                verify_key=self._verify_key,
-            )
-            redacted_device_certificate = device_certificate.evolve(device_label=None)
-
-            user_certificate = user_certificate.dump_and_sign(author.signing_key)
-            redacted_user_certificate = redacted_user_certificate.dump_and_sign(author.signing_key)
-            device_certificate = device_certificate.dump_and_sign(author.signing_key)
-            redacted_device_certificate = redacted_device_certificate.dump_and_sign(
-                author.signing_key
-            )
-
-        except DataError as exc:
-            raise InviteError(f"Cannot generate device certificate: {exc}") from exc
+        user_certificate, redacted_user_certificate, device_certificate, redacted_device_certificate, invite_user_confirmation = _create_new_user_certificates(
+            author, device_label, human_handle, profile, self._public_key, self._verify_key
+        )
 
         rep = await self._cmds.user_create(
             user_certificate=user_certificate,
@@ -330,13 +359,7 @@ class UserGreetInProgress4Ctx:
         # enrollment process to fix this
 
         try:
-            payload = InviteUserConfirmation(
-                device_id=device_id,
-                device_label=device_label,
-                human_handle=human_handle,
-                profile=profile,
-                root_verify_key=author.root_verify_key,
-            ).dump_and_encrypt(key=self._shared_secret_key)
+            payload = invite_user_confirmation.dump_and_encrypt(key=self._shared_secret_key)
         except DataError as exc:
             raise InviteError("Cannot generate InviteUserConfirmation payload") from exc
 
