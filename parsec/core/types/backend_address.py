@@ -515,9 +515,11 @@ class BackendInvitationAddr(_PyBackendActionAddr):
         self,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: InvitationToken,
+        token: Optional[InvitationToken] = None,
         **kwargs,
     ):
+        if invitation_type in (InvitationType.DEVICE, InvitationType.USER) and token is None:
+            raise TypeError("Missing required argument: 'token'")
         super().__init__(**kwargs)
         self._organization_id = organization_id
         self._invitation_type = invitation_type
@@ -538,16 +540,19 @@ class BackendInvitationAddr(_PyBackendActionAddr):
             kwargs["invitation_type"] = InvitationType.USER
         elif value[0] == "claim_device":
             kwargs["invitation_type"] = InvitationType.DEVICE
+        elif value[0] == "pki_enrollment":
+            kwargs["invitation_type"] = InvitationType.PKI
         else:
             raise ValueError("Expected `action=claim_user` or `action=claim_device` param value")
 
         value = params.pop("token", ())
-        if len(value) != 1:
-            raise ValueError("Missing mandatory `token` param")
-        try:
-            kwargs["token"] = InvitationToken.from_hex(value[0])
-        except ValueError:
-            raise ValueError("Invalid `token` param value")
+        if kwargs["invitation_type"] in (InvitationType.DEVICE, InvitationType.USER):
+            if len(value) != 1:
+                raise ValueError("Missing mandatory `token` param")
+            try:
+                kwargs["token"] = InvitationToken.from_hex(value[0])
+            except ValueError:
+                raise ValueError("Invalid `token` param value")
 
         return kwargs
 
@@ -555,7 +560,13 @@ class BackendInvitationAddr(_PyBackendActionAddr):
         return str(self.organization_id)
 
     def _to_url_get_params(self):
-        action = "claim_user" if self._invitation_type == InvitationType.USER else "claim_device"
+        action = {
+            InvitationType.USER: "claim_user",
+            InvitationType.DEVICE: "claim_device",
+            InvitationType.PKI: "pki_enrollment",
+        }[self._invitation_type]
+        if self._token is None:
+            return [("action", action), *super()._to_url_get_params()]
         return [("action", action), ("token", self._token.hex), *super()._to_url_get_params()]
 
     def to_http_redirection_url(self) -> str:
@@ -575,7 +586,7 @@ class BackendInvitationAddr(_PyBackendActionAddr):
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: InvitationToken,
+        token: Optional[InvitationToken] = None,
     ) -> "BackendInvitationAddr":
         return cls(
             hostname=backend_addr.hostname,
@@ -600,7 +611,7 @@ class BackendInvitationAddr(_PyBackendActionAddr):
         return self._invitation_type
 
     @property
-    def token(self) -> InvitationToken:
+    def token(self) -> Optional[InvitationToken]:
         return self._token
 
 
