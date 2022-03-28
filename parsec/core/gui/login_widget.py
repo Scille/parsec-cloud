@@ -47,6 +47,11 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
             self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
             self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
             self.button_action.clicked.connect(lambda: self.clear_clicked.emit(self))
+        elif self.enrollment_info.status in ("certificate not found", "request not found"):
+            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_OUTDATED"))
+            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_OUTDATED_TOOLTIP"))
+            self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
+            self.button_action.clicked.connect(lambda: self.clear_clicked.emit(self))
         elif self.enrollment_info.status == "accepted":
             self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ACCEPTED"))
             self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"))
@@ -253,24 +258,12 @@ class LoginWidget(QWidget, Ui_LoginWidget):
                 rep = pki_enrollment_get_reply_serializer.rep_loads(rep_data)
 
                 if rep["status"] != "ok":
-                    enrollments.append(
-                        PendingEnrollment(
-                            request, None, "pending" if rep["status"] == "pending" else "rejected"
-                        )
-                    )
+                    enrollments.append(PendingEnrollment(request, None, rep["status"]))
                 else:
                     reply = rep["reply"]
                     subject, reply_info = smartcard.verify_enrollment_reply(self.config, reply)
+                    enrollments.append(PendingEnrollment(request, reply_info, "accepted"))
 
-                    status = rep["status"]
-                    if status == "ok":
-                        status = "accepted"
-                    elif status == "pending":
-                        status = "pending"
-                    else:
-                        status = "rejected"
-
-                    enrollments.append(PendingEnrollment(request, reply_info, status))
         return enrollments
 
     async def list_devices_and_enrollments(self):
