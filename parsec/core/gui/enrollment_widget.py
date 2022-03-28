@@ -6,7 +6,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QWidget
 
-from parsec.api.protocol import UserProfile
+from parsec.api.protocol import UserProfile, HumanHandle, DeviceLabel
 
 from parsec.core.backend_connection.authenticated import backend_authenticated_cmds_factory
 
@@ -14,17 +14,112 @@ from parsec.core.core_events import CoreEvent
 
 from parsec.core.invite.greeter import _create_new_user_certificates
 
+from parsec.core.gui.custom_dialogs import GreyedDialog
+from parsec.core.gui import validators
 from parsec.core.gui.lang import translate
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.snackbar_widget import SnackbarManager
 
 from parsec.core.gui.ui.enrollment_widget import Ui_EnrollmentWidget
 from parsec.core.gui.ui.enrollment_button import Ui_EnrollmentButton
+from parsec.core.gui.ui.greet_user_check_info_widget import Ui_GreetUserCheckInfoWidget
 
 
 EnrollmentInfo = namedtuple(
     "EnrollmentInfo", ["request", "request_id", "request_info", "certificate_id", "certif_is_valid"]
 )
+
+
+class AcceptCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
+    succeeded = pyqtSignal()
+    failed = pyqtSignal(object)
+
+    def __init__(self, enrollment_info, user_profile_outsider_allowed=False):
+        super().__init__()
+        self.setupUi(self)
+
+        self.label_waiting.hide()
+
+        self.line_edit_user_full_name.validity_changed.connect(self.check_infos)
+        self.line_edit_user_full_name.set_validator(validators.NotEmptyValidator())
+        self.line_edit_user_email.validity_changed.connect(self.check_infos)
+        self.line_edit_user_email.set_validator(validators.EmailValidator())
+        self.line_edit_device.validity_changed.connect(self.check_infos)
+        self.line_edit_device.set_validator(validators.DeviceLabelValidator())
+        self.combo_profile.currentIndexChanged.connect(self.check_infos)
+
+        self.line_edit_user_full_name.setText(
+            enrollment_info.request_info.requested_human_handle.label
+        )
+        self.line_edit_user_email.setText(enrollment_info.request_info.requested_human_handle.email)
+        self.line_edit_device.setText(enrollment_info.request_info.requested_device_label.str)
+
+        self.combo_profile.addItem(translate("TEXT_SELECT_USER_PROFILE"), None)
+        self.combo_profile.addItem(translate("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
+        self.combo_profile.addItem(translate("TEXT_USER_PROFILE_STANDARD"), UserProfile.STANDARD)
+        self.combo_profile.addItem(translate("TEXT_USER_PROFILE_ADMIN"), UserProfile.ADMIN)
+
+        item = self.combo_profile.model().item(2)
+        item.setToolTip(translate("TEXT_USER_PROFILE_STANDARD_TOOLTIP"))
+        item = self.combo_profile.model().item(3)
+        item.setToolTip(translate("TEXT_USER_PROFILE_ADMIN_TOOLTIP"))
+
+        if not user_profile_outsider_allowed:
+            item = self.combo_profile.model().item(1)
+            item.setEnabled(False)
+            item.setToolTip(translate("NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"))
+        else:
+            item = self.combo_profile.model().item(1)
+            item.setToolTip(translate("TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"))
+
+        # No profile by default, forcing the greeter to choose one
+        self.combo_profile.setCurrentIndex(0)
+
+        self.button_create_user.clicked.connect(self._on_create_user_clicked)
+
+    def check_infos(self, _=None):
+        if (
+            self.line_edit_user_full_name.is_input_valid()
+            and self.line_edit_device.is_input_valid()
+            and self.line_edit_user_email.is_input_valid()
+            and self.combo_profile.currentIndex() != 0
+        ):
+            self.button_create_user.setDisabled(False)
+        else:
+            self.button_create_user.setDisabled(True)
+
+    @property
+    def device_label(self):
+        return DeviceLabel(self.line_edit_device.text())
+
+    @property
+    def profile(self):
+        return self.combo_profile.currentData()
+
+    @property
+    def human_handle(self):
+        user_name = validators.trim_user_name(self.line_edit_user_full_name.text())
+        return HumanHandle(label=user_name, email=self.line_edit_user_email.text())
+
+    def _on_create_user_clicked(self):
+        self.dialog.accept()
+
+    @classmethod
+    def show_modal(cls, enrollment_info, parent, on_finished):
+        w = cls(enrollment_info)
+        d = GreyedDialog(
+            w, translate("TEXT_ENROLLMENT_ACCEPT_CHECK_INFO_TITLE"), parent=parent, width=800
+        )
+        w.dialog = d
+
+        def _on_finished(result):
+            return on_finished(result, w)
+
+        d.finished.connect(_on_finished)
+
+        # Unlike exec_, show is asynchronous and works within the main Qt loop
+        d.show()
+        return w
 
 
 class EnrollmentButton(QWidget, Ui_EnrollmentButton):
@@ -146,15 +241,29 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
                 eb.reject_clicked.connect(self._on_reject_clicked)
                 self.main_layout.addWidget(eb)
 
-    def _on_accept_clicked(self, rw):
-        rw.set_buttons_enabled(False)
-        self.jobs_ctx.submit_job(None, None, self.accept_recruit, enrollment_button=rw)
+    def _on_accept_clicked(self, eb):
+        def _on_finished(status, dialog):
+            if not status:
+                eb.set_buttons_enabled(True)
+            else:
+                self.jobs_ctx.submit_job(
+                    None,
+                    None,
+                    self.accept_recruit,
+                    enrollment_button=eb,
+                    device_label=dialog.device_label,
+                    human_handle=dialog.human_handle,
+                    profile=dialog.profile,
+                )
+
+        eb.set_buttons_enabled(False)
+        AcceptCheckInfoWidget.show_modal(eb.enrollment_info, self, on_finished=_on_finished)
 
     def _on_reject_clicked(self, rw):
         rw.set_buttons_enabled(False)
         self.jobs_ctx.submit_job(None, None, self.reject_recruit, enrollment_button=rw)
 
-    async def accept_recruit(self, enrollment_button):
+    async def accept_recruit(self, enrollment_button, device_label, human_handle, profile):
         from parsec_ext import smartcard
 
         try:
@@ -169,9 +278,9 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
                 author = self.core.device
                 user_certificate, redacted_user_certificate, device_certificate, redacted_device_certificate, user_confirmation = _create_new_user_certificates(
                     author,
-                    enrollment_info.request_info.requested_device_label,
-                    enrollment_info.request_info.requested_human_handle,
-                    UserProfile.STANDARD,
+                    device_label,
+                    human_handle,
+                    profile,
                     enrollment_info.request_info.public_key,
                     enrollment_info.request_info.verify_key,
                 )
