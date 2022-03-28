@@ -59,7 +59,8 @@ class CoreConfig:
     mountpoint_enabled: bool = False
     disabled_workspaces: FrozenSet[EntryID] = frozenset()
 
-    sentry_url: Optional[str] = None
+    sentry_dsn: Optional[str] = None
+    sentry_environment: str = ""
     telemetry_enabled: bool = True
     workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
     pki_extra_trust_roots: FrozenSet[Path] = frozenset()
@@ -96,7 +97,8 @@ def config_factory(
     backend_max_cooldown: int = 30,
     backend_connection_keepalive: Optional[int] = 29,
     backend_max_connections: int = 4,
-    sentry_url: str = None,
+    sentry_dsn: str = None,
+    sentry_environment: str = "",
     telemetry_enabled: bool = True,
     workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
     pki_extra_trust_roots: FrozenSet[Path] = frozenset(),
@@ -145,7 +147,8 @@ def config_factory(
         workspace_storage_cache_size=workspace_storage_cache_size,
         pki_extra_trust_roots=pki_extra_trust_roots,
         debug=debug,
-        sentry_url=sentry_url,
+        sentry_dsn=sentry_dsn,
+        sentry_environment=sentry_environment,
         gui_last_device=gui_last_device,
         gui_tray_enabled=gui_tray_enabled,
         gui_language=gui_language,

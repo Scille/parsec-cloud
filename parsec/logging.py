@@ -190,12 +190,17 @@ def configure_stdlib_logger(
     logger.setLevel(log_level)
 
 
-def build_sentry_configuration(sentry_url: str) -> dict:
+def build_sentry_configuration(dsn: str, environment: str) -> dict:
     sentry_logging = LoggingIntegration(
         level=logging.INFO,  # Capture as breadcrumbs
         event_level=logging.ERROR,  # Send as Sentry event
     )
-    return {"dsn": sentry_url, "release": __version__, "integrations": [sentry_logging]}
+    return {
+        "dsn": dsn,
+        "environment": environment,
+        "release": __version__,
+        "integrations": [sentry_logging],
+    }
 
 
 def configure_logging(log_level: str, log_format: str, log_stream: TextIO) -> None:
@@ -209,8 +214,8 @@ def configure_logging(log_level: str, log_format: str, log_stream: TextIO) -> No
     )
 
 
-def configure_sentry_logging(sentry_url: str) -> None:
-    config = build_sentry_configuration(sentry_url)
+def configure_sentry_logging(dsn: str, environment: str) -> None:
+    config = build_sentry_configuration(dsn, environment)
     sentry_init(**config)
 
 

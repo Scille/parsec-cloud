@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="styleSheet">
-   <string notr="true">#WorkspaceSharingWidget {
+   <string notr="true">#WorkspaceSharingWidget #scrollArea{
 	background-color: #F4F4F4;
 }
 

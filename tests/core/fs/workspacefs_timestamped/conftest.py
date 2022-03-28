@@ -3,6 +3,8 @@
 import pytest
 import pendulum
 
+from parsec.api.data import EntryName
+
 from tests.common import freeze_time
 
 day0 = pendulum.datetime(1999, 12, 31)
@@ -26,7 +28,7 @@ day14 = pendulum.datetime(2000, 1, 14)
 @pytest.mark.trio
 async def alice_workspace(alice_user_fs, running_backend):
     with freeze_time(day0):
-        wid = await alice_user_fs.workspace_create("w")
+        wid = await alice_user_fs.workspace_create(EntryName("w"))
         workspace = alice_user_fs.get_workspace(wid)
         await workspace.mkdir("/foo")
         # No sync, we want alice_workspace.to_timestamped to fail at day0

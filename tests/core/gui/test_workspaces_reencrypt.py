@@ -11,6 +11,7 @@ from parsec.core.fs import (
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
 )
+from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.types import WorkspaceRole
@@ -32,7 +33,7 @@ async def display_reencryption_button(aqtbot, monkeypatch, workspace_widget):
         assert workspace_widget.layout_workspaces.count() == 1
         wk_button = workspace_widget.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "w1"
+        assert wk_button.name == EntryName("w1")
 
     await aqtbot.wait_until(_workspace_displayed, timeout=2000)
     wk_button = workspace_widget.layout_workspaces.itemAt(0).widget()
@@ -53,7 +54,7 @@ async def display_reencryption_button(aqtbot, monkeypatch, workspace_widget):
 
 @pytest.fixture
 async def shared_workspace(running_backend, alice_user_fs, bob_user_fs, bob):
-    wid = await alice_user_fs.workspace_create("w1")
+    wid = await alice_user_fs.workspace_create(EntryName("w1"))
     await alice_user_fs.sync()
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.READER)
     await alice_user_fs.process_last_messages()
@@ -92,7 +93,7 @@ async def test_workspace_reencryption_display(
         assert workspace_w.layout_workspaces.count() == 1
         wk_button = workspace_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.name == "w1"
+        assert wk_button.name == EntryName("w1")
 
     await aqtbot.wait_until(partial(_workspace_displayed, w_w), timeout=2000)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
@@ -354,7 +355,7 @@ async def test_workspace_reencryption_continue(
     alice,
 ):
     # Create a shared workspace
-    wid = await alice_user_fs.workspace_create("w1")
+    wid = await alice_user_fs.workspace_create(EntryName("w1"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/foo.txt")
     await workspace.sync()

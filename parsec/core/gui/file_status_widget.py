@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.fs import WorkspaceFSTimestamped
+from parsec.core.types import DEFAULT_BLOCK_SIZE
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.core.gui.custom_dialogs import GreyedDialog
 from parsec.core.gui.file_size import get_filesize
@@ -58,35 +60,53 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         self.label_location.setText(str(full_path))
         self.label_filetype.setText(str(path_info["type"]))
 
-        self.label_workspace.setText(self.workspace_fs.get_workspace_name())
+        self.label_workspace.setText(self.workspace_fs.get_workspace_name().str)
         self.label_created_on.setText(format_datetime(created_time))
         self.label_last_updated_on.setText(format_datetime(updated_time))
         self.label_created_by.setText(creator.short_user_display)
         self.label_last_updated_by.setText(last_author.short_user_display)
 
         if block_info:
-            local_blocks = str(len(block_info.local_only_blocks))
-            remote_blocks = str(len(block_info.remote_only_blocks))
-            local_and_remote_blocks = str(len(block_info.local_and_remote_blocks))
-            if block_info.pending_chunks_size == 0:
+            local_blocks = len(block_info.local_only_blocks)
+            remote_blocks = len(block_info.remote_only_blocks)
+            local_and_remote_blocks = len(block_info.local_and_remote_blocks)
+            total_blocks = local_blocks + remote_blocks + local_and_remote_blocks
+
+            local_block_count = local_blocks + local_and_remote_blocks
+            local_block_percentage = int(
+                (local_block_count / total_blocks if total_blocks else 1) * 100.0
+            )
+            remote_block_count = remote_blocks + local_and_remote_blocks
+            remote_block_percentage = int(
+                (remote_block_count / total_blocks if total_blocks else 1) * 100.0
+            )
+
+            if local_block_count == total_blocks:
                 self.label_availability.setText(_("TEXT_YES"))
             else:
                 self.label_availability.setText(_("TEXT_NO"))
 
-            if block_info.local_only_blocks != 0:
+            if remote_block_count == total_blocks:
                 self.label_uploaded.setText(_("TEXT_YES"))
             else:
                 self.label_uploaded.setText(_("TEXT_NO"))
 
-            self.label_local.setText(local_blocks)
-            self.label_remote.setText(remote_blocks)
-            self.label_both.setText(local_and_remote_blocks)
+            self.label_local.setText(
+                f"{local_block_count}/{total_blocks} ({local_block_percentage}%)"
+            )
+            self.label_remote.setText(
+                f"{remote_block_count}/{total_blocks} ({remote_block_percentage}%)"
+            )
+            self.label_default_block_size.setText(get_filesize(DEFAULT_BLOCK_SIZE))
 
     @classmethod
     def show_modal(cls, jobs_ctx, workspace_fs, path, core, parent, on_finished):
         w = cls(jobs_ctx=jobs_ctx, workspace_fs=workspace_fs, path=path, core=core)
         d = GreyedDialog(
-            w, title=_("TEXT_FILE_STATUS_TITLE_name").format(name=path.name), parent=parent
+            w,
+            title=_("TEXT_FILE_STATUS_TITLE_name").format(name=path.name),
+            parent=parent,
+            width=1000,
         )
         w.dialog = d
         if on_finished:

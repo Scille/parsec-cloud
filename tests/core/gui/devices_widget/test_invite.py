@@ -55,6 +55,7 @@ async def test_invite_device_send_email(
     catch_greet_device_widget,
     bob,
     online,
+    snackbar_catcher,
 ):
     d_w = await logged_gui.test_switch_to_devices_widget()
 
@@ -83,6 +84,11 @@ async def test_invite_device_send_email(
 
         def _email_sent():
             assert email_letterbox.emails == [(bob.human_handle.email, ANY)]
+            assert snackbar_catcher.snackbars == [
+                ("INFO", f"Email sent to <b>{bob.human_handle.email}</b>")
+            ]
+            assert gdi_w.button_send_email.isEnabled() is False
+            assert gdi_w.button_send_email.text() == "Email sent"
 
         await aqtbot.wait_until(_email_sent)
         assert not autoclose_dialog.dialogs
@@ -224,7 +230,7 @@ async def test_invite_and_greet_device(
             assert gdce_w.widget_greeter_code.isVisible()
             assert not gdce_w.widget_claimer_code.isVisible()
             assert not gdce_w.code_input_widget.isVisible()
-            assert gdce_w.line_edit_greeter_code.text() == greeter_sas
+            assert gdce_w.line_edit_greeter_code.text() == greeter_sas.str
 
         await aqtbot.wait_until(_greeter_code_displayed)
 

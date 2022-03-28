@@ -7,7 +7,7 @@ pytest-rerunfailures==10.2
 hypothesis==6.31.4
 hypothesis-trio==0.6.0
 trustme==0.9.0
-winfspy[test]==0.8.2;platform_system=="Windows"
+winfspy[test]==0.8.3;platform_system=="Windows"
 # Documentation generation requirements
 sphinx==4.4.0
 sphinx-intl==2.0.1

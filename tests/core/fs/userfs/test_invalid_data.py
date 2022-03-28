@@ -3,6 +3,7 @@
 import pytest
 from pendulum import datetime
 
+from parsec.api.data import EntryName
 from parsec.api.protocol import VlobID
 from parsec.core.fs import FSError
 
@@ -111,11 +112,11 @@ async def test_invalid_timestamp(testbed, alice, alice2):
 @pytest.mark.trio
 async def test_create_workspace_bad_name(alice_user_fs):
     with pytest.raises(ValueError):
-        await alice_user_fs.workspace_create("..")
+        await alice_user_fs.workspace_create(EntryName(".."))
 
 
 @pytest.mark.trio
 async def test_rename_workspace_bad_name(alice_user_fs):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     with pytest.raises(ValueError):
-        await alice_user_fs.workspace_rename(wid, "..")
+        await alice_user_fs.workspace_rename(wid, EntryName(".."))

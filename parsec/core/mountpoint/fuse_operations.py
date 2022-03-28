@@ -12,7 +12,7 @@ from contextlib import contextmanager
 from stat import S_IRWXU, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
-from parsec.api.data import EntryID
+from parsec.api.data import EntryID, EntryName
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
@@ -32,8 +32,8 @@ logger = get_logger()
 BANNED_PREFIXES = (".Trash-",)
 
 
-def is_banned(name):
-    return any(name.startswith(prefix) for prefix in BANNED_PREFIXES)
+def is_banned(name: EntryName):
+    return any(name.str.startswith(prefix) for prefix in BANNED_PREFIXES)
 
 
 @contextmanager
@@ -182,9 +182,9 @@ class FuseOperations(LoggingMixIn, Operations):
         return {
             "f_bsize": 512 * 1024,  # 512 KB, i.e the default block size
             "f_frsize": 512 * 1024,  # 512 KB, i.e the default block size
-            "f_blocks": 512 * 1024,  # 512 K blocks is 1 TB
-            "f_bfree": 512 * 1024,  # 512 K blocks is 1 TB
-            "f_bavail": 512 * 1024,  # 512 K blocks is 1 TB
+            "f_blocks": 2 * 1024 ** 2,  # 2 Mblocks is 1 TB
+            "f_bfree": 2 * 1024 ** 2,  # 2 Mblocks is 1 TB
+            "f_bavail": 2 * 1024 ** 2,  # 2 Mblocks is 1 TB
             "f_namemax": 255,  # 255 bytes as maximum length for filenames
         }
 
@@ -231,7 +231,7 @@ class FuseOperations(LoggingMixIn, Operations):
         if stat["type"] == "file":
             raise FuseOSError(errno.ENOTDIR)
 
-        return [".", ".."] + list(stat["children"])
+        return [".", ".."] + list(c.str for c in stat["children"])
 
     def create(self, path: FsPath, mode: int):
         if is_banned(path.name):

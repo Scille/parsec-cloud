@@ -5,6 +5,7 @@ import pytest
 from string import ascii_lowercase
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import Bundle, initialize, rule
+from parsec.api.data import EntryName
 
 
 def get_path(path):
@@ -35,7 +36,7 @@ def test_fs_online_tree_and_sync(user_fs_online_state_machine, oracle_fs_with_sy
 
             await self.start_backend()
             await self.restart_user_fs(self.device)
-            self.wid = await self.user_fs.workspace_create("w")
+            self.wid = await self.user_fs.workspace_create(EntryName("w"))
             workspace = self.user_fs.get_workspace(self.wid)
             await workspace.sync()
             await self.user_fs.sync()

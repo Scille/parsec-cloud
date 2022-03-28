@@ -115,7 +115,7 @@ class WorkspaceFS:
         try:
             name = self.get_workspace_name()
         except Exception:
-            name = "<could not retrieve name>"
+            name = EntryName("<could not retrieve name>")
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
 
     async def get_blocks_by_type(self, path: AnyPath, limit: int = 1000000000) -> BlockInfo:
@@ -148,7 +148,7 @@ class WorkspaceFS:
         """
         return await self.remote_loader.receive_load_blocks(blocks, nursery)
 
-    def get_workspace_name(self) -> str:
+    def get_workspace_name(self) -> EntryName:
         return self.get_workspace_entry().name
 
     def get_encryption_revision(self) -> int:
@@ -752,7 +752,7 @@ class WorkspaceFS:
             if not isinstance(manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
                 return result
 
-            children: Dict[str, Dict[str, object]] = {}
+            children: Dict[EntryName, Dict[str, object]] = {}
             for key, value in manifest.children.items():
                 children[key] = await rec(value)
             result["children"] = children

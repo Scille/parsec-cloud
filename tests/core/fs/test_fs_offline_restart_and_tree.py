@@ -6,6 +6,8 @@ from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule, Bundle
 from string import ascii_lowercase
 
+from parsec.api.data import EntryName
+
 
 def get_path(path):
     return path[2:] if path[2:] else "/"
@@ -27,7 +29,7 @@ def test_fs_offline_restart_and_tree(user_fs_offline_state_machine, oracle_fs_fa
             await self.reset_all()
             self.device = alice
             await self.restart_user_fs(self.device)
-            self.wid = await self.user_fs.workspace_create("w")
+            self.wid = await self.user_fs.workspace_create(EntryName("w"))
             self.workspace = self.user_fs.get_workspace(self.wid)
 
             self.oracle_fs = oracle_fs_factory()

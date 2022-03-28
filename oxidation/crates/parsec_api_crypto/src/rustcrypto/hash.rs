@@ -1,10 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use std::hash::Hash;
-
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
+use std::hash::Hash;
+
+use crate::CryptoError;
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
@@ -42,10 +43,10 @@ impl AsRef<[u8]> for HashDigest {
 }
 
 impl TryFrom<&[u8]> for HashDigest {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         // if you wonder, `try_into` will also fail if data is too small
-        let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| ("Invalid data size"))?;
+        let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
         Ok(Self(arr.into()))
     }
 }
@@ -57,13 +58,13 @@ impl From<[u8; Self::SIZE]> for HashDigest {
 }
 
 impl TryFrom<ByteBuf> for HashDigest {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
         // if you wonder, `try_into` will also fail if data is too small
         let arr: [u8; Self::SIZE] = data
             .into_vec()
             .try_into()
-            .map_err(|_| ("Invalid data size"))?;
+            .map_err(|_| CryptoError::DataSize)?;
         Ok(Self(arr.into()))
     }
 }

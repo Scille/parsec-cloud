@@ -9,8 +9,8 @@ use pyo3::types::{PyByteArray, PyBytes, PyType};
 import_exception!(nacl.exceptions, CryptoError);
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
-pub(crate) struct HashDigest(parsec_api_crypto::HashDigest);
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct HashDigest(pub parsec_api_crypto::HashDigest);
 
 #[pymethods]
 impl HashDigest {
@@ -18,7 +18,7 @@ impl HashDigest {
     fn new(hash: &[u8]) -> PyResult<Self> {
         match parsec_api_crypto::HashDigest::try_from(hash) {
             Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -58,7 +58,7 @@ impl HashDigest {
 
 #[pyclass]
 #[derive(PartialEq, Eq)]
-pub(crate) struct SigningKey(parsec_api_crypto::SigningKey);
+pub(crate) struct SigningKey(pub parsec_api_crypto::SigningKey);
 
 #[pymethods]
 impl SigningKey {
@@ -66,7 +66,7 @@ impl SigningKey {
     fn new(data: &[u8]) -> PyResult<Self> {
         match parsec_api_crypto::SigningKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -111,7 +111,7 @@ impl VerifyKey {
     pub fn new(data: &[u8]) -> PyResult<Self> {
         match parsec_api_crypto::VerifyKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -156,8 +156,8 @@ impl VerifyKey {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
-pub(crate) struct SecretKey(parsec_api_crypto::SecretKey);
+#[derive(PartialEq, Eq, Clone)]
+pub struct SecretKey(pub parsec_api_crypto::SecretKey);
 
 #[pymethods]
 impl SecretKey {
@@ -165,7 +165,7 @@ impl SecretKey {
     fn new(data: &[u8]) -> PyResult<Self> {
         match parsec_api_crypto::SecretKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -193,7 +193,7 @@ impl SecretKey {
     pub fn decrypt<'p>(&self, py: Python<'p>, ciphered: &[u8]) -> PyResult<&'p PyBytes> {
         match self.0.decrypt(ciphered) {
             Ok(v) => Ok(PyBytes::new(py, &v)),
-            Err(err) => Err(CryptoError::new_err(err)),
+            Err(err) => Err(CryptoError::new_err(err.to_string())),
         }
     }
 
@@ -220,8 +220,8 @@ impl SecretKey {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
-pub(crate) struct PrivateKey(parsec_api_crypto::PrivateKey);
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct PrivateKey(pub parsec_api_crypto::PrivateKey);
 
 #[pymethods]
 impl PrivateKey {
@@ -229,7 +229,7 @@ impl PrivateKey {
     fn new(data: &[u8]) -> PyResult<Self> {
         match parsec_api_crypto::PrivateKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -246,7 +246,7 @@ impl PrivateKey {
     fn decrypt_from_self<'p>(&self, py: Python<'p>, ciphered: &[u8]) -> PyResult<&'p PyBytes> {
         match self.0.decrypt_from_self(ciphered) {
             Ok(v) => Ok(PyBytes::new(py, &v)),
-            Err(err) => Err(CryptoError::new_err(err)),
+            Err(err) => Err(CryptoError::new_err(err.to_string())),
         }
     }
 
@@ -268,8 +268,8 @@ impl PrivateKey {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
-pub(crate) struct PublicKey(parsec_api_crypto::PublicKey);
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct PublicKey(pub parsec_api_crypto::PublicKey);
 
 #[pymethods]
 impl PublicKey {
@@ -277,7 +277,7 @@ impl PublicKey {
     fn new(data: &[u8]) -> PyResult<Self> {
         match parsec_api_crypto::PublicKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 

@@ -1,8 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-// Data pipeline:
-// content -> serialized -> compressed -> signed -> encrypted
-
 #[macro_export]
 macro_rules! new_data_type_enum {
     (
@@ -11,16 +8,8 @@ macro_rules! new_data_type_enum {
         $(,)?
     ) => {
         // Enum with single value works as a constant field
-        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-        enum $name {
-            Value,
-        }
-
-        impl Default for $name {
-            fn default() -> Self {
-                $name::Value
-            }
-        }
+        #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
+        pub struct $name;
 
         impl Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -50,7 +39,7 @@ macro_rules! new_data_type_enum {
                         E: serde::de::Error,
                     {
                         if v == $value {
-                            Ok($name::Value)
+                            Ok($name)
                         } else {
                             Err(serde::de::Error::invalid_type(
                                 serde::de::Unexpected::Str(v),
@@ -84,14 +73,14 @@ macro_rules! new_data_struct_type {
 
             #[serde_as]
             #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
-            struct $name {
+            pub struct $name {
 
                 #[serde(rename="type")]
-                type_: [<$name DataType>],
+                pub type_: [<$name DataType>],
 
                 $(
                     $(#[$field_cfgs])*
-                    $field: $field_type
+                    pub $field: $field_type
                 ),*
 
             }
@@ -101,7 +90,7 @@ macro_rules! new_data_struct_type {
 }
 
 #[macro_export]
-macro_rules! impl_transparent_data_format_convertion {
+macro_rules! impl_transparent_data_format_conversion {
     ($obj_type:ty, $data_type:ty, $($field:ident),* $(,)?) => {
 
         impl From<$data_type> for $obj_type {
@@ -124,6 +113,6 @@ macro_rules! impl_transparent_data_format_convertion {
     };
 }
 
-pub use impl_transparent_data_format_convertion;
+pub use impl_transparent_data_format_conversion;
 pub use new_data_struct_type;
 pub use new_data_type_enum;

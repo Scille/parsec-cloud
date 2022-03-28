@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use hex_literal::hex;
-use rstest::*;
+use rstest::rstest;
 
 use parsec_api_crypto::*;
 use parsec_api_types::*;
@@ -30,7 +30,7 @@ fn serde_sharing_granted_message(alice: &Device, bob: &Device) {
         "e3972fa90b12566cc9e7913b3a86be8c2d56a74a4215ee11843f0048cc13e4fc573b9ff2b97473"
         "686dcc4a88699d156ba17e"
     );
-    let timestamp = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let timestamp = "2021-12-04T11:50:43.208821Z".parse().unwrap();
 
     let expected = MessageContent::SharingGranted {
         author: alice.device_id.to_owned(),
@@ -38,7 +38,7 @@ fn serde_sharing_granted_message(alice: &Device, bob: &Device) {
         name: "wksp1".parse().unwrap(),
         id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
         encryption_revision: 3,
-        encrypted_on: "2021-12-04T11:50:43.208820992Z".parse().unwrap(),
+        encrypted_on: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         key: SecretKey::from(hex!(
             "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
         )),
@@ -91,7 +91,7 @@ fn serde_sharing_reencrypted_message(alice: &Device, bob: &Device) {
         "71cf79a00b82dab088a73a16e9c0deeaa79800ef8089851b689a678b45b404e79a05f43e12586b"
         "ac45feee5177af0487"
     );
-    let timestamp = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let timestamp = "2021-12-04T11:50:43.208821Z".parse().unwrap();
 
     let expected = MessageContent::SharingReencrypted {
         author: alice.device_id.to_owned(),
@@ -99,7 +99,7 @@ fn serde_sharing_reencrypted_message(alice: &Device, bob: &Device) {
         name: "wksp1".parse().unwrap(),
         id: "87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap(),
         encryption_revision: 3,
-        encrypted_on: "2021-12-04T11:50:43.208820992Z".parse().unwrap(),
+        encrypted_on: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         key: SecretKey::from(hex!(
             "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
         )),
@@ -146,7 +146,7 @@ fn serde_sharing_revoked_message(alice: &Device, bob: &Device) {
         "d9cc0f8eb5965858e5291fc59b7e63a518303a6ae7b23a819aac032422f21fc404f003665e4776"
         "69de94e7305ee83ead"
     );
-    let timestamp = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let timestamp = "2021-12-04T11:50:43.208821Z".parse().unwrap();
 
     let expected = MessageContent::SharingRevoked {
         author: alice.device_id.to_owned(),
@@ -194,7 +194,7 @@ fn serde_ping_message(alice: &Device, bob: &Device) {
         "4e17745404ed85b67e8246aa3f5ba1e8cf8c8f1f0beb50da6ed53dbc08b478b479138607ed319f"
         "8a22f1a239d3bcf431a667d9d42f755916cdefaa"
     );
-    let timestamp = "2021-12-04T11:50:43.208820992Z".parse().unwrap();
+    let timestamp = "2021-12-04T11:50:43.208821Z".parse().unwrap();
 
     let expected = MessageContent::Ping {
         author: alice.device_id.to_owned(),

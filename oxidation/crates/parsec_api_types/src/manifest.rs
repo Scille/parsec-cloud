@@ -1,15 +1,67 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::prelude::*;
+use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::collections::HashMap;
+use std::io::{Read, Write};
+use std::ops::Deref;
 use unicode_normalization::UnicodeNormalization;
 
-use crate::data_macros::{impl_transparent_data_format_convertion, new_data_struct_type};
-use crate::ext_types::{new_uuid_type, DateTimeExtFormat};
-use crate::DeviceID;
-use parsec_api_crypto::{HashDigest, SecretKey};
+use parsec_api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
+
+use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
+use crate::ext_types::new_uuid_type;
+use crate::{DateTime, DeviceID};
+
+macro_rules! impl_manifest_dump_load {
+    ($name:ident) => {
+        impl $name {
+            pub fn dump_sign_and_encrypt(
+                &self,
+                author_signkey: &SigningKey,
+                key: &SecretKey,
+            ) -> Vec<u8> {
+                let serialized =
+                    ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
+                e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+                let compressed = e.finish().unwrap_or_else(|_| unreachable!());
+                let signed = author_signkey.sign(&compressed);
+                key.encrypt(&signed)
+            }
+
+            pub fn decrypt_verify_and_load(
+                encrypted: &[u8],
+                key: &SecretKey,
+                author_verify_key: &VerifyKey,
+                expected_author: &DeviceID,
+                expected_timestamp: DateTime,
+            ) -> Result<Self, &'static str> {
+                let signed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+                let compressed = author_verify_key
+                    .verify(&signed)
+                    .map_err(|_| "Invalid signature")?;
+                let mut serialized = vec![];
+
+                ZlibDecoder::new(&compressed[..])
+                    .read_to_end(&mut serialized)
+                    .map_err(|_| "Invalid compression")?;
+
+                let obj = ::rmp_serde::from_read_ref::<_, Self>(&serialized)
+                    .map_err(|_| "Invalid serialization")?;
+
+                if obj.author != *expected_author {
+                    Err("Unexpected author")
+                } else if obj.timestamp != expected_timestamp {
+                    Err("Unexpected timestamp")
+                } else {
+                    Ok(obj)
+                }
+            }
+        }
+    };
+}
 
 /*
  * EntryID, BlockID, RealmID, VlobID
@@ -19,6 +71,7 @@ new_uuid_type!(pub EntryID);
 new_uuid_type!(pub BlockID);
 new_uuid_type!(pub RealmID);
 new_uuid_type!(pub VlobID);
+new_uuid_type!(pub ChunkID);
 
 /*
  * BlockAccess
@@ -28,8 +81,8 @@ new_uuid_type!(pub VlobID);
 pub struct BlockAccess {
     pub id: BlockID,
     pub key: SecretKey,
-    pub offset: u32, // TODO: this limit file size to 8Go, is this okay ?
-    pub size: u32,
+    pub offset: u64,
+    pub size: u64,
     pub digest: HashDigest,
 }
 
@@ -37,62 +90,13 @@ pub struct BlockAccess {
  * RealmRole
  */
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum RealmRole {
     Owner,
     Manager,
     Contributor,
     Reader,
-}
-
-impl Serialize for RealmRole {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::ser::Serializer,
-    {
-        let value = match self {
-            RealmRole::Owner => "OWNER",
-            RealmRole::Manager => "MANAGER",
-            RealmRole::Contributor => "CONTRIBUTOR",
-            RealmRole::Reader => "READER",
-        };
-        serializer.serialize_str(value)
-    }
-}
-
-impl<'de> Deserialize<'de> for RealmRole {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::de::Deserializer<'de>,
-    {
-        struct Visitor;
-
-        impl<'de> serde::de::Visitor<'de> for Visitor {
-            type Value = RealmRole;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str(concat!("an user profile as string"))
-            }
-
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                match v {
-                    "OWNER" => Ok(RealmRole::Owner),
-                    "MANAGER" => Ok(RealmRole::Manager),
-                    "CONTRIBUTOR" => Ok(RealmRole::Contributor),
-                    "READER" => Ok(RealmRole::Reader),
-                    _ => Err(serde::de::Error::invalid_type(
-                        serde::de::Unexpected::Str(v),
-                        &self,
-                    )),
-                }
-            }
-        }
-
-        deserializer.deserialize_str(Visitor)
-    }
 }
 
 /*
@@ -166,27 +170,6 @@ impl std::str::FromStr for EntryName {
 }
 
 /*
- * ManifestEntry
- */
-
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(transparent)]
-pub struct ManifestEntry(pub EntryID);
-
-impl AsRef<EntryID> for ManifestEntry {
-    #[inline]
-    fn as_ref(&self) -> &EntryID {
-        &self.0
-    }
-}
-
-impl From<EntryID> for ManifestEntry {
-    fn from(entry_id: EntryID) -> Self {
-        Self(entry_id)
-    }
-}
-
-/*
  * WorkspaceEntry
  */
 
@@ -197,28 +180,25 @@ pub struct WorkspaceEntry {
     pub name: EntryName,
     pub key: SecretKey,
     pub encryption_revision: u32,
-    #[serde_as(as = "DateTimeExtFormat")]
-    pub encrypted_on: DateTime<Utc>,
-    #[serde_as(as = "DateTimeExtFormat")]
-    pub role_cached_on: DateTime<Utc>,
+    pub encrypted_on: DateTime,
+    pub role_cached_on: DateTime,
     pub role: Option<RealmRole>,
 }
 
 impl WorkspaceEntry {
-    pub fn new(name: &EntryName) -> Self {
-        let now = Utc::now();
+    pub fn generate(name: EntryName, timestamp: DateTime) -> Self {
         Self {
             id: EntryID::default(),
-            name: name.to_owned(),
+            name,
             key: SecretKey::generate(),
             encryption_revision: 1,
-            encrypted_on: now,
-            role_cached_on: now,
+            encrypted_on: timestamp,
+            role_cached_on: timestamp,
             role: Some(RealmRole::Owner),
         }
     }
 
-    pub fn is_revoked(self) -> bool {
+    pub fn is_revoked(&self) -> bool {
         self.role.is_none()
     }
 }
@@ -243,58 +223,36 @@ fn generate_local_author_legacy_placeholder() -> DeviceID {
     LEGACY_PLACEHOLDER.clone()
 }
 
-macro_rules! impl_dump_sign_and_encrypt {
-    ($name:ident) => {
-        impl $name {
-            pub fn dump_sign_and_encrypt(
-                &self,
-                author_signkey: &::parsec_api_crypto::SigningKey,
-                key: &::parsec_api_crypto::SecretKey,
-            ) -> Vec<u8> {
-                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
-                let mut e =
-                    ::flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-                use std::io::Write;
-                e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
-                let compressed = e.finish().unwrap_or_else(|_| unreachable!());
-                let signed = author_signkey.sign(&compressed);
-                key.encrypt(&signed)
-            }
+/*
+ * Blocksize
+ */
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Blocksize(u64);
+
+impl TryFrom<u64> for Blocksize {
+    type Error = &'static str;
+    fn try_from(data: u64) -> Result<Self, Self::Error> {
+        if data < 8 {
+            return Err("Invalid blocksize");
         }
-    };
+
+        Ok(Self(data))
+    }
 }
 
-macro_rules! impl_decrypt_verify_and_load {
-    ($name:ident) => {
-        impl $name {
-            pub fn decrypt_verify_and_load(
-                encrypted: &[u8],
-                key: &::parsec_api_crypto::SecretKey,
-                author_verify_key: &::parsec_api_crypto::VerifyKey,
-                expected_author: &DeviceID,
-                expected_timestamp: &DateTime<Utc>,
-            ) -> Result<$name, &'static str> {
-                let signed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-                let compressed = author_verify_key
-                    .verify(&signed)
-                    .map_err(|_| "Invalid signature")?;
-                let mut serialized = vec![];
-                use std::io::Read;
-                ::flate2::read::ZlibDecoder::new(&compressed[..])
-                    .read_to_end(&mut serialized)
-                    .map_err(|_| "Invalid compression")?;
-                let obj: $name =
-                    rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
-                if &obj.author != expected_author {
-                    return Err("Unexpected author");
-                } else if &obj.timestamp != expected_timestamp {
-                    Err("Unexpected timestamp")
-                } else {
-                    Ok(obj)
-                }
-            }
-        }
-    };
+impl From<Blocksize> for u64 {
+    fn from(data: Blocksize) -> Self {
+        data.0
+    }
+}
+
+impl Deref for Blocksize {
+    type Target = u64;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 /*
@@ -302,26 +260,25 @@ macro_rules! impl_decrypt_verify_and_load {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "FileManifestData", from = "FileManifestData")]
+#[serde(into = "FileManifestData", try_from = "FileManifestData")]
 pub struct FileManifest {
     pub author: DeviceID,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub id: EntryID,
     pub parent: EntryID,
     // Version 0 means the data is not synchronized
     pub version: u32,
-    pub created: DateTime<Utc>,
-    pub updated: DateTime<Utc>,
+    pub created: DateTime,
+    pub updated: DateTime,
     /// Total size of the file
-    pub size: u32, // TODO: this limit file size to 8Go, is this okay ?
+    pub size: u64,
     /// Size of a single block
-    pub blocksize: u32,
+    pub blocksize: Blocksize,
     pub blocks: Vec<BlockAccess>,
 }
 
-impl_dump_sign_and_encrypt!(FileManifest);
-impl_decrypt_verify_and_load!(FileManifest);
+impl_manifest_dump_load!(FileManifest);
 
 new_data_struct_type!(
     FileManifestData,
@@ -330,35 +287,53 @@ new_data_struct_type!(
     // Compatibility with versions <= 1.14
     #[serde(default = "generate_local_author_legacy_placeholder")]
     author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
     id: EntryID,
     parent: EntryID,
     version: u32,
-    #[serde_as(as = "DateTimeExtFormat")]
-    created: DateTime<Utc>,
-    #[serde_as(as = "DateTimeExtFormat")]
-    updated: DateTime<Utc>,
-    size: u32,
-    blocksize: u32,
+    created: DateTime,
+    updated: DateTime,
+    size: u64,
+    blocksize: u64,
     blocks: Vec<BlockAccess>,
 
 );
 
-impl_transparent_data_format_convertion!(
-    FileManifest,
-    FileManifestData,
-    author,
-    timestamp,
-    id,
-    parent,
-    version,
-    created,
-    updated,
-    size,
-    blocksize,
-    blocks,
-);
+impl TryFrom<FileManifestData> for FileManifest {
+    type Error = &'static str;
+    fn try_from(data: FileManifestData) -> Result<Self, Self::Error> {
+        Ok(Self {
+            author: data.author,
+            timestamp: data.timestamp,
+            id: data.id,
+            parent: data.parent,
+            version: data.version,
+            created: data.created,
+            updated: data.updated,
+            size: data.size,
+            blocksize: data.blocksize.try_into()?,
+            blocks: data.blocks,
+        })
+    }
+}
+
+impl From<FileManifest> for FileManifestData {
+    fn from(obj: FileManifest) -> Self {
+        Self {
+            type_: FileManifestDataDataType,
+            author: obj.author,
+            timestamp: obj.timestamp,
+            id: obj.id,
+            parent: obj.parent,
+            version: obj.version,
+            created: obj.created,
+            updated: obj.updated,
+            size: obj.size,
+            blocksize: obj.blocksize.into(),
+            blocks: obj.blocks,
+        }
+    }
+}
 
 /*
  * FolderManifest
@@ -368,19 +343,18 @@ impl_transparent_data_format_convertion!(
 #[serde(into = "FolderManifestData", from = "FolderManifestData")]
 pub struct FolderManifest {
     pub author: DeviceID,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub id: EntryID,
     pub parent: EntryID,
     // Version 0 means the data is not synchronized
     pub version: u32,
-    pub created: DateTime<Utc>,
-    pub updated: DateTime<Utc>,
-    pub children: HashMap<EntryName, ManifestEntry>,
+    pub created: DateTime,
+    pub updated: DateTime,
+    pub children: HashMap<EntryName, EntryID>,
 }
 
-impl_dump_sign_and_encrypt!(FolderManifest);
-impl_decrypt_verify_and_load!(FolderManifest);
+impl_manifest_dump_load!(FolderManifest);
 
 new_data_struct_type!(
     FolderManifestData,
@@ -389,19 +363,16 @@ new_data_struct_type!(
     // Compatibility with versions <= 1.14
     #[serde(default = "generate_local_author_legacy_placeholder")]
     author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
     id: EntryID,
     parent: EntryID,
     version: u32,
-    #[serde_as(as = "DateTimeExtFormat")]
-    created: DateTime<Utc>,
-    #[serde_as(as = "DateTimeExtFormat")]
-    updated: DateTime<Utc>,
-    children: HashMap<EntryName, ManifestEntry>,
+    created: DateTime,
+    updated: DateTime,
+    children: HashMap<EntryName, EntryID>,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     FolderManifest,
     FolderManifestData,
     author,
@@ -422,18 +393,17 @@ impl_transparent_data_format_convertion!(
 #[serde(into = "WorkspaceManifestData", from = "WorkspaceManifestData")]
 pub struct WorkspaceManifest {
     pub author: DeviceID,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub id: EntryID,
     // Version 0 means the data is not synchronized
     pub version: u32,
-    pub created: DateTime<Utc>,
-    pub updated: DateTime<Utc>,
-    pub children: HashMap<EntryName, ManifestEntry>,
+    pub created: DateTime,
+    pub updated: DateTime,
+    pub children: HashMap<EntryName, EntryID>,
 }
 
-impl_dump_sign_and_encrypt!(WorkspaceManifest);
-impl_decrypt_verify_and_load!(WorkspaceManifest);
+impl_manifest_dump_load!(WorkspaceManifest);
 
 new_data_struct_type!(
     WorkspaceManifestData,
@@ -442,18 +412,15 @@ new_data_struct_type!(
     // Compatibility with versions <= 1.14
     #[serde(default = "generate_local_author_legacy_placeholder")]
     author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
     id: EntryID,
     version: u32,
-    #[serde_as(as = "DateTimeExtFormat")]
-    created: DateTime<Utc>,
-    #[serde_as(as = "DateTimeExtFormat")]
-    updated: DateTime<Utc>,
-    children: HashMap<EntryName, ManifestEntry>,
+    created: DateTime,
+    updated: DateTime,
+    children: HashMap<EntryName, EntryID>,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     WorkspaceManifest,
     WorkspaceManifestData,
     author,
@@ -473,13 +440,13 @@ impl_transparent_data_format_convertion!(
 #[serde(into = "UserManifestData", from = "UserManifestData")]
 pub struct UserManifest {
     pub author: DeviceID,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub id: EntryID,
     // Version 0 means the data is not synchronized
     pub version: u32,
-    pub created: DateTime<Utc>,
-    pub updated: DateTime<Utc>,
+    pub created: DateTime,
+    pub updated: DateTime,
     pub last_processed_message: u32,
     pub workspaces: Vec<WorkspaceEntry>,
 }
@@ -490,8 +457,7 @@ impl UserManifest {
     }
 }
 
-impl_dump_sign_and_encrypt!(UserManifest);
-impl_decrypt_verify_and_load!(UserManifest);
+impl_manifest_dump_load!(UserManifest);
 
 new_data_struct_type!(
     UserManifestData,
@@ -500,19 +466,16 @@ new_data_struct_type!(
     // Compatibility with versions <= 1.14
     #[serde(default = "generate_local_author_legacy_placeholder")]
     author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
     id: EntryID,
     version: u32,
-    #[serde_as(as = "DateTimeExtFormat")]
-    created: DateTime<Utc>,
-    #[serde_as(as = "DateTimeExtFormat")]
-    updated: DateTime<Utc>,
+    created: DateTime,
+    updated: DateTime,
     last_processed_message: u32,
     workspaces: Vec<WorkspaceEntry>,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     UserManifest,
     UserManifestData,
     author,

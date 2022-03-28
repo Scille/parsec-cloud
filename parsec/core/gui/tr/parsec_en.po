@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-03-07 10:11+0100\n"
+"POT-Creation-Date: 2022-03-10 09:19+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -67,35 +67,35 @@ msgstr ""
 "You do not have access to the workspace containing the file. It may not "
 "have been shared with you."
 
-msgid "NOTIF_INFO_WORKSPACE_READ_ONLY"
+msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "Server address has been copied to the clipboard."
+
+msgid "TEXT_NOTIF_INFO_WORKSPACE_READ_ONLY"
 msgstr "This workspace is read-only"
 
-msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
-msgstr ""
+msgid "TEXT_NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_workspace"
+msgstr "Read access to <b>{workspace}</b> has been lost."
 
-msgid "NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}"
-msgstr ""
+msgid "TEXT_NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_workspace"
+msgstr "Write access to <b>{workspace}</b> has been lost."
 
-msgid "NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}"
-msgstr ""
+msgid "TEXT_NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_workspace"
+msgstr "The workspace <b>{workspace}</b> is in maintenance."
 
-msgid "NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}"
-msgstr ""
+msgid "TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error"
+msgstr "Error with the mountpoint for <b>{workspace}</b>."
 
-msgid "NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}"
-msgstr ""
+msgid "TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error"
+msgstr "Error with the mountpoint for <b>{workspace}</b>."
 
-msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}"
-msgstr ""
+msgid "TEXT_NOTIF_INFO_WORKSPACE_SHARED_workspace"
+msgstr "The workspace <b>{workspace}</b> has been shared with you."
 
-msgid "NOTIF_INFO_WORKSPACE_SHARED_{}"
-msgstr ""
+msgid "TEXT_NOTIF_INFO_WORKSPACE_ROLE_UPDATED_workspace"
+msgstr "Your role on the workspace <b>{workspace}</b> has changed."
 
-msgid "NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}"
-msgstr ""
-
-msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
-msgstr ""
+msgid "TEXT_NOTIF_INFO_WORKSPACE_UNSHARED_workspace"
+msgstr "The workspace <b>{workspace}</b> is no longer shared with you."
 
 msgid "TEXT_BACKEND_STATE_CONNECTED"
 msgstr "Connected"
@@ -341,6 +341,9 @@ msgstr ""
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Create a recovery device"
 
+msgid "TEXT_DEVICE_RECOVERY_IMPORT_WIZARD_TITLE"
+msgstr "Recover a device"
+
 msgid "ACTION_IMPORT_KEY"
 msgstr "Recover a device"
 
@@ -510,10 +513,8 @@ msgstr ""
 
 msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
-"Cannot show the status of multiple files at once. Please select a single"
-" file."
-
-
+"Cannot show the status of multiple files at once. Please select a single "
+"file."
 
 msgid "TEXT_FILE_RENAME_TITLE"
 msgstr "Rename a file"
@@ -604,6 +605,11 @@ msgstr ""
 "There has been an error while importing the files. Some files may not "
 "have been imported."
 
+msgid "TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"
+msgstr ""
+"There has been an error while writing to the disk. It might be already full, "
+"please check your disk space."
+
 msgid "TEXT_FILE_CREATE_FOLDER_TITLE"
 msgstr "Create a folder"
 
@@ -684,6 +690,9 @@ msgstr "The invitation link has been copied to the clipboard"
 msgid "TEXT_GREET_DEVICE_EMAIL_SENT"
 msgstr "Email sent"
 
+msgid "TEXT_GREET_DEVICE_EMAIL_SENT_email"
+msgstr "Email sent to <b>{email}</b>"
+
 msgid "TEXT_EMAIL_FAILED_TO_SEND_TITLE"
 msgstr "Failed to send email"
 
@@ -763,6 +772,9 @@ msgstr ""
 msgid "TEXT_GREET_USER_PEER_RESET"
 msgstr "The invitee has reset the process. We will restart from the beginning."
 
+msgid "TEXT_SELECT_USER_PROFILE"
+msgstr "Select a profile for the new user:"
+
 msgid "TEXT_USER_PROFILE_OUTSIDER"
 msgstr "Outsider"
 
@@ -772,8 +784,27 @@ msgstr "Standard"
 msgid "TEXT_USER_PROFILE_ADMIN"
 msgstr "Administrator"
 
+msgid "TEXT_USER_PROFILE_STANDARD_TOOLTIP"
+msgstr ""
+"The profile <b>Standard User</b> has access to workspaces where they're "
+"invited, they can create new workspaces and share them, they can access "
+"the list of users."
+
+msgid "TEXT_USER_PROFILE_ADMIN_TOOLTIP"
+msgstr ""
+"The profile <b>Administrator</b> manages the organization. "
+"Administrations can add or remove users from the organization. An "
+"administrator also has access to the same functionnalities as a standard "
+"user."
+
 msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Your organization does not authorize this kind of profile."
+
+msgid "TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"
+msgstr ""
+"The profile <b>Outsider</b> can be given access to workspaces as a "
+"<b>Reader</b> or <b>Contributor</b> but cannot create new workspaces and "
+"cannot access the list of users."
 
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr "The email is invalid."
@@ -843,8 +874,8 @@ msgstr "macFUSE update needed"
 
 msgid "TEXT_UPDATE_MACFUSE"
 msgstr ""
-"Your macFUSE version is deprecated. You can update it following the link below"
-" to make sure Parsec keeps functioning properly."
+"Your macFUSE version is deprecated. You can update it following the link "
+"below to make sure Parsec keeps functioning properly."
 
 msgid "TEXT_UPDATE_MACFUSE_BUTTON"
 msgstr "Update to macFUSE latest version"
@@ -1798,9 +1829,10 @@ msgstr "Enable telemetry"
 
 msgid "TEXT_ENABLE_TELEMETRY_INSTRUCTIONS"
 msgstr ""
-"In the event of a bug or a crash, telemetry is used to automatically send "
-"anonymous reports to our technical staff, helping us improve your "
-"user experience.<br />\n<br />\n"
+"In the event of a bug or a crash, telemetry is used to automatically send"
+" anonymous reports to our technical staff, helping us improve your user "
+"experience.<br />\n"
+"<br />\n"
 "Do you want to enable telemetry? This can later be changed in the "
 "settings."
 
@@ -1930,6 +1962,12 @@ msgstr "Copy invitation link"
 msgid "ACTION_USER_INVITE_COPY_EMAIL"
 msgstr "Copy email"
 
+msgid "TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "The invitation link has been copied to the clipboard"
+
+msgid "TEXT_GREET_USER_EMAIL_COPIED_TO_CLIPBOARD"
+msgstr "The email has been copied to the clipboard"
+
 msgid "TEXT_USER_IS_CURRENT"
 msgstr "you"
 
@@ -2005,6 +2043,9 @@ msgstr ""
 
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the user list from the server."
+
+msgid "TEXT_USER_INVITATION_CANCELLED"
+msgstr "The invitation has been cancelled."
 
 msgid "TEXT_INVITE_USER_CANCEL_ERROR"
 msgstr "Could not cancel the invitation."
@@ -2094,6 +2135,15 @@ msgstr "This user has been revoked."
 
 msgid "NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"
 msgstr "Role not allowed for the outsider users."
+
+msgid "TEXT_WORKSPACE_SHARING_NEW_OK_workspace-user"
+msgstr "The workspace <b>{workspace}</b> has been shared with <b>{user}</b>."
+
+msgid "TEXT_WORKSPACE_SHARING_REMOVED_OK_workspace-user"
+msgstr "The workspace <b>{workspace}</b> is no longer shared with <b>{user}</b>."
+
+msgid "TEXT_WORKSPACE_SHARING_UPDATED_workspace-user"
+msgstr "<b>{user}</b>'s role on the workspace <b>{workspace}</b> has been updated."
 
 msgid "TEXT_WORKSPACE_SHARING_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
@@ -2342,6 +2392,9 @@ msgstr "Organization name"
 msgid "TEXT_LABEL_ORG_NAME_RECOMMANDATIONS"
 msgstr "Letters, digits, underscores and hyphens only. No spaces."
 
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Device name"
+
 msgid "ACTION_CREATE_ON_COMMERCIAL_BACKEND"
 msgstr "Use PARSEC main server"
 
@@ -2357,9 +2410,6 @@ msgstr "I have my own PARSEC server"
 
 msgid "TEXT_LABEL_BACKEND_ADDR_PLACEHOLDER"
 msgstr "parsec://host:port"
-
-msgid "TEXT_LABEL_DEVICE_NAME"
-msgstr "Device name"
 
 msgid "TEXT_CREATE_ORGANIZATION_INSTRUCTIONS"
 msgstr "Please fill out the following information to create your organization."
@@ -2478,6 +2528,9 @@ msgstr "Type"
 msgid "TEXT_FILE_INFO_SIZE"
 msgstr "Size"
 
+msgid "TEXT_FILE_INFO_NON_APPLICABLE"
+msgstr "N/A"
+
 msgid "TEXT_FILE_INFO_WORKSPACE"
 msgstr "Workspace"
 
@@ -2494,22 +2547,19 @@ msgid "TEXT_FILE_INFO_UPDATED_BY"
 msgstr "Updated by"
 
 msgid "TEXT_FILE_INFO_AVAILABILITY"
-msgstr "Availability"
+msgstr "Available offline"
 
 msgid "TEXT_FILE_INFO_UPLOADED"
 msgstr "Uploaded"
 
 msgid "TEXT_FILE_INFO_BLOCKS_LOCAL"
-msgstr "Local only blocks"
+msgstr "Local blocks"
 
 msgid "TEXT_FILE_INFO_BLOCKS_REMOTE"
-msgstr "Remote only blocks"
+msgstr "Remote blocks"
 
-msgid "TEXT_FILE_INFO_BLOCKS_BOTH"
-msgstr "Local and remote blocks"
-
-msgid "TEXT_FILE_INFO_NON_APPLICABLE"
-msgstr "N/A"
+msgid "TEXT_FILE_INFO_DEFAULT_BLOCK_SIZE"
+msgstr "Default block size"
 
 msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
 msgstr "Return to the list of workspaces."
@@ -2683,6 +2733,12 @@ msgstr "Check for new versions on startup"
 msgid "ACTION_SETTINGS_CHECK_NEW_VERSION"
 msgstr "Check for new version now"
 
+msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
+msgstr "Telemetry"
+
+msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
+msgstr "Enable telemetry for automatic crash reporting"
+
 msgid "TEXT_SETTINGS_INTERFACE_TITLE"
 msgstr "Interface"
 
@@ -2694,12 +2750,6 @@ msgstr "Use colors for workspaces"
 
 msgid "ACTION_SAVE"
 msgstr "Save"
-
-msgid "TEXT_SETTINGS_TELEMETRY_TITLE"
-msgstr "Telemetry"
-
-msgid "TEXT_SETTINGS_ENABLE_TELEMETRY"
-msgstr "Enable telemetry for automatic crash reporting"
 
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "You will be asked to select your smartcard."
@@ -2737,17 +2787,17 @@ msgstr "Search users"
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Invite a new user"
 
-msgid "ACTION_LIST_PREVIOUS_PAGE"
-msgstr "Previous page"
-
-msgid "ACTION_LIST_NEXT_PAGE"
-msgstr "Next page"
-
 msgid "ACTION_FILTER_REVOKED_USERS"
 msgstr "Hide revoked users"
 
 msgid "ACTION_FILTER_PENDING_INVITATION"
 msgstr "Hide pending invitations"
+
+msgid "ACTION_LIST_PREVIOUS_PAGE"
+msgstr "Previous page"
+
+msgid "ACTION_LIST_NEXT_PAGE"
+msgstr "Next page"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "This workspace is shared."
@@ -2784,4 +2834,5 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
 

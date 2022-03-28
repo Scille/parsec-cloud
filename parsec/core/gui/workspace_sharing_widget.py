@@ -1,7 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from collections import namedtuple
-
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, QEvent, QTimer
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QWidget, QComboBox
@@ -18,6 +16,7 @@ from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_roles import get_role_translation, NOT_SHARED_KEY
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.ui.workspace_sharing_widget import Ui_WorkspaceSharingWidget
 from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
 
@@ -59,26 +58,28 @@ async def _do_get_users(core, workspace_fs):
         raise JobResultError("offline") from exc
 
 
-async def _do_share_workspace(user_fs, workspace_fs, user_roles):
-    errors = []
-    successes = []
+async def _do_share_workspace(user_fs, workspace_fs, user_info, role):
     workspace_name = workspace_fs.get_workspace_name()
 
-    SharingResult = namedtuple("SharingResult", ("user_info", "status", "role", "error"))
-
-    for user_info, role in user_roles.items():
-        try:
-            await user_fs.workspace_share(workspace_fs.workspace_id, user_info.user_id, role)
-            successes.append(SharingResult(user_info, True, role, None))
-        except ValueError:
-            errors.append(SharingResult(user_info, False, role, "invalid-user"))
-        except FSBackendOfflineError:
-            errors.append(SharingResult(user_info, False, role, "offline"))
-        except FSError:
-            errors.append(SharingResult(user_info, False, role, "fs-error"))
-        except Exception:
-            errors.append(SharingResult(user_info, False, role, "error"))
-    return workspace_name, successes, errors
+    try:
+        await user_fs.workspace_share(workspace_fs.workspace_id, user_info.user_id, role)
+        return user_info, role, workspace_name
+    except ValueError as exc:
+        raise JobResultError(
+            "invalid-user", user_info=user_info, role=role, workspace_name=workspace_name
+        ) from exc
+    except FSBackendOfflineError as exc:
+        raise JobResultError(
+            "offline", user_info=user_info, role=role, workspace_name=workspace_name
+        ) from exc
+    except FSError as exc:
+        raise JobResultError(
+            "fs-error", user_info=user_info, role=role, workspace_name=workspace_name
+        ) from exc
+    except Exception as exc:
+        raise JobResultError(
+            "error", user_info=user_info, role=role, workspace_name=workspace_name
+        ) from exc
 
 
 class SharingWidget(QWidget, Ui_SharingWidget):
@@ -90,7 +91,7 @@ class SharingWidget(QWidget, Ui_SharingWidget):
 
         self.combo_role.installEventFilter(self)
 
-        self.role = role
+        self._role = role
         self.current_user_role = current_user_role
         self.is_current_user = is_current_user
         self.user_info = user_info
@@ -128,12 +129,21 @@ class SharingWidget(QWidget, Ui_SharingWidget):
                     item.setFont(font)
                     item.setToolTip(_("NOT_ALLOWED_FOR_OUTSIDER_PROFILE_TOOLTIP"))
 
-        self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self.role])
+        self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self._role])
         self.combo_role.currentIndexChanged.connect(self.on_role_changed)
         self.status_timer = QTimer()
         self.status_timer.setInterval(3000)
         self.status_timer.setSingleShot(True)
         self.status_timer.timeout.connect(self._refresh_status)
+
+    @property
+    def role(self):
+        return self._role if self._role != NOT_SHARED_KEY else None
+
+    @role.setter
+    def role(self, val):
+        self._role = val
+        self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self._role or NOT_SHARED_KEY])
 
     def _refresh_status(self):
         self.label_status.setPixmap(QPixmap())
@@ -250,51 +260,64 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             _do_share_workspace,
             user_fs=self.user_fs,
             workspace_fs=self.workspace_fs,
-            user_roles={user_info: role},
+            user_info=user_info,
+            role=role,
         )
 
     def _on_share_success(self, job):
-        workspace_name, successes, errors = job.ret
-        if successes:
-            self.has_changes = True
-        for result in successes:
-            sharing_widget = self._get_sharing_widget(result.user_info.user_id)
-            if sharing_widget:
-                sharing_widget.set_status_updated()
-        for result in errors:
-            sharing_widget = self._get_sharing_widget(result.user_info.user_id)
-            if sharing_widget:
-                sharing_widget.set_status_update_failed()
+        user_info, new_role, workspace_name = job.ret
+        old_role = None
 
-        if errors:
-            self._process_sharing_errors(workspace_name, errors)
-
-    def _process_sharing_errors(self, workspace_name, errors):
-        reset = True
-        if errors:
-            result = errors[0]
-            if result.error == "offline":
-                show_error(self, _("TEXT_WORKSPACE_SHARING_OFFLINE"))
-                reset = False
-            elif result.role == NOT_SHARED_KEY:
-                show_error(
-                    self,
-                    _("TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user").format(
-                        workspace=workspace_name, user=result.user_info.short_user_display
-                    ),
+        self.has_changes = True
+        sharing_widget = self._get_sharing_widget(user_info.user_id)
+        if sharing_widget:
+            sharing_widget.set_status_updated()
+            old_role = sharing_widget.role
+            sharing_widget.role = new_role
+        if old_role is None:
+            SnackbarManager.inform(
+                _("TEXT_WORKSPACE_SHARING_NEW_OK_workspace-user").format(
+                    workspace=workspace_name, user=user_info.short_user_display
                 )
-            else:
-                show_error(
-                    self,
-                    _("TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user").format(
-                        workspace=workspace_name, user=result.user_info.short_user_display
-                    ),
+            )
+        elif new_role is None:
+            SnackbarManager.inform(
+                _("TEXT_WORKSPACE_SHARING_REMOVED_OK_workspace-user").format(
+                    workspace=workspace_name, user=user_info.short_user_display
                 )
-        if reset:
-            self.reset()
+            )
+        else:
+            SnackbarManager.inform(
+                _("TEXT_WORKSPACE_SHARING_UPDATED_workspace-user").format(
+                    workspace=workspace_name, user=user_info.short_user_display
+                )
+            )
 
     def _on_share_error(self, job):
-        self.reset()
+        reset = True
+        user_info = job.exc.params.get("user_info")
+        role = job.exc.params.get("role")
+        workspace_name = job.exc.params.get("workspace_name")
+        sharing_widget = self._get_sharing_widget(user_info.user_id)
+        if sharing_widget:
+            sharing_widget.set_status_update_failed()
+        if job.status == "offline":
+            SnackbarManager.warn(_("TEXT_WORKSPACE_SHARING_OFFLINE"))
+            reset = False
+        elif role == NOT_SHARED_KEY:
+            SnackbarManager.warn(
+                _("TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user").format(
+                    workspace=workspace_name, user=user_info.short_user_display
+                )
+            )
+        else:
+            SnackbarManager.warn(
+                _("TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user").format(
+                    workspace=workspace_name, user=user_info.short_user_display
+                )
+            )
+        if reset:
+            self.reset()
 
     def _on_get_users_success(self, job):
         users = job.ret

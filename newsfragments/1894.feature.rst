@@ -1,1 +1,0 @@
-Improve the detection and management of clients that have out-of-sync clocks compare to the backend.

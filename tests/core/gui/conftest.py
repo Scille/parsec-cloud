@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtTest
 from pytestqt.exceptions import TimeoutError
 
 from parsec import __version__ as parsec_version
+from parsec.api.data import EntryName
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.workspaces_widget import WorkspaceButton
@@ -170,18 +171,24 @@ def snackbar_catcher(monkeypatch):
             self.snackbars = []
 
         def reset(self):
-            self.snackars = []
+            self.snackbars = []
 
     spy = SnackbarSpy()
 
     def _show_snackbar(message, *args, **kargs):
-        print(message)
         spy.snackbars.append(message)
 
-    monkeypatch.setattr("parsec.core.gui.snackbar_widget.SnackbarManager.warn", _show_snackbar)
-    monkeypatch.setattr("parsec.core.gui.snackbar_widget.SnackbarManager.inform", _show_snackbar)
     monkeypatch.setattr(
-        "parsec.core.gui.snackbar_widget.SnackbarManager.congratulate", _show_snackbar
+        "parsec.core.gui.snackbar_widget.SnackbarManager.warn",
+        lambda msg, *args, **kwargs: _show_snackbar(("WARN", msg)),
+    )
+    monkeypatch.setattr(
+        "parsec.core.gui.snackbar_widget.SnackbarManager.inform",
+        lambda msg, *args, **kwargs: _show_snackbar(("INFO", msg)),
+    )
+    monkeypatch.setattr(
+        "parsec.core.gui.snackbar_widget.SnackbarManager.congratulate",
+        lambda msg, *args, **kwargs: _show_snackbar(("CONGRATULATE", msg)),
     )
     return spy
 
@@ -423,6 +430,9 @@ def testing_main_window_cls(aqtbot):
             password_w = l_w.widget.layout().itemAt(0).widget()
             aqtbot.key_clicks(password_w.line_edit_password, password)
 
+            # Wait for the password to actually be typed
+            await aqtbot.wait_until(lambda: password_w.line_edit_password.text() == password)
+
             signal = tabw.logged_in if not error else tabw.login_failed
             async with aqtbot.wait_signals([l_w.login_with_password_clicked, signal]):
                 aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
@@ -468,6 +478,7 @@ def testing_main_window_cls(aqtbot):
             return w_w
 
         async def test_switch_to_files_widget(self, workspace_name, error=False):
+            assert isinstance(workspace_name, EntryName)
             w_w = await self.test_switch_to_workspaces_widget()
 
             for i in range(w_w.layout_workspaces.count()):

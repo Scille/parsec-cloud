@@ -150,7 +150,8 @@ def test_sas_code():
     with pytest.raises(ValueError):
         SASCode.from_int(2 ** 20)
 
-    with pytest.raises(ValueError):
+    # OverflowError for Rust binding
+    with pytest.raises((ValueError, OverflowError)):
         SASCode.from_int(-1)
 
     for invalid in ["", "AAA", "AAAAA", "aaaa", "AAAI", "AAAO", "AAA0", "AAA1"]:
@@ -207,6 +208,6 @@ def test_entry_name_normalization():
     nfd_str = normalize("NFD", nfc_str)
 
     assert nfc_str != nfd_str
-    assert EntryName(nfd_str) == nfc_str
-    assert EntryName(nfc_str) == nfc_str
-    assert EntryName(nfc_str + nfd_str) == nfc_str + nfc_str
+    assert EntryName(nfd_str).str == nfc_str
+    assert EntryName(nfc_str).str == nfc_str
+    assert EntryName(nfc_str + nfd_str).str == nfc_str + nfc_str

@@ -3,6 +3,7 @@
 from PyQt5.QtCore import QRegularExpression
 from PyQt5.QtGui import QValidator, QIntValidator, QRegularExpressionValidator
 
+from parsec.api.data import EntryName
 from parsec.api.protocol import OrganizationID, UserID, DeviceLabel
 from parsec.core.types import (
     BackendAddr,
@@ -105,13 +106,14 @@ class EmailValidator(QRegularExpressionValidator):
 
 
 class WorkspaceNameValidator(QValidator):
-    def __init__(self):
-        self.regex = QRegularExpression(r"^.{1,256}$")
-
     def validate(self, string, pos):
-        if self.regex.match(string, pos).hasMatch():
+        try:
+            if len(string) == 0:
+                return QValidator.Intermediate, string, pos
+            EntryName(string)
             return QValidator.Acceptable, string, pos
-        return QValidator.Invalid, string, pos
+        except ValueError:
+            return QValidator.Invalid, string, pos
 
 
 class NotEmptyValidator(QValidator):

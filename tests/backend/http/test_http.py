@@ -270,6 +270,34 @@ async def test_get_404(backend_http_send):
 
 
 @pytest.mark.trio
+async def test_unexpected_exception_get_500(
+    backend, server_factory, backend_http_send, monkeypatch
+):
+    class MyUnexpectedException(Exception):
+        pass
+
+    async def _patched_http_404(*args, **kwargs):
+        raise MyUnexpectedException("Unexpected error !")
+
+    monkeypatch.setattr("parsec.backend.http.HTTPComponent._http_404", _patched_http_404)
+
+    async def _run_server_until_unexpected_exception(*, task_status=trio.TASK_STATUS_IGNORED):
+        try:
+            async with server_factory(backend.handle_client) as server:
+                task_status.started(server.addr)
+                await trio.sleep_forever()
+        except MyUnexpectedException:
+            pass
+
+    async with trio.open_nursery() as nursery:
+        backend_addr = await nursery.start(_run_server_until_unexpected_exception)
+
+        status, *_ = await backend_http_send("/dummy", addr=backend_addr)
+
+        assert status == (500, "Internal Server Error")
+
+
+@pytest.mark.trio
 async def test_get_root(backend_http_send):
     status, headers, body = await backend_http_send("/")
     assert status == (200, "OK")

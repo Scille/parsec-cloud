@@ -6,6 +6,8 @@ from pendulum import datetime
 
 from hypothesis_trio.stateful import run_state_machine_as_test, TrioAsyncioRuleBasedStateMachine
 
+from parsec.api.data import EntryName
+
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
@@ -26,7 +28,7 @@ def transactions_factory(event_bus, remote_devices_manager_factory, core_config)
             # The tests shouldn't need this yet
             assert False
 
-        workspace_entry = WorkspaceEntry.new("test", device.timestamp())
+        workspace_entry = WorkspaceEntry.new(EntryName("test"), device.timestamp())
         workspace_manifest = LocalWorkspaceManifest.new_placeholder(
             device.device_id, id=workspace_entry.id, timestamp=datetime(2000, 1, 1)
         )

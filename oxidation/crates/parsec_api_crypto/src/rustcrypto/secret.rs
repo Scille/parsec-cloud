@@ -7,6 +7,8 @@ use serde_bytes::ByteBuf;
 use xsalsa20poly1305::aead::{Aead, NewAead};
 use xsalsa20poly1305::{generate_nonce, Key, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE};
 
+use crate::CryptoError;
+
 type Blake2bMac40 = Blake2bMac<U5>;
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -37,14 +39,12 @@ impl SecretKey {
         res
     }
 
-    pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, &'static str> {
+    pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
         let cipher = XSalsa20Poly1305::new(&self.0);
-        let nonce_slice = ciphered
-            .get(..NONCE_SIZE)
-            .ok_or("The nonce must be exactly 24 bytes long")?;
+        let nonce_slice = ciphered.get(..NONCE_SIZE).ok_or(CryptoError::Nonce)?;
         cipher
             .decrypt(nonce_slice.into(), &ciphered[NONCE_SIZE..])
-            .map_err(|_| "Decryption error")
+            .map_err(|_| CryptoError::Decryption)
     }
 
     pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
@@ -70,10 +70,10 @@ impl AsRef<[u8]> for SecretKey {
 }
 
 impl TryFrom<&[u8]> for SecretKey {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         // if you wonder, `try_into` will also fail if data is too small
-        let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| ("Invalid data size"))?;
+        let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
         Ok(Self(Key::from(arr)))
     }
 }
@@ -85,13 +85,13 @@ impl From<[u8; Self::SIZE]> for SecretKey {
 }
 
 impl TryFrom<ByteBuf> for SecretKey {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
         // if you wonder, `try_into` will also fail if data is too small
         let arr: [u8; Self::SIZE] = data
             .into_vec()
             .try_into()
-            .map_err(|_| ("Invalid data size"))?;
+            .map_err(|_| CryptoError::DataSize)?;
         Ok(Self(Key::from(arr)))
     }
 }

@@ -10,6 +10,7 @@ trigger:
 
 variables:
   python.version: '3.7'
+  node.version: '16.x'
   # pyinstaller is picky on the version to use
   python.version_for_macos_packaging: '3.8'
   postgresql.version: '12'
@@ -48,10 +49,12 @@ jobs:
   - bash: |
       set -eux
       python -m build --wheel
+    env:
+      # oxidation extra_requirements referes to a local path which is forbidden by pypi
+      IGNORE_OXIDATION: "true"
     displayName: 'Build Wheel'
   - publish: dist/
     artifact: wheel
-
 
 #################################################################################
 # Step 1: Tests
@@ -68,13 +71,20 @@ jobs:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '$(node.version)'
   - bash: |
       set -eux
       sudo apt-get update
       python --version
+      pip --version
+      node --version
+      npm --version
       pip install pre-commit
       # Rust stuff (needed by pre-commit)
       curl https://sh.rustup.rs -sSf | sh -s -- -y
+      rustup --version
       echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
       rustup component add rustfmt clippy
     displayName: 'Bootstrap'
@@ -155,6 +165,11 @@ jobs:
     displayName: 'Bootstrap'
   - bash: |
       set -eux
+      cargo test
+    workingDirectory: $(Build.SourcesDirectory)/oxidation
+    displayName: 'Rust Tests'
+  - bash: |
+      set -eux
       pip install .[all,oxidation]
       # Remove the parsec folder from the source to force use of the wheel
       rm -rf parsec
@@ -162,7 +177,7 @@ jobs:
   - bash: |
       set -eux
       py.test $(pytest.base_args) tests -n auto --runrust
-    displayName: 'Tests'
+    displayName: 'Python Tests'
 
 
 #################################################################################
@@ -210,7 +225,7 @@ jobs:
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow \
+        tests --runmountpoint --runslow --rundiskfull \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-memory.xml
     displayName: 'Tests memory'
@@ -480,7 +495,7 @@ jobs:
 
 - job: 's2_windows_installer_build'
   displayName: 'Windows installer build'
-  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  # condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
     vmImage: 'windows-latest'
@@ -501,7 +516,7 @@ jobs:
       architecture: '$(python.arch)'
   - task: BatchScript@1
     inputs:
-      filename: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"'
+      filename: '"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"'
       arguments: $(vs.arch)
       modifyEnvironment: true
   - bash: |

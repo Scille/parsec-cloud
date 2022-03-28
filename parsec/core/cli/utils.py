@@ -70,11 +70,17 @@ def core_config_options(fn: F) -> F:
     def wrapper(**kwargs):
         assert "config" not in kwargs
         config_dir = kwargs["config_dir"]
-        # --sentry-url is only present for gui command
-        sentry_url = kwargs.get("sentry_url")
+        # `--sentry-*` are only present for gui command
+        sentry_dsn = kwargs.get("sentry_dsn")
+        sentry_environment = kwargs.get("sentry_environment", "")
 
         config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
-        config = load_config(config_dir=config_dir, sentry_url=sentry_url, debug=kwargs["debug"])
+        config = load_config(
+            config_dir=config_dir,
+            sentry_dsn=sentry_dsn,
+            sentry_environment=sentry_environment,
+            debug=kwargs["debug"],
+        )
 
         kwargs["config"] = config
         return fn(**kwargs)

@@ -32,7 +32,9 @@ FILE_WRITE_DATA = 1 << 1
 
 def _winpath_to_parsec(path: str) -> FsPath:
     # Given / is not allowed, no need to check if path already contains it
-    return FsPath(unwinify_entry_name(path.replace("\\", "/")))
+    return FsPath(
+        tuple(unwinify_entry_name(x) for x in path.replace("\\", "/").split("/") if x != "")
+    )
 
 
 def _parsec_to_winpath(path: FsPath) -> str:
@@ -219,8 +221,8 @@ class WinFSPOperations(BaseFileSystemOperations):
         # Also, the total size of a workspace is not limited
         # For the moment let's settle on 0 MB used for 1 TB available
         self._volume_info = {
-            "total_size": 1 * 1024 * 1024 * 1024,  # 1 TB
-            "free_size": 1 * 1024 * 1024 * 1024,  # 1 TB
+            "total_size": 1 * 1024 ** 4,  # 1 TB
+            "free_size": 1 * 1024 ** 4,  # 1 TB
             "volume_label": volume_label,
         }
 
@@ -363,6 +365,11 @@ class WinFSPOperations(BaseFileSystemOperations):
         # NOTE: The "." and ".." directories should ONLY be included
         # if the queried directory is not root
 
+        print(
+            f"READ DIR marker: {marker}, file ctx: {file_context.path!r} (is_root: {file_context.path.is_root()})"
+        )
+        print(f"READ DIR stats: {stat!r}")
+
         # Current directory
         if marker is None and not file_context.path.is_root():
             entry = {"file_name": ".", **stat_to_winfsp_attributes(stat)}
@@ -384,7 +391,7 @@ class WinFSPOperations(BaseFileSystemOperations):
         iter_children_names = iter(stat["children"])
         if marker is not None:
             for child_name in iter_children_names:
-                if child_name == marker:
+                if child_name.str == marker:
                     break
 
         # All remaining children are located after the marker
@@ -394,6 +401,7 @@ class WinFSPOperations(BaseFileSystemOperations):
             entry = {"file_name": name, **stat_to_winfsp_attributes(child_stat)}
             entries.append(entry)
 
+        print(f"READ DIR entries: {[e['file_name'] for e in entries]!r}")
         return entries
 
     @handle_error

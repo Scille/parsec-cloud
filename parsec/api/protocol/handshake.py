@@ -139,6 +139,14 @@ class HandshakeAnswerVersionOnlySchema(BaseSchema):
 handshake_answer_version_only_serializer = serializer_factory(HandshakeAnswerVersionOnlySchema)
 
 
+class AnswerSchema(BaseSchema):
+    type = fields.CheckedConstant("signed_answer", required=True)
+    answer = fields.Bytes(required=True)
+
+
+answer_serializer = serializer_factory(AnswerSchema)
+
+
 class HandshakeAuthenticatedAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.EnumCheckedConstant(HandshakeType.AUTHENTICATED, required=True)
@@ -346,7 +354,14 @@ class ServerHandshake:
             try:
                 answer = self.answer_data["answer"]
                 assert isinstance(answer, bytes)
-                returned_challenge = verify_key.verify(answer)
+
+                if self.client_api_version >= (2, 5):
+                    returned_challenge = answer_serializer.loads(verify_key.verify(answer))[
+                        "answer"
+                    ]
+                else:
+                    returned_challenge = verify_key.verify(answer)
+
                 if returned_challenge != self.challenge:
                     raise HandshakeFailedChallenge("Invalid returned challenge")
 
@@ -461,8 +476,18 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
     def process_challenge_req(self, req: bytes) -> bytes:
         self.load_challenge_req(req)
         challenge = self.challenge_data["challenge"]
+
         assert isinstance(challenge, bytes)
-        answer = self.user_signkey.sign(challenge)
+
+        # TO-DO remove the else for the next release
+        if self.backend_api_version >= (2, 5):
+            # TO-DO Need to use "BaseSignedData" ?
+            answer = self.user_signkey.sign(
+                answer_serializer.dumps({"type": "signed_answer", "answer": challenge})
+            )
+        else:
+            answer = self.user_signkey.sign(challenge)
+
         return self.HANDSHAKE_ANSWER_SERIALIZER.dumps(
             {
                 "handshake": "answer",

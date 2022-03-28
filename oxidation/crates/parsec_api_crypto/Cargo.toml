@@ -11,8 +11,10 @@ paste = "1.0.5"
 serde = {version = "1.0.127", features = ["derive"]}
 serde_bytes = {version = "0.11.5"}
 hex = "0.4"
+thiserror = "1.0.30"
 
 sodiumoxide = {version="0.2.7", optional=true}
+libsodium-sys = {version="0.2.7", optional=true}
 
 digest = {version="0.10.1", optional=true}
 generic-array = {version="0.14.4", optional=true, features=["serde"]}
@@ -46,7 +48,7 @@ rmp-serde = "1.0.0"
 [features]
 js = ["getrandom_02/js", "getrandom_01/wasm-bindgen"]
 default = ["use-rustcrypto"]
-use-sodiumoxide = ["sodiumoxide"]
+use-sodiumoxide = ["sodiumoxide", "libsodium-sys"]
 use-rustcrypto = [
     "digest",
     "generic-array",

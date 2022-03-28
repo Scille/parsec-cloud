@@ -290,9 +290,15 @@ extra_requirements = {
     # shipped in production) and only contains rewriting of Python parts so
     # it can be safely ignored for any purpose.
     "oxidation": [
-        f"libparsec @ file://{(Path(__file__) / '../oxidation/libparsec_python').resolve().absolute()}"
+        f"libparsec @ file://localhost{Path(os.path.dirname(os.path.abspath(__file__))) / 'oxidation/libparsec_python'}"
     ],
 }
+
+
+# Cannot have direct dependency when upload on Pypi
+if os.environ.get("IGNORE_OXIDATION"):
+    extra_requirements.pop("oxidation")
+
 
 extra_requirements["all"] = sum([v for k, v in extra_requirements.items() if k != "oxidation"], [])
 extra_requirements["oeuf-jambon-fromage"] = extra_requirements["all"]

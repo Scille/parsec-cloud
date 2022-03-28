@@ -1,15 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::str::FromStr;
 
-use crate::data_macros::{impl_transparent_data_format_convertion, new_data_struct_type};
+use parsec_api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
+
+use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::new_uuid_type;
 use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
-use parsec_api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 
 /*
  * InvitationType
@@ -63,7 +65,7 @@ const SAS_CODE_PATTERN: &str = concat!("^[", SAS_CODE_CHARS!(), "]{4}$");
 const SAS_CODE_LEN: usize = 4;
 const SAS_CODE_BITS: u32 = 20;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd)]
 pub struct SASCode(String);
 
 impl std::fmt::Display for SASCode {
@@ -125,7 +127,13 @@ impl From<SASCode> for String {
 
 impl SASCode {
     pub fn generate_sas_code_candidates(&self, size: usize) -> Vec<SASCode> {
-        let mut sas_codes = vec![];
+        if size == 0 {
+            return vec![];
+        }
+
+        let mut sas_codes = Vec::<SASCode>::with_capacity(size);
+
+        sas_codes.push(SASCode(self.to_string()));
         while sas_codes.len() < size {
             let num = rand::thread_rng().gen_range(0..(2u32.pow(SAS_CODE_BITS) - 1));
             let candidate = SASCode::try_from(num).unwrap_or_else(|_| unreachable!());
@@ -133,6 +141,7 @@ impl SASCode {
                 sas_codes.push(candidate);
             }
         }
+        sas_codes.shuffle(&mut rand::thread_rng());
         sas_codes
     }
 
@@ -173,7 +182,8 @@ macro_rules! impl_dump_and_encrypt {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_encrypt(&self, key: &::parsec_api_crypto::SecretKey) -> Vec<u8> {
-                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                let serialized =
+                    ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e =
                     ::flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
                 use std::io::Write;
@@ -198,9 +208,8 @@ macro_rules! impl_decrypt_and_load {
                 ::flate2::read::ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
                     .map_err(|_| "Invalid compression")?;
-                println!("===>{:?}", &serialized);
                 let obj: $name =
-                    rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+                    ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
                 Ok(obj)
             }
         }
@@ -235,7 +244,7 @@ new_data_struct_type!(
     verify_key: VerifyKey,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     InviteUserData,
     InviteUserDataData,
     requested_device_label,
@@ -275,7 +284,7 @@ new_data_struct_type!(
     root_verify_key: VerifyKey,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     InviteUserConfirmation,
     InviteUserConfirmationData,
     device_id,
@@ -307,7 +316,7 @@ new_data_struct_type!(
     verify_key: VerifyKey,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     InviteDeviceData,
     InviteDeviceDataData,
     requested_device_label,
@@ -351,7 +360,7 @@ new_data_struct_type!(
     root_verify_key: VerifyKey,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     InviteDeviceConfirmation,
     InviteDeviceConfirmationData,
     device_id,

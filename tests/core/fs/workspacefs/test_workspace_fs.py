@@ -7,7 +7,7 @@ from unittest.mock import ANY
 from trio import open_nursery
 
 from parsec.api.protocol import DeviceID, RealmID, RealmRole
-from parsec.api.data import BaseManifest as BaseRemoteManifest
+from parsec.api.data import BaseManifest as BaseRemoteManifest, EntryName
 from parsec.core.types import EntryID, DEFAULT_BLOCK_SIZE
 from parsec.core.fs import FsPath
 from parsec.core.fs.exceptions import FSError, FSBackendOfflineError, FSLocalMissError
@@ -17,7 +17,7 @@ from parsec.backend.block import BlockNotFoundError
 
 @pytest.mark.trio
 async def test_workspace_properties(alice_workspace):
-    assert alice_workspace.get_workspace_name() == "w"
+    assert alice_workspace.get_workspace_name() == EntryName("w")
     assert alice_workspace.get_encryption_revision() == 1
 
 
@@ -26,7 +26,7 @@ async def test_path_info(alice_workspace):
     info = await alice_workspace.path_info("/")
     assert {
         "base_version": ANY,
-        "children": ["foo"],
+        "children": [EntryName("foo")],
         "created": ANY,
         "id": ANY,
         "is_placeholder": False,
@@ -39,7 +39,7 @@ async def test_path_info(alice_workspace):
     info = await alice_workspace.path_info("/foo")
     assert {
         "base_version": ANY,
-        "children": ["bar", "baz"],
+        "children": [EntryName("bar"), EntryName("baz")],
         "created": ANY,
         "id": ANY,
         "is_placeholder": False,
@@ -347,10 +347,10 @@ async def test_dump(alice_workspace):
     assert {
         "base_version": 1,
         "children": {
-            "foo": {
+            EntryName("foo"): {
                 "base_version": 2,
                 "children": {
-                    "bar": {
+                    EntryName("bar"): {
                         "base_version": 1,
                         "blocksize": 524_288,
                         "blocks": [],
@@ -362,7 +362,7 @@ async def test_dump(alice_workspace):
                         "size": 0,
                         "updated": ANY,
                     },
-                    "baz": {"id": ANY},
+                    EntryName("baz"): {"id": ANY},
                 },
                 "created": ANY,
                 "id": ANY,
@@ -460,7 +460,7 @@ async def test_backend_block_data_online(
         assert proper_blocks_size == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
         assert pending_chunks_size == 0
 
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     await alice_user_fs.sync()
     await alice2_user_fs.sync()
 
@@ -592,7 +592,7 @@ async def test_backend_block_data_online(
 async def test_backend_block_upload_error_during_sync(
     alice_user_fs, alice2_user_fs, running_backend, monkeypatch
 ):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     await alice_user_fs.sync()
     await alice2_user_fs.sync()
 

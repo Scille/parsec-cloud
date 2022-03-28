@@ -1,0 +1,6 @@
+{
+	"appId": "io.ionic.starter",
+	"appName": "client",
+	"webDir": "dist",
+	"bundledWebRuntime": false
+}

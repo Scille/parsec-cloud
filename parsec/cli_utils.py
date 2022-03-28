@@ -176,16 +176,35 @@ def logging_config_options(default_log_level: str):
 
 def sentry_config_options(configure_sentry: bool):
     def _sentry_config_options(fn):
+        # Sentry SKD uses 3 environ variables during it configuration phase:
+        # - `SENTRY_DSN`
+        # - `SENTRY_ENVIRONMENT`
+        # - `SENTRY_RELEASE`
+        # Those variable are only used if the corresponding parameter is not
+        # explicitly provided while calling `sentry_init(**config)`.
+        # Hence we make sure we provide the three parameters (note the release
+        # is determined from Parsec's version) so those `PARSEC_*` env vars
+        # are never read and don't clash with the `PARSEC_SENTRY_*` ones.
         @click.option(
-            "--sentry-url",
+            "--sentry-dsn",
             metavar="URL",
-            envvar="PARSEC_SENTRY_URL",
-            help="Sentry URL for telemetry report",
+            envvar="PARSEC_SENTRY_DSN",
+            help="Sentry DSN for telemetry report",
+        )
+        @click.option(
+            "--sentry-environment",
+            metavar="NAME",
+            envvar="PARSEC_SENTRY_ENVIRONMENT",
+            default="production",
+            show_default=True,
+            help="Sentry environment for telemetry report",
         )
         @wraps(fn)
         def wrapper(**kwargs):
-            if configure_sentry and kwargs["sentry_url"]:
-                configure_sentry_logging(kwargs["sentry_url"])
+            if configure_sentry and kwargs["sentry_dsn"]:
+                configure_sentry_logging(
+                    dsn=kwargs["sentry_dsn"], environment=kwargs["sentry_environment"]
+                )
 
             return fn(**kwargs)
 

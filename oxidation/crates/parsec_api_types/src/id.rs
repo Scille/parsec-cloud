@@ -20,7 +20,7 @@ macro_rules! impl_debug_from_display {
 
 macro_rules! new_string_based_id_type {
     (pub $name:ident, $bytes_size:expr, $pattern:expr) => {
-        #[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq)]
+        #[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, Hash)]
         pub struct $name(String);
 
         impl Default for $name {
@@ -213,7 +213,8 @@ impl From<HumanHandle> for (String, String) {
  * UserProfile
  */
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum UserProfile {
     /// Standard user can create new realms and invite new devices for himself.
     ///
@@ -228,51 +229,26 @@ pub enum UserProfile {
     Outsider,
 }
 
-impl Serialize for UserProfile {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::ser::Serializer,
-    {
-        let value = match self {
-            UserProfile::Admin => "ADMIN",
-            UserProfile::Standard => "STANDARD",
-            UserProfile::Outsider => "OUTSIDER",
-        };
-        serializer.serialize_str(value)
+impl FromStr for UserProfile {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_uppercase().as_str() {
+            "ADMIN" => Ok(Self::Admin),
+            "STANDARD" => Ok(Self::Standard),
+            "OUTSIDER" => Ok(Self::Outsider),
+            _ => Err("Invalid InvitationType"),
+        }
     }
 }
 
-impl<'de> Deserialize<'de> for UserProfile {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::de::Deserializer<'de>,
-    {
-        struct Visitor;
-
-        impl<'de> serde::de::Visitor<'de> for Visitor {
-            type Value = UserProfile;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str(concat!("an user profile as string"))
-            }
-
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                match v {
-                    "ADMIN" => Ok(UserProfile::Admin),
-                    "STANDARD" => Ok(UserProfile::Standard),
-                    "OUTSIDER" => Ok(UserProfile::Outsider),
-                    _ => Err(serde::de::Error::invalid_type(
-                        serde::de::Unexpected::Str(v),
-                        &self,
-                    )),
-                }
-            }
+impl ToString for UserProfile {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Admin => String::from("ADMIN"),
+            Self::Standard => String::from("STANDARD"),
+            Self::Outsider => String::from("OUTSIDER"),
         }
-
-        deserializer.deserialize_str(Visitor)
     }
 }
 

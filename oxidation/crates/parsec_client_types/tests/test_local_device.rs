@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use hex_literal::hex;
-use rstest::*;
+use rstest::rstest;
 
 use parsec_api_crypto::*;
 use parsec_api_types::*;
@@ -220,4 +220,15 @@ fn serde_local_device_data(
     // Note we cannot just compare with `data` due to signature and keys order
     let manifest2 = LocalDevice::decrypt_and_load(&data2, &key).unwrap();
     assert_eq!(manifest2, expected);
+}
+
+#[rstest]
+fn slug(alice: &Device) {
+    let local_device = alice.local_device();
+
+    assert_eq!(local_device.slug(), "f78292422e#CoolOrg#alice@dev1");
+    assert_eq!(
+        local_device.slughash(),
+        "a9172f17141ae27ab662d312869169b36fc9d036e88605a9682c98f372c3041b"
+    );
 }

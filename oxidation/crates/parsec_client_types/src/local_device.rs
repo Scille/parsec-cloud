@@ -2,10 +2,10 @@
 
 use serde::{Deserialize, Serialize};
 use serde_with::*;
+use sha2::Digest;
 
 use parsec_api_crypto::*;
 use parsec_api_types::*;
-use sha2::Digest;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]
@@ -48,7 +48,7 @@ impl LocalDevice {
     ///
     /// The purpose of the slog is simply to tell whether `LocalDevice` and
     /// `AvailableDevice` objects corresponds to the same device.
-    pub fn slug(self) -> String {
+    pub fn slug(&self) -> String {
         // Add a hash to avoid clash when the backend is reseted and we recreate
         // a device with same OrganizationID/DeviceID than a previous one
         let mut hasher = sha2::Sha256::new();
@@ -65,7 +65,7 @@ impl LocalDevice {
     /// Slug is long and not readable enough (given DeviceID is now made of uuids).
     /// Hence it's often simpler to rely on it hash instead (e.g. select the
     /// device to use in the CLI by providing the beginning of the hash)
-    pub fn slughash(self) -> String {
+    pub fn slughash(&self) -> String {
         let mut hasher = sha2::Sha256::new();
         hasher.update(self.slug().as_bytes()); // Slug is encoded as utf8
         format!("{:x}", hasher.finalize())
@@ -140,46 +140,17 @@ impl LocalDevice {
     // }
 }
 
-// TODO: move this somewhere more generic
-mod maybe_field {
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-    /// Any value that is present is considered Some value, including null.
-    pub fn deserialize_some<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
-    where
-        T: Deserialize<'de>,
-        D: Deserializer<'de>,
-    {
-        Deserialize::deserialize(deserializer).map(Some)
-    }
-
-    /// Any value that is present is considered Some value, including null.
-    pub fn serialize_some<T, S>(x: &Option<T>, s: S) -> Result<S::Ok, S::Error>
-    where
-        T: Serialize,
-        S: Serializer,
-    {
-        x.serialize(s)
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 struct LocalDeviceData {
     pub organization_addr: BackendOrganizationAddr,
     pub device_id: DeviceID,
+    // Added in Parsec v1.14
     // `device_label` and `human_handle` are new fields (so legacy data may not contain
     // them) that are optional. Hence missing field is handled similarly that `None`.
-    #[serde(
-        default,
-        deserialize_with = "maybe_field::deserialize_some",
-        serialize_with = "maybe_field::serialize_some"
-    )]
+    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
     pub device_label: Option<Option<DeviceLabel>>,
-    #[serde(
-        default,
-        deserialize_with = "maybe_field::deserialize_some",
-        serialize_with = "maybe_field::serialize_some"
-    )]
+    // Added in Parsec v1.13
+    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
     pub human_handle: Option<Option<HumanHandle>>,
     pub signing_key: SigningKey,
     pub private_key: PrivateKey,
@@ -187,11 +158,8 @@ struct LocalDeviceData {
     // backward compatibility), hence `None` is not a valid value (only missing
     // allowed
     pub is_admin: bool,
-    #[serde(
-        default,
-        deserialize_with = "maybe_field::deserialize_some",
-        serialize_with = "maybe_field::serialize_some"
-    )]
+    // Added in Parsec v1.14
+    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
     pub profile: Option<UserProfile>,
     pub user_manifest_id: EntryID,
     pub user_manifest_key: SecretKey,

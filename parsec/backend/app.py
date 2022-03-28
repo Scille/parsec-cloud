@@ -204,6 +204,14 @@ class BackendApp:
             # Peer is drunk, tell him and leave...
             await self._send_http_reply(stream, conn, status_code=exc.error_status_hint)
 
+        except Exception:
+            # Unexpected exception, try to reply before crashing to avoid
+            # "connection has reset" error on client side
+            await self._send_http_reply(
+                stream, conn, status_code=500, data=b"Parsec server has crashed :'("
+            )
+            raise
+
         finally:
             # Note the stream might already be closed (e.g. through `Transport.aclose`)
             # but it's ok given this operation is idempotent

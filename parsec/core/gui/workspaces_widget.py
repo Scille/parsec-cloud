@@ -61,6 +61,8 @@ async def _do_workspace_create(core, workspace_name):
     try:
         workspace_name = EntryName(workspace_name)
     except ValueError:
+        # This should never occurs given new_name is checked by a validator in the GUI
+        # TODO: improve this logic ?
         raise JobResultError("invalid-name")
     workspace_id = await core.user_fs.workspace_create(workspace_name)
     return workspace_id
@@ -70,6 +72,8 @@ async def _do_workspace_rename(core, workspace_id, new_name, button):
     try:
         new_name = EntryName(new_name)
     except ValueError:
+        # This should never occurs given new_name is checked by a validator in the GUI
+        # TODO: improve this logic ?
         raise JobResultError("invalid-name")
     try:
         await core.user_fs.workspace_rename(workspace_id, new_name)
@@ -427,7 +431,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         # Loop over buttons
         for button in self.workspace_button_mapping.values():
             # Filter by name
-            if name_filter is not None and name_filter not in button.name.lower():
+            if name_filter is not None and name_filter not in button.name.str.lower():
                 continue
             # Filter by user
             if user_filter is not None and user_filter not in button.users_roles:
@@ -607,7 +611,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             _("TEXT_WORKSPACE_RENAME_TITLE"),
             _("TEXT_WORKSPACE_RENAME_INSTRUCTIONS"),
             placeholder=_("TEXT_WORKSPACE_RENAME_PLACEHOLDER"),
-            default_text=workspace_button.name,
+            default_text=workspace_button.name.str,
             button_text=_("ACTION_WORKSPACE_RENAME_CONFIRM"),
             validator=validators.WorkspaceNameValidator(),
         )

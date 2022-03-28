@@ -1,16 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::prelude::*;
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::io::{Read, Write};
 
-use crate::data_macros::{impl_transparent_data_format_convertion, new_data_struct_type};
-use crate::ext_types::DateTimeExtFormat;
-use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile};
 use parsec_api_crypto::{PublicKey, SigningKey, VerifyKey};
+
+use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
+use crate::ext_types::maybe_field;
+use crate::{
+    DateTime, DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile,
+};
 
 #[allow(unused_macros)]
 macro_rules! impl_verify_and_load_allow_root {
@@ -29,7 +31,7 @@ macro_rules! impl_verify_and_load_allow_root {
                     .read_to_end(&mut serialized)
                     .map_err(|_| "Invalid compression")?;
                 let obj: $name =
-                    rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+                    ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
                 match (&obj.author, expected_author) {
                     (CertificateSignerOwned::User(ref a_id), CertificateSignerRef::User(ea_id))
                         if a_id == ea_id =>
@@ -60,7 +62,7 @@ macro_rules! impl_verify_and_load_no_root {
                     .read_to_end(&mut serialized)
                     .map_err(|_| "Invalid compression")?;
                 let obj: $name =
-                    rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+                    ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
                 if &obj.author != expected_author {
                     Err("Unexpected author")
                 } else {
@@ -80,7 +82,7 @@ macro_rules! impl_unsecure_load {
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
                     .map_err(|_| "Invalid compression")?;
-                rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")
+                ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")
             }
         }
     };
@@ -90,7 +92,8 @@ macro_rules! impl_dump_and_sign {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
-                let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                let serialized =
+                    ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
                 e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
                 let compressed = e.finish().unwrap_or_else(|_| unreachable!());
@@ -164,7 +167,7 @@ impl From<CertificateSignerOwned> for Option<DeviceID> {
 #[serde(into = "UserCertificateData", from = "UserCertificateData")]
 pub struct UserCertificate {
     pub author: CertificateSignerOwned,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub user_id: UserID,
     // Human handle can be none in case of redacted certificate
@@ -182,22 +185,24 @@ new_data_struct_type!(
     type: "user_certificate",
 
     author: CertificateSignerOwned,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
 
     user_id: UserID,
-    // Human handle can be none in case of redacted certificate
-    human_handle: Option<HumanHandle>,
+    // Added in Parsec v1.13
+    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+    human_handle: Option<Option<HumanHandle>>,
     public_key: PublicKey,
     // `profile` replaces `is_admin` field (which is still required for
     // backward compatibility)
     is_admin: bool,
+    // Added in Parsec v1.14
+    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
     profile: Option<UserProfile>,
 );
 
 impl From<UserCertificateData> for UserCertificate {
     fn from(data: UserCertificateData) -> Self {
-        let profile = data.profile.unwrap_or_else(|| match data.is_admin {
+        let profile = data.profile.unwrap_or(match data.is_admin {
             true => UserProfile::Admin,
             false => UserProfile::Standard,
         });
@@ -205,7 +210,7 @@ impl From<UserCertificateData> for UserCertificate {
             author: data.author,
             timestamp: data.timestamp,
             user_id: data.user_id,
-            human_handle: data.human_handle,
+            human_handle: data.human_handle.unwrap_or_default(),
             public_key: data.public_key,
             profile,
         }
@@ -219,7 +224,7 @@ impl From<UserCertificate> for UserCertificateData {
             author: obj.author,
             timestamp: obj.timestamp,
             user_id: obj.user_id,
-            human_handle: obj.human_handle,
+            human_handle: Some(obj.human_handle),
             public_key: obj.public_key,
             profile: Some(obj.profile),
             is_admin: obj.profile == UserProfile::Admin,
@@ -238,7 +243,7 @@ impl From<UserCertificate> for UserCertificateData {
 )]
 pub struct RevokedUserCertificate {
     pub author: DeviceID,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub user_id: UserID,
 }
@@ -252,13 +257,12 @@ new_data_struct_type!(
     type: "revoked_user_certificate",
 
     author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
 
     user_id: UserID,
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     RevokedUserCertificate,
     RevokedUserCertificateData,
     author,
@@ -274,7 +278,7 @@ impl_transparent_data_format_convertion!(
 #[serde(into = "DeviceCertificateData", from = "DeviceCertificateData")]
 pub struct DeviceCertificate {
     pub author: CertificateSignerOwned,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub device_id: DeviceID,
     // Device label can be none in case of redacted certificate
@@ -291,24 +295,39 @@ new_data_struct_type!(
     type: "device_certificate",
 
     author: CertificateSignerOwned,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
 
     device_id: DeviceID,
-    // Device label can be none in case of redacted certificate
-    device_label: Option<DeviceLabel>,
+    // Added in Parsec v1.14
+    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
+    device_label: Option<Option<DeviceLabel>>,
     verify_key: VerifyKey,
 );
 
-impl_transparent_data_format_convertion!(
-    DeviceCertificate,
-    DeviceCertificateData,
-    author,
-    timestamp,
-    device_id,
-    device_label,
-    verify_key,
-);
+impl From<DeviceCertificateData> for DeviceCertificate {
+    fn from(data: DeviceCertificateData) -> Self {
+        Self {
+            author: data.author,
+            timestamp: data.timestamp,
+            device_id: data.device_id,
+            device_label: data.device_label.unwrap_or_default(),
+            verify_key: data.verify_key,
+        }
+    }
+}
+
+impl From<DeviceCertificate> for DeviceCertificateData {
+    fn from(obj: DeviceCertificate) -> Self {
+        Self {
+            type_: Default::default(),
+            author: obj.author,
+            timestamp: obj.timestamp,
+            device_id: obj.device_id,
+            device_label: Some(obj.device_label),
+            verify_key: obj.verify_key,
+        }
+    }
+}
 
 /*
  * RealmRoleCertificate
@@ -318,7 +337,7 @@ impl_transparent_data_format_convertion!(
 #[serde(into = "RealmRoleCertificateData", from = "RealmRoleCertificateData")]
 pub struct RealmRoleCertificate {
     pub author: DeviceID,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: DateTime,
 
     pub realm_id: EntryID,
     pub user_id: UserID,
@@ -335,8 +354,7 @@ new_data_struct_type!(
     type: "realm_role_certificate",
 
     author: DeviceID,
-    #[serde_as(as = "DateTimeExtFormat")]
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime,
 
     realm_id: EntryID,
     user_id: UserID,
@@ -344,7 +362,7 @@ new_data_struct_type!(
     role: Option<RealmRole>,  // TODO: use a custom type instead
 );
 
-impl_transparent_data_format_convertion!(
+impl_transparent_data_format_conversion!(
     RealmRoleCertificate,
     RealmRoleCertificateData,
     author,

@@ -9,5 +9,5 @@ class ApiVersion(namedtuple("ApiVersion", "version revision")):
 
 
 API_V1_VERSION = ApiVersion(version=1, revision=3)
-API_V2_VERSION = ApiVersion(version=2, revision=4)
+API_V2_VERSION = ApiVersion(version=2, revision=5)
 API_VERSION = API_V2_VERSION

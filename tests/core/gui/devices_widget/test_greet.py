@@ -171,7 +171,7 @@ def GreetDeviceTestBed(
                 assert gdce_w.widget_greeter_code.isVisible()
                 assert not gdce_w.widget_claimer_code.isVisible()
                 assert not gdce_w.code_input_widget.isVisible()
-                assert gdce_w.line_edit_greeter_code.text() == greeter_sas
+                assert gdce_w.line_edit_greeter_code.text() == greeter_sas.str
 
             await aqtbot.wait_until(_greeter_sas_displayed)
 

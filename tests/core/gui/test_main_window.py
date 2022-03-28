@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 
 from parsec.api.protocol import InvitationType, OrganizationID
-from parsec.api.data import UserProfile
+from parsec.api.data import UserProfile, EntryName
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
 from parsec.core.local_device import (
@@ -124,7 +124,7 @@ async def logged_gui_with_files(
 
     def _entry_available():
         assert f_w.workspace_fs is not None
-        assert f_w.workspace_fs.get_workspace_name() == "w1"
+        assert f_w.workspace_fs.get_workspace_name() == EntryName("w1")
         assert f_w.table_files.rowCount() == 1
 
     await aqtbot.wait_until(_entry_available)
@@ -480,6 +480,19 @@ async def test_tab_login_logout(gui_factory, core_config, alice, monkeypatch):
 
 @pytest.mark.gui
 @pytest.mark.trio
+async def test_copy_backend_addr(aqtbot, logged_gui, snackbar_catcher):
+    c_w = logged_gui.test_get_central_widget()
+    assert c_w is not None
+    c_w.button_user.menu().actions()[0].trigger()
+    assert snackbar_catcher.snackbars == [
+        ("INFO", translate("TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"))
+    ]
+    clipboard = QtGui.QGuiApplication.clipboard()
+    assert clipboard.text() == c_w.core.device.organization_addr.to_url()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
 async def test_tab_login_logout_two_tabs(aqtbot, gui_factory, core_config, alice, monkeypatch):
     password = "P@ssw0rd"
     save_device_with_password_in_config(core_config.config_dir, alice, password)
@@ -603,7 +616,7 @@ async def test_link_file_unknown_org(
 async def test_outsider_profil_limit(
     aqtbot, running_backend, adam, core_config, gui_factory, alice_user_fs
 ):
-    wid = await alice_user_fs.workspace_create("workspace1")
+    wid = await alice_user_fs.workspace_create(EntryName("workspace1"))
     await alice_user_fs.workspace_share(wid, adam.user_id, WorkspaceRole.READER)
     await alice_user_fs.process_last_messages()
     await alice_user_fs.sync()
