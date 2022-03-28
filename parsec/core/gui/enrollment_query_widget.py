@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QWidget
 from parsec.crypto import PrivateKey, SigningKey
 
 from parsec.api.protocol.pki import pki_enrollment_request_serializer
+from parsec.api.protocol import DeviceLabel
 
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
 from parsec.core.gui.lang import translate
@@ -94,11 +95,11 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
             f"/anonymous/pki/{organization_id}/enrollment_request"
         )
         try:
-            self.enrollment_request, self.local_request, self.certificate_id, self.certificate_sha1 = await smartcard.prepare_enrollment_request(
+            self.enrollment_request, self.local_request, self.certificate_id, self.certificate_sha1 = smartcard.prepare_enrollment_request(
                 self.request_id,
                 private_key,
                 signing_key,
-                desktop.get_default_device(),
+                DeviceLabel(desktop.get_default_device()),
                 backend_address,
                 organization_id,
             )
