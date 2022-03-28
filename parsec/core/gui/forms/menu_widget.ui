@@ -387,6 +387,12 @@
             <height>32</height>
            </size>
           </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
           <property name="checked_color" stdset="0">
            <color>
             <red>27</red>
