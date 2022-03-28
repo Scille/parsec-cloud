@@ -126,14 +126,14 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
             for certificate_id, request_id, request in rep["requests"]:
                 try:
                     subject, request_info = smartcard.verify_enrollment_request(
-                        self.core.config, request, ["parsec-extensions/certs/ca.pem"]
+                        self.core.config, request
                     )
                     requests.append(
                         EnrollmentInfo(request, request_id, request_info, certificate_id, True)
                     )
                 except smartcard.LocalDeviceError:
                     requests.append(
-                        EnrollmentInfo(request, request_id, request_info, certificate_id, False)
+                        EnrollmentInfo(request, request_id, None, certificate_id, False)
                     )
 
             if len(requests) == 0:

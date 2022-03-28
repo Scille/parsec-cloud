@@ -40,12 +40,8 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
         super().__init__()
         self.setupUi(self)
         self.enrollment_info = enrollment_info
-        # self.label_org.setText(self.enrollment_info.org)
-        self.label_name.setText(
-            self.enrollment_info.reply_info.human_handle.label
-            if self.enrollment_info.reply_info
-            else ""
-        )
+        self.label_org.setText(self.enrollment_info.request.organization_id.str)
+        self.label_name.setText(self.enrollment_info.request.human_handle.label)
         if self.enrollment_info.status == "rejected":
             self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_REJECTED"))
             self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
@@ -264,9 +260,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
                     )
                 else:
                     reply = rep["reply"]
-                    subject, reply_info = smartcard.verify_enrollment_reply(
-                        self.config, reply, ["parsec-extensions/certs/ca.pem"]
-                    )
+                    subject, reply_info = smartcard.verify_enrollment_reply(self.config, reply)
 
                     status = rep["status"]
                     if status == "ok":
@@ -341,7 +335,9 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.reload_devices()
 
     def _on_pending_clear_clicked(self, enrollment_info):
-        pass
+        self.jobs_ctx.submit_job(
+            self.request_file_cleared, None, self._clear_request_file, enrollment_info.request
+        )
 
     def reload_devices(self):
         self._clear_widget()
