@@ -188,13 +188,16 @@ msgid "TEXT_ENROLLMENT_STATUS_OUTDATED_TOOLTIP"
 msgstr "Your smartcard certificate has been used on another device"
 
 msgid "TEXT_ENROLLMENT_STATUS_ACCEPTED"
-msgstr "Request apporved"
+msgstr "Request approved"
 
 msgid "TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"
 msgstr "An administrator has validated your enrollment request"
 
 msgid "ACTION_ENROLLMENT_FINALIZE"
 msgstr "Join the organization"
+
+msgid "TEXT_ENROLLMENT_ACCEPT_CHECK_INFO_TITLE"
+msgstr "Greet a new user"
 
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
