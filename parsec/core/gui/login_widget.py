@@ -2,9 +2,19 @@
 
 from pathlib import Path
 from collections import namedtuple
+from urllib.request import urlopen, Request
+import trio
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
+
+from parsec.api.protocol.pki import pki_enrollment_get_reply_serializer
+from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.gui.trio_jobs import QtToTrioJob
+
+from parsec.core.local_device import generate_new_device, save_device_with_smartcard_in_config
+
+from parsec.core.types import BackendOrganizationAddr
 
 from parsec.core.local_device import list_available_devices, AvailableDevice, DeviceFileType
 
@@ -19,7 +29,7 @@ from parsec.core.gui.ui.login_no_devices_widget import Ui_LoginNoDevicesWidget
 from parsec.core.gui.ui.enrollment_pending_button import Ui_EnrollmentPendingButton
 
 
-PendingEnrollment = namedtuple("PendingEnrollment", ["token", "name", "org", "status", "date"])
+PendingEnrollment = namedtuple("PendingEnrollment", ["request", "reply_info", "status"])
 
 
 class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
@@ -30,8 +40,12 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
         super().__init__()
         self.setupUi(self)
         self.enrollment_info = enrollment_info
-        self.label_org.setText(self.enrollment_info.org)
-        self.label_name.setText(self.enrollment_info.name)
+        # self.label_org.setText(self.enrollment_info.org)
+        self.label_name.setText(
+            self.enrollment_info.reply_info.human_handle.label
+            if self.enrollment_info.reply_info
+            else ""
+        )
         if self.enrollment_info.status == "rejected":
             self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_REJECTED"))
             self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
@@ -191,6 +205,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     create_organization_clicked = pyqtSignal()
     join_organization_clicked = pyqtSignal()
     login_canceled = pyqtSignal()
+    request_file_cleared = pyqtSignal(QtToTrioJob)
 
     def __init__(self, jobs_ctx, event_bus, config, login_failed_sig, parent):
         super().__init__(parent=parent)
@@ -201,6 +216,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_failed_sig = login_failed_sig
 
         login_failed_sig.connect(self.on_login_failed)
+        self.request_file_cleared.connect(self._on_request_file_cleared)
         self.reload_devices()
 
     def on_login_failed(self):
@@ -214,23 +230,62 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             self.try_login()
         event.accept()
 
-    def list_pending_enrollments(self):
-        return [
-            PendingEnrollment("1", "Amy Wong", "Planet_Express", "pending", "16/02/3022"),
-            PendingEnrollment("2", "Kiff Kroker", "Planet_Express", "rejected", "16/02/3022"),
-            PendingEnrollment("3", "Hermes Conrad", "Planet_Express", "accepted", "16/02/3022"),
-        ]
+    async def list_pending_enrollments(self):
+        from parsec_ext import smartcard
 
-    def reload_devices(self):
-        self._clear_widget()
-        pending = self.list_pending_enrollments()
+        async def _http_request(url, method="GET", data=None):
+            def _do_req():
+                req = Request(url=url, method=method, data=data)
+                with urlopen(req) as rep:
+                    return rep.read()
 
+            return await trio.to_thread.run_sync(_do_req)
+
+        enrollments = []
+        async for path in smartcard.LocalEnrollmentRequest.iter_path(self.config.config_dir):
+            if path.name.startswith(""):
+                request = await smartcard.LocalEnrollmentRequest.load_from_path(path)
+                url = request.backend_addr.to_http_domain_url(
+                    f"/anonymous/pki/{request.organization_id}/enrollment_get_reply"
+                )
+                await _http_request(url)
+                req_data = pki_enrollment_get_reply_serializer.req_dumps(
+                    {"certificate_id": request.certificate_sha1, "request_id": request.request_id}
+                )
+
+                rep_data = await _http_request(url, "POST", req_data)
+                rep = pki_enrollment_get_reply_serializer.rep_loads(rep_data)
+
+                if rep["status"] != "ok":
+                    enrollments.append(
+                        PendingEnrollment(
+                            request, None, "pending" if rep["status"] == "pending" else "rejected"
+                        )
+                    )
+                else:
+                    reply = rep["reply"]
+                    subject, reply_info = smartcard.verify_enrollment_reply(
+                        self.config, reply, ["parsec-extensions/certs/ca.pem"]
+                    )
+
+                    status = rep["status"]
+                    if status == "ok":
+                        status = "accepted"
+                    elif status == "pending":
+                        status = "pending"
+                    else:
+                        status = "rejected"
+
+                    enrollments.append(PendingEnrollment(request, reply_info, status))
+        return enrollments
+
+    async def list_devices_and_enrollments(self):
+        pending = await self.list_pending_enrollments()
         devices = [
             device
             for device in list_available_devices(self.config.config_dir)
             if not ParsecApp.is_device_connected(device.organization_id, device.device_id)
         ]
-
         if not len(devices) and not len(pending):
             no_device_widget = LoginNoDevicesWidget()
             no_device_widget.create_organization_clicked.connect(
@@ -244,8 +299,53 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         else:
             accounts_widget = LoginAccountsWidget(devices, pending)
             accounts_widget.account_clicked.connect(self._on_account_clicked)
+            accounts_widget.pending_finalize_clicked.connect(self._on_pending_finalize_clicked)
+            accounts_widget.pending_clear_clicked.connect(self._on_pending_clear_clicked)
             self.widget.layout().addWidget(accounts_widget)
             accounts_widget.setFocus()
+
+    def _on_pending_finalize_clicked(self, enrollment_info):
+        from parsec_ext import smartcard
+
+        request = enrollment_info.request
+        reply_info = enrollment_info.reply_info
+
+        private_key, signing_key = smartcard.recover_private_keys(request)
+
+        organization_address = BackendOrganizationAddr.build(
+            request.backend_addr, request.organization_id, reply_info.root_verify_key
+        )
+        local_device = generate_new_device(
+            organization_addr=organization_address,
+            device_id=reply_info.device_id,
+            profile=reply_info.profile,
+            human_handle=reply_info.human_handle,
+            device_label=reply_info.device_label,
+            signing_key=signing_key,
+            private_key=private_key,
+        )
+
+        save_device_with_smartcard_in_config(
+            self.config.config_dir,
+            local_device,
+            certificate_id=request.certificate_id,
+            certificate_sha1=request.certificate_sha1,
+        )
+        SnackbarManager.inform(_("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
+        self.jobs_ctx.submit_job(self.request_file_cleared, None, self._clear_request_file, request)
+
+    async def _clear_request_file(self, request):
+        await request.get_path(self.config.config_dir).unlink()
+
+    def _on_request_file_cleared(self):
+        self.reload_devices()
+
+    def _on_pending_clear_clicked(self, enrollment_info):
+        pass
+
+    def reload_devices(self):
+        self._clear_widget()
+        self.jobs_ctx.submit_job(None, None, self.list_devices_and_enrollments)
 
     def _clear_widget(self):
         while self.widget.layout().count() != 0:

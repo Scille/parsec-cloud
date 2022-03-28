@@ -406,6 +406,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 self._on_claim_user_clicked(action_addr)
             elif action_addr.invitation_type == InvitationType.DEVICE:
                 self._on_claim_device_clicked(action_addr)
+            elif action_addr.invitation_type == InvitationType.PKI:
+                self._on_claim_pki_clicked(action_addr)
             else:
                 show_error(self, _("TEXT_INVALID_URL"))
                 return
@@ -413,13 +415,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             show_error(self, _("TEXT_INVALID_URL"))
             return
 
-    def _on_enrollment_query_clicked(self, action_addr: str) -> None:
+    def _on_claim_pki_clicked(self, action_addr: BackendInvitationAddr) -> None:
         widget: EnrollmentQueryWidget
 
         def _on_finished() -> None:
             nonlocal widget
             if not widget.status:
                 return
+            show_info(self, _("TEXT_ENROLLMENT_QUERY_SUCCEEDED"))
             self.reload_login_devices()
 
         widget = EnrollmentQueryWidget.show_modal(
