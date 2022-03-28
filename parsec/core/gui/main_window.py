@@ -387,10 +387,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         elif url == "":
             show_error(self, _("TEXT_JOIN_ORG_INVALID_URL"))
             return
-        # TODO: remove this once enrollment is implemented
-        elif url == "enrollment":
-            self._on_enrollment_query_clicked("parsec://ignored")
-            return
 
         action_addr = None
         try:
@@ -772,6 +768,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.switch_to_login_tab()
         self._on_claim_device_clicked(action_addr)
 
+    def show_claim_pki_widget(self, action_addr: BackendInvitationAddr) -> None:
+        self.switch_to_login_tab()
+        self._on_claim_pki_clicked(action_addr)
+
     def add_instance(self, start_arg: Optional[str] = None) -> None:
         action_addr = None
         if start_arg:
@@ -797,6 +797,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             and action_addr.invitation_type == InvitationType.DEVICE
         ):
             self.show_claim_device_widget(action_addr)
+        elif (
+            isinstance(action_addr, BackendInvitationAddr)
+            and action_addr.invitation_type == InvitationType.PKI
+        ):
+            self.show_claim_pki_widget(action_addr)
         else:
             show_error(self, _("TEXT_INVALID_URL"))
 
