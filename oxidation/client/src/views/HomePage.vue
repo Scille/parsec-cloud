@@ -10,12 +10,24 @@
       </ion-header>
       <ion-content>
         <ion-list>
-          <ion-item button @click="presentPatchNote()">
-            <ion-icon :icon="newspaperSharp" slot="start"/>
+          <ion-item
+            button
+            @click="presentPatchNote()"
+          >
+            <ion-icon
+              :icon="newspaperSharp"
+              slot="start"
+            />
             <ion-label>Journal des modifications</ion-label>
           </ion-item>
-          <ion-item button @click="presentAbout()">
-            <ion-icon :icon="helpCircleOutline" slot="start"/>
+          <ion-item
+            button
+            @click="presentAbout()"
+          >
+            <ion-icon
+              :icon="helpCircleOutline"
+              slot="start"
+            />
             <ion-label>À propos</ion-label>
           </ion-item>
         </ion-list>
@@ -40,7 +52,10 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true" id="main">
+    <ion-content
+      :fullscreen="true"
+      id="main"
+    >
       <ion-header collapse="condense">
         <ion-toolbar color="primary">
           <ion-buttons slot="start">
