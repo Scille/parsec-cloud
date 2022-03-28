@@ -422,37 +422,40 @@ impl TrustchainContext {
         for certif_state in devices_states.values() {
             let verified = certif_state.borrow().verified;
             if !verified {
-                certif_state.borrow_mut().content = self.recursive_verify_device(
+                let content = self.recursive_verify_device(
                     &users_states,
                     &devices_states,
                     &revoked_users_states,
                     &certif_state.borrow().content.device_id,
                     &mut vec![],
                 )?;
+                certif_state.borrow_mut().content = content;
             }
         }
         for certif_state in users_states.values() {
             let verified = certif_state.borrow().verified;
             if !verified {
-                certif_state.borrow_mut().content = self.verify_user(
+                let content = self.verify_user(
                     &users_states,
                     &devices_states,
                     &revoked_users_states,
                     &certif_state.borrow().content,
                     certif_state.borrow().certif,
                 )?;
+                certif_state.borrow_mut().content = content;
             }
         }
         for certif_state in revoked_users_states.values() {
             let verified = certif_state.borrow().verified;
             if !verified {
-                certif_state.borrow_mut().content = self.verify_revoked_user(
+                let content = self.verify_revoked_user(
                     &users_states,
                     &devices_states,
                     &revoked_users_states,
                     &certif_state.borrow().content,
                     certif_state.borrow().certif,
                 )?;
+                certif_state.borrow_mut().content = content;
             }
         }
 
