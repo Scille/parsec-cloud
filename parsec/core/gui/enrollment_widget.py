@@ -6,7 +6,13 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QWidget
 
+from parsec.api.protocol import UserProfile
+
+from parsec.core.backend_connection.authenticated import backend_authenticated_cmds_factory
+
 from parsec.core.core_events import CoreEvent
+
+from parsec.core.invite.greeter import _create_new_user_certificates
 
 from parsec.core.gui.lang import translate
 from parsec.core.gui.custom_widgets import Pixmap
@@ -16,7 +22,9 @@ from parsec.core.gui.ui.enrollment_widget import Ui_EnrollmentWidget
 from parsec.core.gui.ui.enrollment_button import Ui_EnrollmentButton
 
 
-EnrollmentInfo = namedtuple("EnrollmentInfo", ["token", "name", "email", "date", "certif_is_valid"])
+EnrollmentInfo = namedtuple(
+    "EnrollmentInfo", ["request", "request_id", "request_info", "certificate_id", "certif_is_valid"]
+)
 
 
 class EnrollmentButton(QWidget, Ui_EnrollmentButton):
@@ -27,9 +35,9 @@ class EnrollmentButton(QWidget, Ui_EnrollmentButton):
         super().__init__()
         self.setupUi(self)
         self.enrollment_info = enrollment_info
-        self.label_name.setText(self.enrollment_info.name)
-        self.label_email.setText(self.enrollment_info.email)
-        self.label_date.setText(self.enrollment_info.date)
+        self.label_name.setText(self.enrollment_info.request.requested_human_handle.label)
+        self.label_email.setText(self.enrollment_info.request.requested_human_handle.email)
+        # self.label_date.setText(self.enrollment_info.date)
         accept_pix = Pixmap(":/icons/images/material/done.svg")
         accept_pix.replace_color(QColor(0x00, 0x00, 0x00), QColor(0xFF, 0xFF, 0xFF))
         reject_pix = Pixmap(":/icons/images/material/clear.svg")
@@ -97,50 +105,46 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
                 w.setParent(None)
 
     async def list_pending_enrollments(self):
-        try:
-            self.label_empty_list.hide()
-            self.clear_layout()
-            # enrollments = await self.core.list_pending_enrollments()
-            enrollments = [
-                EnrollmentInfo(
-                    "1",
-                    "Hubert Farnsworth",
-                    "hubert.farnsworth@planetexpress.com",
-                    "16/02/3022",
-                    True,
-                ),
-                EnrollmentInfo(
-                    "2", "John A. Zoidberg", "john.zoidberg@planetexpress.com", "14/02/3022", True
-                ),
-                EnrollmentInfo(
-                    "3", "Leela Turanga", "leela.turanga@planetexpress.com", "14/02/3022", True
-                ),
-                EnrollmentInfo(
-                    "4",
-                    "Bender B. Rodriguez",
-                    "bender.rodriguez@planetexpress.com",
-                    "15/02/3022",
-                    True,
-                ),
-                EnrollmentInfo(
-                    "5", "Zapp Brannigan", "zapp.brannigan@doop.com", "15/02/3022", False
-                ),
-                EnrollmentInfo(
-                    "6", "Philip J. Fry", "philip.fry@planetexpress.com", "16/02/3022", True
-                ),
-            ]
-            if len(enrollments) == 0:
+        from parsec_ext import smartcard
+
+        self.label_empty_list.hide()
+        self.clear_layout()
+
+        async with backend_authenticated_cmds_factory(
+            addr=self.core.device.organization_addr,
+            device_id=self.core.device.device_id,
+            signing_key=self.core.device.signing_key,
+            keepalive=self.core.config.backend_connection_keepalive,
+        ) as cmds:
+            rep = await cmds.pki_enrollment_get_requests()
+            if rep["status"] != "ok":
+                self.label_empty_list.setText(translate("TEXT_ENROLLMENT_FAILED_TO_RETRIEVE_LIST"))
+                self.label_empty_list.show()
+                return
+
+            requests = []
+            for certificate_id, request_id, request in rep["requests"]:
+                try:
+                    subject, request_info = smartcard.verify_enrollment_request(
+                        self.core.config, request, ["parsec-extensions/certs/ca.pem"]
+                    )
+                    requests.append(
+                        EnrollmentInfo(request, request_id, request_info, certificate_id, True)
+                    )
+                except smartcard.LocalDeviceError:
+                    requests.append(
+                        EnrollmentInfo(request, request_id, request_info, certificate_id, False)
+                    )
+
+            if len(requests) == 0:
                 self.label_empty_list.setText(translate("TEXT_ENROLLMENT_NO_PENDING_enrollment"))
                 self.label_empty_list.show()
                 return
-            for recruit in enrollments:
-                rw = EnrollmentButton(recruit)
-                rw.accept_clicked.connect(self._on_accept_clicked)
-                rw.reject_clicked.connect(self._on_reject_clicked)
-                self.main_layout.addWidget(rw)
-        except:
-            self.label_empty_list.setText(translate("TEXT_ENROLLMENT_FAILED_TO_RETRIEVE_LIST"))
-            self.label_empty_list.show()
+            for recruit in requests:
+                eb = EnrollmentButton(recruit)
+                eb.accept_clicked.connect(self._on_accept_clicked)
+                eb.reject_clicked.connect(self._on_reject_clicked)
+                self.main_layout.addWidget(eb)
 
     def _on_accept_clicked(self, rw):
         rw.set_buttons_enabled(False)
@@ -150,30 +154,74 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         rw.set_buttons_enabled(False)
         self.jobs_ctx.submit_job(None, None, self.reject_recruit, enrollment_button=rw)
 
-    # Used to write tests for the time being
-    def _fake_accept(self):
-        pass
-
-    # Used to write tests for the time being
-    def _fake_reject(self):
-        pass
-
     async def accept_recruit(self, enrollment_button):
+        from parsec_ext import smartcard
+
         try:
-            # await self.core.accept_recruit(token)
-            self._fake_accept()
-            SnackbarManager.inform(translate("TEXT_ENROLLMENT_ACCEPT_SUCCESS"))
-            self.main_layout.removeWidget(enrollment_button)
+            async with backend_authenticated_cmds_factory(
+                addr=self.core.device.organization_addr,
+                device_id=self.core.device.device_id,
+                signing_key=self.core.device.signing_key,
+                keepalive=self.core.config.backend_connection_keepalive,
+            ) as cmds:
+
+                enrollment_info = enrollment_button.enrollment_info
+                author = self.core.device
+                user_certificate, redacted_user_certificate, device_certificate, redacted_device_certificate, user_confirmation = _create_new_user_certificates(
+                    author,
+                    enrollment_info.request_info.requested_device_label,
+                    enrollment_info.request_info.requested_human_handle,
+                    UserProfile.STANDARD,
+                    enrollment_info.request_info.public_key,
+                    enrollment_info.request_info.verify_key,
+                )
+
+                reply = smartcard.prepare_enrollment_reply(author, user_confirmation)
+
+                # Perform the pki_enrollment_reply command
+                rep = await cmds.pki_enrollment_reply(
+                    enrollment_info.certificate_id,
+                    enrollment_info.request_id,
+                    reply=reply,
+                    user_id=user_confirmation.device_id.user_id,
+                    user_certificate=user_certificate,
+                    device_certificate=device_certificate,
+                    redacted_user_certificate=redacted_user_certificate,
+                    redacted_device_certificate=redacted_device_certificate,
+                )
+                if rep["status"] != "ok":
+                    SnackbarManager.warn(translate("TEXT_ENROLLMENT_ACCEPT_FAILURE"))
+                    enrollment_button.set_buttons_enabled(True)
+                else:
+                    SnackbarManager.inform(translate("TEXT_ENROLLMENT_ACCEPT_SUCCESS"))
+                    self.main_layout.removeWidget(enrollment_button)
         except:
+            import traceback
+
+            traceback.print_exc()
             SnackbarManager.warn(translate("TEXT_ENROLLMENT_ACCEPT_FAILURE"))
             enrollment_button.set_buttons_enabled(True)
 
     async def reject_recruit(self, enrollment_button):
         try:
-            # await self.core.reject_recruit(token)
-            self._fake_reject()
-            SnackbarManager.inform(translate("TEXT_ENROLLMENT_REJECT_SUCCESS"))
-            self.main_layout.removeWidget(enrollment_button)
+            async with backend_authenticated_cmds_factory(
+                addr=self.core.device.organization_addr,
+                device_id=self.core.device.device_id,
+                signing_key=self.core.device.signing_key,
+                keepalive=self.core.config.backend_connection_keepalive,
+            ) as cmds:
+                rep = await cmds.pki_enrollment_reply(
+                    enrollment_button.enrollment_info.certificate_id,
+                    enrollment_button.enrollment_info.request_id,
+                    reply=None,
+                    user_id=None,
+                )
+                if rep["status"] != "ok":
+                    SnackbarManager.warn(translate("TEXT_ENROLLMENT_REJECT_FAILURE"))
+                    enrollment_button.set_buttons_enabled(True)
+                else:
+                    SnackbarManager.inform(translate("TEXT_ENROLLMENT_REJECT_SUCCESS"))
+                    self.main_layout.removeWidget(enrollment_button)
         except:
             SnackbarManager.warn(translate("TEXT_ENROLLMENT_REJECT_FAILURE"))
             enrollment_button.set_buttons_enabled(True)
