@@ -152,7 +152,7 @@ msgid "ACTION_SELECT_CERTIFICATE"
 msgstr "Select certificate"
 
 msgid "ACTION_ASK_TO_JOIN_ORG"
-msgstr "send join request"
+msgstr "Send join request"
 
 msgid "TEXT_ENROLLMENT_ERROR_LOADING_CERTIFICATE"
 msgstr "Error loading certificate"
