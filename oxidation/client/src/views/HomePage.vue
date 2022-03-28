@@ -18,7 +18,7 @@
               :icon="newspaperSharp"
               slot="start"
             />
-            <ion-label>Journal des modifications</ion-label>
+            <ion-label>{{ $t('HomePage.mainMenu.changelog') }}</ion-label>
           </ion-item>
           <ion-item
             button
@@ -28,7 +28,7 @@
               :icon="helpCircleOutline"
               slot="start"
             />
-            <ion-label>À propos</ion-label>
+            <ion-label>{{ $t('HomePage.mainMenu.about') }}</ion-label>
           </ion-item>
         </ion-list>
       </ion-content>
@@ -77,8 +77,8 @@
         </ion-toolbar>
       </ion-header>
       <div id="container">
-        <p>Vous n'avez pas d'appareils sur ce téléphone.</p>
-        <p>Pour ajouter un appareil, invitez-le depuis une organisation existante, ou créez une nouvelle organisation.</p>
+        <p>{{ $t('HomePage.noDevices') }}</p>
+        <p>{{ $t('HomePage.howToAddDevices') }}</p>
       </div>
     </ion-content>
   </ion-page>
@@ -110,6 +110,9 @@ import {
   helpCircleOutline,
   newspaperSharp
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 function presentAbout(): void {
   console.log('presentAbout');
@@ -122,11 +125,11 @@ function presentPatchNote(): void {
 async function presentOrganizationActionSheet(): Promise<void> {
   const actionSheet = await actionSheetController
     .create({
-      header: 'Organisation',
+      header: t('HomePage.organizationActionSheet.header'),
       cssClass: 'organization-action-sheet',
       buttons: [
         {
-          text: 'Créer',
+          text: t('HomePage.organizationActionSheet.create'),
           icon: add,
           data: {
             type: 'delete'
@@ -136,7 +139,7 @@ async function presentOrganizationActionSheet(): Promise<void> {
           }
         },
         {
-          text: 'Rejoindre par lien',
+          text: t('HomePage.organizationActionSheet.joinByLink'),
           icon: link,
           data: 10,
           handler: (): void => {
@@ -144,7 +147,7 @@ async function presentOrganizationActionSheet(): Promise<void> {
           }
         },
         {
-          text: 'Rejoindre par QR code',
+          text: t('HomePage.organizationActionSheet.joinByQRcode'),
           icon: qrCodeSharp,
           data: 'Data value',
           handler: (): void => {
