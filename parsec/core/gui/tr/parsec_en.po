@@ -137,7 +137,64 @@ msgid "ACTION_MENU_DEVICES"
 msgstr "My devices"
 
 msgid "ACTION_MENU_ENROLLMENT"
-msgstr ""
+msgstr "SmartCard Enrollment"
+
+msgid "TEXT_ENROLLMENT_NO_PENDING_enrollment"
+msgstr "No pending enrollment request"
+
+msgid "TEXT_ENROLLMENT_QUERY_TITLE"
+msgstr "Join an organization with smartcard"
+
+msgid "TEXT_ENROLLMENT_INSTRUCTIONS"
+msgstr "Please select your smartcard card certificate"
+
+msgid "ACTION_SELECT_CERTIFICATE"
+msgstr "Select certificate"
+
+msgid "ACTION_ASK_TO_JOIN_ORG"
+msgstr "send join request"
+
+msgid "TEXT_ENROLLMENT_ERROR_LOADING_CERTIFICATE"
+msgstr "Error loading certificate"
+
+msgid "TEXT_ENROLLMENT_STATUS_PENDING"
+msgstr "Pending request"
+
+msgid "TEXT_ENROLLMENT_STATUS_PENDING_TOOLTIP"
+msgstr "Your request requires to be validated by an administrator"
+
+msgid "TEXT_ENROLLMENT_STATUS_REJECTED"
+msgstr "Your request has been rejected"
+
+msgid "TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"
+msgstr "An administrator has rejected your request"
+
+msgid "ACTION_ENROLLMENT_CLEAR"
+msgstr "Remove from device list"
+
+msgid "TEXT_LABEL_USER_NAME"
+msgstr "User name"
+
+msgid "TEXT_ENROLLMENT_QUERY_SUCCEEDED"
+msgstr "Your request has been sent"
+
+msgid "TEXT_ENROLLMENT_QUERY_FAILED"
+msgstr "Error, your request can not be sent"
+
+msgid "TEXT_ENROLLMENT_STATUS_OUTDATED"
+msgstr "Outdated request"
+
+msgid "TEXT_ENROLLMENT_STATUS_OUTDATED_TOOLTIP"
+msgstr "Your smartcard certificate has been used on another device"
+
+msgid "TEXT_ENROLLMENT_STATUS_ACCEPTED"
+msgstr "Request apporved"
+
+msgid "TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"
+msgstr "An administrator has validated your enrollment request"
+
+msgid "ACTION_ENROLLMENT_FINALIZE"
+msgstr "Join the organization"
 
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
