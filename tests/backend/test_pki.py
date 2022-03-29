@@ -14,15 +14,6 @@ from parsec.crypto import PublicKey, VerifyKey, generate_nonce
 from parsec.core.invite.greeter import _create_new_user_certificates
 
 
-@pytest.mark.trio
-async def test_pki_get_empty_request(backend, alice, bob, alice_backend_sock):
-    data = await backend.pki.pki_enrollment_get_requests()
-    assert not data
-    rep = await pki_enrollment_get_requests(alice_backend_sock.transport)
-    assert rep["status"] == "ok"
-    assert rep["requests"] == []
-
-
 async def _setup_backend_request(backend, organization_id):
     certificate_id = b"certificate_id"
     request_id = uuid4()
@@ -51,7 +42,27 @@ async def _setup_backend_request(backend, organization_id):
 
 
 @pytest.mark.trio
-async def test_pki_send_accepted_reply(backend, alice, alice_backend_sock):
+async def test_pki_get_empty_request(backend, alice_backend_sock):
+    data = await backend.pki.pki_enrollment_get_requests()
+    assert not data
+    rep = await pki_enrollment_get_requests(alice_backend_sock.transport)
+    assert rep["status"] == "ok"
+    assert rep["requests"] == []
+
+
+@pytest.mark.trio
+async def test_pki_get_requests(backend, alice, alice_backend_sock):
+    (certificate_id, *_) = await _setup_backend_request(backend, alice.organization_id)
+
+    rep = await pki_enrollment_get_requests(alice_backend_sock.transport)
+
+    assert rep["status"] == "ok"
+    assert len(rep["requests"]) == 1
+    assert rep["requests"][0][0] == certificate_id
+
+
+@pytest.mark.trio
+async def test_pki_send_reply_accepted(backend, alice, alice_backend_sock):
     ref_time = pendulum.now()
     (
         certificate_id,
@@ -60,12 +71,6 @@ async def test_pki_send_accepted_reply(backend, alice, alice_backend_sock):
         requested_device_label,
         *_,
     ) = await _setup_backend_request(backend, alice.organization_id)
-
-    rep = await pki_enrollment_get_requests(alice_backend_sock.transport)
-
-    assert rep["status"] == "ok"
-    assert len(rep["requests"]) == 1
-    assert rep["requests"][0][0] == certificate_id
 
     pki_reply_info = InviteUserConfirmation(
         device_id=DeviceID("ZappB@nimbus"),
@@ -128,21 +133,11 @@ async def test_pki_send_accepted_reply(backend, alice, alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_pki_send_rejected_reply(backend, alice, alice_backend_sock):
+async def test_pki_send_reply_rejected(backend, alice, alice_backend_sock):
     ref_time = pendulum.now()
-    (
-        certificate_id,
-        request_id,
-        requested_human_handle,
-        requested_device_label,
-        *_,
-    ) = await _setup_backend_request(backend, alice.organization_id)
-
-    rep = await pki_enrollment_get_requests(alice_backend_sock.transport)
-
-    assert rep["status"] == "ok"
-    assert len(rep["requests"]) == 1
-    assert rep["requests"][0][0] == certificate_id
+    (certificate_id, request_id, requested_human_handle, *_) = await _setup_backend_request(
+        backend, alice.organization_id
+    )
 
     rep = await pki_enrollment_reply(
         alice_backend_sock.transport,
@@ -170,3 +165,39 @@ async def test_pki_send_rejected_reply(backend, alice, alice_backend_sock):
     )
 
     assert rep == ([], 0)
+
+
+@pytest.mark.trio
+async def test_pki_send_reply_wrong_certificate_id(backend, alice, alice_backend_sock):
+    (_, request_id, *_) = await _setup_backend_request(backend, alice.organization_id)
+
+    rep = await pki_enrollment_reply(
+        alice_backend_sock.transport,
+        certificate_id=b"wrong_certificate_id",
+        request_id=request_id,
+        reply=None,
+        user_id=None,
+        device_certificate=None,
+        user_certificate=None,
+        redacted_user_certificate=None,
+        redacted_device_certificate=None,
+    )
+    assert rep["status"] == "certificate not found"
+
+
+@pytest.mark.trio
+async def test_pki_send_reply_wrond_request_id(backend, alice, alice_backend_sock):
+    (certificate_id, *_) = await _setup_backend_request(backend, alice.organization_id)
+
+    rep = await pki_enrollment_reply(
+        alice_backend_sock.transport,
+        certificate_id=certificate_id,
+        request_id=uuid4(),
+        reply=None,
+        user_id=None,
+        device_certificate=None,
+        user_certificate=None,
+        redacted_user_certificate=None,
+        redacted_device_certificate=None,
+    )
+    assert rep["status"] == "request not found"
