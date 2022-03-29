@@ -1,32 +1,101 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.api.data.pki import PkiEnrollmentRequest
-from parsec.api.data.pki import PkiEnrollmentReply
+from typing import Dict, cast
+from enum import Enum
+
 from parsec.api.protocol.base import BaseRepSchema, BaseReqSchema, CmdSerializer
 from parsec.api.protocol.types import HumanHandleField
-from parsec.serde import fields
+from parsec.serde import BaseSchema, OneOfSchema, fields
 
 
-# pki_enrollment_request
+class PkiEnrollmentStatus(Enum):
+    SUBMITTED = "SUBMITTED"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
 
 
-class PkiEnrollmentRequestReqSchema(BaseReqSchema):
-    request = fields.Nested(PkiEnrollmentRequest.SCHEMA_CLS, required=True)
-    certificate_id = fields.Bytes(required=True)
-    request_id = fields.UUID(required=True)
-    force_flag = fields.Boolean(required=True)
+PkiEnrollmentStatusField = fields.enum_field_factory(PkiEnrollmentStatus)
 
 
-class PkiEnrollmentRequestRepSchema(BaseRepSchema):
-    status = fields.String(required=True)
-    timestamp = fields.DateTime(required=True)
+# pki_enrollment_submit
 
 
-pki_enrollment_request_serializer = CmdSerializer(
-    PkiEnrollmentRequestReqSchema, PkiEnrollmentRequestRepSchema
+class PkiEnrollmentSubmitReqSchema(BaseReqSchema):
+    enrollment_id = fields.UUID(required=True)
+    force_flag = fields.Boolean(required=True)  # TODO: document me !
+
+    der_x509_certificate = fields.Bytes(require=True)
+    signature = fields.Bytes(required=True)
+    payload = fields.Bytes(required=True)  # Signature should be checked before loading
+
+
+class PkiEnrollmentSubmitRepSchema(BaseRepSchema):
+    pass
+
+
+pki_enrollment_submit_serializer = CmdSerializer(
+    PkiEnrollmentSubmitReqSchema, PkiEnrollmentSubmitRepSchema
 )
 
-# pki_enrollment_get_requests
+
+# pki_enrollment_info
+
+
+class PkiEnrollmentInfoReqSchema(BaseReqSchema):
+    enrollment_id = fields.UUID(required=True)
+
+
+class PkiEnrollmentInfoRepSubmittedSchema(BaseRepSchema):
+    type = fields.EnumCheckedConstant(PkiEnrollmentStatus.SUBMITTED, required=True)
+    submitted_on = fields.DateTime(required=True)
+
+
+class PkiEnrollmentInfoRepAcceptedSchema(BaseRepSchema):
+    type = fields.EnumCheckedConstant(PkiEnrollmentStatus.ACCEPTED, required=True)
+    submitted_on = fields.DateTime(required=True)
+    replied_on = fields.DateTime(required=True)
+    replier_user_id = HumanHandleField(required=True)
+    replier_human_handle = HumanHandleField(required=True, allow_none=True)
+
+    der_x509_certificate = fields.Bytes(required=True)
+    signature = fields.Bytes(required=True)
+    pki_reply_info = fields.Bytes(required=True)  # Signature should be checked before loading
+
+
+class PkiEnrollmentInfoRepRejectedSchema(BaseRepSchema):
+    type = fields.EnumCheckedConstant(PkiEnrollmentStatus.REJECTED, required=True)
+    submitted_on = fields.DateTime(required=True)
+    replied_on = fields.DateTime(required=True)
+    replier_user_id = HumanHandleField(required=True)
+    replier_human_handle = HumanHandleField(required=True, allow_none=True)
+
+
+class PkiEnrollmentInfoRepSchema(OneOfSchema):
+    type_field = "type"
+    type_schemas = {
+        PkiEnrollmentStatus.SUBMITTED: PkiEnrollmentInfoRepSubmittedSchema(),
+        PkiEnrollmentStatus.ACCEPTED: PkiEnrollmentInfoRepAcceptedSchema(),
+        PkiEnrollmentStatus.REJECTED: PkiEnrollmentInfoRepRejectedSchema(),
+    }
+
+    def get_obj_type(self, obj: Dict[str, object]) -> PkiEnrollmentStatus:
+        return cast(PkiEnrollmentStatus, obj["type"])
+
+
+pki_enrollment_info_serializer = CmdSerializer(
+    PkiEnrollmentInfoReqSchema, PkiEnrollmentInfoRepSchema
+)
+
+
+# pki_enrollment_list
+
+
+class PkiEnrollmentListItemSchema(BaseSchema):
+    enrollment_id = fields.UUID(required=True)
+    submitted_on = fields.DateTime(required=True)
+    der_x509_certificate = fields.Bytes(require=True)
+    signature = fields.Bytes(required=True)
+    pki_request_info = fields.Bytes(required=True)  # Signature should be checked before loading
 
 
 class PkiEnrollmentGetRequestsReqSchema(BaseReqSchema):
@@ -34,59 +103,51 @@ class PkiEnrollmentGetRequestsReqSchema(BaseReqSchema):
 
 
 class PkiEnrollmentGetRequestsRepSchema(BaseRepSchema):
-    requests = fields.List(
-        fields.Tuple(
-            fields.Bytes(required=True),
-            fields.UUID(required=True),
-            fields.Nested(PkiEnrollmentRequest.SCHEMA_CLS, required=True),
-        ),
-        required=True,
-    )
+    requests = fields.List(fields.Nested(PkiEnrollmentListItemSchema), required=True)
 
 
-pki_enrollment_get_requests_serializer = CmdSerializer(
+pki_enrollment_list_serializer = CmdSerializer(
     PkiEnrollmentGetRequestsReqSchema, PkiEnrollmentGetRequestsRepSchema
 )
 
-# pki_enrollment_reply
+
+# pki_enrollment_reject
 
 
-class PkiEnrollmentReplyReqSchema(BaseReqSchema):
-    certificate_id = fields.Bytes(required=True)
-    request_id = fields.UUID(required=True)
-    reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, required=True, allow_none=True)
-    user_id = fields.String(required=True, allow_none=True)  # TODO Move to userid ?
-    device_certificate = fields.Bytes(required=True, allow_none=True)
-    user_certificate = fields.Bytes(required=True, allow_none=True)
-    redacted_user_certificate = fields.Bytes(required=True, allow_none=True)
-    redacted_device_certificate = fields.Bytes(required=True, allow_none=True)
+class PkiEnrollmentRejectReqSchema(BaseReqSchema):
+    enrollment_id = fields.UUID(required=True)
 
 
-class PkiEnrollmentReplyRepSchema(BaseRepSchema):
-    status = fields.String(required=True)
-    timestamp = fields.DateTime(required=True)
+class PkiEnrollmentRejectRepSchema(BaseRepSchema):
+    pass
 
 
-pki_enrollment_reply_serializer = CmdSerializer(
-    PkiEnrollmentReplyReqSchema, PkiEnrollmentReplyRepSchema
+pki_enrollment_reject_serializer = CmdSerializer(
+    PkiEnrollmentRejectReqSchema, PkiEnrollmentRejectRepSchema
 )
 
 
-# pki_enrollment_get_reply
+# pki_enrollment_accept
 
 
-class PkiEnrollmentGetReplyReqSchema(BaseReqSchema):
-    certificate_id = fields.Bytes(required=True)
-    request_id = fields.UUID(required=True)
+class PkiEnrollmentAcceptReqSchema(BaseReqSchema):
+    enrollment_id = fields.UUID(required=True)
+
+    der_x509_certificate = fields.Bytes(required=True)
+    signature = fields.Bytes(required=True)
+    payload = fields.Bytes(required=True)  # Signature should be checked before loading
+
+    user_certificate = fields.Bytes(required=True)
+    device_certificate = fields.Bytes(required=True)
+    # Same certificates than above, but expurged of human_handle/device_label
+    redacted_user_certificate = fields.Bytes(required=True)
+    redacted_device_certificate = fields.Bytes(required=True)
 
 
-class PkiEnrollmentGetReplyRepSchema(BaseRepSchema):
-    status = fields.String(required=True)
-    reply = fields.Nested(PkiEnrollmentReply.SCHEMA_CLS, required=True, allow_none=True)
-    timestamp = fields.DateTime(required=True)
-    admin_human_handle = HumanHandleField(required=True, allow_none=True)
+class PkiEnrollmentAcceptRepSchema(BaseRepSchema):
+    pass
 
 
-pki_enrollment_get_reply_serializer = CmdSerializer(
-    PkiEnrollmentGetReplyReqSchema, PkiEnrollmentGetReplyRepSchema
+pki_enrollment_accept_serializer = CmdSerializer(
+    PkiEnrollmentAcceptReqSchema, PkiEnrollmentAcceptRepSchema
 )

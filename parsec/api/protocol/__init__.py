@@ -121,13 +121,14 @@ from parsec.api.protocol.vlob import (
     vlob_maintenance_save_reencryption_batch_serializer,
 )
 from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS, APIV1_ANONYMOUS_CMDS
+from parsec.api.protocol.pki import (
+    pki_enrollment_submit_serializer,
+    pki_enrollment_info_serializer,
+    pki_enrollment_list_serializer,
+    pki_enrollment_reject_serializer,
+    pki_enrollment_accept_serializer,
+)
 
-# from parsec.api.protocol.pki import (
-#     pki_enrollment_request_serializer,
-#     pki_enrollment_get_requests_serializer,
-#     pki_enrollment_reply_serializer,
-#     pki_enrollment_get_reply_serializer,
-# )
 
 __all__ = (
     "ProtocolError",
@@ -240,11 +241,12 @@ __all__ = (
     "BlockIDField",
     "block_create_serializer",
     "block_read_serializer",
-    # Pki certificates
-    # "pki_enrollment_request_serializer",
-    # "pki_enrollment_get_reply_serializer",
-    # "pki_enrollment_get_requests_serializer",
-    # "pki_enrollment_reply_serializer",
+    # PKI enrollment
+    "pki_enrollment_submit_serializer",
+    "pki_enrollment_info_serializer",
+    "pki_enrollment_list_serializer",
+    "pki_enrollment_reject_serializer",
+    "pki_enrollment_accept_serializer",
     # List of cmds
     "AUTHENTICATED_CMDS",
     "INVITED_CMDS",
