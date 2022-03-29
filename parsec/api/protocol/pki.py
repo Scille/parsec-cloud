@@ -95,16 +95,16 @@ class PkiEnrollmentListItemSchema(BaseSchema):
     submitted_payload = fields.Bytes(required=True)  # Signature should be checked before loading
 
 
-class PkiEnrollmentGetRequestsReqSchema(BaseReqSchema):
+class PkiEnrollmentListReqSchema(BaseReqSchema):
     pass
 
 
-class PkiEnrollmentGetRequestsRepSchema(BaseRepSchema):
+class PkiEnrollmentListRepSchema(BaseRepSchema):
     requests = fields.List(fields.Nested(PkiEnrollmentListItemSchema), required=True)
 
 
 pki_enrollment_list_serializer = CmdSerializer(
-    PkiEnrollmentGetRequestsReqSchema, PkiEnrollmentGetRequestsRepSchema
+    PkiEnrollmentListReqSchema, PkiEnrollmentListRepSchema
 )
 
 
