@@ -2,6 +2,7 @@
 
 from typing import Tuple, List, Dict, Optional
 import pendulum
+from uuid import UUID
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.api.transport import Transport, TransportError
@@ -60,18 +61,17 @@ from parsec.api.protocol import (
     device_create_serializer,
 )
 from parsec.api.protocol.pki import (
-    pki_enrollment_get_requests_serializer,
-    pki_enrollment_reply_serializer,
+    pki_enrollment_submit_serializer,
+    pki_enrollment_info_serializer,
+    pki_enrollment_list_serializer,
+    pki_enrollment_reject_serializer,
+    pki_enrollment_accept_serializer,
 )
-
-
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
     BackendProtocolError,
     BackendOutOfBallparkError,
 )
-from parsec.api.data.pki import PkiEnrollmentReply
-from parsec.serde.fields import UUID
 
 
 async def _send_cmd(transport: Transport, serializer, **req) -> dict:
@@ -589,36 +589,72 @@ async def organization_bootstrap(
     )
 
 
-### Pki enrollment cmds ###
+### PKI enrollment API ###
 
 
-async def pki_enrollment_get_requests(transport: Transport):
+async def pki_enrollment_submit(
+    transport: Transport,
+    enrollment_id: UUID,
+    force: bool,
+    der_x509_certificate: bytes,
+    signature: bytes,
+    payload: bytes,
+) -> dict:
     return await _send_cmd(
-        transport, pki_enrollment_get_requests_serializer, cmd="pki_enrollment_get_requests"
+        transport,
+        pki_enrollment_submit_serializer,
+        cmd="pki_enrollment_submit",
+        enrollment_id=enrollment_id,
+        force=force,
+        der_x509_certificate=der_x509_certificate,
+        signature=signature,
+        payload=payload,
     )
 
 
-async def pki_enrollment_reply(
-    transport: Transport,
-    certificate_id: bytes,
-    request_id: UUID,
-    reply: PkiEnrollmentReply,
-    user_id: Optional[UserID] = None,
-    device_certificate: Optional[bytes] = None,
-    user_certificate: Optional[bytes] = None,
-    redacted_user_certificate: Optional[bytes] = None,
-    redacted_device_certificate: Optional[bytes] = None,
-):
+async def pki_enrollment_info(transport: Transport, enrollment_id: UUID) -> dict:
     return await _send_cmd(
         transport,
-        pki_enrollment_reply_serializer,
-        cmd="pki_enrollment_reply",
-        certificate_id=certificate_id,
-        request_id=request_id,
-        reply=reply,
-        user_id=user_id,
-        device_certificate=device_certificate,
+        pki_enrollment_info_serializer,
+        cmd="pki_enrollment_info",
+        enrollment_id=enrollment_id,
+    )
+
+
+async def pki_enrollment_list(transport: Transport) -> dict:
+    return await _send_cmd(transport, pki_enrollment_list_serializer, cmd="pki_enrollment_list")
+
+
+async def pki_enrollment_reject(transport: Transport, enrollment_id: UUID) -> dict:
+    return await _send_cmd(
+        transport,
+        pki_enrollment_reject_serializer,
+        cmd="pki_enrollment_reject",
+        enrollment_id=enrollment_id,
+    )
+
+
+async def pki_enrollment_accept(
+    transport: Transport,
+    enrollment_id: UUID,
+    der_x509_certificate: bytes,
+    signature: bytes,
+    payload: bytes,
+    user_certificate: bytes,
+    device_certificate: bytes,
+    redacted_user_certificate: bytes,
+    redacted_device_certificate: bytes,
+) -> dict:
+    return await _send_cmd(
+        transport,
+        pki_enrollment_accept_serializer,
+        cmd="pki_enrollment_accept",
+        enrollment_id=enrollment_id,
+        der_x509_certificate=der_x509_certificate,
+        signature=signature,
+        payload=payload,
         user_certificate=user_certificate,
-        redacted_device_certificate=redacted_device_certificate,
+        device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
+        redacted_device_certificate=redacted_device_certificate,
     )
