@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
+from typing import Optional
 from functools import partial
 from pendulum import now as pendulum_now
 from async_generator import asynccontextmanager
@@ -54,6 +55,81 @@ from parsec.api.protocol import (
     pki_enrollment_reject_serializer,
     pki_enrollment_accept_serializer,
 )
+
+
+def craft_http_request(
+    target: str, method: str, headers: dict, body: Optional[bytes], protocol: str = "1.0"
+) -> bytes:
+    if body is None:
+        body = b""
+    else:
+        assert isinstance(body, bytes)
+        headers = {**headers, "content-length": len(body)}
+
+    # Use HTTP 1.0 by default given 1.1 requires Host header
+    req = f"{method} {target} HTTP/{protocol}\r\n"
+    req += "\r\n".join(f"{key}: {value}" for key, value in headers.items())
+    while not req.endswith("\r\n\r\n"):
+        req += "\r\n"
+
+    return req.encode("ascii") + body
+
+
+def parse_http_response(raw: bytes):
+    head, _ = raw.split(b"\r\n\r\n", 1)  # Ignore the body part
+    status, *headers = head.split(b"\r\n")
+    protocole, status_code, status_label = status.split(b" ", 2)
+    assert protocole == b"HTTP/1.1"
+    cooked_status = (int(status_code.decode("ascii")), status_label.decode("ascii"))
+    cooked_headers = {}
+    for header in headers:
+        key, value = header.split(b": ")
+        cooked_headers[key.decode("ascii").lower()] = value.decode("ascii")
+    return cooked_status, cooked_headers
+
+
+async def do_http_request(
+    stream: trio.abc.Stream,
+    target: Optional[str] = None,
+    method: str = "GET",
+    req: Optional[bytes] = None,
+    headers: Optional[dict] = None,
+    body: Optional[bytes] = None,
+):
+    if req is None:
+        assert target is not None
+        req = craft_http_request(target, method, headers or {}, body)
+    else:
+        assert target is None
+        assert headers is None
+        assert body is None
+    await stream.send_all(req)
+
+    # In theory there is no guarantee `stream.receive_some()` outputs
+    # an entire HTTP request (it typically depends on the TCP stack and
+    # the network). However given we mock the TCP stack in the tests
+    # (see `OpenTCPStreamMockWrapper` class), we have the guarantee
+    # a buffer send through `stream.send_data()` on the backend side
+    # won't be splitted into multiple `stream.receive_some()` on the
+    # client side (and vice-versa). However it's still possible for
+    # multiple `stream.send_data()` to be merged and outputed on a
+    # single `stream.receive_some()`.
+    # Of course this is totally dependant of the backend's implementation
+    # so things may change in the future ;-)
+    rep = await stream.receive_some()
+    status, rep_headers = parse_http_response(rep)
+    rep_body = rep.split(b"\r\n\r\n", 1)[1]
+    content_size = int(rep_headers.get("content-length", "0"))
+    if content_size:
+        while len(rep_body) < content_size:
+            rep_body += await stream.receive_some()
+        # No need to check for another request beeing put after the
+        # body in the buffer given we don't use keep alive
+        assert len(rep_body) == content_size
+    else:
+        assert rep_body == b""
+
+    return status, rep_headers, rep_body
 
 
 class CmdSock:
