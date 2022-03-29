@@ -24,9 +24,9 @@ class PkiEnrollmentSubmitReqSchema(BaseReqSchema):
     enrollment_id = fields.UUID(required=True)
     force_flag = fields.Boolean(required=True)  # TODO: document me !
 
-    der_x509_certificate = fields.Bytes(require=True)
-    signature = fields.Bytes(required=True)
-    payload = fields.Bytes(required=True)  # Signature should be checked before loading
+    submitter_der_x509_certificate = fields.Bytes(require=True)
+    submitted_signature = fields.Bytes(required=True)
+    submitted_payload = fields.Bytes(required=True)  # Signature should be checked before loading
 
 
 class PkiEnrollmentSubmitRepSchema(BaseRepSchema):
@@ -53,21 +53,21 @@ class PkiEnrollmentInfoRepSubmittedSchema(BaseRepSchema):
 class PkiEnrollmentInfoRepAcceptedSchema(BaseRepSchema):
     type = fields.EnumCheckedConstant(PkiEnrollmentStatus.ACCEPTED, required=True)
     submitted_on = fields.DateTime(required=True)
-    replied_on = fields.DateTime(required=True)
-    replier_user_id = HumanHandleField(required=True)
-    replier_human_handle = HumanHandleField(required=True, allow_none=True)
+    accepted_on = fields.DateTime(required=True)
+    accepter_user_id = HumanHandleField(required=True)
+    accepter_human_handle = HumanHandleField(required=True, allow_none=True)
 
-    der_x509_certificate = fields.Bytes(required=True)
-    signature = fields.Bytes(required=True)
-    pki_reply_info = fields.Bytes(required=True)  # Signature should be checked before loading
+    accepter_der_x509_certificate = fields.Bytes(required=True)
+    accepted_signature = fields.Bytes(required=True)
+    accepted_payload = fields.Bytes(required=True)  # Signature should be checked before loading
 
 
 class PkiEnrollmentInfoRepRejectedSchema(BaseRepSchema):
     type = fields.EnumCheckedConstant(PkiEnrollmentStatus.REJECTED, required=True)
     submitted_on = fields.DateTime(required=True)
-    replied_on = fields.DateTime(required=True)
-    replier_user_id = HumanHandleField(required=True)
-    replier_human_handle = HumanHandleField(required=True, allow_none=True)
+    rejected_on = fields.DateTime(required=True)
+    rejecter_user_id = HumanHandleField(required=True)
+    rejecter_human_handle = HumanHandleField(required=True, allow_none=True)
 
 
 class PkiEnrollmentInfoRepSchema(OneOfSchema):
@@ -93,9 +93,9 @@ pki_enrollment_info_serializer = CmdSerializer(
 class PkiEnrollmentListItemSchema(BaseSchema):
     enrollment_id = fields.UUID(required=True)
     submitted_on = fields.DateTime(required=True)
-    der_x509_certificate = fields.Bytes(require=True)
-    signature = fields.Bytes(required=True)
-    pki_request_info = fields.Bytes(required=True)  # Signature should be checked before loading
+    submitter_der_x509_certificate = fields.Bytes(require=True)
+    submitted_signature = fields.Bytes(required=True)
+    submitted_payload = fields.Bytes(required=True)  # Signature should be checked before loading
 
 
 class PkiEnrollmentGetRequestsReqSchema(BaseReqSchema):
@@ -133,9 +133,9 @@ pki_enrollment_reject_serializer = CmdSerializer(
 class PkiEnrollmentAcceptReqSchema(BaseReqSchema):
     enrollment_id = fields.UUID(required=True)
 
-    der_x509_certificate = fields.Bytes(required=True)
-    signature = fields.Bytes(required=True)
-    payload = fields.Bytes(required=True)  # Signature should be checked before loading
+    accepter_der_x509_certificate = fields.Bytes(required=True)
+    accepted_signature = fields.Bytes(required=True)
+    accepted_payload = fields.Bytes(required=True)  # Signature should be checked before loading
 
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
