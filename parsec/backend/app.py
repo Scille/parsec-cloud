@@ -427,7 +427,7 @@ class BackendApp:
 
     async def _handle_client_websocket_loop(self, transport: Transport, client_ctx) -> NoReturn:
         # Retrieve the allowed commands according to api version and auth type
-        api_cmds = self.apis[client_ctx.handshake_type]
+        api_cmds = self.apis[client_ctx.TYPE]
 
         raw_req = None
         while True:

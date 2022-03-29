@@ -9,13 +9,12 @@ from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import (
     OrganizationID,
-    HandshakeType,
     organization_stats_serializer,
-    APIV1_HandshakeType,
     apiv1_organization_bootstrap_serializer,
     organization_config_serializer,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
+from parsec.backend.utils import ClientType
 from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent
 from parsec.backend.utils import catch_protocol_errors, api, Unset, UnsetType
@@ -92,7 +91,7 @@ class BaseOrganizationComponent:
         self.webhooks = webhooks
         self._config = config
 
-    @api("organization_config", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("organization_config")
     @catch_protocol_errors
     async def api_authenticated_organization_config(self, client_ctx, msg):
         msg = organization_config_serializer.req_load(msg)
@@ -111,7 +110,7 @@ class BaseOrganizationComponent:
 
         return organization_config_serializer.rep_dump(rep)
 
-    @api("organization_stats", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("organization_stats")
     @catch_protocol_errors
     async def api_authenticated_organization_stats(self, client_ctx, msg):
         msg = organization_stats_serializer.req_load(msg)
@@ -141,7 +140,7 @@ class BaseOrganizationComponent:
             }
         )
 
-    @api("organization_bootstrap", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
+    @api("organization_bootstrap", client_types=[ClientType.APIV1_ANONYMOUS])
     @catch_protocol_errors
     async def api_organization_bootstrap(self, client_ctx, msg):
         msg = apiv1_organization_bootstrap_serializer.req_load(msg)

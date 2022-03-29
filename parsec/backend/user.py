@@ -21,7 +21,6 @@ from parsec.api.protocol import (
     DeviceID,
     HumanHandle,
     DeviceLabel,
-    HandshakeType,
     user_get_serializer,
     human_find_serializer,
     user_create_serializer,
@@ -167,7 +166,7 @@ class BaseUserComponent:
             }
         )
 
-    @api("human_find", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("human_find")
     @catch_protocol_errors
     async def api_human_find(self, client_ctx, msg):
         if client_ctx.profile == UserProfile.OUTSIDER:
@@ -188,7 +187,7 @@ class BaseUserComponent:
             }
         )
 
-    @api("user_create", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("user_create")
     @catch_protocol_errors
     async def api_user_create(self, client_ctx, msg):
         if client_ctx.profile != UserProfile.ADMIN:
@@ -356,7 +355,7 @@ class BaseUserComponent:
 
         return user_revoke_serializer.rep_dump({"status": "ok"})
 
-    @api("device_create", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("device_create")
     @catch_protocol_errors
     async def api_device_create(self, client_ctx, msg):
         msg = device_create_serializer.req_load(msg)

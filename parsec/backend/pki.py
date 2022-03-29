@@ -7,7 +7,6 @@ import attr
 
 from pendulum import DateTime
 from parsec.api.data.pki import PkiEnrollmentReply, PkiEnrollmentRequest
-from parsec.api.protocol.handshake import HandshakeType
 from parsec.api.protocol.pki import (
     pki_enrollment_get_requests_serializer,
     pki_enrollment_reply_serializer,
@@ -15,7 +14,7 @@ from parsec.api.protocol.pki import (
     pki_enrollment_get_reply_serializer,
 )
 from parsec.api.protocol.types import HumanHandle, OrganizationID, UserProfile
-from parsec.backend.utils import api, catch_protocol_errors
+from parsec.backend.utils import api, catch_protocol_errors, ClientType
 
 
 class PkiCertificateError(Exception):
@@ -56,6 +55,7 @@ class PkiEnrollementReplyBundle:
 
 
 class BasePkiCertificateComponent:
+    @api("pki_enrollment_get_requests", client_types=[ClientType.ANONYMOUS])
     @catch_protocol_errors
     async def api_pki_enrollment_request(self, msg, organization_id: OrganizationID):
         msg = pki_enrollment_request_serializer.req_load(msg)
@@ -91,7 +91,7 @@ class BasePkiCertificateComponent:
     ) -> DateTime:
         raise NotImplementedError()
 
-    @api("pki_enrollment_get_requests", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("pki_enrollment_get_requests")
     @catch_protocol_errors
     async def api_pki_enrollment_get_requests(self, client_ctx, msg):
         if client_ctx.profile != UserProfile.ADMIN:
@@ -103,7 +103,7 @@ class BasePkiCertificateComponent:
         requested_pki_cert = await self.pki_enrollment_get_requests()
         return pki_enrollment_get_requests_serializer.rep_dump({"requests": requested_pki_cert})
 
-    @api("pki_enrollment_reply", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("pki_enrollment_reply")
     @catch_protocol_errors
     async def api_pki_enrollment_reply(self, client_ctx, msg):
         if client_ctx.profile != UserProfile.ADMIN:
@@ -135,6 +135,7 @@ class BasePkiCertificateComponent:
         except PkiCertificateRequestNotFoundError:
             return pki_enrollment_reply_serializer.rep_dump({"status": "request not found"})
 
+    @api("api_pki_enrollment_get_reply", client_types=[ClientType.ANONYMOUS])
     @catch_protocol_errors
     async def api_pki_enrollment_get_reply(self, msg):
         msg = pki_enrollment_get_reply_serializer.req_load(msg)
