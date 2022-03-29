@@ -120,7 +120,7 @@ async def _pki_enrollment_request(config, invitation_address, device_label, forc
         await local_request.get_path(config.config_dir).unlink()
 
 
-@click.command(short_help="Perform a PKI-based enrolement request")
+@click.command(short_help="Perform a PKI-based enrollment request")
 @click.argument("backend-invitation", type=BackendInvitationAddr.from_url)
 @click.option(
     "--device-label", prompt="Device label", default=lambda: platform.node(), type=DeviceLabel
@@ -129,7 +129,7 @@ async def _pki_enrollment_request(config, invitation_address, device_label, forc
 @core_config_options
 @cli_command_base_options
 def pki_enrollment_request(config, backend_invitation, device_label, force, **kwargs):
-    """Perform a PKI-based enrolement request"""
+    """Perform a PKI-based enrollment request"""
     with cli_exception_handler(config.debug):
         trio_run(_pki_enrollment_request, config, backend_invitation, device_label, force)
 

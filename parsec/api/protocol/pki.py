@@ -7,7 +7,7 @@ from parsec.api.protocol.types import HumanHandleField
 from parsec.serde import fields
 
 
-# pki_enrolement_request
+# pki_enrollment_request
 
 
 class PkiEnrollmentRequestReqSchema(BaseReqSchema):
@@ -26,7 +26,7 @@ pki_enrollment_request_serializer = CmdSerializer(
     PkiEnrollmentRequestReqSchema, PkiEnrollmentRequestRepSchema
 )
 
-# pki_enrolement_get_requests
+# pki_enrollment_get_requests
 
 
 class PkiEnrollmentGetRequestsReqSchema(BaseReqSchema):
@@ -48,7 +48,7 @@ pki_enrollment_get_requests_serializer = CmdSerializer(
     PkiEnrollmentGetRequestsReqSchema, PkiEnrollmentGetRequestsRepSchema
 )
 
-# pki_enrolement_reply
+# pki_enrollment_reply
 
 
 class PkiEnrollmentReplyReqSchema(BaseReqSchema):
@@ -72,7 +72,7 @@ pki_enrollment_reply_serializer = CmdSerializer(
 )
 
 
-# pki_enrolement_get_reply
+# pki_enrollment_get_reply
 
 
 class PkiEnrollmentGetReplyReqSchema(BaseReqSchema):
