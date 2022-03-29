@@ -4,7 +4,6 @@ from typing import Dict, cast
 from enum import Enum
 
 from parsec.api.protocol.base import BaseRepSchema, BaseReqSchema, CmdSerializer
-from parsec.api.protocol.types import HumanHandleField
 from parsec.serde import BaseSchema, OneOfSchema, fields
 
 
@@ -54,8 +53,6 @@ class PkiEnrollmentInfoRepAcceptedSchema(BaseRepSchema):
     type = fields.EnumCheckedConstant(PkiEnrollmentStatus.ACCEPTED, required=True)
     submitted_on = fields.DateTime(required=True)
     accepted_on = fields.DateTime(required=True)
-    accepter_user_id = HumanHandleField(required=True)
-    accepter_human_handle = HumanHandleField(required=True, allow_none=True)
 
     accepter_der_x509_certificate = fields.Bytes(required=True)
     accepted_signature = fields.Bytes(required=True)
@@ -66,8 +63,6 @@ class PkiEnrollmentInfoRepRejectedSchema(BaseRepSchema):
     type = fields.EnumCheckedConstant(PkiEnrollmentStatus.REJECTED, required=True)
     submitted_on = fields.DateTime(required=True)
     rejected_on = fields.DateTime(required=True)
-    rejecter_user_id = HumanHandleField(required=True)
-    rejecter_human_handle = HumanHandleField(required=True, allow_none=True)
 
 
 class PkiEnrollmentInfoRepSchema(OneOfSchema):
