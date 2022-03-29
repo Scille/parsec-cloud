@@ -48,6 +48,11 @@ from parsec.api.protocol import (
     invite_3b_greeter_signify_trust_serializer,
     invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
+    pki_enrollment_submit_serializer,
+    pki_enrollment_info_serializer,
+    pki_enrollment_list_serializer,
+    pki_enrollment_reject_serializer,
+    pki_enrollment_accept_serializer,
 )
 
 
@@ -427,4 +432,45 @@ invite_4_claimer_communicate = CmdSock(
     "invite_4_claimer_communicate",
     invite_4_claimer_communicate_serializer,
     parse_args=lambda self, payload: {"payload": payload},
+)
+
+
+### PKI enrollment ###
+
+
+pki_enrollment_submit = CmdSock(
+    "pki_enrollment_submit",
+    pki_enrollment_submit_serializer,
+    parse_args=lambda self, enrollment_id, force_flag, der_x509_certificate, signature, payload: {
+        "enrollment_id": enrollment_id,
+        "force_flag": force_flag,
+        "der_x509_certificate": der_x509_certificate,
+        "signature": signature,
+        "payload": payload,
+    },
+)
+pki_enrollment_info = CmdSock(
+    "pki_enrollment_info",
+    pki_enrollment_info_serializer,
+    parse_args=lambda self, enrollment_id: {"enrollment_id": enrollment_id},
+)
+pki_enrollment_list = CmdSock("pki_enrollment_list", pki_enrollment_list_serializer)
+pki_enrollment_reject = CmdSock(
+    "pki_enrollment_reject",
+    pki_enrollment_reject_serializer,
+    parse_args=lambda self, enrollment_id: {"enrollment_id": enrollment_id},
+)
+pki_enrollment_accept = CmdSock(
+    "pki_enrollment_accept",
+    pki_enrollment_accept_serializer,
+    parse_args=lambda self, enrollment_id, der_x509_certificate, signature, payload, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
+        "enrollment_id": enrollment_id,
+        "der_x509_certificate": der_x509_certificate,
+        "signature": signature,
+        "payload": payload,
+        "user_certificate": user_certificate,
+        "device_certificate": device_certificate,
+        "redacted_user_certificate": redacted_user_certificate,
+        "redacted_device_certificate": redacted_device_certificate,
+    },
 )
