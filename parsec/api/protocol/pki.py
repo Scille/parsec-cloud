@@ -100,7 +100,7 @@ class PkiEnrollmentListReqSchema(BaseReqSchema):
 
 
 class PkiEnrollmentListRepSchema(BaseRepSchema):
-    requests = fields.List(fields.Nested(PkiEnrollmentListItemSchema), required=True)
+    enrollments = fields.List(fields.Nested(PkiEnrollmentListItemSchema), required=True)
 
 
 pki_enrollment_list_serializer = CmdSerializer(
