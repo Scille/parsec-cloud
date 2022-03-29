@@ -12,7 +12,7 @@ use parsec_core::{TrustchainContext, TrustchainError};
 
 use tests_fixtures::{
     alice, alice_device_certif, alice_revoked_user_certif, alice_user_certif, bob,
-    bob_device_certif, bob_user_certif, coolorg, empty_trustchain, mallory, mallory_device_certif,
+    bob_device_certif, bob_user_certif, coolorg, mallory, mallory_device_certif,
     mallory_revoked_user_certif, mallory_user_certif, Device, Organization,
 };
 
@@ -20,7 +20,6 @@ use tests_fixtures::{
 fn test_bad_expected_user(
     alice: &Device,
     bob: &Device,
-    empty_trustchain: &Trustchain,
     alice_user_certif: &UserCertificate,
     alice_device_certif: &DeviceCertificate,
     coolorg: &Organization,
@@ -29,7 +28,11 @@ fn test_bad_expected_user(
 
     let err = ctx
         .load_user_and_devices(
-            empty_trustchain.clone(),
+            Trustchain {
+                users: vec![],
+                devices: vec![],
+                revoked_users: vec![],
+            },
             alice_user_certif.dump_and_sign(&coolorg.signing_key),
             None,
             vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
@@ -49,7 +52,6 @@ fn test_bad_expected_user(
 #[rstest]
 fn test_verify_no_trustchain(
     alice: &Device,
-    empty_trustchain: &Trustchain,
     alice_user_certif: &UserCertificate,
     alice_device_certif: &DeviceCertificate,
     coolorg: &Organization,
@@ -69,7 +71,11 @@ fn test_verify_no_trustchain(
 
     let (user, revoked_user, devices) = ctx
         .load_user_and_devices(
-            empty_trustchain.clone(),
+            Trustchain {
+                users: vec![],
+                devices: vec![],
+                revoked_users: vec![],
+            },
             alice_user_certif.dump_and_sign(&coolorg.signing_key),
             None,
             vec![
@@ -93,7 +99,6 @@ fn test_verify_no_trustchain(
 #[rstest]
 fn test_bad_user_self_signed(
     alice: &Device,
-    empty_trustchain: &Trustchain,
     alice_user_certif: &UserCertificate,
     alice_device_certif: &DeviceCertificate,
     coolorg: &Organization,
@@ -105,7 +110,11 @@ fn test_bad_user_self_signed(
 
     let err = ctx
         .load_user_and_devices(
-            empty_trustchain.clone(),
+            Trustchain {
+                users: vec![],
+                devices: vec![],
+                revoked_users: vec![],
+            },
             alice_user_certif.dump_and_sign(&coolorg.signing_key),
             None,
             vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],
@@ -124,7 +133,6 @@ fn test_bad_user_self_signed(
 #[rstest]
 fn test_bad_revoked_user_self_signed(
     alice: &Device,
-    empty_trustchain: &Trustchain,
     alice_user_certif: &UserCertificate,
     alice_device_certif: &DeviceCertificate,
     alice_revoked_user_certif: &RevokedUserCertificate,
@@ -136,7 +144,11 @@ fn test_bad_revoked_user_self_signed(
 
     let err = ctx
         .load_user_and_devices(
-            empty_trustchain.clone(),
+            Trustchain {
+                users: vec![],
+                devices: vec![],
+                revoked_users: vec![],
+            },
             alice_user_certif.dump_and_sign(&coolorg.signing_key),
             Some(alice_revoked_user_certif.dump_and_sign(&alice.signing_key)),
             vec![alice_device_certif.dump_and_sign(&coolorg.signing_key)],

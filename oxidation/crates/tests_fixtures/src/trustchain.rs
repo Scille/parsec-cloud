@@ -3,22 +3,11 @@
 use chrono::{TimeZone, Utc};
 use rstest::fixture;
 
-use parsec_api_protocol::Trustchain;
 use parsec_api_types::{
     CertificateSignerOwned, DateTime, DeviceCertificate, RevokedUserCertificate, UserCertificate,
 };
 
 use crate::{alice, bob, mallory, Device};
-
-#[fixture]
-#[once]
-pub fn empty_trustchain() -> Trustchain {
-    Trustchain {
-        users: vec![],
-        devices: vec![],
-        revoked_users: vec![],
-    }
-}
 
 #[fixture]
 #[once]
