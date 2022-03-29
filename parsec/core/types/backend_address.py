@@ -265,6 +265,7 @@ class BackendActionAddr(_PyBackendAddr):
                 _PyBackendOrganizationBootstrapAddr,
                 _PyBackendOrganizationFileLinkAddr,
                 _PyBackendInvitationAddr,
+                _PyBackendPkiEnrollmentAddr,
             ):
                 try:
                     return _PyBackendAddr.from_url.__func__(type, url, **kwargs)
@@ -626,3 +627,76 @@ if not TYPE_CHECKING:
         pass
     else:
         BackendInvitationAddr = _RsBackendInvitationAddr
+
+
+class BackendPkiEnrollmentAddr(_PyBackendActionAddr):
+    """
+    Represent the URL used to reach an organization to request a PKI-based enrollment
+    (e.g. ``parsec://parsec.example.com/my_org?action=pki_enrollment``)
+    """
+
+    __slots__ = ("_organization_id",)
+
+    def __init__(self, organization_id: OrganizationID, **kwargs):
+        super().__init__(**kwargs)
+        self._organization_id = organization_id
+
+    @classmethod
+    def _from_url_parse_path(cls, path):
+        return {"organization_id": OrganizationID(path[1:])}
+
+    @classmethod
+    def _from_url_parse_and_consume_params(cls, params):
+        kwargs = super()._from_url_parse_and_consume_params(params)
+
+        value = params.pop("action", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `action` param")
+        if value[0] != "pki_enrollment":
+            raise ValueError("Expected `action=pki_enrollment` param value")
+
+        return kwargs
+
+    def _to_url_get_path(self):
+        return str(self.organization_id)
+
+    def _to_url_get_params(self):
+        return [("action", "pki_enrollment"), *super()._to_url_get_params()]
+
+    def to_http_redirection_url(self) -> str:
+        # Skipping no_ssl param because it is already in the scheme
+        query = urlencode({k: v for k, v in self._to_url_get_params() if k != "no_ssl"})
+        path = "/redirect/" + quote_plus(self._to_url_get_path())
+        if self._use_ssl:
+            scheme = "https"
+        else:
+            scheme = "http"
+
+        return urlunsplit((scheme, self._netloc, path, query, None))
+
+    @classmethod
+    def build(
+        cls, backend_addr: BackendAddr, organization_id: OrganizationID
+    ) -> "BackendInvitationAddr":
+        return cls(
+            hostname=backend_addr.hostname,
+            port=backend_addr.port,
+            use_ssl=backend_addr.use_ssl,
+            organization_id=organization_id,
+        )
+
+    def generate_organization_addr(self, root_verify_key: VerifyKey) -> _PyBackendOrganizationAddr:
+        return _PyBackendOrganizationAddr.build(
+            backend_addr=self, organization_id=self.organization_id, root_verify_key=root_verify_key
+        )
+
+    def generate_backend_addr(self) -> _PyBackendAddr:
+        return _PyBackendAddr(self.hostname, self.port, self.use_ssl)
+
+    @property
+    def organization_id(self) -> OrganizationID:
+        return self._organization_id
+
+
+_PyBackendPkiEnrollmentAddr = BackendPkiEnrollmentAddr
+# TODO: Oxidation implementation !
