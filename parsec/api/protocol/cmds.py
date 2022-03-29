@@ -45,9 +45,10 @@ AUTHENTICATED_CMDS = {
     # Organization
     "organization_stats",  # organization_stats has been added in api v2.1
     "organization_config",  # organization_config has been added in api v2.2
-    # Pki certification
-    "pki_enrollment_get_requests",
-    "pki_enrollment_reply",
+    # PKI enrollment
+    "pki_enrollment_list",
+    "pki_enrollment_reject",
+    "pki_enrollment_accept",
 }
 INVITED_CMDS = {
     "ping",  # TODO: remove ping and ping event (only have them in tests)
@@ -59,7 +60,7 @@ INVITED_CMDS = {
     "invite_3b_claimer_wait_peer_trust",
     "invite_4_claimer_communicate",
 }
-ANONYMOUS_CMDS = {"pki_enrollment_get_reply", "pki_enrollment_request"}
+ANONYMOUS_CMDS = {"pki_enrollment_submit", "pki_enrollment_info"}
 
 # TODO: remove me once API v1 is deprecated
 APIV1_ANONYMOUS_CMDS = {"ping", "organization_bootstrap"}
