@@ -46,13 +46,13 @@ class PkiCertificateRequestNotFoundError(PkiCertificateError):
     pass
 
 
-@attr.s
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollementReplyBundle:
-    certificate_id: bytes = attr.ib()
-    request_id: UUID = attr.ib()
-    reply_user_id: Optional[str] = attr.ib(default=None)
-    reply_object: Optional[PkiEnrollmentReply] = attr.ib(default=None)
-    reply_admin_user: Optional[HumanHandle] = attr.ib(default=None)
+    certificate_id: bytes
+    request_id: UUID
+    reply_user_id: Optional[str] = None
+    reply_object: Optional[PkiEnrollmentReply] = None
+    reply_admin_user: Optional[HumanHandle] = None
 
 
 class BasePkiCertificateComponent:

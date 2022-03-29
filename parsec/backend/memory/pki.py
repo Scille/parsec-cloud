@@ -20,16 +20,16 @@ from parsec.backend.pki import (
 )
 
 
-@attr.s
+@attr.s(slots=True, auto_attribs=True)
 class PkiCertificate:
-    certificate_id: bytes = attr.ib()
-    request_id: UUID = attr.ib()
-    request_object: PkiEnrollmentRequest = attr.ib()
-    request_timestamp: DateTime = attr.ib()
-    reply_user_id: Optional[str] = attr.ib(default=None)
-    reply_timestamp: Optional[DateTime] = attr.ib(default=None)
-    reply_object: Optional[PkiEnrollmentReply] = attr.ib(default=None)
-    reply_admin_user: Optional[HumanHandle] = attr.ib(default=None)
+    certificate_id: bytes
+    request_id: UUID
+    request_object: PkiEnrollmentRequest
+    request_timestamp: DateTime
+    reply_user_id: Optional[str] = None
+    reply_timestamp: Optional[DateTime] = None
+    reply_object: Optional[PkiEnrollmentReply] = None
+    reply_admin_user: Optional[HumanHandle] = None
 
 
 class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
