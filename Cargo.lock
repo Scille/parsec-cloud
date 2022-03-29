@@ -1032,9 +1032,12 @@ dependencies = [
 name = "parsec_core"
 version = "0.0.0"
 dependencies = [
+ "chrono",
  "parsec_api_crypto",
  "parsec_api_protocol",
  "parsec_api_types",
+ "rstest",
+ "tests_fixtures",
  "thiserror",
 ]
 
@@ -1646,8 +1649,10 @@ dependencies = [
 name = "tests_fixtures"
 version = "0.0.0"
 dependencies = [
+ "chrono",
  "hex-literal",
  "parsec_api_crypto",
+ "parsec_api_protocol",
  "parsec_api_types",
  "parsec_client_types",
  "rstest",

@@ -19,7 +19,7 @@ pub enum TrustchainError {
     #[error("{path}: Invalid signature given {user_id} is not admin")]
     InvalidSignatureGiven { path: String, user_id: UserID },
 
-    #[error("{path}: Invalid signaure loop detected")]
+    #[error("{path}: Invalid signature loop detected")]
     InvalidSignatureLoopDetected { path: String },
 
     #[error("{path}: Missing device certificate for {device_id}")]
@@ -28,8 +28,11 @@ pub enum TrustchainError {
     #[error("{path}: Missing user certificate for {user_id}")]
     MissingUserCertificate { path: String, user_id: UserID },
 
-    #[error("Signature {verified_timestamp} is posterior to user revocation {user_timestamp}")]
+    #[error(
+        "{path}: Signature {verified_timestamp} is posterior to user revocation {user_timestamp}"
+    )]
     SignaturePosteriorUserRevocation {
+        path: String,
         verified_timestamp: DateTime,
         user_timestamp: DateTime,
     },

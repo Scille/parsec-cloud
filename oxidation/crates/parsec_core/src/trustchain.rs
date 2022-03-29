@@ -11,6 +11,7 @@ use parsec_api_types::{
     RevokedUserCertificate, UserCertificate, UserID, UserProfile,
 };
 
+#[derive(Debug)]
 struct CertifState<'a, T> {
     certif: &'a [u8],
     content: T,
@@ -62,6 +63,7 @@ impl TrustchainContext {
 
             if verified_data.1 > author_revoked_user.timestamp {
                 return Err(TrustchainError::SignaturePosteriorUserRevocation {
+                    path: build_signature_path(sign_chain),
                     verified_timestamp: verified_data.1,
                     user_timestamp: author_revoked_user.timestamp,
                 });
@@ -116,8 +118,6 @@ impl TrustchainContext {
                     author,
                     sign_chain,
                 )?;
-
-                sign_chain.push(author.to_string());
 
                 let verified = DeviceCertificate::verify_and_load(
                     state.certif,
@@ -179,8 +179,6 @@ impl TrustchainContext {
                     &mut sign_chain,
                 )?;
 
-                sign_chain.push(author.to_string());
-
                 let verified = UserCertificate::verify_and_load(
                     certif,
                     &author_device.verify_key,
@@ -232,8 +230,6 @@ impl TrustchainContext {
                 author,
                 &mut sign_chain,
             )?;
-
-            sign_chain.push(author.to_string());
 
             let verified = RevokedUserCertificate::verify_and_load(
                 certif,
@@ -539,6 +535,7 @@ impl TrustchainContext {
         let (mut verified_users, mut verified_revoked_users, mut verified_devices) =
             self.load_trustchain(&users, &revoked_users, &devices, Some(now))?;
 
+        // This won't work, because python keeps the order in the map
         let verified_user = verified_users.remove(0);
         if let Some(expected_user_id) = &expected_user_id {
             if verified_user.user_id != *expected_user_id {
@@ -550,6 +547,7 @@ impl TrustchainContext {
         }
 
         let verified_revoked_user = if revoked_user_certif_is_some {
+            // This won't work, because python keeps the order in the map
             let verified_revoked_user = verified_revoked_users.remove(0);
             if let Some(expected_user_id) = &expected_user_id {
                 if verified_revoked_user.user_id != *expected_user_id {

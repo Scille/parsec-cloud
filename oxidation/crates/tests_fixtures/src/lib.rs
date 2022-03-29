@@ -1,5 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+mod trustchain;
+
+pub use trustchain::*;
+
 use hex_literal::hex;
 use rstest::fixture;
 
@@ -129,5 +133,24 @@ pub fn bob(coolorg: &Organization) -> Device {
         local_symkey: SecretKey::from(hex!(
             "93f25b18491016f20b10dcf4eb7986716d914653d6ab4e778701c13435e6bdf0"
         )),
+    }
+}
+
+#[fixture]
+#[once]
+pub fn mallory(coolorg: &Organization) -> Device {
+    Device {
+        organization_addr: coolorg.addr_with_prefixed_host("mallory_dev1"),
+        device_id: "mallory@dev1".parse().unwrap(),
+        device_label: None,
+        human_handle: Some(
+            HumanHandle::new("mallory@example.com", "Malloryy McMalloryFace").unwrap(),
+        ),
+        signing_key: SigningKey::generate(),
+        private_key: PrivateKey::generate(),
+        profile: UserProfile::Standard,
+        user_manifest_id: EntryID::default(),
+        user_manifest_key: SecretKey::generate(),
+        local_symkey: SecretKey::generate(),
     }
 }
