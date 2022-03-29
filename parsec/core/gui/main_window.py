@@ -570,7 +570,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         telemetry.init(self.config)
 
         devices = list_available_devices(self.config.config_dir)
-        if not len(devices) and not invitation_link:
+        # TODO: replace this hack
+        path = self.config.config_dir / "enrollment_requests"
+        requests = []
+        if path.exists():
+            requests = list((self.config.config_dir / "enrollment_requests").iterdir())
+        if not len(devices) and not invitation_link and not requests:
             r = ask_question(
                 self,
                 _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"),
