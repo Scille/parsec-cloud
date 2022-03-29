@@ -83,26 +83,24 @@ def test_local_file_manifest():
 
     kwargs = {
         "base": FileManifest(
-            **{
-                "author": DeviceID("user@device"),
-                "id": EntryID.new(),
-                "parent": EntryID.new(),
-                "version": 42,
-                "size": 1337,
-                "blocksize": 85,
-                "timestamp": pendulum.now(),
-                "created": pendulum.now(),
-                "updated": pendulum.now(),
-                "blocks": (
-                    BlockAccess(
-                        id=BlockID.new(),
-                        key=SecretKey.generate(),
-                        offset=0,
-                        size=1024,
-                        digest=HashDigest.from_data(b"a"),
-                    ),
+            author=DeviceID("user@device"),
+            id=EntryID.new(),
+            parent=EntryID.new(),
+            version=42,
+            size=1337,
+            blocksize=85,
+            timestamp=pendulum.now(),
+            created=pendulum.now(),
+            updated=pendulum.now(),
+            blocks=(
+                BlockAccess(
+                    id=BlockID.new(),
+                    key=SecretKey.generate(),
+                    offset=0,
+                    size=1024,
+                    digest=HashDigest.from_data(b"a"),
                 ),
-            }
+            ),
         ),
         "need_sync": True,
         "updated": pendulum.now(),
@@ -200,9 +198,11 @@ def test_local_file_manifest():
     rs_enc = rs_lfm.dump_and_encrypt(sk)
 
     # Decrypt rust encrypted with Python and vice versa
-    _PyLocalFileManifest.decrypt_and_load(rs_enc, sk)
-    LocalFileManifest.decrypt_and_load(py_enc, sk)
-    _assert_local_file_manifest_eq(py_lfm, rs_lfm)
+    lfm1 = _PyLocalFileManifest.decrypt_and_load(rs_enc, sk)
+    lfm2 = LocalFileManifest.decrypt_and_load(py_enc, sk)
+    assert isinstance(lfm1, LocalFileManifest)
+    assert isinstance(lfm2, LocalFileManifest)
+    assert lfm1 == lfm2
 
     py_lfm = py_lfm.evolve(**{"size": 1337})
     rs_lfm = rs_lfm.evolve(**{"size": 1337})
@@ -336,16 +336,14 @@ def test_local_folder_manifest():
 
     kwargs = {
         "base": FolderManifest(
-            **{
-                "author": DeviceID("user@device"),
-                "id": EntryID.new(),
-                "parent": EntryID.new(),
-                "version": 42,
-                "timestamp": pendulum.now(),
-                "created": pendulum.now(),
-                "updated": pendulum.now(),
-                "children": {EntryName("file1.txt"): EntryID.new()},
-            }
+            author=DeviceID("user@device"),
+            id=EntryID.new(),
+            parent=EntryID.new(),
+            version=42,
+            timestamp=pendulum.now(),
+            created=pendulum.now(),
+            updated=pendulum.now(),
+            children={EntryName("file1.txt"): EntryID.new()},
         ),
         "need_sync": True,
         "updated": pendulum.now(),
@@ -388,8 +386,12 @@ def test_local_folder_manifest():
     rs_enc = py_lfm.dump_and_encrypt(sk)
 
     # Decrypt rust encrypted with Python and vice versa
-    _PyLocalFolderManifest.decrypt_and_load(rs_enc, sk)
-    LocalFolderManifest.decrypt_and_load(py_enc, sk)
+    # _PyLocalFolderManifest.decrypt_and_load returns a LocalFOlderManifest, not a _PyFolderManifest
+    lfm1 = _PyLocalFolderManifest.decrypt_and_load(rs_enc, sk)
+    lfm2 = LocalFolderManifest.decrypt_and_load(py_enc, sk)
+    assert isinstance(lfm1, LocalFolderManifest)
+    assert isinstance(lfm2, LocalFolderManifest)
+    assert lfm1 == lfm2
 
     assert py_lfm.to_stats() == rs_lfm.to_stats()
     assert py_lfm.parent == rs_lfm.parent
@@ -512,16 +514,14 @@ def test_local_workspace_manifest():
 
     kwargs = {
         "base": WorkspaceManifest(
-            **{
-                "author": DeviceID("user@device"),
-                "id": EntryID.new(),
-                "parent": EntryID.new(),
-                "version": 42,
-                "timestamp": pendulum.now(),
-                "created": pendulum.now(),
-                "updated": pendulum.now(),
-                "children": {EntryName("file1.txt"): EntryID.new()},
-            }
+            author=DeviceID("user@device"),
+            id=EntryID.new(),
+            parent=EntryID.new(),
+            version=42,
+            timestamp=pendulum.now(),
+            created=pendulum.now(),
+            updated=pendulum.now(),
+            children={EntryName("file1.txt"): EntryID.new()},
         ),
         "need_sync": True,
         "updated": pendulum.now(),
@@ -566,8 +566,11 @@ def test_local_workspace_manifest():
     rs_enc = py_lwm.dump_and_encrypt(sk)
 
     # Decrypt rust encrypted with Python and vice versa
-    _PyLocalWorkspaceManifest.decrypt_and_load(rs_enc, sk)
-    LocalWorkspaceManifest.decrypt_and_load(py_enc, sk)
+    lwm1 = _PyLocalWorkspaceManifest.decrypt_and_load(rs_enc, sk)
+    lwm2 = LocalWorkspaceManifest.decrypt_and_load(py_enc, sk)
+    assert isinstance(lwm1, LocalWorkspaceManifest)
+    assert isinstance(lwm2, LocalWorkspaceManifest)
+    assert lwm1 == lwm2
 
     assert py_lwm.to_stats() == rs_lwm.to_stats()
     assert py_lwm.asdict() == rs_lwm.asdict()
@@ -646,17 +649,15 @@ def test_local_user_manifest():
 
     kwargs = {
         "base": UserManifest(
-            **{
-                "author": DeviceID("user@device"),
-                "id": EntryID.new(),
-                "parent": EntryID.new(),
-                "version": 42,
-                "timestamp": pendulum.now(),
-                "created": pendulum.now(),
-                "updated": pendulum.now(),
-                "last_processed_message": 0,
-                "workspaces": (WorkspaceEntry.new(EntryName("user"), pendulum.now()),),
-            }
+            author=DeviceID("user@device"),
+            id=EntryID.new(),
+            parent=EntryID.new(),
+            version=42,
+            timestamp=pendulum.now(),
+            created=pendulum.now(),
+            updated=pendulum.now(),
+            last_processed_message=0,
+            workspaces=(WorkspaceEntry.new(EntryName("user"), pendulum.now()),),
         ),
         "need_sync": True,
         "updated": pendulum.now(),
@@ -700,8 +701,11 @@ def test_local_user_manifest():
     rs_enc = py_lum.dump_and_encrypt(sk)
 
     # Decrypt rust encrypted with Python and vice versa
-    _PyLocalUserManifest.decrypt_and_load(rs_enc, sk)
-    LocalUserManifest.decrypt_and_load(py_enc, sk)
+    lum1 = _PyLocalUserManifest.decrypt_and_load(rs_enc, sk)
+    lum2 = LocalUserManifest.decrypt_and_load(py_enc, sk)
+    assert isinstance(lum1, LocalUserManifest)
+    assert isinstance(lum2, LocalUserManifest)
+    assert lum1 == lum2
 
     assert py_lum.to_stats() == rs_lum.to_stats()
     assert py_lum.asdict() == rs_lum.asdict()

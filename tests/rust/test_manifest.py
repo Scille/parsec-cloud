@@ -316,12 +316,15 @@ def test_workspace_manifest():
     py_signed_and_encrypted = py_wm.dump_sign_and_encrypt(signing_key, secret_key)
     rs_signed_and_encrypted = rs_wm.dump_sign_and_encrypt(signing_key, secret_key)
 
-    WorkspaceManifest.decrypt_verify_and_load(
+    wm1 = WorkspaceManifest.decrypt_verify_and_load(
         py_signed_and_encrypted, secret_key, signing_key.verify_key, py_wm.author, py_wm.timestamp
     )
-    _PyWorkspaceManifest.decrypt_verify_and_load(
+    wm2 = _PyWorkspaceManifest.decrypt_verify_and_load(
         rs_signed_and_encrypted, secret_key, signing_key.verify_key, py_wm.author, py_wm.timestamp
     )
+    assert isinstance(wm1, WorkspaceManifest)
+    assert isinstance(wm2, WorkspaceManifest)
+    assert wm1 == wm2
 
 
 @pytest.mark.rust
