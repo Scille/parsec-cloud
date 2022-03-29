@@ -115,6 +115,7 @@ def config_factory(
     preferred_org_creation_backend_addr: Optional[BackendAddr] = None,
     gui_show_confined: bool = False,
     gui_geometry: bytes = None,
+    ipc_win32_mutex_name: str = "parsec-cloud",
     environ: dict = {},
     **_,
 ) -> CoreConfig:
@@ -162,7 +163,7 @@ def config_factory(
         gui_show_confined=gui_show_confined,
         gui_geometry=gui_geometry,
         ipc_socket_file=data_base_dir / "parsec-cloud.lock",
-        ipc_win32_mutex_name="parsec-cloud",
+        ipc_win32_mutex_name=ipc_win32_mutex_name,
     )
 
     # Make sure the directories exist on the system
@@ -275,6 +276,7 @@ def save_config(config: CoreConfig):
                 "gui_geometry": base64.b64encode(config.gui_geometry).decode("ascii")
                 if config.gui_geometry
                 else None,
+                "ipc_win32_mutex_name": config.ipc_win32_mutex_name,
             },
             indent=True,
         )

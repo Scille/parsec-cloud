@@ -37,6 +37,7 @@ repos:
           - "--exclude=parsec/core/gui/_resources_rc.py"
           - "--exclude=parsec/core/gui/ui/"
       language_version: python3
+      additional_dependencies: ['click==8.0.4']
 
 -   repo: https://gitlab.com/pycqa/flake8
     rev: 3.8.3
