@@ -501,7 +501,7 @@ impl TrustchainContext {
 
     pub fn load_user_and_devices(
         &mut self,
-        trustchain: Trustchain,
+        mut trustchain: Trustchain,
         user_certif: Vec<u8>,
         revoked_user_certif: Option<Vec<u8>>,
         devices_certifs: Vec<Vec<u8>>,
@@ -513,67 +513,52 @@ impl TrustchainContext {
     )> {
         let now = DateTime::now();
 
-        let mut users = Vec::with_capacity(trustchain.users.len() + 1);
-        users.push(user_certif);
-        users.extend(trustchain.users);
+        let UserCertificate { user_id, .. } =
+            UserCertificate::unsecure_load(&user_certif).unwrap_or_else(|_| unreachable!());
 
-        let (revoked_users, revoked_user_certif_is_some) = match revoked_user_certif {
-            Some(revoked_user_certif) => {
-                let mut revoked_users = Vec::with_capacity(trustchain.revoked_users.len() + 1);
-                revoked_users.push(revoked_user_certif);
-                revoked_users.extend(trustchain.revoked_users);
-                (revoked_users, true)
-            }
-            None => (trustchain.revoked_users, false),
-        };
-
-        let devices_certifs_len = devices_certifs.len();
-        let mut devices = Vec::with_capacity(trustchain.devices.len() + devices_certifs_len);
-        devices.extend(devices_certifs);
-        devices.extend(trustchain.devices);
-
-        let (mut verified_users, mut verified_revoked_users, mut verified_devices) =
-            self.load_trustchain(&users, &revoked_users, &devices, Some(now))?;
-
-        // This won't work, because python keeps the order in the map
-        let verified_user = verified_users.remove(0);
-        if let Some(expected_user_id) = &expected_user_id {
-            if verified_user.user_id != *expected_user_id {
+        if let Some(expected_user_id) = expected_user_id {
+            if expected_user_id != user_id {
                 return Err(TrustchainError::UnexpectedCertificate {
-                    expected: expected_user_id.clone(),
-                    got: verified_user.user_id,
+                    expected: expected_user_id,
+                    got: user_id,
                 });
             }
         }
 
-        let verified_revoked_user = if revoked_user_certif_is_some {
-            // This won't work, because python keeps the order in the map
-            let verified_revoked_user = verified_revoked_users.remove(0);
-            if let Some(expected_user_id) = &expected_user_id {
-                if verified_revoked_user.user_id != *expected_user_id {
-                    return Err(TrustchainError::UnexpectedCertificate {
-                        expected: expected_user_id.clone(),
-                        got: verified_revoked_user.user_id,
-                    });
-                }
+        trustchain.users.push(user_certif);
+        trustchain.devices.extend(devices_certifs);
+
+        let revoked_user_certif_is_some = match revoked_user_certif {
+            Some(revoked_user_certif) => {
+                trustchain.revoked_users.push(revoked_user_certif);
+                true
             }
-            Some(verified_revoked_user)
-        } else {
-            None
+            None => false,
         };
 
-        verified_devices.truncate(devices_certifs_len);
-        if let Some(expected_user_id) = expected_user_id {
-            for verified_device in &verified_devices {
-                if verified_device.device_id.user_id != expected_user_id {
-                    return Err(TrustchainError::UnexpectedCertificate {
-                        expected: expected_user_id,
-                        got: verified_device.device_id.user_id.clone(),
-                    });
-                }
-            }
-        }
+        let (verified_users, verified_revoked_users, verified_devices) = self.load_trustchain(
+            &trustchain.users,
+            &trustchain.revoked_users,
+            &trustchain.devices,
+            Some(now),
+        )?;
 
-        Ok((verified_user, verified_revoked_user, verified_devices))
+        Ok((
+            verified_users
+                .into_iter()
+                .find(|user| user.user_id == user_id)
+                .unwrap_or_else(|| unreachable!()),
+            if revoked_user_certif_is_some {
+                verified_revoked_users
+                    .into_iter()
+                    .find(|user| user.user_id == user_id)
+            } else {
+                None
+            },
+            verified_devices
+                .into_iter()
+                .filter(|device| device.device_id.user_id == user_id)
+                .collect(),
+        ))
     }
 }
