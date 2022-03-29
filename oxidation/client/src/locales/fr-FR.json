@@ -2,7 +2,11 @@
     "HomePage": {
         "mainMenu": {
             "changelog": "Journal des modifications",
-            "about": "À propos"
+            "about": "À propos",
+            "lang": {
+                "frFR": "Français",
+                "enUS": "English"
+            }
         },
         "organizationActionSheet": {
             "header": "Organisation",

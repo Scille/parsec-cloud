@@ -31,6 +31,34 @@
             <ion-label>{{ $t('HomePage.mainMenu.about') }}</ion-label>
           </ion-item>
         </ion-list>
+        <ion-accordion-group ref="langAccordionGroup">
+          <ion-accordion value="langs">
+            <ion-item slot="header">
+              <ion-icon
+                :icon="language"
+                slot="start"
+              />
+              <ion-label>{{ $t(`HomePage.mainMenu.lang.${$i18n.locale.replace('-', '')}`) }}</ion-label>
+            </ion-item>
+            <ion-list
+              slot="content"
+              class="lang-list"
+            >
+              <ion-item
+                button
+                @click="changeLang('fr-FR')"
+              >
+                <ion-label>{{ $t('HomePage.mainMenu.lang.frFR') }}</ion-label>
+              </ion-item>
+              <ion-item
+                button
+                @click="changeLang('en-US')"
+              >
+                <ion-label>{{ $t('HomePage.mainMenu.lang.enUS') }}</ion-label>
+              </ion-item>
+            </ion-list>
+          </ion-accordion>
+        </ion-accordion-group>
       </ion-content>
     </ion-menu>
     <ion-header :translucent="true">
@@ -86,6 +114,8 @@
 
 <script setup lang="ts">
 import {
+  IonAccordionGroup,
+  IonAccordion,
   IonContent,
   IonHeader,
   IonPage,
@@ -108,11 +138,25 @@ import {
   link,
   qrCodeSharp,
   helpCircleOutline,
-  newspaperSharp
+  newspaperSharp,
+  language
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
+import { ref } from 'vue';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+const langAccordionGroup = ref();
+
+function closeLangAccordion(): void {
+  if (langAccordionGroup.value) {
+    langAccordionGroup.value.$el.value = undefined;
+  }
+}
+
+function changeLang(selectedLang: string): void {
+  locale.value = selectedLang;
+  closeLangAccordion();
+}
 
 function presentAbout(): void {
   console.log('presentAbout');
@@ -175,5 +219,12 @@ async function presentOrganizationActionSheet(): Promise<void> {
     p {
         font-weight: bold;
     }
+}
+.lang-list {
+  .item {
+      ion-label {
+        margin-left: 3.5em;
+      }
+  }
 }
 </style>
