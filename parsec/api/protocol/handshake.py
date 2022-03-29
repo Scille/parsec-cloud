@@ -213,9 +213,9 @@ class ServerHandshake:
     # Class attribute
     SUPPORTED_API_VERSIONS = (API_V2_VERSION, API_V1_VERSION)
 
-    def __init__(self, challenge_size: int = 48):
+    def __init__(self) -> None:
         # Challenge
-        self.challenge_size = challenge_size
+        self.challenge_size = 48
         self.challenge: bytes
 
         # Once support APIV1 is dropped, we can do much better than exposing the answer data as
