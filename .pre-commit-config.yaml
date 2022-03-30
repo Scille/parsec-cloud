@@ -32,6 +32,7 @@ repos:
     rev: 19.3b0
     hooks:
     - id: black
+      additional_dependencies: ['click==8.0.4']
       args:
           - "--line-length=100"
           - "--exclude=parsec/core/gui/_resources_rc.py"
@@ -83,3 +84,4 @@ repos:
         -   "@typescript-eslint/parser@5.14.0"
         -   "@vue/cli-plugin-eslint@5.0.1"
         -   "@vue/eslint-config-typescript@9.1.0"
+        -   "@intlify/eslint-plugin-vue-i18n@1.4.0"

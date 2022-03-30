@@ -1,0 +1,20 @@
+{
+    "HomePage": {
+        "mainMenu": {
+            "changelog": "Journal des modifications",
+            "about": "À propos",
+            "lang": {
+                "frFR": "Français",
+                "enUS": "English"
+            }
+        },
+        "organizationActionSheet": {
+            "header": "Organisation",
+            "create": "Créer",
+            "joinByLink": "Rejoindre par lien",
+            "joinByQRcode": "Rejoindre par QR code"
+        },
+        "noDevices": "Vous n'avez pas d'appareils sur ce téléphone.",
+        "howToAddDevices": "Pour ajouter un appareil, invitez-le depuis une organisation existante, ou créez une nouvelle organisation."
+    }
+}
