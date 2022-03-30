@@ -392,7 +392,7 @@ class HTTPComponent:
 
         except KeyError:
             rep = {"status": "unknown_command"}
-
-        rep = await cmd_func(client_ctx, msg)
+        else:
+            rep = await cmd_func(client_ctx, msg)
 
         return HTTPResponse.build_msgpack(200, rep)
