@@ -140,7 +140,7 @@ class BasePkiEnrollmentComponent:
 
         return pki_enrollment_submit_serializer.rep_dump(rep)
 
-    @api("api_pki_enrollment_info", client_types=[ClientType.ANONYMOUS])
+    @api("pki_enrollment_info", client_types=[ClientType.ANONYMOUS])
     @catch_protocol_errors
     async def api_pki_enrollment_info(self, client_ctx: AnonymousClientContext, msg: dict) -> dict:
         msg = pki_enrollment_info_serializer.req_load(msg)
