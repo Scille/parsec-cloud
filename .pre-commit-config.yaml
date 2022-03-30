@@ -32,6 +32,7 @@ repos:
     rev: 19.3b0
     hooks:
     - id: black
+      additional_dependencies: ['click==8.0.4']
       args:
           - "--line-length=100"
           - "--exclude=parsec/core/gui/_resources_rc.py"
