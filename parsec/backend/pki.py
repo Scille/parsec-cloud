@@ -165,6 +165,12 @@ class BasePkiEnrollmentComponent:
                     "submitted_on": info.submitted_on,
                     "rejected_on": info.rejected_on,
                 }
+            elif isinstance(info, PkiEnrollmentInfoCancelled):
+                rep = {
+                    "type": PkiEnrollmentStatus.CANCELLED,
+                    "submitted_on": info.submitted_on,
+                    "cancelled_on": info.cancelled_on,
+                }
             else:
                 assert False
 
