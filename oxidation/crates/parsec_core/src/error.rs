@@ -46,3 +46,32 @@ pub type TrustchainResult<T> = Result<T, TrustchainError>;
 pub(crate) fn build_signature_path(sign_chain: &[String]) -> String {
     sign_chain.join(" <-sign- ")
 }
+
+#[derive(Error, Debug, PartialEq)]
+pub enum RemoteDevicesManagerError {
+    #[error("User `{user_id}` is not in local cache and we are offline.")]
+    BackendOffline { user_id: UserID },
+
+    #[error("Failed to fetch invitation creator for device `{device_id}`: {reason}")]
+    FailedFetchInvitationCreatorForDevice { device_id: DeviceID, reason: String },
+
+    #[error("Failed to fetch invitation creator for user `{user_id}`: {reason}")]
+    FailedFetchInvitationCreatorForUser { user_id: UserID, reason: String },
+
+    #[error("Failed to fetch user {user_id}: `{reason}`")]
+    FailedFetchUser { user_id: UserID, reason: String },
+
+    #[error("{exc}")]
+    InvalidTrustchain { exc: TrustchainError },
+
+    #[error("User `{user_id}` doesn't exist in backend")]
+    UserNotFound { user_id: UserID },
+}
+
+pub type RemoteDevicesManagerResult<T> = Result<T, RemoteDevicesManagerError>;
+
+impl From<TrustchainError> for RemoteDevicesManagerError {
+    fn from(exc: TrustchainError) -> Self {
+        Self::InvalidTrustchain { exc }
+    }
+}

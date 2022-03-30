@@ -266,6 +266,10 @@ impl TrustchainContext {
         }
     }
 
+    pub fn cache_validity(&self) -> i64 {
+        self.cache_validity
+    }
+
     pub fn invalidate_user_cache(&mut self, user_id: &UserID) {
         self._users_cache.remove(user_id);
     }
