@@ -1,153 +1,187 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
-from typing import Dict, List, Optional, Tuple
+
+from typing import Dict, List, Optional
 from uuid import UUID
-
+from collections import defaultdict
 import attr
+from pendulum import DateTime
 
-import pendulum
-from pendulum.datetime import DateTime
-from parsec.api.data.pki import PkiEnrollmentReply, PkiEnrollmentRequest
-from parsec.api.protocol.types import HumanHandle, OrganizationID
-from parsec.backend.memory.user import MemoryUserComponent
+from parsec.api.protocol import OrganizationID, DeviceID
+from parsec.backend.memory.user import (
+    MemoryUserComponent,
+    UserAlreadyExistsError,
+    UserActiveUsersLimitReached,
+)
+from parsec.backend.user_type import User, Device
 from parsec.backend.pki import (
-    BasePkiCertificateComponent,
-    PkiCertificateAlreadyEnrolledError,
-    PkiCertificateAlreadyRequestedError,
-    PkiCertificateEmailAlreadyAttributedError,
-    PkiCertificateNotFoundError,
-    PkiCertificateRequestNotFoundError,
-    PkiEnrollementReplyBundle,
+    PkiEnrollmentInfo,
+    PkiEnrollmentInfoSubmitted,
+    PkiEnrollmentInfoAccepted,
+    PkiEnrollmentInfoRejected,
+    PkiEnrollmentInfoCancelled,
+    PkiEnrollmentListItem,
+    BasePkiEnrollmentComponent,
+    PkiEnrollmentAlreadyEnrolledError,
+    PkiEnrollmentCertificateAlreadySubmittedError,
+    PkiEnrollmentNoLongerAvailableError,
+    PkiEnrollmentAlreadyExistError,
+    PkiEnrollmentActiveUsersLimitReached,
+    PkiEnrollmentNotFoundError,
 )
 
 
 @attr.s(slots=True, auto_attribs=True)
-class PkiCertificate:
-    certificate_id: bytes
-    request_id: UUID
-    request_object: PkiEnrollmentRequest
-    request_timestamp: DateTime
-    reply_user_id: Optional[str] = None
-    reply_timestamp: Optional[DateTime] = None
-    reply_object: Optional[PkiEnrollmentReply] = None
-    reply_admin_user: Optional[HumanHandle] = None
+class PkiEnrollment:
+    enrollment_id: UUID
+    info: PkiEnrollmentInfo
+    submitter_der_x509_certificate: bytes
+    submit_payload_signature: bytes
+    submit_payload: bytes
+    accepter: Optional[DeviceID] = None
 
 
-class MemoryPkiCertificateComponent(BasePkiCertificateComponent):
+class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     def __init__(self, send_event):
         self._send_event = send_event
-        self._pki_certificates: Dict[bytes, PkiCertificate] = {}
         self._user_component: MemoryUserComponent = None
+        self._enrollements: Dict[OrganizationID, List[PkiEnrollment]] = defaultdict(list)
 
     def register_components(self, **other_components):
         self._user_component = other_components["user"]
 
-    async def pki_enrollment_request(
+    async def submit(
         self,
         organization_id: OrganizationID,
-        certificate_id: bytes,
-        request_id: UUID,
-        request_object: PkiEnrollmentRequest,
-        force_flag: bool = False,
-    ) -> DateTime:
+        enrollment_id: UUID,
+        force: bool,
+        submitter_der_x509_certificate: bytes,
+        submit_payload_signature: bytes,
+        submit_payload: bytes,
+        submitted_on: DateTime,
+    ) -> None:
+        # Try to retrieve the last attempt with this x509 certificate
+        for enrollment in reversed(self._enrollements[organization_id]):
+            if enrollment.submitter_der_x509_certificate == submitter_der_x509_certificate:
+                if isinstance(enrollment.info, PkiEnrollmentInfoSubmitted):
+                    # Previous attempt is still pending, overwrite it if force flag is set...
+                    if force:
+                        enrollment.info = PkiEnrollmentInfoCancelled(
+                            enrollment_id=enrollment_id,
+                            submitted_on=enrollment.info.submitted_on,
+                            cancelled_on=submitted_on,
+                        )
+                    else:
+                        # ...otherwise nothing we can do
+                        raise PkiEnrollmentCertificateAlreadySubmittedError(
+                            submitted_on=enrollment.info.submitted_on
+                        )
+                elif isinstance(
+                    enrollment.info, (PkiEnrollmentInfoRejected, PkiEnrollmentInfoCancelled)
+                ):
+                    # Previous attempt was unsuccessful, so we are clear to submit a new attempt !
+                    pass
+                elif isinstance(enrollment.info, PkiEnrollmentInfoAccepted):
+                    # Previous attempt end successfully, we are not allowed to submit
+                    # unless the created user has been revoked
+                    assert enrollment.accepter is not None
+                    user = self._user_component._get_user(
+                        organization_id=organization_id, user_id=enrollment.accepter.user_id
+                    )
+                    if not user.is_revoked():
+                        raise PkiEnrollmentAlreadyEnrolledError(enrollment.info.accepted_on)
+                else:
+                    assert False
+                # There is no need looking for older enrollements given the
+                # last one represent the current state of this x509 certificate.
+                break
 
-        humans, _ = await self._user_component.find_humans(
-            organization_id=organization_id, query=request_object.requested_human_handle.email
-        )
-        if humans and not humans[0].revoked:
-            raise PkiCertificateEmailAlreadyAttributedError(
-                f"email f{request_object.requested_human_handle} already attributed"
+        self._enrollements[organization_id].append(
+            PkiEnrollment(
+                enrollment_id=enrollment_id,
+                submitter_der_x509_certificate=submitter_der_x509_certificate,
+                submit_payload_signature=submit_payload_signature,
+                submit_payload=submit_payload,
+                info=PkiEnrollmentInfoSubmitted(
+                    enrollment_id=enrollment_id, submitted_on=submitted_on
+                ),
             )
-        # Revoked user certificate can be overwritten
-        elif not humans:
-            existing_certificate = self._pki_certificates.get(certificate_id, None)
-            if existing_certificate:
-                if existing_certificate.reply_object and existing_certificate.reply_user_id:
-                    raise PkiCertificateAlreadyEnrolledError(
-                        existing_certificate.request_timestamp,
-                        f"Certificate {str(certificate_id)} already attributed",
+        )
+
+    async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
+        for enrollment in reversed(self._enrollements[organization_id]):
+            if enrollment.enrollment_id == enrollment_id:
+                return enrollment.info
+        else:
+            raise PkiEnrollmentNotFoundError()
+
+    async def list(self, organization_id: OrganizationID) -> List[PkiEnrollmentListItem]:
+        items = []
+        for e in self._enrollements[organization_id]:
+            if isinstance(e.info, PkiEnrollmentInfoSubmitted):
+                items.append(
+                    PkiEnrollmentListItem(
+                        enrollment_id=e.enrollment_id,
+                        submitted_on=e.info.submitted_on,
+                        submitter_der_x509_certificate=e.submitter_der_x509_certificate,
+                        submit_payload_signature=e.submit_payload_signature,
+                        submit_payload=e.submit_payload,
+                    )
+                )
+        return items
+
+    async def reject(
+        self, organization_id: OrganizationID, enrollment_id: UUID, rejected_on: DateTime
+    ) -> None:
+        for enrollment in reversed(self._enrollements[organization_id]):
+            if enrollment.enrollment_id == enrollment_id:
+                if isinstance(enrollment.info, PkiEnrollmentInfoSubmitted):
+                    enrollment.info = PkiEnrollmentInfoRejected(
+                        enrollment_id=enrollment_id,
+                        submitted_on=enrollment.info.submitted_on,
+                        rejected_on=rejected_on,
+                    )
+                else:
+                    raise PkiEnrollmentNoLongerAvailableError()
+        else:
+            raise PkiEnrollmentNotFoundError()
+
+    async def accept(
+        self,
+        organization_id: OrganizationID,
+        enrollment_id: UUID,
+        accepter_der_x509_certificate: bytes,
+        accept_payload_signature: bytes,
+        accept_payload: bytes,
+        accepted_on: DateTime,
+        user: User,
+        first_device: Device,
+    ) -> None:
+        for enrollment in reversed(self._enrollements[organization_id]):
+            if enrollment.enrollment_id == enrollment_id:
+                if not isinstance(enrollment.info, PkiEnrollmentInfoSubmitted):
+                    raise PkiEnrollmentNoLongerAvailableError()
+
+                try:
+                    await self._user_component.create_user(
+                        organization_id=organization_id, user=user, first_device=first_device
                     )
 
-                if not force_flag:
-                    raise PkiCertificateAlreadyRequestedError(
-                        existing_certificate.reply_timestamp,
-                        f"Certificate {str(certificate_id)} already used in request {request_id}",
-                    )
+                except UserAlreadyExistsError as exc:
+                    raise PkiEnrollmentAlreadyExistError from exc
 
-        new_pki_certificate = PkiCertificate(
-            certificate_id=certificate_id,
-            request_id=request_id,
-            request_timestamp=pendulum.now(),
-            request_object=request_object,
-            reply_user_id=None,
-            reply_timestamp=None,
-            reply_object=None,
-        )
-        self._pki_certificates[certificate_id] = new_pki_certificate
-        return new_pki_certificate.request_timestamp
+                except UserActiveUsersLimitReached as exc:
+                    raise PkiEnrollmentActiveUsersLimitReached from exc
 
-    async def pki_enrollment_get_requests(self) -> List[Tuple[bytes, UUID, PkiEnrollmentRequest]]:
-        return [
-            (
-                pki_certificate.certificate_id,
-                pki_certificate.request_id,
-                pki_certificate.request_object,
-            )
-            for pki_certificate in self._pki_certificates.values()
-            if pki_certificate.reply_admin_user is None
-        ]
-
-    async def pki_enrollrment_reply_reject_user(
-        self, pki_reply_bundle: PkiEnrollementReplyBundle
-    ) -> DateTime:
-        return await self._pki_enrollment_reply(pki_reply_bundle)
-
-    async def pki_enrollment_reply_approve_user(
-        self, pki_reply_bundle: PkiEnrollementReplyBundle, client_ctx, msg
-    ) -> DateTime:
-        await self._user_component._api_user_create(client_ctx, msg, pki_reply_bundle)
-        timestamp = self._pki_certificates[pki_reply_bundle.certificate_id].reply_timestamp
-        assert timestamp
-        return timestamp
-
-    async def _pki_enrollment_reply(self, pki_reply_bundle: PkiEnrollementReplyBundle) -> DateTime:
-        try:
-            pki_certificate = self._pki_certificates[pki_reply_bundle.certificate_id]
-        except KeyError:
-            raise PkiCertificateNotFoundError(
-                f"Certificate {str(pki_reply_bundle.certificate_id)} not found"
-            )
-        if pki_certificate.request_id != pki_reply_bundle.request_id:
-            raise PkiCertificateRequestNotFoundError(
-                f"Request {pki_reply_bundle.request_id} not found for certificate {str(pki_reply_bundle.certificate_id)}"
-            )
-
-        pki_certificate.reply_object = pki_reply_bundle.reply_object
-        pki_certificate.reply_user_id = pki_reply_bundle.reply_user_id
-        pki_certificate.reply_timestamp = pendulum.now()
-        pki_certificate.reply_admin_user = pki_reply_bundle.reply_admin_user
-        return pki_certificate.reply_timestamp
-
-    async def pki_enrollment_get_reply(
-        self, certificate_id, request_id
-    ) -> Tuple[
-        Optional[PkiEnrollmentReply],
-        Optional[DateTime],
-        DateTime,
-        Optional[str],
-        Optional[HumanHandle],
-    ]:
-        try:
-            pki_certificate = self._pki_certificates[certificate_id]
-        except KeyError:
-            raise PkiCertificateNotFoundError(f"Certificate {certificate_id} not found")
-        if pki_certificate.request_id != request_id:
-            raise PkiCertificateRequestNotFoundError(
-                f"Request {request_id} not found for certificate {certificate_id}"
-            )
-        return (
-            pki_certificate.reply_object,
-            pki_certificate.reply_timestamp,
-            pki_certificate.request_timestamp,
-            pki_certificate.reply_user_id,
-            pki_certificate.reply_admin_user,
-        )
+                enrollment.info = PkiEnrollmentInfoAccepted(
+                    enrollment_id=enrollment_id,
+                    submitted_on=enrollment.info.submitted_on,
+                    accepted_on=accepted_on,
+                    accepter_der_x509_certificate=accepter_der_x509_certificate,
+                    accept_payload_signature=accept_payload_signature,
+                    accept_payload=accept_payload,
+                )
+                # Certifier is empty only for organization bootstrap
+                assert user.user_certifier is not None
+                enrollment.accepter = user.user_certifier
+        else:
+            raise PkiEnrollmentNotFoundError()

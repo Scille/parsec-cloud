@@ -1,13 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from enum import Enum
+from uuid import uuid4
 from typing import Optional, Tuple, Set, Dict
-from structlog import BoundLogger
+from structlog import BoundLogger, get_logger
 import trio
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.event_bus import EventBusConnectionContext
-from parsec.api.version import ApiVersion
+from parsec.api.version import ApiVersion, API_V2_VERSION
 from parsec.api.transport import Transport
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
@@ -21,6 +22,9 @@ from parsec.api.protocol import (
 )
 from parsec.backend.utils import ClientType
 from parsec.backend.invite import Invitation
+
+
+logger = get_logger()
 
 
 class BaseClientContext:
@@ -142,16 +146,23 @@ class AnonymousClientContext(BaseClientContext):
     __slots__ = ("organization_id", "conn_id", "logger")
     TYPE = ClientType.ANONYMOUS
 
-    def __init__(
-        self, transport: Transport, api_version: ApiVersion, organization_id: OrganizationID
-    ):
-        super().__init__(transport, api_version)
+    def __init__(self, organization_id: OrganizationID):
+        # Anonymous is a special snowflake: it is accessed trough HTTP instead of
+        # Websocket, hence the transport is not available (given Transport is based
+        # on websocket) and there is no api version negociation for the moment
+        super().__init__(None, API_V2_VERSION)  # type: ignore
         self.organization_id = organization_id
 
-        self.conn_id = self.transport.conn_id
-        self.logger = self.transport.logger = self.transport.logger.bind(
-            conn_id=self.conn_id, organization_id=self.organization_id
-        )
+        self.conn_id = uuid4().hex
+        self.logger = logger.bind(conn_id=self.conn_id, organization_id=self.organization_id)
+
+    @property  # type: ignore
+    def transport(self):
+        raise RuntimeError("Transport is not accessible for anonymous client context !")
+
+    @transport.setter
+    def transport(self, value):
+        pass
 
     def __repr__(self):
         return f"InvitedClientContext(org={self.organization_id}, invitation={self.invitation})"

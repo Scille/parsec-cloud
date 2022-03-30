@@ -4,7 +4,6 @@ import pendulum
 from typing import Tuple, List, Optional
 
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
-from parsec.backend.pki import PkiEnrollementReplyBundle
 from parsec.backend.user import (
     BaseUserComponent,
     User,
@@ -33,15 +32,10 @@ class PGUserComponent(BaseUserComponent):
         self.dbh = dbh
 
     async def create_user(
-        self,
-        organization_id: OrganizationID,
-        user: User,
-        first_device: Device,
-        pki_enrollement_reply_bundle: Optional[PkiEnrollementReplyBundle] = None,
+        self, organization_id: OrganizationID, user: User, first_device: Device
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await query_create_user(conn, organization_id, user, first_device)
-            # TODO Pki request
 
     async def create_device(
         self, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""

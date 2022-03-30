@@ -122,6 +122,8 @@ from parsec.api.protocol.vlob import (
 )
 from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS, APIV1_ANONYMOUS_CMDS
 from parsec.api.protocol.pki import (
+    PkiEnrollmentStatus,
+    PkiEnrollmentStatusField,
     pki_enrollment_submit_serializer,
     pki_enrollment_info_serializer,
     pki_enrollment_list_serializer,
@@ -242,6 +244,8 @@ __all__ = (
     "block_create_serializer",
     "block_read_serializer",
     # PKI enrollment
+    "PkiEnrollmentStatus",
+    "PkiEnrollmentStatusField",
     "pki_enrollment_submit_serializer",
     "pki_enrollment_info_serializer",
     "pki_enrollment_list_serializer",

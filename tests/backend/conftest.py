@@ -4,6 +4,7 @@ import pytest
 from typing import Optional
 from pendulum import datetime
 from async_generator import asynccontextmanager
+from structlog import get_logger
 
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import (
@@ -211,17 +212,20 @@ class AnonymousTransport:
         self.connection_factory = connection_factory
         self.organization_id = organization_id
         self.last_request_response: Optional[bytes] = None
+        self.logger = get_logger()
 
     async def send(self, msg: bytes) -> None:
         assert self.last_request_response is None
         async with self.connection_factory() as stream:
-            self.last_request_response = await do_http_request(
+            status, _, body = await do_http_request(
                 stream=stream,
                 target=f"/anonymous/{self.organization_id}",
                 method="POST",
-                headers={"Content-Type: application/msgpack"},
+                headers={"Content-Type": "application/msgpack"},
                 body=msg,
             )
+            assert status[0] == 200
+            self.last_request_response = body
 
     async def recv(self) -> bytes:
         assert self.last_request_response is not None
@@ -231,7 +235,7 @@ class AnonymousTransport:
 
 
 @pytest.fixture
-def backend_anonymous_sock_factory(server_factory):
+def anonymous_backend_sock_factory(server_factory):
     @asynccontextmanager
     async def _backend_sock_factory(backend, organization_id: OrganizationID):
         async with server_factory(backend.handle_client) as server:
@@ -241,8 +245,8 @@ def backend_anonymous_sock_factory(server_factory):
 
 
 @pytest.fixture
-async def backend_anonymous_sock(backend_anonymous_sock_factory, backend, coolorg):
-    async with backend_anonymous_sock_factory(backend, coolorg) as sock:
+async def anonymous_backend_sock(anonymous_backend_sock_factory, backend, coolorg):
+    async with anonymous_backend_sock_factory(backend, coolorg.organization_id) as sock:
         yield sock
 
 

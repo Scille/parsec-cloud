@@ -13,8 +13,8 @@ from parsec.backend.postgresql.user import PGUserComponent
 from parsec.backend.postgresql.message import PGMessageComponent
 from parsec.backend.postgresql.realm import PGRealmComponent
 from parsec.backend.postgresql.vlob import PGVlobComponent
-from parsec.backend.postgresql.pki import PGCertificateComponent
 from parsec.backend.postgresql.block import PGBlockComponent, PGBlockStoreComponent
+from parsec.backend.postgresql.pki import PGPkiEnrollmentComponent
 from parsec.backend.postgresql.factory import components_factory
 
 
@@ -33,5 +33,6 @@ __all__ = [
     "PGBlockComponent",
     "PGCertificateComponent",
     "PGBlockStoreComponent",
+    "PGPkiEnrollmentComponent",
     "components_factory",
 ]

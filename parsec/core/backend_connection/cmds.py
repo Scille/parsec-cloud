@@ -59,8 +59,6 @@ from parsec.api.protocol import (
     user_create_serializer,
     user_revoke_serializer,
     device_create_serializer,
-)
-from parsec.api.protocol.pki import (
     pki_enrollment_submit_serializer,
     pki_enrollment_info_serializer,
     pki_enrollment_list_serializer,
@@ -596,9 +594,9 @@ async def pki_enrollment_submit(
     transport: Transport,
     enrollment_id: UUID,
     force: bool,
-    der_x509_certificate: bytes,
-    signature: bytes,
-    payload: bytes,
+    submitter_der_x509_certificate: bytes,
+    submit_payload_signature: bytes,
+    submit_payload: bytes,
 ) -> dict:
     return await _send_cmd(
         transport,
@@ -606,9 +604,9 @@ async def pki_enrollment_submit(
         cmd="pki_enrollment_submit",
         enrollment_id=enrollment_id,
         force=force,
-        der_x509_certificate=der_x509_certificate,
-        signature=signature,
-        payload=payload,
+        submitter_der_x509_certificate=submitter_der_x509_certificate,
+        submit_payload_signature=submit_payload_signature,
+        submit_payload=submit_payload,
     )
 
 
@@ -637,9 +635,9 @@ async def pki_enrollment_reject(transport: Transport, enrollment_id: UUID) -> di
 async def pki_enrollment_accept(
     transport: Transport,
     enrollment_id: UUID,
-    der_x509_certificate: bytes,
-    signature: bytes,
-    payload: bytes,
+    accepter_der_x509_certificate: bytes,
+    accept_payload_signature: bytes,
+    accept_payload: bytes,
     user_certificate: bytes,
     device_certificate: bytes,
     redacted_user_certificate: bytes,
@@ -650,9 +648,9 @@ async def pki_enrollment_accept(
         pki_enrollment_accept_serializer,
         cmd="pki_enrollment_accept",
         enrollment_id=enrollment_id,
-        der_x509_certificate=der_x509_certificate,
-        signature=signature,
-        payload=payload,
+        accepter_der_x509_certificate=accepter_der_x509_certificate,
+        accept_payload_signature=accept_payload_signature,
+        accept_payload=accept_payload,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,

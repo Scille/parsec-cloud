@@ -25,7 +25,7 @@ from parsec.api.protocol import (
     UserID,
     InvitationToken,
 )
-from parsec.backend.utils import CancelledByNewRequest, collect_apis
+from parsec.backend.utils import CancelledByNewRequest, ClientType, collect_apis
 from parsec.backend.config import BackendConfig
 from parsec.backend.client_context import AuthenticatedClientContext, InvitedClientContext
 from parsec.backend.handshake import do_handshake
@@ -70,10 +70,10 @@ async def backend_app_factory(config: BackendConfig, event_bus: Optional[EventBu
             message=components["message"],
             realm=components["realm"],
             vlob=components["vlob"],
-            pki=components["pki"],
             ping=components["ping"],
             blockstore=components["blockstore"],
             block=components["block"],
+            pki=components["pki"],
             events=components["events"],
         )
 
@@ -91,10 +91,10 @@ class BackendApp:
         message,
         realm,
         vlob,
-        pki,
         ping,
         blockstore,
         block,
+        pki,
         events,
     ):
         self.config = config
@@ -109,14 +109,16 @@ class BackendApp:
         self.realm = realm
         self.vlob = vlob
         self.ping = ping
-        self.pki = pki
         self.blockstore = blockstore
         self.block = block
+        self.pki = pki
         self.events = events
 
         self.apis = collect_apis(
-            user, invite, organization, message, realm, vlob, ping, pki, blockstore, block, events
+            user, invite, organization, message, realm, vlob, ping, blockstore, block, pki, events
         )
+        # TODO: find a cleaner way to do this ?
+        self.http.anonymous_api = self.apis[ClientType.ANONYMOUS]
 
         if self.config.debug:
             self.server_header = f"parsec/{parsec_version} {h11.PRODUCT_ID}".encode("ascii")

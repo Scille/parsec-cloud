@@ -11,6 +11,7 @@ class PkiEnrollmentStatus(Enum):
     SUBMITTED = "SUBMITTED"
     ACCEPTED = "ACCEPTED"
     REJECTED = "REJECTED"
+    CANCELLED = "CANCELLED"
 
 
 PkiEnrollmentStatusField = fields.enum_field_factory(PkiEnrollmentStatus)
@@ -26,8 +27,8 @@ class PkiEnrollmentSubmitReqSchema(BaseReqSchema):
     force = fields.Boolean(required=True)
 
     submitter_der_x509_certificate = fields.Bytes(require=True)
-    submitted_signature = fields.Bytes(required=True)
-    submitted_payload = fields.Bytes(required=True)  # Signature should be checked before loading
+    submit_payload_signature = fields.Bytes(required=True)
+    submit_payload = fields.Bytes(required=True)  # Signature should be checked before loading
 
 
 class PkiEnrollmentSubmitRepSchema(BaseRepSchema):
@@ -57,8 +58,8 @@ class PkiEnrollmentInfoRepAcceptedSchema(BaseRepSchema):
     accepted_on = fields.DateTime(required=True)
 
     accepter_der_x509_certificate = fields.Bytes(required=True)
-    accepted_signature = fields.Bytes(required=True)
-    accepted_payload = fields.Bytes(required=True)  # Signature should be checked before loading
+    accept_payload_signature = fields.Bytes(required=True)
+    accept_payload = fields.Bytes(required=True)  # Signature should be checked before loading
 
 
 class PkiEnrollmentInfoRepRejectedSchema(BaseRepSchema):
@@ -67,12 +68,19 @@ class PkiEnrollmentInfoRepRejectedSchema(BaseRepSchema):
     rejected_on = fields.DateTime(required=True)
 
 
+class PkiEnrollmentInfoRepCancelledSchema(BaseRepSchema):
+    type = fields.EnumCheckedConstant(PkiEnrollmentStatus.CANCELLED, required=True)
+    submitted_on = fields.DateTime(required=True)
+    cancelled_on = fields.DateTime(required=True)
+
+
 class PkiEnrollmentInfoRepSchema(OneOfSchema):
     type_field = "type"
     type_schemas = {
         PkiEnrollmentStatus.SUBMITTED: PkiEnrollmentInfoRepSubmittedSchema(),
         PkiEnrollmentStatus.ACCEPTED: PkiEnrollmentInfoRepAcceptedSchema(),
         PkiEnrollmentStatus.REJECTED: PkiEnrollmentInfoRepRejectedSchema(),
+        PkiEnrollmentStatus.CANCELLED: PkiEnrollmentInfoRepCancelledSchema(),
     }
 
     def get_obj_type(self, obj: Dict[str, object]) -> PkiEnrollmentStatus:
@@ -84,6 +92,7 @@ pki_enrollment_info_serializer = CmdSerializer(
 )
 
 
+# TODO: rename to pki_enrollment_list_submitted ?
 # pki_enrollment_list
 
 
@@ -91,8 +100,8 @@ class PkiEnrollmentListItemSchema(BaseSchema):
     enrollment_id = fields.UUID(required=True)
     submitted_on = fields.DateTime(required=True)
     submitter_der_x509_certificate = fields.Bytes(require=True)
-    submitted_signature = fields.Bytes(required=True)
-    submitted_payload = fields.Bytes(required=True)  # Signature should be checked before loading
+    submit_payload_signature = fields.Bytes(required=True)
+    submit_payload = fields.Bytes(required=True)  # Signature should be checked before loading
 
 
 class PkiEnrollmentListReqSchema(BaseReqSchema):
@@ -131,8 +140,8 @@ class PkiEnrollmentAcceptReqSchema(BaseReqSchema):
     enrollment_id = fields.UUID(required=True)
 
     accepter_der_x509_certificate = fields.Bytes(required=True)
-    accepted_signature = fields.Bytes(required=True)
-    accepted_payload = fields.Bytes(required=True)  # Signature should be checked before loading
+    accept_payload_signature = fields.Bytes(required=True)
+    accept_payload = fields.Bytes(required=True)  # Signature should be checked before loading
 
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)

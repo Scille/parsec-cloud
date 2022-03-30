@@ -20,7 +20,7 @@ from parsec.backend.memory.message import MemoryMessageComponent
 from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.backend.memory.block import MemoryBlockComponent
-from parsec.backend.memory.pki import MemoryPkiCertificateComponent
+from parsec.backend.memory.pki import MemoryPkiEnrollmentComponent
 from parsec.backend.webhooks import WebhooksComponent
 from parsec.backend.http import HTTPComponent
 
@@ -48,7 +48,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
     realm = MemoryRealmComponent(_send_event)
     vlob = MemoryVlobComponent(_send_event)
     ping = MemoryPingComponent(_send_event)
-    pki = MemoryPkiCertificateComponent(_send_event)
+    pki = MemoryPkiEnrollmentComponent(_send_event)
     block = MemoryBlockComponent()
     blockstore = blockstore_factory(config.blockstore_config)
     events = EventsComponent(realm, send_event=_send_event)

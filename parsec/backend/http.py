@@ -9,10 +9,7 @@ from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode, unquote_plus
 import importlib_resources
 import h11
 
-from parsec.backend.pki import BasePkiCertificateComponent
-
-from parsec.serde.packing import packb, unpackb
-from parsec.serde import SerdeValidationError
+from parsec.serde import SerdeValidationError, SerdePackingError, packb, unpackb
 from parsec.api.protocol import OrganizationID
 from parsec.api.rest import (
     organization_config_req_serializer,
@@ -24,8 +21,9 @@ from parsec.api.rest import (
     organization_stats_req_serializer,
     organization_stats_rep_serializer,
 )
-from parsec.backend.config import BackendConfig
 from parsec.backend import static as http_static_module
+from parsec.backend.config import BackendConfig
+from parsec.backend.client_context import AnonymousClientContext
 from parsec.backend.templates import get_template
 from parsec.backend.organization import (
     BaseOrganizationComponent,
@@ -33,7 +31,7 @@ from parsec.backend.organization import (
     OrganizationNotFoundError,
     generate_bootstrap_token,
 )
-from parsec.serde.exceptions import SerdePackingError
+from parsec.backend.pki import BasePkiEnrollmentComponent
 
 try:
     from typing import Protocol
@@ -110,11 +108,11 @@ class HTTPResponse:
 
     @classmethod
     def build_msgpack(
-        cls, status_code: int, data: bytes, headers: Optional[Dict[bytes, bytes]] = None
+        cls, status_code: int, data: dict, headers: Optional[Dict[bytes, bytes]] = None
     ) -> "HTTPResponse":
         headers = headers or {}
         headers[b"content-type"] = b"application/msgpack"
-        return cls.build(status_code=status_code, headers=headers, data=data)
+        return cls.build(status_code=status_code, headers=headers, data=packb(data))
 
     @classmethod
     def build(
@@ -131,7 +129,7 @@ class HTTPComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
         self._organization_component: BaseOrganizationComponent
-        self._pki_component: BasePkiCertificateComponent
+        self._pki_component: BasePkiEnrollmentComponent
         self.route_mapping: List[Tuple[Pattern[str], Set[str], RequestHandler]] = [
             (re.compile(r"^/?$"), {"GET"}, self._http_root),
             (re.compile(r"^/redirect/(?P<path>.*)$"), {"GET"}, self._http_redirect),
@@ -152,16 +150,14 @@ class HTTPComponent:
                 self._http_api_organization_stats,
             ),
             (
-                re.compile(r"^/anonymous/pki/(?P<organization_id>[^/]*)/enrollment_request$"),
+                re.compile(r"^/anonymous/(?P<organization_id>[^/]*)$"),
                 {"GET", "POST"},
-                self._http_api_pki_enrollement_request,
-            ),
-            (
-                re.compile(r"^/anonymous/pki/(?P<organization_id>[^/]*)/enrollment_get_reply$"),
-                {"GET", "POST"},
-                self._http_api_pki_enrollement_get_reply,
+                self._http_api_anonymous,
             ),
         ]
+        # TODO: find a cleaner way to do this ?
+        # This should be set by BackendApp during it init
+        self.anonymous_api: Dict[str, Callable] = {}
 
     def register_components(self, **other_components):
         self._organization_component = other_components["organization"]
@@ -370,40 +366,33 @@ class HTTPComponent:
 
         return None, data
 
-    async def _http_api_pki_enrollement_request(
-        self, req: HTTPRequest, **kwargs: str
-    ) -> HTTPResponse:
+    async def _http_api_anonymous(self, req: HTTPRequest, **kwargs: str) -> HTTPResponse:
         try:
-            organization_name = kwargs["organization_id"]
-            await self._organization_component.get(OrganizationID(organization_name))
-        except (IndexError, OrganizationNotFoundError):
-            return HTTPResponse.build_msgpack(404, data=b"")
+            organization_id = OrganizationID(kwargs["organization_id"])
+            await self._organization_component.get(organization_id)
+        except (ValueError, OrganizationNotFoundError):
+            return HTTPResponse.build_msgpack(404, {})
 
         if req.method == "GET":
-            return HTTPResponse.build_msgpack(200, data=b"")
+            return HTTPResponse.build_msgpack(200, {})
 
         body = await req.get_body()
-        msg = unpackb(body)
-        msg["cmd"] = "pki_enrollement_request"
-        rep = await self._pki_component.api_pki_enrollment_request(
-            msg, OrganizationID(organization_name)
-        )
-        return HTTPResponse.build_msgpack(200, data=packb(rep))
-
-    async def _http_api_pki_enrollement_get_reply(
-        self, req: HTTPRequest, **kwargs: str
-    ) -> HTTPResponse:
         try:
-            organization_name = kwargs["organization_id"]
-            await self._organization_component.get(OrganizationID(organization_name))
-        except (IndexError, OrganizationNotFoundError):
-            return HTTPResponse.build_msgpack(404, data=b"")
+            msg = unpackb(body)
+        except SerdePackingError:
+            return HTTPResponse.build_msgpack(200, {"status": "invalid_msg_format"})
 
-        if req.method == "GET":
-            return HTTPResponse.build_msgpack(200, data=b"")
+        client_ctx = AnonymousClientContext(organization_id)
+        try:
+            cmd = msg.get("cmd", "<missing>")
+            if not isinstance(cmd, str):
+                raise KeyError()
 
-        body = await req.get_body()
-        msg = unpackb(body)
-        msg["cmd"] = "pki_enrollement_get_reply"
-        rep = await self._pki_component.api_pki_enrollment_get_reply(msg)
-        return HTTPResponse.build_msgpack(200, data=packb(rep))
+            cmd_func = self.anonymous_api[cmd]
+
+        except KeyError:
+            rep = {"status": "unknown_command"}
+
+        rep = await cmd_func(client_ctx, msg)
+
+        return HTTPResponse.build_msgpack(200, rep)

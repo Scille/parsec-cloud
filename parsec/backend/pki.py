@@ -1,176 +1,348 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-
-from typing import Optional
-from uuid import UUID
 import attr
+from typing import List
+from uuid import UUID
+from pendulum import DateTime, now as pendulum_now
 
-from pendulum import DateTime
-from parsec.api.data.pki import PkiEnrollmentReply, PkiEnrollmentRequest
-from parsec.api.protocol.pki import (
-    pki_enrollment_get_requests_serializer,
-    pki_enrollment_reply_serializer,
-    pki_enrollment_request_serializer,
-    pki_enrollment_get_reply_serializer,
+from parsec.api.data import DataError, PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
+from parsec.api.protocol import (
+    OrganizationID,
+    UserProfile,
+    PkiEnrollmentStatus,
+    pki_enrollment_submit_serializer,
+    pki_enrollment_info_serializer,
+    pki_enrollment_list_serializer,
+    pki_enrollment_reject_serializer,
+    pki_enrollment_accept_serializer,
 )
-from parsec.api.protocol.types import HumanHandle, OrganizationID, UserProfile
+from parsec.backend.user_type import (
+    User,
+    Device,
+    validate_new_user_certificates,
+    CertificateValidationError,
+)
+from parsec.backend.client_context import AuthenticatedClientContext, AnonymousClientContext
 from parsec.backend.utils import api, catch_protocol_errors, ClientType
 
 
-class PkiCertificateError(Exception):
+class PkiEnrollmentError(Exception):
     pass
 
 
-class PkiCertificateAlreadyRequestedError(PkiCertificateError):
-    def __init__(self, timestamp, *args, **kwargs):
-        self.request_timestamp = timestamp
-        PkiCertificateError.__init__(self, *args, **kwargs)
+class PkiEnrollmentAlreadyEnrolledError(PkiEnrollmentError):
+    def __init__(self, accepted_on, *args, **kwargs):
+        self.accepted_on = accepted_on
+        PkiEnrollmentError.__init__(self, *args, **kwargs)
 
 
-class PkiCertificateAlreadyEnrolledError(PkiCertificateError):
-    def __init__(self, timestamp, *args, **kwargs):
-        self.reply_timestamp = timestamp
-        PkiCertificateError.__init__(self, *args, **kwargs)
-
-
-class PkiCertificateEmailAlreadyAttributedError(PkiCertificateError):
+class PkiEnrollmentNotFoundError(PkiEnrollmentError):
     pass
 
 
-class PkiCertificateNotFoundError(PkiCertificateError):
+class PkiEnrollmentAlreadyExistError(PkiEnrollmentError):
     pass
 
 
-class PkiCertificateRequestNotFoundError(PkiCertificateError):
+class PkiEnrollmentActiveUsersLimitReached(PkiEnrollmentError):
+    pass
+
+
+class PkiEnrollmentCertificateAlreadySubmittedError(PkiEnrollmentError):
+    def __init__(self, submitted_on, *args, **kwargs):
+        self.submitted_on = submitted_on
+        PkiEnrollmentError.__init__(self, *args, **kwargs)
+
+
+class PkiEnrollmentNoLongerAvailableError(PkiEnrollmentError):
+    pass
+
+
+class PkiEnrollmentRequestNotFoundError(PkiEnrollmentError):
+    pass
+
+
+class PkiEnrollmentReplacedError(PkiEnrollmentError):  # TODO
     pass
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollementReplyBundle:
-    certificate_id: bytes
-    request_id: UUID
-    reply_user_id: Optional[str] = None
-    reply_object: Optional[PkiEnrollmentReply] = None
-    reply_admin_user: Optional[HumanHandle] = None
+class PkiEnrollmentInfo:
+    enrollment_id: UUID
 
 
-class BasePkiCertificateComponent:
-    @api("pki_enrollment_get_requests", client_types=[ClientType.ANONYMOUS])
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class PkiEnrollmentInfoSubmitted(PkiEnrollmentInfo):
+    submitted_on: DateTime
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class PkiEnrollmentInfoAccepted(PkiEnrollmentInfo):
+    submitted_on: DateTime
+    accepted_on: DateTime
+    accepter_der_x509_certificate: bytes
+    accept_payload_signature: bytes
+    accept_payload: bytes
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class PkiEnrollmentInfoRejected(PkiEnrollmentInfo):
+    submitted_on: DateTime
+    rejected_on: DateTime
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class PkiEnrollmentInfoCancelled(PkiEnrollmentInfo):
+    submitted_on: DateTime
+    cancelled_on: DateTime
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class PkiEnrollmentListItem:
+    enrollment_id: UUID
+    submitted_on: DateTime
+    submitter_der_x509_certificate: bytes
+    submit_payload_signature: bytes
+    submit_payload: bytes
+
+
+class BasePkiEnrollmentComponent:
+    @api("pki_enrollment_submit", client_types=[ClientType.ANONYMOUS])
     @catch_protocol_errors
-    async def api_pki_enrollment_request(self, msg, organization_id: OrganizationID):
-        msg = pki_enrollment_request_serializer.req_load(msg)
-        certifiate_id = msg["certificate_id"]
-        request = msg["request"]
-        request_id = msg["request_id"]
-        force_flag = msg["force_flag"]
+    async def api_pki_enrollment_submit(
+        self, client_ctx: AnonymousClientContext, msg: dict
+    ) -> dict:
+        msg = pki_enrollment_submit_serializer.req_load(msg)
+
         try:
-            result = await self.pki_enrollment_request(
-                organization_id, certifiate_id, request_id, request, force_flag
-            )
-            return pki_enrollment_request_serializer.rep_dump({"status": "ok", "timestamp": result})
-        except PkiCertificateAlreadyRequestedError as err:
-            return pki_enrollment_request_serializer.rep_dump(
-                {"status": "already_requested", "timestamp": err.request_timestamp}
-            )
-        except PkiCertificateAlreadyEnrolledError as err:
-            return pki_enrollment_request_serializer.rep_dump(
-                {"status": "already_enrolled", "timestamp": err.reply_timestamp}
-            )
-        except PkiCertificateEmailAlreadyAttributedError:
-            return pki_enrollment_request_serializer.rep_dump(
-                {"status": "email_already_attributed"}
-            )
+            PkiEnrollmentSubmitPayload.load(msg["submit_payload"])
 
-    async def pki_enrollment_request(
-        self,
-        organization_id: OrganizationID,
-        certificate_id: bytes,
-        request_id: UUID,
-        request_object: PkiEnrollmentRequest,
-        force_flag: bool = False,
-    ) -> DateTime:
-        raise NotImplementedError()
+        except DataError as exc:
+            return {"status": "invalid_payload_data", "reason": str(exc)}
 
-    @api("pki_enrollment_get_requests")
+        try:
+            await self.submit(
+                organization_id=client_ctx.organization_id,
+                enrollment_id=msg["enrollment_id"],
+                force=msg["force"],
+                submitter_der_x509_certificate=msg["submitter_der_x509_certificate"],
+                submit_payload_signature=msg["submit_payload_signature"],
+                submit_payload=msg["submit_payload"],
+                submitted_on=pendulum_now(),
+            )
+            rep = {"status": "ok"}
+
+        except PkiEnrollmentCertificateAlreadySubmittedError as exc:
+            rep = {"status": "already_submitted", "submitted_on": exc.submitted_on}
+
+        except PkiEnrollmentAlreadyEnrolledError:
+            rep = {"status": "already_enrolled"}
+
+        return pki_enrollment_submit_serializer.rep_dump(rep)
+
+    @api("api_pki_enrollment_info", client_types=[ClientType.ANONYMOUS])
     @catch_protocol_errors
-    async def api_pki_enrollment_get_requests(self, client_ctx, msg):
+    async def api_pki_enrollment_info(self, client_ctx: AnonymousClientContext, msg: dict) -> dict:
+        msg = pki_enrollment_info_serializer.req_load(msg)
+        try:
+            info = await self.info(
+                organization_id=client_ctx.organization_id, enrollment_id=msg["enrollment_id"]
+            )
+            if isinstance(info, PkiEnrollmentInfoSubmitted):
+                rep = {"type": PkiEnrollmentStatus.SUBMITTED, "submitted_on": info.submitted_on}
+            elif isinstance(info, PkiEnrollmentInfoAccepted):
+                rep = {
+                    "type": PkiEnrollmentStatus.ACCEPTED,
+                    "submitted_on": info.submitted_on,
+                    "accepted_on": info.accepted_on,
+                    "accepter_der_x509_certificate": info.accepter_der_x509_certificate,
+                    "accept_payload_signature": info.accept_payload_signature,
+                    "accept_payload": info.accept_payload,
+                }
+            elif isinstance(info, PkiEnrollmentInfoRejected):
+                rep = {
+                    "type": PkiEnrollmentStatus.REJECTED,
+                    "submitted_on": info.submitted_on,
+                    "rejected_on": info.rejected_on,
+                }
+            else:
+                assert False
+
+        except PkiEnrollmentNotFoundError as exc:
+            rep = {"status": "not_found", "reason": str(exc)}
+
+        return pki_enrollment_info_serializer.rep_dump(rep)
+
+    @api("pki_enrollment_list")
+    @catch_protocol_errors
+    async def api_pki_enrollment_list(
+        self, client_ctx: AuthenticatedClientContext, msg: dict
+    ) -> dict:
         if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
             }
-        msg = pki_enrollment_get_requests_serializer.req_load(msg)
-        requested_pki_cert = await self.pki_enrollment_get_requests()
-        return pki_enrollment_get_requests_serializer.rep_dump({"requests": requested_pki_cert})
-
-    @api("pki_enrollment_reply")
-    @catch_protocol_errors
-    async def api_pki_enrollment_reply(self, client_ctx, msg):
-        if client_ctx.profile != UserProfile.ADMIN:
-            return {
-                "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+        msg = pki_enrollment_list_serializer.req_load(msg)
+        enrollments = await self.list(organization_id=client_ctx.organization_id)
+        return pki_enrollment_list_serializer.rep_dump(
+            {
+                "enrollments": [
+                    {
+                        "enrollment_id": e.enrollment_id,
+                        "submitted_on": e.submitted_on,
+                        "submitter_der_x509_certificate": e.submitter_der_x509_certificate,
+                        "submit_payload_signature": e.submit_payload_signature,
+                        "submit_payload": e.submit_payload,
+                    }
+                    for e in enrollments
+                ]
             }
-        msg = pki_enrollment_reply_serializer.req_load(msg)
-        pki_reply_bundle = PkiEnrollementReplyBundle(
-            certificate_id=msg["certificate_id"],
-            request_id=msg["request_id"],
-            reply_user_id=msg["user_id"],
-            reply_object=msg["reply"],
-            reply_admin_user=client_ctx.human_handle,
         )
 
-        try:
-            if msg["user_id"]:
-                timestamp = await self.pki_enrollment_reply_approve_user(
-                    pki_reply_bundle, client_ctx, msg
-                )
-            else:
-                timestamp = await self.pki_enrollrment_reply_reject_user(pki_reply_bundle)
-            return pki_enrollment_reply_serializer.rep_dump(
-                {"status": "ok", "timestamp": timestamp}
-            )
-        except PkiCertificateNotFoundError:
-            return pki_enrollment_reply_serializer.rep_dump({"status": "certificate not found"})
-        except PkiCertificateRequestNotFoundError:
-            return pki_enrollment_reply_serializer.rep_dump({"status": "request not found"})
-
-    @api("api_pki_enrollment_get_reply", client_types=[ClientType.ANONYMOUS])
+    @api("pki_enrollment_reject")
     @catch_protocol_errors
-    async def api_pki_enrollment_get_reply(self, msg):
-        msg = pki_enrollment_get_reply_serializer.req_load(msg)
-        certificate_id = msg["certificate_id"]
-        request_id = msg["request_id"]
+    async def api_pki_enrollment_reject(
+        self, client_ctx: AuthenticatedClientContext, msg: dict
+    ) -> dict:
+        if client_ctx.profile != UserProfile.ADMIN:
+            return {
+                "status": "not_allowed",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
+        msg = pki_enrollment_reject_serializer.req_load(msg)
         try:
-            (
-                reply,
-                reply_timestamp,
-                request_timestamp,
-                user_id,
-                admin_user,
-            ) = await self.pki_enrollment_get_reply(certificate_id, request_id)
-            if not admin_user:
-                return pki_enrollment_get_reply_serializer.rep_dump(
-                    {"status": "pending", "timestamp": request_timestamp}
-                )
-            if not user_id:
-                return pki_enrollment_get_reply_serializer.rep_dump(
-                    {
-                        "status": "rejected",
-                        "reason": f"Rejected by {admin_user}",
-                        "timestamp": reply_timestamp,
-                    }
-                )
-            else:
-                return pki_enrollment_get_reply_serializer.rep_dump(
-                    {
-                        "status": "ok",
-                        "reply": reply,
-                        "timestamp": reply_timestamp,
-                        "admin_human_handle": admin_user,
-                    }
-                )
-        except PkiCertificateNotFoundError:
-            return pki_enrollment_get_reply_serializer.rep_dump({"status": "certificate not found"})
-        except PkiCertificateRequestNotFoundError:
-            return pki_enrollment_get_reply_serializer.rep_dump({"status": "request not found"})
+            await self.reject(
+                organization_id=client_ctx.organization_id,
+                enrollment_id=msg["enrollment_id"],
+                rejected_on=pendulum_now(),
+            )
+            rep = {"status": "ok"}
+
+        except PkiEnrollmentNotFoundError as exc:
+            rep = {"status": "not_found", "reason": str(exc)}
+
+        except PkiEnrollmentNoLongerAvailableError as exc:
+            rep = {"status": "no_longer_available", "reason": str(exc)}
+
+        return pki_enrollment_reject_serializer.rep_dump(rep)
+
+    @api("pki_enrollment_accept")
+    @catch_protocol_errors
+    async def api_pki_enrollment_accept(
+        self, client_ctx: AuthenticatedClientContext, msg: dict
+    ) -> dict:
+        if client_ctx.profile != UserProfile.ADMIN:
+            return {
+                "status": "not_allowed",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
+        msg = pki_enrollment_accept_serializer.req_load(msg)
+
+        try:
+            PkiEnrollmentAcceptPayload.load(msg["accept_payload"])
+
+        except DataError as exc:
+            return {"status": "invalid_payload_data", "reason": str(exc)}
+
+        try:
+            user, first_device = validate_new_user_certificates(
+                expected_author=client_ctx.device_id,
+                author_verify_key=client_ctx.verify_key,
+                device_certificate=msg["device_certificate"],
+                user_certificate=msg["user_certificate"],
+                redacted_user_certificate=msg["redacted_user_certificate"],
+                redacted_device_certificate=msg["redacted_device_certificate"],
+            )
+
+        except CertificateValidationError as exc:
+            return pki_enrollment_accept_serializer.rep_dump(
+                {"status": exc.status, "reason": exc.reason}
+            )
+
+        try:
+            await self.accept(
+                organization_id=client_ctx.organization_id,
+                enrollment_id=msg["enrollment_id"],
+                accepter_der_x509_certificate=msg["accepter_der_x509_certificate"],
+                accept_payload_signature=msg["accept_payload_signature"],
+                accept_payload=msg["accept_payload"],
+                accepted_on=pendulum_now(),
+                user=user,
+                first_device=first_device,
+            )
+            rep = {"status": "ok"}
+
+        except PkiEnrollmentNotFoundError as exc:
+            rep = {"status": "not_found", "reason": str(exc)}
+
+        except PkiEnrollmentNoLongerAvailableError as exc:
+            rep = {"status": "no_longer_available", "reason": str(exc)}
+
+        except PkiEnrollmentAlreadyExistError as exc:
+            rep = {"status": "already_exists", "reason": str(exc)}
+
+        except PkiEnrollmentActiveUsersLimitReached:
+            rep = {"status": "active_users_limit_reached"}
+
+        return pki_enrollment_accept_serializer.rep_dump(rep)
+
+    async def submit(
+        self,
+        organization_id: OrganizationID,
+        enrollment_id: UUID,
+        force: bool,
+        submitter_der_x509_certificate: bytes,
+        submit_payload_signature: bytes,
+        submit_payload: bytes,
+        submitted_on: DateTime,
+    ) -> None:
+        """
+        Raises:
+            PkiEnrollmentCertificateAlreadySubmittedError
+            PkiEnrollmentAlreadyEnrolledError
+        """
+        raise NotImplementedError()
+
+    async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
+        """
+        Raises:
+            PkiEnrollmentNotFoundError
+        """
+        raise NotImplementedError()
+
+    async def list(self, organization_id: OrganizationID) -> List[PkiEnrollmentListItem]:
+        """
+        Raises: Nothing !
+        """
+        raise NotImplementedError()
+
+    async def reject(
+        self, organization_id: OrganizationID, enrollment_id: UUID, rejected_on: DateTime
+    ) -> None:
+        """
+        Raises:
+            PkiEnrollmentNotFoundError
+            PkiEnrollmentNoLongerAvailableError
+        """
+        raise NotImplementedError()
+
+    async def accept(
+        self,
+        organization_id: OrganizationID,
+        enrollment_id: UUID,
+        accepter_der_x509_certificate: bytes,
+        accept_payload_signature: bytes,
+        accept_payload: bytes,
+        accepted_on: DateTime,
+        user: User,
+        first_device: Device,
+    ) -> None:
+        """
+        Raises:
+            PkiEnrollmentNotFoundError
+            PkiEnrollmentNoLongerAvailableError
+            PkiEnrollmentAlreadyExistError
+            PkiEnrollmentActiveUsersLimitReached
+        """
+        raise NotImplementedError()

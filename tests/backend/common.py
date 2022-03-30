@@ -517,12 +517,12 @@ invite_4_claimer_communicate = CmdSock(
 pki_enrollment_submit = CmdSock(
     "pki_enrollment_submit",
     pki_enrollment_submit_serializer,
-    parse_args=lambda self, enrollment_id, force, der_x509_certificate, signature, payload: {
+    parse_args=lambda self, enrollment_id, force, submitter_der_x509_certificate, submit_payload_signature, submit_payload: {
         "enrollment_id": enrollment_id,
         "force": force,
-        "der_x509_certificate": der_x509_certificate,
-        "signature": signature,
-        "payload": payload,
+        "submitter_der_x509_certificate": submitter_der_x509_certificate,
+        "submit_payload_signature": submit_payload_signature,
+        "submit_payload": submit_payload,
     },
 )
 pki_enrollment_info = CmdSock(
@@ -539,11 +539,11 @@ pki_enrollment_reject = CmdSock(
 pki_enrollment_accept = CmdSock(
     "pki_enrollment_accept",
     pki_enrollment_accept_serializer,
-    parse_args=lambda self, enrollment_id, der_x509_certificate, signature, payload, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
+    parse_args=lambda self, enrollment_id, accepter_der_x509_certificate, accept_payload_signature, accept_payload, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
         "enrollment_id": enrollment_id,
-        "der_x509_certificate": der_x509_certificate,
-        "signature": signature,
-        "payload": payload,
+        "accepter_der_x509_certificate": accepter_der_x509_certificate,
+        "accept_payload_signature": accept_payload_signature,
+        "accept_payload": accept_payload,
         "user_certificate": user_certificate,
         "device_certificate": device_certificate,
         "redacted_user_certificate": redacted_user_certificate,

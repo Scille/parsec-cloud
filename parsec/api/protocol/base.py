@@ -70,8 +70,6 @@ class ErrorRepSchema(BaseRepSchema):
     reason = fields.String(allow_none=True)
     # TODO: should errors be better checked ?
     errors = fields.Dict(allow_none=True)
-    # TODO: is adding this timestamp field ok?
-    timestamp = fields.DateTime(required=False, missing=None)
 
 
 class RequireGreaterTimestampRepSchema(BaseRepSchema):

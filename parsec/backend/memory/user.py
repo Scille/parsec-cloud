@@ -1,13 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from parsec.backend.backend_events import BackendEvent
 import attr
 import pendulum
 from typing import Iterable, Tuple, List, Dict, Optional
 from collections import defaultdict
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
-from parsec.backend.pki import PkiEnrollementReplyBundle
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import (
     BaseUserComponent,
     User,
@@ -42,11 +41,7 @@ class MemoryUserComponent(BaseUserComponent):
         self._pki_component = other_components["pki"]
 
     async def create_user(
-        self,
-        organization_id: OrganizationID,
-        user: User,
-        first_device: Device,
-        pki_bundle: Optional[PkiEnrollementReplyBundle] = None,
+        self, organization_id: OrganizationID, user: User, first_device: Device
     ) -> None:
         org = self._organizations[organization_id]
         active_users_limit = self._organization_component._organizations[
@@ -66,8 +61,6 @@ class MemoryUserComponent(BaseUserComponent):
 
         org.users[user.user_id] = user
         org.devices[first_device.user_id][first_device.device_name] = first_device
-        if pki_bundle:
-            await self._pki_component._pki_enrollment_reply(pki_bundle)
         if user.human_handle:
             org.human_handle_to_user_id[user.human_handle] = user.user_id
 

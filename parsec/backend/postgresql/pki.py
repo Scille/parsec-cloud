@@ -1,22 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from collections import namedtuple
-from typing import List, Optional, Tuple
+from typing import List
 from uuid import UUID
+from collections import namedtuple
+from pendulum import DateTime
 
-import pendulum
-from parsec.api.data.pki import PkiEnrollmentReply, PkiEnrollmentRequest
-from parsec.api.protocol.types import OrganizationID
-from parsec.backend.pki import (
-    BasePkiCertificateComponent,
-    PkiCertificateAlreadyEnrolledError,
-    PkiCertificateAlreadyRequestedError,
-    PkiCertificateNotFoundError,
-    PkiCertificateRequestNotFoundError,
-)
+from parsec.api.protocol import OrganizationID
+from parsec.backend.user_type import User, Device
+from parsec.backend.pki import PkiEnrollmentInfo, PkiEnrollmentListItem, BasePkiEnrollmentComponent
 from parsec.backend.postgresql import PGHandler
 from parsec.backend.postgresql.utils import Q
-from pendulum import DateTime
+
 
 _q_insert_certificate = Q(
     f"""
@@ -97,115 +91,175 @@ def build_certificate_from_db(entry) -> DBPkiCertificate:
     )
 
 
-class PGCertificateComponent(BasePkiCertificateComponent):
+class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 
-    async def pki_enrollment_request(
+    async def submit(
         self,
         organization_id: OrganizationID,
-        certificate_id: bytes,
-        request_id: UUID,
-        request_object: PkiEnrollmentRequest,
-        force_flag: bool = False,
-    ) -> DateTime:
+        enrollment_id: UUID,
+        force: bool,
+        submitter_der_x509_certificate: bytes,
+        submit_payload_signature: bytes,
+        submit_payload: bytes,
+        submitted_on: DateTime,
+    ) -> None:
+        """
+        Raises:
+            PkiEnrollmentCertificateAlreadySubmittedError
+            PkiEnrollmentAlreadyEnrolledError
+        """
+        raise NotImplementedError()
 
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-            data = await conn.fetch(*_q_get_certificate(certificate_id=certificate_id))
-            if len(data):
-                existing_certificate = build_certificate_from_db(data[0])
-                if existing_certificate.reply_object and existing_certificate.reply_user_id:
-                    raise PkiCertificateAlreadyEnrolledError(
-                        existing_certificate.request_timestamp,
-                        f"Certificate {str(certificate_id)} already attributed",
-                    )
+    async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
+        """
+        Raises:
+            PkiEnrollmentNotFoundError
+        """
+        raise NotImplementedError()
 
-                if not force_flag:
-                    raise PkiCertificateAlreadyRequestedError(
-                        existing_certificate.reply_timestamp,
-                        f"Certificate {str(certificate_id)} already used in request {request_id}",
-                    )
-                else:
-                    request_timestamp = pendulum.now()
-                    await conn.fetchval(
-                        *_q_update_certificate_request(
-                            certificate_id=certificate_id,
-                            request_id=request_id,
-                            request_timestamp=request_timestamp,
-                            request_object=request_object.dump(),
-                        )
-                    )
-                    return request_timestamp
+    async def list(self, organization_id: OrganizationID) -> List[PkiEnrollmentListItem]:
+        """
+        Raises: Nothing !
+        """
+        raise NotImplementedError()
 
-            ## TODO # Check human handle already used
-            ## for pki_certificate in self._pki_certificates.values():
-            ##     if (
-            ##         pki_certificate.request_object.requested_human_handle
-            ##         == request_object.requested_human_handle
-            ##     ):
-            ##         raise PkiCertificateEmailAlreadyAttributedError(
-            ##             f"email f{request_object.requested_human_handle} already attributed"
-            ##         )
-            else:
-                request_timestamp = pendulum.now()
-                await conn.fetchval(
-                    *_q_insert_certificate(
-                        certificate_id=certificate_id,
-                        request_id=request_id,
-                        request_timestamp=request_timestamp,
-                        request_object=request_object.dump(),
-                    )
-                )
-                return request_timestamp
+    async def reject(
+        self, organization_id: OrganizationID, enrollment_id: UUID, rejected_on: DateTime
+    ) -> None:
+        """
+        Raises:
+            PkiEnrollmentNotFoundError
+            PkiEnrollmentNoLongerAvailableError
+        """
+        raise NotImplementedError()
 
-    async def pki_enrollment_get_requests(self) -> List[Tuple[str, str, PkiEnrollmentRequest]]:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-            data = await conn.fetch(*_q_get_certificates())
-
-        return [(d[1], d[2], d[3]) for d in data]
-
-    async def pki_enrollment_reply(
+    async def accept(
         self,
-        certificate_id: str,
-        request_id: str,
-        reply_object: PkiEnrollmentReply,
-        user_id: Optional[str] = None,
-    ) -> DateTime:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-            data = await conn.fetch(*_q_get_certificate(certificate_id=certificate_id))
-            if not len(data):
-                raise PkiCertificateNotFoundError(f"Certificate {certificate_id} not found")
-            pki_certificate = build_certificate_from_db(data[0])
-            if pki_certificate.request_id != request_id:
-                raise PkiCertificateRequestNotFoundError(
-                    f"Request {request_id} not found for certificate {certificate_id}"
-                )
-            reply_timestamp = pendulum.now()
-            await conn.fetchval(
-                *_q_update_certificate_reply(
-                    certificate_id=certificate_id,
-                    reply_object=reply_object.dump(),
-                    reply_user_id=user_id,
-                    reply_timestamp=reply_timestamp,
-                )
-            )
-            return reply_timestamp
+        organization_id: OrganizationID,
+        enrollment_id: UUID,
+        accepter_der_x509_certificate: bytes,
+        accept_payload_signature: bytes,
+        accept_payload: bytes,
+        accepted_on: DateTime,
+        user: User,
+        first_device: Device,
+    ) -> None:
+        """
+        Raises:
+            PkiEnrollmentNotFoundError
+            PkiEnrollmentNoLongerAvailableError
+            PkiEnrollmentAlreadyExistError
+            PkiEnrollmentActiveUsersLimitReached
+        """
+        raise NotImplementedError()
 
-    async def pki_enrollment_get_reply(
-        self, certificate_id, request_id
-    ) -> Tuple[Optional[PkiEnrollmentReply], Optional[DateTime], DateTime, Optional[str]]:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-            data = await conn.fetch(*_q_get_certificate(certificate_id=certificate_id))
-            if not len(data):
-                raise PkiCertificateNotFoundError(f"Certificate {certificate_id} not found")
-            pki_certificate = build_certificate_from_db(data[0])
-            if pki_certificate.request_id != request_id:
-                raise PkiCertificateRequestNotFoundError(
-                    f"Request {request_id} not found for certificate {certificate_id}"
-                )
-        return (
-            data[0][7],  # reply_object
-            data[0][6],  # reply_timestamp
-            data[0][3],  # request_timestamp
-            data[0][5],  # user_id
-        )
+    # async def pki_enrollment_request(
+    #     self,
+    #     organization_id: OrganizationID,
+    #     certificate_id: bytes,
+    #     request_id: UUID,
+    #     request_object: PkiEnrollmentRequest,
+    #     force_flag: bool = False,
+    # ) -> DateTime:
+
+    #     async with self.dbh.pool.acquire() as conn, conn.transaction():
+    #         data = await conn.fetch(*_q_get_certificate(certificate_id=certificate_id))
+    #         if len(data):
+    #             existing_certificate = build_certificate_from_db(data[0])
+    #             if existing_certificate.reply_object and existing_certificate.reply_user_id:
+    #                 raise PkiCertificateAlreadyEnrolledError(
+    #                     existing_certificate.request_timestamp,
+    #                     f"Certificate {str(certificate_id)} already attributed",
+    #                 )
+
+    #             if not force_flag:
+    #                 raise PkiCertificateAlreadyRequestedError(
+    #                     existing_certificate.reply_timestamp,
+    #                     f"Certificate {str(certificate_id)} already used in request {request_id}",
+    #                 )
+    #             else:
+    #                 request_timestamp = pendulum.now()
+    #                 await conn.fetchval(
+    #                     *_q_update_certificate_request(
+    #                         certificate_id=certificate_id,
+    #                         request_id=request_id,
+    #                         request_timestamp=request_timestamp,
+    #                         request_object=request_object.dump(),
+    #                     )
+    #                 )
+    #                 return request_timestamp
+
+    #         ## TODO # Check human handle already used
+    #         ## for pki_certificate in self._pki_certificates.values():
+    #         ##     if (
+    #         ##         pki_certificate.request_object.requested_human_handle
+    #         ##         == request_object.requested_human_handle
+    #         ##     ):
+    #         ##         raise PkiCertificateEmailAlreadyAttributedError(
+    #         ##             f"email f{request_object.requested_human_handle} already attributed"
+    #         ##         )
+    #         else:
+    #             request_timestamp = pendulum.now()
+    #             await conn.fetchval(
+    #                 *_q_insert_certificate(
+    #                     certificate_id=certificate_id,
+    #                     request_id=request_id,
+    #                     request_timestamp=request_timestamp,
+    #                     request_object=request_object.dump(),
+    #                 )
+    #             )
+    #             return request_timestamp
+
+    # async def pki_enrollment_get_requests(self) -> List[Tuple[str, str, PkiEnrollmentRequest]]:
+    #     async with self.dbh.pool.acquire() as conn, conn.transaction():
+    #         data = await conn.fetch(*_q_get_certificates())
+
+    #     return [(d[1], d[2], d[3]) for d in data]
+
+    # async def pki_enrollment_reply(
+    #     self,
+    #     certificate_id: str,
+    #     request_id: str,
+    #     reply_object: PkiEnrollmentReply,
+    #     user_id: Optional[str] = None,
+    # ) -> DateTime:
+    #     async with self.dbh.pool.acquire() as conn, conn.transaction():
+    #         data = await conn.fetch(*_q_get_certificate(certificate_id=certificate_id))
+    #         if not len(data):
+    #             raise PkiCertificateNotFoundError(f"Certificate {certificate_id} not found")
+    #         pki_certificate = build_certificate_from_db(data[0])
+    #         if pki_certificate.request_id != request_id:
+    #             raise PkiCertificateRequestNotFoundError(
+    #                 f"Request {request_id} not found for certificate {certificate_id}"
+    #             )
+    #         reply_timestamp = pendulum.now()
+    #         await conn.fetchval(
+    #             *_q_update_certificate_reply(
+    #                 certificate_id=certificate_id,
+    #                 reply_object=reply_object.dump(),
+    #                 reply_user_id=user_id,
+    #                 reply_timestamp=reply_timestamp,
+    #             )
+    #         )
+    #         return reply_timestamp
+
+    # async def pki_enrollment_get_reply(
+    #     self, certificate_id, request_id
+    # ) -> Tuple[Optional[PkiEnrollmentReply], Optional[DateTime], DateTime, Optional[str]]:
+    #     async with self.dbh.pool.acquire() as conn, conn.transaction():
+    #         data = await conn.fetch(*_q_get_certificate(certificate_id=certificate_id))
+    #         if not len(data):
+    #             raise PkiCertificateNotFoundError(f"Certificate {certificate_id} not found")
+    #         pki_certificate = build_certificate_from_db(data[0])
+    #         if pki_certificate.request_id != request_id:
+    #             raise PkiCertificateRequestNotFoundError(
+    #                 f"Request {request_id} not found for certificate {certificate_id}"
+    #             )
+    #     return (
+    #         data[0][7],  # reply_object
+    #         data[0][6],  # reply_timestamp
+    #         data[0][3],  # request_timestamp
+    #         data[0][5],  # user_id
+    #     )

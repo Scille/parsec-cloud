@@ -19,8 +19,8 @@ from parsec.backend.postgresql.invite import PGInviteComponent
 from parsec.backend.postgresql.message import PGMessageComponent
 from parsec.backend.postgresql.realm import PGRealmComponent
 from parsec.backend.postgresql.vlob import PGVlobComponent
-from parsec.backend.postgresql.pki import PGCertificateComponent
 from parsec.backend.postgresql.block import PGBlockComponent
+from parsec.backend.postgresql.pki import PGPkiEnrollmentComponent
 from parsec.backend.backend_events import BackendEvent
 
 
@@ -48,9 +48,9 @@ async def components_factory(
     realm = PGRealmComponent(dbh)
     vlob = PGVlobComponent(dbh)
     ping = PGPingComponent(dbh)
-    pki = PGCertificateComponent(dbh)
     blockstore = blockstore_factory(config.blockstore_config, postgresql_dbh=dbh)
     block = PGBlockComponent(dbh, blockstore, vlob)
+    pki = PGPkiEnrollmentComponent(dbh)
     events = EventsComponent(realm, send_event=_send_event)
 
     components = {
@@ -64,9 +64,9 @@ async def components_factory(
         "realm": realm,
         "vlob": vlob,
         "ping": ping,
-        "pki": pki,
         "block": block,
         "blockstore": blockstore,
+        "pki": pki,
     }
     for component in components.values():
         method = getattr(component, "register_components", None)
