@@ -14,6 +14,7 @@ from parsec.api.protocol import (
     pki_enrollment_info_serializer,
 )
 from parsec.api.transport import TransportError
+from parsec.core.types import BackendAddr, BackendPkiEnrollmentAddr
 from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendProtocolError
 
 logger = get_logger()
@@ -32,7 +33,9 @@ async def _http_request(url: str, method: str, data: Optional[bytes] = None) -> 
     return await trio.to_thread.run_sync(_do_req)
 
 
-async def _anonymous_cmd(serializer, organization_id: OrganizationID, **req) -> dict:
+async def _anonymous_cmd(
+    serializer, addr: BackendAddr, organization_id: OrganizationID, **req
+) -> dict:
     """
     Raises:
         Backend
@@ -53,10 +56,9 @@ async def _anonymous_cmd(serializer, organization_id: OrganizationID, **req) -> 
         logger.exception("Invalid request data", cmd=req["cmd"], error=exc)
         raise BackendProtocolError("Invalid request data") from exc
 
+    url = addr.to_http_domain_url(f"/anonymous/{organization_id}")
     try:
-        raw_rep = await _http_request(
-            url=f"/anonymous/{organization_id}", method="POST", data=raw_req
-        )
+        raw_rep = await _http_request(url=url, method="POST", data=raw_req)
 
     except TransportError as exc:
         logger.debug("Request failed (backend not available)", cmd=req["cmd"], exc_info=exc)
@@ -81,7 +83,7 @@ async def _anonymous_cmd(serializer, organization_id: OrganizationID, **req) -> 
 
 
 async def pki_enrollment_submit(
-    organization_id: OrganizationID,
+    addr: BackendPkiEnrollmentAddr,
     enrollment_id: UUID,
     force: bool,
     submitter_der_x509_certificate: bytes,
@@ -89,8 +91,9 @@ async def pki_enrollment_submit(
     submit_payload: bytes,
 ) -> dict:
     return await _anonymous_cmd(
-        pki_enrollment_submit_serializer,
-        organization_id=organization_id,
+        serializer=pki_enrollment_submit_serializer,
+        addr=addr,
+        organization_id=addr.organization_id,
         enrollment_id=enrollment_id,
         force=force,
         submitter_der_x509_certificate=submitter_der_x509_certificate,
@@ -99,7 +102,12 @@ async def pki_enrollment_submit(
     )
 
 
-async def pki_enrollment_info(organization_id: OrganizationID, enrollment_id: UUID) -> dict:
+async def pki_enrollment_info(
+    addr: BackendPkiEnrollmentAddr, organization_id: OrganizationID, enrollment_id: UUID
+) -> dict:
     return await _anonymous_cmd(
-        pki_enrollment_info_serializer, organization_id=organization_id, enrollment_id=enrollment_id
+        serializer=pki_enrollment_info_serializer,
+        addr=addr,
+        organization_id=addr.organization_id,
+        enrollment_id=enrollment_id,
     )
