@@ -143,6 +143,7 @@ import {
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
 import { ref } from 'vue';
+import { Storage } from '@ionic/storage';
 
 const { t, locale } = useI18n();
 const langAccordionGroup = ref();
@@ -153,8 +154,11 @@ function closeLangAccordion(): void {
   }
 }
 
-function changeLang(selectedLang: string): void {
+async function changeLang(selectedLang: string): Promise<void> {
   locale.value = selectedLang;
+  const store = new Storage();
+  await store.create();
+  await store.set('userLocale', selectedLang);
   closeLangAccordion();
 }
 
