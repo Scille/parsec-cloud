@@ -1,51 +1,84 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from uuid import uuid4
+
 import pytest
 
+import pendulum
 from parsec.api.data import PkiEnrollmentSubmitPayload
-from parsec.core.backend_connection.cmds import pki_enrollment_submit
+from parsec.api.data.pki import PkiEnrollmentAcceptPayload
+from parsec.api.protocol.pki import PkiEnrollmentStatus
+from parsec.api.protocol.types import UserProfile
+from parsec.core.backend_connection.cmds import pki_enrollment_info, pki_enrollment_submit
+from parsec.core.invite.greeter import _create_new_user_certificates
+from tests.backend.common import pki_enrollment_accept, pki_enrollment_list, pki_enrollment_reject
 
-# from parsec.api.data.pki import PkiEnrollmentRequestInfo
-# from parsec.api.protocol.types import DeviceID, DeviceLabel, HumanHandle, UserProfile
-# from parsec.api.data import InviteUserConfirmation
-# from parsec.api.protocol.pki import PkiEnrollmentRequest, PkiEnrollmentReply
-# from parsec.crypto import PublicKey, VerifyKey, generate_nonce
-# from parsec.core.invite.greeter import _create_new_user_certificates
-
-from tests.backend.common import pki_enrollment_list
-
-# async def _setup_backend_request(backend, organization_id):
-#     certificate_id = b"certificate_id"
-#     request_id = uuid4()
-
-#     requested_human_handle = HumanHandle(
-#         email="zapp.brannigan@earthgovernment.com", label="Zapp Brannigan"
-#     )
-#     requested_device_label = DeviceLabel("Nimbus Computer")
-
-#     pki_request_info = PkiEnrollmentRequestInfo(
-#         verify_key=VerifyKey(generate_nonce(32)),
-#         public_key=PublicKey(generate_nonce(32)),
-#         requested_human_handle=requested_human_handle,
-#         requested_device_label=requested_device_label,
-#     )
-#     pki_request = PkiEnrollmentRequest(
-#         der_x509_certificate=b"1234567890ABCDEF",
-#         signature=b"123",
-#         requested_human_handle=requested_human_handle,
-#         pki_request_info=pki_request_info.dump(),
-#     )
-#     await backend.pki.pki_enrollment_request(
-#         organization_id, certificate_id, request_id, pki_request, False
-#     )
-#     return certificate_id, request_id, requested_human_handle, requested_device_label, pki_request
+# Helpers
 
 
-@pytest.mark.trio
-async def test_pki_list_empty(alice_backend_sock):
-    rep = await pki_enrollment_list(alice_backend_sock)
-    assert rep == {"status": "ok", "enrollments": []}
+async def _submit_request(
+    anonymous_backend_sock,
+    bob,
+    certif=b"<x509 certif>",
+    signature=b"<signature>",
+    request_id=None,
+    force=False,
+):
+    if not request_id:
+        request_id = uuid4()
+    payload = PkiEnrollmentSubmitPayload(
+        verify_key=bob.verify_key,
+        public_key=bob.public_key,
+        requested_human_handle=bob.human_handle,
+        requested_device_label=bob.device_label,
+    ).dump()
+    rep = await pki_enrollment_submit(
+        anonymous_backend_sock,
+        enrollment_id=request_id,
+        force=force,
+        submitter_der_x509_certificate=certif,
+        submit_payload_signature=signature,
+        submit_payload=payload,
+    )
+    assert rep == {"status": "ok"}
+
+
+def _prepare_accept_reply(admin, invitee):
+    (
+        user_certificate,
+        redacted_user_certificate,
+        device_certificate,
+        redacted_device_certificate,
+        user_confirmation,
+    ) = _create_new_user_certificates(
+        admin,
+        invitee.device_label,
+        invitee.human_handle,
+        UserProfile.STANDARD,
+        admin.public_key,
+        admin.verify_key,
+    )
+    payload = PkiEnrollmentAcceptPayload(
+        device_id=invitee.device_id,
+        device_label=invitee.device_label,
+        human_handle=invitee.human_handle,
+        profile=UserProfile.STANDARD,
+        root_verify_key=admin.root_verify_key,
+    ).dump()
+    kwargs = {
+        "accepter_der_x509_certificate": b"<accepter_der_x509_certificate>",
+        "accept_payload_signature": b"<signature>",
+        "accept_payload": payload,
+        "user_certificate": user_certificate,
+        "device_certificate": device_certificate,
+        "redacted_user_certificate": redacted_user_certificate,
+        "redacted_device_certificate": redacted_device_certificate,
+    }
+
+    return (user_confirmation, kwargs)
+
+
+# Test pki_enrollment_submit
 
 
 @pytest.mark.trio
@@ -91,154 +124,265 @@ async def test_pki_submit(anonymous_backend_sock, bob):
     assert rep == {"status": "ok"}
 
 
-# @pytest.mark.trio
-# async def test_pki_get_requests(backend, alice, alice_backend_sock):
-#     (certificate_id, *_) = await _setup_backend_request(backend, alice.organization_id)
-
-#     rep = await pki_enrollment_get_requests(alice_backend_sock.transport)
-
-#     assert rep["status"] == "ok"
-#     assert len(rep["requests"]) == 1
-#     assert rep["requests"][0][0] == certificate_id
+# Test pki_enrollment_list
 
 
-# @pytest.mark.trio
-# async def test_pki_send_reply_accepted(backend, alice, alice_backend_sock):
-#     ref_time = pendulum.now()
-#     (
-#         certificate_id,
-#         request_id,
-#         requested_human_handle,
-#         requested_device_label,
-#         *_,
-#     ) = await _setup_backend_request(backend, alice.organization_id)
+@pytest.mark.trio
+async def test_pki_list(anonymous_backend_sock, bob, adam, alice_backend_sock):
+    ref_time = pendulum.now()
+    bob_certif = b"<x509 certif>"
+    bob_request_id = uuid4()
+    bob_certif_signature = b"<signature>"
 
-#     pki_reply_info = InviteUserConfirmation(
-#         device_id=DeviceID("ZappB@nimbus"),
-#         root_verify_key=alice.verify_key,
-#         device_label=requested_device_label,
-#         human_handle=requested_human_handle,
-#         profile=UserProfile.ADMIN,
-#     )
+    await _submit_request(
+        anonymous_backend_sock, bob, bob_certif, bob_certif_signature, bob_request_id
+    )
 
-#     pki_reply = PkiEnrollmentReply(
-#         der_x509_admin_certificate=b"admin_cert",
-#         signature=b"123",
-#         pki_reply_info=pki_reply_info.dump(),
-#     )
-#     (
-#         user_certificate,
-#         redacted_user_certificate,
-#         device_certificate,
-#         redacted_device_certificate,
-#         user_confirmation,
-#     ) = _create_new_user_certificates(
-#         alice,
-#         requested_device_label,
-#         requested_human_handle,
-#         UserProfile.ADMIN,
-#         alice.public_key,
-#         alice.verify_key,
-#     )
+    rep = await pki_enrollment_list(alice_backend_sock)
 
-#     rep = await pki_enrollment_reply(
-#         alice_backend_sock.transport,
-#         certificate_id=certificate_id,
-#         request_id=request_id,
-#         reply=pki_reply,
-#         user_id=user_confirmation.device_id.user_id,
-#         device_certificate=device_certificate,
-#         user_certificate=user_certificate,
-#         redacted_user_certificate=redacted_user_certificate,
-#         redacted_device_certificate=redacted_device_certificate,
-#     )
+    assert rep["status"] == "ok"
+    assert len(rep["enrollments"]) == 1
 
-#     assert rep["status"] == "ok"
-#     assert rep["timestamp"] > ref_time
+    submited_request = rep["enrollments"][0]
+    assert submited_request["enrollment_id"] == bob_request_id
+    assert submited_request["submitter_der_x509_certificate"] == bob_certif
+    assert submited_request["submit_payload_signature"] == bob_certif_signature
+    assert submited_request["submitted_on"] > ref_time
 
-#     (rep_object, _, _, _, rep_admin) = await backend.pki.pki_enrollment_get_reply(
-#         certificate_id, request_id
-#     )
-#     assert rep_object == pki_reply
-#     assert rep_admin == alice.human_handle
+    submited_payload = PkiEnrollmentSubmitPayload.load(submited_request["submit_payload"])
+    assert submited_payload.requested_human_handle == bob.human_handle
+    assert submited_payload.verify_key == bob.verify_key
+    assert submited_payload.public_key == bob.public_key
+    assert submited_payload.requested_device_label == bob.device_label
 
-#     rep = await backend.user.find_humans(
-#         organization_id=alice.organization_id, query=requested_human_handle.email
-#     )
+    # Add another user
 
-#     assert rep[1] == 1
-#     rep_human_handle = rep[0][0]
-#     assert not rep_human_handle.revoked
-#     assert rep_human_handle.user_id == user_confirmation.device_id.user_id
-#     assert rep_human_handle.human_handle == requested_human_handle
+    await _submit_request(
+        anonymous_backend_sock, adam, b"<adam's x509 certif>", b"<signature>", uuid4()
+    )
+    rep = await pki_enrollment_list(alice_backend_sock)
+
+    assert rep["status"] == "ok"
+    assert len(rep["enrollments"]) == 2
 
 
-# @pytest.mark.trio
-# async def test_pki_send_reply_rejected(backend, alice, alice_backend_sock):
-#     ref_time = pendulum.now()
-#     (certificate_id, request_id, requested_human_handle, *_) = await _setup_backend_request(
-#         backend, alice.organization_id
-#     )
-
-#     rep = await pki_enrollment_reply(
-#         alice_backend_sock.transport,
-#         certificate_id=certificate_id,
-#         request_id=request_id,
-#         reply=None,
-#         user_id=None,
-#         device_certificate=None,
-#         user_certificate=None,
-#         redacted_user_certificate=None,
-#         redacted_device_certificate=None,
-#     )
-
-#     assert rep["status"] == "ok"
-#     assert rep["timestamp"] > ref_time
-
-#     (rep_object, _, _, _, rep_admin) = await backend.pki.pki_enrollment_get_reply(
-#         certificate_id, request_id
-#     )
-#     assert not rep_object
-#     assert rep_admin == alice.human_handle
-
-#     rep = await backend.user.find_humans(
-#         organization_id=alice.organization_id, query=requested_human_handle.email
-#     )
-
-#     assert rep == ([], 0)
+@pytest.mark.trio
+async def test_pki_list_empty(alice_backend_sock):
+    rep = await pki_enrollment_list(alice_backend_sock)
+    assert rep == {"status": "ok", "enrollments": []}
 
 
-# @pytest.mark.trio
-# async def test_pki_send_reply_wrong_certificate_id(backend, alice, alice_backend_sock):
-#     (_, request_id, *_) = await _setup_backend_request(backend, alice.organization_id)
-
-#     rep = await pki_enrollment_reply(
-#         alice_backend_sock.transport,
-#         certificate_id=b"wrong_certificate_id",
-#         request_id=request_id,
-#         reply=None,
-#         user_id=None,
-#         device_certificate=None,
-#         user_certificate=None,
-#         redacted_user_certificate=None,
-#         redacted_device_certificate=None,
-#     )
-#     assert rep["status"] == "certificate not found"
+# Test pki_enrollment_accept
 
 
-# @pytest.mark.trio
-# async def test_pki_send_reply_wrond_request_id(backend, alice, alice_backend_sock):
-#     (certificate_id, *_) = await _setup_backend_request(backend, alice.organization_id)
+@pytest.mark.trio
+async def test_pki_accept(anonymous_backend_sock, mallory, alice, alice_backend_sock, backend):
+    # Assert mallory does not exist
+    rep = await backend.user.find_humans(
+        organization_id=alice.organization_id, query=mallory.human_handle.email
+    )
+    assert rep == ([], 0)
 
-#     rep = await pki_enrollment_reply(
-#         alice_backend_sock.transport,
-#         certificate_id=certificate_id,
-#         request_id=uuid4(),
-#         reply=None,
-#         user_id=None,
-#         device_certificate=None,
-#         user_certificate=None,
-#         redacted_user_certificate=None,
-#         redacted_device_certificate=None,
-#     )
-#     assert rep["status"] == "request not found"
+    # Create request
+    request_id = uuid4()
+    await _submit_request(anonymous_backend_sock, mallory, request_id=request_id)
+
+    # Send reply
+    user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+    rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
+    assert rep == {"status": "ok"}
+
+    # Assert user has been created
+    rep = await backend.user.find_humans(
+        organization_id=alice.organization_id, query=mallory.human_handle.email
+    )
+    assert rep[1] == 1
+    rep_human_handle = rep[0][0]
+    assert not rep_human_handle.revoked
+    assert rep_human_handle.user_id == user_confirmation.device_id.user_id
+    assert rep_human_handle.human_handle == mallory.human_handle
+
+    # Send reply twice
+    user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+    rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
+    assert rep["status"] == "no_longer_available"
+
+
+@pytest.mark.trio
+async def test_pki_accept_not_found(mallory, alice, alice_backend_sock, backend):
+    request_id = uuid4()
+
+    _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+    rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
+    assert rep["status"] == "not_found"
+
+    rep = await backend.user.find_humans(
+        organization_id=alice.organization_id, query=mallory.human_handle.email
+    )
+    assert rep == ([], 0)
+
+
+@pytest.mark.trio
+async def test_pki_accept_invalid_certificate(mallory, alice, alice_backend_sock, backend):
+    request_id = uuid4()
+
+    # Create certificate with mallory user instead of alice
+    _, kwargs = _prepare_accept_reply(admin=mallory, invitee=mallory)
+    rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
+    assert rep["status"] == "invalid_certification"
+
+    rep = await backend.user.find_humans(
+        organization_id=alice.organization_id, query=mallory.human_handle.email
+    )
+    assert rep == ([], 0)
+
+
+@pytest.mark.trio
+async def test_pki_accept_outdated_submit(
+    anonymous_backend_sock, mallory, alice, alice_backend_sock, backend
+):
+    # First request
+    request_id = uuid4()
+    await _submit_request(anonymous_backend_sock, mallory, request_id=request_id)
+    # Second request
+    await _submit_request(anonymous_backend_sock, mallory, force=True)
+
+    _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+    rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
+    assert rep["status"] == "no_longer_available"
+
+    rep = await backend.user.find_humans(
+        organization_id=alice.organization_id, query=mallory.human_handle.email
+    )
+    assert rep == ([], 0)
+
+
+@pytest.mark.trio
+async def test_pki_accept_user_already_exist(
+    anonymous_backend_sock, bob, alice, alice_backend_sock, backend
+):
+    request_id = uuid4()
+    await _submit_request(anonymous_backend_sock, bob, request_id=request_id)
+
+    _, kwargs = _prepare_accept_reply(admin=alice, invitee=bob)
+    rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
+    assert rep["status"] == "already_exists"
+
+
+@pytest.mark.trio
+async def test_pki_accept_limit_reached(
+    backend, anonymous_backend_sock, mallory, alice, alice_backend_sock
+):
+    # Change organization settings
+    await backend.organization.update(alice.organization_id, is_expired=False, active_users_limit=1)
+    request_id = uuid4()
+    await _submit_request(anonymous_backend_sock, mallory, request_id=request_id)
+
+    _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+    rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
+    assert rep["status"] == "active_users_limit_reached"
+
+
+@pytest.mark.trio
+async def test_pki_accept_already_rejected(
+    backend, anonymous_backend_sock, mallory, alice, alice_backend_sock
+):
+    request_id = uuid4()
+    await _submit_request(anonymous_backend_sock, mallory, request_id=request_id)
+
+    # Reject
+    rep = await pki_enrollment_reject(alice_backend_sock, enrollment_id=request_id)
+    assert rep["status"] == "ok"
+
+    _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+    rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
+    assert rep["status"] == "no_longer_available"
+
+
+# TODO: test_pki_accept_limit_expired ??
+
+# Test pki_entollment_reject
+
+
+@pytest.mark.trio
+async def test_pki_reject(anonymous_backend_sock, mallory, alice_backend_sock):
+    # Create request
+    request_id = uuid4()
+    await _submit_request(anonymous_backend_sock, mallory, request_id=request_id)
+
+    rep = await pki_enrollment_reject(alice_backend_sock, enrollment_id=request_id)
+    assert rep == {"status": "ok"}
+
+    # Reject twice
+    rep = await pki_enrollment_reject(alice_backend_sock, enrollment_id=request_id)
+    assert rep["status"] == "no_longer_available"
+
+
+@pytest.mark.trio
+async def test_pki_reject_not_found(alice_backend_sock):
+    request_id = uuid4()
+
+    rep = await pki_enrollment_reject(alice_backend_sock, enrollment_id=request_id)
+    assert rep["status"] == "not_found"
+
+
+@pytest.mark.trio
+async def test_pki_reject_already_accepted(
+    anonymous_backend_sock, mallory, alice, alice_backend_sock
+):
+    request_id = uuid4()
+    await _submit_request(anonymous_backend_sock, mallory, request_id=request_id)
+    # Accept request
+    _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+    rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
+    assert rep == {"status": "ok"}
+
+    # Reject accepted request
+    rep = await pki_enrollment_reject(alice_backend_sock, enrollment_id=request_id)
+    assert rep["status"] == "no_longer_available"
+
+
+@pytest.mark.trio
+async def test_pki_reject_already_canceled(anonymous_backend_sock, mallory, alice_backend_sock):
+    request_id = uuid4()
+    await _submit_request(anonymous_backend_sock, mallory, request_id=request_id)
+    # Second submit
+    await _submit_request(anonymous_backend_sock, mallory, force=True)
+
+    rep = await pki_enrollment_reject(alice_backend_sock, enrollment_id=request_id)
+    assert rep["status"] == "no_longer_available"
+
+
+# Test pki_enrollment_info
+
+
+@pytest.mark.trio
+async def test_pki_info(anonymous_backend_sock, mallory, alice, alice_backend_sock):
+    request_id = uuid4()
+
+    # Request not found
+    rep = await pki_enrollment_info(anonymous_backend_sock, request_id)
+    assert rep == {"reason": "", "status": "not_found"}
+
+    # Request submitted
+    await _submit_request(anonymous_backend_sock, mallory, request_id=request_id)
+    rep = await pki_enrollment_info(anonymous_backend_sock, request_id)
+    assert rep["status"] == "ok"
+    assert rep["type"] == PkiEnrollmentStatus.SUBMITTED
+
+    # Request cancelled
+    new_request_id = uuid4()
+    await _submit_request(anonymous_backend_sock, mallory, request_id=new_request_id, force=True)
+    rep = await pki_enrollment_info(anonymous_backend_sock, request_id)
+    assert rep["status"] == "ok"
+    assert rep["type"] == PkiEnrollmentStatus.CANCELLED
+
+    # Request approved
+    _, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+    rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=new_request_id, **kwargs)
+    assert rep == {"status": "ok"}
+    rep = await pki_enrollment_info(anonymous_backend_sock, new_request_id)
+    assert rep["status"] == "ok"
+    assert rep["type"] == PkiEnrollmentStatus.ACCEPTED
+
+    # Request rejected
