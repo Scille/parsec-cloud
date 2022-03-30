@@ -69,6 +69,10 @@ async def _anonymous_cmd(serializer, organization_id: OrganizationID, **req) -> 
         logger.exception("Invalid response data", cmd=req["cmd"], error=exc)
         raise BackendProtocolError("Invalid response data") from exc
 
+    if rep["status"] == "unknown_command":
+        logger.error("Invalid request command according to backend", cmd=req["cmd"], rep=rep)
+        raise BackendProtocolError("Invalid request command according to backend")
+
     if rep["status"] == "invalid_msg_format":
         logger.error("Invalid request data according to backend", cmd=req["cmd"], rep=rep)
         raise BackendProtocolError("Invalid request data according to backend")
