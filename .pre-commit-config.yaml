@@ -83,3 +83,4 @@ repos:
         -   "@typescript-eslint/parser@5.14.0"
         -   "@vue/cli-plugin-eslint@5.0.1"
         -   "@vue/eslint-config-typescript@9.1.0"
+        -   "@intlify/eslint-plugin-vue-i18n@1.4.0"
