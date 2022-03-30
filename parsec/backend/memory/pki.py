@@ -183,5 +183,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 # Certifier is empty only for organization bootstrap
                 assert user.user_certifier is not None
                 enrollment.accepter = user.user_certifier
+
+                return
         else:
             raise PkiEnrollmentNotFoundError()
