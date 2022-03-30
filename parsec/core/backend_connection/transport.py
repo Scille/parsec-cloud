@@ -92,7 +92,6 @@ async def _connect(
 
     try:
         transport = await Transport.init_for_client(stream, host=hostname)
-        transport.handshake = handshake
         transport.keepalive = keepalive
 
     except TransportError as exc:

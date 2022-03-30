@@ -6,6 +6,8 @@ use sodiumoxide::crypto::sign::{
     ed25519, gen_keypair, sign, verify, PUBLICKEYBYTES, SEEDBYTES, SIGNATUREBYTES,
 };
 
+use crate::CryptoError;
+
 /*
  * SigningKey
  */
@@ -35,10 +37,10 @@ impl SigningKey {
 }
 
 impl TryFrom<&[u8]> for SigningKey {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         // if you wonder, `try_into` will also fail if data is too small
-        let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| ("Invalid data size"))?;
+        let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
         let (_, sk) = ed25519::keypair_from_seed(&ed25519::Seed(arr));
         Ok(Self(sk))
     }
@@ -61,7 +63,7 @@ impl AsRef<[u8]> for SigningKey {
 }
 
 impl TryFrom<ByteBuf> for SigningKey {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
         // TODO: zerocopy
         Self::try_from(data.into_vec().as_ref())
@@ -94,8 +96,8 @@ impl VerifyKey {
         signed.get(SIGNATUREBYTES..)
     }
 
-    pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, &'static str> {
-        verify(signed, &self.0).or(Err("Verify error"))
+    pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {
+        verify(signed, &self.0).or(Err(CryptoError::SignatureVerification))
     }
 }
 

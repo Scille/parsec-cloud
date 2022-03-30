@@ -3,11 +3,11 @@
 macro_rules! impl_try_from {
     ($name: ident, $sub_type: expr) => {
         impl TryFrom<&[u8]> for $name {
-            type Error = &'static str;
+            type Error = CryptoError;
 
             fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
                 // if you wonder, `try_into` will also fail if v is too small
-                let arr: [u8; Self::SIZE] = v.try_into().map_err(|_| "Invalid data size")?;
+                let arr: [u8; Self::SIZE] = v.try_into().map_err(|_| CryptoError::DataSize)?;
                 Ok(Self($sub_type(arr)))
             }
         }

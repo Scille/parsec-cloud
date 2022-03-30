@@ -338,6 +338,9 @@ msgstr ""
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Create a recovery device"
 
+msgid "TEXT_DEVICE_RECOVERY_IMPORT_WIZARD_TITLE"
+msgstr "Recover a device"
+
 msgid "ACTION_IMPORT_KEY"
 msgstr "Recover a device"
 

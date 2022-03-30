@@ -768,6 +768,7 @@ dependencies = [
  "serde_test",
  "sha2 0.10.1",
  "sodiumoxide",
+ "thiserror",
  "x25519-dalek",
  "xsalsa20poly1305",
 ]

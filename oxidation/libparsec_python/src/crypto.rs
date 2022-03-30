@@ -18,7 +18,7 @@ impl HashDigest {
     fn new(hash: &[u8]) -> PyResult<Self> {
         match parsec_api_crypto::HashDigest::try_from(hash) {
             Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -66,7 +66,7 @@ impl SigningKey {
     fn new(data: &[u8]) -> PyResult<Self> {
         match parsec_api_crypto::SigningKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -111,7 +111,7 @@ impl VerifyKey {
     pub fn new(data: &[u8]) -> PyResult<Self> {
         match parsec_api_crypto::VerifyKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -165,7 +165,7 @@ impl SecretKey {
     fn new(data: &[u8]) -> PyResult<Self> {
         match parsec_api_crypto::SecretKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -193,7 +193,7 @@ impl SecretKey {
     pub fn decrypt<'p>(&self, py: Python<'p>, ciphered: &[u8]) -> PyResult<&'p PyBytes> {
         match self.0.decrypt(ciphered) {
             Ok(v) => Ok(PyBytes::new(py, &v)),
-            Err(err) => Err(CryptoError::new_err(err)),
+            Err(err) => Err(CryptoError::new_err(err.to_string())),
         }
     }
 
@@ -229,7 +229,7 @@ impl PrivateKey {
     fn new(data: &[u8]) -> PyResult<Self> {
         match parsec_api_crypto::PrivateKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -246,7 +246,7 @@ impl PrivateKey {
     fn decrypt_from_self<'p>(&self, py: Python<'p>, ciphered: &[u8]) -> PyResult<&'p PyBytes> {
         match self.0.decrypt_from_self(ciphered) {
             Ok(v) => Ok(PyBytes::new(py, &v)),
-            Err(err) => Err(CryptoError::new_err(err)),
+            Err(err) => Err(CryptoError::new_err(err.to_string())),
         }
     }
 
@@ -277,7 +277,7 @@ impl PublicKey {
     fn new(data: &[u8]) -> PyResult<Self> {
         match parsec_api_crypto::PublicKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 

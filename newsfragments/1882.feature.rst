@@ -1,1 +1,0 @@
-Added option to copy the server address

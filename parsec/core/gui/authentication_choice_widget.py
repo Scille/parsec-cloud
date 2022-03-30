@@ -24,12 +24,10 @@ class AuthenticationChoiceWidget(QWidget, Ui_AuthenticationChoiceWidget):
             self.combo_auth_method.addItem(
                 translate("TEXT_AUTH_METHOD_SMARTCARD"), DeviceFileType.SMARTCARD
             )
-        self.combo_auth_method.setStyleSheet("background-color: #FFFFFF;")
         self.combo_auth_method.setCurrentIndex(0)
         if self.combo_auth_method.count() == 1:
             self.combo_auth_method.setEnabled(False)
             self.combo_auth_method.setToolTip(translate("TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"))
-            self.combo_auth_method.setStyleSheet("background-color: #DDDDDD;")
         self.auth_widgets = {
             DeviceFileType.PASSWORD: PasswordAuthenticationWidget(),
             DeviceFileType.SMARTCARD: SmartCardAuthenticationWidget(),

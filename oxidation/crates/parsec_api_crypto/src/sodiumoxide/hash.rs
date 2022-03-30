@@ -3,6 +3,8 @@
 use serde::{Deserialize, Serialize};
 use sodiumoxide::crypto::hash::sha256;
 
+use crate::CryptoError;
+
 #[derive(Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct HashDigest(sha256::Digest);
@@ -39,10 +41,10 @@ impl AsRef<[u8]> for HashDigest {
 }
 
 impl TryFrom<&[u8]> for HashDigest {
-    type Error = &'static str;
+    type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         // if you wonder, `try_into` will also fail if data is too small
-        let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| ("Invalid data size"))?;
+        let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
         Ok(Self(sha256::Digest(arr)))
     }
 }

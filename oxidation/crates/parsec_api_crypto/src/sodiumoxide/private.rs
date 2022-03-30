@@ -7,7 +7,7 @@ use sodiumoxide::crypto::box_::{
 use sodiumoxide::crypto::scalarmult::{scalarmult, GroupElement, Scalar};
 use sodiumoxide::crypto::sealedbox::{open, seal};
 
-use crate::SecretKey;
+use crate::{CryptoError, SecretKey};
 
 /*
  * PrivateKey
@@ -33,8 +33,8 @@ impl PrivateKey {
         Self(gen_keypair().1)
     }
 
-    pub fn decrypt_from_self(&self, ciphered: &[u8]) -> Result<Vec<u8>, &'static str> {
-        open(ciphered, &self.0.public_key(), &self.0).or(Err("Decryption error"))
+    pub fn decrypt_from_self(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
+        open(ciphered, &self.0.public_key(), &self.0).or(Err(CryptoError::Decryption))
     }
 
     pub fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {

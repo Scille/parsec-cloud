@@ -4,7 +4,7 @@ use hex_literal::hex;
 use pretty_assertions::assert_eq;
 use serde_test::{assert_tokens, Token};
 
-use parsec_api_crypto::SecretKey;
+use parsec_api_crypto::{CryptoError, SecretKey};
 
 #[macro_use]
 mod common;
@@ -32,12 +32,9 @@ fn round_trip() {
 fn bad_decrypt() {
     let sk = SecretKey::generate();
 
-    assert_eq!(
-        sk.decrypt(b""),
-        Err("The nonce must be exactly 24 bytes long")
-    );
+    assert_eq!(sk.decrypt(b""), Err(CryptoError::Nonce));
 
-    assert_eq!(sk.decrypt(&[0; 64]), Err("Decryption error"));
+    assert_eq!(sk.decrypt(&[0; 64]), Err(CryptoError::Decryption));
 }
 
 #[test]
