@@ -140,6 +140,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         submitted_on=enrollment.info.submitted_on,
                         rejected_on=rejected_on,
                     )
+                    return
                 else:
                     raise PkiEnrollmentNoLongerAvailableError()
         else:
