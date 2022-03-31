@@ -44,7 +44,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     def __init__(self, send_event):
         self._send_event = send_event
         self._user_component: MemoryUserComponent = None
-        self._enrollements: Dict[OrganizationID, List[PkiEnrollment]] = defaultdict(list)
+        self._enrollments: Dict[OrganizationID, List[PkiEnrollment]] = defaultdict(list)
 
     def register_components(self, **other_components):
         self._user_component = other_components["user"]
@@ -60,7 +60,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         submitted_on: DateTime,
     ) -> None:
         # Try to retrieve the last attempt with this x509 certificate
-        for enrollment in reversed(self._enrollements[organization_id]):
+        for enrollment in reversed(self._enrollments[organization_id]):
             if enrollment.submitter_der_x509_certificate == submitter_der_x509_certificate:
                 if isinstance(enrollment.info, PkiEnrollmentInfoSubmitted):
                     # Previous attempt is still pending, overwrite it if force flag is set...
@@ -91,11 +91,11 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         raise PkiEnrollmentAlreadyEnrolledError(enrollment.info.accepted_on)
                 else:
                     assert False
-                # There is no need looking for older enrollements given the
+                # There is no need looking for older enrollments given the
                 # last one represent the current state of this x509 certificate.
                 break
 
-        self._enrollements[organization_id].append(
+        self._enrollments[organization_id].append(
             PkiEnrollment(
                 enrollment_id=enrollment_id,
                 submitter_der_x509_certificate=submitter_der_x509_certificate,
@@ -108,7 +108,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         )
 
     async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
-        for enrollment in reversed(self._enrollements[organization_id]):
+        for enrollment in reversed(self._enrollments[organization_id]):
             if enrollment.enrollment_id == enrollment_id:
                 return enrollment.info
         else:
@@ -116,7 +116,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
     async def list(self, organization_id: OrganizationID) -> List[PkiEnrollmentListItem]:
         items = []
-        for e in self._enrollements[organization_id]:
+        for e in self._enrollments[organization_id]:
             if isinstance(e.info, PkiEnrollmentInfoSubmitted):
                 items.append(
                     PkiEnrollmentListItem(
@@ -132,7 +132,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     async def reject(
         self, organization_id: OrganizationID, enrollment_id: UUID, rejected_on: DateTime
     ) -> None:
-        for enrollment in reversed(self._enrollements[organization_id]):
+        for enrollment in reversed(self._enrollments[organization_id]):
             if enrollment.enrollment_id == enrollment_id:
                 if isinstance(enrollment.info, PkiEnrollmentInfoSubmitted):
                     enrollment.info = PkiEnrollmentInfoRejected(
@@ -160,7 +160,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         user: User,
         first_device: Device,
     ) -> None:
-        for enrollment in reversed(self._enrollements[organization_id]):
+        for enrollment in reversed(self._enrollments[organization_id]):
             if enrollment.enrollment_id == enrollment_id:
                 if not isinstance(enrollment.info, PkiEnrollmentInfoSubmitted):
                     raise PkiEnrollmentNoLongerAvailableError()

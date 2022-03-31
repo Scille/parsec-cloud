@@ -23,7 +23,7 @@ PkiEnrollmentStatusField = fields.enum_field_factory(PkiEnrollmentStatus)
 class PkiEnrollmentSubmitReqSchema(BaseReqSchema):
     enrollment_id = fields.UUID(required=True)
     # Existing enrollment with SUMBITTED status prevent submitting new
-    # enrollement with similir x509 certificate unless force flag is set.
+    # enrollment with similir x509 certificate unless force flag is set.
     force = fields.Boolean(required=True)
 
     submitter_der_x509_certificate = fields.Bytes(require=True)

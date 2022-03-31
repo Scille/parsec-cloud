@@ -110,7 +110,7 @@ __all__ = (
     "WorkspaceManifest",
     "FolderManifest",
     "FileManifest",
-    # PKI enrollement
+    # PKI enrollment
     "PkiEnrollmentSubmitPayload",
     "PkiEnrollmentAcceptPayload",
 )

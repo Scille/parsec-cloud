@@ -10,7 +10,7 @@ from parsec.core.gui.login_widget import PendingEnrollment, EnrollmentPendingBut
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_list_enrollements(aqtbot, logged_gui):
+async def test_list_enrollments(aqtbot, logged_gui):
     e_w = await logged_gui.test_switch_to_enrollment_widget()
 
     def _enrollment_shown():
