@@ -30,11 +30,7 @@ from async_generator import asynccontextmanager
 
 from parsec import __version__ as parsec_version
 from parsec.crypto import SigningKey, PrivateKey
-from parsec.api.data import (
-    PkiEnrollmentSubmitPayload,
-    PkiEnrollmentAcceptPayload,
-    DataError,
-)
+from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload, DataError
 from parsec.cli import cli
 from parsec.backend.postgresql import MigrationItem
 from parsec.core.types import BackendAddr
@@ -240,21 +236,13 @@ def test_migrate_backend(postgresql_url, unused_tcp_port):
     dry_run_args = f"backend migrate --db {postgresql_url} --dry-run"
     apply_args = f"backend migrate --db {postgresql_url}"
 
-    with patch(
-        "parsec.backend.cli.migration.retrieve_migrations"
-    ) as retrieve_migrations:
+    with patch("parsec.backend.cli.migration.retrieve_migrations") as retrieve_migrations:
         retrieve_migrations.return_value = [
             MigrationItem(
-                idx=100001,
-                name="migration1",
-                file_name="100001_migration1.sql",
-                sql=sql,
+                idx=100001, name="migration1", file_name="100001_migration1.sql", sql=sql
             ),
             MigrationItem(
-                idx=100002,
-                name="migration2",
-                file_name="100002_migration2.sql",
-                sql=sql,
+                idx=100002, name="migration2", file_name="100002_migration2.sql", sql=sql
             ),
         ]
         runner = CliRunner()
@@ -268,12 +256,7 @@ def test_migrate_backend(postgresql_url, unused_tcp_port):
         assert "100002_migration2.sql ✔" in result.output
 
         retrieve_migrations.return_value.append(
-            MigrationItem(
-                idx=100003,
-                name="migration3",
-                file_name="100003_migration3.sql",
-                sql=sql,
-            )
+            MigrationItem(idx=100003, name="migration3", file_name="100003_migration3.sql", sql=sql)
         )
 
         result = runner.invoke(cli, dry_run_args)
@@ -374,8 +357,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         print("####### Bootstrap organization #######")
         with _running(
-            "core bootstrap_organization "
-            f"{url} --config-dir={config_dir} --password={password}",
+            "core bootstrap_organization " f"{url} --config-dir={config_dir} --password={password}",
             env=ssl_conf.client_env,
             wait_for="User fullname:",
         ) as p:
@@ -418,12 +400,8 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             f"--password={password} bob@example.com",
             env=ssl_conf.client_env,
         )
-        user_invitation_url = re.search(
-            r"^url: (.*)$", p.stdout.decode(), re.MULTILINE
-        ).group(1)
-        user_invitation_token = re.search(r"token=([^&]+)", user_invitation_url).group(
-            1
-        )
+        user_invitation_url = re.search(r"^url: (.*)$", p.stdout.decode(), re.MULTILINE).group(1)
+        user_invitation_token = re.search(r"token=([^&]+)", user_invitation_url).group(1)
 
         p = _run(
             "core invite_device "
@@ -431,12 +409,8 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             f"--password={password}",
             env=ssl_conf.client_env,
         )
-        device_invitation_url = re.search(
-            r"^url: (.*)$", p.stdout.decode(), re.MULTILINE
-        ).group(1)
-        device_invitation_token = re.search(
-            r"token=([^&]+)", device_invitation_url
-        ).group(1)
+        device_invitation_url = re.search(r"^url: (.*)$", p.stdout.decode(), re.MULTILINE).group(1)
+        device_invitation_token = re.search(r"token=([^&]+)", device_invitation_url).group(1)
 
         print("####### Cancel invitation #######")
 
@@ -446,9 +420,9 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             f"--password={password} zack@example.com",
             env=ssl_conf.client_env,
         )
-        to_cancel_invitation_url = re.search(
-            r"^url: (.*)$", p.stdout.decode(), re.MULTILINE
-        ).group(1)
+        to_cancel_invitation_url = re.search(r"^url: (.*)$", p.stdout.decode(), re.MULTILINE).group(
+            1
+        )
         p = _run(
             "core cancel_invitation "
             f"--config-dir={config_dir} --device={alice1_slughash} "
@@ -610,9 +584,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
                 p_claimer.wait()
 
         print("####### List users #######")
-        p = _run(
-            f"core list_devices --config-dir={config_dir}", env=ssl_conf.client_env
-        )
+        p = _run(f"core list_devices --config-dir={config_dir}", env=ssl_conf.client_env)
         stdout = p.stdout.decode()
         assert alice1_slughash[:3] in stdout
         assert (
@@ -652,9 +624,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         )
         stdout = p.stdout.decode()
         # Retrieve passphrase
-        match = re.search(
-            r"Save the recovery passphrase in a safe place: ([a-zA-Z0-9\-]+)", stdout
-        )
+        match = re.search(r"Save the recovery passphrase in a safe place: ([a-zA-Z0-9\-]+)", stdout)
         passphrase = match.group(1)
         # Retrieve recovery file
         recovery_file = next(recovery_dir.glob("*.psrk"))
@@ -733,9 +703,7 @@ def mocked_parsec_ext_smartcard(monkeypatch):
 
         @staticmethod
         def _compute_signature(der_x509_certificate: bytes, payload: bytes) -> bytes:
-            return sha1(
-                payload + der_x509_certificate
-            ).digest()  # 100% secure crypto \o/
+            return sha1(payload + der_x509_certificate).digest()  # 100% secure crypto \o/
 
         def pki_enrollment_select_certificate(
             self, owner_hint: Optional[LocalDevice] = None
@@ -743,13 +711,9 @@ def mocked_parsec_ext_smartcard(monkeypatch):
             return self.default_x509_certificate
 
         def pki_enrollment_sign_payload(
-            self,
-            payload: bytes,
-            x509_certificate: X509Certificate,
+            self, payload: bytes, x509_certificate: X509Certificate
         ) -> bytes:
-            return self._compute_signature(
-                x509_certificate.der_x509_certificate, payload
-            )
+            return self._compute_signature(x509_certificate.der_x509_certificate, payload)
 
         def pki_enrollment_save_local_pending(
             self,
@@ -773,9 +737,7 @@ def mocked_parsec_ext_smartcard(monkeypatch):
             self._pending_enrollments[config_dir].append((pending, secret_part))
 
         def pki_enrollment_load_local_pending_secret_part(
-            self,
-            config_dir: Path,
-            enrollment_id: UUID,
+            self, config_dir: Path, enrollment_id: UUID
         ) -> Tuple[SigningKey, PrivateKey]:
             for (pending, secret_part) in self._pending_enrollments[config_dir]:
                 if pending.enrollment_id == enrollment_id:
@@ -800,10 +762,7 @@ def mocked_parsec_ext_smartcard(monkeypatch):
             return [pending for (pending, _) in self._pending_enrollments[config_dir]]
 
         def _pki_enrollment_load_payload(
-            self,
-            der_x509_certificate: bytes,
-            payload_signature: bytes,
-            payload: bytes,
+            self, der_x509_certificate: bytes, payload_signature: bytes, payload: bytes
         ):
             if not der_x509_certificate.startswith(b"der_X509_certificate:"):
                 # Consider the certificate invalid
@@ -906,7 +865,7 @@ async def cli_with_running_backend_testbed(backend, *devices):
                 local_symkey=device.local_symkey,
             )
 
-        yield backend_addr, *[_correct_local_device_backend_addr(d) for d in devices]
+        yield (backend_addr,) + tuple(_correct_local_device_backend_addr(d) for d in devices)
 
         nursery.cancel_scope.cancel()
 
@@ -914,10 +873,7 @@ async def cli_with_running_backend_testbed(backend, *devices):
 @pytest.mark.trio
 @pytest.mark.real_tcp
 async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, alice):
-    async with cli_with_running_backend_testbed(backend, alice) as (
-        backend_addr,
-        alice,
-    ):
+    async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
         # First, save the local device needed for pki_enrollment_review_pendings command
         config_dir = tmp_path / "config"
         alice_password = "S3cr3t"
@@ -957,9 +913,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
             assert len(enrollments) == enrollments_count
             return enrollments
 
-        addr = BackendPkiEnrollmentAddr.build(
-            backend_addr, organization_id=alice.organization_id
-        )
+        addr = BackendPkiEnrollmentAddr.build(backend_addr, organization_id=alice.organization_id)
 
         async def run_submit(extra_args: str = "", check_result: bool = True):
             result = await _cli_invoke_in_thread(
@@ -1019,20 +973,17 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
         # New enrollment
         enrollment_id1 = await run_submit()
         assert await run_poll() == [enrollment_id1.hex[:3]]
-        # Poll doesn't modify the pending enrollement
+        # Poll doesn't modify the pending enrollment
         assert await run_poll() == [enrollment_id1.hex[:3]]
 
         # List new enrollment
-        assert await run_review_pendings(extra_args="--list-only") == [
-            enrollment_id1.hex[:3]
-        ]
+        assert await run_review_pendings(extra_args="--list-only") == [enrollment_id1.hex[:3]]
 
         # Try to reply enrollment without force
         result = await run_submit(check_result=False)
         assert result.exit_code == 1
         assert (
-            "Backend refused to create enrollment: {'status': 'already_submitted'}"
-            in result.output
+            "Backend refused to create enrollment: {'status': 'already_submitted'}" in result.output
         )
         assert await run_review_pendings(extra_args="--list-only") == [
             enrollment_id1.hex[:3]
@@ -1040,9 +991,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
 
         # Actually reply enrollment with force
         enrollment_id3 = await run_submit(extra_args="--force")
-        assert await run_review_pendings(extra_args="--list-only") == [
-            enrollment_id3.hex[:3]
-        ]
+        assert await run_review_pendings(extra_args="--list-only") == [enrollment_id3.hex[:3]]
 
         # Reject enrollment
         await run_review_pendings(extra_args=f"--reject {enrollment_id3.hex}")
@@ -1053,11 +1002,10 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
         await run_review_pendings(extra_args=f"--accept {enrollment_id4.hex}")
         assert await run_review_pendings(extra_args="--list-only") == []
 
-        # It is no longer possible to do another enrollement with the same certificate (until the user is revoked)
+        # It is no longer possible to do another enrollment with the same certificate (until the user is revoked)
         result = await run_submit(check_result=False)
         assert (
-            "Backend refused to create enrollment: {'status': 'already_enrolled'}"
-            in result.output
+            "Backend refused to create enrollment: {'status': 'already_enrolled'}" in result.output
         )
 
         # Reject/Accept not possible against unknown/cancelled/accepted enrollments
@@ -1075,13 +1023,11 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
             f"--reject {enrollment_id4.hex[:3]}",
             f"--accept {enrollment_id4.hex[:3]}",
         ):
-            result = await run_review_pendings(
-                extra_args=extra_args, check_result=False
-            )
+            result = await run_review_pendings(extra_args=extra_args, check_result=False)
             assert result.exit_code == 1
             assert "Additional --accept/--reject elements not used" in result.output
 
-        # Poll to handle the accepted enrollements, and discard the non-pendings ones
+        # Poll to handle the accepted enrollments, and discard the non-pendings ones
         assert await run_poll() == [
             enrollment_id1.hex[:3],
             enrollment_id3.hex[:3],
@@ -1089,12 +1035,10 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
         ]
 
         # Now we should have a new local device !
-        result = await _cli_invoke_in_thread(
-            f"core list_devices --config-dir {config_dir}"
-        )
+        result = await _cli_invoke_in_thread(f"core list_devices --config-dir {config_dir}")
         assert result.exit_code == 0
         assert result.output.startswith("Found 2 device(s)")
         assert "CoolOrg: John Doe <john@example.com> @ PC1" in result.output
 
-        # And all the enrollements should have been taken care of
+        # And all the enrollments should have been taken care of
         assert await run_poll() == []
