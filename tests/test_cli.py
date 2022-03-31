@@ -710,7 +710,7 @@ def test_pki_enrollment_not_available(tmp_path, alice):
     runner = CliRunner()
     for cmd in [
         f"core pki_enrollment_submit --config-dir {config_dir} parsec://parsec.example.com/my_org?action=pki_enrollment",
-        f"core pki_enrollment_info --config-dir {config_dir} ",
+        f"core pki_enrollment_poll --config-dir {config_dir} ",
         f"core pki_enrollment_review_pendings --config-dir {config_dir} --device {alice.slughash} --password {alice_password}",
     ]:
         result = runner.invoke(cli, cmd)
