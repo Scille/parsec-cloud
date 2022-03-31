@@ -39,7 +39,7 @@ async def _submit_request(
         submit_payload_signature=signature,
         submit_payload=payload,
     )
-    assert rep == {"status": "ok"}
+    assert rep["status"] == "ok"
 
 
 def _prepare_accept_reply(admin, invitee):
@@ -95,7 +95,7 @@ async def test_pki_submit(anonymous_backend_sock, bob):
         submit_payload_signature=b"<signature>",
         submit_payload=payload,
     )
-    assert rep == {"status": "ok"}
+    assert rep["status"] == "ok"
 
     # Retry without force
 
@@ -119,7 +119,7 @@ async def test_pki_submit(anonymous_backend_sock, bob):
         submit_payload_signature=b"<signature>",
         submit_payload=payload,
     )
-    assert rep == {"status": "ok"}
+    assert rep["status"] == "ok"
 
 
 # Test pki_enrollment_list
@@ -148,7 +148,6 @@ async def test_pki_list(anonymous_backend_sock, bob, adam, alice_backend_sock):
     assert submited_request["submitted_on"] > ref_time
 
     submited_payload = PkiEnrollmentSubmitPayload.load(submited_request["submit_payload"])
-    assert submited_payload.requested_human_handle == bob.human_handle
     assert submited_payload.verify_key == bob.verify_key
     assert submited_payload.public_key == bob.public_key
     assert submited_payload.requested_device_label == bob.device_label
@@ -366,14 +365,14 @@ async def test_pki_info(anonymous_backend_sock, mallory, alice, alice_backend_so
     await _submit_request(anonymous_backend_sock, mallory, request_id=request_id)
     rep = await pki_enrollment_info(anonymous_backend_sock, request_id)
     assert rep["status"] == "ok"
-    assert rep["type"] == PkiEnrollmentStatus.SUBMITTED
+    assert rep["enrollment_status"] == PkiEnrollmentStatus.SUBMITTED
 
     # Request cancelled
     new_request_id = uuid4()
     await _submit_request(anonymous_backend_sock, mallory, request_id=new_request_id, force=True)
     rep = await pki_enrollment_info(anonymous_backend_sock, request_id)
     assert rep["status"] == "ok"
-    assert rep["type"] == PkiEnrollmentStatus.CANCELLED
+    assert rep["enrollment_status"] == PkiEnrollmentStatus.CANCELLED
 
 
 @pytest.mark.trio
@@ -387,7 +386,7 @@ async def test_pki_info_accepted(anonymous_backend_sock, mallory, alice, alice_b
 
     rep = await pki_enrollment_info(anonymous_backend_sock, request_id)
     assert rep["status"] == "ok"
-    assert rep["type"] == PkiEnrollmentStatus.ACCEPTED
+    assert rep["enrollment_status"] == PkiEnrollmentStatus.ACCEPTED
 
 
 @pytest.mark.trio
@@ -400,4 +399,4 @@ async def test_pki_info_rejected(anonymous_backend_sock, mallory, alice_backend_
 
     rep = await pki_enrollment_info(anonymous_backend_sock, request_id)
     assert rep["status"] == "ok"
-    assert rep["type"] == PkiEnrollmentStatus.REJECTED
+    assert rep["enrollment_status"] == PkiEnrollmentStatus.REJECTED
