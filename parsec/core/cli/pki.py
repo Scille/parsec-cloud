@@ -8,7 +8,7 @@ import platform
 from pendulum import DateTime
 import click
 
-from parsec.api.protocol import HumanHandle, DeviceLabel, PkiEnrollmentStatus
+from parsec.api.protocol import HumanHandle, DeviceLabel
 from parsec.cli_utils import cli_exception_handler, spinner, aprompt
 from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.cli.invitation import ask_info_new_user
@@ -24,6 +24,11 @@ from parsec.core.pki import (
     is_pki_enrollment_available,
     PkiEnrollementSubmiterInitalCtx,
     PkiEnrollmentSubmiterSubmittedCtx,
+    PkiEnrollmentSubmiterSubmittedStatusCtx,
+    PkiEnrollmentSubmiterCancelledStatusCtx,
+    PkiEnrollmentSubmiterRejectedStatusCtx,
+    PkiEnrollmentSubmiterAcceptedStatusButBadSignatureCtx,
+    PkiEnrollmentSubmiterAcceptedStatusCtx,
     accepter_list_submitted_from_backend,
     PkiEnrollementAccepterValidSubmittedCtx,
     PkiEnrollementAccepterInvalidSubmittedCtx,
@@ -94,7 +99,7 @@ async def _pki_enrollment_poll(
     save_device_with_selected_auth: Callable,
     extra_trust_roots: Sequence[Path],
 ):
-    pendings = PkiEnrollmentSubmiterSubmittedCtx.list_from_disk(config_dir=config.config_dir)
+    pendings = await PkiEnrollmentSubmiterSubmittedCtx.list_from_disk(config_dir=config.config_dir)
 
     # Try to shorten the UUIDs to make it easier to work with
     enrollment_ids = [e.enrollment_id for e in pendings]
@@ -142,32 +147,49 @@ async def _pki_enrollment_poll(
 
         async with spinner("Fetching PKI enrollment status from the backend"):
             try:
-                enrollment_status, occured_on, maybe_new_device = await ctx.poll(
-                    clean_disk=not dry_run, extra_trust_roots=extra_trust_roots
-                )
+                ctx = await ctx.poll(extra_trust_roots=extra_trust_roots)
 
             except Exception:
                 # TODO: exception handling !
                 raise
 
-        if enrollment_status == PkiEnrollmentStatus.SUBMITTED:
+        if isinstance(ctx, PkiEnrollmentSubmiterSubmittedStatusCtx):
             # Nothing to do
             click.echo("Enrollment is still pending")
 
-        elif enrollment_status == PkiEnrollmentStatus.CANCELLED:
-            click.echo("Enrollment has been cancelled on " + click.style(occured_on, fg="yellow"))
+        elif isinstance(ctx, PkiEnrollmentSubmiterCancelledStatusCtx):
+            click.echo(
+                "Enrollment has been cancelled on " + click.style(ctx.submitted_on, fg="yellow")
+            )
+            if not dry_run:
+                await ctx.remove_from_disk()
 
-        elif enrollment_status == PkiEnrollmentStatus.REJECTED:
-            click.echo("Enrollment has been rejected on " + click.style(occured_on, fg="yellow"))
+        elif isinstance(ctx, PkiEnrollmentSubmiterRejectedStatusCtx):
+            click.echo(
+                "Enrollment has been rejected on " + click.style(ctx.rejected_on, fg="yellow")
+            )
+            if not dry_run:
+                await ctx.remove_from_disk()
+
+        elif isinstance(ctx, PkiEnrollmentSubmiterAcceptedStatusButBadSignatureCtx):
+            click.echo(
+                "Enrollment has been accepted on " + click.style(ctx.accepted_on, fg="yellow")
+            )
+            raise RuntimeError(
+                f"Cannot validate accept information with selected X509 certificate: {ctx.error}"
+            )
 
         else:
-            assert enrollment_status == PkiEnrollmentStatus.ACCEPTED
-            assert isinstance(maybe_new_device, LocalDevice)
+            assert isinstance(ctx, PkiEnrollmentSubmiterAcceptedStatusCtx)
+            click.echo(
+                "Enrollment has been accepted on " + click.style(ctx.accepted_on, fg="yellow")
+            )
+            ctx = await ctx.finalize()
             if not dry_run:
                 await save_device_with_selected_auth(
-                    config_dir=config.config_dir, device=maybe_new_device
+                    config_dir=config.config_dir, device=ctx.new_device
                 )
-            click.echo("Enrollment has been accepted on " + click.style(occured_on, fg="yellow"))
+                await ctx.remove_from_disk()
 
 
 @click.command(short_help="check status of the pending PKI enrollments locally available")

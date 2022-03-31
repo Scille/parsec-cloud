@@ -74,6 +74,18 @@ def pki_enrollment_save_local_pending(
     )
 
 
+def pki_enrollment_load_local_pending_secret_part(
+    config_dir: Path, enrollment_id: UUID
+) -> Tuple[SigningKey, PrivateKey]:
+    """
+    This will prompt PIN dialog
+    """
+    # TODO: document exceptions !
+    return _load_smartcard_extension().pki_enrollment_load_local_pending_secret_part(
+        config_dir=config_dir, enrollment_id=enrollment_id
+    )
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class LocalPendingEnrollment:
     x509_certificate: X509Certificate
@@ -82,8 +94,6 @@ class LocalPendingEnrollment:
     submitted_on: DateTime
     enrollment_id: UUID
     submit_payload: PkiEnrollmentSubmitPayload
-    signing_key: SigningKey
-    private_key: PrivateKey
 
 
 def pki_enrollment_list_local_pendings(config_dir: Path) -> List[LocalPendingEnrollment]:

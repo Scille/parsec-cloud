@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
-from typing import Iterable, Optional, List, Tuple
+from typing import Iterable, List, Union
 from uuid import UUID, uuid4
 from pathlib import Path
 from pendulum import DateTime
@@ -15,9 +15,11 @@ from parsec.core.backend_connection import (
 from parsec.core.types import BackendPkiEnrollmentAddr, BackendOrganizationAddr
 from parsec.core.pki.plumbing import (
     X509Certificate,
+    PkiEnrollmentAcceptPayload,
     pki_enrollment_select_certificate,
     pki_enrollment_sign_payload,
     pki_enrollment_save_local_pending,
+    pki_enrollment_load_local_pending_secret_part,
     pki_enrollment_remove_local_pending,
     pki_enrollment_list_local_pendings,
     pki_enrollment_load_accept_payload,
@@ -36,7 +38,7 @@ class PkiEnrollementSubmiterInitalCtx:
     x509_certificate: X509Certificate
 
     @classmethod
-    def new(cls, addr: BackendPkiEnrollmentAddr) -> "PkiEnrollementSubmiterInitalCtx":
+    def new(cls, addr: BackendPkiEnrollmentAddr) -> "PkiEnrollmentSubmiterSubmittedStatusCtx":
         enrollment_id = uuid4()
         signing_key = SigningKey.generate()
         private_key = PrivateKey.generate()
@@ -107,15 +109,13 @@ class PkiEnrollementSubmiterInitalCtx:
             private_key=self.private_key,
         )
 
-        return PkiEnrollmentSubmiterSubmittedCtx(
+        return PkiEnrollmentSubmiterSubmittedStatusCtx(
             config_dir=config_dir,
             x509_certificate=self.x509_certificate,
             addr=self.addr,
             submitted_on=rep["submitted_on"],
             enrollment_id=self.enrollment_id,
             submit_payload=cooked_submit_payload,
-            signing_key=self.signing_key,
-            private_key=self.private_key,
         )
 
 
@@ -127,11 +127,9 @@ class PkiEnrollmentSubmiterSubmittedCtx:
     submitted_on: DateTime
     enrollment_id: UUID
     submit_payload: PkiEnrollmentSubmitPayload
-    signing_key: SigningKey
-    private_key: PrivateKey
 
     @classmethod
-    def list_from_disk(cls, config_dir: Path) -> List["PkiEnrollmentSubmiterSubmittedCtx"]:
+    async def list_from_disk(cls, config_dir: Path) -> List["PkiEnrollmentSubmiterSubmittedCtx"]:
         # TODO: document exceptions !
         ctxs = []
         for pending in pki_enrollment_list_local_pendings(config_dir=config_dir):
@@ -142,16 +140,21 @@ class PkiEnrollmentSubmiterSubmittedCtx:
                 submitted_on=pending.submitted_on,
                 enrollment_id=pending.enrollment_id,
                 submit_payload=pending.submit_payload,
-                signing_key=pending.signing_key,
-                private_key=pending.private_key,
             )
             ctxs.append(ctx)
 
         return ctxs
 
     async def poll(
-        self, clean_disk: bool, extra_trust_roots: Iterable[Path] = ()
-    ) -> Tuple[PkiEnrollmentStatus, DateTime, Optional[LocalDevice]]:
+        self, extra_trust_roots: Iterable[Path] = ()
+    ) -> Union[
+        "PkiEnrollmentSubmiterSubmittedStatusCtx",
+        "PkiEnrollmentSubmiterCancelledStatusCtx",
+        "PkiEnrollmentSubmiterRejectedStatusCtx",
+        "PkiEnrollmentSubmiterAcceptedStatusButBadSignatureCtx",
+        "PkiEnrollmentSubmiterAcceptedStatusCtx",
+    ]:
+        #  Tuple[PkiEnrollmentStatus, DateTime, Optional[LocalDevice]]:
         try:
             rep = await cmd_pki_enrollment_info(addr=self.addr, enrollment_id=self.enrollment_id)
         except Exception:
@@ -162,64 +165,184 @@ class PkiEnrollmentSubmiterSubmittedCtx:
             raise RuntimeError()
 
         enrollment_status = rep["type"]
-        maybe_new_device = None
-        need_remove_local_pending = False
 
+        if enrollment_status == PkiEnrollmentStatus.SUBMITTED:
+            return PkiEnrollmentSubmiterSubmittedStatusCtx(
+                config_dir=self.config_dir,
+                x509_certificate=self.x509_certificate,
+                addr=self.addr,
+                submitted_on=self.submitted_on,
+                enrollment_id=self.enrollment_id,
+                submit_payload=self.submit_payload,
+            )
+
+        elif enrollment_status == PkiEnrollmentStatus.CANCELLED:
+            return PkiEnrollmentSubmiterCancelledStatusCtx(
+                config_dir=self.config_dir,
+                x509_certificate=self.x509_certificate,
+                addr=self.addr,
+                submitted_on=self.submitted_on,
+                enrollment_id=self.enrollment_id,
+                submit_payload=self.submit_payload,
+                cancelled_on=rep["cancelled_on"],
+            )
+
+        elif enrollment_status == PkiEnrollmentStatus.REJECTED:
+            return PkiEnrollmentSubmiterRejectedStatusCtx(
+                config_dir=self.config_dir,
+                x509_certificate=self.x509_certificate,
+                addr=self.addr,
+                submitted_on=self.submitted_on,
+                enrollment_id=self.enrollment_id,
+                submit_payload=self.submit_payload,
+                rejected_on=rep["rejected_on"],
+            )
+
+        else:
+            assert enrollment_status == PkiEnrollmentStatus.ACCEPTED
+            try:
+                (accepter_x509_certif, accept_payload) = pki_enrollment_load_accept_payload(
+                    extra_trust_roots=extra_trust_roots,
+                    der_x509_certificate=rep["accepter_der_x509_certificate"],
+                    payload_signature=rep["accept_payload_signature"],
+                    payload=rep["accept_payload"],
+                )
+                return PkiEnrollmentSubmiterAcceptedStatusCtx(
+                    config_dir=self.config_dir,
+                    x509_certificate=self.x509_certificate,
+                    addr=self.addr,
+                    submitted_on=self.submitted_on,
+                    enrollment_id=self.enrollment_id,
+                    submit_payload=self.submit_payload,
+                    accepted_on=rep["accepted_on"],
+                    accepter_x509_certif=accepter_x509_certif,
+                    accept_payload=accept_payload,
+                )
+
+            # Verification failed
+            except LocalDeviceError as exc:
+                return PkiEnrollmentSubmiterAcceptedStatusButBadSignatureCtx(
+                    config_dir=self.config_dir,
+                    x509_certificate=self.x509_certificate,
+                    addr=self.addr,
+                    submitted_on=self.submitted_on,
+                    enrollment_id=self.enrollment_id,
+                    submit_payload=self.submit_payload,
+                    accepted_on=rep["accepted_on"],
+                    error=str(exc),
+                )
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class BasePkiEnrollmentSubmiterStatusCtx:
+    config_dir: Path
+    x509_certificate: X509Certificate
+    addr: BackendPkiEnrollmentAddr
+    submitted_on: DateTime
+    enrollment_id: UUID
+    submit_payload: PkiEnrollmentSubmitPayload
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class PkiEnrollmentSubmiterSubmittedStatusCtx(BasePkiEnrollmentSubmiterStatusCtx):
+    submit_payload: PkiEnrollmentSubmitPayload
+
+    async def remove_from_disk(self):
         try:
-            if enrollment_status == PkiEnrollmentStatus.SUBMITTED:
-                occured_on = self.submitted_on
+            pki_enrollment_remove_local_pending(
+                config_dir=self.config_dir, enrollment_id=self.enrollment_id
+            )
+        except Exception:
+            # TODO: handle exception
+            raise
 
-            elif enrollment_status == PkiEnrollmentStatus.CANCELLED:
-                need_remove_local_pending = True
-                occured_on = rep["cancelled_on"]
 
-            elif enrollment_status == PkiEnrollmentStatus.REJECTED:
-                need_remove_local_pending = True
-                occured_on = rep["rejected_on"]
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class PkiEnrollmentSubmiterCancelledStatusCtx(BasePkiEnrollmentSubmiterStatusCtx):
+    cancelled_on: DateTime
 
-            else:
-                assert enrollment_status == PkiEnrollmentStatus.ACCEPTED
-                # In case an exception occurs while checking the accepted payload,
-                # we still want to remove the local data.
-                # This is because in such case it is most likely we cannot do
-                # anything with the accepted payload and it's cheap for admin
-                # to revoked the user and restart the enrollment from scratch.
-                need_remove_local_pending = True
+    async def remove_from_disk(self):
+        try:
+            pki_enrollment_remove_local_pending(
+                config_dir=self.config_dir, enrollment_id=self.enrollment_id
+            )
+        except Exception:
+            # TODO: handle exception
+            raise
 
-                occured_on = rep["accepted_on"]
-                try:
-                    (accepter_x509_certif, accept_payload) = pki_enrollment_load_accept_payload(
-                        extra_trust_roots=extra_trust_roots,
-                        der_x509_certificate=rep["accepter_der_x509_certificate"],
-                        payload_signature=rep["accept_payload_signature"],
-                        payload=rep["accept_payload"],
-                    )
 
-                # Verification failed
-                except LocalDeviceError:
-                    raise
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class PkiEnrollmentSubmiterRejectedStatusCtx(BasePkiEnrollmentSubmiterStatusCtx):
+    rejected_on: DateTime
 
-                # Create the local device
-                organization_addr = BackendOrganizationAddr.build(
-                    backend_addr=self.addr,
-                    organization_id=self.addr.organization_id,
-                    root_verify_key=accept_payload.root_verify_key,
-                )
-                maybe_new_device = generate_new_device(
-                    organization_addr=organization_addr,
-                    device_id=accept_payload.device_id,
-                    profile=accept_payload.profile,
-                    human_handle=accept_payload.human_handle,
-                    device_label=accept_payload.device_label,
-                    signing_key=self.signing_key,
-                    private_key=self.private_key,
-                )
+    async def remove_from_disk(self):
+        try:
+            pki_enrollment_remove_local_pending(
+                config_dir=self.config_dir, enrollment_id=self.enrollment_id
+            )
+        except Exception:
+            # TODO: handle exception
+            raise
 
-        finally:
-            if clean_disk and need_remove_local_pending:
-                # TODO: handle exception in case the file is not found ?
-                pki_enrollment_remove_local_pending(
-                    config_dir=self.config_dir, enrollment_id=self.enrollment_id
-                )
 
-        return (enrollment_status, occured_on, maybe_new_device)
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class PkiEnrollmentSubmiterAcceptedStatusButBadSignatureCtx(BasePkiEnrollmentSubmiterStatusCtx):
+    accepted_on: DateTime
+    error: str
+
+    async def remove_from_disk(self):
+        try:
+            pki_enrollment_remove_local_pending(
+                config_dir=self.config_dir, enrollment_id=self.enrollment_id
+            )
+        except Exception:
+            # TODO: handle exception
+            raise
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class PkiEnrollmentSubmiterAcceptedStatusCtx(BasePkiEnrollmentSubmiterStatusCtx):
+    accepted_on: DateTime
+    accepter_x509_certif: X509Certificate
+    accept_payload: PkiEnrollmentAcceptPayload
+
+    async def finalize(self) -> "PkiEnrollmentFinalizedCtx":
+        signing_key, private_key = pki_enrollment_load_local_pending_secret_part(
+            config_dir=self.config_dir, enrollment_id=self.enrollment_id
+        )
+
+        # Create the local device
+        organization_addr = BackendOrganizationAddr.build(
+            backend_addr=self.addr,
+            organization_id=self.addr.organization_id,
+            root_verify_key=self.accept_payload.root_verify_key,
+        )
+        new_device = generate_new_device(
+            organization_addr=organization_addr,
+            device_id=self.accept_payload.device_id,
+            profile=self.accept_payload.profile,
+            human_handle=self.accept_payload.human_handle,
+            device_label=self.accept_payload.device_label,
+            signing_key=signing_key,
+            private_key=private_key,
+        )
+
+        return PkiEnrollmentFinalizedCtx(
+            config_dir=self.config_dir, enrollment_id=self.enrollment_id, new_device=new_device
+        )
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class PkiEnrollmentFinalizedCtx:
+    config_dir: Path
+    enrollment_id: UUID
+    new_device: LocalDevice
+
+    async def remove_from_disk(self) -> None:
+        try:
+            pki_enrollment_remove_local_pending(
+                config_dir=self.config_dir, enrollment_id=self.enrollment_id
+            )
+        except Exception:
+            # TODO: handle exception
+            raise

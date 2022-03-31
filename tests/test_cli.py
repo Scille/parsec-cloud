@@ -768,17 +768,27 @@ def mocked_parsec_ext_smartcard(monkeypatch):
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
                 submit_payload=submit_payload,
-                signing_key=signing_key,
-                private_key=private_key,
             )
-            self._pending_enrollments[config_dir].append(pending)
+            secret_part = (signing_key, private_key)
+            self._pending_enrollments[config_dir].append((pending, secret_part))
+
+        def pki_enrollment_load_local_pending_secret_part(
+            self,
+            config_dir: Path,
+            enrollment_id: UUID,
+        ) -> Tuple[SigningKey, PrivateKey]:
+            for (pending, secret_part) in self._pending_enrollments[config_dir]:
+                if pending.enrollment_id == enrollment_id:
+                    return secret_part
+            else:
+                raise LocalDeviceNotFoundError()
 
         def pki_enrollment_remove_local_pending(
             self, config_dir: Path, enrollment_id: UUID
         ) -> None:
             enrollments = self._pending_enrollments[config_dir]
-            for i, enrollment in enumerate(enrollments):
-                if enrollment.enrollment_id == enrollment_id:
+            for i, (pending, _) in enumerate(enrollments):
+                if pending.enrollment_id == enrollment_id:
                     enrollments.pop(i)
                     break
             else:
@@ -787,7 +797,7 @@ def mocked_parsec_ext_smartcard(monkeypatch):
         def pki_enrollment_list_local_pendings(
             self, config_dir: Path
         ) -> List[LocalPendingEnrollment]:
-            return self._pending_enrollments[config_dir].copy()
+            return [pending for (pending, _) in self._pending_enrollments[config_dir]]
 
         def _pki_enrollment_load_payload(
             self,
