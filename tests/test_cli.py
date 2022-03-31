@@ -2,8 +2,15 @@
 
 import re
 import os
+import trio
+from uuid import UUID
+from pendulum import DateTime
+from collections import defaultdict
+from typing import Tuple, Optional, Iterable, List
+from hashlib import sha1
 from pathlib import Path
 from functools import partial
+
 
 try:
     import fcntl
@@ -22,11 +29,30 @@ from click.testing import CliRunner
 from async_generator import asynccontextmanager
 
 from parsec import __version__ as parsec_version
-from parsec.backend.postgresql import MigrationItem
-from parsec.core.local_device import save_device_with_password_in_config
+from parsec.crypto import SigningKey, PrivateKey
+from parsec.api.data import (
+    PkiEnrollmentSubmitPayload,
+    PkiEnrollmentAcceptPayload,
+    DataError,
+)
 from parsec.cli import cli
-from parsec.core.types import UserInfo
+from parsec.backend.postgresql import MigrationItem
+from parsec.core.types import BackendAddr
+from parsec.core.local_device import (
+    LocalDeviceNotFoundError,
+    save_device_with_password_in_config,
+    LocalDeviceCryptoError,
+    LocalDevicePackingError,
+)
+from parsec.core.types import (
+    LocalDevice,
+    UserInfo,
+    BackendOrganizationAddr,
+    BackendPkiEnrollmentAddr,
+)
+from parsec.core.config import CoreConfig
 from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
+from parsec.core.pki import X509Certificate, LocalPendingEnrollment
 
 from tests.common import AsyncMock
 
@@ -215,13 +241,21 @@ def test_migrate_backend(postgresql_url, unused_tcp_port):
     dry_run_args = f"backend migrate --db {postgresql_url} --dry-run"
     apply_args = f"backend migrate --db {postgresql_url}"
 
-    with patch("parsec.backend.cli.migration.retrieve_migrations") as retrieve_migrations:
+    with patch(
+        "parsec.backend.cli.migration.retrieve_migrations"
+    ) as retrieve_migrations:
         retrieve_migrations.return_value = [
             MigrationItem(
-                idx=100001, name="migration1", file_name="100001_migration1.sql", sql=sql
+                idx=100001,
+                name="migration1",
+                file_name="100001_migration1.sql",
+                sql=sql,
             ),
             MigrationItem(
-                idx=100002, name="migration2", file_name="100002_migration2.sql", sql=sql
+                idx=100002,
+                name="migration2",
+                file_name="100002_migration2.sql",
+                sql=sql,
             ),
         ]
         runner = CliRunner()
@@ -235,7 +269,12 @@ def test_migrate_backend(postgresql_url, unused_tcp_port):
         assert "100002_migration2.sql ✔" in result.output
 
         retrieve_migrations.return_value.append(
-            MigrationItem(idx=100003, name="migration3", file_name="100003_migration3.sql", sql=sql)
+            MigrationItem(
+                idx=100003,
+                name="migration3",
+                file_name="100003_migration3.sql",
+                sql=sql,
+            )
         )
 
         result = runner.invoke(cli, dry_run_args)
@@ -336,7 +375,8 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         print("####### Bootstrap organization #######")
         with _running(
-            "core bootstrap_organization " f"{url} --config-dir={config_dir} --password={password}",
+            "core bootstrap_organization "
+            f"{url} --config-dir={config_dir} --password={password}",
             env=ssl_conf.client_env,
             wait_for="User fullname:",
         ) as p:
@@ -379,8 +419,12 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             f"--password={password} bob@example.com",
             env=ssl_conf.client_env,
         )
-        user_invitation_url = re.search(r"^url: (.*)$", p.stdout.decode(), re.MULTILINE).group(1)
-        user_invitation_token = re.search(r"token=([^&]+)", user_invitation_url).group(1)
+        user_invitation_url = re.search(
+            r"^url: (.*)$", p.stdout.decode(), re.MULTILINE
+        ).group(1)
+        user_invitation_token = re.search(r"token=([^&]+)", user_invitation_url).group(
+            1
+        )
 
         p = _run(
             "core invite_device "
@@ -388,8 +432,12 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             f"--password={password}",
             env=ssl_conf.client_env,
         )
-        device_invitation_url = re.search(r"^url: (.*)$", p.stdout.decode(), re.MULTILINE).group(1)
-        device_invitation_token = re.search(r"token=([^&]+)", device_invitation_url).group(1)
+        device_invitation_url = re.search(
+            r"^url: (.*)$", p.stdout.decode(), re.MULTILINE
+        ).group(1)
+        device_invitation_token = re.search(
+            r"token=([^&]+)", device_invitation_url
+        ).group(1)
 
         print("####### Cancel invitation #######")
 
@@ -399,9 +447,9 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             f"--password={password} zack@example.com",
             env=ssl_conf.client_env,
         )
-        to_cancel_invitation_url = re.search(r"^url: (.*)$", p.stdout.decode(), re.MULTILINE).group(
-            1
-        )
+        to_cancel_invitation_url = re.search(
+            r"^url: (.*)$", p.stdout.decode(), re.MULTILINE
+        ).group(1)
         p = _run(
             "core cancel_invitation "
             f"--config-dir={config_dir} --device={alice1_slughash} "
@@ -563,7 +611,9 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
                 p_claimer.wait()
 
         print("####### List users #######")
-        p = _run(f"core list_devices --config-dir={config_dir}", env=ssl_conf.client_env)
+        p = _run(
+            f"core list_devices --config-dir={config_dir}", env=ssl_conf.client_env
+        )
         stdout = p.stdout.decode()
         assert alice1_slughash[:3] in stdout
         assert (
@@ -603,7 +653,9 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         )
         stdout = p.stdout.decode()
         # Retrieve passphrase
-        match = re.search(r"Save the recovery passphrase in a safe place: ([a-zA-Z0-9\-]+)", stdout)
+        match = re.search(
+            r"Save the recovery passphrase in a safe place: ([a-zA-Z0-9\-]+)", stdout
+        )
         passphrase = match.group(1)
         # Retrieve recovery file
         recovery_file = next(recovery_dir.glob("*.psrk"))
@@ -646,3 +698,396 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 )
 def test_gui_with_diagnose_option(env):
     _run(f"core gui --diagnose", env=env, capture=False)
+
+
+def test_pki_enrollment_not_available(tmp_path, alice):
+    # First need to have alice device on the disk
+    config_dir = tmp_path / "config"
+    alice_password = "S3cr3t"
+    save_device_with_password_in_config(config_dir, alice, alice_password)
+
+    # Now Run the cli
+    runner = CliRunner()
+    for cmd in [
+        f"core pki_enrollment_submit --config-dir {config_dir} parsec://parsec.example.com/my_org?action=pki_enrollment",
+        f"core pki_enrollment_info --config-dir {config_dir} ",
+        f"core pki_enrollment_review_pendings --config-dir {config_dir} --device {alice.slughash} --password {alice_password}",
+    ]:
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code == 1
+        assert "Error: Parsec smartcard extension not available" in result.output
+
+
+@pytest.fixture
+def mocked_parsec_ext_smartcard(monkeypatch):
+    class MockedParsecExtSmartcard:
+        def __init__(self):
+            self._pending_enrollments = defaultdict(list)
+            der_x509_certificate = b"der_X509_certificate:42:john@example.com:John Doe"
+            self.default_x509_certificate = X509Certificate(
+                issuer_label="John Doe",
+                issuer_email="john@example.com",
+                der_x509_certificate=der_x509_certificate,
+                certificate_sha1=sha1(der_x509_certificate).digest(),
+                certificate_id=42,
+            )
+
+        @staticmethod
+        def _compute_signature(der_x509_certificate: bytes, payload: bytes) -> bytes:
+            return sha1(
+                payload + der_x509_certificate
+            ).digest()  # 100% secure crypto \o/
+
+        def pki_enrollment_select_certificate(
+            self, owner_hint: Optional[LocalDevice] = None
+        ) -> X509Certificate:
+            return self.default_x509_certificate
+
+        def pki_enrollment_sign_payload(
+            self,
+            payload: bytes,
+            x509_certificate: X509Certificate,
+        ) -> bytes:
+            return self._compute_signature(
+                x509_certificate.der_x509_certificate, payload
+            )
+
+        def pki_enrollment_save_local_pending(
+            self,
+            config_dir: Path,
+            x509_certificate: X509Certificate,
+            addr: BackendPkiEnrollmentAddr,
+            enrollment_id: UUID,
+            submitted_on: DateTime,
+            submit_payload: PkiEnrollmentSubmitPayload,
+            signing_key: SigningKey,
+            private_key: PrivateKey,
+        ):
+            pending = LocalPendingEnrollment(
+                x509_certificate=x509_certificate,
+                addr=addr,
+                enrollment_id=enrollment_id,
+                submitted_on=submitted_on,
+                submit_payload=submit_payload,
+                signing_key=signing_key,
+                private_key=private_key,
+            )
+            self._pending_enrollments[config_dir].append(pending)
+
+        def pki_enrollment_remove_local_pending(
+            self, config_dir: Path, enrollment_id: UUID
+        ) -> None:
+            enrollments = self._pending_enrollments[config_dir]
+            for i, enrollment in enumerate(enrollments):
+                if enrollment.enrollment_id == enrollment_id:
+                    enrollments.pop(i)
+                    break
+            else:
+                raise LocalDeviceNotFoundError()
+
+        def pki_enrollment_list_local_pendings(
+            self, config_dir: Path
+        ) -> List[LocalPendingEnrollment]:
+            return self._pending_enrollments[config_dir].copy()
+
+        def _pki_enrollment_load_payload(
+            self,
+            der_x509_certificate: bytes,
+            payload_signature: bytes,
+            payload: bytes,
+        ):
+            if not der_x509_certificate.startswith(b"der_X509_certificate:"):
+                # Consider the certificate invalid
+                raise LocalDeviceCryptoError()
+
+            _, certificate_id, issuer_email, issuer_label = der_x509_certificate.decode(
+                "utf8"
+            ).split(":")
+            x509_certificate = X509Certificate(
+                issuer_label=issuer_label,
+                issuer_email=issuer_email,
+                der_x509_certificate=der_x509_certificate,
+                certificate_sha1=sha1(der_x509_certificate).digest(),
+                certificate_id=certificate_id,
+            )
+
+            computed_signature = self._compute_signature(der_x509_certificate, payload)
+            if computed_signature != payload_signature:
+                raise LocalDeviceCryptoError()
+
+            return x509_certificate
+
+        def pki_enrollment_load_submit_payload(
+            self,
+            config: CoreConfig,
+            der_x509_certificate: bytes,
+            payload_signature: bytes,
+            payload: bytes,
+            extra_trust_roots: Iterable[Path] = (),
+        ) -> Tuple[X509Certificate, PkiEnrollmentSubmitPayload]:
+            x509_certificate = self._pki_enrollment_load_payload(
+                der_x509_certificate=der_x509_certificate,
+                payload_signature=payload_signature,
+                payload=payload,
+            )
+            try:
+                submit_payload = PkiEnrollmentSubmitPayload.load(payload)
+            except DataError as exc:
+                raise LocalDevicePackingError(str(exc)) from exc
+
+            return x509_certificate, submit_payload
+
+        def pki_enrollment_load_accept_payload(
+            self,
+            config: CoreConfig,
+            der_x509_certificate: bytes,
+            payload_signature: bytes,
+            payload: bytes,
+            extra_trust_roots: Iterable[Path] = (),
+        ) -> Tuple[X509Certificate, PkiEnrollmentAcceptPayload]:
+            x509_certificate = self._pki_enrollment_load_payload(
+                der_x509_certificate=der_x509_certificate,
+                payload_signature=payload_signature,
+                payload=payload,
+            )
+            try:
+                accept_payload = PkiEnrollmentAcceptPayload.load(payload)
+            except DataError as exc:
+                raise LocalDevicePackingError(str(exc)) from exc
+
+            return x509_certificate, accept_payload
+
+    mocked_parsec_ext_smartcard = MockedParsecExtSmartcard()
+
+    def _mocked_load_smartcard_extension():
+        return mocked_parsec_ext_smartcard
+
+    monkeypatch.setattr(
+        "parsec.core.pki._load_smartcard_extension", _mocked_load_smartcard_extension
+    )
+    return mocked_parsec_ext_smartcard
+
+
+@asynccontextmanager
+async def cli_with_running_backend_testbed(backend, *devices):
+    # Must use real TCP sockets instead of the tcp_stream_spy here, this is required
+    # given the cli commands are going to run in a separate thread with they own
+    # trio loop. Hence sharing memory channel between trio loops is going to create
+    # unexpected errors !
+    async with trio.open_service_nursery() as nursery:
+        listeners = await nursery.start(trio.serve_tcp, backend.handle_client, 0)
+        _, port = listeners[0].socket.getsockname()
+        backend_addr = BackendAddr("127.0.0.1", port, use_ssl=False)
+
+        # Now the local device point to an invalid backend address, must fix this
+        def _correct_local_device_backend_addr(device):
+            organization_addr = BackendOrganizationAddr.build(
+                backend_addr,
+                organization_id=device.organization_addr.organization_id,
+                root_verify_key=device.organization_addr.root_verify_key,
+            )
+            return LocalDevice(
+                organization_addr=organization_addr,
+                device_id=device.device_id,
+                device_label=device.device_label,
+                human_handle=device.human_handle,
+                signing_key=device.signing_key,
+                private_key=device.private_key,
+                profile=device.profile,
+                user_manifest_id=device.user_manifest_id,
+                user_manifest_key=device.user_manifest_key,
+                local_symkey=device.local_symkey,
+            )
+
+        yield backend_addr, *[_correct_local_device_backend_addr(d) for d in devices]
+
+        nursery.cancel_scope.cancel()
+
+
+@pytest.mark.trio
+@pytest.mark.real_tcp
+async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, alice):
+    async with cli_with_running_backend_testbed(backend, alice) as (
+        backend_addr,
+        alice,
+    ):
+        # First, save the local device needed for pki_enrollment_review_pendings command
+        config_dir = tmp_path / "config"
+        alice_password = "S3cr3t"
+        save_device_with_password_in_config(config_dir, alice, alice_password)
+
+        runner = CliRunner()
+
+        async def _cli_invoke_in_thread(cmd: str):
+            # We must run the command from another thread given it will create it own trio loop
+            with trio.fail_after(1):
+                return await trio.to_thread.run_sync(runner.invoke, cli, cmd)
+
+        async def run_review_pendings(extra_args: str = "", check_result: bool = True):
+            result = await _cli_invoke_in_thread(
+                f"core pki_enrollment_review_pendings --config-dir {config_dir} --device {alice.slughash} --password {alice_password} {extra_args}"
+            )
+            if not check_result:
+                return result
+            if result.exception:
+                raise AssertionError(
+                    f"CliRunner raise an exception: {result.exception}"
+                ) from result.exception
+            assert (
+                result.exit_code == 0
+            ), f"Bad exit_code: {result.exit_code}\nOutput: {result.output}"
+
+            first_line, *other_lines = result.output.splitlines()
+            match = re.match(r"^Found ([0-9]+) pending enrollment\(s\):", first_line)
+            assert match
+            enrollments_count = int(match.group(1))
+            # Just retrieve the enrollment ID
+            enrollments = []
+            for line in other_lines:
+                match = re.match(r"^Pending enrollment ([a-f0-9]+)", line)
+                if match:
+                    enrollments.append(match.group(1))
+            assert len(enrollments) == enrollments_count
+            return enrollments
+
+        addr = BackendPkiEnrollmentAddr.build(
+            backend_addr, organization_id=alice.organization_id
+        )
+
+        async def run_submit(extra_args: str = "", check_result: bool = True):
+            result = await _cli_invoke_in_thread(
+                f"core pki_enrollment_submit --config-dir {config_dir} {addr} --device-label PC1 {extra_args}"
+            )
+            if not check_result:
+                return result
+            if result.exception:
+                raise AssertionError(
+                    f"CliRunner raise an exception: {result.exception}"
+                ) from result.exception
+            assert (
+                result.exit_code == 0
+            ), f"Bad exit_code: {result.exit_code}\nOutput: {result.output}"
+            match = re.match(
+                r"PKI enrollment ([a-f0-9]+) submitted", result.output.splitlines()[-1]
+            )
+            assert match
+            return UUID(match.group(1))
+
+        async def run_poll(extra_args: str = "", check_result: bool = True):
+            result = await _cli_invoke_in_thread(
+                f"core pki_enrollment_poll --config-dir {config_dir} --password S3cr3t {extra_args}"
+            )
+            if not check_result:
+                return result
+            if result.exception:
+                raise AssertionError(
+                    f"CliRunner raise an exception: {result.exception}"
+                ) from result.exception
+            assert (
+                result.exit_code == 0
+            ), f"Bad exit_code: {result.exit_code}\nOutput: {result.output}"
+
+            first_line, *other_lines = result.output.splitlines()
+            match = re.match(r"^Found ([0-9]+) pending enrollment\(s\):", first_line)
+            assert match
+            enrollments_count = int(match.group(1))
+            # Just retrieve the enrollment ID
+            enrollments = []
+
+            for line in other_lines:
+                match = re.match(r"^Pending enrollment ([a-f0-9]+)", line)
+                if match:
+                    enrollments.append(match.group(1))
+            assert len(enrollments) == enrollments_count
+            return enrollments
+
+        # Time for testing !
+
+        # List with no enrollments
+        assert await run_review_pendings(extra_args="--list-only") == []
+
+        # Poll with no local enrollments
+        assert await run_poll() == []
+
+        # New enrollment
+        enrollment_id1 = await run_submit()
+        assert await run_poll() == [enrollment_id1.hex[:3]]
+        # Poll doesn't modify the pending enrollement
+        assert await run_poll() == [enrollment_id1.hex[:3]]
+
+        # List new enrollment
+        assert await run_review_pendings(extra_args="--list-only") == [
+            enrollment_id1.hex[:3]
+        ]
+
+        # Try to reply enrollment without force
+        result = await run_submit(check_result=False)
+        assert result.exit_code == 1
+        assert (
+            "Backend refused to create enrollment: {'status': 'already_submitted'}"
+            in result.output
+        )
+        assert await run_review_pendings(extra_args="--list-only") == [
+            enrollment_id1.hex[:3]
+        ]  # No change
+
+        # Actually reply enrollment with force
+        enrollment_id3 = await run_submit(extra_args="--force")
+        assert await run_review_pendings(extra_args="--list-only") == [
+            enrollment_id3.hex[:3]
+        ]
+
+        # Reject enrollment
+        await run_review_pendings(extra_args=f"--reject {enrollment_id3.hex}")
+        assert await run_review_pendings(extra_args="--list-only") == []
+
+        # Accept enrollment
+        enrollment_id4 = await run_submit()
+        await run_review_pendings(extra_args=f"--accept {enrollment_id4.hex}")
+        assert await run_review_pendings(extra_args="--list-only") == []
+
+        # It is no longer possible to do another enrollement with the same certificate (until the user is revoked)
+        result = await run_submit(check_result=False)
+        assert (
+            "Backend refused to create enrollment: {'status': 'already_enrolled'}"
+            in result.output
+        )
+
+        # Reject/Accept not possible against unknown/cancelled/accepted enrollments
+        for extra_args in (
+            # Unknown
+            f"--reject e499f9aed05e4287875a177909d62d90",
+            f"--accept e499f9aed05e4287875a177909d62d90",
+            # Already Cancelled
+            f"--reject {enrollment_id1.hex[:3]}",
+            f"--accept {enrollment_id1.hex[:3]}",
+            # Already Rejected
+            f"--reject {enrollment_id3.hex[:3]}",
+            f"--accept {enrollment_id3.hex[:3]}",
+            # Already Accepted
+            f"--reject {enrollment_id4.hex[:3]}",
+            f"--accept {enrollment_id4.hex[:3]}",
+        ):
+            result = await run_review_pendings(
+                extra_args=extra_args, check_result=False
+            )
+            assert result.exit_code == 1
+            assert "Additional --accept/--reject elements not used" in result.output
+
+        # Poll to handle the accepted enrollements, and discard the non-pendings ones
+        assert await run_poll() == [
+            enrollment_id1.hex[:3],
+            enrollment_id3.hex[:3],
+            enrollment_id4.hex[:3],
+        ]
+
+        # Now we should have a new local device !
+        result = await _cli_invoke_in_thread(
+            f"core list_devices --config-dir {config_dir}"
+        )
+        assert result.exit_code == 0
+        assert result.output.startswith("Found 2 device(s)")
+        assert "CoolOrg: John Doe <john@example.com> @ PC1" in result.output
+
+        # And all the enrollements should have been taken care of
+        assert await run_poll() == []

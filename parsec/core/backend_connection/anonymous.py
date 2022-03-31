@@ -92,6 +92,7 @@ async def pki_enrollment_submit(
 ) -> dict:
     return await _anonymous_cmd(
         serializer=pki_enrollment_submit_serializer,
+        cmd="pki_enrollment_submit",
         addr=addr,
         organization_id=addr.organization_id,
         enrollment_id=enrollment_id,
@@ -102,11 +103,10 @@ async def pki_enrollment_submit(
     )
 
 
-async def pki_enrollment_info(
-    addr: BackendPkiEnrollmentAddr, organization_id: OrganizationID, enrollment_id: UUID
-) -> dict:
+async def pki_enrollment_info(addr: BackendPkiEnrollmentAddr, enrollment_id: UUID) -> dict:
     return await _anonymous_cmd(
         serializer=pki_enrollment_info_serializer,
+        cmd="pki_enrollment_info",
         addr=addr,
         organization_id=addr.organization_id,
         enrollment_id=enrollment_id,

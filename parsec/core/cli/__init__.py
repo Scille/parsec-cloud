@@ -47,6 +47,6 @@ core_cmd.add_command(stats_organization.stats_organization, "stats_organization"
 core_cmd.add_command(status_organization.status_organization, "status_organization")
 core_cmd.add_command(bootstrap_organization.bootstrap_organization, "bootstrap_organization")
 
-core_cmd.add_command(pki.pki_enrollment_request, "pki_enrollment_request")
-core_cmd.add_command(pki.pki_enrollment_get_reply, "pki_enrollment_get_reply")
-core_cmd.add_command(pki.pki_enrollment_get_requests, "pki_enrollment_get_requests")
+core_cmd.add_command(pki.pki_enrollment_submit, "pki_enrollment_submit")
+core_cmd.add_command(pki.pki_enrollment_poll, "pki_enrollment_poll")
+core_cmd.add_command(pki.pki_enrollment_review_pendings, "pki_enrollment_review_pendings")

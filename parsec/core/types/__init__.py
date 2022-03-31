@@ -12,6 +12,7 @@ from parsec.core.types.backend_address import (
     BackendOrganizationAddrField,
     BackendOrganizationFileLinkAddr,
     BackendInvitationAddr,
+    BackendPkiEnrollmentAddr,
 )
 from parsec.core.types.local_device import LocalDevice, UserInfo, DeviceInfo
 from parsec.core.types.manifest import (
@@ -64,6 +65,7 @@ __all__ = (
     "BackendOrganizationAddrField",
     "BackendOrganizationFileLinkAddr",
     "BackendInvitationAddr",
+    "BackendPkiEnrollmentAddr",
     # local_device
     "LocalDevice",
     "UserInfo",

@@ -120,6 +120,7 @@ class BasePkiEnrollmentComponent:
         except DataError as exc:
             return {"status": "invalid_payload_data", "reason": str(exc)}
 
+        submitted_on = pendulum_now()
         try:
             await self.submit(
                 organization_id=client_ctx.organization_id,
@@ -128,9 +129,9 @@ class BasePkiEnrollmentComponent:
                 submitter_der_x509_certificate=msg["submitter_der_x509_certificate"],
                 submit_payload_signature=msg["submit_payload_signature"],
                 submit_payload=msg["submit_payload"],
-                submitted_on=pendulum_now(),
+                submitted_on=submitted_on,
             )
-            rep = {"status": "ok"}
+            rep = {"status": "ok", "submitted_on": submitted_on}
 
         except PkiEnrollmentCertificateAlreadySubmittedError as exc:
             rep = {"status": "already_submitted", "submitted_on": exc.submitted_on}

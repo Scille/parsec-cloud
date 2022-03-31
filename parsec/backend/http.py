@@ -392,6 +392,7 @@ class HTTPComponent:
 
         except KeyError:
             rep = {"status": "unknown_command"}
+
         else:
             rep = await cmd_func(client_ctx, msg)
 

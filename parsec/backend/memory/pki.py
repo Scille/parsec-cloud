@@ -143,6 +143,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     return
                 else:
                     raise PkiEnrollmentNoLongerAvailableError()
+
+                break
+
         else:
             raise PkiEnrollmentNotFoundError()
 
@@ -185,6 +188,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 assert user.user_certifier is not None
                 enrollment.accepter = user.user_certifier
 
-                return
+                break
+
         else:
             raise PkiEnrollmentNotFoundError()

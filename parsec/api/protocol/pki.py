@@ -32,7 +32,7 @@ class PkiEnrollmentSubmitReqSchema(BaseReqSchema):
 
 
 class PkiEnrollmentSubmitRepSchema(BaseRepSchema):
-    pass
+    submitted_on = fields.DateTime(required=True)
 
 
 pki_enrollment_submit_serializer = CmdSerializer(

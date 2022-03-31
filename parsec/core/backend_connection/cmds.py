@@ -85,7 +85,6 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
         BackendCmdsBadResponse
     """
     transport.logger.info("Request", cmd=req["cmd"])
-
     try:
         raw_req = serializer.req_dumps(req)
 

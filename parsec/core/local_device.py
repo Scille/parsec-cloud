@@ -56,6 +56,10 @@ class LocalDeviceCryptoError(LocalDeviceError):
     pass
 
 
+class LocalDeviceSignatureError(LocalDeviceError):
+    pass
+
+
 class LocalDeviceNotFoundError(LocalDeviceError):
     pass
 

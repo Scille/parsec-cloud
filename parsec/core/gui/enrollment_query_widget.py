@@ -6,7 +6,9 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.crypto import PrivateKey, SigningKey
 
-from parsec.api.protocol.pki import pki_enrollment_request_serializer
+# from parsec.api.protocol.pki import pki_enrollment_request_serializer
+# TODO: fix me !
+pki_enrollment_request_serializer = None
 from parsec.api.protocol import DeviceLabel
 
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
