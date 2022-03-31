@@ -125,13 +125,13 @@ async def ask_info_new_user(
     default_device_label: str, default_user_label: str, default_user_email: str
 ) -> Tuple[DeviceLabel, HumanHandle, UserProfile]:
     while True:
-        granted_email = await aprompt("New user email", default=default_user_email)
         granted_label = await aprompt("New user label", default=default_user_label)
+        granted_email = await aprompt("New user email", default=default_user_email)
         try:
             granted_human_handle = HumanHandle(email=granted_email, label=granted_label)
             break
         except ValueError:
-            click.echo("Invalid user email and/or label")
+            click.echo("Invalid user label and/or email")
             continue
 
     while True:
@@ -180,7 +180,7 @@ async def _do_greet_user(device: LocalDevice, initial_ctx: UserGreetInitialCtx) 
         in_progress_ctx = await in_progress_ctx.do_signify_trust()
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
-    granted_device_label, granted_human_handle, granted_profile = ask_info_new_user(
+    granted_device_label, granted_human_handle, granted_profile = await ask_info_new_user(
         default_device_label=in_progress_ctx.requested_device_label,
         default_user_label=in_progress_ctx.requested_human_handle.label,
         default_user_email=in_progress_ctx.requested_human_handle.email,
