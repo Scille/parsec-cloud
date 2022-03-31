@@ -8,7 +8,7 @@ import platform
 from pendulum import DateTime
 import click
 
-from parsec.api.protocol import HumanHandle, DeviceLabel
+from parsec.api.protocol import DeviceLabel
 from parsec.cli_utils import cli_exception_handler, spinner, aprompt
 from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.cli.invitation import ask_info_new_user
@@ -22,7 +22,7 @@ from parsec.core.cli.utils import (
 )
 from parsec.core.pki import (
     is_pki_enrollment_available,
-    PkiEnrollementSubmitterInitalCtx,
+    PkiEnrollmentSubmitterInitialCtx,
     PkiEnrollmentSubmitterSubmittedCtx,
     PkiEnrollmentSubmitterSubmittedStatusCtx,
     PkiEnrollmentSubmitterCancelledStatusCtx,
@@ -48,20 +48,22 @@ async def _pki_enrollment_submit(
     requested_device_label: DeviceLabel,
     force: bool,
 ):
-    ctx = PkiEnrollementSubmitterInitalCtx.new(addr)
-    try:
-        requested_human_handle = HumanHandle(
-            email=ctx.x509_certificate.issuer_email, label=ctx.x509_certificate.issuer_label
-        )
-    except ValueError:
-        raise RuntimeError("bah !")  # TODO
+    ctx = PkiEnrollmentSubmitterInitialCtx.new(addr)
+
+    x509_display = f"PKI issuer SHA1 fingerprint: " + click.style(
+        ctx.x509_certificate.certificate_sha1.hex(), fg="yellow"
+    )
+    x509_display += "\nPKI issuer label: " + click.style(
+        ctx.x509_certificate.issuer_label, fg="yellow"
+    )
+    x509_display += "\nPKI issuer email: " + click.style(
+        ctx.x509_certificate.issuer_email, fg="yellow"
+    )
+    click.echo(x509_display)
 
     async with spinner("Sending PKI enrollment to the backend"):
         ctx = await ctx.submit(
-            config_dir=config.config_dir,
-            requested_device_label=requested_device_label,
-            requested_human_handle=requested_human_handle,
-            force=force,
+            config_dir=config.config_dir, requested_device_label=requested_device_label, force=force
         )
 
     enrollment_id_display = click.style(ctx.enrollment_id.hex, fg="green")
@@ -122,17 +124,14 @@ async def _pki_enrollment_poll(
         display = f"Pending enrollment {enrollment_id_display}"
         display += f"\n  submitted on: " + click.style(pending.submitted_on, fg="yellow")
         display += f"\n  organization URL: " + click.style(pending.addr, fg="yellow")
-        display += f"\n  X509 issuer SHA1 fingerprint: " + click.style(
+        display += f"\n  PKI issuer SHA1 fingerprint: " + click.style(
             pending.x509_certificate.certificate_sha1.hex(), fg="yellow"
         )
-        display += "\n  X509 issuer label: " + click.style(
+        display += "\n  PKI issuer label: " + click.style(
             pending.x509_certificate.issuer_label, fg="yellow"
         )
-        display += "\n  X509 issuer email: " + click.style(
+        display += "\n  PKI issuer email: " + click.style(
             pending.x509_certificate.issuer_email, fg="yellow"
-        )
-        display += "\n  requested human handle: " + click.style(
-            pending.submit_payload.requested_human_handle, fg="yellow"
         )
         display += "\n  requested device label: " + click.style(
             pending.submit_payload.requested_device_label, fg="yellow"
@@ -288,9 +287,6 @@ async def _pki_enrollment_review_pendings(
                 display += "\n  X509 issuer email: " + click.style(
                     pending.submitter_x509_certif.issuer_email, fg="yellow"
                 )
-                display += "\n  requested human handle: " + click.style(
-                    pending.submit_payload.requested_human_handle, fg="yellow"
-                )
                 display += "\n  requested device label: " + click.style(
                     pending.submit_payload.requested_device_label, fg="yellow"
                 )
@@ -350,19 +346,18 @@ async def _pki_enrollment_review_pendings(
                     assert action == "accept"
 
                     # Let the admin edit the user information
-                    human_label, human_email, device_label, profile = await ask_info_new_user(
-                        requested_device_label=pending.submit_payload.requested_device_label,
-                        requested_human_handle=pending.submit_payload.requested_human_handle,
+                    granted_device_label, granted_human_handle, granted_profile = await ask_info_new_user(
+                        default_device_label=pending.submit_payload.requested_device_label,
+                        default_user_label=pending.submitter_x509_certif.issuer_label,
+                        default_user_email=pending.submitter_x509_certif.issuer_email,
                     )
-                    device_label = DeviceLabel(device_label)
-                    human_handle = HumanHandle(human_email, human_label)
 
                     async with spinner("Accepting PKI enrollment in the backend"):
                         await pending.accept(
                             author=device,
-                            device_label=device_label,
-                            human_handle=human_handle,
-                            profile=profile,
+                            device_label=granted_device_label,
+                            human_handle=granted_human_handle,
+                            profile=granted_profile,
                         )
 
         if preselected_actions:

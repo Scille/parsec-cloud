@@ -3,7 +3,7 @@
 
 from parsec.core.pki.plumbing import is_pki_enrollment_available, X509Certificate
 from parsec.core.pki.submitter import (
-    PkiEnrollementSubmitterInitalCtx,
+    PkiEnrollmentSubmitterInitialCtx,
     PkiEnrollmentSubmitterSubmittedCtx,
     PkiEnrollmentSubmitterSubmittedStatusCtx,
     PkiEnrollmentSubmitterCancelledStatusCtx,
@@ -24,7 +24,7 @@ __all__ = (
     "is_pki_enrollment_available",
     "X509Certificate",
     # Submitter
-    "PkiEnrollementSubmitterInitalCtx",
+    "PkiEnrollmentSubmitterInitialCtx",
     "PkiEnrollmentSubmitterSubmittedCtx",
     "PkiEnrollmentSubmitterSubmittedStatusCtx",
     "PkiEnrollmentSubmitterCancelledStatusCtx",

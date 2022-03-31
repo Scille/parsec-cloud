@@ -29,7 +29,6 @@ async def _submit_request(
     payload = PkiEnrollmentSubmitPayload(
         verify_key=bob.verify_key,
         public_key=bob.public_key,
-        requested_human_handle=bob.human_handle,
         requested_device_label=bob.device_label,
     ).dump()
     rep = await pki_enrollment_submit(
@@ -86,7 +85,6 @@ async def test_pki_submit(anonymous_backend_sock, bob):
     payload = PkiEnrollmentSubmitPayload(
         verify_key=bob.verify_key,
         public_key=bob.public_key,
-        requested_human_handle=bob.human_handle,
         requested_device_label=bob.device_label,
     ).dump()
     rep = await pki_enrollment_submit(

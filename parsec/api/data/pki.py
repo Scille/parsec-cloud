@@ -23,8 +23,9 @@ class PkiEnrollmentSubmitPayload(BaseAPIData):
         type = fields.CheckedConstant("pki_enrollment_submit_payload", required=True)
         verify_key = fields.VerifyKey(required=True)
         public_key = fields.PublicKey(required=True)
-        requested_human_handle = HumanHandleField(required=True)
         requested_device_label = DeviceLabelField(required=True)
+        # No requested human handle given the accepter should use instead the
+        # information from the submitter's X509 certificate
 
         @post_load
         def make_obj(self, data: Dict[str, Any]) -> "PkiEnrollmentSubmitPayload":
@@ -33,7 +34,6 @@ class PkiEnrollmentSubmitPayload(BaseAPIData):
 
     verify_key: VerifyKey
     public_key: PublicKey
-    requested_human_handle: HumanHandle
     requested_device_label: DeviceLabel
 
 

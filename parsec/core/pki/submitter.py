@@ -7,7 +7,7 @@ from pathlib import Path
 from pendulum import DateTime
 
 from parsec.api.data import PkiEnrollmentSubmitPayload
-from parsec.api.protocol import HumanHandle, DeviceLabel, PkiEnrollmentStatus
+from parsec.api.protocol import DeviceLabel, PkiEnrollmentStatus
 from parsec.core.backend_connection import (
     pki_enrollment_submit as cmd_pki_enrollment_submit,
     pki_enrollment_info as cmd_pki_enrollment_info,
@@ -30,7 +30,7 @@ from parsec.crypto import PrivateKey, SigningKey
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollementSubmitterInitalCtx:
+class PkiEnrollmentSubmitterInitialCtx:
     addr: BackendPkiEnrollmentAddr
     enrollment_id: UUID
     signing_key: SigningKey
@@ -54,11 +54,7 @@ class PkiEnrollementSubmitterInitalCtx:
         )
 
     async def submit(
-        self,
-        config_dir: Path,
-        requested_device_label: DeviceLabel,
-        requested_human_handle: HumanHandle,
-        force: bool,
+        self, config_dir: Path, requested_device_label: DeviceLabel, force: bool
     ) -> "PkiEnrollmentSubmitterSubmittedCtx":
         # TODO: document exceptions !
 
@@ -66,7 +62,6 @@ class PkiEnrollementSubmitterInitalCtx:
         cooked_submit_payload = PkiEnrollmentSubmitPayload(
             verify_key=self.signing_key.verify_key,
             public_key=self.private_key.public_key,
-            requested_human_handle=requested_human_handle,
             requested_device_label=requested_device_label,
         )
         raw_submit_payload = cooked_submit_payload.dump()
