@@ -4,12 +4,15 @@ use pyo3::prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 
 mod addrs;
 mod binding_utils;
+mod certif;
 mod crypto;
 mod ids;
 mod invite;
 mod local_manifest;
 mod manifest;
 mod protocol;
+mod time;
+mod trustchain;
 
 /// A Python module implemented in Rust. The name of this function must match
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
@@ -167,5 +170,11 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchReq>()?;
     m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchRep>()?;
     m.add_class::<protocol::ReencryptionBatchEntry>()?;
+    // Trustchain
+    m.add_class::<certif::UserCertificate>()?;
+    m.add_class::<certif::RevokedUserCertificate>()?;
+    m.add_class::<certif::DeviceCertificate>()?;
+    m.add_class::<trustchain::TrustchainContext>()?;
+    m.add_function(wrap_pyfunction!(time::freeze_time, m)?)?;
     Ok(())
 }

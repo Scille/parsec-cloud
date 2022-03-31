@@ -8,6 +8,7 @@ import trio
 import attr
 import pendulum
 
+from libparsec.types import freeze_time as _Rs_freeze_time
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
@@ -90,6 +91,8 @@ def freeze_time(time=None, device=None):
     global __freeze_time_task
     if isinstance(time, str):
         time = pendulum.parse(time)
+
+    _Rs_freeze_time(time)
 
     # Save previous context
     previous_task = __freeze_time_task

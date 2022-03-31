@@ -29,7 +29,7 @@ pub enum TrustchainError {
     MissingUserCertificate { path: String, user_id: UserID },
 
     #[error(
-        "{path}: Signature {verified_timestamp} is posterior to user revocation {user_timestamp}"
+        "{path}: Signature ({verified_timestamp}) is posterior to user revocation ({user_timestamp})"
     )]
     SignaturePosteriorUserRevocation {
         path: String,

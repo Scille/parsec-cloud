@@ -26,7 +26,7 @@ async def test_retrieve_device(running_backend, alice_remote_devices_manager, bo
         # Offline with cache
         with running_backend.offline():
             device2 = await remote_devices_manager.get_device(bob.device_id)
-            assert device2 is device
+            assert device2 == device
 
     d2 = d1.add(seconds=remote_devices_manager.cache_validity + 1)
     with freeze_time(d2):
@@ -60,7 +60,7 @@ async def test_retrieve_user(running_backend, alice_remote_devices_manager, bob)
         # Offline with cache
         with running_backend.offline():
             user2, revoked_user2 = await remote_devices_manager.get_user(bob.user_id)
-            assert user2 is user
+            assert user2 == user
             assert revoked_user2 is None
 
     d2 = d1.add(seconds=remote_devices_manager.cache_validity + 1)

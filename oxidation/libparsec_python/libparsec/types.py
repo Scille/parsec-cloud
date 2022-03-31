@@ -146,6 +146,12 @@ try:
         VlobMaintenanceSaveReencryptionBatchReq,
         VlobMaintenanceSaveReencryptionBatchRep,
         ReencryptionBatchEntry,
+        # Trustchain
+        UserCertificate,
+        DeviceCertificate,
+        RevokedUserCertificate,
+        TrustchainContext,
+        freeze_time,
     )
 except ImportError as exc:
     print(f"Import error in libparsec/types: {exc}")
@@ -295,4 +301,10 @@ __all__ = (
     "VlobMaintenanceSaveReencryptionBatchReq",
     "VlobMaintenanceSaveReencryptionBatchRep",
     "ReencryptionBatchEntry",
+    # Trustchain
+    "UserCertificate",
+    "DeviceCertificate",
+    "RevokedUserCertificate",
+    "TrustchainContext",
+    "freeze_time",
 )

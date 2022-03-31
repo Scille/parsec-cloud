@@ -1,23 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use crate::{DateTime, DeviceID};
 use thiserror::Error;
 
-#[derive(Error, Debug)]
-pub enum DataError {
-    #[error("Invalid encryption")]
-    InvalidEncryption,
-    #[error("Signature was forged or corrupt")]
-    InvalidSignature,
-    #[error("Invalid compression")]
-    InvalidCompression,
-    #[error("Invalid serializarion")]
-    InvalidSerialization,
-    #[error("Invalid author: expected `{expected}`, got `{got}`")]
-    UnexpectedAuthor { expected: DeviceID, got: DeviceID },
-    #[error("Invalid timestamp: expected `{expected}`, got `{got}`")]
-    UnexpectedTimestamp { expected: DateTime, got: DateTime },
-}
+use crate::{DateTime, DeviceID};
+use parsec_api_crypto::CryptoError;
 
 #[derive(Error, Debug)]
 pub enum EntryNameError {
@@ -26,3 +12,26 @@ pub enum EntryNameError {
     #[error("Invalid name")]
     InvalidName,
 }
+
+#[derive(Error, Debug, PartialEq)]
+pub enum DataError {
+    #[error("Invalid compression")]
+    Compression,
+
+    #[error("{exc}")]
+    Crypto { exc: CryptoError },
+
+    #[error("Invalid serialization")]
+    Serialization,
+
+    #[error("Invalid author: expected `{expected}`, got `{}`", match .got { Some(got) => got.to_string(), None => "None".to_string() })]
+    UnexpectedAuthor {
+        expected: DeviceID,
+        got: Option<DeviceID>,
+    },
+
+    #[error("Invalid timestamp: expected `{expected}`, got `{got}`")]
+    UnexpectedTimestamp { expected: DateTime, got: DateTime },
+}
+
+pub type DataResult<T> = Result<T, DataError>;

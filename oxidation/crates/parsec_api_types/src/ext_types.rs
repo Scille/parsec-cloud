@@ -60,10 +60,31 @@ impl DateTime {
         ts_us as f64 / 1e6
     }
 
+    #[cfg(not(feature = "mock-time"))]
     #[inline]
     pub fn now() -> Self {
         let now = chrono::Utc::now();
         now.into()
+    }
+}
+
+#[cfg(feature = "mock-time")]
+mod mock_time {
+    use super::DateTime;
+    use std::cell::RefCell;
+
+    thread_local! {
+        static MOCK_TIME: RefCell<DateTime> = RefCell::new(chrono::Utc::now().into());
+    }
+
+    impl DateTime {
+        pub fn now() -> Self {
+            MOCK_TIME.with(|cell| *cell.borrow())
+        }
+
+        pub fn freeze_time(time: Self) {
+            MOCK_TIME.with(|cell| *cell.borrow_mut() = time)
+        }
     }
 }
 
