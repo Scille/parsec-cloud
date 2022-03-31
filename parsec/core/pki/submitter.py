@@ -30,7 +30,7 @@ from parsec.crypto import PrivateKey, SigningKey
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollementSubmiterInitalCtx:
+class PkiEnrollementSubmitterInitalCtx:
     addr: BackendPkiEnrollmentAddr
     enrollment_id: UUID
     signing_key: SigningKey
@@ -38,7 +38,7 @@ class PkiEnrollementSubmiterInitalCtx:
     x509_certificate: X509Certificate
 
     @classmethod
-    def new(cls, addr: BackendPkiEnrollmentAddr) -> "PkiEnrollmentSubmiterSubmittedStatusCtx":
+    def new(cls, addr: BackendPkiEnrollmentAddr) -> "PkiEnrollmentSubmitterSubmittedStatusCtx":
         enrollment_id = uuid4()
         signing_key = SigningKey.generate()
         private_key = PrivateKey.generate()
@@ -59,7 +59,7 @@ class PkiEnrollementSubmiterInitalCtx:
         requested_device_label: DeviceLabel,
         requested_human_handle: HumanHandle,
         force: bool,
-    ) -> "PkiEnrollmentSubmiterSubmittedCtx":
+    ) -> "PkiEnrollmentSubmitterSubmittedCtx":
         # TODO: document exceptions !
 
         # Build submit payload
@@ -109,7 +109,7 @@ class PkiEnrollementSubmiterInitalCtx:
             private_key=self.private_key,
         )
 
-        return PkiEnrollmentSubmiterSubmittedStatusCtx(
+        return PkiEnrollmentSubmitterSubmittedStatusCtx(
             config_dir=config_dir,
             x509_certificate=self.x509_certificate,
             addr=self.addr,
@@ -120,7 +120,7 @@ class PkiEnrollementSubmiterInitalCtx:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollmentSubmiterSubmittedCtx:
+class PkiEnrollmentSubmitterSubmittedCtx:
     config_dir: Path
     x509_certificate: X509Certificate
     addr: BackendPkiEnrollmentAddr
@@ -129,11 +129,11 @@ class PkiEnrollmentSubmiterSubmittedCtx:
     submit_payload: PkiEnrollmentSubmitPayload
 
     @classmethod
-    async def list_from_disk(cls, config_dir: Path) -> List["PkiEnrollmentSubmiterSubmittedCtx"]:
+    async def list_from_disk(cls, config_dir: Path) -> List["PkiEnrollmentSubmitterSubmittedCtx"]:
         # TODO: document exceptions !
         ctxs = []
         for pending in pki_enrollment_list_local_pendings(config_dir=config_dir):
-            ctx = PkiEnrollmentSubmiterSubmittedCtx(
+            ctx = PkiEnrollmentSubmitterSubmittedCtx(
                 config_dir=config_dir,
                 x509_certificate=pending.x509_certificate,
                 addr=pending.addr,
@@ -148,11 +148,11 @@ class PkiEnrollmentSubmiterSubmittedCtx:
     async def poll(
         self, extra_trust_roots: Iterable[Path] = ()
     ) -> Union[
-        "PkiEnrollmentSubmiterSubmittedStatusCtx",
-        "PkiEnrollmentSubmiterCancelledStatusCtx",
-        "PkiEnrollmentSubmiterRejectedStatusCtx",
-        "PkiEnrollmentSubmiterAcceptedStatusButBadSignatureCtx",
-        "PkiEnrollmentSubmiterAcceptedStatusCtx",
+        "PkiEnrollmentSubmitterSubmittedStatusCtx",
+        "PkiEnrollmentSubmitterCancelledStatusCtx",
+        "PkiEnrollmentSubmitterRejectedStatusCtx",
+        "PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx",
+        "PkiEnrollmentSubmitterAcceptedStatusCtx",
     ]:
         #  Tuple[PkiEnrollmentStatus, DateTime, Optional[LocalDevice]]:
         try:
@@ -167,7 +167,7 @@ class PkiEnrollmentSubmiterSubmittedCtx:
         enrollment_status = rep["type"]
 
         if enrollment_status == PkiEnrollmentStatus.SUBMITTED:
-            return PkiEnrollmentSubmiterSubmittedStatusCtx(
+            return PkiEnrollmentSubmitterSubmittedStatusCtx(
                 config_dir=self.config_dir,
                 x509_certificate=self.x509_certificate,
                 addr=self.addr,
@@ -177,7 +177,7 @@ class PkiEnrollmentSubmiterSubmittedCtx:
             )
 
         elif enrollment_status == PkiEnrollmentStatus.CANCELLED:
-            return PkiEnrollmentSubmiterCancelledStatusCtx(
+            return PkiEnrollmentSubmitterCancelledStatusCtx(
                 config_dir=self.config_dir,
                 x509_certificate=self.x509_certificate,
                 addr=self.addr,
@@ -188,7 +188,7 @@ class PkiEnrollmentSubmiterSubmittedCtx:
             )
 
         elif enrollment_status == PkiEnrollmentStatus.REJECTED:
-            return PkiEnrollmentSubmiterRejectedStatusCtx(
+            return PkiEnrollmentSubmitterRejectedStatusCtx(
                 config_dir=self.config_dir,
                 x509_certificate=self.x509_certificate,
                 addr=self.addr,
@@ -207,7 +207,7 @@ class PkiEnrollmentSubmiterSubmittedCtx:
                     payload_signature=rep["accept_payload_signature"],
                     payload=rep["accept_payload"],
                 )
-                return PkiEnrollmentSubmiterAcceptedStatusCtx(
+                return PkiEnrollmentSubmitterAcceptedStatusCtx(
                     config_dir=self.config_dir,
                     x509_certificate=self.x509_certificate,
                     addr=self.addr,
@@ -221,7 +221,7 @@ class PkiEnrollmentSubmiterSubmittedCtx:
 
             # Verification failed
             except LocalDeviceError as exc:
-                return PkiEnrollmentSubmiterAcceptedStatusButBadSignatureCtx(
+                return PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx(
                     config_dir=self.config_dir,
                     x509_certificate=self.x509_certificate,
                     addr=self.addr,
@@ -234,7 +234,7 @@ class PkiEnrollmentSubmiterSubmittedCtx:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class BasePkiEnrollmentSubmiterStatusCtx:
+class BasePkiEnrollmentSubmitterStatusCtx:
     config_dir: Path
     x509_certificate: X509Certificate
     addr: BackendPkiEnrollmentAddr
@@ -244,7 +244,7 @@ class BasePkiEnrollmentSubmiterStatusCtx:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollmentSubmiterSubmittedStatusCtx(BasePkiEnrollmentSubmiterStatusCtx):
+class PkiEnrollmentSubmitterSubmittedStatusCtx(BasePkiEnrollmentSubmitterStatusCtx):
     submit_payload: PkiEnrollmentSubmitPayload
 
     async def remove_from_disk(self):
@@ -258,7 +258,7 @@ class PkiEnrollmentSubmiterSubmittedStatusCtx(BasePkiEnrollmentSubmiterStatusCtx
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollmentSubmiterCancelledStatusCtx(BasePkiEnrollmentSubmiterStatusCtx):
+class PkiEnrollmentSubmitterCancelledStatusCtx(BasePkiEnrollmentSubmitterStatusCtx):
     cancelled_on: DateTime
 
     async def remove_from_disk(self):
@@ -272,7 +272,7 @@ class PkiEnrollmentSubmiterCancelledStatusCtx(BasePkiEnrollmentSubmiterStatusCtx
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollmentSubmiterRejectedStatusCtx(BasePkiEnrollmentSubmiterStatusCtx):
+class PkiEnrollmentSubmitterRejectedStatusCtx(BasePkiEnrollmentSubmitterStatusCtx):
     rejected_on: DateTime
 
     async def remove_from_disk(self):
@@ -286,7 +286,7 @@ class PkiEnrollmentSubmiterRejectedStatusCtx(BasePkiEnrollmentSubmiterStatusCtx)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollmentSubmiterAcceptedStatusButBadSignatureCtx(BasePkiEnrollmentSubmiterStatusCtx):
+class PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx(BasePkiEnrollmentSubmitterStatusCtx):
     accepted_on: DateTime
     error: str
 
@@ -301,7 +301,7 @@ class PkiEnrollmentSubmiterAcceptedStatusButBadSignatureCtx(BasePkiEnrollmentSub
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PkiEnrollmentSubmiterAcceptedStatusCtx(BasePkiEnrollmentSubmiterStatusCtx):
+class PkiEnrollmentSubmitterAcceptedStatusCtx(BasePkiEnrollmentSubmitterStatusCtx):
     accepted_on: DateTime
     accepter_x509_certif: X509Certificate
     accept_payload: PkiEnrollmentAcceptPayload

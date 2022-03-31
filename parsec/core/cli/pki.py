@@ -22,13 +22,13 @@ from parsec.core.cli.utils import (
 )
 from parsec.core.pki import (
     is_pki_enrollment_available,
-    PkiEnrollementSubmiterInitalCtx,
-    PkiEnrollmentSubmiterSubmittedCtx,
-    PkiEnrollmentSubmiterSubmittedStatusCtx,
-    PkiEnrollmentSubmiterCancelledStatusCtx,
-    PkiEnrollmentSubmiterRejectedStatusCtx,
-    PkiEnrollmentSubmiterAcceptedStatusButBadSignatureCtx,
-    PkiEnrollmentSubmiterAcceptedStatusCtx,
+    PkiEnrollementSubmitterInitalCtx,
+    PkiEnrollmentSubmitterSubmittedCtx,
+    PkiEnrollmentSubmitterSubmittedStatusCtx,
+    PkiEnrollmentSubmitterCancelledStatusCtx,
+    PkiEnrollmentSubmitterRejectedStatusCtx,
+    PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx,
+    PkiEnrollmentSubmitterAcceptedStatusCtx,
     accepter_list_submitted_from_backend,
     PkiEnrollementAccepterValidSubmittedCtx,
     PkiEnrollementAccepterInvalidSubmittedCtx,
@@ -48,7 +48,7 @@ async def _pki_enrollment_submit(
     requested_device_label: DeviceLabel,
     force: bool,
 ):
-    ctx = PkiEnrollementSubmiterInitalCtx.new(addr)
+    ctx = PkiEnrollementSubmitterInitalCtx.new(addr)
     try:
         requested_human_handle = HumanHandle(
             email=ctx.x509_certificate.issuer_email, label=ctx.x509_certificate.issuer_label
@@ -99,7 +99,7 @@ async def _pki_enrollment_poll(
     save_device_with_selected_auth: Callable,
     extra_trust_roots: Sequence[Path],
 ):
-    pendings = await PkiEnrollmentSubmiterSubmittedCtx.list_from_disk(config_dir=config.config_dir)
+    pendings = await PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(config_dir=config.config_dir)
 
     # Try to shorten the UUIDs to make it easier to work with
     enrollment_ids = [e.enrollment_id for e in pendings]
@@ -115,7 +115,7 @@ async def _pki_enrollment_poll(
         if not pendings:
             raise RuntimeError(f"No enrollment with id {enrollment_id_filter} locally available")
 
-    def _display_pending_enrollment(pending: PkiEnrollmentSubmiterSubmittedCtx):
+    def _display_pending_enrollment(pending: PkiEnrollmentSubmitterSubmittedCtx):
         enrollment_id_display = click.style(
             pending.enrollment_id.hex[:enrollment_id_len], fg="green"
         )
@@ -153,25 +153,25 @@ async def _pki_enrollment_poll(
                 # TODO: exception handling !
                 raise
 
-        if isinstance(ctx, PkiEnrollmentSubmiterSubmittedStatusCtx):
+        if isinstance(ctx, PkiEnrollmentSubmitterSubmittedStatusCtx):
             # Nothing to do
             click.echo("Enrollment is still pending")
 
-        elif isinstance(ctx, PkiEnrollmentSubmiterCancelledStatusCtx):
+        elif isinstance(ctx, PkiEnrollmentSubmitterCancelledStatusCtx):
             click.echo(
                 "Enrollment has been cancelled on " + click.style(ctx.submitted_on, fg="yellow")
             )
             if not dry_run:
                 await ctx.remove_from_disk()
 
-        elif isinstance(ctx, PkiEnrollmentSubmiterRejectedStatusCtx):
+        elif isinstance(ctx, PkiEnrollmentSubmitterRejectedStatusCtx):
             click.echo(
                 "Enrollment has been rejected on " + click.style(ctx.rejected_on, fg="yellow")
             )
             if not dry_run:
                 await ctx.remove_from_disk()
 
-        elif isinstance(ctx, PkiEnrollmentSubmiterAcceptedStatusButBadSignatureCtx):
+        elif isinstance(ctx, PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx):
             click.echo(
                 "Enrollment has been accepted on " + click.style(ctx.accepted_on, fg="yellow")
             )
@@ -180,7 +180,7 @@ async def _pki_enrollment_poll(
             )
 
         else:
-            assert isinstance(ctx, PkiEnrollmentSubmiterAcceptedStatusCtx)
+            assert isinstance(ctx, PkiEnrollmentSubmitterAcceptedStatusCtx)
             click.echo(
                 "Enrollment has been accepted on " + click.style(ctx.accepted_on, fg="yellow")
             )
