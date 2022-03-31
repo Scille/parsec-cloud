@@ -52,7 +52,7 @@ from parsec.core.types import (
 )
 from parsec.core.config import CoreConfig
 from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
-from parsec.core.pki import X509Certificate, LocalPendingEnrollment
+from parsec.core.pki.plumbing import X509Certificate, LocalPendingEnrollment
 
 from tests.common import AsyncMock
 
@@ -863,7 +863,7 @@ def mocked_parsec_ext_smartcard(monkeypatch):
         return mocked_parsec_ext_smartcard
 
     monkeypatch.setattr(
-        "parsec.core.pki._load_smartcard_extension", _mocked_load_smartcard_extension
+        "parsec.core.pki.plumbing._load_smartcard_extension", _mocked_load_smartcard_extension
     )
     return mocked_parsec_ext_smartcard
 

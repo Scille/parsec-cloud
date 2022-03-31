@@ -2,46 +2,36 @@
 
 import attr
 from typing import Sequence, Optional, Callable
-from uuid import UUID, uuid4
+from uuid import UUID
 from pathlib import Path
 import platform
 from pendulum import DateTime
 import click
 
-from parsec.api.data import PkiEnrollmentSubmitPayload
 from parsec.api.protocol import HumanHandle, DeviceLabel, PkiEnrollmentStatus
-from parsec.cli_utils import cli_exception_handler, operation, spinner, aprompt
-from parsec.core.backend_connection import (
-    backend_authenticated_cmds_factory,
-    pki_enrollment_submit as cmd_pki_enrollment_submit,
-    pki_enrollment_info as cmd_pki_enrollment_info,
-)
+from parsec.cli_utils import cli_exception_handler, spinner, aprompt
+from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.cli.invitation import ask_info_new_user
 from parsec.core.config import CoreConfig
-from parsec.core.types import BackendPkiEnrollmentAddr, BackendOrganizationAddr
+from parsec.core.types import BackendPkiEnrollmentAddr
 from parsec.core.cli.utils import (
     cli_command_base_options,
     core_config_and_device_options,
     core_config_options,
     save_device_options,
 )
-from parsec.core.pki import (
-    LocalPendingEnrollment,
-    is_pki_enrollment_available,
-    pki_enrollment_select_certificate,
-    pki_enrollment_sign_payload,
-    pki_enrollment_save_local_pending,
-    pki_enrollment_remove_local_pending,
-    pki_enrollment_list_local_pendings,
-    pki_enrollment_load_accept_payload,
+from parsec.core.pki2 import (
     pki_enrollment_remote_pendings_list,
     pki_enrollment_accept_remote_pending,
     ValidRemotePendingEnrollment,
     ClaqueAuSolRemotePendingEnrollment,
 )
+from parsec.core.pki import (
+    is_pki_enrollment_available,
+    PkiEnrollementSubmiterInitalCtx,
+    PkiEnrollmentSubmiterSubmittedCtx,
+)
 from parsec.core.types import LocalDevice
-from parsec.core.local_device import LocalDeviceError, generate_new_device
-from parsec.crypto import PrivateKey, SigningKey
 from parsec.utils import trio_run
 
 
@@ -56,62 +46,23 @@ async def _pki_enrollment_submit(
     requested_device_label: DeviceLabel,
     force: bool,
 ):
-    # Get smartcard module
-    enrollment_id = uuid4()
-    signing_key = SigningKey.generate()
-    private_key = PrivateKey.generate()
-
-    x509_certificate = pki_enrollment_select_certificate()
-    requested_human_handle = HumanHandle(
-        email=x509_certificate.issuer_email, label=x509_certificate.issuer_label
-    )
-
-    # Build submit payload
-    cooked_submit_payload = PkiEnrollmentSubmitPayload(
-        verify_key=signing_key.verify_key,
-        public_key=private_key.public_key,
-        requested_human_handle=requested_human_handle,
-        requested_device_label=requested_device_label,
-    )
-    raw_submit_payload = cooked_submit_payload.dump()
-    payload_signature: bytes
-    payload_signature = pki_enrollment_sign_payload(
-        payload=raw_submit_payload, x509_certificate=x509_certificate
-    )
+    ctx = PkiEnrollementSubmiterInitalCtx.new(addr)
+    try:
+        requested_human_handle = HumanHandle(
+            email=ctx.x509_certificate.issuer_email, label=ctx.x509_certificate.issuer_label
+        )
+    except ValueError:
+        raise RuntimeError("bah !")  # TODO
 
     async with spinner("Sending PKI enrollment to the backend"):
-
-        rep = await cmd_pki_enrollment_submit(
-            addr=addr,
-            enrollment_id=enrollment_id,
+        ctx = await ctx.submit(
+            config_dir=config.config_dir,
+            requested_device_label=requested_device_label,
+            requested_human_handle=requested_human_handle,
             force=force,
-            submitter_der_x509_certificate=x509_certificate.der_x509_certificate,
-            submit_payload_signature=payload_signature,
-            submit_payload=raw_submit_payload,
         )
 
-        if rep["status"] != "ok":
-            raise RuntimeError(f"Backend refused to create enrollment: {rep}")
-
-    # Save the enrollment request on disk.
-    # Note there is not atomicity with the request to the backend, but it's
-    # considered fine:
-    # - if the pending enrollment is not saved, CLI will display an error message (unless
-    #   the whole machine has crashed ^^) so user is expected to retry the submit command
-    # - in case the enrollment is accepted by a ninja-fast admin before the submit can be
-    #   retried, it's no big deal to revoke the newly enrolled user and restart from scratch
-    pki_enrollment_save_local_pending(
-        config_dir=config.config_dir,
-        x509_certificate=x509_certificate,
-        addr=addr,
-        enrollment_id=enrollment_id,
-        submitted_on=rep["submitted_on"],
-        submit_payload=cooked_submit_payload,
-        signing_key=signing_key,
-        private_key=private_key,
-    )
-
-    enrollment_id_display = click.style(enrollment_id.hex, fg="green")
+    enrollment_id_display = click.style(ctx.enrollment_id.hex, fg="green")
     click.echo(f"PKI enrollment {enrollment_id_display} submitted")
 
 
@@ -146,7 +97,7 @@ async def _pki_enrollment_poll(
     save_device_with_selected_auth: Callable,
     extra_trust_roots: Sequence[Path],
 ):
-    pendings = pki_enrollment_list_local_pendings(config_dir=config.config_dir)
+    pendings = PkiEnrollmentSubmiterSubmittedCtx.list_from_disk(config_dir=config.config_dir)
 
     # Try to shorten the UUIDs to make it easier to work with
     enrollment_ids = [e.enrollment_id for e in pendings]
@@ -162,7 +113,7 @@ async def _pki_enrollment_poll(
         if not pendings:
             raise RuntimeError(f"No enrollment with id {enrollment_id_filter} locally available")
 
-    def _display_pending_enrollment(pending: LocalPendingEnrollment):
+    def _display_pending_enrollment(pending: PkiEnrollmentSubmiterSubmittedCtx):
         enrollment_id_display = click.style(
             pending.enrollment_id.hex[:enrollment_id_len], fg="green"
         )
@@ -189,89 +140,33 @@ async def _pki_enrollment_poll(
     num_pendings_display = click.style(str(len(pendings)), fg="green")
     click.echo(f"Found {num_pendings_display} pending enrollment(s):")
 
-    for pending in pendings:
-        click.echo(_display_pending_enrollment(pending))
+    for ctx in pendings:
+        click.echo(_display_pending_enrollment(ctx))
 
         async with spinner("Fetching PKI enrollment status from the backend"):
             try:
-                rep = await cmd_pki_enrollment_info(
-                    addr=pending.addr, enrollment_id=pending.enrollment_id
+                enrollment_status, occured_on, maybe_local_device = await ctx.poll(
+                    clean_disk=True, extra_trust_roots=extra_trust_roots
                 )
+
             except Exception:
                 # TODO: exception handling !
                 raise
-            if rep["status"] != "ok":
-                # TODO: exception handling !
-                raise RuntimeError()
 
-        if rep["type"] == PkiEnrollmentStatus.SUBMITTED:
+        if enrollment_status == PkiEnrollmentStatus.SUBMITTED:
             # Nothing to do
             click.echo("Enrollment is still pending")
 
-        elif rep["type"] == PkiEnrollmentStatus.CANCELLED:
-            click.echo(
-                "Enrollment has been cancelled on " + click.style(rep["cancelled_on"], fg="yellow")
-            )
-            if not dry_run:
-                with operation("Removing enrollement info"):
-                    pki_enrollment_remove_local_pending(
-                        config_dir=config.config_dir, enrollment_id=pending.enrollment_id
-                    )
+        elif enrollment_status == PkiEnrollmentStatus.CANCELLED:
+            click.echo("Enrollment has been cancelled on " + click.style(occured_on, fg="yellow"))
 
-        elif rep["type"] == PkiEnrollmentStatus.REJECTED:
-            click.echo(
-                "Enrollment has been rejected on " + click.style(rep["rejected_on"], fg="yellow")
-            )
-            if not dry_run:
-                with operation("Removing enrollement info"):
-                    pki_enrollment_remove_local_pending(
-                        config_dir=config.config_dir, enrollment_id=pending.enrollment_id
-                    )
+        elif enrollment_status == PkiEnrollmentStatus.REJECTED:
+            click.echo("Enrollment has been rejected on " + click.style(occured_on, fg="yellow"))
 
         else:
-            assert rep["type"] == PkiEnrollmentStatus.ACCEPTED
-            click.echo(
-                "Enrollment has been accepted on " + click.style(rep["accepted_on"], fg="yellow")
-            )
-            if not dry_run:
-                with operation("Saving new device"):
-                    try:
-                        (accepter_x509_certif, accept_payload) = pki_enrollment_load_accept_payload(
-                            config=config,
-                            extra_trust_roots=extra_trust_roots,
-                            der_x509_certificate=rep["accepter_der_x509_certificate"],
-                            payload_signature=rep["accept_payload_signature"],
-                            payload=rep["accept_payload"],
-                        )
-
-                        # Create the local device
-                        organization_addr = BackendOrganizationAddr.build(
-                            backend_addr=pending.addr,
-                            organization_id=pending.addr.organization_id,
-                            root_verify_key=accept_payload.root_verify_key,
-                        )
-                        new_device = generate_new_device(
-                            organization_addr=organization_addr,
-                            device_id=accept_payload.device_id,
-                            profile=accept_payload.profile,
-                            human_handle=accept_payload.human_handle,
-                            device_label=accept_payload.device_label,
-                            signing_key=pending.signing_key,
-                            private_key=pending.private_key,
-                        )
-
-                    # Verification failed
-                    except LocalDeviceError as exc:
-                        click.echo(f"Invalid enrollement accep payload: {exc}")
-
-                    await save_device_with_selected_auth(
-                        config_dir=config.config_dir, device=new_device
-                    )
-
-                with operation("Removing enrollement info"):
-                    pki_enrollment_remove_local_pending(
-                        config_dir=config.config_dir, enrollment_id=pending.enrollment_id
-                    )
+            assert enrollment_status == PkiEnrollmentStatus.ACCEPTED
+            assert isinstance(maybe_local_device, LocalDevice)
+            click.echo("Enrollment has been accepted on " + click.style(occured_on, fg="yellow"))
 
 
 @click.command(short_help="check status of the pending PKI enrollments locally available")
