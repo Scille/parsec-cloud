@@ -48,12 +48,12 @@ class PkiEnrollmentInfoReqSchema(BaseReqSchema):
 
 
 class PkiEnrollmentInfoRepSubmittedSchema(BaseRepSchema):
-    type = fields.EnumCheckedConstant(PkiEnrollmentStatus.SUBMITTED, required=True)
+    enrollment_status = fields.EnumCheckedConstant(PkiEnrollmentStatus.SUBMITTED, required=True)
     submitted_on = fields.DateTime(required=True)
 
 
 class PkiEnrollmentInfoRepAcceptedSchema(BaseRepSchema):
-    type = fields.EnumCheckedConstant(PkiEnrollmentStatus.ACCEPTED, required=True)
+    enrollment_status = fields.EnumCheckedConstant(PkiEnrollmentStatus.ACCEPTED, required=True)
     submitted_on = fields.DateTime(required=True)
     accepted_on = fields.DateTime(required=True)
 
@@ -63,19 +63,19 @@ class PkiEnrollmentInfoRepAcceptedSchema(BaseRepSchema):
 
 
 class PkiEnrollmentInfoRepRejectedSchema(BaseRepSchema):
-    type = fields.EnumCheckedConstant(PkiEnrollmentStatus.REJECTED, required=True)
+    enrollment_status = fields.EnumCheckedConstant(PkiEnrollmentStatus.REJECTED, required=True)
     submitted_on = fields.DateTime(required=True)
     rejected_on = fields.DateTime(required=True)
 
 
 class PkiEnrollmentInfoRepCancelledSchema(BaseRepSchema):
-    type = fields.EnumCheckedConstant(PkiEnrollmentStatus.CANCELLED, required=True)
+    enrollment_status = fields.EnumCheckedConstant(PkiEnrollmentStatus.CANCELLED, required=True)
     submitted_on = fields.DateTime(required=True)
     cancelled_on = fields.DateTime(required=True)
 
 
 class PkiEnrollmentInfoRepSchema(OneOfSchema):
-    type_field = "type"
+    type_field = "enrollment_status"
     type_schemas = {
         PkiEnrollmentStatus.SUBMITTED: PkiEnrollmentInfoRepSubmittedSchema(),
         PkiEnrollmentStatus.ACCEPTED: PkiEnrollmentInfoRepAcceptedSchema(),
@@ -84,7 +84,7 @@ class PkiEnrollmentInfoRepSchema(OneOfSchema):
     }
 
     def get_obj_type(self, obj: Dict[str, object]) -> PkiEnrollmentStatus:
-        return cast(PkiEnrollmentStatus, obj["type"])
+        return cast(PkiEnrollmentStatus, obj["enrollment_status"])
 
 
 pki_enrollment_info_serializer = CmdSerializer(

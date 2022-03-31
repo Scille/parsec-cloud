@@ -159,7 +159,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
             # TODO: exception handling !
             raise RuntimeError()
 
-        enrollment_status = rep["type"]
+        enrollment_status = rep["enrollment_status"]
 
         if enrollment_status == PkiEnrollmentStatus.SUBMITTED:
             return PkiEnrollmentSubmitterSubmittedStatusCtx(

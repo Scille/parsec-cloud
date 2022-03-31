@@ -150,10 +150,13 @@ class BasePkiEnrollmentComponent:
                 organization_id=client_ctx.organization_id, enrollment_id=msg["enrollment_id"]
             )
             if isinstance(info, PkiEnrollmentInfoSubmitted):
-                rep = {"type": PkiEnrollmentStatus.SUBMITTED, "submitted_on": info.submitted_on}
+                rep = {
+                    "enrollment_status": PkiEnrollmentStatus.SUBMITTED,
+                    "submitted_on": info.submitted_on,
+                }
             elif isinstance(info, PkiEnrollmentInfoAccepted):
                 rep = {
-                    "type": PkiEnrollmentStatus.ACCEPTED,
+                    "enrollment_status": PkiEnrollmentStatus.ACCEPTED,
                     "submitted_on": info.submitted_on,
                     "accepted_on": info.accepted_on,
                     "accepter_der_x509_certificate": info.accepter_der_x509_certificate,
@@ -162,13 +165,13 @@ class BasePkiEnrollmentComponent:
                 }
             elif isinstance(info, PkiEnrollmentInfoRejected):
                 rep = {
-                    "type": PkiEnrollmentStatus.REJECTED,
+                    "enrollment_status": PkiEnrollmentStatus.REJECTED,
                     "submitted_on": info.submitted_on,
                     "rejected_on": info.rejected_on,
                 }
             elif isinstance(info, PkiEnrollmentInfoCancelled):
                 rep = {
-                    "type": PkiEnrollmentStatus.CANCELLED,
+                    "enrollment_status": PkiEnrollmentStatus.CANCELLED,
                     "submitted_on": info.submitted_on,
                     "cancelled_on": info.cancelled_on,
                 }
