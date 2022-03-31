@@ -692,10 +692,10 @@ def mocked_parsec_ext_smartcard(monkeypatch):
     class MockedParsecExtSmartcard:
         def __init__(self):
             self._pending_enrollments = defaultdict(list)
-            der_x509_certificate = b"der_X509_certificate:42:john@example.com:John Doe"
+            der_x509_certificate = b"der_X509_certificate:42:john@example.com:John Doe:My CA"
             self.default_x509_certificate = X509Certificate(
-                issuer_label="John Doe",
-                issuer_email="john@example.com",
+                issuer={"common_name": "My CA"},
+                subject={"common_name": "John Doe", "email_address": "john@example.com"},
                 der_x509_certificate=der_x509_certificate,
                 certificate_sha1=sha1(der_x509_certificate).digest(),
                 certificate_id=42,
@@ -768,12 +768,12 @@ def mocked_parsec_ext_smartcard(monkeypatch):
                 # Consider the certificate invalid
                 raise LocalDeviceCryptoError()
 
-            _, certificate_id, issuer_email, issuer_label = der_x509_certificate.decode(
+            _, certificate_id, subject_email, subject_cn, issuer_cn = der_x509_certificate.decode(
                 "utf8"
             ).split(":")
             x509_certificate = X509Certificate(
-                issuer_label=issuer_label,
-                issuer_email=issuer_email,
+                issuer={"common_name": issuer_cn},
+                subject={"email_address": subject_email, "common_name": subject_cn},
                 der_x509_certificate=der_x509_certificate,
                 certificate_sha1=sha1(der_x509_certificate).digest(),
                 certificate_id=certificate_id,

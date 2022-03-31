@@ -50,15 +50,19 @@ async def _pki_enrollment_submit(
 ):
     ctx = PkiEnrollmentSubmitterInitialCtx.new(addr)
 
-    x509_display = f"PKI issuer SHA1 fingerprint: " + click.style(
+    x509_display = f"Certificate SHA1 Fingerprint: " + click.style(
         ctx.x509_certificate.certificate_sha1.hex(), fg="yellow"
     )
-    x509_display += "\nPKI issuer label: " + click.style(
-        ctx.x509_certificate.issuer_label, fg="yellow"
+    x509_display += "\nCertificate Issuer Common Name: " + click.style(
+        ctx.x509_certificate.issuer_common_name, fg="yellow"
     )
-    x509_display += "\nPKI issuer email: " + click.style(
-        ctx.x509_certificate.issuer_email, fg="yellow"
+    x509_display += "\nCertificate Subject Common Name: " + click.style(
+        ctx.x509_certificate.subject_common_name, fg="yellow"
     )
+    x509_display += "\nCertificate Subject Email Address: " + click.style(
+        ctx.x509_certificate.subject_email_address, fg="yellow"
+    )
+
     click.echo(x509_display)
 
     async with spinner("Sending PKI enrollment to the backend"):
@@ -71,7 +75,7 @@ async def _pki_enrollment_submit(
 
 
 @click.command(short_help="submit a new PKI enrollment")
-@click.argument("backend_invitation", type=BackendPkiEnrollmentAddr.from_url)
+@click.argument("enrollment-address", type=BackendPkiEnrollmentAddr.from_url)
 @click.option(
     "--device-label", prompt="Device label", default=lambda: platform.node(), type=DeviceLabel
 )
@@ -83,7 +87,7 @@ async def _pki_enrollment_submit(
 @cli_command_base_options
 def pki_enrollment_submit(
     config: CoreConfig,
-    backend_invitation: BackendPkiEnrollmentAddr,
+    enrollment_address: BackendPkiEnrollmentAddr,
     device_label: DeviceLabel,
     force: bool,
     **kwargs,
@@ -91,7 +95,7 @@ def pki_enrollment_submit(
     """Submit a new PKI enrollment"""
     with cli_exception_handler(config.debug):
         _ensure_pki_enrollment_available()
-        trio_run(_pki_enrollment_submit, config, backend_invitation, device_label, force)
+        trio_run(_pki_enrollment_submit, config, enrollment_address, device_label, force)
 
 
 async def _pki_enrollment_poll(
@@ -122,18 +126,21 @@ async def _pki_enrollment_poll(
             pending.enrollment_id.hex[:enrollment_id_len], fg="green"
         )
         display = f"Pending enrollment {enrollment_id_display}"
-        display += f"\n  submitted on: " + click.style(pending.submitted_on, fg="yellow")
-        display += f"\n  organization URL: " + click.style(pending.addr, fg="yellow")
-        display += f"\n  PKI issuer SHA1 fingerprint: " + click.style(
+        display += f"\n  Submitted on: " + click.style(pending.submitted_on, fg="yellow")
+        display += f"\n  Organization URL: " + click.style(pending.addr, fg="yellow")
+        display += f"\n  Certificate SHA1 Fingerprint: " + click.style(
             pending.x509_certificate.certificate_sha1.hex(), fg="yellow"
         )
-        display += "\n  PKI issuer label: " + click.style(
-            pending.x509_certificate.issuer_label, fg="yellow"
+        display += "\n  Certificate Issuer Common Name: " + click.style(
+            pending.x509_certificate.issuer_common_name, fg="yellow"
         )
-        display += "\n  PKI issuer email: " + click.style(
-            pending.x509_certificate.issuer_email, fg="yellow"
+        display += "\n  Certificate Subject Common Name: " + click.style(
+            pending.x509_certificate.subject_common_name, fg="yellow"
         )
-        display += "\n  requested device label: " + click.style(
+        display += "\n  Certificate Subject Common Name: " + click.style(
+            pending.x509_certificate.subject_email_address, fg="yellow"
+        )
+        display += "\n  Requested Device Label: " + click.style(
             pending.submit_payload.requested_device_label, fg="yellow"
         )
         return display
@@ -273,21 +280,24 @@ async def _pki_enrollment_review_pendings(
                 pending.enrollment_id.hex[:enrollment_id_len], fg="green"
             )
             display = f"Pending enrollment {enrollment_id_display}"
-            display += f"\n  submitted on: " + click.style(pending.submitted_on, fg="yellow")
-            display += f"\n  X509 issuer SHA1 fingerprint: " + click.style(
+            display += f"\n  Submitted on: " + click.style(pending.submitted_on, fg="yellow")
+            display += f"\n  Certificate SHA1 fingerprint: " + click.style(
                 pending.submitter_x509_certificate_sha1.hex(), fg="yellow"
             )
             if isinstance(pending, PkiEnrollementAccepterInvalidSubmittedCtx):
                 display += click.style("Invalid enrollment", fg="red") + f": {pending.error}"
             else:
                 assert isinstance(pending, PkiEnrollementAccepterValidSubmittedCtx)
-                display += "\n  X509 issuer label: " + click.style(
-                    pending.submitter_x509_certif.issuer_label, fg="yellow"
+                display += "\n  Certificate Issuer Common Name: " + click.style(
+                    pending.submitter_x509_certif.issuer_common_name, fg="yellow"
                 )
-                display += "\n  X509 issuer email: " + click.style(
-                    pending.submitter_x509_certif.issuer_email, fg="yellow"
+                display += "\n  Certificate Subject Common Name: " + click.style(
+                    pending.submitter_x509_certif.subject_common_name, fg="yellow"
                 )
-                display += "\n  requested device label: " + click.style(
+                display += "\n  Certificate Subject Email Address: " + click.style(
+                    pending.submitter_x509_certif.subject_email_address, fg="yellow"
+                )
+                display += "\n  Requested Device Label: " + click.style(
                     pending.submit_payload.requested_device_label, fg="yellow"
                 )
             return display
@@ -348,8 +358,8 @@ async def _pki_enrollment_review_pendings(
                     # Let the admin edit the user information
                     granted_device_label, granted_human_handle, granted_profile = await ask_info_new_user(
                         default_device_label=pending.submit_payload.requested_device_label,
-                        default_user_label=pending.submitter_x509_certif.issuer_label,
-                        default_user_email=pending.submitter_x509_certif.issuer_email,
+                        default_user_label=pending.submitter_x509_certif.subject_common_name,
+                        default_user_email=pending.submitter_x509_certif.subject_email_address,
                     )
 
                     async with spinner("Accepting PKI enrollment in the backend"):

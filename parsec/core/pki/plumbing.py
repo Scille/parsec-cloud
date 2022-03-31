@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Iterable, Tuple, List, Optional
+from typing import Iterable, Tuple, List, Optional, Dict
 from pathlib import Path
 from hashlib import sha1
 from uuid import UUID
@@ -23,12 +23,23 @@ def _load_smartcard_extension():
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class X509Certificate:
-    # TODO: better names ?
-    issuer_label: str
-    issuer_email: str
+    issuer: Dict[str, str]
+    subject: Dict[str, str]
     der_x509_certificate: bytes
     certificate_sha1: bytes
     certificate_id: str
+
+    @property
+    def subject_common_name(self) -> Optional[str]:
+        return self.subject.get("common_name")
+
+    @property
+    def subject_email_address(self) -> Optional[str]:
+        return self.subject.get("email_address")
+
+    @property
+    def issuer_common_name(self) -> Optional[str]:
+        return self.issuer.get("common_name")
 
 
 def is_pki_enrollment_available() -> bool:
