@@ -50,7 +50,6 @@ from parsec.core.types import (
     BackendOrganizationAddr,
     BackendPkiEnrollmentAddr,
 )
-from parsec.core.config import CoreConfig
 from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
 from parsec.core.pki.plumbing import X509Certificate, LocalPendingEnrollment
 
@@ -819,7 +818,6 @@ def mocked_parsec_ext_smartcard(monkeypatch):
 
         def pki_enrollment_load_submit_payload(
             self,
-            config: CoreConfig,
             der_x509_certificate: bytes,
             payload_signature: bytes,
             payload: bytes,
@@ -839,7 +837,6 @@ def mocked_parsec_ext_smartcard(monkeypatch):
 
         def pki_enrollment_load_accept_payload(
             self,
-            config: CoreConfig,
             der_x509_certificate: bytes,
             payload_signature: bytes,
             payload: bytes,

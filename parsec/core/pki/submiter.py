@@ -108,6 +108,7 @@ class PkiEnrollementSubmiterInitalCtx:
         )
 
         return PkiEnrollmentSubmiterSubmittedCtx(
+            config_dir=config_dir,
             x509_certificate=self.x509_certificate,
             addr=self.addr,
             submitted_on=rep["submitted_on"],
@@ -120,6 +121,7 @@ class PkiEnrollementSubmiterInitalCtx:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentSubmiterSubmittedCtx:
+    config_dir: Path
     x509_certificate: X509Certificate
     addr: BackendPkiEnrollmentAddr
     submitted_on: DateTime
@@ -134,6 +136,7 @@ class PkiEnrollmentSubmiterSubmittedCtx:
         ctxs = []
         for pending in pki_enrollment_list_local_pendings(config_dir=config_dir):
             ctx = PkiEnrollmentSubmiterSubmittedCtx(
+                config_dir=config_dir,
                 x509_certificate=pending.x509_certificate,
                 addr=pending.addr,
                 submitted_on=pending.submitted_on,
@@ -162,28 +165,39 @@ class PkiEnrollmentSubmiterSubmittedCtx:
         maybe_new_device = None
         need_remove_local_pending = False
 
-        if enrollment_status == PkiEnrollmentStatus.SUBMITTED:
-            occured_on = self.submitted_on
+        try:
+            if enrollment_status == PkiEnrollmentStatus.SUBMITTED:
+                occured_on = self.submitted_on
 
-        elif enrollment_status == PkiEnrollmentStatus.CANCELLED:
-            need_remove_local_pending = True
-            occured_on = rep["cancelled_on"]
+            elif enrollment_status == PkiEnrollmentStatus.CANCELLED:
+                need_remove_local_pending = True
+                occured_on = rep["cancelled_on"]
 
-        elif enrollment_status == PkiEnrollmentStatus.REJECTED:
-            need_remove_local_pending = True
-            occured_on = rep["rejected_on"]
+            elif enrollment_status == PkiEnrollmentStatus.REJECTED:
+                need_remove_local_pending = True
+                occured_on = rep["rejected_on"]
 
-        else:
-            assert enrollment_status == PkiEnrollmentStatus.ACCEPTED
-            occured_on = rep["accepted_on"]
-            try:
-                (accepter_x509_certif, accept_payload) = pki_enrollment_load_accept_payload(
-                    config=self.config,
-                    extra_trust_roots=extra_trust_roots,
-                    der_x509_certificate=rep["accepter_der_x509_certificate"],
-                    payload_signature=rep["accept_payload_signature"],
-                    payload=rep["accept_payload"],
-                )
+            else:
+                assert enrollment_status == PkiEnrollmentStatus.ACCEPTED
+                # In case an exception occurs while checking the accepted payload,
+                # we still want to remove the local data.
+                # This is because in such case it is most likely we cannot do
+                # anything with the accepted payload and it's cheap for admin
+                # to revoked the user and restart the enrollment from scratch.
+                need_remove_local_pending = True
+
+                occured_on = rep["accepted_on"]
+                try:
+                    (accepter_x509_certif, accept_payload) = pki_enrollment_load_accept_payload(
+                        extra_trust_roots=extra_trust_roots,
+                        der_x509_certificate=rep["accepter_der_x509_certificate"],
+                        payload_signature=rep["accept_payload_signature"],
+                        payload=rep["accept_payload"],
+                    )
+
+                # Verification failed
+                except LocalDeviceError:
+                    raise
 
                 # Create the local device
                 organization_addr = BackendOrganizationAddr.build(
@@ -201,17 +215,11 @@ class PkiEnrollmentSubmiterSubmittedCtx:
                     private_key=self.private_key,
                 )
 
-            # Verification failed
-            except LocalDeviceError:
-                # TODO: exception handling !
-                raise
-
-            need_remove_local_pending = True
-
-        if not clean_disk and need_remove_local_pending:
-            # TODO: handle exception in case the file is not found ?
-            pki_enrollment_remove_local_pending(
-                config_dir=self.config_dir, enrollment_id=self.enrollment_id
-            )
+        finally:
+            if clean_disk and need_remove_local_pending:
+                # TODO: handle exception in case the file is not found ?
+                pki_enrollment_remove_local_pending(
+                    config_dir=self.config_dir, enrollment_id=self.enrollment_id
+                )
 
         return (enrollment_status, occured_on, maybe_new_device)

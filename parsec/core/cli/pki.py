@@ -20,16 +20,13 @@ from parsec.core.cli.utils import (
     core_config_options,
     save_device_options,
 )
-from parsec.core.pki2 import (
-    pki_enrollment_remote_pendings_list,
-    pki_enrollment_accept_remote_pending,
-    ValidRemotePendingEnrollment,
-    ClaqueAuSolRemotePendingEnrollment,
-)
 from parsec.core.pki import (
     is_pki_enrollment_available,
     PkiEnrollementSubmiterInitalCtx,
     PkiEnrollmentSubmiterSubmittedCtx,
+    accepter_list_submitted_from_backend,
+    PkiEnrollementAccepterValidSubmittedCtx,
+    PkiEnrollementAccepterInvalidSubmittedCtx,
 )
 from parsec.core.types import LocalDevice
 from parsec.utils import trio_run
@@ -145,8 +142,8 @@ async def _pki_enrollment_poll(
 
         async with spinner("Fetching PKI enrollment status from the backend"):
             try:
-                enrollment_status, occured_on, maybe_local_device = await ctx.poll(
-                    clean_disk=True, extra_trust_roots=extra_trust_roots
+                enrollment_status, occured_on, maybe_new_device = await ctx.poll(
+                    clean_disk=not dry_run, extra_trust_roots=extra_trust_roots
                 )
 
             except Exception:
@@ -165,7 +162,11 @@ async def _pki_enrollment_poll(
 
         else:
             assert enrollment_status == PkiEnrollmentStatus.ACCEPTED
-            assert isinstance(maybe_local_device, LocalDevice)
+            assert isinstance(maybe_new_device, LocalDevice)
+            if not dry_run:
+                await save_device_with_selected_auth(
+                    config_dir=config.config_dir, device=maybe_new_device
+                )
             click.echo("Enrollment has been accepted on " + click.style(occured_on, fg="yellow"))
 
 
@@ -225,10 +226,9 @@ async def _pki_enrollment_review_pendings(
         signing_key=device.signing_key,
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
-        pendings = await pki_enrollment_remote_pendings_list(
-            config=config, cmds=cmds, extra_trust_roots=extra_trust_roots
+        pendings = await accepter_list_submitted_from_backend(
+            cmds=cmds, extra_trust_roots=extra_trust_roots
         )
-
         num_pendings_display = click.style(str(len(pendings)), fg="green")
         click.echo(f"Found {num_pendings_display} pending enrollment(s):")
 
@@ -254,12 +254,12 @@ async def _pki_enrollment_review_pendings(
             display = f"Pending enrollment {enrollment_id_display}"
             display += f"\n  submitted on: " + click.style(pending.submitted_on, fg="yellow")
             display += f"\n  X509 issuer SHA1 fingerprint: " + click.style(
-                pending.certificate_sha1.hex(), fg="yellow"
+                pending.submitter_x509_certificate_sha1.hex(), fg="yellow"
             )
-            if isinstance(pending, ClaqueAuSolRemotePendingEnrollment):
+            if isinstance(pending, PkiEnrollementAccepterInvalidSubmittedCtx):
                 display += click.style("Invalid enrollment", fg="red") + f": {pending.error}"
             else:
-                assert isinstance(pending, ValidRemotePendingEnrollment)
+                assert isinstance(pending, PkiEnrollementAccepterValidSubmittedCtx)
                 display += "\n  X509 issuer label: " + click.style(
                     pending.submitter_x509_certif.issuer_label, fg="yellow"
                 )
@@ -280,10 +280,10 @@ async def _pki_enrollment_review_pendings(
             if list_only:
                 continue
 
-            if isinstance(pending, ClaqueAuSolRemotePendingEnrollment):
+            if isinstance(pending, PkiEnrollementAccepterInvalidSubmittedCtx):
                 action = _preselected_actions_lookup(enrollment_id)
                 if action == "accept":
-                    raise RuntimeError(f"Could not accept enrollment {enrollment_id.hex}")
+                    raise RuntimeError(f"Could not accept invalid enrollment {enrollment_id.hex}")
 
                 elif action is None:
                     # Let the user pick and action
@@ -300,15 +300,11 @@ async def _pki_enrollment_review_pendings(
                     # Reject the request
                     assert action == "reject"
                     async with spinner("Rejecting PKI enrollment from the backend"):
-                        rep = await cmds.pki_enrollment_reject(enrollment_id)
-                        if rep["status"] != "ok":
-                            raise RuntimeError(
-                                f"Could not reject enrollment {enrollment_id.hex()}: {rep}"
-                            )
+                        await pending.reject()
                     continue
-
             else:
-                assert isinstance(pending, ValidRemotePendingEnrollment)
+                assert isinstance(pending, PkiEnrollementAccepterValidSubmittedCtx)
+
                 action = _preselected_actions_lookup(enrollment_id)
                 if action is None:
                     # Let the user pick and action
@@ -323,12 +319,8 @@ async def _pki_enrollment_review_pendings(
 
                 # Reject the request
                 if action == "reject":
-                    rep = await cmds.pki_enrollment_reject(enrollment_id)
-                    if rep["status"] != "ok":
-                        raise RuntimeError(
-                            f"Could not reject enrollment {enrollment_id.hex}: {rep}"
-                        )
-                    click.echo(f"-> Successfully rejected")
+                    async with spinner("Rejecting PKI enrollment from the backend"):
+                        await pending.reject()
                     continue
 
                 else:
@@ -344,15 +336,11 @@ async def _pki_enrollment_review_pendings(
                     human_handle = HumanHandle(human_email, human_label)
 
                     async with spinner("Accepting PKI enrollment in the backend"):
-                        await pki_enrollment_accept_remote_pending(
-                            cmds=cmds,
-                            enrollment_id=enrollment_id,
+                        await pending.accept(
                             author=device,
                             device_label=device_label,
                             human_handle=human_handle,
                             profile=profile,
-                            public_key=pending.submit_payload.public_key,
-                            verify_key=pending.submit_payload.verify_key,
                         )
 
         if preselected_actions:
