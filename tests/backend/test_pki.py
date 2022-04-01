@@ -6,12 +6,18 @@ import pytest
 
 import pendulum
 from parsec.api.data import PkiEnrollmentSubmitPayload
+from parsec.api.data.certif import RevokedUserCertificateContent
 from parsec.api.data.pki import PkiEnrollmentAcceptPayload
 from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.api.protocol.types import UserProfile
 from parsec.core.backend_connection.cmds import pki_enrollment_info, pki_enrollment_submit
 from parsec.core.invite.greeter import _create_new_user_certificates
-from tests.backend.common import pki_enrollment_accept, pki_enrollment_list, pki_enrollment_reject
+from tests.backend.common import (
+    pki_enrollment_accept,
+    pki_enrollment_list,
+    pki_enrollment_reject,
+    user_revoke,
+)
 
 # Helpers
 
@@ -256,7 +262,7 @@ async def test_pki_accept_outdated_submit(
 
 @pytest.mark.trio
 async def test_pki_accept_user_already_exist(
-    anonymous_backend_sock, bob, alice, alice_backend_sock, backend
+    anonymous_backend_sock, bob, alice, alice_backend_sock
 ):
     request_id = uuid4()
     await _submit_request(anonymous_backend_sock, bob, request_id=request_id)
@@ -264,6 +270,19 @@ async def test_pki_accept_user_already_exist(
     _, kwargs = _prepare_accept_reply(admin=alice, invitee=bob)
     rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
     assert rep["status"] == "already_exists"
+
+    # Revoke user
+    now = pendulum.now()
+    bob_revocation = RevokedUserCertificateContent(
+        author=alice.device_id, timestamp=now, user_id=bob.user_id
+    ).dump_and_sign(alice.signing_key)
+
+    rep = await user_revoke(alice_backend_sock, revoked_user_certificate=bob_revocation)
+    assert rep == {"status": "ok"}
+
+    # Accept revoked user
+    rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
+    assert rep["status"] == "ok"
 
 
 @pytest.mark.trio
