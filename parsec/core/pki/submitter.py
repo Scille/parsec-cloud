@@ -201,7 +201,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
         else:
             assert enrollment_status == PkiEnrollmentStatus.ACCEPTED
             try:
-                (accepter_x509_certif, accept_payload) = pki_enrollment_load_accept_payload(
+                (accepter_x509_certificate, accept_payload) = pki_enrollment_load_accept_payload(
                     extra_trust_roots=extra_trust_roots,
                     der_x509_certificate=rep["accepter_der_x509_certificate"],
                     payload_signature=rep["accept_payload_signature"],
@@ -215,7 +215,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
                     enrollment_id=self.enrollment_id,
                     submit_payload=self.submit_payload,
                     accepted_on=rep["accepted_on"],
-                    accepter_x509_certif=accepter_x509_certif,
+                    accepter_x509_certificate=accepter_x509_certificate,
                     accept_payload=accept_payload,
                 )
 
@@ -295,7 +295,7 @@ class PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx(BasePkiEnrollmentSu
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentSubmitterAcceptedStatusCtx(BasePkiEnrollmentSubmitterStatusCtx):
     accepted_on: DateTime
-    accepter_x509_certif: X509Certificate
+    accepter_x509_certificate: X509Certificate
     accept_payload: PkiEnrollmentAcceptPayload
 
     async def finalize(self) -> "PkiEnrollmentFinalizedCtx":
@@ -320,7 +320,10 @@ class PkiEnrollmentSubmitterAcceptedStatusCtx(BasePkiEnrollmentSubmitterStatusCt
         )
 
         return PkiEnrollmentFinalizedCtx(
-            config_dir=self.config_dir, enrollment_id=self.enrollment_id, new_device=new_device
+            config_dir=self.config_dir,
+            enrollment_id=self.enrollment_id,
+            new_device=new_device,
+            x509_certificate=self.x509_certificate,
         )
 
 
@@ -329,6 +332,7 @@ class PkiEnrollmentFinalizedCtx:
     config_dir: Path
     enrollment_id: UUID
     new_device: LocalDevice
+    x509_certificate: X509Certificate
 
     async def remove_from_disk(self) -> None:
         try:
