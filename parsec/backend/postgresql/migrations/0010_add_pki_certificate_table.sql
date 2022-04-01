@@ -5,19 +5,43 @@
 --  Migration
 -------------------------------------------------------
 
--- This migration simply creates a new table to keep track of the
--- pki certificate request and replies.
+CREATE TYPE enrollment_state AS ENUM (
+    'SUBMITTED',
+    'ACCEPTED',
+    'REJECTED',
+    'CANCELLED'
+);
 
+CREATE TYPE pki_enrollment_info_accepted AS(
+    accepted_on TIMESTAMPTZ,
+    accepter_der_x509_certificate BYTEA,
+    accept_payload_signature BYTEA,
+    accept_payload BYTEA
+);
 
-CREATE TABLE pki_certificate (
+CREATE TYPE pki_enrollment_info_rejected AS(
+    rejected_on TIMESTAMPTZ
+);
+
+CREATE TYPE pki_enrollment_info_cancelled AS(
+    cancelled_on TIMESTAMPTZ
+);
+
+CREATE TABLE pki_enrollment (
     _id SERIAL PRIMARY KEY,
-    certificate_id UUID NOT NULL,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
     request_id UUID NOT NULL,
-    request_timestamp TIMESTAMPTZ NOT NULL,
-    request_object BYTEA NOT NULL,
-    reply_user_id UUID,
-    reply_timestamp TIMESTAMPTZ,
-    reply_object BYTEA,
+    submitter_der_x509_certificate BYTEA NOT NULL,
+    submit_payload_signature BYTEA NOT NULL,
+    submit_payload BYTEA NOT NULL,
+    submitted_on TIMESTAMPTZ NOT NULL,
 
-    UNIQUE(certificate_id)
+    accepter INTEGER REFERENCES device (_id),
+
+    enrollment_state enrollment_state NOT NULL,
+    info_accepted pki_enrollment_info_accepted,
+    info_rejected pki_enrollment_info_rejected,
+    info_cancelled pki_enrollment_info_cancelled,
+
+    UNIQUE(organization, request_id)
 );
