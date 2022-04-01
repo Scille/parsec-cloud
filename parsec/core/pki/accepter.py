@@ -68,7 +68,7 @@ async def accepter_list_submitted_from_backend(
         # Verification failed
         except LocalDeviceError as exc:
             submitter_x509_certif = submit_payload = None
-            pending = PkiEnrollementAccepterValidSubmittedCtx(
+            pending = PkiEnrollementAccepterInvalidSubmittedCtx(
                 cmds=cmds,
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
