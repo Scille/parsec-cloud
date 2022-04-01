@@ -74,15 +74,15 @@ mod mock_time {
     use std::cell::RefCell;
 
     thread_local! {
-        static MOCK_TIME: RefCell<DateTime> = RefCell::new(chrono::Utc::now().into());
+        static MOCK_TIME: RefCell<Option<DateTime>> = RefCell::new(None);
     }
 
     impl DateTime {
         pub fn now() -> Self {
-            MOCK_TIME.with(|cell| *cell.borrow())
+            MOCK_TIME.with(|cell| cell.borrow().unwrap_or(Self::now()))
         }
 
-        pub fn freeze_time(time: Self) {
+        pub fn freeze_time(time: Option<Self>) {
             MOCK_TIME.with(|cell| *cell.borrow_mut() = time)
         }
     }

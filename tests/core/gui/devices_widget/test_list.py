@@ -15,10 +15,19 @@ async def test_list_devices(aqtbot, running_backend, logged_gui):
 
     assert d_w.layout_devices.count() == 2
     item = d_w.layout_devices.itemAt(0)
-    assert item.widget().label_device_name.text() == "My dev1 machine"
-    assert item.widget().label_is_current.text() == "(current)"
+    label_device0 = item.widget().label_device_name.text()
+    label_is_current0 = item.widget().label_is_current.text()
     item = d_w.layout_devices.itemAt(1)
-    assert item.widget().label_device_name.text() == "My dev2 machine"
+    label_device1 = item.widget().label_device_name.text()
+    label_is_current1 = item.widget().label_is_current.text()
+
+    if label_device0 == "My dev1 machine":
+        assert label_device1 == "My dev2 machine"
+        assert label_is_current0 == "(current)"
+    else:
+        assert label_device0 == "My dev2 machine"
+        assert label_device1 == "My dev1 machine"
+        assert label_is_current1 == "(current)"
 
 
 @pytest.mark.gui

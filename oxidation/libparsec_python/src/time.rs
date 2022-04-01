@@ -8,7 +8,7 @@ use crate::binding_utils::py_to_rs_datetime;
 
 #[pyfunction]
 pub(crate) fn freeze_time(time: &PyAny) -> PyResult<()> {
-    let time = py_to_rs_datetime(time)?;
+    let time = py_to_rs_datetime(time).ok();
     DateTime::freeze_time(time);
     Ok(())
 }
