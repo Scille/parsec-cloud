@@ -700,3 +700,17 @@ class BackendPkiEnrollmentAddr(_PyBackendActionAddr):
 
 _PyBackendPkiEnrollmentAddr = BackendPkiEnrollmentAddr
 # TODO: Oxidation implementation !
+
+
+class BackendPkiEnrollmentAddrField(fields.Field):
+    def _deserialize(self, value, attr, data):
+        try:
+            return BackendPkiEnrollmentAddr.from_url(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+    def _serialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        return value.to_url()
