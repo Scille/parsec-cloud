@@ -4,6 +4,8 @@ from typing import Iterable, Tuple, Optional
 from pathlib import Path
 from uuid import UUID
 from importlib import import_module
+
+import trio
 from pendulum import DateTime
 
 from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
@@ -28,15 +30,25 @@ def is_pki_enrollment_available() -> bool:
         return False
 
 
-def pki_enrollment_select_certificate(owner_hint: Optional[LocalDevice] = None) -> X509Certificate:
+async def pki_enrollment_select_certificate(
+    owner_hint: Optional[LocalDevice] = None
+) -> X509Certificate:
+    extension = _load_smartcard_extension()
     # TODO: document exceptions !
-    return _load_smartcard_extension().pki_enrollment_select_certificate(owner_hint=owner_hint)
+    # Selecting a certificate require a prompt, so run the call in a thread
+    return await trio.to_thread.run_sync(
+        lambda: extension.pki_enrollment_select_certificate(owner_hint=owner_hint)
+    )
 
 
-def pki_enrollment_sign_payload(payload: bytes, x509_certificate: X509Certificate) -> bytes:
+async def pki_enrollment_sign_payload(payload: bytes, x509_certificate: X509Certificate) -> bytes:
+    extension = _load_smartcard_extension()
     # TODO: document exceptions !
-    return _load_smartcard_extension().pki_enrollment_sign_payload(
-        payload=payload, x509_certificate=x509_certificate
+    # Signing require a private key, so a prompt is likely to be used for unlocking it
+    return await trio.to_thread.run_sync(
+        lambda: extension.pki_enrollment_sign_payload(
+            payload=payload, x509_certificate=x509_certificate
+        )
     )
 
 
@@ -51,6 +63,7 @@ def pki_enrollment_save_local_pending(
     private_key: PrivateKey,
 ) -> None:
     # TODO: document exceptions !
+    # Encrypting the private keys is done using the certificate public key, so this should not block
     local_pending = _load_smartcard_extension().pki_enrollment_save_local_pending(
         config_dir=config_dir,
         x509_certificate=x509_certificate,
@@ -65,15 +78,16 @@ def pki_enrollment_save_local_pending(
     local_pending.save(config_dir)
 
 
-def pki_enrollment_load_local_pending_secret_part(
+async def pki_enrollment_load_local_pending_secret_part(
     config_dir: Path, enrollment_id: UUID
 ) -> Tuple[SigningKey, PrivateKey]:
-    """
-    This will prompt PIN dialog
-    """
+    extension = _load_smartcard_extension()
     # TODO: document exceptions !
-    return _load_smartcard_extension().pki_enrollment_load_local_pending_secret_part(
-        config_dir=config_dir, enrollment_id=enrollment_id
+    # Retreiving the private keys require the certificate private keys, so a pin prompt is likely to block
+    return await trio.to_thread.run_sync(
+        lambda: extension.pki_enrollment_load_local_pending_secret_part(
+            config_dir=config_dir, enrollment_id=enrollment_id
+        )
     )
 
 
@@ -84,6 +98,7 @@ def pki_enrollment_load_submit_payload(
     extra_trust_roots: Iterable[Path] = (),
 ) -> Tuple[X509Certificate, PkiEnrollmentSubmitPayload]:
     # TODO: document exceptions !
+    # Verifying a payload only requires public key operations, so no blocking here
     return _load_smartcard_extension().pki_enrollment_load_submit_payload(
         der_x509_certificate=der_x509_certificate,
         payload_signature=payload_signature,
@@ -99,6 +114,7 @@ def pki_enrollment_load_accept_payload(
     extra_trust_roots: Iterable[Path] = (),
 ) -> Tuple[X509Certificate, PkiEnrollmentAcceptPayload]:
     # TODO: document exceptions !
+    # Verifying a payload only requires public key operations, so no blocking here
     return _load_smartcard_extension().pki_enrollment_load_accept_payload(
         der_x509_certificate=der_x509_certificate,
         payload_signature=payload_signature,

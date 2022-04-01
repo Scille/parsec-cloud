@@ -137,8 +137,8 @@ class PkiEnrollementAccepterValidSubmittedCtx:
             root_verify_key=user_confirmation.root_verify_key,
         ).dump()
 
-        accepter_x509_certificate = pki_enrollment_select_certificate(owner_hint=author)
-        accept_payload_signature = pki_enrollment_sign_payload(
+        accepter_x509_certificate = await pki_enrollment_select_certificate(owner_hint=author)
+        accept_payload_signature = await pki_enrollment_sign_payload(
             payload=accept_payload, x509_certificate=accepter_x509_certificate
         )
 

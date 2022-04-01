@@ -43,12 +43,14 @@ class PkiEnrollmentSubmitterInitialCtx:
     x509_certificate: X509Certificate
 
     @classmethod
-    def new(cls, addr: BackendPkiEnrollmentAddr) -> "PkiEnrollmentSubmitterSubmittedStatusCtx":
+    async def new(
+        cls, addr: BackendPkiEnrollmentAddr
+    ) -> "PkiEnrollmentSubmitterSubmittedStatusCtx":
         enrollment_id = uuid4()
         signing_key = SigningKey.generate()
         private_key = PrivateKey.generate()
 
-        x509_certificate = pki_enrollment_select_certificate()
+        x509_certificate = await pki_enrollment_select_certificate()
 
         return cls(
             addr=addr,
@@ -70,7 +72,7 @@ class PkiEnrollmentSubmitterInitialCtx:
             requested_device_label=requested_device_label,
         )
         raw_submit_payload = cooked_submit_payload.dump()
-        payload_signature = pki_enrollment_sign_payload(
+        payload_signature = await pki_enrollment_sign_payload(
             payload=raw_submit_payload, x509_certificate=self.x509_certificate
         )
 
@@ -299,7 +301,7 @@ class PkiEnrollmentSubmitterAcceptedStatusCtx(BasePkiEnrollmentSubmitterStatusCt
     accept_payload: PkiEnrollmentAcceptPayload
 
     async def finalize(self) -> "PkiEnrollmentFinalizedCtx":
-        signing_key, private_key = pki_enrollment_load_local_pending_secret_part(
+        signing_key, private_key = await pki_enrollment_load_local_pending_secret_part(
             config_dir=self.config_dir, enrollment_id=self.enrollment_id
         )
 

@@ -49,7 +49,7 @@ async def _pki_enrollment_submit(
     requested_device_label: DeviceLabel,
     force: bool,
 ):
-    ctx = PkiEnrollmentSubmitterInitialCtx.new(addr)
+    ctx = await PkiEnrollmentSubmitterInitialCtx.new(addr)
 
     x509_display = f"Certificate SHA1 Fingerprint: " + click.style(
         ctx.x509_certificate.certificate_sha1.hex(), fg="yellow"
