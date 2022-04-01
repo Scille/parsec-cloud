@@ -128,6 +128,48 @@ async def test_pki_submit(anonymous_backend_sock, bob):
     assert rep["status"] == "ok"
 
 
+@pytest.mark.trio
+async def test_pki_submit_same_id(anonymous_backend_sock, bob):
+    payload = PkiEnrollmentSubmitPayload(
+        verify_key=bob.verify_key,
+        public_key=bob.public_key,
+        requested_device_label=bob.device_label,
+    ).dump()
+    enrollment_id = uuid4()
+
+    rep = await pki_enrollment_submit(
+        anonymous_backend_sock,
+        enrollment_id=enrollment_id,
+        force=False,
+        submitter_der_x509_certificate=b"<x509 certif>",
+        submit_payload_signature=b"<signature>",
+        submit_payload=payload,
+    )
+    assert rep["status"] == "ok"
+
+    # Same enrollment ID without Force
+    rep = await pki_enrollment_submit(
+        anonymous_backend_sock,
+        enrollment_id=enrollment_id,
+        force=False,
+        submitter_der_x509_certificate=b"<x509 certif>",
+        submit_payload_signature=b"<signature>",
+        submit_payload=payload,
+    )
+    assert rep["status"] == "enrollment_id_already_used"
+
+    # Same enrollment ID with Froce
+    rep = await pki_enrollment_submit(
+        anonymous_backend_sock,
+        enrollment_id=enrollment_id,
+        force=True,
+        submitter_der_x509_certificate=b"<x509 certif>",
+        submit_payload_signature=b"<signature>",
+        submit_payload=payload,
+    )
+    assert rep["status"] == "enrollment_id_already_used"
+
+
 # Test pki_enrollment_list
 
 
@@ -359,14 +401,52 @@ async def test_pki_reject_already_accepted(
 
 
 @pytest.mark.trio
-async def test_pki_reject_already_canceled(anonymous_backend_sock, mallory, alice_backend_sock):
+async def test_pki_submit_already_accepted(
+    anonymous_backend_sock, mallory, alice, alice_backend_sock, backend
+):
     request_id = uuid4()
     await _submit_request(anonymous_backend_sock, mallory, request_id=request_id)
-    # Second submit
-    await _submit_request(anonymous_backend_sock, mallory, force=True)
 
-    rep = await pki_enrollment_reject(alice_backend_sock, enrollment_id=request_id)
-    assert rep["status"] == "no_longer_available"
+    user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+    rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
+    assert rep == {"status": "ok"}
+
+    # Pki enrollment is accepted and user not revoked
+    payload = PkiEnrollmentSubmitPayload(
+        verify_key=mallory.verify_key,
+        public_key=mallory.public_key,
+        requested_device_label=mallory.device_label,
+    ).dump()
+    rep = await pki_enrollment_submit(
+        anonymous_backend_sock,
+        enrollment_id=uuid4(),
+        force=False,
+        submitter_der_x509_certificate=b"<x509 certif>",
+        submit_payload_signature=b"<signature>",
+        submit_payload=payload,
+    )
+    assert rep["status"] == "already_enrolled"
+
+    # Revoke user
+    now = pendulum.now()
+    revocation = RevokedUserCertificateContent(
+        author=alice.device_id, timestamp=now, user_id=user_confirmation.device_id.user_id
+    ).dump_and_sign(alice.signing_key)
+
+    rep = await user_revoke(alice_backend_sock, revoked_user_certificate=revocation)
+    assert rep == {"status": "ok"}
+
+    # Pki enrollment is accepted and user revoked
+    rep = await pki_enrollment_submit(
+        anonymous_backend_sock,
+        enrollment_id=uuid4(),
+        force=False,
+        submitter_der_x509_certificate=b"<x509 certif>",
+        submit_payload_signature=b"<signature>",
+        submit_payload=payload,
+    )
+
+    assert rep["status"] == "ok"
 
 
 # Test pki_enrollment_info
