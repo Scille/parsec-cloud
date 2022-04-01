@@ -2,11 +2,12 @@
 
 
 -- pki_certificate_submitted
-INSERT INTO pki_enrollment(_id, organization, request_id, submitter_der_x509_certificate, submit_payload_signature, submit_payload, enrollment_state, submitted_on) VALUES(
+INSERT INTO pki_enrollment(_id, organization, enrollment_id, submitter_der_x509_certificate, submitter_der_x509_certificate_sha1, submit_payload_signature, submit_payload, enrollment_state, submitted_on) VALUES(
     6,
     10,
     '6ecd8c99-4036-403d-bf84-cf8400f67836',
     E'<certificate>',
+    E'<certificate_sha1_cert_1>',
     E'<signature>',
     E'<payload>',
     'SUBMITTED',
@@ -14,11 +15,12 @@ INSERT INTO pki_enrollment(_id, organization, request_id, submitter_der_x509_cer
 );
 
 -- pki_certificate_cancelled
-INSERT INTO pki_enrollment(_id, organization, request_id, submitter_der_x509_certificate, submit_payload_signature, submit_payload, enrollment_state, submitted_on, info_cancelled.cancelled_on) VALUES(
+INSERT INTO pki_enrollment(_id, organization, enrollment_id, submitter_der_x509_certificate, submitter_der_x509_certificate_sha1, submit_payload_signature, submit_payload, enrollment_state, submitted_on, info_cancelled.cancelled_on) VALUES(
     7,
     10,
     '6ecd8c99-4036-403d-bf84-cf8400f67837',
     E'<certificate>',
+    E'<certificate_sha1_cert_2>',
     E'<signature>',
     E'<payload>',
     'CANCELLED',
@@ -27,11 +29,12 @@ INSERT INTO pki_enrollment(_id, organization, request_id, submitter_der_x509_cer
 );
 
 -- pki_certificate_rejected
-INSERT INTO pki_enrollment(_id, organization, request_id, submitter_der_x509_certificate, submit_payload_signature, submit_payload, enrollment_state, submitted_on, info_rejected.rejected_on) VALUES(
+INSERT INTO pki_enrollment(_id, organization, enrollment_id, submitter_der_x509_certificate, submitter_der_x509_certificate_sha1,  submit_payload_signature, submit_payload, enrollment_state, submitted_on, info_rejected.rejected_on) VALUES(
     8,
     10,
     '6ecd8c99-4036-403d-bf84-cf8400f67838',
     E'<certificate>',
+    E'<certificate_sha1_cert_3>',
     E'<signature>',
     E'<payload>',
     'REJECTED',
@@ -41,11 +44,12 @@ INSERT INTO pki_enrollment(_id, organization, request_id, submitter_der_x509_cer
 
 
 -- pki_certificate_accepted
-INSERT INTO pki_enrollment(_id, organization, request_id, submitter_der_x509_certificate, submit_payload_signature, submit_payload, enrollment_state, submitted_on, info_accepted.accepted_on, info_accepted.accepter_der_x509_certificate, info_accepted.accept_payload_signature, info_accepted.accept_payload) VALUES(
+INSERT INTO pki_enrollment(_id, organization, enrollment_id, submitter_der_x509_certificate, submitter_der_x509_certificate_sha1, submit_payload_signature, submit_payload, enrollment_state, submitted_on, info_accepted.accepted_on, info_accepted.accepter_der_x509_certificate, info_accepted.accept_payload_signature, info_accepted.accept_payload) VALUES(
     9,
     10,
     '6ecd8c99-4036-403d-bf84-cf8400f67839',
     E'<certificate>',
+    E'<certificate_sha1_cert_4>',
     E'<signature>',
     E'<payload>',
     'ACCEPTED',
@@ -56,3 +60,4 @@ INSERT INTO pki_enrollment(_id, organization, request_id, submitter_der_x509_cer
     E'<payload>'
 )
 
+-- TODO add test accepted and accepter

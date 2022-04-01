@@ -30,18 +30,22 @@ CREATE TYPE pki_enrollment_info_cancelled AS(
 CREATE TABLE pki_enrollment (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
-    request_id UUID NOT NULL,
+
+    enrollment_id UUID NOT NULL,
     submitter_der_x509_certificate BYTEA NOT NULL,
+    submitter_der_x509_certificate_sha1 BYTEA NOT NULL,
+
     submit_payload_signature BYTEA NOT NULL,
     submit_payload BYTEA NOT NULL,
     submitted_on TIMESTAMPTZ NOT NULL,
 
     accepter INTEGER REFERENCES device (_id),
+    accepted INTEGER REFERENCES device (_id),
 
     enrollment_state enrollment_state NOT NULL,
     info_accepted pki_enrollment_info_accepted,
     info_rejected pki_enrollment_info_rejected,
     info_cancelled pki_enrollment_info_cancelled,
 
-    UNIQUE(organization, request_id)
+    UNIQUE(organization, enrollment_id)
 );
