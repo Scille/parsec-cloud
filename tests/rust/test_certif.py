@@ -122,6 +122,7 @@ def test_revoked_user_certificate():
     _assert_revoked_user_certificate_eq(py_ruc, rs_ruc)
 
 
+@pytest.mark.rust
 def test_device_certificate():
     from parsec.api.data.certif import (
         _RsDeviceCertificateContent,
