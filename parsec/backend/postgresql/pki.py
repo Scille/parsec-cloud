@@ -1,15 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+import hashlib
 from typing import List
 from uuid import UUID
-from collections import namedtuple
 from pendulum import DateTime
 
 from parsec.api.protocol import OrganizationID
+from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.backend.user_type import User, Device
-from parsec.backend.pki import PkiEnrollmentInfo, PkiEnrollmentListItem, BasePkiEnrollmentComponent
+from parsec.backend.pki import (
+    PkiEnrollmentCertificateAlreadySubmittedError,
+    PkiEnrollmentIdAlreadyUsedError,
+    PkiEnrollmentInfo,
+    PkiEnrollmentListItem,
+    BasePkiEnrollmentComponent,
+)
 from parsec.backend.postgresql import PGHandler
-from parsec.backend.postgresql.utils import Q
+from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 
 
 _q_insert_certificate = Q(
@@ -69,31 +76,79 @@ _q_get_certificates = Q(
     """
 )
 
+_q_get_pki_enrollment_from_certificate_sha1 = Q(
+    f"""
+    SELECT * FROM pki_enrollment
+    WHERE (
+        organization = { q_organization_internal_id("$organization_id") }
+        AND submitter_der_x509_certificate_sha1=$submitter_der_x509_certificate_sha1
+    )
+    ORDER BY enrollment_state ASC
+    """
+)
 
-DBPkiCertificate = namedtuple(
-    "DBPkiCertificate",
-    [
-        "db_id",
-        "certificate_id",
-        "request_id",
-        "request_timestamp",
-        "request_object",
-        "reply_user_id",
-        "reply_timestamp",
-        "reply_object",
-    ],
+_q_get_pki_enrollment = Q(
+    f"""
+    SELECT * FROM pki_enrollment
+    WHERE (
+        organization = { q_organization_internal_id("$organization_id") }
+        AND enrollment_id=$enrollment_id
+    )
+    """
+)
+
+_q_tmp = Q(
+    """
+    SELECT * FROM device """
 )
 
 
-def build_certificate_from_db(entry) -> DBPkiCertificate:
-    return DBPkiCertificate(
-        entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6], entry[7]
+_q_submit_pki_enrollment = Q(
+    f"""
+    INSERT INTO pki_enrollment(
+        organization,
+        enrollment_id,
+        submitter_der_x509_certificate,
+        submitter_der_x509_certificate_sha1,
+        submit_payload_signature,
+        submit_payload,
+        enrollment_state,
+        submitted_on
     )
+    VALUES(
+        { q_organization_internal_id("$organization_id") },
+        $enrollment_id,
+        $submitter_der_x509_certificate,
+        $submitter_der_x509_certificate_sha1,
+        $submit_payload_signature,
+        $submit_payload,
+        $enrollment_state,
+        $submitted_on
+    )
+
+    """
+)
+
+_q_cancel_pki_enrollment = Q(
+    f"""
+    UPDATE pki_enrollment
+    SET
+        enrollment_state=$enrollment_state,
+        info_cancelled.cancelled_on=$cancelled_on
+    WHERE (
+        organization = { q_organization_internal_id("$organization_id") }
+        AND submitter_der_x509_certificate_sha1=$submitter_der_x509_certificate_sha1
+    )
+    """
+)
 
 
 class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
+
+    def register_components(self, **other_components):
+        self._user_component = other_components["user"]
 
     async def submit(
         self,
@@ -110,7 +165,66 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             PkiEnrollmentCertificateAlreadySubmittedError
             PkiEnrollmentAlreadyEnrolledError
         """
-        raise NotImplementedError()
+        submitter_der_x509_certificate_sha1 = hashlib.sha1(submitter_der_x509_certificate).digest()
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            # Assert enrollment_id not used
+            row = await conn.fetchrow(
+                *_q_get_pki_enrollment(
+                    organization_id=organization_id.str, enrollment_id=enrollment_id
+                )
+            )
+            if row:
+                raise PkiEnrollmentIdAlreadyUsedError()
+
+            # Try to retrieve the last attempt with this x509 certificate
+            rep = await conn.fetch(
+                *_q_get_pki_enrollment_from_certificate_sha1(
+                    organization_id=organization_id.str,
+                    submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
+                )
+            )
+            for row in rep:
+                enrollment_state = row["enrollment_state"]
+                if enrollment_state == PkiEnrollmentStatus.SUBMITTED.value:
+                    if force:
+                        await conn.execute(
+                            *_q_cancel_pki_enrollment(
+                                organization_id=organization_id.str,
+                                submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
+                                enrollment_state=PkiEnrollmentStatus.CANCELLED.value,
+                                cancelled_on=submitted_on,
+                            )
+                        )
+                    else:
+                        raise PkiEnrollmentCertificateAlreadySubmittedError(
+                            submitted_on=row["submitted_on"]
+                        )
+                elif enrollment_state in [
+                    PkiEnrollmentStatus.REJECTED.value,
+                    PkiEnrollmentStatus.CANCELLED.value,
+                ]:
+                    # Previous attempt was unsuccessful, so we are clear to submit a new attempt !
+                    pass
+                elif enrollment_state == PkiEnrollmentStatus.ACCEPTED.value:
+                    # Previous attempt end successfully, we are not allowed to submit
+                    # unless the created user has been revoked
+                    assert row["accepted"] is not None and row["accepter"] is not None
+                    # TODO check user
+                else:
+                    assert False
+            # TODO Request ID error
+            await conn.execute(
+                *_q_submit_pki_enrollment(
+                    organization_id=organization_id.str,
+                    enrollment_id=enrollment_id,
+                    submitter_der_x509_certificate=submitter_der_x509_certificate,
+                    submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
+                    submit_payload_signature=submit_payload_signature,
+                    submit_payload=submit_payload,
+                    enrollment_state=PkiEnrollmentStatus.SUBMITTED.value,
+                    submitted_on=submitted_on,
+                )
+            )
 
     async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
         """
