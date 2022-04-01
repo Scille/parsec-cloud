@@ -24,11 +24,11 @@ impl UserCertificate {
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
-            [author, Option<DeviceID>, "author"],
+            [author: Option<DeviceID>, "author"],
             [timestamp, "timestamp", py_to_rs_datetime],
-            [user_id, UserID, "user_id"],
-            [human_handle, Option<HumanHandle>, "human_handle"],
-            [public_key, PublicKey, "public_key"],
+            [user_id: UserID, "user_id"],
+            [human_handle: Option<HumanHandle>, "human_handle"],
+            [public_key: PublicKey, "public_key"],
             [profile, "profile", py_to_rs_user_profile]
         );
 
@@ -49,11 +49,11 @@ impl UserCertificate {
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
-            [author, Option<DeviceID>, "author"],
+            [author: Option<DeviceID>, "author"],
             [timestamp, "timestamp", py_to_rs_datetime],
-            [user_id, UserID, "user_id"],
-            [human_handle, Option<HumanHandle>, "human_handle"],
-            [public_key, PublicKey, "public_key"],
+            [user_id: UserID, "user_id"],
+            [human_handle: Option<HumanHandle>, "human_handle"],
+            [public_key: PublicKey, "public_key"],
             [profile, "profile", py_to_rs_user_profile]
         );
 
@@ -199,11 +199,11 @@ impl DeviceCertificate {
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
-            [author, Option<DeviceID>, "author"],
+            [author: Option<DeviceID>, "author"],
             [timestamp, "timestamp", py_to_rs_datetime],
-            [device_id, DeviceID, "device_id"],
-            [device_label, Option<DeviceLabel>, "device_label"],
-            [verify_key, VerifyKey, "verify_key"],
+            [device_id: DeviceID, "device_id"],
+            [device_label: Option<DeviceLabel>, "device_label"],
+            [verify_key: VerifyKey, "verify_key"],
         );
 
         Ok(Self(parsec_api_types::DeviceCertificate {
@@ -222,11 +222,11 @@ impl DeviceCertificate {
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
-            [author, Option<DeviceID>, "author"],
+            [author: Option<DeviceID>, "author"],
             [timestamp, "timestamp", py_to_rs_datetime],
-            [device_id, DeviceID, "device_id"],
-            [device_label, Option<DeviceLabel>, "device_label"],
-            [verify_key, VerifyKey, "verify_key"],
+            [device_id: DeviceID, "device_id"],
+            [device_label: Option<DeviceLabel>, "device_label"],
+            [verify_key: VerifyKey, "verify_key"],
         );
 
         let mut r = self.0.clone();
@@ -352,9 +352,9 @@ impl RevokedUserCertificate {
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
-            [author, DeviceID, "author"],
+            [author: DeviceID, "author"],
             [timestamp, "timestamp", py_to_rs_datetime],
-            [user_id, UserID, "user_id"],
+            [user_id: UserID, "user_id"],
         );
 
         Ok(Self(parsec_api_types::RevokedUserCertificate {
@@ -368,9 +368,9 @@ impl RevokedUserCertificate {
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
-            [author, DeviceID, "author"],
+            [author: DeviceID, "author"],
             [timestamp, "timestamp", py_to_rs_datetime],
-            [user_id, UserID, "user_id"],
+            [user_id: UserID, "user_id"],
         );
 
         let mut r = self.0.clone();
