@@ -9,10 +9,11 @@ from pendulum import DateTime
 import click
 
 from parsec.api.protocol import DeviceLabel
-from parsec.cli_utils import cli_exception_handler, spinner, aprompt
+from parsec.cli_utils import aconfirm, cli_exception_handler, spinner, aprompt
 from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.cli.invitation import ask_info_new_user
 from parsec.core.config import CoreConfig
+from parsec.core.local_device import save_device_with_smartcard_in_config
 from parsec.core.types import BackendPkiEnrollmentAddr
 from parsec.core.cli.utils import (
     cli_command_base_options,
@@ -105,6 +106,10 @@ async def _pki_enrollment_poll(
     save_device_with_selected_auth: Callable,
     extra_trust_roots: Sequence[Path],
 ):
+
+    # Use extra trust roots from both command line and config
+    extra_trust_roots = [*extra_trust_roots, *config.pki_extra_trust_roots]
+
     pendings = await PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(config_dir=config.config_dir)
 
     # Try to shorten the UUIDs to make it easier to work with
@@ -142,6 +147,24 @@ async def _pki_enrollment_poll(
         )
         display += "\n  Requested Device Label: " + click.style(
             pending.submit_payload.requested_device_label, fg="yellow"
+        )
+        return display
+
+    def _display_accepted_enrollment(accepted: PkiEnrollmentSubmitterAcceptedStatusCtx):
+        display = (
+            f"Enrollment has been accepted on " + click.style(ctx.accepted_on, fg="yellow") + " by:"
+        )
+        display += f"\n  Certificate SHA1 Fingerprint: " + click.style(
+            accepted.accepter_x509_certificate.certificate_sha1.hex(), fg="yellow"
+        )
+        display += "\n  Certificate Issuer Common Name: " + click.style(
+            accepted.accepter_x509_certificate.issuer_common_name, fg="yellow"
+        )
+        display += "\n  Certificate Subject Common Name: " + click.style(
+            accepted.accepter_x509_certificate.subject_common_name, fg="yellow"
+        )
+        display += "\n  Certificate Subject Common Name: " + click.style(
+            accepted.accepter_x509_certificate.subject_email_address, fg="yellow"
         )
         return display
 
@@ -187,13 +210,16 @@ async def _pki_enrollment_poll(
 
         else:
             assert isinstance(ctx, PkiEnrollmentSubmitterAcceptedStatusCtx)
-            click.echo(
-                "Enrollment has been accepted on " + click.style(ctx.accepted_on, fg="yellow")
-            )
-            ctx = await ctx.finalize()
+            click.echo(_display_accepted_enrollment(ctx))
             if not dry_run:
-                await save_device_with_selected_auth(
-                    config_dir=config.config_dir, device=ctx.new_device
+                if not await aconfirm("Finalize device creation"):
+                    return
+                ctx = await ctx.finalize()
+                save_device_with_smartcard_in_config(
+                    config.config_dir,
+                    ctx.new_device,
+                    certificate_id=ctx.x509_certificate.certificate_id,
+                    certificate_sha1=ctx.x509_certificate.certificate_sha1,
                 )
                 await ctx.remove_from_disk()
 
@@ -247,6 +273,9 @@ async def _pki_enrollment_review_pendings(
     accept: Sequence[str],
     reject: Sequence[str],
 ):
+    # Use extra trust roots from both command line and config
+    extra_trust_roots = [*extra_trust_roots, *config.pki_extra_trust_roots]
+
     # Connect to the backend
     async with backend_authenticated_cmds_factory(
         addr=device.organization_addr,
@@ -285,7 +314,7 @@ async def _pki_enrollment_review_pendings(
                 pending.submitter_x509_certificate_sha1.hex(), fg="yellow"
             )
             if isinstance(pending, PkiEnrollementAccepterInvalidSubmittedCtx):
-                display += click.style("Invalid enrollment", fg="red") + f": {pending.error}"
+                display += click.style("\nInvalid enrollment", fg="red") + f": {pending.error}"
             else:
                 assert isinstance(pending, PkiEnrollementAccepterValidSubmittedCtx)
                 display += "\n  Certificate Issuer Common Name: " + click.style(
@@ -319,7 +348,8 @@ async def _pki_enrollment_review_pendings(
                         "-> Action",
                         default="Ignore",
                         type=click.Choice(["Ignore", "Reject"], case_sensitive=False),
-                    ).lower()
+                    )
+                    action = action.lower()
 
                 if action == "ignore":
                     continue
@@ -340,7 +370,8 @@ async def _pki_enrollment_review_pendings(
                         "-> Action",
                         default="Ignore",
                         type=click.Choice(["Ignore", "Reject", "Accept"], case_sensitive=False),
-                    ).lower()
+                    )
+                    action = action.lower()
 
                 if action == "ignore":
                     continue
