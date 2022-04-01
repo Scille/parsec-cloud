@@ -25,9 +25,7 @@ macro_rules! impl_verify_and_load_allow_root {
                 author_verify_key: &VerifyKey,
                 expected_author: CertificateSignerRef<'a>,
             ) -> DataResult<$name> {
-                let compressed = author_verify_key
-                    .verify(signed)
-                    .map_err(|exc| DataError::Crypto { exc })?;
+                let compressed = author_verify_key.verify(signed)?;
                 let mut serialized = vec![];
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
@@ -64,9 +62,7 @@ macro_rules! impl_verify_and_load_no_root {
                 author_verify_key: &VerifyKey,
                 expected_author: &DeviceID,
             ) -> DataResult<$name> {
-                let compressed = author_verify_key
-                    .verify(signed)
-                    .map_err(|exc| DataError::Crypto { exc })?;
+                let compressed = author_verify_key.verify(signed)?;
                 let mut serialized = vec![];
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)

@@ -35,3 +35,9 @@ pub enum DataError {
 }
 
 pub type DataResult<T> = Result<T, DataError>;
+
+impl From<CryptoError> for DataError {
+    fn from(exc: CryptoError) -> Self {
+        Self::Crypto { exc }
+    }
+}
