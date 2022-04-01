@@ -105,6 +105,7 @@ async def _pki_enrollment_poll(
     dry_run: bool,
     save_device_with_selected_auth: Callable,
     extra_trust_roots: Sequence[Path],
+    finalize: Sequence[str],
 ):
 
     # Use extra trust roots from both command line and config
@@ -117,6 +118,16 @@ async def _pki_enrollment_poll(
     for enrollment_id_len in range(3, 64):
         if len({h.hex[:enrollment_id_len] for h in enrollment_ids}) == len(enrollment_ids):
             break
+
+    # Manage pre-selected actions
+    preselected_actions = {x: "finalize" for x in finalize}
+
+    def _preselected_actions_lookup(enrollment_id: UUID) -> Optional[str]:
+        for preselected in preselected_actions:
+            if len(preselected) < enrollment_id_len:
+                continue
+            if enrollment_id.hex.startswith(preselected):
+                return preselected_actions.pop(preselected)
 
     # Filter if needed
     if enrollment_id_filter:
@@ -142,7 +153,7 @@ async def _pki_enrollment_poll(
         display += "\n  Certificate Subject Common Name: " + click.style(
             pending.x509_certificate.subject_common_name, fg="yellow"
         )
-        display += "\n  Certificate Subject Common Name: " + click.style(
+        display += "\n  Certificate Subject Email Address: " + click.style(
             pending.x509_certificate.subject_email_address, fg="yellow"
         )
         display += "\n  Requested Device Label: " + click.style(
@@ -163,7 +174,7 @@ async def _pki_enrollment_poll(
         display += "\n  Certificate Subject Common Name: " + click.style(
             accepted.accepter_x509_certificate.subject_common_name, fg="yellow"
         )
-        display += "\n  Certificate Subject Common Name: " + click.style(
+        display += "\n  Certificate Subject Email Address: " + click.style(
             accepted.accepter_x509_certificate.subject_email_address, fg="yellow"
         )
         return display
@@ -212,7 +223,8 @@ async def _pki_enrollment_poll(
             assert isinstance(ctx, PkiEnrollmentSubmitterAcceptedStatusCtx)
             click.echo(_display_accepted_enrollment(ctx))
             if not dry_run:
-                if not await aconfirm("Finalize device creation"):
+                preselected_finalize = _preselected_actions_lookup(ctx.enrollment_id) == "finalize"
+                if not preselected_finalize and not await aconfirm("Finalize device creation"):
                     return
                 ctx = await ctx.finalize()
                 save_device_with_smartcard_in_config(
@@ -228,6 +240,7 @@ async def _pki_enrollment_poll(
 @click.argument("enrollment_id", required=False)
 @click.option("--dry-run", is_flag=True)
 @click.option("--extra-trust-root", multiple=True, default=(), type=Path)
+@click.option("--finalize", multiple=True, default=())
 @save_device_options
 @core_config_options
 @cli_command_base_options
@@ -237,6 +250,7 @@ def pki_enrollment_poll(
     dry_run: bool,
     save_device_with_selected_auth: Callable,
     extra_trust_root: Sequence[Path],
+    finalize: Sequence[str],
     **kwargs,
 ):
     """Check status of the pending PKI enrollments locally available"""
@@ -249,6 +263,7 @@ def pki_enrollment_poll(
             dry_run,
             save_device_with_selected_auth,
             extra_trust_root,
+            finalize,
         )
 
 
