@@ -20,13 +20,18 @@ from parsec.core.pki.plumbing import (
     pki_enrollment_sign_payload,
     pki_enrollment_save_local_pending,
     pki_enrollment_load_local_pending_secret_part,
-    pki_enrollment_remove_local_pending,
-    pki_enrollment_list_local_pendings,
     pki_enrollment_load_accept_payload,
 )
 from parsec.core.types import LocalDevice
+from parsec.core.types.pki import LocalPendingEnrollment
 from parsec.core.local_device import LocalDeviceError, generate_new_device
 from parsec.crypto import PrivateKey, SigningKey
+
+
+def _remove_local_pending(config_dir: Path, enrollment_id: UUID):
+    LocalPendingEnrollment.load_from_enrollment_id(config_dir, enrollment_id).get_path(
+        config_dir
+    ).unlink()
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -127,7 +132,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
     async def list_from_disk(cls, config_dir: Path) -> List["PkiEnrollmentSubmitterSubmittedCtx"]:
         # TODO: document exceptions !
         ctxs = []
-        for pending in pki_enrollment_list_local_pendings(config_dir=config_dir):
+        for pending in LocalPendingEnrollment.list(config_dir):
             ctx = PkiEnrollmentSubmitterSubmittedCtx(
                 config_dir=config_dir,
                 x509_certificate=pending.x509_certificate,
@@ -244,9 +249,7 @@ class PkiEnrollmentSubmitterSubmittedStatusCtx(BasePkiEnrollmentSubmitterStatusC
 
     async def remove_from_disk(self):
         try:
-            pki_enrollment_remove_local_pending(
-                config_dir=self.config_dir, enrollment_id=self.enrollment_id
-            )
+            _remove_local_pending(config_dir=self.config_dir, enrollment_id=self.enrollment_id)
         except Exception:
             # TODO: handle exception
             raise
@@ -258,9 +261,7 @@ class PkiEnrollmentSubmitterCancelledStatusCtx(BasePkiEnrollmentSubmitterStatusC
 
     async def remove_from_disk(self):
         try:
-            pki_enrollment_remove_local_pending(
-                config_dir=self.config_dir, enrollment_id=self.enrollment_id
-            )
+            _remove_local_pending(config_dir=self.config_dir, enrollment_id=self.enrollment_id)
         except Exception:
             # TODO: handle exception
             raise
@@ -272,9 +273,7 @@ class PkiEnrollmentSubmitterRejectedStatusCtx(BasePkiEnrollmentSubmitterStatusCt
 
     async def remove_from_disk(self):
         try:
-            pki_enrollment_remove_local_pending(
-                config_dir=self.config_dir, enrollment_id=self.enrollment_id
-            )
+            _remove_local_pending(config_dir=self.config_dir, enrollment_id=self.enrollment_id)
         except Exception:
             # TODO: handle exception
             raise
@@ -287,9 +286,7 @@ class PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx(BasePkiEnrollmentSu
 
     async def remove_from_disk(self):
         try:
-            pki_enrollment_remove_local_pending(
-                config_dir=self.config_dir, enrollment_id=self.enrollment_id
-            )
+            _remove_local_pending(config_dir=self.config_dir, enrollment_id=self.enrollment_id)
         except Exception:
             # TODO: handle exception
             raise
@@ -335,9 +332,7 @@ class PkiEnrollmentFinalizedCtx:
 
     async def remove_from_disk(self) -> None:
         try:
-            pki_enrollment_remove_local_pending(
-                config_dir=self.config_dir, enrollment_id=self.enrollment_id
-            )
+            _remove_local_pending(config_dir=self.config_dir, enrollment_id=self.enrollment_id)
         except Exception:
             # TODO: handle exception
             raise

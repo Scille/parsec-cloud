@@ -1,17 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Iterable, Tuple, List, Optional, Dict
+from typing import Iterable, Tuple, Optional
 from pathlib import Path
-from hashlib import sha1
 from uuid import UUID
 from importlib import import_module
 from pendulum import DateTime
-import attr
-from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 
+from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.crypto import PrivateKey, SigningKey
 from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 from parsec.core.types import LocalDevice
+from parsec.core.types.pki import X509Certificate
 
 
 def _load_smartcard_extension():
@@ -19,27 +18,6 @@ def _load_smartcard_extension():
         return import_module("parsec_ext.smartcard")
     except ModuleNotFoundError as exc:
         raise ModuleNotFoundError("Parsec smartcard extension not available") from exc
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class X509Certificate:
-    issuer: Dict[str, str]
-    subject: Dict[str, str]
-    der_x509_certificate: bytes
-    certificate_sha1: bytes
-    certificate_id: str
-
-    @property
-    def subject_common_name(self) -> Optional[str]:
-        return self.subject.get("common_name")
-
-    @property
-    def subject_email_address(self) -> Optional[str]:
-        return self.subject.get("email_address")
-
-    @property
-    def issuer_common_name(self) -> Optional[str]:
-        return self.issuer.get("common_name")
 
 
 def is_pki_enrollment_available() -> bool:
@@ -73,7 +51,7 @@ def pki_enrollment_save_local_pending(
     private_key: PrivateKey,
 ) -> None:
     # TODO: document exceptions !
-    return _load_smartcard_extension().pki_enrollment_save_local_pending(
+    local_pending = _load_smartcard_extension().pki_enrollment_save_local_pending(
         config_dir=config_dir,
         x509_certificate=x509_certificate,
         addr=addr,
@@ -83,6 +61,8 @@ def pki_enrollment_save_local_pending(
         signing_key=signing_key,
         private_key=private_key,
     )
+    # TODO: Move this logic elsewhere
+    local_pending.save(config_dir)
 
 
 def pki_enrollment_load_local_pending_secret_part(
@@ -93,28 +73,6 @@ def pki_enrollment_load_local_pending_secret_part(
     """
     # TODO: document exceptions !
     return _load_smartcard_extension().pki_enrollment_load_local_pending_secret_part(
-        config_dir=config_dir, enrollment_id=enrollment_id
-    )
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class LocalPendingEnrollment:
-    x509_certificate: X509Certificate
-    addr: BackendPkiEnrollmentAddr
-    # This `submitted_on` is not strictly in line with the submitted_on stored on the backend
-    submitted_on: DateTime
-    enrollment_id: UUID
-    submit_payload: PkiEnrollmentSubmitPayload
-
-
-def pki_enrollment_list_local_pendings(config_dir: Path) -> List[LocalPendingEnrollment]:
-    # TODO: document exceptions !
-    return _load_smartcard_extension().pki_enrollment_list_local_pendings(config_dir=config_dir)
-
-
-def pki_enrollment_remove_local_pending(config_dir: Path, enrollment_id: UUID) -> None:
-    # TODO: document exceptions !
-    return _load_smartcard_extension().pki_enrollment_remove_local_pending(
         config_dir=config_dir, enrollment_id=enrollment_id
     )
 
@@ -147,16 +105,3 @@ def pki_enrollment_load_accept_payload(
         payload=payload,
         extra_trust_roots=extra_trust_roots,
     )
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class RemotePendingEnrollment:
-    enrollment_id: UUID
-    submitted_on: DateTime
-    submitter_der_x509_certificate: bytes
-    submit_payload_signature: bytes
-    raw_submit_payload: bytes
-
-    @property
-    def certificate_sha1(self) -> bytes:
-        return sha1(self.submitter_der_x509_certificate).digest()
