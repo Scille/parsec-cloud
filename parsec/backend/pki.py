@@ -54,6 +54,10 @@ class PkiEnrollmentCertificateAlreadySubmittedError(PkiEnrollmentError):
         PkiEnrollmentError.__init__(self, *args, **kwargs)
 
 
+class PkiEnrollmentIdAlreadyUsedError(PkiEnrollmentError):
+    pass
+
+
 class PkiEnrollmentNoLongerAvailableError(PkiEnrollmentError):
     pass
 
@@ -135,6 +139,9 @@ class BasePkiEnrollmentComponent:
 
         except PkiEnrollmentCertificateAlreadySubmittedError as exc:
             rep = {"status": "already_submitted", "submitted_on": exc.submitted_on}
+
+        except PkiEnrollmentIdAlreadyUsedError:
+            rep = {"status": "enrollment_id_already_used"}
 
         except PkiEnrollmentAlreadyEnrolledError:
             rep = {"status": "already_enrolled"}
