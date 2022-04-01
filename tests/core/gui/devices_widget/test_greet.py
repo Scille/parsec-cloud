@@ -230,10 +230,16 @@ def GreetDeviceTestBed(
                 assert not gdce_w.isVisible()
                 assert autoclose_dialog.dialogs == [("", "The device was successfully created.")]
                 assert self.devices_widget.layout_devices.count() == 3
-                device_button = self.devices_widget.layout_devices.itemAt(2).widget()
+                device_button = next(
+                    (
+                        item.widget()
+                        for item in self.devices_widget.layout_devices.items
+                        if item.widget().label_device_name.text() == "PC1"
+                    ),
+                    None,
+                )
                 assert isinstance(device_button, DeviceButton)
                 assert device_button.device_info.device_label == self.requested_device_label
-                assert device_button.label_device_name.text() == "PC1"
 
             await aqtbot.wait_until(_greet_done)
             return
