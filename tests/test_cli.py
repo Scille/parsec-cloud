@@ -6,7 +6,7 @@ import trio
 from uuid import UUID
 from pendulum import DateTime
 from collections import defaultdict
-from typing import Tuple, Optional, Iterable, List
+from typing import Tuple, Optional, Iterable
 from hashlib import sha1
 from pathlib import Path
 from functools import partial
@@ -39,6 +39,8 @@ from parsec.core.local_device import (
     save_device_with_password_in_config,
     LocalDeviceCryptoError,
     LocalDevicePackingError,
+    DeviceFileType,
+    _save_device,
 )
 from parsec.core.types import (
     LocalDevice,
@@ -47,7 +49,7 @@ from parsec.core.types import (
     BackendPkiEnrollmentAddr,
 )
 from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
-from parsec.core.pki.plumbing import X509Certificate, LocalPendingEnrollment
+from parsec.core.types.pki import X509Certificate, LocalPendingEnrollment
 
 from tests.common import AsyncMock
 
@@ -732,9 +734,12 @@ def mocked_parsec_ext_smartcard(monkeypatch):
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
                 submit_payload=submit_payload,
+                encrypted_key=b"123",
+                ciphertext=b"123",
             )
             secret_part = (signing_key, private_key)
             self._pending_enrollments[config_dir].append((pending, secret_part))
+            return pending
 
         def pki_enrollment_load_local_pending_secret_part(
             self, config_dir: Path, enrollment_id: UUID
@@ -744,22 +749,6 @@ def mocked_parsec_ext_smartcard(monkeypatch):
                     return secret_part
             else:
                 raise LocalDeviceNotFoundError()
-
-        def pki_enrollment_remove_local_pending(
-            self, config_dir: Path, enrollment_id: UUID
-        ) -> None:
-            enrollments = self._pending_enrollments[config_dir]
-            for i, (pending, _) in enumerate(enrollments):
-                if pending.enrollment_id == enrollment_id:
-                    enrollments.pop(i)
-                    break
-            else:
-                raise LocalDeviceNotFoundError()
-
-        def pki_enrollment_list_local_pendings(
-            self, config_dir: Path
-        ) -> List[LocalPendingEnrollment]:
-            return [pending for (pending, _) in self._pending_enrollments[config_dir]]
 
         def _pki_enrollment_load_payload(
             self, der_x509_certificate: bytes, payload_signature: bytes, payload: bytes
@@ -823,6 +812,25 @@ def mocked_parsec_ext_smartcard(monkeypatch):
 
             return x509_certificate, accept_payload
 
+        def save_device_with_smartcard(
+            self,
+            key_file: Path,
+            device: LocalDevice,
+            force: bool = False,
+            certificate_id: Optional[str] = None,
+            certificate_sha1: Optional[bytes] = None,
+        ) -> None:
+            def _encrypt_dump(cleartext: bytes) -> Tuple[DeviceFileType, bytes, dict]:
+
+                extra_args = {
+                    "encrypted_key": b"123",
+                    "certificate_id": certificate_id,
+                    "certificate_sha1": certificate_sha1,
+                }
+                return DeviceFileType.SMARTCARD, b"456", extra_args
+
+            _save_device(key_file, device, force, _encrypt_dump)
+
     mocked_parsec_ext_smartcard = MockedParsecExtSmartcard()
 
     def _mocked_load_smartcard_extension():
@@ -830,6 +838,9 @@ def mocked_parsec_ext_smartcard(monkeypatch):
 
     monkeypatch.setattr(
         "parsec.core.pki.plumbing._load_smartcard_extension", _mocked_load_smartcard_extension
+    )
+    monkeypatch.setattr(
+        "parsec.core.local_device._load_smartcard_extension", _mocked_load_smartcard_extension
     )
     return mocked_parsec_ext_smartcard
 
@@ -954,7 +965,6 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
             enrollments_count = int(match.group(1))
             # Just retrieve the enrollment ID
             enrollments = []
-
             for line in other_lines:
                 match = re.match(r"^Pending enrollment ([a-f0-9]+)", line)
                 if match:
@@ -1028,11 +1038,8 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
             assert "Additional --accept/--reject elements not used" in result.output
 
         # Poll to handle the accepted enrollments, and discard the non-pendings ones
-        assert await run_poll() == [
-            enrollment_id1.hex[:3],
-            enrollment_id3.hex[:3],
-            enrollment_id4.hex[:3],
-        ]
+        ids = await run_poll(extra_args=f"--finalize {enrollment_id4.hex[:3]}")
+        assert set(ids) == {enrollment_id1.hex[:3], enrollment_id3.hex[:3], enrollment_id4.hex[:3]}
 
         # Now we should have a new local device !
         result = await _cli_invoke_in_thread(f"core list_devices --config-dir {config_dir}")
