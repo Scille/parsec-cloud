@@ -25,7 +25,7 @@ from parsec.core.local_device import (
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class X509Certificate:
     class SCHEMA_CLS(BaseSchema):
-        type = fields.CheckedConstant("x509_certifcate", required=True)
+        type = fields.CheckedConstant("x509_certificate", required=True)
         issuer = fields.Dict(required=True)
         subject = fields.Dict(required=True)
         der_x509_certificate = fields.Bytes(required=True)
@@ -146,7 +146,6 @@ class LocalPendingEnrollment(BaseLocalData):
             try:
                 result.append(cls.load(path.read_bytes()))
             # Ignore invalid or missing files
-            except (DataError, OSError) as e:
-                print(repr(e))
+            except (DataError, OSError):
                 pass
         return result
