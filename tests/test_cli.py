@@ -671,7 +671,18 @@ def test_gui_with_diagnose_option(env):
     _run(f"core gui --diagnose", env=env, capture=False)
 
 
-def test_pki_enrollment_not_available(tmp_path, alice):
+@pytest.fixture
+def no_parsec_extension():
+    saved_parsec_ext = sys.modules.get("parsec_ext")
+    sys.modules["parsec_ext"] = None
+    yield
+    if saved_parsec_ext is None:
+        del sys.modules["parsec_ext"]
+    else:
+        sys.modules["parsec_ext"] = saved_parsec_ext
+
+
+def test_pki_enrollment_not_available(tmp_path, alice, no_parsec_extension):
     # First need to have alice device on the disk
     config_dir = tmp_path / "config"
     alice_password = "S3cr3t"
