@@ -171,6 +171,7 @@ jobs:
     displayName: 'Rust Tests'
   - bash: |
       set -eux
+      cargo build --features mock-time
       pip install .[all,oxidation]
       # Remove the parsec folder from the source to force use of the wheel
       rm -rf parsec
