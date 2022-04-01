@@ -166,12 +166,11 @@ jobs:
     displayName: 'Bootstrap'
   - bash: |
       set -eux
-      cargo test
+      cargo test --features mock-time
     workingDirectory: $(Build.SourcesDirectory)/oxidation
     displayName: 'Rust Tests'
   - bash: |
       set -eux
-      cargo build --features mock-time
       pip install .[all,oxidation]
       # Remove the parsec folder from the source to force use of the wheel
       rm -rf parsec

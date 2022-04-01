@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
 from contextlib import ExitStack, contextmanager
@@ -8,7 +9,6 @@ import trio
 import attr
 import pendulum
 
-from libparsec.types import freeze_time as _Rs_freeze_time
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
@@ -92,7 +92,13 @@ def freeze_time(time=None, device=None):
     if isinstance(time, str):
         time = pendulum.parse(time)
 
-    _Rs_freeze_time(time)
+    if not TYPE_CHECKING:
+        try:
+            from libparsec.types import freeze_time as _Rs_freeze_time
+        except ImportError:
+            pass
+        else:
+            _Rs_freeze_time(time)
 
     # Save previous context
     previous_task = __freeze_time_task
