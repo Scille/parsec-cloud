@@ -14,6 +14,7 @@ from parsec.backend.memory.user import (
 )
 from parsec.backend.user_type import User, Device
 from parsec.backend.pki import (
+    PkiEnrollmentIdAlreadyUsedError,
     PkiEnrollmentInfo,
     PkiEnrollmentInfoSubmitted,
     PkiEnrollmentInfoAccepted,
@@ -38,6 +39,7 @@ class PkiEnrollment:
     submit_payload_signature: bytes
     submit_payload: bytes
     accepter: Optional[DeviceID] = None
+    accepted: Optional[DeviceID] = None
 
 
 class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
@@ -59,6 +61,12 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         submit_payload: bytes,
         submitted_on: DateTime,
     ) -> None:
+
+        # Assert enrollment id not used already
+        for enrollment in reversed(self._enrollments[organization_id]):
+            if enrollment.enrollment_id == enrollment_id:
+                raise PkiEnrollmentIdAlreadyUsedError()
+
         # Try to retrieve the last attempt with this x509 certificate
         for enrollment in reversed(self._enrollments[organization_id]):
             if enrollment.submitter_der_x509_certificate == submitter_der_x509_certificate:
@@ -83,9 +91,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 elif isinstance(enrollment.info, PkiEnrollmentInfoAccepted):
                     # Previous attempt end successfully, we are not allowed to submit
                     # unless the created user has been revoked
-                    assert enrollment.accepter is not None
+                    assert enrollment.accepter is not None and enrollment.accepted is not None
                     user = self._user_component._get_user(
-                        organization_id=organization_id, user_id=enrollment.accepter.user_id
+                        organization_id=organization_id, user_id=enrollment.accepted.user_id
                     )
                     if not user.is_revoked():
                         raise PkiEnrollmentAlreadyEnrolledError(enrollment.info.accepted_on)
@@ -187,6 +195,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 # Certifier is empty only for organization bootstrap
                 assert user.user_certifier is not None
                 enrollment.accepter = user.user_certifier
+                enrollment.accepted = first_device.device_id
 
                 break
 
