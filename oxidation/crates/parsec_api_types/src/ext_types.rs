@@ -79,7 +79,7 @@ mod mock_time {
 
     impl DateTime {
         pub fn now() -> Self {
-            MOCK_TIME.with(|cell| cell.borrow().unwrap_or(Self::now()))
+            MOCK_TIME.with(|cell| cell.borrow().unwrap_or(chrono::Utc::now().into()))
         }
 
         pub fn freeze_time(time: Option<Self>) {
