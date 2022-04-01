@@ -10,7 +10,12 @@ from parsec.core.gui.login_widget import PendingEnrollment, EnrollmentPendingBut
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_list_enrollments(aqtbot, logged_gui):
+async def test_list_enrollments(aqtbot, logged_gui, monkeypatch):
+    def _test_list_submitted_enrollment_requests():
+        pass
+
+    monkeypatch.setattr("")
+
     e_w = await logged_gui.test_switch_to_enrollment_widget()
 
     def _enrollment_shown():
@@ -195,7 +200,6 @@ async def test_query_enrollment(
     assert eq_w.button_select_cert.isEnabled()
 
     if cert_is_valid:
-        aqtbot.mouse_click(eq_w.button_select_cert, QtCore.Qt.LeftButton)
         aqtbot.mouse_click(eq_w.button_select_cert, QtCore.Qt.LeftButton)
         assert not eq_w.label_cert_error.isVisible()
         assert eq_w.widget_user_info.isVisible()

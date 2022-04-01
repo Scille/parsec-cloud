@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>453</width>
-    <height>274</height>
+    <width>540</width>
+    <height>359</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -130,17 +130,41 @@
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
+        <property name="spacing">
+         <number>5</number>
+        </property>
         <item>
          <widget class="QLabel" name="label_2">
+          <property name="font">
+           <font>
+            <pointsize>11</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
           <property name="text">
-           <string>TEXT_LABEL_USER_NAME</string>
+           <string>TEXT_LABEL_USER_FULL_NAME</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="line_edit_user_name">
+         <widget class="ValidatedLineEdit" name="line_edit_user_name">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
           <property name="readOnly">
            <bool>true</bool>
+          </property>
+          <property name="placeholderText">
+           <string>TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER</string>
           </property>
          </widget>
         </item>
@@ -148,17 +172,86 @@
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <property name="spacing">
+         <number>5</number>
+        </property>
         <item>
          <widget class="QLabel" name="label">
+          <property name="font">
+           <font>
+            <pointsize>11</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
           <property name="text">
            <string>TEXT_LABEL_USER_EMAIL</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="line_edit_user_email">
+         <widget class="ValidatedLineEdit" name="line_edit_user_email">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
           <property name="readOnly">
            <bool>true</bool>
+          </property>
+          <property name="placeholderText">
+           <string>TEXT_LABEL_USER_EMAIL_PLACEHOLDER</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <property name="spacing">
+         <number>5</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="label_4">
+          <property name="font">
+           <font>
+            <pointsize>11</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>TEXT_LABEL_DEVICE</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="ValidatedLineEdit" name="line_edit_device">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="placeholderText">
+           <string>TEXT_LABEL_DEVICE_PLACEHOLDER</string>
           </property>
          </widget>
         </item>
@@ -209,6 +302,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ValidatedLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>parsec.core.gui.input_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

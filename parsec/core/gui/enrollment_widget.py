@@ -2,21 +2,24 @@
 
 from collections import namedtuple
 
+import textwrap
+
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QWidget
 
 from parsec.api.protocol import UserProfile, HumanHandle, DeviceLabel
 
-from parsec.core.backend_connection.authenticated import backend_authenticated_cmds_factory
-
 from parsec.core.core_events import CoreEvent
 
-from parsec.core.invite.greeter import _create_new_user_certificates
+from parsec.core.pki import (
+    PkiEnrollementAccepterValidSubmittedCtx,
+    PkiEnrollementAccepterInvalidSubmittedCtx,
+)
 
 from parsec.core.gui.custom_dialogs import GreyedDialog
 from parsec.core.gui import validators
-from parsec.core.gui.lang import translate
+from parsec.core.gui.lang import translate, format_datetime
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.snackbar_widget import SnackbarManager
 
@@ -34,7 +37,7 @@ class AcceptCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
     succeeded = pyqtSignal()
     failed = pyqtSignal(object)
 
-    def __init__(self, enrollment_info, user_profile_outsider_allowed=False):
+    def __init__(self, pending, user_profile_outsider_allowed=False):
         super().__init__()
         self.setupUi(self)
 
@@ -48,11 +51,9 @@ class AcceptCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.line_edit_device.set_validator(validators.DeviceLabelValidator())
         self.combo_profile.currentIndexChanged.connect(self.check_infos)
 
-        self.line_edit_user_full_name.setText(
-            enrollment_info.request_info.requested_human_handle.label
-        )
-        self.line_edit_user_email.setText(enrollment_info.request_info.requested_human_handle.email)
-        self.line_edit_device.setText(enrollment_info.request_info.requested_device_label.str)
+        self.line_edit_user_full_name.setText(pending.submitter_x509_certif.subject_common_name)
+        self.line_edit_user_email.setText(pending.submitter_x509_certif.subject_email_address)
+        self.line_edit_device.setText(pending.submit_payload.requested_device_label.str)
 
         self.combo_profile.addItem(translate("TEXT_SELECT_USER_PROFILE"), None)
         self.combo_profile.addItem(translate("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
@@ -126,12 +127,10 @@ class EnrollmentButton(QWidget, Ui_EnrollmentButton):
     accept_clicked = pyqtSignal(QWidget)
     reject_clicked = pyqtSignal(QWidget)
 
-    def __init__(self, enrollment_info):
+    def __init__(self, pending):
         super().__init__()
         self.setupUi(self)
-        self.enrollment_info = enrollment_info
-        self.label_name.setText(self.enrollment_info.request.requested_human_handle.label)
-        self.label_email.setText(self.enrollment_info.request.requested_human_handle.email)
+        self.pending = pending
         # self.label_date.setText(self.enrollment_info.date)
         accept_pix = Pixmap(":/icons/images/material/done.svg")
         accept_pix.replace_color(QColor(0x00, 0x00, 0x00), QColor(0xFF, 0xFF, 0xFF))
@@ -140,20 +139,33 @@ class EnrollmentButton(QWidget, Ui_EnrollmentButton):
         self.button_accept.setIcon(QIcon(accept_pix))
         self.button_reject.setIcon(QIcon(reject_pix))
 
-        if self.enrollment_info.certif_is_valid:
-            self.button_accept.setVisible(True)
-            self.label_certif.setStyleSheet("color: #8BC34A;")
-            self.label_certif.setText("✔ " + translate("TEXT_ENROLLMENT_CERTIFICATE_IS_VALID"))
-        else:
+        self.label_date.setText(format_datetime(pending.submitted_on))
+
+        if isinstance(self.pending, PkiEnrollementAccepterInvalidSubmittedCtx):
+            self.widget_cert_infos.setVisible(False)
+            self.widget_cert_error.setVisible(True)
+            self.label_error.setText(translate("TEXT_ENROLLMENT_ERROR_WITH_CERTIFICATE"))
             self.button_accept.setVisible(False)
-            self.label_certif.setStyleSheet("color: #F44336;")
-            self.label_certif.setText("✘ " + translate("TEXT_ENROLLMENT_CERTIFICATE_IS_INVALID"))
+            self.label_cert_validity.setStyleSheet("#label_cert_validity { color: #F44336; }")
+            self.label_cert_validity.setText(
+                "✘ " + translate("TEXT_ENROLLMENT_CERTIFICATE_IS_INVALID")
+            )
+            self.label_cert_validity.setToolTip(textwrap.fill(self.pending.error, 80))
+        else:
+            assert isinstance(self.pending, PkiEnrollementAccepterValidSubmittedCtx)
+            self.widget_cert_infos.setVisible(True)
+            self.widget_cert_error.setVisible(False)
+            self.button_accept.setVisible(True)
+            self.label_name.setText(self.pending.submitter_x509_certif.subject_common_name)
+            self.label_email.setText(self.pending.submitter_x509_certif.subject_email_address)
+            self.label_issuer.setText(self.pending.submitter_x509_certif.issuer_common_name)
+            self.label_cert_validity.setStyleSheet("#label_cert_validity { color: #8BC34A; }")
+            self.label_cert_validity.setText(
+                "✔ " + translate("TEXT_ENROLLMENT_CERTIFICATE_IS_VALID")
+            )
+
         self.button_accept.clicked.connect(lambda: self.accept_clicked.emit(self))
         self.button_reject.clicked.connect(lambda: self.reject_clicked.emit(self))
-
-    @property
-    def token(self):
-        return self.enrollment_info.token
 
     def set_buttons_enabled(self, enabled):
         self.button_accept.setEnabled(enabled)
@@ -200,46 +212,20 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
                 w.setParent(None)
 
     async def list_pending_enrollments(self):
-        from parsec_ext import smartcard
-
         self.label_empty_list.hide()
         self.clear_layout()
 
-        async with backend_authenticated_cmds_factory(
-            addr=self.core.device.organization_addr,
-            device_id=self.core.device.device_id,
-            signing_key=self.core.device.signing_key,
-            keepalive=self.core.config.backend_connection_keepalive,
-        ) as cmds:
-            rep = await cmds.pki_enrollment_get_requests()
-            if rep["status"] != "ok":
-                self.label_empty_list.setText(translate("TEXT_ENROLLMENT_FAILED_TO_RETRIEVE_LIST"))
-                self.label_empty_list.show()
-                return
+        pendings = await self.core.list_submitted_enrollment_requests()
 
-            requests = []
-            for certificate_id, request_id, request in rep["requests"]:
-                try:
-                    subject, request_info = smartcard.verify_enrollment_request(
-                        self.core.config, request
-                    )
-                    requests.append(
-                        EnrollmentInfo(request, request_id, request_info, certificate_id, True)
-                    )
-                except smartcard.LocalDeviceError:
-                    requests.append(
-                        EnrollmentInfo(request, request_id, None, certificate_id, False)
-                    )
-
-            if len(requests) == 0:
-                self.label_empty_list.setText(translate("TEXT_ENROLLMENT_NO_PENDING_enrollment"))
-                self.label_empty_list.show()
-                return
-            for recruit in requests:
-                eb = EnrollmentButton(recruit)
-                eb.accept_clicked.connect(self._on_accept_clicked)
-                eb.reject_clicked.connect(self._on_reject_clicked)
-                self.main_layout.addWidget(eb)
+        if not pendings:
+            self.label_empty_list.setText(translate("TEXT_ENROLLMENT_NO_PENDING_enrollment"))
+            self.label_empty_list.show()
+            return
+        for pending in pendings:
+            eb = EnrollmentButton(pending)
+            eb.accept_clicked.connect(self._on_accept_clicked)
+            eb.reject_clicked.connect(self._on_reject_clicked)
+            self.main_layout.addWidget(eb)
 
     def _on_accept_clicked(self, eb):
         def _on_finished(status, dialog):
@@ -251,59 +237,28 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
                     None,
                     self.accept_recruit,
                     enrollment_button=eb,
-                    device_label=dialog.device_label,
                     human_handle=dialog.human_handle,
+                    device_label=dialog.device_label,
                     profile=dialog.profile,
                 )
 
         eb.set_buttons_enabled(False)
-        AcceptCheckInfoWidget.show_modal(eb.enrollment_info, self, on_finished=_on_finished)
+        AcceptCheckInfoWidget.show_modal(eb.pending, self, on_finished=_on_finished)
 
     def _on_reject_clicked(self, rw):
         rw.set_buttons_enabled(False)
         self.jobs_ctx.submit_job(None, None, self.reject_recruit, enrollment_button=rw)
 
-    async def accept_recruit(self, enrollment_button, device_label, human_handle, profile):
-        from parsec_ext import smartcard
-
+    async def accept_recruit(self, enrollment_button, human_handle, device_label, profile):
         try:
-            async with backend_authenticated_cmds_factory(
-                addr=self.core.device.organization_addr,
-                device_id=self.core.device.device_id,
-                signing_key=self.core.device.signing_key,
-                keepalive=self.core.config.backend_connection_keepalive,
-            ) as cmds:
-
-                enrollment_info = enrollment_button.enrollment_info
-                author = self.core.device
-                user_certificate, redacted_user_certificate, device_certificate, redacted_device_certificate, user_confirmation = _create_new_user_certificates(
-                    author,
-                    device_label,
-                    human_handle,
-                    profile,
-                    enrollment_info.request_info.public_key,
-                    enrollment_info.request_info.verify_key,
-                )
-
-                reply = smartcard.prepare_enrollment_reply(author, user_confirmation)
-
-                # Perform the pki_enrollment_reply command
-                rep = await cmds.pki_enrollment_reply(
-                    enrollment_info.certificate_id,
-                    enrollment_info.request_id,
-                    reply=reply,
-                    user_id=user_confirmation.device_id.user_id,
-                    user_certificate=user_certificate,
-                    device_certificate=device_certificate,
-                    redacted_user_certificate=redacted_user_certificate,
-                    redacted_device_certificate=redacted_device_certificate,
-                )
-                if rep["status"] != "ok":
-                    SnackbarManager.warn(translate("TEXT_ENROLLMENT_ACCEPT_FAILURE"))
-                    enrollment_button.set_buttons_enabled(True)
-                else:
-                    SnackbarManager.inform(translate("TEXT_ENROLLMENT_ACCEPT_SUCCESS"))
-                    self.main_layout.removeWidget(enrollment_button)
+            await enrollment_button.pending.accept(
+                author=self.core.device,
+                device_label=device_label,
+                human_handle=human_handle,
+                profile=profile,
+            )
+            SnackbarManager.inform(translate("TEXT_ENROLLMENT_ACCEPT_SUCCESS"))
+            self.main_layout.removeWidget(enrollment_button)
         except:
             import traceback
 
@@ -313,24 +268,12 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
 
     async def reject_recruit(self, enrollment_button):
         try:
-            async with backend_authenticated_cmds_factory(
-                addr=self.core.device.organization_addr,
-                device_id=self.core.device.device_id,
-                signing_key=self.core.device.signing_key,
-                keepalive=self.core.config.backend_connection_keepalive,
-            ) as cmds:
-                rep = await cmds.pki_enrollment_reply(
-                    enrollment_button.enrollment_info.certificate_id,
-                    enrollment_button.enrollment_info.request_id,
-                    reply=None,
-                    user_id=None,
-                )
-                if rep["status"] != "ok":
-                    SnackbarManager.warn(translate("TEXT_ENROLLMENT_REJECT_FAILURE"))
-                    enrollment_button.set_buttons_enabled(True)
-                else:
-                    SnackbarManager.inform(translate("TEXT_ENROLLMENT_REJECT_SUCCESS"))
-                    self.main_layout.removeWidget(enrollment_button)
+            await enrollment_button.pending.reject()
+            SnackbarManager.inform(translate("TEXT_ENROLLMENT_REJECT_SUCCESS"))
+            self.main_layout.removeWidget(enrollment_button)
         except:
+            import traceback
+
+            traceback.print_exc()
             SnackbarManager.warn(translate("TEXT_ENROLLMENT_REJECT_FAILURE"))
             enrollment_button.set_buttons_enabled(True)

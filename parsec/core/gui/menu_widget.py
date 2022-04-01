@@ -5,6 +5,7 @@ from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import QWidget, QStyle, QStyleOption
 
 from parsec.api.protocol import OrganizationID
+from parsec.core.pki import is_pki_enrollment_available
 from parsec.core.types import OrganizationStats
 from parsec.core.gui.ui.menu_widget import Ui_MenuWidget
 from parsec.core.gui.lang import translate as _
@@ -29,6 +30,8 @@ class MenuWidget(QWidget, Ui_MenuWidget):
         self.button_devices.apply_style()
         self.button_enrollment.apply_style()
         self.icon_connection.apply_style()
+        if not is_pki_enrollment_available():
+            self.button_enrollment.hide()
 
     def paintEvent(self, _):
         opt = QStyleOption()
