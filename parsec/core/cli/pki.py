@@ -3,7 +3,6 @@
 import attr
 from typing import Sequence, Optional, Callable
 from uuid import UUID
-from pathlib import Path
 import platform
 from pendulum import DateTime
 import click
@@ -104,13 +103,8 @@ async def _pki_enrollment_poll(
     enrollment_id_filter: Optional[str],
     dry_run: bool,
     save_device_with_selected_auth: Callable,
-    extra_trust_roots: Sequence[Path],
     finalize: Sequence[str],
 ):
-
-    # Use extra trust roots from both command line and config
-    extra_trust_roots = [*extra_trust_roots, *config.pki_extra_trust_roots]
-
     pendings = await PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(config_dir=config.config_dir)
 
     # Try to shorten the UUIDs to make it easier to work with
@@ -187,7 +181,7 @@ async def _pki_enrollment_poll(
 
         async with spinner("Fetching PKI enrollment status from the backend"):
             try:
-                ctx = await ctx.poll(extra_trust_roots=extra_trust_roots)
+                ctx = await ctx.poll(extra_trust_roots=config.pki_extra_trust_roots)
 
             except Exception:
                 # TODO: exception handling !
@@ -239,7 +233,6 @@ async def _pki_enrollment_poll(
 @click.command(short_help="check status of the pending PKI enrollments locally available")
 @click.argument("enrollment_id", required=False)
 @click.option("--dry-run", is_flag=True)
-@click.option("--extra-trust-root", multiple=True, default=(), type=Path)
 @click.option("--finalize", multiple=True, default=())
 @save_device_options
 @core_config_options
@@ -249,7 +242,6 @@ def pki_enrollment_poll(
     enrollment_id: Optional[str],
     dry_run: bool,
     save_device_with_selected_auth: Callable,
-    extra_trust_root: Sequence[Path],
     finalize: Sequence[str],
     **kwargs,
 ):
@@ -262,7 +254,6 @@ def pki_enrollment_poll(
             enrollment_id,
             dry_run,
             save_device_with_selected_auth,
-            extra_trust_root,
             finalize,
         )
 
@@ -283,14 +274,10 @@ class CookedPendingEnrollment:
 async def _pki_enrollment_review_pendings(
     config: CoreConfig,
     device: LocalDevice,
-    extra_trust_roots: Sequence[Path],
     list_only: bool,
     accept: Sequence[str],
     reject: Sequence[str],
 ):
-    # Use extra trust roots from both command line and config
-    extra_trust_roots = [*extra_trust_roots, *config.pki_extra_trust_roots]
-
     # Connect to the backend
     async with backend_authenticated_cmds_factory(
         addr=device.organization_addr,
@@ -299,7 +286,7 @@ async def _pki_enrollment_review_pendings(
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
         pendings = await accepter_list_submitted_from_backend(
-            cmds=cmds, extra_trust_roots=extra_trust_roots
+            cmds=cmds, extra_trust_roots=config.pki_extra_trust_roots
         )
         num_pendings_display = click.style(str(len(pendings)), fg="green")
         click.echo(f"Found {num_pendings_display} pending enrollment(s):")
@@ -423,8 +410,6 @@ async def _pki_enrollment_review_pendings(
 
 
 @click.command(short_help="show the pending PKI enrollments")
-# TODO: document options
-@click.option("--extra-trust-root", multiple=True, default=(), type=Path)
 @click.option("--list-only", is_flag=True)
 @click.option(
     "--accept", multiple=True, default=()
@@ -437,7 +422,6 @@ async def _pki_enrollment_review_pendings(
 def pki_enrollment_review_pendings(
     config: CoreConfig,
     device: LocalDevice,
-    extra_trust_root: Sequence[Path],
     list_only: bool,
     accept: Sequence[str],
     reject: Sequence[str],
@@ -454,12 +438,4 @@ def pki_enrollment_review_pendings(
 
     with cli_exception_handler(config.debug):
         _ensure_pki_enrollment_available()
-        trio_run(
-            _pki_enrollment_review_pendings,
-            config,
-            device,
-            extra_trust_root,
-            list_only,
-            accept,
-            reject,
-        )
+        trio_run(_pki_enrollment_review_pendings, config, device, list_only, accept, reject)

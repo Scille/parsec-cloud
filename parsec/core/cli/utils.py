@@ -64,10 +64,17 @@ def cli_command_base_options(fn: F) -> F:
 
 def core_config_options(fn: F) -> F:
     @click.option(
+        "--pki-extra-trust-root",
+        multiple=True,
+        default=(),
+        type=Path,
+        help="Additional directory to look for PKI root certificates",
+    )
+    @click.option(
         "--config-dir", envvar="PARSEC_CONFIG_DIR", type=click.Path(exists=True, file_okay=False)
     )
     @wraps(fn)
-    def wrapper(**kwargs):
+    def wrapper(pki_extra_trust_root, **kwargs):
         assert "config" not in kwargs
         config_dir = kwargs["config_dir"]
         # `--sentry-*` are only present for gui command
@@ -80,6 +87,7 @@ def core_config_options(fn: F) -> F:
             sentry_dsn=sentry_dsn,
             sentry_environment=sentry_environment,
             debug=kwargs["debug"],
+            pki_extra_trust_roots=pki_extra_trust_root,
         )
 
         kwargs["config"] = config
