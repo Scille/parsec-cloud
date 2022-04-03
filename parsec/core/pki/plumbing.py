@@ -62,7 +62,7 @@ async def pki_enrollment_sign_payload(payload: bytes, x509_certificate: X509Cert
     )
 
 
-def pki_enrollment_save_local_pending(
+def pki_enrollment_create_local_pending(
     config_dir: Path,
     x509_certificate: X509Certificate,
     addr: BackendPkiEnrollmentAddr,
@@ -80,7 +80,7 @@ def pki_enrollment_save_local_pending(
         PkiEnrollmentLocalPendingCryptoError
     """
     # Encrypting the private keys is done using the certificate public key, so this should not block
-    local_pending = _load_smartcard_extension().pki_enrollment_save_local_pending(
+    return _load_smartcard_extension().pki_enrollment_create_local_pending(
         config_dir=config_dir,
         x509_certificate=x509_certificate,
         addr=addr,
@@ -90,8 +90,6 @@ def pki_enrollment_save_local_pending(
         signing_key=signing_key,
         private_key=private_key,
     )
-    # TODO: Move this logic elsewhere
-    local_pending.save(config_dir)
 
 
 async def pki_enrollment_load_local_pending_secret_part(

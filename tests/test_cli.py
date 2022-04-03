@@ -728,7 +728,7 @@ def mocked_parsec_ext_smartcard(monkeypatch):
         ) -> bytes:
             return self._compute_signature(x509_certificate.der_x509_certificate, payload)
 
-        def pki_enrollment_save_local_pending(
+        def pki_enrollment_create_local_pending(
             self,
             config_dir: Path,
             x509_certificate: X509Certificate,

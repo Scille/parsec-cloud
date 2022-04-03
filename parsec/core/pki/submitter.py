@@ -18,7 +18,7 @@ from parsec.core.pki.plumbing import (
     PkiEnrollmentAcceptPayload,
     pki_enrollment_select_certificate,
     pki_enrollment_sign_payload,
-    pki_enrollment_save_local_pending,
+    pki_enrollment_create_local_pending,
     pki_enrollment_load_local_pending_secret_part,
     pki_enrollment_load_accept_payload,
 )
@@ -100,7 +100,7 @@ class PkiEnrollmentSubmitterInitialCtx:
         #   the whole machine has crashed ^^) so user is expected to retry the submit command
         # - in case the enrollment is accepted by a ninja-fast admin before the submit can be
         #   retried, it's no big deal to revoke the newly enrolled user and restart from scratch
-        pki_enrollment_save_local_pending(
+        local_pending = pki_enrollment_create_local_pending(
             config_dir=config_dir,
             x509_certificate=self.x509_certificate,
             addr=self.addr,
@@ -110,6 +110,7 @@ class PkiEnrollmentSubmitterInitialCtx:
             signing_key=self.signing_key,
             private_key=self.private_key,
         )
+        local_pending.save(config_dir)
 
         return PkiEnrollmentSubmitterSubmittedStatusCtx(
             config_dir=config_dir,
