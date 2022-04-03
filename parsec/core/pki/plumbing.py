@@ -12,7 +12,7 @@ from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.crypto import PrivateKey, SigningKey
 from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 from parsec.core.types import LocalDevice
-from parsec.core.types.pki import X509Certificate
+from parsec.core.types.pki import X509Certificate, LocalPendingEnrollment
 
 
 def _load_smartcard_extension():
@@ -71,7 +71,7 @@ def pki_enrollment_create_local_pending(
     submit_payload: PkiEnrollmentSubmitPayload,
     signing_key: SigningKey,
     private_key: PrivateKey,
-) -> None:
+) -> LocalPendingEnrollment:
     """
     Raises:
         PkiEnrollmentCertificateNotFoundError

@@ -1004,7 +1004,8 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
         result = await run_submit(check_result=False)
         assert result.exit_code == 1
         assert (
-            "Backend refused to create enrollment: {'status': 'already_submitted'}" in result.output
+            "The certificate `6f30201fed6069dc05be07aa7fa380d6901591a3` has already been submitted"
+            in result.output
         )
         assert await run_review_pendings(extra_args="--list-only") == [
             enrollment_id1.hex[:3]
@@ -1026,7 +1027,8 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
         # It is no longer possible to do another enrollment with the same certificate (until the user is revoked)
         result = await run_submit(check_result=False)
         assert (
-            "Backend refused to create enrollment: {'status': 'already_enrolled'}" in result.output
+            "The certificate `6f30201fed6069dc05be07aa7fa380d6901591a3` has already been enrolled"
+            in result.output
         )
 
         # Reject/Accept not possible against unknown/cancelled/accepted enrollments

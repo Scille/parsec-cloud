@@ -38,7 +38,6 @@ async def _anonymous_cmd(
 ) -> dict:
     """
     Raises:
-        Backend
         BackendNotAvailable
         BackendProtocolError
 

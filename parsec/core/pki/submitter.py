@@ -27,6 +27,13 @@ from parsec.core.types.pki import LocalPendingEnrollment
 from parsec.core.local_device import LocalDeviceError, generate_new_device
 from parsec.crypto import PrivateKey, SigningKey
 
+from parsec.core.pki.exceptions import (
+    PkiEnrollmentSubmitCertificateAlreadySubmittedError,
+    PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError,
+    PkiEnrollmentSubmitCertificateAlreadyEnrolledError,
+    PkiEnrollmentSubmitError,
+)
+
 
 def _remove_local_pending(config_dir: Path, enrollment_id: UUID):
     LocalPendingEnrollment.load_from_enrollment_id(config_dir, enrollment_id).get_path(
@@ -63,7 +70,29 @@ class PkiEnrollmentSubmitterInitialCtx:
     async def submit(
         self, config_dir: Path, requested_device_label: DeviceLabel, force: bool
     ) -> "PkiEnrollmentSubmitterSubmittedCtx":
-        # TODO: document exceptions !
+        """
+        Raises:
+            BackendNotAvailable
+            BackendProtocolError
+
+            BackendCmdsInvalidRequest
+            BackendCmdsInvalidResponse
+            BackendNotAvailable
+            BackendCmdsBadResponse
+
+            PkiEnrollmentSubmitError
+            PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError
+            PkiEnrollmentSubmitCertificateAlreadySubmittedError
+            PkiEnrollmentSubmitCertificateAlreadyEnrolledError
+
+            PkiEnrollmentCertificateNotFoundError
+            PkiEnrollmentCertificateCryptoError
+            PkiEnrollmentCertificateError
+            PkiEnrollmentLocalPendingCryptoError
+
+            PkiEnrollmentLocalPendingError
+            PkiEnrollmentLocalPendingPackingError
+        """
 
         # Build submit payload
         cooked_submit_payload = PkiEnrollmentSubmitPayload(
@@ -76,22 +105,34 @@ class PkiEnrollmentSubmitterInitialCtx:
             payload=raw_submit_payload, x509_certificate=self.x509_certificate
         )
 
-        try:
-            rep = await cmd_pki_enrollment_submit(
-                addr=self.addr,
-                enrollment_id=self.enrollment_id,
-                force=force,
-                submitter_der_x509_certificate=self.x509_certificate.der_x509_certificate,
-                submit_payload_signature=payload_signature,
-                submit_payload=raw_submit_payload,
+        rep = await cmd_pki_enrollment_submit(
+            addr=self.addr,
+            enrollment_id=self.enrollment_id,
+            force=force,
+            submitter_der_x509_certificate=self.x509_certificate.der_x509_certificate,
+            submit_payload_signature=payload_signature,
+            submit_payload=raw_submit_payload,
+        )
+
+        if rep["status"] == "already_submitted":
+            # TODO: support submitted_on after error schema update
+            # submitted_on = rep["submitted_on"]
+            raise PkiEnrollmentSubmitCertificateAlreadySubmittedError(
+                f"The certificate `{self.x509_certificate.certificate_sha1.hex()}` has already been submitted"
             )
-        except Exception:
-            # TODO: exception handling !
-            raise
+
+        if rep["status"] == "enrollment_id_already_used":
+            raise PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError(
+                f"The enrollment ID {self.enrollment_id.hex} is already used"
+            )
+
+        if rep["status"] == "already_enrolled":
+            raise PkiEnrollmentSubmitCertificateAlreadyEnrolledError(
+                f"The certificate `{self.x509_certificate.certificate_sha1.hex()}` has already been enrolled"
+            )
 
         if rep["status"] != "ok":
-            # TODO: error handling !
-            raise RuntimeError(f"Backend refused to create enrollment: {rep}")
+            raise PkiEnrollmentSubmitError(self.x509_certificate, self.enrollment_id)
 
         # Save the enrollment request on disk.
         # Note there is not atomicity with the request to the backend, but it's

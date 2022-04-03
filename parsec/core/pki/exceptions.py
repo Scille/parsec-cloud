@@ -14,6 +14,11 @@ PkiEnrollmentError: all PKI enrollment related errors
    +- PkiEnrollmentCertificateCryptoError: when any of the required certificate-replated crypto operation fails
 +- PkiEnrollmentPayloadError: all the enrollment payload errors
    +- PkiEnrollmentPayloadValidationError: when some enrollement information cannot be properly loaded
++- PkiEnrollmentRemoteError: all the errors coming from a enrollment command on the backend
+   +- PkiEnrollmentSubmitError: all the errors coming from the pki_enrollment_submit command
+   +- PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError: when the enrollment ID is alread used
+   +- PkiEnrollmentSubmitCertificateAlreadySubmittedError: when the certificate has already been submited
+   +- PkiEnrollmentSubmitCertificateAlreadyEnrolledError: when the certificate is already enrolled
 """
 
 
@@ -75,4 +80,27 @@ class PkiEnrollmentPayloadError(PkiEnrollmentError):
 
 
 class PkiEnrollmentPayloadValidationError(PkiEnrollmentPayloadError):
+    pass
+
+
+# Submit Errors
+
+
+class PkiEnrollmentRemoteError(PkiEnrollmentError):
+    pass
+
+
+class PkiEnrollmentSubmitError(PkiEnrollmentRemoteError):
+    pass
+
+
+class PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError(PkiEnrollmentSubmitError):
+    pass
+
+
+class PkiEnrollmentSubmitCertificateAlreadySubmittedError(PkiEnrollmentSubmitError):
+    pass
+
+
+class PkiEnrollmentSubmitCertificateAlreadyEnrolledError(PkiEnrollmentSubmitError):
     pass
