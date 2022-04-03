@@ -76,6 +76,12 @@ class LocalDevicePackingError(LocalDeviceError):
     pass
 
 
+class LocalDeviceCertificateNotFoundError(LocalDeviceError):
+    """Used in parsec-extensions for smartcard devices."""
+
+    pass
+
+
 class DeviceFileType(Enum):
     PASSWORD = "password"
     SMARTCARD = "smartcard"

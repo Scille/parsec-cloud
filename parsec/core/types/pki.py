@@ -10,16 +10,17 @@ from parsec.core.types.backend_address import (
     BackendPkiEnrollmentAddrField,
 )
 from parsec.core.types.base import BaseLocalData
+from parsec.core.pki.exceptions import (
+    PkiEnrollmentLocalPendingError,
+    PkiEnrollmentLocalPendingPackingError,
+    PkiEnrollmentLocalPendingNotFoundError,
+    PkiEnrollmentLocalPendingValidationError,
+)
 
 from parsec.serde import BaseSchema, fields, post_load
 from parsec.api.data import DataError
 from parsec.api.data import PkiEnrollmentSubmitPayload
-from parsec.core.local_device import (
-    MsgpackSerializer,
-    LocalDeviceValidationError,
-    LocalDeviceError,
-    LocalDevicePackingError,
-)
+from parsec.core.local_device import MsgpackSerializer
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -64,8 +65,8 @@ class PendingDeviceKeys(BaseSchema):
 
 pending_device_keys_serializer = MsgpackSerializer(
     PendingDeviceKeys,
-    validation_exc=LocalDeviceValidationError,
-    packing_exc=LocalDevicePackingError,
+    validation_exc=PkiEnrollmentLocalPendingValidationError,
+    packing_exc=PkiEnrollmentLocalPendingPackingError,
 )
 
 
@@ -98,19 +99,30 @@ class LocalPendingEnrollment(BaseLocalData):
     ciphertext: bytes
 
     def get_path(self, config_dir: Path) -> Path:
+        """Raises: Nothing"""
         return config_dir / self.DIRECTORY_NAME / self.enrollment_id.hex
 
     def save(self, config_dir: Path) -> Path:
+        """
+        Raises:
+            PkiEnrollmentLocalPendingError
+            PkiEnrollmentLocalPendingPackingError
+        """
         path = self.get_path(config_dir)
         try:
             path.parent.mkdir(mode=0o700, exist_ok=True, parents=True)
             path.write_bytes(self.dump())
+        except DataError as exc:
+            raise PkiEnrollmentLocalPendingPackingError(
+                f"Cannot dump the local pending enrollment: {exc}"
+            ) from exc
         except OSError as exc:
-            raise LocalDeviceError(f"Cannot save {path}: {exc}") from exc
+            raise PkiEnrollmentLocalPendingError(f"Cannot save {path}: {exc}") from exc
         return path
 
     @classmethod
     def iter_path(cls, config_dir: Path) -> Iterable[Path]:
+        """Raises: Nothing"""
         parent = config_dir / cls.DIRECTORY_NAME
         if not parent.exists():
             return
@@ -119,11 +131,19 @@ class LocalPendingEnrollment(BaseLocalData):
 
     @classmethod
     def load_from_path(cls, path: Path):
-        data = path.read_bytes()
+        """
+        Raises:
+            PkiEnrollmentLocalPendingNotFoundError
+            PkiEnrollmentLocalPendingValidationError
+        """
+        try:
+            data = path.read_bytes()
+        except FileNotFoundError as exc:
+            raise PkiEnrollmentLocalPendingNotFoundError(str(exc)) from exc
         try:
             return cls.load(data)
         except DataError as exc:
-            raise LocalDeviceValidationError(
+            raise PkiEnrollmentLocalPendingValidationError(
                 f"Cannot load local enrollment request: {exc}"
             ) from exc
 
@@ -131,16 +151,25 @@ class LocalPendingEnrollment(BaseLocalData):
     def load_from_enrollment_id(
         cls, config_dir: Path, enrollment_id: UUID
     ) -> "LocalPendingEnrollment":
-        data = (config_dir / cls.DIRECTORY_NAME / enrollment_id.hex).read_bytes()
+        """
+        Raises:
+            PkiEnrollmentLocalPendingNotFoundError
+            PkiEnrollmentLocalPendingValidationError
+        """
+        try:
+            data = (config_dir / cls.DIRECTORY_NAME / enrollment_id.hex).read_bytes()
+        except FileNotFoundError as exc:
+            raise PkiEnrollmentLocalPendingNotFoundError(str(exc)) from exc
         try:
             return cls.load(data)
         except DataError as exc:
-            raise LocalDeviceValidationError(
+            raise PkiEnrollmentLocalPendingValidationError(
                 f"Cannot load local enrollment request: {exc}"
             ) from exc
 
     @classmethod
     def list(cls, config_dir: Path) -> List["LocalPendingEnrollment"]:
+        """Raises: Nothing"""
         result = []
         for path in cls.iter_path(config_dir):
             try:
