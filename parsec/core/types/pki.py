@@ -31,7 +31,7 @@ class X509Certificate:
         subject = fields.Dict(required=True)
         der_x509_certificate = fields.Bytes(required=True)
         certificate_sha1 = fields.Bytes(required=True)
-        certificate_id = fields.String(required=True)
+        certificate_id = fields.String(required=True, allow_none=True)
 
         @post_load
         def make_obj(self, data):
@@ -42,7 +42,11 @@ class X509Certificate:
     subject: Dict[str, str]
     der_x509_certificate: bytes
     certificate_sha1: bytes
-    certificate_id: str
+    certificate_id: Optional[str]
+
+    def is_available_locally(self):
+        """Certificates that are received from another peer are not available locally."""
+        return self.certificate_id is not None
 
     @property
     def subject_common_name(self) -> Optional[str]:
