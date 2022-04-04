@@ -69,7 +69,7 @@ def core_config_options(fn: F) -> F:
         default=(),
         type=Path,
         envvar="PARSEC_PKI_EXTRA_TRUST_ROOT",
-        help="Additional directory to look for PKI root certificates",
+        help="Additional path to a PKI root certificate",
     )
     @click.option(
         "--config-dir", envvar="PARSEC_CONFIG_DIR", type=click.Path(exists=True, file_okay=False)

@@ -211,8 +211,10 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
         pass
 
     try:
+        extra_trust_roots_from_extra_config = list(extra_config.pop("pki_extra_trust_roots", []))
+        extra_trust_roots_from_data_conf = list(data_conf.get("pki_extra_trust_roots", []))
         data_conf["pki_extra_trust_roots"] = frozenset(
-            map(Path, data_conf["pki_extra_trust_roots"])
+            map(Path, extra_trust_roots_from_data_conf + extra_trust_roots_from_extra_config)
         )
     except (KeyError, ValueError):
         pass
