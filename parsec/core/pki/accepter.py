@@ -85,7 +85,7 @@ async def accepter_list_submitted_from_backend(
                 submitter_der_x509_certificate=submitter_der_x509_certificate,
                 submit_payload_signature=submit_payload_signature,
                 raw_submit_payload=raw_submit_payload,
-                submitter_x509_certif=submitter_x509_certificate,
+                submitter_x509_certificate=submitter_x509_certificate,
                 submit_payload=submit_payload,
             )
 
@@ -119,12 +119,12 @@ class PkiEnrollementAccepterValidSubmittedCtx:
     submit_payload_signature: bytes
     raw_submit_payload: bytes
 
-    submitter_x509_certif: X509Certificate
+    submitter_x509_certificate: X509Certificate
     submit_payload: PkiEnrollmentSubmitPayload
 
     @property
     def submitter_x509_certificate_sha1(self) -> bytes:
-        return self.submitter_x509_certif.certificate_sha1
+        return self.submitter_x509_certificate.certificate_sha1
 
     async def reject(self) -> None:
         """

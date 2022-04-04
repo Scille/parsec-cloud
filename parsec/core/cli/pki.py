@@ -320,13 +320,13 @@ async def _pki_enrollment_review_pendings(
             else:
                 assert isinstance(pending, PkiEnrollementAccepterValidSubmittedCtx)
                 display += "\n  Certificate Issuer Common Name: " + click.style(
-                    pending.submitter_x509_certif.issuer_common_name, fg="yellow"
+                    pending.submitter_x509_certificate.issuer_common_name, fg="yellow"
                 )
                 display += "\n  Certificate Subject Common Name: " + click.style(
-                    pending.submitter_x509_certif.subject_common_name, fg="yellow"
+                    pending.submitter_x509_certificate.subject_common_name, fg="yellow"
                 )
                 display += "\n  Certificate Subject Email Address: " + click.style(
-                    pending.submitter_x509_certif.subject_email_address, fg="yellow"
+                    pending.submitter_x509_certificate.subject_email_address, fg="yellow"
                 )
                 display += "\n  Requested Device Label: " + click.style(
                     pending.submit_payload.requested_device_label, fg="yellow"
@@ -391,8 +391,8 @@ async def _pki_enrollment_review_pendings(
                     # Let the admin edit the user information
                     granted_device_label, granted_human_handle, granted_profile = await ask_info_new_user(
                         default_device_label=pending.submit_payload.requested_device_label,
-                        default_user_label=pending.submitter_x509_certif.subject_common_name,
-                        default_user_email=pending.submitter_x509_certif.subject_email_address,
+                        default_user_label=pending.submitter_x509_certificate.subject_common_name,
+                        default_user_email=pending.submitter_x509_certificate.subject_email_address,
                     )
 
                     async with spinner("Accepting PKI enrollment in the backend"):
