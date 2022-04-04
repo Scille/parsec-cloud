@@ -3,24 +3,37 @@
 """
 PkiEnrollmentError: all PKI enrollment related errors
 +- PkiEnrollmentLocalPendingError: all local pending enrollment errors
-   +- PkiEnrollmentLocalPendingNotFoundError: when the file corresponding to a given enrollment id cannot be not found
-   +- PkiEnrollmentLocalPendingValidationError: when a local pending enrollment cannot be loaded
-   +- PkiEnrollmentLocalPendingPackingError: when a local pending enrollment cannot be loaded
-   +- PkiEnrollmentLocalPendingCryptoError: when the private keys cannot be encrypted/decrypted
+    +- PkiEnrollmentLocalPendingNotFoundError: when the file corresponding to a given enrollment id cannot be not found
+    +- PkiEnrollmentLocalPendingValidationError: when a local pending enrollment cannot be loaded
+    +- PkiEnrollmentLocalPendingPackingError: when a local pending enrollment cannot be loaded
+    +- PkiEnrollmentLocalPendingCryptoError: when the private keys cannot be encrypted/decrypted
 +- PkiEnrollmentCertificateError: all certificate errors
-   +- PkiEnrollmentCertificateNotFoundError: when the certificate corresponding to a given certificate id cannot be found
-   +- PkiEnrollmentCertificateValidationError: when the provided certificate cannot be validated using the configured trust roots
-   +- PkiEnrollmentCertificateSignatureError: when the provided signature does not correspond to the certificate public key
-   +- PkiEnrollmentCertificateCryptoError: when any of the required certificate-replated crypto operation fails
+    +- PkiEnrollmentCertificateNotFoundError: when the certificate corresponding to a given certificate id cannot be found
+    +- PkiEnrollmentCertificateValidationError: when the provided certificate cannot be validated using the configured trust roots
+    +- PkiEnrollmentCertificateSignatureError: when the provided signature does not correspond to the certificate public key
+    +- PkiEnrollmentCertificateCryptoError: when any of the required certificate-replated crypto operation fails
 +- PkiEnrollmentPayloadError: all the enrollment payload errors
-   +- PkiEnrollmentPayloadValidationError: when some enrollement information cannot be properly loaded
+    +- PkiEnrollmentPayloadValidationError: when some enrollement information cannot be properly loaded
 +- PkiEnrollmentRemoteError: all the errors coming from a enrollment command on the backend
-   +- PkiEnrollmentSubmitError: all the errors coming from the pki_enrollment_submit command
-       +- PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError: when the enrollment ID is alread used
-       +- PkiEnrollmentSubmitCertificateAlreadySubmittedError: when the certificate has already been submited
-       +- PkiEnrollmentSubmitCertificateAlreadyEnrolledError: when the certificate is already enrolled
-   +- PkiEnrollmentEnrollmentListError: all the errors coming from the pki_enrollment_list command
-       +- PkiEnrollmentEnrollmentListNotAllowedError: when listing the enrollments is not allowed
+    +- PkiEnrollmentSubmitError: all the errors coming from the pki_enrollment_submit command
+        +- PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError: when the enrollment ID is alread used
+        +- PkiEnrollmentSubmitCertificateAlreadySubmittedError: when the certificate has already been submited
+        +- PkiEnrollmentSubmitCertificateAlreadyEnrolledError: when the certificate is already enrolled
+    +- PkiEnrollmentListError: all the errors coming from the pki_enrollment_list command
+        +- PkiEnrollmentListNotAllowedError: when listing the enrollments is not allowed
+    +- PkiEnrollmentRejectError: all the errors from the pki_enrollment_reject command
+        +- PkiEnrollmentRejectNotAllowedError: when rejecting the enrollment is not allowed
+        +- PkiEnrollmentRejectNotFoundError: when the enrollment is not found
+        +- PkiEnrollmentRejectNoLongerAvailableError: when the enrollment is not longer available
+    +- PkiEnrollmentAcceptError: all the errors coming from the pki_enrollment_reject command
+        +- PkiEnrollmentAcceptNotAllowedError: when accepting the enrollment is not allowed
+        +- PkiEnrollmentAcceptInvalidPayloadDataError: when the payload data is invalid
+        +- PkiEnrollmentAcceptInvalidDataError: when the new user data is invalid
+        +- PkiEnrollmentAcceptInvalidCertificationError: when the new user certification is invalid
+        +- PkiEnrollmentAcceptNotFoundError: when the enrollment is not found
+        +- PkiEnrollmentAcceptNoLongerAvailableError: when the enrollment is no longer available
+        +- PkiEnrollmentAcceptAlreadyExistsError: when the new user already exists
+        +- PkiEnrollmentAcceptActiveUsersLimitReachedError: when the activate users limit has been reached
 """
 
 
@@ -117,9 +130,67 @@ class PkiEnrollmentSubmitCertificateAlreadyEnrolledError(PkiEnrollmentSubmitErro
 # Enrollment list errors
 
 
-class PkiEnrollmentEnrollmentListError(PkiEnrollmentRemoteError):
+class PkiEnrollmentListError(PkiEnrollmentRemoteError):
     pass
 
 
-class PkiEnrollmentEnrollmentListNotAllowedError(PkiEnrollmentEnrollmentListError):
+class PkiEnrollmentListNotAllowedError(PkiEnrollmentListError):
+    pass
+
+
+# Enrollment reject errors
+
+
+class PkiEnrollmentRejectError(PkiEnrollmentRemoteError):
+    pass
+
+
+class PkiEnrollmentRejectNotAllowedError(PkiEnrollmentRejectError):
+    pass
+
+
+class PkiEnrollmentRejectNotFoundError(PkiEnrollmentRejectError):
+    pass
+
+
+class PkiEnrollmentRejectNoLongerAvailableError(PkiEnrollmentRejectError):
+    pass
+
+
+# Enrollment accept errors
+
+
+class PkiEnrollmentAcceptError(PkiEnrollmentRemoteError):
+    pass
+
+
+class PkiEnrollmentAcceptNotAllowedError(PkiEnrollmentAcceptError):
+    pass
+
+
+class PkiEnrollmentAcceptInvalidPayloadDataError(PkiEnrollmentAcceptError):
+    pass
+
+
+class PkiEnrollmentAcceptInvalidDataError(PkiEnrollmentAcceptError):
+    pass
+
+
+class PkiEnrollmentAcceptInvalidCertificationError(PkiEnrollmentAcceptError):
+    pass
+
+
+class PkiEnrollmentAcceptNotFoundError(PkiEnrollmentAcceptError):
+    pass
+
+
+class PkiEnrollmentAcceptNoLongerAvailableError(PkiEnrollmentAcceptError):
+    pass
+
+
+class PkiEnrollmentAcceptAlreadyExistsError(PkiEnrollmentAcceptError):
+    pass
+
+
+class PkiEnrollmentAcceptActiveUsersLimitReachedError(PkiEnrollmentAcceptError):
     pass
