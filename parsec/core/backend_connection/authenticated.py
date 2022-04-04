@@ -143,6 +143,9 @@ def _handle_event(event_bus: EventBus, rep: dict) -> None:
             encryption_revision=rep["encryption_revision"],
         )
 
+    elif rep["event"] == APIEvent.PKI_ENROLLMENT_UPDATED:
+        event_bus.send(CoreEvent.PKI_ENROLLMENT_UPDATED)
+
 
 def _transport_pool_factory(addr, device_id, signing_key, max_pool, keepalive):
     async def _connect():
