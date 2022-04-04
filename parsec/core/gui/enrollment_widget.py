@@ -276,17 +276,23 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
                 human_handle=human_handle,
                 profile=profile,
             )
-            SnackbarManager.inform(translate("TEXT_ENROLLMENT_ACCEPT_SUCCESS"))
-            self.main_layout.removeWidget(enrollment_button)
-        except:
+        except Exception:
             SnackbarManager.warn(translate("TEXT_ENROLLMENT_ACCEPT_FAILURE"))
             enrollment_button.set_buttons_enabled(True)
+        else:
+            SnackbarManager.inform(translate("TEXT_ENROLLMENT_ACCEPT_SUCCESS"))
+            self.main_layout.removeWidget(enrollment_button)
+            enrollment_button.hide()
+            enrollment_button.setParent(None)
 
     async def reject_recruit(self, enrollment_button):
         try:
             await enrollment_button.pending.reject()
-            SnackbarManager.inform(translate("TEXT_ENROLLMENT_REJECT_SUCCESS"))
-            self.main_layout.removeWidget(enrollment_button)
-        except:
+        except Exception:
             SnackbarManager.warn(translate("TEXT_ENROLLMENT_REJECT_FAILURE"))
             enrollment_button.set_buttons_enabled(True)
+        else:
+            SnackbarManager.inform(translate("TEXT_ENROLLMENT_REJECT_SUCCESS"))
+            self.main_layout.removeWidget(enrollment_button)
+            enrollment_button.hide()
+            enrollment_button.setParent(None)
