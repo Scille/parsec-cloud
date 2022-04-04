@@ -253,10 +253,7 @@ async def _create_user(
     )
 
 
-@query(in_transaction=True)
-async def query_create_user(
-    conn, organization_id: OrganizationID, user: User, first_device: Device
-) -> None:
+async def q_create_user(conn, organization_id: OrganizationID, user: User, first_device: Device):
     record = await conn.fetchrow(*_q_check_active_users_limit(organization_id=organization_id.str))
     if not record["allowed"]:
         raise UserActiveUsersLimitReached()
@@ -267,6 +264,13 @@ async def query_create_user(
     # This is considered "fine enough" given concurrency on user creation is very
     # low and worse outcome would be to go slightly above user limit.
     await _create_user(conn, organization_id, user, first_device)
+
+
+@query(in_transaction=True)
+async def query_create_user(
+    conn, organization_id: OrganizationID, user: User, first_device: Device
+) -> None:
+    await q_create_user(conn, organization_id, user, first_device)
 
 
 async def _create_device(
