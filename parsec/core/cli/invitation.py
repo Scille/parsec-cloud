@@ -149,7 +149,7 @@ async def ask_info_new_user(
         display_choice = click.style(choice.value, fg="yellow")
         click.echo(f" {i} - {display_choice}")
     choice_index = await aprompt(
-        "New user profile", default="0", type=click.Choice([str(i) for i, _ in enumerate(choices)])
+        "New user profile", default="1", type=click.Choice([str(i) for i, _ in enumerate(choices)])
     )
     granted_profile = choices[int(choice_index)]
     return granted_device_label, granted_human_handle, granted_profile
