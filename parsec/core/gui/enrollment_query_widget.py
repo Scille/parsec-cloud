@@ -95,7 +95,8 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
             self.line_edit_user_name.setText(self.context.x509_certificate.subject_common_name)
             self.line_edit_user_email.setText(self.context.x509_certificate.subject_email_address)
             self.line_edit_device.setText(desktop.get_default_device())
-        except:
+            self.button_select_cert.setText(self.context.x509_certificate.certificate_id)
+        except Exception:
             self.widget_user_info.setVisible(False)
             self.label_cert_error.setText(translate("TEXT_ENROLLMENT_ERROR_LOADING_CERTIFICATE"))
             self.label_cert_error.setVisible(True)
