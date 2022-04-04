@@ -40,11 +40,6 @@ async def _anonymous_cmd(
     Raises:
         BackendNotAvailable
         BackendProtocolError
-
-        BackendCmdsInvalidRequest
-        BackendCmdsInvalidResponse
-        BackendNotAvailable
-        BackendCmdsBadResponse
     """
     logger.info("Request", cmd=req["cmd"])
 

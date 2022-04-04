@@ -75,11 +75,6 @@ class PkiEnrollmentSubmitterInitialCtx:
             BackendNotAvailable
             BackendProtocolError
 
-            BackendCmdsInvalidRequest
-            BackendCmdsInvalidResponse
-            BackendNotAvailable
-            BackendCmdsBadResponse
-
             PkiEnrollmentSubmitError
             PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError
             PkiEnrollmentSubmitCertificateAlreadySubmittedError
@@ -115,24 +110,37 @@ class PkiEnrollmentSubmitterInitialCtx:
         )
 
         if rep["status"] == "already_submitted":
-            # TODO: support submitted_on after error schema update
-            # submitted_on = rep["submitted_on"]
+            submitted_on = rep["submitted_on"]
             raise PkiEnrollmentSubmitCertificateAlreadySubmittedError(
-                f"The certificate `{self.x509_certificate.certificate_sha1.hex()}` has already been submitted"
+                f"The certificate `{self.x509_certificate.certificate_sha1.hex()}` has already been submitted on {submitted_on}",
+                self.enrollment_id,
+                self.x509_certificate,
+                rep,
             )
 
         if rep["status"] == "enrollment_id_already_used":
             raise PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError(
-                f"The enrollment ID {self.enrollment_id.hex} is already used"
+                f"The enrollment ID {self.enrollment_id.hex} is already used",
+                self.enrollment_id,
+                self.x509_certificate,
+                rep,
             )
 
         if rep["status"] == "already_enrolled":
             raise PkiEnrollmentSubmitCertificateAlreadyEnrolledError(
-                f"The certificate `{self.x509_certificate.certificate_sha1.hex()}` has already been enrolled"
+                f"The certificate `{self.x509_certificate.certificate_sha1.hex()}` has already been enrolled",
+                self.enrollment_id,
+                self.x509_certificate,
+                rep,
             )
 
         if rep["status"] != "ok":
-            raise PkiEnrollmentSubmitError(self.x509_certificate, self.enrollment_id)
+            raise PkiEnrollmentSubmitError(
+                f"Backend refused to create enrollment: {rep['status']}",
+                self.enrollment_id,
+                self.x509_certificate,
+                rep,
+            )
 
         # Save the enrollment request on disk.
         # Note there is not atomicity with the request to the backend, but it's
