@@ -28,64 +28,7 @@ from parsec.backend.pki import (
 )
 from parsec.backend.postgresql import PGHandler
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id, q_device_internal_id
-
-
-_q_insert_certificate = Q(
-    f"""
-    INSERT INTO pki_certificate (certificate_id, request_id, request_timestamp, request_object)
-    VALUES (
-        $certificate_id,
-        $request_id,
-        $request_timestamp,
-        $request_object,
-
-    )
-    """
-)
-
-# TODO update request shall reset reply ?
-_q_update_certificate_request = Q(
-    f"""
-    UPDATE pki_certificate
-    SET
-        request_id = $request_id,
-        request_timestamp=$request_timestamp,
-        request_object=$request_object,
-        reply_object=$reply_object,
-        reply_timesamp=$reply_timestamp,
-        reply_user_id=reply_user_id,
-    WHERE certificate_id=certificate_id
-"""
-)
-
-_q_update_certificate_reply = Q(
-    f"""
-    UPDATE pki_certificate
-    SET
-        reply_object=$reply_object,
-        reply_timesamp=$reply_timestamp,
-        reply_user_id=reply_user_id,
-    WHERE certificate_id=certificate_id
-    """
-)
-
-_q_get_certificate = Q(
-    f"""
-    SELECT *
-    FROM pki_certificate
-    WHERE
-        certificate_id=$certificate_id
-    ORDER BY _id ASC
-    """
-)
-
-_q_get_certificates = Q(
-    f"""
-    SELECT *
-    FROM pki_certificate
-    ORDER BY _id ASC
-    """
-)
+from parsec.backend.postgresql.user_queries.create import q_create_user
 
 _q_get_pki_enrollment_from_certificate_sha1 = Q(
     f"""
@@ -108,13 +51,14 @@ _q_get_pki_enrollment_from_enrollment_id = Q(
     """
 )
 
-_q_get_pki_enrollment = Q(
+_q_get_pki_enrollment_for_update = Q(
     f"""
     SELECT * FROM pki_enrollment
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
         AND enrollment_id=$enrollment_id
     )
+    FOR UPDATE
     """
 )
 
@@ -182,6 +126,7 @@ _q_reject_pki_enrollment = Q(
     )
     """
 )
+
 
 _q_accept_pki_enrollment = Q(
     f"""
@@ -258,7 +203,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # Assert enrollment_id not used
             row = await conn.fetchrow(
-                *_q_get_pki_enrollment(
+                *_q_get_pki_enrollment_for_update(
                     organization_id=organization_id.str, enrollment_id=enrollment_id
                 )
             )
@@ -304,6 +249,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     # Previous attempt end successfully, we are not allowed to submit
                     # unless the created user has been revoked
                     assert row["accepted"] is not None and row["accepter"] is not None
+
                     # TODO check user
                 else:
                     assert False
@@ -374,7 +320,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             row = await conn.fetchrow(
-                *_q_get_pki_enrollment(
+                *_q_get_pki_enrollment_for_update(
                     organization_id=organization_id.str, enrollment_id=enrollment_id
                 )
             )
@@ -415,7 +361,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         """
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             row = await conn.fetchrow(
-                *_q_get_pki_enrollment(
+                *_q_get_pki_enrollment_for_update(
                     organization_id=organization_id.str, enrollment_id=enrollment_id
                 )
             )
@@ -425,8 +371,8 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 raise PkiEnrollmentNoLongerAvailableError()
 
             try:
-                await self._user_component.create_user(
-                    organization_id=organization_id, user=user, first_device=first_device
+                await q_create_user(
+                    conn=conn, organization_id=organization_id, user=user, first_device=first_device
                 )
 
             except UserAlreadyExistsError as exc:
