@@ -22,7 +22,7 @@ class APIEvent(Enum):
     REALM_MAINTENANCE_STARTED = "realm.maintenance_started"
     REALM_VLOBS_UPDATED = "realm.vlobs_updated"
     REALM_ROLES_UPDATED = "realm.roles_updated"
-    PKI_ENROLLMENT_UPDATED = "pki_enrollment.up"
+    PKI_ENROLLMENT_UPDATED = "pki_enrollment.updated"
 
 
 class EventsPingedRepSchema(BaseRepSchema):
@@ -67,12 +67,12 @@ class EventsInviteStatusChangedRepSchema(BaseRepSchema):
     invitation_status = InvitationStatusField(required=True)
 
 
+class EventPkiEnrollmentUpdated(BaseRepSchema):
+    event = fields.EnumCheckedConstant(APIEvent.PKI_ENROLLMENT_UPDATED, required=True)
+
+
 class EventsListenReqSchema(BaseReqSchema):
     wait = fields.Boolean(missing=True)
-
-
-class EventPkiEnrollmentUpdated(BaseReqSchema):
-    event = fields.EnumCheckedConstant(APIEvent.PKI_ENROLLMENT_UPDATED, required=True)
 
 
 class EventsListenRepSchema(OneOfSchema):
