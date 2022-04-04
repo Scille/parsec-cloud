@@ -7,8 +7,11 @@ from pendulum import DateTime
 
 from parsec.api.protocol import OrganizationID
 from parsec.api.protocol.pki import PkiEnrollmentStatus
+from parsec.backend.user import UserActiveUsersLimitReached, UserAlreadyExistsError
 from parsec.backend.user_type import User, Device
 from parsec.backend.pki import (
+    PkiEnrollmentActiveUsersLimitReached,
+    PkiEnrollmentAlreadyExistError,
     PkiEnrollmentCertificateAlreadySubmittedError,
     PkiEnrollmentIdAlreadyUsedError,
     PkiEnrollmentInfo,
@@ -18,6 +21,7 @@ from parsec.backend.pki import (
     PkiEnrollmentInfoSubmitted,
     PkiEnrollmentListItem,
     BasePkiEnrollmentComponent,
+    PkiEnrollmentNoLongerAvailableError,
     PkiEnrollmentNotFoundError,
 )
 from parsec.backend.postgresql import PGHandler
@@ -112,9 +116,15 @@ _q_get_pki_enrollment = Q(
     """
 )
 
-_q_tmp = Q(
+_q_get_pki_enrollment_from_state = Q(
+    f"""
+    SELECT * FROM pki_enrollment
+    WHERE (
+        organization = { q_organization_internal_id("$organization_id") }
+        AND enrollment_state=$state
+    )
+    ORDER BY _id ASC
     """
-    SELECT * FROM device """
 )
 
 
@@ -152,7 +162,37 @@ _q_cancel_pki_enrollment = Q(
         info_cancelled.cancelled_on=$cancelled_on
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
-        AND submitter_der_x509_certificate_sha1=$submitter_der_x509_certificate_sha1
+        AND enrollment_id=$enrollment_id
+    )
+    """
+)
+
+
+_q_reject_pki_enrollment = Q(
+    f"""
+    UPDATE pki_enrollment
+    SET
+        enrollment_state=$enrollment_state,
+        info_rejected.rejected_on=$rejected_on
+    WHERE (
+        organization = { q_organization_internal_id("$organization_id") }
+        AND enrollment_id=$enrollment_id
+    )
+    """
+)
+
+_q_accept_pki_enrollment = Q(
+    f"""
+    UPDATE pki_enrollment
+    SET
+        enrollment_state=$enrollment_state,
+        info_accepted.accepted_on=$accepted_on,
+        info_accepted.accepter_der_x509_certificate=$accepter_der_x509_certificate,
+        info_accepted.accept_payload_signature=$accept_payload_signature,
+        info_accepted.accept_payload=$accept_payload
+    WHERE (
+        organization = { q_organization_internal_id("$organization_id") }
+        AND enrollment_id=$enrollment_id
     )
     """
 )
@@ -235,7 +275,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         await conn.execute(
                             *_q_cancel_pki_enrollment(
                                 organization_id=organization_id.str,
-                                submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
+                                enrollment_id=row["enrollment_id"],
                                 enrollment_state=PkiEnrollmentStatus.CANCELLED.value,
                                 cancelled_on=submitted_on,
                             )
@@ -292,7 +332,23 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         Raises: Nothing !
         """
 
-        raise NotImplementedError()
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+
+            entries = await conn.fetch(
+                *_q_get_pki_enrollment_from_state(
+                    organization_id=organization_id.str, state=PkiEnrollmentStatus.SUBMITTED.value
+                )
+            )
+            return [
+                PkiEnrollmentListItem(
+                    enrollment_id=entry["enrollment_id"],
+                    submitted_on=entry["submitted_on"],
+                    submitter_der_x509_certificate=entry["submitter_der_x509_certificate"],
+                    submit_payload_signature=entry["submit_payload_signature"],
+                    submit_payload=entry["submit_payload"],
+                )
+                for entry in entries
+            ]
 
     async def reject(
         self, organization_id: OrganizationID, enrollment_id: UUID, rejected_on: DateTime
@@ -302,7 +358,26 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             PkiEnrollmentNotFoundError
             PkiEnrollmentNoLongerAvailableError
         """
-        raise NotImplementedError()
+
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            row = await conn.fetchrow(
+                *_q_get_pki_enrollment(
+                    organization_id=organization_id.str, enrollment_id=enrollment_id
+                )
+            )
+            if not row:
+                raise PkiEnrollmentNotFoundError()
+            if row["enrollment_state"] != PkiEnrollmentStatus.SUBMITTED.value:
+                raise PkiEnrollmentNoLongerAvailableError()
+
+            await conn.execute(
+                *_q_reject_pki_enrollment(
+                    organization_id=organization_id.str,
+                    enrollment_id=enrollment_id,
+                    enrollment_state=PkiEnrollmentStatus.REJECTED.value,
+                    rejected_on=rejected_on,
+                )
+            )
 
     async def accept(
         self,
@@ -322,7 +397,40 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             PkiEnrollmentAlreadyExistError
             PkiEnrollmentActiveUsersLimitReached
         """
-        raise NotImplementedError()
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            row = await conn.fetchrow(
+                *_q_get_pki_enrollment(
+                    organization_id=organization_id.str, enrollment_id=enrollment_id
+                )
+            )
+            print(row)
+            if not row:
+                raise PkiEnrollmentNotFoundError()
+            if row["enrollment_state"] != PkiEnrollmentStatus.SUBMITTED.value:
+                raise PkiEnrollmentNoLongerAvailableError()
+
+            try:
+                await self._user_component.create_user(
+                    organization_id=organization_id, user=user, first_device=first_device
+                )
+
+            except UserAlreadyExistsError as exc:
+                raise PkiEnrollmentAlreadyExistError from exc
+
+            except UserActiveUsersLimitReached as exc:
+                raise PkiEnrollmentActiveUsersLimitReached from exc
+
+            await conn.execute(
+                *_q_accept_pki_enrollment(
+                    enrollment_state=PkiEnrollmentStatus.ACCEPTED.value,
+                    organization_id=organization_id.str,
+                    enrollment_id=enrollment_id,
+                    accepted_on=accepted_on,
+                    accepter_der_x509_certificate=accepter_der_x509_certificate,
+                    accept_payload_signature=accept_payload_signature,
+                    accept_payload=accept_payload,
+                )
+            )
 
     # async def pki_enrollment_request(
     #     self,
