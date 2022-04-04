@@ -4,46 +4,61 @@ import pytest
 
 from PyQt5 import QtCore
 
+from parsec.api.protocol import DeviceLabel
+from parsec.core.pki import (
+    PkiEnrollmentSubmitterInitialCtx,
+    PkiEnrollementAccepterValidSubmittedCtx,
+)
+from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.core.gui.enrollment_widget import EnrollmentButton
 from parsec.core.gui.login_widget import PendingEnrollment, EnrollmentPendingButton
 
 
+@pytest.fixture
+async def pki_org_addr(organization_factory, alice, running_backend):
+    org = organization_factory()
+    backend_user, backend_first_device = local_device_to_backend_user(alice, org)
+    bootstrap_token = "123456"
+    await running_backend.backend.organization.create(org.organization_id, bootstrap_token, None)
+    await running_backend.backend.organization.bootstrap(
+        org.organization_id,
+        backend_user,
+        backend_first_device,
+        bootstrap_token,
+        org.root_verify_key,
+    )
+    return BackendPkiEnrollmentAddr.build(running_backend.addr, org.organization_id)
+
+
+@pytest.fixture
+async def pki_request(core_config):
+    context = await PkiEnrollmentSubmitterInitialCtx.new(pki_org_addr)
+    # context = await context.submit(
+    #     config_dir=core_config.config_dir,
+    #     requested_device_label=DeviceLabel("device"),
+    #     force=True,
+    # )
+
+
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_list_enrollments(aqtbot, logged_gui, monkeypatch):
-    def _test_list_submitted_enrollment_requests():
-        pass
-
-    monkeypatch.setattr("")
-
+async def test_list_enrollments(
+    aqtbot, logged_gui, mocked_parsec_ext_smartcard, pki_org_addr, pki_request
+):
     e_w = await logged_gui.test_switch_to_enrollment_widget()
 
     def _enrollment_shown():
         assert not e_w.label_empty_list.isVisible()
-        assert e_w.main_layout.count() == 6
-        user_list = [
-            "hubert.farnsworth@planetexpress.com",
-            "john.zoidberg@planetexpress.com",
-            "leela.turanga@planetexpress.com",
-            "bender.rodriguez@planetexpress.com",
-            "zapp.brannigan@doop.com",
-            "philip.fry@planetexpress.com",
-        ]
-        for i in range(e_w.main_layout.count()):
-            item = e_w.main_layout.itemAt(i)
-            assert item and item.widget() and isinstance(item.widget(), EnrollmentButton)
-            w = item.widget()
-            assert w.enrollment_info.email in user_list
-            assert w.label_email.text() == w.enrollment_info.email
-            assert w.label_name.text() == w.enrollment_info.name
-            if w.enrollment_info.certif_is_valid:
-                assert w.button_accept.isVisible()
-                assert w.button_reject.isVisible()
-            else:
-                assert not w.button_accept.isVisible()
-                assert w.button_reject.isVisible()
-            user_list.remove(w.enrollment_info.email)
-        assert not user_list
+        assert e_w.main_layout.count() == 1
+        item = e_w.main_layout.itemAt(0)
+        assert item and item.widget() and isinstance(item.widget(), EnrollmentButton)
+        w = item.widget()
+        assert w.label_name.text() == "John Doe"
+        assert w.label_email.text() == "john@example.com"
+        assert w.label_issuer.text() == ""
+        assert isinstance(w.pending, PkiEnrollementAccepterValidSubmittedCtx)
+        assert w.button_accept.isVisible()
+        assert w.button_reject.isVisible()
 
     await aqtbot.wait_until(_enrollment_shown)
 

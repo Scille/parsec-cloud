@@ -13,7 +13,25 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">#button_get_enrollment_addr {
+	background-color: none;
+	border: none;
+	color: #0092FF;
+}
+
+#button_get_enrollment_addr:hover {
+	color: #0070DD;
+}
+
+#scrollAreaWidgetContents {
+    background-color: #EEEEEE;
+}</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <property name="spacing">
+    <number>0</number>
+   </property>
    <property name="leftMargin">
     <number>0</number>
    </property>
@@ -26,6 +44,47 @@
    <property name="bottomMargin">
     <number>0</number>
    </property>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QPushButton" name="button_get_enrollment_addr">
+       <property name="text">
+        <string>ACTION_GET_ENROLLMENT_ADDR</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../rc/resources.qrc">
+         <normaloff>:/icons/images/material/content_copy.svg</normaloff>:/icons/images/material/content_copy.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="color" stdset="0">
+        <color>
+         <red>0</red>
+         <green>146</green>
+         <blue>255</blue>
+        </color>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
    <item>
     <widget class="QWidget" name="widget" native="true">
      <layout class="QVBoxLayout" name="verticalLayout">
@@ -69,7 +128,7 @@
            <x>0</x>
            <y>0</y>
            <width>573</width>
-           <height>481</height>
+           <height>455</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -129,6 +188,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../rc/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

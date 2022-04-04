@@ -68,9 +68,10 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
                 extra_trust_roots=self.config.pki_extra_trust_roots
             )
         except:
-            # import traceback
-            # traceback.print_exc()
-            raise
+            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE"))
+            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE_TOOLTIP"))
+            self.button_action.hide()
+            return
 
         if isinstance(new_context, PkiEnrollmentSubmitterSubmittedStatusCtx):
             self.button_action.hide()

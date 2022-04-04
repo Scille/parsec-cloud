@@ -286,7 +286,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             previous_entry: Optional[WorkspaceEntry] = kwargs["previous_entry"]
             new_role = new_entry.role
             previous_role = previous_entry.role if previous_entry is not None else None
-            print(previous_role, new_role)
             if new_role is not None and previous_role is None:
                 self.new_notification.emit(
                     "INFO",

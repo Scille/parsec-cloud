@@ -1,7 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from collections import namedtuple
-
 import textwrap
 
 from PyQt5.QtCore import pyqtSignal
@@ -10,15 +8,18 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.api.protocol import UserProfile, HumanHandle, DeviceLabel
 
+from parsec.core.types import BackendPkiEnrollmentAddr
+
 from parsec.core.core_events import CoreEvent
 
 from parsec.core.pki import (
     PkiEnrollementAccepterValidSubmittedCtx,
     PkiEnrollementAccepterInvalidSubmittedCtx,
 )
+from parsec.core.pki.exceptions import PkiEnrollmentListError
 
 from parsec.core.gui.custom_dialogs import GreyedDialog
-from parsec.core.gui import validators
+from parsec.core.gui import validators, desktop
 from parsec.core.gui.lang import translate, format_datetime
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.snackbar_widget import SnackbarManager
@@ -26,11 +27,6 @@ from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.ui.enrollment_widget import Ui_EnrollmentWidget
 from parsec.core.gui.ui.enrollment_button import Ui_EnrollmentButton
 from parsec.core.gui.ui.greet_user_check_info_widget import Ui_GreetUserCheckInfoWidget
-
-
-EnrollmentInfo = namedtuple(
-    "EnrollmentInfo", ["request", "request_id", "request_info", "certificate_id", "certif_is_valid"]
-)
 
 
 class AcceptCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
@@ -142,15 +138,26 @@ class EnrollmentButton(QWidget, Ui_EnrollmentButton):
         self.label_date.setText(format_datetime(pending.submitted_on))
 
         if isinstance(self.pending, PkiEnrollementAccepterInvalidSubmittedCtx):
-            self.widget_cert_infos.setVisible(False)
-            self.widget_cert_error.setVisible(True)
-            self.label_error.setText(translate("TEXT_ENROLLMENT_ERROR_WITH_CERTIFICATE"))
+            if self.pending.submitter_x509_certificate:
+                self.widget_cert_infos.setVisible(True)
+                self.widget_cert_error.setVisible(False)
+                self.label_name.setText(self.pending.submitter_x509_certificate.subject_common_name)
+                self.label_email.setText(
+                    self.pending.submitter_x509_certificate.subject_email_address
+                )
+                self.label_issuer.setText(
+                    self.pending.submitter_x509_certificate.issuer_common_name
+                )
+            else:
+                self.widget_cert_infos.setVisible(False)
+                self.widget_cert_error.setVisible(True)
+                self.label_error.setText(translate("TEXT_ENROLLMENT_ERROR_WITH_CERTIFICATE"))
             self.button_accept.setVisible(False)
             self.label_cert_validity.setStyleSheet("#label_cert_validity { color: #F44336; }")
             self.label_cert_validity.setText(
                 "✘ " + translate("TEXT_ENROLLMENT_CERTIFICATE_IS_INVALID")
             )
-            self.label_cert_validity.setToolTip(textwrap.fill(self.pending.error, 80))
+            self.label_cert_validity.setToolTip(textwrap.fill(str(self.pending.error), 80))
         else:
             assert isinstance(self.pending, PkiEnrollementAccepterValidSubmittedCtx)
             self.widget_cert_infos.setVisible(True)
@@ -180,24 +187,29 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         self.jobs_ctx = jobs_ctx
         self.label_empty_list.hide()
         self.event_bus = event_bus
+        self.button_get_enrollment_addr.clicked.connect(self._on_get_enrollment_addr_clicked)
 
-    def showEvent(self, event):
+    def _on_get_enrollment_addr_clicked(self):
+        ba = BackendPkiEnrollmentAddr.build(
+            self.core.device.organization_addr.get_backend_addr(),
+            self.core.device.organization_addr.organization_id
+        )
+        desktop.copy_to_clipboard(ba.to_url())
+        SnackbarManager.inform(translate("TEXT_ENROLLMENT_ADDR_COPIED_TO_CLIPBOARD"))
+
+    def showEvent(self, _):
+        self.event_bus.connect(CoreEvent.PKI_ENROLLMENT_UPDATED, self._on_updated)
         self.reset()
-        return
-        self.event_bus.connect(CoreEvent.NEW_RECRUIT, self._on_new_recruit)
-        self.event_bus.connect(CoreEvent.RECRUIT_UPDATED, self._on_recruit_updated)
-        self.event_bus.connect(CoreEvent.RECRUIT_ACCEPTED, self._on_recruit_accepted)
-        self.event_bus.connect(CoreEvent.RECRUIT_REJECTED, self._on_recruit_rejected)
 
-    def hideEvent(self, event):
-        return
+    def hideEvent(self, _):
         try:
-            self.event_bus.disconnect(CoreEvent.NEW_RECRUIT, self._on_new_recruit)
-            self.event_bus.disconnect(CoreEvent.RECRUIT_UPDATED, self._on_recruit_updated)
-            self.event_bus.disconnect(CoreEvent.RECRUIT_ACCEPTED, self._on_recruit_accepted)
-            self.event_bus.disconnect(CoreEvent.RECRUIT_REJECTED, self._on_recruit_rejected)
+            self.event_bus.disconnect(CoreEvent.PKI_ENROLLMENT_UPDATED, self._on_updated)
         except ValueError:
             pass
+
+    def _on_updated(self):
+        print("UPDATED")
+        self.reset()
 
     def reset(self):
         self.jobs_ctx.submit_job(None, None, self.list_pending_enrollments)
@@ -215,8 +227,11 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         self.label_empty_list.hide()
         self.clear_layout()
 
-        pendings = await self.core.list_submitted_enrollment_requests()
-
+        pendings = []
+        try:
+            pendings = await self.core.list_submitted_enrollment_requests()
+        except PkiEnrollmentListError:
+            SnackbarManager.warn(translate("TEXT_ENROLLMENT_FAILED_TO_RETRIEVE_PENDING"))
         if not pendings:
             self.label_empty_list.setText(translate("TEXT_ENROLLMENT_NO_PENDING_enrollment"))
             self.label_empty_list.show()
@@ -260,9 +275,6 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
             SnackbarManager.inform(translate("TEXT_ENROLLMENT_ACCEPT_SUCCESS"))
             self.main_layout.removeWidget(enrollment_button)
         except:
-            import traceback
-
-            traceback.print_exc()
             SnackbarManager.warn(translate("TEXT_ENROLLMENT_ACCEPT_FAILURE"))
             enrollment_button.set_buttons_enabled(True)
 
@@ -272,8 +284,5 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
             SnackbarManager.inform(translate("TEXT_ENROLLMENT_REJECT_SUCCESS"))
             self.main_layout.removeWidget(enrollment_button)
         except:
-            import traceback
-
-            traceback.print_exc()
             SnackbarManager.warn(translate("TEXT_ENROLLMENT_REJECT_FAILURE"))
             enrollment_button.set_buttons_enabled(True)
