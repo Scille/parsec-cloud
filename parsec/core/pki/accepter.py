@@ -13,6 +13,7 @@ from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmd
 from parsec.core.invite.greeter import _create_new_user_certificates
 from parsec.core.pki.plumbing import (
     X509Certificate,
+    pki_enrollment_load_peer_certificate,
     pki_enrollment_load_submit_payload,
     pki_enrollment_select_certificate,
     pki_enrollment_sign_payload,
@@ -70,30 +71,38 @@ async def accepter_list_submitted_from_backend(
         submit_payload_signature: bytes = enrollment["submit_payload_signature"]
         raw_submit_payload: bytes = enrollment["submit_payload"]
 
+        # Load the submitter certificate
+        try:
+            submitter_x509_certificate = pki_enrollment_load_peer_certificate(
+                submitter_der_x509_certificate
+            )
+
+        # Could not load the submitter certificate
+        except PkiEnrollmentError as exc:
+            pending = PkiEnrollementAccepterInvalidSubmittedCtx(
+                cmds=cmds,
+                enrollment_id=enrollment_id,
+                submitted_on=submitted_on,
+                submitter_der_x509_certificate=submitter_der_x509_certificate,
+                submitter_x509_certificate=None,
+                submit_payload_signature=submit_payload_signature,
+                raw_submit_payload=raw_submit_payload,
+                error=exc,
+            )
+            pendings.append(pending)
+            continue
+
         # Verify the enrollment request
         try:
-            (submitter_x509_certificate, submit_payload) = pki_enrollment_load_submit_payload(
+            submit_payload = pki_enrollment_load_submit_payload(
                 extra_trust_roots=extra_trust_roots,
                 der_x509_certificate=submitter_der_x509_certificate,
                 payload_signature=submit_payload_signature,
                 payload=raw_submit_payload,
             )
-            pending = PkiEnrollementAccepterValidSubmittedCtx(
-                cmds=cmds,
-                enrollment_id=enrollment_id,
-                submitted_on=submitted_on,
-                submitter_der_x509_certificate=submitter_der_x509_certificate,
-                submit_payload_signature=submit_payload_signature,
-                raw_submit_payload=raw_submit_payload,
-                submitter_x509_certificate=submitter_x509_certificate,
-                submit_payload=submit_payload,
-            )
 
         # Verification failed
         except PkiEnrollmentError as exc:
-            submitter_x509_certificate = None
-            if len(exc.args) >= 2 and isinstance(exc.args[1], X509Certificate):
-                submitter_x509_certificate = exc.args[1]
             pending = PkiEnrollementAccepterInvalidSubmittedCtx(
                 cmds=cmds,
                 enrollment_id=enrollment_id,
@@ -104,7 +113,20 @@ async def accepter_list_submitted_from_backend(
                 raw_submit_payload=raw_submit_payload,
                 error=exc,
             )
+            pendings.append(pending)
+            continue
 
+        # Verification succeed
+        pending = PkiEnrollementAccepterValidSubmittedCtx(
+            cmds=cmds,
+            enrollment_id=enrollment_id,
+            submitted_on=submitted_on,
+            submitter_der_x509_certificate=submitter_der_x509_certificate,
+            submit_payload_signature=submit_payload_signature,
+            raw_submit_payload=raw_submit_payload,
+            submitter_x509_certificate=submitter_x509_certificate,
+            submit_payload=submit_payload,
+        )
         pendings.append(pending)
 
     return pendings

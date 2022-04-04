@@ -112,18 +112,27 @@ async def pki_enrollment_load_local_pending_secret_part(
     )
 
 
+def pki_enrollment_load_peer_certificate(der_x509_certificate: bytes,) -> X509Certificate:
+    """
+    Raises:
+        PkiEnrollmentCertificateError
+        PkiEnrollmentCertificateCryptoError
+   """
+    return _load_smartcard_extension().pki_enrollment_load_peer_certificate(der_x509_certificate)
+
+
 def pki_enrollment_load_submit_payload(
     der_x509_certificate: bytes,
     payload_signature: bytes,
     payload: bytes,
     extra_trust_roots: Iterable[Path] = (),
-) -> Tuple[X509Certificate, PkiEnrollmentSubmitPayload]:
+) -> PkiEnrollmentSubmitPayload:
     """
     Raises:
+        PkiEnrollmentCertificateError
         PkiEnrollmentCertificateCryptoError
         PkiEnrollmentCertificateSignatureError
         PkiEnrollmentCertificateValidationError
-        PkiEnrollmentCertificateError
         PkiEnrollmentPayloadValidationError
     """
     # Verifying a payload only requires public key operations, so no blocking here
@@ -140,13 +149,13 @@ def pki_enrollment_load_accept_payload(
     payload_signature: bytes,
     payload: bytes,
     extra_trust_roots: Iterable[Path] = (),
-) -> Tuple[X509Certificate, PkiEnrollmentAcceptPayload]:
+) -> PkiEnrollmentAcceptPayload:
     """
     Raises:
+        PkiEnrollmentCertificateError
         PkiEnrollmentCertificateCryptoError
         PkiEnrollmentCertificateSignatureError
         PkiEnrollmentCertificateValidationError
-        PkiEnrollmentCertificateError
         PkiEnrollmentPayloadValidationError
     """
     # Verifying a payload only requires public key operations, so no blocking here

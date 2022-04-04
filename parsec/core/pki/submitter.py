@@ -20,6 +20,7 @@ from parsec.core.pki.plumbing import (
     pki_enrollment_sign_payload,
     pki_enrollment_create_local_pending,
     pki_enrollment_load_local_pending_secret_part,
+    pki_enrollment_load_peer_certificate,
     pki_enrollment_load_accept_payload,
 )
 from parsec.core.types import LocalDevice
@@ -272,30 +273,19 @@ class PkiEnrollmentSubmitterSubmittedCtx:
 
         else:
             assert enrollment_status == PkiEnrollmentStatus.ACCEPTED
+            accepter_der_x509_certificate: bytes = rep["accepter_der_x509_certificate"]
+            payload_signature: bytes = rep["accept_payload_signature"]
+            payload: bytes = rep["accept_payload"]
+            accepted_on: DateTime = rep["accepted_on"]
+
+            # Load peer certificate
             try:
-                (accepter_x509_certificate, accept_payload) = pki_enrollment_load_accept_payload(
-                    extra_trust_roots=extra_trust_roots,
-                    der_x509_certificate=rep["accepter_der_x509_certificate"],
-                    payload_signature=rep["accept_payload_signature"],
-                    payload=rep["accept_payload"],
-                )
-                return PkiEnrollmentSubmitterAcceptedStatusCtx(
-                    config_dir=self.config_dir,
-                    x509_certificate=self.x509_certificate,
-                    addr=self.addr,
-                    submitted_on=self.submitted_on,
-                    enrollment_id=self.enrollment_id,
-                    submit_payload=self.submit_payload,
-                    accepted_on=rep["accepted_on"],
-                    accepter_x509_certificate=accepter_x509_certificate,
-                    accept_payload=accept_payload,
+                accepter_x509_certificate = pki_enrollment_load_peer_certificate(
+                    accepter_der_x509_certificate
                 )
 
-            # Verification failed
+            # Could not load peer certificate
             except PkiEnrollmentError as exc:
-                accepter_x509_certificate = None
-                if len(exc.args) >= 2 and isinstance(exc.args[1], X509Certificate):
-                    accepter_x509_certificate = exc.args[1]
                 return PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx(
                     config_dir=self.config_dir,
                     x509_certificate=self.x509_certificate,
@@ -303,10 +293,46 @@ class PkiEnrollmentSubmitterSubmittedCtx:
                     submitted_on=self.submitted_on,
                     enrollment_id=self.enrollment_id,
                     submit_payload=self.submit_payload,
-                    accepted_on=rep["accepted_on"],
+                    accepted_on=accepted_on,
+                    accepter_x509_certificate=None,
+                    error=exc,
+                )
+
+            # Load accept payload
+            try:
+                accept_payload = pki_enrollment_load_accept_payload(
+                    extra_trust_roots=extra_trust_roots,
+                    der_x509_certificate=accepter_der_x509_certificate,
+                    payload_signature=payload_signature,
+                    payload=payload,
+                )
+
+            # Verification failed
+            except PkiEnrollmentError as exc:
+                return PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx(
+                    config_dir=self.config_dir,
+                    x509_certificate=self.x509_certificate,
+                    addr=self.addr,
+                    submitted_on=self.submitted_on,
+                    enrollment_id=self.enrollment_id,
+                    submit_payload=self.submit_payload,
+                    accepted_on=accepted_on,
                     accepter_x509_certificate=accepter_x509_certificate,
                     error=exc,
                 )
+
+            # Verification succeed
+            return PkiEnrollmentSubmitterAcceptedStatusCtx(
+                config_dir=self.config_dir,
+                x509_certificate=self.x509_certificate,
+                addr=self.addr,
+                submitted_on=self.submitted_on,
+                enrollment_id=self.enrollment_id,
+                submit_payload=self.submit_payload,
+                accepted_on=accepted_on,
+                accepter_x509_certificate=accepter_x509_certificate,
+                accept_payload=accept_payload,
+            )
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
