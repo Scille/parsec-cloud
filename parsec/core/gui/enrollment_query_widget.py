@@ -12,6 +12,7 @@ from parsec.core.gui.lang import translate
 from parsec.core.gui import desktop, validators
 
 from parsec.core.gui.ui.enrollment_query_widget import Ui_EnrollmentQueryWidget
+from parsec.core.pki.exceptions import PkiEnrollmentSubmitCertificateAlreadySubmittedError
 
 
 class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
@@ -38,36 +39,53 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
         self.jobs_ctx.submit_job(None, None, self.make_enrollment_request)
 
     async def make_enrollment_request(self):
-        self.button_ask_to_join.setEnabled(False)
+        # Catch all errors
+        try:
+            self.button_ask_to_join.setEnabled(False)
 
-        force = False
-        while True:
+            # Try the enrollment submission without the force flag
             try:
                 self.context = await self.context.submit(
                     config_dir=self.config.config_dir,
                     requested_device_label=DeviceLabel(self.line_edit_device.text()),
-                    force=force,
+                    force=False,
                 )
-                self.status = True
-                self.dialog.accept()
-                return
-            except:
-                # Let's assume that the first exception is because the request already exists|
-                if not force:
-                    answer = ask_question(
-                        self,
-                        translate("TEXT_ENROLLMENT_SUBMIT_ALREADY_EXISTS_TITLE"),
-                        translate("TEXT_ENROLLMENT_SUBMIT_ALREADY_EXISTS_QUESTION"),
-                        [translate("ACTION_ENROLLMENT_FORCE"), translate("ACTION_NO")],
-                        oriented_question=True,
-                    )
-                    if answer == translate("ACTION_ENROLLMENT_FORCE"):
-                        force = True
-                    else:
-                        return
-                else:
-                    show_error(self, translate("TEXT_ENROLLMENT_SUBMIT_FAILED"))
+
+            # This certificate has already been submitted
+            except PkiEnrollmentSubmitCertificateAlreadySubmittedError:
+
+                # Prompt for permission to force
+                answer = ask_question(
+                    self,
+                    translate("TEXT_ENROLLMENT_SUBMIT_ALREADY_EXISTS_TITLE"),
+                    translate("TEXT_ENROLLMENT_SUBMIT_ALREADY_EXISTS_QUESTION"),
+                    [translate("ACTION_ENROLLMENT_FORCE"), translate("ACTION_NO")],
+                    oriented_question=True,
+                )
+
+                # No permission, we're done
+                if answer != translate("ACTION_ENROLLMENT_FORCE"):
                     return
+
+                # Submit the enrollment with the force flag
+                self.context = await self.context.submit(
+                    config_dir=self.config.config_dir,
+                    requested_device_label=DeviceLabel(self.line_edit_device.text()),
+                    force=True,
+                )
+
+        # Enrollment submission failed
+        except Exception as exc:
+            show_error(self, translate("TEXT_ENROLLMENT_SUBMIT_FAILED"), exc)
+
+        # Enrollment submission is a success
+        else:
+            self.status = True
+            self.dialog.accept()
+
+        # In all cases, restore the button status
+        finally:
+            self.button_ask_to_join.setEnabled(True)
 
     async def prepare_enrollment_request(self):
         try:
