@@ -761,48 +761,22 @@ def mocked_parsec_ext_smartcard(monkeypatch):
             else:
                 raise LocalDeviceNotFoundError()
 
-        def _pki_enrollment_load_payload(
-            self, der_x509_certificate: bytes, payload_signature: bytes, payload: bytes
-        ):
-            if not der_x509_certificate.startswith(b"der_X509_certificate:"):
-                # Consider the certificate invalid
-                raise LocalDeviceCryptoError()
-
-            _, certificate_id, subject_email, subject_cn, issuer_cn = der_x509_certificate.decode(
-                "utf8"
-            ).split(":")
-            x509_certificate = X509Certificate(
-                issuer={"common_name": issuer_cn},
-                subject={"email_address": subject_email, "common_name": subject_cn},
-                der_x509_certificate=der_x509_certificate,
-                certificate_sha1=sha1(der_x509_certificate).digest(),
-                certificate_id=certificate_id,
-            )
-
-            computed_signature = self._compute_signature(der_x509_certificate, payload)
-            if computed_signature != payload_signature:
-                raise LocalDeviceCryptoError()
-
-            return x509_certificate
-
         def pki_enrollment_load_submit_payload(
             self,
             der_x509_certificate: bytes,
             payload_signature: bytes,
             payload: bytes,
             extra_trust_roots: Iterable[Path] = (),
-        ) -> Tuple[X509Certificate, PkiEnrollmentSubmitPayload]:
-            x509_certificate = self._pki_enrollment_load_payload(
-                der_x509_certificate=der_x509_certificate,
-                payload_signature=payload_signature,
-                payload=payload,
-            )
+        ) -> PkiEnrollmentSubmitPayload:
+            computed_signature = self._compute_signature(der_x509_certificate, payload)
+            if computed_signature != payload_signature:
+                raise LocalDeviceCryptoError()
             try:
                 submit_payload = PkiEnrollmentSubmitPayload.load(payload)
             except DataError as exc:
                 raise LocalDevicePackingError(str(exc)) from exc
 
-            return x509_certificate, submit_payload
+            return submit_payload
 
         def pki_enrollment_load_accept_payload(
             self,
@@ -810,18 +784,16 @@ def mocked_parsec_ext_smartcard(monkeypatch):
             payload_signature: bytes,
             payload: bytes,
             extra_trust_roots: Iterable[Path] = (),
-        ) -> Tuple[X509Certificate, PkiEnrollmentAcceptPayload]:
-            x509_certificate = self._pki_enrollment_load_payload(
-                der_x509_certificate=der_x509_certificate,
-                payload_signature=payload_signature,
-                payload=payload,
-            )
+        ) -> PkiEnrollmentAcceptPayload:
+            computed_signature = self._compute_signature(der_x509_certificate, payload)
+            if computed_signature != payload_signature:
+                raise LocalDeviceCryptoError()
             try:
                 accept_payload = PkiEnrollmentAcceptPayload.load(payload)
             except DataError as exc:
                 raise LocalDevicePackingError(str(exc)) from exc
 
-            return x509_certificate, accept_payload
+            return accept_payload
 
         def save_device_with_smartcard(
             self,
@@ -841,6 +813,24 @@ def mocked_parsec_ext_smartcard(monkeypatch):
                 return DeviceFileType.SMARTCARD, b"456", extra_args
 
             _save_device(key_file, device, force, _encrypt_dump)
+
+        def pki_enrollment_load_peer_certificate(
+            self, der_x509_certificate: bytes
+        ) -> X509Certificate:
+            if not der_x509_certificate.startswith(b"der_X509_certificate:"):
+                # Consider the certificate invalid
+                raise LocalDeviceCryptoError()
+
+            _, certificate_id, subject_email, subject_cn, issuer_cn = der_x509_certificate.decode(
+                "utf8"
+            ).split(":")
+            return X509Certificate(
+                issuer={"common_name": issuer_cn},
+                subject={"email_address": subject_email, "common_name": subject_cn},
+                der_x509_certificate=der_x509_certificate,
+                certificate_sha1=sha1(der_x509_certificate).digest(),
+                certificate_id=certificate_id,
+            )
 
     mocked_parsec_ext_smartcard = MockedParsecExtSmartcard()
 
