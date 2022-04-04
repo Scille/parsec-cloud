@@ -101,6 +101,7 @@ async def test_pki_submit(anonymous_backend_sock, bob):
         submit_payload_signature=b"<signature>",
         submit_payload=payload,
     )
+
     assert rep["status"] == "ok"
 
     # Retry without force

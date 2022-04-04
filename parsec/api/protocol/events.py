@@ -3,6 +3,7 @@
 from enum import Enum
 from typing import Dict, cast
 
+
 from parsec.serde import OneOfSchema, fields, validate
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.realm import RealmIDField, RealmRoleField
@@ -21,6 +22,7 @@ class APIEvent(Enum):
     REALM_MAINTENANCE_STARTED = "realm.maintenance_started"
     REALM_VLOBS_UPDATED = "realm.vlobs_updated"
     REALM_ROLES_UPDATED = "realm.roles_updated"
+    PKI_ENROLLMENT_UPDATED = "pki_enrollment.up"
 
 
 class EventsPingedRepSchema(BaseRepSchema):
@@ -69,6 +71,10 @@ class EventsListenReqSchema(BaseReqSchema):
     wait = fields.Boolean(missing=True)
 
 
+class EventPkiEnrollmentUpdated(BaseReqSchema):
+    event = fields.EnumCheckedConstant(APIEvent.PKI_ENROLLMENT_UPDATED, required=True)
+
+
 class EventsListenRepSchema(OneOfSchema):
     type_field = "event"
     type_schemas = {
@@ -79,6 +85,7 @@ class EventsListenRepSchema(OneOfSchema):
         APIEvent.REALM_VLOBS_UPDATED: EventsRealmVlobsUpdatedRepSchema(),
         APIEvent.REALM_MAINTENANCE_STARTED: EventsRealmMaintenanceStartedRepSchema(),
         APIEvent.REALM_MAINTENANCE_FINISHED: EventsRealmMaintenanceFinishedRepSchema(),
+        APIEvent.PKI_ENROLLMENT_UPDATED: EventPkiEnrollmentUpdated(),
     }
 
     def get_obj_type(self, obj: Dict[str, object]) -> APIEvent:

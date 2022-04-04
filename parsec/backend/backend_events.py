@@ -18,7 +18,7 @@ __all__ = ("BackendEvent",)
 
 
 class BackendEvent(Enum):
-    """ Backend internal events"""
+    """Backend internal events"""
 
     # DEVICE_CLAIMED = "device.claimed"  # TODO: not used anymore
     DEVICE_CREATED = "device.created"  # TODO: not needed anymore ?
@@ -37,6 +37,8 @@ class BackendEvent(Enum):
     REALM_MAINTENANCE_STARTED = "realm.maintenance_started"
     REALM_VLOBS_UPDATED = "realm.vlobs_updated"
     REALM_ROLES_UPDATED = "realm.roles_updated"
+    # Pki enrollment
+    PKI_ENROLLMENT_UPDATED = "pki_enrollment.updated"
 
 
 class DeviceCreatedSchema(BaseSchema):
@@ -143,6 +145,12 @@ class RealmRolesUpdatedSchema(BaseSchema):
     role = RealmRoleField(required=True, allow_none=True)
 
 
+class PkiEnrollmentUpdatedSchema(BaseSchema):
+    __id__ = fields.String(required=True)
+    __signal__ = fields.EnumCheckedConstant(BackendEvent.REALM_ROLES_UPDATED, required=True)
+    organization_id = OrganizationIDField(requise=True)
+
+
 class BackendEventSchema(OneOfSchema):
     type_field = "__signal__"
     type_schemas = {
@@ -158,6 +166,7 @@ class BackendEventSchema(OneOfSchema):
         BackendEvent.REALM_MAINTENANCE_STARTED: RealmMaintenanceStartedSchema,
         BackendEvent.REALM_VLOBS_UPDATED: RealmVlobsUpdatedSchema,
         BackendEvent.REALM_ROLES_UPDATED: RealmRolesUpdatedSchema,
+        BackendEvent.PKI_ENROLLMENT_UPDATED: PkiEnrollmentUpdatedSchema,
     }
 
     def get_obj_type(self, obj):

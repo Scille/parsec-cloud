@@ -24,6 +24,7 @@ from parsec.backend.user_type import (
 )
 from parsec.backend.client_context import AuthenticatedClientContext, AnonymousClientContext
 from parsec.backend.utils import api, catch_protocol_errors, ClientType
+from parsec.event_bus import EventBus
 
 
 class PkiEnrollmentError(Exception):
@@ -111,6 +112,9 @@ class PkiEnrollmentListItem:
 
 
 class BasePkiEnrollmentComponent:
+    def __init__(self, event_bus: EventBus):
+        self._event_bus = event_bus
+
     @api("pki_enrollment_submit", client_types=[ClientType.ANONYMOUS])
     @catch_protocol_errors
     async def api_pki_enrollment_submit(

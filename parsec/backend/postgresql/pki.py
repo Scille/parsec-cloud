@@ -7,6 +7,8 @@ from pendulum import DateTime
 
 from parsec.api.protocol import OrganizationID
 from parsec.api.protocol.pki import PkiEnrollmentStatus
+from parsec.backend.backend_events import BackendEvent
+from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.user import UserActiveUsersLimitReached, UserAlreadyExistsError
 from parsec.backend.user_type import User, Device
 from parsec.backend.pki import (
@@ -282,6 +284,12 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                                 cancelled_on=submitted_on,
                             )
                         )
+                        await send_signal(
+                            conn,
+                            BackendEvent.PKI_ENROLLMENT_UPDATED,
+                            organization_id=organization_id,
+                        )
+
                     else:
                         raise PkiEnrollmentCertificateAlreadySubmittedError(
                             submitted_on=row["submitted_on"]
@@ -311,6 +319,9 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     enrollment_state=PkiEnrollmentStatus.SUBMITTED.value,
                     submitted_on=submitted_on,
                 )
+            )
+            await send_signal(
+                conn, BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id
             )
 
     async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
@@ -380,6 +391,9 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     rejected_on=rejected_on,
                 )
             )
+            await send_signal(
+                conn, BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id
+            )
 
     async def accept(
         self,
@@ -434,6 +448,9 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     accepter=user.user_certifier.str,
                     accepted=first_device.device_id.str,
                 )
+            )
+            await send_signal(
+                conn, BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id
             )
 
     # async def pki_enrollment_request(

@@ -7,6 +7,7 @@ import attr
 from pendulum import DateTime
 
 from parsec.api.protocol import OrganizationID, DeviceID
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.memory.user import (
     MemoryUserComponent,
     UserAlreadyExistsError,
@@ -78,6 +79,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                             submitted_on=enrollment.info.submitted_on,
                             cancelled_on=submitted_on,
                         )
+                        await self._send_event(
+                            BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id
+                        )
                     else:
                         # ...otherwise nothing we can do
                         raise PkiEnrollmentCertificateAlreadySubmittedError(
@@ -114,6 +118,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 ),
             )
         )
+        await self._send_event(BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id)
 
     async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
         for enrollment in reversed(self._enrollments[organization_id]):
@@ -147,6 +152,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         enrollment_id=enrollment_id,
                         submitted_on=enrollment.info.submitted_on,
                         rejected_on=rejected_on,
+                    )
+                    await self._send_event(
+                        BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id
                     )
                     return
                 else:
@@ -197,6 +205,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 enrollment.accepter = user.user_certifier
                 enrollment.accepted = first_device.device_id
 
+                await self._send_event(
+                    BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id
+                )
                 break
 
         else:
