@@ -34,6 +34,8 @@ PkiEnrollmentError: all PKI enrollment related errors
         +- PkiEnrollmentAcceptNoLongerAvailableError: when the enrollment is no longer available
         +- PkiEnrollmentAcceptAlreadyExistsError: when the new user already exists
         +- PkiEnrollmentAcceptActiveUsersLimitReachedError: when the activate users limit has been reached
+    +- PkiEnrollmentInfoError: all the errors coming from the pki_enrollment_info command
+        +- PkiEnrollmentInfoNotFoundError: when the provided enrollment could not be found
 """
 
 
@@ -193,4 +195,15 @@ class PkiEnrollmentAcceptAlreadyExistsError(PkiEnrollmentAcceptError):
 
 
 class PkiEnrollmentAcceptActiveUsersLimitReachedError(PkiEnrollmentAcceptError):
+    pass
+
+
+# Enrollment info errors
+
+
+class PkiEnrollmentInfoError(PkiEnrollmentRemoteError):
+    pass
+
+
+class PkiEnrollmentInfoNotFoundError(PkiEnrollmentInfoError):
     pass

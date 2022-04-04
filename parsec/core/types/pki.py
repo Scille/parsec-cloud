@@ -137,6 +137,7 @@ class LocalPendingEnrollment(BaseLocalData):
     def load_from_path(cls, path: Path):
         """
         Raises:
+            PkiEnrollmentLocalPendingError
             PkiEnrollmentLocalPendingNotFoundError
             PkiEnrollmentLocalPendingValidationError
         """
@@ -144,6 +145,8 @@ class LocalPendingEnrollment(BaseLocalData):
             data = path.read_bytes()
         except FileNotFoundError as exc:
             raise PkiEnrollmentLocalPendingNotFoundError(str(exc)) from exc
+        except OSError as exc:
+            raise PkiEnrollmentLocalPendingError(f"Cannot read {path}: {exc}") from exc
         try:
             return cls.load(data)
         except DataError as exc:
@@ -157,13 +160,17 @@ class LocalPendingEnrollment(BaseLocalData):
     ) -> "LocalPendingEnrollment":
         """
         Raises:
+            PkiEnrollmentLocalPendingError
             PkiEnrollmentLocalPendingNotFoundError
             PkiEnrollmentLocalPendingValidationError
         """
         try:
-            data = (config_dir / cls.DIRECTORY_NAME / enrollment_id.hex).read_bytes()
+            path = config_dir / cls.DIRECTORY_NAME / enrollment_id.hex
+            data = path.read_bytes()
         except FileNotFoundError as exc:
             raise PkiEnrollmentLocalPendingNotFoundError(str(exc)) from exc
+        except OSError as exc:
+            raise PkiEnrollmentLocalPendingError(f"Cannot read {path}: {exc}") from exc
         try:
             return cls.load(data)
         except DataError as exc:
@@ -182,3 +189,18 @@ class LocalPendingEnrollment(BaseLocalData):
             except (DataError, OSError):
                 pass
         return result
+
+    @classmethod
+    def remove_from_enrollment_id(cls, config_dir: Path, enrollment_id: UUID):
+        """
+        Raises:
+            PkiEnrollmentLocalPendingError
+            PkiEnrollmentLocalPendingNotFoundError
+            PkiEnrollmentLocalPendingValidationError
+        """
+        pending = LocalPendingEnrollment.load_from_enrollment_id(config_dir, enrollment_id)
+        path = pending.get_path(config_dir)
+        try:
+            path.unlink()
+        except OSError as exc:
+            raise PkiEnrollmentLocalPendingError(f"Cannot remove {path}: {exc}") from exc

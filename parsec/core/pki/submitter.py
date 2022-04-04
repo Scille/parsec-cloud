@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
-from typing import Iterable, List, Union
-from uuid import UUID, uuid4
 from pathlib import Path
+from uuid import UUID, uuid4
 from pendulum import DateTime
+from typing import Iterable, List, Union, Optional
 
 from parsec.api.data import PkiEnrollmentSubmitPayload
 from parsec.api.protocol import DeviceLabel, PkiEnrollmentStatus
@@ -24,21 +24,18 @@ from parsec.core.pki.plumbing import (
 )
 from parsec.core.types import LocalDevice
 from parsec.core.types.pki import LocalPendingEnrollment
-from parsec.core.local_device import LocalDeviceError, generate_new_device
+from parsec.core.local_device import generate_new_device
 from parsec.crypto import PrivateKey, SigningKey
 
 from parsec.core.pki.exceptions import (
+    PkiEnrollmentError,
+    PkiEnrollmentSubmitError,
     PkiEnrollmentSubmitCertificateAlreadySubmittedError,
     PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError,
     PkiEnrollmentSubmitCertificateAlreadyEnrolledError,
-    PkiEnrollmentSubmitError,
+    PkiEnrollmentInfoError,
+    PkiEnrollmentInfoNotFoundError,
 )
-
-
-def _remove_local_pending(config_dir: Path, enrollment_id: UUID):
-    LocalPendingEnrollment.load_from_enrollment_id(config_dir, enrollment_id).get_path(
-        config_dir
-    ).unlink()
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -53,6 +50,12 @@ class PkiEnrollmentSubmitterInitialCtx:
     async def new(
         cls, addr: BackendPkiEnrollmentAddr
     ) -> "PkiEnrollmentSubmitterSubmittedStatusCtx":
+        """
+        Raises:
+            PkiEnrollmentCertificateError
+            PkiEnrollmentCertificateCryptoError
+            PkiEnrollmentCertificateNotFoundError
+        """
         enrollment_id = uuid4()
         signing_key = SigningKey.generate()
         private_key = PrivateKey.generate()
@@ -80,12 +83,12 @@ class PkiEnrollmentSubmitterInitialCtx:
             PkiEnrollmentSubmitCertificateAlreadySubmittedError
             PkiEnrollmentSubmitCertificateAlreadyEnrolledError
 
-            PkiEnrollmentCertificateNotFoundError
-            PkiEnrollmentCertificateCryptoError
             PkiEnrollmentCertificateError
-            PkiEnrollmentLocalPendingCryptoError
+            PkiEnrollmentCertificateCryptoError
+            PkiEnrollmentCertificateNotFoundError
 
             PkiEnrollmentLocalPendingError
+            PkiEnrollmentLocalPendingCryptoError
             PkiEnrollmentLocalPendingPackingError
         """
 
@@ -113,33 +116,33 @@ class PkiEnrollmentSubmitterInitialCtx:
             submitted_on = rep["submitted_on"]
             raise PkiEnrollmentSubmitCertificateAlreadySubmittedError(
                 f"The certificate `{self.x509_certificate.certificate_sha1.hex()}` has already been submitted on {submitted_on}",
+                rep,
                 self.enrollment_id,
                 self.x509_certificate,
-                rep,
             )
 
         if rep["status"] == "enrollment_id_already_used":
             raise PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError(
                 f"The enrollment ID {self.enrollment_id.hex} is already used",
+                rep,
                 self.enrollment_id,
                 self.x509_certificate,
-                rep,
             )
 
         if rep["status"] == "already_enrolled":
             raise PkiEnrollmentSubmitCertificateAlreadyEnrolledError(
                 f"The certificate `{self.x509_certificate.certificate_sha1.hex()}` has already been enrolled",
+                rep,
                 self.enrollment_id,
                 self.x509_certificate,
-                rep,
             )
 
         if rep["status"] != "ok":
             raise PkiEnrollmentSubmitError(
                 f"Backend refused to create enrollment: {rep['status']}",
+                rep,
                 self.enrollment_id,
                 self.x509_certificate,
-                rep,
             )
 
         # Save the enrollment request on disk.
@@ -182,7 +185,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
 
     @classmethod
     async def list_from_disk(cls, config_dir: Path) -> List["PkiEnrollmentSubmitterSubmittedCtx"]:
-        # TODO: document exceptions !
+        """Raises: None"""
         ctxs = []
         for pending in LocalPendingEnrollment.list(config_dir):
             ctx = PkiEnrollmentSubmitterSubmittedCtx(
@@ -206,15 +209,32 @@ class PkiEnrollmentSubmitterSubmittedCtx:
         "PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx",
         "PkiEnrollmentSubmitterAcceptedStatusCtx",
     ]:
+        """
+        Raises:
+            BackendNotAvailable
+            BackendProtocolError
+
+            PkiEnrollmentInfoError
+            PkiEnrollmentInfoNotFoundError
+        """
         #  Tuple[PkiEnrollmentStatus, DateTime, Optional[LocalDevice]]:
-        try:
-            rep = await cmd_pki_enrollment_info(addr=self.addr, enrollment_id=self.enrollment_id)
-        except Exception:
-            # TODO: exception handling !
-            raise
+        rep = await cmd_pki_enrollment_info(addr=self.addr, enrollment_id=self.enrollment_id)
+
+        if rep["status"] == "not_found":
+            raise PkiEnrollmentInfoNotFoundError(
+                f"The provided enrollment could not be found: {rep['reason']}",
+                rep,
+                self.enrollment_id,
+                self.x509_certificate,
+            )
+
         if rep["status"] != "ok":
-            # TODO: exception handling !
-            raise RuntimeError()
+            raise PkiEnrollmentInfoError(
+                f"Backend refused to provide the enrollment info: {rep['status']}",
+                rep,
+                self.enrollment_id,
+                self.x509_certificate,
+            )
 
         enrollment_status = rep["enrollment_status"]
 
@@ -272,7 +292,10 @@ class PkiEnrollmentSubmitterSubmittedCtx:
                 )
 
             # Verification failed
-            except LocalDeviceError as exc:
+            except PkiEnrollmentError as exc:
+                accepter_x509_certificate = None
+                if len(exc.args) >= 2 and isinstance(exc.args[1], X509Certificate):
+                    accepter_x509_certificate = exc.args[1]
                 return PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx(
                     config_dir=self.config_dir,
                     x509_certificate=self.x509_certificate,
@@ -281,7 +304,8 @@ class PkiEnrollmentSubmitterSubmittedCtx:
                     enrollment_id=self.enrollment_id,
                     submit_payload=self.submit_payload,
                     accepted_on=rep["accepted_on"],
-                    error=str(exc),
+                    accepter_x509_certificate=accepter_x509_certificate,
+                    error=exc,
                 )
 
 
@@ -300,11 +324,15 @@ class PkiEnrollmentSubmitterSubmittedStatusCtx(BasePkiEnrollmentSubmitterStatusC
     submit_payload: PkiEnrollmentSubmitPayload
 
     async def remove_from_disk(self):
-        try:
-            _remove_local_pending(config_dir=self.config_dir, enrollment_id=self.enrollment_id)
-        except Exception:
-            # TODO: handle exception
-            raise
+        """
+        Raises:
+            PkiEnrollmentLocalPendingError
+            PkiEnrollmentLocalPendingNotFoundError
+            PkiEnrollmentLocalPendingValidationError
+        """
+        LocalPendingEnrollment.remove_from_enrollment_id(
+            config_dir=self.config_dir, enrollment_id=self.enrollment_id
+        )
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -312,11 +340,15 @@ class PkiEnrollmentSubmitterCancelledStatusCtx(BasePkiEnrollmentSubmitterStatusC
     cancelled_on: DateTime
 
     async def remove_from_disk(self):
-        try:
-            _remove_local_pending(config_dir=self.config_dir, enrollment_id=self.enrollment_id)
-        except Exception:
-            # TODO: handle exception
-            raise
+        """
+        Raises:
+            PkiEnrollmentLocalPendingError
+            PkiEnrollmentLocalPendingNotFoundError
+            PkiEnrollmentLocalPendingValidationError
+        """
+        LocalPendingEnrollment.remove_from_enrollment_id(
+            config_dir=self.config_dir, enrollment_id=self.enrollment_id
+        )
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -324,24 +356,45 @@ class PkiEnrollmentSubmitterRejectedStatusCtx(BasePkiEnrollmentSubmitterStatusCt
     rejected_on: DateTime
 
     async def remove_from_disk(self):
-        try:
-            _remove_local_pending(config_dir=self.config_dir, enrollment_id=self.enrollment_id)
-        except Exception:
-            # TODO: handle exception
-            raise
+        """
+        Raises:
+            PkiEnrollmentLocalPendingError
+            PkiEnrollmentLocalPendingNotFoundError
+            PkiEnrollmentLocalPendingValidationError
+        """
+        LocalPendingEnrollment.remove_from_enrollment_id(
+            config_dir=self.config_dir, enrollment_id=self.enrollment_id
+        )
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx(BasePkiEnrollmentSubmitterStatusCtx):
+    """
+    The `error` attribute can be one of the following:
+    - PkiEnrollmentCertificateCryptoError: when any of the required certificate-replated crypto operation fails
+    - PkiEnrollmentCertificateSignatureError: when the provided signature does not correspond to the certificate public key
+    - PkiEnrollmentCertificateValidationError: when the provided certificate cannot be validated using the configured trust roots
+    - PkiEnrollmentCertificateError: an generic certificate-related errors
+    - PkiEnrollmentPayloadValidationError: when some enrollement information cannot be properly loaded
+
+    The `accepter_x509_certificate` is optional depending on whether the certificate information could be successfully extracted
+    before the error or not.
+    """
+
     accepted_on: DateTime
-    error: str
+    accepter_x509_certificate: Optional[X509Certificate]
+    error: PkiEnrollmentError
 
     async def remove_from_disk(self):
-        try:
-            _remove_local_pending(config_dir=self.config_dir, enrollment_id=self.enrollment_id)
-        except Exception:
-            # TODO: handle exception
-            raise
+        """
+        Raises:
+            PkiEnrollmentLocalPendingError
+            PkiEnrollmentLocalPendingNotFoundError
+            PkiEnrollmentLocalPendingValidationError
+        """
+        LocalPendingEnrollment.remove_from_enrollment_id(
+            config_dir=self.config_dir, enrollment_id=self.enrollment_id
+        )
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -351,6 +404,13 @@ class PkiEnrollmentSubmitterAcceptedStatusCtx(BasePkiEnrollmentSubmitterStatusCt
     accept_payload: PkiEnrollmentAcceptPayload
 
     async def finalize(self) -> "PkiEnrollmentFinalizedCtx":
+        """
+        Raises:
+            PkiEnrollmentCertificateNotFoundError
+            PkiEnrollmentCertificateCryptoError
+            PkiEnrollmentCertificateError
+            PkiEnrollmentLocalPendingCryptoError
+        """
         signing_key, private_key = await pki_enrollment_load_local_pending_secret_part(
             config_dir=self.config_dir, enrollment_id=self.enrollment_id
         )
@@ -387,8 +447,12 @@ class PkiEnrollmentFinalizedCtx:
     x509_certificate: X509Certificate
 
     async def remove_from_disk(self) -> None:
-        try:
-            _remove_local_pending(config_dir=self.config_dir, enrollment_id=self.enrollment_id)
-        except Exception:
-            # TODO: handle exception
-            raise
+        """
+        Raises:
+            PkiEnrollmentLocalPendingError
+            PkiEnrollmentLocalPendingNotFoundError
+            PkiEnrollmentLocalPendingValidationError
+        """
+        LocalPendingEnrollment.remove_from_enrollment_id(
+            config_dir=self.config_dir, enrollment_id=self.enrollment_id
+        )
