@@ -12,8 +12,13 @@ from parsec.backend.pki import (
     PkiEnrollmentCertificateAlreadySubmittedError,
     PkiEnrollmentIdAlreadyUsedError,
     PkiEnrollmentInfo,
+    PkiEnrollmentInfoAccepted,
+    PkiEnrollmentInfoCancelled,
+    PkiEnrollmentInfoRejected,
+    PkiEnrollmentInfoSubmitted,
     PkiEnrollmentListItem,
     BasePkiEnrollmentComponent,
+    PkiEnrollmentNotFoundError,
 )
 from parsec.backend.postgresql import PGHandler
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
@@ -87,6 +92,16 @@ _q_get_pki_enrollment_from_certificate_sha1 = Q(
     """
 )
 
+_q_get_pki_enrollment_from_enrollment_id = Q(
+    f"""
+    SELECT * FROM pki_enrollment
+    WHERE (
+        organization = { q_organization_internal_id("$organization_id") }
+        AND enrollment_id=$enrollment_id
+    )
+    """
+)
+
 _q_get_pki_enrollment = Q(
     f"""
     SELECT * FROM pki_enrollment
@@ -141,6 +156,36 @@ _q_cancel_pki_enrollment = Q(
     )
     """
 )
+
+
+def _build_enrollment_info(entry) -> PkiEnrollmentInfo:
+    if entry["enrollment_state"] == PkiEnrollmentStatus.SUBMITTED.value:
+        return PkiEnrollmentInfoSubmitted(
+            enrollment_id=entry["enrollment_id"], submitted_on=entry["submitted_on"]
+        )
+    elif entry["enrollment_state"] == PkiEnrollmentStatus.CANCELLED.value:
+        return PkiEnrollmentInfoCancelled(
+            enrollment_id=entry["enrollment_id"],
+            submitted_on=entry["submitted_on"],
+            cancelled_on=entry["info_cancelled"]["cancelled_on"],
+        )
+    elif entry["enrollment_state"] == PkiEnrollmentStatus.REJECTED.value:
+        return PkiEnrollmentInfoRejected(
+            enrollment_id=entry["enrollment_id"],
+            submitted_on=entry["submitted_on"],
+            rejected_on=entry["info_rejected"]["rejected_on"],
+        )
+    elif entry["enrollment_state"] == PkiEnrollmentStatus.SUBMITTED.value:
+        return PkiEnrollmentInfoAccepted(
+            enrollment_id=entry["enrollment_id"],
+            submitted_on=entry["submitted_on"],
+            accepted_on=entry["info_accepted"]["accepted_on"],
+            accepter_der_x509_certificate=entry["info_accepted"]["accepter_der_x509_certificate"],
+            accept_payload_signature=entry["info_accepted"]["accept_payload_signature"],
+            accept_payload=entry["info_accepted"]["accept_payload"],
+        )
+    else:
+        assert False
 
 
 class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
@@ -231,12 +276,22 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         Raises:
             PkiEnrollmentNotFoundError
         """
-        raise NotImplementedError()
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            row = await conn.fetchrow(
+                *_q_get_pki_enrollment_from_enrollment_id(
+                    organization_id=organization_id.str, enrollment_id=enrollment_id
+                )
+            )
+            if not row:
+                raise PkiEnrollmentNotFoundError()
+            else:
+                return _build_enrollment_info(row)
 
     async def list(self, organization_id: OrganizationID) -> List[PkiEnrollmentListItem]:
         """
         Raises: Nothing !
         """
+
         raise NotImplementedError()
 
     async def reject(
