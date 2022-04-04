@@ -12,7 +12,7 @@ use parsec_api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 
 use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::new_uuid_type;
-use crate::{DataError, DateTime, DeviceID};
+use crate::{DataError, DateTime, DeviceID, EntryNameError};
 
 macro_rules! impl_manifest_dump_load {
     ($name:ident) => {
@@ -134,20 +134,6 @@ impl std::fmt::Debug for EntryName {
         f.debug_tuple(stringify!(EntryName))
             .field(&display)
             .finish()
-    }
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum EntryNameError {
-    #[serde(rename = "Name too long")]
-    NameTooLong,
-    #[serde(rename = "Invalid name")]
-    InvalidName,
-}
-
-impl std::fmt::Display for EntryNameError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self)
     }
 }
 

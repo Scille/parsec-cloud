@@ -7,6 +7,9 @@ use pyo3::prelude::PyModule;
 use pyo3::types::{PyDict, PyFrozenSet, PyTuple};
 use pyo3::FromPyObject;
 use pyo3::{PyAny, PyObject, PyResult, Python};
+use regex::Regex;
+use std::collections::HashSet;
+use std::hash::Hash;
 
 pub fn comp_op<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult<bool> {
     match op {
@@ -64,6 +67,25 @@ pub fn py_to_rs_realm_role(role: &PyAny) -> PyResult<parsec_api_types::RealmRole
         _ => unreachable!(),
     };
     Ok(role)
+}
+
+// This implementation is due to
+// https://github.com/PyO3/pyo3/blob/39d2b9d96476e6cc85ca43e720e035e0cdff7a45/src/types/set.rs#L240
+// where Hashset is PySet in FromPyObject trait
+pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyResult<HashSet<T>> {
+    set.downcast::<PyFrozenSet>()?
+        .iter()
+        .map(T::extract)
+        .collect::<PyResult<std::collections::HashSet<T>>>()
+}
+
+pub fn py_to_rs_regex(regex: &PyAny) -> PyResult<Regex> {
+    let regex = regex
+        .getattr("pattern")?
+        .extract::<String>()?
+        .replace("\\Z", "\\z")
+        .replace("\\ ", "\x20");
+    Regex::new(&regex).map_err(|e| PyValueError::new_err(e.to_string()))
 }
 
 pub fn kwargs_extract_required<'a, T: FromPyObject<'a>>(
@@ -133,46 +155,32 @@ pub fn kwargs_extract_optional_custom<T>(
     }
 }
 
-// This implementation is due to
-// https://github.com/PyO3/pyo3/blob/39d2b9d96476e6cc85ca43e720e035e0cdff7a45/src/types/set.rs#L240
-// where Hashset is PySet in FromPyObject trait
-pub fn kwargs_extract_required_frozenset<'a, T: FromPyObject<'a> + Eq + std::hash::Hash>(
-    args: &'a PyDict,
-    name: &str,
-) -> PyResult<std::collections::HashSet<T>> {
-    match kwargs_extract_optional_frozenset::<T>(args, name)? {
-        Some(v) => Ok(v),
-        None => Err(PyValueError::new_err(format!(
-            "Missing `{}` argument",
-            name
-        ))),
-    }
+macro_rules! parse_kwargs_optional {
+    ($kwargs: ident $(,[$var: ident $(:$ty: ty)?, $name: literal $(,$function: ident)?])* $(,)?) => {
+        $(let mut $var = None;)*
+        if let Some($kwargs) = $kwargs {
+            for arg in $kwargs {
+                match arg.0.extract::<&str>()? {
+                    $($name => $var = {
+                        let temp = arg.1;
+                        $(let temp = temp.extract::<$ty>()?;)?
+                        $(let temp = $function(&temp)?;)?
+                        Some(temp)
+                    },)*
+                    _ => unreachable!(),
+                }
+            }
+        }
+    };
 }
-
-pub fn kwargs_extract_optional_frozenset<'a, T: FromPyObject<'a> + Eq + std::hash::Hash>(
-    args: &'a PyDict,
-    name: &str,
-) -> PyResult<Option<std::collections::HashSet<T>>> {
-    match args.get_item(name) {
-        Some(item) if item.is_none() => Ok(None),
-        Some(item) => match item.downcast::<PyFrozenSet>() {
-            Ok(set) => Ok(Some(
-                set.iter()
-                    .map(T::extract)
-                    .collect::<PyResult<std::collections::HashSet<T>>>()?,
-            )),
-            Err(err) => Err(PyValueError::new_err(format!(
-                "Invalid `{}` argument: {}",
-                name, err
-            ))),
-        },
-        None => Ok(None),
-    }
+macro_rules! parse_kwargs {
+    ($kwargs: ident $(,[$var: ident $(:$ty: ty)?, $name: literal $(,$function: ident)?])* $(,)?) => {
+        crate::binding_utils::parse_kwargs_optional!(
+            $kwargs,
+            $([$var $(:$ty)?, $name $(,$function)?],)*
+        );
+        $(let $var = $var.expect("Missing `{$name}` argument");)*
+    };
 }
-
-pub fn pattern_match(prevent_sync_pattern: &PyAny, pattern: &str) -> PyResult<bool> {
-    prevent_sync_pattern
-        .call_method1("match", (pattern,))?
-        .extract::<Option<PyObject>>()
-        .map(|b| b.is_some())
-}
+pub(crate) use parse_kwargs;
+pub(crate) use parse_kwargs_optional;

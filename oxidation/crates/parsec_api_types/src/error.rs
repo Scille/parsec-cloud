@@ -18,3 +18,11 @@ pub enum DataError {
     #[error("Invalid timestamp: expected `{expected}`, got `{got}`")]
     UnexpectedTimestamp { expected: DateTime, got: DateTime },
 }
+
+#[derive(Error, Debug)]
+pub enum EntryNameError {
+    #[error("Name too long")]
+    NameTooLong,
+    #[error("Invalid name")]
+    InvalidName,
+}

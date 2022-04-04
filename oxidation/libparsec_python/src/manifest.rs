@@ -966,6 +966,7 @@ impl UserManifest {
     }
 
     #[classmethod]
+    #[allow(clippy::too_many_arguments)]
     fn decrypt_verify_and_load(
         _cls: &PyType,
         encrypted: &[u8],

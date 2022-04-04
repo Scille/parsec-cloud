@@ -1,7 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use std::cmp::Ordering;
 use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
@@ -56,7 +58,29 @@ pub struct Chunk {
     pub access: Option<BlockAccess>,
 }
 
+impl PartialEq<u64> for Chunk {
+    fn eq(&self, other: &u64) -> bool {
+        self.start == *other
+    }
+}
+
+impl PartialOrd<u64> for Chunk {
+    fn partial_cmp(&self, other: &u64) -> Option<Ordering> {
+        Some(self.start.cmp(other))
+    }
+}
+
 impl Chunk {
+    pub fn new(start: u64, stop: NonZeroU64) -> Self {
+        Self {
+            id: parsec_api_types::ChunkID::default(),
+            start,
+            stop,
+            raw_offset: start,
+            raw_size: NonZeroU64::try_from(u64::from(stop) - start).unwrap(),
+            access: None,
+        }
+    }
     pub fn from_block_access(block_access: BlockAccess) -> Result<Self, &'static str> {
         let raw_size = NonZeroU64::try_from(block_access.size).map_err(|_| "invalid raw size")?;
         let stop = NonZeroU64::try_from(block_access.offset + block_access.size)
@@ -99,20 +123,22 @@ impl Chunk {
         // Requires an access
         if let Some(access) = &self.access {
             // Pseudo block
-            !(!self.is_pseudo_block()
+            self.is_pseudo_block()
                 // Offset inconsistent
-                || self.raw_offset != access.offset
+                && self.raw_offset == access.offset
                 // Size inconsistent
-                || u64::from(self.raw_size) != access.size)
+                && u64::from(self.raw_size) == access.size
         } else {
             false
         }
     }
 
     pub fn is_pseudo_block(&self) -> bool {
+        // Not left aligned
         if self.start != self.raw_offset {
             return false;
         }
+        // Not right aligned
         if u64::from(self.stop) != self.raw_offset + u64::from(self.raw_size) {
             return false;
         }
@@ -184,8 +210,35 @@ impl From<LocalFileManifest> for LocalFileManifestData {
 impl_local_manifest_dump_load!(LocalFileManifest);
 
 impl LocalFileManifest {
-    pub fn get_chunks(&self, block: usize) -> Vec<Chunk> {
-        self.blocks.get(block).cloned().unwrap_or_default()
+    pub fn new_placeholder(
+        author: DeviceID,
+        parent: EntryID,
+        timestamp: DateTime,
+        blocksize: Blocksize,
+    ) -> Self {
+        Self {
+            base: parsec_api_types::FileManifest {
+                author,
+                timestamp,
+                id: parsec_api_types::EntryID::default(),
+                parent,
+                version: 0,
+                created: timestamp,
+                updated: timestamp,
+                blocksize,
+                size: 0,
+                blocks: vec![],
+            },
+            need_sync: true,
+            updated: timestamp,
+            blocksize,
+            size: 0,
+            blocks: vec![],
+        }
+    }
+
+    pub fn get_chunks(&self, block: usize) -> Option<&Vec<Chunk>> {
+        self.blocks.get(block)
     }
 
     pub fn is_reshaped(&self) -> bool {
@@ -240,13 +293,13 @@ impl LocalFileManifest {
         timestamp: DateTime,
     ) -> Result<FileManifest, &'static str> {
         self.assert_integrity();
-        assert!(self.is_reshaped());
 
         let blocks = self
             .blocks
             .iter()
             .map(|chunks| chunks[0].get_block_access())
-            .collect::<Result<Vec<_>, _>>()?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| "Need reshape")?
             .into_iter()
             .flatten()
             .collect();
@@ -265,14 +318,14 @@ impl LocalFileManifest {
         })
     }
 
-    pub fn match_remote(&self, remote_manifest: &FileManifest) -> Result<bool, &'static str> {
-        if !self.is_reshaped() {
-            return Ok(false);
-        }
+    pub fn match_remote(&self, remote_manifest: &FileManifest) -> bool {
         let mut reference =
-            self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp)?;
+            match self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp) {
+                Ok(reference) => reference,
+                _ => return false,
+            };
         reference.version = remote_manifest.version;
-        Ok(&reference == remote_manifest)
+        reference == *remote_manifest
     }
 }
 
@@ -350,58 +403,234 @@ impl From<LocalFolderManifest> for LocalFolderManifestData {
 impl_local_manifest_dump_load!(LocalFolderManifest);
 
 impl LocalFolderManifest {
-    pub fn _filter_local_confinement_points(&self) -> Self {
-        let mut result = self.clone();
-
-        if result.local_confinement_points.is_empty() {
-            return result;
+    pub fn new_placeholder(author: DeviceID, parent: EntryID, timestamp: DateTime) -> Self {
+        Self {
+            base: parsec_api_types::FolderManifest {
+                author,
+                timestamp,
+                id: parsec_api_types::EntryID::default(),
+                parent,
+                version: 0,
+                created: timestamp,
+                updated: timestamp,
+                children: HashMap::new(),
+            },
+            need_sync: true,
+            updated: timestamp,
+            children: HashMap::new(),
+            local_confinement_points: HashSet::new(),
+            remote_confinement_points: HashSet::new(),
         }
-
-        result
-            .children
-            .retain(|_, entry_id| !self.local_confinement_points.contains(entry_id));
-
-        result.local_confinement_points.clear();
-        result
     }
 
-    pub fn _restore_remote_confinement_points(&self) -> Self {
-        let mut result = self.clone();
+    pub fn evolve_children_and_mark_updated(
+        mut self,
+        data: HashMap<EntryName, Option<EntryID>>,
+        prevent_sync_pattern: &Regex,
+        timestamp: DateTime,
+    ) -> Self {
+        let mut actually_updated = false;
+        // Deal with removal first
+        for (name, entry_id) in data.iter() {
+            // Here `entry_id` can be either:
+            // - a new entry id that might overwrite the previous one with the same name if it exists
+            // - `None` which means the entry for the corresponding name should be removed
+            if !self.children.contains_key(name) {
+                // Make sure we don't remove a name that does not exist
+                assert!(entry_id.is_some());
+                continue;
+            }
+            // Remove old entry
+            if let Some(old_entry_id) = self.children.remove(name) {
+                if !self.local_confinement_points.remove(&old_entry_id) {
+                    actually_updated = true;
+                }
+            }
+        }
+        // Make sure no entry_id is duplicated
+        assert_eq!(
+            HashSet::<_, RandomState>::from_iter(data.values().filter_map(|v| v.as_ref()))
+                .intersection(&HashSet::from_iter(self.children.values()))
+                .count(),
+            0
+        );
 
-        if result.remote_confinement_points.is_empty() {
-            return result;
+        // Deal with additions second
+        for (name, entry_id) in data.into_iter() {
+            if let Some(entry_id) = entry_id {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
+                    self.local_confinement_points.insert(entry_id);
+                } else {
+                    actually_updated = true;
+                }
+                // Add new entry
+                self.children.insert(name, entry_id);
+            }
+        }
+
+        if !actually_updated {
+            return self;
+        }
+
+        self.need_sync = true;
+        self.updated = timestamp;
+        self
+    }
+
+    fn filter_local_confinement_points(mut self) -> Self {
+        if self.local_confinement_points.is_empty() {
+            return self;
+        }
+
+        self.children
+            .retain(|_, entry_id| !self.local_confinement_points.contains(entry_id));
+
+        self.local_confinement_points.clear();
+        self
+    }
+
+    fn restore_local_confinement_points(
+        self,
+        other: &Self,
+        prevent_sync_pattern: &Regex,
+        timestamp: DateTime,
+    ) -> Self {
+        // Using self.remote_confinement_points is useful to restore entries that were present locally
+        // before applying a new filter that filtered those entries from the remote manifest
+        if other.local_confinement_points.is_empty() && self.remote_confinement_points.is_empty() {
+            return self;
+        }
+        // Create a set for fast lookup in order to make sure no entry gets duplicated.
+        // This might happen when a synchronized entry is renamed to a confined name locally.
+        let self_entry_ids = HashSet::<_, RandomState>::from_iter(self.children.values());
+        let previously_local_confinement_points = other
+            .children
+            .iter()
+            .filter_map(|(name, entry_id)| {
+                if !self_entry_ids.contains(entry_id)
+                    && (other.local_confinement_points.contains(entry_id)
+                        || self.remote_confinement_points.contains(entry_id))
+                {
+                    Some((name.clone(), Some(*entry_id)))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        self.evolve_children_and_mark_updated(
+            previously_local_confinement_points,
+            prevent_sync_pattern,
+            timestamp,
+        )
+    }
+
+    fn filter_remote_entries(mut self, prevent_sync_pattern: &Regex) -> Self {
+        let remote_confinement_points: HashSet<_> = self
+            .children
+            .iter()
+            .filter_map(|(name, entry_id)| {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
+                    Some(*entry_id)
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        if remote_confinement_points.is_empty() {
+            return self;
+        }
+
+        self.remote_confinement_points = remote_confinement_points;
+        self.children
+            .retain(|_, entry_id| !self.remote_confinement_points.contains(entry_id));
+
+        self
+    }
+
+    fn restore_remote_confinement_points(mut self) -> Self {
+        if self.remote_confinement_points.is_empty() {
+            return self;
         }
 
         for (name, entry_id) in self.base.children.iter() {
             if self.remote_confinement_points.contains(entry_id) {
-                result.children.insert(name.clone(), *entry_id);
+                self.children.insert(name.clone(), *entry_id);
             }
         }
-        result.remote_confinement_points.clear();
-        result
+        self.remote_confinement_points.clear();
+        self
     }
 
-    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
-        // Filter confined entries
-        let mut processed_manifest = self._filter_local_confinement_points();
-        // Restore filtered entries
-        processed_manifest = processed_manifest._restore_remote_confinement_points();
+    pub fn apply_prevent_sync_pattern(
+        &self,
+        prevent_sync_pattern: &Regex,
+        timestamp: DateTime,
+    ) -> Self {
+        let result = self.clone();
+        result
+            // Filter local confinement points
+            .filter_local_confinement_points()
+            // Restore remote confinement points
+            .restore_remote_confinement_points()
+            // Filter remote confinement_points
+            .filter_remote_entries(prevent_sync_pattern)
+            // Restore local confinement points
+            .restore_local_confinement_points(self, prevent_sync_pattern, timestamp)
+    }
+
+    pub fn from_remote(remote: FolderManifest, prevent_sync_pattern: &Regex) -> Self {
+        let updated = remote.updated;
+        let children = remote.children.clone();
+
+        Self {
+            base: remote,
+            need_sync: false,
+            updated,
+            children,
+            local_confinement_points: HashSet::new(),
+            remote_confinement_points: HashSet::new(),
+        }
+        .filter_remote_entries(prevent_sync_pattern)
+    }
+
+    pub fn from_remote_with_local_context(
+        remote: FolderManifest,
+        prevent_sync_pattern: &Regex,
+        local_manifest: &Self,
+        timestamp: DateTime,
+    ) -> Self {
+        Self::from_remote(remote, prevent_sync_pattern).restore_local_confinement_points(
+            local_manifest,
+            prevent_sync_pattern,
+            timestamp,
+        )
+    }
+
+    pub fn to_remote(self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
+        let result = self
+            // Filter confined entries
+            .filter_local_confinement_points()
+            // Restore filtered entries
+            .restore_remote_confinement_points();
         // Create remote manifest
         FolderManifest {
             author,
             timestamp,
-            id: self.base.id,
-            parent: self.base.parent,
-            version: self.base.version + 1,
-            created: self.base.created,
-            updated: self.updated,
-            children: processed_manifest.children,
+            id: result.base.id,
+            parent: result.base.parent,
+            version: result.base.version + 1,
+            created: result.base.created,
+            updated: result.updated,
+            children: result.children,
         }
     }
 
     pub fn match_remote(&self, remote_manifest: &FolderManifest) -> bool {
-        let mut reference =
-            self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
+        let mut reference = self
+            .clone()
+            .to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
         reference.version = remote_manifest.version;
         reference == *remote_manifest
     }
@@ -503,55 +732,237 @@ impl From<LocalWorkspaceManifest> for LocalWorkspaceManifestData {
 }
 
 impl LocalWorkspaceManifest {
-    pub fn _filter_local_confinement_points(&self) -> Self {
-        let mut result = self.clone();
-
-        if result.local_confinement_points.is_empty() {
-            return result;
+    pub fn new_placeholder(
+        author: DeviceID,
+        timestamp: DateTime,
+        id: Option<EntryID>,
+        speculative: bool,
+    ) -> Self {
+        Self {
+            base: parsec_api_types::WorkspaceManifest {
+                author,
+                timestamp,
+                id: id.unwrap_or_default(),
+                version: 0,
+                created: timestamp,
+                updated: timestamp,
+                children: HashMap::new(),
+            },
+            need_sync: true,
+            updated: timestamp,
+            children: HashMap::new(),
+            local_confinement_points: HashSet::new(),
+            remote_confinement_points: HashSet::new(),
+            speculative,
         }
-
-        result
-            .children
-            .retain(|_, entry_id| !self.local_confinement_points.contains(entry_id));
-
-        result.local_confinement_points.clear();
-        result
     }
 
-    pub fn _restore_remote_confinement_points(&self) -> Self {
-        let mut result = self.clone();
+    pub fn evolve_children_and_mark_updated(
+        mut self,
+        data: HashMap<EntryName, Option<EntryID>>,
+        prevent_sync_pattern: &Regex,
+        timestamp: DateTime,
+    ) -> Self {
+        let mut actually_updated = false;
+        // Deal with removal first
+        for (name, entry_id) in data.iter() {
+            // Here `entry_id` can be either:
+            // - a new entry id that might overwrite the previous one with the same name if it exists
+            // - `None` which means the entry for the corresponding name should be removed
+            if !self.children.contains_key(name) {
+                // Make sure we don't remove a name that does not exist
+                assert!(entry_id.is_some());
+                continue;
+            }
+            // Remove old entry
+            if let Some(old_entry_id) = self.children.remove(name) {
+                if !self.local_confinement_points.remove(&old_entry_id) {
+                    actually_updated = true;
+                }
+            }
+        }
+        // Make sure no entry_id is duplicated
+        assert_eq!(
+            HashSet::<_, RandomState>::from_iter(data.values().filter_map(|v| v.as_ref()))
+                .intersection(&HashSet::from_iter(self.children.values()))
+                .count(),
+            0
+        );
 
-        if result.remote_confinement_points.is_empty() {
-            return result;
+        // Deal with additions second
+        for (name, entry_id) in data.into_iter() {
+            if let Some(entry_id) = entry_id {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
+                    self.local_confinement_points.insert(entry_id);
+                } else {
+                    actually_updated = true;
+                }
+                // Add new entry
+                self.children.insert(name, entry_id);
+            }
+        }
+
+        if !actually_updated {
+            return self;
+        }
+
+        self.need_sync = true;
+        self.updated = timestamp;
+        self
+    }
+
+    fn filter_local_confinement_points(mut self) -> Self {
+        if self.local_confinement_points.is_empty() {
+            return self;
+        }
+
+        self.children
+            .retain(|_, entry_id| !self.local_confinement_points.contains(entry_id));
+
+        self.local_confinement_points.clear();
+        self
+    }
+
+    fn restore_local_confinement_points(
+        self,
+        other: &Self,
+        prevent_sync_pattern: &Regex,
+        timestamp: DateTime,
+    ) -> Self {
+        // Using self.remote_confinement_points is useful to restore entries that were present locally
+        // before applying a new filter that filtered those entries from the remote manifest
+        if other.local_confinement_points.is_empty() && self.remote_confinement_points.is_empty() {
+            return self;
+        }
+        // Create a set for fast lookup in order to make sure no entry gets duplicated.
+        // This might happen when a synchronized entry is renamed to a confined name locally.
+        let self_entry_ids = HashSet::<_, RandomState>::from_iter(self.children.values());
+        let previously_local_confinement_points = other
+            .children
+            .iter()
+            .filter_map(|(name, entry_id)| {
+                if !self_entry_ids.contains(entry_id)
+                    && (other.local_confinement_points.contains(entry_id)
+                        || self.remote_confinement_points.contains(entry_id))
+                {
+                    Some((name.clone(), Some(*entry_id)))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        self.evolve_children_and_mark_updated(
+            previously_local_confinement_points,
+            prevent_sync_pattern,
+            timestamp,
+        )
+    }
+
+    fn filter_remote_entries(mut self, prevent_sync_pattern: &Regex) -> Self {
+        let remote_confinement_points: HashSet<_> = self
+            .children
+            .iter()
+            .filter_map(|(name, entry_id)| {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
+                    Some(*entry_id)
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        if remote_confinement_points.is_empty() {
+            return self;
+        }
+
+        self.remote_confinement_points = remote_confinement_points;
+        self.children
+            .retain(|_, entry_id| !self.remote_confinement_points.contains(entry_id));
+
+        self
+    }
+
+    fn restore_remote_confinement_points(mut self) -> Self {
+        if self.remote_confinement_points.is_empty() {
+            return self;
         }
 
         for (name, entry_id) in self.base.children.iter() {
             if self.remote_confinement_points.contains(entry_id) {
-                result.children.insert(name.clone(), *entry_id);
+                self.children.insert(name.clone(), *entry_id);
             }
         }
-        result.remote_confinement_points.clear();
-        result
+        self.remote_confinement_points.clear();
+        self
     }
 
-    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> WorkspaceManifest {
-        let mut processed_manifest = self._filter_local_confinement_points();
-        processed_manifest = processed_manifest._restore_remote_confinement_points();
+    pub fn apply_prevent_sync_pattern(
+        &self,
+        prevent_sync_pattern: &Regex,
+        timestamp: DateTime,
+    ) -> Self {
+        let result = self.clone();
+        result
+            // Filter local confinement points
+            .filter_local_confinement_points()
+            // Restore remote confinement points
+            .restore_remote_confinement_points()
+            // Filter remote confinement_points
+            .filter_remote_entries(prevent_sync_pattern)
+            // Restore local confinement points
+            .restore_local_confinement_points(self, prevent_sync_pattern, timestamp)
+    }
+
+    pub fn from_remote(remote: WorkspaceManifest, prevent_sync_pattern: &Regex) -> Self {
+        let updated = remote.updated;
+        let children = remote.children.clone();
+
+        Self {
+            base: remote,
+            need_sync: false,
+            updated,
+            children,
+            local_confinement_points: HashSet::new(),
+            remote_confinement_points: HashSet::new(),
+            speculative: false,
+        }
+        .filter_remote_entries(prevent_sync_pattern)
+    }
+
+    pub fn from_remote_with_local_context(
+        remote: WorkspaceManifest,
+        prevent_sync_pattern: &Regex,
+        local_manifest: &Self,
+        timestamp: DateTime,
+    ) -> Self {
+        Self::from_remote(remote, prevent_sync_pattern).restore_local_confinement_points(
+            local_manifest,
+            prevent_sync_pattern,
+            timestamp,
+        )
+    }
+
+    pub fn to_remote(self, author: DeviceID, timestamp: DateTime) -> WorkspaceManifest {
+        let result = self
+            .filter_local_confinement_points()
+            .restore_remote_confinement_points();
 
         WorkspaceManifest {
             author,
             timestamp,
-            id: self.base.id,
-            version: self.base.version + 1,
-            created: self.base.created,
-            updated: self.updated,
-            children: processed_manifest.children,
+            id: result.base.id,
+            version: result.base.version + 1,
+            created: result.base.created,
+            updated: result.updated,
+            children: result.children,
         }
     }
 
     pub fn match_remote(&self, remote_manifest: &WorkspaceManifest) -> bool {
-        let mut reference =
-            self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
+        let mut reference = self
+            .clone()
+            .to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
         reference.version = remote_manifest.version;
         reference == *remote_manifest
     }
@@ -628,6 +1039,31 @@ impl From<LocalUserManifest> for LocalUserManifestData {
 }
 
 impl LocalUserManifest {
+    pub fn new_placeholder(
+        author: DeviceID,
+        timestamp: DateTime,
+        id: Option<EntryID>,
+        speculative: bool,
+    ) -> Self {
+        Self {
+            base: parsec_api_types::UserManifest {
+                author,
+                timestamp,
+                id: id.unwrap_or_default(),
+                version: 0,
+                created: timestamp,
+                updated: timestamp,
+                last_processed_message: 0,
+                workspaces: vec![],
+            },
+            need_sync: true,
+            updated: timestamp,
+            last_processed_message: 0,
+            workspaces: vec![],
+            speculative,
+        }
+    }
+
     pub fn evolve_workspaces(&self, workspace: WorkspaceEntry) -> Self {
         let mut out = self.clone();
         let mut workspaces = HashMap::<_, _, RandomState>::from_iter(

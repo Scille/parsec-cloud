@@ -8,7 +8,6 @@ mod crypto;
 mod ids;
 mod invite;
 mod local_manifest;
-#[allow(clippy::too_many_arguments)]
 mod manifest;
 
 /// A Python module implemented in Rust. The name of this function must match
