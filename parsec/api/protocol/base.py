@@ -108,8 +108,14 @@ class CmdSerializer:
             f"rep_schema={self._rep_serializer})"
         )
 
-    def __init__(self, req_schema_cls: Type[BaseSchema], rep_schema_cls: Type[BaseSchema]):
+    def __init__(
+        self,
+        req_schema_cls: Type[BaseSchema],
+        rep_schema_cls: Type[BaseSchema],
+        extra_rep_schema: Dict[str, Type[BaseSchema]] = {},
+    ):
         self.rep_noerror_schema = rep_schema_cls()
+        self.extra_rep_schema = extra_rep_schema
 
         class RepWithErrorSchema(OneOfSchemaLegacy):
             type_field = "status"
@@ -119,6 +125,7 @@ class CmdSerializer:
                 "require_greater_timestamp": RequireGreaterTimestampRepSchema,
                 "bad_timestamp": TimestampOutOfBallparkRepSchema,
             }
+            type_schemas.update(extra_rep_schema)
 
             def get_obj_type(self, obj: Dict[str, object]) -> str:
                 try:

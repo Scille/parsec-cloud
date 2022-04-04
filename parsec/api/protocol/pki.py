@@ -35,8 +35,15 @@ class PkiEnrollmentSubmitRepSchema(BaseRepSchema):
     submitted_on = fields.DateTime(required=True)
 
 
+class PkiEnrollmentErrorSubmitRepSchema(BaseRepSchema):
+    status = fields.String(required=True)
+    submitted_on = fields.DateTime(required=True)
+
+
 pki_enrollment_submit_serializer = CmdSerializer(
-    PkiEnrollmentSubmitReqSchema, PkiEnrollmentSubmitRepSchema
+    PkiEnrollmentSubmitReqSchema,
+    PkiEnrollmentSubmitRepSchema,
+    extra_rep_schema={"already_submitted": PkiEnrollmentErrorSubmitRepSchema},
 )
 
 
