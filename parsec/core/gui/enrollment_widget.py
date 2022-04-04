@@ -47,8 +47,10 @@ class AcceptCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.line_edit_device.set_validator(validators.DeviceLabelValidator())
         self.combo_profile.currentIndexChanged.connect(self.check_infos)
 
-        self.line_edit_user_full_name.setText(pending.submitter_x509_certif.subject_common_name)
-        self.line_edit_user_email.setText(pending.submitter_x509_certif.subject_email_address)
+        self.line_edit_user_full_name.setText(
+            pending.submitter_x509_certificate.subject_common_name
+        )
+        self.line_edit_user_email.setText(pending.submitter_x509_certificate.subject_email_address)
         self.line_edit_device.setText(pending.submit_payload.requested_device_label.str)
 
         self.combo_profile.addItem(translate("TEXT_SELECT_USER_PROFILE"), None)
@@ -163,9 +165,9 @@ class EnrollmentButton(QWidget, Ui_EnrollmentButton):
             self.widget_cert_infos.setVisible(True)
             self.widget_cert_error.setVisible(False)
             self.button_accept.setVisible(True)
-            self.label_name.setText(self.pending.submitter_x509_certif.subject_common_name)
-            self.label_email.setText(self.pending.submitter_x509_certif.subject_email_address)
-            self.label_issuer.setText(self.pending.submitter_x509_certif.issuer_common_name)
+            self.label_name.setText(self.pending.submitter_x509_certificate.subject_common_name)
+            self.label_email.setText(self.pending.submitter_x509_certificate.subject_email_address)
+            self.label_issuer.setText(self.pending.submitter_x509_certificate.issuer_common_name)
             self.label_cert_validity.setStyleSheet("#label_cert_validity { color: #8BC34A; }")
             self.label_cert_validity.setText(
                 "✔ " + translate("TEXT_ENROLLMENT_CERTIFICATE_IS_VALID")
@@ -192,7 +194,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
     def _on_get_enrollment_addr_clicked(self):
         ba = BackendPkiEnrollmentAddr.build(
             self.core.device.organization_addr.get_backend_addr(),
-            self.core.device.organization_addr.organization_id
+            self.core.device.organization_addr.organization_id,
         )
         desktop.copy_to_clipboard(ba.to_url())
         SnackbarManager.inform(translate("TEXT_ENROLLMENT_ADDR_COPIED_TO_CLIPBOARD"))
@@ -207,8 +209,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         except ValueError:
             pass
 
-    def _on_updated(self):
-        print("UPDATED")
+    def _on_updated(self, _):
         self.reset()
 
     def reset(self):
