@@ -190,6 +190,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         self.label_empty_list.hide()
         self.event_bus = event_bus
         self.button_get_enrollment_addr.clicked.connect(self._on_get_enrollment_addr_clicked)
+        self.current_job = None
 
     def _on_get_enrollment_addr_clicked(self):
         ba = BackendPkiEnrollmentAddr.build(
@@ -213,7 +214,9 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         self.reset()
 
     def reset(self):
-        self.jobs_ctx.submit_job(None, None, self.list_pending_enrollments)
+        if self.current_job is not None and not self.current_job.is_finished():
+            return
+        self.current_job = self.jobs_ctx.submit_job(None, None, self.list_pending_enrollments)
 
     def clear_layout(self):
         while self.main_layout.count() != 0:
