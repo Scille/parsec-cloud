@@ -25,7 +25,7 @@ from parsec.backend.pki import (
     PkiEnrollmentNotFoundError,
 )
 from parsec.backend.postgresql import PGHandler
-from parsec.backend.postgresql.utils import Q, q_organization_internal_id
+from parsec.backend.postgresql.utils import Q, q_organization_internal_id, q_device_internal_id
 
 
 _q_insert_certificate = Q(
@@ -189,7 +189,9 @@ _q_accept_pki_enrollment = Q(
         info_accepted.accepted_on=$accepted_on,
         info_accepted.accepter_der_x509_certificate=$accepter_der_x509_certificate,
         info_accepted.accept_payload_signature=$accept_payload_signature,
-        info_accepted.accept_payload=$accept_payload
+        info_accepted.accept_payload=$accept_payload,
+        accepter={q_device_internal_id(organization_id="$organization_id", device_id="$accepter")},
+        accepted={q_device_internal_id(organization_id="$organization_id", device_id="$accepted")}
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
         AND enrollment_id=$enrollment_id
@@ -403,7 +405,6 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     organization_id=organization_id.str, enrollment_id=enrollment_id
                 )
             )
-            print(row)
             if not row:
                 raise PkiEnrollmentNotFoundError()
             if row["enrollment_state"] != PkiEnrollmentStatus.SUBMITTED.value:
@@ -420,6 +421,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             except UserActiveUsersLimitReached as exc:
                 raise PkiEnrollmentActiveUsersLimitReached from exc
 
+            assert user.user_certifier is not None
             await conn.execute(
                 *_q_accept_pki_enrollment(
                     enrollment_state=PkiEnrollmentStatus.ACCEPTED.value,
@@ -429,6 +431,8 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     accepter_der_x509_certificate=accepter_der_x509_certificate,
                     accept_payload_signature=accept_payload_signature,
                     accept_payload=accept_payload,
+                    accepter=user.user_certifier.str,
+                    accepted=first_device.device_id.str,
                 )
             )
 
