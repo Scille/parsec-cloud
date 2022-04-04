@@ -42,7 +42,7 @@ CREATE TABLE pki_enrollment (
     accepter INTEGER REFERENCES device (_id),
     accepted INTEGER REFERENCES device (_id),
 
-    enrollment_state enrollment_state NOT NULL,
+    enrollment_state enrollment_state NOT NULL DEFAULT 'SUBMITTED',
     info_accepted pki_enrollment_info_accepted,
     info_rejected pki_enrollment_info_rejected,
     info_cancelled pki_enrollment_info_cancelled,
