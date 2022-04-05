@@ -31,7 +31,6 @@ __all__ = [
     "PGRealmComponent",
     "PGVlobComponent",
     "PGBlockComponent",
-    "PGCertificateComponent",
     "PGBlockStoreComponent",
     "PGPkiEnrollmentComponent",
     "components_factory",
