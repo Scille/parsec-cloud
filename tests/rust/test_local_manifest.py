@@ -372,8 +372,8 @@ def test_local_folder_manifest():
         "need_sync": False,
         "updated": pendulum.now(),
         "children": {EntryName("wksp1"): EntryID.new()},
-        "local_confinement_points": {EntryID.new()},
-        "remote_confinement_points": {EntryID.new()},
+        "local_confinement_points": frozenset({EntryID.new()}),
+        "remote_confinement_points": frozenset({EntryID.new()}),
     }
 
     py_lfm = py_lfm.evolve(**kwargs)
@@ -434,26 +434,6 @@ def test_local_folder_manifest():
     rs_lfm = rs_lfm.evolve_children_and_mark_updated(
         data={EntryName("file1.txt"): ei}, prevent_sync_pattern=re.compile(r".+"), timestamp=ts
     )
-    _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
-
-    py_lfm = py_lfm._filter_local_confinement_points()
-    rs_lfm = rs_lfm._filter_local_confinement_points()
-    _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
-
-    py_lfm = py_lfm._restore_local_confinement_points(
-        other=py_lfm2, prevent_sync_pattern=re.compile(r".+"), timestamp=ts
-    )
-    rs_lfm = rs_lfm._restore_local_confinement_points(
-        other=rs_lfm2, prevent_sync_pattern=re.compile(r".+"), timestamp=ts
-    )
-    _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
-
-    py_lfm = py_lfm._filter_remote_entries(prevent_sync_pattern=re.compile(".+"))
-    rs_lfm = rs_lfm._filter_remote_entries(prevent_sync_pattern=re.compile(".+"))
-    _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
-
-    py_lfm = py_lfm._restore_remote_confinement_points()
-    rs_lfm = rs_lfm._restore_remote_confinement_points()
     _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
 
     py_lfm = py_lfm.apply_prevent_sync_pattern(re.compile(".+"), timestamp=ts)
@@ -551,8 +531,8 @@ def test_local_workspace_manifest():
         "need_sync": False,
         "updated": pendulum.now(),
         "children": {EntryName("wksp1"): EntryID.new()},
-        "local_confinement_points": {EntryID.new()},
-        "remote_confinement_points": {EntryID.new()},
+        "local_confinement_points": frozenset({EntryID.new()}),
+        "remote_confinement_points": frozenset({EntryID.new()}),
         "speculative": False,
     }
 

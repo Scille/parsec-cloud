@@ -81,7 +81,8 @@ pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyRe
 
 pub fn py_to_rs_regex(regex: &PyAny) -> PyResult<Regex> {
     let regex = regex
-        .getattr("pattern")?
+        .getattr("pattern")
+        .unwrap_or(regex)
         .extract::<String>()?
         .replace("\\Z", "\\z")
         .replace("\\ ", "\x20");
