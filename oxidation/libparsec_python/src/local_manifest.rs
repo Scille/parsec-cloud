@@ -124,6 +124,7 @@ impl Chunk {
     fn evolve_as_block(&self, data: Vec<u8>) -> PyResult<Self> {
         Ok(Self(
             self.0
+                .clone()
                 .evolve_as_block(&data)
                 .map_err(PyValueError::new_err)?,
         ))
@@ -137,12 +138,13 @@ impl Chunk {
         Ok(self.0.is_pseudo_block())
     }
 
-    fn get_block_access(&self) -> PyResult<Option<BlockAccess>> {
-        Ok(self
-            .0
-            .get_block_access()
-            .map_err(PyValueError::new_err)?
-            .map(BlockAccess))
+    fn get_block_access(&self) -> PyResult<BlockAccess> {
+        Ok(BlockAccess(
+            self.0
+                .get_block_access()
+                .map_err(PyValueError::new_err)?
+                .clone(),
+        ))
     }
 
     #[classmethod]
@@ -376,11 +378,9 @@ impl LocalFileManifest {
         let blocksize =
             parsec_api_types::Blocksize::try_from(blocksize).map_err(PyValueError::new_err)?;
 
-        Ok(Self(
-            parsec_client_types::LocalFileManifest::new_placeholder(
-                author.0, parent.0, timestamp, blocksize,
-            ),
-        ))
+        Ok(Self(parsec_client_types::LocalFileManifest::new(
+            author.0, parent.0, timestamp, blocksize,
+        )))
     }
 
     #[args(data = "**")]
@@ -654,11 +654,9 @@ impl LocalFolderManifest {
         timestamp: &PyAny,
     ) -> PyResult<Self> {
         let timestamp = py_to_rs_datetime(timestamp)?;
-        Ok(Self(
-            parsec_client_types::LocalFolderManifest::new_placeholder(
-                author.0, parent.0, timestamp,
-            ),
-        ))
+        Ok(Self(parsec_client_types::LocalFolderManifest::new(
+            author.0, parent.0, timestamp,
+        )))
     }
 
     #[args(data = "**")]
@@ -711,9 +709,7 @@ impl LocalFolderManifest {
 
     fn to_remote(&self, author: DeviceID, timestamp: &PyAny) -> PyResult<FolderManifest> {
         let timestamp = py_to_rs_datetime(timestamp)?;
-        Ok(FolderManifest(
-            self.0.clone().to_remote(author.0, timestamp),
-        ))
+        Ok(FolderManifest(self.0.to_remote(author.0, timestamp)))
     }
 
     #[getter]
@@ -1022,14 +1018,12 @@ impl LocalWorkspaceManifest {
         speculative: bool,
     ) -> PyResult<Self> {
         let timestamp = py_to_rs_datetime(timestamp)?;
-        Ok(Self(
-            parsec_client_types::LocalWorkspaceManifest::new_placeholder(
-                author.0,
-                timestamp,
-                id.map(|id| id.0),
-                speculative,
-            ),
-        ))
+        Ok(Self(parsec_client_types::LocalWorkspaceManifest::new(
+            author.0,
+            timestamp,
+            id.map(|id| id.0),
+            speculative,
+        )))
     }
 
     #[args(data = "**")]
@@ -1084,9 +1078,7 @@ impl LocalWorkspaceManifest {
 
     fn to_remote(&self, author: DeviceID, timestamp: &PyAny) -> PyResult<WorkspaceManifest> {
         let timestamp = py_to_rs_datetime(timestamp)?;
-        Ok(WorkspaceManifest(
-            self.0.clone().to_remote(author.0, timestamp),
-        ))
+        Ok(WorkspaceManifest(self.0.to_remote(author.0, timestamp)))
     }
 
     #[getter]
@@ -1353,7 +1345,7 @@ impl LocalUserManifest {
     }
 
     fn evolve_workspaces(&self, workspace: WorkspaceEntry) -> PyResult<Self> {
-        Ok(Self(self.0.evolve_workspaces(workspace.0)))
+        Ok(Self(self.0.clone().evolve_workspaces(workspace.0)))
     }
 
     fn dump_and_encrypt<'p>(&self, py: Python<'p>, key: &SecretKey) -> PyResult<&'p PyBytes> {
@@ -1378,14 +1370,12 @@ impl LocalUserManifest {
         speculative: bool,
     ) -> PyResult<Self> {
         let timestamp = py_to_rs_datetime(timestamp)?;
-        Ok(Self(
-            parsec_client_types::LocalUserManifest::new_placeholder(
-                author.0,
-                timestamp,
-                id.map(|id| id.0),
-                speculative,
-            ),
-        ))
+        Ok(Self(parsec_client_types::LocalUserManifest::new(
+            author.0,
+            timestamp,
+            id.map(|id| id.0),
+            speculative,
+        )))
     }
 
     fn get_workspace_entry(&self, workspace_id: EntryID) -> PyResult<Option<WorkspaceEntry>> {

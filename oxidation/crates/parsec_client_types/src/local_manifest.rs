@@ -8,7 +8,7 @@ use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
-use parsec_api_crypto::SecretKey;
+use parsec_api_crypto::{HashDigest, SecretKey};
 use parsec_api_types::*;
 
 macro_rules! impl_local_manifest_dump_load {
@@ -73,7 +73,7 @@ impl PartialOrd<u64> for Chunk {
 impl Chunk {
     pub fn new(start: u64, stop: NonZeroU64) -> Self {
         Self {
-            id: parsec_api_types::ChunkID::default(),
+            id: ChunkID::default(),
             start,
             stop,
             raw_offset: start,
@@ -83,10 +83,9 @@ impl Chunk {
     }
     pub fn from_block_access(block_access: BlockAccess) -> Result<Self, &'static str> {
         let raw_size = NonZeroU64::try_from(block_access.size).map_err(|_| "invalid raw size")?;
-        let stop = NonZeroU64::try_from(block_access.offset + block_access.size)
-            .map_err(|_| "invalid stop")?;
+        let stop = NonZeroU64::try_from(block_access.offset + block_access.size).unwrap();
         Ok(Self {
-            id: parsec_api_types::ChunkID::from(*block_access.id),
+            id: ChunkID::from(*block_access.id),
             raw_offset: block_access.offset,
             raw_size,
             start: block_access.offset,
@@ -95,28 +94,27 @@ impl Chunk {
         })
     }
 
-    pub fn evolve_as_block(&self, data: &[u8]) -> Result<Self, &'static str> {
-        let mut result = self.clone();
+    pub fn evolve_as_block(mut self, data: &[u8]) -> Result<Self, &'static str> {
         // No-op
-        if result.is_block() {
-            return Ok(result);
+        if self.is_block() {
+            return Ok(self);
         }
 
         // Check alignement
-        if result.raw_offset != result.start {
+        if self.raw_offset != self.start {
             return Err("This chunk is not aligned");
         }
 
         // Craft access
-        result.access = Some(parsec_api_types::BlockAccess {
-            id: parsec_api_types::BlockID::from(*result.id),
-            key: parsec_api_crypto::SecretKey::generate(),
-            offset: result.start,
-            size: u64::from(result.stop) - result.start,
-            digest: parsec_api_crypto::HashDigest::from_data(data),
+        self.access = Some(BlockAccess {
+            id: BlockID::from(*self.id),
+            key: SecretKey::generate(),
+            offset: self.start,
+            size: u64::from(self.stop) - self.start,
+            digest: HashDigest::from_data(data),
         });
 
-        Ok(result)
+        Ok(self)
     }
 
     pub fn is_block(&self) -> bool {
@@ -145,11 +143,11 @@ impl Chunk {
         true
     }
 
-    pub fn get_block_access(&self) -> Result<Option<BlockAccess>, &'static str> {
+    pub fn get_block_access(&self) -> Result<&BlockAccess, &'static str> {
         if !self.is_block() {
             return Err("This chunk does not correspond to a block");
         }
-        Ok(self.access.clone())
+        Ok(self.access.as_ref().unwrap())
     }
 }
 
@@ -210,17 +208,17 @@ impl From<LocalFileManifest> for LocalFileManifestData {
 impl_local_manifest_dump_load!(LocalFileManifest);
 
 impl LocalFileManifest {
-    pub fn new_placeholder(
+    pub fn new(
         author: DeviceID,
         parent: EntryID,
         timestamp: DateTime,
         blocksize: Blocksize,
     ) -> Self {
         Self {
-            base: parsec_api_types::FileManifest {
+            base: FileManifest {
                 author,
                 timestamp,
-                id: parsec_api_types::EntryID::default(),
+                id: EntryID::default(),
                 parent,
                 version: 0,
                 created: timestamp,
@@ -301,7 +299,7 @@ impl LocalFileManifest {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|_| "Need reshape")?
             .into_iter()
-            .flatten()
+            .cloned()
             .collect();
 
         Ok(FileManifest {
@@ -403,12 +401,12 @@ impl From<LocalFolderManifest> for LocalFolderManifestData {
 impl_local_manifest_dump_load!(LocalFolderManifest);
 
 impl LocalFolderManifest {
-    pub fn new_placeholder(author: DeviceID, parent: EntryID, timestamp: DateTime) -> Self {
+    pub fn new(author: DeviceID, parent: EntryID, timestamp: DateTime) -> Self {
         Self {
-            base: parsec_api_types::FolderManifest {
+            base: FolderManifest {
                 author,
                 timestamp,
-                id: parsec_api_types::EntryID::default(),
+                id: EntryID::default(),
                 parent,
                 version: 0,
                 created: timestamp,
@@ -608,8 +606,9 @@ impl LocalFolderManifest {
         )
     }
 
-    pub fn to_remote(self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
+    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
         let result = self
+            .clone()
             // Filter confined entries
             .filter_local_confinement_points()
             // Restore filtered entries
@@ -628,9 +627,8 @@ impl LocalFolderManifest {
     }
 
     pub fn match_remote(&self, remote_manifest: &FolderManifest) -> bool {
-        let mut reference = self
-            .clone()
-            .to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
+        let mut reference =
+            self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
         reference.version = remote_manifest.version;
         reference == *remote_manifest
     }
@@ -732,14 +730,14 @@ impl From<LocalWorkspaceManifest> for LocalWorkspaceManifestData {
 }
 
 impl LocalWorkspaceManifest {
-    pub fn new_placeholder(
+    pub fn new(
         author: DeviceID,
         timestamp: DateTime,
         id: Option<EntryID>,
         speculative: bool,
     ) -> Self {
         Self {
-            base: parsec_api_types::WorkspaceManifest {
+            base: WorkspaceManifest {
                 author,
                 timestamp,
                 id: id.unwrap_or_default(),
@@ -943,11 +941,14 @@ impl LocalWorkspaceManifest {
         )
     }
 
-    pub fn to_remote(self, author: DeviceID, timestamp: DateTime) -> WorkspaceManifest {
+    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> WorkspaceManifest {
         let result = self
+            .clone()
+            // Filter confined entries
             .filter_local_confinement_points()
+            // Restore filtered entries
             .restore_remote_confinement_points();
-
+        // Create remote manifest
         WorkspaceManifest {
             author,
             timestamp,
@@ -960,9 +961,8 @@ impl LocalWorkspaceManifest {
     }
 
     pub fn match_remote(&self, remote_manifest: &WorkspaceManifest) -> bool {
-        let mut reference = self
-            .clone()
-            .to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
+        let mut reference =
+            self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
         reference.version = remote_manifest.version;
         reference == *remote_manifest
     }
@@ -1039,14 +1039,14 @@ impl From<LocalUserManifest> for LocalUserManifestData {
 }
 
 impl LocalUserManifest {
-    pub fn new_placeholder(
+    pub fn new(
         author: DeviceID,
         timestamp: DateTime,
         id: Option<EntryID>,
         speculative: bool,
     ) -> Self {
         Self {
-            base: parsec_api_types::UserManifest {
+            base: UserManifest {
                 author,
                 timestamp,
                 id: id.unwrap_or_default(),
@@ -1064,14 +1064,9 @@ impl LocalUserManifest {
         }
     }
 
-    pub fn evolve_workspaces(&self, workspace: WorkspaceEntry) -> Self {
-        let mut out = self.clone();
-        let mut workspaces = HashMap::<_, _, RandomState>::from_iter(
-            self.workspaces.clone().into_iter().map(|w| (w.id, w)),
-        );
-        workspaces.insert(workspace.id, workspace);
-        out.workspaces = workspaces.into_values().collect();
-        out
+    pub fn evolve_workspaces(mut self, workspace: WorkspaceEntry) -> Self {
+        self.workspaces.push(workspace);
+        self
     }
 
     pub fn get_workspace_entry(&self, workspace_id: EntryID) -> Option<&WorkspaceEntry> {
