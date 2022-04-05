@@ -32,6 +32,11 @@ async def test_expired_notification_logging(
     lw = gui.test_get_login_widget()
     tabw = gui.test_get_tab()
 
+    def _devices_listed():
+        assert lw.widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
+
     def _password_widget_shown():
         assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
 
@@ -69,6 +74,11 @@ async def test_expired_notification_from_connection(
 
     # Force logging on an expired organization
     with freeze_time("1989-12-17"):
+
+        def _devices_listed():
+            assert lw.widget.layout().count() > 0
+
+        await aqtbot.wait_until(_devices_listed)
 
         def _password_widget_shown():
             assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)

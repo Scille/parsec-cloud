@@ -204,6 +204,11 @@ async def test_import_recovery_device(
 
         lw = gui.test_get_login_widget()
 
+        def _devices_listed():
+            assert lw.widget.layout().count() > 0
+
+        await aqtbot.wait_until(_devices_listed)
+
         accounts_w = lw.widget.layout().itemAt(0).widget()
         assert accounts_w.accounts_widget.layout().count() == 3
 
