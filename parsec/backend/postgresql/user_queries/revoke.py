@@ -15,6 +15,7 @@ from parsec.backend.postgresql.utils import (
     q_device_internal_id,
     q_user,
 )
+from parsec.backend.postgresql.user_queries.create import q_take_user_device_write_lock
 
 
 _q_revoke_user = Q(
@@ -45,6 +46,7 @@ async def query_revoke_user(
     revoked_user_certifier: DeviceID,
     revoked_on: Optional[pendulum.DateTime] = None,
 ) -> None:
+    await q_take_user_device_write_lock(conn, organization_id)
     result = await conn.execute(
         *_q_revoke_user(
             organization_id=organization_id.str,

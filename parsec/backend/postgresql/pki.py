@@ -30,7 +30,10 @@ from parsec.backend.pki import (
 )
 from parsec.backend.postgresql import PGHandler
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id, q_device_internal_id
-from parsec.backend.postgresql.user_queries.create import q_create_user
+from parsec.backend.postgresql.user_queries.create import (
+    q_create_user,
+    q_take_user_device_write_lock,
+)
 
 _q_get_pki_enrollment_from_certificate_sha1 = Q(
     f"""
@@ -220,6 +223,10 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         """
         submitter_der_x509_certificate_sha1 = hashlib.sha1(submitter_der_x509_certificate).digest()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
+            # Hold the user/device write lock before any check in the enrollment
+            # table to ensure it is going to be done without concurrency issues
+            await q_take_user_device_write_lock(conn, organization_id)
+
             # Assert enrollment_id not used
             row = await conn.fetchrow(
                 *_q_get_pki_enrollment_for_update(
@@ -358,6 +365,10 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         """
 
         async with self.dbh.pool.acquire() as conn, conn.transaction():
+            # Enrollment submit depend on the data we are going to modify,
+            # hence by transitivity we also should hold the user/device write lock
+            await q_take_user_device_write_lock(conn, organization_id)
+
             row = await conn.fetchrow(
                 *_q_get_pki_enrollment_for_update(
                     organization_id=organization_id.str, enrollment_id=enrollment_id
@@ -399,6 +410,10 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             PkiEnrollmentActiveUsersLimitReached
         """
         async with self.dbh.pool.acquire() as conn, conn.transaction():
+            # Enrollment submit depend on the data we are going to modify,
+            # hence by transitivity we also should hold the user/device write lock
+            await q_take_user_device_write_lock(conn, organization_id)
+
             row = await conn.fetchrow(
                 *_q_get_pki_enrollment_for_update(
                     organization_id=organization_id.str, enrollment_id=enrollment_id
@@ -411,7 +426,11 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
             try:
                 await q_create_user(
-                    conn=conn, organization_id=organization_id, user=user, first_device=first_device
+                    conn=conn,
+                    organization_id=organization_id,
+                    user=user,
+                    first_device=first_device,
+                    lock_already_held=True,
                 )
 
             except UserAlreadyExistsError as exc:
