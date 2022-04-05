@@ -38,7 +38,6 @@ class MemoryUserComponent(BaseUserComponent):
 
     def register_components(self, **other_components) -> None:
         self._organization_component = other_components["organization"]
-        self._pki_component = other_components["pki"]
 
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device
