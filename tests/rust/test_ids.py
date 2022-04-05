@@ -173,6 +173,8 @@ def test_device_label():
         DeviceLabel("a" * 256)
     assert str(excinfo.value) == "Invalid DeviceLabel"
 
+    assert DeviceLabel(DeviceLabel("foo")) == DeviceLabel("foo")
+
 
 @pytest.mark.rust
 def test_entry_id():

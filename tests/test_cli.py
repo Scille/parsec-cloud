@@ -678,16 +678,7 @@ def no_parsec_extension():
         sys.modules["parsec_ext"] = saved_parsec_ext
 
 
-def skip_if_oxidation():
-    import parsec.api.protocol.types
-
-    if hasattr(parsec.api.protocol.types, "_RsDeviceLabel"):
-        pytest.skip("TODO: oxidation types doesn't support `DeviceLable(DeviceLabel('foo'))` yet")
-
-
 def test_pki_enrollment_not_available(tmp_path, alice, no_parsec_extension):
-    skip_if_oxidation()  # TODO
-
     # First need to have alice device on the disk
     config_dir = tmp_path / "config"
     alice_password = "S3cr3t"
@@ -896,8 +887,6 @@ async def cli_with_running_backend_testbed(backend, *devices):
 @pytest.mark.trio
 @pytest.mark.real_tcp
 async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, alice):
-    skip_if_oxidation()  # TODO
-
     async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
         # First, save the local device needed for pki_enrollment_review_pendings command
         config_dir = tmp_path / "config"
