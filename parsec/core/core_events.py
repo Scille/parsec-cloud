@@ -37,4 +37,4 @@ class CoreEvent(Enum):
     SHARING_UPDATED = "sharing.updated"
     USERFS_UPDATED = "userfs.updated"
     # Pki enrollment
-    PKI_ENROLLMENT_UPDATED = "pki_enrollment.updated"
+    PKI_ENROLLMENTS_UPDATED = "pki_enrollment.updated"

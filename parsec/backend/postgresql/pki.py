@@ -257,7 +257,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         )
                         await send_signal(
                             conn,
-                            BackendEvent.PKI_ENROLLMENT_UPDATED,
+                            BackendEvent.PKI_ENROLLMENTS_UPDATED,
                             organization_id=organization_id,
                         )
 
@@ -313,7 +313,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 )
             )
             await send_signal(
-                conn, BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id
+                conn, BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
             )
 
     async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
@@ -388,7 +388,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 )
             )
             await send_signal(
-                conn, BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id
+                conn, BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
             )
 
     async def accept(
@@ -454,5 +454,5 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 )
             )
             await send_signal(
-                conn, BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id
+                conn, BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
             )

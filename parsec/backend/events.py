@@ -173,8 +173,8 @@ class EventsComponent:
             )
 
             client_ctx.event_bus_ctx.connect(
-                BackendEvent.PKI_ENROLLMENT_UPDATED,
-                partial(_on_pki_enrollment_updated, APIEvent.PKI_ENROLLMENT_UPDATED),
+                BackendEvent.PKI_ENROLLMENTS_UPDATED,
+                partial(_on_pki_enrollment_updated, APIEvent.PKI_ENROLLMENTS_UPDATED),
             )
 
             # Final event to keep up to date the list of realm we should listen on

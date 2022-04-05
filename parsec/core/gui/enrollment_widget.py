@@ -201,12 +201,12 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         SnackbarManager.inform(translate("TEXT_ENROLLMENT_ADDR_COPIED_TO_CLIPBOARD"))
 
     def showEvent(self, _):
-        self.event_bus.connect(CoreEvent.PKI_ENROLLMENT_UPDATED, self._on_updated)
+        self.event_bus.connect(CoreEvent.PKI_ENROLLMENTS_UPDATED, self._on_updated)
         self.reset()
 
     def hideEvent(self, _):
         try:
-            self.event_bus.disconnect(CoreEvent.PKI_ENROLLMENT_UPDATED, self._on_updated)
+            self.event_bus.disconnect(CoreEvent.PKI_ENROLLMENTS_UPDATED, self._on_updated)
         except ValueError:
             pass
 

@@ -38,7 +38,7 @@ class BackendEvent(Enum):
     REALM_VLOBS_UPDATED = "realm.vlobs_updated"
     REALM_ROLES_UPDATED = "realm.roles_updated"
     # Pki enrollment
-    PKI_ENROLLMENT_UPDATED = "pki_enrollment.updated"
+    PKI_ENROLLMENTS_UPDATED = "pki_enrollment.updated"
 
 
 class DeviceCreatedSchema(BaseSchema):
@@ -166,7 +166,7 @@ class BackendEventSchema(OneOfSchema):
         BackendEvent.REALM_MAINTENANCE_STARTED: RealmMaintenanceStartedSchema,
         BackendEvent.REALM_VLOBS_UPDATED: RealmVlobsUpdatedSchema,
         BackendEvent.REALM_ROLES_UPDATED: RealmRolesUpdatedSchema,
-        BackendEvent.PKI_ENROLLMENT_UPDATED: PkiEnrollmentUpdatedSchema,
+        BackendEvent.PKI_ENROLLMENTS_UPDATED: PkiEnrollmentUpdatedSchema,
     }
 
     def get_obj_type(self, obj):

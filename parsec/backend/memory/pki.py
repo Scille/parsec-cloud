@@ -80,7 +80,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                             cancelled_on=submitted_on,
                         )
                         await self._send_event(
-                            BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id
+                            BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
                         )
                     else:
                         # ...otherwise nothing we can do
@@ -118,7 +118,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 ),
             )
         )
-        await self._send_event(BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id)
+        await self._send_event(
+            BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
+        )
 
     async def info(self, organization_id: OrganizationID, enrollment_id: UUID) -> PkiEnrollmentInfo:
         for enrollment in reversed(self._enrollments[organization_id]):
@@ -154,7 +156,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         rejected_on=rejected_on,
                     )
                     await self._send_event(
-                        BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id
+                        BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
                     )
                     return
                 else:
@@ -206,7 +208,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 enrollment.accepted = first_device.device_id
 
                 await self._send_event(
-                    BackendEvent.PKI_ENROLLMENT_UPDATED, organization_id=organization_id
+                    BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
                 )
                 break
 

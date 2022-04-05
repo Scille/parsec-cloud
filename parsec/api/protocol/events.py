@@ -22,7 +22,7 @@ class APIEvent(Enum):
     REALM_MAINTENANCE_STARTED = "realm.maintenance_started"
     REALM_VLOBS_UPDATED = "realm.vlobs_updated"
     REALM_ROLES_UPDATED = "realm.roles_updated"
-    PKI_ENROLLMENT_UPDATED = "pki_enrollment.updated"
+    PKI_ENROLLMENTS_UPDATED = "pki_enrollment.updated"
 
 
 class EventsPingedRepSchema(BaseRepSchema):
@@ -68,7 +68,7 @@ class EventsInviteStatusChangedRepSchema(BaseRepSchema):
 
 
 class EventPkiEnrollmentUpdated(BaseRepSchema):
-    event = fields.EnumCheckedConstant(APIEvent.PKI_ENROLLMENT_UPDATED, required=True)
+    event = fields.EnumCheckedConstant(APIEvent.PKI_ENROLLMENTS_UPDATED, required=True)
 
 
 class EventsListenReqSchema(BaseReqSchema):
@@ -85,7 +85,7 @@ class EventsListenRepSchema(OneOfSchema):
         APIEvent.REALM_VLOBS_UPDATED: EventsRealmVlobsUpdatedRepSchema(),
         APIEvent.REALM_MAINTENANCE_STARTED: EventsRealmMaintenanceStartedRepSchema(),
         APIEvent.REALM_MAINTENANCE_FINISHED: EventsRealmMaintenanceFinishedRepSchema(),
-        APIEvent.PKI_ENROLLMENT_UPDATED: EventPkiEnrollmentUpdated(),
+        APIEvent.PKI_ENROLLMENTS_UPDATED: EventPkiEnrollmentUpdated(),
     }
 
     def get_obj_type(self, obj: Dict[str, object]) -> APIEvent:
