@@ -43,7 +43,7 @@ class PkiEnrollmentErrorSubmitRepSchema(BaseRepSchema):
 pki_enrollment_submit_serializer = CmdSerializer(
     PkiEnrollmentSubmitReqSchema,
     PkiEnrollmentSubmitRepSchema,
-    extra_rep_schema={"already_submitted": PkiEnrollmentErrorSubmitRepSchema},
+    extra_error_schemas={"already_submitted": PkiEnrollmentErrorSubmitRepSchema},
 )
 
 
