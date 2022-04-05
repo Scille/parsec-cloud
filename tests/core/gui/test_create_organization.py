@@ -391,11 +391,15 @@ async def test_create_organization_bootstrap_only_custom_server(
 
     await aqtbot.wait_until(_user_widget_ready)
 
-    aqtbot.key_clicks(
-        co_w.current_widget.line_edit_backend_addr, "parsec://example.com:9999?no_ssl=true "
-    )
-
     def _custom_bckend_addr_widget_is_valid():
+        aqtbot.key_clicks(
+            co_w.current_widget.line_edit_backend_addr, "parsec://example.com:9999?no_ssl=true "
+        )
+        assert co_w.current_widget.line_edit_backend_addr.is_input_valid()
+        assert co_w.button_validate.isEnabled()
+        aqtbot.key_clicks(
+            co_w.current_widget.line_edit_backend_addr, " parsec://example.com:9999?no_ssl=true"
+        )
         assert co_w.current_widget.line_edit_backend_addr.is_input_valid()
         assert co_w.button_validate.isEnabled()
 
