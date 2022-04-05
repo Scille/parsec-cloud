@@ -4,11 +4,8 @@ import pytest
 
 from PyQt5 import QtCore
 
-# from parsec.api.protocol import DeviceLabel
-# from parsec.core.pki import (
-#     PkiEnrollmentSubmitterInitialCtx,
-#     PkiEnrollementAccepterValidSubmittedCtx,
-# )
+from parsec.api.protocol import DeviceLabel
+from parsec.core.pki import PkiEnrollmentSubmitterInitialCtx
 from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 
 # from parsec.core.gui.parsec_application import ParsecApp
@@ -23,27 +20,29 @@ from parsec.core.local_device import save_device_with_password_in_config
 
 # from tests.fixtures import local_device_to_backend_user
 # from tests.test_cli import mocked_parsec_ext_smartcard
-from tests.test_cli import cli_with_running_backend_testbed
+from tests.test_cli import cli_with_running_backend_testbed, mocked_parsec_ext_smartcard
+
+# Fixtures
+(mocked_parsec_ext_smartcard,)
 
 
-# @pytest.mark.gui
-# @pytest.mark.trio
-# @pytest.mark.real_tcp
-# async def test_list_enrollments(
-#     aqtbot, mocked_parsec_ext_smartcard, alice, core_config, backend, event_bus_factory, job_scheduler, testing_main_window_cls
-# ):
-#     async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
-#         config_dir = core_config.config_dir
-#         alice_password = "S3cr3t"
-#         save_device_with_password_in_config(config_dir, alice, alice_password)
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_list_enrollments(
+    aqtbot, mocked_parsec_ext_smartcard, alice, core_config, logged_gui, running_backend
+):
+    core = logged_gui.test_get_core()
+    addr = core._backend_conn._cmds.addr
 
-#         pki_org_addr = BackendPkiEnrollmentAddr.build(alice.organization_addr.get_backend_addr(), alice.organization_addr.organization_id)
-#         context = await PkiEnrollmentSubmitterInitialCtx.new(pki_org_addr)
-#         context = await context.submit(
-#             config_dir=core_config.config_dir,
-#             requested_device_label=DeviceLabel("device"),
-#             force=True,
-#         )
+    pki_org_addr = BackendPkiEnrollmentAddr.build(addr.get_backend_addr(), addr.organization_id)
+    context = await PkiEnrollmentSubmitterInitialCtx.new(pki_org_addr)
+    context = await context.submit(
+        config_dir=core_config.config_dir, requested_device_label=DeviceLabel("device"), force=True
+    )
+
+    # TODO: running backend is now working, keep implementing
+
+
 #         event_bus = event_bus_factory()
 #         ParsecApp.connected_devices = set()
 

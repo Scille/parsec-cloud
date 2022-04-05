@@ -28,7 +28,7 @@ async def _http_request(url: str, method: str, data: Optional[bytes] = None) -> 
                 return rep.read()
 
         except URLError as exc:
-            raise TransportError(f"Bad response from backend {exc}") from exc
+            raise TransportError(f"Bad response from backend: {exc}") from exc
 
     return await trio.to_thread.run_sync(_do_req)
 
