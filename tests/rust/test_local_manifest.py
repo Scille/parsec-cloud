@@ -386,7 +386,7 @@ def test_local_folder_manifest():
     rs_enc = py_lfm.dump_and_encrypt(sk)
 
     # Decrypt rust encrypted with Python and vice versa
-    # _PyLocalFolderManifest.decrypt_and_load returns a LocalFOlderManifest, not a _PyFolderManifest
+    # _PyLocalFolderManifest.decrypt_and_load returns a LocalFolderManifest, not a _PyFolderManifest
     lfm1 = _PyLocalFolderManifest.decrypt_and_load(rs_enc, sk)
     lfm2 = LocalFolderManifest.decrypt_and_load(py_enc, sk)
     assert isinstance(lfm1, LocalFolderManifest)
