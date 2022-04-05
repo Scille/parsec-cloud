@@ -104,8 +104,8 @@ class AcceptCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.dialog.accept()
 
     @classmethod
-    def show_modal(cls, enrollment_info, parent, on_finished):
-        w = cls(enrollment_info)
+    def show_modal(cls, enrollment_info, parent, on_finished, user_profile_outsider_allowed):
+        w = cls(enrollment_info, user_profile_outsider_allowed)
         d = GreyedDialog(
             w, translate("TEXT_ENROLLMENT_ACCEPT_CHECK_INFO_TITLE"), parent=parent, width=800
         )
@@ -187,6 +187,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         self.setupUi(self)
         self.core = core
         self.jobs_ctx = jobs_ctx
+        self.organization_config = self.core.get_organization_config()
         self.label_empty_list.hide()
         self.event_bus = event_bus
         self.button_get_enrollment_addr.clicked.connect(self._on_get_enrollment_addr_clicked)
@@ -262,7 +263,12 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
                 )
 
         eb.set_buttons_enabled(False)
-        AcceptCheckInfoWidget.show_modal(eb.pending, self, on_finished=_on_finished)
+        AcceptCheckInfoWidget.show_modal(
+            eb.pending,
+            self,
+            on_finished=_on_finished,
+            user_profile_outsider_allowed=self.organization_config.user_profile_outsider_allowed,
+        )
 
     def _on_reject_clicked(self, rw):
         rw.set_buttons_enabled(False)
