@@ -71,9 +71,8 @@ def test_version():
     assert f"parsec, version {parsec_version}\n" in result.output
 
 
-def test_share_workspace(tmpdir, monkeypatch, alice, bob, cli_workspace_role):
-    # As usual Windows path require a big hack...
-    config_dir = tmpdir.strpath.replace("\\", "\\\\")
+def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
+    config_dir = tmp_path / "config"
     # Mocking
     factory_mock = AsyncMock()
     workspace_role, expected_workspace_role = cli_workspace_role
@@ -83,7 +82,7 @@ def test_share_workspace(tmpdir, monkeypatch, alice, bob, cli_workspace_role):
         yield factory_mock(*args, **kwargs)
 
     password = "S3cr3t"
-    save_device_with_password_in_config(Path(config_dir), bob, password)
+    save_device_with_password_in_config(config_dir, bob, password)
     alice_info = [
         UserInfo(
             user_id=alice.user_id,
@@ -120,7 +119,7 @@ def test_share_workspace(tmpdir, monkeypatch, alice, bob, cli_workspace_role):
 
     default_args = (
         f"core share_workspace --password {password} "
-        f"--device={bob.slughash} --config-dir={config_dir} "
+        f"--device={bob.slughash} --config-dir={config_dir.as_posix()} "
         f"--role={workspace_role} "
         f"--workspace-name=ws1 "
     )
@@ -308,13 +307,9 @@ def ssl_conf(request):
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Hard to test on Windows...")
 def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
-    # As usual Windows path require a big hack...
-    def escape_backslashes(path):
-        return str(path).replace("\\", "\\\\")
-
     config_dir = tmp_path / "config"
     config_dir.mkdir()
-    config_dir = escape_backslashes(config_dir)
+
     org = coolorg.organization_id
 
     alice_human_handle_label = "Alice"
@@ -359,7 +354,8 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         print("####### Bootstrap organization #######")
         with _running(
-            "core bootstrap_organization " f"{url} --config-dir={config_dir} --password={password}",
+            "core bootstrap_organization "
+            f"{url} --config-dir={config_dir.as_posix()} --password={password}",
             env=ssl_conf.client_env,
             wait_for="User fullname:",
         ) as p:
@@ -398,7 +394,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         print("####### Create user&device invitations #######")
         p = _run(
             "core invite_user "
-            f"--config-dir={config_dir} --device={alice1_slughash} "
+            f"--config-dir={config_dir.as_posix()} --device={alice1_slughash} "
             f"--password={password} bob@example.com",
             env=ssl_conf.client_env,
         )
@@ -407,7 +403,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         p = _run(
             "core invite_device "
-            f"--config-dir={config_dir} --device={alice1_slughash} "
+            f"--config-dir={config_dir.as_posix()} --device={alice1_slughash} "
             f"--password={password}",
             env=ssl_conf.client_env,
         )
@@ -418,7 +414,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         p = _run(
             "core invite_user "
-            f"--config-dir={config_dir} --device={alice1_slughash} "
+            f"--config-dir={config_dir.as_posix()} --device={alice1_slughash} "
             f"--password={password} zack@example.com",
             env=ssl_conf.client_env,
         )
@@ -427,7 +423,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         )
         p = _run(
             "core cancel_invitation "
-            f"--config-dir={config_dir} --device={alice1_slughash} "
+            f"--config-dir={config_dir.as_posix()} --device={alice1_slughash} "
             f"--password={password} {to_cancel_invitation_url}",
             env=ssl_conf.client_env,
         )
@@ -436,7 +432,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         p = _run(
             "core list_invitations "
-            f"--config-dir={config_dir} --device={alice1_slughash} "
+            f"--config-dir={config_dir.as_posix()} --device={alice1_slughash} "
             f"--password={password}",
             env=ssl_conf.client_env,
         )
@@ -447,12 +443,12 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         print("####### Claim user invitation #######")
         with _running(
             "core claim_invitation "
-            f"--config-dir={config_dir} --password={password} {user_invitation_url} ",
+            f"--config-dir={config_dir.as_posix()} --password={password} {user_invitation_url} ",
             env=ssl_conf.client_env,
         ) as p_claimer:
             with _running(
                 "core greet_invitation "
-                f"--config-dir={config_dir} --device={alice1_slughash} "
+                f"--config-dir={config_dir.as_posix()} --device={alice1_slughash} "
                 f"--password={password} {user_invitation_token}",
                 env=ssl_conf.client_env,
             ) as p_greeter:
@@ -511,7 +507,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
                 p_greeter.stdin.write(f"{bob_device_label}\n".encode())
                 p_greeter.stdin.flush()
 
-                stdout_greeter = p_greeter.wait_for("New user profile (0, 1, 2) [0]:")
+                stdout_greeter = p_greeter.wait_for("New user profile (0, 1, 2) [1]:")
                 p_greeter.stdin.write(b"1\n")
                 p_greeter.stdin.flush()
 
@@ -526,12 +522,12 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         print("####### Claim device invitation #######")
         with _running(
             "core claim_invitation "
-            f"--config-dir={config_dir} --password={password} {device_invitation_url} ",
+            f"--config-dir={config_dir.as_posix()} --password={password} {device_invitation_url} ",
             env=ssl_conf.client_env,
         ) as p_claimer:
             with _running(
                 "core greet_invitation "
-                f"--config-dir={config_dir} --device={alice1_slughash} "
+                f"--config-dir={config_dir.as_posix()} --device={alice1_slughash} "
                 f"--password={password} {device_invitation_url}",
                 env=ssl_conf.client_env,
             ) as p_greeter:
@@ -586,7 +582,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
                 p_claimer.wait()
 
         print("####### List users #######")
-        p = _run(f"core list_devices --config-dir={config_dir}", env=ssl_conf.client_env)
+        p = _run(f"core list_devices --config-dir={config_dir.as_posix()}", env=ssl_conf.client_env)
         stdout = p.stdout.decode()
         assert alice1_slughash[:3] in stdout
         assert (
@@ -607,12 +603,12 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         print("####### New users can communicate with backend #######")
         _run(
             "core create_workspace wksp1 "
-            f"--config-dir={config_dir} --device={bob1_slughash} --password={password}",
+            f"--config-dir={config_dir.as_posix()} --device={bob1_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
         _run(
             "core create_workspace wksp2 "
-            f"--config-dir={config_dir} --device={alice2_slughash} --password={password}",
+            f"--config-dir={config_dir.as_posix()} --device={alice2_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
 
@@ -620,8 +616,8 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         recovery_dir = tmp_path / "recovery"
         recovery_dir.mkdir()
         p = _run(
-            f"core export_recovery_device --output={escape_backslashes(recovery_dir)} "
-            f"--config-dir={config_dir} --device={alice1_slughash} --password={password}",
+            f"core export_recovery_device --output={recovery_dir.as_posix()} "
+            f"--config-dir={config_dir.as_posix()} --device={alice1_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
         stdout = p.stdout.decode()
@@ -632,9 +628,9 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         recovery_file = next(recovery_dir.glob("*.psrk"))
         # Do the import
         p = _run(
-            f"core import_recovery_device {escape_backslashes(recovery_file)} "
+            f"core import_recovery_device {recovery_file.as_posix()} "
             f"--passphrase={passphrase} --device-label={alice3_device_label} "
-            f"--config-dir={config_dir} --password={password}",
+            f"--config-dir={config_dir.as_posix()} --password={password}",
             env=ssl_conf.client_env,
         )
         stdout = p.stdout.decode()
@@ -644,7 +640,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         print("####### Recovered device can communicate with backend #######")
         _run(
             "core create_workspace wksp3 "
-            f"--config-dir={config_dir} --device={alice3_slughash} --password={password}",
+            f"--config-dir={config_dir.as_posix()} --device={alice3_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
 
@@ -691,9 +687,9 @@ def test_pki_enrollment_not_available(tmp_path, alice, no_parsec_extension):
     # Now Run the cli
     runner = CliRunner()
     for cmd in [
-        f"core pki_enrollment_submit --config-dir {config_dir} parsec://parsec.example.com/my_org?action=pki_enrollment",
-        f"core pki_enrollment_poll --config-dir {config_dir} ",
-        f"core pki_enrollment_review_pendings --config-dir {config_dir} --device {alice.slughash} --password {alice_password}",
+        f"core pki_enrollment_submit --config-dir={config_dir.as_posix()} parsec://parsec.example.com/my_org?action=pki_enrollment",
+        f"core pki_enrollment_poll --config-dir={config_dir.as_posix()}",
+        f"core pki_enrollment_review_pendings --config-dir={config_dir.as_posix()} --device {alice.slughash} --password {alice_password}",
     ]:
         result = runner.invoke(cli, cmd)
         assert result.exit_code == 1
@@ -853,8 +849,14 @@ async def cli_with_running_backend_testbed(backend, *devices):
     # trio loop. Hence sharing memory channel between trio loops is going to create
     # unexpected errors !
     async with trio.open_service_nursery() as nursery:
-        listeners = await nursery.start(trio.serve_tcp, backend.handle_client, 0)
-        _, port = listeners[0].socket.getsockname()
+        listeners = await nursery.start(
+            lambda task_status: trio.serve_tcp(
+                backend.handle_client, host="0.0.0.0", port=0, task_status=task_status
+            )
+        )
+        _, port, *_ = listeners[0].socket.getsockname()
+        # Given we specified host=0.0.0.0, we are sure the listener is for IPv4 and
+        # hence is accessible with 127.0.0.1
         backend_addr = BackendAddr("127.0.0.1", port, use_ssl=False)
 
         # Now the local device point to an invalid backend address, must fix this
@@ -900,7 +902,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
 
         async def run_review_pendings(extra_args: str = "", check_result: bool = True):
             result = await _cli_invoke_in_thread(
-                f"core pki_enrollment_review_pendings --config-dir {config_dir} --device {alice.slughash} --password {alice_password} {extra_args}"
+                f"core pki_enrollment_review_pendings --config-dir={config_dir.as_posix()} --device {alice.slughash} --password {alice_password} {extra_args}"
             )
             if not check_result:
                 return result
@@ -929,7 +931,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
 
         async def run_submit(extra_args: str = "", check_result: bool = True):
             result = await _cli_invoke_in_thread(
-                f"core pki_enrollment_submit --config-dir {config_dir} {addr} --device-label PC1 {extra_args}"
+                f"core pki_enrollment_submit --config-dir={config_dir.as_posix()} {addr} --device-label PC1 {extra_args}"
             )
             if not check_result:
                 return result
@@ -948,7 +950,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
 
         async def run_poll(extra_args: str = "", check_result: bool = True):
             result = await _cli_invoke_in_thread(
-                f"core pki_enrollment_poll --config-dir {config_dir} --password S3cr3t {extra_args}"
+                f"core pki_enrollment_poll --config-dir={config_dir.as_posix()} --password S3cr3t {extra_args}"
             )
             if not check_result:
                 return result
@@ -1045,7 +1047,9 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
         assert set(ids) == {enrollment_id1.hex[:3], enrollment_id3.hex[:3], enrollment_id4.hex[:3]}
 
         # Now we should have a new local device !
-        result = await _cli_invoke_in_thread(f"core list_devices --config-dir {config_dir}")
+        result = await _cli_invoke_in_thread(
+            f"core list_devices --config-dir={config_dir.as_posix()}"
+        )
         assert result.exit_code == 0
         assert result.output.startswith("Found 2 device(s)")
         assert "CoolOrg: John Doe <john@example.com> @ PC1" in result.output
