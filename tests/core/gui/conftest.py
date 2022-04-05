@@ -407,13 +407,17 @@ def testing_main_window_cls(aqtbot):
             def get_accounts_w():
                 return l_w.widget.layout().itemAt(0).widget()
 
+            def _devices_listed():
+                assert l_w.widget.layout().count() == 1
+
+            await aqtbot.wait_until(_devices_listed)
+
             tabw = self.test_get_tab()
 
             # Only one device available
             accounts_w = get_accounts_w()
             if isinstance(accounts_w, LoginPasswordInputWidget):
                 assert accounts_w.device.slug == device.slug
-
             else:
                 assert isinstance(accounts_w, LoginAccountsWidget)
                 for i in range(accounts_w.accounts_widget.layout().count() - 1):
