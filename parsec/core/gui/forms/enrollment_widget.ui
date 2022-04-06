@@ -48,6 +48,9 @@
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="Button" name="button_get_enrollment_addr">
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
        <property name="text">
         <string>ACTION_GET_ENROLLMENT_ADDR</string>
        </property>

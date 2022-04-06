@@ -2,7 +2,9 @@
 
 from pathlib import Path
 
-from PyQt5.QtCore import pyqtSignal, Qt, QTimer
+import trio
+
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.pki import (
@@ -18,7 +20,6 @@ from parsec.core.pki.submitter import BasePkiEnrollmentSubmitterStatusCtx
 from parsec.core.local_device import save_device_with_smartcard_in_config
 
 from parsec.core.gui.snackbar_widget import SnackbarManager
-from parsec.core.gui.trio_jobs import QtToTrioJob
 
 from parsec.core.local_device import list_available_devices, AvailableDevice, DeviceFileType
 
@@ -36,7 +37,6 @@ from parsec.core.gui.ui.enrollment_pending_button import Ui_EnrollmentPendingBut
 class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
     finalize_clicked = pyqtSignal(PkiEnrollmentSubmitterAcceptedStatusCtx)
     clear_clicked = pyqtSignal(BasePkiEnrollmentSubmitterStatusCtx)
-    get_info_finished = pyqtSignal(QtToTrioJob)
 
     def __init__(self, config, jobs_ctx, context):
         super().__init__()
@@ -49,72 +49,58 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
         self.button_action.hide()
         self.label_status.setText(_("TEXT_ENROLLMENT_RETRIEVING_STATUS"))
         self.label_status.setToolTip("")
-        self.destroyed.connect(self._on_destroyed)
-        self.timer = QTimer()
-        self.timer.setInterval(10000)
-        self.timer.setSingleShot(True)
-        self.job = None
-        self.timer.timeout.connect(self._start_get_pending_enrollment_job)
-        self.get_info_finished.connect(self._on_get_info_finished)
-        self._start_get_pending_enrollment_job()
-
-    def _start_get_pending_enrollment_job(self):
-        self.job = self.jobs_ctx.submit_job(
-            self.get_info_finished, self.get_info_finished, self._get_pending_enrollment_infos
-        )
+        self.jobs_ctx.submit_job(None, None, self._get_pending_enrollment_infos)
 
     async def _get_pending_enrollment_infos(self):
-        try:
-            new_context = await self.context.poll(
-                extra_trust_roots=self.config.pki_extra_trust_roots
-            )
-        except:
-            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE"))
-            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE_TOOLTIP"))
-            self.button_action.hide()
-            return
-
-        if isinstance(new_context, PkiEnrollmentSubmitterSubmittedStatusCtx):
-            self.button_action.hide()
-            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_PENDING"))
-            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_PENDING_TOOLTIP"))
-        elif isinstance(new_context, PkiEnrollmentSubmitterCancelledStatusCtx):
-            self.context = new_context
-            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_OUTDATED"))
-            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_OUTDATED_TOOLTIP"))
-            self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
-            self.button_action.clicked.connect(lambda: self.clear_clicked.emit(self.context))
-            self.button_action.show()
-        elif isinstance(new_context, PkiEnrollmentSubmitterRejectedStatusCtx) or isinstance(
-            new_context, PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx
-        ):
-            self.context = new_context
-            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_REJECTED"))
-            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
-            self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
-            self.button_action.clicked.connect(lambda: self.clear_clicked.emit(self.context))
-            self.button_action.show()
-        else:
-            assert isinstance(new_context, PkiEnrollmentSubmitterAcceptedStatusCtx)
-            self.context = new_context
-            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ACCEPTED"))
-            self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"))
-            self.button_action.setText(_("ACTION_ENROLLMENT_FINALIZE"))
-            self.button_action.show()
-            self.button_action.clicked.connect(lambda: self.finalize_clicked.emit(self.context))
-
-    def _on_get_info_finished(self, _):
-        status = self.job.status
-        self.job = None
-        # Only restart if the status is still pending, no need to refresh otherwise
-        if status != "cancelled" and isinstance(self.context, PkiEnrollmentSubmitterSubmittedCtx):
-            self.timer.start()
-
-    def _on_destroyed(self):
-        if self.job:
-            self.job.cancel()
-            while not self.job.is_finished():
-                pass
+        while True:
+            new_context = None
+            try:
+                new_context = await self.context.poll(
+                    extra_trust_roots=self.config.pki_extra_trust_roots
+                )
+            except Exception:
+                self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE"))
+                self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE_TOOLTIP"))
+                self.button_action.hide()
+            else:
+                if isinstance(new_context, PkiEnrollmentSubmitterSubmittedStatusCtx):
+                    self.button_action.hide()
+                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_PENDING"))
+                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_PENDING_TOOLTIP"))
+                elif isinstance(new_context, PkiEnrollmentSubmitterCancelledStatusCtx):
+                    self.context = new_context
+                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_OUTDATED"))
+                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_OUTDATED_TOOLTIP"))
+                    self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
+                    self.button_action.clicked.connect(
+                        lambda: self.clear_clicked.emit(self.context)
+                    )
+                    self.button_action.show()
+                    return
+                elif isinstance(new_context, PkiEnrollmentSubmitterRejectedStatusCtx) or isinstance(
+                    new_context, PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx
+                ):
+                    self.context = new_context
+                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_REJECTED"))
+                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
+                    self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
+                    self.button_action.clicked.connect(
+                        lambda: self.clear_clicked.emit(self.context)
+                    )
+                    self.button_action.show()
+                    return
+                else:
+                    assert isinstance(new_context, PkiEnrollmentSubmitterAcceptedStatusCtx)
+                    self.context = new_context
+                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ACCEPTED"))
+                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"))
+                    self.button_action.setText(_("ACTION_ENROLLMENT_FINALIZE"))
+                    self.button_action.show()
+                    self.button_action.clicked.connect(
+                        lambda: self.finalize_clicked.emit(self.context)
+                    )
+                    return
+            await trio.sleep(10.0)
 
 
 class AccountButton(QWidget, Ui_AccountButton):
@@ -157,8 +143,12 @@ class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
     def _on_pending_finalize_clicked(self, pending):
         self.pending_finalize_clicked.emit(pending)
 
-    def reset(self):
-        pass
+    def clear(self):
+        while self.accounts_widget.layout().count() != 1:
+            item = self.accounts_widget.layout().takeAt(0)
+            if item and item.widget():
+                item.widget().hide()
+                item.widget().setParent(None)
 
 
 class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
@@ -336,6 +326,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             item = self.widget.layout().takeAt(0)
             if item:
                 w = item.widget()
+                if isinstance(w, LoginAccountsWidget):
+                    w.clear()
                 self.widget.layout().removeWidget(w)
                 w.hide()
                 w.setParent(None)
