@@ -109,6 +109,7 @@ def get_path_and_translate_error(
             mountpoint=str(mountpoint),
             workspace_id=workspace_id,
             timestamp=timestamp,
+            exc_info=exc,
         )
         fs_access.send_event(
             CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
