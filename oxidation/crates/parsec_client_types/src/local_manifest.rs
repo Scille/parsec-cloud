@@ -1065,7 +1065,10 @@ impl LocalUserManifest {
     }
 
     pub fn evolve_workspaces(mut self, workspace: WorkspaceEntry) -> Self {
-        self.workspaces.push(workspace);
+        let mut workspaces =
+            HashMap::<_, _, RandomState>::from_iter(self.workspaces.into_iter().map(|w| (w.id, w)));
+        workspaces.insert(workspace.id, workspace);
+        self.workspaces = workspaces.into_values().collect();
         self
     }
 
