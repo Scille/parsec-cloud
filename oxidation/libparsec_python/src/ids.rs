@@ -15,19 +15,27 @@ pub(crate) struct OrganizationID(pub parsec_api_types::OrganizationID);
 #[pymethods]
 impl OrganizationID {
     #[new]
-    pub fn new(org_id: &str) -> PyResult<Self> {
-        match org_id.parse::<parsec_api_types::OrganizationID>() {
-            Ok(organization_id) => Ok(Self(organization_id)),
-            Err(err) => Err(PyValueError::new_err(err)),
+    fn new(organization_id: &PyAny) -> PyResult<Self> {
+        if let Ok(organization_id) = organization_id.extract::<Self>() {
+            Ok(organization_id)
+        } else if let Ok(organization_id) = organization_id.extract::<&str>() {
+            match organization_id.parse::<parsec_api_types::OrganizationID>() {
+                Ok(organization_id) => Ok(Self(organization_id)),
+                Err(err) => Err(PyValueError::new_err(err)),
+            }
+        } else {
+            unimplemented!()
         }
     }
 
-    fn __richcmp__(&self, py: Python, other: &OrganizationID, op: CompareOp) -> PyObject {
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
         match op {
-            CompareOp::Eq => (self.0.to_string() == other.0.to_string()).into_py(py),
-            CompareOp::Ne => (self.0.to_string() != other.0.to_string()).into_py(py),
-            CompareOp::Lt => (self.0.to_string() < other.0.to_string()).into_py(py),
-            _ => py.NotImplemented(),
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            CompareOp::Lt => self.0 < other.0,
+            CompareOp::Gt => self.0 > other.0,
+            CompareOp::Le => self.0 <= other.0,
+            CompareOp::Ge => self.0 >= other.0,
         }
     }
 
@@ -396,19 +404,27 @@ pub(crate) struct UserID(pub parsec_api_types::UserID);
 #[pymethods]
 impl UserID {
     #[new]
-    pub fn new(user_id: &str) -> PyResult<Self> {
-        match user_id.parse::<parsec_api_types::UserID>() {
-            Ok(user_id) => Ok(Self(user_id)),
-            Err(err) => Err(PyValueError::new_err(err)),
+    fn new(user_id: &PyAny) -> PyResult<Self> {
+        if let Ok(user_id) = user_id.extract::<Self>() {
+            Ok(user_id)
+        } else if let Ok(user_id) = user_id.extract::<&str>() {
+            match user_id.parse::<parsec_api_types::UserID>() {
+                Ok(user_id) => Ok(Self(user_id)),
+                Err(err) => Err(PyValueError::new_err(err)),
+            }
+        } else {
+            unimplemented!()
         }
     }
 
-    fn __richcmp__(&self, py: Python, other: &UserID, op: CompareOp) -> PyObject {
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
         match op {
-            CompareOp::Eq => (self.0.to_string() == other.0.to_string()).into_py(py),
-            CompareOp::Ne => (self.0.to_string() != other.0.to_string()).into_py(py),
-            CompareOp::Lt => (self.0.to_string() < other.0.to_string()).into_py(py),
-            _ => py.NotImplemented(),
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            CompareOp::Lt => self.0 < other.0,
+            CompareOp::Gt => self.0 > other.0,
+            CompareOp::Le => self.0 <= other.0,
+            CompareOp::Ge => self.0 >= other.0,
         }
     }
 
@@ -450,22 +466,29 @@ pub(crate) struct DeviceName(pub parsec_api_types::DeviceName);
 #[pymethods]
 impl DeviceName {
     #[new]
-    pub fn new(device_name: &str) -> PyResult<Self> {
-        match device_name.parse::<parsec_api_types::DeviceName>() {
-            Ok(device_name) => Ok(Self(device_name)),
-            Err(err) => Err(PyValueError::new_err(err)),
+    fn new(device_name: &PyAny) -> PyResult<Self> {
+        if let Ok(device_name) = device_name.extract::<Self>() {
+            Ok(device_name)
+        } else if let Ok(device_name) = device_name.extract::<&str>() {
+            match device_name.parse::<parsec_api_types::DeviceName>() {
+                Ok(device_name) => Ok(Self(device_name)),
+                Err(err) => Err(PyValueError::new_err(err)),
+            }
+        } else {
+            unimplemented!()
         }
     }
 
-    fn __richcmp__(&self, py: Python, other: &DeviceName, op: CompareOp) -> PyObject {
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
         match op {
-            CompareOp::Eq => (self.0.to_string() == other.0.to_string()).into_py(py),
-            CompareOp::Ne => (self.0.to_string() != other.0.to_string()).into_py(py),
-            CompareOp::Lt => (self.0.to_string() < other.0.to_string()).into_py(py),
-            _ => py.NotImplemented(),
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            CompareOp::Lt => self.0 < other.0,
+            CompareOp::Gt => self.0 > other.0,
+            CompareOp::Le => self.0 <= other.0,
+            CompareOp::Ge => self.0 >= other.0,
         }
     }
-
     fn __str__(&self) -> PyResult<String> {
         Ok(self.0.to_string())
     }
@@ -497,8 +520,8 @@ pub(crate) struct DeviceLabel(pub parsec_api_types::DeviceLabel);
 #[pymethods]
 impl DeviceLabel {
     #[new]
-    pub fn new(device_label: &PyAny) -> PyResult<Self> {
-        if let Ok(device_label) = device_label.extract::<DeviceLabel>() {
+    fn new(device_label: &PyAny) -> PyResult<Self> {
+        if let Ok(device_label) = device_label.extract::<Self>() {
             Ok(device_label)
         } else if let Ok(device_label) = device_label.extract::<&str>() {
             match device_label.parse::<parsec_api_types::DeviceLabel>() {
@@ -510,12 +533,14 @@ impl DeviceLabel {
         }
     }
 
-    fn __richcmp__(&self, py: Python, other: &DeviceLabel, op: CompareOp) -> PyObject {
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
         match op {
-            CompareOp::Eq => (self.0.to_string() == other.0.to_string()).into_py(py),
-            CompareOp::Ne => (self.0.to_string() != other.0.to_string()).into_py(py),
-            CompareOp::Lt => (self.0.to_string() < other.0.to_string()).into_py(py),
-            _ => py.NotImplemented(),
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            CompareOp::Lt => self.0 < other.0,
+            CompareOp::Gt => self.0 > other.0,
+            CompareOp::Le => self.0 <= other.0,
+            CompareOp::Ge => self.0 >= other.0,
         }
     }
 
@@ -544,10 +569,16 @@ pub(crate) struct DeviceID(pub parsec_api_types::DeviceID);
 #[pymethods]
 impl DeviceID {
     #[new]
-    pub fn new(device_id: &str) -> PyResult<Self> {
-        match device_id.parse::<parsec_api_types::DeviceID>() {
-            Ok(d) => Ok(Self(d)),
-            Err(err) => Err(PyValueError::new_err(err)),
+    fn new(device_id: &PyAny) -> PyResult<Self> {
+        if let Ok(device_id) = device_id.extract::<Self>() {
+            Ok(device_id)
+        } else if let Ok(device_id) = device_id.extract::<&str>() {
+            match device_id.parse::<parsec_api_types::DeviceID>() {
+                Ok(device_id) => Ok(Self(device_id)),
+                Err(err) => Err(PyValueError::new_err(err)),
+            }
+        } else {
+            unimplemented!()
         }
     }
 
@@ -559,12 +590,14 @@ impl DeviceID {
         Ok(format!("<DeviceID {}>", self.0))
     }
 
-    fn __richcmp__(&self, py: Python, other: &DeviceID, op: CompareOp) -> PyObject {
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
         match op {
-            CompareOp::Eq => (self.0.to_string() == other.0.to_string()).into_py(py),
-            CompareOp::Ne => (self.0.to_string() != other.0.to_string()).into_py(py),
-            CompareOp::Lt => (self.0.to_string() < other.0.to_string()).into_py(py),
-            _ => py.NotImplemented(),
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            CompareOp::Lt => self.0 < other.0,
+            CompareOp::Gt => self.0 > other.0,
+            CompareOp::Le => self.0 <= other.0,
+            CompareOp::Ge => self.0 >= other.0,
         }
     }
 
@@ -579,12 +612,12 @@ impl DeviceID {
 
     #[getter]
     fn user_id(&self) -> PyResult<UserID> {
-        Ok(UserID::new(&self.0.user_id.to_string()).unwrap())
+        Ok(UserID(self.0.user_id.clone()))
     }
 
     #[getter]
     fn device_name(&self) -> PyResult<DeviceName> {
-        Ok(DeviceName::new(&self.0.device_name.to_string()).unwrap())
+        Ok(DeviceName(self.0.device_name.clone()))
     }
 
     #[classmethod]
