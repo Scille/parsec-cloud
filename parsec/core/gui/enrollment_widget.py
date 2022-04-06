@@ -192,6 +192,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         self.organization_config = self.core.get_organization_config()
         self.label_empty_list.hide()
         self.event_bus = event_bus
+        self.button_get_enrollment_addr.apply_style()
         self.button_get_enrollment_addr.clicked.connect(self._on_get_enrollment_addr_clicked)
         self.current_job = None
 

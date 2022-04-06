@@ -47,7 +47,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QPushButton" name="button_get_enrollment_addr">
+      <widget class="Button" name="button_get_enrollment_addr">
        <property name="text">
         <string>ACTION_GET_ENROLLMENT_ADDR</string>
        </property>
@@ -188,6 +188,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Button</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>
