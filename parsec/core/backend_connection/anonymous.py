@@ -28,7 +28,7 @@ async def _http_request(url: str, method: str, data: Optional[bytes] = None) -> 
                 return rep.read()
 
         except URLError as exc:
-            raise TransportError(f"Bad response from backend {exc}") from exc
+            raise TransportError(f"Bad response from backend: {exc}") from exc
 
     return await trio.to_thread.run_sync(_do_req)
 
@@ -64,10 +64,6 @@ async def _anonymous_cmd(
     except ProtocolError as exc:
         logger.exception("Invalid response data", cmd=req["cmd"], error=exc)
         raise BackendProtocolError("Invalid response data") from exc
-
-    if rep["status"] == "unknown_command":
-        logger.error("Invalid request command according to backend", cmd=req["cmd"], rep=rep)
-        raise BackendProtocolError("Invalid request command according to backend")
 
     if rep["status"] == "invalid_msg_format":
         logger.error("Invalid request data according to backend", cmd=req["cmd"], rep=rep)

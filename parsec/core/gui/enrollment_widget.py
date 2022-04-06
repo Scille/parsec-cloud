@@ -7,6 +7,7 @@ from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QWidget
 
 from parsec.api.protocol import UserProfile, HumanHandle, DeviceLabel
+from parsec.core.gui.trio_jobs import QtToTrioJob
 
 from parsec.core.types import BackendPkiEnrollmentAddr
 
@@ -104,8 +105,8 @@ class AcceptCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.dialog.accept()
 
     @classmethod
-    def show_modal(cls, enrollment_info, parent, on_finished):
-        w = cls(enrollment_info)
+    def show_modal(cls, enrollment_info, parent, on_finished, user_profile_outsider_allowed):
+        w = cls(enrollment_info, user_profile_outsider_allowed)
         d = GreyedDialog(
             w, translate("TEXT_ENROLLMENT_ACCEPT_CHECK_INFO_TITLE"), parent=parent, width=800
         )
@@ -129,14 +130,12 @@ class EnrollmentButton(QWidget, Ui_EnrollmentButton):
         super().__init__()
         self.setupUi(self)
         self.pending = pending
-        # self.label_date.setText(self.enrollment_info.date)
         accept_pix = Pixmap(":/icons/images/material/done.svg")
         accept_pix.replace_color(QColor(0x00, 0x00, 0x00), QColor(0xFF, 0xFF, 0xFF))
         reject_pix = Pixmap(":/icons/images/material/clear.svg")
         reject_pix.replace_color(QColor(0x00, 0x00, 0x00), QColor(0xFF, 0xFF, 0xFF))
         self.button_accept.setIcon(QIcon(accept_pix))
         self.button_reject.setIcon(QIcon(reject_pix))
-
         self.label_date.setText(format_datetime(pending.submitted_on))
 
         if isinstance(self.pending, PkiEnrollementAccepterInvalidSubmittedCtx):
@@ -182,11 +181,15 @@ class EnrollmentButton(QWidget, Ui_EnrollmentButton):
 
 
 class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
+    list_success = pyqtSignal(QtToTrioJob)
+    list_failure = pyqtSignal(QtToTrioJob)
+
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.core = core
         self.jobs_ctx = jobs_ctx
+        self.organization_config = self.core.get_organization_config()
         self.label_empty_list.hide()
         self.event_bus = event_bus
         self.button_get_enrollment_addr.clicked.connect(self._on_get_enrollment_addr_clicked)
@@ -216,7 +219,9 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
     def reset(self):
         if self.current_job is not None and not self.current_job.is_finished():
             return
-        self.current_job = self.jobs_ctx.submit_job(None, None, self.list_pending_enrollments)
+        self.current_job = self.jobs_ctx.submit_job(
+            self.list_success, self.list_failure, self.list_pending_enrollments
+        )
 
     def clear_layout(self):
         while self.main_layout.count() != 0:
@@ -237,7 +242,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         except PkiEnrollmentListError:
             SnackbarManager.warn(translate("TEXT_ENROLLMENT_FAILED_TO_RETRIEVE_PENDING"))
         if not pendings:
-            self.label_empty_list.setText(translate("TEXT_ENROLLMENT_NO_PENDING_enrollment"))
+            self.label_empty_list.setText(translate("TEXT_ENROLLMENT_NO_PENDING_ENROLLMENT"))
             self.label_empty_list.show()
             return
         for pending in pendings:
@@ -262,7 +267,12 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
                 )
 
         eb.set_buttons_enabled(False)
-        AcceptCheckInfoWidget.show_modal(eb.pending, self, on_finished=_on_finished)
+        AcceptCheckInfoWidget.show_modal(
+            eb.pending,
+            self,
+            on_finished=_on_finished,
+            user_profile_outsider_allowed=self.organization_config.user_profile_outsider_allowed,
+        )
 
     def _on_reject_clicked(self, rw):
         rw.set_buttons_enabled(False)

@@ -147,7 +147,7 @@ class RealmRolesUpdatedSchema(BaseSchema):
 
 class PkiEnrollmentUpdatedSchema(BaseSchema):
     __id__ = fields.String(required=True)
-    __signal__ = fields.EnumCheckedConstant(BackendEvent.REALM_ROLES_UPDATED, required=True)
+    __signal__ = fields.EnumCheckedConstant(BackendEvent.PKI_ENROLLMENTS_UPDATED, required=True)
     organization_id = OrganizationIDField(requise=True)
 
 

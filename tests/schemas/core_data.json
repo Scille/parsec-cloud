@@ -410,6 +410,112 @@
         },
         "serializing": "msgpack"
     },
+    "LocalPendingEnrollment": {
+        "fields": {
+            "addr": {
+                "allow_none": false,
+                "required": true,
+                "type": "BackendPkiEnrollmentAddrField"
+            },
+            "ciphertext": {
+                "allow_none": false,
+                "required": true,
+                "type": "bytesField"
+            },
+            "encrypted_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "bytesField"
+            },
+            "enrollment_id": {
+                "allow_none": false,
+                "required": false,
+                "type": "UUID"
+            },
+            "submit_payload": {
+                "allow_none": false,
+                "required": true,
+                "schema": {
+                    "fields": {
+                        "public_key": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "PublicKey"
+                        },
+                        "requested_device_label": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "DeviceLabelField"
+                        },
+                        "type": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "CheckedConstant",
+                            "value": "pki_enrollment_submit_payload"
+                        },
+                        "verify_key": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "VerifyKey"
+                        }
+                    }
+                },
+                "type": "Nested"
+            },
+            "submitted_on": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "local_pending_enrollment"
+            },
+            "x509_certificate": {
+                "allow_none": false,
+                "required": true,
+                "schema": {
+                    "fields": {
+                        "certificate_id": {
+                            "allow_none": true,
+                            "required": true,
+                            "type": "String"
+                        },
+                        "certificate_sha1": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "bytesField"
+                        },
+                        "der_x509_certificate": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "bytesField"
+                        },
+                        "issuer": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "Dict"
+                        },
+                        "subject": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "Dict"
+                        },
+                        "type": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "CheckedConstant",
+                            "value": "x509_certificate"
+                        }
+                    }
+                },
+                "type": "Nested"
+            }
+        },
+        "serializing": "msgpack"
+    },
     "LocalUserManifest": {
         "fields": {
             "base": {

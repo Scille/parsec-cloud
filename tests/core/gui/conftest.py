@@ -12,7 +12,7 @@ from pytestqt.exceptions import TimeoutError
 
 from parsec import __version__ as parsec_version
 from parsec.api.data import EntryName
-from parsec.core.local_device import save_device_with_password_in_config
+from parsec.core.local_device import save_device_with_password_in_config, DeviceFileType
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.workspaces_widget import WorkspaceButton
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
@@ -21,6 +21,7 @@ from parsec.core.gui.login_widget import (
     LoginPasswordInputWidget,
     LoginAccountsWidget,
     AccountButton,
+    LoginSmartcardInputWidget,
 )
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.lang import switch_language
@@ -416,30 +417,48 @@ def testing_main_window_cls(aqtbot):
 
             # Only one device available
             accounts_w = get_accounts_w()
+            device_type = None
             if isinstance(accounts_w, LoginPasswordInputWidget):
                 assert accounts_w.device.slug == device.slug
+                device_type = accounts_w.device.type
             else:
                 assert isinstance(accounts_w, LoginAccountsWidget)
                 for i in range(accounts_w.accounts_widget.layout().count() - 1):
                     acc_w = accounts_w.accounts_widget.layout().itemAt(i).widget()
                     if isinstance(acc_w, AccountButton) and acc_w.device.slug == device.slug:
+                        device_type = acc_w.device.type
                         async with aqtbot.wait_signal(accounts_w.account_clicked):
                             aqtbot.mouse_click(acc_w, QtCore.Qt.LeftButton)
                         break
+            assert device_type is not None
 
-            def _password_widget_shown():
-                assert isinstance(get_accounts_w(), LoginPasswordInputWidget)
+            if device_type == DeviceFileType.PASSWORD:
 
-            await aqtbot.wait_until(_password_widget_shown)
-            password_w = l_w.widget.layout().itemAt(0).widget()
-            aqtbot.key_clicks(password_w.line_edit_password, password)
+                def _password_widget_shown():
+                    assert isinstance(get_accounts_w(), LoginPasswordInputWidget)
 
-            # Wait for the password to actually be typed
-            await aqtbot.wait_until(lambda: password_w.line_edit_password.text() == password)
+                await aqtbot.wait_until(_password_widget_shown)
+                password_w = l_w.widget.layout().itemAt(0).widget()
+                aqtbot.key_clicks(password_w.line_edit_password, password)
 
-            signal = tabw.logged_in if not error else tabw.login_failed
-            async with aqtbot.wait_signals([l_w.login_with_password_clicked, signal]):
-                aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+                # Wait for the password to actually be typed
+                await aqtbot.wait_until(lambda: password_w.line_edit_password.text() == password)
+
+                signal = tabw.logged_in if not error else tabw.login_failed
+                async with aqtbot.wait_signals([l_w.login_with_password_clicked, signal]):
+                    aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+            else:
+
+                def _smartcard_widget_shown():
+                    assert isinstance(get_accounts_w(), LoginSmartcardInputWidget)
+
+                await aqtbot.wait_until(_smartcard_widget_shown)
+
+                smartcard_w = l_w.widget.layout().itemAt(0).widget()
+
+                signal = tabw.logged_in if not error else tabw.login_failed
+                async with aqtbot.wait_signals([l_w.login_with_smartcard_clicked, signal]):
+                    aqtbot.mouse_click(smartcard_w.button_login, QtCore.Qt.LeftButton)
 
             def _wait_logged_in():
                 assert not l_w.isVisible()
@@ -450,10 +469,10 @@ def testing_main_window_cls(aqtbot):
                 await aqtbot.wait_until(_wait_logged_in)
             return self.test_get_central_widget()
 
-        async def test_switch_to_enrollment_widget(self, error=False):
+        async def test_switch_to_enrollment_widget(self):
             central_widget = self.test_get_central_widget()
             e_w = self.test_get_enrollment_widget()
-            async with aqtbot.wait_exposed(e_w):
+            async with aqtbot.wait_exposed(e_w), aqtbot.wait_signal(e_w.list_success, timeout=3000):
                 aqtbot.mouse_click(central_widget.menu.button_enrollment, QtCore.Qt.LeftButton)
             return e_w
 

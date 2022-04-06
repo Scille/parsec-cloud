@@ -23,7 +23,7 @@ from parsec.core.pki.plumbing import (
     pki_enrollment_load_peer_certificate,
     pki_enrollment_load_accept_payload,
 )
-from parsec.core.types import LocalDevice
+from parsec.core.types import LocalDevice, BackendAddr
 from parsec.core.types.pki import LocalPendingEnrollment
 from parsec.core.local_device import generate_new_device
 from parsec.crypto import PrivateKey, SigningKey
@@ -443,7 +443,7 @@ class PkiEnrollmentSubmitterAcceptedStatusCtx(BasePkiEnrollmentSubmitterStatusCt
 
         # Create the local device
         organization_addr = BackendOrganizationAddr.build(
-            backend_addr=self.addr,
+            backend_addr=BackendAddr(self.addr.hostname, self.addr.port, self.addr.use_ssl),
             organization_id=self.addr.organization_id,
             root_verify_key=self.accept_payload.root_verify_key,
         )

@@ -4,8 +4,9 @@ import pytest
 import trio
 
 from parsec.api.data import EntryName
+from parsec.api.protocol import RealmRole
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import RealmRole, HandshakeType
+from parsec.backend.utils import ClientType
 from parsec.core.types import OrganizationConfig
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
@@ -52,7 +53,7 @@ async def test_init_with_backend_online(
             # Backend with API support <2.2, the client should be able to fallback
             return {"status": "unknown_command"}
 
-    running_backend.backend.apis[HandshakeType.AUTHENTICATED][
+    running_backend.backend.apis[ClientType.AUTHENTICATED][
         "organization_config"
     ] = _mocked_organization_config
 

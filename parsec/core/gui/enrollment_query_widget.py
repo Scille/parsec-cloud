@@ -24,6 +24,11 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
         self.config = config
         self.dialog = None
         self.addr = addr
+        self.label_instructions.setText(
+            translate("TEXT_ENROLLMENT_INSTRUCTIONS_organization").format(
+                organization=self.addr.organization_id
+            )
+        )
         self.label_cert_error.setVisible(False)
         self.widget_user_info.setVisible(False)
         self.button_ask_to_join.setEnabled(False)

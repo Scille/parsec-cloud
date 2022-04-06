@@ -49,6 +49,7 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
         self.button_action.hide()
         self.label_status.setText(_("TEXT_ENROLLMENT_RETRIEVING_STATUS"))
         self.label_status.setToolTip("")
+        self.destroyed.connect(self._on_destroyed)
         self.timer = QTimer()
         self.timer.setInterval(10000)
         self.timer.setSingleShot(True)
@@ -112,6 +113,8 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
     def _on_destroyed(self):
         if self.job:
             self.job.cancel()
+            while not self.job.is_finished():
+                pass
 
 
 class AccountButton(QWidget, Ui_AccountButton):

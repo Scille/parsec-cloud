@@ -381,6 +381,10 @@ def tcp_stream_spy(request, monkeypatch):
     else:
         open_tcp_stream_mock_wrapper = OpenTCPStreamMockWrapper()
         monkeypatch.setattr("trio.open_tcp_stream", open_tcp_stream_mock_wrapper)
+        monkeypatch.setattr(
+            "parsec.core.backend_connection.anonymous._http_request",
+            open_tcp_stream_mock_wrapper._http_request,
+        )
         return open_tcp_stream_mock_wrapper
 
 
