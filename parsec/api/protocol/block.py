@@ -1,10 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Any, Union
+import attr
 
 from parsec.types import UUID4
-from parsec.serde import fields
-from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.serde import fields, post_load
+from parsec.api.protocol.base import (
+    BaseReqSchema,
+    BaseRepSchema,
+    CmdSerializer,
+    BaseReq,
+    BaseRep,
+    cmd_rep_error_type_factory,
+    cmd_rep_factory,
+)
 from parsec.api.protocol.realm import RealmIDField
 
 
@@ -41,12 +50,55 @@ class BlockCreateRepSchema(BaseRepSchema):
 block_create_serializer = CmdSerializer(BlockCreateReqSchema, BlockCreateRepSchema)
 
 
-class BlockReadReqSchema(BaseReqSchema):
-    block_id = BlockIDField(required=True)
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class BlockReadReq(BaseReq):
+    class SCHEMA_CLS(BaseReqSchema):
+        block_id = BlockIDField(required=True)
+
+        @post_load
+        def make_obj(self, data: Dict[str, Any]) -> "BlockReadReq":
+            data.pop("type")
+            return BlockReadReq(**data)
+
+    block_id: BlockID
 
 
-class BlockReadRepSchema(BaseRepSchema):
-    block = fields.Bytes(required=True)
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class BlockReadRepOk(BaseRep):
+    class SCHEMA_CLS(BaseRepSchema):
+        block = fields.Bytes(required=True)
+
+        @post_load
+        def make_obj(self, data: Dict[str, Any]) -> "BlockReadRepOk":
+            data.pop("type")
+            return BlockReadRepOk(**data)
+
+    block: bytes
 
 
-block_read_serializer = CmdSerializer(BlockReadReqSchema, BlockReadRepSchema)
+BlockReadRepNotFound = cmd_rep_error_type_factory("BlockReadRepNotFound", "not_found")
+BlockReadRepTimeout = cmd_rep_error_type_factory("BlockReadRepTimeout", "timeout")
+BlockReadRepNotAllowed = cmd_rep_error_type_factory("BlockReadRepNotAllowed", "not_allowed")
+BlockReadRepInMaintenance = cmd_rep_error_type_factory(
+    "BlockReadRepInMaintenance", "in_maintenance"
+)
+
+
+BlockReadRep = cmd_rep_factory(
+    "BlockReadRep",
+    BlockReadRepOk,
+    BlockReadRepNotFound,
+    BlockReadRepTimeout,
+    BlockReadRepNotAllowed,
+    BlockReadRepInMaintenance,
+)
+BlockReadRepType = Union[
+    BlockReadRepOk,
+    BlockReadRepNotFound,
+    BlockReadRepTimeout,
+    BlockReadRepNotAllowed,
+    BlockReadRepInMaintenance,
+]
+
+
+block_read_serializer = CmdSerializer.from_typed(BlockReadReq, BlockReadRep.TYPES)

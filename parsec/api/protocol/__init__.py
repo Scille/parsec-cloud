@@ -6,6 +6,7 @@ from parsec.api.protocol.base import (
     InvalidMessageError,
     packb,
     unpackb,
+    api_typed_msg_adapter,
 )
 from parsec.api.protocol.types import (
     UserID,
@@ -108,6 +109,9 @@ from parsec.api.protocol.block import (
     BlockIDField,
     block_create_serializer,
     block_read_serializer,
+    BlockReadReq,
+    BlockReadRep,
+    BlockReadRepType,
 )
 from parsec.api.protocol.vlob import (
     VlobID,
@@ -129,6 +133,7 @@ __all__ = (
     "InvalidMessageError",
     "packb",
     "unpackb",
+    "api_typed_msg_adapter",
     "HandshakeError",
     "HandshakeFailedChallenge",
     "HandshakeBadAdministrationToken",
@@ -234,6 +239,9 @@ __all__ = (
     "BlockIDField",
     "block_create_serializer",
     "block_read_serializer",
+    "BlockReadReq",
+    "BlockReadRep",
+    "BlockReadRepType",
     # List of cmds
     "AUTHENTICATED_CMDS",
     "INVITED_CMDS",
