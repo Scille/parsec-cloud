@@ -552,7 +552,7 @@ def is_smartcard_extension_available() -> bool:
         return False
 
 
-def load_device_with_smartcard(key_file: Path) -> LocalDevice:
+def load_device_with_smartcard_sync(key_file: Path) -> LocalDevice:
     """
         LocalDeviceError
         LocalDeviceNotFoundError
@@ -561,6 +561,17 @@ def load_device_with_smartcard(key_file: Path) -> LocalDevice:
         LocalDevicePackingError
     """
     return _load_smartcard_extension().load_device_with_smartcard(key_file)
+
+
+async def load_device_with_smartcard(key_file: Path) -> LocalDevice:
+    """
+        LocalDeviceError
+        LocalDeviceNotFoundError
+        LocalDeviceCryptoError
+        LocalDeviceValidationError
+        LocalDevicePackingError
+    """
+    return await trio.to_thread.run_sync(load_device_with_smartcard_sync, key_file)
 
 
 def save_device_with_smartcard_in_config(

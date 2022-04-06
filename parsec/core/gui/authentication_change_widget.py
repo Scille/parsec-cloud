@@ -73,6 +73,10 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
 
     @classmethod
     def show_modal(cls, core, jobs_ctx, parent, on_finished=None):
+        jobs_ctx.submit_job(None, None, cls.show_modal_async, core, jobs_ctx, parent, on_finished)
+
+    @classmethod
+    async def show_modal_async(cls, core, jobs_ctx, parent, on_finished=None):
         available_device = get_available_device(core.config.config_dir, core.device)
         loaded_device = None
 
@@ -93,7 +97,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                     return
                 loaded_device = load_device_with_password(available_device.key_file_path, password)
             else:
-                loaded_device = load_device_with_smartcard(available_device.key_file_path)
+                loaded_device = await load_device_with_smartcard(available_device.key_file_path)
         except LocalDeviceError:
             show_error(parent, _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
             return

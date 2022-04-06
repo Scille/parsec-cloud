@@ -15,7 +15,7 @@ from parsec.core.local_device import (
     list_available_devices,
     is_smartcard_extension_available,
     load_device_with_password,
-    load_device_with_smartcard,
+    load_device_with_smartcard_sync,
     save_device_with_password_in_config,
     save_device_with_smartcard_in_config,
 )
@@ -158,7 +158,8 @@ def core_config_and_device_options(fn: F) -> F:
                     password = click.prompt("password", hide_input=True)
                 device = load_device_with_password(devices[0].key_file_path, password)
             elif available_device.type == DeviceFileType.SMARTCARD:
-                device = load_device_with_smartcard(devices[0].key_file_path)
+                # It's ok to be blocking here, we're not in async land yet
+                device = load_device_with_smartcard_sync(devices[0].key_file_path)
             else:
                 raise SystemExit(f"Unsuported device file authentication `{available_device.type}`")
 
