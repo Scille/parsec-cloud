@@ -22,7 +22,7 @@ from parsec.backend.organization import (
     UsersPerProfileDetailItem,
 )
 from parsec.backend.postgresql.handler import PGHandler
-from parsec.backend.postgresql.user_queries.create import _create_user
+from parsec.backend.postgresql.user_queries.create import q_create_user
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 from parsec.backend.postgresql.handler import send_signal
 
@@ -233,7 +233,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 raise OrganizationInvalidBootstrapTokenError()
 
             try:
-                await _create_user(conn, id, user, first_device)
+                await q_create_user(conn, id, user, first_device)
             except UserError as exc:
                 raise OrganizationFirstUserCreationError(exc) from exc
 

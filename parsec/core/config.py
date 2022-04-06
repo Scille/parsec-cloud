@@ -63,6 +63,7 @@ class CoreConfig:
     sentry_environment: str = ""
     telemetry_enabled: bool = True
     workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
+    pki_extra_trust_roots: FrozenSet[Path] = frozenset()
 
     gui_last_device: Optional[str] = None
     gui_tray_enabled: bool = True
@@ -100,6 +101,7 @@ def config_factory(
     sentry_environment: str = "",
     telemetry_enabled: bool = True,
     workspace_storage_cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
+    pki_extra_trust_roots: FrozenSet[Path] = frozenset(),
     debug: bool = False,
     gui_last_device: str = None,
     gui_tray_enabled: bool = True,
@@ -113,6 +115,7 @@ def config_factory(
     preferred_org_creation_backend_addr: Optional[BackendAddr] = None,
     gui_show_confined: bool = False,
     gui_geometry: bytes = None,
+    ipc_win32_mutex_name: str = "parsec-cloud",
     environ: dict = {},
     **_,
 ) -> CoreConfig:
@@ -143,6 +146,7 @@ def config_factory(
         backend_max_connections=backend_max_connections,
         telemetry_enabled=telemetry_enabled,
         workspace_storage_cache_size=workspace_storage_cache_size,
+        pki_extra_trust_roots=pki_extra_trust_roots,
         debug=debug,
         sentry_dsn=sentry_dsn,
         sentry_environment=sentry_environment,
@@ -159,7 +163,7 @@ def config_factory(
         gui_show_confined=gui_show_confined,
         gui_geometry=gui_geometry,
         ipc_socket_file=data_base_dir / "parsec-cloud.lock",
-        ipc_win32_mutex_name="parsec-cloud",
+        ipc_win32_mutex_name=ipc_win32_mutex_name,
     )
 
     # Make sure the directories exist on the system
@@ -202,6 +206,15 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     try:
         data_conf["disabled_workspaces"] = frozenset(
             map(EntryID.from_hex, data_conf["disabled_workspaces"])
+        )
+    except (KeyError, ValueError):
+        pass
+
+    try:
+        extra_trust_roots_from_extra_config = list(extra_config.pop("pki_extra_trust_roots", []))
+        extra_trust_roots_from_data_conf = list(data_conf.get("pki_extra_trust_roots", []))
+        data_conf["pki_extra_trust_roots"] = frozenset(
+            map(Path, extra_trust_roots_from_data_conf + extra_trust_roots_from_extra_config)
         )
     except (KeyError, ValueError):
         pass
@@ -250,6 +263,7 @@ def save_config(config: CoreConfig):
                 "backend_max_cooldown": config.backend_max_cooldown,
                 "backend_connection_keepalive": config.backend_connection_keepalive,
                 "workspace_storage_cache_size": config.workspace_storage_cache_size,
+                "pki_extra_trust_roots": list(map(str, config.pki_extra_trust_roots)),
                 "gui_last_device": config.gui_last_device,
                 "gui_tray_enabled": config.gui_tray_enabled,
                 "gui_language": config.gui_language,
@@ -264,6 +278,7 @@ def save_config(config: CoreConfig):
                 "gui_geometry": base64.b64encode(config.gui_geometry).decode("ascii")
                 if config.gui_geometry
                 else None,
+                "ipc_win32_mutex_name": config.ipc_win32_mutex_name,
             },
             indent=True,
         )

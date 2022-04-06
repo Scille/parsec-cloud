@@ -274,10 +274,13 @@ class InstanceWidget(QWidget):
                 self.login_failed.emit()
 
     def login_with_smartcard(self, key_file):
+        self.jobs_ctx.submit_job(None, None, self.login_with_smartcard_async, key_file)
+
+    async def login_with_smartcard_async(self, key_file):
         message = None
         exception = None
         try:
-            device = load_device_with_smartcard(key_file)
+            device = await load_device_with_smartcard(key_file)
             if ParsecApp.is_device_connected(
                 device.organization_addr.organization_id, device.device_id
             ):

@@ -19,6 +19,7 @@ from parsec.api.protocol import (
     InvitationEmailSentStatus,
 )
 from parsec.api.data import RevokedUserCertificateContent
+from parsec.core.pki import accepter_list_submitted_from_backend
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
 from parsec.core.config import CoreConfig
@@ -357,6 +358,11 @@ class LoggedCore:
 
     def get_organization_config(self) -> OrganizationConfig:
         return self._backend_conn.get_organization_config()
+
+    async def list_submitted_enrollment_requests(self):
+        return await accepter_list_submitted_from_backend(
+            cmds=self._backend_conn.cmds, extra_trust_roots=self.config.pki_extra_trust_roots
+        )
 
 
 @asynccontextmanager

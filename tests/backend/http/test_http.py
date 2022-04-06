@@ -10,7 +10,8 @@ from parsec.core.types.backend_address import BackendInvitationAddr
 from parsec.backend.app import MAX_INITIAL_HTTP_REQUEST_SIZE
 
 from tests.common import customize_fixtures
-from tests.backend.http.conftest import open_stream_to_backend, parse_http_response
+from tests.backend.http.conftest import open_stream_to_backend
+from tests.backend.common import parse_http_response
 
 
 async def _do_test_redirect(backend_http_send):

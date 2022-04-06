@@ -6,7 +6,6 @@ from PyQt5 import QtCore, QtWidgets
 from parsec.core.local_device import save_device_with_password_in_config, list_available_devices
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.central_widget import CentralWidget
-from parsec.core.gui.lang import translate as _
 from parsec.core.gui.login_widget import (
     LoginPasswordInputWidget,
     LoginAccountsWidget,
@@ -25,6 +24,11 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice, 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
     tabw = gui.test_get_tab()
+
+    def _devices_listed():
+        assert lw.widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
 
     accounts_w = lw.widget.layout().itemAt(0).widget()
     assert accounts_w
@@ -69,6 +73,11 @@ async def test_login_back_to_account_list(
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
 
+    def _devices_listed():
+        assert lw.widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
+
     accounts_w = lw.widget.layout().itemAt(0).widget()
     assert accounts_w
 
@@ -97,14 +106,13 @@ async def test_login_no_devices(aqtbot, gui_factory, autoclose_dialog):
     gui = await gui_factory(skip_dialogs=False)
     lw = gui.test_get_login_widget()
 
+    def _devices_listed():
+        assert lw.widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
+
     no_device_w = lw.widget.layout().itemAt(0).widget()
     assert isinstance(no_device_w, LoginNoDevicesWidget)
-    assert autoclose_dialog.dialogs == [
-        (
-            _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"),
-            _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_INSTRUCTIONS"),
-        )
-    ]
 
 
 @pytest.mark.gui
@@ -116,6 +124,11 @@ async def test_login_device_list(aqtbot, gui_factory, autoclose_dialog, core_con
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
+
+    def _devices_listed():
+        assert lw.widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
 
     accounts_w = lw.widget.layout().itemAt(0).widget()
     assert accounts_w
@@ -151,6 +164,11 @@ async def test_login_no_available_devices(
 
     lw.reload_devices()
 
+    def _devices_listed():
+        assert lw.widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
+
     no_device_w = lw.widget.layout().itemAt(0).widget()
     assert isinstance(no_device_w, LoginNoDevicesWidget)
 
@@ -169,6 +187,11 @@ async def test_login_logout_account_list_refresh(
     lw = gui.test_get_login_widget()
     tabw = gui.test_get_tab()
 
+    def _devices_listed():
+        assert lw.widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
+
     acc_w = lw.widget.layout().itemAt(0).widget()
     assert acc_w
 
@@ -182,6 +205,8 @@ async def test_login_logout_account_list_refresh(
         assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
 
     await aqtbot.wait_until(_password_widget_shown)
+
+    await aqtbot.wait_until(_devices_listed)
 
     password_w = lw.widget.layout().itemAt(0).widget()
 
@@ -206,6 +231,11 @@ async def test_login_logout_account_list_refresh(
 
     await aqtbot.wait_until(_switch_to_login_tab)
 
+    def _devices_listed():
+        assert gui.test_get_login_widget().widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
+
     acc_w = gui.test_get_login_widget().widget.layout().itemAt(0).widget()
     # Skipping device selection because we have only one device
     assert isinstance(acc_w, LoginPasswordInputWidget)
@@ -221,6 +251,8 @@ async def test_login_logout_account_list_refresh(
     assert gui.tab_center.count() == 1
 
     def _wait_devices_refreshed():
+        assert gui.test_get_login_widget() is not None
+        assert gui.test_get_login_widget().widget.layout().itemAt(0) is not None
         acc_w = gui.test_get_login_widget().widget.layout().itemAt(0).widget()
         assert acc_w.accounts_widget.layout().count() == 3
 

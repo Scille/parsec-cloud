@@ -159,6 +159,9 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
         self.button_validate.setEnabled(True)
 
     def _on_validate_clicked(self):
+        self.jobs_ctx.submit_job(None, None, self._on_validate_clicked_async)
+
+    async def _on_validate_clicked_async(self):
         if isinstance(self.current_page, DeviceRecoveryExportPage1Widget):
             self.button_validate.setEnabled(False)
             selected_device = self.current_page.get_selected_device()
@@ -180,6 +183,9 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
                     validator=None,
                     hidden=True,
                 )
+                if password is None:
+                    self.button_validate.setEnabled(True)
+                    return
                 try:
                     device = load_device_with_password(selected_device.key_file_path, password)
                 except LocalDeviceError:
@@ -188,7 +194,7 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
                     return
             elif selected_device.type == DeviceFileType.SMARTCARD:
                 try:
-                    device = load_device_with_smartcard(selected_device.key_file_path)
+                    device = await load_device_with_smartcard(selected_device.key_file_path)
                 except LocalDeviceError as exc:
                     show_error(
                         self, translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"), exception=exc

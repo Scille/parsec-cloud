@@ -497,10 +497,16 @@ pub(crate) struct DeviceLabel(pub parsec_api_types::DeviceLabel);
 #[pymethods]
 impl DeviceLabel {
     #[new]
-    pub fn new(device_label: &str) -> PyResult<Self> {
-        match device_label.parse::<parsec_api_types::DeviceLabel>() {
-            Ok(device_label) => Ok(Self(device_label)),
-            Err(err) => Err(PyValueError::new_err(err)),
+    pub fn new(device_label: &PyAny) -> PyResult<Self> {
+        if let Ok(device_label) = device_label.extract::<DeviceLabel>() {
+            Ok(device_label)
+        } else if let Ok(device_label) = device_label.extract::<&str>() {
+            match device_label.parse::<parsec_api_types::DeviceLabel>() {
+                Ok(device_label) => Ok(Self(device_label)),
+                Err(err) => Err(PyValueError::new_err(err)),
+            }
+        } else {
+            unimplemented!()
         }
     }
 

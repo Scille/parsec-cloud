@@ -580,7 +580,7 @@ async def test_tab_login_logout_two_tabs_logged_in(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_file_unknown_org(
-    core_config, gui_factory, autoclose_dialog, running_backend, alice
+    aqtbot, core_config, gui_factory, autoclose_dialog, running_backend, alice
 ):
     password = "P@ssw0rd"
     save_device_with_password_in_config(core_config.config_dir, alice, password)
@@ -603,6 +603,11 @@ async def test_link_file_unknown_org(
     assert autoclose_dialog.dialogs[0][1] == translate(
         "TEXT_FILE_LINK_NOT_IN_ORG_organization"
     ).format(organization="UnknownOrg")
+
+    def _devices_listed():
+        assert lw.widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
 
     accounts_w = lw.widget.layout().itemAt(0).widget()
     assert accounts_w

@@ -2,8 +2,24 @@
 
 from pathlib import Path
 
+import trio
+
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
+
+from parsec.core.pki import (
+    PkiEnrollmentSubmitterSubmittedCtx,
+    PkiEnrollmentSubmitterSubmittedStatusCtx,
+    PkiEnrollmentSubmitterCancelledStatusCtx,
+    PkiEnrollmentSubmitterRejectedStatusCtx,
+    PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx,
+    PkiEnrollmentSubmitterAcceptedStatusCtx,
+)
+from parsec.core.pki.submitter import BasePkiEnrollmentSubmitterStatusCtx
+
+from parsec.core.local_device import save_device_with_smartcard_in_config
+
+from parsec.core.gui.snackbar_widget import SnackbarManager
 
 from parsec.core.local_device import list_available_devices, AvailableDevice, DeviceFileType
 
@@ -15,6 +31,76 @@ from parsec.core.gui.ui.login_accounts_widget import Ui_LoginAccountsWidget
 from parsec.core.gui.ui.login_password_input_widget import Ui_LoginPasswordInputWidget
 from parsec.core.gui.ui.login_smartcard_input_widget import Ui_LoginSmartcardInputWidget
 from parsec.core.gui.ui.login_no_devices_widget import Ui_LoginNoDevicesWidget
+from parsec.core.gui.ui.enrollment_pending_button import Ui_EnrollmentPendingButton
+
+
+class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
+    finalize_clicked = pyqtSignal(PkiEnrollmentSubmitterAcceptedStatusCtx)
+    clear_clicked = pyqtSignal(BasePkiEnrollmentSubmitterStatusCtx)
+
+    def __init__(self, config, jobs_ctx, context):
+        super().__init__()
+        self.setupUi(self)
+        self.config = config
+        self.jobs_ctx = jobs_ctx
+        self.context = context
+        self.label_org.setText(self.context.addr.organization_id.str)
+        self.label_name.setText(self.context.x509_certificate.subject_common_name)
+        self.button_action.hide()
+        self.label_status.setText(_("TEXT_ENROLLMENT_RETRIEVING_STATUS"))
+        self.label_status.setToolTip("")
+        self.jobs_ctx.submit_job(None, None, self._get_pending_enrollment_infos)
+
+    async def _get_pending_enrollment_infos(self):
+        while True:
+            new_context = None
+            try:
+                new_context = await self.context.poll(
+                    extra_trust_roots=self.config.pki_extra_trust_roots
+                )
+            except Exception:
+                self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE"))
+                self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE_TOOLTIP"))
+                self.button_action.hide()
+            else:
+                if isinstance(new_context, PkiEnrollmentSubmitterSubmittedStatusCtx):
+                    self.button_action.hide()
+                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_PENDING"))
+                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_PENDING_TOOLTIP"))
+                elif isinstance(new_context, PkiEnrollmentSubmitterCancelledStatusCtx):
+                    self.context = new_context
+                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_OUTDATED"))
+                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_OUTDATED_TOOLTIP"))
+                    self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
+                    self.button_action.clicked.connect(
+                        lambda: self.clear_clicked.emit(self.context)
+                    )
+                    self.button_action.show()
+                    return
+                elif isinstance(new_context, PkiEnrollmentSubmitterRejectedStatusCtx) or isinstance(
+                    new_context, PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx
+                ):
+                    self.context = new_context
+                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_REJECTED"))
+                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
+                    self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
+                    self.button_action.clicked.connect(
+                        lambda: self.clear_clicked.emit(self.context)
+                    )
+                    self.button_action.show()
+                    return
+                else:
+                    assert isinstance(new_context, PkiEnrollmentSubmitterAcceptedStatusCtx)
+                    self.context = new_context
+                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ACCEPTED"))
+                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"))
+                    self.button_action.setText(_("ACTION_ENROLLMENT_FINALIZE"))
+                    self.button_action.show()
+                    self.button_action.clicked.connect(
+                        lambda: self.finalize_clicked.emit(self.context)
+                    )
+                    return
+            await trio.sleep(10.0)
 
 
 class AccountButton(QWidget, Ui_AccountButton):
@@ -35,17 +121,34 @@ class AccountButton(QWidget, Ui_AccountButton):
 
 class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
     account_clicked = pyqtSignal(AvailableDevice)
+    pending_finalize_clicked = pyqtSignal(PkiEnrollmentSubmitterAcceptedStatusCtx)
+    pending_clear_clicked = pyqtSignal(BasePkiEnrollmentSubmitterStatusCtx)
 
-    def __init__(self, devices):
+    def __init__(self, config, jobs_ctx, devices, pendings):
         super().__init__()
         self.setupUi(self)
         for available_device in devices:
             ab = AccountButton(available_device)
             ab.clicked.connect(self.account_clicked.emit)
             self.accounts_widget.layout().insertWidget(0, ab)
+        for ctx in pendings:
+            epb = EnrollmentPendingButton(config, jobs_ctx, ctx)
+            epb.finalize_clicked.connect(self._on_pending_finalize_clicked)
+            epb.clear_clicked.connect(self._on_pending_clear_clicked)
+            self.accounts_widget.layout().insertWidget(0, epb)
 
-    def reset(self):
-        pass
+    def _on_pending_clear_clicked(self, pending):
+        self.pending_clear_clicked.emit(pending)
+
+    def _on_pending_finalize_clicked(self, pending):
+        self.pending_finalize_clicked.emit(pending)
+
+    def clear(self):
+        while self.accounts_widget.layout().count() != 1:
+            item = self.accounts_widget.layout().takeAt(0)
+            if item and item.widget():
+                item.widget().hide()
+                item.widget().setParent(None)
 
 
 class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
@@ -166,14 +269,16 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             self.try_login()
         event.accept()
 
-    def reload_devices(self):
-        self._clear_widget()
+    async def list_devices_and_enrollments(self):
+        pendings = await PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(
+            config_dir=self.config.config_dir
+        )
         devices = [
             device
             for device in list_available_devices(self.config.config_dir)
             if not ParsecApp.is_device_connected(device.organization_id, device.device_id)
         ]
-        if not len(devices):
+        if not len(devices) and not len(pendings):
             no_device_widget = LoginNoDevicesWidget()
             no_device_widget.create_organization_clicked.connect(
                 self.create_organization_clicked.emit
@@ -181,19 +286,48 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             no_device_widget.join_organization_clicked.connect(self.join_organization_clicked.emit)
             self.widget.layout().addWidget(no_device_widget)
             no_device_widget.setFocus()
-        elif len(devices) == 1:
+        elif len(devices) == 1 and not len(pendings):
             self._on_account_clicked(devices[0], hide_back=True)
         else:
-            accounts_widget = LoginAccountsWidget(devices)
+            accounts_widget = LoginAccountsWidget(self.config, self.jobs_ctx, devices, pendings)
             accounts_widget.account_clicked.connect(self._on_account_clicked)
+            accounts_widget.pending_finalize_clicked.connect(self._on_pending_finalize_clicked)
+            accounts_widget.pending_clear_clicked.connect(self._on_pending_clear_clicked)
             self.widget.layout().addWidget(accounts_widget)
             accounts_widget.setFocus()
+
+    def _on_pending_finalize_clicked(self, context: PkiEnrollmentSubmitterAcceptedStatusCtx):
+        self.jobs_ctx.submit_job(None, None, self._finalize_enrollment, context)
+
+    async def _finalize_enrollment(self, context):
+        context = await context.finalize()
+        await save_device_with_smartcard_in_config(
+            config_dir=self.config.config_dir,
+            device=context.new_device,
+            certificate_id=context.x509_certificate.certificate_id,
+            certificate_sha1=context.x509_certificate.certificate_sha1,
+        )
+        await self._remove_enrollment(context)
+        SnackbarManager.inform(_("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
+
+    async def _remove_enrollment(self, context):
+        await context.remove_from_disk()
+        self.reload_devices()
+
+    def _on_pending_clear_clicked(self, context: BasePkiEnrollmentSubmitterStatusCtx):
+        self.jobs_ctx.submit_job(None, None, self._remove_enrollment, context)
+
+    def reload_devices(self):
+        self._clear_widget()
+        self.jobs_ctx.submit_job(None, None, self.list_devices_and_enrollments)
 
     def _clear_widget(self):
         while self.widget.layout().count() != 0:
             item = self.widget.layout().takeAt(0)
             if item:
                 w = item.widget()
+                if isinstance(w, LoginAccountsWidget):
+                    w.clear()
                 self.widget.layout().removeWidget(w)
                 w.hide()
                 w.setParent(None)

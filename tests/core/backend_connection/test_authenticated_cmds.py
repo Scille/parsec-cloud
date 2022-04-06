@@ -4,15 +4,10 @@ import trio
 import pytest
 import pendulum
 
+from parsec.backend.utils import ClientType
 from parsec.api.transport import Transport, Ping, Pong
 from parsec.api.data import RevokedUserCertificateContent
-from parsec.api.protocol import (
-    ServerHandshake,
-    HandshakeType,
-    AUTHENTICATED_CMDS,
-    APIEvent,
-    OrganizationID,
-)
+from parsec.api.protocol import ServerHandshake, AUTHENTICATED_CMDS, APIEvent, OrganizationID
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import (
     BackendNotAvailable,
@@ -195,7 +190,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
     # event that will be returned to the client
     backend_received_cmd = trio.Event()
     backend_client_ctx = None
-    vanilla_api_events_listen = running_backend.backend.apis[HandshakeType.AUTHENTICATED][
+    vanilla_api_events_listen = running_backend.backend.apis[ClientType.AUTHENTICATED][
         "events_listen"
     ]
 
@@ -205,7 +200,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
         backend_received_cmd.set()
         return await vanilla_api_events_listen(client_ctx, msg)
 
-    running_backend.backend.apis[HandshakeType.AUTHENTICATED][
+    running_backend.backend.apis[ClientType.AUTHENTICATED][
         "events_listen"
     ] = _mocked_api_events_listen
 

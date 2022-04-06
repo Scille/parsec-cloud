@@ -155,6 +155,7 @@ async def test_import_recovery_device(
         aqtbot.key_click(gui, "i", QtCore.Qt.ControlModifier, 200)
 
     imp_w = await catch_import_recovery_widget()
+
     assert imp_w
     assert isinstance(imp_w.current_page, DeviceRecoveryImportPage1Widget)
     assert not imp_w.button_validate.isEnabled()
@@ -166,18 +167,19 @@ async def test_import_recovery_device(
 
     aqtbot.key_clicks(imp_w.current_page.edit_passphrase, "abcdef")
     assert not imp_w.button_validate.isEnabled()
-    assert imp_w.current_page.label_passphrase_error.text() == translate(
-        "TEXT_RECOVERY_INVALID_PASSPHRASE"
+    await aqtbot.wait_until(
+        lambda: imp_w.current_page.label_passphrase_error.text()
+        == translate("TEXT_RECOVERY_INVALID_PASSPHRASE")
     )
     assert imp_w.current_page.label_passphrase_error.isVisible()
 
     imp_w.current_page.edit_passphrase.setText("")
     aqtbot.key_clicks(imp_w.current_page.edit_passphrase, passphrase)
-    assert not imp_w.current_page.label_passphrase_error.isVisible()
+    await aqtbot.wait_until(lambda: not imp_w.current_page.label_passphrase_error.isVisible())
     assert not imp_w.button_validate.isEnabled()
 
     aqtbot.key_clicks(imp_w.current_page.line_edit_device, str(NEW_DEVICE_LABEL))
-    assert imp_w.button_validate.isEnabled()
+    await aqtbot.wait_until(imp_w.button_validate.isEnabled)
 
     if kind == "ok":
 
@@ -197,12 +199,19 @@ async def test_import_recovery_device(
         aqtbot.key_clicks(
             imp_w.current_page.main_layout.itemAt(0).widget().line_edit_password_check, PASSWORD
         )
-        assert imp_w.button_validate.isEnabled()
+        await aqtbot.wait_until(imp_w.button_validate.isEnabled)
 
         aqtbot.mouse_click(imp_w.button_validate, QtCore.Qt.LeftButton)
-        assert autoclose_dialog.dialogs == [("", translate("TEXT_RECOVERY_IMPORT_SUCCESS"))]
+        await aqtbot.wait_until(
+            lambda: autoclose_dialog.dialogs == [("", translate("TEXT_RECOVERY_IMPORT_SUCCESS"))]
+        )
 
         lw = gui.test_get_login_widget()
+
+        def _devices_listed():
+            assert lw.widget.layout().count() > 0
+
+        await aqtbot.wait_until(_devices_listed)
 
         accounts_w = lw.widget.layout().itemAt(0).widget()
         assert accounts_w.accounts_widget.layout().count() == 3

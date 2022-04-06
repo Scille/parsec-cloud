@@ -136,6 +136,9 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
             raise JobResultError("error") from exc
 
     def _on_validate_clicked(self):
+        self.jobs_ctx.submit_job(None, None, self._on_validate_clicked_async)
+
+    async def _on_validate_clicked_async(self):
         if isinstance(self.current_page, DeviceRecoveryImportPage1Widget):
             # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
             device_label = DeviceLabel(
@@ -160,7 +163,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
                         password=self.current_page.get_auth(),
                     )
                 else:
-                    save_device_with_smartcard_in_config(
+                    await save_device_with_smartcard_in_config(
                         config_dir=self.config.config_dir, device=self.new_device
                     )
                 show_info(self, translate("TEXT_RECOVERY_IMPORT_SUCCESS"))

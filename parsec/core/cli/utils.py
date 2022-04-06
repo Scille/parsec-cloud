@@ -15,7 +15,7 @@ from parsec.core.local_device import (
     list_available_devices,
     is_smartcard_extension_available,
     load_device_with_password,
-    load_device_with_smartcard,
+    load_device_with_smartcard_sync,
     save_device_with_password_in_config,
     save_device_with_smartcard_in_config,
 )
@@ -64,10 +64,18 @@ def cli_command_base_options(fn: F) -> F:
 
 def core_config_options(fn: F) -> F:
     @click.option(
+        "--pki-extra-trust-root",
+        multiple=True,
+        default=(),
+        type=Path,
+        envvar="PARSEC_PKI_EXTRA_TRUST_ROOT",
+        help="Additional path to a PKI root certificate",
+    )
+    @click.option(
         "--config-dir", envvar="PARSEC_CONFIG_DIR", type=click.Path(exists=True, file_okay=False)
     )
     @wraps(fn)
-    def wrapper(**kwargs):
+    def wrapper(pki_extra_trust_root, **kwargs):
         assert "config" not in kwargs
         config_dir = kwargs["config_dir"]
         # `--sentry-*` are only present for gui command
@@ -80,6 +88,7 @@ def core_config_options(fn: F) -> F:
             sentry_dsn=sentry_dsn,
             sentry_environment=sentry_environment,
             debug=kwargs["debug"],
+            pki_extra_trust_roots=pki_extra_trust_root,
         )
 
         kwargs["config"] = config
@@ -149,7 +158,8 @@ def core_config_and_device_options(fn: F) -> F:
                     password = click.prompt("password", hide_input=True)
                 device = load_device_with_password(devices[0].key_file_path, password)
             elif available_device.type == DeviceFileType.SMARTCARD:
-                device = load_device_with_smartcard(devices[0].key_file_path)
+                # It's ok to be blocking here, we're not in async land yet
+                device = load_device_with_smartcard_sync(devices[0].key_file_path)
             else:
                 raise SystemExit(f"Unsuported device file authentication `{available_device.type}`")
 
@@ -202,12 +212,8 @@ def save_device_options(fn: F) -> F:
 
                     else:  # smartcard
                         with operation(f"Saving device {device_display}"):
-                            return await trio.to_thread.run_sync(
-                                partial(
-                                    save_device_with_smartcard_in_config,
-                                    config_dir=config_dir,
-                                    device=device,
-                                )
+                            return await save_device_with_smartcard_in_config(
+                                config_dir=config_dir, device=device
                             )
 
                 except LocalDeviceError as exc:

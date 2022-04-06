@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import os
 import sys
 import shutil
 import argparse
@@ -32,7 +33,7 @@ def run(cmd, **kwargs):
     return ret
 
 
-def main(program_source):
+def main(program_source, include_parsec_ext=None):
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
 
     # Retrieve program version
@@ -60,8 +61,11 @@ def main(program_source):
         # Generate wheels for parsec (with it core extra) and it dependencies
         # Also generate wheels for PyInstaller in the same command so that
         # dependency resolution is done together with parsec.
+        packages = [f"{program_source.absolute()}[core]", "pyinstaller"]
+        if include_parsec_ext is not None:
+            packages.append(f"{include_parsec_ext.absolute()}")
         run(
-            f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip wheel --wheel-dir {WHEELS_DIR} {program_source.absolute()}[core] pyinstaller"
+            f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip wheel --wheel-dir {WHEELS_DIR} {' '.join(packages)}"
         )
 
     # Bootstrap PyInstaller virtualenv
@@ -70,8 +74,11 @@ def main(program_source):
         print("### Installing wheels & PyInstaller in temporary virtualenv ###")
         run(f"python -m venv {pyinstaller_venv_dir}")
         run(f"{ pyinstaller_venv_dir / 'Scripts/python' } -m pip install pip --upgrade")
+        packages = ["parsec-cloud[core]", "pyinstaller"]
+        if include_parsec_ext is not None:
+            packages.append("parsec-ext")
         run(
-            f"{ pyinstaller_venv_dir / 'Scripts/python' } -m pip install --no-index --find-links {WHEELS_DIR} parsec-cloud[core] pyinstaller"
+            f"{ pyinstaller_venv_dir / 'Scripts/python' } -m pip install --no-index --find-links {WHEELS_DIR} {' '.join(packages)}"
         )
 
     pyinstaller_build = BUILD_DIR / "pyinstaller_build"
@@ -79,8 +86,12 @@ def main(program_source):
     if not pyinstaller_dist.is_dir():
         print("### Use Pyinstaller to generate distribution ###")
         spec_file = Path(__file__).joinpath("..", "pyinstaller.spec").resolve()
+        env = dict(os.environ)
+        if include_parsec_ext is not None:
+            env["INCLUDE_PARSEC_EXT"] = "1"
         run(
-            f"{ pyinstaller_venv_dir / 'Scripts/python' } -m PyInstaller {spec_file} --distpath {pyinstaller_dist} --workpath {pyinstaller_build}"
+            f"{ pyinstaller_venv_dir / 'Scripts/python' } -m PyInstaller {spec_file} --distpath {pyinstaller_dist} --workpath {pyinstaller_build}",
+            env=env,
         )
 
     target_dir = BUILD_DIR / f"parsec-{program_version}-{get_archslug()}"
@@ -162,7 +173,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Freeze Parsec")
     parser.add_argument("program_source")
     parser.add_argument("--disable-check-python", action="store_true")
+    parser.add_argument("--include-parsec-ext", type=Path)
     args = parser.parse_args()
     if not args.disable_check_python:
         check_python_version()
-    main(Path(args.program_source))
+    main(Path(args.program_source), include_parsec_ext=args.include_parsec_ext)

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-03-10 09:19+0100\n"
+"POT-Creation-Date: 2022-04-06 11:55+0200\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -135,6 +135,9 @@ msgstr "Users"
 
 msgid "ACTION_MENU_DEVICES"
 msgstr "My devices"
+
+msgid "ACTION_MENU_ENROLLMENT"
+msgstr "SmartCard Enrollment"
 
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
@@ -338,9 +341,6 @@ msgstr ""
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Create a recovery device"
 
-msgid "TEXT_DEVICE_RECOVERY_IMPORT_WIZARD_TITLE"
-msgstr "Recover a device"
-
 msgid "ACTION_IMPORT_KEY"
 msgstr "Recover a device"
 
@@ -374,6 +374,9 @@ msgstr "The device has been successfully recovered"
 msgid "ACTION_CREATE_DEVICE"
 msgstr "Create the device"
 
+msgid "TEXT_DEVICE_RECOVERY_IMPORT_WIZARD_TITLE"
+msgstr "Recover a device"
+
 msgid "TEXT_DEVICE_IS_CURRENT"
 msgstr "current"
 
@@ -385,6 +388,101 @@ msgstr "Could not invite the device."
 
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the device list from the server."
+
+msgid "TEXT_ENROLLMENT_INSTRUCTIONS_organization"
+msgstr ""
+"Please select a valid certificate to make an enrollment request to the "
+"organization {organization}."
+
+msgid "TEXT_ENROLLMENT_SUBMIT_ALREADY_EXISTS_TITLE"
+msgstr "Request already exists"
+
+msgid "TEXT_ENROLLMENT_SUBMIT_ALREADY_EXISTS_QUESTION"
+msgstr ""
+"A request has already been made on this organization with this "
+"certificate. Do you want to overwrite it?"
+
+msgid "ACTION_ENROLLMENT_FORCE"
+msgstr "Remake the request"
+
+msgid "ACTION_NO"
+msgstr "No"
+
+msgid "TEXT_ENROLLMENT_SUBMIT_FAILED"
+msgstr "Could not make the request."
+
+msgid "TEXT_ENROLLMENT_ERROR_LOADING_CERTIFICATE"
+msgstr "Error loading certificate."
+
+msgid "TEXT_ENROLLMENT_QUERY_TITLE"
+msgstr "Join an organization with smartcard"
+
+msgid "TEXT_SELECT_USER_PROFILE"
+msgstr "Select a profile for the new user:"
+
+msgid "TEXT_USER_PROFILE_OUTSIDER"
+msgstr "Outsider"
+
+msgid "TEXT_USER_PROFILE_STANDARD"
+msgstr "Standard"
+
+msgid "TEXT_USER_PROFILE_ADMIN"
+msgstr "Administrator"
+
+msgid "TEXT_USER_PROFILE_STANDARD_TOOLTIP"
+msgstr ""
+"The profile <b>Standard User</b> has access to workspaces where they're "
+"invited, they can create new workspaces and share them, they can access "
+"the list of users."
+
+msgid "TEXT_USER_PROFILE_ADMIN_TOOLTIP"
+msgstr ""
+"The profile <b>Administrator</b> manages the organization. "
+"Administrations can add or remove users from the organization. An "
+"administrator also has access to the same functionnalities as a standard "
+"user."
+
+msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
+msgstr "Your organization does not authorize this kind of profile."
+
+msgid "TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"
+msgstr ""
+"The profile <b>Outsider</b> can be given access to workspaces as a "
+"<b>Reader</b> or <b>Contributor</b> but cannot create new workspaces and "
+"cannot access the list of users."
+
+msgid "TEXT_ENROLLMENT_ACCEPT_CHECK_INFO_TITLE"
+msgstr "Greet a new user"
+
+msgid "TEXT_ENROLLMENT_ERROR_WITH_CERTIFICATE"
+msgstr "An error occured while trying to load this request."
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_IS_INVALID"
+msgstr "Invalid certificate"
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_IS_VALID"
+msgstr "Valid certificate"
+
+msgid "TEXT_ENROLLMENT_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "The link has been copied to the clipboard."
+
+msgid "TEXT_ENROLLMENT_FAILED_TO_RETRIEVE_PENDING"
+msgstr "Could not retrieve pending requests."
+
+msgid "TEXT_ENROLLMENT_NO_PENDING_ENROLLMENT"
+msgstr "No pending enrollment requests."
+
+msgid "TEXT_ENROLLMENT_ACCEPT_FAILURE"
+msgstr "Could not accept this demand."
+
+msgid "TEXT_ENROLLMENT_ACCEPT_SUCCESS"
+msgstr "This demand was successfully accepted."
+
+msgid "TEXT_ENROLLMENT_REJECT_FAILURE"
+msgstr "Could not reject this demand."
+
+msgid "TEXT_ENROLLMENT_REJECT_SUCCESS"
+msgstr "This demand was successfully rejected."
 
 msgid "TEXT_FILE_HISTORY_LIST_FAILURE"
 msgstr "Error while retrieving the file history."
@@ -568,6 +666,11 @@ msgstr ""
 "You don't have the permission to access some of these files. Some files "
 "may not have been imported."
 
+msgid "TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"
+msgstr ""
+"There has been an error while writing to the disk. It might be already "
+"full, please check your disk space."
+
 msgid "TEXT_FILE_IMPORT_ONE_ERROR"
 msgstr ""
 "There has been an error while import the file. The file could not be "
@@ -577,11 +680,6 @@ msgid "TEXT_FILE_IMPORT_MULTIPLE_ERROR"
 msgstr ""
 "There has been an error while importing the files. Some files may not "
 "have been imported."
-
-msgid "TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"
-msgstr ""
-"There has been an error while writing to the disk. It might be already full, "
-"please check your disk space."
 
 msgid "TEXT_FILE_CREATE_FOLDER_TITLE"
 msgstr "Create a folder"
@@ -744,40 +842,6 @@ msgstr ""
 
 msgid "TEXT_GREET_USER_PEER_RESET"
 msgstr "The invitee has reset the process. We will restart from the beginning."
-
-msgid "TEXT_SELECT_USER_PROFILE"
-msgstr "Select a profile for the new user:"
-
-msgid "TEXT_USER_PROFILE_OUTSIDER"
-msgstr "Outsider"
-
-msgid "TEXT_USER_PROFILE_STANDARD"
-msgstr "Standard"
-
-msgid "TEXT_USER_PROFILE_ADMIN"
-msgstr "Administrator"
-
-msgid "TEXT_USER_PROFILE_STANDARD_TOOLTIP"
-msgstr ""
-"The profile <b>Standard User</b> has access to workspaces where they're "
-"invited, they can create new workspaces and share them, they can access "
-"the list of users."
-
-msgid "TEXT_USER_PROFILE_ADMIN_TOOLTIP"
-msgstr ""
-"The profile <b>Administrator</b> manages the organization. "
-"Administrations can add or remove users from the organization. An "
-"administrator also has access to the same functionnalities as a standard "
-"user."
-
-msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
-msgstr "Your organization does not authorize this kind of profile."
-
-msgid "TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"
-msgstr ""
-"The profile <b>Outsider</b> can be given access to workspaces as a "
-"<b>Reader</b> or <b>Contributor</b> but cannot create new workspaces and "
-"cannot access the list of users."
 
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr "The email is invalid."
@@ -1652,6 +1716,45 @@ msgstr ""
 "\n"
 "</body></html>"
 
+msgid "TEXT_ENROLLMENT_RETRIEVING_STATUS"
+msgstr "Retrieving the status..."
+
+msgid "TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE"
+msgstr "Unknown"
+
+msgid "TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE_TOOLTIP"
+msgstr "Could not retrieve this request status"
+
+msgid "TEXT_ENROLLMENT_STATUS_PENDING"
+msgstr "Pending request"
+
+msgid "TEXT_ENROLLMENT_STATUS_PENDING_TOOLTIP"
+msgstr "Your request requires to be validated by an administrator"
+
+msgid "TEXT_ENROLLMENT_STATUS_OUTDATED"
+msgstr "Outdated request"
+
+msgid "TEXT_ENROLLMENT_STATUS_OUTDATED_TOOLTIP"
+msgstr "Your smartcard certificate has been used on another device"
+
+msgid "ACTION_ENROLLMENT_CLEAR"
+msgstr "Remove from device list"
+
+msgid "TEXT_ENROLLMENT_STATUS_REJECTED"
+msgstr "Your request has been rejected"
+
+msgid "TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"
+msgstr "An administrator has rejected your request"
+
+msgid "TEXT_ENROLLMENT_STATUS_ACCEPTED"
+msgstr "Request approved"
+
+msgid "TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"
+msgstr "An administrator has validated your enrollment request"
+
+msgid "ACTION_ENROLLMENT_FINALIZE"
+msgstr "Join the organization"
+
 msgid "TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user"
 msgstr ""
 "Welcome back to PARSEC <b>{user}</b>! You will be asked to provide your "
@@ -1768,9 +1871,6 @@ msgstr ""
 "We advice that you create a recovery device. Would you like to create one"
 " now?"
 
-msgid "ACTION_NO"
-msgstr "No"
-
 msgid "TEXT_JOIN_ORG_URL_TITLE"
 msgstr "Join an organization"
 
@@ -1785,6 +1885,12 @@ msgstr "The link is invalid."
 
 msgid "TEXT_INVALID_URL"
 msgstr "The link is invalid."
+
+msgid "TEXT_PKI_ENROLLMENT_NOT_AVAILABLE"
+msgstr "This version of Parsec cannot use this type of invitation address."
+
+msgid "TEXT_ENROLLMENT_QUERY_SUCCEEDED"
+msgstr "Your request has been sent"
 
 msgid "TEXT_CLAIM_USER_SUCCESSFUL_TITLE"
 msgstr "You have joined a new organization!"
@@ -1814,18 +1920,6 @@ msgstr "Yes"
 
 msgid "ACTION_ENABLE_TELEMETRY_REFUSE"
 msgstr "No"
-
-msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"
-msgstr "Welcome to Parsec!"
-
-msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_INSTRUCTIONS"
-msgstr "It seems you are new to PARSEC. What would you like to do?"
-
-msgid "ACTION_NO_DEVICE_CREATE_ORGANIZATION"
-msgstr "I want to create a new organization"
-
-msgid "ACTION_NO_DEVICE_JOIN_ORGANIZATION"
-msgstr "I want to join an existing organization"
 
 msgid "TEXT_TAB_TITLE_LOG_IN_SCREEN"
 msgstr "Log In"
@@ -2451,6 +2545,30 @@ msgstr "Invite a new device"
 
 msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
 msgstr "This workspace is empty."
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_SUBJECT_NAME"
+msgstr "Name"
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_ISSUER"
+msgstr "Issuer"
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_SUBJECT_EMAIL"
+msgstr "Email"
+
+msgid "ACTION_ACCEPT_RECRUIT"
+msgstr "Accept"
+
+msgid "ACTION_REJECT_RECRUIT"
+msgstr "Reject"
+
+msgid "ACTION_SELECT_CERTIFICATE"
+msgstr "Select a certificate"
+
+msgid "ACTION_ASK_TO_JOIN_ORG"
+msgstr "Ask to join the organization"
+
+msgid "ACTION_GET_ENROLLMENT_ADDR"
+msgstr "Get the enrollment link"
 
 msgid "TEXT_ERROR_SHOW_DETAILS_TOOLTIP"
 msgstr "Show application execution state."

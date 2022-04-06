@@ -5,22 +5,13 @@ from typing import List, Optional, Tuple
 import pendulum
 
 from parsec.utils import timestamps_in_the_ballpark
-from parsec.crypto import VerifyKey, PublicKey
 from parsec.event_bus import EventBus
-from parsec.api.data import (
-    UserProfile,
-    UserCertificateContent,
-    DeviceCertificateContent,
-    RevokedUserCertificateContent,
-    DataError,
-)
+from parsec.api.data import UserProfile, RevokedUserCertificateContent, DataError
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
     DeviceID,
     HumanHandle,
-    DeviceLabel,
-    HandshakeType,
     user_get_serializer,
     human_find_serializer,
     user_create_serializer,
@@ -28,6 +19,13 @@ from parsec.api.protocol import (
     device_create_serializer,
 )
 from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.user_type import (
+    User,
+    Device,
+    validate_new_user_certificates,
+    validate_new_device_certificate,
+    CertificateValidationError,
+)
 
 
 class UserError(Exception):
@@ -50,63 +48,20 @@ class UserActiveUsersLimitReached(UserError):
     pass
 
 
+class UserCertifValidationError(UserError):
+    pass
+
+
+class UserInvalidCertificationError(UserCertifValidationError):
+    status = "invalid_certification"
+
+
+class UserInvalidDataError(UserCertifValidationError):
+    status = "invalid_data"
+
+
 PEER_EVENT_MAX_WAIT = 300
 INVITATION_VALIDITY = 3600
-
-
-@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
-class Device:
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.device_id})"
-
-    def evolve(self, **kwargs):
-        return attr.evolve(self, **kwargs)
-
-    @property
-    def device_name(self):
-        return self.device_id.device_name
-
-    @property
-    def user_id(self):
-        return self.device_id.user_id
-
-    @property
-    def verify_key(self) -> VerifyKey:
-        return DeviceCertificateContent.unsecure_load(self.device_certificate).verify_key
-
-    device_id: DeviceID
-    device_label: Optional[DeviceLabel]
-    device_certificate: bytes
-    redacted_device_certificate: bytes
-    device_certifier: Optional[DeviceID]
-    created_on: pendulum.DateTime = attr.ib(factory=pendulum.now)
-
-
-@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
-class User:
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.user_id})"
-
-    def evolve(self, **kwargs):
-        return attr.evolve(self, **kwargs)
-
-    def is_revoked(self):
-        return self.revoked_on and self.revoked_on <= pendulum.now()
-
-    @property
-    def public_key(self) -> PublicKey:
-        return UserCertificateContent.unsecure_load(self.user_certificate).public_key
-
-    user_id: UserID
-    human_handle: Optional[HumanHandle]
-    user_certificate: bytes
-    redacted_user_certificate: bytes
-    user_certifier: Optional[DeviceID]
-    profile: UserProfile = UserProfile.STANDARD
-    created_on: pendulum.DateTime = attr.ib(factory=pendulum.now)
-    revoked_on: Optional[pendulum.DateTime] = None
-    revoked_user_certificate: Optional[bytes] = None
-    revoked_user_certifier: Optional[DeviceID] = None
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -166,7 +121,7 @@ class BaseUserComponent:
             }
         )
 
-    @api("human_find", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("human_find")
     @catch_protocol_errors
     async def api_human_find(self, client_ctx, msg):
         if client_ctx.profile == UserProfile.OUTSIDER:
@@ -187,116 +142,40 @@ class BaseUserComponent:
             }
         )
 
-    @api("user_create", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("user_create")
     @catch_protocol_errors
     async def api_user_create(self, client_ctx, msg):
         if client_ctx.profile != UserProfile.ADMIN:
-            return {
-                "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
-            }
+            return user_create_serializer.rep_dump(
+                {
+                    "status": "not_allowed",
+                    "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+                }
+            )
         msg = user_create_serializer.req_load(msg)
-        rep = await self._api_user_create(client_ctx, msg)
-        return user_create_serializer.rep_dump(rep)
-
-    async def _api_user_create(self, client_ctx, msg):
-        try:
-            d_data = DeviceCertificateContent.verify_and_load(
-                msg["device_certificate"],
-                author_verify_key=client_ctx.verify_key,
-                expected_author=client_ctx.device_id,
-            )
-            u_data = UserCertificateContent.verify_and_load(
-                msg["user_certificate"],
-                author_verify_key=client_ctx.verify_key,
-                expected_author=client_ctx.device_id,
-            )
-            ru_data = UserCertificateContent.verify_and_load(
-                msg["redacted_user_certificate"],
-                author_verify_key=client_ctx.verify_key,
-                expected_author=client_ctx.device_id,
-            )
-            rd_data = DeviceCertificateContent.verify_and_load(
-                msg["redacted_device_certificate"],
-                author_verify_key=client_ctx.verify_key,
-                expected_author=client_ctx.device_id,
-            )
-
-        except DataError as exc:
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
-            }
-
-        if u_data.timestamp != d_data.timestamp:
-            return {
-                "status": "invalid_data",
-                "reason": "Device and User certificates must have the same timestamp.",
-            }
-
-        now = pendulum.now()
-        if not timestamps_in_the_ballpark(u_data.timestamp, now):
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certificate.",
-            }
-
-        if u_data.user_id != d_data.device_id.user_id:
-            return {
-                "status": "invalid_data",
-                "reason": "Device and User must have the same user ID.",
-            }
-
-        if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
-            return {
-                "status": "invalid_data",
-                "reason": "Redacted User certificate differs from User certificate.",
-            }
-        if ru_data.human_handle:
-            return {
-                "status": "invalid_data",
-                "reason": "Redacted User certificate must not contain a human_handle field.",
-            }
-
-        if rd_data.evolve(device_label=d_data.device_label) != d_data:
-            return {
-                "status": "invalid_data",
-                "reason": "Redacted Device certificate differs from Device certificate.",
-            }
-        if rd_data.device_label:
-            return {
-                "status": "invalid_data",
-                "reason": "Redacted Device certificate must not contain a device_label field.",
-            }
 
         try:
-            user = User(
-                user_id=u_data.user_id,
-                human_handle=u_data.human_handle,
-                profile=u_data.profile,
-                user_certificate=msg["user_certificate"],
-                redacted_user_certificate=msg["redacted_user_certificate"]
-                or msg["user_certificate"],
-                user_certifier=u_data.author,
-                created_on=u_data.timestamp,
-            )
-            first_device = Device(
-                device_id=d_data.device_id,
-                device_label=d_data.device_label,
+            user, first_device = validate_new_user_certificates(
+                expected_author=client_ctx.device_id,
+                author_verify_key=client_ctx.verify_key,
                 device_certificate=msg["device_certificate"],
-                redacted_device_certificate=msg["redacted_device_certificate"]
-                or msg["device_certificate"],
-                device_certifier=d_data.author,
-                created_on=d_data.timestamp,
+                user_certificate=msg["user_certificate"],
+                redacted_user_certificate=msg["redacted_user_certificate"],
+                redacted_device_certificate=msg["redacted_device_certificate"],
             )
             await self.create_user(client_ctx.organization_id, user, first_device)
+            rep = {"status": "ok"}
+
+        except CertificateValidationError as exc:
+            rep = {"status": exc.status, "reason": exc.reason}
 
         except UserAlreadyExistsError as exc:
-            return {"status": "already_exists", "reason": str(exc)}
-        except UserActiveUsersLimitReached:
-            return {"status": "active_users_limit_reached"}
+            rep = {"status": "already_exists", "reason": str(exc)}
 
-        return {"status": "ok"}
+        except UserActiveUsersLimitReached:
+            rep = {"status": "active_users_limit_reached"}
+
+        return user_create_serializer.rep_dump(rep)
 
     @api("user_revoke")
     @catch_protocol_errors
@@ -348,68 +227,28 @@ class BaseUserComponent:
 
         return user_revoke_serializer.rep_dump({"status": "ok"})
 
-    @api("device_create", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("device_create")
     @catch_protocol_errors
     async def api_device_create(self, client_ctx, msg):
         msg = device_create_serializer.req_load(msg)
 
         try:
-            data = DeviceCertificateContent.verify_and_load(
-                msg["device_certificate"],
-                author_verify_key=client_ctx.verify_key,
+            device = validate_new_device_certificate(
                 expected_author=client_ctx.device_id,
-            )
-
-            redacted_data = None
-            if msg["redacted_device_certificate"]:
-                redacted_data = DeviceCertificateContent.verify_and_load(
-                    msg["redacted_device_certificate"],
-                    author_verify_key=client_ctx.verify_key,
-                    expected_author=client_ctx.device_id,
-                )
-
-        except DataError as exc:
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
-            }
-
-        if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certification.",
-            }
-
-        if data.device_id.user_id != client_ctx.user_id:
-            return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
-
-        if redacted_data:
-            if redacted_data.evolve(device_label=data.device_label) != data:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted Device certificate differs from Device certificate.",
-                }
-            if redacted_data.device_label:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted Device certificate must not contain a device_label field.",
-                }
-
-        try:
-            device = Device(
-                device_id=data.device_id,
-                device_label=data.device_label,
+                author_verify_key=client_ctx.verify_key,
                 device_certificate=msg["device_certificate"],
-                redacted_device_certificate=msg["redacted_device_certificate"]
-                or msg["device_certificate"],
-                device_certifier=data.author,
-                created_on=data.timestamp,
+                redacted_device_certificate=msg["redacted_device_certificate"],
             )
             await self.create_device(client_ctx.organization_id, device)
-        except UserAlreadyExistsError as exc:
-            return {"status": "already_exists", "reason": str(exc)}
+            rep = {"status": "ok"}
 
-        return device_create_serializer.rep_dump({"status": "ok"})
+        except CertificateValidationError as exc:
+            rep = {"status": exc.status, "reason": exc.reason}
+
+        except UserAlreadyExistsError as exc:
+            rep = {"status": "already_exists", "reason": str(exc)}
+
+        return device_create_serializer.rep_dump(rep)
 
     #### Virtual methods ####
 
