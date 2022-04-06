@@ -16,7 +16,6 @@ from PyQt5.QtWidgets import (
 )
 
 from parsec.core.fs import FsPath
-from parsec.api.data import EntryName
 
 from parsec.core.gui.custom_widgets import ClickableLabel, IconLabel
 
@@ -60,7 +59,7 @@ class NavigationBarWidget(QWidget):
 
     def _on_label_clicked(self, idx):
         def _internal_label_clicked(_title):
-            complete_path = FsPath([EntryName(p) for i, p in enumerate(self.paths) if i < idx])
+            complete_path = FsPath([p for i, p in enumerate(self.paths) if i < idx])
             self.route_clicked.emit(complete_path)
 
         return _internal_label_clicked
