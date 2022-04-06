@@ -45,7 +45,7 @@ def test_get_text_dialog_accept(qtbot):
     qtbot.keyClicks(w.line_edit_text, "test")
     qtbot.mouseClick(w.button_ok, QtCore.Qt.LeftButton)
     assert d.result() == QtWidgets.QDialog.Accepted
-    assert w.text == "test"
+    qtbot.wait_until(lambda: w.text == "test")
     assert w.isVisible() is False
 
 

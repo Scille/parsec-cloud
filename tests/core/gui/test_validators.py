@@ -19,6 +19,7 @@ def test_device_label_validator(qtbot, core_config):
     le.show()
 
     qtbot.keyClicks(le, "abcd")
+    qtbot.wait_until(lambda: le.text() == "abcd")
     assert le.is_input_valid()
     assert le.property("validity") == QtGui.QValidator.Acceptable
 
@@ -33,14 +34,17 @@ def test_email_validator(qtbot, core_config):
     le.show()
 
     qtbot.keyClicks(le, "maurice")
+    qtbot.wait_until(lambda: le.text() == "maurice")
     assert not le.is_input_valid()
     assert le.property("validity") == QtGui.QValidator.Intermediate
 
     qtbot.keyClicks(le, ".moss@reynholm.com")
+    qtbot.wait_until(lambda: le.text() == "maurice.moss@reynholm.com")
     assert le.is_input_valid()
     assert le.property("validity") == QtGui.QValidator.Acceptable
 
     qtbot.keyClicks(le, "#")
+    qtbot.wait_until(lambda: le.text() == "maurice.moss@reynholm.com#")
     assert not le.is_input_valid()
     assert le.property("validity") == QtGui.QValidator.Invalid
 
@@ -55,9 +59,11 @@ def test_organization_validator(qtbot, core_config):
     le.show()
 
     qtbot.keyClicks(le, "Reynholm")
+    qtbot.wait_until(lambda: le.text() == "Reynholm")
     assert le.is_input_valid()
     assert le.property("validity") == QtGui.QValidator.Acceptable
 
     qtbot.keyClicks(le, " Industries")
+    qtbot.wait_until(lambda: le.text() == "Reynholm Industries")
     assert not le.is_input_valid()
     assert le.property("validity") == QtGui.QValidator.Invalid
