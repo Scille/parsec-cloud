@@ -203,9 +203,6 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 
-    def register_components(self, **other_components):
-        self._user_component = other_components["user"]
-
     async def submit(
         self,
         organization_id: OrganizationID,
