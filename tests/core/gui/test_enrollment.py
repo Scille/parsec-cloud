@@ -81,6 +81,7 @@ async def test_full_enrollment(
 
     def _devices_listed():
         assert lw.widget.layout().count() == 1
+        assert lw.widget.layout().itemAt(0) is not None
         assert lw.widget.layout().itemAt(0).widget().accounts_widget.layout().count() == 3
         pending = lw.widget.layout().itemAt(0).widget().accounts_widget.layout().itemAt(0).widget()
         assert isinstance(pending, EnrollmentPendingButton)
@@ -104,6 +105,7 @@ async def test_full_enrollment(
 
     def _enrollments_listed():
         assert e_w.main_layout.count() == 1
+        assert e_w.main_layout.itemAt(0) is not None
         assert isinstance(e_w.main_layout.itemAt(0).widget(), EnrollmentButton)
 
     await aqtbot.wait_until(_enrollments_listed)
@@ -168,6 +170,7 @@ async def test_full_enrollment(
 
     def _devices_listed():
         assert lw.widget.layout().count() == 1
+        assert lw.widget.layout().itemAt(0) is not None
         assert lw.widget.layout().itemAt(0).widget().accounts_widget.layout().count() == 3
         pending = lw.widget.layout().itemAt(0).widget().accounts_widget.layout().itemAt(0).widget()
         assert isinstance(pending, EnrollmentPendingButton)
@@ -191,6 +194,7 @@ async def test_full_enrollment(
         org_name = alice.organization_addr.organization_id.str
         devices = ["John Doe", "Alicey McAliceFace"]
 
+        assert lw.widget.layout().itemAt(0) is not None
         assert lw.widget.layout().itemAt(0).widget().accounts_widget.layout().count() == 3
         for i in [0, 1]:
             device = (
