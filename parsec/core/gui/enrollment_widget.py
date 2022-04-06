@@ -242,7 +242,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         except PkiEnrollmentListError:
             SnackbarManager.warn(translate("TEXT_ENROLLMENT_FAILED_TO_RETRIEVE_PENDING"))
         if not pendings:
-            self.label_empty_list.setText(translate("TEXT_ENROLLMENT_NO_PENDING_enrollment"))
+            self.label_empty_list.setText(translate("TEXT_ENROLLMENT_NO_PENDING_ENROLLMENT"))
             self.label_empty_list.show()
             return
         for pending in pendings:

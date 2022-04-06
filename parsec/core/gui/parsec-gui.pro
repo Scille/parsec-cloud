@@ -80,7 +80,9 @@ FORMS += forms/main_window.ui \
     forms/snackbar_widget.ui \
     forms/file_status_widget.ui \
     forms/enrollment_widget.ui \
-    forms/recruitment_widget.ui
+    forms/enrollment_button.ui \
+    forms/enrollment_query_widget.ui \
+    forms/enrollment_pending_button.ui
 
 RESOURCES += rc/resources.qrc \
     forms/rc/resources.qrc
