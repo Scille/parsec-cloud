@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::{Duration, TimeZone, Timelike};
+pub use chrono::Duration;
+use chrono::{TimeZone, Timelike};
 use core::ops::Sub;
 use serde_bytes::ByteBuf;
 

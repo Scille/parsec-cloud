@@ -3,7 +3,7 @@
 use parsec_api_types::DateTime;
 use thiserror::Error;
 
-use crate::ApiVersion;
+use crate::{ApiVersion, HANDSHAKE_CHALLENGE_SIZE};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum HandshakeError {
@@ -38,7 +38,7 @@ impl From<&'static str> for HandshakeError {
 
 #[derive(Debug, PartialEq)]
 pub struct ChallengeDataReport {
-    pub challenge: Vec<u8>,
+    pub challenge: [u8; HANDSHAKE_CHALLENGE_SIZE],
     pub supported_api_versions: Vec<ApiVersion>,
     pub backend_timestamp: DateTime,
     pub client_timestamp: DateTime,

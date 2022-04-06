@@ -10,7 +10,7 @@ use serde_with::{serde_as, Bytes};
 use crate::{impl_dumps_loads, ChallengeDataReport, HandshakeError, InvitationType};
 use parsec_api_types::{maybe_field, DateTime, DeviceID, InvitationToken, OrganizationID};
 
-const HANDSHAKE_CHALLENGE_SIZE: usize = 48;
+pub const HANDSHAKE_CHALLENGE_SIZE: usize = 48;
 
 pub const API_V1_VERSION: ApiVersion = ApiVersion {
     version: 1,
@@ -78,12 +78,19 @@ pub enum Answer {
         invitation_type: InvitationType,
         token: InvitationToken,
     },
-    #[serde(rename = "signed_answer")]
-    SignedAnswer {
-        #[serde_as(as = "Bytes")]
-        answer: Vec<u8>,
-    },
 }
+
+impl_dumps_loads!(Answer);
+
+#[serde_as]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "type", rename = "signed_answer")]
+pub struct SignedAnswer {
+    #[serde_as(as = "Bytes")]
+    pub answer: [u8; HANDSHAKE_CHALLENGE_SIZE],
+}
+
+impl_dumps_loads!(SignedAnswer);
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
@@ -97,15 +104,13 @@ pub enum HandshakeResult {
     RvkMismatch,
 }
 
-impl_dumps_loads!(Answer);
-
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "handshake", rename_all = "snake_case")]
 pub enum Handshake {
     Challenge {
         #[serde_as(as = "Bytes")]
-        challenge: Vec<u8>,
+        challenge: [u8; HANDSHAKE_CHALLENGE_SIZE],
         supported_api_versions: Vec<ApiVersion>,
         // Those fields have been added to API version 2.4
         // They are provided to the client in order to allow them to detect whether
@@ -120,6 +125,8 @@ pub enum Handshake {
         backend_timestamp: Option<DateTime>,
     },
     Answer(Box<Answer>),
+    #[serde(rename = "answer")]
+    SignedAnswer(SignedAnswer),
     Result {
         result: HandshakeResult,
         #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
@@ -131,14 +138,12 @@ impl_dumps_loads!(Handshake);
 
 #[derive(Debug)]
 pub struct ServerHandshakeStalled {
-    pub challenge_size: usize,
     pub supported_api_version: Vec<ApiVersion>,
 }
 
 impl Default for ServerHandshakeStalled {
     fn default() -> Self {
         Self {
-            challenge_size: HANDSHAKE_CHALLENGE_SIZE,
             supported_api_version: vec![API_V2_VERSION, API_V1_VERSION],
         }
     }
@@ -147,14 +152,15 @@ impl Default for ServerHandshakeStalled {
 impl ServerHandshakeStalled {
     fn _build_challenge_req_with_challenge(
         self,
-        challenge: Vec<u8>,
+        challenge: [u8; HANDSHAKE_CHALLENGE_SIZE],
+        timestamp: DateTime,
     ) -> Result<ServerHandshakeChallenge, HandshakeError> {
         let raw = Handshake::Challenge {
-            challenge: challenge.clone(),
+            challenge,
             supported_api_versions: self.supported_api_version.clone(),
             ballpark_client_early_offset: Some(BALLPARK_CLIENT_EARLY_OFFSET),
             ballpark_client_late_offset: Some(BALLPARK_CLIENT_LATE_OFFSET),
-            backend_timestamp: Some(DateTime::now()),
+            backend_timestamp: Some(timestamp),
         }
         .dumps()?;
 
@@ -165,52 +171,54 @@ impl ServerHandshakeStalled {
         })
     }
 
-    pub fn build_challenge_req(self) -> Result<ServerHandshakeChallenge, HandshakeError> {
-        let mut challenge = vec![0; self.challenge_size];
+    pub fn build_challenge_req(
+        self,
+        timestamp: DateTime,
+    ) -> Result<ServerHandshakeChallenge, HandshakeError> {
+        let mut challenge = [0; HANDSHAKE_CHALLENGE_SIZE];
         thread_rng().fill(&mut challenge[..]);
-        self._build_challenge_req_with_challenge(challenge)
+        self._build_challenge_req_with_challenge(challenge, timestamp)
     }
 
     #[cfg(feature = "test")]
     pub fn build_challenge_req_with_challenge(
         self,
-        challenge: Vec<u8>,
+        challenge: [u8; HANDSHAKE_CHALLENGE_SIZE],
+        timestamp: DateTime,
     ) -> Result<ServerHandshakeChallenge, HandshakeError> {
-        self._build_challenge_req_with_challenge(challenge)
+        self._build_challenge_req_with_challenge(challenge, timestamp)
     }
 }
 
 #[derive(Debug)]
 pub struct ServerHandshakeChallenge {
     pub supported_api_version: Vec<ApiVersion>,
-    pub challenge: Vec<u8>,
+    pub challenge: [u8; HANDSHAKE_CHALLENGE_SIZE],
     pub raw: Vec<u8>,
 }
 
 impl ServerHandshakeChallenge {
     pub fn process_answer_req(self, req: &[u8]) -> Result<ServerHandshakeAnswer, HandshakeError> {
         if let Handshake::Answer(data) = Handshake::loads(req)? {
-            match *data {
+            let client_api_version = match *data {
                 Answer::Authenticated {
                     client_api_version, ..
-                }
-                | Answer::Invited {
+                } => client_api_version,
+                Answer::Invited {
                     client_api_version, ..
-                } => {
-                    if client_api_version.version == 1 || client_api_version.version == 2 {
-                        return Ok(ServerHandshakeAnswer {
-                            client_api_version,
-                            challenge: self.challenge,
-                            data: *data,
-                        });
-                    } else {
-                        return Err(HandshakeError::APIVersion {
-                            backend_versions: self.supported_api_version,
-                            client_versions: vec![client_api_version],
-                        });
-                    }
-                }
-                _ => return Err(HandshakeError::InvalidMessage("Invalid data".into())),
+                } => client_api_version,
+            };
+            if client_api_version.version == 1 || client_api_version.version == 2 {
+                return Ok(ServerHandshakeAnswer {
+                    client_api_version,
+                    challenge: self.challenge,
+                    data: *data,
+                });
+            } else {
+                return Err(HandshakeError::APIVersion {
+                    backend_versions: self.supported_api_version,
+                    client_versions: vec![client_api_version],
+                });
             }
         }
         Err(HandshakeError::InvalidMessage("Invalid data".into()))
@@ -239,7 +247,7 @@ impl ServerHandshakeChallenge {
 #[derive(Debug)]
 pub struct ServerHandshakeAnswer {
     client_api_version: ApiVersion,
-    challenge: Vec<u8>,
+    challenge: [u8; HANDSHAKE_CHALLENGE_SIZE],
     pub data: Answer,
 }
 
@@ -265,14 +273,13 @@ impl ServerHandshakeAnswer {
                         let answer = verify_key
                             .verify(&answer)
                             .map_err(|_| HandshakeError::FailedChallenge)?;
-                        match Answer::loads(&answer)? {
-                            Answer::SignedAnswer { answer } => answer,
-                            _ => return Err(HandshakeError::InvalidMessage("Invalid data".into())),
-                        }
+                        SignedAnswer::loads(&answer)?.answer
                     } else {
                         verify_key
                             .verify(&answer)
                             .map_err(|_| HandshakeError::FailedChallenge)?
+                            .try_into()
+                            .unwrap()
                     };
 
                     if returned_challenge != self.challenge {
@@ -451,7 +458,15 @@ fn load_challenge_req(
     req: &[u8],
     _supported_api_versions: &[ApiVersion],
     client_timestamp: DateTime,
-) -> Result<(Vec<u8>, ApiVersion, ApiVersion, Vec<ApiVersion>), HandshakeError> {
+) -> Result<
+    (
+        [u8; HANDSHAKE_CHALLENGE_SIZE],
+        ApiVersion,
+        ApiVersion,
+        Vec<ApiVersion>,
+    ),
+    HandshakeError,
+> {
     let challenge_data = Handshake::loads(req)?;
 
     if let Handshake::Challenge {
@@ -560,7 +575,7 @@ impl AuthenticatedClientHandshakeStalled {
         let answer = if backend_api_version >= Self::VERSION {
             // TO-DO Need to use "BaseSignedData" ?
             self.user_signkey
-                .sign(&Answer::SignedAnswer { answer: challenge }.dumps()?)
+                .sign(&SignedAnswer { answer: challenge }.dumps()?)
         } else {
             self.user_signkey.sign(&challenge)
         };
