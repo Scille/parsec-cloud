@@ -62,7 +62,7 @@ jobs:
 
 - job: 's1_qa'
   displayName: 'Q&A'
-  timeoutInMinutes: 5
+  timeoutInMinutes: 60
   pool:
     vmImage: 'ubuntu-latest'
   steps:
