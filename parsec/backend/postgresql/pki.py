@@ -275,9 +275,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
                     row = await conn.fetchrow(
                         *_q_get_user_from_device_id(
-                            organization_id=organization_id.str,
-                            device_id=row["accepted"],
-                            # now=submitted_on,
+                            organization_id=organization_id.str, device_id=row["accepted"]
                         )
                     )
                     user = User(
@@ -318,7 +316,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         Raises:
             PkiEnrollmentNotFoundError
         """
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
+        async with self.dbh.pool.acquire() as conn:
             row = await conn.fetchrow(
                 *_q_get_pki_enrollment_from_enrollment_id(
                     organization_id=organization_id.str, enrollment_id=enrollment_id
@@ -334,7 +332,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         Raises: Nothing !
         """
 
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
+        async with self.dbh.pool.acquire() as conn:
 
             entries = await conn.fetch(
                 *_q_get_pki_enrollment_from_state(
@@ -436,6 +434,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             except UserActiveUsersLimitReached as exc:
                 raise PkiEnrollmentActiveUsersLimitReached from exc
 
+            # Only the user created during organization bootstrap has no certifier
             assert user.user_certifier is not None
             await conn.execute(
                 *_q_accept_pki_enrollment(
