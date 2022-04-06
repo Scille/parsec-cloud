@@ -5,6 +5,23 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.8.0-rc1 (2022-04-06)
+------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a bug in the navigation bar where clicking a parent folder didn't change
+  the current directory.  (`#2138 <https://github.com/Scille/parsec-
+  cloud/issues/2138>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Add support for PKI based enrollement  (`#2113
+  <https://github.com/Scille/parsec-cloud/issues/2113>`__)
+
+
 Parsec v2.7.0 (2022-04-01)
 --------------------------
 
