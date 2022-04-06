@@ -49,6 +49,7 @@ async def test_full_enrollment(
         lambda *args, **kwargs: (pki_org_addr.to_url()),
     )
 
+    # Open the PKI enrollment dialog
     aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
 
     eq_w = await catch_enrollment_query_widget()
@@ -74,6 +75,8 @@ async def test_full_enrollment(
 
     await aqtbot.wait_until(_request_made)
 
+    # Check if the enrollment appears among the list of devices with a PENDING status
+
     lw = gui.test_get_login_widget()
 
     def _devices_listed():
@@ -88,10 +91,14 @@ async def test_full_enrollment(
 
     await aqtbot.wait_until(_devices_listed)
 
+    # Log in with an admin device
+
     cw = await gui.test_switch_to_logged_in(alice, alice_password)
     cw.button_user.text() == "Alice"
 
     assert cw.menu.button_enrollment.isVisible() is True
+
+    # Check if the enrollment request we made appears
 
     e_w = await gui.test_switch_to_enrollment_widget()
 
@@ -111,6 +118,8 @@ async def test_full_enrollment(
     assert button.label_email.text() == "john@example.com"
     assert button.label_issuer.text() == "My CA"
     assert button.label_cert_validity.text() == "✔ Valid certificate"
+
+    # Accept the enrollment request
 
     aqtbot.mouse_click(button.button_accept, QtCore.Qt.LeftButton)
 
@@ -140,6 +149,8 @@ async def test_full_enrollment(
         "parsec.core.gui.users_widget.ensure_string_size", lambda s, size, font: (s[:12] + "...")
     )
 
+    # Check if the new user appears
+
     u_w = await gui.test_switch_to_users_widget()
     assert u_w.layout_users.count() == 3
 
@@ -150,6 +161,8 @@ async def test_full_enrollment(
     j_w = u_w.layout_users.itemAt(1).widget()
     j_w.label_username.text() == "John Doe"
     j_w.label_email.text() == "john@example..."
+
+    # Logout and check the status of the enrollment request
 
     lw = await gui.test_logout_and_switch_to_login_widget()
 
@@ -165,10 +178,14 @@ async def test_full_enrollment(
 
     await aqtbot.wait_until(_devices_listed)
 
+    # Finalize the enrollment
+
     pending = lw.widget.layout().itemAt(0).widget().accounts_widget.layout().itemAt(0).widget()
     aqtbot.mouse_click(pending.button_action, QtCore.Qt.LeftButton)
 
     assert snackbar_catcher.snackbars == [("INFO", "This demand was successfully accepted.")]
+
+    # Check if the new device appears
 
     def _new_device_listed():
         org_name = alice.organization_addr.organization_id.str
@@ -185,6 +202,8 @@ async def test_full_enrollment(
             assert device.label_organization.text() == org_name
 
     await aqtbot.wait_until(_new_device_listed)
+
+    # Log in with the new device
 
     new_device = None
     for i in [0, 1]:
