@@ -212,12 +212,8 @@ def save_device_options(fn: F) -> F:
 
                     else:  # smartcard
                         with operation(f"Saving device {device_display}"):
-                            return await trio.to_thread.run_sync(
-                                partial(
-                                    save_device_with_smartcard_in_config,
-                                    config_dir=config_dir,
-                                    device=device,
-                                )
+                            return await save_device_with_smartcard_in_config(
+                                config_dir=config_dir, device=device
                             )
 
                 except LocalDeviceError as exc:

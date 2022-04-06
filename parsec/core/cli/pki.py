@@ -221,7 +221,7 @@ async def _pki_enrollment_poll(
                 if not preselected_finalize and not await aconfirm("Finalize device creation"):
                     return
                 ctx = await ctx.finalize()
-                save_device_with_smartcard_in_config(
+                await save_device_with_smartcard_in_config(
                     config.config_dir,
                     ctx.new_device,
                     certificate_id=ctx.x509_certificate.certificate_id,

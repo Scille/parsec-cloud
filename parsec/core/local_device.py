@@ -574,7 +574,7 @@ async def load_device_with_smartcard(key_file: Path) -> LocalDevice:
     return await trio.to_thread.run_sync(load_device_with_smartcard_sync, key_file)
 
 
-def save_device_with_smartcard_in_config(
+async def save_device_with_smartcard_in_config(
     config_dir: Path,
     device: LocalDevice,
     certificate_id: Optional[str] = None,
@@ -599,22 +599,13 @@ def save_device_with_smartcard_in_config(
     #   not possible in theory, but could occur in case of a rollback in the
     #   Parsec server), in this case the old device object is now invalid
     #   and it's a good thing to replace it.
-    _load_smartcard_extension().save_device_with_smartcard(
-        key_file,
-        device,
-        force=True,
-        certificate_id=certificate_id,
-        certificate_sha1=certificate_sha1,
+    await trio.to_thread.run_sync(
+        lambda: _load_smartcard_extension().save_device_with_smartcard(
+            key_file,
+            device,
+            force=True,
+            certificate_id=certificate_id,
+            certificate_sha1=certificate_sha1,
+        )
     )
     return key_file
-
-
-def save_device_with_smartcard(key_file: Path, device: LocalDevice, force: bool) -> None:
-    """
-        LocalDeviceError
-        LocalDeviceNotFoundError
-        LocalDeviceCryptoError
-        LocalDeviceValidationError
-        LocalDevicePackingError
-    """
-    _load_smartcard_extension().save_device_with_smartcard(key_file, device, force)

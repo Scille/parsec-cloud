@@ -214,6 +214,9 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
             self.button_finalize.setDisabled(True)
 
     def _on_finalize_clicked(self):
+        self.jobs_ctx.submit_job(None, None, self._on_finalize_clicked_async)
+
+    async def _on_finalize_clicked_async(self):
         try:
             if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
                 save_device_with_password_in_config(
@@ -222,7 +225,7 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
                     password=self.widget_auth.get_auth(),
                 )
             elif self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
-                save_device_with_smartcard_in_config(
+                await save_device_with_smartcard_in_config(
                     config_dir=self.config.config_dir, device=self.new_device
                 )
             self.succeeded.emit(

@@ -311,7 +311,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
     async def _finalize_enrollment(self, context):
         context = await context.finalize()
-        save_device_with_smartcard_in_config(
+        await save_device_with_smartcard_in_config(
             config_dir=self.config.config_dir,
             device=context.new_device,
             certificate_id=context.x509_certificate.certificate_id,

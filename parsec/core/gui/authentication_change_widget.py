@@ -5,11 +5,10 @@ from PyQt5.QtWidgets import QWidget, QApplication
 from structlog import get_logger
 
 from parsec.core.local_device import (
-    get_key_file,
     load_device_with_password,
     load_device_with_smartcard,
-    save_device_with_password,
-    save_device_with_smartcard,
+    save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
     LocalDeviceError,
     LocalDeviceNotFoundError,
     LocalDeviceCryptoError,
@@ -42,16 +41,20 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
         self.button_validate.setEnabled(valid)
 
     def _on_validate_clicked(self):
+        self.jobs_ctx.submit_job(None, None, self._on_validate_clicked_async)
+
+    async def _on_validate_clicked_async(self):
         self.button_validate.setEnabled(False)
         auth_method = self.widget_auth.get_auth_method()
-        kf = get_key_file(self.core.config.config_dir, self.loaded_device)
         try:
             if auth_method == DeviceFileType.PASSWORD:
-                save_device_with_password(
-                    kf, self.loaded_device, self.widget_auth.get_auth(), force=True
+                save_device_with_password_in_config(
+                    self.core.config.config_dir, self.loaded_device, self.widget_auth.get_auth()
                 )
             elif auth_method == DeviceFileType.SMARTCARD:
-                save_device_with_smartcard(kf, self.loaded_device, force=True)
+                await save_device_with_smartcard_in_config(
+                    self.core.config.config_dir, self.loaded_device
+                )
             show_info(self, _("TEXT_AUTH_CHANGE_SUCCESS"))
             if self.dialog:
                 self.dialog.accept()
