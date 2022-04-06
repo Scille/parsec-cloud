@@ -166,7 +166,7 @@ CREATE TABLE pki_enrollment (
     submitted_on TIMESTAMPTZ NOT NULL,
 
     accepter INTEGER REFERENCES device (_id),
-    accepted INTEGER REFERENCES device (_id),
+    submitter_accepted_device INTEGER REFERENCES device (_id),
 
     enrollment_state enrollment_state NOT NULL DEFAULT 'SUBMITTED',
     info_accepted pki_enrollment_info_accepted,

@@ -143,7 +143,7 @@ _q_accept_pki_enrollment = Q(
         info_accepted.accept_payload_signature=$accept_payload_signature,
         info_accepted.accept_payload=$accept_payload,
         accepter={q_device_internal_id(organization_id="$organization_id", device_id="$accepter")},
-        accepted={q_device_internal_id(organization_id="$organization_id", device_id="$accepted")}
+        submitter_accepted_device={q_device_internal_id(organization_id="$organization_id", device_id="$accepted")}
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
         AND enrollment_id=$enrollment_id
@@ -164,6 +164,7 @@ _q_get_user_from_device_id = Q(
             WHERE device._id=$device_id
             AND device.organization = { q_organization_internal_id("$organization_id") }
         )
+    FOR UPDATE
     LIMIT 1
     """
 )
@@ -271,11 +272,14 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 elif enrollment_state == PkiEnrollmentStatus.ACCEPTED.value:
                     # Previous attempt end successfully, we are not allowed to submit
                     # unless the created user has been revoked
-                    assert row["accepted"] is not None and row["accepter"] is not None
+                    assert (
+                        row["submitter_accepted_device"] is not None and row["accepter"] is not None
+                    )
 
                     row = await conn.fetchrow(
                         *_q_get_user_from_device_id(
-                            organization_id=organization_id.str, device_id=row["accepted"]
+                            organization_id=organization_id.str,
+                            device_id=row["submitter_accepted_device"],
                         )
                     )
                     user = User(
