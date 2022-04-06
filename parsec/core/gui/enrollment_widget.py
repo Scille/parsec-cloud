@@ -7,6 +7,7 @@ from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QWidget
 
 from parsec.api.protocol import UserProfile, HumanHandle, DeviceLabel
+from parsec.core.gui.trio_jobs import QtToTrioJob
 
 from parsec.core.types import BackendPkiEnrollmentAddr
 
@@ -129,14 +130,12 @@ class EnrollmentButton(QWidget, Ui_EnrollmentButton):
         super().__init__()
         self.setupUi(self)
         self.pending = pending
-        # self.label_date.setText(self.enrollment_info.date)
         accept_pix = Pixmap(":/icons/images/material/done.svg")
         accept_pix.replace_color(QColor(0x00, 0x00, 0x00), QColor(0xFF, 0xFF, 0xFF))
         reject_pix = Pixmap(":/icons/images/material/clear.svg")
         reject_pix.replace_color(QColor(0x00, 0x00, 0x00), QColor(0xFF, 0xFF, 0xFF))
         self.button_accept.setIcon(QIcon(accept_pix))
         self.button_reject.setIcon(QIcon(reject_pix))
-
         self.label_date.setText(format_datetime(pending.submitted_on))
 
         if isinstance(self.pending, PkiEnrollementAccepterInvalidSubmittedCtx):
@@ -182,6 +181,9 @@ class EnrollmentButton(QWidget, Ui_EnrollmentButton):
 
 
 class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
+    list_success = pyqtSignal(QtToTrioJob)
+    list_failure = pyqtSignal(QtToTrioJob)
+
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -217,7 +219,9 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
     def reset(self):
         if self.current_job is not None and not self.current_job.is_finished():
             return
-        self.current_job = self.jobs_ctx.submit_job(None, None, self.list_pending_enrollments)
+        self.current_job = self.jobs_ctx.submit_job(
+            self.list_success, self.list_failure, self.list_pending_enrollments
+        )
 
     def clear_layout(self):
         while self.main_layout.count() != 0:

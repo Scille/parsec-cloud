@@ -23,6 +23,7 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendConnStatus,
 )
+from parsec.core.pki import is_pki_enrollment_available
 from parsec.core.fs import FSWorkspaceNotFoundError
 from parsec.core.fs import (
     FSWorkspaceNoReadAccess,
@@ -136,8 +137,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.button_user.clicked.connect(self._show_user_menu)
 
         self.new_notification.connect(self.on_new_notification)
-        if not self.core.device.is_admin:
-            self.menu.button_enrollment.hide()
+        self.menu.button_enrollment.setVisible(
+            self.core.device.is_admin and is_pki_enrollment_available()
+        )
         if self.core.device.is_outsider:
             self.menu.button_users.hide()
         self.menu.files_clicked.connect(self.show_mount_widget)

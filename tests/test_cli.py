@@ -4,13 +4,8 @@ import re
 import os
 import trio
 from uuid import UUID
-from pendulum import DateTime
-from collections import defaultdict
-from typing import Tuple, Optional, Iterable
-from hashlib import sha1
 from pathlib import Path
 from functools import partial
-
 
 try:
     import fcntl
@@ -29,19 +24,10 @@ from click.testing import CliRunner
 from async_generator import asynccontextmanager
 
 from parsec import __version__ as parsec_version
-from parsec.crypto import SigningKey, PrivateKey
-from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload, DataError
 from parsec.cli import cli
 from parsec.backend.postgresql import MigrationItem
 from parsec.core.types import BackendAddr
-from parsec.core.local_device import (
-    LocalDeviceNotFoundError,
-    save_device_with_password_in_config,
-    LocalDeviceCryptoError,
-    LocalDevicePackingError,
-    DeviceFileType,
-    _save_device,
-)
+from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.types import (
     LocalDevice,
     UserInfo,
@@ -49,7 +35,6 @@ from parsec.core.types import (
     BackendPkiEnrollmentAddr,
 )
 from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
-from parsec.core.types.pki import X509Certificate, LocalPendingEnrollment
 
 from tests.common import AsyncMock
 
@@ -694,152 +679,6 @@ def test_pki_enrollment_not_available(tmp_path, alice, no_parsec_extension):
         result = runner.invoke(cli, cmd)
         assert result.exit_code == 1
         assert "Error: Parsec smartcard extension not available" in result.output
-
-
-@pytest.fixture
-def mocked_parsec_ext_smartcard(monkeypatch):
-    class MockedParsecExtSmartcard:
-        def __init__(self):
-            self._pending_enrollments = defaultdict(list)
-            der_x509_certificate = b"der_X509_certificate:42:john@example.com:John Doe:My CA"
-            self.default_x509_certificate = X509Certificate(
-                issuer={"common_name": "My CA"},
-                subject={"common_name": "John Doe", "email_address": "john@example.com"},
-                der_x509_certificate=der_x509_certificate,
-                certificate_sha1=sha1(der_x509_certificate).digest(),
-                certificate_id=42,
-            )
-
-        @staticmethod
-        def _compute_signature(der_x509_certificate: bytes, payload: bytes) -> bytes:
-            return sha1(payload + der_x509_certificate).digest()  # 100% secure crypto \o/
-
-        def pki_enrollment_select_certificate(
-            self, owner_hint: Optional[LocalDevice] = None
-        ) -> X509Certificate:
-            return self.default_x509_certificate
-
-        def pki_enrollment_sign_payload(
-            self, payload: bytes, x509_certificate: X509Certificate
-        ) -> bytes:
-            return self._compute_signature(x509_certificate.der_x509_certificate, payload)
-
-        def pki_enrollment_create_local_pending(
-            self,
-            config_dir: Path,
-            x509_certificate: X509Certificate,
-            addr: BackendPkiEnrollmentAddr,
-            enrollment_id: UUID,
-            submitted_on: DateTime,
-            submit_payload: PkiEnrollmentSubmitPayload,
-            signing_key: SigningKey,
-            private_key: PrivateKey,
-        ):
-            pending = LocalPendingEnrollment(
-                x509_certificate=x509_certificate,
-                addr=addr,
-                enrollment_id=enrollment_id,
-                submitted_on=submitted_on,
-                submit_payload=submit_payload,
-                encrypted_key=b"123",
-                ciphertext=b"123",
-            )
-            secret_part = (signing_key, private_key)
-            self._pending_enrollments[config_dir].append((pending, secret_part))
-            return pending
-
-        def pki_enrollment_load_local_pending_secret_part(
-            self, config_dir: Path, enrollment_id: UUID
-        ) -> Tuple[SigningKey, PrivateKey]:
-            for (pending, secret_part) in self._pending_enrollments[config_dir]:
-                if pending.enrollment_id == enrollment_id:
-                    return secret_part
-            else:
-                raise LocalDeviceNotFoundError()
-
-        def pki_enrollment_load_submit_payload(
-            self,
-            der_x509_certificate: bytes,
-            payload_signature: bytes,
-            payload: bytes,
-            extra_trust_roots: Iterable[Path] = (),
-        ) -> PkiEnrollmentSubmitPayload:
-            computed_signature = self._compute_signature(der_x509_certificate, payload)
-            if computed_signature != payload_signature:
-                raise LocalDeviceCryptoError()
-            try:
-                submit_payload = PkiEnrollmentSubmitPayload.load(payload)
-            except DataError as exc:
-                raise LocalDevicePackingError(str(exc)) from exc
-
-            return submit_payload
-
-        def pki_enrollment_load_accept_payload(
-            self,
-            der_x509_certificate: bytes,
-            payload_signature: bytes,
-            payload: bytes,
-            extra_trust_roots: Iterable[Path] = (),
-        ) -> PkiEnrollmentAcceptPayload:
-            computed_signature = self._compute_signature(der_x509_certificate, payload)
-            if computed_signature != payload_signature:
-                raise LocalDeviceCryptoError()
-            try:
-                accept_payload = PkiEnrollmentAcceptPayload.load(payload)
-            except DataError as exc:
-                raise LocalDevicePackingError(str(exc)) from exc
-
-            return accept_payload
-
-        def save_device_with_smartcard(
-            self,
-            key_file: Path,
-            device: LocalDevice,
-            force: bool = False,
-            certificate_id: Optional[str] = None,
-            certificate_sha1: Optional[bytes] = None,
-        ) -> None:
-            def _encrypt_dump(cleartext: bytes) -> Tuple[DeviceFileType, bytes, dict]:
-
-                extra_args = {
-                    "encrypted_key": b"123",
-                    "certificate_id": certificate_id,
-                    "certificate_sha1": certificate_sha1,
-                }
-                return DeviceFileType.SMARTCARD, b"456", extra_args
-
-            _save_device(key_file, device, force, _encrypt_dump)
-
-        def pki_enrollment_load_peer_certificate(
-            self, der_x509_certificate: bytes
-        ) -> X509Certificate:
-            if not der_x509_certificate.startswith(b"der_X509_certificate:"):
-                # Consider the certificate invalid
-                raise LocalDeviceCryptoError()
-
-            _, certificate_id, subject_email, subject_cn, issuer_cn = der_x509_certificate.decode(
-                "utf8"
-            ).split(":")
-            return X509Certificate(
-                issuer={"common_name": issuer_cn},
-                subject={"email_address": subject_email, "common_name": subject_cn},
-                der_x509_certificate=der_x509_certificate,
-                certificate_sha1=sha1(der_x509_certificate).digest(),
-                certificate_id=certificate_id,
-            )
-
-    mocked_parsec_ext_smartcard = MockedParsecExtSmartcard()
-
-    def _mocked_load_smartcard_extension():
-        return mocked_parsec_ext_smartcard
-
-    monkeypatch.setattr(
-        "parsec.core.pki.plumbing._load_smartcard_extension", _mocked_load_smartcard_extension
-    )
-    monkeypatch.setattr(
-        "parsec.core.local_device._load_smartcard_extension", _mocked_load_smartcard_extension
-    )
-    return mocked_parsec_ext_smartcard
 
 
 @asynccontextmanager
