@@ -212,10 +212,10 @@ handshake_result_serializer = serializer_factory(HandshakeResultSchema)
 class ServerHandshake:
     # Class attribute
     SUPPORTED_API_VERSIONS = (API_V2_VERSION, API_V1_VERSION)
+    CHALLENGE_SIZE = 48
 
-    def __init__(self, challenge_size: int = 48):
+    def __init__(self) -> None:
         # Challenge
-        self.challenge_size = challenge_size
         self.challenge: bytes
 
         # Once support APIV1 is dropped, we can do much better than exposing the answer data as
@@ -235,7 +235,7 @@ class ServerHandshake:
         if not self.state == "stalled":
             raise HandshakeError("Invalid state.")
 
-        self.challenge = token_bytes(self.challenge_size)
+        self.challenge = token_bytes(self.CHALLENGE_SIZE)
         self.state = "challenge"
 
         return handshake_challenge_serializer.dumps(
