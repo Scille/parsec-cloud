@@ -56,6 +56,17 @@ class AsyncQtBot:
             return getattr(self.qtbot, camel_name)
         raise AttributeError(name)
 
+    async def key_clicks(self, widget, text, *args, **kwargs):
+        if hasattr(widget, "text"):
+            method = widget.text
+        elif hasattr(widget, "toPlainText"):
+            method = widget.toPlainText
+        else:
+            raise TypeError(widget)
+        expected = method() + text
+        self.qtbot.keyClicks(widget, text, *args, **kwargs)
+        await self.wait_until(lambda: method() in (text, expected))
+
     async def wait(self, timeout):
         await trio.sleep(timeout / 1000)
 
@@ -439,7 +450,7 @@ def testing_main_window_cls(aqtbot):
 
                 await aqtbot.wait_until(_password_widget_shown)
                 password_w = l_w.widget.layout().itemAt(0).widget()
-                aqtbot.key_clicks(password_w.line_edit_password, password)
+                await aqtbot.key_clicks(password_w.line_edit_password, password)
 
                 # Wait for the password to actually be typed
                 await aqtbot.wait_until(lambda: password_w.line_edit_password.text() == password)
