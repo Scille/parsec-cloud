@@ -251,6 +251,8 @@ async def test_login_logout_account_list_refresh(
     assert gui.tab_center.count() == 1
 
     def _wait_devices_refreshed():
+        assert gui.test_get_login_widget() is not None
+        assert gui.test_get_login_widget().widget.layout().itemAt(0) is not None
         acc_w = gui.test_get_login_widget().widget.layout().itemAt(0).widget()
         assert acc_w.accounts_widget.layout().count() == 3
 
