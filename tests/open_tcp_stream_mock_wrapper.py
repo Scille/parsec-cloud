@@ -86,7 +86,8 @@ class OpenTCPStreamMockWrapper:
         await sock.send_all(connection.send(h11.EndOfMessage()))
 
         async with sock:
-            response = out_data = None
+            out_data = b""
+            response = None
             while True:
                 # Check if an event is already available
                 event = connection.next_event()
@@ -99,8 +100,10 @@ class OpenTCPStreamMockWrapper:
                 if type(event) is h11.Response:
                     response = event
                 if type(event) is h11.Data:
-                    out_data = event.data
+                    out_data += event.data
 
+        if response is None:
+            raise TransportError(f"Bad response from backend")
         if response.status_code != 200:
             exc = urllib.error.URLError(f"{response.status_code}")
             raise TransportError(f"Bad response from backend {exc}")
