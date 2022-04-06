@@ -183,6 +183,9 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
                     validator=None,
                     hidden=True,
                 )
+                if password is None:
+                    self.button_validate.setEnabled(True)
+                    return
                 try:
                     device = load_device_with_password(selected_device.key_file_path, password)
                 except LocalDeviceError:
