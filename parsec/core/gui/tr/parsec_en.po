@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-04-06 11:55+0200\n"
+"POT-Creation-Date: 2022-04-07 15:59+0200\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -1746,6 +1746,20 @@ msgstr "Your request has been rejected"
 msgid "TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"
 msgstr "An administrator has rejected your request"
 
+msgid "TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED"
+msgstr "Validation failed"
+
+msgid "TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED_TOOLTIP"
+msgstr "Could not validate the invitation. Please contact the administrator."
+
+msgid "TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT"
+msgstr "Validation failed"
+
+msgid "TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT_TOOLTIP"
+msgstr ""
+"Could not validate the invitation. Please contact the amdinistrator and "
+"try again."
+
 msgid "TEXT_ENROLLMENT_STATUS_ACCEPTED"
 msgstr "Request approved"
 
@@ -2919,5 +2933,4 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
-
 

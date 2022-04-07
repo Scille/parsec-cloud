@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-04-06 11:55+0200\n"
+"POT-Creation-Date: 2022-04-07 15:59+0200\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -137,7 +137,7 @@ msgid "ACTION_MENU_DEVICES"
 msgstr "Mes appareils"
 
 msgid "ACTION_MENU_ENROLLMENT"
-msgstr "Enrôlement par SmartCard"
+msgstr "Enrôlement SmartCard"
 
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
@@ -1796,6 +1796,22 @@ msgstr "Rejettée"
 
 msgid "TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"
 msgstr "L'administrateur a rejetté cette requête."
+
+msgid "TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED"
+msgstr "Échec de validation"
+
+msgid "TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED_TOOLTIP"
+msgstr ""
+"Impossible de valider cette invitation. Veuillez contacter "
+"l'administrateur."
+
+msgid "TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT"
+msgstr "Échec de validation"
+
+msgid "TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT_TOOLTIP"
+msgstr ""
+"Impossible de valider cette invitation. Veuillez faire une nouvelle "
+"requête et/ou contacter l'administrateur."
 
 msgid "TEXT_ENROLLMENT_STATUS_ACCEPTED"
 msgstr "Acceptée"
