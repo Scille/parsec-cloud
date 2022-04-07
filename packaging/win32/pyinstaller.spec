@@ -50,7 +50,7 @@ block_cipher = None
 INCLUDE_PARSEC_EXT = bool(os.environ.get("INCLUDE_PARSEC_EXT", ""))
 
 datas = [*collect_package_datas("parsec")]
-hiddenimports = ["parsec_ext.smartcard"]
+hiddenimports = []
 if INCLUDE_PARSEC_EXT:
     datas += [*collect_package_datas("parsec_ext")]
     hiddenimports += ["parsec_ext.smartcard"]
