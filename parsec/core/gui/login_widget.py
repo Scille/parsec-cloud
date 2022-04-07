@@ -15,6 +15,7 @@ from parsec.core.pki import (
     PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx,
     PkiEnrollmentSubmitterAcceptedStatusCtx,
 )
+from parsec.core.pki.exceptions import PkiEnrollmentCertificateValidationError
 from parsec.core.pki.submitter import BasePkiEnrollmentSubmitterStatusCtx
 
 from parsec.core.local_device import save_device_with_smartcard_in_config
@@ -77,9 +78,7 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
                     )
                     self.button_action.show()
                     return
-                elif isinstance(new_context, PkiEnrollmentSubmitterRejectedStatusCtx) or isinstance(
-                    new_context, PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx
-                ):
+                elif isinstance(new_context, PkiEnrollmentSubmitterRejectedStatusCtx):
                     self.context = new_context
                     self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_REJECTED"))
                     self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
@@ -89,6 +88,27 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
                     )
                     self.button_action.show()
                     return
+                elif isinstance(
+                    new_context, PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx
+                ):
+                    if isinstance(new_context.error, PkiEnrollmentCertificateValidationError):
+                        self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED"))
+                        self.label_status.setToolTip(
+                            _("TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED_TOOLTIP")
+                        )
+                        self.button_action.hide()
+                        return
+                    else:
+                        self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT"))
+                        self.label_status.setToolTip(
+                            _("TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT_TOOLTIP")
+                        )
+                        self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
+                        self.button_action.clicked.connect(
+                            lambda: self.clear_clicked.emit(self.context)
+                        )
+                        self.button_action.show()
+                        return
                 else:
                     assert isinstance(new_context, PkiEnrollmentSubmitterAcceptedStatusCtx)
                     self.context = new_context
