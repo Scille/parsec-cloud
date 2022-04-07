@@ -57,6 +57,11 @@ class AsyncQtBot:
         raise AttributeError(name)
 
     async def key_clicks(self, widget, text, *args, **kwargs):
+        """Write the provided text to the given widget.
+
+        On some systems, the writing is not guaranteed to be actually performed by
+        the end of the qtbot call so we also wait for the changes to be detected.
+        """
         if hasattr(widget, "text"):
             method = widget.text
         elif hasattr(widget, "toPlainText"):
