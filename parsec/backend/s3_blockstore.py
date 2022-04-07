@@ -2,15 +2,15 @@
 
 import trio
 import boto3
-from botocore.exceptions import (
-    ClientError as S3ClientError,
-    EndpointConnectionError as S3EndpointConnectionError,
-)
+from botocore.exceptions import BotoCoreError, ClientError
+from structlog import get_logger
 from functools import partial
 
 from parsec.api.protocol import OrganizationID, BlockID
-from parsec.backend.blockstore import BaseBlockStoreComponent
-from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
+from parsec.backend.blockstore import BaseBlockStoreComponent, BlockStoreError
+
+
+logger = get_logger()
 
 
 def build_s3_slug(organization_id: OrganizationID, id: BlockID):
@@ -33,21 +33,20 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
         )
         self._s3_bucket = s3_bucket
         self._s3.head_bucket(Bucket=s3_bucket)
+        self._logger = logger.bind(blockstore_type="S3", s3_region=s3_region, s3_bucket=s3_bucket)
 
     async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
         slug = build_s3_slug(organization_id=organization_id, id=id)
         try:
             obj = self._s3.get_object(Bucket=self._s3_bucket, Key=slug)
-
-        except S3ClientError as exc:
-            if exc.response["Error"]["Code"] == "404":
-                raise BlockNotFoundError() from exc
-
-            else:
-                raise BlockTimeoutError() from exc
-
-        except S3EndpointConnectionError as exc:
-            raise BlockTimeoutError() from exc
+        except (BotoCoreError, ClientError) as exc:
+            self._logger.warning(
+                "Block read error",
+                organization_id=str(organization_id),
+                block_id=str(id),
+                exc_info=exc,
+            )
+            raise BlockStoreError(exc) from exc
 
         return obj["Body"].read()
 
@@ -55,20 +54,13 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
         slug = build_s3_slug(organization_id=organization_id, id=id)
         try:
             await trio.to_thread.run_sync(
-                partial(self._s3.head_object, Bucket=self._s3_bucket, Key=slug)
+                partial(self._s3.put_object, Bucket=self._s3_bucket, Key=slug, Body=block)
             )
-        except S3ClientError as outer_exc:
-            if outer_exc.response["Error"]["Code"] == "404":
-                try:
-                    await trio.to_thread.run_sync(
-                        partial(self._s3.put_object, Bucket=self._s3_bucket, Key=slug, Body=block)
-                    )
-                except (S3ClientError, S3EndpointConnectionError) as inner_exc:
-                    raise BlockTimeoutError() from inner_exc
-            else:
-                raise BlockTimeoutError() from outer_exc
-
-        except S3EndpointConnectionError as exc:
-            raise BlockTimeoutError() from exc
-        else:
-            raise BlockAlreadyExistsError()
+        except (BotoCoreError, ClientError) as exc:
+            self._logger.warning(
+                "Block create error",
+                organization_id=str(organization_id),
+                block_id=str(id),
+                exc_info=exc,
+            )
+            raise BlockStoreError(exc) from exc

@@ -575,9 +575,18 @@ def blockstore(request, backend_store, fixtures_customization):
         config = RAID0BlockStoreConfig(blockstores=[config, MockedBlockStoreConfig()])
     elif raid == "RAID1":
         config = RAID1BlockStoreConfig(blockstores=[config, MockedBlockStoreConfig()])
+    elif raid == "RAID1_PARTIAL_CREATE_OK":
+        config = RAID1BlockStoreConfig(
+            blockstores=[config, MockedBlockStoreConfig()], partial_create_ok=True
+        )
     elif raid == "RAID5":
         config = RAID5BlockStoreConfig(
             blockstores=[config, MockedBlockStoreConfig(), MockedBlockStoreConfig()]
+        )
+    elif raid == "RAID5_PARTIAL_CREATE_OK":
+        config = RAID5BlockStoreConfig(
+            blockstores=[config, MockedBlockStoreConfig(), MockedBlockStoreConfig()],
+            partial_create_ok=True,
         )
     else:
         assert raid == "NO_RAID"

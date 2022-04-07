@@ -25,6 +25,7 @@ class RAID1BlockStoreConfig(BaseBlockStoreConfig):
     type = "RAID1"
 
     blockstores: List[BaseBlockStoreConfig]
+    partial_create_ok: bool = False
 
 
 @attr.s(frozen=True, auto_attribs=True)
@@ -32,6 +33,7 @@ class RAID5BlockStoreConfig(BaseBlockStoreConfig):
     type = "RAID5"
 
     blockstores: List[BaseBlockStoreConfig]
+    partial_create_ok: bool = False
 
 
 @attr.s(frozen=True, auto_attribs=True)

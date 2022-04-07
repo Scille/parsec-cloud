@@ -6,7 +6,7 @@ import pendulum
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, BlockID
 from parsec.backend.utils import OperationKind
 from parsec.backend.vlob import BaseVlobComponent
-from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.backend.blockstore import BaseBlockStoreComponent, BlockStoreError
 from parsec.backend.block import (
     BaseBlockComponent,
     BlockError,
@@ -14,6 +14,7 @@ from parsec.backend.block import (
     BlockNotFoundError,
     BlockAccessError,
     BlockInMaintenanceError,
+    BlockTimeoutError,
 )
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.utils import (
@@ -153,7 +154,12 @@ class PGBlockComponent(BaseBlockComponent):
             elif not ret["has_access"]:
                 raise BlockAccessError()
 
-        return await self._blockstore_component.read(organization_id, block_id)
+        # We can do the blockstore read outside of the transaction given the block
+        # are never modified/removed
+        try:
+            return await self._blockstore_component.read(organization_id, block_id)
+        except BlockStoreError as exc:
+            raise BlockTimeoutError(exc) from exc
 
     async def create(
         self,
@@ -167,6 +173,8 @@ class PGBlockComponent(BaseBlockComponent):
             await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_WRITE)
 
             # 1) Check access rights and block unicity
+            # Note it's important to check unicity here because blockstore create
+            # overwrite existing data !
             ret = await conn.fetchrow(
                 *_q_get_block_write_right_and_unicity(
                     organization_id=organization_id.str,
@@ -183,27 +191,37 @@ class PGBlockComponent(BaseBlockComponent):
                 raise BlockAlreadyExistsError()
 
             # 2) Upload block data in blockstore under an arbitrary id
-            # Given block metadata and block data are stored on different
-            # storages, beeing atomic is not easy here :(
-            # For instance step 2) can be successful (or can be successful on
-            # *some* blockstores in case of a RAID blockstores configuration)
-            # but step 4) fails. To avoid deadlock in such case (i.e.
-            # blockstores with existing block raise `BlockAlreadyExistsError`)
-            # blockstore are idempotent (i.e. if a block id already exists a
-            # blockstore return success without any modification).
-            await self._blockstore_component.create(organization_id, block_id, block)
+            # Given block metadata and block data are stored on different storages,
+            # beeing atomic is not easy here :(
+            # For instance step 2) can be successful (or can be successful on *some*
+            # blockstores in case of a RAID blockstores configuration) but step 4) fails.
+            # This is solved by the fact blockstores are considered idempotent and two
+            # create operations with the same orgID/ID couple are expected to have the
+            # same block data.
+            # Hence any blockstore create failure result in postgres transaction
+            # cancellation, and blockstore create success can be overwritten by another
+            # create in case the postgres transaction was cancelled in step 3)
+            try:
+                await self._blockstore_component.create(organization_id, block_id, block)
+            except BlockStoreError as exc:
+                raise BlockTimeoutError(exc) from exc
 
             # 3) Insert the block metadata into the database
-            ret = await conn.execute(
-                *_q_insert_block(
-                    organization_id=organization_id.str,
-                    block_id=block_id.uuid,
-                    realm_id=realm_id.uuid,
-                    author=author.str,
-                    size=len(block),
-                    created_on=pendulum.now(),
+            try:
+                ret = await conn.execute(
+                    *_q_insert_block(
+                        organization_id=organization_id.str,
+                        block_id=block_id.uuid,
+                        realm_id=realm_id.uuid,
+                        author=author.str,
+                        size=len(block),
+                        created_on=pendulum.now(),
+                    )
                 )
-            )
+            except UniqueViolationError as exc:
+                # Given step 1) hasn't locked anything in the database, concurrent block
+                # create operations may end up with one of them in unique violation error
+                raise BlockAlreadyExistsError() from exc
 
             if ret != "INSERT 0 1":
                 raise BlockError(f"Insertion error: {ret}")
@@ -239,7 +257,7 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
                 *_q_get_block_data(organization_id=organization_id.str, block_id=id.uuid)
             )
             if not ret:
-                raise BlockNotFoundError()
+                raise BlockStoreError("Block not found")
 
             return ret[0]
 
@@ -252,7 +270,7 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
                     )
                 )
                 if ret != "INSERT 0 1":
-                    raise BlockError(f"Insertion error: {ret}")
+                    raise BlockStoreError(f"Insertion error: {ret}")
 
             except UniqueViolationError:
                 # Keep calm and stay idempotent

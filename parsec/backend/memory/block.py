@@ -6,13 +6,14 @@ from typing import Dict, Tuple
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole, BlockID
 from parsec.backend.utils import OperationKind
 from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
-from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.backend.blockstore import BaseBlockStoreComponent, BlockStoreError
 from parsec.backend.block import (
     BaseBlockComponent,
     BlockAlreadyExistsError,
     BlockAccessError,
     BlockNotFoundError,
     BlockInMaintenanceError,
+    BlockTimeoutError,
 )
 
 
@@ -92,7 +93,10 @@ class MemoryBlockComponent(BaseBlockComponent):
 
         self._check_realm_read_access(organization_id, blockmeta.realm_id, author.user_id)
 
-        return await self._blockstore_component.read(organization_id, block_id)
+        try:
+            return await self._blockstore_component.read(organization_id, block_id)
+        except BlockStoreError as exc:
+            raise BlockTimeoutError(exc) from exc
 
     async def create(
         self,
@@ -103,8 +107,14 @@ class MemoryBlockComponent(BaseBlockComponent):
         block: bytes,
     ) -> None:
         self._check_realm_write_access(organization_id, realm_id, author.user_id)
+        if (organization_id, block_id) in self._blockmetas:
+            raise BlockAlreadyExistsError()
 
-        await self._blockstore_component.create(organization_id, block_id, block)
+        try:
+            await self._blockstore_component.create(organization_id, block_id, block)
+        except BlockStoreError as exc:
+            raise BlockTimeoutError(exc) from exc
+
         self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id, len(block))
 
 
@@ -117,14 +127,10 @@ class MemoryBlockStoreComponent(BaseBlockStoreComponent):
             return self._blocks[(organization_id, block_id)]
 
         except KeyError:
-            raise BlockNotFoundError()
+            raise BlockStoreError()
 
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
     ) -> None:
         key = (organization_id, block_id)
-        if key in self._blocks:
-            # Should not happen if client play with uuid randomness
-            raise BlockAlreadyExistsError()
-
         self._blocks[key] = block
