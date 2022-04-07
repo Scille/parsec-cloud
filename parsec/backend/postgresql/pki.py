@@ -35,14 +35,16 @@ from parsec.backend.postgresql.user_queries.create import (
     q_take_user_device_write_lock,
 )
 
-_q_get_pki_enrollment_from_certificate_sha1 = Q(
+_q_get_last_pki_enrollment_from_certificate_sha1 = Q(
     f"""
-    SELECT * FROM pki_enrollment
+    SELECT enrollment_id, enrollment_state, submitted_on, submitter_accepted_device, accepter
+    FROM pki_enrollment
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
         AND submitter_der_x509_certificate_sha1=$submitter_der_x509_certificate_sha1
     )
-    ORDER BY enrollment_state ASC
+    ORDER BY _id DESC LIMIT 1
+    FOR UPDATE
     """
 )
 
@@ -235,13 +237,13 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 raise PkiEnrollmentIdAlreadyUsedError()
 
             # Try to retrieve the last attempt with this x509 certificate
-            rep = await conn.fetch(
-                *_q_get_pki_enrollment_from_certificate_sha1(
+            row = await conn.fetchrow(
+                *_q_get_last_pki_enrollment_from_certificate_sha1(
                     organization_id=organization_id.str,
                     submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
                 )
             )
-            for row in rep:
+            if row:
                 enrollment_state = row["enrollment_state"]
                 if enrollment_state == PkiEnrollmentStatus.SUBMITTED.value:
                     if force:
@@ -294,7 +296,6 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         revoked_user_certificate=row["revoked_user_certificate"],
                         revoked_user_certifier=None,
                     )
-                    # if row and row.get("revoked_on") and row.get("revoked_on") < submitted_on:
                     if not user.is_revoked():
                         raise PkiEnrollmentAlreadyEnrolledError(submitted_on)
                 else:
