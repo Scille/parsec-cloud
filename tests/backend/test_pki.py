@@ -502,3 +502,42 @@ async def test_pki_info_rejected(anonymous_backend_sock, mallory, alice_backend_
     rep = await pki_enrollment_info(anonymous_backend_sock, request_id)
     assert rep["status"] == "ok"
     assert rep["enrollment_status"] == PkiEnrollmentStatus.REJECTED
+
+
+@pytest.mark.trio
+async def test_pki_complete_sequence(anonymous_backend_sock, mallory, alice_backend_sock, alice):
+    async def _cancel():
+        await _submit_request(anonymous_backend_sock, mallory, force=True)
+        # Create more than once cancel request
+        await _submit_request(anonymous_backend_sock, mallory, force=True)
+
+    async def _reject():
+
+        request_id = uuid4()
+        await _submit_request(anonymous_backend_sock, mallory, request_id=request_id, force=True)
+        rep = await pki_enrollment_reject(alice_backend_sock, enrollment_id=request_id)
+        assert rep["status"] == "ok"
+
+    async def _accept():
+        request_id = uuid4()
+        await _submit_request(anonymous_backend_sock, mallory, request_id=request_id, force=True)
+        user_confirmation, kwargs = _prepare_accept_reply(admin=alice, invitee=mallory)
+        rep = await pki_enrollment_accept(alice_backend_sock, enrollment_id=request_id, **kwargs)
+        assert rep == {"status": "ok"}
+        return user_confirmation.device_id.user_id
+
+    async def _revoke(user_id):
+        now = pendulum.now()
+        revocation = RevokedUserCertificateContent(
+            author=alice.device_id, timestamp=now, user_id=user_id
+        ).dump_and_sign(alice.signing_key)
+
+        rep = await user_revoke(alice_backend_sock, revoked_user_certificate=revocation)
+        assert rep == {"status": "ok"}
+
+    for _ in range(4):
+        await _cancel()
+        await _reject()
+        await _cancel()
+        user_id = await _accept()
+        await _revoke(user_id)
