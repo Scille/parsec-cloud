@@ -1,36 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from uuid import UUID
-from typing import Optional
 from structlog import get_logger
-from urllib.request import Request, urlopen
-from urllib.error import URLError
-import trio
 
+from parsec.utils import http_request, URLError
 from parsec.api.protocol import (
     OrganizationID,
     ProtocolError,
     pki_enrollment_submit_serializer,
     pki_enrollment_info_serializer,
 )
-from parsec.api.transport import TransportError
 from parsec.core.types import BackendAddr, BackendPkiEnrollmentAddr
 from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendProtocolError
 
 logger = get_logger()
-
-
-async def _http_request(url: str, method: str, data: Optional[bytes] = None) -> bytes:
-    def _do_req() -> bytes:
-        req = Request(url=url, method=method, data=data)
-        try:
-            with urlopen(req) as rep:
-                return rep.read()
-
-        except URLError as exc:
-            raise TransportError(f"Bad response from backend: {exc}") from exc
-
-    return await trio.to_thread.run_sync(_do_req)
 
 
 async def _anonymous_cmd(
@@ -52,9 +35,9 @@ async def _anonymous_cmd(
 
     url = addr.to_http_domain_url(f"/anonymous/{organization_id}")
     try:
-        raw_rep = await _http_request(url=url, method="POST", data=raw_req)
+        raw_rep = await http_request(url=url, method="POST", data=raw_req)
 
-    except TransportError as exc:
+    except URLError as exc:
         logger.debug("Request failed (backend not available)", cmd=req["cmd"], exc_info=exc)
         raise BackendNotAvailable(exc) from exc
 

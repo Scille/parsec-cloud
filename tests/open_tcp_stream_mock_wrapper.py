@@ -2,13 +2,12 @@
 
 import h11
 import urllib.error
-from typing import Optional
+from typing import Optional, Dict
 from contextlib import contextmanager
 from unittest.mock import patch
 import inspect
 from urllib.parse import urlparse
 import trio
-from parsec.api.transport import TransportError
 
 
 def addr_to_netloc(addr):
@@ -62,7 +61,13 @@ class OpenTCPStreamMockWrapper:
 
         raise ConnectionRefusedError(111, "Connection refused")
 
-    async def _http_request(self, url: str, method: str, data: Optional[bytes] = None) -> bytes:
+    async def http_request(
+        self,
+        url: str,
+        data: Optional[bytes] = None,
+        headers: Dict[str, str] = {},
+        method: Optional[str] = None,
+    ) -> bytes:
         """
         The `parsec.core.backend_connection.anonymous._http_request` call originally submit a call to
         `urllib.request.urlopen` to a thread. In order to transparently integrate with the existing
@@ -76,7 +81,8 @@ class OpenTCPStreamMockWrapper:
         target = parse_result.path
         host, port = netloc.split(":")
         sock = await self(host, port)
-        headers = [("Host", host), ("Content-Length", str(len(data)))]
+        headers = [(key, value) for key, value in headers.items()]
+        headers += [("Host", host), ("Content-Length", str(len(data)))]
 
         connection = h11.Connection(our_role=h11.CLIENT)
         await sock.send_all(
@@ -103,10 +109,9 @@ class OpenTCPStreamMockWrapper:
                     out_data += event.data
 
         if response is None:
-            raise TransportError(f"Bad response from backend")
+            raise urllib.error.URLError("No response")
         if response.status_code != 200:
-            exc = urllib.error.URLError(f"{response.status_code}")
-            raise TransportError(f"Bad response from backend {exc}")
+            raise urllib.error.URLError(f"{response.status_code}")
         return out_data
 
     def switch_offline(self, addr):
