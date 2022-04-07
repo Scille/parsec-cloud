@@ -40,8 +40,9 @@ pub enum APIEvent {
         src_version: u64,
     },
     #[serde(rename = "realm.roles_updated")]
-    RealmRolesUdpated { realm_id: RealmID, role: RealmRole },
+    RealmRolesUpdated { realm_id: RealmID, role: RealmRole },
 }
+
 /*
  * EventsListenReq
  */

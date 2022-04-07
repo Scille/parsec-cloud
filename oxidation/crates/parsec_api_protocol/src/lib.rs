@@ -28,7 +28,7 @@ use vlob::*;
 
 pub use events::APIEvent;
 pub use invite::{
-    InvitationDeletedReason, InvitationEmailSentStatus, InvitationStatus, InvitationType,
+    InvitationDeletedReason, InvitationEmailSentStatus, InvitationStatus,
     InviteInfoUserOrDeviceRep, InviteListItem,
 };
 pub use message::Message;

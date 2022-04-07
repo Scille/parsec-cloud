@@ -58,28 +58,37 @@ pub fn rs_to_py_realm_role(role: &parsec_api_types::RealmRole) -> PyResult<PyObj
     })
 }
 
-pub fn py_to_rs_realm_role(role: &PyAny) -> PyResult<Option<parsec_api_types::RealmRole>> {
-    if role.is_none() {
-        return Ok(None);
-    }
-    let role = match role.getattr("name")?.extract::<&str>()? {
-        "OWNER" => parsec_api_types::RealmRole::Owner,
-        "MANAGER" => parsec_api_types::RealmRole::Manager,
-        "CONTRIBUTOR" => parsec_api_types::RealmRole::Contributor,
-        "READER" => parsec_api_types::RealmRole::Reader,
+pub fn py_to_rs_realm_role(role: &PyAny) -> PyResult<parsec_api_types::RealmRole> {
+    use parsec_api_types::RealmRole::*;
+    Ok(match role.getattr("name")?.extract::<&str>()? {
+        "OWNER" => Owner,
+        "MANAGER" => Manager,
+        "CONTRIBUTOR" => Contributor,
+        "READER" => Reader,
         _ => unreachable!(),
-    };
-    Ok(Some(role))
+    })
 }
 
 pub fn py_to_rs_user_profile(profile: &PyAny) -> PyResult<parsec_api_types::UserProfile> {
-    let profile = match profile.getattr("name")?.extract::<&str>()? {
-        "ADMIN" => parsec_api_types::UserProfile::Admin,
-        "STANDARD" => parsec_api_types::UserProfile::Standard,
-        "OUTSIDER" => parsec_api_types::UserProfile::Outsider,
+    use parsec_api_types::UserProfile::*;
+    Ok(match profile.getattr("name")?.extract::<&str>()? {
+        "ADMIN" => Admin,
+        "STANDARD" => Standard,
+        "OUTSIDER" => Outsider,
         _ => unreachable!(),
-    };
-    Ok(profile)
+    })
+}
+
+pub fn py_to_rs_invitation_status(
+    status: &PyAny,
+) -> PyResult<parsec_api_protocol::InvitationStatus> {
+    use parsec_api_protocol::InvitationStatus::*;
+    Ok(match status.getattr("name")?.extract::<&str>()? {
+        "IDLE" => Idle,
+        "READY" => Ready,
+        "DELETED" => Deleted,
+        _ => unreachable!(),
+    })
 }
 
 // This implementation is due to

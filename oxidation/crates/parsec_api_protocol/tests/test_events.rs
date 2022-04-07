@@ -159,7 +159,7 @@ fn serde_events_listen_req() {
             "021d3353157d7d4e95ad2fdea7b3bd19c5a4726f6c65a54f574e4552a6737461747573a26f"
             "6b"
         )[..],
-        authenticated_cmds::events_listen::Rep::Ok(APIEvent::RealmRolesUdpated {
+        authenticated_cmds::events_listen::Rep::Ok(APIEvent::RealmRolesUpdated {
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 role: RealmRole::Owner,
         })

@@ -17,7 +17,7 @@ macro_rules! cmds_bundle {
             pub mod $cmds {
                 use ::serde::{Deserialize, Serialize};
 
-                #[derive(Serialize, Deserialize, PartialEq, Debug)]
+                #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
                 #[serde(tag = "cmd", rename_all = "snake_case")]
                 pub enum AnyCmdReq {
                     $(

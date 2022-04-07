@@ -161,7 +161,7 @@ pub enum VlobPollChangesRep {
 }
 
 /*
- * VlobPollChangesRep
+ * VlobListVersionsReq
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
