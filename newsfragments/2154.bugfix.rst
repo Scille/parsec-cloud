@@ -1,0 +1,1 @@
+Fix regression in Parsec server introduced in version 2.7.0 leading to block being stored and fetched with an incorrect ID
