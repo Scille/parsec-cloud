@@ -26,6 +26,13 @@ from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
 
 
+def build_swift_slug(organization_id: OrganizationID, id: BlockID):
+    # The slug uses the UUID canonical textual representation (eg.
+    # `CoolOrg/3b917792-35ac-409f-9af1-fe6de8d2b905`) where `BlockID.__str__`
+    # uses the short textual representation (eg. `3b91779235ac409f9af1fe6de8d2b905`)
+    return f"{organization_id}/{id.uuid}"
+
+
 class SwiftBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self, auth_url, tenant, container, user, password):
         self.swift_client = swiftclient.Connection(
@@ -35,7 +42,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
         self.swift_client.head_container(container)
 
     async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
-        slug = f"{organization_id}/{id}"
+        slug = build_swift_slug(organization_id=organization_id, id=id)
         try:
             headers, obj = await trio.to_thread.run_sync(
                 self.swift_client.get_object, self._container, slug
@@ -51,11 +58,9 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
         return obj
 
     async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
-        slug = f"{organization_id}/{id}"
+        slug = build_swift_slug(organization_id=organization_id, id=id)
         try:
-            _, obj = await trio.to_thread.run_sync(
-                self.swift_client.get_object, self._container, slug
-            )
+            await trio.to_thread.run_sync(self.swift_client.get_object, self._container, slug)
 
         except ClientException as exc:
             if exc.http_status == 404:

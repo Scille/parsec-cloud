@@ -13,6 +13,13 @@ from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
 
 
+def build_s3_slug(organization_id: OrganizationID, id: BlockID):
+    # The slug uses the UUID canonical textual representation (eg.
+    # `CoolOrg/3b917792-35ac-409f-9af1-fe6de8d2b905`) where `BlockID.__str__`
+    # uses the short textual representation (eg. `3b91779235ac409f9af1fe6de8d2b905`)
+    return f"{organization_id}/{id.uuid}"
+
+
 class S3BlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self, s3_region, s3_bucket, s3_key, s3_secret, s3_endpoint_url=None):
         self._s3 = None
@@ -28,7 +35,7 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
         self._s3.head_bucket(Bucket=s3_bucket)
 
     async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
-        slug = f"{organization_id}/{id}"
+        slug = build_s3_slug(organization_id=organization_id, id=id)
         try:
             obj = self._s3.get_object(Bucket=self._s3_bucket, Key=slug)
 
@@ -45,7 +52,7 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
         return obj["Body"].read()
 
     async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
-        slug = f"{organization_id}/{id}"
+        slug = build_s3_slug(organization_id=organization_id, id=id)
         try:
             await trio.to_thread.run_sync(
                 partial(self._s3.head_object, Bucket=self._s3_bucket, Key=slug)
