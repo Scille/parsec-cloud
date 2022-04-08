@@ -65,10 +65,10 @@ async def test_change_password_invalid_password_check(
         pc_w = await catch_auth_change_widget()
 
     assert not pc_w.button_validate.isEnabled()
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         pc_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password, "P@ssw0rd2"
     )
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         pc_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check, "P@ssw0rd3"
     )
     assert not pc_w.button_validate.isEnabled()
@@ -99,10 +99,10 @@ async def test_change_password_success(
         pc_w = await catch_auth_change_widget()
 
     assert not pc_w.button_validate.isEnabled()
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         pc_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password, "P@ssw0rd2"
     )
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         pc_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check, "P@ssw0rd2"
     )
 

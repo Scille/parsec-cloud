@@ -165,7 +165,7 @@ async def test_import_recovery_device(
     imp_w.current_page.label_key_file.setText(str(file_path))
     assert not imp_w.button_validate.isEnabled()
 
-    aqtbot.key_clicks(imp_w.current_page.edit_passphrase, "abcdef")
+    await aqtbot.key_clicks(imp_w.current_page.edit_passphrase, "abcdef")
     assert not imp_w.button_validate.isEnabled()
     await aqtbot.wait_until(
         lambda: imp_w.current_page.label_passphrase_error.text()
@@ -174,11 +174,11 @@ async def test_import_recovery_device(
     assert imp_w.current_page.label_passphrase_error.isVisible()
 
     imp_w.current_page.edit_passphrase.setText("")
-    aqtbot.key_clicks(imp_w.current_page.edit_passphrase, passphrase)
+    await aqtbot.key_clicks(imp_w.current_page.edit_passphrase, passphrase)
     await aqtbot.wait_until(lambda: not imp_w.current_page.label_passphrase_error.isVisible())
     assert not imp_w.button_validate.isEnabled()
 
-    aqtbot.key_clicks(imp_w.current_page.line_edit_device, str(NEW_DEVICE_LABEL))
+    await aqtbot.key_clicks(imp_w.current_page.line_edit_device, str(NEW_DEVICE_LABEL))
     await aqtbot.wait_until(imp_w.button_validate.isEnabled)
 
     if kind == "ok":
@@ -192,11 +192,11 @@ async def test_import_recovery_device(
         await aqtbot.wait_until(_page2_shown)
 
         assert not imp_w.button_validate.isEnabled()
-        aqtbot.key_clicks(
+        await aqtbot.key_clicks(
             imp_w.current_page.main_layout.itemAt(0).widget().line_edit_password, PASSWORD
         )
         assert not imp_w.button_validate.isEnabled()
-        aqtbot.key_clicks(
+        await aqtbot.key_clicks(
             imp_w.current_page.main_layout.itemAt(0).widget().line_edit_password_check, PASSWORD
         )
         await aqtbot.wait_until(imp_w.button_validate.isEnabled)

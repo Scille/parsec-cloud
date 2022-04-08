@@ -37,10 +37,12 @@ async def _do_creation_process(aqtbot, co_w):
     await aqtbot.wait_until(_user_widget_ready)
 
     # Adding a few spaces to the name
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "  Gordon     Freeman   ")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_org_name, "AnomalousMaterials")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "  Gordon     Freeman   ")
+    await aqtbot.key_clicks(
+        co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com"
+    )
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_org_name, "AnomalousMaterials")
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
     assert not co_w.button_validate.isEnabled()
 
     aqtbot.mouse_click(co_w.current_widget.check_accept_contract, QtCore.Qt.LeftButton)
@@ -61,12 +63,12 @@ async def _do_creation_process(aqtbot, co_w):
     assert co_w.current_widget.main_layout.itemAt(
         0
     ).widget().label_password_warning.text() == translate("TEXT_PASSWORD_WARNING")
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         co_w.current_widget.main_layout.itemAt(0).widget().line_edit_password, "nihilanth"
     )
     assert not co_w.button_validate.isEnabled()
 
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         co_w.current_widget.main_layout.itemAt(0).widget().line_edit_password_check, "nihilanth"
     )
 
@@ -140,10 +142,12 @@ async def test_create_organization_offline(
         await aqtbot.wait_until(_user_widget_ready)
 
         # Adding a few spaces to the name
-        aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
-        aqtbot.key_clicks(co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-        aqtbot.key_clicks(co_w.current_widget.line_edit_org_name, "AnomalousMaterials")
-        aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
+        await aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
+        await aqtbot.key_clicks(
+            co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com"
+        )
+        await aqtbot.key_clicks(co_w.current_widget.line_edit_org_name, "AnomalousMaterials")
+        await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
         assert not co_w.button_validate.isEnabled()
 
         aqtbot.mouse_click(co_w.current_widget.check_accept_contract, QtCore.Qt.LeftButton)
@@ -193,10 +197,12 @@ async def test_create_organization_same_name(
     await aqtbot.wait_until(_user_widget_ready)
 
     # Adding a few spaces to the name
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_org_name, "AnomalousMaterials")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
+    await aqtbot.key_clicks(
+        co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com"
+    )
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_org_name, "AnomalousMaterials")
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
     assert not co_w.button_validate.isEnabled()
 
     aqtbot.mouse_click(co_w.current_widget.check_accept_contract, QtCore.Qt.LeftButton)
@@ -229,20 +235,20 @@ async def test_create_organization_previous_clicked(
     assert co_w
     await aqtbot.wait_until(co_w.user_widget.isVisible)
 
-    aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
-    aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-    aqtbot.key_clicks(co_w.user_widget.line_edit_org_name, "AnomalousMaterials")
+    await aqtbot.key_clicks(co_w.user_widget.line_edit_user_full_name, "Gordon Freeman")
+    await aqtbot.key_clicks(co_w.user_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
+    await aqtbot.key_clicks(co_w.user_widget.line_edit_org_name, "AnomalousMaterials")
     aqtbot.mouse_click(co_w.user_widget.check_accept_contract, QtCore.Qt.LeftButton)
     aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
     await aqtbot.wait_until(co_w.device_widget.isVisible)
 
-    aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(co_w.device_widget.line_edit_device, "HEV")
+    await aqtbot.key_clicks(
         co_w.device_widget.widget_auth.main_layout.itemAt(0).widget().line_edit_password,
         "nihilanth",
     )
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         co_w.device_widget.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check,
         "nihilanth",
     )
@@ -306,9 +312,11 @@ async def test_create_organization_bootstrap_only(
         "TEXT_BOOTSTRAP_ORGANIZATION_INSTRUCTIONS_organization"
     ).format(organization="AnomalousMaterials")
 
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
+    await aqtbot.key_clicks(
+        co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com"
+    )
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
 
     def _user_widget_button_validate_ready():
         assert co_w.button_validate.isEnabled()
@@ -329,10 +337,10 @@ async def test_create_organization_bootstrap_only(
 
     await aqtbot.wait_until(_device_widget_ready)
 
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         co_w.current_widget.main_layout.itemAt(0).widget().line_edit_password, "nihilanth"
     )
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         co_w.current_widget.main_layout.itemAt(0).widget().line_edit_password_check, "nihilanth"
     )
 
@@ -375,9 +383,11 @@ async def test_create_organization_bootstrap_only_custom_server(
         "TEXT_BOOTSTRAP_ORGANIZATION_INSTRUCTIONS_organization"
     ).format(organization="AnomalousMaterials")
 
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
+    await aqtbot.key_clicks(
+        co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com"
+    )
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
 
     def _user_widget_ready():
         assert co_w.current_widget.line_edit_org_name.text() == "AnomalousMaterials"
@@ -398,10 +408,10 @@ async def test_create_organization_bootstrap_only_custom_server(
 
     await aqtbot.wait_until(_device_widget_ready)
 
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         co_w.current_widget.main_layout.itemAt(0).widget().line_edit_password, "nihilanth"
     )
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         co_w.current_widget.main_layout.itemAt(0).widget().line_edit_password_check, "nihilanth"
     )
 
@@ -462,9 +472,11 @@ async def test_create_organization_already_bootstrapped(
     co_w = await catch_create_org_widget()
     await aqtbot.wait_until(lambda: isinstance(co_w.current_widget, CreateOrgUserInfoWidget))
 
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
+    await aqtbot.key_clicks(
+        co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com"
+    )
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
 
     def _user_widget_ready():
         assert co_w.current_widget.line_edit_org_name.text() == str(org.organization_id)
@@ -503,10 +515,12 @@ async def test_create_organization_custom_backend(
 
     await aqtbot.wait_until(_user_widget_ready)
 
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_org_name, "AnomalousMaterials")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
+    await aqtbot.key_clicks(
+        co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com"
+    )
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_org_name, "AnomalousMaterials")
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
     aqtbot.mouse_click(co_w.user_widget.check_accept_contract, QtCore.Qt.LeftButton)
 
     def _user_widget_button_validate_ready():
@@ -520,10 +534,10 @@ async def test_create_organization_custom_backend(
 
     await aqtbot.wait_until(_device_widget_ready)
 
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         co_w.current_widget.main_layout.itemAt(0).widget().line_edit_password, "nihilanth"
     )
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         co_w.current_widget.main_layout.itemAt(0).widget().line_edit_password_check, "nihilanth"
     )
 
@@ -556,7 +570,7 @@ async def test_create_organization_custom_backend(
     # Clicking the radio doesn't do anything, so we cheat
     co_w.user_widget.radio_use_custom.setChecked(True)
 
-    aqtbot.key_clicks(co_w.user_widget.line_edit_backend_addr, running_backend.addr.to_url())
+    await aqtbot.key_clicks(co_w.user_widget.line_edit_backend_addr, running_backend.addr.to_url())
     await aqtbot.wait_until(_user_widget_button_validate_ready)
 
     # First click to get to the device page
@@ -595,10 +609,12 @@ async def test_create_organization_wrong_timestamp(
 
     monkeypatch.setattr("parsec.core.types.LocalDevice.timestamp", _timestamp)
 
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_org_name, "AnomalousMaterials")
-    aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
+    await aqtbot.key_clicks(
+        co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com"
+    )
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_org_name, "AnomalousMaterials")
+    await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
     assert not co_w.button_validate.isEnabled()
 
     aqtbot.mouse_click(co_w.current_widget.check_accept_contract, QtCore.Qt.LeftButton)
@@ -654,9 +670,11 @@ async def test_create_organization_with_boostrap_token(
 
         await aqtbot.wait_until(_user_widget_ready)
 
-        aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
-        aqtbot.key_clicks(co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
-        aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
+        await aqtbot.key_clicks(co_w.current_widget.line_edit_user_full_name, "Gordon Freeman")
+        await aqtbot.key_clicks(
+            co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com"
+        )
+        await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
         aqtbot.mouse_click(co_w.current_widget.check_accept_contract, QtCore.Qt.LeftButton)
 
         def _user_widget_button_validate_ready():
@@ -679,10 +697,10 @@ async def test_create_organization_with_boostrap_token(
 
             await aqtbot.wait_until(_device_widget_ready)
 
-            aqtbot.key_clicks(
+            await aqtbot.key_clicks(
                 co_w.current_widget.main_layout.itemAt(0).widget().line_edit_password, "nihilanth"
             )
-            aqtbot.key_clicks(
+            await aqtbot.key_clicks(
                 co_w.current_widget.main_layout.itemAt(0).widget().line_edit_password_check,
                 "nihilanth",
             )

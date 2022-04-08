@@ -47,7 +47,7 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice, 
 
     password_w = lw.widget.layout().itemAt(0).widget()
 
-    aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
+    await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
         aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
@@ -210,7 +210,7 @@ async def test_login_logout_account_list_refresh(
 
     password_w = lw.widget.layout().itemAt(0).widget()
 
-    aqtbot.key_clicks(password_w.line_edit_password, password)
+    await aqtbot.key_clicks(password_w.line_edit_password, password)
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
         aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
