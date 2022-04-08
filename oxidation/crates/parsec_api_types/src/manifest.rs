@@ -42,11 +42,9 @@ macro_rules! impl_manifest_dump_load {
                 expected_timestamp: DateTime,
             ) -> Result<Self, DataError> {
                 let signed = key
-                    .decrypt(encrypted)
-                    .map_err(|_| DataError::InvalidEncryption)?;
+                    .decrypt(encrypted)?;
                 let compressed = author_verify_key
-                    .verify(&signed)
-                    .map_err(|_| DataError::InvalidSignature)?;
+                    .verify(&signed)?;
                 let mut serialized = vec![];
 
                 ZlibDecoder::new(&compressed[..])
@@ -59,7 +57,7 @@ macro_rules! impl_manifest_dump_load {
                 if obj.author != *expected_author {
                     Err(DataError::UnexpectedAuthor {
                         expected: expected_author.clone(),
-                        got: obj.author,
+                        got: Some(obj.author),
                     })
                 } else if obj.timestamp != expected_timestamp {
                     Err(DataError::UnexpectedTimestamp {
