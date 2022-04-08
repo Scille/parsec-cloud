@@ -620,7 +620,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
         }
     )
 )]
-#[case::bad_encryption(
+#[case::bad_encryption_revision(
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
