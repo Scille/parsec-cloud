@@ -19,6 +19,7 @@ def close_process_pool():
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 async def test_file_dialog_in_process(gui, close_process_pool):
     assert QDialogInProcess.getOpenFileName(gui, "title", dir="dir", testing=True) == (
         "getOpenFileName",
