@@ -535,7 +535,7 @@ async def test_pki_complete_sequence(anonymous_backend_sock, mallory, alice_back
         rep = await user_revoke(alice_backend_sock, revoked_user_certificate=revocation)
         assert rep == {"status": "ok"}
 
-    for _ in range(4):
+    for _ in range(2):
         await _cancel()
         await _reject()
         await _cancel()
