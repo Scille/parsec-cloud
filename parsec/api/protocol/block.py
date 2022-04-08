@@ -57,7 +57,6 @@ class BlockReadReq(BaseReq):
 
         @post_load
         def make_obj(self, data: Dict[str, Any]) -> "BlockReadReq":
-            data.pop("type")
             return BlockReadReq(**data)
 
     block_id: BlockID
@@ -70,7 +69,6 @@ class BlockReadRepOk(BaseRep):
 
         @post_load
         def make_obj(self, data: Dict[str, Any]) -> "BlockReadRepOk":
-            data.pop("type")
             return BlockReadRepOk(**data)
 
     block: bytes

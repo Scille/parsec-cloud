@@ -41,10 +41,10 @@ class BlockInMaintenanceError(BlockError):
 class BaseBlockComponent:
     @api("block_read")
     @catch_protocol_errors
-    @api_typed_msg_adapter(BlockReadRep, BlockReadRep)
-    async def api_block_read(self, client_ctx, msg: BlockReadReq) -> BlockReadRepType:
+    @api_typed_msg_adapter(BlockReadReq, BlockReadRep)
+    async def api_block_read(self, client_ctx, req: BlockReadReq) -> BlockReadRepType:
         try:
-            block = await self.read(client_ctx.organization_id, client_ctx.device_id, **msg)
+            block = await self.read(client_ctx.organization_id, client_ctx.device_id, req.block_id)
 
         except BlockNotFoundError:
             return BlockReadRep.NotFound()

@@ -284,7 +284,7 @@ def cmd_rep_error_type_factory(
 
                 @post_load
                 def make_obj(self, data):
-                    data.pop("type")
+                    data.pop("status")
                     return <name>(**data)
 
             status: str
@@ -352,11 +352,11 @@ def cmd_rep_factory(name: str, *rep_types: Type[BaseRep]):
 def api_typed_msg_adapter(rep_cls, req_cls):
     def _api_typed_msg_adapter(fn):
         @wraps(fn)
-        def wrapper(self, client_ctx, msg):
+        async def wrapper(self, client_ctx, msg):
             # Here packb&unpackb should never fail given they are only undoing
             # work we've just done in another layer
             typed_msg = rep_cls.load(_packb(msg))
-            typed_rep = rep_cls(self, client_ctx, typed_msg)
+            typed_rep = await fn(self, client_ctx, typed_msg)
             return _unpackb(typed_rep.dump())
 
         return wrapper
