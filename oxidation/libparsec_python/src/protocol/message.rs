@@ -32,6 +32,11 @@ impl MessageGetReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn offset(&self) -> PyResult<u64> {
+        Ok(self.0.offset)
+    }
 }
 
 #[pyclass]

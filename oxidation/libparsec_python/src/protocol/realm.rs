@@ -11,6 +11,7 @@ use parsec_api_protocol::authenticated_cmds::{
 };
 
 use crate::binding_utils::py_to_rs_datetime;
+use crate::binding_utils::rs_to_py_datetime;
 use crate::ids::{DeviceID, RealmID, UserID};
 
 import_exception!(parsec.api.protocol, ProtocolError);
@@ -35,6 +36,11 @@ impl RealmCreateReq {
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
+    }
+
+    #[getter]
+    fn roles_certificate(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.role_certificate)
     }
 }
 
@@ -112,6 +118,11 @@ impl RealmStatusReq {
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
+    }
+
+    #[getter]
+    fn realm_id(&self) -> PyResult<RealmID> {
+        Ok(RealmID(self.0.realm_id))
     }
 }
 
@@ -207,6 +218,11 @@ impl RealmStatsReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn realm_id(&self) -> PyResult<RealmID> {
+        Ok(RealmID(self.0.realm_id))
+    }
 }
 
 #[pyclass]
@@ -276,6 +292,19 @@ impl RealmGetRoleCertificateReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn realm_id(&self) -> PyResult<RealmID> {
+        Ok(RealmID(self.0.realm_id))
+    }
+
+    #[getter]
+    fn since<'py>(&self, py: Python<'py>) -> PyResult<Option<&'py PyAny>> {
+        self.0
+            .since
+            .map(|since| rs_to_py_datetime(py, since))
+            .transpose()
+    }
 }
 
 #[pyclass]
@@ -342,6 +371,16 @@ impl RealmUpdateRolesReq {
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
+    }
+
+    #[getter]
+    fn role_certificate(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.role_certificate)
+    }
+
+    #[getter]
+    fn recipient_message(&self) -> PyResult<Option<&[u8]>> {
+        Ok(self.0.recipient_message.as_ref().map(|m| &m[..]))
     }
 }
 
@@ -459,6 +498,32 @@ impl RealmStartReencryptionMaintenanceReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn realm_id(&self) -> PyResult<RealmID> {
+        Ok(RealmID(self.0.realm_id))
+    }
+
+    #[getter]
+    fn encryption_revision(&self) -> PyResult<u64> {
+        Ok(self.0.encryption_revision)
+    }
+
+    #[getter]
+    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
+        rs_to_py_datetime(py, self.0.timestamp)
+    }
+
+    #[getter]
+    fn per_participant_message(&self) -> PyResult<HashMap<UserID, Vec<u8>>> {
+        Ok(self
+            .0
+            .per_participant_message
+            .clone()
+            .into_iter()
+            .map(|(k, v)| (UserID(k), v))
+            .collect())
+    }
 }
 
 #[pyclass]
@@ -564,6 +629,16 @@ impl RealmFinishReencryptionMaintenanceReq {
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
+    }
+
+    #[getter]
+    fn realm_id(&self) -> PyResult<RealmID> {
+        Ok(RealmID(self.0.realm_id))
+    }
+
+    #[getter]
+    fn encryption_revision(&self) -> PyResult<u64> {
+        Ok(self.0.encryption_revision)
     }
 }
 

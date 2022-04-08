@@ -34,6 +34,21 @@ impl BlockCreateReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn block_id(&self) -> PyResult<BlockID> {
+        Ok(BlockID(self.0.block_id))
+    }
+
+    #[getter]
+    fn realm_id(&self) -> PyResult<RealmID> {
+        Ok(RealmID(self.0.realm_id))
+    }
+
+    #[getter]
+    fn block(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.block)
+    }
 }
 
 #[pyclass]
@@ -117,6 +132,11 @@ impl BlockReadReq {
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
+    }
+
+    #[getter]
+    fn block_id(&self) -> PyResult<BlockID> {
+        Ok(BlockID(self.0.block_id))
     }
 }
 

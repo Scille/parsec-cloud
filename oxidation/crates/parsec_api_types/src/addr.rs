@@ -720,8 +720,8 @@ impl BackendInvitationAddr {
         self.invitation_type
     }
 
-    pub fn token(&self) -> &InvitationToken {
-        &self.token
+    pub fn token(&self) -> InvitationToken {
+        self.token
     }
 }
 

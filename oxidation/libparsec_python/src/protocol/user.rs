@@ -35,6 +35,11 @@ impl UserGetReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn user_id(&self) -> PyResult<UserID> {
+        Ok(UserID(self.0.user_id.clone()))
+    }
 }
 
 #[pyclass]
@@ -139,6 +144,26 @@ impl UserCreateReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn user_certificate(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.user_certificate)
+    }
+
+    #[getter]
+    fn device_certificate(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.device_certificate)
+    }
+
+    #[getter]
+    fn redacted_user_certificate(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.redacted_user_certificate)
+    }
+
+    #[getter]
+    fn redacted_device_certificate(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.redacted_device_certificate)
+    }
 }
 
 #[pyclass]
@@ -223,6 +248,11 @@ impl UserRevokeReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn revoked_user_certificate(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.revoked_user_certificate)
+    }
 }
 
 #[pyclass]
@@ -295,6 +325,16 @@ impl DeviceCreateReq {
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
+    }
+
+    #[getter]
+    fn device_certificate(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.device_certificate)
+    }
+
+    #[getter]
+    fn redacted_device_certificate(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.redacted_device_certificate)
     }
 }
 
@@ -386,6 +426,31 @@ impl HumanFindReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn query(&self) -> PyResult<Option<&str>> {
+        Ok(self.0.query.as_ref().map(|q| &q[..]))
+    }
+
+    #[getter]
+    fn omit_revoked(&self) -> PyResult<bool> {
+        Ok(self.0.omit_revoked)
+    }
+
+    #[getter]
+    fn omit_non_human(&self) -> PyResult<bool> {
+        Ok(self.0.omit_non_human)
+    }
+
+    #[getter]
+    fn page(&self) -> PyResult<u64> {
+        Ok(self.0.page.into())
+    }
+
+    #[getter]
+    fn per_page(&self) -> PyResult<u64> {
+        Ok(self.0.per_page.into())
+    }
 }
 
 #[pyclass]
@@ -407,6 +472,21 @@ impl HumanFindResultItem {
 
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("{:?}>", self.0))
+    }
+
+    #[getter]
+    fn user_id(&self) -> PyResult<UserID> {
+        Ok(UserID(self.0.user_id.clone()))
+    }
+
+    #[getter]
+    fn human_handle(&self) -> PyResult<Option<HumanHandle>> {
+        Ok(self.0.human_handle.clone().map(HumanHandle))
+    }
+
+    #[getter]
+    fn revoked(&self) -> PyResult<bool> {
+        Ok(self.0.revoked)
     }
 }
 

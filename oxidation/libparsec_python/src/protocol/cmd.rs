@@ -10,10 +10,10 @@ import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
 #[derive(PartialEq, Clone)]
-pub(crate) struct AuthenticatedCmdReq(pub authenticated_cmds::AnyCmdReq);
+pub(crate) struct AuthenticatedAnyCmdReq(pub authenticated_cmds::AnyCmdReq);
 
 #[pymethods]
-impl AuthenticatedCmdReq {
+impl AuthenticatedAnyCmdReq {
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("{:?}>", self.0))
     }
@@ -35,10 +35,10 @@ impl AuthenticatedCmdReq {
 
 #[pyclass]
 #[derive(PartialEq, Clone)]
-pub(crate) struct InvitedCmdReq(pub invited_cmds::AnyCmdReq);
+pub(crate) struct InvitedAnyCmdReq(pub invited_cmds::AnyCmdReq);
 
 #[pymethods]
-impl InvitedCmdReq {
+impl InvitedAnyCmdReq {
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("{:?}>", self.0))
     }

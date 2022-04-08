@@ -29,6 +29,11 @@ impl InvitedPingReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn ping(&self) -> PyResult<&str> {
+        Ok(&self.0.ping)
+    }
 }
 
 #[pyclass]
@@ -80,6 +85,11 @@ impl AuthenticatedPingReq {
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
+    }
+
+    #[getter]
+    fn ping(&self) -> PyResult<&str> {
+        Ok(&self.0.ping)
     }
 }
 

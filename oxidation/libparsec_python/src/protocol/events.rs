@@ -33,6 +33,11 @@ impl EventsListenReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn wait(&self) -> PyResult<bool> {
+        Ok(self.0.wait)
+    }
 }
 
 #[pyclass]

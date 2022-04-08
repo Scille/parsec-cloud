@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 use pyo3::import_exception;
 use pyo3::prelude::*;
+use pyo3::types::PyTuple;
 use pyo3::types::{PyBytes, PyType};
 
 use parsec_api_protocol::authenticated_cmds::{
@@ -12,6 +13,7 @@ use parsec_api_protocol::authenticated_cmds::{
 };
 
 use crate::binding_utils::py_to_rs_datetime;
+use crate::binding_utils::rs_to_py_datetime;
 use crate::ids::DeviceID;
 use crate::ids::{RealmID, VlobID};
 
@@ -52,6 +54,31 @@ impl VlobCreateReq {
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
+    }
+
+    #[getter]
+    fn realm_id(&self) -> PyResult<RealmID> {
+        Ok(RealmID(self.0.realm_id))
+    }
+
+    #[getter]
+    fn encryption_revision(&self) -> PyResult<u64> {
+        Ok(self.0.encryption_revision)
+    }
+
+    #[getter]
+    fn vlob_id(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.vlob_id))
+    }
+
+    #[getter]
+    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
+        rs_to_py_datetime(py, self.0.timestamp)
+    }
+
+    #[getter]
+    fn blob(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.blob)
     }
 }
 
@@ -140,6 +167,29 @@ impl VlobReadReq {
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
+    }
+
+    #[getter]
+    fn encryption_revision(&self) -> PyResult<u64> {
+        Ok(self.0.encryption_revision)
+    }
+
+    #[getter]
+    fn vlob_id(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.vlob_id))
+    }
+
+    #[getter]
+    fn version(&self) -> PyResult<Option<u64>> {
+        Ok(self.0.version)
+    }
+
+    #[getter]
+    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<Option<&'py PyAny>> {
+        self.0
+            .timestamp
+            .map(|timestamp| rs_to_py_datetime(py, timestamp))
+            .transpose()
     }
 }
 
@@ -255,6 +305,31 @@ impl VlobUpdateReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn encryption_revision(&self) -> PyResult<u64> {
+        Ok(self.0.encryption_revision)
+    }
+
+    #[getter]
+    fn vlob_id(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.vlob_id))
+    }
+
+    #[getter]
+    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
+        rs_to_py_datetime(py, self.0.timestamp)
+    }
+
+    #[getter]
+    fn version(&self) -> PyResult<u64> {
+        Ok(self.0.version)
+    }
+
+    #[getter]
+    fn blob(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.blob)
+    }
 }
 
 #[pyclass]
@@ -341,6 +416,16 @@ impl VlobPollChangesReq {
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
+
+    #[getter]
+    fn realm_id(&self) -> PyResult<RealmID> {
+        Ok(RealmID(self.0.realm_id))
+    }
+
+    #[getter]
+    fn last_checkpoint(&self) -> PyResult<u64> {
+        Ok(self.0.last_checkpoint)
+    }
 }
 
 #[pyclass]
@@ -415,6 +500,11 @@ impl VlobListVersionsReq {
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
+    }
+
+    #[getter]
+    fn vlob_id(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.vlob_id))
     }
 }
 
@@ -498,6 +588,21 @@ impl VlobMaintenanceGetReencryptionBatchReq {
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
+    }
+
+    #[getter]
+    fn realm_id(&self) -> PyResult<RealmID> {
+        Ok(RealmID(self.0.realm_id))
+    }
+
+    #[getter]
+    fn encryption_revision(&self) -> PyResult<u64> {
+        Ok(self.0.encryption_revision)
+    }
+
+    #[getter]
+    fn size(&self) -> PyResult<u64> {
+        Ok(self.0.size)
     }
 }
 
@@ -596,6 +701,21 @@ impl ReencryptionBatchEntry {
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("{:?}>", self.0))
     }
+
+    #[getter]
+    fn vlob_id(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.vlob_id))
+    }
+
+    #[getter]
+    fn version(&self) -> PyResult<u64> {
+        Ok(self.0.version)
+    }
+
+    #[getter]
+    fn blob(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.blob)
+    }
 }
 
 #[pyclass]
@@ -629,6 +749,28 @@ impl VlobMaintenanceSaveReencryptionBatchReq {
         Ok(PyBytes::new(
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+        ))
+    }
+
+    #[getter]
+    fn realm_id(&self) -> PyResult<RealmID> {
+        Ok(RealmID(self.0.realm_id))
+    }
+
+    #[getter]
+    fn encryption_revision(&self) -> PyResult<u64> {
+        Ok(self.0.encryption_revision)
+    }
+
+    #[getter]
+    fn batch<'py>(&self, py: Python<'py>) -> PyResult<&'py PyTuple> {
+        Ok(PyTuple::new(
+            py,
+            self.0
+                .batch
+                .clone()
+                .into_iter()
+                .map(|b| ReencryptionBatchEntry(b).into_py(py)),
         ))
     }
 }

@@ -731,7 +731,7 @@ impl BackendInvitationAddr {
 
     #[getter]
     fn token(&self) -> PyResult<InvitationToken> {
-        Ok(InvitationToken(*self.0.token()))
+        Ok(InvitationToken(self.0.token()))
     }
 
     fn __str__(&self) -> PyResult<String> {

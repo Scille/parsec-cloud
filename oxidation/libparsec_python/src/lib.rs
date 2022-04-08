@@ -66,8 +66,8 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::BlockReadReq>()?;
     m.add_class::<protocol::BlockReadRep>()?;
     // Cmd
-    m.add_class::<protocol::AuthenticatedCmdReq>()?;
-    m.add_class::<protocol::InvitedCmdReq>()?;
+    m.add_class::<protocol::AuthenticatedAnyCmdReq>()?;
+    m.add_class::<protocol::InvitedAnyCmdReq>()?;
     // Events
     m.add_class::<protocol::EventsListenReq>()?;
     m.add_class::<protocol::EventsListenRep>()?;
