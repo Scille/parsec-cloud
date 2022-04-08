@@ -3,6 +3,7 @@
 import hashlib
 from typing import List
 from uuid import UUID
+from asyncpg import UniqueViolationError
 from pendulum import DateTime
 
 from parsec.api.protocol import OrganizationID
@@ -17,6 +18,7 @@ from parsec.backend.pki import (
     PkiEnrollmentAlreadyEnrolledError,
     PkiEnrollmentAlreadyExistError,
     PkiEnrollmentCertificateAlreadySubmittedError,
+    PkiEnrollmentError,
     PkiEnrollmentIdAlreadyUsedError,
     PkiEnrollmentInfo,
     PkiEnrollmentInfoAccepted,
@@ -35,20 +37,36 @@ from parsec.backend.postgresql.user_queries.create import (
     q_take_user_device_write_lock,
 )
 
-_q_get_pki_enrollment_from_certificate_sha1 = Q(
+_q_get_last_pki_enrollment_from_certificate_sha1_for_update = Q(
     f"""
-    SELECT * FROM pki_enrollment
+    SELECT
+        enrollment_id,
+        enrollment_state,
+        submitted_on,
+        submitter_accepted_device,
+        accepter
+    FROM
+        pki_enrollment
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
         AND submitter_der_x509_certificate_sha1=$submitter_der_x509_certificate_sha1
     )
-    ORDER BY enrollment_state ASC
+    ORDER BY _id DESC LIMIT 1
+    FOR UPDATE
     """
 )
 
 _q_get_pki_enrollment_from_enrollment_id = Q(
     f"""
-    SELECT * FROM pki_enrollment
+    SELECT
+        enrollment_id,
+        enrollment_state,
+        submitted_on,
+        info_cancelled,
+        info_accepted,
+        info_rejected
+    FROM
+        pki_enrollment
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
         AND enrollment_id=$enrollment_id
@@ -58,7 +76,14 @@ _q_get_pki_enrollment_from_enrollment_id = Q(
 
 _q_get_pki_enrollment_for_update = Q(
     f"""
-    SELECT * FROM pki_enrollment
+    SELECT
+        enrollment_id,
+        enrollment_state,
+        submitted_on,
+        accepter,
+        submitter_accepted_device
+    FROM
+        pki_enrollment
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
         AND enrollment_id=$enrollment_id
@@ -69,7 +94,14 @@ _q_get_pki_enrollment_for_update = Q(
 
 _q_get_pki_enrollment_from_state = Q(
     f"""
-    SELECT * FROM pki_enrollment
+    SELECT
+        enrollment_id,
+        submitted_on,
+        submitter_der_x509_certificate,
+        submit_payload_signature,
+        submit_payload
+    FROM
+        pki_enrollment
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
         AND enrollment_state=$state
@@ -218,6 +250,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         Raises:
             PkiEnrollmentCertificateAlreadySubmittedError
             PkiEnrollmentAlreadyEnrolledError
+            PkiEnrollmentIdAlreadyUsedError
         """
         submitter_der_x509_certificate_sha1 = hashlib.sha1(submitter_der_x509_certificate).digest()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
@@ -235,13 +268,13 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 raise PkiEnrollmentIdAlreadyUsedError()
 
             # Try to retrieve the last attempt with this x509 certificate
-            rep = await conn.fetch(
-                *_q_get_pki_enrollment_from_certificate_sha1(
+            row = await conn.fetchrow(
+                *_q_get_last_pki_enrollment_from_certificate_sha1_for_update(
                     organization_id=organization_id.str,
                     submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
                 )
             )
-            for row in rep:
+            if row:
                 enrollment_state = row["enrollment_state"]
                 if enrollment_state == PkiEnrollmentStatus.SUBMITTED.value:
                     if force:
@@ -294,23 +327,30 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         revoked_user_certificate=row["revoked_user_certificate"],
                         revoked_user_certifier=None,
                     )
-                    # if row and row.get("revoked_on") and row.get("revoked_on") < submitted_on:
                     if not user.is_revoked():
                         raise PkiEnrollmentAlreadyEnrolledError(submitted_on)
                 else:
                     assert False
-            await conn.execute(
-                *_q_submit_pki_enrollment(
-                    organization_id=organization_id.str,
-                    enrollment_id=enrollment_id,
-                    submitter_der_x509_certificate=submitter_der_x509_certificate,
-                    submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
-                    submit_payload_signature=submit_payload_signature,
-                    submit_payload=submit_payload,
-                    enrollment_state=PkiEnrollmentStatus.SUBMITTED.value,
-                    submitted_on=submitted_on,
+
+            try:
+                result = await conn.execute(
+                    *_q_submit_pki_enrollment(
+                        organization_id=organization_id.str,
+                        enrollment_id=enrollment_id,
+                        submitter_der_x509_certificate=submitter_der_x509_certificate,
+                        submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
+                        submit_payload_signature=submit_payload_signature,
+                        submit_payload=submit_payload,
+                        enrollment_state=PkiEnrollmentStatus.SUBMITTED.value,
+                        submitted_on=submitted_on,
+                    )
                 )
-            )
+            except UniqueViolationError:
+                raise PkiEnrollmentIdAlreadyUsedError()
+
+            if result != "INSERT 0 1":
+                raise PkiEnrollmentError(f"Insertion error: {result}")
+
             await send_signal(
                 conn, BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
             )
