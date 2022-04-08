@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from typing import Optional
 import attr
 from functools import wraps
 from pendulum import DateTime
-from typing import Dict, Type, cast, TypeVar, Union, Mapping, Any, Tuple, Sequence
+from typing import Dict, Type, cast, TypeVar, Mapping, Any, Tuple, Sequence
 
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.serde import (
@@ -67,18 +68,22 @@ class BaseTypedReqSchema(BaseReqSchema):
     # Defined by CmdReqMeta
     TYPE: Type["BaseReq"]
 
+    # Children must provide a checked constant `cmd` field
+
     @post_load
     def make_obj(self, data: Dict[str, Any]) -> "BaseReq":
         return self.TYPE(**data)
 
 
 class BaseRepSchema(BaseSchema):
-    status: Union[str, fields.CheckedConstant] = fields.CheckedConstant("ok", required=True)
+    status = fields.CheckedConstant("ok", required=True)
 
 
 class BaseTypedRepSchema(BaseRepSchema):
     # Defined by CmdReqMeta
     TYPE: Type["BaseRep"]
+
+    # Children must provide a checked constant `status` field
 
     @post_load
     def make_obj(self, data: Dict[str, Any]) -> "BaseRep":
@@ -225,6 +230,7 @@ class CmdSerializer:
 class CmdReqMeta(type):
     BASE_SCHEMA_CLS = BaseTypedReqSchema
     CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+    DISCRIMINANT_FIELD = "cmd"
 
     def __new__(cls, name: str, bases: Tuple[type, ...], nmspc: Dict[str, Any]):
         # Sanity checks
@@ -232,6 +238,15 @@ class CmdReqMeta(type):
             raise RuntimeError("Missing attribute `SCHEMA_CLS` in class definition")
         if not issubclass(nmspc["SCHEMA_CLS"], cls.BASE_SCHEMA_CLS):
             raise RuntimeError(f"Attribute `SCHEMA_CLS` must inherit {cls.BASE_SCHEMA_CLS!r}")
+
+        # Special case if we are defining `BaseReq/BaseRep`
+        if nmspc["SCHEMA_CLS"] is not cls.BASE_SCHEMA_CLS:
+            # Sanity check: discriminant field should be defined as check constant
+            discriminant_field = nmspc["SCHEMA_CLS"]._declared_fields.get(cls.DISCRIMINANT_FIELD)
+            if not discriminant_field or not isinstance(discriminant_field, fields.CheckedConstant):
+                raise RuntimeError(
+                    f"Attribute `SCHEMA_CLS` must contain a `{cls.DISCRIMINANT_FIELD}` field"
+                )
 
         raw_cls = type.__new__(cls, name, bases, nmspc)
 
@@ -260,6 +275,7 @@ class CmdReqMeta(type):
 
 class CmdRepMeta(CmdReqMeta):
     BASE_SCHEMA_CLS = BaseTypedRepSchema
+    DISCRIMINANT_FIELD = "status"
 
 
 BaseReqTypeVar = TypeVar("BaseReqTypeVar", bound="BaseReq")
@@ -361,10 +377,7 @@ def cmd_rep_factory(name: str, *rep_types: Type[BaseRep]):
         }
 
         def get_obj_type(self, obj: Dict[str, object]) -> str:
-            try:
-                return cast(str, obj["status"])
-            except (TypeError, KeyError):
-                return "ok"
+            return cast(str, obj.get("status"))
 
     RepSchema.__name__ = f"{name}Schema"
 
@@ -384,16 +397,50 @@ def cmd_rep_factory(name: str, *rep_types: Type[BaseRep]):
     return type(name, (), fields)
 
 
+def any_cmd_req_factory(name: str, *req_types: Type[BaseReq]):
+    assert name.endswith("Req")
+
+    class AnyCmdReqSchema(OneOfSchemaLegacy):
+        type_field = "cmd"
+        type_schemas = {
+            x.SCHEMA_CLS._declared_fields["cmd"].default: x.SCHEMA_CLS for x in req_types
+        }
+
+        def get_obj_type(self, obj: Dict[str, object]) -> Optional[str]:
+            return cast(str, obj.get("cmd"))
+
+    AnyCmdReqSchema.__name__ = f"{name}Schema"
+
+    serializer = MsgpackSerializer(AnyCmdReqSchema, InvalidMessageError, MessageSerializationError)
+
+    @classmethod
+    def load(cls, raw: bytes) -> BaseRep:
+        return serializer.loads(raw)
+
+    fields = {"load": load, "TYPES": req_types}
+    suffix = "Req"
+    for rep_type in req_types:
+        assert rep_type.__name__.endswith(suffix)
+        rep_type_name = rep_type.__name__[: -len(suffix)]
+        assert rep_type_name not in fields
+        fields[rep_type_name] = rep_type
+
+    return type(name, (), fields)
+
+
 # TODO: temporary hack that should be removed once all cmds are typed, at this point we
 # will be able to do this handling directly into `BackendApp._handle_client_websocket_loop`
 def api_typed_msg_adapter(req_cls, rep_cls):
     def _api_typed_msg_adapter(fn):
         @wraps(fn)
         async def wrapper(self, client_ctx, msg):
+            from parsec.api.protocol import AuthenticatedAnyCmdReq
+
             # Here packb&unpackb should never fail given they are only undoing
             # work we've just done in another layer
-            typed_msg = req_cls.load(_packb(msg))
-            typed_rep = await fn(self, client_ctx, typed_msg)
+            typed_req = AuthenticatedAnyCmdReq.load(_packb(msg))
+            assert isinstance(typed_req, req_cls)
+            typed_rep = await fn(self, client_ctx, typed_req)
             assert isinstance(typed_rep, rep_cls.TYPES)
             return _unpackb(typed_rep.dump())
 

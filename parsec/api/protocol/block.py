@@ -55,6 +55,7 @@ block_create_serializer = CmdSerializer(BlockCreateReqSchema, BlockCreateRepSche
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BlockReadReq(BaseReq):
     class SCHEMA_CLS(BaseTypedReqSchema):
+        cmd = fields.CheckedConstant("block_read", required=True)
         block_id = BlockIDField(required=True)
 
     block_id: BlockID
@@ -63,6 +64,7 @@ class BlockReadReq(BaseReq):
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BlockReadRepOk(BaseRep):
     class SCHEMA_CLS(BaseTypedRepSchema):
+        status = fields.CheckedConstant("ok", required=True)
         block = fields.Bytes(required=True)
 
     block: bytes

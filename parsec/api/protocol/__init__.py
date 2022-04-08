@@ -7,6 +7,7 @@ from parsec.api.protocol.base import (
     packb,
     unpackb,
     api_typed_msg_adapter,
+    any_cmd_req_factory,
 )
 from parsec.api.protocol.types import (
     UserID,
@@ -125,6 +126,9 @@ from parsec.api.protocol.vlob import (
     vlob_maintenance_save_reencryption_batch_serializer,
 )
 from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS, APIV1_ANONYMOUS_CMDS
+
+
+AuthenticatedAnyCmdReq = any_cmd_req_factory("AuthenticatedAnyCmdReq", BlockReadReq)
 
 
 __all__ = (
@@ -246,4 +250,5 @@ __all__ = (
     "AUTHENTICATED_CMDS",
     "INVITED_CMDS",
     "APIV1_ANONYMOUS_CMDS",
+    "AuthenticatedAnyCmd",
 )
