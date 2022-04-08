@@ -47,10 +47,10 @@ impl VlobCreateReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -95,16 +95,16 @@ impl VlobCreateRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_create::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(vlob_create::Rep::load(&buf)))
     }
 }
 
@@ -135,10 +135,10 @@ impl VlobReadReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -207,16 +207,16 @@ impl VlobReadRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_read::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(vlob_read::Rep::load(&buf)))
     }
 }
 
@@ -249,10 +249,10 @@ impl VlobUpdateReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -303,16 +303,16 @@ impl VlobUpdateRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_update::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(vlob_update::Rep::load(&buf)))
     }
 }
 
@@ -335,10 +335,10 @@ impl VlobPollChangesReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -381,16 +381,16 @@ impl VlobPollChangesRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_poll_changes::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(vlob_poll_changes::Rep::load(&buf)))
     }
 }
 
@@ -410,10 +410,10 @@ impl VlobListVersionsReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -458,16 +458,16 @@ impl VlobListVersionsRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_list_versions::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(vlob_list_versions::Rep::load(&buf)))
     }
 }
 
@@ -493,10 +493,10 @@ impl VlobMaintenanceGetReencryptionBatchReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -562,16 +562,16 @@ impl VlobMaintenanceGetReencryptionBatchRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_maintenance_get_reencryption_batch::Rep::loads(
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(vlob_maintenance_get_reencryption_batch::Rep::load(
             &buf,
         )))
     }
@@ -625,10 +625,10 @@ impl VlobMaintenanceSaveReencryptionBatchReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -694,16 +694,16 @@ impl VlobMaintenanceSaveReencryptionBatchRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_maintenance_save_reencryption_batch::Rep::loads(
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(vlob_maintenance_save_reencryption_batch::Rep::load(
             &buf,
         )))
     }

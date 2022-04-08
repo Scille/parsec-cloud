@@ -30,10 +30,10 @@ impl RealmCreateReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -78,16 +78,16 @@ impl RealmCreateRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_create::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(realm_create::Rep::load(&buf)))
     }
 }
 
@@ -107,10 +107,10 @@ impl RealmStatusReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -172,16 +172,16 @@ impl RealmStatusRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_status::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(realm_status::Rep::load(&buf)))
     }
 }
 
@@ -201,10 +201,10 @@ impl RealmStatsReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -240,16 +240,16 @@ impl RealmStatsRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_stats::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(realm_stats::Rep::load(&buf)))
     }
 }
 
@@ -270,10 +270,10 @@ impl RealmGetRoleCertificateReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -306,16 +306,16 @@ impl RealmGetRoleCertificateRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_get_role_certificates::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(realm_get_role_certificates::Rep::load(&buf)))
     }
 }
 
@@ -337,10 +337,10 @@ impl RealmUpdateRolesReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -407,16 +407,16 @@ impl RealmUpdateRolesRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_update_roles::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(realm_update_roles::Rep::load(&buf)))
     }
 }
 
@@ -453,10 +453,10 @@ impl RealmStartReencryptionMaintenanceReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -525,16 +525,16 @@ impl RealmStartReencryptionMaintenanceRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_start_reencryption_maintenance::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(realm_start_reencryption_maintenance::Rep::load(&buf)))
     }
 }
 
@@ -559,10 +559,10 @@ impl RealmFinishReencryptionMaintenanceReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -623,17 +623,15 @@ impl RealmFinishReencryptionMaintenanceRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_finish_reencryption_maintenance::Rep::loads(
-            &buf,
-        )))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(realm_finish_reencryption_maintenance::Rep::load(&buf)))
     }
 }

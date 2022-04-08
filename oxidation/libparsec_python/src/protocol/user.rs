@@ -29,10 +29,10 @@ impl UserGetReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -95,16 +95,16 @@ impl UserGetRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(user_get::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(user_get::Rep::load(&buf)))
     }
 }
 
@@ -133,10 +133,10 @@ impl UserCreateReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -187,16 +187,16 @@ impl UserCreateRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(user_create::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(user_create::Rep::load(&buf)))
     }
 }
 
@@ -217,10 +217,10 @@ impl UserRevokeReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -259,16 +259,16 @@ impl UserRevokeRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(user_revoke::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(user_revoke::Rep::load(&buf)))
     }
 }
 
@@ -290,10 +290,10 @@ impl DeviceCreateReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -338,16 +338,16 @@ impl DeviceCreateRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(device_create::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(device_create::Rep::load(&buf)))
     }
 }
 
@@ -380,10 +380,10 @@ impl HumanFindReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -446,15 +446,15 @@ impl HumanFindRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(human_find::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(human_find::Rep::load(&buf)))
     }
 }

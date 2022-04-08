@@ -26,10 +26,10 @@ impl MessageGetReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -74,15 +74,15 @@ impl MessageGetRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(message_get::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(message_get::Rep::load(&buf)))
     }
 }

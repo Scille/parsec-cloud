@@ -48,10 +48,10 @@ impl InviteNewReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -104,16 +104,16 @@ impl InviteNewRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_new::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_new::Rep::load(&buf)))
     }
 }
 
@@ -146,10 +146,10 @@ impl InviteDeleteReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -182,16 +182,16 @@ impl InviteDeleteRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_delete::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_delete::Rep::load(&buf)))
     }
 }
 
@@ -210,10 +210,10 @@ impl InviteListReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -284,16 +284,16 @@ impl InviteListRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_list::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_list::Rep::load(&buf)))
     }
 }
 
@@ -312,10 +312,10 @@ impl InviteInfoReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -366,16 +366,16 @@ impl InviteInfoRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_info::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_info::Rep::load(&buf)))
     }
 }
 
@@ -395,10 +395,10 @@ impl Invite1ClaimerWaitPeerReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -434,16 +434,16 @@ impl Invite1ClaimerWaitPeerRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_1_claimer_wait_peer::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_1_claimer_wait_peer::Rep::load(&buf)))
     }
 }
 
@@ -467,10 +467,10 @@ impl Invite1GreeterWaitPeerReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -512,16 +512,16 @@ impl Invite1GreeterWaitPeerRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_1_greeter_wait_peer::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_1_greeter_wait_peer::Rep::load(&buf)))
     }
 }
 
@@ -545,10 +545,10 @@ impl Invite2aClaimerSendHashedNonceHashNonceReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -597,17 +597,17 @@ impl Invite2aClaimerSendHashedNonceHashNonceRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
         Ok(Self(
-            invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::loads(&buf),
+            invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::load(&buf),
         ))
     }
 }
@@ -628,10 +628,10 @@ impl Invite2aGreeterGetHashedNonceReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -675,16 +675,16 @@ impl Invite2aGreeterGetHashedNonceRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_2a_greeter_get_hashed_nonce::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_2a_greeter_get_hashed_nonce::Rep::load(&buf)))
     }
 }
 
@@ -703,10 +703,10 @@ impl Invite2bClaimerSendNonceReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -739,16 +739,16 @@ impl Invite2bClaimerSendNonceRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_2b_claimer_send_nonce::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_2b_claimer_send_nonce::Rep::load(&buf)))
     }
 }
 
@@ -771,10 +771,10 @@ impl Invite2bGreeterSendNonceReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -815,16 +815,16 @@ impl Invite2bGreeterSendNonceRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_2b_greeter_send_nonce::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_2b_greeter_send_nonce::Rep::load(&buf)))
     }
 }
 
@@ -843,10 +843,10 @@ impl Invite3aClaimerSignifyTrustReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -879,16 +879,16 @@ impl Invite3aClaimerSignifyTrustRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_3a_claimer_signify_trust::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_3a_claimer_signify_trust::Rep::load(&buf)))
     }
 }
 
@@ -908,10 +908,10 @@ impl Invite3aGreeterWaitPeerTrustReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -950,16 +950,16 @@ impl Invite3aGreeterWaitPeerTrustRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_3a_greeter_wait_peer_trust::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_3a_greeter_wait_peer_trust::Rep::load(&buf)))
     }
 }
 
@@ -978,10 +978,10 @@ impl Invite3bClaimerWaitPeerTrustReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -1014,16 +1014,16 @@ impl Invite3bClaimerWaitPeerTrustRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_3b_claimer_wait_peer_trust::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_3b_claimer_wait_peer_trust::Rep::load(&buf)))
     }
 }
 
@@ -1043,10 +1043,10 @@ impl Invite3bGreeterSignifyTrustReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -1085,16 +1085,16 @@ impl Invite3bGreeterSignifyTrustRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_3b_greeter_signify_trust::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_3b_greeter_signify_trust::Rep::load(&buf)))
     }
 }
 
@@ -1113,10 +1113,10 @@ impl Invite4ClaimerCommunicateReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -1149,16 +1149,16 @@ impl Invite4ClaimerCommunicateRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_4_claimer_communicate::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_4_claimer_communicate::Rep::load(&buf)))
     }
 }
 
@@ -1178,10 +1178,10 @@ impl Invite4GreeterCommunicateReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -1220,15 +1220,15 @@ impl Invite4GreeterCommunicateRep {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dumps().map_err(ProtocolError::new_err)?,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_4_greeter_communicate::Rep::loads(&buf)))
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+        Ok(Self(invite_4_greeter_communicate::Rep::load(&buf)))
     }
 }

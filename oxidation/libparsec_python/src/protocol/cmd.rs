@@ -18,17 +18,17 @@ impl AuthenticatedCmdReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.dumps().map_err(ProtocolError::new_err)?,
+            &self.0.dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
         Ok(Self(
-            authenticated_cmds::AnyCmdReq::loads(&buf).map_err(ProtocolError::new_err)?,
+            authenticated_cmds::AnyCmdReq::load(&buf).map_err(ProtocolError::new_err)?,
         ))
     }
 }
@@ -43,17 +43,17 @@ impl InvitedCmdReq {
         Ok(format!("{:?}>", self.0))
     }
 
-    fn dumps<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.dumps().map_err(ProtocolError::new_err)?,
+            &self.0.dump().map_err(ProtocolError::new_err)?,
         ))
     }
 
     #[classmethod]
-    fn loads(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
+    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
         Ok(Self(
-            invited_cmds::AnyCmdReq::loads(&buf).map_err(ProtocolError::new_err)?,
+            invited_cmds::AnyCmdReq::load(&buf).map_err(ProtocolError::new_err)?,
         ))
     }
 }
