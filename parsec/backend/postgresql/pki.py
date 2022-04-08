@@ -3,6 +3,7 @@
 import hashlib
 from typing import List
 from uuid import UUID
+from asyncpg import UniqueViolationError
 from pendulum import DateTime
 
 from parsec.api.protocol import OrganizationID
@@ -17,6 +18,7 @@ from parsec.backend.pki import (
     PkiEnrollmentAlreadyEnrolledError,
     PkiEnrollmentAlreadyExistError,
     PkiEnrollmentCertificateAlreadySubmittedError,
+    PkiEnrollmentError,
     PkiEnrollmentIdAlreadyUsedError,
     PkiEnrollmentInfo,
     PkiEnrollmentInfoAccepted,
@@ -248,6 +250,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         Raises:
             PkiEnrollmentCertificateAlreadySubmittedError
             PkiEnrollmentAlreadyEnrolledError
+            PkiEnrollmentIdAlreadyUsedError
         """
         submitter_der_x509_certificate_sha1 = hashlib.sha1(submitter_der_x509_certificate).digest()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
@@ -328,18 +331,26 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         raise PkiEnrollmentAlreadyEnrolledError(submitted_on)
                 else:
                     assert False
-            await conn.execute(
-                *_q_submit_pki_enrollment(
-                    organization_id=organization_id.str,
-                    enrollment_id=enrollment_id,
-                    submitter_der_x509_certificate=submitter_der_x509_certificate,
-                    submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
-                    submit_payload_signature=submit_payload_signature,
-                    submit_payload=submit_payload,
-                    enrollment_state=PkiEnrollmentStatus.SUBMITTED.value,
-                    submitted_on=submitted_on,
+
+            try:
+                result = await conn.execute(
+                    *_q_submit_pki_enrollment(
+                        organization_id=organization_id.str,
+                        enrollment_id=enrollment_id,
+                        submitter_der_x509_certificate=submitter_der_x509_certificate,
+                        submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
+                        submit_payload_signature=submit_payload_signature,
+                        submit_payload=submit_payload,
+                        enrollment_state=PkiEnrollmentStatus.SUBMITTED.value,
+                        submitted_on=submitted_on,
+                    )
                 )
-            )
+            except UniqueViolationError:
+                raise PkiEnrollmentIdAlreadyUsedError()
+
+            if result != "INSERT 0 1":
+                raise PkiEnrollmentError(f"Insertion error: {result}")
+
             await send_signal(
                 conn, BackendEvent.PKI_ENROLLMENTS_UPDATED, organization_id=organization_id
             )
