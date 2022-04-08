@@ -1,13 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import TYPE_CHECKING, Dict, Any, Union
+from typing import TYPE_CHECKING, Union
 import attr
 
 from parsec.types import UUID4
-from parsec.serde import fields, post_load
+from parsec.serde import fields
 from parsec.api.protocol.base import (
     BaseReqSchema,
     BaseRepSchema,
+    BaseTypedReqSchema,
+    BaseTypedRepSchema,
     CmdSerializer,
     BaseReq,
     BaseRep,
@@ -52,24 +54,16 @@ block_create_serializer = CmdSerializer(BlockCreateReqSchema, BlockCreateRepSche
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BlockReadReq(BaseReq):
-    class SCHEMA_CLS(BaseReqSchema):
+    class SCHEMA_CLS(BaseTypedReqSchema):
         block_id = BlockIDField(required=True)
-
-        @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "BlockReadReq":
-            return BlockReadReq(**data)
 
     block_id: BlockID
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class BlockReadRepOk(BaseRep):
-    class SCHEMA_CLS(BaseRepSchema):
+    class SCHEMA_CLS(BaseTypedRepSchema):
         block = fields.Bytes(required=True)
-
-        @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "BlockReadRepOk":
-            return BlockReadRepOk(**data)
 
     block: bytes
 

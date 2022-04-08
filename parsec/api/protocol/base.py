@@ -63,8 +63,27 @@ class BaseReqSchema(BaseSchema):
         self.drop_cmd_field = drop_cmd_field
 
 
+class BaseTypedReqSchema(BaseReqSchema):
+    # Defined by CmdReqMeta
+    TYPE: Type["BaseReq"]
+
+    @post_load
+    def make_obj(self, data: Dict[str, Any]) -> "BaseReq":
+        return self.TYPE(**data)
+
+
 class BaseRepSchema(BaseSchema):
     status: Union[str, fields.CheckedConstant] = fields.CheckedConstant("ok", required=True)
+
+
+class BaseTypedRepSchema(BaseRepSchema):
+    # Defined by CmdReqMeta
+    TYPE: Type["BaseRep"]
+
+    @post_load
+    def make_obj(self, data: Dict[str, Any]) -> "BaseRep":
+        data.pop("status")
+        return self.TYPE(**data)
 
 
 class ErrorRepSchema(BaseRepSchema):
@@ -157,14 +176,29 @@ class CmdSerializer:
         self._req_serializer = serializer_factory(req_schema_cls)
         self._rep_serializer = serializer_factory(RepWithErrorSchema)
 
-        self.req_load = self._req_serializer.load
-        self.req_dump = self._req_serializer.dump
-        self.rep_load = self._rep_serializer.load
-        self.rep_dump = self._rep_serializer.dump
-        self.req_loads = self._req_serializer.loads
-        self.req_dumps = self._req_serializer.dumps
-        self.rep_loads = self._rep_serializer.loads
-        self.rep_dumps = self._rep_serializer.dumps
+        def _maybe_untype_wrapper(fn):
+            @wraps(fn)
+            def wrapper(data):
+                if isinstance(data, (BaseReq, BaseRep)):
+                    data = data.SERIALIZER.dump(data)
+
+                ret = fn(data)
+
+                if isinstance(ret, (BaseReq, BaseRep)):
+                    ret = ret.SERIALIZER.dump(ret)
+
+                return ret
+
+            return wrapper
+
+        self.req_load = _maybe_untype_wrapper(self._req_serializer.load)
+        self.req_dump = _maybe_untype_wrapper(self._req_serializer.dump)
+        self.rep_load = _maybe_untype_wrapper(self._rep_serializer.load)
+        self.rep_dump = _maybe_untype_wrapper(self._rep_serializer.dump)
+        self.req_loads = _maybe_untype_wrapper(self._req_serializer.loads)
+        self.req_dumps = _maybe_untype_wrapper(self._req_serializer.dumps)
+        self.rep_loads = _maybe_untype_wrapper(self._rep_serializer.loads)
+        self.rep_dumps = _maybe_untype_wrapper(self._rep_serializer.dumps)
 
     def require_greater_timestamp_rep_dump(
         self, strictly_greater_than: DateTime
@@ -189,7 +223,7 @@ class CmdSerializer:
 
 
 class CmdReqMeta(type):
-    BASE_SCHEMA_CLS = BaseReqSchema
+    BASE_SCHEMA_CLS = BaseTypedReqSchema
     CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 
     def __new__(cls, name: str, bases: Tuple[type, ...], nmspc: Dict[str, Any]):
@@ -218,11 +252,14 @@ class CmdReqMeta(type):
             nmspc["SCHEMA_CLS"], InvalidMessageError, MessageSerializationError
         )
 
+        # Define attribute `BaseTypedReqSchema.TYPE`
+        raw_cls.SCHEMA_CLS.TYPE = raw_cls
+
         return raw_cls
 
 
 class CmdRepMeta(CmdReqMeta):
-    BASE_SCHEMA_CLS = BaseRepSchema
+    BASE_SCHEMA_CLS = BaseTypedRepSchema
 
 
 BaseReqTypeVar = TypeVar("BaseReqTypeVar", bound="BaseReq")
@@ -230,7 +267,7 @@ BaseReqTypeVar = TypeVar("BaseReqTypeVar", bound="BaseReq")
 
 class BaseReq(metaclass=CmdReqMeta):
     # Must be overloaded by child classes
-    SCHEMA_CLS = BaseReqSchema
+    SCHEMA_CLS = BaseTypedReqSchema
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
@@ -253,7 +290,7 @@ BaseRepTypeVar = TypeVar("BaseRepTypeVar", bound="BaseRep")
 
 class BaseRep(metaclass=CmdRepMeta):
     # Must be overloaded by child classes
-    SCHEMA_CLS = BaseRepSchema
+    SCHEMA_CLS = BaseTypedRepSchema
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
@@ -298,7 +335,7 @@ def cmd_rep_error_type_factory(
         data.pop("status")
         return rep_cls(**data)
 
-    schema_cls = type("SCHEMA_CLS", (BaseRepSchema,), {"make_obj": make_obj, **schema_fields})
+    schema_cls = type("SCHEMA_CLS", (BaseTypedRepSchema,), {"make_obj": make_obj, **schema_fields})
     rep_cls = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)(
         type(
             name,
