@@ -35,10 +35,16 @@ from parsec.backend.postgresql.user_queries.create import (
     q_take_user_device_write_lock,
 )
 
-_q_get_last_pki_enrollment_from_certificate_sha1 = Q(
+_q_get_last_pki_enrollment_from_certificate_sha1_for_update = Q(
     f"""
-    SELECT enrollment_id, enrollment_state, submitted_on, submitter_accepted_device, accepter
-    FROM pki_enrollment
+    SELECT
+        enrollment_id,
+        enrollment_state,
+        submitted_on,
+        submitter_accepted_device,
+        accepter
+    FROM
+        pki_enrollment
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
         AND submitter_der_x509_certificate_sha1=$submitter_der_x509_certificate_sha1
@@ -50,7 +56,15 @@ _q_get_last_pki_enrollment_from_certificate_sha1 = Q(
 
 _q_get_pki_enrollment_from_enrollment_id = Q(
     f"""
-    SELECT * FROM pki_enrollment
+    SELECT
+        enrollment_id,
+        enrollment_state,
+        submitted_on,
+        info_cancelled,
+        info_accepted,
+        info_rejected
+    FROM
+        pki_enrollment
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
         AND enrollment_id=$enrollment_id
@@ -60,7 +74,14 @@ _q_get_pki_enrollment_from_enrollment_id = Q(
 
 _q_get_pki_enrollment_for_update = Q(
     f"""
-    SELECT * FROM pki_enrollment
+    SELECT
+        enrollment_id,
+        enrollment_state,
+        submitted_on,
+        accepter,
+        submitter_accepted_device
+    FROM
+        pki_enrollment
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
         AND enrollment_id=$enrollment_id
@@ -71,7 +92,14 @@ _q_get_pki_enrollment_for_update = Q(
 
 _q_get_pki_enrollment_from_state = Q(
     f"""
-    SELECT * FROM pki_enrollment
+    SELECT
+        enrollment_id,
+        submitted_on,
+        submitter_der_x509_certificate,
+        submit_payload_signature,
+        submit_payload
+    FROM
+        pki_enrollment
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
         AND enrollment_state=$state
@@ -238,7 +266,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
             # Try to retrieve the last attempt with this x509 certificate
             row = await conn.fetchrow(
-                *_q_get_last_pki_enrollment_from_certificate_sha1(
+                *_q_get_last_pki_enrollment_from_certificate_sha1_for_update(
                     organization_id=organization_id.str,
                     submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
                 )
