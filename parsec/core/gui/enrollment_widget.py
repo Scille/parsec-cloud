@@ -243,6 +243,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
             pendings = await self.core.list_submitted_enrollment_requests()
         except (PkiEnrollmentListError, BackendConnectionError):
             self.label_empty_list.setText(translate("TEXT_ENROLLMENT_FAILED_TO_RETRIEVE_PENDING"))
+            self.label_empty_list.show()
             return
         if not pendings:
             self.label_empty_list.setText(translate("TEXT_ENROLLMENT_NO_PENDING_ENROLLMENT"))
