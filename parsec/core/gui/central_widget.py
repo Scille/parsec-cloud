@@ -41,6 +41,7 @@ from parsec.core.gui import desktop
 from parsec.core.gui.authentication_change_widget import AuthenticationChangeWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import Pixmap
+from parsec.core.gui.commercial import is_saas_addr, SAAS_UPDATE_SUBSCRIPTION_URL
 from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
@@ -122,6 +123,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
         self.set_user_info()
         menu = QMenu()
+        if self.core.device.is_admin and is_saas_addr(self.core.device.organization_addr):
+            update_sub_act = menu.addAction(_("ACTION_UPDATE_SUBSCRIPTION"))
+            update_sub_act.triggered.connect(self._on_update_subscription_clicked)
         copy_backend_addr_act = menu.addAction(_("ACTION_COPY_BACKEND_ADDR"))
         copy_backend_addr_act.triggered.connect(self._on_copy_backend_addr)
         menu.addSeparator()
@@ -197,6 +201,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
     def _show_user_menu(self) -> None:
         self.button_user.showMenu()
+
+    def _on_update_subscription_clicked(self) -> None:
+        desktop.open_url(SAAS_UPDATE_SUBSCRIPTION_URL)
 
     def _on_copy_backend_addr(self) -> None:
         desktop.copy_to_clipboard(self.core.device.organization_addr.to_url())
