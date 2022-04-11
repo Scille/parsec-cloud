@@ -106,7 +106,6 @@ parts:
         Nfc \
         OpenGL \
         Positioning \
-        PrintSupport \
         Qml \
         Quick \
         Quick3D \
