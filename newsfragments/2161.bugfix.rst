@@ -1,1 +1,0 @@
-Fix the print dialog pop-up in snap builds (introduced in 2.7.0).

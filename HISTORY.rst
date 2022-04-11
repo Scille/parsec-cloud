@@ -5,6 +5,19 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.7.1 (2022-04-11)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix the print dialog pop-up in snap builds (introduced in 2.7.0).  (`#2161
+  <https://github.com/Scille/parsec-cloud/issues/2161>`__)
+* Fix regression in Parsec server introduced in version 2.7.0 leading to block
+  being stored and fetched with an incorrect ID  (`#2154
+  <https://github.com/Scille/parsec-cloud/issues/2154>`__)
+
+
 Parsec v2.7.0 (2022-04-01)
 --------------------------
 
