@@ -190,10 +190,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         if self.create_job:
             self.create_job.cancel()
 
-    def _on_next_clicked(self):
-        self.jobs_ctx.submit_job(None, None, self._on_next_clicked_async)
-
-    async def _on_next_clicked_async(self):
+    async def _on_next_clicked(self):
         if isinstance(self.current_widget, CreateOrgUserInfoWidget):
             backend_addr = None
             org_id = None

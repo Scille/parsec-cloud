@@ -337,7 +337,7 @@ async def test_workspace_reencryption_do_one_batch_error(
     # Unexpected error is logged
     if error_type is Exception:
         caplog.assert_occured_once(
-            "[error    ] Uncatched error                [parsec.core.gui.trio_jobs]"
+            "[error    ] Uncatched error in Qt/trio job [parsec.core.gui.trio_jobs]"
         )
 
 

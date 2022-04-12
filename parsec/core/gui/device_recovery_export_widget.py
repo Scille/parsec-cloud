@@ -158,10 +158,7 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
             raise JobResultError("error") from exc
         self.button_validate.setEnabled(True)
 
-    def _on_validate_clicked(self):
-        self.jobs_ctx.submit_job(None, None, self._on_validate_clicked_async)
-
-    async def _on_validate_clicked_async(self):
+    async def _on_validate_clicked(self):
         if isinstance(self.current_page, DeviceRecoveryExportPage1Widget):
             self.button_validate.setEnabled(False)
             selected_device = self.current_page.get_selected_device()
