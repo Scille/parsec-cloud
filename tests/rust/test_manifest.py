@@ -361,15 +361,13 @@ def test_user_manifest():
         "last_processed_message": 4,
         "workspaces": [
             WorkspaceEntry(
-                **{
-                    "name": EntryName("name"),
-                    "id": EntryID.new(),
-                    "key": SecretKey.generate(),
-                    "encryption_revision": 1,
-                    "encrypted_on": pendulum.now(),
-                    "role_cached_on": pendulum.now(),
-                    "role": RealmRole.OWNER,
-                }
+                name=EntryName("name"),
+                id=EntryID.new(),
+                key=SecretKey.generate(),
+                encryption_revision=1,
+                encrypted_on=pendulum.now(),
+                role_cached_on=pendulum.now(),
+                role=RealmRole.OWNER,
             )
         ],
     }
@@ -388,26 +386,22 @@ def test_user_manifest():
         "last_processed_message": 7,
         "workspaces": [
             WorkspaceEntry(
-                **{
-                    "name": EntryName("name"),
-                    "id": EntryID.new(),
-                    "key": SecretKey.generate(),
-                    "encryption_revision": 1,
-                    "encrypted_on": pendulum.now(),
-                    "role_cached_on": pendulum.now(),
-                    "role": RealmRole.OWNER,
-                }
+                name=EntryName("name"),
+                id=EntryID.new(),
+                key=SecretKey.generate(),
+                encryption_revision=1,
+                encrypted_on=pendulum.now(),
+                role_cached_on=pendulum.now(),
+                role=RealmRole.OWNER,
             ),
             WorkspaceEntry(
-                **{
-                    "name": EntryName("other_name"),
-                    "id": EntryID.new(),
-                    "key": SecretKey.generate(),
-                    "encryption_revision": 2,
-                    "encrypted_on": pendulum.now(),
-                    "role_cached_on": pendulum.now(),
-                    "role": RealmRole.CONTRIBUTOR,
-                }
+                name=EntryName("other_name"),
+                id=EntryID.new(),
+                key=SecretKey.generate(),
+                encryption_revision=2,
+                encrypted_on=pendulum.now(),
+                role_cached_on=pendulum.now(),
+                role=RealmRole.CONTRIBUTOR,
             ),
         ],
     }
