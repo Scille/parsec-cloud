@@ -37,7 +37,7 @@ class BlockAccess(BaseData):
         id = BlockIDField(required=True)
         key = fields.SecretKey(required=True)
         offset = fields.Integer(required=True, validate=validate.Range(min=0))
-        size = fields.Integer(required=True, validate=validate.Range(min=0))
+        size = fields.Integer(required=True, validate=validate.Range(min=1))
         digest = fields.HashDigest(required=True)
 
         @post_load
