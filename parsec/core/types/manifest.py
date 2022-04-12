@@ -70,7 +70,7 @@ class Chunk(BaseData):
     still with respect to the file addressing.
 
     This means the following rule applies:
-        raw_offset <= start < stop <= raw_start + raw_size
+        raw_offset <= start < stop <= raw_offset + raw_size
 
     Access is an optional block access that can be used to produce a remote manifest
     when the chunk corresponds to an actual block within the context of this manifest.
@@ -94,6 +94,12 @@ class Chunk(BaseData):
     raw_offset: int
     raw_size: int
     access: Optional[BlockAccess]
+
+    # Integrity
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        assert self.raw_offset <= self.start < self.stop <= self.raw_offset + self.raw_size
 
     # Ordering
 
@@ -183,9 +189,10 @@ class Chunk(BaseData):
 
     # Export
 
-    def get_block_access(self) -> Optional[BlockAccess]:
+    def get_block_access(self) -> BlockAccess:
         if not self.is_block():
             raise TypeError("This chunk does not correspond to a block")
+        assert self.access is not None
         return self.access
 
 
