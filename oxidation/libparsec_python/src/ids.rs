@@ -24,7 +24,7 @@ impl OrganizationID {
                 Err(err) => Err(PyValueError::new_err(err)),
             }
         } else {
-            unimplemented!()
+            Err(PyValueError::new_err("Unimplemented"))
         }
     }
 
@@ -413,7 +413,7 @@ impl UserID {
                 Err(err) => Err(PyValueError::new_err(err)),
             }
         } else {
-            unimplemented!()
+            Err(PyValueError::new_err("Unimplemented"))
         }
     }
 
@@ -475,7 +475,7 @@ impl DeviceName {
                 Err(err) => Err(PyValueError::new_err(err)),
             }
         } else {
-            unimplemented!()
+            Err(PyValueError::new_err("Unimplemented"))
         }
     }
 
@@ -529,7 +529,7 @@ impl DeviceLabel {
                 Err(err) => Err(PyValueError::new_err(err)),
             }
         } else {
-            unimplemented!()
+            Err(PyValueError::new_err("Unimplemented"))
         }
     }
 
@@ -578,7 +578,7 @@ impl DeviceID {
                 Err(err) => Err(PyValueError::new_err(err)),
             }
         } else {
-            unimplemented!()
+            Err(PyValueError::new_err("Unimplemented"))
         }
     }
 
