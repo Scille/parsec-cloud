@@ -120,7 +120,7 @@ use tests_fixtures::{alice, Device};
                             "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                         )),
                         offset: 0,
-                        size: 512,
+                        size: NonZeroU64::try_from(512).unwrap(),
                     },
                     BlockAccess {
                         id: "d7e3af6a03e1414db0f4682901e9aa4b".parse().unwrap(),
@@ -131,7 +131,7 @@ use tests_fixtures::{alice, Device};
                             "c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc"
                         )),
                         offset: 512,
-                        size: 188,
+                        size: NonZeroU64::try_from(188).unwrap(),
                     }
                 ],
                 blocksize: Blocksize::try_from(512).unwrap(),
@@ -152,7 +152,7 @@ use tests_fixtures::{alice, Device};
                             "ac57"
                         )),
                         offset: 0,
-                        size: 512,
+                        size: NonZeroU64::try_from(512).unwrap(),
                     }),
                     raw_offset: 0,
                     raw_size: NonZeroU64::new(512).unwrap(),
@@ -935,40 +935,6 @@ fn chunk_new() {
 }
 
 #[rstest]
-fn chunk_from_block_access() {
-    let id = BlockID::default();
-
-    let block_access = BlockAccess {
-        id,
-        key: SecretKey::generate(),
-        offset: 1,
-        size: 4,
-        digest: HashDigest::from_data(&[]),
-    };
-
-    let chunk = Chunk::from_block_access(block_access.clone()).unwrap();
-
-    assert_eq!(*chunk.id, *id);
-    assert_eq!(chunk.start, 1);
-    assert_eq!(chunk.stop, NonZeroU64::try_from(5).unwrap());
-    assert_eq!(chunk.raw_offset, 1);
-    assert_eq!(chunk.raw_size, NonZeroU64::try_from(4).unwrap());
-    assert_eq!(chunk.access, Some(block_access));
-
-    let block_access = BlockAccess {
-        id,
-        key: SecretKey::generate(),
-        offset: 0,
-        size: 0,
-        digest: HashDigest::from_data(&[]),
-    };
-
-    let err = Chunk::from_block_access(block_access.clone()).unwrap_err();
-
-    assert_eq!(err, "invalid raw size");
-}
-
-#[rstest]
 fn chunk_evolve_as_block() {
     let chunk = Chunk::new(1, NonZeroU64::try_from(5).unwrap());
     let id = chunk.id;
@@ -981,7 +947,10 @@ fn chunk_evolve_as_block() {
     assert_eq!(block.raw_size, NonZeroU64::try_from(4).unwrap());
     assert_eq!(*block.access.as_ref().unwrap().id, *id);
     assert_eq!(block.access.as_ref().unwrap().offset, 1);
-    assert_eq!(block.access.as_ref().unwrap().size, 4);
+    assert_eq!(
+        block.access.as_ref().unwrap().size,
+        NonZeroU64::try_from(4).unwrap()
+    );
     assert_eq!(
         block.access.as_ref().unwrap().digest,
         HashDigest::from_data(&[])
@@ -991,7 +960,7 @@ fn chunk_evolve_as_block() {
         id: BlockID::default(),
         key: SecretKey::generate(),
         offset: 1,
-        size: 4,
+        size: NonZeroU64::try_from(4).unwrap(),
         digest: HashDigest::from_data(&[]),
     };
 
@@ -1061,7 +1030,7 @@ fn chunk_is_block() {
     assert_eq!(block.is_pseudo_block(), true);
     assert_eq!(block.is_block(), false);
 
-    block.access.as_mut().unwrap().size = 4;
+    block.access.as_mut().unwrap().size = NonZeroU64::try_from(4).unwrap();
 
     assert_eq!(block.is_pseudo_block(), true);
     assert_eq!(block.is_block(), true);
@@ -1133,14 +1102,14 @@ fn local_file_manifest_is_reshaped() {
         id: BlockID::default(),
         key: SecretKey::generate(),
         offset: 1,
-        size: 4,
+        size: NonZeroU64::try_from(4).unwrap(),
         digest: HashDigest::from_data(&[]),
     },
     BlockAccess {
         id: BlockID::default(),
         key: SecretKey::generate(),
         offset: 1,
-        size: 4,
+        size: NonZeroU64::try_from(4).unwrap(),
         digest: HashDigest::from_data(&[]),
     }
 ]))]
@@ -1232,7 +1201,7 @@ fn local_file_manifest_match_remote() {
             id: BlockID::default(),
             key: SecretKey::generate(),
             offset: 0,
-            size: 1,
+            size: NonZeroU64::try_from(1).unwrap(),
             digest: HashDigest::from_data(&[]),
         }],
     };
