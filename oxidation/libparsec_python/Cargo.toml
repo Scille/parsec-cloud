@@ -22,7 +22,7 @@ chrono = {version = "0.4.19", features = ["serde"]}
 regex = "1.5.5"
 
 [dependencies.pyo3]
-version = "0.16.0"
+version = "0.16.3"
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
 # "abi3-py37" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.7
 features = ["extension-module", "abi3-py37"]

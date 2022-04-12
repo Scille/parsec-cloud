@@ -384,18 +384,26 @@ checksum = "fbe5e23404da5b4f555ef85ebed98fb4083e55a00c317800bc2a50ede9f3d219"
 name = "libparsec"
 version = "0.1.0"
 dependencies = [
+ "libparsec_platform_native",
  "parsec_api_crypto",
  "parsec_api_types",
 ]
 
 [[package]]
+name = "libparsec_platform_native"
+version = "0.0.0"
+
+[[package]]
 name = "libparsec_python"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "libparsec",
  "parsec_api_crypto",
  "parsec_api_types",
+ "parsec_client_types",
  "pyo3",
+ "regex",
  "uuid",
 ]
 
@@ -504,6 +512,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "sha2 0.10.2",
+ "thiserror",
  "x25519-dalek",
  "xsalsa20poly1305",
 ]
@@ -512,7 +521,6 @@ dependencies = [
 name = "parsec_api_types"
 version = "0.0.0"
 dependencies = [
- "byteorder",
  "chrono",
  "data-encoding",
  "flate2",
@@ -527,9 +535,27 @@ dependencies = [
  "serde_bytes",
  "serde_repr",
  "serde_with",
+ "thiserror",
  "unicode-normalization",
  "url",
  "uuid",
+]
+
+[[package]]
+name = "parsec_client_types"
+version = "0.0.0"
+dependencies = [
+ "flate2",
+ "parsec_api_crypto",
+ "parsec_api_types",
+ "paste",
+ "regex",
+ "rmp-serde",
+ "serde",
+ "serde_bytes",
+ "serde_repr",
+ "serde_with",
+ "sha2 0.10.2",
 ]
 
 [[package]]
@@ -572,9 +598,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3"
-version = "0.16.0"
+version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d1a3df45cb95bd954fac00bd9609062640fd7fb9e9946a660092c9e015421fb"
+checksum = "6b3e99c4c3e790e4fc365b42b70c1f7801f42eadc4ea648fa327e6f5ca29f215"
 dependencies = [
  "cfg-if",
  "indoc",
@@ -588,18 +614,19 @@ dependencies = [
 
 [[package]]
 name = "pyo3-build-config"
-version = "0.16.0"
+version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "386a68f0f5f2f9932815068bc8049a56989f2437d96dbb31d1fb11b63ce90364"
+checksum = "2486b96281859ff0a3929ba6467b13751627b974f7137362db38e2bed14b2094"
 dependencies = [
  "once_cell",
+ "target-lexicon",
 ]
 
 [[package]]
 name = "pyo3-ffi"
-version = "0.16.0"
+version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9a4e2f74dc77eea5ce11d19f0afaeb632b6590f8cbb1d5ee2f1330b766803e8"
+checksum = "dd9de1d94557751599f8bd321f10e6c1ef2801067acb58c91138deef2ae83a17"
 dependencies = [
  "libc",
  "pyo3-build-config",
@@ -607,9 +634,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-macros"
-version = "0.16.0"
+version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbff3a1579934968a53bcc78ac33663ed2577accda05d484097679cc8d28e52d"
+checksum = "0b9584049129b1cfb615243391a6345c726690271ae195ffd6aa3766177296aa"
 dependencies = [
  "proc-macro2",
  "pyo3-macros-backend",
@@ -619,12 +646,11 @@ dependencies = [
 
 [[package]]
 name = "pyo3-macros-backend"
-version = "0.16.0"
+version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90644126c8c1ac7b47f794dd20a5729f8646b91c49edb31689c90f8cb3c33ea9"
+checksum = "b6c4717e6a55c51a9958eda1f5481ff7f62cccd21f45309c10e4731cb7198dbc"
 dependencies = [
  "proc-macro2",
- "pyo3-build-config",
  "quote",
  "syn",
 ]
@@ -730,9 +756,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.5.4"
+version = "1.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d07a8629359eb56f1e2fb1652bb04212c072a87ba68546a04065d525673ac461"
+checksum = "1a11647b6b25ff05a515cb92c365cec08801e83423a235b51e231e1808747286"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -920,6 +946,32 @@ dependencies = [
  "quote",
  "syn",
  "unicode-xid",
+]
+
+[[package]]
+name = "target-lexicon"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7fa7e55043acb85fca6b3c01485a2eeb6b69c5d21002e273c79e465f43b7ac1"
+
+[[package]]
+name = "thiserror"
+version = "1.0.30"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "854babe52e4df1653706b98fcfc05843010039b406875930a70e4d9644e5c417"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.30"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa32fd3f627f367fe16f893e2597ae3c05020f8bba2666a4e6ea73d377e5714b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
