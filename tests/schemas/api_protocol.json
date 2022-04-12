@@ -285,7 +285,8 @@
                         "cmd": {
                             "allow_none": false,
                             "required": true,
-                            "type": "String"
+                            "type": "CheckedConstant",
+                            "value": "block_read"
                         }
                     },
                     "serializing": "msgpack"

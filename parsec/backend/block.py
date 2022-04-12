@@ -6,7 +6,9 @@ from parsec.api.protocol import (
     RealmID,
     BlockID,
     block_create_serializer,
-    block_read_serializer,
+    BlockReadReq,
+    BlockReadRep,
+    api_typed_msg_adapter,
 )
 from parsec.backend.utils import catch_protocol_errors, api
 
@@ -38,25 +40,24 @@ class BlockInMaintenanceError(BlockError):
 class BaseBlockComponent:
     @api("block_read")
     @catch_protocol_errors
-    async def api_block_read(self, client_ctx, msg):
-        msg = block_read_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(BlockReadReq, BlockReadRep)
+    async def api_block_read(self, client_ctx, req: BlockReadReq) -> BlockReadRep:
         try:
-            block = await self.read(client_ctx.organization_id, client_ctx.device_id, **msg)
+            block = await self.read(client_ctx.organization_id, client_ctx.device_id, req.block_id)
 
         except BlockNotFoundError:
-            return block_read_serializer.rep_dump({"status": "not_found"})
+            return BlockReadRep.NotFound()
 
         except BlockTimeoutError:
-            return block_read_serializer.rep_dump({"status": "timeout"})
+            return BlockReadRep.Timeout()
 
         except BlockAccessError:
-            return block_read_serializer.rep_dump({"status": "not_allowed"})
+            return BlockReadRep.NotAllowed()
 
         except BlockInMaintenanceError:
-            return block_read_serializer.rep_dump({"status": "in_maintenance"})
+            return BlockReadRep.InMaintenance()
 
-        return block_read_serializer.rep_dump({"status": "ok", "block": block})
+        return BlockReadRep.Ok(block=block)
 
     @api("block_create")
     @catch_protocol_errors

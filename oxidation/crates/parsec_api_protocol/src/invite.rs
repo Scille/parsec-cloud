@@ -11,8 +11,7 @@ use parsec_api_types::{DateTime, HumanHandle, InvitationToken, UserID};
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "type")]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(tag = "type", rename_all = "UPPERCASE")]
 pub enum InviteNewReq {
     User {
         claimer_email: String,

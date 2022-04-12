@@ -1,7 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from typing import Optional
+import attr
+from functools import wraps
 from pendulum import DateTime
-from typing import Dict, Type, cast, TypeVar, Union, Mapping
+from typing import Dict, Type, cast, TypeVar, Mapping, Any, Tuple, Sequence
 
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.serde import (
@@ -61,8 +64,39 @@ class BaseReqSchema(BaseSchema):
         self.drop_cmd_field = drop_cmd_field
 
 
+class BaseTypedReqSchema(BaseReqSchema):
+    # Defined by CmdReqMeta
+    TYPE: Type["BaseReq"]
+
+    # Children must provide a checked constant `cmd` field
+
+    @post_load
+    def make_obj(  # type: ignore[misc]
+        self, data: Dict[str, Any]
+    ) -> "BaseReq":
+        return self.TYPE(  # type: ignore[call-arg]
+            **data
+        )
+
+
 class BaseRepSchema(BaseSchema):
-    status: Union[str, fields.CheckedConstant] = fields.CheckedConstant("ok", required=True)
+    status = fields.CheckedConstant("ok", required=True)
+
+
+class BaseTypedRepSchema(BaseRepSchema):
+    # Defined by CmdReqMeta
+    TYPE: Type["BaseRep"]
+
+    # Children must provide a checked constant `status` field
+
+    @post_load
+    def make_obj(  # type: ignore[misc]
+        self, data: Dict[str, Any]
+    ) -> "BaseRep":
+        data.pop("status")
+        return self.TYPE(  # type: ignore[call-arg]
+            **data
+        )
 
 
 class ErrorRepSchema(BaseRepSchema):
@@ -108,6 +142,23 @@ class CmdSerializer:
             f"rep_schema={self._rep_serializer})"
         )
 
+    @classmethod
+    def from_typed(
+        cls, req_cls: Type["BaseReq"], rep_clss: Sequence[Type["BaseRep"]]
+    ) -> "CmdSerializer":
+        assert issubclass(req_cls, BaseReq)
+        assert all(issubclass(x, BaseRep) for x in rep_clss)
+
+        rep_schemas = {
+            x.SCHEMA_CLS._declared_fields["status"].default: x.SCHEMA_CLS for x in rep_clss
+        }
+        rep_schema_ok = rep_schemas.pop("ok")
+        return cls(
+            req_schema_cls=req_cls.SCHEMA_CLS,
+            rep_schema_cls=rep_schema_ok,
+            extra_error_schemas=rep_schemas,
+        )
+
     def __init__(
         self,
         req_schema_cls: Type[BaseSchema],
@@ -138,14 +189,33 @@ class CmdSerializer:
         self._req_serializer = serializer_factory(req_schema_cls)
         self._rep_serializer = serializer_factory(RepWithErrorSchema)
 
-        self.req_load = self._req_serializer.load
-        self.req_dump = self._req_serializer.dump
-        self.rep_load = self._rep_serializer.load
-        self.rep_dump = self._rep_serializer.dump
-        self.req_loads = self._req_serializer.loads
-        self.req_dumps = self._req_serializer.dumps
-        self.rep_loads = self._rep_serializer.loads
-        self.rep_dumps = self._rep_serializer.dumps
+        def _maybe_untype_wrapper(  # type: ignore[no-untyped-def]
+            fn
+        ):
+            @wraps(fn)
+            def wrapper(  # type: ignore[no-untyped-def, misc]
+                data
+            ):
+                if isinstance(data, (BaseReq, BaseRep)):
+                    data = data.SERIALIZER.dump(data)
+
+                ret = fn(data)
+
+                if isinstance(ret, (BaseReq, BaseRep)):
+                    ret = ret.SERIALIZER.dump(ret)
+
+                return ret
+
+            return wrapper
+
+        self.req_load = _maybe_untype_wrapper(self._req_serializer.load)
+        self.req_dump = _maybe_untype_wrapper(self._req_serializer.dump)
+        self.rep_load = _maybe_untype_wrapper(self._rep_serializer.load)
+        self.rep_dump = _maybe_untype_wrapper(self._rep_serializer.dump)
+        self.req_loads = _maybe_untype_wrapper(self._req_serializer.loads)
+        self.req_dumps = _maybe_untype_wrapper(self._req_serializer.dumps)
+        self.rep_loads = _maybe_untype_wrapper(self._rep_serializer.loads)
+        self.rep_dumps = _maybe_untype_wrapper(self._rep_serializer.dumps)
 
     def require_greater_timestamp_rep_dump(
         self, strictly_greater_than: DateTime
@@ -167,3 +237,238 @@ class CmdSerializer:
                 "client_timestamp": client_timestamp,
             }
         )
+
+
+class CmdReqMeta(type):
+    BASE_SCHEMA_CLS = BaseTypedReqSchema
+    CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+    DISCRIMINANT_FIELD = "cmd"
+
+    def __new__(  # type: ignore[no-untyped-def, misc]
+        cls, name: str, bases: Tuple[type, ...], nmspc: Dict[str, Any]
+    ):
+        # Sanity checks
+        if "SCHEMA_CLS" not in nmspc:
+            raise RuntimeError("Missing attribute `SCHEMA_CLS` in class definition")
+        if not issubclass(nmspc["SCHEMA_CLS"], cls.BASE_SCHEMA_CLS):
+            raise RuntimeError(f"Attribute `SCHEMA_CLS` must inherit {cls.BASE_SCHEMA_CLS!r}")
+
+        # Special case if we are defining `BaseReq/BaseRep`
+        if nmspc["SCHEMA_CLS"] is not cls.BASE_SCHEMA_CLS:
+            # Sanity check: discriminant field should be defined as check constant
+            discriminant_field = nmspc["SCHEMA_CLS"]._declared_fields.get(cls.DISCRIMINANT_FIELD)
+            if not discriminant_field or not isinstance(discriminant_field, fields.CheckedConstant):
+                raise RuntimeError(
+                    f"Attribute `SCHEMA_CLS` must contain a `{cls.DISCRIMINANT_FIELD}` field"
+                )
+
+        raw_cls = type.__new__(cls, name, bases, nmspc)
+
+        # Sanity checks: class SCHEMA_CLS needs to define parents SCHEMA_CLS fields
+        schema_cls_fields = set(nmspc["SCHEMA_CLS"]._declared_fields)
+        bases_schema_cls = (base for base in bases if hasattr(base, "SCHEMA_CLS"))
+        for base in bases_schema_cls:
+            assert (
+                base.SCHEMA_CLS._declared_fields.keys()  # type: ignore[attr-defined]
+                <= schema_cls_fields
+            )
+
+        # Sanity check: attr fields need to be defined in SCHEMA_CLS
+        if "__attrs_attrs__" in nmspc:
+            assert {att.name for att in nmspc["__attrs_attrs__"]} <= schema_cls_fields
+
+        raw_cls.SERIALIZER = MsgpackSerializer(  # type: ignore[attr-defined]
+            nmspc["SCHEMA_CLS"], InvalidMessageError, MessageSerializationError
+        )
+
+        # Define attribute `BaseTypedReqSchema.TYPE`
+        raw_cls.SCHEMA_CLS.TYPE = raw_cls  # type: ignore[attr-defined]
+
+        return raw_cls
+
+
+class CmdRepMeta(CmdReqMeta):
+    BASE_SCHEMA_CLS = BaseTypedRepSchema
+    DISCRIMINANT_FIELD = "status"
+
+
+BaseReqTypeVar = TypeVar("BaseReqTypeVar", bound="BaseReq")
+
+
+class BaseReq(metaclass=CmdReqMeta):
+    # Must be overloaded by child classes
+    SCHEMA_CLS = BaseTypedReqSchema
+
+    def __eq__(  # type: ignore[misc]
+        self, other: Any
+    ) -> bool:
+        if isinstance(other, type(self)):
+            return attr.astuple(self).__eq__(attr.astuple(other))
+        return NotImplemented
+
+    def evolve(  # type: ignore[no-untyped-def]
+        self, **kwargs
+    ):
+        return attr.evolve(self, **kwargs)
+
+    def dump(self) -> bytes:
+        return self.SERIALIZER.dumps(self)  # type: ignore[attr-defined]
+
+    @classmethod
+    def load(cls: Type[BaseReqTypeVar], raw: bytes) -> BaseReqTypeVar:
+        return cls.SERIALIZER.loads(raw)  # type: ignore[attr-defined]
+
+
+BaseRepTypeVar = TypeVar("BaseRepTypeVar", bound="BaseRep")
+
+
+class BaseRep(metaclass=CmdRepMeta):
+    # Must be overloaded by child classes
+    SCHEMA_CLS = BaseTypedRepSchema
+
+    def __eq__(  # type: ignore[misc]
+        self, other: Any
+    ) -> bool:
+        if isinstance(other, type(self)):
+            return attr.astuple(self).__eq__(attr.astuple(other))
+        return NotImplemented
+
+    def evolve(  # type: ignore[no-untyped-def]
+        self, **kwargs
+    ):
+        return attr.evolve(self, **kwargs)
+
+    def dump(self) -> bytes:
+        return self.SERIALIZER.dumps(self)  # type: ignore[attr-defined]
+
+    @classmethod
+    def load(cls: Type[BaseReqTypeVar], raw: bytes) -> BaseReqTypeVar:  # type: ignore[misc]
+        return cls.SERIALIZER.loads(raw)  # type: ignore[attr-defined]
+
+
+def cmd_rep_error_type_factory(  # type: ignore[no-any-unimported]
+    name: str, status: str, extra_fields: Dict[str, fields.Field] = {}
+) -> Type[BaseRep]:
+    """
+    Shorthand for creating:
+
+        class <name>(BaseRep):
+            class SCHEMA_CLS(BaseRepSchema):
+                status = fields.CheckedConstant(<status>, required=True)
+                [...]  # extra_fields
+
+                @post_load
+                def make_obj(self, data):
+                    data.pop("status")
+                    return <name>(**data)
+
+            status: str
+            [...] # extra_fields
+
+    """
+    schema_fields = {**extra_fields, "status": fields.CheckedConstant(status, required=True)}
+
+    @post_load
+    def make_obj(  # type: ignore[no-untyped-def, misc]
+        self, data: Dict[str, Any]
+    ) -> Type[BaseRep]:
+        data.pop("status")
+        return rep_cls(**data)
+
+    schema_cls = type("SCHEMA_CLS", (BaseTypedRepSchema,), {"make_obj": make_obj, **schema_fields})
+    rep_cls = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)(
+        type(
+            name,
+            (BaseRep,),
+            {
+                "SCHEMA_CLS": schema_cls,
+                # Note static type check won't be ablet to check such dynamic code,
+                # hence it's fine to use object as generic type here
+                **{k: object for k in schema_fields.keys()},
+            },
+        )
+    )
+    return rep_cls
+
+
+def cmd_rep_factory(  # type: ignore[no-untyped-def]
+    name: str, *rep_types: Type[BaseRep]
+):
+    assert name.endswith("Rep")
+
+    class RepSchema(OneOfSchemaLegacy):
+        type_field = "status"
+        type_schemas = {
+            x.SCHEMA_CLS._declared_fields["status"].default: x.SCHEMA_CLS for x in rep_types
+        }
+
+        def get_obj_type(self, obj: Dict[str, object]) -> str:
+            return cast(str, obj.get("status"))
+
+    RepSchema.__name__ = f"{name}Schema"
+
+    serializer = MsgpackSerializer(RepSchema, InvalidMessageError, MessageSerializationError)
+
+    @classmethod  # type: ignore[misc]
+    def load(cls, raw: bytes) -> Dict[Any, Any]:  # type: ignore[no-untyped-def, misc]
+        return serializer.loads(raw)
+
+    fields = {"load": load, "TYPES": rep_types}
+    for rep_type in rep_types:
+        assert rep_type.__name__.startswith(name)
+        rep_type_name = rep_type.__name__[len(name) :]
+        assert rep_type_name not in fields
+        fields[rep_type_name] = rep_type
+
+    return type(name, (), fields)
+
+
+def any_cmd_req_factory(name: str, *req_types: Type[BaseReq]):  # type: ignore[no-untyped-def]
+    assert name.endswith("Req")
+
+    class AnyCmdReqSchema(OneOfSchemaLegacy):
+        type_field = "cmd"
+        type_schemas = {
+            x.SCHEMA_CLS._declared_fields["cmd"].default: x.SCHEMA_CLS for x in req_types
+        }
+
+        def get_obj_type(self, obj: Dict[str, object]) -> Optional[str]:
+            return cast(str, obj.get("cmd"))
+
+    AnyCmdReqSchema.__name__ = f"{name}Schema"
+
+    serializer = MsgpackSerializer(AnyCmdReqSchema, InvalidMessageError, MessageSerializationError)
+
+    @classmethod  # type: ignore[misc]
+    def load(cls, raw: bytes) -> Dict[Any, Any]:  # type: ignore[no-untyped-def, misc]
+        return serializer.loads(raw)
+
+    fields = {"load": load, "TYPES": req_types}
+    suffix = "Req"
+    for rep_type in req_types:
+        assert rep_type.__name__.endswith(suffix)
+        rep_type_name = rep_type.__name__[: -len(suffix)]
+        assert rep_type_name not in fields
+        fields[rep_type_name] = rep_type
+
+    return type(name, (), fields)
+
+
+# TODO: temporary hack that should be removed once all cmds are typed, at this point we
+# will be able to do this handling directly into `BackendApp._handle_client_websocket_loop`
+def api_typed_msg_adapter(req_cls, rep_cls):  # type: ignore[no-untyped-def]
+    def _api_typed_msg_adapter(fn):  # type: ignore[no-untyped-def]
+        @wraps(fn)
+        async def wrapper(self, client_ctx, msg):  # type: ignore[no-untyped-def, misc]
+            from parsec.api.protocol import AuthenticatedAnyCmdReq
+
+            # Here packb&unpackb should never fail given they are only undoing
+            # work we've just done in another layer
+            typed_req = AuthenticatedAnyCmdReq.load(_packb(msg))
+            assert isinstance(typed_req, req_cls)
+            typed_rep = await fn(self, client_ctx, typed_req)
+            return _unpackb(typed_rep.dump())
+
+        return wrapper
+
+    return _api_typed_msg_adapter

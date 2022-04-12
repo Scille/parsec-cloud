@@ -36,39 +36,3 @@ pub use organization::{OrganizationBootstrapWebhook, UsersPerProfileDetailItem};
 pub use realm::MaintenanceType;
 pub use user::{HumanFindResultItem, Trustchain};
 pub use vlob::ReencryptionBatchEntry;
-
-macro_rules! impl_dump_load {
-    ($name:ident) => {
-        impl $name {
-            pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
-                ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
-            }
-
-            pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
-                ::rmp_serde::from_read_ref(buf).map_err(|_| "Deserialization failed")
-            }
-        }
-    };
-}
-
-macro_rules! impl_dump_load_for_rep {
-    ($name:ident) => {
-        impl $name {
-            pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
-                ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
-            }
-
-            pub fn load(buf: &[u8]) -> Self {
-                match ::rmp_serde::from_read_ref(buf) {
-                    Ok(res) => res,
-                    Err(e) => Self::UnknownError {
-                        error: e.to_string(),
-                    },
-                }
-            }
-        }
-    };
-}
-
-pub(crate) use impl_dump_load;
-pub(crate) use impl_dump_load_for_rep;

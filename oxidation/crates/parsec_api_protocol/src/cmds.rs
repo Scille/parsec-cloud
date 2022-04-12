@@ -26,7 +26,15 @@ macro_rules! cmds_bundle {
                     )*
                 }
 
-                crate::impl_dump_load!(AnyCmdReq);
+                impl AnyCmdReq {
+                    pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
+                        ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
+                    }
+
+                    pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
+                        ::rmp_serde::from_read_ref(buf).map_err(|_| "Deserialization failed")
+                    }
+                }
 
                 $(
                     pub mod $module {
@@ -40,7 +48,20 @@ macro_rules! cmds_bundle {
                             }
                         }
 
-                        crate::impl_dump_load_for_rep!(Rep);
+                        impl Rep {
+                            pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
+                                ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
+                            }
+
+                            pub fn load(buf: &[u8]) -> Self {
+                                match ::rmp_serde::from_read_ref(buf) {
+                                    Ok(res) => res,
+                                    Err(e) => Self::UnknownError {
+                                        error: e.to_string(),
+                                    },
+                                }
+                            }
+                        }
 
                         #[test]
                         fn test_unknown_error() {

@@ -6,6 +6,8 @@ use pyo3::types::{PyBytes, PyType};
 
 use parsec_api_protocol::{authenticated_cmds, invited_cmds};
 
+use crate::protocol::BlockReadReq;
+
 import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
@@ -26,10 +28,14 @@ impl AuthenticatedAnyCmdReq {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(
-            authenticated_cmds::AnyCmdReq::load(&buf).map_err(ProtocolError::new_err)?,
-        ))
+    fn load(_cls: &PyType, buf: Vec<u8>, py: Python) -> PyResult<PyObject> {
+        use authenticated_cmds::AnyCmdReq;
+        Ok(
+            match AnyCmdReq::load(&buf).map_err(ProtocolError::new_err)? {
+                AnyCmdReq::BlockRead(x) => BlockReadReq(x).into_py(py),
+                _ => unimplemented!(),
+            },
+        )
     }
 }
 

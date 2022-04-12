@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 mod block;
-mod cmd;
+mod cmds;
 mod events;
 mod invite;
 mod message;
@@ -12,7 +12,7 @@ mod user;
 mod vlob;
 
 pub use block::*;
-pub use cmd::*;
+pub use cmds::*;
 pub use events::*;
 pub use invite::*;
 pub use message::*;
