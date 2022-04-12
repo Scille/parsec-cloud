@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::collections::HashMap;
 use std::io::{Read, Write};
+use std::num::NonZeroU64;
 use std::ops::Deref;
 use unicode_normalization::UnicodeNormalization;
 
@@ -12,7 +13,7 @@ use parsec_api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 
 use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::new_uuid_type;
-use crate::{DateTime, DeviceID};
+use crate::{DataError, DateTime, DeviceID, EntryNameError};
 
 macro_rules! impl_manifest_dump_load {
     ($name:ident) => {
@@ -37,24 +38,32 @@ macro_rules! impl_manifest_dump_load {
                 author_verify_key: &VerifyKey,
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
-            ) -> Result<Self, &'static str> {
-                let signed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+            ) -> Result<Self, DataError> {
+                let signed = key
+                    .decrypt(encrypted)
+                    .map_err(|_| DataError::InvalidEncryption)?;
                 let compressed = author_verify_key
                     .verify(&signed)
-                    .map_err(|_| "Invalid signature")?;
+                    .map_err(|_| DataError::InvalidSignature)?;
                 let mut serialized = vec![];
 
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
-                    .map_err(|_| "Invalid compression")?;
+                    .map_err(|_| DataError::InvalidCompression)?;
 
-                let obj = ::rmp_serde::from_read_ref::<_, Self>(&serialized)
-                    .map_err(|_| "Invalid serialization")?;
+                let obj = rmp_serde::from_read_ref::<_, Self>(&serialized)
+                    .map_err(|_| DataError::InvalidSerialization)?;
 
                 if obj.author != *expected_author {
-                    Err("Unexpected author")
+                    Err(DataError::UnexpectedAuthor {
+                        expected: expected_author.clone(),
+                        got: obj.author,
+                    })
                 } else if obj.timestamp != expected_timestamp {
-                    Err("Unexpected timestamp")
+                    Err(DataError::UnexpectedTimestamp {
+                        expected: expected_timestamp,
+                        got: obj.timestamp,
+                    })
                 } else {
                     Ok(obj)
                 }
@@ -82,7 +91,7 @@ pub struct BlockAccess {
     pub id: BlockID,
     pub key: SecretKey,
     pub offset: u64,
-    pub size: u64,
+    pub size: NonZeroU64,
     pub digest: HashDigest,
 }
 
@@ -130,7 +139,7 @@ impl std::fmt::Debug for EntryName {
 }
 
 impl TryFrom<&str> for EntryName {
-    type Error = &'static str;
+    type Error = EntryNameError;
 
     fn try_from(id: &str) -> Result<Self, Self::Error> {
         let id: String = id.nfc().collect();
@@ -140,14 +149,14 @@ impl TryFrom<&str> for EntryName {
         // - no `/` or null byte in the name
         // - max 255 bytes long name
         if id.len() >= 256 {
-            Err("Name too long")
+            Err(Self::Error::NameTooLong)
         } else if id.is_empty()
             || id == "."
             || id == ".."
             || id.find('/').is_some()
             || id.find('\x00').is_some()
         {
-            Err("Invalid name")
+            Err(Self::Error::InvalidName)
         } else {
             Ok(Self(id))
         }
@@ -161,7 +170,7 @@ impl From<EntryName> for String {
 }
 
 impl std::str::FromStr for EntryName {
-    type Err = &'static str;
+    type Err = EntryNameError;
 
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {

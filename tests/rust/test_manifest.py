@@ -56,6 +56,8 @@ def test_workspace_entry():
     assert WorkspaceEntry is _RsWorkspaceEntry
 
     def _assert_workspace_entry_eq(py, rs):
+        assert isinstance(py, _PyWorkspaceEntry)
+        assert isinstance(rs, _RsWorkspaceEntry)
         assert py.is_revoked() == rs.is_revoked()
         assert py.name == rs.name
         assert py.id == rs.id
@@ -100,6 +102,9 @@ def test_block_access():
     assert BlockAccess is _RsBlockAccess
 
     def _assert_block_access_eq(py, rs):
+        assert isinstance(py, _PyBlockAccess)
+        assert isinstance(rs, _RsBlockAccess)
+
         assert py.id == rs.id
         assert py.key == rs.key
         assert py.offset == rs.offset
@@ -137,6 +142,9 @@ def test_file_manifest():
     assert FileManifest is _RsFileManifest
 
     def _assert_file_manifest_eq(py, rs):
+        assert isinstance(py, _PyFileManifest)
+        assert isinstance(rs, _RsFileManifest)
+
         assert py.author == rs.author
         assert py.id == rs.id
         assert py.parent == rs.parent
@@ -147,9 +155,11 @@ def test_file_manifest():
         assert py.created == rs.created
         assert py.updated == rs.updated
         assert len(py.blocks) == len(rs.blocks)
-        assert all(isinstance(b, BlockAccess) for b in rs.blocks)
         assert all(
-            b1.id == b2.id and b1.offset == b2.offset and b1.size == b2.size
+            isinstance(b2, BlockAccess)
+            and b1.id == b2.id
+            and b1.offset == b2.offset
+            and b1.size == b2.size
             for (b1, b2) in zip(py.blocks, rs.blocks)
         )
 
@@ -209,6 +219,9 @@ def test_folder_manifest():
     assert FolderManifest is _RsFolderManifest
 
     def _assert_folder_manifest_eq(py, rs):
+        assert isinstance(py, _PyFolderManifest)
+        assert isinstance(rs, _RsFolderManifest)
+
         assert py.author == rs.author
         assert py.parent == rs.parent
         assert py.id == rs.id
@@ -248,7 +261,6 @@ def test_folder_manifest():
     _assert_folder_manifest_eq(py_wm, rs_wm)
 
 
-@pytest.mark.xfail(reason="Waiting for a fix on datetimes serialization")
 @pytest.mark.rust
 def test_workspace_manifest():
     from parsec.api.data.manifest import (
@@ -260,6 +272,9 @@ def test_workspace_manifest():
     assert WorkspaceManifest is _RsWorkspaceManifest
 
     def _assert_workspace_manifest_eq(py, rs):
+        assert isinstance(py, _PyWorkspaceManifest)
+        assert isinstance(rs, _RsWorkspaceManifest)
+
         assert py.author == rs.author
         assert py.id == rs.id
         assert py.version == rs.version
@@ -301,18 +316,96 @@ def test_workspace_manifest():
     py_signed_and_encrypted = py_wm.dump_sign_and_encrypt(signing_key, secret_key)
     rs_signed_and_encrypted = rs_wm.dump_sign_and_encrypt(signing_key, secret_key)
 
-    py_decrypted_and_verified = _PyWorkspaceManifest.decrypt_verify_and_load(
+    wm1 = WorkspaceManifest.decrypt_verify_and_load(
         py_signed_and_encrypted, secret_key, signing_key.verify_key, py_wm.author, py_wm.timestamp
     )
-    rs_decrypted_and_verified = WorkspaceManifest.decrypt_verify_and_load(
-        rs_signed_and_encrypted, secret_key, signing_key.verify_key, rs_wm.author, rs_wm.timestamp
+    wm2 = _PyWorkspaceManifest.decrypt_verify_and_load(
+        rs_signed_and_encrypted, secret_key, signing_key.verify_key, py_wm.author, py_wm.timestamp
     )
-    _assert_workspace_manifest_eq(py_decrypted_and_verified, rs_decrypted_and_verified)
+    assert isinstance(wm1, WorkspaceManifest)
+    assert isinstance(wm2, WorkspaceManifest)
+    assert wm1 == wm2
 
-    py_decrypted_and_verified = _PyWorkspaceManifest.decrypt_verify_and_load(
-        rs_signed_and_encrypted, secret_key, signing_key.verify_key, rs_wm.author, rs_wm.timestamp
+
+@pytest.mark.rust
+def test_user_manifest():
+    from parsec.api.data.manifest import (
+        _RsUserManifest,
+        UserManifest,
+        _PyUserManifest,
+        WorkspaceEntry,
     )
-    rs_decrypted_and_verified = WorkspaceManifest.decrypt_verify_and_load(
-        py_signed_and_encrypted, secret_key, signing_key.verify_key, py_wm.author, py_wm.timestamp
-    )
-    _assert_workspace_manifest_eq(py_decrypted_and_verified, rs_decrypted_and_verified)
+
+    assert UserManifest is _RsUserManifest
+
+    def _assert_user_manifest_eq(py, rs):
+        assert isinstance(py, _PyUserManifest)
+        assert isinstance(rs, _RsUserManifest)
+
+        assert py.author == rs.author
+        assert py.version == rs.version
+        assert py.id == rs.id
+        assert py.timestamp == rs.timestamp
+        assert py.created == rs.created
+        assert py.updated == rs.updated
+        assert py.last_processed_message == rs.last_processed_message
+        assert py.workspaces == rs.workspaces
+
+    kwargs = {
+        "author": DeviceID("user@device"),
+        "id": EntryID.new(),
+        "version": 42,
+        "timestamp": pendulum.now(),
+        "created": pendulum.now(),
+        "updated": pendulum.now(),
+        "last_processed_message": 4,
+        "workspaces": [
+            WorkspaceEntry(
+                name=EntryName("name"),
+                id=EntryID.new(),
+                key=SecretKey.generate(),
+                encryption_revision=1,
+                encrypted_on=pendulum.now(),
+                role_cached_on=pendulum.now(),
+                role=RealmRole.OWNER,
+            )
+        ],
+    }
+
+    py_um = _PyUserManifest(**kwargs)
+    rs_um = UserManifest(**kwargs)
+    _assert_user_manifest_eq(py_um, rs_um)
+
+    kwargs = {
+        "author": DeviceID("a@b"),
+        "id": EntryID.new(),
+        "version": 1337,
+        "timestamp": pendulum.now(),
+        "created": pendulum.now(),
+        "updated": pendulum.now(),
+        "last_processed_message": 7,
+        "workspaces": [
+            WorkspaceEntry(
+                name=EntryName("name"),
+                id=EntryID.new(),
+                key=SecretKey.generate(),
+                encryption_revision=1,
+                encrypted_on=pendulum.now(),
+                role_cached_on=pendulum.now(),
+                role=RealmRole.OWNER,
+            ),
+            WorkspaceEntry(
+                name=EntryName("other_name"),
+                id=EntryID.new(),
+                key=SecretKey.generate(),
+                encryption_revision=2,
+                encrypted_on=pendulum.now(),
+                role_cached_on=pendulum.now(),
+                role=RealmRole.CONTRIBUTOR,
+            ),
+        ],
+    }
+
+    py_wm = py_um.evolve(**kwargs)
+    rs_wm = rs_um.evolve(**kwargs)
+    _assert_user_manifest_eq(py_wm, rs_wm)

@@ -517,7 +517,7 @@ impl InviteDeviceConfirmation {
 
     #[getter]
     fn user_manifest_id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.user_manifest_id.clone()))
+        Ok(EntryID(self.0.user_manifest_id))
     }
 
     #[getter]

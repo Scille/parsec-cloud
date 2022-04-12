@@ -58,7 +58,7 @@ impl OrganizationID {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct EntryID(pub parsec_api_types::EntryID);
 
 #[pymethods]
@@ -78,6 +78,10 @@ impl EntryID {
             }
             Err(_) => Err(PyValueError::new_err("Not a UUID")),
         }
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("<EntryID {}>", self.0))
     }
 
     #[getter]
@@ -131,10 +135,6 @@ impl EntryID {
 
     fn __str__(&self) -> PyResult<String> {
         Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<EntryID {}>", self.0))
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
@@ -624,6 +624,99 @@ impl DeviceID {
     #[pyo3(name = "new")]
     fn _class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(parsec_api_types::DeviceID::default()))
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct ChunkID(pub parsec_api_types::ChunkID);
+
+#[pymethods]
+impl ChunkID {
+    #[new]
+    pub fn new(uuid: &PyAny) -> PyResult<Self> {
+        // Check if the PyAny as a hex parameter (meaning it's probably a uuid.UUID)
+        match uuid.getattr("hex") {
+            Ok(as_hex) => {
+                // Convert to string
+                let u = as_hex.extract::<&str>()?;
+                // Parse it as a Rust Uuid
+                match Uuid::parse_str(u) {
+                    Ok(as_uuid) => Ok(Self(parsec_api_types::ChunkID::from(as_uuid))),
+                    Err(_) => Err(PyValueError::new_err("Not a UUID")),
+                }
+            }
+            Err(_) => Err(PyValueError::new_err("Not a UUID")),
+        }
+    }
+
+    #[getter]
+    fn uuid<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        let uuid = PyModule::import(py, "uuid")?;
+        let kwargs = vec![("hex", self.hex().unwrap())].into_py_dict(py);
+        match uuid.getattr("UUID")?.call((), Some(kwargs)) {
+            Ok(any) => Ok(any),
+            Err(err) => Err(PyValueError::new_err(err)),
+        }
+    }
+
+    #[classmethod]
+    fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
+        let b = bytes.as_bytes();
+        match uuid::Uuid::from_slice(b) {
+            Ok(uuid) => Ok(Self(parsec_api_types::ChunkID::from(uuid))),
+            Err(_) => Err(PyValueError::new_err("Invalid UUID")),
+        }
+    }
+
+    #[classmethod]
+    fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
+        match hex.to_string().parse::<parsec_api_types::ChunkID>() {
+            Ok(entry_id) => Ok(Self(entry_id)),
+            Err(err) => Err(PyValueError::new_err(err)),
+        }
+    }
+
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
+        match op {
+            CompareOp::Eq => (self.0 == other.0).into_py(py),
+            CompareOp::Ne => (self.0 != other.0).into_py(py),
+            CompareOp::Lt => (self.0 < other.0).into_py(py),
+            _ => py.NotImplemented(),
+        }
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("<ChunkID {}>", self.0))
+    }
+
+    fn __hash__(&self, py: Python) -> PyResult<isize> {
+        hash_generic(&self.0.to_string(), py)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "new")]
+    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(parsec_api_types::ChunkID::default()))
+    }
+
+    #[getter]
+    fn bytes<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, self.0.as_bytes()))
+    }
+
+    #[getter]
+    fn hex(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
+    }
+
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
     }
 }
 

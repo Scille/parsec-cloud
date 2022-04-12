@@ -298,3 +298,35 @@ def test_vblob_id():
     with pytest.raises(ValueError) as excinfo:
         VlobID(str(uuid4()))
     assert str(excinfo.value) == "Not a UUID"
+
+
+@pytest.mark.rust
+def test_chunk_id():
+    from parsec.core.types.manifest import ChunkID, _RsChunkID, _PyChunkID
+
+    assert ChunkID is _RsChunkID
+
+    ID = uuid4()
+
+    py_ei = _PyChunkID(ID)
+    rs_ei = ChunkID(ID)
+
+    assert str(py_ei) == str(rs_ei)
+    assert repr(py_ei) == repr(rs_ei)
+    assert py_ei.uuid == rs_ei.uuid
+    assert py_ei.hex == rs_ei.hex
+    assert py_ei.bytes == rs_ei.bytes
+
+    assert str(ChunkID.from_hex(str(ID))) == str(_PyChunkID.from_hex(str(ID)))
+    assert str(ChunkID.from_bytes(ID.bytes)) == str(_PyChunkID.from_bytes(ID.bytes))
+
+    with pytest.raises(ValueError) as excinfo:
+        _PyChunkID(str(uuid4()))
+    assert str(excinfo.value) == "Not a UUID"
+
+    with pytest.raises(ValueError) as excinfo:
+        ChunkID(str(uuid4()))
+    assert str(excinfo.value) == "Not a UUID"
+
+    d = {rs_ei: None}
+    assert rs_ei in d

@@ -5,6 +5,7 @@ use pyo3::exceptions::PyValueError;
 use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyBytes, PyDict, PyTuple, PyType};
+use std::num::NonZeroU64;
 
 use crate::binding_utils::{
     hash_generic, kwargs_extract_optional, kwargs_extract_optional_custom, kwargs_extract_required,
@@ -15,9 +16,11 @@ use crate::crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 use crate::ids::{BlockID, DeviceID, EntryID};
 
 import_exception!(parsec.api.data, EntryNameTooLongError);
+import_exception!(parsec.api.data, DataError);
+import_exception!(parsec.api.data, DataValidationError);
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct EntryName(pub parsec_api_types::EntryName);
 
 #[pymethods]
@@ -27,10 +30,16 @@ impl EntryName {
         match name.parse::<parsec_api_types::EntryName>() {
             Ok(en) => Ok(Self(en)),
             Err(err) => match err {
-                "Name too long" => Err(EntryNameTooLongError::new_err("Invalid data")),
+                parsec_api_types::EntryNameError::NameTooLong => {
+                    Err(EntryNameTooLongError::new_err("Invalid data"))
+                }
                 _ => Err(PyValueError::new_err("Invalid data")),
             },
         }
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("<EntryName {}>", self.0))
     }
 
     fn __richcmp__(&self, py: Python, other: &EntryName, op: CompareOp) -> PyObject {
@@ -46,10 +55,6 @@ impl EntryName {
         Ok(self.0.to_string())
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<EntryName {}>", self.0))
-    }
-
     fn __hash__(&self, py: Python) -> PyResult<isize> {
         hash_generic(&self.0.to_string(), py)
     }
@@ -61,8 +66,17 @@ impl EntryName {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub(crate) struct WorkspaceEntry(pub parsec_api_types::WorkspaceEntry);
+
+impl WorkspaceEntry {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.id == other.0.id
+            && self.0.name == other.0.name
+            && self.0.encryption_revision == other.0.encryption_revision
+            && self.0.role == other.0.role
+    }
+}
 
 #[pymethods]
 impl WorkspaceEntry {
@@ -98,6 +112,10 @@ impl WorkspaceEntry {
         }))
     }
 
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
     #[args(py_kwargs = "**")]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         let args = py_kwargs.unwrap();
@@ -113,7 +131,7 @@ impl WorkspaceEntry {
         if let Some(v) = kwargs_extract_optional::<SecretKey>(args, "key")? {
             r.key = v.0;
         }
-        if let Some(v) = kwargs_extract_optional::<u32>(args, "encryption_revision")? {
+        if let Some(v) = kwargs_extract_optional(args, "encryption_revision")? {
             r.encryption_revision = v;
         }
         if let Some(v) = kwargs_extract_optional_custom(args, "encrypted_on", &py_to_rs_datetime)? {
@@ -151,38 +169,17 @@ impl WorkspaceEntry {
         self.0.is_revoked()
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!(
-            "<WorkspaceEntry name={} id={}>",
-            self.0.name, self.0.id
-        ))
-    }
-
-    fn __richcmp__(&self, py: Python, other: &WorkspaceEntry, op: CompareOp) -> PyObject {
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
         match op {
-            CompareOp::Eq => PyBool::new(
-                py,
-                self.0.id == other.0.id
-                    && self.0.name == other.0.name
-                    && self.0.encryption_revision == other.0.encryption_revision
-                    && self.0.role == other.0.role,
-            )
-            .into_py(py),
-            CompareOp::Ne => PyBool::new(
-                py,
-                self.0.id != other.0.id
-                    || self.0.name != other.0.name
-                    || self.0.encryption_revision != other.0.encryption_revision
-                    || self.0.role != other.0.role,
-            )
-            .into_py(py),
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
             _ => py.NotImplemented(),
         }
     }
 
     #[getter]
     fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id.clone()))
+        Ok(EntryID(self.0.id))
     }
 
     #[getter]
@@ -223,6 +220,12 @@ impl WorkspaceEntry {
 #[derive(PartialEq, Eq, Clone)]
 pub(crate) struct BlockAccess(pub parsec_api_types::BlockAccess);
 
+impl BlockAccess {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.id == other.0.id && self.0.offset == other.0.offset && self.0.size == other.0.size
+    }
+}
+
 #[pymethods]
 impl BlockAccess {
     #[new]
@@ -240,9 +243,14 @@ impl BlockAccess {
             id: id.0,
             key: key.0,
             offset,
-            size,
+            size: NonZeroU64::try_from(size)
+                .map_err(|_| PyValueError::new_err("Invalid size field"))?,
             digest: digest.0,
         }))
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
     }
 
     #[args(py_kwargs = "**")]
@@ -261,7 +269,8 @@ impl BlockAccess {
             r.offset = v;
         }
         if let Some(v) = kwargs_extract_optional::<u64>(args, "size")? {
-            r.size = v;
+            r.size =
+                NonZeroU64::try_from(v).map_err(|_| PyValueError::new_err("Invalid size field"))?
         }
         if let Some(v) = kwargs_extract_optional::<HashDigest>(args, "digest")? {
             r.digest = v.0;
@@ -270,29 +279,17 @@ impl BlockAccess {
         Ok(Self(r))
     }
 
-    fn __richcmp__(&self, py: Python, other: &BlockAccess, op: CompareOp) -> PyObject {
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
         match op {
-            CompareOp::Eq => PyBool::new(
-                py,
-                self.0.id == other.0.id
-                    && self.0.offset == other.0.offset
-                    && self.0.size == other.0.size,
-            )
-            .into_py(py),
-            CompareOp::Ne => PyBool::new(
-                py,
-                self.0.id != other.0.id
-                    || self.0.offset != other.0.offset
-                    || self.0.size != other.0.size,
-            )
-            .into_py(py),
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
             _ => py.NotImplemented(),
         }
     }
 
     #[getter]
     fn id(&self) -> PyResult<BlockID> {
-        Ok(BlockID(self.0.id.clone()))
+        Ok(BlockID(self.0.id))
     }
 
     #[getter]
@@ -307,7 +304,7 @@ impl BlockAccess {
 
     #[getter]
     fn size(&self) -> PyResult<u64> {
-        Ok(self.0.size)
+        Ok(self.0.size.into())
     }
 
     #[getter]
@@ -317,8 +314,21 @@ impl BlockAccess {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub(crate) struct FileManifest(pub parsec_api_types::FileManifest);
+
+impl FileManifest {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.author == other.0.author
+            && self.0.id == other.0.id
+            && self.0.version == other.0.version
+            && self.0.parent == other.0.parent
+            && self.0.timestamp == other.0.timestamp
+            && self.0.created == other.0.created
+            && self.0.updated == other.0.updated
+            && self.0.blocks == other.0.blocks
+    }
+}
 
 #[pymethods]
 impl FileManifest {
@@ -364,6 +374,10 @@ impl FileManifest {
         }))
     }
 
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
     fn dump_sign_and_encrypt<'p>(
         &self,
         py: Python<'p>,
@@ -394,7 +408,7 @@ impl FileManifest {
             expected_timestamp,
         ) {
             Ok(x) => Ok(Self(x)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -452,32 +466,10 @@ impl FileManifest {
         Ok(Self(r))
     }
 
-    fn __richcmp__(&self, py: Python, other: &FileManifest, op: CompareOp) -> PyObject {
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
         match op {
-            CompareOp::Eq => PyBool::new(
-                py,
-                self.0.author == other.0.author
-                    && self.0.id == other.0.id
-                    && self.0.version == other.0.version
-                    && self.0.parent == other.0.parent
-                    && self.0.timestamp == other.0.timestamp
-                    && self.0.created == other.0.created
-                    && self.0.updated == other.0.updated
-                    && self.0.blocks == other.0.blocks,
-            )
-            .into_py(py),
-            CompareOp::Ne => PyBool::new(
-                py,
-                self.0.author != other.0.author
-                    || self.0.id != other.0.id
-                    || self.0.version != other.0.version
-                    || self.0.parent == other.0.parent
-                    || self.0.timestamp != other.0.timestamp
-                    || self.0.created != other.0.created
-                    || self.0.updated != other.0.updated
-                    || self.0.blocks != other.0.blocks,
-            )
-            .into_py(py),
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -489,12 +481,12 @@ impl FileManifest {
 
     #[getter]
     fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id.clone()))
+        Ok(EntryID(self.0.id))
     }
 
     #[getter]
     fn parent(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.parent.clone()))
+        Ok(EntryID(self.0.parent))
     }
 
     #[getter]
@@ -540,8 +532,21 @@ impl FileManifest {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub(crate) struct FolderManifest(pub parsec_api_types::FolderManifest);
+
+impl FolderManifest {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.author == other.0.author
+            && self.0.id == other.0.id
+            && self.0.version == other.0.version
+            && self.0.parent == other.0.parent
+            && self.0.timestamp == other.0.timestamp
+            && self.0.created == other.0.created
+            && self.0.updated == other.0.updated
+            && self.0.children == other.0.children
+    }
+}
 
 #[pymethods]
 impl FolderManifest {
@@ -580,6 +585,10 @@ impl FolderManifest {
         }))
     }
 
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
     fn dump_sign_and_encrypt<'p>(
         &self,
         py: Python<'p>,
@@ -610,7 +619,7 @@ impl FolderManifest {
             expected_timestamp,
         ) {
             Ok(x) => Ok(Self(x)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -658,32 +667,10 @@ impl FolderManifest {
         Ok(Self(r))
     }
 
-    fn __richcmp__(&self, py: Python, other: &FolderManifest, op: CompareOp) -> PyObject {
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
         match op {
-            CompareOp::Eq => PyBool::new(
-                py,
-                self.0.author == other.0.author
-                    && self.0.id == other.0.id
-                    && self.0.version == other.0.version
-                    && self.0.parent == other.0.parent
-                    && self.0.timestamp == other.0.timestamp
-                    && self.0.created == other.0.created
-                    && self.0.updated == other.0.updated
-                    && self.0.children == other.0.children,
-            )
-            .into_py(py),
-            CompareOp::Ne => PyBool::new(
-                py,
-                self.0.author != other.0.author
-                    || self.0.id != other.0.id
-                    || self.0.version != other.0.version
-                    || self.0.parent == other.0.parent
-                    || self.0.timestamp != other.0.timestamp
-                    || self.0.created != other.0.created
-                    || self.0.updated != other.0.updated
-                    || self.0.children != other.0.children,
-            )
-            .into_py(py),
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -695,12 +682,12 @@ impl FolderManifest {
 
     #[getter]
     fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id.clone()))
+        Ok(EntryID(self.0.id))
     }
 
     #[getter]
     fn parent(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.parent.clone()))
+        Ok(EntryID(self.0.parent))
     }
 
     #[getter]
@@ -729,7 +716,7 @@ impl FolderManifest {
 
         for (k, v) in &self.0.children {
             let en = EntryName(k.clone()).into_py(py);
-            let me = EntryID(v.clone()).into_py(py);
+            let me = EntryID(*v).into_py(py);
             let _ = d.set_item(en, me);
         }
         Ok(d)
@@ -737,8 +724,20 @@ impl FolderManifest {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub(crate) struct WorkspaceManifest(pub parsec_api_types::WorkspaceManifest);
+
+impl WorkspaceManifest {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.author == other.0.author
+            && self.0.id == other.0.id
+            && self.0.version == other.0.version
+            && self.0.timestamp == other.0.timestamp
+            && self.0.created == other.0.created
+            && self.0.updated == other.0.updated
+            && self.0.children == other.0.children
+    }
+}
 
 #[pymethods]
 impl WorkspaceManifest {
@@ -775,6 +774,10 @@ impl WorkspaceManifest {
         }))
     }
 
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
     fn dump_sign_and_encrypt<'p>(
         &self,
         py: Python<'p>,
@@ -805,7 +808,7 @@ impl WorkspaceManifest {
             expected_timestamp,
         ) {
             Ok(x) => Ok(Self(x)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 
@@ -852,28 +855,8 @@ impl WorkspaceManifest {
 
     fn __richcmp__(&self, py: Python, other: &WorkspaceManifest, op: CompareOp) -> PyObject {
         match op {
-            CompareOp::Eq => PyBool::new(
-                py,
-                self.0.author == other.0.author
-                    && self.0.id == other.0.id
-                    && self.0.version == other.0.version
-                    && self.0.timestamp == other.0.timestamp
-                    && self.0.created == other.0.created
-                    && self.0.updated == other.0.updated
-                    && self.0.children == other.0.children,
-            )
-            .into_py(py),
-            CompareOp::Ne => PyBool::new(
-                py,
-                self.0.author != other.0.author
-                    || self.0.id != other.0.id
-                    || self.0.version != other.0.version
-                    || self.0.timestamp != other.0.timestamp
-                    || self.0.created != other.0.created
-                    || self.0.updated != other.0.updated
-                    || self.0.children != other.0.children,
-            )
-            .into_py(py),
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -885,7 +868,7 @@ impl WorkspaceManifest {
 
     #[getter]
     fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id.clone()))
+        Ok(EntryID(self.0.id))
     }
 
     #[getter]
@@ -914,9 +897,211 @@ impl WorkspaceManifest {
 
         for (k, v) in &self.0.children {
             let en = EntryName(k.clone()).into_py(py);
-            let me = EntryID(v.clone()).into_py(py);
+            let me = EntryID(*v).into_py(py);
             let _ = d.set_item(en, me);
         }
         Ok(d)
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct UserManifest(pub parsec_api_types::UserManifest);
+
+impl UserManifest {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.author == other.0.author
+            && self.0.id == other.0.id
+            && self.0.version == other.0.version
+            && self.0.timestamp == other.0.timestamp
+            && self.0.created == other.0.created
+            && self.0.updated == other.0.updated
+            && self.0.last_processed_message == other.0.last_processed_message
+            && self.0.workspaces == other.0.workspaces
+    }
+}
+
+#[pymethods]
+impl UserManifest {
+    #[new]
+    #[args(py_kwargs = "**")]
+    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        let args = py_kwargs.unwrap();
+
+        let author = kwargs_extract_required::<DeviceID>(args, "author")?;
+        let timestamp = kwargs_extract_required_custom(args, "timestamp", &py_to_rs_datetime)?;
+        let id = kwargs_extract_required::<EntryID>(args, "id")?;
+        let version = kwargs_extract_required(args, "version")?;
+        let created = kwargs_extract_required_custom(args, "created", &py_to_rs_datetime)?;
+        let updated = kwargs_extract_required_custom(args, "updated", &py_to_rs_datetime)?;
+        let last_processed_message = kwargs_extract_required(args, "last_processed_message")?;
+        let workspaces = kwargs_extract_required::<Vec<WorkspaceEntry>>(args, "workspaces")?
+            .into_iter()
+            .map(|w| w.0)
+            .collect();
+
+        Ok(Self(parsec_api_types::UserManifest {
+            author: author.0,
+            timestamp,
+            id: id.0,
+            version,
+            created,
+            updated,
+            last_processed_message,
+            workspaces,
+        }))
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn dump_sign_and_encrypt<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+        key: &SecretKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
+        ))
+    }
+
+    #[classmethod]
+    #[allow(clippy::too_many_arguments)]
+    fn decrypt_verify_and_load(
+        _cls: &PyType,
+        encrypted: &[u8],
+        key: &SecretKey,
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: &PyAny,
+        expected_id: Option<EntryID>,
+        expected_version: Option<u32>,
+    ) -> PyResult<Self> {
+        let expected_timestamp = py_to_rs_datetime(expected_timestamp)?;
+        let data = parsec_api_types::UserManifest::decrypt_verify_and_load(
+            encrypted,
+            &key.0,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_timestamp,
+        )
+        .map_err(|e| DataError::new_err(e.to_string()))?;
+        if let Some(expected_id) = expected_id {
+            if data.id != expected_id.0 {
+                return Err(DataValidationError::new_err(format!(
+                    "Invalid entry ID: expected `{}`, got `{}`",
+                    expected_id.0, data.id
+                )));
+            }
+        }
+        if let Some(expected_version) = expected_version {
+            if data.version != expected_version {
+                return Err(DataValidationError::new_err(format!(
+                    "Invalid version: expected `{}`, got `{}`",
+                    expected_version, data.version
+                )));
+            }
+        }
+        Ok(Self(data))
+    }
+
+    #[args(py_kwargs = "**")]
+    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        let args = py_kwargs.unwrap();
+
+        let mut r = self.0.clone();
+
+        if let Some(v) = kwargs_extract_optional::<DeviceID>(args, "author")? {
+            r.author = v.0;
+        }
+        if let Some(v) = kwargs_extract_optional_custom(args, "timestamp", &py_to_rs_datetime)? {
+            r.timestamp = v;
+        }
+        if let Some(v) = kwargs_extract_optional::<EntryID>(args, "id")? {
+            r.id = v.0;
+        }
+        if let Some(v) = kwargs_extract_optional(args, "version")? {
+            r.version = v;
+        }
+        if let Some(v) = kwargs_extract_optional_custom(args, "created", &py_to_rs_datetime)? {
+            r.created = v;
+        }
+        if let Some(v) = kwargs_extract_optional_custom(args, "updated", &py_to_rs_datetime)? {
+            r.updated = v;
+        }
+        if let Some(v) = kwargs_extract_optional(args, "last_processed_message")? {
+            r.last_processed_message = v;
+        }
+        if let Some(v) = kwargs_extract_optional::<Vec<WorkspaceEntry>>(args, "workspaces")? {
+            r.workspaces = v.into_iter().map(|w| w.0).collect();
+        }
+
+        Ok(Self(r))
+    }
+
+    fn get_workspace_entry(&self, workspace_id: EntryID) -> PyResult<Option<WorkspaceEntry>> {
+        Ok(self
+            .0
+            .get_workspace_entry(workspace_id.0)
+            .cloned()
+            .map(WorkspaceEntry))
+    }
+
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
+        match op {
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
+            _ => py.NotImplemented(),
+        }
+    }
+
+    #[getter]
+    fn author(&self) -> PyResult<DeviceID> {
+        Ok(DeviceID(self.0.author.clone()))
+    }
+
+    #[getter]
+    fn id(&self) -> PyResult<EntryID> {
+        Ok(EntryID(self.0.id))
+    }
+
+    #[getter]
+    fn version(&self) -> PyResult<u32> {
+        Ok(self.0.version)
+    }
+
+    #[getter]
+    fn timestamp<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        rs_to_py_datetime(py, self.0.timestamp)
+    }
+
+    #[getter]
+    fn created<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        rs_to_py_datetime(py, self.0.created)
+    }
+
+    #[getter]
+    fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        rs_to_py_datetime(py, self.0.updated)
+    }
+
+    #[getter]
+    fn last_processed_message(&self) -> PyResult<u32> {
+        Ok(self.0.last_processed_message)
+    }
+
+    #[getter]
+    fn workspaces<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
+        let elems: Vec<PyObject> = self
+            .0
+            .workspaces
+            .clone()
+            .into_iter()
+            .map(|x| WorkspaceEntry(x).into_py(py))
+            .collect();
+        Ok(PyTuple::new(py, elems))
     }
 }
