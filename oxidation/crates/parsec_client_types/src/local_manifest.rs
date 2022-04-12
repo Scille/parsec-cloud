@@ -77,7 +77,9 @@ impl Chunk {
             start,
             stop,
             raw_offset: start,
-            raw_size: NonZeroU64::try_from(u64::from(stop) - start).unwrap(),
+            // TODO: what to do with overflow
+            raw_size: NonZeroU64::try_from(u64::from(stop) - start)
+                .unwrap_or_else(|_| unreachable!()),
             access: None,
         }
     }
@@ -87,9 +89,10 @@ impl Chunk {
             raw_offset: block_access.offset,
             raw_size: block_access.size,
             start: block_access.offset,
+            // TODO: what to do with overflow
             stop: (block_access.offset + u64::from(block_access.size))
                 .try_into()
-                .unwrap(),
+                .unwrap_or_else(|_| unreachable!()),
             access: Some(block_access),
         })
     }
