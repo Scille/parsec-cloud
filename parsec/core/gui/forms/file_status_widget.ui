@@ -18,7 +18,7 @@
 	color: #333333;
 }
 
-#FileInfoWidget {
+#scrollAreaWidgetContents {
 	background-color: #FFFFFF;
 }</string>
   </property>
