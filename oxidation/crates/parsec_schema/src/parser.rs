@@ -10,16 +10,14 @@ pub(crate) enum Schema {
 
 impl Parse for Schema {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let attrs = Attribute::parse_outer(input)?;
-        let token = input.lookahead1();
-
-        Ok(if token.peek(Token![struct]) {
+        let mut attrs = Attribute::parse_outer(input)?;
+        Ok(if input.peek(Token![pub]) && input.peek2(Token![struct]) {
             let mut schema = input.parse::<ItemStruct>()?;
-            schema.attrs = attrs;
+            schema.attrs.append(&mut attrs);
             Schema::Struct(schema)
-        } else if token.peek(Token![enum]) {
+        } else if input.peek(Token![pub]) && input.peek2(Token![enum]) {
             let mut schema = input.parse::<ItemEnum>()?;
-            schema.attrs = attrs;
+            schema.attrs.append(&mut attrs);
             Schema::Enum(schema)
         } else {
             unimplemented!()

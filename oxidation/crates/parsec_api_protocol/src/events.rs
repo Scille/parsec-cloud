@@ -13,7 +13,7 @@ use crate::InvitationStatus;
 
 #[parsec_schema]
 #[serde(tag = "event")]
-enum APIEvent {
+pub enum APIEvent {
     #[serde(rename = "pinged")]
     Pinged { ping: String },
     #[serde(rename = "message.received")]
@@ -49,13 +49,13 @@ enum APIEvent {
  */
 
 #[parsec_schema]
-struct EventsListenReq {
+pub struct EventsListenReq {
     pub wait: bool,
 }
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
-enum EventsListenRep {
+pub enum EventsListenRep {
     Ok(APIEvent),
     Cancelled { reason: Option<String> },
     NoEvents,
@@ -67,7 +67,7 @@ enum EventsListenRep {
  */
 
 #[parsec_schema]
-struct EventsSubscribeReq;
+pub struct EventsSubscribeReq;
 
 /*
  * EventsSubscribeRep
@@ -75,7 +75,7 @@ struct EventsSubscribeReq;
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
-enum EventsSubscribeRep {
+pub enum EventsSubscribeRep {
     Ok,
     UnknownError { error: String },
 }

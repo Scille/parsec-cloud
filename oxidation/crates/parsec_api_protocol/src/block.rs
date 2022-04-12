@@ -10,7 +10,7 @@ use parsec_schema::parsec_schema;
  */
 
 #[parsec_schema]
-struct BlockCreateReq {
+pub struct BlockCreateReq {
     pub block_id: BlockID,
     pub realm_id: RealmID,
     pub block: Vec<u8>,
@@ -22,7 +22,7 @@ struct BlockCreateReq {
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
-enum BlockCreateRep {
+pub enum BlockCreateRep {
     Ok,
     AlreadyExists,
     NotFound,
@@ -37,7 +37,7 @@ enum BlockCreateRep {
  */
 
 #[parsec_schema]
-struct BlockReadReq {
+pub struct BlockReadReq {
     pub block_id: BlockID,
 }
 
@@ -47,7 +47,7 @@ struct BlockReadReq {
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
-enum BlockReadRep {
+pub enum BlockReadRep {
     Ok { block: Vec<u8> },
     NotFound,
     Timeout,

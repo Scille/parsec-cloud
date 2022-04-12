@@ -42,13 +42,12 @@ fn extract_ty(ty: &Type) -> String {
     }
 }
 
-pub fn quote_fields(fields: Iter<Field>, serde_as: &mut bool) -> TokenStream {
+pub fn quote_fields(fields: Iter<Field>) -> TokenStream {
     let mut _fields = quote! {};
 
     for field in fields {
         let ty = extract_ty(&field.ty);
         if ty.starts_with("Vec<u8>") {
-            *serde_as = true;
             _fields = quote! {
                 #_fields
                 #[serde_as(as = "::serde_with::Bytes")]
@@ -71,7 +70,7 @@ pub fn quote_fields(fields: Iter<Field>, serde_as: &mut bool) -> TokenStream {
     _fields
 }
 
-pub fn quote_variants(variants: Iter<Variant>, serde_as: &mut bool) -> TokenStream {
+pub fn quote_variants(variants: Iter<Variant>) -> TokenStream {
     let mut _variants = quote! {};
 
     for variant in variants {
@@ -88,23 +87,19 @@ pub fn quote_variants(variants: Iter<Variant>, serde_as: &mut bool) -> TokenStre
                 }
             }
             Fields::Unnamed(_) => {
-                let fields = quote_fields(variant.fields.iter(), serde_as);
+                let fields = quote_fields(variant.fields.iter());
                 _variants = quote! {
                     #_variants
                     #attrs
-                    #ident (
-                        #fields
-                    ),
+                    #ident (#fields),
                 }
             }
             Fields::Named(_) => {
-                let fields = quote_fields(variant.fields.iter(), serde_as);
+                let fields = quote_fields(variant.fields.iter());
                 _variants = quote! {
                     #_variants
                     #attrs
-                    #ident {
-                        #fields
-                    },
+                    #ident {#fields},
                 }
             }
         }
