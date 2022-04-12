@@ -177,10 +177,7 @@ class InstanceWidget(QWidget):
         self.core_jobs_ctx = core_jobs_ctx
         self.core.event_bus.connect(CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated)
         self.event_bus.send(
-            CoreEvent.GUI_CONFIG_CHANGED,
-            gui_last_device="{}:{}".format(
-                self.core.device.organization_addr.organization_id, self.core.device.device_id
-            ),
+            CoreEvent.GUI_CONFIG_CHANGED, gui_last_device=self.core.device.device_id.str
         )
         ParsecApp.add_connected_device(
             self.core.device.organization_addr.organization_id, self.core.device.device_id
