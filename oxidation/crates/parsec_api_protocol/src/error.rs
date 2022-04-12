@@ -30,6 +30,7 @@ pub enum HandshakeError {
     InvalidMessage(String),
 }
 
+// TODO: temporary code to handle `&'static str` kind of errors
 impl From<&'static str> for HandshakeError {
     fn from(s: &'static str) -> Self {
         Self::InvalidMessage(s.into())
