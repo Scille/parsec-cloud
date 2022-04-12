@@ -14,6 +14,7 @@ path = "tests/tests.rs"
 [dependencies]
 parsec_api_crypto = { version = "0.0.0", path = "../parsec_api_crypto" }
 parsec_api_types = { version = "0.0.0", path = "../parsec_api_types" }
+parsec_schema = { version = "0.0.0", path = "../parsec_schema" }
 
 paste = "1.0.5"
 rand = "0.8.5"

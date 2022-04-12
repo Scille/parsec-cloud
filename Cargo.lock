@@ -808,6 +808,7 @@ dependencies = [
  "hex-literal",
  "parsec_api_crypto",
  "parsec_api_types",
+ "parsec_schema",
  "paste",
  "rand 0.8.5",
  "rmp-serde",
@@ -871,6 +872,15 @@ dependencies = [
  "serde_with",
  "sha2 0.10.1",
  "tests_fixtures",
+]
+
+[[package]]
+name = "parsec_schema"
+version = "0.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
