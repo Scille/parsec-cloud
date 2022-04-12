@@ -20,7 +20,9 @@ macro_rules! impl_debug_from_display {
 
 macro_rules! new_string_based_id_type {
     (pub $name:ident, $bytes_size:expr, $pattern:expr) => {
-        #[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, Hash)]
+        #[derive(
+            Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, Hash, PartialOrd, Ord,
+        )]
         pub struct $name(String);
 
         impl Default for $name {
@@ -109,7 +111,7 @@ new_string_based_id_type!(pub DeviceLabel, 255, r"^.+$");
  * DeviceID
  */
 
-#[derive(Default, Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq)]
+#[derive(Default, Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DeviceID {
     pub user_id: UserID,
     pub device_name: DeviceName,

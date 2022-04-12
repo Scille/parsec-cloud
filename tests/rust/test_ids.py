@@ -29,6 +29,8 @@ def test_device_name():
         DeviceName("Invalid Device Name")
     assert str(excinfo.value) == "Invalid DeviceName"
 
+    assert DeviceName(DeviceName("foo")) == DeviceName("foo")
+
 
 @pytest.mark.rust
 def test_device_id():
@@ -59,6 +61,8 @@ def test_device_id():
 
     assert isinstance(DeviceID.new(), DeviceID)
 
+    assert DeviceID(DeviceID("foo@bar")) == DeviceID("foo@bar")
+
 
 @pytest.mark.rust
 def test_organization_id():
@@ -82,6 +86,8 @@ def test_organization_id():
     with pytest.raises(ValueError) as excinfo:
         OrganizationID("Invalid Organization ID")
     assert str(excinfo.value) == "Invalid OrganizationID"
+
+    assert OrganizationID(OrganizationID("foo")) == OrganizationID("foo")
 
 
 @pytest.mark.rust
@@ -147,6 +153,8 @@ def test_user_id():
     with pytest.raises(ValueError) as excinfo:
         UserID("Invalid User Id")
     assert str(excinfo.value) == "Invalid UserID"
+
+    assert UserID(UserID("foo")) == UserID("foo")
 
 
 @pytest.mark.rust
