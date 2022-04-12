@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::collections::HashMap;
 use std::io::{Read, Write};
+use std::num::NonZeroU64;
 use std::ops::Deref;
 use unicode_normalization::UnicodeNormalization;
 
@@ -90,7 +91,7 @@ pub struct BlockAccess {
     pub id: BlockID,
     pub key: SecretKey,
     pub offset: u64,
-    pub size: u64,
+    pub size: NonZeroU64,
     pub digest: HashDigest,
 }
 

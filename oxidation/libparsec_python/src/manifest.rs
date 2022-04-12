@@ -5,6 +5,7 @@ use pyo3::exceptions::PyValueError;
 use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyBytes, PyDict, PyTuple, PyType};
+use std::num::NonZeroU64;
 
 use crate::binding_utils::{
     hash_generic, kwargs_extract_optional, kwargs_extract_optional_custom, kwargs_extract_required,
@@ -242,7 +243,8 @@ impl BlockAccess {
             id: id.0,
             key: key.0,
             offset,
-            size,
+            size: NonZeroU64::try_from(size)
+                .map_err(|_| PyValueError::new_err("Invalid size field"))?,
             digest: digest.0,
         }))
     }
@@ -267,7 +269,8 @@ impl BlockAccess {
             r.offset = v;
         }
         if let Some(v) = kwargs_extract_optional::<u64>(args, "size")? {
-            r.size = v;
+            r.size =
+                NonZeroU64::try_from(v).map_err(|_| PyValueError::new_err("Invalid size field"))?
         }
         if let Some(v) = kwargs_extract_optional::<HashDigest>(args, "digest")? {
             r.digest = v.0;
@@ -301,7 +304,7 @@ impl BlockAccess {
 
     #[getter]
     fn size(&self) -> PyResult<u64> {
-        Ok(self.0.size)
+        Ok(self.0.size.into())
     }
 
     #[getter]

@@ -82,14 +82,14 @@ impl Chunk {
         }
     }
     pub fn from_block_access(block_access: BlockAccess) -> Result<Self, &'static str> {
-        let raw_size = NonZeroU64::try_from(block_access.size).map_err(|_| "invalid raw size")?;
-        let stop = NonZeroU64::try_from(block_access.offset + block_access.size).unwrap();
         Ok(Self {
             id: ChunkID::from(*block_access.id),
             raw_offset: block_access.offset,
-            raw_size,
+            raw_size: block_access.size,
             start: block_access.offset,
-            stop,
+            stop: (block_access.offset + u64::from(block_access.size))
+                .try_into()
+                .unwrap(),
             access: Some(block_access),
         })
     }
@@ -110,7 +110,9 @@ impl Chunk {
             id: BlockID::from(*self.id),
             key: SecretKey::generate(),
             offset: self.start,
-            size: u64::from(self.stop) - self.start,
+            size: (u64::from(self.stop) - self.start)
+                .try_into()
+                .map_err(|_| "Stop - Start must be > 0")?,
             digest: HashDigest::from_data(data),
         });
 
@@ -125,7 +127,7 @@ impl Chunk {
                 // Offset inconsistent
                 && self.raw_offset == access.offset
                 // Size inconsistent
-                && u64::from(self.raw_size) == access.size
+                && self.raw_size == access.size
         } else {
             false
         }
