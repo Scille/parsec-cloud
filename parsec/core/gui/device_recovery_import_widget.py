@@ -135,10 +135,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
             show_error(self, translate("IMPORT_KEY_ERROR"), exception=exc)
             raise JobResultError("error") from exc
 
-    def _on_validate_clicked(self):
-        self.jobs_ctx.submit_job(None, None, self._on_validate_clicked_async)
-
-    async def _on_validate_clicked_async(self):
+    async def _on_validate_clicked(self):
         if isinstance(self.current_page, DeviceRecoveryImportPage1Widget):
             # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
             device_label = DeviceLabel(

@@ -209,8 +209,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.button_user.setText(user_text)
         self.button_user.setToolTip(self.core.device.organization_addr.to_url())
 
-    def change_authentication(self) -> None:
-        AuthenticationChangeWidget.show_modal(
+    async def change_authentication(self) -> None:
+        await AuthenticationChangeWidget.show_modal(
             core=self.core, jobs_ctx=self.jobs_ctx, parent=self, on_finished=None
         )
 

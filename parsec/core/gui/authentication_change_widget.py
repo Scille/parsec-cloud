@@ -40,10 +40,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
     def _on_info_filled(self, auth_method, valid):
         self.button_validate.setEnabled(valid)
 
-    def _on_validate_clicked(self):
-        self.jobs_ctx.submit_job(None, None, self._on_validate_clicked_async)
-
-    async def _on_validate_clicked_async(self):
+    async def _on_validate_clicked(self):
         self.button_validate.setEnabled(False)
         auth_method = self.widget_auth.get_auth_method()
         try:
@@ -75,11 +72,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
             show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
     @classmethod
-    def show_modal(cls, core, jobs_ctx, parent, on_finished=None):
-        jobs_ctx.submit_job(None, None, cls.show_modal_async, core, jobs_ctx, parent, on_finished)
-
-    @classmethod
-    async def show_modal_async(cls, core, jobs_ctx, parent, on_finished=None):
+    async def show_modal(cls, core, jobs_ctx, parent, on_finished=None):
         available_device = get_available_device(core.config.config_dir, core.device)
         loaded_device = None
 

@@ -623,12 +623,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         page.failed.connect(self._on_page_failed)
         self.main_layout.insertWidget(0, page)
 
-    def _on_finished(self, new_device, auth_method, password):
-        self.jobs_ctx.submit_job(
-            None, None, self._on_finished_async, new_device, auth_method, password
-        )
-
-    async def _on_finished_async(self, new_device, auth_method, password):
+    async def _on_finished(self, new_device, auth_method, password):
         try:
             if auth_method == DeviceFileType.PASSWORD:
                 save_device_with_password_in_config(
