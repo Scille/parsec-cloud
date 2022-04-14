@@ -27,7 +27,7 @@ pub enum HandshakeError {
         backend_versions: Vec<ApiVersion>,
     },
     #[error("Handshake invalid message: {0}")]
-    InvalidMessage(String),
+    InvalidMessage(&'static str),
 }
 
 #[derive(Debug, PartialEq)]

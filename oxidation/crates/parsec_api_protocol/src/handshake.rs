@@ -163,7 +163,7 @@ impl ServerHandshakeStalled {
             backend_timestamp: Some(timestamp),
         }
         .dump()
-        .map_err(|err| HandshakeError::InvalidMessage(err.into()))?;
+        .map_err(HandshakeError::InvalidMessage)?;
 
         Ok(ServerHandshakeChallenge {
             supported_api_version: self.supported_api_version,
@@ -201,7 +201,7 @@ pub struct ServerHandshakeChallenge {
 impl ServerHandshakeChallenge {
     pub fn process_answer_req(self, req: &[u8]) -> Result<ServerHandshakeAnswer, HandshakeError> {
         if let Handshake::Answer(data) =
-            Handshake::load(req).map_err(|err| HandshakeError::InvalidMessage(err.into()))?
+            Handshake::load(req).map_err(HandshakeError::InvalidMessage)?
         {
             let client_api_version = match data {
                 Answer::Authenticated {
@@ -224,7 +224,7 @@ impl ServerHandshakeChallenge {
                 });
             }
         }
-        Err(HandshakeError::InvalidMessage("Invalid data".into()))
+        Err(HandshakeError::InvalidMessage("Invalid data"))
     }
 
     pub fn build_bad_protocol_result_req(
@@ -243,7 +243,7 @@ impl ServerHandshakeChallenge {
                 help,
             }
             .dump()
-            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
+            .map_err(HandshakeError::InvalidMessage)?,
         })
     }
 }
@@ -278,7 +278,7 @@ impl ServerHandshakeAnswer {
                             .verify(&answer)
                             .map_err(|_| HandshakeError::FailedChallenge)?;
                         SignedAnswer::load(&answer)
-                            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?
+                            .map_err(HandshakeError::InvalidMessage)?
                             .answer
                     } else {
                         verify_key
@@ -294,7 +294,7 @@ impl ServerHandshakeAnswer {
                 }
                 _ => {
                     return Err(HandshakeError::InvalidMessage(
-                        "`verify_key` param must be provided for authenticated handshake".into(),
+                        "`verify_key` param must be provided for authenticated handshake",
                     ))
                 }
             }
@@ -307,7 +307,7 @@ impl ServerHandshakeAnswer {
                 help: None,
             }
             .dump()
-            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
+            .map_err(HandshakeError::InvalidMessage)?,
         })
     }
 
@@ -327,7 +327,7 @@ impl ServerHandshakeAnswer {
                 help,
             }
             .dump()
-            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
+            .map_err(HandshakeError::InvalidMessage)?,
         })
     }
 
@@ -347,7 +347,7 @@ impl ServerHandshakeAnswer {
                 help,
             }
             .dump()
-            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
+            .map_err(HandshakeError::InvalidMessage)?,
         })
     }
 
@@ -367,7 +367,7 @@ impl ServerHandshakeAnswer {
                 help,
             }
             .dump()
-            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
+            .map_err(HandshakeError::InvalidMessage)?,
         })
     }
 
@@ -387,7 +387,7 @@ impl ServerHandshakeAnswer {
                 help,
             }
             .dump()
-            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
+            .map_err(HandshakeError::InvalidMessage)?,
         })
     }
 
@@ -409,7 +409,7 @@ impl ServerHandshakeAnswer {
                 help,
             }
             .dump()
-            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
+            .map_err(HandshakeError::InvalidMessage)?,
         })
     }
 
@@ -429,7 +429,7 @@ impl ServerHandshakeAnswer {
                 help,
             }
             .dump()
-            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
+            .map_err(HandshakeError::InvalidMessage)?,
         })
     }
 }
@@ -480,8 +480,7 @@ fn load_challenge_req(
     ),
     HandshakeError,
 > {
-    let challenge_data =
-        Handshake::load(req).map_err(|err| HandshakeError::InvalidMessage(err.into()))?;
+    let challenge_data = Handshake::load(req).map_err(HandshakeError::InvalidMessage)?;
 
     if let Handshake::Challenge {
         challenge,
@@ -532,12 +531,12 @@ fn load_challenge_req(
             supported_api_versions,
         ));
     }
-    Err(HandshakeError::InvalidMessage("Invalid data".into()))
+    Err(HandshakeError::InvalidMessage("Invalid data"))
 }
 
 fn process_result_req(req: &[u8]) -> Result<(), HandshakeError> {
-    if let Handshake::Result { result, help } =
-        Handshake::load(req).map_err(|err| HandshakeError::InvalidMessage(err.into()))?
+    if let Handshake::Result { result, .. } =
+        Handshake::load(req).map_err(HandshakeError::InvalidMessage)?
     {
         match result {
             HandshakeResult::BadIdentity => Err(HandshakeError::BadIdentity),
@@ -545,13 +544,13 @@ fn process_result_req(req: &[u8]) -> Result<(), HandshakeError> {
             HandshakeResult::RvkMismatch => Err(HandshakeError::RVKMismatch),
             HandshakeResult::RevokedDevice => Err(HandshakeError::RevokedDevice),
             HandshakeResult::BadAdminToken => Err(HandshakeError::BadAdministrationToken),
+            HandshakeResult::BadProtocol => Err(HandshakeError::InvalidMessage(
+                "Bad protocol replied by peer",
+            )),
             HandshakeResult::Ok => Ok(()),
-            _ => Err(HandshakeError::InvalidMessage(format!(
-                "Bad `result` handshake: {result:?} ({help:?})"
-            ))),
         }
     } else {
-        Err(HandshakeError::InvalidMessage("Invalid data".into()))
+        Err(HandshakeError::InvalidMessage("Invalid data"))
     }
 }
 
@@ -594,7 +593,7 @@ impl AuthenticatedClientHandshakeStalled {
             self.user_signkey.sign(
                 &SignedAnswer { answer: challenge }
                     .dump()
-                    .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
+                    .map_err(HandshakeError::InvalidMessage)?,
             )
         } else {
             self.user_signkey.sign(&challenge)
@@ -612,7 +611,7 @@ impl AuthenticatedClientHandshakeStalled {
                 answer,
             })
             .dump()
-            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
+            .map_err(HandshakeError::InvalidMessage)?,
         });
     }
 
@@ -674,7 +673,7 @@ impl InvitedClientHandshakeStalled {
                 token: self.token,
             })
             .dump()
-            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
+            .map_err(HandshakeError::InvalidMessage)?,
         });
     }
 
