@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QWidget
 from parsec.api.data import EntryName
 from parsec.core.core_events import CoreEvent
 from parsec.core.gui.file_status_widget import FileStatusWidget
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.types import WorkspaceRole, EntryID
 from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
@@ -381,7 +382,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         path = self.current_directory / files[0].name
         addr = self.workspace_fs.generate_file_link(path)
         desktop.copy_to_clipboard(addr.to_url())
-        show_info(self, _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
+        SnackbarManager.inform(_("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
 
     def on_copy_clicked(self):
         files = self.table_files.selected_files()

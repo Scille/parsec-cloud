@@ -289,8 +289,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             self.try_login()
         event.accept()
 
-    async def list_devices_and_enrollments(self):
-        pendings = await PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(
+    def list_devices_and_enrollments(self):
+        pendings = PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(
             config_dir=self.config.config_dir
         )
         devices = [
@@ -339,7 +339,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
     def reload_devices(self):
         self._clear_widget()
-        self.jobs_ctx.submit_job(None, None, self.list_devices_and_enrollments)
+        self.list_devices_and_enrollments()
 
     def _clear_widget(self):
         while self.widget.layout().count() != 0:
