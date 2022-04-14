@@ -160,6 +160,31 @@ VALUES (
 )
 
 
+_q_lock = Q(
+    # Use 55 as magic number to represent user/device creation lock
+    # (note this is not stricly needed right now given there is no other
+    # advisory lock in the application, but may avoid weird error if we
+    # introduce a new avisory lock while forgetting about this one)
+    "SELECT pg_advisory_xact_lock(55, _id) FROM organization WHERE organization_id = $organization_id"
+)
+
+
+async def q_take_user_device_write_lock(conn, organization_id: OrganizationID):
+    """
+    User/device creation is a complexe procedure given it contains checks that
+    cannot be enforced by PostgreSQL, e.g.:
+    - `user_` table can contain multiple row with the same `human` value, but
+      only one of them can be non-revoked
+    - PKI-based enrollment also has to ensure no non-revoked `user_` exist
+
+    So an easy way to lower complexity on this topic is to get rid of the
+    concurrency (considering user/device creation is far from being performance
+    intensive) by requesting a per-organization PostgreSQL Advisory Lock to be
+    held for the duration of the user/device create/update transaction.
+    """
+    await conn.execute(*_q_lock(organization_id=organization_id.str))
+
+
 async def _do_create_user_with_human_handle(
     conn, organization_id: OrganizationID, user: User, first_device: Device
 ) -> None:
@@ -231,9 +256,22 @@ async def _do_create_user_without_human_handle(
         raise UserError(f"Insertion error: {result}")
 
 
-async def _create_user(
-    conn, organization_id: OrganizationID, user: User, first_device: Device
-) -> None:
+async def q_create_user(
+    conn,
+    organization_id: OrganizationID,
+    user: User,
+    first_device: Device,
+    lock_already_held: bool = False,
+):
+    if not lock_already_held:
+        await q_take_user_device_write_lock(conn, organization_id)
+
+    record = await conn.fetchrow(*_q_check_active_users_limit(organization_id=organization_id.str))
+    # Note with the user/device write lock held we have the guarantee the active users
+    # limit won't change in our back.
+    if not record["allowed"]:
+        raise UserActiveUsersLimitReached()
+
     if user.human_handle:
         await _do_create_user_with_human_handle(conn, organization_id, user, first_device)
     else:
@@ -257,16 +295,7 @@ async def _create_user(
 async def query_create_user(
     conn, organization_id: OrganizationID, user: User, first_device: Device
 ) -> None:
-    record = await conn.fetchrow(*_q_check_active_users_limit(organization_id=organization_id.str))
-    if not record["allowed"]:
-        raise UserActiveUsersLimitReached()
-    # Note we don't lock anything in postgresql after checking active users limit.
-    # This means we are not protected against concurrency (i.e. multiple concurrent
-    # user creation will first check the active user limit is not reached then
-    # commit their new user, ending up with more than the users than the limit !).
-    # This is considered "fine enough" given concurrency on user creation is very
-    # low and worse outcome would be to go slightly above user limit.
-    await _create_user(conn, organization_id, user, first_device)
+    await q_create_user(conn, organization_id, user, first_device)
 
 
 async def _create_device(
@@ -306,6 +335,7 @@ async def _create_device(
 async def query_create_device(
     conn, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""
 ) -> None:
+    await q_take_user_device_write_lock(conn, organization_id)
     await _create_device(conn, organization_id, device, bool(encrypted_answer))
     await send_signal(
         conn,

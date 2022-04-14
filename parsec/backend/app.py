@@ -25,7 +25,7 @@ from parsec.api.protocol import (
     UserID,
     InvitationToken,
 )
-from parsec.backend.utils import CancelledByNewRequest, collect_apis
+from parsec.backend.utils import CancelledByNewRequest, ClientType, collect_apis
 from parsec.backend.config import BackendConfig
 from parsec.backend.client_context import AuthenticatedClientContext, InvitedClientContext
 from parsec.backend.handshake import do_handshake
@@ -73,6 +73,7 @@ async def backend_app_factory(config: BackendConfig, event_bus: Optional[EventBu
             ping=components["ping"],
             blockstore=components["blockstore"],
             block=components["block"],
+            pki=components["pki"],
             events=components["events"],
         )
 
@@ -93,6 +94,7 @@ class BackendApp:
         ping,
         blockstore,
         block,
+        pki,
         events,
     ):
         self.config = config
@@ -109,11 +111,14 @@ class BackendApp:
         self.ping = ping
         self.blockstore = blockstore
         self.block = block
+        self.pki = pki
         self.events = events
 
         self.apis = collect_apis(
-            user, invite, organization, message, realm, vlob, ping, blockstore, block, events
+            user, invite, organization, message, realm, vlob, ping, blockstore, block, pki, events
         )
+        # TODO: find a cleaner way to do this ?
+        self.http.anonymous_api = self.apis[ClientType.ANONYMOUS]
 
         if self.config.debug:
             self.server_header = f"parsec/{parsec_version} {h11.PRODUCT_ID}".encode("ascii")
@@ -424,7 +429,7 @@ class BackendApp:
 
     async def _handle_client_websocket_loop(self, transport: Transport, client_ctx) -> NoReturn:
         # Retrieve the allowed commands according to api version and auth type
-        api_cmds = self.apis[client_ctx.handshake_type]
+        api_cmds = self.apis[client_ctx.TYPE]
 
         raw_req = None
         while True:
@@ -462,7 +467,6 @@ class BackendApp:
                     # when the peer send a new request
                     raw_req = exc.new_raw_req
                     continue
-
             client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
             raw_rep = packb(rep)
             await transport.send(raw_rep)

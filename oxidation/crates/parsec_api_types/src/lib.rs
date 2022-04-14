@@ -6,6 +6,7 @@ extern crate lazy_static;
 mod addr;
 mod certif;
 pub mod data_macros;
+mod error;
 mod ext_types;
 mod id;
 mod invite;
@@ -14,6 +15,7 @@ mod message;
 
 pub use addr::*;
 pub use certif::*;
+pub use error::*;
 pub use ext_types::*;
 pub use id::*;
 pub use invite::*;

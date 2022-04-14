@@ -623,14 +623,14 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         page.failed.connect(self._on_page_failed)
         self.main_layout.insertWidget(0, page)
 
-    def _on_finished(self, new_device, auth_method, password):
+    async def _on_finished(self, new_device, auth_method, password):
         try:
             if auth_method == DeviceFileType.PASSWORD:
                 save_device_with_password_in_config(
                     config_dir=self.config.config_dir, device=new_device, password=password
                 )
             elif auth_method == DeviceFileType.SMARTCARD:
-                save_device_with_smartcard_in_config(
+                await save_device_with_smartcard_in_config(
                     config_dir=self.config.config_dir, device=new_device
                 )
             show_info(self, _("TEXT_CLAIM_DEVICE_SUCCESSFUL"))

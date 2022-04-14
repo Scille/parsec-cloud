@@ -62,7 +62,7 @@ jobs:
 
 - job: 's1_qa'
   displayName: 'Q&A'
-  timeoutInMinutes: 5
+  timeoutInMinutes: 60
   pool:
     vmImage: 'ubuntu-latest'
   steps:
@@ -225,7 +225,7 @@ jobs:
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow --rundiskfull \
+        tests --runmountpoint --runslow \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-memory.xml
     displayName: 'Tests memory'

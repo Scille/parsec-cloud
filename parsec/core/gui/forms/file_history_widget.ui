@@ -14,9 +14,8 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#FileHistoryWidget {
+   <string notr="true">#scrollAreaWidgetContents {
 	background-color: #F4F4F4;
-	color: #333333;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">

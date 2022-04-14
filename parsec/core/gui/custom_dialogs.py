@@ -6,8 +6,9 @@ import multiprocessing
 from contextlib import contextmanager
 from concurrent.futures import ThreadPoolExecutor
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QPainter, QValidator
+from PyQt5.QtCore import Qt, pyqtSignal, QEventLoop
+from PyQt5.QtGui import QPainter, QValidator, QIcon, QPixmap, QTextDocument
+from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt5.QtWidgets import (
     QWidget,
     QCompleter,
@@ -36,6 +37,19 @@ from parsec.core.gui.ui.greyed_dialog import Ui_GreyedDialog
 
 
 logger = get_logger()
+
+# Qt classes used in the subprocesses dedicated to dialogs
+# They're not used directly but imported in order to fail early if one of those is not available
+# See https://github.com/Scille/parsec-cloud/issues/2161 for a related issue.
+qt_classes_in_subprocess = (
+    QIcon,
+    QPixmap,
+    QPrinter,
+    QPrintDialog,
+    QTextDocument,
+    QApplication,
+    QEventLoop,
+)
 
 
 @contextmanager

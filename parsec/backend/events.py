@@ -14,6 +14,7 @@ from parsec.api.protocol import (
     events_listen_serializer,
     APIEvent,
 )
+from parsec.api.protocol.types import UserProfile
 from parsec.backend.utils import catch_protocol_errors, run_with_breathing_transport, api
 from parsec.backend.realm import BaseRealmComponent
 from parsec.backend.backend_events import BackendEvent
@@ -131,9 +132,21 @@ class EventsComponent:
             except trio.WouldBlock:
                 client_ctx.logger.warning("dropping event (queue is full)")
 
+        def _on_pki_enrollment_updated(
+            event: APIEvent, backend_event: BackendEvent, organization_id: OrganizationID
+        ) -> None:
+            if (
+                organization_id != client_ctx.organization_id
+                and client_ctx.profile != UserProfile.ADMIN
+            ):
+                return
+            try:
+                client_ctx.send_events_channel.send_nowait({"event": event})
+            except trio.WouldBlock:
+                client_ctx.logger.warning("dropping event (queue is full)")
+
         # Command should be idempotent
         if not client_ctx.events_subscribed:
-
             # Connect the new callbacks
             client_ctx.event_bus_ctx.connect(
                 BackendEvent.PINGED, partial(_on_pinged, APIEvent.PINGED)
@@ -157,6 +170,11 @@ class EventsComponent:
             client_ctx.event_bus_ctx.connect(
                 BackendEvent.INVITE_STATUS_CHANGED,
                 partial(_on_invite_status_changed, APIEvent.INVITE_STATUS_CHANGED),
+            )
+
+            client_ctx.event_bus_ctx.connect(
+                BackendEvent.PKI_ENROLLMENTS_UPDATED,
+                partial(_on_pki_enrollment_updated, APIEvent.PKI_ENROLLMENTS_UPDATED),
             )
 
             # Final event to keep up to date the list of realm we should listen on

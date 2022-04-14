@@ -1,11 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.config import CoreConfig
-from typing import Optional
-from parsec.core.core_events import CoreEvent
 import trio
+from typing import Optional
 from structlog import get_logger
-from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
 from packaging.version import Version
 
@@ -24,6 +22,8 @@ from parsec.core.mountpoint import (
     MountpointWinfspNotAvailable,
 )
 
+from parsec.core.config import CoreConfig
+from parsec.core.core_events import CoreEvent
 from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler, run_trio_job_scheduler
 from parsec.core.gui.parsec_application import ParsecApp
@@ -132,10 +132,6 @@ class InstanceWidget(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
-
-    @pyqtSlot(object, object)
-    def _core_ready(self, core, core_jobs_ctx):
-        self.run_core_ready.emit(core, core_jobs_ctx)
 
     @property
     def current_device(self):
@@ -273,11 +269,11 @@ class InstanceWidget(QWidget):
                 show_error(self, message, exception=exception)
                 self.login_failed.emit()
 
-    def login_with_smartcard(self, key_file):
+    async def login_with_smartcard(self, key_file):
         message = None
         exception = None
         try:
-            device = load_device_with_smartcard(key_file)
+            device = await load_device_with_smartcard(key_file)
             if ParsecApp.is_device_connected(
                 device.organization_addr.organization_id, device.device_id
             ):

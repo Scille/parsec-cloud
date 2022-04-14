@@ -23,6 +23,7 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendConnStatus,
 )
+from parsec.core.pki import is_pki_enrollment_available
 from parsec.core.fs import FSWorkspaceNotFoundError
 from parsec.core.fs import (
     FSWorkspaceNoReadAccess,
@@ -34,6 +35,7 @@ from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
+from parsec.core.gui.enrollment_widget import EnrollmentWidget
 from parsec.core.gui.menu_widget import MenuWidget
 from parsec.core.gui import desktop
 from parsec.core.gui.authentication_change_widget import AuthenticationChangeWidget
@@ -135,12 +137,15 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.button_user.clicked.connect(self._show_user_menu)
 
         self.new_notification.connect(self.on_new_notification)
-        self.menu.files_clicked.connect(self.show_mount_widget)
+        self.menu.button_enrollment.setVisible(
+            self.core.device.is_admin and is_pki_enrollment_available()
+        )
         if self.core.device.is_outsider:
             self.menu.button_users.hide()
-        else:
-            self.menu.users_clicked.connect(self.show_users_widget)
+        self.menu.files_clicked.connect(self.show_mount_widget)
+        self.menu.users_clicked.connect(self.show_users_widget)
         self.menu.devices_clicked.connect(self.show_devices_widget)
+        self.menu.enrollment_clicked.connect(self.show_enrollment_widget)
         self.connection_state_changed.connect(self._on_connection_state_changed)
 
         self.navigation_bar_widget.clear()
@@ -166,6 +171,11 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
         self.devices_widget = DevicesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.devices_widget)
+
+        self.enrollment_widget = EnrollmentWidget(
+            self.core, self.jobs_ctx, self.event_bus, parent=self
+        )
+        self.widget_central.layout().insertWidget(0, self.enrollment_widget)
 
         self._on_connection_state_changed(
             self.core.backend_status, self.core.backend_status_exc, allow_systray=False
@@ -199,8 +209,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.button_user.setText(user_text)
         self.button_user.setToolTip(self.core.device.organization_addr.to_url())
 
-    def change_authentication(self) -> None:
-        AuthenticationChangeWidget.show_modal(
+    async def change_authentication(self) -> None:
+        await AuthenticationChangeWidget.show_modal(
             core=self.core, jobs_ctx=self.jobs_ctx, parent=self, on_finished=None
         )
 
@@ -278,7 +288,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             previous_entry: Optional[WorkspaceEntry] = kwargs["previous_entry"]
             new_role = new_entry.role
             previous_role = previous_entry.role if previous_entry is not None else None
-            print(previous_role, new_role)
             if new_role is not None and previous_role is None:
                 self.new_notification.emit(
                     "INFO",
@@ -457,8 +466,15 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.label_title.setText(_("ACTION_MENU_DEVICES"))
         self.devices_widget.show()
 
+    def show_enrollment_widget(self) -> None:
+        self.clear_widgets()
+        self.menu.activate_enrollment()
+        self.label_title.setText(_("ACTION_MENU_ENROLLMENT"))
+        self.enrollment_widget.show()
+
     def clear_widgets(self) -> None:
         self.navigation_bar_widget.clear()
         self.users_widget.hide()
         self.mount_widget.hide()
         self.devices_widget.hide()
+        self.enrollment_widget.hide()

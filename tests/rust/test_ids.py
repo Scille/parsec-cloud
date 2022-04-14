@@ -29,6 +29,8 @@ def test_device_name():
         DeviceName("Invalid Device Name")
     assert str(excinfo.value) == "Invalid DeviceName"
 
+    assert DeviceName(DeviceName("foo")) == DeviceName("foo")
+
 
 @pytest.mark.rust
 def test_device_id():
@@ -59,6 +61,8 @@ def test_device_id():
 
     assert isinstance(DeviceID.new(), DeviceID)
 
+    assert DeviceID(DeviceID("foo@bar")) == DeviceID("foo@bar")
+
 
 @pytest.mark.rust
 def test_organization_id():
@@ -82,6 +86,8 @@ def test_organization_id():
     with pytest.raises(ValueError) as excinfo:
         OrganizationID("Invalid Organization ID")
     assert str(excinfo.value) == "Invalid OrganizationID"
+
+    assert OrganizationID(OrganizationID("foo")) == OrganizationID("foo")
 
 
 @pytest.mark.rust
@@ -148,6 +154,8 @@ def test_user_id():
         UserID("Invalid User Id")
     assert str(excinfo.value) == "Invalid UserID"
 
+    assert UserID(UserID("foo")) == UserID("foo")
+
 
 @pytest.mark.rust
 def test_device_label():
@@ -172,6 +180,8 @@ def test_device_label():
     with pytest.raises(ValueError) as excinfo:
         DeviceLabel("a" * 256)
     assert str(excinfo.value) == "Invalid DeviceLabel"
+
+    assert DeviceLabel(DeviceLabel("foo")) == DeviceLabel("foo")
 
 
 @pytest.mark.rust
@@ -288,3 +298,35 @@ def test_vblob_id():
     with pytest.raises(ValueError) as excinfo:
         VlobID(str(uuid4()))
     assert str(excinfo.value) == "Not a UUID"
+
+
+@pytest.mark.rust
+def test_chunk_id():
+    from parsec.core.types.manifest import ChunkID, _RsChunkID, _PyChunkID
+
+    assert ChunkID is _RsChunkID
+
+    ID = uuid4()
+
+    py_ei = _PyChunkID(ID)
+    rs_ei = ChunkID(ID)
+
+    assert str(py_ei) == str(rs_ei)
+    assert repr(py_ei) == repr(rs_ei)
+    assert py_ei.uuid == rs_ei.uuid
+    assert py_ei.hex == rs_ei.hex
+    assert py_ei.bytes == rs_ei.bytes
+
+    assert str(ChunkID.from_hex(str(ID))) == str(_PyChunkID.from_hex(str(ID)))
+    assert str(ChunkID.from_bytes(ID.bytes)) == str(_PyChunkID.from_bytes(ID.bytes))
+
+    with pytest.raises(ValueError) as excinfo:
+        _PyChunkID(str(uuid4()))
+    assert str(excinfo.value) == "Not a UUID"
+
+    with pytest.raises(ValueError) as excinfo:
+        ChunkID(str(uuid4()))
+    assert str(excinfo.value) == "Not a UUID"
+
+    d = {rs_ei: None}
+    assert rs_ei in d

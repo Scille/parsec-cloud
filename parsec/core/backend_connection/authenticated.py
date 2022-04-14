@@ -93,6 +93,9 @@ class BackendAuthenticatedCmds:
     )
     organization_stats = expose_cmds_with_retrier(cmds.organization_stats)
     organization_config = expose_cmds_with_retrier(cmds.organization_config)
+    pki_enrollment_list = expose_cmds_with_retrier(cmds.pki_enrollment_list)
+    pki_enrollment_reject = expose_cmds_with_retrier(cmds.pki_enrollment_reject)
+    pki_enrollment_accept = expose_cmds_with_retrier(cmds.pki_enrollment_accept)
 
 
 for cmd in AUTHENTICATED_CMDS:
@@ -139,6 +142,9 @@ def _handle_event(event_bus: EventBus, rep: dict) -> None:
             realm_id=EntryID(rep["realm_id"].uuid),
             encryption_revision=rep["encryption_revision"],
         )
+
+    elif rep["event"] == APIEvent.PKI_ENROLLMENTS_UPDATED:
+        event_bus.send(CoreEvent.PKI_ENROLLMENTS_UPDATED)
 
 
 def _transport_pool_factory(addr, device_id, signing_key, max_pool, keepalive):

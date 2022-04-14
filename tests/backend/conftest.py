@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
+from typing import Optional
 from pendulum import datetime
 from async_generator import asynccontextmanager
+from structlog import get_logger
 
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import (
@@ -22,6 +24,7 @@ from parsec.backend.backend_events import BackendEvent
 from parsec.core.types import LocalDevice
 
 from tests.common import FreezeTestOnTransportError
+from tests.backend.common import do_http_request
 
 
 @pytest.fixture
@@ -113,7 +116,7 @@ async def apiv1_bob_backend_sock(apiv1_backend_sock_factory, backend, bob):
 
 
 @pytest.fixture
-def backend_sock_factory(backend_raw_transport_factory, coolorg):
+def backend_sock_factory(backend_raw_transport_factory):
     # APIv2's invited handshake is not compatible with this
     # fixture because it requires purpose information (invitation_type/token)
     @asynccontextmanager
@@ -196,6 +199,55 @@ def backend_invited_sock_factory(backend_raw_transport_factory):
             yield transport
 
     return _backend_sock_factory
+
+
+class AnonymousTransport:
+    """
+    Mimic regular Transport to be compatible with the `tests.backend.common.CmdSock`,
+    the trick is given we use regular HTTP instead of Websocket we create a new
+    socket each time and do send&recv at the same time.
+    """
+
+    def __init__(self, connection_factory, organization_id: OrganizationID):
+        self.connection_factory = connection_factory
+        self.organization_id = organization_id
+        self.last_request_response: Optional[bytes] = None
+        self.logger = get_logger()
+
+    async def send(self, msg: bytes) -> None:
+        assert self.last_request_response is None
+        async with self.connection_factory() as stream:
+            status, _, body = await do_http_request(
+                stream=stream,
+                target=f"/anonymous/{self.organization_id}",
+                method="POST",
+                headers={"Content-Type": "application/msgpack"},
+                body=msg,
+            )
+            assert status[0] == 200
+            self.last_request_response = body
+
+    async def recv(self) -> bytes:
+        assert self.last_request_response is not None
+        rep = self.last_request_response
+        self.last_request_response = None
+        return rep
+
+
+@pytest.fixture
+def anonymous_backend_sock_factory(server_factory):
+    @asynccontextmanager
+    async def _backend_sock_factory(backend, organization_id: OrganizationID):
+        async with server_factory(backend.handle_client) as server:
+            yield AnonymousTransport(server.connection_factory, organization_id)
+
+    return _backend_sock_factory
+
+
+@pytest.fixture
+async def anonymous_backend_sock(anonymous_backend_sock_factory, backend, coolorg):
+    async with anonymous_backend_sock_factory(backend, coolorg.organization_id) as sock:
+        yield sock
 
 
 @pytest.fixture

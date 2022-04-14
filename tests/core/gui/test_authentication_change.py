@@ -34,9 +34,15 @@ async def test_change_password_invalid_old_password(
         # 0 is "Copy backend addr", 1 is a separator
         c_w.button_user.menu().actions()[2].trigger()
 
-    assert autoclose_dialog.dialogs == [
-        (translate("TEXT_ERR_DIALOG_TITLE"), translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
-    ]
+        await aqtbot.wait_until(
+            lambda: autoclose_dialog.dialogs
+            == [
+                (
+                    translate("TEXT_ERR_DIALOG_TITLE"),
+                    translate("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"),
+                )
+            ]
+        )
 
 
 @pytest.mark.gui
@@ -56,13 +62,13 @@ async def test_change_password_invalid_password_check(
         )
         c_w.button_user.menu().actions()[2].trigger()
 
-    pc_w = await catch_auth_change_widget()
+        pc_w = await catch_auth_change_widget()
 
     assert not pc_w.button_validate.isEnabled()
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         pc_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password, "P@ssw0rd2"
     )
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         pc_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check, "P@ssw0rd3"
     )
     assert not pc_w.button_validate.isEnabled()
@@ -90,19 +96,22 @@ async def test_change_password_success(
         )
         c_w.button_user.menu().actions()[2].trigger()
 
-    pc_w = await catch_auth_change_widget()
+        pc_w = await catch_auth_change_widget()
 
     assert not pc_w.button_validate.isEnabled()
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         pc_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password, "P@ssw0rd2"
     )
-    aqtbot.key_clicks(
+    await aqtbot.key_clicks(
         pc_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check, "P@ssw0rd2"
     )
-    assert pc_w.button_validate.isEnabled()
+
+    await aqtbot.wait_until(pc_w.button_validate.isEnabled)
     aqtbot.mouse_click(pc_w.button_validate, QtCore.Qt.LeftButton)
 
-    assert autoclose_dialog.dialogs == [("", translate("TEXT_AUTH_CHANGE_SUCCESS"))]
+    await aqtbot.wait_until(
+        lambda: autoclose_dialog.dialogs == [("", translate("TEXT_AUTH_CHANGE_SUCCESS"))]
+    )
     autoclose_dialog.reset()
 
     # Retry to login...

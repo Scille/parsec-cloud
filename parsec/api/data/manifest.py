@@ -37,7 +37,7 @@ class BlockAccess(BaseData):
         id = BlockIDField(required=True)
         key = fields.SecretKey(required=True)
         offset = fields.Integer(required=True, validate=validate.Range(min=0))
-        size = fields.Integer(required=True, validate=validate.Range(min=0))
+        size = fields.Integer(required=True, validate=validate.Range(min=1))
         digest = fields.HashDigest(required=True)
 
         @post_load
@@ -134,7 +134,7 @@ class BaseManifest(BaseAPISignedData):
                 ManifestType.FILE_MANIFEST: _PyFileManifest.SCHEMA_CLS,
                 ManifestType.FOLDER_MANIFEST: _PyFolderManifest.SCHEMA_CLS,
                 ManifestType.WORKSPACE_MANIFEST: _PyWorkspaceManifest.SCHEMA_CLS,
-                ManifestType.USER_MANIFEST: UserManifest.SCHEMA_CLS,
+                ManifestType.USER_MANIFEST: _PyUserManifest.SCHEMA_CLS,
             }
 
         def get_obj_type(self, obj: Dict[str, T]) -> T:

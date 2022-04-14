@@ -7,6 +7,7 @@ mod binding_utils;
 mod crypto;
 mod ids;
 mod invite;
+mod local_manifest;
 mod manifest;
 
 /// A Python module implemented in Rust. The name of this function must match
@@ -31,6 +32,7 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ids::BlockID>()?;
     m.add_class::<ids::RealmID>()?;
     m.add_class::<ids::VlobID>()?;
+    m.add_class::<ids::ChunkID>()?;
     m.add_class::<ids::HumanHandle>()?;
     m.add_class::<ids::DeviceID>()?;
     m.add_class::<ids::DeviceName>()?;
@@ -51,5 +53,11 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<manifest::FolderManifest>()?;
     m.add_class::<manifest::WorkspaceEntry>()?;
     m.add_class::<manifest::WorkspaceManifest>()?;
+    m.add_class::<manifest::UserManifest>()?;
+    m.add_class::<local_manifest::Chunk>()?;
+    m.add_class::<local_manifest::LocalFileManifest>()?;
+    m.add_class::<local_manifest::LocalFolderManifest>()?;
+    m.add_class::<local_manifest::LocalWorkspaceManifest>()?;
+    m.add_class::<local_manifest::LocalUserManifest>()?;
     Ok(())
 }

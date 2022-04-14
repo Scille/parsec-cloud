@@ -5,6 +5,34 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.8.1 (2022-04-08)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix regression in Parsec server introduced in version 2.7.0 leading to block
+  being stored and fetched with an incorrect ID  (`#2153
+  <https://github.com/Scille/parsec-cloud/issues/2153>`__)
+
+
+Parsec v2.8.0 (2022-04-06)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a bug in the navigation bar where clicking a parent folder didn't change
+  the current directory.  (`#2138 <https://github.com/Scille/parsec-
+  cloud/issues/2138>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Add support for PKI based enrollement  (`#2113
+  <https://github.com/Scille/parsec-cloud/issues/2113>`__)
+
+
 Parsec v2.7.0 (2022-04-01)
 --------------------------
 

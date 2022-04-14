@@ -266,6 +266,7 @@ class BackendActionAddr(_PyBackendAddr):
                 _PyBackendOrganizationBootstrapAddr,
                 _PyBackendOrganizationFileLinkAddr,
                 _PyBackendInvitationAddr,
+                _PyBackendPkiEnrollmentAddr,
             ):
                 try:
                     return _PyBackendAddr.from_url.__func__(type, url, **kwargs)
@@ -490,6 +491,20 @@ class BackendOrganizationAddrField(fields.Field):
         return value.to_url()
 
 
+class BackendAddrField(fields.Field):
+    def _deserialize(self, value, attr, data):
+        try:
+            return BackendAddr.from_url(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+    def _serialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        return value.to_url()
+
+
 class BackendInvitationAddr(_PyBackendActionAddr):
     """
     Represent the URL to invite a user or a device
@@ -502,9 +517,11 @@ class BackendInvitationAddr(_PyBackendActionAddr):
         self,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: InvitationToken,
+        token: Optional[InvitationToken] = None,
         **kwargs,
     ):
+        if invitation_type in (InvitationType.DEVICE, InvitationType.USER) and token is None:
+            raise TypeError("Missing required argument: 'token'")
         super().__init__(**kwargs)
         self._organization_id = organization_id
         self._invitation_type = invitation_type
@@ -525,16 +542,19 @@ class BackendInvitationAddr(_PyBackendActionAddr):
             kwargs["invitation_type"] = InvitationType.USER
         elif value[0] == "claim_device":
             kwargs["invitation_type"] = InvitationType.DEVICE
+        elif value[0] == "pki_enrollment":
+            kwargs["invitation_type"] = InvitationType.PKI
         else:
             raise ValueError("Expected `action=claim_user` or `action=claim_device` param value")
 
         value = params.pop("token", ())
-        if len(value) != 1:
-            raise ValueError("Missing mandatory `token` param")
-        try:
-            kwargs["token"] = InvitationToken.from_hex(value[0])
-        except ValueError:
-            raise ValueError("Invalid `token` param value")
+        if kwargs["invitation_type"] in (InvitationType.DEVICE, InvitationType.USER):
+            if len(value) != 1:
+                raise ValueError("Missing mandatory `token` param")
+            try:
+                kwargs["token"] = InvitationToken.from_hex(value[0])
+            except ValueError:
+                raise ValueError("Invalid `token` param value")
 
         return kwargs
 
@@ -542,7 +562,13 @@ class BackendInvitationAddr(_PyBackendActionAddr):
         return str(self.organization_id)
 
     def _to_url_get_params(self):
-        action = "claim_user" if self._invitation_type == InvitationType.USER else "claim_device"
+        action = {
+            InvitationType.USER: "claim_user",
+            InvitationType.DEVICE: "claim_device",
+            InvitationType.PKI: "pki_enrollment",
+        }[self._invitation_type]
+        if self._token is None:
+            return [("action", action), *super()._to_url_get_params()]
         return [("action", action), ("token", self._token.hex), *super()._to_url_get_params()]
 
     def to_http_redirection_url(self) -> str:
@@ -562,7 +588,7 @@ class BackendInvitationAddr(_PyBackendActionAddr):
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: InvitationToken,
+        token: Optional[InvitationToken] = None,
     ) -> "BackendInvitationAddr":
         return cls(
             hostname=backend_addr.hostname,
@@ -578,6 +604,9 @@ class BackendInvitationAddr(_PyBackendActionAddr):
             backend_addr=self, organization_id=self.organization_id, root_verify_key=root_verify_key
         )
 
+    def generate_backend_addr(self) -> _PyBackendAddr:
+        return _PyBackendAddr(self.hostname, self.port, self.use_ssl)
+
     @property
     def organization_id(self) -> OrganizationID:
         return self._organization_id
@@ -587,7 +616,7 @@ class BackendInvitationAddr(_PyBackendActionAddr):
         return self._invitation_type
 
     @property
-    def token(self) -> InvitationToken:
+    def token(self) -> Optional[InvitationToken]:
         return self._token
 
 
@@ -599,3 +628,90 @@ if not TYPE_CHECKING:
         pass
     else:
         BackendInvitationAddr = _RsBackendInvitationAddr
+
+
+class BackendPkiEnrollmentAddr(_PyBackendActionAddr):
+    """
+    Represent the URL used to reach an organization to request a PKI-based enrollment
+    (e.g. ``parsec://parsec.example.com/my_org?action=pki_enrollment``)
+    """
+
+    __slots__ = ("_organization_id",)
+
+    def __init__(self, organization_id: OrganizationID, **kwargs):
+        super().__init__(**kwargs)
+        self._organization_id = organization_id
+
+    @classmethod
+    def _from_url_parse_path(cls, path):
+        return {"organization_id": OrganizationID(path[1:])}
+
+    @classmethod
+    def _from_url_parse_and_consume_params(cls, params):
+        kwargs = super()._from_url_parse_and_consume_params(params)
+
+        value = params.pop("action", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `action` param")
+        if value[0] != "pki_enrollment":
+            raise ValueError("Expected `action=pki_enrollment` param value")
+
+        return kwargs
+
+    def _to_url_get_path(self):
+        return str(self.organization_id)
+
+    def _to_url_get_params(self):
+        return [("action", "pki_enrollment"), *super()._to_url_get_params()]
+
+    def to_http_redirection_url(self) -> str:
+        # Skipping no_ssl param because it is already in the scheme
+        query = urlencode({k: v for k, v in self._to_url_get_params() if k != "no_ssl"})
+        path = "/redirect/" + quote_plus(self._to_url_get_path())
+        if self._use_ssl:
+            scheme = "https"
+        else:
+            scheme = "http"
+
+        return urlunsplit((scheme, self._netloc, path, query, None))
+
+    @classmethod
+    def build(
+        cls, backend_addr: BackendAddr, organization_id: OrganizationID
+    ) -> "BackendInvitationAddr":
+        return cls(
+            hostname=backend_addr.hostname,
+            port=backend_addr.port,
+            use_ssl=backend_addr.use_ssl,
+            organization_id=organization_id,
+        )
+
+    def generate_organization_addr(self, root_verify_key: VerifyKey) -> _PyBackendOrganizationAddr:
+        return _PyBackendOrganizationAddr.build(
+            backend_addr=self, organization_id=self.organization_id, root_verify_key=root_verify_key
+        )
+
+    def generate_backend_addr(self) -> _PyBackendAddr:
+        return _PyBackendAddr(self.hostname, self.port, self.use_ssl)
+
+    @property
+    def organization_id(self) -> OrganizationID:
+        return self._organization_id
+
+
+_PyBackendPkiEnrollmentAddr = BackendPkiEnrollmentAddr
+# TODO: Oxidation implementation !
+
+
+class BackendPkiEnrollmentAddrField(fields.Field):
+    def _deserialize(self, value, attr, data):
+        try:
+            return BackendPkiEnrollmentAddr.from_url(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+    def _serialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        return value.to_url()

@@ -2,11 +2,9 @@
 
 import sys
 from marshmallow.decorators import post_load
-import trio
 import json
 from typing import Optional, Tuple, List
 from json import JSONDecodeError
-from urllib.request import urlopen, Request, URLError
 from packaging.version import Version
 from structlog import get_logger
 
@@ -14,6 +12,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QSysInfo
 from PyQt5.QtWidgets import QDialog, QWidget
 
 from parsec import __version__
+from parsec.utils import http_request, URLError
 from parsec.serde import BaseSchema, fields, JSONSerializer, SerdeError
 from parsec.core.gui import desktop
 from parsec.core.gui.lang import translate as _
@@ -59,17 +58,15 @@ api_releases_serializer = JSONSerializer(ApiReleasesSchema)
 
 
 async def fetch_json_releases(api_url: str) -> Optional[List]:
-    def _do_http_request():
-        try:
-            with urlopen(Request(api_url, method="GET")) as req_api:
-                return json.loads(req_api.read())
-        except JSONDecodeError as exc:
-            logger.error("Cannot deserialize releases info from API", exc_info=exc, api_url=api_url)
-            return None
-        except URLError:
-            return None
 
-    return await trio.to_thread.run_sync(_do_http_request)
+    try:
+        data = await http_request(api_url, method="GET")
+        return json.loads(data)
+    except JSONDecodeError as exc:
+        logger.error("Cannot deserialize releases info from API", exc_info=exc, api_url=api_url)
+        return None
+    except URLError:
+        return None
 
 
 async def do_check_new_version(

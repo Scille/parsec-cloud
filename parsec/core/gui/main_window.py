@@ -10,6 +10,7 @@ from PyQt5.QtGui import QColor, QIcon, QKeySequence, QResizeEvent, QCloseEvent
 from PyQt5.QtWidgets import QWidget, QMainWindow, QMenu, QShortcut, QMenuBar
 
 from parsec import __version__ as PARSEC_VERSION
+from parsec.core.gui.enrollment_query_widget import EnrollmentQueryWidget
 from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import InvitationType
 from parsec.core.types import (
@@ -21,6 +22,7 @@ from parsec.core.types import (
 )
 from parsec.core.core_events import CoreEvent
 from parsec.core.config import CoreConfig, save_config
+from parsec.core.pki import is_pki_enrollment_available
 from parsec.core.local_device import list_available_devices, get_key_file, DeviceFileType
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.lang import translate as _
@@ -403,12 +405,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 self._on_claim_user_clicked(action_addr)
             elif action_addr.invitation_type == InvitationType.DEVICE:
                 self._on_claim_device_clicked(action_addr)
+            elif action_addr.invitation_type == InvitationType.PKI:
+                if not is_pki_enrollment_available():
+                    show_error(self, _("TEXT_PKI_ENROLLMENT_NOT_AVAILABLE"))
+                    return
+                self._on_claim_pki_clicked(action_addr)
             else:
                 show_error(self, _("TEXT_INVALID_URL"))
                 return
         else:
             show_error(self, _("TEXT_INVALID_URL"))
             return
+
+    def _on_claim_pki_clicked(self, action_addr: BackendInvitationAddr) -> None:
+        widget: EnrollmentQueryWidget
+
+        def _on_finished() -> None:
+            nonlocal widget
+            if not widget.status:
+                return
+            show_info(self, _("TEXT_ENROLLMENT_QUERY_SUCCEEDED"))
+            self.reload_login_devices()
+
+        widget = EnrollmentQueryWidget.show_modal(
+            jobs_ctx=self.jobs_ctx,
+            config=self.config,
+            addr=action_addr,
+            parent=self,
+            on_finished=_on_finished,
+        )
 
     def _on_claim_user_clicked(self, action_addr: BackendInvitationAddr) -> None:
         widget: ClaimDeviceWidget
@@ -549,23 +574,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_last_version=PARSEC_VERSION)
 
         telemetry.init(self.config)
-
-        devices = list_available_devices(self.config.config_dir)
-        if not len(devices) and not invitation_link:
-            r = ask_question(
-                self,
-                _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"),
-                _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_INSTRUCTIONS"),
-                [
-                    _("ACTION_NO_DEVICE_CREATE_ORGANIZATION"),
-                    _("ACTION_NO_DEVICE_JOIN_ORGANIZATION"),
-                ],
-                radio_mode=True,
-            )
-            if r == _("ACTION_NO_DEVICE_JOIN_ORGANIZATION"):
-                self._on_join_org_clicked()
-            elif r == _("ACTION_NO_DEVICE_CREATE_ORGANIZATION"):
-                self._on_create_org_clicked()
 
     def show_top(self) -> None:
         self.activateWindow()
@@ -749,6 +757,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.switch_to_login_tab()
         self._on_claim_device_clicked(action_addr)
 
+    def show_claim_pki_widget(self, action_addr: BackendInvitationAddr) -> None:
+        self.switch_to_login_tab()
+        self._on_claim_pki_clicked(action_addr)
+
     def add_instance(self, start_arg: Optional[str] = None) -> None:
         action_addr = None
         if start_arg:
@@ -774,6 +786,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             and action_addr.invitation_type == InvitationType.DEVICE
         ):
             self.show_claim_device_widget(action_addr)
+        elif (
+            isinstance(action_addr, BackendInvitationAddr)
+            and action_addr.invitation_type == InvitationType.PKI
+        ):
+            self.show_claim_pki_widget(action_addr)
         else:
             show_error(self, _("TEXT_INVALID_URL"))
 

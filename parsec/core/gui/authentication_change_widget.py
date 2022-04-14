@@ -5,11 +5,10 @@ from PyQt5.QtWidgets import QWidget, QApplication
 from structlog import get_logger
 
 from parsec.core.local_device import (
-    get_key_file,
     load_device_with_password,
     load_device_with_smartcard,
-    save_device_with_password,
-    save_device_with_smartcard,
+    save_device_with_password_in_config,
+    save_device_with_smartcard_in_config,
     LocalDeviceError,
     LocalDeviceNotFoundError,
     LocalDeviceCryptoError,
@@ -41,17 +40,18 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
     def _on_info_filled(self, auth_method, valid):
         self.button_validate.setEnabled(valid)
 
-    def _on_validate_clicked(self):
+    async def _on_validate_clicked(self):
         self.button_validate.setEnabled(False)
         auth_method = self.widget_auth.get_auth_method()
-        kf = get_key_file(self.core.config.config_dir, self.loaded_device)
         try:
             if auth_method == DeviceFileType.PASSWORD:
-                save_device_with_password(
-                    kf, self.loaded_device, self.widget_auth.get_auth(), force=True
+                save_device_with_password_in_config(
+                    self.core.config.config_dir, self.loaded_device, self.widget_auth.get_auth()
                 )
             elif auth_method == DeviceFileType.SMARTCARD:
-                save_device_with_smartcard(kf, self.loaded_device, force=True)
+                await save_device_with_smartcard_in_config(
+                    self.core.config.config_dir, self.loaded_device
+                )
             show_info(self, _("TEXT_AUTH_CHANGE_SUCCESS"))
             if self.dialog:
                 self.dialog.accept()
@@ -72,7 +72,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
             show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
 
     @classmethod
-    def show_modal(cls, core, jobs_ctx, parent, on_finished=None):
+    async def show_modal(cls, core, jobs_ctx, parent, on_finished=None):
         available_device = get_available_device(core.config.config_dir, core.device)
         loaded_device = None
 
@@ -93,7 +93,7 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                     return
                 loaded_device = load_device_with_password(available_device.key_file_path, password)
             else:
-                loaded_device = load_device_with_smartcard(available_device.key_file_path)
+                loaded_device = await load_device_with_smartcard(available_device.key_file_path)
         except LocalDeviceError:
             show_error(parent, _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
             return

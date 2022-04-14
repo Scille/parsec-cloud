@@ -19,6 +19,7 @@ import re
 import tempfile
 import subprocess
 import json
+import uuid
 
 import trio
 import click
@@ -102,9 +103,11 @@ async def generate_gui_config(backend_address):
         "gui_check_version_at_startup": False,
         "gui_tray_enabled": False,
         "gui_last_version": PARSEC_VERSION,
-        "preferred_org_creation_backend_addr": backend_address.to_url(),
         "gui_show_confined": True,
+        "ipc_win32_mutex_name": f"parsec-clould-{uuid.uuid4()}",
     }
+    if backend_address is not None:
+        config["preferred_org_creation_backend_addr"] = backend_address.to_url()
     await config_file.write_text(json.dumps(config, indent=4))
 
 
@@ -262,6 +265,7 @@ async def amain(
 
     # Keep the environment empty
     if empty:
+        await generate_gui_config(backend_address)
         return
 
     # Start a local backend

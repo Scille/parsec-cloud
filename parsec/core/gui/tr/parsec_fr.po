@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-03-10 09:19+0100\n"
+"POT-Creation-Date: 2022-04-07 15:59+0200\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -135,6 +135,9 @@ msgstr "Utilisateurs"
 
 msgid "ACTION_MENU_DEVICES"
 msgstr "Mes appareils"
+
+msgid "ACTION_MENU_ENROLLMENT"
+msgstr "Enrôlement SmartCard"
 
 msgid "TEXT_CLAIM_DEVICE_INVALID_CODE_CLICKED"
 msgstr ""
@@ -358,9 +361,6 @@ msgstr ""
 msgid "TEXT_DEVICE_RECOVERY_EXPORT_WIZARD_TITLE"
 msgstr "Créer un appareil de récupération"
 
-msgid "TEXT_DEVICE_RECOVERY_IMPORT_WIZARD_TITLE"
-msgstr "Récupérer un appareil"
-
 msgid "ACTION_IMPORT_KEY"
 msgstr "Récupérer un appareil"
 
@@ -396,6 +396,9 @@ msgstr "L'appareil a été récupéré avec succès"
 msgid "ACTION_CREATE_DEVICE"
 msgstr "Créer l'appareil"
 
+msgid "TEXT_DEVICE_RECOVERY_IMPORT_WIZARD_TITLE"
+msgstr "Récupérer un appareil"
+
 msgid "TEXT_DEVICE_IS_CURRENT"
 msgstr "actuel"
 
@@ -407,6 +410,103 @@ msgstr "Impossible d'inviter un nouvel appareil"
 
 msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
 msgstr "Impossible de récupérer la liste de vos appareils."
+
+msgid "TEXT_ENROLLMENT_INSTRUCTIONS_organization"
+msgstr ""
+"Veuillez sélectionner un certificate valide pour faire une demande pour "
+"rejoindre l'organisation {organization}."
+
+msgid "TEXT_ENROLLMENT_SUBMIT_ALREADY_EXISTS_TITLE"
+msgstr "La requête existe déjà"
+
+msgid "TEXT_ENROLLMENT_SUBMIT_ALREADY_EXISTS_QUESTION"
+msgstr ""
+"Une requête pour rejoindre cette organisation avec ce certificate existe "
+"déjà. Voulez-vous l'écraser?"
+
+msgid "ACTION_ENROLLMENT_FORCE"
+msgstr "Écraser la requête"
+
+msgid "ACTION_NO"
+msgstr "Non"
+
+msgid "TEXT_ENROLLMENT_SUBMIT_FAILED"
+msgstr "Impossible de faire une demande d'enrôlement"
+
+msgid "TEXT_ENROLLMENT_ERROR_LOADING_CERTIFICATE"
+msgstr "Impossible de charger le certificate"
+
+msgid "TEXT_ENROLLMENT_QUERY_TITLE"
+msgstr "Rejoindre une organisation avec une SmartCard"
+
+msgid "TEXT_SELECT_USER_PROFILE"
+msgstr "Veuillez sélectionner le profil de l'utilisateur :"
+
+msgid "TEXT_USER_PROFILE_OUTSIDER"
+msgstr "Externe"
+
+msgid "TEXT_USER_PROFILE_STANDARD"
+msgstr "Standard"
+
+msgid "TEXT_USER_PROFILE_ADMIN"
+msgstr "Administrateur"
+
+msgid "TEXT_USER_PROFILE_STANDARD_TOOLTIP"
+msgstr ""
+"Le profil <b>Utilisateur Standard</b> accède aux espaces de travail dans "
+"lesquelles il est invité ; il peut créer un espace de travail et le "
+"partager ; il peut accéder à l'annuaire des utilisateurs de "
+"l'organisation."
+
+msgid "TEXT_USER_PROFILE_ADMIN_TOOLTIP"
+msgstr ""
+"Le profil <b>Administrateur</b> gère l'organisation. Les administrateurs "
+"peuvent ajouter ou retirer des utilisateurs de l'organisation. Un "
+"administrateur a également accès aux fonctionnalités d'un utilisateur "
+"standard."
+
+msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
+msgstr "Votre configuration actuelle n'autorise pas ce type de profil"
+
+msgid "TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"
+msgstr ""
+"Le profil <b>Utilisateur Externe</b> est invité à partager les données "
+"d'un espace de travail en mode <b>Lecteur</b> ou <b>Contributeur</b> mais"
+" ne peut pas créer d'espace de travail ni ne peut accéder à l'annuaire "
+"des utilisateurs de l'organisation"
+
+msgid "TEXT_ENROLLMENT_ACCEPT_CHECK_INFO_TITLE"
+msgstr "Accueillir le nouvel utilisateur"
+
+msgid "TEXT_ENROLLMENT_ERROR_WITH_CERTIFICATE"
+msgstr "Une erreur est survenue en essayant de charger cette requête."
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_IS_INVALID"
+msgstr "Certificate invalide"
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_IS_VALID"
+msgstr "Certificat valide"
+
+msgid "TEXT_ENROLLMENT_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "Le lien d'enrôlement a été copié dans le presse-papier."
+
+msgid "TEXT_ENROLLMENT_FAILED_TO_RETRIEVE_PENDING"
+msgstr "Impossible de récupérer les requêtes en attente."
+
+msgid "TEXT_ENROLLMENT_NO_PENDING_ENROLLMENT"
+msgstr "Aucune requête d'enrôlement en attente."
+
+msgid "TEXT_ENROLLMENT_ACCEPT_FAILURE"
+msgstr "Impossible d'accepter cette requête."
+
+msgid "TEXT_ENROLLMENT_ACCEPT_SUCCESS"
+msgstr "La requête d'enrôlement a été acceptée."
+
+msgid "TEXT_ENROLLMENT_REJECT_FAILURE"
+msgstr "Impossible de rejetter cette requête."
+
+msgid "TEXT_ENROLLMENT_REJECT_SUCCESS"
+msgstr "La requête d'enrôlement a été rejettée."
 
 msgid "TEXT_FILE_HISTORY_LIST_FAILURE"
 msgstr ""
@@ -598,6 +698,11 @@ msgstr ""
 "Certains fichiers n'ont pas été importés car vous ne disposez pas des "
 "permissions suffisantes."
 
+msgid "TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"
+msgstr ""
+"Un problème est survenu lors d'une écriture sur le disque. Il est peut-"
+"être déjà plein, veuillez vérifier l'espace disponible sur le disque."
+
 msgid "TEXT_FILE_IMPORT_ONE_ERROR"
 msgstr "Un problème est survenu lors de l'import du fichier."
 
@@ -605,11 +710,6 @@ msgid "TEXT_FILE_IMPORT_MULTIPLE_ERROR"
 msgstr ""
 "Un problème est survenu lors de l'import des fichiers. Certains fichiers "
 "n'ont peut-être pas été importés."
-
-msgid "TEXT_FILE_IMPORT_LOCAL_STORAGE_ERROR"
-msgstr ""
-"Un problème est survenu lors d'une écriture sur le disque. Il est peut-être déjà plein, "
-"veuillez vérifier l'espace disponible sur le disque."
 
 msgid "TEXT_FILE_CREATE_FOLDER_TITLE"
 msgstr "Créer un répertoire"
@@ -780,42 +880,6 @@ msgstr "Suite à une annulation de l'invité, il faut redémarrer le precessus"
 
 msgid "TEXT_GREET_USER_PEER_RESET"
 msgstr "Suite à une annulation de l'invité, il faut redémarrer le processus."
-
-msgid "TEXT_SELECT_USER_PROFILE"
-msgstr "Veuillez sélectionner le profil de l'utilisateur :"
-
-msgid "TEXT_USER_PROFILE_OUTSIDER"
-msgstr "Externe"
-
-msgid "TEXT_USER_PROFILE_STANDARD"
-msgstr "Standard"
-
-msgid "TEXT_USER_PROFILE_ADMIN"
-msgstr "Administrateur"
-
-msgid "TEXT_USER_PROFILE_STANDARD_TOOLTIP"
-msgstr ""
-"Le profil <b>Utilisateur Standard</b> accède aux espaces de travail dans "
-"lesquelles il est invité ; il peut créer un espace de travail et le "
-"partager ; il peut accéder à l'annuaire des utilisateurs de "
-"l'organisation."
-
-msgid "TEXT_USER_PROFILE_ADMIN_TOOLTIP"
-msgstr ""
-"Le profil <b>Administrateur</b> gère l'organisation. Les administrateurs "
-"peuvent ajouter ou retirer des utilisateurs de l'organisation. Un "
-"administrateur a également accès aux fonctionnalités d'un utilisateur "
-"standard."
-
-msgid "NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"
-msgstr "Votre configuration actuelle n'autorise pas ce type de profil"
-
-msgid "TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"
-msgstr ""
-"Le profil <b>Utilisateur Externe</b> est invité à partager les données "
-"d'un espace de travail en mode <b>Lecteur</b> ou <b>Contributeur</b> mais"
-" ne peut pas créer d'espace de travail ni ne peut accéder à l'annuaire "
-"des utilisateurs de l'organisation"
 
 msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
 msgstr "L'email n'est pas valide."
@@ -1703,6 +1767,61 @@ msgstr ""
 "\n"
 "</body></html>"
 
+msgid "TEXT_ENROLLMENT_RETRIEVING_STATUS"
+msgstr "..."
+
+msgid "TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE"
+msgstr "Erreur"
+
+msgid "TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE_TOOLTIP"
+msgstr "Impossible de récupérer le status de cette requête"
+
+msgid "TEXT_ENROLLMENT_STATUS_PENDING"
+msgstr "En attente"
+
+msgid "TEXT_ENROLLMENT_STATUS_PENDING_TOOLTIP"
+msgstr "En attente de validation par un administrateur."
+
+msgid "TEXT_ENROLLMENT_STATUS_OUTDATED"
+msgstr "Expirée"
+
+msgid "TEXT_ENROLLMENT_STATUS_OUTDATED_TOOLTIP"
+msgstr "Cette requête a déjà été utilisée."
+
+msgid "ACTION_ENROLLMENT_CLEAR"
+msgstr "Supprimer"
+
+msgid "TEXT_ENROLLMENT_STATUS_REJECTED"
+msgstr "Rejettée"
+
+msgid "TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"
+msgstr "L'administrateur a rejetté cette requête."
+
+msgid "TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED"
+msgstr "Échec de validation"
+
+msgid "TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED_TOOLTIP"
+msgstr ""
+"Impossible de valider cette invitation. Veuillez contacter "
+"l'administrateur."
+
+msgid "TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT"
+msgstr "Échec de validation"
+
+msgid "TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT_TOOLTIP"
+msgstr ""
+"Impossible de valider cette invitation. Veuillez faire une nouvelle "
+"requête et/ou contacter l'administrateur."
+
+msgid "TEXT_ENROLLMENT_STATUS_ACCEPTED"
+msgstr "Acceptée"
+
+msgid "TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"
+msgstr "L'administrateur a accepté cette requête d'enrôlement."
+
+msgid "ACTION_ENROLLMENT_FINALIZE"
+msgstr "Finaliser"
+
 msgid "TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user"
 msgstr ""
 "Content de vous revoir <b>{user}</b> ! Il vous sera demandé votre carte à"
@@ -1821,9 +1940,6 @@ msgstr ""
 "Nous vous conseillons de créer un appareil de récupération.<br />\n"
 "Souhaitez-vous en créer un maintenant ?"
 
-msgid "ACTION_NO"
-msgstr "Non"
-
 msgid "TEXT_JOIN_ORG_URL_TITLE"
 msgstr "Rejoindre une organisation"
 
@@ -1838,6 +1954,14 @@ msgstr "L'URL n'est pas valide."
 
 msgid "TEXT_INVALID_URL"
 msgstr "L'URL n'est pas valide."
+
+msgid "TEXT_PKI_ENROLLMENT_NOT_AVAILABLE"
+msgstr ""
+"L'enrôlement par Smartcard n'est pas disponible sur cette version de "
+"Parsec."
+
+msgid "TEXT_ENROLLMENT_QUERY_SUCCEEDED"
+msgstr "La requête a été soumise à l'administrateur."
 
 msgid "TEXT_CLAIM_USER_SUCCESSFUL_TITLE"
 msgstr "Vous avez rejoint une nouvelle organisation !"
@@ -1868,18 +1992,6 @@ msgstr "Oui"
 
 msgid "ACTION_ENABLE_TELEMETRY_REFUSE"
 msgstr "Non"
-
-msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"
-msgstr "Bienvenue dans Parsec !"
-
-msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_INSTRUCTIONS"
-msgstr "Vous semblez être un nouvel utilisateur. Que souhaitez vous faire ?"
-
-msgid "ACTION_NO_DEVICE_CREATE_ORGANIZATION"
-msgstr "Je souhaite créer une nouvelle organisation"
-
-msgid "ACTION_NO_DEVICE_JOIN_ORGANIZATION"
-msgstr "Je souhaite rejoindre une organisation existante"
 
 msgid "TEXT_TAB_TITLE_LOG_IN_SCREEN"
 msgstr "Connexion"
@@ -2522,6 +2634,30 @@ msgstr "Inviter un nouvel appareil"
 msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
 msgstr "Cet espace de travail est vide."
 
+msgid "TEXT_ENROLLMENT_CERTIFICATE_SUBJECT_NAME"
+msgstr "Nom"
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_ISSUER"
+msgstr "Émetteur"
+
+msgid "TEXT_ENROLLMENT_CERTIFICATE_SUBJECT_EMAIL"
+msgstr "Email"
+
+msgid "ACTION_ACCEPT_RECRUIT"
+msgstr "Accepter"
+
+msgid "ACTION_REJECT_RECRUIT"
+msgstr "Rejetter"
+
+msgid "ACTION_SELECT_CERTIFICATE"
+msgstr "Sélectionner un certificat"
+
+msgid "ACTION_ASK_TO_JOIN_ORG"
+msgstr "Demander à rejoindre l'organisation"
+
+msgid "ACTION_GET_ENROLLMENT_ADDR"
+msgstr "Récupérer le lien d'enrôlement"
+
 msgid "TEXT_ERROR_SHOW_DETAILS_TOOLTIP"
 msgstr "Voir les détails de l'erreur"
 
@@ -2877,3 +3013,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+

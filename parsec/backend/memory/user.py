@@ -1,12 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from parsec.backend.backend_events import BackendEvent
 import attr
 import pendulum
 from typing import Iterable, Tuple, List, Dict, Optional
 from collections import defaultdict
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import (
     BaseUserComponent,
     User,

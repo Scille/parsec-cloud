@@ -297,20 +297,20 @@ async def test_workspace_sharing_filter_users(
 
     assert _users_visible() == 3
 
-    aqtbot.key_clicks(share_w_w.line_edit_filter, "face")
-    assert _users_visible() == 3
+    await aqtbot.key_clicks(share_w_w.line_edit_filter, "face")
+    await aqtbot.wait_until(lambda: _users_visible() == 3)
     _reset_input()
 
-    aqtbot.key_clicks(share_w_w.line_edit_filter, "mca")
-    assert _users_visible() == 2
+    await aqtbot.key_clicks(share_w_w.line_edit_filter, "mca")
+    await aqtbot.wait_until(lambda: _users_visible() == 2)
     _reset_input()
 
-    aqtbot.key_clicks(share_w_w.line_edit_filter, "bob")
-    assert _users_visible() == 1
+    await aqtbot.key_clicks(share_w_w.line_edit_filter, "bob")
+    await aqtbot.wait_until(lambda: _users_visible() == 1)
     _reset_input()
 
-    aqtbot.key_clicks(share_w_w.line_edit_filter, "zoidberg")
-    assert _users_visible() == 0
+    await aqtbot.key_clicks(share_w_w.line_edit_filter, "zoidberg")
+    await aqtbot.wait_until(lambda: _users_visible() == 0)
     _reset_input()
 
 

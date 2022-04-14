@@ -190,7 +190,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         if self.create_job:
             self.create_job.cancel()
 
-    def _on_next_clicked(self):
+    async def _on_next_clicked(self):
         if isinstance(self.current_widget, CreateOrgUserInfoWidget):
             backend_addr = None
             org_id = None
@@ -233,6 +233,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 show_error(self, _("TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"), exception=exc)
                 return
 
+            # TODO: call `await _do_create_org` directly since the context is now async
             self.create_job = self.jobs_ctx.submit_job(
                 self.req_success,
                 self.req_error,
@@ -251,7 +252,9 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                         self.config.config_dir, self.new_device, self.current_widget.get_auth()
                     )
                 elif auth_method == DeviceFileType.SMARTCARD:
-                    save_device_with_smartcard_in_config(self.config.config_dir, self.new_device)
+                    await save_device_with_smartcard_in_config(
+                        self.config.config_dir, self.new_device
+                    )
                 self.status = (self.new_device, auth_method, self.current_widget.get_auth())
 
                 if self.dialog:

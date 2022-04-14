@@ -2,7 +2,7 @@
 
 use hex_literal::hex;
 use rstest::rstest;
-use std::collections::HashMap;
+use std::{collections::HashMap, num::NonZeroU64};
 
 use parsec_api_crypto::*;
 use parsec_api_types::*;
@@ -76,7 +76,7 @@ fn serde_file_manifest(alice: &Device) {
                     "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                 )),
                 offset: 0,
-                size: 512,
+                size: NonZeroU64::try_from(512).unwrap(),
                 digest: HashDigest::from(hex!(
                     "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560"
                 )),
@@ -87,7 +87,7 @@ fn serde_file_manifest(alice: &Device) {
                     "c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc"
                 )),
                 offset: 512,
-                size: 188,
+                size: NonZeroU64::try_from(188).unwrap(),
                 digest: HashDigest::from(hex!(
                     "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
                 )),

@@ -375,10 +375,17 @@ def event_bus(event_bus_factory):
 
 
 @pytest.fixture
-def tcp_stream_spy():
-    open_tcp_stream_mock_wrapper = OpenTCPStreamMockWrapper()
-    with patch("trio.open_tcp_stream", new=open_tcp_stream_mock_wrapper):
-        yield open_tcp_stream_mock_wrapper
+def tcp_stream_spy(request, monkeypatch):
+    if request.node.get_closest_marker("real_tcp"):
+        return None
+    else:
+        open_tcp_stream_mock_wrapper = OpenTCPStreamMockWrapper()
+        monkeypatch.setattr("trio.open_tcp_stream", open_tcp_stream_mock_wrapper)
+        monkeypatch.setattr(
+            "parsec.core.backend_connection.anonymous.http_request",
+            open_tcp_stream_mock_wrapper.http_request,
+        )
+        return open_tcp_stream_mock_wrapper
 
 
 @pytest.fixture(scope="session")
