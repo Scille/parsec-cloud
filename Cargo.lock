@@ -1118,8 +1118,10 @@ dependencies = [
  "futures",
  "http",
  "parsec_api_protocol",
+ "parsec_api_types",
  "rstest",
  "smol",
+ "tests_fixtures",
 ]
 
 [[package]]
