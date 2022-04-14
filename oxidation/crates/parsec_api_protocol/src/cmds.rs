@@ -1,15 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-// This macro implements dumps/loads methods for client/server side.
+// This macro implements dump/load methods for client/server side.
 // It checks if both Req and Rep are implemented for a specified command
 // It also provides a way to use commands by specifying status, command and type.
 // For example:
 // Server side
-// authenticated_cmds::AnyCmdReq::loads(..)
-// authenticated_cmds::block_create::Rep::Ok.dumps()
+// authenticated_cmds::AnyCmdReq::load(..)
+// authenticated_cmds::block_create::Rep::Ok.dump()
 // Client side
-// authenticated_cmds::block_create::Req { .. }.dumps()
-// authenticated_cmds::block_create::Rep::loads(..)
+// authenticated_cmds::block_create::Req { .. }.dump()
+// authenticated_cmds::block_create::Rep::load(..)
 macro_rules! cmds_bundle {
     ($cmds: ident, [$(($path: path, $module: ident, $cmd: ident $(, $rename: literal)? $(,)?),)*]) => {
 
@@ -26,7 +26,7 @@ macro_rules! cmds_bundle {
                     )*
                 }
 
-                crate::impl_dumps_loads!(AnyCmdReq);
+                crate::impl_dump_load!(AnyCmdReq);
 
                 $(
                     pub mod $module {
@@ -34,18 +34,18 @@ macro_rules! cmds_bundle {
                         use super::AnyCmdReq;
 
                         impl Req {
-                            pub fn dumps(self) -> Result<Vec<u8>, &'static str> {
+                            pub fn dump(self) -> Result<Vec<u8>, &'static str> {
                                 ::rmp_serde::to_vec_named(&AnyCmdReq::$cmd(self))
                                     .map_err(|_| "Serialization failed")
                             }
                         }
 
-                        crate::impl_dumps_loads_for_rep!(Rep);
+                        crate::impl_dump_load_for_rep!(Rep);
 
                         #[test]
                         fn test_unknown_error() {
                             let raw = b"foobar";
-                            let data = Rep::loads(raw);
+                            let data = Rep::load(raw);
 
                             match data {
                                 Rep::UnknownError { .. } => assert!(true),

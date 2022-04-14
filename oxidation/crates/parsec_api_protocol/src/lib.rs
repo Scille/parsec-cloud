@@ -2,7 +2,9 @@
 
 mod block;
 mod cmds;
+mod error;
 mod events;
+mod handshake;
 mod invite;
 mod message;
 mod organization;
@@ -13,7 +15,9 @@ mod vlob;
 
 use block::*;
 pub use cmds::*;
+pub use error::*;
 use events::*;
+pub use handshake::*;
 use invite::*;
 use message::*;
 use organization::*;
@@ -33,28 +37,28 @@ pub use realm::MaintenanceType;
 pub use user::{HumanFindResultItem, Trustchain};
 pub use vlob::ReencryptionBatchEntry;
 
-macro_rules! impl_dumps_loads {
+macro_rules! impl_dump_load {
     ($name:ident) => {
         impl $name {
-            pub fn dumps(&self) -> Result<Vec<u8>, &'static str> {
+            pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
                 ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
             }
 
-            pub fn loads(buf: &[u8]) -> Result<Self, &'static str> {
+            pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
                 ::rmp_serde::from_read_ref(buf).map_err(|_| "Deserialization failed")
             }
         }
     };
 }
 
-macro_rules! impl_dumps_loads_for_rep {
+macro_rules! impl_dump_load_for_rep {
     ($name:ident) => {
         impl $name {
-            pub fn dumps(&self) -> Result<Vec<u8>, &'static str> {
+            pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
                 ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
             }
 
-            pub fn loads(buf: &[u8]) -> Self {
+            pub fn load(buf: &[u8]) -> Self {
                 match ::rmp_serde::from_read_ref(buf) {
                     Ok(res) => res,
                     Err(e) => Self::UnknownError {
@@ -66,5 +70,5 @@ macro_rules! impl_dumps_loads_for_rep {
     };
 }
 
-pub(crate) use impl_dumps_loads;
-pub(crate) use impl_dumps_loads_for_rep;
+pub(crate) use impl_dump_load;
+pub(crate) use impl_dump_load_for_rep;

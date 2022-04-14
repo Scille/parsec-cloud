@@ -25,14 +25,14 @@ fn serde_user_get_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::UserGet(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -84,14 +84,14 @@ fn serde_user_get_req() {
 fn serde_user_get_rep(#[case] raw_expected: (&[u8], authenticated_cmds::user_get::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::user_get::Rep::loads(&raw);
+    let data = authenticated_cmds::user_get::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_get::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::user_get::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -121,14 +121,14 @@ fn serde_user_create_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::UserCreate(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -220,14 +220,14 @@ fn serde_user_create_req() {
 fn serde_user_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::user_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::user_create::Rep::loads(&raw);
+    let data = authenticated_cmds::user_create::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_create::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::user_create::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -249,14 +249,14 @@ fn serde_user_revoke_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::UserRevoke(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -331,14 +331,14 @@ fn serde_user_revoke_req() {
 fn serde_user_revoke_rep(#[case] raw_expected: (&[u8], authenticated_cmds::user_revoke::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::user_revoke::Rep::loads(&raw);
+    let data = authenticated_cmds::user_revoke::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_revoke::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::user_revoke::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -363,14 +363,14 @@ fn serde_device_create_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::DeviceCreate(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -447,14 +447,14 @@ fn serde_device_create_req() {
 fn serde_device_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::device_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::device_create::Rep::loads(&raw);
+    let data = authenticated_cmds::device_create::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::device_create::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::device_create::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -485,14 +485,14 @@ fn serde_human_find_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::HumanFind(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -548,14 +548,14 @@ fn serde_human_find_req() {
 fn serde_human_find_rep(#[case] raw_expected: (&[u8], authenticated_cmds::human_find::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::human_find::Rep::loads(&raw);
+    let data = authenticated_cmds::human_find::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::human_find::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::human_find::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
