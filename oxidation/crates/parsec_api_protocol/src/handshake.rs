@@ -67,6 +67,8 @@ pub enum Answer {
         client_api_version: ApiVersion,
         organization_id: OrganizationID,
         device_id: DeviceID,
+        // RustCrypto cache aditional points on the Edward curve so total size is around ~200bytes
+        // That's why VerifyKey is boxed to keep approximately the same size as InvitedAnswer
         rvk: Box<VerifyKey>,
         #[serde_as(as = "Bytes")]
         answer: Vec<u8>,
