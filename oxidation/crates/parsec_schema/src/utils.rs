@@ -8,6 +8,7 @@ use syn::{Attribute, Field, Fields, GenericArgument, Ident, PathArguments, Type,
 
 use crate::parser;
 
+// Extract the type recursively
 fn extract_ty(ty: &Type) -> String {
     match ty {
         Type::Path(p) => {
@@ -53,7 +54,8 @@ fn extract_ty(ty: &Type) -> String {
     }
 }
 
-fn extract_serde_as(ty: &Type) -> String {
+// Extract the type recursively by changing all unit type except u8 by _
+fn _extract_serde_as(ty: &Type) -> String {
     match ty {
         Type::Path(p) => {
             let ty = p.path.segments.last().unwrap_or_else(|| unreachable!());
@@ -104,6 +106,13 @@ fn extract_serde_as(ty: &Type) -> String {
     }
 }
 
+// Extract a type for serde_as proc macro
+fn extract_serde_as(ty: &Type) -> String {
+    _extract_serde_as(ty)
+        .replace("Vec<u8>", "::serde_with::Bytes")
+        .replace("u8", "_")
+}
+
 pub(crate) fn extract_extra_specs(ident: &Ident) -> TokenStream {
     let ident = ident.to_string();
     let ident_len = ident.len() - 3;
@@ -149,8 +158,8 @@ pub(crate) fn quote_fields(fields: Iter<Field>) -> (TokenStream, TokenStream) {
             .as_ref()
             .map(|ident| ident.to_string())
             .unwrap_or(format!("{i}"));
+        let serde_as = extract_serde_as(&field.ty);
 
-        let serde_as = extract_serde_as(&field.ty).replace("Vec<u8>", "::serde_with::Bytes");
         _fields = quote! {
             #_fields
             #[serde_as(as = #serde_as)]
@@ -211,6 +220,7 @@ pub(crate) fn quote_variants(variants: IntoIter<Variant>) -> (TokenStream, Token
 
 pub(crate) fn quote_attrs(attrs: Vec<Attribute>) -> (TokenStream, HashMap<String, String>) {
     let mut _attrs = quote! {};
+    // We can inspect serde proc macro #[serde(key0 = value0, key1 = value1, ...)]
     let mut serde_attrs = HashMap::new();
 
     for attr in attrs {
