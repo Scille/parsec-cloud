@@ -391,20 +391,6 @@ async def test_create_organization_bootstrap_only_custom_server(
 
     await aqtbot.wait_until(_user_widget_ready)
 
-    def _custom_bckend_addr_widget_is_valid():
-        aqtbot.key_clicks(
-            co_w.current_widget.line_edit_backend_addr, "parsec://example.com:9999?no_ssl=true "
-        )
-        assert co_w.current_widget.line_edit_backend_addr.is_input_valid()
-        assert co_w.button_validate.isEnabled()
-        aqtbot.key_clicks(
-            co_w.current_widget.line_edit_backend_addr, " parsec://example.com:9999?no_ssl=true"
-        )
-        assert co_w.current_widget.line_edit_backend_addr.is_input_valid()
-        assert co_w.button_validate.isEnabled()
-
-    await aqtbot.wait_until(_custom_bckend_addr_widget_is_valid)
-
     aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
     def _device_widget_ready():
@@ -495,7 +481,6 @@ async def test_create_organization_already_bootstrapped(
     await aqtbot.wait_until(_modal_shown)
 
 
-@pytest.mark.skip("No previous button in the new process")
 @pytest.mark.gui
 @pytest.mark.trio
 @customize_fixtures(backend_spontaneous_organization_boostrap=True)
@@ -521,12 +506,32 @@ async def test_create_organization_custom_backend(
     aqtbot.key_clicks(co_w.current_widget.line_edit_user_email, "gordon.freeman@blackmesa.com")
     aqtbot.key_clicks(co_w.current_widget.line_edit_org_name, "AnomalousMaterials")
     aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
-    aqtbot.mouse_click(co_w.user_widget.check_accept_contract, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(co_w.current_widget.radio_use_custom, QtCore.Qt.LeftButton)
 
-    def _user_widget_button_validate_ready():
-        assert co_w.button_validate.isEnabled()
+    def _user_widget_button_validate_ready(state):
+        assert co_w.current_widget._are_inputs_valid() is state
+        assert co_w.button_validate.isEnabled() is state
 
-    await aqtbot.wait_until(_user_widget_button_validate_ready)
+    # Space at the end, should be fine
+    aqtbot.key_clicks(
+        co_w.current_widget.line_edit_backend_addr, running_backend.addr.to_url() + " " * 3
+    )
+    assert co_w.current_widget.line_edit_backend_addr.is_input_valid()
+    await aqtbot.wait_until(lambda: _user_widget_button_validate_ready(True))
+
+    # Empty, should not be valid
+    co_w.current_widget.line_edit_backend_addr.setText("")
+    assert co_w.current_widget.line_edit_backend_addr.text() == ""
+    assert not co_w.current_widget.line_edit_backend_addr.is_input_valid()
+    await aqtbot.wait_until(lambda: _user_widget_button_validate_ready(False))
+
+    # Spaces at the beginning, should be fine
+    aqtbot.key_clicks(
+        co_w.current_widget.line_edit_backend_addr, " " * 10 + running_backend.addr.to_url()
+    )
+    assert co_w.current_widget.line_edit_backend_addr.is_input_valid()
+    await aqtbot.wait_until(lambda: _user_widget_button_validate_ready(True))
+
     aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
     def _device_widget_ready():
@@ -546,36 +551,6 @@ async def test_create_organization_custom_backend(
 
     await aqtbot.wait_until(_device_widget_button_validate_ready)
 
-    aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
-
-    # Should fail because it will use an invalid backend addr
-    def _error_modal_shown():
-        assert autoclose_dialog.dialogs == [("Error", "Cannot connect to the server.")]
-
-    await aqtbot.wait_until(_error_modal_shown)
-
-    autoclose_dialog.reset()
-
-    # Let's go back and provide a custom address
-    aqtbot.mouse_click(co_w.button_previous, QtCore.Qt.LeftButton)
-
-    def _user_widget_ready_again():
-        assert co_w.user_widget.isVisible()
-        assert not co_w.device_widget.isVisible()
-        assert not co_w.button_previous.isVisible()
-        assert co_w.button_validate.isEnabled()
-
-    await aqtbot.wait_until(_user_widget_ready_again)
-
-    # Clicking the radio doesn't do anything, so we cheat
-    co_w.user_widget.radio_use_custom.setChecked(True)
-
-    aqtbot.key_clicks(co_w.user_widget.line_edit_backend_addr, running_backend.addr.to_url())
-    await aqtbot.wait_until(_user_widget_button_validate_ready)
-
-    # First click to get to the device page
-    aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
-    # Second click to create the org
     aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
     def _modal_shown():
@@ -719,3 +694,41 @@ async def test_create_organization_with_boostrap_token(
                 ]
 
             await aqtbot.wait_until(_modal_shown)
+
+
+@pytest.fixture
+def catch_text_input_widget(widget_catcher_factory):
+    return widget_catcher_factory("parsec.core.gui.custom_dialogs.TextInputWidget")
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_join_org_addr_input(
+    gui, aqtbot, running_backend, autoclose_dialog, catch_text_input_widget
+):
+    # The org bootstrap window is usually opened using a sub-menu.
+    # Sub-menus can be a bit challenging to open in tests so we cheat
+    # using the keyboard shortcut Ctrl+O that has the same effect.
+    aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
+
+    ti_w = await catch_text_input_widget()
+
+    assert ti_w
+
+    def _check_button_state(expected_state):
+        assert ti_w.button_ok.isEnabled() is expected_state
+
+    aqtbot.key_clicks(ti_w.line_edit_text, "invalid backend addr")
+    assert not ti_w.line_edit_text.is_input_valid()
+    await aqtbot.wait_until(lambda: _check_button_state(False))
+
+    ti_w.line_edit_text.setText("")
+    assert not ti_w.line_edit_text.is_input_valid()
+    await aqtbot.wait_until(lambda: _check_button_state(False))
+
+    aqtbot.key_clicks(
+        ti_w.line_edit_text,
+        "   parsec://example.com/org?action=claim_user&token=3a50b191122b480ebb113b10216ef343   ",
+    )
+    assert ti_w.line_edit_text.is_input_valid()
+    await aqtbot.wait_until(lambda: _check_button_state(True))
