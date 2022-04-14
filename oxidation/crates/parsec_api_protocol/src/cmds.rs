@@ -22,19 +22,11 @@ macro_rules! cmds_bundle {
                 pub enum AnyCmdReq {
                     $(
                         $(#[serde(rename = $rename)])?
-                        $cmd(crate::[<$cmd Req>]),
+                        $cmd($path::[<$cmd Req>]),
                     )*
                 }
 
-                impl AnyCmdReq {
-                    pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
-                        ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
-                    }
-
-                    pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
-                        ::rmp_serde::from_read_ref(buf).map_err(|_| "Deserialization failed")
-                    }
-                }
+                crate::impl_dump_load!(AnyCmdReq);
 
                 $(
                     pub mod $module {
@@ -83,7 +75,7 @@ macro_rules! cmds_bundle {
 cmds_bundle!(
     authenticated_cmds,
     [
-        (crate::ping, ping, AuthenticatedPing, "ping"),
+        (crate::ping::authenticated, ping, Ping),
         // Block
         (crate::block, block_create, BlockCreate),
         (crate::block, block_read, BlockRead),
@@ -184,7 +176,7 @@ cmds_bundle!(
 cmds_bundle!(
     invited_cmds,
     [
-        (crate::ping, ping, InvitedPing, "ping"),
+        (crate::ping::invited, ping, Ping),
         (crate::invite, invite_info, InviteInfo),
         (
             crate::invite,

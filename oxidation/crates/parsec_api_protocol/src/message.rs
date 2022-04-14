@@ -4,12 +4,13 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
 use parsec_api_types::{DateTime, DeviceID};
+use parsec_schema::parsec_schema;
 
 /*
  * MessageGetReq
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct MessageGetReq {
     pub offset: u64,
 }
@@ -32,7 +33,7 @@ pub struct Message {
  * MessageGetRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum MessageGetRep {
     Ok { messages: Vec<Message> },

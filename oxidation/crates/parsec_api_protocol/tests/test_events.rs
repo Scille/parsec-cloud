@@ -248,3 +248,69 @@ fn serde_events_subscribe_rep() {
 
     assert_eq!(data2, expected);
 }
+
+#[rstest]
+fn specs_events_listen_req() {
+    assert_eq!(
+        authenticated_cmds::events_listen::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "events_listen",
+                },
+                "wait": {
+                    "type": "bool",
+                },
+            },
+        })
+    )
+}
+
+#[rstest]
+fn specs_events_listen_rep() {
+    assert_eq!(
+        authenticated_cmds::events_listen::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "0": {
+                    "type": "APIEvent",
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok",
+                },
+            },
+        })
+    )
+}
+
+#[rstest]
+fn specs_events_subscribe_req() {
+    assert_eq!(
+        authenticated_cmds::events_subscribe::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "events_subscribe",
+                },
+            },
+        })
+    )
+}
+
+#[rstest]
+fn specs_events_subscribe_rep() {
+    assert_eq!(
+        authenticated_cmds::events_subscribe::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok",
+                },
+            },
+        })
+    )
+}

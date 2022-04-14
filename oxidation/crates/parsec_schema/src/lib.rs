@@ -8,7 +8,7 @@ use quote::quote;
 use syn::{parse_macro_input, Fields};
 
 use parser::Schema;
-use utils::{quote_attrs, quote_fields, quote_variants};
+use utils::{extract_extra_specs, quote_attrs, quote_fields, quote_variants};
 
 #[proc_macro_attribute]
 pub fn parsec_schema(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -16,34 +16,60 @@ pub fn parsec_schema(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     TokenStream::from(match input {
         Schema::Struct(schema) => {
-            let attrs = quote_attrs(&schema.attrs);
+            let (_attrs, _) = quote_attrs(schema.attrs);
             let ident = schema.ident;
-            let fields = quote_fields(schema.fields.iter());
+            let (_fields, _specs) = quote_fields(schema.fields.iter());
 
             let _struct = match schema.fields {
                 Fields::Unit => quote! {pub struct #ident;},
-                Fields::Unnamed(_) => quote! {pub struct #ident (#fields)},
-                Fields::Named(_) => quote! {pub struct #ident {#fields}},
+                Fields::Unnamed(_) => quote! {pub struct #ident (#_fields)},
+                Fields::Named(_) => quote! {pub struct #ident {#_fields}},
             };
+
+            let _extra_specs = extract_extra_specs(&ident);
 
             quote! {
                 #[::serde_with::serde_as]
-                #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-                #attrs
+                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+                #_attrs
                 #_struct
+
+                impl #ident {
+                    pub fn specs() -> ::serde_json::Value {
+                        ::serde_json::json!({
+                            "fields": {
+                                #_specs
+                                #_extra_specs
+                            }
+                        })
+                    }
+                }
             }
         }
         Schema::Enum(schema) => {
-            let attrs = quote_attrs(&schema.attrs);
+            let (_attrs, _) = quote_attrs(schema.attrs);
             let ident = schema.ident;
-            let variants = quote_variants(schema.variants.iter());
+            let (_variants, _specs) = quote_variants(schema.variants.into_iter());
+
+            let _extra_specs = extract_extra_specs(&ident);
 
             quote! {
                 #[::serde_with::serde_as]
-                #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-                #attrs
+                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+                #_attrs
                 pub enum #ident {
-                    #variants
+                    #_variants
+                }
+
+                impl #ident {
+                    pub fn specs() -> ::serde_json::Value {
+                        ::serde_json::json!({
+                            "fields": {
+                                #_specs
+                                #_extra_specs
+                            }
+                        })
+                    }
                 }
             }
         }

@@ -1,17 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, Bytes};
 use std::collections::HashMap;
 
-use parsec_api_types::{maybe_field, DateTime, DeviceID, RealmID, VlobID};
+use parsec_api_types::{DateTime, DeviceID, RealmID, VlobID};
+use parsec_schema::parsec_schema;
 
 /*
  * VlobCreateReq
  */
 
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct VlobCreateReq {
     pub realm_id: RealmID,
     pub encryption_revision: u64,
@@ -23,7 +21,6 @@ pub struct VlobCreateReq {
     // for the message will receive the declared timestamp to check against
     // the actual timestamp within the message.
     pub timestamp: DateTime,
-    #[serde_as(as = "Bytes")]
     pub blob: Vec<u8>,
 }
 
@@ -31,28 +28,22 @@ pub struct VlobCreateReq {
  * VlobCreateRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum VlobCreateRep {
     Ok,
-    AlreadyExists {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
+    AlreadyExists { reason: Option<String> },
     NotAllowed,
     BadEncryptionRevision,
     InMaintenance,
-    UnknownError {
-        error: String,
-    },
+    UnknownError { error: String },
 }
 
 /*
  * VlobReadReq
  */
 
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct VlobReadReq {
     pub encryption_revision: u64,
     pub vlob_id: VlobID,
@@ -64,23 +55,19 @@ pub struct VlobReadReq {
  * VlobReadRep
  */
 
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum VlobReadRep {
     Ok {
         version: u64,
-        #[serde_as(as = "Bytes")]
         blob: Vec<u8>,
         author: DeviceID,
         timestamp: DateTime,
         // This field is used by the client to figure out if its role certificate cache is up-to-date enough
         // to be able to perform the proper integrity checks on the manifest timestamp.
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         author_last_role_granted_on: Option<DateTime>,
     },
     NotFound {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
     },
     NotAllowed,
@@ -96,14 +83,12 @@ pub enum VlobReadRep {
  * VlobUpdateReq
  */
 
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct VlobUpdateReq {
     pub encryption_revision: u64,
     pub vlob_id: VlobID,
     pub timestamp: DateTime,
     pub version: u64,
-    #[serde_as(as = "Bytes")]
     pub blob: Vec<u8>,
 }
 
@@ -111,28 +96,23 @@ pub struct VlobUpdateReq {
  * VlobUpdateRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum VlobUpdateRep {
     Ok,
-    NotFound {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
+    NotFound { reason: Option<String> },
     NotAllowed,
     BadVersion,
     BadEncryptionRevision,
     InMaintenance,
-    UnknownError {
-        error: String,
-    },
+    UnknownError { error: String },
 }
 
 /*
  * VlobPollChangesReq
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct VlobPollChangesReq {
     pub realm_id: RealmID,
     pub last_checkpoint: u64,
@@ -142,7 +122,7 @@ pub struct VlobPollChangesReq {
  * VlobPollChangesRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum VlobPollChangesRep {
     Ok {
@@ -151,7 +131,6 @@ pub enum VlobPollChangesRep {
     },
     NotAllowed,
     NotFound {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
     },
     InMaintenance,
@@ -164,7 +143,7 @@ pub enum VlobPollChangesRep {
  * VlobListVersionsReq
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct VlobListVersionsReq {
     pub vlob_id: VlobID,
 }
@@ -173,7 +152,7 @@ pub struct VlobListVersionsReq {
  * VlobListVersionsRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum VlobListVersionsRep {
     Ok {
@@ -181,7 +160,6 @@ pub enum VlobListVersionsRep {
     },
     NotAllowed,
     NotFound {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
     },
     InMaintenance,
@@ -194,7 +172,7 @@ pub enum VlobListVersionsRep {
  * VlobMaintenanceGetReencryptionBatchReq
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct VlobMaintenanceGetReencryptionBatchReq {
     pub realm_id: RealmID,
     pub encryption_revision: u64,
@@ -205,12 +183,10 @@ pub struct VlobMaintenanceGetReencryptionBatchReq {
  * ReencryptionBatchEntry
  */
 
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct ReencryptionBatchEntry {
     pub vlob_id: VlobID,
     pub version: u64,
-    #[serde_as(as = "Bytes")]
     pub blob: Vec<u8>,
 }
 
@@ -218,36 +194,23 @@ pub struct ReencryptionBatchEntry {
  * VlobMaintenanceGetReencryptionBatchRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum VlobMaintenanceGetReencryptionBatchRep {
-    Ok {
-        batch: Vec<ReencryptionBatchEntry>,
-    },
+    Ok { batch: Vec<ReencryptionBatchEntry> },
     NotAllowed,
-    NotFound {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    NotInMaintenance {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
+    NotFound { reason: Option<String> },
+    NotInMaintenance { reason: Option<String> },
     BadEncryptionRevision,
-    MaintenanceError {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    UnknownError {
-        error: String,
-    },
+    MaintenanceError { reason: Option<String> },
+    UnknownError { error: String },
 }
 
 /*
  * VlobMaintenanceSaveReencryptionBatchReq
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct VlobMaintenanceSaveReencryptionBatchReq {
     pub realm_id: RealmID,
     pub encryption_revision: u64,
@@ -258,28 +221,14 @@ pub struct VlobMaintenanceSaveReencryptionBatchReq {
  * VlobMaintenanceSaveReencryptionBatchRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum VlobMaintenanceSaveReencryptionBatchRep {
-    Ok {
-        total: u64,
-        done: u64,
-    },
+    Ok { total: u64, done: u64 },
     NotAllowed,
-    NotFound {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    NotInMaintenance {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
+    NotFound { reason: Option<String> },
+    NotInMaintenance { reason: Option<String> },
     BadEncryptionRevision,
-    MaintenanceError {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    UnknownError {
-        error: String,
-    },
+    MaintenanceError { reason: Option<String> },
+    UnknownError { error: String },
 }

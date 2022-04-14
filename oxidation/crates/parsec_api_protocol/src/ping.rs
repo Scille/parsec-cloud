@@ -1,35 +1,49 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use serde::{Deserialize, Serialize};
+pub mod authenticated {
+    use parsec_schema::parsec_schema;
 
-/*
- * PingReq
- */
+    /*
+     * PingReq
+     */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct AuthenticatedPingReq {
-    pub ping: String,
+    #[parsec_schema]
+    pub struct PingReq {
+        pub ping: String,
+    }
+
+    /*
+     * PingRep
+     */
+
+    #[parsec_schema]
+    #[serde(tag = "status", rename_all = "snake_case")]
+    pub enum PingRep {
+        Ok { pong: String },
+        UnknownError { error: String },
+    }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct InvitedPingReq {
-    pub ping: String,
-}
+pub mod invited {
+    use parsec_schema::parsec_schema;
 
-/*
- * PingRep
- */
+    /*
+     * PingReq
+     */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "status", rename_all = "snake_case")]
-pub enum AuthenticatedPingRep {
-    Ok { pong: String },
-    UnknownError { error: String },
-}
+    #[parsec_schema]
+    pub struct PingReq {
+        pub ping: String,
+    }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "status", rename_all = "snake_case")]
-pub enum InvitedPingRep {
-    Ok { pong: String },
-    UnknownError { error: String },
+    /*
+     * PingRep
+     */
+
+    #[parsec_schema]
+    #[serde(tag = "status", rename_all = "snake_case")]
+    pub enum PingRep {
+        Ok { pong: String },
+        UnknownError { error: String },
+    }
 }

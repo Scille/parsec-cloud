@@ -11,7 +11,7 @@ use crate::InvitationStatus;
  * APIEvent
  */
 
-#[parsec_schema]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "event")]
 pub enum APIEvent {
     #[serde(rename = "pinged")]

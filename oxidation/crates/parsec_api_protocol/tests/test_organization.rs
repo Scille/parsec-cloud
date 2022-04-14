@@ -171,3 +171,87 @@ fn serde_organization_config_rep(
 
     assert_eq!(data2, expected);
 }
+
+#[rstest]
+fn specs_organization_stats_req() {
+    assert_eq!(
+        authenticated_cmds::organization_stats::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "organization_stats"
+                },
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_organization_stats_rep() {
+    assert_eq!(
+        authenticated_cmds::organization_stats::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "active_users": {
+                    "type": "u64"
+                },
+                "data_size": {
+                    "type": "u64"
+                },
+                "metadata_size": {
+                    "type": "u64"
+                },
+                "realms": {
+                    "type": "u64"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+                "users": {
+                    "type": "u64"
+                },
+                "users_per_profile_detail": {
+                    "type": "Vec<UsersPerProfileDetailItem>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_organization_config_req() {
+    assert_eq!(
+        authenticated_cmds::organization_config::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "organization_config"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_organization_config_rep() {
+    assert_eq!(
+        authenticated_cmds::organization_config::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "active_users_limit": {
+                    "type": "Option<u64>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+                "user_profile_outsider_allowed": {
+                    "type": "bool"
+                }
+            }
+        })
+    )
+}

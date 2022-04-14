@@ -8,6 +8,7 @@ use parsec_api_types::{DateTime, InvitationToken, OrganizationID};
 use rstest::rstest;
 
 use parsec_api_protocol::*;
+use parsec_api_types::InvitationType;
 
 use tests_fixtures::{alice, bob, Device};
 

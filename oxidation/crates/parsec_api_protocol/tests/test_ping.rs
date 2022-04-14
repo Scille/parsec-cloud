@@ -17,7 +17,7 @@ fn serde_authenticated_ping_req() {
         ping: "ping".to_owned(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::AuthenticatedPing(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::Ping(req.clone());
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -67,7 +67,7 @@ fn serde_invited_ping_req() {
         ping: "ping".to_owned(),
     };
 
-    let expected = invited_cmds::AnyCmdReq::InvitedPing(req.clone());
+    let expected = invited_cmds::AnyCmdReq::Ping(req.clone());
 
     let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -103,4 +103,68 @@ fn serde_invited_ping_rep() {
     let data2 = invited_cmds::ping::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
+}
+
+#[rstest]
+fn specs_ping_req() {
+    assert_eq!(
+        authenticated_cmds::ping::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "ping"
+                },
+                "ping": {
+                    "type": "String"
+                }
+            }
+        })
+    );
+    assert_eq!(
+        invited_cmds::ping::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "ping"
+                },
+                "ping": {
+                    "type": "String"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_ping_rep() {
+    assert_eq!(
+        authenticated_cmds::ping::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "pong": {
+                    "type": "String"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    );
+    assert_eq!(
+        invited_cmds::ping::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "pong": {
+                    "type": "String"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
 }

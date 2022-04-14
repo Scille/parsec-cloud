@@ -19,7 +19,8 @@ parsec_schema = { version = "0.0.0", path = "../parsec_schema" }
 paste = "1.0.5"
 rand = "0.8.5"
 rmp-serde = "1.0.0"
-serde = {version = "1.0.127", features = ["derive"]}
+serde = { version = "1.0.127", features = ["derive"] }
+serde_json = "1.0.59"
 serde_with = "1.11.0"
 thiserror = "1.0.30"
 

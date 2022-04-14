@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use parsec_api_protocol::InviteInfoUserOrDeviceRep;
+use parsec_api_protocol::InviteInfoUserOrDevice;
 use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyType};
@@ -336,13 +336,11 @@ impl InviteInfoRep {
     ) -> PyResult<Self> {
         let greeter_user_id = greeter_user_id.0;
         let greeter_human_handle = greeter_human_handle.0;
-        Ok(Self(invite_info::Rep::Ok(
-            InviteInfoUserOrDeviceRep::User {
-                claimer_email,
-                greeter_user_id,
-                greeter_human_handle,
-            },
-        )))
+        Ok(Self(invite_info::Rep::Ok(InviteInfoUserOrDevice::User {
+            claimer_email,
+            greeter_user_id,
+            greeter_human_handle,
+        })))
     }
 
     #[classmethod]
@@ -354,12 +352,10 @@ impl InviteInfoRep {
     ) -> PyResult<Self> {
         let greeter_user_id = greeter_user_id.0;
         let greeter_human_handle = greeter_human_handle.0;
-        Ok(Self(invite_info::Rep::Ok(
-            InviteInfoUserOrDeviceRep::Device {
-                greeter_user_id,
-                greeter_human_handle,
-            },
-        )))
+        Ok(Self(invite_info::Rep::Ok(InviteInfoUserOrDevice::Device {
+            greeter_user_id,
+            greeter_human_handle,
+        })))
     }
 
     fn __repr__(&self) -> PyResult<String> {

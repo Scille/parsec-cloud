@@ -2,7 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 
-use parsec_api_types::{maybe_field, DeviceID, DeviceLabel, OrganizationID, UserProfile};
+use parsec_api_types::{DeviceID, DeviceLabel, OrganizationID, UserProfile};
+use parsec_schema::parsec_schema;
 
 /*
  * OrganizationBootstrapWebhook
@@ -32,14 +33,14 @@ pub struct UsersPerProfileDetailItem {
  * OrganizationStatsReq
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct OrganizationStatsReq;
 
 /*
  * OrganizationStatsRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum OrganizationStatsRep {
     Ok {
@@ -51,7 +52,6 @@ pub enum OrganizationStatsRep {
         users_per_profile_detail: Vec<UsersPerProfileDetailItem>,
     },
     NotAllowed {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
     },
     NotFound,
@@ -64,14 +64,14 @@ pub enum OrganizationStatsRep {
  * OrganizationConfigReq
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct OrganizationConfigReq;
 
 /*
  * OrganizationConfigRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum OrganizationConfigRep {
     Ok {
