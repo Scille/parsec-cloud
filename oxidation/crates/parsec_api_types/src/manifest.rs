@@ -41,10 +41,8 @@ macro_rules! impl_manifest_dump_load {
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
             ) -> Result<Self, DataError> {
-                let signed = key
-                    .decrypt(encrypted)?;
-                let compressed = author_verify_key
-                    .verify(&signed)?;
+                let signed = key.decrypt(encrypted)?;
+                let compressed = author_verify_key.verify(&signed)?;
                 let mut serialized = vec![];
 
                 ZlibDecoder::new(&compressed[..])

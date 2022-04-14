@@ -4,7 +4,7 @@ use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyTuple};
 
-use crate::binding_utils::{kwargs_extract_required, py_to_rs_datetime};
+use crate::binding_utils::py_to_rs_datetime;
 use crate::certif::{DeviceCertificate, RevokedUserCertificate, UserCertificate};
 use crate::crypto::VerifyKey;
 use crate::ids::{DeviceID, UserID};
@@ -100,7 +100,7 @@ impl TrustchainContext {
 
     fn load_user_and_devices<'py>(
         &mut self,
-        trustchain: &PyDict,
+        trustchain: Option<&PyDict>,
         user_certif: Vec<u8>,
         revoked_user_certif: Option<Vec<u8>>,
         devices_certifs: Vec<Vec<u8>>,
@@ -111,10 +111,17 @@ impl TrustchainContext {
         Option<RevokedUserCertificate>,
         &'py PyTuple,
     )> {
+        crate::binding_utils::parse_kwargs!(
+            trustchain,
+            [users: Vec<Vec<u8>>, "users"],
+            [devices: Vec<Vec<u8>>, "devices"],
+            [revoked_users: Vec<Vec<u8>>, "revoked_users"]
+        );
+
         let trustchain = parsec_api_protocol::Trustchain {
-            users: kwargs_extract_required(trustchain, "users")?,
-            devices: kwargs_extract_required(trustchain, "devices")?,
-            revoked_users: kwargs_extract_required(trustchain, "revoked_users")?,
+            users,
+            devices,
+            revoked_users,
         };
 
         let (user, revoked_user, devices) = self
