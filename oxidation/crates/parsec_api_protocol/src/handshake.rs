@@ -162,7 +162,8 @@ impl ServerHandshakeStalled {
             ballpark_client_late_offset: Some(BALLPARK_CLIENT_LATE_OFFSET),
             backend_timestamp: Some(timestamp),
         }
-        .dumps()?;
+        .dumps()
+        .map_err(|err| HandshakeError::InvalidMessage(err.into()))?;
 
         Ok(ServerHandshakeChallenge {
             supported_api_version: self.supported_api_version,
@@ -199,7 +200,9 @@ pub struct ServerHandshakeChallenge {
 
 impl ServerHandshakeChallenge {
     pub fn process_answer_req(self, req: &[u8]) -> Result<ServerHandshakeAnswer, HandshakeError> {
-        if let Handshake::Answer(data) = Handshake::loads(req)? {
+        if let Handshake::Answer(data) =
+            Handshake::loads(req).map_err(|err| HandshakeError::InvalidMessage(err.into()))?
+        {
             let client_api_version = match *data {
                 Answer::Authenticated {
                     client_api_version, ..
@@ -239,7 +242,8 @@ impl ServerHandshakeChallenge {
                 result: HandshakeResult::BadProtocol,
                 help,
             }
-            .dumps()?,
+            .dumps()
+            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
 }
@@ -273,7 +277,9 @@ impl ServerHandshakeAnswer {
                         let answer = verify_key
                             .verify(&answer)
                             .map_err(|_| HandshakeError::FailedChallenge)?;
-                        SignedAnswer::loads(&answer)?.answer
+                        SignedAnswer::loads(&answer)
+                            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?
+                            .answer
                     } else {
                         verify_key
                             .verify(&answer)
@@ -300,7 +306,8 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::Ok,
                 help: None,
             }
-            .dumps()?,
+            .dumps()
+            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
 
@@ -319,7 +326,8 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::BadProtocol,
                 help,
             }
-            .dumps()?,
+            .dumps()
+            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
 
@@ -338,7 +346,8 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::BadAdminToken,
                 help,
             }
-            .dumps()?,
+            .dumps()
+            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
 
@@ -357,7 +366,8 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::BadIdentity,
                 help,
             }
-            .dumps()?,
+            .dumps()
+            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
 
@@ -376,7 +386,8 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::OrganizationExpired,
                 help,
             }
-            .dumps()?,
+            .dumps()
+            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
 
@@ -397,7 +408,8 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::RvkMismatch,
                 help,
             }
-            .dumps()?,
+            .dumps()
+            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
 
@@ -416,7 +428,8 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::RevokedDevice,
                 help,
             }
-            .dumps()?,
+            .dumps()
+            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
 }
@@ -467,7 +480,8 @@ fn load_challenge_req(
     ),
     HandshakeError,
 > {
-    let challenge_data = Handshake::loads(req)?;
+    let challenge_data =
+        Handshake::loads(req).map_err(|err| HandshakeError::InvalidMessage(err.into()))?;
 
     if let Handshake::Challenge {
         challenge,
@@ -522,7 +536,9 @@ fn load_challenge_req(
 }
 
 fn process_result_req(req: &[u8]) -> Result<(), HandshakeError> {
-    if let Handshake::Result { result, help } = Handshake::loads(req)? {
+    if let Handshake::Result { result, help } =
+        Handshake::loads(req).map_err(|err| HandshakeError::InvalidMessage(err.into()))?
+    {
         match result {
             HandshakeResult::BadIdentity => Err(HandshakeError::BadIdentity),
             HandshakeResult::OrganizationExpired => Err(HandshakeError::OrganizationExpired),
@@ -574,8 +590,11 @@ impl AuthenticatedClientHandshakeStalled {
         // TO-DO remove the else for the next release
         let answer = if backend_api_version >= Self::VERSION {
             // TO-DO Need to use "BaseSignedData" ?
-            self.user_signkey
-                .sign(&SignedAnswer { answer: challenge }.dumps()?)
+            self.user_signkey.sign(
+                &SignedAnswer { answer: challenge }
+                    .dumps()
+                    .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
+            )
         } else {
             self.user_signkey.sign(&challenge)
         };
@@ -591,7 +610,8 @@ impl AuthenticatedClientHandshakeStalled {
                 rvk: Box::new(self.root_verify_key),
                 answer,
             }))
-            .dumps()?,
+            .dumps()
+            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         });
     }
 
@@ -651,7 +671,8 @@ impl InvitedClientHandshakeStalled {
                 invitation_type: self.invitation_type,
                 token: self.token,
             }))
-            .dumps()?,
+            .dumps()
+            .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         });
     }
 
