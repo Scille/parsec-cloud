@@ -99,7 +99,7 @@ fn test_good_authenticated_handshake_client(alice: &Device) {
         alice.device_id.clone(),
         alice.signing_key.clone(),
         alice.root_verify_key().clone(),
-        DateTime::from_f64_with_us_precision(1647884434.47775),
+        "2022-03-21T17:40:34.477750Z".parse().unwrap(),
     );
 
     ch.process_challenge_req(&challenge_req).unwrap();
@@ -283,7 +283,7 @@ fn test_good_invited_handshake_client(#[case] input: (&[u8], InvitationType, Inv
         organization_id,
         invitation_type,
         token,
-        DateTime::from_f64_with_us_precision(1647885016.474222),
+        "2022-03-21T17:50:16.474222Z".parse().unwrap(),
     );
 
     ch.process_challenge_req(&challenge_req).unwrap();
