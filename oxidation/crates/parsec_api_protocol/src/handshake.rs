@@ -7,7 +7,7 @@ use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
-use crate::{impl_dumps_loads, ChallengeDataReport, HandshakeError, InvitationType};
+use crate::{impl_dump_load, ChallengeDataReport, HandshakeError, InvitationType};
 use parsec_api_types::{maybe_field, DateTime, DeviceID, InvitationToken, OrganizationID};
 
 pub const HANDSHAKE_CHALLENGE_SIZE: usize = 48;
@@ -80,7 +80,7 @@ pub enum Answer {
     },
 }
 
-impl_dumps_loads!(Answer);
+impl_dump_load!(Answer);
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -90,7 +90,7 @@ pub struct SignedAnswer {
     pub answer: [u8; HANDSHAKE_CHALLENGE_SIZE],
 }
 
-impl_dumps_loads!(SignedAnswer);
+impl_dump_load!(SignedAnswer);
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
@@ -124,7 +124,7 @@ pub enum Handshake {
         #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         backend_timestamp: Option<DateTime>,
     },
-    Answer(Box<Answer>),
+    Answer(Answer),
     #[serde(rename = "answer")]
     SignedAnswer(SignedAnswer),
     Result {
@@ -134,7 +134,7 @@ pub enum Handshake {
     },
 }
 
-impl_dumps_loads!(Handshake);
+impl_dump_load!(Handshake);
 
 #[derive(Debug)]
 pub struct ServerHandshakeStalled {
@@ -162,7 +162,7 @@ impl ServerHandshakeStalled {
             ballpark_client_late_offset: Some(BALLPARK_CLIENT_LATE_OFFSET),
             backend_timestamp: Some(timestamp),
         }
-        .dumps()
+        .dump()
         .map_err(|err| HandshakeError::InvalidMessage(err.into()))?;
 
         Ok(ServerHandshakeChallenge {
@@ -201,9 +201,9 @@ pub struct ServerHandshakeChallenge {
 impl ServerHandshakeChallenge {
     pub fn process_answer_req(self, req: &[u8]) -> Result<ServerHandshakeAnswer, HandshakeError> {
         if let Handshake::Answer(data) =
-            Handshake::loads(req).map_err(|err| HandshakeError::InvalidMessage(err.into()))?
+            Handshake::load(req).map_err(|err| HandshakeError::InvalidMessage(err.into()))?
         {
-            let client_api_version = match *data {
+            let client_api_version = match data {
                 Answer::Authenticated {
                     client_api_version, ..
                 } => client_api_version,
@@ -215,7 +215,7 @@ impl ServerHandshakeChallenge {
                 return Ok(ServerHandshakeAnswer {
                     client_api_version,
                     challenge: self.challenge,
-                    data: *data,
+                    data,
                 });
             } else {
                 return Err(HandshakeError::APIVersion {
@@ -242,7 +242,7 @@ impl ServerHandshakeChallenge {
                 result: HandshakeResult::BadProtocol,
                 help,
             }
-            .dumps()
+            .dump()
             .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
@@ -277,7 +277,7 @@ impl ServerHandshakeAnswer {
                         let answer = verify_key
                             .verify(&answer)
                             .map_err(|_| HandshakeError::FailedChallenge)?;
-                        SignedAnswer::loads(&answer)
+                        SignedAnswer::load(&answer)
                             .map_err(|err| HandshakeError::InvalidMessage(err.into()))?
                             .answer
                     } else {
@@ -306,7 +306,7 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::Ok,
                 help: None,
             }
-            .dumps()
+            .dump()
             .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
@@ -326,7 +326,7 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::BadProtocol,
                 help,
             }
-            .dumps()
+            .dump()
             .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
@@ -346,7 +346,7 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::BadAdminToken,
                 help,
             }
-            .dumps()
+            .dump()
             .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
@@ -366,7 +366,7 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::BadIdentity,
                 help,
             }
-            .dumps()
+            .dump()
             .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
@@ -386,7 +386,7 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::OrganizationExpired,
                 help,
             }
-            .dumps()
+            .dump()
             .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
@@ -408,7 +408,7 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::RvkMismatch,
                 help,
             }
-            .dumps()
+            .dump()
             .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
@@ -428,7 +428,7 @@ impl ServerHandshakeAnswer {
                 result: HandshakeResult::RevokedDevice,
                 help,
             }
-            .dumps()
+            .dump()
             .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         })
     }
@@ -481,7 +481,7 @@ fn load_challenge_req(
     HandshakeError,
 > {
     let challenge_data =
-        Handshake::loads(req).map_err(|err| HandshakeError::InvalidMessage(err.into()))?;
+        Handshake::load(req).map_err(|err| HandshakeError::InvalidMessage(err.into()))?;
 
     if let Handshake::Challenge {
         challenge,
@@ -537,7 +537,7 @@ fn load_challenge_req(
 
 fn process_result_req(req: &[u8]) -> Result<(), HandshakeError> {
     if let Handshake::Result { result, help } =
-        Handshake::loads(req).map_err(|err| HandshakeError::InvalidMessage(err.into()))?
+        Handshake::load(req).map_err(|err| HandshakeError::InvalidMessage(err.into()))?
     {
         match result {
             HandshakeResult::BadIdentity => Err(HandshakeError::BadIdentity),
@@ -566,6 +566,7 @@ impl AuthenticatedClientHandshakeStalled {
         device_id: DeviceID,
         user_signkey: SigningKey,
         root_verify_key: VerifyKey,
+        client_timestamp: DateTime,
     ) -> Self {
         let mut supported_api_versions = vec![API_V2_VERSION, API_V1_VERSION];
         supported_api_versions.sort();
@@ -576,7 +577,7 @@ impl AuthenticatedClientHandshakeStalled {
             user_signkey,
             root_verify_key,
             supported_api_versions,
-            client_timestamp: DateTime::now(),
+            client_timestamp,
         }
     }
 
@@ -592,7 +593,7 @@ impl AuthenticatedClientHandshakeStalled {
             // TO-DO Need to use "BaseSignedData" ?
             self.user_signkey.sign(
                 &SignedAnswer { answer: challenge }
-                    .dumps()
+                    .dump()
                     .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
             )
         } else {
@@ -603,14 +604,14 @@ impl AuthenticatedClientHandshakeStalled {
             backend_api_version,
             client_api_version,
             supported_api_versions,
-            raw: Handshake::Answer(Box::new(Answer::Authenticated {
+            raw: Handshake::Answer(Answer::Authenticated {
                 client_api_version,
                 organization_id: self.organization_id,
                 device_id: self.device_id,
                 rvk: Box::new(self.root_verify_key),
                 answer,
-            }))
-            .dumps()
+            })
+            .dump()
             .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         });
     }
@@ -642,6 +643,7 @@ impl InvitedClientHandshakeStalled {
         organization_id: OrganizationID,
         invitation_type: InvitationType,
         token: InvitationToken,
+        client_timestamp: DateTime,
     ) -> Self {
         let mut supported_api_versions = vec![API_V2_VERSION, API_V1_VERSION];
         supported_api_versions.sort();
@@ -651,7 +653,7 @@ impl InvitedClientHandshakeStalled {
             invitation_type,
             token,
             supported_api_versions,
-            client_timestamp: DateTime::now(),
+            client_timestamp,
         }
     }
 
@@ -665,13 +667,13 @@ impl InvitedClientHandshakeStalled {
         return Ok(InvitedClientHandshakeChallenge {
             backend_api_version,
             client_api_version,
-            raw: Handshake::Answer(Box::new(Answer::Invited {
+            raw: Handshake::Answer(Answer::Invited {
                 client_api_version,
                 organization_id: self.organization_id,
                 invitation_type: self.invitation_type,
                 token: self.token,
-            }))
-            .dumps()
+            })
+            .dump()
             .map_err(|err| HandshakeError::InvalidMessage(err.into()))?,
         });
     }

@@ -94,15 +94,13 @@ fn test_good_authenticated_handshake_client(alice: &Device) {
         "737570706f727465645f6170695f76657273696f6e7392920205920103"
     );
 
-    let mut ch = AuthenticatedClientHandshakeStalled::new(
+    let ch = AuthenticatedClientHandshakeStalled::new(
         alice.organization_id().clone(),
         alice.device_id.clone(),
         alice.signing_key.clone(),
         alice.root_verify_key().clone(),
+        DateTime::from_f64_with_us_precision(1647884434.47775),
     );
-
-    // Fix ballpark failure
-    ch.client_timestamp = DateTime::from_f64_with_us_precision(1647884434.47775);
 
     ch.process_challenge_req(&challenge_req).unwrap();
 }
@@ -118,6 +116,7 @@ fn test_good_authenticated_handshake(alice: &Device) {
         alice.device_id.clone(),
         alice.signing_key.clone(),
         alice.root_verify_key().clone(),
+        DateTime::now(),
     )
     .process_challenge_req(&sh.raw)
     .unwrap();
@@ -280,10 +279,12 @@ fn test_good_invited_handshake_client(#[case] input: (&[u8], InvitationType, Inv
     let organization_id = OrganizationID::from_str("Org").unwrap();
     let (challenge_req, invitation_type, token) = input;
 
-    let mut ch = InvitedClientHandshakeStalled::new(organization_id, invitation_type, token);
-
-    // Fix ballpark failure
-    ch.client_timestamp = DateTime::from_f64_with_us_precision(1647885016.474222);
+    let ch = InvitedClientHandshakeStalled::new(
+        organization_id,
+        invitation_type,
+        token,
+        DateTime::from_f64_with_us_precision(1647885016.474222),
+    );
 
     ch.process_challenge_req(&challenge_req).unwrap();
 }
@@ -303,6 +304,7 @@ fn test_good_invited_handshake(#[case] _invitation_type: InvitationType) {
         _organization_id.clone(),
         _invitation_type.clone(),
         _token.clone(),
+        DateTime::now(),
     )
     .process_challenge_req(&sh.raw)
     .unwrap();
@@ -381,6 +383,7 @@ fn test_process_challenge_req_bad_format(alice: &Device, #[case] req: Value) {
         alice.device_id.clone(),
         alice.signing_key.clone(),
         alice.root_verify_key().clone(),
+        DateTime::now(),
     )
     .process_challenge_req(&req)
     .unwrap_err();
@@ -415,7 +418,7 @@ fn test_process_challenge_req_good_api_version(
         ballpark_client_early_offset: Some(BALLPARK_CLIENT_EARLY_OFFSET),
         ballpark_client_late_offset: Some(BALLPARK_CLIENT_LATE_OFFSET),
     }
-    .dumps()
+    .dump()
     .unwrap();
 
     let mut ch = AuthenticatedClientHandshakeStalled::new(
@@ -423,6 +426,7 @@ fn test_process_challenge_req_good_api_version(
         alice.device_id.clone(),
         alice.signing_key.clone(),
         alice.root_verify_key().clone(),
+        DateTime::now(),
     );
 
     ch.supported_api_versions = vec![client_version];
@@ -553,7 +557,7 @@ fn test_process_challenge_req_good_multiple_api_version(
         ballpark_client_early_offset: Some(BALLPARK_CLIENT_EARLY_OFFSET),
         ballpark_client_late_offset: Some(BALLPARK_CLIENT_LATE_OFFSET),
     }
-    .dumps()
+    .dump()
     .unwrap();
 
     let mut ch = AuthenticatedClientHandshakeStalled::new(
@@ -561,6 +565,7 @@ fn test_process_challenge_req_good_multiple_api_version(
         alice.device_id.clone(),
         alice.signing_key.clone(),
         alice.root_verify_key().clone(),
+        DateTime::now(),
     );
 
     ch.supported_api_versions = _client_versions.clone();
@@ -699,7 +704,7 @@ fn test_build_result_req_bad_key(alice: &Device, bob: &Device) {
         .build_challenge_req(DateTime::now())
         .unwrap();
 
-    let answer = Handshake::Answer(Box::new(Answer::Authenticated {
+    let answer = Handshake::Answer(Answer::Authenticated {
         client_api_version: API_V2_VERSION,
         organization_id: alice.organization_id().clone(),
         device_id: alice.device_id.clone(),
@@ -708,13 +713,13 @@ fn test_build_result_req_bad_key(alice: &Device, bob: &Device) {
             &SignedAnswer {
                 answer: sh.challenge,
             }
-            .dumps()
+            .dump()
             .unwrap(),
         ),
-    }));
+    });
 
     let err = sh
-        .process_answer_req(&answer.dumps().unwrap())
+        .process_answer_req(&answer.dump().unwrap())
         .unwrap()
         .build_result_req(Some(bob.verify_key()))
         .unwrap_err();
@@ -735,18 +740,18 @@ fn test_build_result_req_bad_challenge(alice: &Device) {
     challenge[0] = 0;
     challenge[1] = 0;
 
-    let answer = Handshake::Answer(Box::new(Answer::Authenticated {
+    let answer = Handshake::Answer(Answer::Authenticated {
         client_api_version: API_V2_VERSION,
         organization_id: alice.organization_id().clone(),
         device_id: alice.device_id.clone(),
         rvk: Box::new(alice.root_verify_key().clone()),
         answer: alice
             .signing_key
-            .sign(&SignedAnswer { answer: challenge }.dumps().unwrap()),
-    }));
+            .sign(&SignedAnswer { answer: challenge }.dump().unwrap()),
+    });
 
     let err = sh
-        .process_answer_req(&answer.dumps().unwrap())
+        .process_answer_req(&answer.dump().unwrap())
         .unwrap()
         .build_result_req(Some(alice.verify_key()))
         .unwrap_err();
@@ -798,7 +803,7 @@ fn test_build_bad_outcomes(
         .build_challenge_req(DateTime::now())
         .unwrap();
 
-    let answer = Handshake::Answer(Box::new(Answer::Authenticated {
+    let answer = Handshake::Answer(Answer::Authenticated {
         client_api_version: API_V2_VERSION,
         organization_id: alice.organization_id().clone(),
         device_id: alice.device_id.clone(),
@@ -807,13 +812,13 @@ fn test_build_bad_outcomes(
             &SignedAnswer {
                 answer: sh.challenge,
             }
-            .dumps()
+            .dump()
             .unwrap(),
         ),
-    }));
-    let sh = sh.process_answer_req(&answer.dumps().unwrap()).unwrap();
+    });
+    let sh = sh.process_answer_req(&answer.dump().unwrap()).unwrap();
     let (sh, expected) = generate_method_and_expected(sh);
-    if let Handshake::Result { result, .. } = Handshake::loads(&sh.raw).unwrap() {
+    if let Handshake::Result { result, .. } = Handshake::load(&sh.raw).unwrap() {
         assert_eq!(result, expected);
     } else {
         assert!(false);
@@ -834,6 +839,7 @@ fn test_process_result_req_bad_format(#[case] req: Value) {
         OrganizationID::default(),
         InvitationType::User,
         InvitationToken::default(),
+        DateTime::now(),
     )
     .process_result_req(&req)
     .unwrap_err();
@@ -863,6 +869,7 @@ fn test_process_result_req_bad_outcome(#[case] result_expected: (&str, Handshake
         OrganizationID::default(),
         InvitationType::User,
         InvitationToken::default(),
+        DateTime::now(),
     )
     .process_result_req(&req)
     .unwrap_err();
