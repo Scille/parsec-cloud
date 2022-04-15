@@ -1,0 +1,16 @@
+{
+    "Foo": {
+        "fields": {
+            "bar0": {
+                "type": "String"
+            },
+            "bar1": {
+                "type": "Vec<u8>"
+            },
+            "bar2": {
+                "type": "HashMap<u8, Vec<u8>>"
+            }
+        }
+    }
+}
+

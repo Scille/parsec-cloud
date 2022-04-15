@@ -900,6 +900,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "58893f751c9b0412871a09abd62ecd2a00298c6c83befa223ef98c52aef40cbe"
 
 [[package]]
+name = "poc"
+version = "0.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_with",
+ "syn",
+]
+
+[[package]]
 name = "poly1305"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
