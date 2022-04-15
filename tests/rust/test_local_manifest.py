@@ -308,12 +308,15 @@ def test_local_folder_manifest():
         assert py.need_sync == rs.need_sync
         assert py.updated == rs.updated
         assert len(py.children) == len(rs.children)
+
         assert all(
             isinstance(name1, EntryName)
             and isinstance(id1, EntryID)
             and name1 == name2
             and id1 == id2
-            for ((name1, id1), (name2, id2)) in zip(py.children.items(), rs.children.items())
+            for ((name1, id1), (name2, id2)) in zip(
+                sorted(py.children.items()), sorted(rs.children.items())
+            )
         )
         assert len(py.local_confinement_points) == len(rs.local_confinement_points)
         assert all(
