@@ -189,6 +189,17 @@ class CmdSerializer:
         self._req_serializer = serializer_factory(req_schema_cls)
         self._rep_serializer = serializer_factory(RepWithErrorSchema)
 
+        # WTF is this `_maybe_untype_wrapper` mess ???
+        # Command handling in the backend is divided between
+        # `BackendApp._handle_client_websocket_loop` that is responsible to dispatch
+        # the cmd and the `api_...` functions for actually doing the commands.
+        # Currently the two communicate by representing req/rep as dict, we want
+        # to replace that by typed objects but this involve all lot of change.
+        # Hence this workaround that allow to have an `api_...` function working
+        # with typed req/rep while the rest of the application still use the legacy
+        # dict interface.
+        # Of course once all the `api_...` functions migrated, this hack must be removed ;-)
+
         def _maybe_untype_wrapper(  # type: ignore[no-untyped-def]
             fn
         ):
