@@ -250,10 +250,10 @@ class CmdSerializer:
         )
 
 
-class CmdReqMeta(type):
-    BASE_SCHEMA_CLS = BaseTypedReqSchema
+class CmdMeta(type):
     CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-    DISCRIMINANT_FIELD = "cmd"
+    BASE_SCHEMA_CLS: type
+    DISCRIMINANT_FIELD: str
 
     def __new__(  # type: ignore[no-untyped-def, misc]
         cls, name: str, bases: Tuple[type, ...], nmspc: Dict[str, Any]
@@ -298,7 +298,12 @@ class CmdReqMeta(type):
         return raw_cls
 
 
-class CmdRepMeta(CmdReqMeta):
+class CmdReqMeta(CmdMeta):
+    BASE_SCHEMA_CLS = BaseTypedReqSchema
+    DISCRIMINANT_FIELD = "cmd"
+
+
+class CmdRepMeta(CmdMeta):
     BASE_SCHEMA_CLS = BaseTypedRepSchema
     DISCRIMINANT_FIELD = "status"
 
