@@ -284,11 +284,6 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             lw = item.widget()
             lw.reset()
 
-    def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.button_login.isEnabled():
-            self.try_login()
-        event.accept()
-
     async def list_devices_and_enrollments(self):
         pendings = await PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(
             config_dir=self.config.config_dir
