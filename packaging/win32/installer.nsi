@@ -6,12 +6,14 @@
 !addplugindir nsis_plugins
 !addincludedir nsis_plugins
 !include "WordFunc.nsh"
+!include "x64.nsh"
 
 # Script version; displayed when running the installer
 !define INSTALLER_SCRIPT_VERSION "1.0"
 
 # Program information
 !define PROGRAM_NAME "Parsec"
+!define PROGRAM_FULLNAME "Parsec Cloud"
 !define PROGRAM_WEB_SITE "http://parsec.cloud"
 !define APPGUID "6C37F945-7EFC-480A-A444-A6D44A3D107F"
 !define OBSOLETE_MOUNTPOINT "$PROFILE\Parsec"
@@ -203,6 +205,22 @@ Function .onInit
 
     done:
 
+    ; Set the proper installation directory
+    ; https://stackoverflow.com/a/29127653/2846140
+    ${If} ${RunningX64}
+      ${If} ${PROGRAM_PLATFORM} == "win64"
+        StrCpy $InstDir "$PROGRAMFILES64\${PROGRAM_FULLNAME}"
+      ${Else}
+        StrCpy $InstDir "$PROGRAMFILES32\${PROGRAM_FULLNAME}"
+      ${Endif}
+    ${Else}
+      ${If} ${PROGRAM_PLATFORM} == "win64"
+        Quit
+      ${Else}
+        StrCpy $InstDir "$PROGRAMFILES\${PROGRAM_FULLNAME}"
+      ${Endif}
+    ${EndIf}
+
 FunctionEnd
 
 Function un.onUninstSuccess
@@ -266,7 +284,7 @@ FunctionEnd
 BrandingText "${PROGRAM_NAME} Windows Installer v${INSTALLER_SCRIPT_VERSION}"
 Name "${PROGRAM_NAME} ${PROGRAM_VERSION}"
 OutFile "${BUILD_DIR}\${INSTALLER_FILENAME}"
-InstallDir "$PROGRAMFILES\Parsec Cloud"
+InstallDir "$PROGRAMFILES\${PROGRAM_FULLNAME}"
 
 # No need for such details
 ShowInstDetails hide
