@@ -239,7 +239,7 @@ impl BlockAccess {
             key: key.0,
             offset,
             size: NonZeroU64::try_from(size)
-                .map_err(|_| PyValueError::new_err("Invalid size field"))?,
+                .map_err(|_| PyValueError::new_err("Invalid `size` field"))?,
             digest: digest.0,
         }))
     }
@@ -270,8 +270,8 @@ impl BlockAccess {
             r.offset = v;
         }
         if let Some(v) = size {
-            r.size =
-                NonZeroU64::try_from(v).map_err(|_| PyValueError::new_err("Invalid size field"))?;
+            r.size = NonZeroU64::try_from(v)
+                .map_err(|_| PyValueError::new_err("Invalid `size` field"))?;
         }
         if let Some(v) = digest {
             r.digest = v.0;
@@ -360,7 +360,7 @@ impl FileManifest {
             updated,
             size,
             blocksize: parsec_api_types::Blocksize::try_from(blocksize)
-                .map_err(|_| PyValueError::new_err("iNVALID BLOCKSIZE"))?,
+                .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?,
             blocks: blocks.into_iter().map(|b| b.0).collect(),
         }))
     }
@@ -447,7 +447,7 @@ impl FileManifest {
         }
         if let Some(v) = blocksize {
             r.blocksize = parsec_api_types::Blocksize::try_from(v)
-                .map_err(|_| PyValueError::new_err("iNVALID BLOCKSIZE"))?;
+                .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?;
         }
         if let Some(v) = blocks {
             r.blocks = v.into_iter().map(|b| b.0).collect();
