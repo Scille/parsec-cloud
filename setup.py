@@ -311,7 +311,7 @@ setup(
     author="Scille SAS",
     author_email="contact@scille.fr",
     url="https://github.com/Scille/parsec-cloud",
-    python_requires="~=3.7",
+    python_requires="~=3.8",
     packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
     install_requires=requirements,
