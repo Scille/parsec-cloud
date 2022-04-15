@@ -5,12 +5,12 @@ use pyo3::exceptions::PyValueError;
 use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyBytes, PyDict, PyTuple, PyType};
+use std::collections::HashMap;
 use std::num::NonZeroU64;
 
+use crate::binding_utils::py_to_rs_realm_role;
 use crate::binding_utils::{
-    hash_generic, kwargs_extract_optional, kwargs_extract_optional_custom, kwargs_extract_required,
-    kwargs_extract_required_custom, py_to_rs_datetime, py_to_rs_realm_role, rs_to_py_datetime,
-    rs_to_py_realm_role,
+    hash_generic, py_to_rs_datetime, rs_to_py_datetime, rs_to_py_realm_role,
 };
 use crate::crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 use crate::ids::{BlockID, DeviceID, EntryID};
@@ -83,23 +83,16 @@ impl WorkspaceEntry {
     #[new]
     #[args(py_kwargs = "**")]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
-
-        let id = kwargs_extract_required::<EntryID>(args, "id")?;
-        let name = kwargs_extract_required::<EntryName>(args, "name")?;
-        let key = kwargs_extract_required::<SecretKey>(args, "key")?;
-        let encryption_revision = kwargs_extract_required::<u32>(args, "encryption_revision")?;
-        let encrypted_on =
-            kwargs_extract_required_custom(args, "encrypted_on", &py_to_rs_datetime)?;
-        let role_cached_on =
-            kwargs_extract_required_custom(args, "role_cached_on", &py_to_rs_datetime)?;
-        let realm_role = kwargs_extract_required_custom(args, "role", &|item| {
-            if item.is_none() {
-                Ok(None)
-            } else {
-                py_to_rs_realm_role(item).map(Some)
-            }
-        })?;
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [id: EntryID, "id"],
+            [name: EntryName, "name"],
+            [key: SecretKey, "key"],
+            [encryption_revision: u32, "encryption_revision"],
+            [encrypted_on, "encrypted_on", py_to_rs_datetime],
+            [role_cached_on, "role_cached_on", py_to_rs_datetime],
+            [role, "role", py_to_rs_realm_role],
+        );
 
         Ok(Self(parsec_api_types::WorkspaceEntry {
             id: id.0,
@@ -108,7 +101,7 @@ impl WorkspaceEntry {
             encryption_revision,
             encrypted_on,
             role_cached_on,
-            role: realm_role,
+            role,
         }))
     }
 
@@ -118,37 +111,38 @@ impl WorkspaceEntry {
 
     #[args(py_kwargs = "**")]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [id: EntryID, "id"],
+            [name: EntryName, "name"],
+            [key: SecretKey, "key"],
+            [encryption_revision: u32, "encryption_revision"],
+            [encrypted_on, "encrypted_on", py_to_rs_datetime],
+            [role_cached_on, "role_cached_on", py_to_rs_datetime],
+            [role, "role", py_to_rs_realm_role],
+        );
 
         let mut r = self.0.clone();
 
-        if let Some(v) = kwargs_extract_optional::<EntryID>(args, "id")? {
+        if let Some(v) = id {
             r.id = v.0;
         }
-        if let Some(v) = kwargs_extract_optional::<EntryName>(args, "name")? {
+        if let Some(v) = name {
             r.name = v.0;
         }
-        if let Some(v) = kwargs_extract_optional::<SecretKey>(args, "key")? {
+        if let Some(v) = key {
             r.key = v.0;
         }
-        if let Some(v) = kwargs_extract_optional(args, "encryption_revision")? {
+        if let Some(v) = encryption_revision {
             r.encryption_revision = v;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "encrypted_on", &py_to_rs_datetime)? {
+        if let Some(v) = encrypted_on {
             r.encrypted_on = v;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "role_cached_on", &py_to_rs_datetime)?
-        {
+        if let Some(v) = role_cached_on {
             r.role_cached_on = v;
         }
-        let maybe_role = kwargs_extract_optional_custom(args, "role", &|item| {
-            if item.is_none() {
-                Ok(None)
-            } else {
-                py_to_rs_realm_role(item).map(Some)
-            }
-        })?;
-        if let Some(v) = maybe_role {
+        if let Some(v) = role {
             r.role = v;
         }
 
@@ -231,13 +225,14 @@ impl BlockAccess {
     #[new]
     #[args(py_kwargs = "**")]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
-
-        let id = kwargs_extract_required::<BlockID>(args, "id")?;
-        let key = kwargs_extract_required::<SecretKey>(args, "key")?;
-        let offset = kwargs_extract_required::<u64>(args, "offset")?;
-        let size = kwargs_extract_required::<u64>(args, "size")?;
-        let digest = kwargs_extract_required::<HashDigest>(args, "digest")?;
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [id: BlockID, "id"],
+            [key: SecretKey, "key"],
+            [offset: u64, "offset"],
+            [size: u64, "size"],
+            [digest: HashDigest, "digest"],
+        );
 
         Ok(Self(parsec_api_types::BlockAccess {
             id: id.0,
@@ -255,24 +250,30 @@ impl BlockAccess {
 
     #[args(py_kwargs = "**")]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
-
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [id: BlockID, "id"],
+            [key: SecretKey, "key"],
+            [offset: u64, "offset"],
+            [size: u64, "size"],
+            [digest: HashDigest, "digest"],
+        );
         let mut r = self.0.clone();
 
-        if let Some(v) = kwargs_extract_optional::<BlockID>(args, "id")? {
+        if let Some(v) = id {
             r.id = v.0;
         }
-        if let Some(v) = kwargs_extract_optional::<SecretKey>(args, "key")? {
+        if let Some(v) = key {
             r.key = v.0;
         }
-        if let Some(v) = kwargs_extract_optional::<u64>(args, "offset")? {
+        if let Some(v) = offset {
             r.offset = v;
         }
-        if let Some(v) = kwargs_extract_optional::<u64>(args, "size")? {
+        if let Some(v) = size {
             r.size =
-                NonZeroU64::try_from(v).map_err(|_| PyValueError::new_err("Invalid size field"))?
+                NonZeroU64::try_from(v).map_err(|_| PyValueError::new_err("Invalid size field"))?;
         }
-        if let Some(v) = kwargs_extract_optional::<HashDigest>(args, "digest")? {
+        if let Some(v) = digest {
             r.digest = v.0;
         }
 
@@ -335,30 +336,19 @@ impl FileManifest {
     #[new]
     #[args(py_kwargs = "**")]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
-
-        let author = kwargs_extract_required::<DeviceID>(args, "author")?;
-        let timestamp = kwargs_extract_required_custom(args, "timestamp", &py_to_rs_datetime)?;
-        let id = kwargs_extract_required::<EntryID>(args, "id")?;
-        let parent = kwargs_extract_required::<EntryID>(args, "parent")?;
-        let version = kwargs_extract_required::<u32>(args, "version")?;
-        let created = kwargs_extract_required_custom(args, "created", &py_to_rs_datetime)?;
-        let updated = kwargs_extract_required_custom(args, "updated", &py_to_rs_datetime)?;
-        let size = kwargs_extract_required::<u64>(args, "size")?;
-        let blocksize = kwargs_extract_required_custom(args, "blocksize", &|item| {
-            let raw = item.extract::<u64>()?;
-            parsec_api_types::Blocksize::try_from(raw)
-                .map_err(|_| PyValueError::new_err("Invalid blocksize"))
-        })?;
-        let blocks = kwargs_extract_required_custom(args, "blocks", &|item| {
-            let pyblocks = item.downcast::<PyTuple>()?;
-            let mut rsblocks = Vec::with_capacity(pyblocks.len());
-            for pyblock in pyblocks {
-                let rsblock = pyblock.extract::<BlockAccess>()?;
-                rsblocks.push(rsblock.0);
-            }
-            Ok(rsblocks)
-        })?;
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [parent: EntryID, "parent"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [size: u64, "size"],
+            [blocksize: u64, "blocksize"],
+            [blocks: Vec<BlockAccess>, "blocks"],
+        );
 
         Ok(Self(parsec_api_types::FileManifest {
             author: author.0,
@@ -369,8 +359,9 @@ impl FileManifest {
             created,
             updated,
             size,
-            blocksize,
-            blocks,
+            blocksize: parsec_api_types::Blocksize::try_from(blocksize)
+                .map_err(|_| PyValueError::new_err("iNVALID BLOCKSIZE"))?,
+            blocks: blocks.into_iter().map(|b| b.0).collect(),
         }))
     }
 
@@ -414,53 +405,52 @@ impl FileManifest {
 
     #[args(py_kwargs = "**")]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [parent: EntryID, "parent"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [size: u64, "size"],
+            [blocksize: u64, "blocksize"],
+            [blocks: Vec<BlockAccess>, "blocks"],
+        );
 
         let mut r = self.0.clone();
 
-        if let Some(v) = kwargs_extract_optional::<DeviceID>(args, "author")? {
+        if let Some(v) = author {
             r.author = v.0;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "timestamp", &py_to_rs_datetime)? {
+        if let Some(v) = timestamp {
             r.timestamp = v;
         }
-        if let Some(v) = kwargs_extract_optional::<EntryID>(args, "id")? {
+        if let Some(v) = id {
             r.id = v.0;
         }
-        if let Some(v) = kwargs_extract_optional::<EntryID>(args, "parent")? {
+        if let Some(v) = parent {
             r.parent = v.0;
         }
-        if let Some(v) = kwargs_extract_optional::<u32>(args, "version")? {
+        if let Some(v) = version {
             r.version = v;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "created", &py_to_rs_datetime)? {
+        if let Some(v) = created {
             r.created = v;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "updated", &py_to_rs_datetime)? {
+        if let Some(v) = updated {
             r.updated = v;
         }
-        if let Some(v) = kwargs_extract_optional::<u64>(args, "size")? {
+        if let Some(v) = size {
             r.size = v;
         }
-        let maybe_blocksize = kwargs_extract_optional_custom(args, "blocksize", &|item| {
-            let raw = item.extract::<u64>()?;
-            parsec_api_types::Blocksize::try_from(raw)
-                .map_err(|_| PyValueError::new_err("Invalid blocksize"))
-        })?;
-        if let Some(v) = maybe_blocksize {
-            r.blocksize = v;
+        if let Some(v) = blocksize {
+            r.blocksize = parsec_api_types::Blocksize::try_from(v)
+                .map_err(|_| PyValueError::new_err("iNVALID BLOCKSIZE"))?;
         }
-        let maybe_blocks = kwargs_extract_optional_custom(args, "blocks", &|item| {
-            let pyblocks = item.downcast::<PyTuple>()?;
-            let mut rsblocks = Vec::with_capacity(pyblocks.len());
-            for pyblock in pyblocks {
-                let rsblock = pyblock.extract::<BlockAccess>()?;
-                rsblocks.push(rsblock.0);
-            }
-            Ok(rsblocks)
-        })?;
-        if let Some(v) = maybe_blocks {
-            r.blocks = v;
+        if let Some(v) = blocks {
+            r.blocks = v.into_iter().map(|b| b.0).collect();
         }
 
         Ok(Self(r))
@@ -553,25 +543,17 @@ impl FolderManifest {
     #[new]
     #[args(py_kwargs = "**")]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
-
-        let author = kwargs_extract_required::<DeviceID>(args, "author")?;
-        let timestamp = kwargs_extract_required_custom(args, "timestamp", &py_to_rs_datetime)?;
-        let id = kwargs_extract_required::<EntryID>(args, "id")?;
-        let parent = kwargs_extract_required::<EntryID>(args, "parent")?;
-        let version = kwargs_extract_required::<u32>(args, "version")?;
-        let created = kwargs_extract_required_custom(args, "created", &py_to_rs_datetime)?;
-        let updated = kwargs_extract_required_custom(args, "updated", &py_to_rs_datetime)?;
-        let children = kwargs_extract_required_custom(args, "children", &|item| {
-            let pychildren = item.downcast::<PyDict>()?;
-            let mut rschildren = std::collections::HashMap::with_capacity(pychildren.len());
-            for (pyk, pyv) in pychildren.iter() {
-                let rsk = pyk.extract::<EntryName>()?;
-                let rsv = pyv.extract::<EntryID>()?;
-                rschildren.insert(rsk.0, rsv.0);
-            }
-            Ok(rschildren)
-        })?;
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [parent: EntryID, "parent"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [children: HashMap<EntryName, EntryID>, "children"],
+        );
 
         Ok(Self(parsec_api_types::FolderManifest {
             author: author.0,
@@ -581,7 +563,10 @@ impl FolderManifest {
             parent: parent.0,
             created,
             updated,
-            children,
+            children: children
+                .into_iter()
+                .map(|(name, id)| (name.0, id.0))
+                .collect(),
         }))
     }
 
@@ -625,43 +610,43 @@ impl FolderManifest {
 
     #[args(py_kwargs = "**")]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [parent: EntryID, "parent"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [children: HashMap<EntryName, EntryID>, "children"],
+        );
 
         let mut r = self.0.clone();
 
-        if let Some(v) = kwargs_extract_optional::<DeviceID>(args, "author")? {
+        if let Some(v) = author {
             r.author = v.0;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "timestamp", &py_to_rs_datetime)? {
+        if let Some(v) = timestamp {
             r.timestamp = v;
         }
-        if let Some(v) = kwargs_extract_optional::<EntryID>(args, "id")? {
+        if let Some(v) = id {
             r.id = v.0;
         }
-        if let Some(v) = kwargs_extract_optional::<EntryID>(args, "parent")? {
+        if let Some(v) = parent {
             r.parent = v.0;
         }
-        if let Some(v) = kwargs_extract_optional::<u32>(args, "version")? {
+        if let Some(v) = version {
             r.version = v;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "created", &py_to_rs_datetime)? {
+        if let Some(v) = created {
             r.created = v;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "updated", &py_to_rs_datetime)? {
+        if let Some(v) = updated {
             r.updated = v;
         }
-        let maybe_children = kwargs_extract_optional_custom(args, "children", &|item| {
-            let pychildren = item.downcast::<PyDict>()?;
-            let mut rschildren = std::collections::HashMap::with_capacity(pychildren.len());
-            for (pyk, pyv) in pychildren.iter() {
-                let rsk = pyk.extract::<EntryName>()?;
-                let rsv = pyv.extract::<EntryID>()?;
-                rschildren.insert(rsk.0, rsv.0);
-            }
-            Ok(rschildren)
-        })?;
-        if let Some(v) = maybe_children {
-            r.children = v;
+        if let Some(v) = children {
+            r.children = v.into_iter().map(|(name, id)| (name.0, id.0)).collect();
         }
 
         Ok(Self(r))
@@ -744,24 +729,16 @@ impl WorkspaceManifest {
     #[new]
     #[args(py_kwargs = "**")]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
-
-        let author = kwargs_extract_required::<DeviceID>(args, "author")?;
-        let timestamp = kwargs_extract_required_custom(args, "timestamp", &py_to_rs_datetime)?;
-        let id = kwargs_extract_required::<EntryID>(args, "id")?;
-        let version = kwargs_extract_required::<u32>(args, "version")?;
-        let created = kwargs_extract_required_custom(args, "created", &py_to_rs_datetime)?;
-        let updated = kwargs_extract_required_custom(args, "updated", &py_to_rs_datetime)?;
-        let children = kwargs_extract_required_custom(args, "children", &|item| {
-            let pychildren = item.downcast::<PyDict>()?;
-            let mut rschildren = std::collections::HashMap::with_capacity(pychildren.len());
-            for (pyk, pyv) in pychildren.iter() {
-                let rsk = pyk.extract::<EntryName>()?;
-                let rsv = pyv.extract::<EntryID>()?;
-                rschildren.insert(rsk.0, rsv.0);
-            }
-            Ok(rschildren)
-        })?;
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [children: HashMap<EntryName, EntryID>, "children"],
+        );
 
         Ok(Self(parsec_api_types::WorkspaceManifest {
             author: author.0,
@@ -770,7 +747,10 @@ impl WorkspaceManifest {
             version,
             created,
             updated,
-            children,
+            children: children
+                .into_iter()
+                .map(|(name, id)| (name.0, id.0))
+                .collect(),
         }))
     }
 
@@ -814,40 +794,39 @@ impl WorkspaceManifest {
 
     #[args(py_kwargs = "**")]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [children: HashMap<EntryName, EntryID>, "children"],
+        );
 
         let mut r = self.0.clone();
 
-        if let Some(v) = kwargs_extract_optional::<DeviceID>(args, "author")? {
+        if let Some(v) = author {
             r.author = v.0;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "timestamp", &py_to_rs_datetime)? {
+        if let Some(v) = timestamp {
             r.timestamp = v;
         }
-        if let Some(v) = kwargs_extract_optional::<EntryID>(args, "id")? {
+        if let Some(v) = id {
             r.id = v.0;
         }
-        if let Some(v) = kwargs_extract_optional::<u32>(args, "version")? {
+        if let Some(v) = version {
             r.version = v;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "created", &py_to_rs_datetime)? {
+        if let Some(v) = created {
             r.created = v;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "updated", &py_to_rs_datetime)? {
+        if let Some(v) = updated {
             r.updated = v;
         }
-        let maybe_children = kwargs_extract_optional_custom(args, "children", &|item| {
-            let pychildren = item.downcast::<PyDict>()?;
-            let mut rschildren = std::collections::HashMap::with_capacity(pychildren.len());
-            for (pyk, pyv) in pychildren.iter() {
-                let rsk = pyk.extract::<EntryName>()?;
-                let rsv = pyv.extract::<EntryID>()?;
-                rschildren.insert(rsk.0, rsv.0);
-            }
-            Ok(rschildren)
-        })?;
-        if let Some(v) = maybe_children {
-            r.children = v;
+        if let Some(v) = children {
+            r.children = v.into_iter().map(|(name, id)| (name.0, id.0)).collect();
         }
 
         Ok(Self(r))
@@ -926,19 +905,17 @@ impl UserManifest {
     #[new]
     #[args(py_kwargs = "**")]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
-
-        let author = kwargs_extract_required::<DeviceID>(args, "author")?;
-        let timestamp = kwargs_extract_required_custom(args, "timestamp", &py_to_rs_datetime)?;
-        let id = kwargs_extract_required::<EntryID>(args, "id")?;
-        let version = kwargs_extract_required(args, "version")?;
-        let created = kwargs_extract_required_custom(args, "created", &py_to_rs_datetime)?;
-        let updated = kwargs_extract_required_custom(args, "updated", &py_to_rs_datetime)?;
-        let last_processed_message = kwargs_extract_required(args, "last_processed_message")?;
-        let workspaces = kwargs_extract_required::<Vec<WorkspaceEntry>>(args, "workspaces")?
-            .into_iter()
-            .map(|w| w.0)
-            .collect();
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [last_processed_message: u32, "last_processed_message"],
+            [workspaces: Vec<WorkspaceEntry>, "workspaces"],
+        );
 
         Ok(Self(parsec_api_types::UserManifest {
             author: author.0,
@@ -948,7 +925,7 @@ impl UserManifest {
             created,
             updated,
             last_processed_message,
-            workspaces,
+            workspaces: workspaces.into_iter().map(|w| w.0).collect(),
         }))
     }
 
@@ -1010,32 +987,42 @@ impl UserManifest {
 
     #[args(py_kwargs = "**")]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [last_processed_message: u32, "last_processed_message"],
+            [workspaces: Vec<WorkspaceEntry>, "workspaces"],
+        );
 
         let mut r = self.0.clone();
 
-        if let Some(v) = kwargs_extract_optional::<DeviceID>(args, "author")? {
+        if let Some(v) = author {
             r.author = v.0;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "timestamp", &py_to_rs_datetime)? {
+        if let Some(v) = timestamp {
             r.timestamp = v;
         }
-        if let Some(v) = kwargs_extract_optional::<EntryID>(args, "id")? {
+        if let Some(v) = id {
             r.id = v.0;
         }
-        if let Some(v) = kwargs_extract_optional(args, "version")? {
+        if let Some(v) = version {
             r.version = v;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "created", &py_to_rs_datetime)? {
+        if let Some(v) = created {
             r.created = v;
         }
-        if let Some(v) = kwargs_extract_optional_custom(args, "updated", &py_to_rs_datetime)? {
+        if let Some(v) = updated {
             r.updated = v;
         }
-        if let Some(v) = kwargs_extract_optional(args, "last_processed_message")? {
+        if let Some(v) = last_processed_message {
             r.last_processed_message = v;
         }
-        if let Some(v) = kwargs_extract_optional::<Vec<WorkspaceEntry>>(args, "workspaces")? {
+        if let Some(v) = workspaces {
             r.workspaces = v.into_iter().map(|w| w.0).collect();
         }
 

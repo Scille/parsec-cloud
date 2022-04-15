@@ -4,7 +4,7 @@ use pyo3::basic::CompareOp;
 use pyo3::conversion::IntoPy;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::PyModule;
-use pyo3::types::{PyDict, PyFrozenSet, PyTuple};
+use pyo3::types::{PyFrozenSet, PyTuple};
 use pyo3::FromPyObject;
 use pyo3::{PyAny, PyObject, PyResult, Python};
 use regex::Regex;
@@ -58,7 +58,10 @@ pub fn rs_to_py_realm_role(role: &parsec_api_types::RealmRole) -> PyResult<PyObj
     })
 }
 
-pub fn py_to_rs_realm_role(role: &PyAny) -> PyResult<parsec_api_types::RealmRole> {
+pub fn py_to_rs_realm_role(role: &PyAny) -> PyResult<Option<parsec_api_types::RealmRole>> {
+    if role.is_none() {
+        return Ok(None);
+    }
     let role = match role.getattr("name")?.extract::<&str>()? {
         "OWNER" => parsec_api_types::RealmRole::Owner,
         "MANAGER" => parsec_api_types::RealmRole::Manager,
@@ -66,7 +69,17 @@ pub fn py_to_rs_realm_role(role: &PyAny) -> PyResult<parsec_api_types::RealmRole
         "READER" => parsec_api_types::RealmRole::Reader,
         _ => unreachable!(),
     };
-    Ok(role)
+    Ok(Some(role))
+}
+
+pub fn py_to_rs_user_profile(profile: &PyAny) -> PyResult<parsec_api_types::UserProfile> {
+    let profile = match profile.getattr("name")?.extract::<&str>()? {
+        "ADMIN" => parsec_api_types::UserProfile::Admin,
+        "STANDARD" => parsec_api_types::UserProfile::Standard,
+        "OUTSIDER" => parsec_api_types::UserProfile::Outsider,
+        _ => unreachable!(),
+    };
+    Ok(profile)
 }
 
 // This implementation is due to
@@ -87,73 +100,6 @@ pub fn py_to_rs_regex(regex: &PyAny) -> PyResult<Regex> {
         .replace("\\Z", "\\z")
         .replace("\\ ", "\x20");
     Regex::new(&regex).map_err(|e| PyValueError::new_err(e.to_string()))
-}
-
-pub fn kwargs_extract_required<'a, T: FromPyObject<'a>>(
-    args: &'a PyDict,
-    name: &str,
-) -> PyResult<T> {
-    match args.get_item(name) {
-        Some(item) => match item.extract::<T>() {
-            Ok(v) => Ok(v),
-            Err(err) => Err(PyValueError::new_err(format!(
-                "Invalid `{}` argument: {}",
-                name, err
-            ))),
-        },
-        None => Err(PyValueError::new_err(format!(
-            "Missing `{}` argument",
-            name
-        ))),
-    }
-}
-
-pub fn kwargs_extract_optional<'a, T: FromPyObject<'a>>(
-    args: &'a PyDict,
-    name: &str,
-) -> PyResult<Option<T>> {
-    match args.get_item(name) {
-        Some(item) if item.is_none() => Ok(None),
-        Some(item) => match item.extract::<T>() {
-            Ok(v) => Ok(Some(v)),
-            Err(err) => Err(PyValueError::new_err(format!(
-                "Invalid `{}` argument: {}",
-                name, err
-            ))),
-        },
-        None => Ok(None),
-    }
-}
-
-pub fn kwargs_extract_required_custom<T>(
-    args: &PyDict,
-    name: &str,
-    converter: &dyn Fn(&PyAny) -> PyResult<T>,
-) -> PyResult<T> {
-    match kwargs_extract_optional_custom(args, name, converter)? {
-        Some(v) => Ok(v),
-        None => Err(PyValueError::new_err(format!(
-            "Missing `{}` argument",
-            name
-        ))),
-    }
-}
-
-pub fn kwargs_extract_optional_custom<T>(
-    args: &PyDict,
-    name: &str,
-    converter: &dyn Fn(&PyAny) -> PyResult<T>,
-) -> PyResult<Option<T>> {
-    match args.get_item(name) {
-        Some(item) => match converter(item) {
-            Ok(v) => Ok(Some(v)),
-            Err(err) => Err(PyValueError::new_err(format!(
-                "Invalid `{}` argument: {}",
-                name, err
-            ))),
-        },
-        None => Ok(None),
-    }
 }
 
 macro_rules! parse_kwargs_optional {
@@ -180,7 +126,7 @@ macro_rules! parse_kwargs {
             $kwargs,
             $([$var $(:$ty)?, $name $(,$function)?],)*
         );
-        $(let $var = $var.expect("Missing `{$name}` argument");)*
+        $(let $var = $var.expect(concat!("Missing `", stringify!($name), "` argument"));)*
     };
 }
 pub(crate) use parse_kwargs;

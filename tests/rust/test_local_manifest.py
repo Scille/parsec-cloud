@@ -4,7 +4,6 @@ import pytest
 
 import pendulum
 import re
-
 from parsec.api.data import EntryID, BlockID, EntryName
 from parsec.api.data.manifest import (
     FileManifest,
@@ -266,10 +265,13 @@ def test_local_file_manifest():
 
     assert py_lfm.match_remote(py_rfm) == rs_lfm.match_remote(rs_rfm)
 
-    py_lfm = py_lfm.evolve_and_mark_updated(timestamp=ts, **{"size": 4096})
-    rs_lfm = rs_lfm.evolve_and_mark_updated(timestamp=ts, **{"size": 4096})
+    py_lfm = py_lfm.evolve_and_mark_updated(timestamp=ts, size=4096)
+    rs_lfm = rs_lfm.evolve_and_mark_updated(timestamp=ts, size=4096)
 
     _assert_local_file_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
+
+    with pytest.raises(BaseException):
+        rs_lfm.evolve_and_mark_updated(timestamp=ts, need_sync=True)
 
     ei = EntryID.new()
 
@@ -422,10 +424,15 @@ def test_local_folder_manifest():
 
     assert py_lfm.match_remote(py_rfm) == rs_lfm.match_remote(rs_rfm)
 
-    py_lfm = py_lfm.evolve_and_mark_updated(timestamp=ts, **{"need_sync": True})
-    rs_lfm = rs_lfm.evolve_and_mark_updated(timestamp=ts, **{"need_sync": True})
+    children = {EntryName("wksp1"): EntryID.new()}
+
+    py_lfm = py_lfm.evolve_and_mark_updated(timestamp=ts, children=children)
+    rs_lfm = rs_lfm.evolve_and_mark_updated(timestamp=ts, children=children)
 
     _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
+
+    with pytest.raises(BaseException):
+        rs_lfm.evolve_and_mark_updated(timestamp=ts, need_sync=True)
 
     ei = EntryID.new()
     py_lfm = py_lfm.evolve_children_and_mark_updated(
@@ -496,7 +503,6 @@ def test_local_workspace_manifest():
         "base": WorkspaceManifest(
             author=DeviceID("user@device"),
             id=EntryID.new(),
-            parent=EntryID.new(),
             version=42,
             timestamp=pendulum.now(),
             created=pendulum.now(),
@@ -520,7 +526,6 @@ def test_local_workspace_manifest():
             **{
                 "author": DeviceID("a@b"),
                 "id": EntryID.new(),
-                "parent": EntryID.new(),
                 "version": 1337,
                 "timestamp": pendulum.now(),
                 "created": pendulum.now(),
@@ -631,7 +636,6 @@ def test_local_user_manifest():
         "base": UserManifest(
             author=DeviceID("user@device"),
             id=EntryID.new(),
-            parent=EntryID.new(),
             version=42,
             timestamp=pendulum.now(),
             created=pendulum.now(),
@@ -655,7 +659,6 @@ def test_local_user_manifest():
             **{
                 "author": DeviceID("a@b"),
                 "id": EntryID.new(),
-                "parent": EntryID.new(),
                 "version": 1337,
                 "timestamp": pendulum.now(),
                 "created": pendulum.now(),

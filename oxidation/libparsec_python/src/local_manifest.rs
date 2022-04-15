@@ -8,9 +8,7 @@ use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 use std::panic;
 
-use crate::binding_utils::{
-    kwargs_extract_optional, py_to_rs_datetime, py_to_rs_regex, py_to_rs_set, rs_to_py_datetime,
-};
+use crate::binding_utils::{py_to_rs_datetime, py_to_rs_regex, py_to_rs_set, rs_to_py_datetime};
 use crate::crypto::SecretKey;
 use crate::ids::{ChunkID, DeviceID, EntryID};
 use crate::manifest::{
@@ -385,15 +383,17 @@ impl LocalFileManifest {
 
     #[args(data = "**")]
     fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
+        if let Some(args) = data {
+            assert!(
+                args.get_item("need_sync").is_none(),
+                "Forbidden `need_sync` argument"
+            );
+        }
+
         let mut out = self.evolve(data)?;
 
         out.0.need_sync = true;
         out.0.updated = py_to_rs_datetime(timestamp)?;
-        if let Some(args) = data {
-            if let Some(v) = kwargs_extract_optional(args, "need_sync")? {
-                out.0.need_sync = v;
-            }
-        }
 
         Ok(out)
     }
@@ -661,15 +661,17 @@ impl LocalFolderManifest {
 
     #[args(data = "**")]
     fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
+        if let Some(args) = data {
+            assert!(
+                args.get_item("need_sync").is_none(),
+                "Forbidden `need_sync` argument"
+            );
+        }
+
         let mut out = self.evolve(data)?;
 
         out.0.need_sync = true;
         out.0.updated = py_to_rs_datetime(timestamp)?;
-        if let Some(args) = data {
-            if let Some(v) = kwargs_extract_optional(args, "need_sync")? {
-                out.0.need_sync = v;
-            }
-        }
 
         Ok(out)
     }
@@ -1028,15 +1030,17 @@ impl LocalWorkspaceManifest {
 
     #[args(data = "**")]
     fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
+        if let Some(args) = data {
+            assert!(
+                args.get_item("need_sync").is_none(),
+                "Forbidden `need_sync` argument"
+            );
+        }
+
         let mut out = self.evolve(data)?;
 
         out.0.need_sync = true;
         out.0.updated = py_to_rs_datetime(timestamp)?;
-        if let Some(args) = data {
-            if let Some(v) = kwargs_extract_optional(args, "need_sync")? {
-                out.0.need_sync = v;
-            }
-        }
 
         Ok(out)
     }
@@ -1322,15 +1326,17 @@ impl LocalUserManifest {
 
     #[args(data = "**")]
     fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
+        if let Some(args) = data {
+            assert!(
+                args.get_item("need_sync").is_none(),
+                "Forbidden `need_sync` argument"
+            );
+        }
+
         let mut out = self.evolve(data)?;
 
         out.0.need_sync = true;
         out.0.updated = py_to_rs_datetime(timestamp)?;
-        if let Some(args) = data {
-            if let Some(v) = kwargs_extract_optional(args, "need_sync")? {
-                out.0.need_sync = v;
-            }
-        }
 
         Ok(out)
     }

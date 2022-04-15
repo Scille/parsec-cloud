@@ -134,6 +134,10 @@ def test_block_access():
     rs_ba = rs_ba.evolve(**kwargs)
     _assert_block_access_eq(py_ba, rs_ba)
 
+    kwargs["size"] = 0
+    with pytest.raises(ValueError):
+        BlockAccess(**kwargs)
+
 
 @pytest.mark.rust
 def test_file_manifest():
