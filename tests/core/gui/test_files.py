@@ -670,7 +670,7 @@ async def test_open_file_failed(monkeypatch, aqtbot, autoclose_dialog, files_wid
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
+async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed, snackbar_catcher):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
 
@@ -681,15 +681,17 @@ async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
 
     await tb.cd("foo")
     await tb.apply_selection("bar.txt")
+    snackbar_catcher.reset()
 
     f_w.table_files.file_path_clicked.emit()
 
-    def _file_link_copied_dialog():
-        assert autoclose_dialog.dialogs == [("", _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))]
+    def _file_link_copied_snackbar():
+        print(snackbar_catcher.snackbars)
+        assert snackbar_catcher.snackbars == [("INFO", _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))]
         url = QGuiApplication.clipboard().text()
         assert url.startswith("parsec://")
 
-    await aqtbot.wait_until(_file_link_copied_dialog)
+    await aqtbot.wait_until(_file_link_copied_snackbar)
 
 
 @pytest.mark.gui
