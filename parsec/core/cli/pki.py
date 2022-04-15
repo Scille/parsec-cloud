@@ -105,7 +105,7 @@ async def _pki_enrollment_poll(
     save_device_with_selected_auth: Callable,
     finalize: Sequence[str],
 ):
-    pendings = await PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(config_dir=config.config_dir)
+    pendings = PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(config_dir=config.config_dir)
 
     # Try to shorten the UUIDs to make it easier to work with
     enrollment_ids = [e.enrollment_id for e in pendings]
