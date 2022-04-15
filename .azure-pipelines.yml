@@ -9,10 +9,10 @@ trigger:
     - '*'
 
 variables:
-  python.version: '3.8'
+  python.version: '3.9'
   node.version: '16.x'
   # pyinstaller is picky on the version to use
-  python.version_for_macos_packaging: '3.8'
+  python.version_for_macos_packaging: '3.9'
   postgresql.version: '12'
   winfsp.version: '1.8.20304'
   pytest.base_args: |
