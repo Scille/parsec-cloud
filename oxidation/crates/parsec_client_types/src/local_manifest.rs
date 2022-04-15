@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use regex::Regex;
+use fancy_regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::cmp::Ordering;
@@ -461,7 +461,10 @@ impl LocalFolderManifest {
         // Deal with additions second
         for (name, entry_id) in data.into_iter() {
             if let Some(entry_id) = entry_id {
-                if prevent_sync_pattern.is_match(name.as_ref()) {
+                if prevent_sync_pattern
+                    .is_match(name.as_ref())
+                    .unwrap_or(false)
+                {
                     self.local_confinement_points.insert(entry_id);
                 } else {
                     actually_updated = true;
@@ -533,7 +536,10 @@ impl LocalFolderManifest {
             .children
             .iter()
             .filter_map(|(name, entry_id)| {
-                if prevent_sync_pattern.is_match(name.as_ref()) {
+                if prevent_sync_pattern
+                    .is_match(name.as_ref())
+                    .unwrap_or(false)
+                {
                     Some(*entry_id)
                 } else {
                     None
@@ -795,7 +801,10 @@ impl LocalWorkspaceManifest {
         // Deal with additions second
         for (name, entry_id) in data.into_iter() {
             if let Some(entry_id) = entry_id {
-                if prevent_sync_pattern.is_match(name.as_ref()) {
+                if prevent_sync_pattern
+                    .is_match(name.as_ref())
+                    .unwrap_or(false)
+                {
                     self.local_confinement_points.insert(entry_id);
                 } else {
                     actually_updated = true;
@@ -867,7 +876,10 @@ impl LocalWorkspaceManifest {
             .children
             .iter()
             .filter_map(|(name, entry_id)| {
-                if prevent_sync_pattern.is_match(name.as_ref()) {
+                if prevent_sync_pattern
+                    .is_match(name.as_ref())
+                    .unwrap_or(false)
+                {
                     Some(*entry_id)
                 } else {
                     None

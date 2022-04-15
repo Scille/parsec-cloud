@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use fancy_regex::Regex;
 use pyo3::basic::CompareOp;
 use pyo3::conversion::IntoPy;
 use pyo3::exceptions::PyValueError;
@@ -7,7 +8,6 @@ use pyo3::prelude::PyModule;
 use pyo3::types::{PyDict, PyFrozenSet, PyTuple};
 use pyo3::FromPyObject;
 use pyo3::{PyAny, PyObject, PyResult, Python};
-use regex::Regex;
 use std::collections::HashSet;
 use std::hash::Hash;
 
