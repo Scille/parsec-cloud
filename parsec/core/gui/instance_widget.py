@@ -103,6 +103,7 @@ class InstanceWidget(QWidget):
     login_failed = pyqtSignal()
     join_organization_clicked = pyqtSignal()
     create_organization_clicked = pyqtSignal()
+    recover_device_clicked = pyqtSignal()
 
     def __init__(
         self,
@@ -330,6 +331,7 @@ class InstanceWidget(QWidget):
         login_widget.login_with_smartcard_clicked.connect(self.login_with_smartcard)
         login_widget.join_organization_clicked.connect(self.join_organization_clicked.emit)
         login_widget.create_organization_clicked.connect(self.create_organization_clicked.emit)
+        login_widget.recover_device_clicked.connect(self.recover_device_clicked.emit)
         login_widget.login_canceled.connect(self.reset_workspace_path)
         login_widget.show()
 

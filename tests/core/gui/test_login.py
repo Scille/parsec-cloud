@@ -171,6 +171,10 @@ async def test_login_no_available_devices(
 
     no_device_w = lw.widget.layout().itemAt(0).widget()
     assert isinstance(no_device_w, LoginNoDevicesWidget)
+    # 0 is spacer, 1 is label
+    assert no_device_w.layout().itemAt(2).widget().text() == "Create an organization"
+    assert no_device_w.layout().itemAt(3).widget().text() == "Join an organization"
+    assert no_device_w.layout().itemAt(4).widget().text() == "Recover a device"
 
 
 @pytest.mark.gui
