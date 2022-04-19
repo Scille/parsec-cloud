@@ -1,0 +1,19 @@
+{
+    "name": "Foo",
+    "fields": [
+        {
+            "name": "bar0",
+            "ty": "String",
+            "rename": "bar0"
+        },
+        {
+            "name": "bar1",
+            "ty": "Vec<u8>",
+            "rename": "bar1"
+        },
+        {
+            "name": "bar2",
+            "ty": "HashMap<u8, Vec<u8>>"
+        }
+    ]
+}

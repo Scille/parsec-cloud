@@ -12,8 +12,12 @@ proc-macro = true
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = "1.0"
+miniserde = "0.1"
 
 [dev-dependencies]
+parsec_api_types = { version = "0.0.0", path = "../parsec_api_types" }
+
+rmp-serde = "1.0.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_with = "1.0"
 

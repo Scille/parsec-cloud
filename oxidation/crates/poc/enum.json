@@ -1,0 +1,29 @@
+{
+    "name": "FooEnum",
+    "variants": [
+        {
+            "name": "Foo0",
+            "fields": [
+                {
+                    "name": "Bar0",
+                    "ty": "String",
+                    "rename": "bar0"
+                },
+                {
+                    "name": "Bar1",
+                    "ty": "Vec<u8>",
+                    "rename": "bar1"
+                },
+                {
+                    "name": "Bar2",
+                    "ty": "HashMap<u8, Vec<u8>>"
+                }
+            ]
+        },
+        {
+            "name": "Foo1",
+            "fields": []
+        }
+    ]
+}
+

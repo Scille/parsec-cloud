@@ -1,0 +1,45 @@
+{
+    "family": "authenticated",
+    "cmds": [
+        {
+            "name": "BlockRead",
+            "req": [
+                {
+                    "name": "block_id",
+                    "ty": "BlockID"
+                }
+            ],
+            "reps": [
+                {
+                    "name": "Ok",
+                    "fields": [
+                        {
+                            "name": "block",
+                            "ty": "Vec<u8>"
+                        }
+                    ]
+                },
+                {
+                    "name": "AlreadyExists",
+                    "fields": []
+                },
+                {
+                    "name": "NotFound",
+                    "fields": []
+                },
+                {
+                    "name": "Timeout",
+                    "fields": []
+                },
+                {
+                    "name": "NotAllowed",
+                    "fields": []
+                },
+                {
+                    "name": "InMaintenance",
+                    "fields": []
+                }
+            ]
+        }
+    ]
+}
