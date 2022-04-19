@@ -522,29 +522,33 @@ async def test_create_organization_custom_backend(
     await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
     aqtbot.mouse_click(co_w.current_widget.radio_use_custom, QtCore.Qt.LeftButton)
 
-    def _user_widget_button_validate_ready(state):
+    def _user_widget_button_validate_ready(state, addr):
+        assert co_w.current_widget.line_edit_backend_addr.text() == addr
         assert co_w.current_widget._are_inputs_valid() is state
         assert co_w.button_validate.isEnabled() is state
 
     # Space at the end, should be fine
     await aqtbot.key_clicks(
-        co_w.current_widget.line_edit_backend_addr, running_backend.addr.to_url() + " " * 3
+        co_w.current_widget.line_edit_backend_addr, running_backend.addr.to_url() + " "
     )
     assert co_w.current_widget.line_edit_backend_addr.is_input_valid()
-    await aqtbot.wait_until(lambda: _user_widget_button_validate_ready(True))
+    await aqtbot.wait_until(
+        lambda: _user_widget_button_validate_ready(True, running_backend.addr.to_url() + " ")
+    )
 
     # Empty, should not be valid
     co_w.current_widget.line_edit_backend_addr.setText("")
-    assert co_w.current_widget.line_edit_backend_addr.text() == ""
     assert not co_w.current_widget.line_edit_backend_addr.is_input_valid()
-    await aqtbot.wait_until(lambda: _user_widget_button_validate_ready(False))
+    await aqtbot.wait_until(lambda: _user_widget_button_validate_ready(False, ""))
 
-    # Spaces at the beginning, should be fine
+    # Space at the beginning, should be fine
     await aqtbot.key_clicks(
-        co_w.current_widget.line_edit_backend_addr, " " * 10 + running_backend.addr.to_url()
+        co_w.current_widget.line_edit_backend_addr, " " + running_backend.addr.to_url()
     )
     assert co_w.current_widget.line_edit_backend_addr.is_input_valid()
-    await aqtbot.wait_until(lambda: _user_widget_button_validate_ready(True))
+    await aqtbot.wait_until(
+        lambda: _user_widget_button_validate_ready(True, " " + running_backend.addr.to_url())
+    )
 
     aqtbot.mouse_click(co_w.button_validate, QtCore.Qt.LeftButton)
 
