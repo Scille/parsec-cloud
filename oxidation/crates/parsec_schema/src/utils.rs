@@ -69,7 +69,7 @@ fn _extract_serde_as(ty: &Type) -> String {
                         .args
                         .iter()
                         .map(|arg| match arg {
-                            GenericArgument::Type(ty) => extract_serde_as(ty),
+                            GenericArgument::Type(ty) => _extract_serde_as(ty),
                             _ => unimplemented!(),
                         })
                         .collect::<Vec<_>>()
@@ -82,7 +82,7 @@ fn _extract_serde_as(ty: &Type) -> String {
                     ident += &x
                         .inputs
                         .iter()
-                        .map(extract_serde_as)
+                        .map(_extract_serde_as)
                         .collect::<Vec<_>>()
                         .join(",");
                     ident.push(')');
@@ -96,7 +96,7 @@ fn _extract_serde_as(ty: &Type) -> String {
             ident += &t
                 .elems
                 .iter()
-                .map(extract_serde_as)
+                .map(_extract_serde_as)
                 .collect::<Vec<_>>()
                 .join(",");
             ident.push(')');
