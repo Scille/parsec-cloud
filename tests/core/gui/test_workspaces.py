@@ -7,10 +7,10 @@ from pathlib import Path
 import pendulum
 import datetime
 
-from parsec.api.data import EntryName
+from parsec.api.data import EntryName, EntryID
 from parsec.core.types import WorkspaceRole
 from parsec.core.core_events import CoreEvent
-from parsec.core.fs import FSWorkspaceNoReadAccess
+from parsec.core.fs import FSWorkspaceNoReadAccess, FsPath
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
 from parsec.core.gui.lang import translate, format_datetime
@@ -114,37 +114,37 @@ async def test_rename_workspace(
     await aqtbot.wait_until(_outcome_occured)
 
 
-@pytest.mark.skip("No notification center at the moment")
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui):
+async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui, snackbar_catcher):
     c_w = logged_gui.test_get_central_widget()
 
     async with aqtbot.wait_signal(c_w.new_notification):
         c_w.event_bus.send(
             CoreEvent.MOUNTPOINT_REMOTE_ERROR,
             exc=FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access"),
-            path="/foo",
+            path=FsPath("/bar"),
+            mountpoint=Path("/foo"),
             operation="open",
+            workspace_id=EntryID.new(),
+            timestamp=None,
         )
-    msg_widget = c_w.notification_center.widget_layout.layout().itemAt(0).widget()
-    assert (
-        msg_widget.message
-        == 'Cannot access "/foo" from the server given you lost read access to the workspace.'
-    )
+
+    assert "Read access to " in snackbar_catcher.snackbars[0][1]
+    snackbar_catcher.reset()
 
     async with aqtbot.wait_signal(c_w.new_notification):
         c_w.event_bus.send(
             CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
             exc=RuntimeError("D'Oh !"),
-            path="/bar",
+            path=FsPath("/bar"),
+            mountpoint=Path("/foo"),
             operation="unlink",
+            workspace_id=EntryID.new(),
         )
-    msg_widget = c_w.notification_center.widget_layout.layout().itemAt(0).widget()
-    assert (
-        msg_widget.message
-        == 'Unexpected error while performing "unlink" operation on "/bar": D\'Oh !.'
-    )
+
+    assert "Error with the mountpoint " in snackbar_catcher.snackbars[0][1]
+    snackbar_catcher.reset()
 
 
 @pytest.mark.gui
