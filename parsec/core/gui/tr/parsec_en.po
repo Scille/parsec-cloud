@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-04-07 15:59+0200\n"
+"POT-Creation-Date: 2022-04-19 13:09+0200\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -53,6 +53,9 @@ msgstr ""
 "Only one method authentication method is available in this version of "
 "Parsec."
 
+msgid "ACTION_UPDATE_SUBSCRIPTION"
+msgstr "Update subscription"
+
 msgid "ACTION_COPY_BACKEND_ADDR"
 msgstr "Copy server address"
 
@@ -66,6 +69,9 @@ msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
 msgstr ""
 "You do not have access to the workspace containing the file. It may not "
 "have been shared with you."
+
+msgid "TEXT_SAAS_UPDATE_SUBSCRIPTION_URL"
+msgstr "https://parsec.cloud/comment-changer-dabonnement-parsec/"
 
 msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
 msgstr "Server address has been copied to the clipboard."

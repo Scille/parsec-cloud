@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
+from unittest.mock import patch
 from PyQt5 import QtCore, QtWidgets, QtGui
 
 from parsec.api.protocol import InvitationType, OrganizationID
@@ -662,3 +663,32 @@ async def test_outsider_profil_limit(
 
     c_w = gui.test_get_central_widget()
     assert c_w.menu.button_users.isVisible() is False
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_commercial_open_switch_offer(aqtbot, gui_factory, alice, monkeypatch):
+    gui = await gui_factory()
+    await gui.test_switch_to_logged_in(alice)
+    c_w = gui.test_get_central_widget()
+    assert c_w is not None
+
+    actions = c_w.button_user.menu().actions()
+    assert len(actions) == 5
+    assert "Update subscription" not in [a.text() for a in actions]
+
+    await gui.test_logout_and_switch_to_login_widget()
+
+    monkeypatch.setattr("parsec.core.gui.central_widget.is_saas_addr", lambda _: True)
+
+    await gui.test_switch_to_logged_in(alice)
+    c_w = gui.test_get_central_widget()
+    assert c_w is not None
+
+    actions = c_w.button_user.menu().actions()
+    assert len(actions) == 6
+    assert actions[0].text() == "Update subscription"
+
+    with patch("parsec.core.gui.central_widget.desktop.open_url") as mock:
+        actions[0].triggered.emit()
+        mock.assert_called_once()
