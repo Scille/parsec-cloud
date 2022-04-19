@@ -2,9 +2,8 @@
 
 from parsec.core.types import BackendAddr
 
-SAAS_HOSTNAME = "saas.parsec.cloud"
-SAAS_UPDATE_SUBSCRIPTION_URL = "https://parsec.cloud/comment-changer-dabonnement-parsec/"
+SAAS_HOSTNAMES = ["saas.parsec.cloud"]
 
 
 def is_saas_addr(addr: BackendAddr) -> bool:
-    return addr.hostname.lower() == SAAS_HOSTNAME
+    return addr.hostname.lower() in SAAS_HOSTNAMES

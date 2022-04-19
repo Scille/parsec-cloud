@@ -672,10 +672,6 @@ async def test_commercial_open_switch_offer(aqtbot, gui_factory, alice, monkeypa
     assert len(actions) == 6
     assert actions[0].text() == "Update subscription"
 
-    FAKE_URL = "http://fake.com"
-
-    monkeypatch.setattr("parsec.core.gui.central_widget.SAAS_UPDATE_SUBSCRIPTION_URL", FAKE_URL)
-
     with patch("parsec.core.gui.central_widget.desktop.open_url") as mock:
         actions[0].triggered.emit()
-        mock.assert_called_once_with(FAKE_URL)
+        mock.assert_called_once()
