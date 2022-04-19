@@ -520,7 +520,15 @@ async def test_create_organization_custom_backend(
     )
     await aqtbot.key_clicks(co_w.current_widget.line_edit_org_name, "AnomalousMaterials")
     await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
-    aqtbot.mouse_click(co_w.current_widget.radio_use_custom, QtCore.Qt.LeftButton)
+
+    # Mouse click doesn't work on Windows in this case for some reason so we check the radio programatically
+    co_w.current_widget.radio_use_custom.setChecked(True)
+
+    def _use_custom_checked():
+        assert co_w.current_widget.radio_use_custom.isChecked()
+        assert not co_w.current_widget.radio_use_commercial.isChecked()
+
+    await aqtbot.wait_until(_use_custom_checked)
 
     def _user_widget_button_validate_ready(state, addr):
         assert co_w.current_widget.line_edit_backend_addr.text() == addr
