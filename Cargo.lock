@@ -67,6 +67,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
 
 [[package]]
+name = "bit-set"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e11e16035ea35e4e5997b393eacbf6f63983188f7a2ad25bfb13465f5ad59de"
+dependencies = [
+ "bit-vec",
+]
+
+[[package]]
+name = "bit-vec"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -360,6 +375,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "fancy-regex"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d95b4efe5be9104a4a18a9916e86654319895138be727b229820c39257c30dda"
+dependencies = [
+ "bit-set",
+ "regex",
+]
+
+[[package]]
 name = "flate2"
 version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -579,12 +604,12 @@ name = "libparsec_python"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "fancy-regex",
  "libparsec",
  "parsec_api_crypto",
  "parsec_api_types",
  "parsec_client_types",
  "pyo3",
- "regex",
  "uuid",
 ]
 
@@ -799,6 +824,7 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "data-encoding",
+ "fancy-regex",
  "flate2",
  "hex-literal",
  "lazy_static",
@@ -807,7 +833,6 @@ dependencies = [
  "percent-encoding",
  "pretty_assertions",
  "rand 0.8.5",
- "regex",
  "rmp-serde",
  "rstest",
  "rstest_reuse",
@@ -828,13 +853,13 @@ dependencies = [
 name = "parsec_client_types"
 version = "0.0.0"
 dependencies = [
+ "fancy-regex",
  "flate2",
  "hex-literal",
  "parsec_api_crypto",
  "parsec_api_types",
  "paste",
  "pretty_assertions",
- "regex",
  "rmp-serde",
  "rstest",
  "rstest_reuse",
