@@ -365,3 +365,14 @@ def test_invite_device_confirmation():
     assert rs_idc.device_label is None
     assert py_idc.human_handle is None
     assert rs_idc.human_handle is None
+
+    # No device_label or human_handle
+    # with pytest.raises(ValueError):
+    #     InviteDeviceConfirmation(
+    #         device_id=di,
+    #         profile=profile,
+    #         private_key=pk,
+    #         user_manifest_id=umi,
+    #         user_manifest_key=umk,
+    #         root_verify_key=vk,
+    #     )

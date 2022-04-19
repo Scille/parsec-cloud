@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyBytes, PyDict, PyList, PyString, PyTuple, PyType};
 use uuid::Uuid;
 
-use crate::binding_utils::{comp_op, hash_generic, kwargs_extract_required};
+use crate::binding_utils::{comp_op, hash_generic, py_to_rs_user_profile};
 use crate::crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 use crate::ids::{DeviceID, DeviceLabel, EntryID, HumanHandle};
 
@@ -188,28 +188,23 @@ impl InviteUserData {
     #[new]
     #[args(py_kwargs = "**")]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [
+                requested_device_label: Option<DeviceLabel>,
+                "requested_device_label"
+            ],
+            [
+                requested_human_handle: Option<HumanHandle>,
+                "requested_human_handle"
+            ],
+            [public_key: PublicKey, "public_key"],
+            [verify_key: VerifyKey, "verify_key"],
+        );
 
-        let public_key = kwargs_extract_required::<PublicKey>(args, "public_key")?;
-        let verify_key = kwargs_extract_required::<VerifyKey>(args, "verify_key")?;
-        /*
-            Both `requested_device_label` and `requested_human_handle` are marked as optional, but they have to be set
-            explicitly to None by the user. That's why we're using `kwargs_extract_required` and extracting an Option, rather
-            that `kwargs_extract_optional`.
-        */
-        let requested_device_label =
-            match kwargs_extract_required::<Option<DeviceLabel>>(args, "requested_device_label")? {
-                Some(rdl) => Some(rdl.0),
-                None => None,
-            };
-        let requested_human_handle =
-            match kwargs_extract_required::<Option<HumanHandle>>(args, "requested_human_handle")? {
-                Some(rhh) => Some(rhh.0),
-                None => None,
-            };
         Ok(Self(parsec_api_types::InviteUserData {
-            requested_device_label,
-            requested_human_handle,
+            requested_device_label: requested_device_label.map(|d| d.0),
+            requested_human_handle: requested_human_handle.map(|h| h.0),
             public_key: public_key.0,
             verify_key: verify_key.0,
         }))
@@ -267,46 +262,19 @@ impl InviteUserConfirmation {
     #[new]
     #[args(py_kwargs = "**")]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
-
-        let device_id = kwargs_extract_required::<DeviceID>(args, "device_id")?;
-
-        /*
-            Both `device_label` and `human_handle` are marked as optional, but they have to be set
-            explicitly to None by the user. That's why we're using `kwargs_extract_required` and extracting an Option, rather
-            that `kwargs_extract_optional`.
-        */
-        let device_label =
-            match kwargs_extract_required::<Option<DeviceLabel>>(args, "device_label")? {
-                Some(rdl) => Some(rdl.0),
-                None => None,
-            };
-        let human_handle =
-            match kwargs_extract_required::<Option<HumanHandle>>(args, "human_handle")? {
-                Some(rhh) => Some(rhh.0),
-                None => None,
-            };
-
-        let profile = match args.get_item("profile") {
-            Some(p) => {
-                match p
-                    .getattr("name")?
-                    .extract::<&str>()?
-                    .parse::<parsec_api_types::UserProfile>()
-                {
-                    Ok(p) => p,
-                    Err(err) => return Err(PyValueError::new_err(err)),
-                }
-            }
-            None => return Err(PyValueError::new_err("Missing `profile` argument")),
-        };
-
-        let root_verify_key = kwargs_extract_required::<VerifyKey>(args, "root_verify_key")?;
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [device_id: DeviceID, "device_id"],
+            [device_label: Option<DeviceLabel>, "device_label"],
+            [human_handle: Option<HumanHandle>, "human_handle"],
+            [profile, "profile", py_to_rs_user_profile],
+            [root_verify_key: VerifyKey, "root_verify_key"],
+        );
 
         Ok(Self(parsec_api_types::InviteUserConfirmation {
             device_id: device_id.0,
-            device_label,
-            human_handle,
+            device_label: device_label.map(|d| d.0),
+            human_handle: human_handle.map(|h| h.0),
             profile,
             root_verify_key: root_verify_key.0,
         }))
@@ -374,18 +342,17 @@ impl InviteDeviceData {
     #[new]
     #[args(py_kwargs = "**")]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
-
-        let requested_device_label =
-            match kwargs_extract_required::<Option<DeviceLabel>>(args, "requested_device_label")? {
-                Some(rdl) => Some(rdl.0),
-                None => None,
-            };
-
-        let verify_key = kwargs_extract_required::<VerifyKey>(args, "verify_key")?;
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [
+                requested_device_label: Option<DeviceLabel>,
+                "requested_device_label"
+            ],
+            [verify_key: VerifyKey, "verify_key"],
+        );
 
         Ok(Self(parsec_api_types::InviteDeviceData {
-            requested_device_label,
+            requested_device_label: requested_device_label.map(|d| d.0),
             verify_key: verify_key.0,
         }))
     }
@@ -429,48 +396,22 @@ impl InviteDeviceConfirmation {
     #[new]
     #[args(py_kwargs = "**")]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        let args = py_kwargs.unwrap();
-
-        let device_id = kwargs_extract_required::<DeviceID>(args, "device_id")?;
-
-        /*
-            Both `device_label` and `human_handle` are marked as optional, but they have to be set
-            explicitly to None by the user. That's why we're using `kwargs_extract_required` and extracting an Option, rather
-            that `kwargs_extract_optional`.
-        */
-        let device_label =
-            match kwargs_extract_required::<Option<DeviceLabel>>(args, "device_label")? {
-                Some(rdl) => Some(rdl.0),
-                None => None,
-            };
-        let human_handle =
-            match kwargs_extract_required::<Option<HumanHandle>>(args, "human_handle")? {
-                Some(rhh) => Some(rhh.0),
-                None => None,
-            };
-
-        let profile = match args.get_item("profile") {
-            Some(p) => {
-                match p
-                    .getattr("name")?
-                    .extract::<&str>()?
-                    .parse::<parsec_api_types::UserProfile>()
-                {
-                    Ok(p) => p,
-                    Err(err) => return Err(PyValueError::new_err(err)),
-                }
-            }
-            None => return Err(PyValueError::new_err("Missing `profile` argument")),
-        };
-        let private_key = kwargs_extract_required::<PrivateKey>(args, "private_key")?;
-        let root_verify_key = kwargs_extract_required::<VerifyKey>(args, "root_verify_key")?;
-        let user_manifest_id = kwargs_extract_required::<EntryID>(args, "user_manifest_id")?;
-        let user_manifest_key = kwargs_extract_required::<SecretKey>(args, "user_manifest_key")?;
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [device_id: DeviceID, "device_id"],
+            [device_label: Option<DeviceLabel>, "device_label"],
+            [human_handle: Option<HumanHandle>, "human_handle"],
+            [profile, "profile", py_to_rs_user_profile],
+            [private_key: PrivateKey, "private_key"],
+            [root_verify_key: VerifyKey, "root_verify_key"],
+            [user_manifest_id: EntryID, "user_manifest_id"],
+            [user_manifest_key: SecretKey, "user_manifest_key"],
+        );
 
         Ok(Self(parsec_api_types::InviteDeviceConfirmation {
             device_id: device_id.0,
-            device_label,
-            human_handle,
+            device_label: device_label.map(|d| d.0),
+            human_handle: human_handle.map(|h| h.0),
             profile,
             private_key: private_key.0,
             user_manifest_id: user_manifest_id.0,
