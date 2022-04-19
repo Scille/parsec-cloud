@@ -185,7 +185,7 @@ class PkiEnrollmentSubmitterSubmittedCtx:
     submit_payload: PkiEnrollmentSubmitPayload
 
     @classmethod
-    async def list_from_disk(cls, config_dir: Path) -> List["PkiEnrollmentSubmitterSubmittedCtx"]:
+    def list_from_disk(cls, config_dir: Path) -> List["PkiEnrollmentSubmitterSubmittedCtx"]:
         """Raises: None"""
         ctxs = []
         for pending in LocalPendingEnrollment.list(config_dir):

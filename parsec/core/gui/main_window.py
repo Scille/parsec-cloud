@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QWidget, QMainWindow, QMenu, QShortcut, QMenuBar
 
 from parsec import __version__ as PARSEC_VERSION
 from parsec.core.gui.enrollment_query_widget import EnrollmentQueryWidget
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import InvitationType
 from parsec.core.types import (
@@ -690,11 +691,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         instance_widget.set_workspace_path(file_link_addr)
 
         # Prompt the user for the need to log in first
-        show_info(
-            self,
+        SnackbarManager.inform(
             _("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
                 organization=file_link_addr.organization_id
-            ),
+            )
         )
 
     def go_to_file_link(self, addr: BackendOrganizationFileLinkAddr) -> None:

@@ -249,7 +249,13 @@ async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_f
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_file_disconnected(
-    aqtbot, autoclose_dialog, logged_gui_with_files, bob, monkeypatch, bob_available_device
+    aqtbot,
+    autoclose_dialog,
+    logged_gui_with_files,
+    bob,
+    monkeypatch,
+    bob_available_device,
+    snackbar_catcher,
 ):
     gui, w_w, f_w = logged_gui_with_files
     addr = f_w.workspace_fs.generate_file_link("/dir1")
@@ -259,27 +265,30 @@ async def test_link_file_disconnected(
         lambda *args, **kwargs: [bob_available_device],
     )
 
+    snackbar_catcher.reset()
+
     # Log out and send link
     await gui.test_logout_and_switch_to_login_widget()
     gui.add_instance(addr.to_url())
 
-    def _assert_dialogs():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [
+    def _assert_snackbars():
+        assert len(snackbar_catcher.snackbars) == 1
+        assert snackbar_catcher.snackbars == [
             (
-                "",
+                "INFO",
                 translate("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
                     organization=bob.organization_id
                 ),
             )
         ]
 
-    await aqtbot.wait_until(_assert_dialogs)
+    await aqtbot.wait_until(_assert_snackbars)
 
     # Assert login widget is displayed
     lw = gui.test_get_login_widget()
 
     def _password_widget_shown():
+        assert lw.widget.layout().count() == 1
         assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
         password_w = lw.widget.layout().itemAt(0).widget()
         assert password_w.button_login.isEnabled()
@@ -313,7 +322,13 @@ async def test_link_file_disconnected(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_file_disconnected_cancel_login(
-    aqtbot, autoclose_dialog, logged_gui_with_files, bob, monkeypatch, bob_available_device
+    aqtbot,
+    autoclose_dialog,
+    logged_gui_with_files,
+    bob,
+    monkeypatch,
+    bob_available_device,
+    snackbar_catcher,
 ):
     gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link("/dir1")
@@ -323,22 +338,24 @@ async def test_link_file_disconnected_cancel_login(
         lambda *args, **kwargs: [bob_available_device],
     )
 
+    snackbar_catcher.reset()
+
     # Log out and send link
     await gui.test_logout_and_switch_to_login_widget()
     gui.add_instance(str(url))
 
-    def _assert_dialogs():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [
+    def _assert_snackbars():
+        assert len(snackbar_catcher.snackbars) == 1
+        assert snackbar_catcher.snackbars == [
             (
-                "",
+                "INFO",
                 translate("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
                     organization=bob.organization_id
                 ),
             )
         ]
 
-    await aqtbot.wait_until(_assert_dialogs)
+    await aqtbot.wait_until(_assert_snackbars)
 
     # Assert login widget is displayed
     lw = gui.test_get_login_widget()
