@@ -245,22 +245,22 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             assert isinstance(kwargs["mountpoint"], PurePath)
             assert isinstance(kwargs["path"], FsPath)
             exc = kwargs["exc"]
-            abspath = kwargs["path"].with_mountpoint(kwargs["mountpoint"])
+            mountpoint = kwargs["mountpoint"]
             if isinstance(exc, FSWorkspaceNoReadAccess):
                 msg = _("TEXT_NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_workspace").format(
-                    workspace=abspath
+                    workspace=str(mountpoint)
                 )
             elif isinstance(exc, FSWorkspaceNoWriteAccess):
                 msg = _("TEXT_NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_workspace").format(
-                    workspace=abspath
+                    workspace=str(mountpoint)
                 )
             elif isinstance(exc, FSWorkspaceInMaintenance):
                 msg = _("TEXT_NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_workspace").format(
-                    workspace=abspath
+                    workspace=str(mountpoint)
                 )
             else:
                 msg = _("TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error").format(
-                    workspace=abspath, error=str(exc)
+                    workspace=str(mountpoint), error=str(exc)
                 )
             self.new_notification.emit("WARN", msg)
         elif event in (
@@ -272,11 +272,12 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             assert isinstance(kwargs["mountpoint"], PurePath)
             assert isinstance(kwargs["path"], FsPath)
             exc = kwargs["exc"]
-            abspath = kwargs["path"].with_mountpoint(kwargs["mountpoint"])
             self.new_notification.emit(
                 "WARN",
                 _("TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error").format(
-                    operation=kwargs["operation"], workspace=abspath, error=str(kwargs["exc"])
+                    operation=kwargs["operation"],
+                    workspace=str(kwargs["mountpoint"]),
+                    error=str(kwargs["exc"]),
                 ),
             )
         elif event == CoreEvent.SHARING_UPDATED:

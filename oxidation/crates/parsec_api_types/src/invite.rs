@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use fancy_regex::Regex;
 use rand::seq::SliceRandom;
 use rand::Rng;
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::str::FromStr;
@@ -82,7 +82,7 @@ impl FromStr for SASCode {
             static ref PATTERN: Regex =
                 Regex::new(SAS_CODE_PATTERN).unwrap_or_else(|_| unreachable!());
         }
-        if PATTERN.is_match(s) {
+        if PATTERN.is_match(s).unwrap_or(false) {
             Ok(Self(s.to_string()))
         } else {
             Err("Invalid SAS code")

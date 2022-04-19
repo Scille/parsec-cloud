@@ -67,6 +67,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
 
 [[package]]
+name = "bit-set"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e11e16035ea35e4e5997b393eacbf6f63983188f7a2ad25bfb13465f5ad59de"
+dependencies = [
+ "bit-vec",
+]
+
+[[package]]
+name = "bit-vec"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -360,6 +375,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "fancy-regex"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d95b4efe5be9104a4a18a9916e86654319895138be727b229820c39257c30dda"
+dependencies = [
+ "bit-set",
+ "regex",
+]
+
+[[package]]
 name = "flate2"
 version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -579,12 +604,12 @@ name = "libparsec_python"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "fancy-regex",
  "libparsec",
  "parsec_api_crypto",
  "parsec_api_types",
  "parsec_client_types",
  "pyo3",
- "regex",
  "uuid",
 ]
 
@@ -763,7 +788,7 @@ dependencies = [
  "paste",
  "pretty_assertions",
  "rand 0.7.3",
- "rand 0.8.4",
+ "rand 0.8.5",
  "rmp-serde",
  "serde",
  "serde_bytes",
@@ -783,10 +808,14 @@ dependencies = [
  "parsec_api_crypto",
  "parsec_api_types",
  "paste",
+ "rand 0.8.5",
  "rmp-serde",
  "rstest",
  "serde",
+ "serde_json",
  "serde_with",
+ "tests_fixtures",
+ "thiserror",
 ]
 
 [[package]]
@@ -795,6 +824,7 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "data-encoding",
+ "fancy-regex",
  "flate2",
  "hex-literal",
  "lazy_static",
@@ -802,8 +832,7 @@ dependencies = [
  "paste",
  "percent-encoding",
  "pretty_assertions",
- "rand 0.8.4",
- "regex",
+ "rand 0.8.5",
  "rmp-serde",
  "rstest",
  "rstest_reuse",
@@ -824,13 +853,13 @@ dependencies = [
 name = "parsec_client_types"
 version = "0.0.0"
 dependencies = [
+ "fancy-regex",
  "flate2",
  "hex-literal",
  "parsec_api_crypto",
  "parsec_api_types",
  "paste",
  "pretty_assertions",
- "regex",
  "rmp-serde",
  "rstest",
  "rstest_reuse",
@@ -986,19 +1015,18 @@ dependencies = [
  "libc",
  "rand_chacha 0.2.2",
  "rand_core 0.5.1",
- "rand_hc 0.2.0",
+ "rand_hc",
 ]
 
 [[package]]
 name = "rand"
-version = "0.8.4"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e7573632e6454cf6b99d7aac4ccca54be06da05aca2ef7423d22d27d4d4bcd8"
+checksum = "34af8d1a0e25924bc5b7c43c079c942339d8f0a8b57c39049bef581b46327404"
 dependencies = [
  "libc",
  "rand_chacha 0.3.1",
  "rand_core 0.6.3",
- "rand_hc 0.3.1",
 ]
 
 [[package]]
@@ -1046,15 +1074,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca3129af7b92a17112d59ad498c6f81eaf463253766b90396d39ea7a39d6613c"
 dependencies = [
  "rand_core 0.5.1",
-]
-
-[[package]]
-name = "rand_hc"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d51e9f596de227fda2ea6c84607f5558e196eeaf43c986b724ba4fb8fdf497e7"
-dependencies = [
- "rand_core 0.6.3",
 ]
 
 [[package]]
@@ -1524,7 +1543,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb3ab47baa004111b323696c6eaa2752e7356f7f77cf6b6dc7a2087368ce1ca4"
 dependencies = [
  "getrandom 0.2.4",
- "rand 0.8.4",
+ "rand 0.8.5",
  "serde",
 ]
 

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use regex::Regex;
+use fancy_regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 use std::convert::TryFrom;
@@ -58,7 +58,7 @@ macro_rules! new_string_based_id_type {
                         Regex::new($pattern).unwrap_or_else(|_| unreachable!());
                 }
                 // ID must respect regex AND be contained within $bytes_size bytes
-                if PATTERN.is_match(&id) && id.len() <= $bytes_size {
+                if PATTERN.is_match(&id).unwrap_or(false) && id.len() <= $bytes_size {
                     Ok(Self(id))
                 } else {
                     Err(concat!("Invalid ", stringify!($name)))

@@ -150,7 +150,9 @@ class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
         for available_device in devices:
             ab = AccountButton(available_device)
             ab.clicked.connect(self.account_clicked.emit)
-            self.accounts_widget.layout().insertWidget(0, ab)
+            self.accounts_widget.layout().insertWidget(
+                self.accounts_widget.layout().count() - 1, ab
+            )
         for ctx in pendings:
             epb = EnrollmentPendingButton(config, jobs_ctx, ctx)
             epb.finalize_clicked.connect(self._on_pending_finalize_clicked)
@@ -284,11 +286,6 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             lw = item.widget()
             lw.reset()
 
-    def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.button_login.isEnabled():
-            self.try_login()
-        event.accept()
-
     def list_devices_and_enrollments(self):
         pendings = PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(
             config_dir=self.config.config_dir
@@ -309,6 +306,15 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         elif len(devices) == 1 and not len(pendings):
             self._on_account_clicked(devices[0], hide_back=True)
         else:
+            # If the GUI has a last used device, we look for it in our devices list
+            # and insert it to the front, so it will be shown first
+            if self.config.gui_last_device:
+                last_used = next(
+                    (d for d in devices if d.device_id.str == self.config.gui_last_device), None
+                )
+                if last_used:
+                    devices.remove(last_used)
+                    devices.insert(0, last_used)
             accounts_widget = LoginAccountsWidget(self.config, self.jobs_ctx, devices, pendings)
             accounts_widget.account_clicked.connect(self._on_account_clicked)
             accounts_widget.pending_finalize_clicked.connect(self._on_pending_finalize_clicked)

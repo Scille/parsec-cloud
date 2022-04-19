@@ -22,7 +22,6 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
     c_w = logged_gui.test_get_central_widget()
 
     def _snackbar_shown(sb):
-        print(snackbar_catcher.snackbars)
         assert snackbar_catcher.snackbars == sb
 
     kwargs = {
@@ -30,7 +29,6 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
         "mountpoint": Path("/tmp/unused"),
         "path": FsPath("/unused"),
     }
-    wk_path = kwargs["path"].with_mountpoint(kwargs["mountpoint"])
     c_w.handle_event(CoreEvent.MOUNTPOINT_REMOTE_ERROR, **kwargs)
     await aqtbot.wait_until(
         lambda: _snackbar_shown(
@@ -38,7 +36,7 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
                 (
                     "WARN",
                     translate("TEXT_NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_workspace").format(
-                        workspace=wk_path
+                        workspace=str(kwargs["mountpoint"])
                     ),
                 )
             ]
@@ -54,7 +52,7 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
                 (
                     "WARN",
                     translate("TEXT_NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_workspace").format(
-                        workspace=wk_path
+                        workspace=str(kwargs["mountpoint"])
                     ),
                 )
             ]
@@ -70,7 +68,7 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
                 (
                     "WARN",
                     translate("TEXT_NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_workspace").format(
-                        workspace=wk_path
+                        workspace=str(kwargs["mountpoint"])
                     ),
                 )
             ]
@@ -86,7 +84,7 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
                 (
                     "WARN",
                     translate("TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error").format(
-                        workspace=wk_path, error="exception"
+                        workspace=str(kwargs["mountpoint"]), error="exception"
                     ),
                 )
             ]
@@ -104,7 +102,9 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
                     "WARN",
                     translate(
                         "TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error"
-                    ).format(workspace=wk_path, operation="unused", error="exception"),
+                    ).format(
+                        workspace=str(kwargs["mountpoint"]), operation="unused", error="exception"
+                    ),
                 )
             ]
         )
@@ -121,7 +121,9 @@ async def test_mountpoint_notifs(aqtbot, logged_gui, snackbar_catcher):
                     "WARN",
                     translate(
                         "TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error"
-                    ).format(workspace=wk_path, operation="unused", error="exception"),
+                    ).format(
+                        workspace=str(kwargs["mountpoint"]), operation="unused", error="exception"
+                    ),
                 )
             ]
         )
