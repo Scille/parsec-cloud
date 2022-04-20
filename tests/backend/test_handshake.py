@@ -3,6 +3,7 @@
 import pytest
 
 from parsec.api.protocol import packb, unpackb
+from parsec.api.protocol.handshake import ServerHandshake
 from parsec.api.version import ApiVersion, API_VERSION
 from parsec.api.transport import Transport
 from parsec.api.protocol import (
@@ -54,9 +55,11 @@ async def test_handshake_incompatible_version(backend, server_factory):
         assert unpackb(result_req) == {
             "handshake": "result",
             "result": "bad_protocol",
-            "help": "No overlap between client API versions {3.0} and backend API versions {"
-            + str(API_VERSION)
-            + ", 1.3}",
+            "help": "No overlap between client API versions {"
+            + str(incompatible_version)
+            + "} and backend API versions {"
+            + ", ".join(map(str, ServerHandshake.SUPPORTED_API_VERSIONS))
+            + "}",
         }
 
 

@@ -27,7 +27,7 @@ from parsec.api.protocol import (
 )
 from parsec.api.protocol.handshake import answer_serializer
 
-from parsec.api.version import API_V2_VERSION, ApiVersion
+from parsec.api.version import API_VERSION, ApiVersion
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 
@@ -49,7 +49,7 @@ def test_good_authenticated_handshake(alice):
     assert sh.answer_type == HandshakeType.AUTHENTICATED
     assert sh.answer_data == {
         "answer": ANY,
-        "client_api_version": API_V2_VERSION,
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key,
@@ -58,7 +58,7 @@ def test_good_authenticated_handshake(alice):
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
-    assert sh.client_api_version == API_V2_VERSION
+    assert sh.client_api_version == API_VERSION
 
 
 @pytest.mark.parametrize("invitation_type", (InvitationType.USER, InvitationType.DEVICE))
@@ -81,7 +81,7 @@ def test_good_invited_handshake(coolorg, invitation_type):
     assert sh.state == "answer"
     assert sh.answer_type == HandshakeType.INVITED
     assert sh.answer_data == {
-        "client_api_version": API_V2_VERSION,
+        "client_api_version": API_VERSION,
         "organization_id": organization_id,
         "invitation_type": invitation_type,
         "token": token,
@@ -91,7 +91,7 @@ def test_good_invited_handshake(coolorg, invitation_type):
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
-    assert sh.client_api_version == API_V2_VERSION
+    assert sh.client_api_version == API_VERSION
 
 
 # 1) Server build challenge (nothing more to test...)
@@ -104,17 +104,13 @@ def test_good_invited_handshake(coolorg, invitation_type):
     "req",
     [
         {},
-        {
-            "handshake": "foo",
-            "challenge": b"1234567890",
-            "supported_api_versions": [API_V2_VERSION],
-        },
+        {"handshake": "foo", "challenge": b"1234567890", "supported_api_versions": [API_VERSION]},
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"challenge": b"1234567890"},
-        {"challenge": b"1234567890", "supported_api_versions": [API_V2_VERSION]},
+        {"challenge": b"1234567890", "supported_api_versions": [API_VERSION]},
         {"handshake": "challenge", "challenge": None},
-        {"handshake": "challenge", "challenge": None, "supported_api_versions": [API_V2_VERSION]},
-        {"handshake": "challenge", "challenge": 42, "supported_api_versions": [API_V2_VERSION]},
+        {"handshake": "challenge", "challenge": None, "supported_api_versions": [API_VERSION]},
+        {"handshake": "challenge", "challenge": 42, "supported_api_versions": [API_VERSION]},
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"handshake": "challenge", "challenge": b"1234567890", "supported_api_versions": "invalid"},
     ],
@@ -333,7 +329,7 @@ def test_process_answer_req_bad_format(req, alice):
     ]:
         if req.get(key) == "<good>":
             req[key] = good_value
-    req["client_api_version"] = API_V2_VERSION
+    req["client_api_version"] = API_VERSION
     sh = ServerHandshake()
     sh.build_challenge_req()
     with pytest.raises(InvalidMessageError):
@@ -349,7 +345,7 @@ def test_build_result_req_bad_key(alice, bob):
     answer = {
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
-        "client_api_version": API_V2_VERSION,
+        "client_api_version": API_VERSION,
         "organization_id": str(alice.organization_id),
         "device_id": str(alice.device_id),
         "rvk": alice.root_verify_key.encode(),
@@ -366,7 +362,7 @@ def test_build_result_req_bad_challenge(alice):
     answer = {
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
-        "client_api_version": API_V2_VERSION,
+        "client_api_version": API_VERSION,
         "organization_id": str(alice.organization_id),
         "device_id": str(alice.device_id),
         "rvk": alice.root_verify_key.encode(),
@@ -396,7 +392,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
     answer = {
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
-        "client_api_version": API_V2_VERSION,
+        "client_api_version": API_VERSION,
         "organization_id": str(alice.organization_id),
         "device_id": str(alice.device_id),
         "rvk": alice.root_verify_key.encode(),
