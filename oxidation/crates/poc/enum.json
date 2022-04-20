@@ -6,17 +6,17 @@
             "fields": [
                 {
                     "name": "Bar0",
-                    "ty": "String",
+                    "type": "String",
                     "rename": "bar0"
                 },
                 {
                     "name": "Bar1",
-                    "ty": "Vec<u8>",
+                    "type": "Vec<u8>",
                     "rename": "bar1"
                 },
                 {
                     "name": "Bar2",
-                    "ty": "HashMap<u8, Vec<u8>>"
+                    "type": "HashMap<u8, Vec<u8>>"
                 }
             ]
         },

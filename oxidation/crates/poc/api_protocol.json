@@ -6,7 +6,7 @@
             "req": [
                 {
                     "name": "block_id",
-                    "ty": "BlockID"
+                    "type": "BlockID"
                 }
             ],
             "reps": [
@@ -15,7 +15,7 @@
                     "fields": [
                         {
                             "name": "block",
-                            "ty": "Vec<u8>"
+                            "type": "Vec<u8>"
                         }
                     ]
                 },

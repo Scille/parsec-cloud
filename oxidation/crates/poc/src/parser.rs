@@ -97,6 +97,7 @@ enum Vis {
 #[derive(Deserialize)]
 struct Field {
     name: String,
+    #[serde(rename = "type")]
     ty: String,
     rename: Option<String>,
 }
