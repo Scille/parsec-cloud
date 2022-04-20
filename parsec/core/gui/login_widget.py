@@ -247,6 +247,7 @@ class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
 class LoginNoDevicesWidget(QWidget, Ui_LoginNoDevicesWidget):
     join_organization_clicked = pyqtSignal()
     create_organization_clicked = pyqtSignal()
+    recover_device_clicked = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -257,6 +258,7 @@ class LoginNoDevicesWidget(QWidget, Ui_LoginNoDevicesWidget):
             self.label_no_device.setText(_("TEXT_LOGIN_NO_DEVICE_ON_MACHINE"))
         self.button_create_org.clicked.connect(self.create_organization_clicked.emit)
         self.button_join_org.clicked.connect(self.join_organization_clicked.emit)
+        self.button_recover_device.clicked.connect(self.recover_device_clicked.emit)
 
     def reset(self):
         pass
@@ -267,6 +269,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_smartcard_clicked = pyqtSignal(Path)
     create_organization_clicked = pyqtSignal()
     join_organization_clicked = pyqtSignal()
+    recover_device_clicked = pyqtSignal()
     login_canceled = pyqtSignal()
 
     def __init__(self, jobs_ctx, event_bus, config, login_failed_sig, parent):
@@ -301,6 +304,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
                 self.create_organization_clicked.emit
             )
             no_device_widget.join_organization_clicked.connect(self.join_organization_clicked.emit)
+            no_device_widget.recover_device_clicked.connect(self.recover_device_clicked.emit)
             self.widget.layout().addWidget(no_device_widget)
             no_device_widget.setFocus()
         elif len(devices) == 1 and not len(pendings):

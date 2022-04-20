@@ -416,6 +416,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             show_error(self, _("TEXT_INVALID_URL"))
             return
 
+    def _on_recover_device_clicked(self) -> None:
+        DeviceRecoveryImportWidget.show_modal(
+            self.config, self.jobs_ctx, parent=self, on_finished=self.reload_login_devices
+        )
+
     def _on_claim_pki_clicked(self, action_addr: BackendInvitationAddr) -> None:
         widget: EnrollmentQueryWidget
 
@@ -635,6 +640,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config, self.systray_notification)
         tab.join_organization_clicked.connect(self._on_join_org_clicked)
         tab.create_organization_clicked.connect(self._on_create_org_clicked)
+        tab.recover_device_clicked.connect(self._on_recover_device_clicked)
         idx = self.tab_center.addTab(tab, "")
         tab.state_changed.connect(self.on_tab_state_changed)
         self.tab_center.setCurrentIndex(idx)
