@@ -42,6 +42,7 @@ from parsec.api.protocol.handshake import (
     APIV1_AnonymousClientHandshake,
 )
 from parsec.api.protocol.organization import (
+    organization_bootstrap_serializer,
     apiv1_organization_bootstrap_serializer,
     organization_bootstrap_webhook_serializer,
     organization_stats_serializer,
@@ -170,6 +171,7 @@ __all__ = (
     "DeviceLabel",
     "StrBased",
     # Organization
+    "organization_bootstrap_serializer",
     "apiv1_organization_bootstrap_serializer",
     "organization_bootstrap_webhook_serializer",
     "organization_stats_serializer",

@@ -10,6 +10,7 @@ from parsec.crypto import VerifyKey
 from parsec.api.protocol import (
     OrganizationID,
     organization_stats_serializer,
+    organization_bootstrap_serializer,
     apiv1_organization_bootstrap_serializer,
     organization_config_serializer,
 )
@@ -19,6 +20,7 @@ from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent
 from parsec.backend.utils import catch_protocol_errors, api, Unset, UnsetType
 from parsec.backend.config import BackendConfig
+from parsec.backend.client_context import AnonymousClientContext, APIV1_AnonymousClientContext
 
 
 class OrganizationError(Exception):
@@ -140,10 +142,20 @@ class BaseOrganizationComponent:
             }
         )
 
-    @api("organization_bootstrap", client_types=[ClientType.APIV1_ANONYMOUS])
+    @api("organization_bootstrap", client_types=[ClientType.APIV1_ANONYMOUS, ClientType.ANONYMOUS])
     @catch_protocol_errors
-    async def api_organization_bootstrap(self, client_ctx, msg):
-        msg = apiv1_organization_bootstrap_serializer.req_load(msg)
+    async def api_organization_bootstrap(
+        self, client_ctx: Union[APIV1_AnonymousClientContext, AnonymousClientContext], msg: dict
+    ):
+        # Use the correct serializer depending on the API
+        if isinstance(client_ctx, APIV1_AnonymousClientContext):
+            serializer = apiv1_organization_bootstrap_serializer
+        else:
+            assert isinstance(client_ctx, AnonymousClientContext)
+            serializer = organization_bootstrap_serializer
+
+        msg = serializer.req_load(msg)
+
         bootstrap_token = msg["bootstrap_token"]
         root_verify_key = msg["root_verify_key"]
 
@@ -156,12 +168,14 @@ class BaseOrganizationComponent:
             )
 
             ru_data = rd_data = None
+            # TODO: Remove this `if` statement once APIv1 is no longer supported
             if "redacted_user_certificate" in msg:
                 ru_data = UserCertificateContent.verify_and_load(
                     msg["redacted_user_certificate"],
                     author_verify_key=root_verify_key,
                     expected_author=None,
                 )
+            # TODO: Remove this `if` statement once APIv1 is no longer supported
             if "redacted_device_certificate" in msg:
                 rd_data = DeviceCertificateContent.verify_and_load(
                     msg["redacted_device_certificate"],
@@ -194,7 +208,7 @@ class BaseOrganizationComponent:
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(u_data.timestamp, now):
-            return apiv1_organization_bootstrap_serializer.timestamp_out_of_ballpark_rep_dump(
+            return serializer.timestamp_out_of_ballpark_rep_dump(
                 backend_timestamp=now, client_timestamp=u_data.timestamp
             )
 
@@ -233,6 +247,7 @@ class BaseOrganizationComponent:
             human_handle=u_data.human_handle,
             profile=u_data.profile,
             user_certificate=msg["user_certificate"],
+            # TODO: Remove this `get` method once APIv1 is no longer supported
             redacted_user_certificate=msg.get("redacted_user_certificate", msg["user_certificate"]),
             user_certifier=u_data.author,
             created_on=u_data.timestamp,
@@ -241,6 +256,7 @@ class BaseOrganizationComponent:
             device_id=d_data.device_id,
             device_label=d_data.device_label,
             device_certificate=msg["device_certificate"],
+            # TODO: Remove this `get` method once APIv1 is no longer supported
             redacted_device_certificate=msg.get(
                 "redacted_device_certificate", msg["device_certificate"]
             ),
@@ -270,7 +286,7 @@ class BaseOrganizationComponent:
             human_label=user.human_handle.label if user.human_handle else None,
         )
 
-        return apiv1_organization_bootstrap_serializer.rep_dump({"status": "ok"})
+        return serializer.rep_dump({"status": "ok"})
 
     async def create(
         self,

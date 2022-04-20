@@ -5,9 +5,9 @@ from typing import Optional
 from parsec.crypto import SigningKey
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
 from parsec.api.protocol import HumanHandle, DeviceLabel
-from parsec.core.types import LocalDevice, BackendOrganizationAddr
+from parsec.core.types import LocalDevice, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
-from parsec.core.backend_connection import APIV1_BackendAnonymousCmds
+from parsec.core.backend_connection import organization_bootstrap as cmd_organization_bootstrap
 from parsec.core.invite.exceptions import (
     InviteError,
     InviteNotFoundError,
@@ -28,7 +28,7 @@ def _check_rep(rep, step_name):
 
 
 async def bootstrap_organization(
-    cmds: APIV1_BackendAnonymousCmds,
+    addr: BackendOrganizationBootstrapAddr,
     human_handle: Optional[HumanHandle],
     device_label: Optional[DeviceLabel],
 ) -> LocalDevice:
@@ -36,8 +36,8 @@ async def bootstrap_organization(
     root_verify_key = root_signing_key.verify_key
 
     organization_addr = BackendOrganizationAddr.build(
-        backend_addr=cmds.addr.get_backend_addr(),
-        organization_id=cmds.addr.organization_id,
+        backend_addr=addr.get_backend_addr(),
+        organization_id=addr.organization_id,
         root_verify_key=root_verify_key,
     )
 
@@ -72,9 +72,8 @@ async def bootstrap_organization(
     device_certificate = device_certificate.dump_and_sign(root_signing_key)
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(root_signing_key)
 
-    rep = await cmds.organization_bootstrap(
-        organization_id=cmds.addr.organization_id,
-        bootstrap_token=cmds.addr.token,
+    rep = await cmd_organization_bootstrap(
+        addr=addr,
         root_verify_key=root_verify_key,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
