@@ -479,14 +479,14 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
 
         assert isinstance(challenge, bytes)
 
-        # TO-DO remove the else for the next release
-        if self.backend_api_version >= (2, 5):
-            # TO-DO Need to use "BaseSignedData" ?
-            answer = self.user_signkey.sign(
-                answer_serializer.dumps({"type": "signed_answer", "answer": challenge})
-            )
-        else:
-            answer = self.user_signkey.sign(challenge)
+        # Clients with API version >= 2.7 no longer support API version < 2.5,
+        # as the signing mecanism for the challenge has changed with version 2.5
+        if self.backend_api_version < (2, 5):
+            raise HandshakeAPIVersionError([self.backend_api_version], self.SUPPORTED_API_VERSIONS)
+
+        answer = self.user_signkey.sign(
+            answer_serializer.dumps({"type": "signed_answer", "answer": challenge})
+        )
 
         return self.HANDSHAKE_ANSWER_SERIALIZER.dumps(
             {
