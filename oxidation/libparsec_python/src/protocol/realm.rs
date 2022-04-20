@@ -28,7 +28,7 @@ impl RealmCreateReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -81,7 +81,7 @@ impl RealmCreateRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -110,7 +110,7 @@ impl RealmStatusReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -180,7 +180,7 @@ impl RealmStatusRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -209,7 +209,7 @@ impl RealmStatsReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -253,7 +253,7 @@ impl RealmStatsRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -283,7 +283,7 @@ impl RealmGetRoleCertificateReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -332,7 +332,7 @@ impl RealmGetRoleCertificateRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -363,7 +363,7 @@ impl RealmUpdateRolesReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -443,7 +443,7 @@ impl RealmUpdateRolesRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -489,7 +489,7 @@ impl RealmStartReencryptionMaintenanceReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -587,7 +587,7 @@ impl RealmStartReencryptionMaintenanceRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -621,7 +621,7 @@ impl RealmFinishReencryptionMaintenanceReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -695,7 +695,7 @@ impl RealmFinishReencryptionMaintenanceRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {

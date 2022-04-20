@@ -25,7 +25,7 @@ impl BlockCreateReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -94,7 +94,7 @@ impl BlockCreateRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -124,7 +124,7 @@ impl BlockReadReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -177,7 +177,7 @@ impl BlockReadRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {

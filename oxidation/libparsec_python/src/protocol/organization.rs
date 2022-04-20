@@ -22,7 +22,7 @@ impl OrganizationStatsReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -50,7 +50,7 @@ impl UsersPerProfileDetailItem {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 }
 
@@ -98,7 +98,7 @@ impl OrganizationStatsRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -126,7 +126,7 @@ impl OrganizationConfigReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -163,7 +163,7 @@ impl OrganizationConfigRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {

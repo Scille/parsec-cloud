@@ -26,7 +26,7 @@ impl UserGetReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -62,7 +62,7 @@ impl Trustchain {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 }
 
@@ -97,7 +97,7 @@ impl UserGetRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -135,7 +135,7 @@ impl UserCreateReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -209,7 +209,7 @@ impl UserCreateRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -239,7 +239,7 @@ impl UserRevokeReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -286,7 +286,7 @@ impl UserRevokeRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -317,7 +317,7 @@ impl DeviceCreateReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -375,7 +375,7 @@ impl DeviceCreateRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -417,7 +417,7 @@ impl HumanFindReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -471,7 +471,7 @@ impl HumanFindResultItem {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     #[getter]
@@ -523,7 +523,7 @@ impl HumanFindRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {

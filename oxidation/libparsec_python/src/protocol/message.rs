@@ -23,7 +23,7 @@ impl MessageGetReq {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -58,7 +58,7 @@ impl Message {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 }
 
@@ -76,7 +76,7 @@ impl MessageGetRep {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}>", self.0))
+        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
