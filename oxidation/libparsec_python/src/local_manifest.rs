@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use pyo3::basic::CompareOp;
-use pyo3::exceptions::{PyAssertionError, PyAttributeError, PyValueError};
+use pyo3::exceptions::{PyAssertionError, PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyBytes, PyDict, PyTuple, PyType};
 use std::collections::{HashMap, HashSet};
@@ -385,7 +385,9 @@ impl LocalFileManifest {
     fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
         if let Some(args) = data {
             if args.get_item("need_sync").is_some() {
-                return Err(PyAttributeError::new_err("need_sync"));
+                return Err(PyTypeError::new_err(
+                    "Unexpected keyword argument `need_sync`",
+                ));
             }
         }
 
@@ -662,7 +664,9 @@ impl LocalFolderManifest {
     fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
         if let Some(args) = data {
             if args.get_item("need_sync").is_some() {
-                return Err(PyAttributeError::new_err("need_sync"));
+                return Err(PyTypeError::new_err(
+                    "Unexpected keyword argument `need_sync`",
+                ));
             }
         }
 
@@ -1030,7 +1034,9 @@ impl LocalWorkspaceManifest {
     fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
         if let Some(args) = data {
             if args.get_item("need_sync").is_some() {
-                return Err(PyAttributeError::new_err("need_sync"));
+                return Err(PyTypeError::new_err(
+                    "Unexpected keyword argument `need_sync`",
+                ));
             }
         }
 
@@ -1325,7 +1331,9 @@ impl LocalUserManifest {
     fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
         if let Some(args) = data {
             if args.get_item("need_sync").is_some() {
-                return Err(PyAttributeError::new_err("need_sync"));
+                return Err(PyTypeError::new_err(
+                    "Unexpected keyword argument `need_sync`",
+                ));
             }
         }
 

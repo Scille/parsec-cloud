@@ -270,9 +270,12 @@ def test_local_file_manifest():
 
     _assert_local_file_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
 
-    with pytest.raises(AttributeError) as excinfo:
+    with pytest.raises(TypeError) as excinfo:
+        py_lfm.evolve_and_mark_updated(timestamp=ts, need_sync=True)
+    assert str(excinfo.value) == "Unexpected keyword argument `need_sync`"
+    with pytest.raises(TypeError) as excinfo:
         rs_lfm.evolve_and_mark_updated(timestamp=ts, need_sync=True)
-    assert "need_sync" in str(excinfo.value)
+    assert str(excinfo.value) == "Unexpected keyword argument `need_sync`"
 
     ei = EntryID.new()
 
@@ -429,9 +432,12 @@ def test_local_folder_manifest():
 
     _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
 
-    with pytest.raises(AttributeError) as excinfo:
+    with pytest.raises(TypeError) as excinfo:
+        py_lfm.evolve_and_mark_updated(timestamp=ts, need_sync=True)
+    assert str(excinfo.value) == "Unexpected keyword argument `need_sync`"
+    with pytest.raises(TypeError) as excinfo:
         rs_lfm.evolve_and_mark_updated(timestamp=ts, need_sync=True)
-    assert "need_sync" in str(excinfo.value)
+    assert str(excinfo.value) == "Unexpected keyword argument `need_sync`"
 
     ei = EntryID.new()
     py_lfm = py_lfm.evolve_children_and_mark_updated(
@@ -576,6 +582,19 @@ def test_local_workspace_manifest():
     py_rwm = py_lwm.to_remote(author=di, timestamp=ts)
     rs_rwm = rs_lwm.to_remote(author=di, timestamp=ts)
     _assert_workspace_manifest_eq(py_rwm, rs_rwm)
+
+    children = {EntryName("wksp1"): EntryID.new()}
+    py_lwm = py_lwm.evolve_and_mark_updated(timestamp=ts, children=children)
+    rs_lwm = rs_lwm.evolve_and_mark_updated(timestamp=ts, children=children)
+
+    _assert_local_workspace_manifest_eq(py_lwm, rs_lwm, exclude_base=True, exclude_id=True)
+
+    with pytest.raises(TypeError) as excinfo:
+        py_lwm.evolve_and_mark_updated(timestamp=ts, need_sync=True)
+    assert str(excinfo.value) == "Unexpected keyword argument `need_sync`"
+    with pytest.raises(TypeError) as excinfo:
+        rs_lwm.evolve_and_mark_updated(timestamp=ts, need_sync=True)
+    assert str(excinfo.value) == "Unexpected keyword argument `need_sync`"
 
     py_lwm2 = _PyLocalWorkspaceManifest.from_remote(py_rwm, r".+")
     rs_lwm2 = LocalWorkspaceManifest.from_remote(rs_rwm, r".+")
