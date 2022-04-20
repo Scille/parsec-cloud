@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use pyo3::basic::CompareOp;
-use pyo3::exceptions::{PyAssertionError, PyValueError};
+use pyo3::exceptions::{PyAssertionError, PyAttributeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyBytes, PyDict, PyTuple, PyType};
 use std::collections::{HashMap, HashSet};
@@ -384,10 +384,9 @@ impl LocalFileManifest {
     #[args(data = "**")]
     fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
         if let Some(args) = data {
-            assert!(
-                args.get_item("need_sync").is_none(),
-                "Forbidden `need_sync` argument"
-            );
+            if args.get_item("need_sync").is_some() {
+                return Err(PyAttributeError::new_err("need_sync"));
+            }
         }
 
         let mut out = self.evolve(data)?;
@@ -662,10 +661,9 @@ impl LocalFolderManifest {
     #[args(data = "**")]
     fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
         if let Some(args) = data {
-            assert!(
-                args.get_item("need_sync").is_none(),
-                "Forbidden `need_sync` argument"
-            );
+            if args.get_item("need_sync").is_some() {
+                return Err(PyAttributeError::new_err("need_sync"));
+            }
         }
 
         let mut out = self.evolve(data)?;
@@ -1031,10 +1029,9 @@ impl LocalWorkspaceManifest {
     #[args(data = "**")]
     fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
         if let Some(args) = data {
-            assert!(
-                args.get_item("need_sync").is_none(),
-                "Forbidden `need_sync` argument"
-            );
+            if args.get_item("need_sync").is_some() {
+                return Err(PyAttributeError::new_err("need_sync"));
+            }
         }
 
         let mut out = self.evolve(data)?;
@@ -1327,10 +1324,9 @@ impl LocalUserManifest {
     #[args(data = "**")]
     fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
         if let Some(args) = data {
-            assert!(
-                args.get_item("need_sync").is_none(),
-                "Forbidden `need_sync` argument"
-            );
+            if args.get_item("need_sync").is_some() {
+                return Err(PyAttributeError::new_err("need_sync"));
+            }
         }
 
         let mut out = self.evolve(data)?;

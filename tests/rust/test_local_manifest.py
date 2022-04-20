@@ -48,7 +48,7 @@ def test_local_file_manifest():
         assert py.base_version == rs.base_version
         assert py.is_placeholder == rs.is_placeholder
         assert py.is_reshaped() == rs.is_reshaped()
-        for (b1, b2) in zip(py.blocks, rs.blocks):
+        for (b1, b2) in zip(sorted(py.blocks), sorted(rs.blocks)):
             assert len(b1) == len(b2)
             assert all(
                 isinstance(c2, Chunk)
@@ -77,7 +77,7 @@ def test_local_file_manifest():
             and b1.id == b2.id
             and b1.offset == b2.offset
             and b1.size == b2.size
-            for (b1, b2) in zip(py.blocks, rs.blocks)
+            for (b1, b2) in zip(sorted(py.blocks), sorted(rs.blocks))
         )
 
     kwargs = {
@@ -270,8 +270,9 @@ def test_local_file_manifest():
 
     _assert_local_file_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
 
-    with pytest.raises(BaseException):
+    with pytest.raises(AttributeError) as excinfo:
         rs_lfm.evolve_and_mark_updated(timestamp=ts, need_sync=True)
+    assert "need_sync" in str(excinfo.value)
 
     ei = EntryID.new()
 
@@ -319,15 +320,9 @@ def test_local_folder_manifest():
             )
         )
         assert len(py.local_confinement_points) == len(rs.local_confinement_points)
-        assert all(
-            isinstance(lcp1, EntryID) and lcp1 == lcp2
-            for (lcp1, lcp2) in zip(py.local_confinement_points, rs.local_confinement_points)
-        )
+        assert rs.local_confinement_points == py.local_confinement_points
         assert len(py.remote_confinement_points) == len(rs.remote_confinement_points)
-        assert all(
-            isinstance(rcp1, EntryID) and rcp1 == rcp2
-            for (rcp1, rcp2) in zip(py.remote_confinement_points, rs.remote_confinement_points)
-        )
+        assert rs.remote_confinement_points == py.remote_confinement_points
 
     def _assert_folder_manifest_eq(py, rs):
         assert py.author == rs.author
@@ -434,8 +429,9 @@ def test_local_folder_manifest():
 
     _assert_local_folder_manifest_eq(py_lfm, rs_lfm, exclude_base=True, exclude_id=True)
 
-    with pytest.raises(BaseException):
+    with pytest.raises(AttributeError) as excinfo:
         rs_lfm.evolve_and_mark_updated(timestamp=ts, need_sync=True)
+    assert "need_sync" in str(excinfo.value)
 
     ei = EntryID.new()
     py_lfm = py_lfm.evolve_children_and_mark_updated(
@@ -481,18 +477,14 @@ def test_local_workspace_manifest():
             and isinstance(id1, EntryID)
             and name1 == name2
             and id1 == id2
-            for ((name1, id1), (name2, id2)) in zip(py.children.items(), rs.children.items())
+            for ((name1, id1), (name2, id2)) in zip(
+                sorted(py.children.items()), sorted(rs.children.items())
+            )
         )
         assert len(py.local_confinement_points) == len(rs.local_confinement_points)
-        assert all(
-            isinstance(lcp1, EntryID) and lcp1 == lcp2
-            for (lcp1, lcp2) in zip(py.local_confinement_points, rs.local_confinement_points)
-        )
+        assert py.local_confinement_points == rs.local_confinement_points
         assert len(py.remote_confinement_points) == len(rs.remote_confinement_points)
-        assert all(
-            isinstance(rcp1, EntryID) and rcp1 == rcp2
-            for (rcp1, rcp2) in zip(py.remote_confinement_points, rs.remote_confinement_points)
-        )
+        assert py.remote_confinement_points == rs.remote_confinement_points
 
     def _assert_workspace_manifest_eq(py, rs):
         assert py.author == rs.author
@@ -622,7 +614,7 @@ def test_local_user_manifest():
         assert py.last_processed_message == rs.last_processed_message
         assert len(py.workspaces) == len(rs.workspaces)
         assert isinstance(rs.workspaces, type(py.workspaces))
-        assert all(a == b for (a, b) in zip(py.workspaces, rs.workspaces))
+        assert py.workspaces == rs.workspaces
         assert py.speculative == rs.speculative
 
     def _assert_user_manifest_eq(py, rs):
