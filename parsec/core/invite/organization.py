@@ -2,12 +2,16 @@
 
 from typing import Optional
 
-from parsec.crypto import SigningKey
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
+from parsec.crypto import SigningKey, VerifyKey
 from parsec.api.protocol import HumanHandle, DeviceLabel
+from parsec.core.backend_connection.exceptions import BackendNotAvailable
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
 from parsec.core.types import LocalDevice, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
-from parsec.core.backend_connection import organization_bootstrap as cmd_organization_bootstrap
+from parsec.core.backend_connection import (
+    apiv1_backend_anonymous_cmds_factory,
+    organization_bootstrap as cmd_organization_bootstrap,
+)
 from parsec.core.invite.exceptions import (
     InviteError,
     InviteNotFoundError,
@@ -72,7 +76,7 @@ async def bootstrap_organization(
     device_certificate = device_certificate.dump_and_sign(root_signing_key)
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(root_signing_key)
 
-    rep = await cmd_organization_bootstrap(
+    rep = await failsafe_organization_bootstrap(
         addr=addr,
         root_verify_key=root_verify_key,
         user_certificate=user_certificate,
@@ -83,3 +87,43 @@ async def bootstrap_organization(
     _check_rep(rep, step_name="organization bootstrap")
 
     return device
+
+
+async def failsafe_organization_bootstrap(
+    addr: BackendOrganizationBootstrapAddr,
+    root_verify_key: VerifyKey,
+    user_certificate: bytes,
+    device_certificate: bytes,
+    redacted_user_certificate: bytes,
+    redacted_device_certificate: bytes,
+) -> dict:
+    # Try the new anonymous API
+    try:
+        rep = await cmd_organization_bootstrap(
+            addr=addr,
+            root_verify_key=root_verify_key,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=redacted_user_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+        )
+    # If we get a 404 error, maybe the backend is too old to know about the anonymous route (API version < 2.6)
+    except BackendNotAvailable as exc:
+        inner_exc = exc.args[0]
+        if getattr(inner_exc, "status", None) != 404:
+            raise
+    # If we get an "unknown_command" status, the backend might be too old to know about the "organization_bootstrap" command (API version < 2.7)
+    else:
+        if rep["status"] != "unknown_command":
+            return rep
+    # Then we try again with the legacy version
+    async with apiv1_backend_anonymous_cmds_factory(addr) as anonymous_cmds:
+        return await anonymous_cmds.organization_bootstrap(
+            organization_id=addr.organization_id,
+            bootstrap_token=addr.token,
+            root_verify_key=root_verify_key,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=redacted_user_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+        )
