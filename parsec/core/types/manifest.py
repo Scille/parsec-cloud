@@ -289,7 +289,9 @@ class BaseLocalManifest(BaseLocalData):
     def evolve_and_mark_updated(
         self: LocalManifestTypeVar, timestamp: DateTime, **data
     ) -> LocalManifestTypeVar:
-        data.setdefault("need_sync", True)
+        if "need_sync" in data:
+            raise TypeError("Unexpected keyword argument `need_sync`")
+        data["need_sync"] = True
         return self.evolve(updated=timestamp, **data)
 
     # Remote methods
