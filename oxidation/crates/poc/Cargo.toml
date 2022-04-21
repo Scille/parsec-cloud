@@ -15,8 +15,10 @@ syn = "1.0"
 miniserde = "0.1"
 
 [dev-dependencies]
+parsec_api_crypto = { version = "0.0.0", path = "../parsec_api_crypto" }
 parsec_api_types = { version = "0.0.0", path = "../parsec_api_types" }
 
+flate2 = "1.0.22"
 rmp-serde = "1.0.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_with = "1.0"

@@ -1,8 +1,11 @@
 {
-    "name": "FooEnum",
+    "label": "FooEnum",
+    "serializing": "zip+msgpack",
+    "discriminant_field": "type",
     "variants": [
         {
             "name": "Foo0",
+            "discriminant_value": "foo-0",
             "fields": [
                 {
                     "name": "bar0",

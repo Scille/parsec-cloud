@@ -36,7 +36,9 @@ fn inspect_type(ty: &Type) -> String {
                 "List" => "Vec",
                 "Map" => "::std::collections::HashMap",
                 "Set" => "::std::collections::HashSet",
+                "DateTime" => "::parsec_api_types::DateTime",
                 "BlockID" => "::parsec_api_types::BlockID",
+                "DeviceID" => "::parsec_api_types::DeviceID",
                 ident => panic!("{ident} isn't allowed as type"),
             })
             .to_string();
@@ -265,9 +267,18 @@ fn quote_variants(_variants: &[Variant]) -> TokenStream {
     variants
 }
 
+#[derive(Debug, Deserialize)]
+enum Serializing {
+    #[serde(rename = "msgpack")]
+    Msgpack,
+    #[serde(rename = "zip+msgpack")]
+    ZipMsgpack,
+}
+
 #[derive(Deserialize)]
 pub(crate) struct Schema {
-    name: String,
+    label: String,
+    serializing: Serializing,
     // Struct based
     fields: Option<Vec<Field>>,
     // Enum based
@@ -277,8 +288,94 @@ pub(crate) struct Schema {
 
 impl Schema {
     pub(crate) fn quote(&self) -> TokenStream {
-        let name: Ident = syn::parse_str(&self.name).unwrap_or_else(|_| unreachable!());
+        let name: Ident = syn::parse_str(&self.label).unwrap_or_else(|_| unreachable!());
         let tag = quote_serde_attr(SerdeAttr::Tag, self.discriminant_field.as_ref());
+        let serializing = match self.serializing {
+            Serializing::Msgpack => {
+                quote! {
+                    impl #name {
+                        pub fn dump_and_encrypt(
+                            &self,
+                            key: &::parsec_api_crypto::SecretKey
+                        ) -> Vec<u8> {
+                            let serialized =
+                                ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                            key.encrypt(&serialized)
+                        }
+
+                        pub fn decrypt_and_load(
+                            encrypted: &[u8],
+                            key: &::parsec_api_crypto::SecretKey,
+                        ) -> Result<Self, &'static str> {
+                            let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+                            ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")
+                        }
+                    }
+                }
+            }
+            Serializing::ZipMsgpack => {
+                quote! {
+                    impl #name {
+                        pub fn dump_sign_and_encrypt(
+                            &self,
+                            author_signkey: &::parsec_api_crypto::SigningKey,
+                            key: &::parsec_api_crypto::SecretKey,
+                        ) -> Vec<u8> {
+                            use ::flate2::Compression;
+                            use ::std::io::{Read, Write};
+
+                            let serialized =
+                                ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+                            let mut e = ::flate2::write::ZlibEncoder::new(Vec::new(), Compression::default());
+                            e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+                            let compressed = e.finish().unwrap_or_else(|_| unreachable!());
+                            let signed = author_signkey.sign(&compressed);
+                            key.encrypt(&signed)
+                        }
+
+                        pub fn decrypt_verify_and_load(
+                            encrypted: &[u8],
+                            key: &::parsec_api_crypto::SecretKey,
+                            author_verify_key: &::parsec_api_crypto::VerifyKey,
+                            expected_author: &::parsec_api_types::DeviceID,
+                            expected_timestamp: ::parsec_api_types::DateTime,
+                        ) -> Result<Self, ::parsec_api_types::DataError> {
+                            use ::parsec_api_types::DataError;
+                            use ::std::io::{Read, Write};
+
+                            let signed = key
+                                .decrypt(encrypted)
+                                .map_err(|_| DataError::InvalidEncryption)?;
+                            let compressed = author_verify_key
+                                .verify(&signed)
+                                .map_err(|_| DataError::InvalidSignature)?;
+                            let mut serialized = vec![];
+
+                            ::flate2::read::ZlibDecoder::new(&compressed[..])
+                                .read_to_end(&mut serialized)
+                                .map_err(|_| DataError::InvalidCompression)?;
+
+                            let obj = rmp_serde::from_read_ref::<_, Self>(&serialized)
+                                .map_err(|_| DataError::InvalidSerialization)?;
+
+                            if obj.author != *expected_author {
+                                Err(DataError::UnexpectedAuthor {
+                                    expected: expected_author.clone(),
+                                    got: obj.author,
+                                })
+                            } else if obj.timestamp != expected_timestamp {
+                                Err(DataError::UnexpectedTimestamp {
+                                    expected: expected_timestamp,
+                                    got: obj.timestamp,
+                                })
+                            } else {
+                                Ok(obj)
+                            }
+                        }
+                    }
+                }
+            }
+        };
 
         if let Some(variants) = &self.variants {
             let variants = quote_variants(variants);
@@ -300,11 +397,15 @@ impl Schema {
                 pub struct #name {
                     #fields
                 }
+
+                #serializing
             }
         } else {
             quote! {
                 #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                 pub struct #name;
+
+                #serializing
             }
         }
     }

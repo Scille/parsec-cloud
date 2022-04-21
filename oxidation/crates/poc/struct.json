@@ -1,6 +1,15 @@
 {
-    "name": "Foo",
+    "label": "Foo",
+    "serializing": "zip+msgpack",
     "fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
         {
             "name": "bar0",
             "type": "String"
