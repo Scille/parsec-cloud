@@ -443,6 +443,11 @@ impl BackendOrganizationBootstrapAddr {
         Ok(self.0.to_http_redirection_url().to_string())
     }
 
+    #[args(path = "\"\"")]
+    fn to_http_domain_url(&self, path: &str) -> PyResult<String> {
+        Ok(self.0.to_http_domain_url(Some(path)).to_string())
+    }
+
     #[classmethod]
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
