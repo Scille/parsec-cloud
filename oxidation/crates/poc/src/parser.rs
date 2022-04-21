@@ -386,6 +386,8 @@ impl Schema {
                 #tag
                 pub enum #name {
                     #variants
+
+                    // TODO: How to serialize/deserialize an enum with encryption ?
                 }
             }
         } else if let Some(fields) = &self.fields {
