@@ -3,17 +3,15 @@
     "fields": [
         {
             "name": "bar0",
-            "type": "String",
-            "rename": "bar0"
+            "type": "String"
         },
         {
             "name": "bar1",
-            "type": "Vec<u8>",
-            "rename": "bar1"
+            "type": "Bytes"
         },
         {
             "name": "bar2",
-            "type": "HashMap<u8, Vec<u8>>"
+            "type": "Map<Integer, Bytes>"
         }
     ]
 }

@@ -5,18 +5,16 @@
             "name": "Foo0",
             "fields": [
                 {
-                    "name": "Bar0",
-                    "type": "String",
-                    "rename": "bar0"
+                    "name": "bar0",
+                    "type": "String"
                 },
                 {
-                    "name": "Bar1",
-                    "type": "Vec<u8>",
-                    "rename": "bar1"
+                    "name": "bar1",
+                    "type": "Bytes"
                 },
                 {
-                    "name": "Bar2",
-                    "type": "HashMap<u8, Vec<u8>>"
+                    "name": "bar2",
+                    "type": "Map<Integer, Bytes>"
                 }
             ]
         },

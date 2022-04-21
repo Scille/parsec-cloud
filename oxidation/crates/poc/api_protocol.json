@@ -2,42 +2,47 @@
     "family": "authenticated",
     "cmds": [
         {
-            "name": "BlockRead",
-            "req": [
-                {
-                    "name": "block_id",
-                    "type": "BlockID"
-                }
-            ],
+            "label": "BlockRead",
+            "req": {
+                "cmd": "block_read",
+                "other_fields": [
+                    {
+                        "name": "block_id",
+                        "type": "Option<BlockID>",
+                        "introduced_in_revision": 2
+                    }
+                ]
+            },
             "reps": [
                 {
-                    "name": "Ok",
-                    "fields": [
+                    "status": "ok",
+                    "other_fields": [
                         {
                             "name": "block",
-                            "type": "Vec<u8>"
+                            "type": "Bytes",
+                            "introduced_in_revision": 2
                         }
                     ]
                 },
                 {
-                    "name": "AlreadyExists",
-                    "fields": []
+                    "status": "already_exists",
+                    "other_fields": []
                 },
                 {
-                    "name": "NotFound",
-                    "fields": []
+                    "status": "not_found",
+                    "other_fields": []
                 },
                 {
-                    "name": "Timeout",
-                    "fields": []
+                    "status": "timeout",
+                    "other_fields": []
                 },
                 {
-                    "name": "NotAllowed",
-                    "fields": []
+                    "status": "not_allowed",
+                    "other_fields": []
                 },
                 {
-                    "name": "InMaintenance",
-                    "fields": []
+                    "status": "in_maintenance",
+                    "other_fields": []
                 }
             ]
         }
