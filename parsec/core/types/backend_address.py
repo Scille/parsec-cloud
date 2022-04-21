@@ -68,7 +68,8 @@ class BackendAddr:
         for instance `http://example.com/redirect/myOrg?token=123` will be
         converted into `parsec://example.com/myOrg?token=123&no_ssl=True`.
         """
-        split = urlsplit(url)
+        trim = url.strip()
+        split = urlsplit(trim)
         path = unquote_plus(split.path)
 
         if split.query:

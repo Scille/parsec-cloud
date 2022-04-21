@@ -32,6 +32,7 @@ from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui import telemetry
 from parsec.core.gui import desktop
 from parsec.core import win_registry
+from parsec.core.gui import validators
 from parsec.core.gui.changelog_widget import ChangelogWidget
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
@@ -383,6 +384,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             title=_("TEXT_JOIN_ORG_URL_TITLE"),
             message=_("TEXT_JOIN_ORG_URL_INSTRUCTIONS"),
             placeholder=_("TEXT_JOIN_ORG_URL_PLACEHOLDER"),
+            validator=validators.BackendActionAddrValidator(),
         )
         if url is None:
             return
