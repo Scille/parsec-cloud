@@ -410,6 +410,7 @@ pub enum BackendActionAddr {
     OrganizationBootstrap(BackendOrganizationBootstrapAddr),
     OrganizationFileLink(BackendOrganizationFileLinkAddr),
     Invitation(BackendInvitationAddr),
+    PkiEnrollment(BackendPkiEnrollmentAddr),
 }
 
 impl BackendActionAddr {
@@ -423,6 +424,9 @@ impl BackendActionAddr {
         if let Ok(addr) = BackendInvitationAddr::from_any(url) {
             return Ok(BackendActionAddr::Invitation(addr));
         }
+        if let Ok(addr) = BackendPkiEnrollmentAddr::from_any(url) {
+            return Ok(BackendActionAddr::PkiEnrollment(addr));
+        }
         Err("Invalid URL format")
     }
 
@@ -435,6 +439,9 @@ impl BackendActionAddr {
         }
         if let Ok(addr) = BackendInvitationAddr::from_http_redirection(url) {
             return Ok(BackendActionAddr::Invitation(addr));
+        }
+        if let Ok(addr) = BackendPkiEnrollmentAddr::from_http_redirection(url) {
+            return Ok(BackendActionAddr::PkiEnrollment(addr));
         }
         Err("Invalid URL format")
     }
@@ -453,6 +460,9 @@ impl std::str::FromStr for BackendActionAddr {
         }
         if let Ok(addr) = url.parse::<BackendInvitationAddr>() {
             return Ok(BackendActionAddr::Invitation(addr));
+        }
+        if let Ok(addr) = url.parse::<BackendPkiEnrollmentAddr>() {
+            return Ok(BackendActionAddr::PkiEnrollment(addr));
         }
         Err("Invalid URL format")
     }
@@ -718,6 +728,60 @@ impl BackendInvitationAddr {
 
     pub fn token(&self) -> &InvitationToken {
         &self.token
+    }
+}
+
+/*
+ * BackendPkiEnrollmentAddr
+ */
+
+/// Represent the URL to invite a user using PKI
+/// (e.g. ``parsec://parsec.example.com/my_org?action=pki_enrollment``)
+#[derive(Clone, PartialEq, Eq)]
+pub struct BackendPkiEnrollmentAddr {
+    base: BaseBackendAddr,
+    organization_id: OrganizationID,
+}
+impl_common_stuff!(BackendPkiEnrollmentAddr);
+impl BackendPkiEnrollmentAddr {
+    pub fn new(backend_addr: BackendAddr, organization_id: OrganizationID) -> Self {
+        Self {
+            base: backend_addr.base,
+            organization_id,
+        }
+    }
+
+    fn _from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
+        let base = BaseBackendAddr::from_url(parsed, pairs)?;
+        let organization_id = extract_organization_id(parsed)?;
+        let action = extract_action(pairs)?;
+        if action != "pki_enrollment" {
+            return Err("Expected `action=pki_enrollment` param value");
+        }
+
+        Ok(Self {
+            base,
+            organization_id,
+        })
+    }
+
+    expose_BaseBackendAddr_fields!();
+
+    pub fn _to_url(&self, mut url: Url) -> Url {
+        url.path_segments_mut()
+            .unwrap_or_else(|()| unreachable!())
+            .push(self.organization_id.as_ref());
+        url.query_pairs_mut()
+            .append_pair("action", "pki_enrollment");
+        url
+    }
+
+    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
+        self.base.to_http_domain_url(path)
+    }
+
+    pub fn organization_id(&self) -> &OrganizationID {
+        &self.organization_id
     }
 }
 

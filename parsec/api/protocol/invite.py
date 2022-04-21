@@ -48,7 +48,6 @@ if not TYPE_CHECKING:
 class InvitationType(Enum):
     USER = "USER"
     DEVICE = "DEVICE"
-    PKI = "PKI"
 
 
 InvitationTokenField = fields.uuid_based_field_factory(InvitationToken)

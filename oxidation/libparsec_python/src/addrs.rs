@@ -272,6 +272,9 @@ impl BackendActionAddr {
                     parsec_api_types::BackendActionAddr::Invitation(v) => {
                         Ok(BackendInvitationAddr(v).into_py(py).to_object(py))
                     }
+                    parsec_api_types::BackendActionAddr::PkiEnrollment(v) => {
+                        Ok(BackendPkiEnrollmentAddr(v).into_py(py).to_object(py))
+                    }
                 },
                 Err(err) => Err(PyValueError::new_err(err)),
             },
@@ -287,6 +290,9 @@ impl BackendActionAddr {
                     }
                     parsec_api_types::BackendActionAddr::Invitation(v) => {
                         Ok(BackendInvitationAddr(v).into_py(py).to_object(py))
+                    }
+                    parsec_api_types::BackendActionAddr::PkiEnrollment(v) => {
+                        Ok(BackendPkiEnrollmentAddr(v).into_py(py).to_object(py))
                     }
                 },
                 Err(err) => Err(PyValueError::new_err(err)),
@@ -836,6 +842,172 @@ impl BackendInvitationAddr {
             organization_id.0,
             inv_type,
             token.0,
+        )))
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq)]
+pub struct BackendPkiEnrollmentAddr(parsec_api_types::BackendPkiEnrollmentAddr);
+
+#[pymethods]
+impl BackendPkiEnrollmentAddr {
+    #[new]
+    #[args(py_kwargs = "**")]
+    fn new(organization_id: OrganizationID, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        let addr = match py_kwargs {
+            Some(dict) => BackendAddr::new(
+                match dict.get_item("hostname") {
+                    Some(hostname) => hostname.to_string(),
+                    None => String::from(""),
+                },
+                match dict.get_item("port") {
+                    Some(port) => port.extract::<u16>().ok(),
+                    None => None,
+                },
+                match dict.get_item("use_ssl") {
+                    Some(use_ssl) => use_ssl.extract::<bool>().unwrap(),
+                    None => true,
+                },
+            ),
+            None => Err(PyValueError::new_err("Missing parameters")),
+        };
+        Ok(Self(parsec_api_types::BackendPkiEnrollmentAddr::new(
+            addr.unwrap().0,
+            organization_id.0,
+        )))
+    }
+
+    #[getter]
+    fn hostname(&self) -> PyResult<&str> {
+        Ok(self.0.hostname())
+    }
+
+    #[getter]
+    fn port(&self) -> PyResult<u16> {
+        Ok(self.0.port())
+    }
+
+    #[getter]
+    fn use_ssl(&self) -> PyResult<bool> {
+        Ok(self.0.use_ssl())
+    }
+
+    #[getter]
+    fn netloc(&self) -> PyResult<String> {
+        if self.0.is_default_port() {
+            Ok(String::from(self.0.hostname()))
+        } else {
+            Ok(format!("{}:{}", self.0.hostname(), self.0.port()))
+        }
+    }
+
+    #[getter]
+    fn organization_id(&self) -> PyResult<OrganizationID> {
+        Ok(OrganizationID(self.0.organization_id().clone()))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        self.to_url()
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!(
+            "BackendPkiEnrollmentAddr(url={})",
+            self.to_url().unwrap()
+        ))
+    }
+
+    fn __richcmp__(
+        &self,
+        py: Python,
+        other: &BackendPkiEnrollmentAddr,
+        op: CompareOp,
+    ) -> PyResult<bool> {
+        let h1 = self.__hash__(py).unwrap();
+        let h2 = other.__hash__(py).unwrap();
+        comp_op(op, h1, h2)
+    }
+
+    fn __hash__(&self, py: Python) -> PyResult<isize> {
+        hash_generic(&self.to_url().unwrap(), py)
+    }
+
+    fn to_url(&self) -> PyResult<String> {
+        Ok(self.0.to_url().to_string())
+    }
+
+    fn get_backend_addr(&self) -> BackendAddr {
+        BackendAddr::new(
+            String::from(self.0.hostname()),
+            if !self.0.is_default_port() {
+                Some(self.0.port())
+            } else {
+                None
+            },
+            self.0.use_ssl(),
+        )
+        .unwrap()
+    }
+
+    fn generate_organization_addr(
+        &self,
+        py: Python,
+        root_verify_key: VerifyKey,
+    ) -> PyResult<BackendOrganizationAddr> {
+        match BackendOrganizationAddr::build(
+            PyType::new::<BackendOrganizationAddr>(py),
+            BackendAddr::new(
+                String::from(self.0.hostname()),
+                if !self.0.is_default_port() {
+                    Some(self.0.port())
+                } else {
+                    None
+                },
+                self.0.use_ssl(),
+            )
+            .unwrap(),
+            self.organization_id().unwrap(),
+            root_verify_key,
+        ) {
+            Ok(org_addr) => Ok(org_addr),
+            Err(err) => Err(PyValueError::new_err(err)),
+        }
+    }
+
+    fn to_http_redirection_url(&self) -> PyResult<String> {
+        Ok(self.0.to_http_redirection_url().to_string())
+    }
+
+    #[args(path = "\"\"")]
+    fn to_http_domain_url(&self, path: &str) -> PyResult<String> {
+        Ok(self.0.to_http_domain_url(Some(path)).to_string())
+    }
+
+    #[classmethod]
+    #[args(allow_http_redirection = "false")]
+    fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
+        match allow_http_redirection {
+            true => match parsec_api_types::BackendPkiEnrollmentAddr::from_any(url) {
+                Ok(backend_addr) => Ok(Self(backend_addr)),
+                Err(err) => Err(PyValueError::new_err(err)),
+            },
+            false => match parsec_api_types::BackendPkiEnrollmentAddr::from_str(url) {
+                Ok(backend_addr) => Ok(Self(backend_addr)),
+                Err(err) => Err(PyValueError::new_err(err)),
+            },
+        }
+    }
+
+    #[classmethod]
+    fn build(
+        _cls: &PyType,
+        backend_addr: BackendAddr,
+        organization_id: OrganizationID,
+    ) -> PyResult<Self> {
+        Ok(Self(parsec_api_types::BackendPkiEnrollmentAddr::new(
+            backend_addr.0,
+            organization_id.0,
         )))
     }
 }

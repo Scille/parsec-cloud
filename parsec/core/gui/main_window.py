@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QWidget, QMainWindow, QMenu, QShortcut, QMenuBar
 from parsec import __version__ as PARSEC_VERSION
 from parsec.core.gui.enrollment_query_widget import EnrollmentQueryWidget
 from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import InvitationType
 from parsec.core.types import (
@@ -406,14 +407,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 self._on_claim_user_clicked(action_addr)
             elif action_addr.invitation_type == InvitationType.DEVICE:
                 self._on_claim_device_clicked(action_addr)
-            elif action_addr.invitation_type == InvitationType.PKI:
-                if not is_pki_enrollment_available():
-                    show_error(self, _("TEXT_PKI_ENROLLMENT_NOT_AVAILABLE"))
-                    return
-                self._on_claim_pki_clicked(action_addr)
-            else:
-                show_error(self, _("TEXT_INVALID_URL"))
+        elif isinstance(action_addr, BackendPkiEnrollmentAddr):
+            if not is_pki_enrollment_available():
+                show_error(self, _("TEXT_PKI_ENROLLMENT_NOT_AVAILABLE"))
                 return
+            self._on_claim_pki_clicked(action_addr)
         else:
             show_error(self, _("TEXT_INVALID_URL"))
             return
@@ -423,7 +421,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             self.config, self.jobs_ctx, parent=self, on_finished=self.reload_login_devices
         )
 
-    def _on_claim_pki_clicked(self, action_addr: BackendInvitationAddr) -> None:
+    def _on_claim_pki_clicked(self, action_addr: BackendPkiEnrollmentAddr) -> None:
         widget: EnrollmentQueryWidget
 
         def _on_finished() -> None:
@@ -763,7 +761,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.switch_to_login_tab()
         self._on_claim_device_clicked(action_addr)
 
-    def show_claim_pki_widget(self, action_addr: BackendInvitationAddr) -> None:
+    def show_claim_pki_widget(self, action_addr: BackendPkiEnrollmentAddr) -> None:
         self.switch_to_login_tab()
         self._on_claim_pki_clicked(action_addr)
 
@@ -792,10 +790,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             and action_addr.invitation_type == InvitationType.DEVICE
         ):
             self.show_claim_device_widget(action_addr)
-        elif (
-            isinstance(action_addr, BackendInvitationAddr)
-            and action_addr.invitation_type == InvitationType.PKI
-        ):
+        elif isinstance(action_addr, BackendPkiEnrollmentAddr):
             self.show_claim_pki_widget(action_addr)
         else:
             show_error(self, _("TEXT_INVALID_URL"))
