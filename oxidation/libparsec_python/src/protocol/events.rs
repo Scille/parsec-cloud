@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use pyo3::exceptions::PyValueError;
 use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyType};
@@ -136,7 +137,8 @@ impl EventsListenRep {
     #[pyo3(name = "OkRealmRolesUdpated")]
     fn ok_realm_roles_updated(_cls: &PyType, realm_id: RealmID, role: &PyAny) -> PyResult<Self> {
         let realm_id = realm_id.0;
-        let role = py_to_rs_realm_role(role)?;
+        let role =
+            py_to_rs_realm_role(role)?.ok_or_else(|| PyValueError::new_err("role is missing"))?;
         Ok(Self(events_listen::Rep::Ok(
             parsec_api_protocol::APIEvent::RealmRolesUpdated { realm_id, role },
         )))

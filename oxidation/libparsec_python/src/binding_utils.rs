@@ -12,14 +12,14 @@ use std::collections::HashSet;
 use std::hash::Hash;
 
 pub fn comp_op<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult<bool> {
-    match op {
-        CompareOp::Eq => Ok(h1 == h2),
-        CompareOp::Ne => Ok(h1 != h2),
-        CompareOp::Lt => Ok(h1 < h2),
-        CompareOp::Le => Ok(h1 <= h2),
-        CompareOp::Gt => Ok(h1 > h2),
-        CompareOp::Ge => Ok(h1 >= h2),
-    }
+    Ok(match op {
+        CompareOp::Eq => h1 == h2,
+        CompareOp::Ne => h1 != h2,
+        CompareOp::Lt => h1 < h2,
+        CompareOp::Le => h1 <= h2,
+        CompareOp::Gt => h1 > h2,
+        CompareOp::Ge => h1 >= h2,
+    })
 }
 
 pub fn hash_generic(value_to_hash: &str, py: Python) -> PyResult<isize> {
@@ -58,15 +58,18 @@ pub fn rs_to_py_realm_role(role: &parsec_api_types::RealmRole) -> PyResult<PyObj
     })
 }
 
-pub fn py_to_rs_realm_role(role: &PyAny) -> PyResult<parsec_api_types::RealmRole> {
+pub fn py_to_rs_realm_role(role: &PyAny) -> PyResult<Option<parsec_api_types::RealmRole>> {
+    if role.is_none() {
+        return Ok(None);
+    }
     use parsec_api_types::RealmRole::*;
-    Ok(match role.getattr("name")?.extract::<&str>()? {
+    Ok(Some(match role.getattr("name")?.extract::<&str>()? {
         "OWNER" => Owner,
         "MANAGER" => Manager,
         "CONTRIBUTOR" => Contributor,
         "READER" => Reader,
         _ => unreachable!(),
-    })
+    }))
 }
 
 pub fn py_to_rs_user_profile(profile: &PyAny) -> PyResult<parsec_api_types::UserProfile> {
