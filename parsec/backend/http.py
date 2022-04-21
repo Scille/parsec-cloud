@@ -367,33 +367,51 @@ class HTTPComponent:
         return None, data
 
     async def _http_api_anonymous(self, req: HTTPRequest, **kwargs: str) -> HTTPResponse:
+        # Check whether the organization exists
         try:
             organization_id = OrganizationID(kwargs["organization_id"])
             await self._organization_component.get(organization_id)
-        except (ValueError, OrganizationNotFoundError):
+        except OrganizationNotFoundError:
+            organization_exists = False
+        except ValueError:
+            return HTTPResponse.build_msgpack(404, {})
+        else:
+            organization_exists = True
+
+        # Reply to GET
+        if req.method == "GET":
+            status = 200 if organization_exists else 404
+            return HTTPResponse.build_msgpack(status, {})
+
+        # Reply early to POST when the organization doesn't exists
+        if not organization_exists and not self._config.organization_spontaneous_bootstrap:
             return HTTPResponse.build_msgpack(404, {})
 
-        if req.method == "GET":
-            return HTTPResponse.build_msgpack(200, {})
-
+        # Get and unpack the body
         body = await req.get_body()
         try:
             msg = unpackb(body)
         except SerdePackingError:
             return HTTPResponse.build_msgpack(200, {"status": "invalid_msg_format"})
 
+        # Lazy creation of the organization if necessary
+        cmd = msg.get("cmd")
+        if cmd == "organization_bootstrap" and not organization_exists:
+            assert self._config.organization_spontaneous_bootstrap
+            try:
+                await self._organization_component.create(id=organization_id, bootstrap_token="")
+            except OrganizationAlreadyExistsError:
+                pass
+
+        # Retreive command
         client_ctx = AnonymousClientContext(organization_id)
         try:
-            cmd = msg.get("cmd", "<missing>")
             if not isinstance(cmd, str):
                 raise KeyError()
-
             cmd_func = self.anonymous_api[cmd]
-
         except KeyError:
-            rep = {"status": "unknown_command"}
+            return HTTPResponse.build_msgpack(200, {"status": "unknown_command"})
 
-        else:
-            rep = await cmd_func(client_ctx, msg)
-
+        # Run command
+        rep = await cmd_func(client_ctx, msg)
         return HTTPResponse.build_msgpack(200, rep)

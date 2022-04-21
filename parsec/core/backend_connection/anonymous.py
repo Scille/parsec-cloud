@@ -17,7 +17,11 @@ from parsec.core.types import (
     BackendPkiEnrollmentAddr,
     BackendOrganizationBootstrapAddr,
 )
-from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendProtocolError
+from parsec.core.backend_connection.exceptions import (
+    BackendNotAvailable,
+    BackendProtocolError,
+    BackendOutOfBallparkError,
+)
 
 logger = get_logger()
 
@@ -57,6 +61,9 @@ async def _anonymous_cmd(
     if rep["status"] == "invalid_msg_format":
         logger.error("Invalid request data according to backend", cmd=req["cmd"], rep=rep)
         raise BackendProtocolError("Invalid request data according to backend")
+
+    if rep["status"] == "bad_timestamp":
+        raise BackendOutOfBallparkError(rep)
 
     return rep
 

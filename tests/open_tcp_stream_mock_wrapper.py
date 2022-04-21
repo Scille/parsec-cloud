@@ -80,7 +80,10 @@ class OpenTCPStreamMockWrapper:
         netloc = parse_result.netloc
         target = parse_result.path
         host, port = netloc.split(":")
-        sock = await self(host, port)
+        try:
+            sock = await self(host, port)
+        except ConnectionRefusedError as exc:
+            raise urllib.error.URLError(exc)
         headers = [(key, value) for key, value in headers.items()]
         headers += [("Host", host), ("Content-Length", str(len(data)))]
 
@@ -111,7 +114,7 @@ class OpenTCPStreamMockWrapper:
         if response is None:
             raise urllib.error.URLError("No response")
         if response.status_code != 200:
-            raise urllib.error.URLError(f"{response.status_code}")
+            raise urllib.error.HTTPError(None, response.status_code, None, None, None)
         return out_data
 
     def switch_offline(self, addr):
