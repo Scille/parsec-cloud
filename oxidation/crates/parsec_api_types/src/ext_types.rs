@@ -464,8 +464,8 @@ where
         {
             type Value = Maybe<T>;
 
-            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("maybe")
+            fn expecting(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                unreachable!()
             }
 
             fn visit_unit<E>(self) -> Result<Self::Value, E>
