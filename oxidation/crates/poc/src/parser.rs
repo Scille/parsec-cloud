@@ -135,7 +135,7 @@ enum SerdeAttr {
     Tag,
 }
 
-fn quote_serde_attr(attr: SerdeAttr, value: Option<&str>) -> TokenStream {
+fn quote_serde_attr(attr: SerdeAttr, value: Option<&String>) -> TokenStream {
     match value {
         Some(value) => match attr {
             SerdeAttr::Rename => quote! { #[serde(rename = #value)] },
@@ -179,7 +179,7 @@ impl Field {
             (inspect_type(&raw_ty), quote! {})
         };
         let ty: Type = syn::parse_str(&inspected_ty).unwrap_or_else(|e| panic!("{e}"));
-        let rename = quote_serde_attr(SerdeAttr::Rename, rename.map(|_| &self.name[..]));
+        let rename = quote_serde_attr(SerdeAttr::Rename, rename.map(|_| &self.name));
         let serde_as = quote_serde_as(&ty);
 
         match vis {
@@ -216,6 +216,7 @@ fn quote_fields(_fields: &[Field], vis: Vis) -> TokenStream {
 struct Variant {
     name: String,
     fields: Vec<Field>,
+    discriminant_value: Option<String>,
 }
 
 impl Variant {
@@ -226,7 +227,12 @@ impl Variant {
         };
         let name: Ident =
             syn::parse_str(rename.unwrap_or(&self.name)).unwrap_or_else(|_| unreachable!());
-        let rename = quote_serde_attr(SerdeAttr::Rename, rename.map(|_| &self.name[..]));
+        let rename = quote_serde_attr(
+            SerdeAttr::Rename,
+            self.discriminant_value
+                .as_ref()
+                .or_else(|| rename.map(|_| &self.name)),
+        );
         let fields = quote_fields(&self.fields, Vis::Private);
 
         if self.fields.is_empty() {
@@ -265,14 +271,14 @@ pub(crate) struct Schema {
     // Struct based
     fields: Option<Vec<Field>>,
     // Enum based
-    tag: Option<String>,
+    discriminant_field: Option<String>,
     variants: Option<Vec<Variant>>,
 }
 
 impl Schema {
     pub(crate) fn quote(&self) -> TokenStream {
         let name: Ident = syn::parse_str(&self.name).unwrap_or_else(|_| unreachable!());
-        let tag = quote_serde_attr(SerdeAttr::Tag, self.tag.as_ref().map(|tag| &tag[..]));
+        let tag = quote_serde_attr(SerdeAttr::Tag, self.discriminant_field.as_ref());
 
         if let Some(variants) = &self.variants {
             let variants = quote_variants(variants);
