@@ -263,6 +263,8 @@ class ServerHandshake:
         )
 
         # Use the correct serializer
+        # `settle_compatible_versions` is called before,
+        # so we already settled on a version from `self.SUPPORTED_API_VERSIONS`
         if client_api_version.version == 1:
             serializer = apiv1_handshake_answer_serializer
         else:
@@ -356,7 +358,7 @@ class ServerHandshake:
 
                 # Provides compatibility with API version 2.4 and below
                 # TODO: Remove once API v2.x is deprecated
-                if self.client_api_version.version == 2 and self.client_api_version.revision < 5:
+                if (2, 0) <= self.client_api_version < (2, 5):
                     returned_challenge = verify_key.verify(answer)
 
                 # Used in API v2.5+ and API v3.x
@@ -484,7 +486,7 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
 
         # Provides compatibility with API version 2.4 and below
         # TODO: Remove once API v2.x is deprecated
-        if self.backend_api_version.version == 2 and self.backend_api_version.revision < 5:
+        if (2, 0) <= self.backend_api_version < (2, 5):
             answer = self.user_signkey.sign(challenge)
 
         # Used in API v2.5+ and API v3.x

@@ -55,11 +55,7 @@ async def test_handshake_incompatible_version(backend, server_factory):
         assert unpackb(result_req) == {
             "handshake": "result",
             "result": "bad_protocol",
-            "help": "No overlap between client API versions {"
-            + str(incompatible_version)
-            + "} and backend API versions {"
-            + ", ".join(map(str, ServerHandshake.SUPPORTED_API_VERSIONS))
-            + "}",
+            "help": f"No overlap between client API versions {{{incompatible_version}}} and backend API versions {{{', '.join(map(str, ServerHandshake.SUPPORTED_API_VERSIONS))}}}",
         }
 
 
