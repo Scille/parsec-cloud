@@ -53,7 +53,7 @@ parts:
       VENV=${SNAPCRAFT_PART_BUILD}/venv
 
       # Install Parsec & depedencies in a virtual env...
-      /usr/bin/python3.8 -m venv ${VENV}  # must use absolute path here
+      /usr/bin/python3.9 -m venv ${VENV}  # must use absolute path here
       ${VENV}/bin/python -m pip install -Ur pre-requirements.txt
       ${VENV}/bin/python -m pip install -U .[core]
 
@@ -176,26 +176,26 @@ parts:
       done
 
     build-packages:
-      - python3.8-venv
-      - python3.8
+      - python3.9-venv
+      - python3.9
     stage-packages:
       # Why so much packages ?
-      # Well because Python 3.8 is part of base image core20 so Snapcraft
+      # Well because Python 3.9 is part of base image core20 so Snapcraft
       # strips it out of the snap to save space, but this doesn't work for
       # classic mode (given host OS is used then !), so we have to manually
       # specify all the packages to force their inclusion.
       # This list has been generated doing (with a bit of manual tweaking):
-      # apt-cache depends --recurse  --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances python3.8
-      - python3.8
-      - python3.8-minimal
+      # apt-cache depends --recurse  --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances python3.9
+      - python3.9
+      - python3.9-minimal
       # yes, we even package libc (otherwise it may cause issue when runnig on non-ubunut OS)
       - libc6
       - libcrypt1
-      - libpython3.8-minimal
+      - libpython3.9-minimal
       - libssl1.1
       - libexpat1
       - zlib1g
-      - libpython3.8-stdlib
+      - libpython3.9-stdlib
       - mime-support
       - libbz2-1.0
       - libdb5.3
