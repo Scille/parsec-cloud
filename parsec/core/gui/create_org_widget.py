@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import QWidget, QApplication, QDialog
 
 from parsec.api.protocol import OrganizationID, HumanHandle, DeviceLabel
 from parsec.core.backend_connection import (
-    apiv1_backend_anonymous_cmds_factory,
     BackendConnectionRefused,
     BackendNotAvailable,
     BackendOutOfBallparkError,
@@ -49,16 +48,15 @@ async def _do_create_org(
     backend_addr: BackendOrganizationBootstrapAddr,
 ):
     try:
-        async with apiv1_backend_anonymous_cmds_factory(addr=backend_addr) as cmds:
-            new_device = await bootstrap_organization(
-                cmds=cmds, human_handle=human_handle, device_label=device_label
-            )
-            # The organization is brand new, of course there is no existing
-            # remote user manifest, hence our placeholder is non-speculative.
-            await user_storage_non_speculative_init(
-                data_base_dir=config.data_base_dir, device=new_device
-            )
-            return new_device
+        new_device = await bootstrap_organization(
+            backend_addr, human_handle=human_handle, device_label=device_label
+        )
+        # The organization is brand new, of course there is no existing
+        # remote user manifest, hence our placeholder is non-speculative.
+        await user_storage_non_speculative_init(
+            data_base_dir=config.data_base_dir, device=new_device
+        )
+        return new_device
     except InviteNotFoundError as exc:
         raise JobResultError("invite-not-found", exc=exc)
     except InviteAlreadyUsedError as exc:

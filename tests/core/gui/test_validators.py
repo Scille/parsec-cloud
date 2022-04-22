@@ -86,7 +86,7 @@ def test_backend_addr_validator(qtbot, core_config):
     le.setText("")
     qtbot.wait_until(lambda: le.text() == "")
     assert not le.is_input_valid()
-    assert le.property("validity") == QtGui.QValidator.Invalid
+    assert le.property("validity") == QtGui.QValidator.Intermediate
 
     qtbot.keyClicks(le, "parsec://host:1337")
     qtbot.wait_until(lambda: le.text() == "parsec://host:1337")

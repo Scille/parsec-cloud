@@ -28,7 +28,6 @@ from parsec.core.types import (
 from parsec.core.config import load_config
 from parsec.core.backend_connection import (
     BackendAuthenticatedCmds,
-    apiv1_backend_anonymous_cmds_factory,
     backend_authenticated_cmds_factory,
 )
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
@@ -64,18 +63,15 @@ async def initialize_test_organization(
 
     # Bootstrap organization and Alice user and create device "laptop" for Alice
 
-    async with apiv1_backend_anonymous_cmds_factory(organization_bootstrap_addr) as anonymous_cmds:
-        alice_device = await bootstrap_organization(
-            cmds=anonymous_cmds,
-            human_handle=HumanHandle(label="Alice", email="alice@example.com"),
-            device_label=DeviceLabel("laptop"),
-        )
-        await user_storage_non_speculative_init(
-            data_base_dir=config.data_base_dir, device=alice_device
-        )
-        save_device_with_password_in_config(
-            config_dir=config_dir, device=alice_device, password=password
-        )
+    alice_device = await bootstrap_organization(
+        organization_bootstrap_addr,
+        human_handle=HumanHandle(label="Alice", email="alice@example.com"),
+        device_label=DeviceLabel("laptop"),
+    )
+    await user_storage_non_speculative_init(data_base_dir=config.data_base_dir, device=alice_device)
+    save_device_with_password_in_config(
+        config_dir=config_dir, device=alice_device, password=password
+    )
 
     # Create context manager, alice_core will be needed for the rest of the script
     async with logged_core_factory(config, alice_device) as alice_core:

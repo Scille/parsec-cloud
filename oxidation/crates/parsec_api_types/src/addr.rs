@@ -538,6 +538,10 @@ impl BackendOrganizationBootstrapAddr {
     pub fn token(&self) -> Option<&str> {
         self.token.as_deref()
     }
+
+    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
+        self.base.to_http_domain_url(path)
+    }
 }
 
 /*

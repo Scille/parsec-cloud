@@ -60,7 +60,7 @@ INVITED_CMDS = {
     "invite_3b_claimer_wait_peer_trust",
     "invite_4_claimer_communicate",
 }
-ANONYMOUS_CMDS = {"pki_enrollment_submit", "pki_enrollment_info"}
+ANONYMOUS_CMDS = {"pki_enrollment_submit", "pki_enrollment_info", "organization_bootstrap"}
 
 # TODO: remove me once API v1 is deprecated
 APIV1_ANONYMOUS_CMDS = {"ping", "organization_bootstrap"}

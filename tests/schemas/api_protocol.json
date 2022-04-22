@@ -91,6 +91,59 @@
     },
     "APIv2": {
         "ANONYMOUS": {
+            "organization_bootstrap": {
+                "rep": {
+                    "fields": {
+                        "status": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "CheckedConstant",
+                            "value": "ok"
+                        }
+                    },
+                    "serializing": "msgpack"
+                },
+                "req": {
+                    "fields": {
+                        "bootstrap_token": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "String"
+                        },
+                        "cmd": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "String"
+                        },
+                        "device_certificate": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "bytesField"
+                        },
+                        "redacted_device_certificate": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "bytesField"
+                        },
+                        "redacted_user_certificate": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "bytesField"
+                        },
+                        "root_verify_key": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "VerifyKey"
+                        },
+                        "user_certificate": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "bytesField"
+                        }
+                    },
+                    "serializing": "msgpack"
+                }
+            },
             "pki_enrollment_info": {
                 "rep": {
                     "fields": {},

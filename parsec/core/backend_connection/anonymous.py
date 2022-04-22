@@ -3,15 +3,25 @@
 from uuid import UUID
 from structlog import get_logger
 
+from parsec.crypto import VerifyKey
 from parsec.utils import http_request, URLError
 from parsec.api.protocol import (
     OrganizationID,
     ProtocolError,
     pki_enrollment_submit_serializer,
     pki_enrollment_info_serializer,
+    organization_bootstrap_serializer,
 )
-from parsec.core.types import BackendAddr, BackendPkiEnrollmentAddr
-from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendProtocolError
+from parsec.core.types import (
+    BackendAddr,
+    BackendPkiEnrollmentAddr,
+    BackendOrganizationBootstrapAddr,
+)
+from parsec.core.backend_connection.exceptions import (
+    BackendNotAvailable,
+    BackendProtocolError,
+    BackendOutOfBallparkError,
+)
 
 logger = get_logger()
 
@@ -52,6 +62,9 @@ async def _anonymous_cmd(
         logger.error("Invalid request data according to backend", cmd=req["cmd"], rep=rep)
         raise BackendProtocolError("Invalid request data according to backend")
 
+    if rep["status"] == "bad_timestamp":
+        raise BackendOutOfBallparkError(rep)
+
     return rep
 
 
@@ -83,4 +96,26 @@ async def pki_enrollment_info(addr: BackendPkiEnrollmentAddr, enrollment_id: UUI
         addr=addr,
         organization_id=addr.organization_id,
         enrollment_id=enrollment_id,
+    )
+
+
+async def organization_bootstrap(
+    addr: BackendOrganizationBootstrapAddr,
+    root_verify_key: VerifyKey,
+    user_certificate: bytes,
+    device_certificate: bytes,
+    redacted_user_certificate: bytes,
+    redacted_device_certificate: bytes,
+) -> dict:
+    return await _anonymous_cmd(
+        organization_bootstrap_serializer,
+        cmd="organization_bootstrap",
+        addr=addr,
+        organization_id=addr.organization_id,
+        bootstrap_token=addr.token,
+        root_verify_key=root_verify_key,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=redacted_user_certificate,
+        redacted_device_certificate=redacted_device_certificate,
     )

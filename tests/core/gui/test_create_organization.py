@@ -6,7 +6,6 @@ import pendulum
 from PyQt5 import QtCore
 
 from parsec.api.protocol import OrganizationID, HumanHandle, DeviceLabel
-from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.invite import bootstrap_organization
 from parsec.core.gui.create_org_widget import CreateOrgUserInfoWidget
@@ -180,10 +179,9 @@ async def test_create_organization_same_name(
     # Create an org
     human_handle = HumanHandle(email="zack@example.com", label="Zack")
 
-    async with apiv1_backend_anonymous_cmds_factory(addr=organization_bootstrap_addr) as cmds:
-        await bootstrap_organization(
-            cmds, human_handle=human_handle, device_label=DeviceLabel("PC1")
-        )
+    await bootstrap_organization(
+        organization_bootstrap_addr, human_handle=human_handle, device_label=DeviceLabel("PC1")
+    )
 
     # Now create an org with the same name
     aqtbot.key_click(gui, "n", QtCore.Qt.ControlModifier, 200)

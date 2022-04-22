@@ -9,7 +9,6 @@ from parsec.cli_utils import spinner, cli_exception_handler, aprompt
 from parsec.api.protocol import HumanHandle, DeviceLabel
 from parsec.core.config import CoreConfig
 from parsec.core.types import BackendOrganizationBootstrapAddr
-from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import bootstrap_organization as do_bootstrap_organization
 from parsec.core.cli.utils import cli_command_base_options, core_config_options, save_device_options
@@ -32,22 +31,19 @@ async def _bootstrap_organization(
         device_label_raw = await aprompt("Device label", default=platform.node())
         device_label = DeviceLabel(device_label_raw)
 
-    async with apiv1_backend_anonymous_cmds_factory(addr=addr) as cmds:
-        async with spinner("Bootstrapping organization in the backend"):
-            new_device = await do_bootstrap_organization(
-                cmds=cmds, human_handle=human_handle, device_label=device_label
-            )
-
-        # We don't have to worry about overwritting an existing keyfile
-        # given their names are base on the device's slughash which is intended
-        # to be globally unique.
-
-        # The organization is brand new, of course there is no existing
-        # remote user manifest, hence our placeholder is non-speculative.
-        await user_storage_non_speculative_init(
-            data_base_dir=config.data_base_dir, device=new_device
+    async with spinner("Bootstrapping organization in the backend"):
+        new_device = await do_bootstrap_organization(
+            addr, human_handle=human_handle, device_label=device_label
         )
-        await save_device_with_selected_auth(config_dir=config.config_dir, device=new_device)
+
+    # We don't have to worry about overwritting an existing keyfile
+    # given their names are base on the device's slughash which is intended
+    # to be globally unique.
+
+    # The organization is brand new, of course there is no existing
+    # remote user manifest, hence our placeholder is non-speculative.
+    await user_storage_non_speculative_init(data_base_dir=config.data_base_dir, device=new_device)
+    await save_device_with_selected_auth(config_dir=config.config_dir, device=new_device)
 
 
 @click.command(short_help="configure new organization")
