@@ -23,7 +23,7 @@ from parsec.api.protocol.invite import (
     InvitationType,
     InvitationTypeField,
 )
-from parsec.api.version import ApiVersion, API_V1_VERSION, API_V2_VERSION
+from parsec.api.version import ApiVersion, API_V1_VERSION, API_V2_VERSION, API_V3_VERSION
 
 
 class HandshakeError(ProtocolError):
@@ -211,7 +211,7 @@ handshake_result_serializer = serializer_factory(HandshakeResultSchema)
 
 class ServerHandshake:
     # Class attribute
-    SUPPORTED_API_VERSIONS = (API_V2_VERSION, API_V1_VERSION)
+    SUPPORTED_API_VERSIONS = (API_V1_VERSION, API_V2_VERSION, API_V3_VERSION)
     CHALLENGE_SIZE = 48
 
     def __init__(self) -> None:
@@ -256,13 +256,19 @@ class ServerHandshake:
         # Retrieve the version used by client first
         data = handshake_answer_version_only_serializer.loads(req)
         client_api_version = data["client_api_version"]
-        if client_api_version.version == 2:
-            serializer = handshake_answer_serializer
-        elif client_api_version.version == 1:
+
+        # API version matching
+        self.backend_api_version, self.client_api_version = _settle_compatible_versions(
+            self.SUPPORTED_API_VERSIONS, [client_api_version]
+        )
+
+        # Use the correct serializer
+        # `settle_compatible_versions` is called before,
+        # so we already settled on a version from `self.SUPPORTED_API_VERSIONS`
+        if client_api_version.version == 1:
             serializer = apiv1_handshake_answer_serializer
         else:
-            # Imcompatible version !
-            raise HandshakeAPIVersionError(self.SUPPORTED_API_VERSIONS, [client_api_version])
+            serializer = handshake_answer_serializer
 
         # Now we know how to deserialize the rest of the data
         data = serializer.loads(req)
@@ -271,11 +277,6 @@ class ServerHandshake:
         self.answer_type = data.pop("type")
         self.answer_data = data
         self.state = "answer"
-
-        # API version matching
-        self.backend_api_version, self.client_api_version = _settle_compatible_versions(
-            self.SUPPORTED_API_VERSIONS, [client_api_version]
-        )
 
     def build_bad_protocol_result_req(self, help: str = "Invalid params") -> bytes:
         if self.state not in ("answer", "challenge"):
@@ -355,12 +356,16 @@ class ServerHandshake:
                 answer = self.answer_data["answer"]
                 assert isinstance(answer, bytes)
 
-                if self.client_api_version >= (2, 5):
+                # Provides compatibility with API version 2.4 and below
+                # TODO: Remove once API v2.x is deprecated
+                if (2, 0) <= self.client_api_version < (2, 5):
+                    returned_challenge = verify_key.verify(answer)
+
+                # Used in API v2.5+ and API v3.x
+                else:
                     returned_challenge = answer_serializer.loads(verify_key.verify(answer))[
                         "answer"
                     ]
-                else:
-                    returned_challenge = verify_key.verify(answer)
 
                 if returned_challenge != self.challenge:
                     raise HandshakeFailedChallenge("Invalid returned challenge")
@@ -456,7 +461,7 @@ class BaseClientHandshake:
 
 
 class AuthenticatedClientHandshake(BaseClientHandshake):
-    SUPPORTED_API_VERSIONS = (API_V2_VERSION,)
+    SUPPORTED_API_VERSIONS = (API_V2_VERSION, API_V3_VERSION)
     HANDSHAKE_TYPE: Union[HandshakeType, APIV1_HandshakeType] = HandshakeType.AUTHENTICATED
     HANDSHAKE_ANSWER_SERIALIZER = handshake_answer_serializer
 
@@ -479,14 +484,16 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
 
         assert isinstance(challenge, bytes)
 
-        # TO-DO remove the else for the next release
-        if self.backend_api_version >= (2, 5):
-            # TO-DO Need to use "BaseSignedData" ?
+        # Provides compatibility with API version 2.4 and below
+        # TODO: Remove once API v2.x is deprecated
+        if (2, 0) <= self.backend_api_version < (2, 5):
+            answer = self.user_signkey.sign(challenge)
+
+        # Used in API v2.5+ and API v3.x
+        else:
             answer = self.user_signkey.sign(
                 answer_serializer.dumps({"type": "signed_answer", "answer": challenge})
             )
-        else:
-            answer = self.user_signkey.sign(challenge)
 
         return self.HANDSHAKE_ANSWER_SERIALIZER.dumps(
             {
@@ -502,7 +509,7 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
 
 
 class InvitedClientHandshake(BaseClientHandshake):
-    SUPPORTED_API_VERSIONS = (API_V2_VERSION,)
+    SUPPORTED_API_VERSIONS = (API_V2_VERSION, API_V3_VERSION)
 
     def __init__(
         self,
