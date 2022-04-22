@@ -114,7 +114,9 @@ class OpenTCPStreamMockWrapper:
         if response is None:
             raise urllib.error.URLError("No response")
         if response.status_code != 200:
-            raise urllib.error.HTTPError(None, response.status_code, None, None, None)
+            exc = urllib.error.URLError("Error")
+            exc.status = response.status_code
+            raise exc
         return out_data
 
     def switch_offline(self, addr):
