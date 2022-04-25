@@ -1,4 +1,4 @@
-tl;dr:
+## 0 - Quick summary
 
 ```shell
 npm install
@@ -14,8 +14,9 @@ npm run android:open
 npm run android:copy
 ```
 
-
 ## 1 - Install requirements
+
+Npm scripts using libparsec rust needs cargo to work : https://doc.rust-lang.org/cargo/getting-started/installation.html
 
 ```shell
 npm install  # install dependecies
@@ -34,7 +35,7 @@ npm run serve
 
 Note: libparsec is not available on web platform so far :(
 
-## 2 - Electron dev
+## 3 - Electron dev
 
 First libparsec's neon bindings must be built:
 ```shell
@@ -64,7 +65,7 @@ npm electron:start  # Equivalent to above, have a look to `electron/package.json
 npm libparsec  # Copy the libparsec index.node if it has been rebuilt
 ```
 
-## 3 - Android dev
+## 4 - Android dev
 
 For regular build:
 ```shell
@@ -75,7 +76,7 @@ npx cap open android  # Open Android studio
 
 Note: Libparsec is automatically (re)build as needed when building the Android project.
 
-## 4 - iOS dev
+## 5 - iOS dev
 
 For regular build:
 ```shell
