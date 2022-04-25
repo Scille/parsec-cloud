@@ -116,6 +116,7 @@ def test_backend_addr_compare():
         "parsec://a",
         "parsec://a.b/ContainsAPath",
         "http://a.b/redirect",
+        "    parsec://parsec.cloud   ",
     ],
 )
 def test_backend_addr_from_url(url):
@@ -131,7 +132,7 @@ def test_backend_addr_from_url(url):
             BackendAddr.from_url(url)
         assert str(excinfo.value) == "Cannot have path"
 
-    elif url and not url.lower().startswith("parsec://"):
+    elif url and not url.strip().lower().startswith("parsec://"):
         with pytest.raises(ValueError) as excinfo:
             _PyBackendAddr.from_url(url)
         assert str(excinfo.value) == "Must start with `parsec://`"
@@ -250,17 +251,21 @@ def test_backend_organization_addr_from_url():
     py_ba = _PyBackendOrganizationAddr.from_url(URL)
     rs_ba = BackendOrganizationAddr.from_url(URL)
     _check_equal_backend_organization_addrs(rs_ba, py_ba)
-    assert BackendOrganizationAddr.from_url(
-        f"parsec://parsec.cloud/MyOrg?rvk={RVK}"
-    ) == BackendOrganizationAddr.from_url(f"parsec://parsec.cloud/MyOrg?rvk={RVK}")
+
+    # With spaces before and after
+    py_ba = _PyBackendOrganizationAddr.from_url(" " + URL + " ")
+    rs_ba = BackendOrganizationAddr.from_url(" " + URL + " ")
+    _check_equal_backend_organization_addrs(rs_ba, py_ba)
+
+    assert BackendOrganizationAddr.from_url(URL) == BackendOrganizationAddr.from_url(URL)
     # Different host
     assert BackendOrganizationAddr.from_url(
         f"parsec://parse.cloud/MyOrg?rvk={RVK}"
-    ) != BackendOrganizationAddr.from_url(f"parsec://parsec.cloud/MyOrg?rvk={RVK}")
+    ) != BackendOrganizationAddr.from_url(URL)
     # Different org
     assert BackendOrganizationAddr.from_url(
         f"parsec://parsec.cloud/MyOrg2?rvk={RVK}"
-    ) != BackendOrganizationAddr.from_url(f"parsec://parsec.cloud/MyOrg?rvk={RVK}")
+    ) != BackendOrganizationAddr.from_url(URL)
 
     URL = f"http://parsec.cloud/redirect/MyOrg?rvk={RVK}"
     _PyBackendOrganizationAddr.from_url(
@@ -354,6 +359,11 @@ def test_backend_organization_bootstrap_addr_from_url():
     rs_ba = BackendActionAddr.from_url(URL)
     assert isinstance(py_ba, _PyBackendOrganizationBootstrapAddr)
     assert isinstance(rs_ba, BackendOrganizationBootstrapAddr)
+    _check_equal_backend_organization_bootstrap_addrs(rs_ba, py_ba)
+
+    # With spaces before and after
+    py_ba = _PyBackendActionAddr.from_url(" " + URL + " ")
+    rs_ba = BackendActionAddr.from_url(" " + URL + " ")
     _check_equal_backend_organization_bootstrap_addrs(rs_ba, py_ba)
 
     REDIRECT_URL = "http://parsec.cloud/redirect/MyOrg?action=bootstrap_organization&token=1234ABCD"
@@ -500,6 +510,11 @@ def test_backend_organization_file_link_addr_from_url():
     rs_ba = BackendActionAddr.from_url(URL)
     assert isinstance(py_ba, _PyBackendOrganizationFileLinkAddr)
     assert isinstance(rs_ba, BackendOrganizationFileLinkAddr)
+    _check_equal_backend_organization_file_link_addrs(rs_ba, py_ba)
+
+    # With spaces before and after
+    py_ba = _PyBackendActionAddr.from_url(" " + URL + " ")
+    rs_ba = BackendActionAddr.from_url(" " + URL + " ")
     _check_equal_backend_organization_file_link_addrs(rs_ba, py_ba)
 
     assert BackendActionAddr.from_url(URL) == BackendActionAddr.from_url(URL)
@@ -657,6 +672,11 @@ def test_backend_invitation_addr_from_url():
     rs_ba = BackendInvitationAddr.from_url(URL)
     _check_equal_backend_invitation_addrs(rs_ba, py_ba)
 
+    # With spaces before and after
+    py_ba = _PyBackendInvitationAddr.from_url(" " + URL + " ")
+    rs_ba = BackendInvitationAddr.from_url(" " + URL + " ")
+    _check_equal_backend_invitation_addrs(rs_ba, py_ba)
+
     py_ba = _PyBackendActionAddr.from_url(URL)
     rs_ba = BackendActionAddr.from_url(URL)
     assert isinstance(py_ba, _PyBackendInvitationAddr)
@@ -742,3 +762,116 @@ def test_backend_invitation_addr_build():
         token=INVITATION_TOKEN,
     )
     _check_equal_backend_invitation_addrs(rs_ba, py_ba)
+
+
+def _check_equal_backend_pki_enrollment_addrs(rs, py):
+    assert rs.to_url() == py.to_url()
+    assert rs.hostname == py.hostname
+    assert rs.port == py.port
+    assert rs.netloc == py.netloc
+    assert rs.use_ssl == py.use_ssl
+    assert rs.to_http_domain_url() == py.to_http_domain_url() + "/"
+    assert rs.to_http_domain_url("/path") == py.to_http_domain_url("/path")
+    assert str(rs.organization_id) == str(py.organization_id)
+    assert str(rs) == str(py)
+    assert hash(rs) == hash(py)
+    assert repr(rs) == repr(py)
+    vk = SigningKey.generate().verify_key
+    assert (
+        rs.generate_organization_addr(root_verify_key=vk).to_url()
+        == py.generate_organization_addr(root_verify_key=vk).to_url()
+    )
+
+
+@pytest.mark.rust
+def test_backend_pki_enrollment_addr_init():
+    from parsec.core.types.backend_address import (
+        _PyBackendPkiEnrollmentAddr,
+        _RsBackendPkiEnrollmentAddr,
+        BackendPkiEnrollmentAddr,
+    )
+
+    assert BackendPkiEnrollmentAddr is _RsBackendPkiEnrollmentAddr
+
+    py_ba = _PyBackendPkiEnrollmentAddr(OrganizationID("MyOrg"), hostname="parsec.cloud")
+    rs_ba = BackendPkiEnrollmentAddr(OrganizationID("MyOrg"), hostname="parsec.cloud")
+    _check_equal_backend_pki_enrollment_addrs(rs_ba, py_ba)
+
+
+@pytest.mark.rust
+def test_backend_pki_enrollment_addr_from_url():
+    from parsec.core.types.backend_address import (
+        _PyBackendPkiEnrollmentAddr,
+        _RsBackendPkiEnrollmentAddr,
+        BackendPkiEnrollmentAddr,
+        BackendActionAddr,
+        _PyBackendActionAddr,
+        _RsBackendActionAddr,
+    )
+
+    assert BackendPkiEnrollmentAddr is _RsBackendPkiEnrollmentAddr
+    assert BackendActionAddr is _RsBackendActionAddr
+
+    URL = "parsec://parsec.cloud/MyOrg?action=pki_enrollment"
+
+    py_ba = _PyBackendActionAddr.from_url(URL)
+    rs_ba = BackendActionAddr.from_url(URL)
+    assert isinstance(py_ba, _PyBackendPkiEnrollmentAddr)
+    assert isinstance(rs_ba, BackendPkiEnrollmentAddr)
+    _check_equal_backend_pki_enrollment_addrs(rs_ba, py_ba)
+
+    # With spaces before and after
+    py_ba = _PyBackendActionAddr.from_url(" " + URL + " ")
+    rs_ba = BackendActionAddr.from_url(" " + URL + " ")
+    _check_equal_backend_pki_enrollment_addrs(rs_ba, py_ba)
+
+    REDIRECT_URL = "http://parsec.cloud/redirect/MyOrg?action=pki_enrollment"
+    py_ba = _PyBackendActionAddr.from_url(REDIRECT_URL, allow_http_redirection=True)
+    rs_ba = BackendActionAddr.from_url(REDIRECT_URL, allow_http_redirection=True)
+    assert isinstance(py_ba, _PyBackendPkiEnrollmentAddr)
+    assert isinstance(rs_ba, BackendPkiEnrollmentAddr)
+
+    with pytest.raises(ValueError) as excinfo:
+        BackendPkiEnrollmentAddr.from_url("parsec://parsec.cloud?action=pki_enrollment")
+    assert str(excinfo.value) == "Path doesn't form a valid organization id"
+    with pytest.raises(ValueError) as excinfo:
+        _PyBackendPkiEnrollmentAddr.from_url("parsec://parsec.cloud?action=pki_enrollment")
+    assert str(excinfo.value) == "Invalid OrganizationID"
+
+    assert BackendActionAddr.from_url(URL) == BackendActionAddr.from_url(URL)
+    # Different host
+    assert BackendActionAddr.from_url(
+        "parsec://parse.cloud/MyOrg?action=pki_enrollment"
+    ) != BackendActionAddr.from_url("parsec://parsec.cloud/MyOrg?action=pki_enrollment")
+    # Different org
+    assert BackendActionAddr.from_url(
+        "parsec://parsec.cloud/MyOrg2?action=pki_enrollment"
+    ) != BackendActionAddr.from_url("parsec://parsec.cloud/MyOrg?action=pki_enrollment")
+
+    # Missing action
+    with pytest.raises(ValueError) as excinfo:
+        rs_ba = BackendActionAddr.from_url("parsec://parsec.cloud/MyOrg")
+    assert str(excinfo.value) == "Invalid URL format"
+
+    # Invalid action
+    with pytest.raises(ValueError) as excinfo:
+        rs_ba = BackendActionAddr.from_url("parsec://parsec.cloud/MyOrg?action=do_something")
+    assert str(excinfo.value) == "Invalid URL format"
+
+
+@pytest.mark.rust
+def test_backend_pki_enrollment_addr_build():
+    from parsec.core.types.backend_address import (
+        _PyBackendPkiEnrollmentAddr,
+        _RsBackendPkiEnrollmentAddr,
+        BackendPkiEnrollmentAddr,
+        BackendAddr,
+    )
+
+    assert BackendPkiEnrollmentAddr is _RsBackendPkiEnrollmentAddr
+
+    BACKEND_ADDR = BackendAddr.from_url("parsec://parsec.cloud:1337")
+
+    py_ba = _PyBackendPkiEnrollmentAddr.build(BACKEND_ADDR, OrganizationID("MyOrg"))
+    rs_ba = BackendPkiEnrollmentAddr.build(BACKEND_ADDR, OrganizationID("MyOrg"))
+    _check_equal_backend_pki_enrollment_addrs(rs_ba, py_ba)
