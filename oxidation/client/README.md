@@ -29,7 +29,7 @@ npx ionic --help
 ## 2 - Web dev
 
 ```shell
-npx serve
+npm run serve
 ```
 
 Note: libparsec is not available on web platform so far :(
