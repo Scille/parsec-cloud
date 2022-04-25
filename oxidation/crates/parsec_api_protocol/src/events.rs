@@ -2,7 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 
-use parsec_api_types::{maybe_field, InvitationToken, RealmID, RealmRole, VlobID};
+use parsec_api_types::{InvitationToken, RealmID, RealmRole, VlobID};
+use parsec_schema::parsec_schema;
 
 use crate::InvitationStatus;
 
@@ -40,43 +41,39 @@ pub enum APIEvent {
         src_version: u64,
     },
     #[serde(rename = "realm.roles_updated")]
-    RealmRolesUdpated { realm_id: RealmID, role: RealmRole },
+    RealmRolesUpdated { realm_id: RealmID, role: RealmRole },
 }
+
 /*
  * EventsListenReq
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct EventsListenReq {
     pub wait: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum EventsListenRep {
     Ok(APIEvent),
-    Cancelled {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
+    Cancelled { reason: Option<String> },
     NoEvents,
-    UnknownError {
-        error: String,
-    },
+    UnknownError { error: String },
 }
 
 /*
  * EventsSubscribeReq
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct EventsSubscribeReq;
 
 /*
  * EventsSubscribeRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum EventsSubscribeRep {
     Ok,

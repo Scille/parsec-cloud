@@ -559,3 +559,216 @@ fn serde_human_find_rep(#[case] raw_expected: (&[u8], authenticated_cmds::human_
 
     assert_eq!(data2, expected);
 }
+
+#[rstest]
+fn specs_user_get_req() {
+    assert_eq!(
+        authenticated_cmds::user_get::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "user_get"
+                },
+                "user_id": {
+                    "type": "UserID"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_user_get_rep() {
+    assert_eq!(
+        authenticated_cmds::user_get::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "device_certificates": {
+                    "type": "Vec<Vec<u8>>"
+                },
+                "revoked_user_certificate": {
+                    "type": "Vec<u8>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+                "trustchain": {
+                    "type": "Trustchain"
+                },
+                "user_certificate": {
+                    "type": "Vec<u8>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_user_create_req() {
+    assert_eq!(
+        authenticated_cmds::user_create::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "user_create"
+                },
+                "device_certificate": {
+                    "type": "Vec<u8>"
+                },
+                "redacted_device_certificate": {
+                    "type": "Vec<u8>"
+                },
+                "redacted_user_certificate": {
+                    "type": "Vec<u8>"
+                },
+                "user_certificate": {
+                    "type": "Vec<u8>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_user_create_rep() {
+    assert_eq!(
+        authenticated_cmds::user_create::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_user_revoke_req() {
+    assert_eq!(
+        authenticated_cmds::user_revoke::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "user_revoke"
+                },
+                "revoked_user_certificate": {
+                    "type": "Vec<u8>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_user_revoke_rep() {
+    assert_eq!(
+        authenticated_cmds::user_revoke::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_device_create_req() {
+    assert_eq!(
+        authenticated_cmds::device_create::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "device_create"
+                },
+                "device_certificate": {
+                    "type": "Vec<u8>"
+                },
+                "redacted_device_certificate": {
+                    "type": "Vec<u8>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_device_create_rep() {
+    assert_eq!(
+        authenticated_cmds::device_create::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_human_find_req() {
+    assert_eq!(
+        authenticated_cmds::human_find::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "human_find"
+                },
+                "omit_non_human": {
+                    "type": "bool"
+                },
+                "omit_revoked": {
+                    "type": "bool"
+                },
+                "page": {
+                    "type": "NonZeroU64"
+                },
+                "per_page": {
+                    "type": "NonZeroU64"
+                },
+                "query": {
+                    "type": "Option<String>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_human_find_rep() {
+    assert_eq!(
+        authenticated_cmds::human_find::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "page": {
+                    "type": "NonZeroU64"
+                },
+                "per_page": {
+                    "type": "NonZeroU64"
+                },
+                "results": {
+                    "type": "Vec<HumanFindResultItem>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+                "total": {
+                    "type": "u64"
+                }
+            }
+        })
+    )
+}

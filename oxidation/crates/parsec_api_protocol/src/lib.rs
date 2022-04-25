@@ -13,23 +13,13 @@ mod realm;
 mod user;
 mod vlob;
 
-use block::*;
 pub use cmds::*;
 pub use error::*;
-use events::*;
-pub use handshake::*;
-use invite::*;
-use message::*;
-use organization::*;
-use ping::*;
-use realm::*;
-use user::*;
-use vlob::*;
-
 pub use events::APIEvent;
+pub use handshake::*;
 pub use invite::{
-    InvitationDeletedReason, InvitationEmailSentStatus, InvitationStatus, InvitationType,
-    InviteInfoUserOrDeviceRep, InviteListItem,
+    InvitationDeletedReason, InvitationEmailSentStatus, InvitationStatus, InviteInfoUserOrDevice,
+    InviteListItem,
 };
 pub use message::Message;
 pub use organization::{OrganizationBootstrapWebhook, UsersPerProfileDetailItem};
@@ -50,25 +40,4 @@ macro_rules! impl_dump_load {
         }
     };
 }
-
-macro_rules! impl_dump_load_for_rep {
-    ($name:ident) => {
-        impl $name {
-            pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
-                ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
-            }
-
-            pub fn load(buf: &[u8]) -> Self {
-                match ::rmp_serde::from_read_ref(buf) {
-                    Ok(res) => res,
-                    Err(e) => Self::UnknownError {
-                        error: e.to_string(),
-                    },
-                }
-            }
-        }
-    };
-}
-
 pub(crate) use impl_dump_load;
-pub(crate) use impl_dump_load_for_rep;

@@ -7,8 +7,10 @@ use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
-use crate::{impl_dump_load, ChallengeDataReport, HandshakeError, InvitationType};
-use parsec_api_types::{maybe_field, DateTime, DeviceID, InvitationToken, OrganizationID};
+use crate::{impl_dump_load, ChallengeDataReport, HandshakeError};
+use parsec_api_types::{
+    maybe_field, DateTime, DeviceID, InvitationToken, InvitationType, OrganizationID,
+};
 
 pub const HANDSHAKE_CHALLENGE_SIZE: usize = 48;
 

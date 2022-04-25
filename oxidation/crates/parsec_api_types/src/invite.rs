@@ -17,7 +17,8 @@ use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
  * InvitationType
  */
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum InvitationType {
     User,
     Device,

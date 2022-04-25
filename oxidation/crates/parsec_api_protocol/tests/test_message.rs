@@ -68,3 +68,39 @@ fn serde_message_get_rep() {
 
     assert_eq!(data2, expected);
 }
+
+#[rstest]
+fn specs_message_get_req() {
+    assert_eq!(
+        authenticated_cmds::message_get::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "message_get"
+                },
+                "offset": {
+                    "type": "u64"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_message_get_rep() {
+    assert_eq!(
+        authenticated_cmds::message_get::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "messages": {
+                    "type": "Vec<Message>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}

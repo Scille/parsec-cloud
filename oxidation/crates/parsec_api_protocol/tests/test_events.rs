@@ -159,7 +159,7 @@ fn serde_events_listen_req() {
             "021d3353157d7d4e95ad2fdea7b3bd19c5a4726f6c65a54f574e4552a6737461747573a26f"
             "6b"
         )[..],
-        authenticated_cmds::events_listen::Rep::Ok(APIEvent::RealmRolesUdpated {
+        authenticated_cmds::events_listen::Rep::Ok(APIEvent::RealmRolesUpdated {
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 role: RealmRole::Owner,
         })
@@ -247,4 +247,70 @@ fn serde_events_subscribe_rep() {
     let data2 = authenticated_cmds::events_subscribe::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
+}
+
+#[rstest]
+fn specs_events_listen_req() {
+    assert_eq!(
+        authenticated_cmds::events_listen::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "events_listen",
+                },
+                "wait": {
+                    "type": "bool",
+                },
+            },
+        })
+    )
+}
+
+#[rstest]
+fn specs_events_listen_rep() {
+    assert_eq!(
+        authenticated_cmds::events_listen::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "0": {
+                    "type": "APIEvent",
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok",
+                },
+            },
+        })
+    )
+}
+
+#[rstest]
+fn specs_events_subscribe_req() {
+    assert_eq!(
+        authenticated_cmds::events_subscribe::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "events_subscribe",
+                },
+            },
+        })
+    )
+}
+
+#[rstest]
+fn specs_events_subscribe_rep() {
+    assert_eq!(
+        authenticated_cmds::events_subscribe::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok",
+                },
+            },
+        })
+    )
 }

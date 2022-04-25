@@ -17,12 +17,12 @@ macro_rules! cmds_bundle {
             pub mod $cmds {
                 use ::serde::{Deserialize, Serialize};
 
-                #[derive(Serialize, Deserialize, PartialEq, Debug)]
+                #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
                 #[serde(tag = "cmd", rename_all = "snake_case")]
                 pub enum AnyCmdReq {
                     $(
                         $(#[serde(rename = $rename)])?
-                        $cmd(crate::[<$cmd Req>]),
+                        $cmd($path::[<$cmd Req>]),
                     )*
                 }
 
@@ -40,7 +40,20 @@ macro_rules! cmds_bundle {
                             }
                         }
 
-                        crate::impl_dump_load_for_rep!(Rep);
+                        impl Rep {
+                            pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
+                                ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
+                            }
+
+                            pub fn load(buf: &[u8]) -> Self {
+                                match ::rmp_serde::from_read_ref(buf) {
+                                    Ok(res) => res,
+                                    Err(e) => Self::UnknownError {
+                                        error: e.to_string(),
+                                    },
+                                }
+                            }
+                        }
 
                         #[test]
                         fn test_unknown_error() {
@@ -62,7 +75,7 @@ macro_rules! cmds_bundle {
 cmds_bundle!(
     authenticated_cmds,
     [
-        (crate::ping, ping, AuthenticatedPing, "ping"),
+        (crate::ping::authenticated, ping, Ping),
         // Block
         (crate::block, block_create, BlockCreate),
         (crate::block, block_read, BlockRead),
@@ -163,7 +176,7 @@ cmds_bundle!(
 cmds_bundle!(
     invited_cmds,
     [
-        (crate::ping, ping, InvitedPing, "ping"),
+        (crate::ping::invited, ping, Ping),
         (crate::invite, invite_info, InviteInfo),
         (
             crate::invite,

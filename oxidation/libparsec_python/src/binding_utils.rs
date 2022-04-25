@@ -12,14 +12,14 @@ use std::collections::HashSet;
 use std::hash::Hash;
 
 pub fn comp_op<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult<bool> {
-    match op {
-        CompareOp::Eq => Ok(h1 == h2),
-        CompareOp::Ne => Ok(h1 != h2),
-        CompareOp::Lt => Ok(h1 < h2),
-        CompareOp::Le => Ok(h1 <= h2),
-        CompareOp::Gt => Ok(h1 > h2),
-        CompareOp::Ge => Ok(h1 >= h2),
-    }
+    Ok(match op {
+        CompareOp::Eq => h1 == h2,
+        CompareOp::Ne => h1 != h2,
+        CompareOp::Lt => h1 < h2,
+        CompareOp::Le => h1 <= h2,
+        CompareOp::Gt => h1 > h2,
+        CompareOp::Ge => h1 >= h2,
+    })
 }
 
 pub fn hash_generic(value_to_hash: &str, py: Python) -> PyResult<isize> {
@@ -62,24 +62,36 @@ pub fn py_to_rs_realm_role(role: &PyAny) -> PyResult<Option<parsec_api_types::Re
     if role.is_none() {
         return Ok(None);
     }
-    let role = match role.getattr("name")?.extract::<&str>()? {
-        "OWNER" => parsec_api_types::RealmRole::Owner,
-        "MANAGER" => parsec_api_types::RealmRole::Manager,
-        "CONTRIBUTOR" => parsec_api_types::RealmRole::Contributor,
-        "READER" => parsec_api_types::RealmRole::Reader,
+    use parsec_api_types::RealmRole::*;
+    Ok(Some(match role.getattr("name")?.extract::<&str>()? {
+        "OWNER" => Owner,
+        "MANAGER" => Manager,
+        "CONTRIBUTOR" => Contributor,
+        "READER" => Reader,
         _ => unreachable!(),
-    };
-    Ok(Some(role))
+    }))
 }
 
 pub fn py_to_rs_user_profile(profile: &PyAny) -> PyResult<parsec_api_types::UserProfile> {
-    let profile = match profile.getattr("name")?.extract::<&str>()? {
-        "ADMIN" => parsec_api_types::UserProfile::Admin,
-        "STANDARD" => parsec_api_types::UserProfile::Standard,
-        "OUTSIDER" => parsec_api_types::UserProfile::Outsider,
+    use parsec_api_types::UserProfile::*;
+    Ok(match profile.getattr("name")?.extract::<&str>()? {
+        "ADMIN" => Admin,
+        "STANDARD" => Standard,
+        "OUTSIDER" => Outsider,
         _ => unreachable!(),
-    };
-    Ok(profile)
+    })
+}
+
+pub fn py_to_rs_invitation_status(
+    status: &PyAny,
+) -> PyResult<parsec_api_protocol::InvitationStatus> {
+    use parsec_api_protocol::InvitationStatus::*;
+    Ok(match status.getattr("name")?.extract::<&str>()? {
+        "IDLE" => Idle,
+        "READY" => Ready,
+        "DELETED" => Deleted,
+        _ => unreachable!(),
+    })
 }
 
 // This implementation is due to

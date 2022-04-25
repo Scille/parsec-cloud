@@ -313,7 +313,7 @@ impl RealmID {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct VlobID(pub parsec_api_types::VlobID);
 
 #[pymethods]
@@ -398,7 +398,7 @@ impl VlobID {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct UserID(pub parsec_api_types::UserID);
 
 #[pymethods]
