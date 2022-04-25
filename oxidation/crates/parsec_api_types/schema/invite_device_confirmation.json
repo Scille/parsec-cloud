@@ -1,0 +1,38 @@
+{
+    "label": "InviteDeviceConfirmation",
+    "type": "invite_device_confirmation",
+    "other_fields": [
+        {
+            "name": "device_id",
+            "type": "DeviceID"
+        },
+        {
+            "name": "device_label",
+            "type": "Option<DeviceLabel>"
+        },
+        {
+            "name": "human_handle",
+            "type": "Option<HumanHandle>"
+        },
+        {
+            "name": "profile",
+            "type": "UserProfile"
+        },
+        {
+            "name": "private_key",
+            "type": "PrivateKey"
+        },
+        {
+            "name": "user_manifest_id",
+            "type": "EntryID"
+        },
+        {
+            "name": "user_manifest_key",
+            "type": "SecretKey"
+        },
+        {
+            "name": "root_verify_key",
+            "type": "VerifyKey"
+        }
+    ]
+}

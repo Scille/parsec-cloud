@@ -21,7 +21,13 @@ pub(crate) fn to_pascal_case(s: &str) -> String {
     out
 }
 
-pub(crate) fn inspect_type(ty: &Type) -> String {
+pub(crate) fn inspect_type(ty: &str) -> String {
+    let raw_ty: Type =
+        syn::parse_str(ty).unwrap_or_else(|e| panic!("Invalid type value `{ty}`: {e}"));
+    _inspect_type(&raw_ty)
+}
+
+pub(crate) fn _inspect_type(ty: &Type) -> String {
     match ty {
         Type::Path(p) => {
             let ty = p.path.segments.last().unwrap_or_else(|| unreachable!());
@@ -35,13 +41,17 @@ pub(crate) fn inspect_type(ty: &Type) -> String {
                 "List" => "Vec",
                 "Map" => "::std::collections::HashMap",
                 "Set" => "::std::collections::HashSet",
+                "PublicKey" => "parsec_api_crypto::PublicKey",
+                "VerifyKey" => "parsec_api_crypto::VerifyKey",
+                "PrivateKey" => "parsec_api_crypto::PrivateKey",
+                "SecretKey" => "parsec_api_crypto::SecretKey",
                 "DateTime" => "parsec_api_types::DateTime",
                 "BlockID" => "parsec_api_types::BlockID",
                 "DeviceID" => "parsec_api_types::DeviceID",
+                "EntryID" => "parsec_api_types::EntryID",
                 "DeviceLabel" => "parsec_api_types::DeviceLabel",
                 "HumanHandle" => "parsec_api_types::HumanHandle",
-                "PublicKey" => "parsec_api_crypto::PublicKey",
-                "VerifyKey" => "parsec_api_crypto::VerifyKey",
+                "UserProfile" => "parsec_api_types::UserProfile",
                 ident => panic!("{ident} isn't allowed as type"),
             })
             .to_string();
@@ -53,7 +63,7 @@ pub(crate) fn inspect_type(ty: &Type) -> String {
                         .args
                         .iter()
                         .map(|arg| match arg {
-                            GenericArgument::Type(ty) => inspect_type(ty),
+                            GenericArgument::Type(ty) => _inspect_type(ty),
                             _ => unimplemented!(),
                         })
                         .collect::<Vec<_>>()
@@ -70,7 +80,7 @@ pub(crate) fn inspect_type(ty: &Type) -> String {
             ident += &t
                 .elems
                 .iter()
-                .map(inspect_type)
+                .map(_inspect_type)
                 .collect::<Vec<_>>()
                 .join(",");
             ident.push(')');
