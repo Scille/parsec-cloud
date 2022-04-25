@@ -32,3 +32,16 @@ pub fn parsec_cmds(path: TokenStream) -> TokenStream {
         miniserde::json::from_str(&content).unwrap_or_else(|_| panic!("Protocol is not valid"));
     TokenStream::from(cmds.quote())
 }
+
+#[proc_macro]
+pub fn parsec_data(path: TokenStream) -> TokenStream {
+    let path = parse_macro_input!(path as LitStr);
+    let file_path = std::env::current_dir().unwrap().join(&path.value());
+    let mut file = File::open(file_path).unwrap();
+    let mut content = String::new();
+    file.read_to_string(&mut content).unwrap();
+
+    let data: parser::Data =
+        miniserde::json::from_str(&content).unwrap_or_else(|_| panic!("Data is not valid"));
+    TokenStream::from(data.quote())
+}

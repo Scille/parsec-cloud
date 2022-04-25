@@ -54,8 +54,7 @@ fn main() {
         bar1: Default::default(),
         bar2: Default::default(),
     };
-    let signing_key = parsec_api_crypto::SigningKey::generate();
     let secret_key = parsec_api_crypto::SecretKey::generate();
-    let dump = foo.dump_sign_and_encrypt(&signing_key, &secret_key);
+    let dump = foo.dump_and_encrypt(&secret_key);
     println!("{:?} {dump:?}", String::from_utf8_lossy(&dump));
 }
