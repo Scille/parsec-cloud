@@ -1,0 +1,22 @@
+{
+    "label": "InviteUserData",
+    "type": "invite_user_data",
+    "other_fields": [
+        {
+            "name": "requested_device_label",
+            "type": "Option<DeviceLabel>"
+        },
+        {
+            "name": "requested_human_handle",
+            "type": "Option<HumanHandle>"
+        },
+        {
+            "name": "public_key",
+            "type": "PublicKey"
+        },
+        {
+            "name": "verify_key",
+            "type": "VerifyKey"
+        }
+    ]
+}
