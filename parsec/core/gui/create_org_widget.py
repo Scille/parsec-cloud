@@ -3,7 +3,7 @@
 from typing import Optional
 from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QApplication, QDialog
+from PyQt5.QtWidgets import QWidget, QApplication
 
 from parsec.api.protocol import OrganizationID, HumanHandle, DeviceLabel
 from parsec.core.backend_connection import (
@@ -343,12 +343,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         d = GreyedDialog(w, _("TEXT_ORG_WIZARD_TITLE"), parent=parent, width=1000)
         w.dialog = d
 
-        def _on_finished(result):
-            if result == QDialog.Accepted:
-                return on_finished(w.status)
-            return on_finished(None)
-
-        d.finished.connect(_on_finished)
+        d.finished.connect(on_finished)
         # Unlike exec_, show is asynchronous and works within the main Qt loop
         d.show()
         return w
