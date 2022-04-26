@@ -7,6 +7,8 @@
 
 *Note: Among other things, it installs Ionic / Vue / Capacitor CLI locally, you can use them with npx like this: `npx ionic --help`*
 
+*Note: this command will automatically execute a `npm install` in the ELectron folder, this is normally done by `npx cap add @capacitor-community/electron`, nevertheless since we have custom configuration in this folder, we can't override it.*
+
 ## b. LibParsec Bindings requirements
 Follow this [guide](../bindings/README.md)
 
