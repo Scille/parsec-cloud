@@ -1,0 +1,1 @@
+Fixed a bug preventing file saving with Apple softwares such as TextEdit or Preview.
