@@ -5,7 +5,7 @@ NPM scripts using LibParsec needs cargo to work : https://doc.rust-lang.org/carg
 
     # In /bindings/neon
     npm install
-    npm build  # Generate index.node (basically a .so that node can load)
+    npm run build  # Generate index.node (basically a .so that node can load)
 
 
 Note `../client/electron` project automatically does `npm build` and copy `index.node` where needed.
