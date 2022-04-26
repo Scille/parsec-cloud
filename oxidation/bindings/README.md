@@ -1,43 +1,43 @@
 # LibParsec bindings
 
-## Desktop (neon)
+## 1. Desktop (neon)
+- NPM scripts using LibParsec needs cargo to work : https://doc.rust-lang.org/cargo/getting-started/installation.html
+- To develop on Windows, you need to install VS BuildTools 2019 :
+  - Download the installer here : https://visualstudio.microsoft.com/fr/thank-you-downloading-visual-studio/?sku=BuildTools&rel=16
+  - Select in the individual modules : *"MSVC v142 - VS 2019 C++ x64/x86 Build Tools"*
 
-```
-cd bindings/neon/
-npm install
-npm build  # Generate index.node (basically a .so that node can load)
-```
+Install neon dependencies and build:
 
-Note `../client/electron` project automatically does `npm build` and copy `index.node` where needed.
+    # In /bindings/neon
+    npm install
+    npm run build  # Generate index.node (basically a .so that node can load)
 
-## Android
+
+*Note: `../client/electron` project automatically does `npm build` and copy `index.node` where needed.*
+
+## 2. Android
 
 Requirements:
 
-- Install Android studio
-- Install Android Ndk 22.1.7171670
-- Install Android Sdk 30.0.3 and command line tools
-- python command should be available (used by `rust-android-gradle` plugin)
+- Install Android Studio
+- In `File > Settings > Appearance & Behavior > Android SDK > SDK Platform > Show Package Details` : Install Android SDK 30.0.3
+- In `File > Settings > Appearance & Behavior > Android SDK > SDK Tools > Show Package Details` : Install Android NDK 22.1.7171670 and Android SDK Command-line Tools
+- Python command should be available in PATH environment variable (used by `rust-android-gradle` plugin)
 
 Install Rust targets for cross compilation:
 
-```shell
-rustup target add armv7-linux-androideabi
-rustup target add i686-linux-android
-rustup target add aarch64-linux-android
-rustup target add x86_64-linux-android
-ndk 23.1.7779620
-sdk 30
-```
+    rustup target add armv7-linux-androideabi
+    rustup target add i686-linux-android
+    rustup target add aarch64-linux-android
+    rustup target add x86_64-linux-android
 
-The `bindings/android` directory is a valid Android project to generate a libparsec AAR.
+*Note: The `bindings/android` directory is a valid Android project to generate a libparsec AAR.
+However the AAR doesn't have to be built when using `../client/android` project (given it depends explictly on the `bindings/android/libparsec`).*
 
-However the AAR doesn't have to be built when using `../client/android` project (given it depends explictly on the `bindings/android/libparsec`).
-
-### iOS (ffi)
+## 3. iOS (ffi)
 
 `<WIP>`
 
-## Web
+## 4. Web
 
 `<WIP>`

@@ -8,12 +8,15 @@
     "test:unit": "vue-cli-service test:unit",
     "test:e2e": "vue-cli-service test:e2e",
     "lint": "vue-cli-service lint",
+    "postinstall": "cd electron && npm install",
     "android:copy": "npx ionic build && npx cap copy android",
     "ios:copy": "npx ionic build && npx cap copy ios",
     "electron:copy": "npx ionic build && npx cap copy @capacitor-community/electron && cd electron && npm run libparsec",
     "android:open": "npm run android:copy && npx cap open android",
     "ios:open": "npm run ios:copy && npx cap open ios",
-    "electron:open": "npm run electron:copy && npx cap open @capacitor-community/electron"
+    "electron:open": "npm run electron:copy && npx cap open @capacitor-community/electron",
+    "electron:dist": "npx ionic build && npx cap copy @capacitor-community/electron && cd electron && npm run electron:dist"
+
   },
   "dependencies": {
     "@capacitor-community/electron": "^4.1.0",
@@ -62,6 +65,9 @@
     "sass-loader": "^10.2.1",
     "ts-jest": "^27.0.7",
     "typescript": "^4.3.5"
+  },
+  "engines": {
+    "node": ">=16.13.0 <19.0.0"
   },
   "description": "An Ionic project"
 }
