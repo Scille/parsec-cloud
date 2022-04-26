@@ -14,10 +14,10 @@ Note `../client/electron` project automatically does `npm build` and copy `index
 
 Requirements:
 
-- Install Android studio
-- Install Android NDK 22.1.7171670 (go to SDK Manager > SDK Tools > Show Package Details)
-- Install Android SDK 30.0.3 and command line tools
-- python command should be available (used by `rust-android-gradle` plugin)
+- Install Android Studio
+- In `File > Settings > Appearance & Behavior > Android SDK > SDK Platform > Show Package Details` : Install Android SDK 30.0.3
+- In `File > Settings > Appearance & Behavior > Android SDK > SDK Tools > Show Package Details` : Install Android NDK 22.1.7171670 and Android SDK Command-line Tools
+- Python command should be available (used by `rust-android-gradle` plugin)
 
 Install Rust targets for cross compilation:
 
