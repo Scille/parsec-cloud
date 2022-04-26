@@ -371,6 +371,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         @self._bind_async_callback
         async def _on_finished() -> None:
             nonlocal widget
+            # It's safe to access the widget status here since this does not perform a Qt call.
+            # But the underlying C++ widget might already be deleted so we should make sure not
+            # not do anything Qt related with this widget.
             if widget.status is None:
                 return
             self.reload_login_devices()
@@ -444,6 +447,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
         def _on_finished() -> None:
             nonlocal widget
+            # It's safe to access the widget status here since this does not perform a Qt call.
+            # But the underlying C++ widget might already be deleted so we should make sure not
+            # not do anything Qt related with this widget.
             if not widget.status:
                 return
             show_info(self, _("TEXT_ENROLLMENT_QUERY_SUCCEEDED"))
@@ -463,6 +469,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         @self._bind_async_callback
         async def _on_finished() -> None:
             nonlocal widget
+            # It's safe to access the widget status here since this does not perform a Qt call.
+            # But the underlying C++ widget might already be deleted so we should make sure not
+            # not do anything Qt related with this widget.
             if not widget.status:
                 return
             device, auth_method, password = widget.status
@@ -492,6 +501,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         @self._bind_async_callback
         async def _on_finished() -> None:
             nonlocal widget
+            # It's safe to access the widget status here since this does not perform a Qt call.
+            # But the underlying C++ widget might already be deleted so we should make sure not
+            # not do anything Qt related with this widget.
             if not widget.status:
                 return
             device, auth_method, password = widget.status
