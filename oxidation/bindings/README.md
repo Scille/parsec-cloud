@@ -3,7 +3,7 @@
 ## 1. Desktop (neon)
 NPM scripts using LibParsec needs cargo to work : https://doc.rust-lang.org/cargo/getting-started/installation.html
 
-    cd bindings/neon/
+    # In /bindings/neon
     npm install
     npm build  # Generate index.node (basically a .so that node can load)
 

@@ -2,6 +2,7 @@
 
 ## 1 - Install
 ## a. Dependencies
+    # In /oxidation/client
     npm install
 
 *Note: Among other things, it installs Ionic / Vue / Capacitor CLI locally, you can use them with npx like this: `npx ionic --help`*
@@ -11,14 +12,14 @@ Follow this [guide](../bindings/README.md)
 
 ## 2 - Web dev
 
+    # In /oxidation/client
     npm run serve
 
 *Note: LibParsec is not available on web platform so far :(*
 
 ## 3 - Electron dev
 
-Then for regular build:
-
+    # In /oxidation/client
     # Update Electron folder after main project changes
     npm run electron:copy
     ----
@@ -36,8 +37,7 @@ Then for regular build:
 
 ## 4 - Android dev
 
-For regular build:
-
+    # In /oxidation/client
     # Update Android folder after main project changes
     npm run android:copy
     ----
@@ -48,8 +48,7 @@ For regular build:
 
 ## 5 - iOS dev
 
-For regular build:
-
+    # In /oxidation/client
     # Update iOS folder after main project changes
     npm run ios:copy
     ----
