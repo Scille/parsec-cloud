@@ -64,7 +64,7 @@ def check_macfuse_version() -> bool:
     import plistlib
 
     try:
-        with open(macfuse_plist_path, "rb", encoding="utf-8") as plist_file:
+        with open(macfuse_plist_path, "rb") as plist_file:
             local_version = Version(plistlib.load(plist_file)["CFBundleVersion"])
     except ValueError:
         return False
