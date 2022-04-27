@@ -62,7 +62,9 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
                     )
                 except Exception:
                     self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE"))
-                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE_TOOLTIP"))
+                    self.label_status.setToolTip(
+                        _("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE_TOOLTIP")
+                    )
                     self.button_action.hide()
                 else:
                     if isinstance(new_context, PkiEnrollmentSubmitterSubmittedStatusCtx):
