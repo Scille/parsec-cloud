@@ -53,74 +53,80 @@ class EnrollmentPendingButton(QWidget, Ui_EnrollmentPendingButton):
         self.jobs_ctx.submit_job(None, None, self._get_pending_enrollment_infos)
 
     async def _get_pending_enrollment_infos(self):
-        while True:
-            new_context = None
-            try:
-                new_context = await self.context.poll(
-                    extra_trust_roots=self.config.pki_extra_trust_roots
-                )
-            except Exception:
-                self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE"))
-                self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE_TOOLTIP"))
-                self.button_action.hide()
-            else:
-                if isinstance(new_context, PkiEnrollmentSubmitterSubmittedStatusCtx):
+        try:
+            while True:
+                new_context = None
+                try:
+                    new_context = await self.context.poll(
+                        extra_trust_roots=self.config.pki_extra_trust_roots
+                    )
+                except Exception:
+                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE"))
+                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_CANNOT_RETRIEVE_TOOLTIP"))
                     self.button_action.hide()
-                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_PENDING"))
-                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_PENDING_TOOLTIP"))
-                elif isinstance(new_context, PkiEnrollmentSubmitterCancelledStatusCtx):
-                    self.context = new_context
-                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_OUTDATED"))
-                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_OUTDATED_TOOLTIP"))
-                    self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
-                    self.button_action.clicked.connect(
-                        lambda: self.clear_clicked.emit(self.context)
-                    )
-                    self.button_action.show()
-                    return
-                elif isinstance(new_context, PkiEnrollmentSubmitterRejectedStatusCtx):
-                    self.context = new_context
-                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_REJECTED"))
-                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
-                    self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
-                    self.button_action.clicked.connect(
-                        lambda: self.clear_clicked.emit(self.context)
-                    )
-                    self.button_action.show()
-                    return
-                elif isinstance(
-                    new_context, PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx
-                ):
-                    if isinstance(new_context.error, PkiEnrollmentCertificateValidationError):
-                        self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED"))
-                        self.label_status.setToolTip(
-                            _("TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED_TOOLTIP")
-                        )
+                else:
+                    if isinstance(new_context, PkiEnrollmentSubmitterSubmittedStatusCtx):
                         self.button_action.hide()
-                        return
-                    else:
-                        self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT"))
-                        self.label_status.setToolTip(
-                            _("TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT_TOOLTIP")
-                        )
+                        self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_PENDING"))
+                        self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_PENDING_TOOLTIP"))
+                    elif isinstance(new_context, PkiEnrollmentSubmitterCancelledStatusCtx):
+                        self.context = new_context
+                        self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_OUTDATED"))
+                        self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_OUTDATED_TOOLTIP"))
                         self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
                         self.button_action.clicked.connect(
                             lambda: self.clear_clicked.emit(self.context)
                         )
                         self.button_action.show()
                         return
-                else:
-                    assert isinstance(new_context, PkiEnrollmentSubmitterAcceptedStatusCtx)
-                    self.context = new_context
-                    self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ACCEPTED"))
-                    self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"))
-                    self.button_action.setText(_("ACTION_ENROLLMENT_FINALIZE"))
-                    self.button_action.show()
-                    self.button_action.clicked.connect(
-                        lambda: self.finalize_clicked.emit(self.context)
-                    )
-                    return
-            await trio.sleep(10.0)
+                    elif isinstance(new_context, PkiEnrollmentSubmitterRejectedStatusCtx):
+                        self.context = new_context
+                        self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_REJECTED"))
+                        self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_REJECTED_TOOLTIP"))
+                        self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
+                        self.button_action.clicked.connect(
+                            lambda: self.clear_clicked.emit(self.context)
+                        )
+                        self.button_action.show()
+                        return
+                    elif isinstance(
+                        new_context, PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx
+                    ):
+                        if isinstance(new_context.error, PkiEnrollmentCertificateValidationError):
+                            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED"))
+                            self.label_status.setToolTip(
+                                _("TEXT_ENROLLMENT_STATUS_VALIDATION_FAILED_TOOLTIP")
+                            )
+                            self.button_action.hide()
+                            return
+                        else:
+                            self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT"))
+                            self.label_status.setToolTip(
+                                _("TEXT_ENROLLMENT_STATUS_ERROR_WITH_ACCEPT_TOOLTIP")
+                            )
+                            self.button_action.setText(_("ACTION_ENROLLMENT_CLEAR"))
+                            self.button_action.clicked.connect(
+                                lambda: self.clear_clicked.emit(self.context)
+                            )
+                            self.button_action.show()
+                            return
+                    else:
+                        assert isinstance(new_context, PkiEnrollmentSubmitterAcceptedStatusCtx)
+                        self.context = new_context
+                        self.label_status.setText(_("TEXT_ENROLLMENT_STATUS_ACCEPTED"))
+                        self.label_status.setToolTip(_("TEXT_ENROLLMENT_STATUS_ACCEPTED_TOOLTIP"))
+                        self.button_action.setText(_("ACTION_ENROLLMENT_FINALIZE"))
+                        self.button_action.show()
+                        self.button_action.clicked.connect(
+                            lambda: self.finalize_clicked.emit(self.context)
+                        )
+                        return
+                await trio.sleep(10.0)
+        except RuntimeError:
+            # In some rare cases when closing the app, we may try to access a QWidget when the underlying C++
+            # object has already been deleted. Catching the exception just avoid printing an ugly message
+            # and reporting it to sentry.
+            pass
 
 
 class AccountButton(QWidget, Ui_AccountButton):
