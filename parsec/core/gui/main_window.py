@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import sys
-from typing import Callable, Optional, Tuple, cast
+from typing import Callable, Optional, cast, Awaitable
 from structlog import get_logger
 from distutils.version import LooseVersion
 
@@ -352,15 +352,34 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     def _on_add_instance_clicked(self) -> None:
         self.add_instance()
 
+    def _bind_async_callback(
+        self, callback: Callable[[], Awaitable[None]]
+    ) -> Callable[[], Awaitable[None]]:
+        """Async callbacks need to be bound to the MainWindow instance
+        in order to be able to be scheduled in the job context.
+        """
+
+        async def wrapper(instance: "MainWindow") -> None:
+            return await callback()
+
+        return wrapper.__get__(self)  # type: ignore[attr-defined]
+
     def _on_create_org_clicked(
         self, addr: Optional[BackendOrganizationBootstrapAddr] = None
     ) -> None:
-        def _on_finished(ret: Optional[Tuple[LocalDevice, DeviceFileType, str]]) -> None:
-            if ret is None:
+        widget: CreateOrgWidget
+
+        @self._bind_async_callback
+        async def _on_finished() -> None:
+            nonlocal widget
+            # It's safe to access the widget status here since this does not perform a Qt call.
+            # But the underlying C++ widget might already be deleted so we should make sure not
+            # not do anything Qt related with this widget.
+            if widget.status is None:
                 return
             self.reload_login_devices()
-            device, auth_method, password = ret
-            self.try_login(device, auth_method, password)
+            device, auth_method, password = widget.status
+            await self.try_login(device, auth_method, password)
             answer = ask_question(
                 self,
                 _("TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"),
@@ -375,7 +394,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                     self.config, self.jobs_ctx, [device], parent=self
                 )
 
-        CreateOrgWidget.show_modal(
+        widget = CreateOrgWidget.show_modal(
             self.jobs_ctx, self.config, self, on_finished=_on_finished, start_addr=addr
         )
 
@@ -426,6 +445,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
         def _on_finished() -> None:
             nonlocal widget
+            # It's safe to access the widget status here since this does not perform a Qt call.
+            # But the underlying C++ widget might already be deleted so we should make sure not
+            # not do anything Qt related with this widget.
             if not widget.status:
                 return
             show_info(self, _("TEXT_ENROLLMENT_QUERY_SUCCEEDED"))
@@ -440,15 +462,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         )
 
     def _on_claim_user_clicked(self, action_addr: BackendInvitationAddr) -> None:
-        widget: ClaimDeviceWidget
+        widget: ClaimUserWidget
 
-        def _on_finished() -> None:
+        @self._bind_async_callback
+        async def _on_finished() -> None:
             nonlocal widget
+            # It's safe to access the widget status here since this does not perform a Qt call.
+            # But the underlying C++ widget might already be deleted so we should make sure not
+            # not do anything Qt related with this widget.
             if not widget.status:
                 return
             device, auth_method, password = widget.status
             self.reload_login_devices()
-            self.try_login(device, auth_method, password)
+            await self.try_login(device, auth_method, password)
             answer = ask_question(
                 self,
                 _("TEXT_CLAIM_USER_SUCCESSFUL_TITLE"),
@@ -470,13 +496,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     def _on_claim_device_clicked(self, action_addr: BackendInvitationAddr) -> None:
         widget: ClaimDeviceWidget
 
-        def _on_finished() -> None:
+        @self._bind_async_callback
+        async def _on_finished() -> None:
             nonlocal widget
+            # It's safe to access the widget status here since this does not perform a Qt call.
+            # But the underlying C++ widget might already be deleted so we should make sure not
+            # not do anything Qt related with this widget.
             if not widget.status:
                 return
             device, auth_method, password = widget.status
             self.reload_login_devices()
-            self.try_login(device, auth_method, password)
+            await self.try_login(device, auth_method, password)
 
         widget = ClaimDeviceWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
@@ -486,7 +516,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             on_finished=_on_finished,
         )
 
-    def try_login(self, device: LocalDevice, auth_method: DeviceFileType, password: str) -> None:
+    async def try_login(
+        self, device: LocalDevice, auth_method: DeviceFileType, password: str
+    ) -> None:
         idx = self._get_login_tab_index()
         if idx == -1:
             tab = self.add_new_tab()
@@ -496,7 +528,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         if auth_method == DeviceFileType.PASSWORD:
             tab.login_with_password(kf, password)
         elif auth_method == DeviceFileType.SMARTCARD:
-            tab.login_with_smartcard(kf)
+            await tab.login_with_smartcard(kf)
 
     def reload_login_devices(self) -> None:
         idx = self._get_login_tab_index()
