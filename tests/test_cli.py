@@ -835,7 +835,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
         result = await run_submit(check_result=False)
         assert result.exit_code == 1
         assert (
-            "The certificate `6f30201fed6069dc05be07aa7fa380d6901591a3` has already been submitted"
+            f"The certificate `{mocked_parsec_ext_smartcard.default_x509_certificate.certificate_sha1.hex()}` has already been submitted"
             in result.output
         )
         assert await run_review_pendings(extra_args="--list-only") == [
@@ -852,13 +852,15 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
 
         # Accept enrollment
         enrollment_id4 = await run_submit()
-        await run_review_pendings(extra_args=f"--accept {enrollment_id4.hex}")
+        await run_review_pendings(
+            extra_args=f"--accept {enrollment_id4.hex} --pki-extra-trust-root {mocked_parsec_ext_smartcard.default_trust_root_path}"
+        )
         assert await run_review_pendings(extra_args="--list-only") == []
 
         # It is no longer possible to do another enrollment with the same certificate (until the user is revoked)
         result = await run_submit(check_result=False)
         assert (
-            "The certificate `6f30201fed6069dc05be07aa7fa380d6901591a3` has already been enrolled"
+            f"The certificate `{mocked_parsec_ext_smartcard.default_x509_certificate.certificate_sha1.hex()}` has already been enrolled"
             in result.output
         )
 
@@ -882,7 +884,9 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
             assert "Additional --accept/--reject elements not used" in result.output
 
         # Poll to handle the accepted enrollments, and discard the non-pendings ones
-        ids = await run_poll(extra_args=f"--finalize {enrollment_id4.hex[:3]}")
+        ids = await run_poll(
+            extra_args=f"--finalize {enrollment_id4.hex[:3]} --pki-extra-trust-root {mocked_parsec_ext_smartcard.default_trust_root_path}"
+        )
         assert set(ids) == {enrollment_id1.hex[:3], enrollment_id3.hex[:3], enrollment_id4.hex[:3]}
 
         # Now we should have a new local device !

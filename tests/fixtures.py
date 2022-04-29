@@ -2,6 +2,8 @@
 
 import attr
 import re
+import sys
+import subprocess
 import pytest
 import pendulum
 from collections import defaultdict
@@ -778,12 +780,92 @@ def sock_from_other_organization_factory(
     return _sock_from_other_organization_factory
 
 
-@pytest.fixture
-def mocked_parsec_ext_smartcard(monkeypatch):
+def create_test_certificates(tmp_path):
+    """
+    Requires openssl to be installed. Only used on linux when parsec_ext is installed.
+    """
+    # Create openssl config
+    (tmp_path / "openssl.cnf").write_text("keyUsage = digitalSignature")
+
+    # OpenSSL commands for creating the CA key, the CA certificate, the client key and the client certificate.
+    commands = """\
+openssl req -x509 -newkey rsa:4096 -keyout ca_key.pem -out ca_cert.pem -sha256 -days 365 -subj "/CN=My CA" -addext "keyUsage = digitalSignature" -passout pass:test
+openssl req -out client_request.csr -newkey rsa:4096 -keyout client_key.pem -new -passout pass:test -subj "/CN=John Doe/emailAddress=john@example.com"
+openssl x509 -req -days 365 -in client_request.csr -CA ca_cert.pem -CAkey ca_key.pem -passin pass:test -CAcreateserial -out client_cert.pem -extfile "./openssl.cnf"
+"""
+
+    # Run the commands
+    for command in commands.splitlines():
+        subprocess.run(command, shell=True, check=True, cwd=tmp_path)
+
+    # Concatenate the key and the certificate
+    combined_data = (tmp_path / "client_cert.pem").read_bytes() + (
+        tmp_path / "client_key.pem"
+    ).read_bytes()
+    (tmp_path / "client_combined.pem").write_bytes(combined_data)
+
+    # Return certificates and password
+    return tmp_path / "ca_cert.pem", tmp_path / "client_combined.pem", "test"
+
+
+def use_actual_parsec_ext_module(monkeypatch, tmp_path):
+    """
+    All tests using `mocked_parsec_ext_smartcard` can also run with the actual `parsec_ext` module if it is installed.
+
+    It is currently not integrated in the CI but it is useful to run locally.
+    """
+    # We only generate test certificates for linux, that's enough for the moment
+    if sys.platform == "win32":
+        return pytest.skip(reason="Linux only")
+
+    # Simply ignore this test if parsec_ext is not installed, which is typicall the case in the CI
+    try:
+        import parsec_ext.smartcard
+    except ModuleNotFoundError:
+        return pytest.skip(reason="parsec_ext not installed")
+
+    # Generate tests certificate
+    ca_cert, client_cert, password = create_test_certificates(tmp_path)
+
+    # Patch parsec_ext to automatically select those test certificates
+    monkeypatch.setattr(
+        "parsec_ext.smartcard.linux.prompt_file_selection", lambda: str(client_cert)
+    )
+    monkeypatch.setattr("parsec_ext.smartcard.linux.prompt_password", lambda _: password)
+
+    # Create the corresponding instance of `X509Certificate``
+    der_certificate, certificate_id, certificate_sha1 = (
+        parsec_ext.smartcard.get_der_encoded_certificate()
+    )
+    issuer, subject, _ = parsec_ext.smartcard.get_certificate_info(der_certificate)
+    default_x509_certificate = X509Certificate(
+        issuer=issuer,
+        subject=subject,
+        der_x509_certificate=der_certificate,
+        certificate_id=certificate_id,
+        certificate_sha1=certificate_sha1,
+    )
+
+    # Add two attributes to the smartcard modules that are going to be used the tests
+    monkeypatch.setattr(
+        "parsec_ext.smartcard.default_x509_certificate", default_x509_certificate, raising=False
+    )
+    monkeypatch.setattr("parsec_ext.smartcard.default_trust_root_path", ca_cert, raising=False)
+
+    # Return the non-mocked module
+    return parsec_ext.smartcard
+
+
+@pytest.fixture(params=(True, False), ids=("mock_parsec_ext", "use_parsec_ext"))
+def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
+    if not request.param:
+        return use_actual_parsec_ext_module(monkeypatch, tmp_path)
+
     class MockedParsecExtSmartcard:
         def __init__(self):
             self._pending_enrollments = defaultdict(list)
             der_x509_certificate = b"der_X509_certificate:42:john@example.com:John Doe:My CA"
+            self.default_trust_root_path = "some_path.pem"
             self.default_x509_certificate = X509Certificate(
                 issuer={"common_name": "My CA"},
                 subject={"common_name": "John Doe", "email_address": "john@example.com"},

@@ -38,6 +38,10 @@ async def test_full_enrollment(
     autoclose_dialog,
     catch_enrollment_query_widget,
 ):
+    # Add trust root to the configuration
+    gui.config = gui.config.evolve(
+        pki_extra_trust_roots={mocked_parsec_ext_smartcard.default_trust_root_path}
+    )
     config_dir = gui.config.config_dir
     alice_password = "S3cr3t"
     save_device_with_password_in_config(config_dir, alice, alice_password)
