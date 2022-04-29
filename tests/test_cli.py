@@ -737,7 +737,9 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
         async def _cli_invoke_in_thread(cmd: str):
             # We must run the command from another thread given it will create it own trio loop
             with trio.fail_after(1):
-                return await trio.to_thread.run_sync(runner.invoke, cli, cmd)
+                return await trio.to_thread.run_sync(
+                    lambda: runner.invoke(cli, cmd, env={"DEBUG": "1"})
+                )
 
         async def run_review_pendings(extra_args: str = "", check_result: bool = True):
             result = await _cli_invoke_in_thread(
@@ -775,9 +777,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
             if not check_result:
                 return result
             if result.exception:
-                raise AssertionError(
-                    f"CliRunner raise an exception: {result.exception}"
-                ) from result.exception
+                raise result.exception
             assert (
                 result.exit_code == 0
             ), f"Bad exit_code: {result.exit_code}\nOutput: {result.output}"
