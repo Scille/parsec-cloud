@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import TYPE_CHECKING
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
 from contextlib import ExitStack, contextmanager
@@ -109,26 +108,24 @@ def freeze_time(time=None, device=None):
         # Set new context
         __freeze_time_task = current_task
         pendulum.set_test_now(time)
-        if not TYPE_CHECKING:
-            try:
-                from libparsec.types import freeze_time as _Rs_freeze_time
-            except ImportError:
-                pass
-            else:
-                _Rs_freeze_time(time)
+        try:
+            from libparsec.types import freeze_time as _Rs_freeze_time
+        except ImportError:
+            pass
+        else:
+            _Rs_freeze_time(time)
 
         yield time
     finally:
         # Restore previous context
         __freeze_time_task = previous_task
         pendulum.set_test_now(previous_time)
-        if not TYPE_CHECKING:
-            try:
-                from libparsec.types import freeze_time as _Rs_freeze_time
-            except ImportError:
-                pass
-            else:
-                _Rs_freeze_time(time)
+        try:
+            from libparsec.types import freeze_time as _Rs_freeze_time
+        except ImportError:
+            pass
+        else:
+            _Rs_freeze_time(time)
 
 
 class AsyncMock(Mock):
