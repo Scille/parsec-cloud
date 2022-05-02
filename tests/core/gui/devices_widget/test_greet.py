@@ -230,6 +230,7 @@ def GreetDeviceTestBed(
                 assert not gdce_w.isVisible()
                 assert autoclose_dialog.dialogs == [("", "The device was successfully created.")]
                 assert self.devices_widget.layout_devices.count() == 3
+                # Devices are not sorted in Rust (by insertion)
                 device_button = next(
                     (
                         item.widget()

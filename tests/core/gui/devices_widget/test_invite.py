@@ -266,6 +266,7 @@ async def test_invite_and_greet_device(
             assert autoclose_dialog.dialogs == [("", "The device was successfully created.")]
             # Devices list should be updated
             assert d_w.layout_devices.count() == 2
+            # Devices are not sorted in Rust (by insertion)
             device = next(
                 (
                     item.widget()

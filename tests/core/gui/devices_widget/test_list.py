@@ -14,6 +14,7 @@ async def test_list_devices(aqtbot, running_backend, logged_gui):
     d_w = await logged_gui.test_switch_to_devices_widget()
 
     assert d_w.layout_devices.count() == 2
+    # Devices are not sorted in Rust (by insertion)
     item = d_w.layout_devices.itemAt(0)
     label_device0 = item.widget().label_device_name.text()
     label_is_current0 = item.widget().label_is_current.text()
@@ -21,13 +22,10 @@ async def test_list_devices(aqtbot, running_backend, logged_gui):
     label_device1 = item.widget().label_device_name.text()
     label_is_current1 = item.widget().label_is_current.text()
 
-    if label_device0 == "My dev1 machine":
-        assert label_device1 == "My dev2 machine"
-        assert label_is_current0 == "(current)"
-    else:
-        assert label_device0 == "My dev2 machine"
-        assert label_device1 == "My dev1 machine"
-        assert label_is_current1 == "(current)"
+    assert {(label_device0, label_is_current0), (label_device1, label_is_current1)} == {
+        ("My dev1 machine", "(current)"),
+        ("My dev2 machine", ""),
+    }
 
 
 @pytest.mark.gui
