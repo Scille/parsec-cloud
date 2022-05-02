@@ -135,9 +135,9 @@ impl LocalDevice {
     // /// 1. Allowing for easier testing by patching this method in device-sepecific way
     // /// 2. Allowing for other implementation in the future allowing to track, check and
     // ///    possibly alter the production of timestamps.
-    // pub fn timestamp(self) -> DateTime {
-    //     pendulum_now()
-    // }
+    pub fn timestamp(&self) -> DateTime {
+        DateTime::now()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
