@@ -19,6 +19,7 @@ variables:
     --log-level=DEBUG \
     --durations=10 -v \
   debug.stress_flaky_tests: 0  # Repeat all flaky tests X times
+  rust.version: 1.60.0
 
 jobs:
 
@@ -83,7 +84,7 @@ jobs:
       npm --version
       pip install pre-commit
       # Rust stuff (needed by pre-commit)
-      curl https://sh.rustup.rs -sSf | sh -s -- -y
+      curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $(rust.version) -y
       rustup --version
       echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
       rustup component add rustfmt clippy
@@ -157,7 +158,7 @@ jobs:
       sudo apt-get update
       python --version
       # Rust stuff
-      curl https://sh.rustup.rs -sSf | sh -s -- -y
+      curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $(rust.version) -y
       echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
       # pip 20.3 introduces the new dependency resolver
       pip install pip>=20.3 --user --upgrade
