@@ -12,6 +12,7 @@ path = "tests/tests.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+parsec_serialization_format = { version = "0.0.0", path = "../parsec_serialization_format" }
 parsec_api_crypto = { version = "0.0.0", path = "../parsec_api_crypto" }
 
 lazy_static = "1.4.0"

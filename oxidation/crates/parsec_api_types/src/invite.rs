@@ -8,7 +8,9 @@ use serde_with::*;
 use std::str::FromStr;
 
 use parsec_api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
+use parsec_serialization_format::parsec_data;
 
+use crate as parsec_api_types;
 use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
 use crate::ext_types::new_uuid_type;
 use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
@@ -221,16 +223,7 @@ macro_rules! impl_decrypt_and_load {
  * InviteUserData
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "InviteUserDataData", from = "InviteUserDataData")]
-pub struct InviteUserData {
-    // Claimer ask for device_label/human_handle, but greeter has final word on this
-    pub requested_device_label: Option<DeviceLabel>,
-    pub requested_human_handle: Option<HumanHandle>,
-    // Note claiming user also imply creating a first device
-    pub public_key: PublicKey,
-    pub verify_key: VerifyKey,
-}
+parsec_data!("schema/invite_user_data.json");
 
 impl_dump_and_encrypt!(InviteUserData);
 impl_decrypt_and_load!(InviteUserData);
@@ -258,18 +251,7 @@ impl_transparent_data_format_conversion!(
  * InviteUserConfirmation
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(
-    into = "InviteUserConfirmationData",
-    from = "InviteUserConfirmationData"
-)]
-pub struct InviteUserConfirmation {
-    pub device_id: DeviceID,
-    pub device_label: Option<DeviceLabel>,
-    pub human_handle: Option<HumanHandle>,
-    pub profile: UserProfile,
-    pub root_verify_key: VerifyKey,
-}
+parsec_data!("schema/invite_user_confirmation.json");
 
 impl_dump_and_encrypt!(InviteUserConfirmation);
 impl_decrypt_and_load!(InviteUserConfirmation);
@@ -299,12 +281,7 @@ impl_transparent_data_format_conversion!(
  * InviteDeviceData
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "InviteDeviceDataData", from = "InviteDeviceDataData")]
-pub struct InviteDeviceData {
-    pub requested_device_label: Option<DeviceLabel>,
-    pub verify_key: VerifyKey,
-}
+parsec_data!("schema/invite_device_data.json");
 
 impl_dump_and_encrypt!(InviteDeviceData);
 impl_decrypt_and_load!(InviteDeviceData);
@@ -328,21 +305,7 @@ impl_transparent_data_format_conversion!(
  * InviteDeviceConfirmation
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(
-    into = "InviteDeviceConfirmationData",
-    from = "InviteDeviceConfirmationData"
-)]
-pub struct InviteDeviceConfirmation {
-    pub device_id: DeviceID,
-    pub device_label: Option<DeviceLabel>,
-    pub human_handle: Option<HumanHandle>,
-    pub profile: UserProfile,
-    pub private_key: PrivateKey,
-    pub user_manifest_id: EntryID,
-    pub user_manifest_key: SecretKey,
-    pub root_verify_key: VerifyKey,
-}
+parsec_data!("schema/invite_device_confirmation.json");
 
 impl_dump_and_encrypt!(InviteDeviceConfirmation);
 impl_decrypt_and_load!(InviteDeviceConfirmation);
