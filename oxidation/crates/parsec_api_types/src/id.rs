@@ -7,6 +7,8 @@ use std::convert::TryFrom;
 use std::str::FromStr;
 use unicode_normalization::UnicodeNormalization;
 
+use crate::impl_from_maybe;
+
 macro_rules! impl_debug_from_display {
     ($name:ident) => {
         impl std::fmt::Debug for $name {
@@ -106,6 +108,7 @@ new_string_based_id_type!(pub DeviceName, 32, r"^[\w\-]{1,32}$");
 */
 
 new_string_based_id_type!(pub DeviceLabel, 255, r"^.+$");
+impl_from_maybe!(Option<DeviceLabel>);
 
 /*
  * DeviceID
@@ -211,6 +214,8 @@ impl From<HumanHandle> for (String, String) {
     }
 }
 
+crate::impl_from_maybe!(Option<HumanHandle>);
+
 /*
  * UserProfile
  */
@@ -229,6 +234,12 @@ pub enum UserProfile {
     Admin,
     Standard,
     Outsider,
+}
+
+impl Default for UserProfile {
+    fn default() -> Self {
+        Self::Standard
+    }
 }
 
 impl FromStr for UserProfile {

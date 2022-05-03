@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use fancy_regex::Regex;
+use parsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::cmp::Ordering;
@@ -10,6 +11,8 @@ use std::num::NonZeroU64;
 
 use parsec_api_crypto::{HashDigest, SecretKey};
 use parsec_api_types::*;
+
+use crate as parsec_client_types;
 
 macro_rules! impl_local_manifest_dump_load {
     ($name:ident) => {
@@ -171,16 +174,7 @@ pub struct LocalFileManifest {
     pub blocks: Vec<Vec<Chunk>>,
 }
 
-new_data_struct_type!(
-    LocalFileManifestData,
-    type: "local_file_manifest",
-    base: FileManifest,
-    need_sync: bool,
-    updated: DateTime,
-    size: u64,
-    blocksize: u64,
-    blocks: Vec<Vec<Chunk>>,
-);
+parsec_data!("schema/local_file_manifest.json");
 
 impl TryFrom<LocalFileManifestData> for LocalFileManifest {
     type Error = &'static str;
@@ -199,7 +193,7 @@ impl TryFrom<LocalFileManifestData> for LocalFileManifest {
 impl From<LocalFileManifest> for LocalFileManifestData {
     fn from(obj: LocalFileManifest) -> Self {
         Self {
-            type_: LocalFileManifestDataDataType,
+            ty: Default::default(),
             base: obj.base,
             need_sync: obj.need_sync,
             updated: obj.updated,
@@ -355,53 +349,18 @@ pub struct LocalFolderManifest {
     pub remote_confinement_points: HashSet<EntryID>,
 }
 
-new_data_struct_type!(
+parsec_data!("schema/local_folder_manifest.json");
+
+impl_transparent_data_format_conversion!(
+    LocalFolderManifest,
     LocalFolderManifestData,
-    type: "local_folder_manifest",
-    base: FolderManifest,
-    need_sync: bool,
-    updated: DateTime,
-    children: HashMap<EntryName, EntryID>,
-    // Added in Parsec v1.15
-    #[serde(
-        default,
-        deserialize_with = "maybe_field::deserialize_some",
-    )]
-    local_confinement_points: Option<HashSet<EntryID>>,
-    // Added in Parsec v1.15
-    #[serde(
-        default,
-        deserialize_with = "maybe_field::deserialize_some",
-    )]
-    remote_confinement_points: Option<HashSet<EntryID>>,
+    base,
+    need_sync,
+    updated,
+    children,
+    local_confinement_points,
+    remote_confinement_points,
 );
-
-impl From<LocalFolderManifestData> for LocalFolderManifest {
-    fn from(data: LocalFolderManifestData) -> Self {
-        Self {
-            base: data.base,
-            need_sync: data.need_sync,
-            updated: data.updated,
-            children: data.children,
-            local_confinement_points: data.local_confinement_points.unwrap_or_default(),
-            remote_confinement_points: data.remote_confinement_points.unwrap_or_default(),
-        }
-    }
-}
-
-impl From<LocalFolderManifest> for LocalFolderManifestData {
-    fn from(obj: LocalFolderManifest) -> Self {
-        Self {
-            type_: Default::default(),
-            base: obj.base,
-            need_sync: obj.need_sync,
-            updated: obj.updated,
-            children: obj.children,
-            local_confinement_points: Some(obj.local_confinement_points),
-            remote_confinement_points: Some(obj.remote_confinement_points),
-        }
-    }
-}
 
 impl_local_manifest_dump_load!(LocalFolderManifest);
 
@@ -682,63 +641,21 @@ pub struct LocalWorkspaceManifest {
     pub speculative: bool,
 }
 
-new_data_struct_type!(
-    LocalWorkspaceManifestData,
-    type: "local_workspace_manifest",
-    base: WorkspaceManifest,
-    need_sync: bool,
-    updated: DateTime,
-    children: HashMap<EntryName, EntryID>,
-    // Added in Parsec v1.15
-    #[serde(
-        default,
-        deserialize_with = "maybe_field::deserialize_some",
-    )]
-    local_confinement_points: Option<HashSet<EntryID>>,
-    // Added in Parsec v1.15
-    #[serde(
-        default,
-        deserialize_with = "maybe_field::deserialize_some",
-    )]
-    remote_confinement_points: Option<HashSet<EntryID>>,
-    // Added in Parsec v2.6
-    #[serde(
-        default,
-        deserialize_with = "maybe_field::deserialize_some",
-    )]
-    speculative: Option<bool>,
-);
+parsec_data!("schema/local_workspace_manifest.json");
 
 impl_local_manifest_dump_load!(LocalWorkspaceManifest);
 
-impl From<LocalWorkspaceManifestData> for LocalWorkspaceManifest {
-    fn from(data: LocalWorkspaceManifestData) -> Self {
-        Self {
-            base: data.base,
-            need_sync: data.need_sync,
-            updated: data.updated,
-            children: data.children,
-            local_confinement_points: data.local_confinement_points.unwrap_or_default(),
-            remote_confinement_points: data.remote_confinement_points.unwrap_or_default(),
-            speculative: data.speculative.unwrap_or(false),
-        }
-    }
-}
-
-impl From<LocalWorkspaceManifest> for LocalWorkspaceManifestData {
-    fn from(obj: LocalWorkspaceManifest) -> Self {
-        Self {
-            type_: Default::default(),
-            base: obj.base,
-            need_sync: obj.need_sync,
-            updated: obj.updated,
-            children: obj.children,
-            local_confinement_points: Some(obj.local_confinement_points),
-            remote_confinement_points: Some(obj.remote_confinement_points),
-            speculative: Some(obj.speculative),
-        }
-    }
-}
+impl_transparent_data_format_conversion!(
+    LocalWorkspaceManifest,
+    LocalWorkspaceManifestData,
+    base,
+    need_sync,
+    updated,
+    children,
+    local_confinement_points,
+    remote_confinement_points,
+    speculative
+);
 
 impl LocalWorkspaceManifest {
     pub fn new(
@@ -995,7 +912,7 @@ pub struct LocalUserManifest {
     pub base: UserManifest,
     pub need_sync: bool,
     pub updated: DateTime,
-    pub last_processed_message: u32,
+    pub last_processed_message: u64,
     pub workspaces: Vec<WorkspaceEntry>,
     // Speculative placeholders are created when we want to access the
     // user manifest but didn't retrieve it from backend yet. This implies:
@@ -1012,48 +929,18 @@ pub struct LocalUserManifest {
 
 impl_local_manifest_dump_load!(LocalUserManifest);
 
-new_data_struct_type!(
+parsec_data!("schema/local_user_manifest.json");
+
+impl_transparent_data_format_conversion!(
+    LocalUserManifest,
     LocalUserManifestData,
-    type: "local_user_manifest",
-    base: UserManifest,
-    need_sync: bool,
-    updated: DateTime,
-    last_processed_message: u32,
-    workspaces: Vec<WorkspaceEntry>,
-    // Added in Parsec v2.6
-    #[serde(
-        default,
-        deserialize_with = "maybe_field::deserialize_some",
-    )]
-    speculative: Option<bool>,
+    base,
+    need_sync,
+    updated,
+    last_processed_message,
+    workspaces,
+    speculative
 );
-
-impl From<LocalUserManifestData> for LocalUserManifest {
-    fn from(data: LocalUserManifestData) -> Self {
-        Self {
-            base: data.base,
-            need_sync: data.need_sync,
-            updated: data.updated,
-            last_processed_message: data.last_processed_message,
-            workspaces: data.workspaces,
-            speculative: data.speculative.unwrap_or(false),
-        }
-    }
-}
-
-impl From<LocalUserManifest> for LocalUserManifestData {
-    fn from(obj: LocalUserManifest) -> Self {
-        Self {
-            type_: Default::default(),
-            base: obj.base,
-            need_sync: obj.need_sync,
-            updated: obj.updated,
-            last_processed_message: obj.last_processed_message,
-            workspaces: obj.workspaces,
-            speculative: Some(obj.speculative),
-        }
-    }
-}
 
 impl LocalUserManifest {
     pub fn new(

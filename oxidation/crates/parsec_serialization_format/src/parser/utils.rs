@@ -27,7 +27,7 @@ pub(crate) fn inspect_type(ty: &str) -> String {
     _inspect_type(&raw_ty)
 }
 
-pub(crate) fn _inspect_type(ty: &Type) -> String {
+fn _inspect_type(ty: &Type) -> String {
     match ty {
         Type::Path(p) => {
             let ty = p.path.segments.last().unwrap_or_else(|| unreachable!());
@@ -49,9 +49,23 @@ pub(crate) fn _inspect_type(ty: &Type) -> String {
                 "BlockID" => "parsec_api_types::BlockID",
                 "DeviceID" => "parsec_api_types::DeviceID",
                 "EntryID" => "parsec_api_types::EntryID",
+                "UserID" => "parsec_api_types::UserID",
                 "DeviceLabel" => "parsec_api_types::DeviceLabel",
                 "HumanHandle" => "parsec_api_types::HumanHandle",
                 "UserProfile" => "parsec_api_types::UserProfile",
+                "RealmRole" => "parsec_api_types::RealmRole",
+                "CertificateSignerOwned" => "parsec_api_types::CertificateSignerOwned",
+                "BlockAccess" => "parsec_api_types::BlockAccess",
+                "EntryName" => "parsec_api_types::EntryName",
+                "WorkspaceEntry" => "parsec_api_types::WorkspaceEntry",
+                "Version" => "u32",
+                "Size" => "u64",
+                "Index" => "u64",
+                "FileManifest" => "parsec_api_types::FileManifest",
+                "FolderManifest" => "parsec_api_types::FolderManifest",
+                "WorkspaceManifest" => "parsec_api_types::WorkspaceManifest",
+                "UserManifest" => "parsec_api_types::UserManifest",
+                "Chunk" => "parsec_client_types::Chunk",
                 ident => panic!("{ident} isn't allowed as type"),
             })
             .to_string();

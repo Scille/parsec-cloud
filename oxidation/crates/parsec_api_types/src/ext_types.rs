@@ -427,6 +427,18 @@ impl<T> Maybe<T> {
     pub fn is_absent(&self) -> bool {
         matches!(self, Self::Absent)
     }
+    pub fn unwrap_or(self, default: T) -> T {
+        match self {
+            Self::Present(data) => data,
+            Self::Absent => default,
+        }
+    }
+}
+
+impl<T> From<T> for Maybe<T> {
+    fn from(data: T) -> Self {
+        Self::Present(data)
+    }
 }
 
 impl<T, U> serde_with::SerializeAs<Maybe<T>> for Maybe<U>
@@ -493,3 +505,20 @@ where
         deserializer.deserialize_option(MaybeVisitor::<T, U>(std::marker::PhantomData))
     }
 }
+
+macro_rules! impl_from_maybe {
+    ($name: ty) => {
+        impl From<crate::Maybe<$name>> for $name {
+            fn from(data: crate::Maybe<$name>) -> Self {
+                match data {
+                    crate::Maybe::Present(data) => data,
+                    crate::Maybe::Absent => Default::default(),
+                }
+            }
+        }
+    };
+}
+
+impl_from_maybe!(bool);
+
+pub(crate) use impl_from_maybe;

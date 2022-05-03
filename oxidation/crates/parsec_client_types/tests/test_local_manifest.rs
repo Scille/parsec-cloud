@@ -1955,7 +1955,7 @@ fn local_user_manifest_new() {
 #[case::empty((0, vec![]))]
 #[case::last_processed_message((10, vec![]))]
 #[case::workspaces((0, vec![WorkspaceEntry::generate("alice".parse().unwrap(), DateTime::now())]))]
-fn local_user_manifest_from_remote(#[case] input: (u32, Vec<WorkspaceEntry>)) {
+fn local_user_manifest_from_remote(#[case] input: (u64, Vec<WorkspaceEntry>)) {
     let timestamp = DateTime::now();
     let (last_processed_message, workspaces) = input;
     let um = UserManifest {

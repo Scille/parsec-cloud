@@ -76,7 +76,7 @@ macro_rules! new_data_struct_type {
             pub struct $name {
 
                 #[serde(rename="type")]
-                pub type_: [<$name DataType>],
+                pub ty: [<$name DataType>],
 
                 $(
                     $(#[$field_cfgs])*
@@ -96,7 +96,7 @@ macro_rules! impl_transparent_data_format_conversion {
         impl From<$data_type> for $obj_type {
             fn from(data: $data_type) -> Self {
                 Self {
-                    $($field: data.$field),*
+                    $($field: data.$field.into()),*
                 }
             }
         }
@@ -104,8 +104,8 @@ macro_rules! impl_transparent_data_format_conversion {
         impl From<$obj_type> for $data_type {
             fn from(obj: $obj_type) -> Self {
                 Self {
-                    type_: Default::default(),
-                    $($field: obj.$field),*
+                    ty: Default::default(),
+                    $($field: obj.$field.into()),*
                 }
             }
         }
