@@ -4,7 +4,7 @@ mod parser;
 
 use proc_macro::TokenStream;
 use std::fs::File;
-use std::io::Read;
+use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use syn::{parse_macro_input, LitStr};
 
@@ -14,9 +14,17 @@ fn content(path: String) -> String {
         .parse::<PathBuf>()
         .unwrap();
     let file_path = manifest_dir_path.join(&path);
-    let mut file = File::open(file_path).unwrap();
+    let file = File::open(file_path).unwrap();
+    let buf = BufReader::new(file);
     let mut content = String::new();
-    file.read_to_string(&mut content).unwrap();
+    for line in buf.lines() {
+        let line = line.unwrap_or_else(|_| unreachable!());
+        let line = match line.split_once("//") {
+            Some((line, _)) => line,
+            None => &line,
+        };
+        content.push_str(line)
+    }
     content
 }
 
