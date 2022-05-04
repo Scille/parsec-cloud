@@ -12,8 +12,8 @@ path = "tests/tests.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-parsec_serialization_format = { version = "0.0.0", path = "../parsec_serialization_format" }
-parsec_api_crypto = { version = "0.0.0", path = "../parsec_api_crypto" }
+parsec_serialization_format = { path = "../parsec_serialization_format" }
+parsec_api_crypto = { path = "../parsec_api_crypto" }
 
 lazy_static = "1.4.0"
 serde = {version = "1.0.127", features = ["derive"]}
@@ -38,7 +38,7 @@ rand = "0.8.4"
 thiserror = "1.0.30"
 
 [dev-dependencies]
-tests_fixtures = { version = "0.0.0", path = "../tests_fixtures" }
+tests_fixtures = { path = "../tests_fixtures" }
 pretty_assertions = "1.0.0"
 serde_test = "1.0.130"
 hex-literal = "0.3.3"

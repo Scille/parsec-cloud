@@ -12,8 +12,8 @@ path = "tests/tests.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-parsec_api_crypto = { version = "0.0.0", path = "../parsec_api_crypto" }
-parsec_api_types = { version = "0.0.0", path = "../parsec_api_types" }
+parsec_api_crypto = { path = "../parsec_api_crypto" }
+parsec_api_types = { path = "../parsec_api_types" }
 
 flate2 = "1.0.22"
 serde = {version = "1.0.127", features = ["derive"]}
@@ -26,7 +26,7 @@ paste = "1.0.5"
 fancy-regex = "0.8.0"
 
 [dev-dependencies]
-tests_fixtures = { version = "0.0.0", path = "../tests_fixtures" }
+tests_fixtures = { path = "../tests_fixtures" }
 pretty_assertions = "1.0.0"
 serde_test = "1.0.130"
 hex-literal = "0.3.3"
