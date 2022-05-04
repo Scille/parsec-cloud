@@ -14,7 +14,6 @@ from PyQt5.QtWidgets import QApplication
 from parsec.event_bus import EventBus
 from parsec.core.core_events import CoreEvent
 from parsec.core.config import CoreConfig
-from parsec.core.gui.custom_dialogs import QDialogInProcess
 from parsec.core.ipcinterface import (
     run_ipc_server,
     send_to_ipc_server,
@@ -30,6 +29,7 @@ try:
     from parsec.core.gui.systray import systray_available, Systray
     from parsec.core.gui.main_window import MainWindow
     from parsec.core.gui.trio_jobs import run_trio_job_scheduler
+    from parsec.core.gui.custom_dialogs import QDialogInProcess
 except ImportError as exc:
     raise ModuleNotFoundError(
         """PyQt forms haven't been generated.
