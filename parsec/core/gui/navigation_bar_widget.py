@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from typing import Optional, List
+
 from PyQt5.QtCore import pyqtSignal, Qt
-
 from PyQt5.QtGui import QPixmap, QColor
-
 from PyQt5.QtWidgets import (
     QHBoxLayout,
     QWidget,
@@ -15,8 +15,8 @@ from PyQt5.QtWidgets import (
     QScroller,
 )
 
+from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
-
 from parsec.core.gui.custom_widgets import ClickableLabel, IconLabel
 
 
@@ -51,8 +51,8 @@ class NavigationBarWidget(QWidget):
         self.scroll_area.setWidget(self.inner_widget)
         self.inner_widget.layout().setContentsMargins(0, 3, 0, 0)
         self.inner_widget.layout().addItem(QSpacerItem(10, 0, QSizePolicy.Policy.MinimumExpanding))
-        self.paths = []
-        self.workspace_name = None
+        self.paths: List[EntryName] = []
+        self.workspace_name: Optional[EntryName] = None
 
     def _on_range_changed(self, min, max):
         self.scroll_area.horizontalScrollBar().setSliderPosition(max)
@@ -67,7 +67,7 @@ class NavigationBarWidget(QWidget):
     def get_current_path(self):
         return FsPath(self.paths)
 
-    def from_path(self, workspace_name, path):
+    def from_path(self, workspace_name: EntryName, path: str):
         self.clear()
         path = FsPath(path)
         parts = [workspace_name]
