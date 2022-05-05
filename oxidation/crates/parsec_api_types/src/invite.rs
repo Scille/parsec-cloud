@@ -26,6 +26,18 @@ pub enum InvitationType {
     Device,
 }
 
+/*
+ * InvitationStatus
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum InvitationStatus {
+    Idle,
+    Ready,
+    Deleted,
+}
+
 impl FromStr for InvitationType {
     type Err = &'static str;
 

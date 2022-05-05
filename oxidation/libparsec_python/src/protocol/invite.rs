@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use parsec_api_protocol::InviteInfoUserOrDevice;
 use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyType};
@@ -32,16 +31,20 @@ impl InviteNewReq {
     #[classmethod]
     #[pyo3(name = "User")]
     fn user(_cls: &PyType, claimer_email: String, send_email: bool) -> PyResult<Self> {
-        Ok(InviteNewReq(invite_new::Req::User {
-            claimer_email,
-            send_email,
-        }))
+        Ok(InviteNewReq(invite_new::Req(
+            invite_new::UserOrDevice::User {
+                claimer_email,
+                send_email,
+            },
+        )))
     }
 
     #[classmethod]
     #[pyo3(name = "Device")]
     fn device(_cls: &PyType, send_email: bool) -> PyResult<Self> {
-        Ok(Self(invite_new::Req::Device { send_email }))
+        Ok(Self(invite_new::Req(invite_new::UserOrDevice::Device {
+            send_email,
+        })))
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -58,8 +61,8 @@ impl InviteNewReq {
 
 fn py_to_rs_invitation_email_sent_status(
     email_sent: &PyAny,
-) -> PyResult<parsec_api_protocol::InvitationEmailSentStatus> {
-    use parsec_api_protocol::InvitationEmailSentStatus::*;
+) -> PyResult<invite_new::InvitationEmailSentStatus> {
+    use invite_new::InvitationEmailSentStatus::*;
     Ok(match email_sent.getattr("name")?.extract::<&str>()? {
         "SUCCESS" => Success,
         "NOT_AVAILABLE" => NotAvailable,
@@ -119,8 +122,8 @@ impl InviteNewRep {
 
 fn py_to_rs_invitation_deleted_reason(
     reason: &PyAny,
-) -> PyResult<parsec_api_protocol::InvitationDeletedReason> {
-    use parsec_api_protocol::InvitationDeletedReason::*;
+) -> PyResult<invite_delete::InvitationDeletedReason> {
+    use invite_delete::InvitationDeletedReason::*;
     Ok(match reason.getattr("name")?.extract::<&str>()? {
         "FINISHED" => Finished,
         "CANCELLED" => Cancelled,
@@ -220,7 +223,7 @@ impl InviteListReq {
 
 #[pyclass]
 #[derive(PartialEq, Clone)]
-pub(crate) struct InviteListItem(pub parsec_api_protocol::InviteListItem);
+pub(crate) struct InviteListItem(pub invite_list::InviteListItem);
 
 #[pymethods]
 impl InviteListItem {
@@ -236,7 +239,7 @@ impl InviteListItem {
         let token = token.0;
         let created_on = py_to_rs_datetime(created_on)?;
         let status = py_to_rs_invitation_status(status)?;
-        Ok(Self(parsec_api_protocol::InviteListItem::User {
+        Ok(Self(invite_list::InviteListItem::User {
             token,
             created_on,
             claimer_email,
@@ -255,7 +258,7 @@ impl InviteListItem {
         let token = token.0;
         let created_on = py_to_rs_datetime(created_on)?;
         let status = py_to_rs_invitation_status(status)?;
-        Ok(Self(parsec_api_protocol::InviteListItem::Device {
+        Ok(Self(invite_list::InviteListItem::Device {
             token,
             created_on,
             status,
@@ -336,11 +339,13 @@ impl InviteInfoRep {
     ) -> PyResult<Self> {
         let greeter_user_id = greeter_user_id.0;
         let greeter_human_handle = greeter_human_handle.0;
-        Ok(Self(invite_info::Rep::Ok(InviteInfoUserOrDevice::User {
-            claimer_email,
-            greeter_user_id,
-            greeter_human_handle,
-        })))
+        Ok(Self(invite_info::Rep::Ok(
+            invite_info::UserOrDevice::User {
+                claimer_email,
+                greeter_user_id,
+                greeter_human_handle,
+            },
+        )))
     }
 
     #[classmethod]
@@ -352,10 +357,12 @@ impl InviteInfoRep {
     ) -> PyResult<Self> {
         let greeter_user_id = greeter_user_id.0;
         let greeter_human_handle = greeter_human_handle.0;
-        Ok(Self(invite_info::Rep::Ok(InviteInfoUserOrDevice::Device {
-            greeter_user_id,
-            greeter_human_handle,
-        })))
+        Ok(Self(invite_info::Rep::Ok(
+            invite_info::UserOrDevice::Device {
+                greeter_user_id,
+                greeter_human_handle,
+            },
+        )))
     }
 
     fn __repr__(&self) -> PyResult<String> {

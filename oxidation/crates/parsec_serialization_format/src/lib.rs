@@ -29,16 +29,6 @@ fn content(path: String) -> String {
 }
 
 #[proc_macro]
-pub fn parsec_schema(path: TokenStream) -> TokenStream {
-    let path = parse_macro_input!(path as LitStr).value();
-    let content = content(path);
-
-    let schema: parser::Schema =
-        miniserde::json::from_str(&content).unwrap_or_else(|_| panic!("Schema is not valid"));
-    TokenStream::from(schema.quote())
-}
-
-#[proc_macro]
 pub fn parsec_cmds(path: TokenStream) -> TokenStream {
     let path = parse_macro_input!(path as LitStr).value();
     let content = content(path);

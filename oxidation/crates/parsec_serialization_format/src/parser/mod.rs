@@ -3,8 +3,9 @@
 mod data;
 mod field;
 mod protocol;
-mod schema;
+#[allow(dead_code)]
 mod serde_attr;
+#[allow(dead_code)]
 mod serializing;
 pub(crate) mod utils;
 mod variant;
@@ -12,7 +13,6 @@ mod variant;
 pub(crate) use data::*;
 pub(crate) use field::*;
 pub(crate) use protocol::*;
-pub(crate) use schema::*;
 pub(crate) use serde_attr::*;
-pub(crate) use serializing::*;
+// pub(crate) use serializing::*;
 pub(crate) use variant::*;

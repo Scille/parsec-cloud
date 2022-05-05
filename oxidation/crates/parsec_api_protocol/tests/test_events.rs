@@ -4,7 +4,7 @@ use hex_literal::hex;
 use rstest::rstest;
 
 use parsec_api_protocol::*;
-use parsec_api_types::RealmRole;
+use parsec_api_types::{InvitationStatus, RealmRole};
 
 #[rstest]
 fn serde_events_listen_req() {
@@ -41,9 +41,10 @@ fn serde_events_listen_req() {
         &hex!(
             "83a56576656e74a670696e676564a470696e67a6666f6f626172a6737461747573a26f6b"
         )[..],
-        authenticated_cmds::events_listen::Rep::Ok(APIEvent::Pinged {
-            ping: "foobar".to_owned(),
-        })
+        authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::Pinged {
+                ping: "foobar".to_owned(),
+            }
+        )
     )
 )]
 #[case::message_received(
@@ -57,9 +58,10 @@ fn serde_events_listen_req() {
             "83a56576656e74b06d6573736167652e7265636569766564a5696e64657800a67374617475"
             "73a26f6b"
         )[..],
-        authenticated_cmds::events_listen::Rep::Ok(APIEvent::MessageReceived{
-            index: 0,
-        })
+        authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::MessageReceived {
+                index: 0,
+            }
+        )
     )
 )]
 #[case::invite_status_changed(
@@ -75,7 +77,7 @@ fn serde_events_listen_req() {
             "696f6e5f737461747573a449444c45a6737461747573a26f6ba5746f6b656ed802d864b93d"
             "ed264aae9ae583fd3d40c45a"
         )[..],
-        authenticated_cmds::events_listen::Rep::Ok(APIEvent::InviteStatusChanged {
+        authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::InviteStatusChanged {
                 invitation_status: InvitationStatus::Idle,
                 token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
             },
@@ -95,7 +97,7 @@ fn serde_events_listen_req() {
             "696e74656e616e63655f66696e6973686564a87265616c6d5f6964d8021d3353157d7d4e95"
             "ad2fdea7b3bd19c5a6737461747573a26f6b"
         )[..],
-        authenticated_cmds::events_listen::Rep::Ok(APIEvent::RealmMaintenanceFinished{
+        authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmMaintenanceFinished{
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 encryption_revision: 0,
             }
@@ -115,7 +117,7 @@ fn serde_events_listen_req() {
             "696e74656e616e63655f73746172746564a87265616c6d5f6964d8021d3353157d7d4e95ad"
             "2fdea7b3bd19c5a6737461747573a26f6b"
         )[..],
-        authenticated_cmds::events_listen::Rep::Ok(APIEvent::RealmMaintenanceStarted {
+        authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmMaintenanceStarted {
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 encryption_revision: 0,
             }
@@ -138,12 +140,13 @@ fn serde_events_listen_req() {
             "022b5f314728134a12863da1ce49c112f6ab7372635f76657273696f6e00a6737461747573"
             "a26f6b"
         )[..],
-        authenticated_cmds::events_listen::Rep::Ok(APIEvent::RealmVlobsUpdated {
+        authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmVlobsUpdated {
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 checkpoint: 0,
                 src_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
                 src_version: 0,
-        })
+            }
+        )
     )
 )]
 #[case::realm_roles_updated(
@@ -159,10 +162,11 @@ fn serde_events_listen_req() {
             "021d3353157d7d4e95ad2fdea7b3bd19c5a4726f6c65a54f574e4552a6737461747573a26f"
             "6b"
         )[..],
-        authenticated_cmds::events_listen::Rep::Ok(APIEvent::RealmRolesUpdated {
+        authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmRolesUpdated {
                 realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
                 role: RealmRole::Owner,
-        })
+            }
+        )
     )
 )]
 #[case::cancelled(
@@ -247,70 +251,4 @@ fn serde_events_subscribe_rep() {
     let data2 = authenticated_cmds::events_subscribe::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
-}
-
-#[rstest]
-fn specs_events_listen_req() {
-    assert_eq!(
-        authenticated_cmds::events_listen::Req::specs(),
-        serde_json::json!({
-            "fields": {
-                "cmd": {
-                    "type": "CheckedConstant",
-                    "value": "events_listen",
-                },
-                "wait": {
-                    "type": "bool",
-                },
-            },
-        })
-    )
-}
-
-#[rstest]
-fn specs_events_listen_rep() {
-    assert_eq!(
-        authenticated_cmds::events_listen::Rep::specs(),
-        serde_json::json!({
-            "fields": {
-                "0": {
-                    "type": "APIEvent",
-                },
-                "status": {
-                    "type": "CheckedConstant",
-                    "value": "ok",
-                },
-            },
-        })
-    )
-}
-
-#[rstest]
-fn specs_events_subscribe_req() {
-    assert_eq!(
-        authenticated_cmds::events_subscribe::Req::specs(),
-        serde_json::json!({
-            "fields": {
-                "cmd": {
-                    "type": "CheckedConstant",
-                    "value": "events_subscribe",
-                },
-            },
-        })
-    )
-}
-
-#[rstest]
-fn specs_events_subscribe_rep() {
-    assert_eq!(
-        authenticated_cmds::events_subscribe::Rep::specs(),
-        serde_json::json!({
-            "fields": {
-                "status": {
-                    "type": "CheckedConstant",
-                    "value": "ok",
-                },
-            },
-        })
-    )
 }

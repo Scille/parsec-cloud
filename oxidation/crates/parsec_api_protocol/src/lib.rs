@@ -1,31 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-mod block;
-mod cmds;
 mod error;
-mod events;
 mod handshake;
-mod invite;
-mod message;
-mod organization;
-mod ping;
-mod realm;
-mod user;
-mod vlob;
 
-pub use cmds::*;
+use parsec_serialization_format::parsec_cmds;
+
 pub use error::*;
-pub use events::APIEvent;
 pub use handshake::*;
-pub use invite::{
-    InvitationDeletedReason, InvitationEmailSentStatus, InvitationStatus, InviteInfoUserOrDevice,
-    InviteListItem,
-};
-pub use message::Message;
-pub use organization::{OrganizationBootstrapWebhook, UsersPerProfileDetailItem};
-pub use realm::MaintenanceType;
-pub use user::{HumanFindResultItem, Trustchain};
-pub use vlob::ReencryptionBatchEntry;
 
 macro_rules! impl_dump_load {
     ($name:ident) => {
@@ -41,3 +22,16 @@ macro_rules! impl_dump_load {
     };
 }
 pub(crate) use impl_dump_load;
+
+// This macro implements dump/load methods for client/server side.
+// It checks if both Req and Rep are implemented for a specified command
+// It also provides a way to use commands by specifying status, command and type.
+// For example:
+// Server side
+// authenticated_cmds::AnyCmdReq::load(..)
+// authenticated_cmds::block_create::Rep::Ok.dump()
+// Client side
+// authenticated_cmds::block_create::Req { .. }.dump()
+// authenticated_cmds::block_create::Rep::load(..)
+parsec_cmds!("schema/invited.json");
+parsec_cmds!("schema/authenticated.json");

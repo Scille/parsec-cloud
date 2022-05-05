@@ -2,6 +2,7 @@
 
 use proc_macro2::TokenStream;
 use quote::quote;
+use std::collections::HashMap;
 use syn::{GenericArgument, PathArguments, Type};
 
 pub(crate) fn to_pascal_case(s: &str) -> String {
@@ -21,13 +22,13 @@ pub(crate) fn to_pascal_case(s: &str) -> String {
     out
 }
 
-pub(crate) fn inspect_type(ty: &str) -> String {
+pub(crate) fn inspect_type(ty: &str, types: &HashMap<String, String>) -> String {
     let raw_ty: Type =
         syn::parse_str(ty).unwrap_or_else(|e| panic!("Invalid type value `{ty}`: {e}"));
-    _inspect_type(&raw_ty)
+    _inspect_type(&raw_ty, types)
 }
 
-fn _inspect_type(ty: &Type) -> String {
+pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> String {
     match ty {
         Type::Path(p) => {
             let ty = p.path.segments.last().unwrap_or_else(|| unreachable!());
@@ -41,31 +42,41 @@ fn _inspect_type(ty: &Type) -> String {
                 "List" => "Vec",
                 "Map" => "::std::collections::HashMap",
                 "Set" => "::std::collections::HashSet",
+                "Version" => "u32",
+                "Size" => "u64",
+                "Index" => "u64",
+                "NonZeroInteger" => "::std::num::NonZeroU64",
                 "PublicKey" => "parsec_api_crypto::PublicKey",
                 "VerifyKey" => "parsec_api_crypto::VerifyKey",
                 "PrivateKey" => "parsec_api_crypto::PrivateKey",
                 "SecretKey" => "parsec_api_crypto::SecretKey",
+                "HashDigest" => "parsec_api_crypto::HashDigest",
                 "DateTime" => "parsec_api_types::DateTime",
                 "BlockID" => "parsec_api_types::BlockID",
                 "DeviceID" => "parsec_api_types::DeviceID",
                 "EntryID" => "parsec_api_types::EntryID",
                 "UserID" => "parsec_api_types::UserID",
+                "RealmID" => "parsec_api_types::RealmID",
+                "VlobID" => "parsec_api_types::VlobID",
                 "DeviceLabel" => "parsec_api_types::DeviceLabel",
                 "HumanHandle" => "parsec_api_types::HumanHandle",
                 "UserProfile" => "parsec_api_types::UserProfile",
                 "RealmRole" => "parsec_api_types::RealmRole",
+                "InvitationToken" => "parsec_api_types::InvitationToken",
+                "InvitationStatus" => "parsec_api_types::InvitationStatus",
+                "ReencryptionBatchEntry" => "parsec_api_types::ReencryptionBatchEntry",
                 "CertificateSignerOwned" => "parsec_api_types::CertificateSignerOwned",
                 "BlockAccess" => "parsec_api_types::BlockAccess",
                 "EntryName" => "parsec_api_types::EntryName",
                 "WorkspaceEntry" => "parsec_api_types::WorkspaceEntry",
-                "Version" => "u32",
-                "Size" => "u64",
-                "Index" => "u64",
                 "FileManifest" => "parsec_api_types::FileManifest",
                 "FolderManifest" => "parsec_api_types::FolderManifest",
                 "WorkspaceManifest" => "parsec_api_types::WorkspaceManifest",
                 "UserManifest" => "parsec_api_types::UserManifest",
                 "Chunk" => "parsec_client_types::Chunk",
+                ident if types.get(ident).is_some() => {
+                    types.get(ident).unwrap_or_else(|| unreachable!())
+                }
                 ident => panic!("{ident} isn't allowed as type"),
             })
             .to_string();
@@ -77,7 +88,7 @@ fn _inspect_type(ty: &Type) -> String {
                         .args
                         .iter()
                         .map(|arg| match arg {
-                            GenericArgument::Type(ty) => _inspect_type(ty),
+                            GenericArgument::Type(ty) => _inspect_type(ty, types),
                             _ => unimplemented!(),
                         })
                         .collect::<Vec<_>>()
@@ -94,7 +105,7 @@ fn _inspect_type(ty: &Type) -> String {
             ident += &t
                 .elems
                 .iter()
-                .map(_inspect_type)
+                .map(|ty| _inspect_type(ty, types))
                 .collect::<Vec<_>>()
                 .join(",");
             ident.push(')');

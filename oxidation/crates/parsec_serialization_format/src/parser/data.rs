@@ -3,6 +3,7 @@
 use miniserde::Deserialize;
 use proc_macro2::TokenStream;
 use quote::quote;
+use std::collections::HashMap;
 use syn::Ident;
 
 use super::{quote_fields, Field, Vis};
@@ -22,7 +23,7 @@ impl Data {
         let name_type: Ident =
             syn::parse_str(&format!("{}DataType", self.label)).unwrap_or_else(|_| unreachable!());
         let ty = &self.ty;
-        let fields = quote_fields(&self.other_fields, Vis::Public);
+        let fields = quote_fields(&self.other_fields, Vis::Public, &HashMap::new());
         quote! {
             #[serde_with::serde_as]
             #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
