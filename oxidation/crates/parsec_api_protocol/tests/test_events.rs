@@ -42,9 +42,8 @@ fn serde_events_listen_req() {
             "83a56576656e74a670696e676564a470696e67a6666f6f626172a6737461747573a26f6b"
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::Pinged {
-                ping: "foobar".to_owned(),
-            }
-        )
+            ping: "foobar".to_owned(),
+        })
     )
 )]
 #[case::message_received(
@@ -59,9 +58,8 @@ fn serde_events_listen_req() {
             "73a26f6b"
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::MessageReceived {
-                index: 0,
-            }
-        )
+            index: 0,
+        })
     )
 )]
 #[case::invite_status_changed(
@@ -78,10 +76,9 @@ fn serde_events_listen_req() {
             "ed264aae9ae583fd3d40c45a"
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::InviteStatusChanged {
-                invitation_status: InvitationStatus::Idle,
-                token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
-            },
-        )
+            invitation_status: InvitationStatus::Idle,
+            token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+        })
     )
 )]
 #[case::realm_maintenance_finished(
@@ -98,10 +95,9 @@ fn serde_events_listen_req() {
             "ad2fdea7b3bd19c5a6737461747573a26f6b"
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmMaintenanceFinished{
-                realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
-                encryption_revision: 0,
-            }
-        )
+            realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+            encryption_revision: 0,
+        })
     )
 )]
 #[case::realm_maintenance_started(
@@ -118,10 +114,9 @@ fn serde_events_listen_req() {
             "2fdea7b3bd19c5a6737461747573a26f6b"
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmMaintenanceStarted {
-                realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
-                encryption_revision: 0,
-            }
-        )
+            realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+            encryption_revision: 0,
+        })
     )
 )]
 #[case::realm_vlobs_updated(
@@ -141,12 +136,11 @@ fn serde_events_listen_req() {
             "a26f6b"
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmVlobsUpdated {
-                realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
-                checkpoint: 0,
-                src_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
-                src_version: 0,
-            }
-        )
+            realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+            checkpoint: 0,
+            src_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+            src_version: 0,
+        })
     )
 )]
 #[case::realm_roles_updated(
@@ -163,10 +157,9 @@ fn serde_events_listen_req() {
             "6b"
         )[..],
         authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmRolesUpdated {
-                realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
-                role: RealmRole::Owner,
-            }
-        )
+            realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+            role: RealmRole::Owner,
+        })
     )
 )]
 #[case::cancelled(
