@@ -1,0 +1,21 @@
+{
+    "label": "Invite3aClaimerSignifyTrust",
+    "req": {
+        "cmd": "invite_3a_claimer_signify_trust",
+        "other_fields": []
+    },
+    "reps": [
+        {
+            "status": "ok",
+            "other_fields": []
+        },
+        {
+            "status": "not_found",
+            "other_fields": []
+        },
+        {
+            "status": "invalid_state",
+            "other_fields": []
+        }
+    ]
+}
