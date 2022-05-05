@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
+use parsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::collections::HashMap;
@@ -11,8 +12,9 @@ use unicode_normalization::UnicodeNormalization;
 
 use parsec_api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 
-use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
+use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::ext_types::new_uuid_type;
+use crate::{self as parsec_api_types, impl_from_maybe};
 use crate::{DataError, DateTime, DeviceID, EntryNameError};
 
 macro_rules! impl_manifest_dump_load {
@@ -81,6 +83,7 @@ new_uuid_type!(pub BlockID);
 new_uuid_type!(pub RealmID);
 new_uuid_type!(pub VlobID);
 new_uuid_type!(pub ChunkID);
+impl_from_maybe!(std::collections::HashSet<EntryID>);
 
 /*
  * BlockAccess
@@ -289,24 +292,7 @@ pub struct FileManifest {
 
 impl_manifest_dump_load!(FileManifest);
 
-new_data_struct_type!(
-    FileManifestData,
-    type: "file_manifest",
-
-    // Compatibility with versions <= 1.14
-    #[serde(default = "generate_local_author_legacy_placeholder")]
-    author: DeviceID,
-    timestamp: DateTime,
-    id: EntryID,
-    parent: EntryID,
-    version: u32,
-    created: DateTime,
-    updated: DateTime,
-    size: u64,
-    blocksize: u64,
-    blocks: Vec<BlockAccess>,
-
-);
+parsec_data!("schema/manifest/file_manifest.json");
 
 impl TryFrom<FileManifestData> for FileManifest {
     type Error = &'static str;
@@ -329,7 +315,7 @@ impl TryFrom<FileManifestData> for FileManifest {
 impl From<FileManifest> for FileManifestData {
     fn from(obj: FileManifest) -> Self {
         Self {
-            type_: FileManifestDataDataType,
+            ty: Default::default(),
             author: obj.author,
             timestamp: obj.timestamp,
             id: obj.id,
@@ -365,21 +351,7 @@ pub struct FolderManifest {
 
 impl_manifest_dump_load!(FolderManifest);
 
-new_data_struct_type!(
-    FolderManifestData,
-    type: "folder_manifest",
-
-    // Compatibility with versions <= 1.14
-    #[serde(default = "generate_local_author_legacy_placeholder")]
-    author: DeviceID,
-    timestamp: DateTime,
-    id: EntryID,
-    parent: EntryID,
-    version: u32,
-    created: DateTime,
-    updated: DateTime,
-    children: HashMap<EntryName, EntryID>,
-);
+parsec_data!("schema/manifest/folder_manifest.json");
 
 impl_transparent_data_format_conversion!(
     FolderManifest,
@@ -412,22 +384,9 @@ pub struct WorkspaceManifest {
     pub children: HashMap<EntryName, EntryID>,
 }
 
+parsec_data!("schema/manifest/workspace_manifest.json");
+
 impl_manifest_dump_load!(WorkspaceManifest);
-
-new_data_struct_type!(
-    WorkspaceManifestData,
-    type: "workspace_manifest",
-
-    // Compatibility with versions <= 1.14
-    #[serde(default = "generate_local_author_legacy_placeholder")]
-    author: DeviceID,
-    timestamp: DateTime,
-    id: EntryID,
-    version: u32,
-    created: DateTime,
-    updated: DateTime,
-    children: HashMap<EntryName, EntryID>,
-);
 
 impl_transparent_data_format_conversion!(
     WorkspaceManifest,
@@ -456,7 +415,7 @@ pub struct UserManifest {
     pub version: u32,
     pub created: DateTime,
     pub updated: DateTime,
-    pub last_processed_message: u32,
+    pub last_processed_message: u64,
     pub workspaces: Vec<WorkspaceEntry>,
 }
 
@@ -466,23 +425,9 @@ impl UserManifest {
     }
 }
 
+parsec_data!("schema/manifest/user_manifest.json");
+
 impl_manifest_dump_load!(UserManifest);
-
-new_data_struct_type!(
-    UserManifestData,
-    type: "user_manifest",
-
-    // Compatibility with versions <= 1.14
-    #[serde(default = "generate_local_author_legacy_placeholder")]
-    author: DeviceID,
-    timestamp: DateTime,
-    id: EntryID,
-    version: u32,
-    created: DateTime,
-    updated: DateTime,
-    last_processed_message: u32,
-    workspaces: Vec<WorkspaceEntry>,
-);
 
 impl_transparent_data_format_conversion!(
     UserManifest,

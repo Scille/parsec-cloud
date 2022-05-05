@@ -913,7 +913,7 @@ impl UserManifest {
             [version: u32, "version"],
             [created, "created", py_to_rs_datetime],
             [updated, "updated", py_to_rs_datetime],
-            [last_processed_message: u32, "last_processed_message"],
+            [last_processed_message: u64, "last_processed_message"],
             [workspaces: Vec<WorkspaceEntry>, "workspaces"],
         );
 
@@ -995,7 +995,7 @@ impl UserManifest {
             [version: u32, "version"],
             [created, "created", py_to_rs_datetime],
             [updated, "updated", py_to_rs_datetime],
-            [last_processed_message: u32, "last_processed_message"],
+            [last_processed_message: u64, "last_processed_message"],
             [workspaces: Vec<WorkspaceEntry>, "workspaces"],
         );
 
@@ -1076,7 +1076,7 @@ impl UserManifest {
     }
 
     #[getter]
-    fn last_processed_message(&self) -> PyResult<u32> {
+    fn last_processed_message(&self) -> PyResult<u64> {
         Ok(self.0.last_processed_message)
     }
 

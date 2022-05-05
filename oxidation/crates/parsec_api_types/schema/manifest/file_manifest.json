@@ -1,0 +1,47 @@
+{
+    "label": "FileManifest",
+    "type": "file_manifest",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID",
+            "default": "generate_local_author_legacy_placeholder"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "id",
+            "type": "EntryID"
+        },
+        {
+            "name": "parent",
+            "type": "EntryID"
+        },
+        {
+            "name": "version",
+            "type": "Version"
+        },
+        {
+            "name": "created",
+            "type": "DateTime"
+        },
+        {
+            "name": "updated",
+            "type": "DateTime"
+        },
+        {
+            "name": "size",
+            "type": "Size"
+        },
+        {
+            "name": "blocksize",
+            "type": "Size"
+        },
+        {
+            "name": "blocks",
+            "type": "List<BlockAccess>"
+        }
+    ]
+}

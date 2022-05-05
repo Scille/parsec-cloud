@@ -20,6 +20,7 @@ pub(crate) struct Field {
     #[serde(rename = "type")]
     ty: String,
     introduced_in_revision: Option<u32>,
+    default: Option<String>,
 }
 
 impl Field {
@@ -33,9 +34,9 @@ impl Field {
         let ty = inspect_type(&self.ty);
         let (inspected_ty, serde_skip) = if self.introduced_in_revision.is_some() {
             (
-                "::parsec_api_types::Maybe".to_string() + "<" + &ty + ">",
+                "parsec_api_types::Maybe".to_string() + "<" + &ty + ">",
                 quote! {
-                    #[serde(default, skip_serializing_if = "::parsec_api_types::Maybe::is_absent")]
+                    #[serde(default, skip_serializing_if = "parsec_api_types::Maybe::is_absent")]
                 },
             )
         } else {
@@ -44,18 +45,25 @@ impl Field {
         let ty: Type = syn::parse_str(&inspected_ty).unwrap_or_else(|e| panic!("{e}"));
         let rename = SerdeAttr::Rename.quote(rename.map(|_| &self.name));
         let serde_as = quote_serde_as(&ty);
+        let serde_default = if let Some(default) = &self.default {
+            quote! { #[serde(default = #default)] }
+        } else {
+            quote! {}
+        };
 
         match vis {
             Vis::Public => quote! {
                 #rename
                 #serde_as
                 #serde_skip
+                #serde_default
                 pub #name: #ty
             },
             Vis::Private => quote! {
                 #rename
                 #serde_as
                 #serde_skip
+                #serde_default
                 #name: #ty
             },
         }

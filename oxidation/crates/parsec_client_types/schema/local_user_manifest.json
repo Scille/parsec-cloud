@@ -1,0 +1,31 @@
+{
+    "label": "LocalUserManifest",
+    "type": "local_user_manifest",
+    "other_fields": [
+        {
+            "name": "base",
+            "type": "UserManifest"
+        },
+        {
+            "name": "need_sync",
+            "type": "Boolean"
+        },
+        {
+            "name": "updated",
+            "type": "DateTime"
+        },
+        {
+            "name": "last_processed_message",
+            "type": "Index"
+        },
+        {
+            "name": "workspaces",
+            "type": "List<WorkspaceEntry>"
+        },
+        {
+            "name": "speculative",
+            "type": "Boolean",
+            "introduced_in_revision": 6
+        }
+    ]
+}
