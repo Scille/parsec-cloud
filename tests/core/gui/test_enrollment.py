@@ -10,6 +10,7 @@ from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.gui.enrollment_widget import EnrollmentButton
 from parsec.core.gui.login_widget import EnrollmentPendingButton, AccountButton
 from parsec.core.gui.central_widget import CentralWidget
+from parsec.core.gui.lang import translate
 
 
 @pytest.fixture
@@ -37,6 +38,10 @@ async def test_full_enrollment(
     autoclose_dialog,
     catch_enrollment_query_widget,
 ):
+    # Add trust root to the configuration
+    gui.config = gui.config.evolve(
+        pki_extra_trust_roots={mocked_parsec_ext_smartcard.default_trust_root_path}
+    )
     config_dir = gui.config.config_dir
     alice_password = "S3cr3t"
     save_device_with_password_in_config(config_dir, alice, alice_password)
@@ -144,7 +149,10 @@ async def test_full_enrollment(
 
     aqtbot.mouse_click(acc_w.button_create_user, QtCore.Qt.LeftButton)
 
-    snackbar_catcher.snackbars == [("TEXT_ENROLLMENT_ACCEPT_SUCCESS")]
+    await aqtbot.wait_until(
+        lambda: snackbar_catcher.snackbars
+        == [("INFO", translate("TEXT_ENROLLMENT_ACCEPT_SUCCESS"))]
+    )
     snackbar_catcher.reset()
 
     monkeypatch.setattr(
@@ -154,15 +162,15 @@ async def test_full_enrollment(
     # Check if the new user appears
 
     u_w = await gui.test_switch_to_users_widget()
-    assert u_w.layout_users.count() == 3
+    assert u_w.layout_users.count() == 4
 
     a_w = u_w.layout_users.itemAt(0).widget()
-    a_w.label_username.text() == "Adamy McAdam..."
-    a_w.label_email.text() == "adam@example..."
+    assert a_w.label_username.text() == "Adamy McAdam..."
+    assert a_w.label_email.text() == "adam@example..."
 
-    j_w = u_w.layout_users.itemAt(1).widget()
-    j_w.label_username.text() == "John Doe"
-    j_w.label_email.text() == "john@example..."
+    j_w = u_w.layout_users.itemAt(3).widget()
+    assert j_w.label_username.text() == "John Doe..."
+    assert j_w.label_email.text() == "john@example..."
 
     # Logout and check the status of the enrollment request
 
@@ -185,8 +193,6 @@ async def test_full_enrollment(
 
     pending = lw.widget.layout().itemAt(0).widget().accounts_widget.layout().itemAt(0).widget()
     aqtbot.mouse_click(pending.button_action, QtCore.Qt.LeftButton)
-
-    assert snackbar_catcher.snackbars == [("INFO", "This demand was successfully accepted.")]
 
     # Check if the new device appears
 
