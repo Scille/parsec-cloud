@@ -15,4 +15,4 @@ parsec_api_types = { version = "0.0.0", path = "../crates/parsec_api_types" }
 [features]
 default = ["native"]
 native = ["libparsec_platform_native"]
-web = ["libparsec_platform_web"]
+web = ["libparsec_platform_web", "parsec_api_crypto/web"]

@@ -3,6 +3,7 @@ members = [
     "oxidation/libparsec",
     "oxidation/libparsec_python",
     "oxidation/crates/*",
+    "oxidation/bindings/web",
     "oxidation/bindings/neon",
     "oxidation/bindings/android/libparsec/rust",
     "oxidation/parsec_cli",
