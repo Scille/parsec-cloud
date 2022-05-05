@@ -559,9 +559,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         save_config(self.config)
         telemetry.init(self.config)
 
-    def show_window(
-        self, skip_dialogs: bool = False, invitation_link: Optional[str] = None
-    ) -> None:
+    def show_window(self, skip_dialogs: bool = False) -> None:
         try:
             if not self.restoreGeometry(self.config.gui_geometry):
                 self.showMaximized()
