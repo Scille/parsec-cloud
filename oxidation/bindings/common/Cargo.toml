@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-libparsec = { path = "../../libparsec" }
+libparsec = { path = "../../libparsec", default_features = false }
 base64 = "0.13.0"
