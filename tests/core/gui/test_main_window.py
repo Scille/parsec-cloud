@@ -298,8 +298,9 @@ async def test_link_file_disconnected(
 
     password_w = lw.widget.layout().itemAt(0).widget()
 
-    # Connect to the organization
-    aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+    tabw = gui.test_get_tab()
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
+        aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
     def _wait():
         central_widget = gui.test_get_central_widget()
@@ -383,6 +384,49 @@ async def test_link_file_disconnected_cancel_login(
         assert not f_w.isVisible()
 
     await aqtbot.wait_until(_folder_ready)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_link_file_unknown_workspace(
+    aqtbot, core_config, gui_factory, autoclose_dialog, running_backend, alice
+):
+    password = "P@ssw0rd"
+    save_device_with_password_in_config(core_config.config_dir, alice, password)
+
+    file_link = BackendOrganizationFileLinkAddr.build(
+        organization_addr=alice.organization_addr,
+        workspace_id=EntryID.new(),
+        encrypted_path=b"<whatever>",
+    )
+
+    gui = await gui_factory(core_config=core_config, start_arg=file_link.to_url())
+    lw = gui.test_get_login_widget()
+
+    def _password_prompt():
+        assert len(autoclose_dialog.dialogs) == 0
+        lpi_w = lw.widget.layout().itemAt(0).widget()
+        assert isinstance(lpi_w, LoginPasswordInputWidget)
+
+    await aqtbot.wait_until(_password_prompt)
+
+    lpi_w = lw.widget.layout().itemAt(0).widget()
+    await aqtbot.key_clicks(lpi_w.line_edit_password, password)
+    await aqtbot.wait_until(lambda: lpi_w.line_edit_password.text() == password)
+
+    tabw = gui.test_get_tab()
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
+        aqtbot.mouse_click(lpi_w.button_login, QtCore.Qt.LeftButton)
+
+    def _error_shown():
+        assert len(autoclose_dialog.dialogs) == 1
+        print(autoclose_dialog.dialogs)
+        assert autoclose_dialog.dialogs[0] == (
+            "Error",
+            "You do not have access to the workspace containing the file. It may not have been shared with you.",
+        )
+
+    await aqtbot.wait_until(_error_shown)
 
 
 @pytest.mark.gui

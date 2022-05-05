@@ -61,15 +61,15 @@ class GoToFileLinkError(Exception):
     pass
 
 
-class GoToFileLinkBadOrganizationIDError(Exception):
+class GoToFileLinkBadOrganizationIDError(GoToFileLinkError):
     pass
 
 
-class GoToFileLinkBadWorkspaceIDError(Exception):
+class GoToFileLinkBadWorkspaceIDError(GoToFileLinkError):
     pass
 
 
-class GoToFileLinkPathDecryptionError(Exception):
+class GoToFileLinkPathDecryptionError(GoToFileLinkError):
     pass
 
 
@@ -187,14 +187,24 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         if file_link_addr is not None:
             try:
                 self.go_to_file_link(file_link_addr)
-            except FSWorkspaceNotFoundError:
+            except GoToFileLinkBadWorkspaceIDError:
                 show_error(
                     self,
                     _("TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization").format(
                         organization=file_link_addr.organization_id
                     ),
                 )
-
+                self.show_mount_widget()
+            except GoToFileLinkPathDecryptionError:
+                show_error(self, _("TEXT_INVALID_URL"))
+                self.show_mount_widget()
+            except GoToFileLinkBadOrganizationIDError:
+                show_error(
+                    self,
+                    _("TEXT_FILE_LINK_NOT_IN_ORG_organization").format(
+                        organization=file_link_addr.organization_id
+                    ),
+                )
                 self.show_mount_widget()
         else:
             self.show_mount_widget()

@@ -187,7 +187,7 @@ async def _run_gui(
         if config.gui_check_version_at_startup and not diagnose:
             CheckNewVersion(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, parent=win)
 
-        win.show_window(skip_dialogs=diagnose, invitation_link=start_arg)
+        win.show_window(skip_dialogs=diagnose)
         win.show_top()
         win.new_instance_needed.emit(start_arg)
 
