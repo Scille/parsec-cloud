@@ -737,6 +737,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, al
         async def _cli_invoke_in_thread(cmd: str):
             # We must run the command from another thread given it will create it own trio loop
             with trio.fail_after(1):
+                # Pass DEBUG environment variable for better output on crash
                 return await trio.to_thread.run_sync(
                     lambda: runner.invoke(cli, cmd, env={"DEBUG": "1"})
                 )

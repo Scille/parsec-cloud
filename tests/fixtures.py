@@ -789,9 +789,9 @@ def create_test_certificates(tmp_path):
 
     # OpenSSL commands for creating the CA key, the CA certificate, the client key and the client certificate.
     commands = """\
-openssl req -x509 -newkey rsa:4096 -keyout ca_key.pem -out ca_cert.pem -sha256 -days 365 -subj "/CN=My CA" -addext "keyUsage = digitalSignature" -passout pass:test
-openssl req -out client_request.csr -newkey rsa:4096 -keyout client_key.pem -new -passout pass:test -subj "/CN=John Doe/emailAddress=john@example.com"
-openssl x509 -req -days 365 -in client_request.csr -CA ca_cert.pem -CAkey ca_key.pem -passin pass:test -CAcreateserial -out client_cert.pem -extfile "./openssl.cnf"
+openssl req -x509 -newkey rsa:4096 -keyout ca_key.pem -out ca_cert.pem -sha256 -days 365 -subj "/CN=My CA" -addext "keyUsage = digitalSignature" -passout pass:P@ssw0rd
+openssl req -out client_request.csr -newkey rsa:4096 -keyout client_key.pem -new -passout pass:P@ssw0rd -subj "/CN=John Doe/emailAddress=john@example.com"
+openssl x509 -req -days 365 -in client_request.csr -CA ca_cert.pem -CAkey ca_key.pem -passin pass:P@ssw0rd -CAcreateserial -out client_cert.pem -extfile "./openssl.cnf"
 """
 
     # Run the commands
@@ -805,7 +805,7 @@ openssl x509 -req -days 365 -in client_request.csr -CA ca_cert.pem -CAkey ca_key
     (tmp_path / "client_combined.pem").write_bytes(combined_data)
 
     # Return certificates and password
-    return tmp_path / "ca_cert.pem", tmp_path / "client_combined.pem", "test"
+    return tmp_path / "ca_cert.pem", tmp_path / "client_combined.pem", "P@ssw0rd"
 
 
 def use_actual_parsec_ext_module(monkeypatch, tmp_path):
