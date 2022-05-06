@@ -36,6 +36,7 @@ jobs:
     displayName: 'install'
   - bash: |
       echo $SNAPCRAFT_CREDENTIALS | wc -c
+      printf $SNAPCRAFT_CREDENTIALS | wc -c
       echo '========================'
       printf $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
     displayName: 'login'
