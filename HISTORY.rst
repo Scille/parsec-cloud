@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.8.2 (2022-05-06)
+--------------------------
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added an error message when failing to load a certificate  (`#2236
+  <https://github.com/Scille/parsec-cloud/issues/2236>`__)
+
+
 Parsec v2.8.1 (2022-04-08)
 --------------------------
 

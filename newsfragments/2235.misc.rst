@@ -1,1 +1,0 @@
-Added an error message when failing to load a certificate
