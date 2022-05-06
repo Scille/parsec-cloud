@@ -37,7 +37,7 @@ jobs:
   - bash: |
       echo $SNAPCRAFT_CREDENTIALS | wc -c
       echo '========================'
-      echo $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
+      printf $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
     displayName: 'login'
     env:
       SNAPCRAFT_CREDENTIALS: $(SNAPCRAFT_CREDENTIALS)
