@@ -14,7 +14,7 @@
     "nested_types": [
         {
             "label": "UserOrDevice",
-            "discriminant_value": "type",
+            "discriminant_field": "type",
             "variants": [
                 {
                     "name": "User",

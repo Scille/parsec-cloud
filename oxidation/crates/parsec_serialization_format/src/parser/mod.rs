@@ -4,8 +4,6 @@ mod data;
 mod field;
 mod protocol;
 mod serde_attr;
-#[allow(dead_code)]
-mod serializing;
 pub(crate) mod utils;
 mod variant;
 
