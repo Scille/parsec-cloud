@@ -38,7 +38,7 @@ jobs:
       echo $SNAPCRAFT_CREDENTIALS | wc -c
       printf $SNAPCRAFT_CREDENTIALS | wc -c
       echo '========================'
-      printf $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
+      printf "$SNAPCRAFT_CREDENTIALS" | snapcraft login --with -
     displayName: 'login'
     env:
       SNAPCRAFT_CREDENTIALS: $(SNAPCRAFT_CREDENTIALS)
