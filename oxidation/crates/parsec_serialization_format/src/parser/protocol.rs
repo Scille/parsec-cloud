@@ -4,7 +4,7 @@ use miniserde::Deserialize;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashMap;
-use syn::Ident;
+use syn::{Ident, Type};
 
 use crate::parser::{quote_variants, Variant};
 
@@ -21,7 +21,7 @@ struct Req {
 impl Req {
     fn quote(&self, types: &HashMap<String, String>) -> TokenStream {
         if let Some(unit) = &self.unit {
-            let unit: Ident = syn::parse_str(unit).unwrap_or_else(|_| unreachable!());
+            let unit: Ident = syn::parse_str(unit).expect("Expected a valid name (Req)");
             quote! {
                 #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                 pub struct Req(pub #unit);
@@ -54,11 +54,11 @@ struct Rep {
 impl Rep {
     fn quote(&self, types: &HashMap<String, String>) -> TokenStream {
         let name: Ident =
-            syn::parse_str(&to_pascal_case(&self.status)).unwrap_or_else(|_| unreachable!());
+            syn::parse_str(&to_pascal_case(&self.status)).expect("Expected a valid name (Rep)");
         let rename = SerdeAttr::Rename.quote(Some(&self.status));
 
         if let Some(unit) = &self.unit {
-            let unit: Ident = syn::parse_str(unit).unwrap_or_else(|_| unreachable!());
+            let unit: Type = syn::parse_str(unit).expect("Expected a valid unit type (Rep)");
             quote! {
                 #rename
                 #name (#unit)
@@ -97,28 +97,23 @@ fn quote_reps(_reps: &[Rep], types: &HashMap<String, String>) -> TokenStream {
 #[derive(Deserialize)]
 struct NestedType {
     label: String,
-    tag: Option<String>,
-    variants: Vec<Variant>,
+    discriminant_field: Option<String>,
+    variants: Option<Vec<Variant>>,
+    fields: Option<Vec<Field>>,
 }
 
 impl NestedType {
     pub(crate) fn quote(&self, types: &HashMap<String, String>) -> TokenStream {
-        let name: Ident = syn::parse_str(&self.label).unwrap_or_else(|_| unreachable!());
-        match self.variants.len() {
-            0 => {
+        let name: Ident = syn::parse_str(&self.label).expect("Expected a valid name (NestedType)");
+        match (&self.discriminant_field, &self.variants, &self.fields) {
+            (None, None, Some(fields)) if fields.is_empty() => {
                 quote! {
                     #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                     pub struct #name;
                 }
             }
-            1 => {
-                if self.variants[0].fields.is_empty() {
-                    panic!(
-                        r#"Use:  {{ "label": "{}", "variants": [] }} instead"#,
-                        self.label
-                    )
-                }
-                let fields = quote_fields(&self.variants[0].fields, Vis::Public, types);
+            (None, None, Some(fields)) => {
+                let fields = quote_fields(fields, Vis::Public, types);
                 quote! {
                     #[::serde_with::serde_as]
                     #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
@@ -127,9 +122,9 @@ impl NestedType {
                     }
                 }
             }
-            _ => {
-                let serde_tag = SerdeAttr::Tag.quote(self.tag.as_ref());
-                let variants = quote_variants(&self.variants, types);
+            (_, Some(variants), None) if !variants.is_empty() => {
+                let serde_tag = SerdeAttr::Tag.quote(self.discriminant_field.as_ref());
+                let variants = quote_variants(variants, types);
                 quote! {
                     #[::serde_with::serde_as]
                     #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
@@ -139,6 +134,10 @@ impl NestedType {
                     }
                 }
             }
+            _ => panic!(
+                "{} must contains variants[+tag] attributes (enum) or fields attribute (struct)",
+                self.label
+            ),
         }
     }
 }
@@ -175,15 +174,16 @@ pub(crate) struct Cmds {
 
 impl Cmds {
     pub(crate) fn quote(&self) -> TokenStream {
-        let family: Ident = syn::parse_str(&self.family).unwrap_or_else(|_| unreachable!());
+        let family: Ident = syn::parse_str(&self.family).expect("Expected a valid family");
         let mut cmds = quote! {};
         let mut any_cmd_req = quote! {};
         let mut types = HashMap::new();
 
         for cmd in &self.cmds {
-            let name: Ident = syn::parse_str(&cmd.label).unwrap_or_else(|_| unreachable!());
+            let name: Ident = syn::parse_str(&cmd.label).expect("Expected a valid name (Cmd)");
             let rename = &cmd.req.cmd;
-            let module: Ident = syn::parse_str(&cmd.req.cmd).unwrap_or_else(|_| unreachable!());
+            let module: Ident =
+                syn::parse_str(&cmd.req.cmd).expect("Expected a valid module name (Cmd)");
             let nested_types = match &cmd.nested_types {
                 Some(nested_types) => {
                     // Insert local types

@@ -31,7 +31,7 @@ impl Field {
             _ => None,
         };
         let name: Ident =
-            syn::parse_str(rename.unwrap_or(&self.name)).unwrap_or_else(|_| unreachable!());
+            syn::parse_str(rename.unwrap_or(&self.name)).expect("Expected a valid name (Field)");
         let ty = inspect_type(&self.ty, types);
         let (inspected_ty, serde_skip) = if self.introduced_in_revision.is_some() {
             (
@@ -43,7 +43,7 @@ impl Field {
         } else {
             (ty, quote! {})
         };
-        let ty: Type = syn::parse_str(&inspected_ty).unwrap_or_else(|e| panic!("{e}"));
+        let ty: Type = syn::parse_str(&inspected_ty).expect("Expected a valid type (Field)");
         let rename = SerdeAttr::Rename.quote(rename.map(|_| &self.name));
         let serde_as = quote_serde_as(&ty);
         let serde_default = if let Some(default) = &self.default {

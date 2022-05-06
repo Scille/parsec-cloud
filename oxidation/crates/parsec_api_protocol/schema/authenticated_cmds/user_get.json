@@ -39,23 +39,18 @@
     "nested_types": [
         {
             "label": "Trustchain",
-            "variants": [
+            "fields": [
                 {
-                    "name": "",
-                    "fields": [
-                        {
-                            "name": "devices",
-                            "type": "List<Bytes>"
-                        },
-                        {
-                            "name": "users",
-                            "type": "List<Bytes>"
-                        },
-                        {
-                            "name": "revoked_users",
-                            "type": "List<Bytes>"
-                        }
-                    ]
+                    "name": "devices",
+                    "type": "List<Bytes>"
+                },
+                {
+                    "name": "users",
+                    "type": "List<Bytes>"
+                },
+                {
+                    "name": "revoked_users",
+                    "type": "List<Bytes>"
                 }
             ]
         }

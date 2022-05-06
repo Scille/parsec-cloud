@@ -60,23 +60,18 @@
     "nested_types": [
         {
             "label": "HumanFindResultItem",
-            "variants": [
+            "fields": [
                 {
-                    "name": "",
-                    "fields": [
-                        {
-                            "name": "user_id",
-                            "type": "UserID"
-                        },
-                        {
-                            "name": "human_handle",
-                            "type": "Option<HumanHandle>"
-                        },
-                        {
-                            "name": "revoked",
-                            "type": "Boolean"
-                        }
-                    ]
+                    "name": "user_id",
+                    "type": "UserID"
+                },
+                {
+                    "name": "human_handle",
+                    "type": "Option<HumanHandle>"
+                },
+                {
+                    "name": "revoked",
+                    "type": "Boolean"
                 }
             ]
         }

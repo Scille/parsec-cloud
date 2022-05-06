@@ -51,23 +51,18 @@
     "nested_types": [
         {
             "label": "UsersPerProfileDetailItem",
-            "variants": [
+            "fields": [
                 {
-                    "name": "",
-                    "fields": [
-                        {
-                            "name": "profile",
-                            "type": "UserProfile"
-                        },
-                        {
-                            "name": "active",
-                            "type": "Index"
-                        },
-                        {
-                            "name": "revoked",
-                            "type": "Index"
-                        }
-                    ]
+                    "name": "profile",
+                    "type": "UserProfile"
+                },
+                {
+                    "name": "active",
+                    "type": "Index"
+                },
+                {
+                    "name": "revoked",
+                    "type": "Index"
                 }
             ]
         }

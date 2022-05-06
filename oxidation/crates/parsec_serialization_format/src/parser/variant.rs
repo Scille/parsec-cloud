@@ -22,7 +22,7 @@ impl Variant {
             _ => None,
         };
         let name: Ident =
-            syn::parse_str(rename.unwrap_or(&self.name)).unwrap_or_else(|_| unreachable!());
+            syn::parse_str(rename.unwrap_or(&self.name)).expect("Expected a valid name (Variant)");
         let rename = SerdeAttr::Rename.quote(
             self.discriminant_value
                 .as_ref()

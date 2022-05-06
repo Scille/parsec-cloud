@@ -23,27 +23,22 @@
     "nested_types": [
         {
             "label": "Message",
-            "variants": [
+            "fields": [
                 {
-                    "name": "",
-                    "fields": [
-                        {
-                            "name": "count",
-                            "type": "Size"
-                        },
-                        {
-                            "name": "sender",
-                            "type": "DeviceID"
-                        },
-                        {
-                            "name": "timestamp",
-                            "type": "DateTime"
-                        },
-                        {
-                            "name": "body",
-                            "type": "Bytes"
-                        }
-                    ]
+                    "name": "count",
+                    "type": "Size"
+                },
+                {
+                    "name": "sender",
+                    "type": "DeviceID"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "DateTime"
+                },
+                {
+                    "name": "body",
+                    "type": "Bytes"
                 }
             ]
         }

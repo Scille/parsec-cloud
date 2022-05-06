@@ -32,7 +32,7 @@
     "nested_types": [
         {
             "label": "APIEvent",
-            "tag": "event",
+            "discriminant_field": "event",
             "variants": [
                 {
                     "name": "Pinged",
