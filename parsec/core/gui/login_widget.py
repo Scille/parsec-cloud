@@ -212,7 +212,7 @@ class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
         event.accept()
 
     def reset(self):
-        self.button_login.setDisabled(True)
+        self.button_login.setDisabled(False)
         self.button_login.setText(_("ACTION_LOG_IN"))
 
 
