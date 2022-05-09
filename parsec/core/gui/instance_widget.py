@@ -282,7 +282,7 @@ class InstanceWidget(QWidget):
                 self.start_core(device)
         except LocalDeviceCertificatePinCodeUnavailableError:
             # User cancelled the prompt
-            pass
+            self.login_failed.emit()
         except LocalDeviceError as exc:
             message = _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED")
             exception = exc
@@ -292,7 +292,6 @@ class InstanceWidget(QWidget):
         except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash) as exc:
             message = _("TEXT_LOGIN_MOUNTPOINT_ERROR")
             exception = exc
-
         except Exception as exc:
             message = _("TEXT_LOGIN_UNKNOWN_ERROR")
             exception = exc
