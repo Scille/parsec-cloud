@@ -41,13 +41,7 @@ PkiEnrollmentError: all PKI enrollment related errors
 
 
 class PkiEnrollmentError(Exception):
-    @property
-    def message(self):
-        """All PkiEnrollmentError should have a message as first argument."""
-        return str(self.args[0])
-
-    def __str__(self):
-        return self.message
+    pass
 
 
 # Local pending enrollment errors
