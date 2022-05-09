@@ -563,7 +563,7 @@ def load_device_with_smartcard_sync(key_file: Path) -> LocalDevice:
         LocalDeviceCryptoError
         LocalDeviceValidationError
         LocalDevicePackingError
-        LocalDevicePinCodeUnavailableError
+        LocalDeviceCertificatePinCodeUnavailableError
     """
     return _load_smartcard_extension().load_device_with_smartcard(key_file)
 
@@ -575,7 +575,7 @@ async def load_device_with_smartcard(key_file: Path) -> LocalDevice:
         LocalDeviceCryptoError
         LocalDeviceValidationError
         LocalDevicePackingError
-        LocalDevicePinCodeUnavailableError
+        LocalDeviceCertificatePinCodeUnavailableError
     """
     return await trio.to_thread.run_sync(load_device_with_smartcard_sync, key_file)
 
@@ -593,7 +593,7 @@ async def save_device_with_smartcard_in_config(
         LocalDeviceCryptoError
         LocalDeviceValidationError
         LocalDevicePackingError
-        LocalDevicePinCodeUnavailableError
+        LocalDeviceCertificatePinCodeUnavailableError
     """
     key_file = get_default_key_file(config_dir, device)
     # Why do we use `force=True` here ?
