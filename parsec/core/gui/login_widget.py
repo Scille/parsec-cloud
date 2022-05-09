@@ -15,18 +15,23 @@ from parsec.core.pki import (
     PkiEnrollmentSubmitterAcceptedStatusButBadSignatureCtx,
     PkiEnrollmentSubmitterAcceptedStatusCtx,
 )
-from parsec.core.pki.exceptions import PkiEnrollmentCertificateValidationError
+from parsec.core.pki.exceptions import (
+    PkiEnrollmentCertificateValidationError,
+    PkiEnrollmentCertificateNotFoundError,
+    PkiEnrollmentCertificatePinCodeUnavailableError,
+)
 from parsec.core.pki.submitter import BasePkiEnrollmentSubmitterStatusCtx
 
 from parsec.core.local_device import save_device_with_smartcard_in_config
 
-from parsec.core.gui.snackbar_widget import SnackbarManager
 
 from parsec.core.local_device import list_available_devices, AvailableDevice, DeviceFileType
 
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.ui.account_button import Ui_AccountButton
 from parsec.core.gui.ui.login_accounts_widget import Ui_LoginAccountsWidget
 from parsec.core.gui.ui.login_password_input_widget import Ui_LoginPasswordInputWidget
@@ -202,7 +207,7 @@ class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
         event.accept()
 
     def reset(self):
-        self.button_login.setDisabled(True)
+        self.button_login.setDisabled(False)
         self.button_login.setText(_("ACTION_LOG_IN"))
 
 
@@ -320,18 +325,38 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.jobs_ctx.submit_job(None, None, self._finalize_enrollment, context)
 
     async def _finalize_enrollment(self, context):
-        context = await context.finalize()
-        await save_device_with_smartcard_in_config(
-            config_dir=self.config.config_dir,
-            device=context.new_device,
-            certificate_id=context.x509_certificate.certificate_id,
-            certificate_sha1=context.x509_certificate.certificate_sha1,
-        )
+        try:
+            context = await context.finalize()
+        except PkiEnrollmentCertificateNotFoundError:
+            # Nothing to do, the user cancelled the certificate selection prompt
+            return
+        except PkiEnrollmentCertificatePinCodeUnavailableError:
+            # Nothing to do, the user cancelled the pin code prompt
+            return
+        except Exception as exc:
+            show_error(self, _("TEXT_ENROLLMENT_CANNOT_FINALIZE"), exception=exc)
+            return
+
+        try:
+            await save_device_with_smartcard_in_config(
+                config_dir=self.config.config_dir,
+                device=context.new_device,
+                certificate_id=context.x509_certificate.certificate_id,
+                certificate_sha1=context.x509_certificate.certificate_sha1,
+            )
+        except Exception as exc:
+            show_error(self, _("TEXT_CANNOT_SAVE_DEVICE"), exception=exc)
+            return
+
         await self._remove_enrollment(context)
         SnackbarManager.inform(_("TEXT_CLAIM_DEVICE_SUCCESSFUL"))
 
     async def _remove_enrollment(self, context):
-        await context.remove_from_disk()
+        try:
+            await context.remove_from_disk()
+        except Exception as exc:
+            show_error(self, _("TEXT_CANNOT_REMOVE_LOCAL_PENDING_ENROLLMENT"), exception=exc)
+            return
         self.reload_devices()
 
     def _on_pending_clear_clicked(self, context: BasePkiEnrollmentSubmitterStatusCtx):

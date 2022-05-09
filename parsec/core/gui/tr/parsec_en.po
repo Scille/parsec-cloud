@@ -1791,6 +1791,12 @@ msgstr "No other device is available on this computer."
 msgid "TEXT_LOGIN_NO_DEVICE_ON_MACHINE"
 msgstr "You do not have any device on this computer."
 
+msgid "TEXT_ENROLLMENT_CANNOT_FINALIZE"
+msgstr "The enrollment could not be finalized."
+
+msgid "TEXT_CANNOT_REMOVE_LOCAL_PENDING_ENROLLMENT"
+msgstr "The new PARSEC device has been created but the corresponding enrollment could not be cleaned up."
+
 msgid "TEXT_PARSEC_WINDOW_TITLE_version"
 msgstr "PARSEC {version}"
 

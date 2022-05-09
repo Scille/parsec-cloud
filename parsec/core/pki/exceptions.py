@@ -12,6 +12,7 @@ PkiEnrollmentError: all PKI enrollment related errors
     +- PkiEnrollmentCertificateValidationError: when the provided certificate cannot be validated using the configured trust roots
     +- PkiEnrollmentCertificateSignatureError: when the provided signature does not correspond to the certificate public key
     +- PkiEnrollmentCertificateCryptoError: when any of the required certificate-replated crypto operation fails
+    +- PkiEnrollmentCertificatePinCodeUnavailableError: when the user declines to provide the secret key password
 +- PkiEnrollmentPayloadError: all the enrollment payload errors
     +- PkiEnrollmentPayloadValidationError: when some enrollement information cannot be properly loaded
 +- PkiEnrollmentRemoteError: all the errors coming from a enrollment command on the backend
@@ -40,13 +41,7 @@ PkiEnrollmentError: all PKI enrollment related errors
 
 
 class PkiEnrollmentError(Exception):
-    @property
-    def message(self):
-        """All PkiEnrollmentError should have a message as first argument."""
-        return str(self.args[0])
-
-    def __str__(self):
-        return self.message
+    pass
 
 
 # Local pending enrollment errors
@@ -92,6 +87,10 @@ class PkiEnrollmentCertificateSignatureError(PkiEnrollmentCertificateError):
 
 
 class PkiEnrollmentCertificateCryptoError(PkiEnrollmentCertificateError):
+    pass
+
+
+class PkiEnrollmentCertificatePinCodeUnavailableError(PkiEnrollmentCertificateError):
     pass
 
 
