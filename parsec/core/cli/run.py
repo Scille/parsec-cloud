@@ -54,7 +54,10 @@ else:
                 configure_sentry_logging(dsn=sentry_dsn, environment=sentry_environment)
 
             config = config.evolve(mountpoint_enabled=True)
-            _run_gui(config, start_arg=url, diagnose=diagnose)
+            try:
+                _run_gui(config, start_arg=url, diagnose=diagnose)
+            except KeyboardInterrupt:
+                click.echo("bye ;-)")
 
 
 async def _run_mountpoint(
@@ -88,4 +91,7 @@ def run_mountpoint(
     if mountpoint:
         config = config.evolve(mountpoint_base_dir=Path(mountpoint))
     with cli_exception_handler(config.debug):
-        trio_run(_run_mountpoint, config, device, timestamp)
+        try:
+            trio_run(_run_mountpoint, config, device, timestamp)
+        except KeyboardInterrupt:
+            click.echo("bye ;-)")
