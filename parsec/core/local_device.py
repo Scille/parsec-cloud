@@ -56,7 +56,7 @@ class LocalDeviceCryptoError(LocalDeviceError):
     pass
 
 
-class LocalDevicePinCodeUnavailableError(LocalDeviceError):
+class LocalDeviceCertificatePinCodeUnavailableError(LocalDeviceError):
     pass
 
 
