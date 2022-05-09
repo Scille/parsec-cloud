@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.8.3 (2022-05-09)
+--------------------------
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Handle cases where a user does not provide a certificate or a pin (`#2245
+  <https://github.com/Scille/parsec-cloud/issues/2245>`__)
+
+
 Parsec v2.8.2 (2022-05-06)
 --------------------------
 
