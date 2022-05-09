@@ -87,6 +87,7 @@ class PkiEnrollmentSubmitterInitialCtx:
             PkiEnrollmentCertificateError
             PkiEnrollmentCertificateCryptoError
             PkiEnrollmentCertificateNotFoundError
+            PkiEnrollmentCertificatePinCodeUnavailableError
 
             PkiEnrollmentLocalPendingError
             PkiEnrollmentLocalPendingCryptoError
@@ -435,6 +436,7 @@ class PkiEnrollmentSubmitterAcceptedStatusCtx(BasePkiEnrollmentSubmitterStatusCt
             PkiEnrollmentCertificateNotFoundError
             PkiEnrollmentCertificateCryptoError
             PkiEnrollmentCertificateError
+            PkiEnrollmentCertificatePinCodeUnavailableError
             PkiEnrollmentLocalPendingCryptoError
         """
         signing_key, private_key = await pki_enrollment_load_local_pending_secret_part(

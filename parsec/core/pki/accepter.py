@@ -187,6 +187,7 @@ class PkiEnrollementAccepterValidSubmittedCtx:
             PkiEnrollmentCertificateError
             PkiEnrollmentCertificateCryptoError
             PkiEnrollmentCertificateNotFoundError
+            PkiEnrollmentCertificatePinCodeUnavailableError
         """
         # Create the certificate for the new user
         user_certificate, redacted_user_certificate, device_certificate, redacted_device_certificate, user_confirmation = _create_new_user_certificates(

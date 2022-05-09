@@ -1852,6 +1852,12 @@ msgstr ""
 msgid "TEXT_LOGIN_NO_DEVICE_ON_MACHINE"
 msgstr "Vous n'avez aucun appareil sur cet ordinateur."
 
+msgid "TEXT_ENROLLMENT_CANNOT_FINALIZE"
+msgstr "L’enrôlement n'a pas pu être finalisé."
+
+msgid "TEXT_CANNOT_REMOVE_LOCAL_PENDING_ENROLLMENT"
+msgstr "Le nouvel appareil PARSEC a été créé mais l’enrôlement correspondant n'a pas pu être nettoyer"
+
 msgid "TEXT_PARSEC_WINDOW_TITLE_version"
 msgstr "PARSEC {version}"
 

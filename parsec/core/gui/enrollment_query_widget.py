@@ -12,7 +12,11 @@ from parsec.core.gui.lang import translate
 from parsec.core.gui import desktop, validators
 
 from parsec.core.gui.ui.enrollment_query_widget import Ui_EnrollmentQueryWidget
-from parsec.core.pki.exceptions import PkiEnrollmentSubmitCertificateAlreadySubmittedError
+from parsec.core.pki.exceptions import (
+    PkiEnrollmentCertificatePinCodeUnavailableError,
+    PkiEnrollmentCertificateNotFoundError,
+    PkiEnrollmentSubmitCertificateAlreadySubmittedError,
+)
 
 
 class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
@@ -78,7 +82,9 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
                     requested_device_label=DeviceLabel(self.line_edit_device.text()),
                     force=True,
                 )
-
+        except PkiEnrollmentCertificatePinCodeUnavailableError:
+            # User declined to provide a PIN code (cancelled the prompt). We do nothing.
+            pass
         # Enrollment submission failed
         except Exception as exc:
             show_error(self, translate("TEXT_ENROLLMENT_SUBMIT_FAILED"), exc)
@@ -101,6 +107,12 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
             self.line_edit_user_email.setText(self.context.x509_certificate.subject_email_address)
             self.line_edit_device.setText(desktop.get_default_device())
             self.button_select_cert.setText(str(self.context.x509_certificate.certificate_id))
+        except PkiEnrollmentCertificateNotFoundError:
+            # User did not provide a certificate (cancelled the prompt). We do nothing.
+            pass
+        except PkiEnrollmentCertificatePinCodeUnavailableError:
+            # User did not provide a pin code (cancelled the prompt). We do nothing.
+            pass
         except Exception as exc:
             show_error(self, translate("TEXT_ENROLLMENT_ERROR_LOADING_CERTIFICATE"), exception=exc)
             self.widget_user_info.setVisible(False)
