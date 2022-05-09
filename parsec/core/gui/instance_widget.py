@@ -12,6 +12,7 @@ from parsec.api.protocol import HandshakeRevokedDevice
 from parsec.core import logged_core_factory
 from parsec.core.local_device import (
     LocalDeviceError,
+    LocalDevicePinCodeUnavailableError,
     load_device_with_password,
     load_device_with_smartcard,
 )
@@ -279,6 +280,9 @@ class InstanceWidget(QWidget):
                 message = _("TEXT_LOGIN_ERROR_ALREADY_CONNECTED")
             else:
                 self.start_core(device)
+        except LocalDevicePinCodeUnavailableError:
+            # User cancelled the prompt
+            pass
         except LocalDeviceError as exc:
             message = _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED")
             exception = exc

@@ -52,6 +52,7 @@ async def pki_enrollment_sign_payload(payload: bytes, x509_certificate: X509Cert
         PkiEnrollmentCertificateNotFoundError
         PkiEnrollmentCertificateCryptoError
         PkiEnrollmentCertificateError
+        PkiEnrollmentCertificatePinCodeUnavailableError
     """
     extension = _load_smartcard_extension()
     # Signing require a private key, so a prompt is likely to be used for unlocking it
@@ -100,6 +101,7 @@ async def pki_enrollment_load_local_pending_secret_part(
         PkiEnrollmentCertificateNotFoundError
         PkiEnrollmentCertificateCryptoError
         PkiEnrollmentCertificateError
+        PkiEnrollmentCertificatePinCodeUnavailableError
         PkiEnrollmentLocalPendingCryptoError
     """
     extension = _load_smartcard_extension()
