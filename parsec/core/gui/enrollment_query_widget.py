@@ -110,6 +110,9 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
         except PkiEnrollmentCertificateNotFoundError:
             # User did not provide a certificate (cancelled the prompt). We do nothing.
             pass
+        except PkiEnrollmentCertificatePinCodeUnavailableError:
+            # User did not provide a pin code (cancelled the prompt). We do nothing.
+            pass
         except Exception as exc:
             show_error(self, translate("TEXT_ENROLLMENT_ERROR_LOADING_CERTIFICATE"), exception=exc)
             self.widget_user_info.setVisible(False)
