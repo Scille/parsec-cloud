@@ -628,7 +628,7 @@ impl DeviceID {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct ChunkID(pub parsec_api_types::ChunkID);
 
 #[pymethods]
@@ -763,5 +763,17 @@ impl HumanHandle {
     #[getter]
     fn label(&self) -> PyResult<&String> {
         Ok(&self.0.label)
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone, Hash)]
+pub(crate) struct FileDescriptor(pub parsec_api_types::FileDescriptor);
+
+#[pymethods]
+impl FileDescriptor {
+    #[new]
+    pub fn new(index: i32) -> PyResult<Self> {
+        Ok(Self(parsec_api_types::FileDescriptor(index)))
     }
 }

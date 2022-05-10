@@ -107,7 +107,7 @@ mod tests {
         let realm_id = EntryID::default();
         let user_manifest_id = alice.user_manifest_id;
 
-        let manifest_storage = ManifestStorage::new(local_symkey, conn, realm_id);
+        let manifest_storage = ManifestStorage::new(local_symkey, conn, realm_id).unwrap();
         let mut user_storage =
             UserStorage::new(alice.local_device(), user_manifest_id, manifest_storage);
 

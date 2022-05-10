@@ -3,24 +3,28 @@
 use diesel::{sql_query, RunQueryDsl};
 use fancy_regex::Regex;
 use std::collections::{HashMap, HashSet};
+use std::path::Path;
 
 use parsec_api_types::{BlockID, ChunkID, EntryID, FileDescriptor};
 use parsec_client_types::{LocalDevice, LocalFileManifest, LocalManifest, LocalWorkspaceManifest};
 
 use super::chunk_storage::ChunkStorage;
-use super::local_database::SqliteConn;
 use super::manifest_storage::{ChunkOrBlockID, ManifestStorage};
 use crate::error::{FSError, FSResult};
+use crate::storage::chunk_storage::BlockStorage;
+use crate::storage::local_database::SqlitePool;
+use crate::storage::version::{
+    get_workspace_cache_storage_db_path, get_workspace_data_storage_db_path,
+};
 
-const DEFAULT_CHUNK_VACUUM_THRESHOLD: usize = 512 * 1024 * 1024;
+pub const DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE: u64 = 512 * 1024 * 1024;
 
 pub struct WorkspaceStorage {
-    device: LocalDevice,
-    workspace_id: EntryID,
+    pub device: LocalDevice,
+    pub workspace_id: EntryID,
     open_fds: HashMap<FileDescriptor, EntryID>,
     fd_counter: i32,
-    data_conn: SqliteConn,
-    block_storage: ChunkStorage,
+    pub block_storage: BlockStorage,
     chunk_storage: ChunkStorage,
     manifest_storage: ManifestStorage,
     pub prevent_sync_pattern: Regex,
@@ -29,22 +33,43 @@ pub struct WorkspaceStorage {
 
 impl WorkspaceStorage {
     pub fn new(
+        data_base_dir: &Path,
         device: LocalDevice,
         workspace_id: EntryID,
-        data_conn: SqliteConn,
-        block_storage: ChunkStorage,
-        chunk_storage: ChunkStorage,
-        mut manifest_storage: ManifestStorage,
+        cache_size: u64,
     ) -> FSResult<Self> {
+        let data_path = get_workspace_data_storage_db_path(data_base_dir, &device, workspace_id);
+        let cache_path = get_workspace_cache_storage_db_path(data_base_dir, &device, workspace_id);
+
+        let data_pool = SqlitePool::new(
+            data_path
+                .to_str()
+                .expect("Non-Utf-8 character found in data_path"),
+        )?;
+        let cache_pool = SqlitePool::new(
+            cache_path
+                .to_str()
+                .expect("Non-Utf-8 character found in cache_path"),
+        )?;
+
+        let block_storage =
+            BlockStorage::new(device.local_symkey.clone(), cache_pool.conn()?, cache_size)?;
+
+        let mut manifest_storage =
+            ManifestStorage::new(device.local_symkey.clone(), data_pool.conn()?, workspace_id)?;
+
+        let chunk_storage = ChunkStorage::new(device.local_symkey.clone(), data_pool.conn()?)?;
+
         let (prevent_sync_pattern, prevent_sync_pattern_fully_applied) =
             manifest_storage.get_prevent_sync_pattern()?;
-        Ok(Self {
+
+        // Instanciate workspace storage
+        let mut instance = Self {
             device,
             workspace_id,
             // File descriptors
             open_fds: HashMap::new(),
             fd_counter: 0,
-            data_conn,
             // Manifest and block storage
             block_storage,
             chunk_storage,
@@ -52,7 +77,15 @@ impl WorkspaceStorage {
             // Pattern attributes
             prevent_sync_pattern,
             prevent_sync_pattern_fully_applied,
-        })
+        };
+
+        instance.block_storage.cleanup()?;
+        instance.run_cache_vacuum()?;
+        // Populate the cache with the workspace manifest to be able to
+        // access it synchronously at all time
+        instance.load_workspace_manifest()?;
+
+        Ok(instance)
     }
 
     fn get_next_fd(&mut self) -> FileDescriptor {
@@ -190,7 +223,7 @@ impl WorkspaceStorage {
             .set_manifest(entry_id, manifest, cache_only, removed_ids)
     }
 
-    pub fn ensure_manifest_persitent(&mut self, entry_id: EntryID) -> FSResult<()> {
+    pub fn ensure_manifest_persistent(&mut self, entry_id: EntryID) -> FSResult<()> {
         self.manifest_storage.ensure_manifest_persistent(entry_id)
     }
 
@@ -213,16 +246,43 @@ impl WorkspaceStorage {
         self.load_prevent_sync_pattern()
     }
 
-    pub fn mark_preven_sync_pattern_fully_applied(&mut self, pattern: &Regex) -> FSResult<()> {
+    pub fn mark_prevent_sync_pattern_fully_applied(&mut self, pattern: &Regex) -> FSResult<()> {
         self.manifest_storage
             .mark_prevent_sync_pattern_fully_applied(pattern)?;
         self.load_prevent_sync_pattern()
     }
 
-    pub fn run_vacuum(&mut self) -> FSResult<()> {
+    fn run_cache_vacuum(&mut self) -> FSResult<()> {
         sql_query("VACUUM;")
-            .execute(&mut self.data_conn)
+            .execute(&mut self.block_storage.conn)
             .map_err(|_| FSError::Vacuum)?;
         Ok(())
+    }
+
+    pub fn run_data_vacuum(&mut self) -> FSResult<()> {
+        // TODO: Add some condition
+        sql_query("VACUUM;")
+            .execute(&mut self.chunk_storage.conn)
+            .map_err(|_| FSError::Vacuum)?;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rstest::rstest;
+    use tests_fixtures::{alice, Device};
+
+    use super::*;
+
+    #[rstest]
+    fn workspace_storage(alice: &Device) {
+        let _workspace_storage = WorkspaceStorage::new(
+            &Path::new("/tmp/workspace_storage/"),
+            alice.local_device(),
+            EntryID::default(),
+            DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
+        )
+        .unwrap();
     }
 }

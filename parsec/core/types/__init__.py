@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Union, NewType
+from typing import TYPE_CHECKING, Union, NewType
 
 from parsec.api.data import EntryID, EntryIDField, EntryName, EntryNameField
 
@@ -42,6 +42,16 @@ from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
 from parsec.api.data import FolderManifest as RemoteFolderManifest
 
 FileDescriptor = NewType("FileDescriptor", int)
+
+_PyFileDescriptor = FileDescriptor
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import FileDescriptor as _RsFileDescriptor
+    except:
+        pass
+    else:
+        FileDescriptor = _RsFileDescriptor
+
 LocalFolderishManifests = Union[LocalFolderManifest, LocalWorkspaceManifest]
 RemoteFolderishManifests = Union[RemoteFolderManifest, RemoteWorkspaceManifest]
 LocalNonRootManifests = Union[LocalFileManifest, LocalFolderManifest]

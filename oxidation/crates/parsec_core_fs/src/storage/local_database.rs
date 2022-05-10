@@ -3,6 +3,7 @@
 use diesel::connection::SimpleConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::SqliteConnection;
+use std::path::{Path, PathBuf};
 
 use crate::error::{FSError, FSResult};
 
@@ -11,8 +12,19 @@ pub const SQLITE_MAX_VARIABLE_NUMBER: usize = 999;
 pub struct SqlitePool(Pool<ConnectionManager<SqliteConnection>>);
 pub type SqliteConn = PooledConnection<ConnectionManager<SqliteConnection>>;
 
+pub(crate) fn create_parent(path: &Path) -> FSResult<()> {
+    if let Some(prefix) = path.parent() {
+        std::fs::create_dir_all(prefix).map_err(|_| FSError::CreateDir)?;
+    }
+    Ok(())
+}
+
 impl SqlitePool {
     pub fn new<P: Into<String>>(path: P) -> FSResult<SqlitePool> {
+        let path = path.into();
+        if let Some(prefix) = PathBuf::from(&path).parent() {
+            std::fs::create_dir_all(prefix).map_err(|_| FSError::CreateDir)?;
+        }
         let manager = ConnectionManager::<SqliteConnection>::new(path);
         Pool::builder()
             .build(manager)

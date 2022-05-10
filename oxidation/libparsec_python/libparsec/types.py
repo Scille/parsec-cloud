@@ -19,6 +19,7 @@ try:
         RealmID,
         VlobID,
         ChunkID,
+        FileDescriptor,
         InvitationToken,
         SASCode,
         generate_sas_codes,
@@ -152,6 +153,10 @@ try:
         RevokedUserCertificate,
         TrustchainContext,
         freeze_time,
+        # LocalDevice
+        LocalDevice,
+        # WorkspaceStorage
+        WorkspaceStorage,
     )
 except ImportError as exc:
     print(f"Import error in libparsec/types: {exc}")
@@ -174,6 +179,7 @@ __all__ = (
     "RealmID",
     "VlobID",
     "ChunkID",
+    "FileDescriptor",
     "InvitationToken",
     "SASCode",
     "generate_sas_codes",
@@ -307,4 +313,8 @@ __all__ = (
     "RevokedUserCertificate",
     "TrustchainContext",
     "freeze_time",
+    # LocalDevice
+    "LocalDevice",
+    # Storage
+    "WorkspaceStorage",
 )

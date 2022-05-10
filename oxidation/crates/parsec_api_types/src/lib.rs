@@ -21,6 +21,3 @@ pub use id::*;
 pub use invite::*;
 pub use manifest::*;
 pub use message::*;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct FileDescriptor(pub i32);

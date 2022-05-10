@@ -94,14 +94,16 @@ pub struct ManifestStorage {
 }
 
 impl ManifestStorage {
-    pub fn new(local_symkey: SecretKey, conn: SqliteConn, realm_id: EntryID) -> Self {
-        Self {
+    pub fn new(local_symkey: SecretKey, conn: SqliteConn, realm_id: EntryID) -> FSResult<Self> {
+        let mut instance = Self {
             local_symkey,
             conn,
             realm_id,
             cache: HashMap::new(),
             cache_ahead_of_localdb: HashMap::new(),
-        }
+        };
+        instance.create_db()?;
+        Ok(instance)
     }
 
     // Database initialization
@@ -254,7 +256,6 @@ impl ManifestStorage {
         new_checkpoint: i32,
         changed_vlobs: &[(EntryID, i32)],
     ) -> FSResult<()> {
-        println!("{new_checkpoint}");
         let new_realm_checkpoint = NewRealmCheckpoint {
             _id: 0,
             checkpoint: new_checkpoint,
@@ -278,10 +279,7 @@ impl ManifestStorage {
             .do_update()
             .set(&new_realm_checkpoint)
             .execute(&mut self.conn)
-            .map_err(|e| {
-                println!("{e}");
-                FSError::InsertTable("realm_checkpoint: update_realm_checkpoint")
-            })?;
+            .map_err(|_| FSError::InsertTable("realm_checkpoint: update_realm_checkpoint"))?;
 
         Ok(())
     }
@@ -494,8 +492,7 @@ mod tests {
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();
 
-        let mut manifest_storage = ManifestStorage::new(local_symkey, conn, realm_id);
-
+        let mut manifest_storage = ManifestStorage::new(local_symkey, conn, realm_id).unwrap();
         manifest_storage.drop_db().unwrap();
         manifest_storage.create_db().unwrap();
 
