@@ -168,3 +168,8 @@ class ThreadFSAccess:
 
     def fd_flush(self, fh):
         return self._run(self.workspace_fs.transactions.fd_flush, fh)
+
+    # High-level helpers
+
+    def workspace_move(self, source, destination):
+        return self._run(self.workspace_fs.move, source, destination)
