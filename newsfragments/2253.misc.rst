@@ -1,0 +1,1 @@
+Stacktraces in error messages are more consistent
