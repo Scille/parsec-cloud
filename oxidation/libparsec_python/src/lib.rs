@@ -12,11 +12,13 @@ mod certif;
 mod crypto;
 mod ids;
 mod invite;
+mod local_device;
 mod local_manifest;
 mod manifest;
 mod protocol;
 mod time;
 mod trustchain;
+mod storage;
 
 /// A Python module implemented in Rust. The name of this function must match
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
@@ -47,6 +49,7 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ids::DeviceName>()?;
     m.add_class::<ids::DeviceLabel>()?;
     m.add_class::<ids::UserID>()?;
+    m.add_class::<ids::FileDescriptor>()?;
     m.add_class::<invite::InvitationToken>()?;
     m.add_class::<invite::SASCode>()?;
     m.add_function(wrap_pyfunction!(invite::generate_sas_codes, m)?)?;
@@ -180,5 +183,9 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<certif::DeviceCertificate>()?;
     m.add_class::<trustchain::TrustchainContext>()?;
     m.add_function(wrap_pyfunction!(time::freeze_time, m)?)?;
+    // LocalDevice
+    m.add_class::<local_device::LocalDevice>()?;
+    // Storage
+    m.add_class::<storage::WorkspaceStorage>()?;
     Ok(())
 }

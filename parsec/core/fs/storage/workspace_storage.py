@@ -2,7 +2,19 @@
 
 from pathlib import Path
 from collections import defaultdict
-from typing import cast, Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern
+from typing import (
+    TYPE_CHECKING,
+    cast,
+    Dict,
+    Tuple,
+    Set,
+    Optional,
+    Union,
+    AsyncIterator,
+    NoReturn,
+    Pattern,
+)
+
 import trio
 from trio import lowlevel
 from pendulum import DateTime
@@ -424,6 +436,66 @@ class WorkspaceStorage(BaseWorkspaceStorage):
     async def run_vacuum(self) -> None:
         # Only the data storage needs to get vacuuumed
         await self.data_localdb.run_vacuum()
+
+
+_PyWorkspaceStorage = WorkspaceStorage
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import WorkspaceStorage as _RsWorkspaceStorage
+    except:
+        pass
+    else:
+
+        class WorkspaceStorage:
+            def __init__(self, *args, **kwargs):
+                self.sync_instance = _RsWorkspaceStorage(*args, **kwargs)
+
+            @classmethod
+            @asynccontextmanager
+            async def run(cls, *args, **kwargs):
+                self = cls(*args, **kwargs)
+                try:
+                    yield self
+                finally:
+                    await trio.to_thread.run_sync(self.sync_instance.teardown)
+
+            @asynccontextmanager
+            async def lock_entry_id(self, entry_id: EntryID) -> AsyncIterator[EntryID]:
+                try:
+                    yield entry_id
+                finally:
+                    pass
+
+            @asynccontextmanager
+            async def lock_manifest(self, entry_id: EntryID) -> AsyncIterator[BaseLocalManifest]:
+                async with self.lock_entry_id(entry_id):
+                    yield await self.get_manifest(entry_id)
+
+            def create_file_descriptor(self, manifest: LocalFileManifest) -> FileDescriptor:
+                return self.sync_instance.create_file_descriptor(manifest)
+
+            def remove_file_descriptor(self, fd: FileDescriptor) -> None:
+                return self.sync_instance.remove_file_descriptor(fd)
+
+            def get_workspace_manifest(self) -> LocalWorkspaceManifest:
+                return self.sync_instance.get_workspace_manifest()
+
+            def get_prevent_sync_pattern(self) -> Pattern[str]:
+                return self.sync_instance.get_prevent_sync_pattern()
+
+            def get_prevent_sync_pattern_fully_applied(self) -> bool:
+                return self.sync_instance.get_prevent_sync_pattern_fully_applied()
+
+            def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
+                return WorkspaceStorageTimestamped(self, timestamp)
+
+            def __getattr__(self, method_name):
+                method = getattr(self.sync_instance, method_name)
+
+                async def wrapper(self, *args, **kwargs):
+                    return await trio.to_thread.run_sync(lambda: method(*args, **kwargs))
+
+                return wrapper.__get__(self)
 
 
 class WorkspaceStorageTimestamped(BaseWorkspaceStorage):

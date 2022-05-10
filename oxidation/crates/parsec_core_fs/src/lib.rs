@@ -10,6 +10,8 @@ mod workspacefs;
 #[macro_use]
 extern crate diesel;
 
+pub use storage::*;
+
 pub enum Language {
     En,
     Fr,

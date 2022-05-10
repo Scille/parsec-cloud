@@ -267,6 +267,9 @@ impl ToString for UserProfile {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct FileDescriptor(pub i32);
+
 #[cfg(test)]
 mod tests {
     use super::*;

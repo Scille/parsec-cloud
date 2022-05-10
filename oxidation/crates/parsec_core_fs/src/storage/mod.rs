@@ -8,7 +8,9 @@ mod local_database;
 mod manifest_storage;
 #[allow(dead_code)]
 mod user_storage;
-#[allow(dead_code)]
+mod version;
 mod workspace_storage;
 
-pub(crate) use workspace_storage::WorkspaceStorage;
+pub use chunk_storage::BlockStorage;
+pub use manifest_storage::ChunkOrBlockID;
+pub use workspace_storage::*;

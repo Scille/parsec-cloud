@@ -17,6 +17,9 @@ pub enum FSError {
     #[error("CreateTableError {0}")]
     CreateTable(&'static str),
 
+    #[error("CreateDirError")]
+    CreateDir,
+
     #[error("CryptoError: {0}")]
     Crypto(CryptoError),
 
