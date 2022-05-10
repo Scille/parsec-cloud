@@ -48,6 +48,10 @@ border: none;
 background-color: none;
 }
 
+#button_copy:hover, #button_details:hover {
+color: #0092FF;
+}
+
 #text_details
 {
 color: #333333;
@@ -240,6 +244,13 @@ color: #F44336;
          <red>153</red>
          <green>153</green>
          <blue>153</blue>
+        </color>
+       </property>
+       <property name="hover_color" stdset="0">
+        <color>
+         <red>0</red>
+         <green>146</green>
+         <blue>255</blue>
         </color>
        </property>
       </widget>

@@ -28,6 +28,7 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import Button
 from parsec.core.gui.parsec_application import ParsecApp
+from parsec.core.gui.snackbar_widget import SnackbarManager
 
 from parsec.core.gui.ui.error_widget import Ui_ErrorWidget
 from parsec.core.gui.ui.info_widget import Ui_InfoWidget
@@ -494,6 +495,7 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
 
     def copy_to_clipboard(self):
         desktop.copy_to_clipboard(self.text_details.toPlainText())
+        SnackbarManager.inform(_("TEXT_STACKTRACE_COPIED_TO_CLIPBOARD"))
 
     def toggle_details(self, checked):
         if not checked:
