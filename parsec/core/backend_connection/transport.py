@@ -4,10 +4,10 @@ import os
 import trio
 import ssl
 import certifi
-from async_generator import asynccontextmanager
+import urllib.request
 from structlog import get_logger
-from typing import Optional
-from parsec.api.protocol.handshake import HandshakeOutOfBallparkError
+from async_generator import asynccontextmanager
+from typing import Optional, Dict
 
 from parsec.crypto import SigningKey
 from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
@@ -19,6 +19,7 @@ from parsec.api.protocol import (
     AuthenticatedClientHandshake,
     InvitedClientHandshake,
     APIV1_AnonymousClientHandshake,
+    HandshakeOutOfBallparkError,
 )
 from parsec.core.types import (
     BackendOrganizationAddr,
@@ -33,6 +34,7 @@ from parsec.core.backend_connection.exceptions import (
     BackendOutOfBallparkError,
     BackendProtocolError,
 )
+from parsec.core.backend_connection.proxy import maybe_connect_through_proxy, blocking_io_get_proxy
 
 
 logger = get_logger()
@@ -49,7 +51,9 @@ async def apiv1_connect(
     return await _connect(addr.hostname, addr.port, addr.use_ssl, keepalive, handshake)
 
 
-async def connect_as_invited(addr: BackendInvitationAddr, keepalive: Optional[int] = None):
+async def connect_as_invited(
+    addr: BackendInvitationAddr, keepalive: Optional[int] = None
+) -> Transport:
     handshake = InvitedClientHandshake(
         organization_id=addr.organization_id, invitation_type=addr.invitation_type, token=addr.token
     )
@@ -61,7 +65,7 @@ async def connect_as_authenticated(
     device_id: DeviceID,
     signing_key: SigningKey,
     keepalive: Optional[int] = None,
-):
+) -> Transport:
     handshake = AuthenticatedClientHandshake(
         organization_id=addr.organization_id,
         device_id=device_id,
@@ -78,16 +82,21 @@ async def _connect(
     keepalive: Optional[int],
     handshake: BaseClientHandshake,
 ) -> Transport:
-    try:
-        stream = await trio.open_tcp_stream(hostname, port)
+    stream = await maybe_connect_through_proxy(hostname, port, use_ssl)
 
-    except OSError as exc:
-        logger.warning(
-            "Impossible to connect to backend", hostname=hostname, port=port, exc_info=exc
-        )
-        raise BackendNotAvailable(exc) from exc
+    if not stream:
+        logger.debug("Using direct (no proxy) connection", hostname=hostname, port=port)
+        try:
+            stream = await trio.open_tcp_stream(hostname, port)
+
+        except OSError as exc:
+            logger.debug(
+                "Impossible to connect to backend", hostname=hostname, port=port, exc_info=exc
+            )
+            raise BackendNotAvailable(exc) from exc
 
     if use_ssl:
+        logger.debug("Using TLS to secure connection", hostname=hostname)
         stream = _upgrade_stream_to_ssl(stream, hostname)
 
     try:
@@ -114,7 +123,7 @@ async def _connect(
     return transport
 
 
-def _upgrade_stream_to_ssl(raw_stream, hostname):
+def _upgrade_stream_to_ssl(raw_stream: trio.abc.Stream, hostname: str) -> trio.abc.Stream:
     # The ssl context should be generated once and stored into the config
     # however this is tricky (should ssl configuration be stored per device ?)
 
@@ -203,3 +212,41 @@ class TransportPool:
 
             else:
                 self._transports.append(transport)
+
+
+async def http_request(
+    url: str,
+    data: Optional[bytes] = None,
+    headers: Dict[str, str] = {},
+    method: Optional[str] = None,
+) -> bytes:
+    """Raises: urllib.error.URLError"""
+
+    def _target():
+        request = urllib.request.Request(url, data=data, headers=headers, method=method)
+        handlers = []
+        proxy_url = blocking_io_get_proxy(target_url=url, hostname=request.host)
+        if proxy_url:
+            logger.debug("Using proxy to connect", proxy_url=proxy_url, target_url=url)
+            handlers.append(urllib.request.ProxyHandler(proxies={request.type: proxy_url}))
+        else:
+            # Prevent urllib from trying to handle proxy configuration by itself.
+            # We use `blocking_io_get_proxy` to give us the proxy to use
+            # (or, in our case, the fact we should not use proxy).
+            # However this information may come from a weird place (e.g. PAC config)
+            # that urllib is not aware of, so urllib may use an invalid configuration
+            # (e.g. using HTTP_PROXY env var) if we let it handle proxy.
+            handlers.append(urllib.request.ProxyHandler(proxies={}))
+
+        if request.type == "https":
+            context = ssl.create_default_context(cafile=certifi.where())
+            # Also provide custom certificates if any
+            cafile = os.environ.get("SSL_CAFILE")
+            if cafile:
+                context.load_verify_locations(cafile)
+            handlers.append(urllib.request.HTTPSHandler(context=context))
+
+        with urllib.request.build_opener(*handlers).open(request) as rep:
+            return rep.read()
+
+    return await trio.to_thread.run_sync(_target)

@@ -12,8 +12,9 @@ from PyQt5.QtCore import Qt, pyqtSignal, QSysInfo
 from PyQt5.QtWidgets import QDialog, QWidget
 
 from parsec import __version__
-from parsec.utils import http_request, URLError
+from parsec.utils import URLError
 from parsec.serde import BaseSchema, fields, JSONSerializer, SerdeError
+from parsec.core.backend_connection.transport import http_request
 from parsec.core.gui import desktop
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.trio_jobs import QtToTrioJob

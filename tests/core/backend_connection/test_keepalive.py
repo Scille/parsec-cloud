@@ -16,9 +16,11 @@ from parsec.core.backend_connection import (
 @pytest.mark.trio
 async def _test_keepalive(mock_clock, monkeypatch, cmds_factory):
     ping_events_sender, ping_events_receiver = trio.open_memory_channel(100)
+    tansport_ready = trio.Event()
     _vanilla_next_ws_event = Transport._next_ws_event
 
     async def _mocked_next_ws_event(transport):
+        tansport_ready.set()
         while True:
             event = await _vanilla_next_ws_event(transport)
             if isinstance(event, BytesMessage):
@@ -31,7 +33,7 @@ async def _test_keepalive(mock_clock, monkeypatch, cmds_factory):
 
     monkeypatch.setattr(Transport, "_next_ws_event", _mocked_next_ws_event)
 
-    mock_clock.rate = 1
+    mock_clock.rate = 100
     async with cmds_factory(keepalive=10) as cmds:
         # Backend won't receive our command (remember api level ping has nothing
         # to do with websocket level ping !), so the client will end up sending
@@ -40,9 +42,9 @@ async def _test_keepalive(mock_clock, monkeypatch, cmds_factory):
         async with trio.open_service_nursery() as nursery:
             nursery.start_soon(cmds.ping, "Wathever")
 
-            # Now advance time until ping is requested
-            await trio.testing.wait_all_tasks_blocked()
-            mock_clock.jump(10)
+            # Wait for the transport to be ready, then wait until ping is requested
+            await tansport_ready.wait()
+            await trio.sleep(10)  # rate is 100 so 0.1s for real
             with trio.fail_after(1):
                 backend_transport, event = await ping_events_receiver.receive()
                 assert isinstance(event, Ping)
@@ -51,8 +53,7 @@ async def _test_keepalive(mock_clock, monkeypatch, cmds_factory):
                 assert client_transport is not backend_transport
 
             # Wait for another ping, just to be sure...
-            await trio.testing.wait_all_tasks_blocked()
-            mock_clock.jump(10)
+            await trio.sleep(10)  # rate is 100 so 0.1s for real
             with trio.fail_after(1):
                 backend_transport2, event = await ping_events_receiver.receive()
                 assert isinstance(event, Ping)
