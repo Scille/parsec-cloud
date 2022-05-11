@@ -366,12 +366,14 @@ async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status):
         task_status.awake()
 
     def _on_entry_updated(event, id, workspace_id=None):
+
         if workspace_id is None:
             # User manifest
             assert id == user_fs.user_manifest_id
             ctx = ctxs.get(id)
         else:
             ctx = ctxs.get(workspace_id)
+
         if ctx and ctx.set_local_change(id):
             _trigger_early_wakeup()
 
@@ -414,11 +416,37 @@ async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status):
             else:
                 return math.inf
 
+    def _on_upload_list(event, workspace_id, id, blocks):
+        logger.warning(event)
+        logger.warning(workspace_id)
+        logger.warning(id)
+        logger.warning(blocks)
+
+    def _on_upload_one(event, workspace_id, block):
+        logger.warning(event)
+        logger.warning(workspace_id)
+        logger.warning(block)
+
+    def _on_load_list(event, workspace_id, id, blocks):
+        logger.warning(event)
+        logger.warning(workspace_id)
+        logger.warning(id)
+        logger.warning(blocks)
+
+    def _on_load_one(event, workspace_id, block):
+        logger.warning(event)
+        logger.warning(workspace_id)
+        logger.warning(block)
+
     with event_bus.connect_in_context(
         (CoreEvent.FS_ENTRY_UPDATED, _on_entry_updated),
         (CoreEvent.BACKEND_REALM_VLOBS_UPDATED, _on_realm_vlobs_updated),
         (CoreEvent.SHARING_UPDATED, _on_sharing_updated),
         (CoreEvent.FS_ENTRY_CONFINED, _on_entry_confined),
+        # (CoreEvent.SYNCHRONISE_UPLOAD_LIST, _on_upload_list),
+        # (CoreEvent.SYNCHRONISE_UPLOAD_ONE, _on_upload_one),
+        # (CoreEvent.SYNCHRONISE_LOAD_LIST, _on_load_list),
+        # (CoreEvent.SYNCHRONISE_LOAD_ONE, _on_load_one),
     ):
         due_times = []
         # Init userfs sync context

@@ -269,10 +269,18 @@ class FileTransactions:
     ) -> bytes:
         # Loop over attemps
         missing: List[BlockAccess] = []
-        while True:
+        manifest = await self.local_storage.load_file_descriptor(fd)
 
+        while True:
             # Load missing blocks
-            await self.remote_loader.load_blocks(missing)
+            if missing:
+                self.event_bus.send(
+                    CoreEvent.SYNCHRONIZE_LOAD_LIST,
+                    workspace_id=self.workspace_id,
+                    id=manifest.id,
+                    blocks=[block.id for block in missing],
+                )
+            await self.remote_loader.load_blocks(missing, self.event_bus)
 
             # Fetch and lock
             async with self._load_and_lock_file(fd) as manifest:

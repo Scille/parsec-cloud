@@ -7,6 +7,7 @@ from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Op
 from pendulum import DateTime
 
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
+from parsec.core.core_events import CoreEvent
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
 from parsec.api.data import BaseManifest as BaseRemoteManifest, BlockAccess
@@ -36,7 +37,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
-from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
+from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions, get_filename
 from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
@@ -543,7 +544,15 @@ class WorkspaceFS:
             await self.minimal_sync(child)
 
     async def _upload_blocks(self, manifest: RemoteFileManifest) -> None:
-        await self.remote_loader.upload_blocks(list(manifest.blocks))
+        ids = [block.id for block in manifest.blocks]
+        if ids:
+            self.event_bus.send(
+                CoreEvent.SYNCHRONIZE_UPLOAD_LIST,
+                workspace_id=self.workspace_id,
+                id=manifest.id,
+                blocks=ids,
+            )
+        await self.remote_loader.upload_blocks(list(manifest.blocks), self.event_bus)
 
     async def minimal_sync(self, entry_id: EntryID) -> None:
         """
@@ -578,6 +587,18 @@ class WorkspaceFS:
         except FSLocalMissError:
             pass
 
+    async def get_name(self, entry_id: EntryID) -> Optional[EntryName]:
+        try:
+            manifest = await self.local_storage.get_manifest(entry_id)
+        except FSLocalMissError:
+            return None
+        if isinstance(manifest, (LocalFileManifest, RemoteFileManifest)):
+            folder_manifest = await self.local_storage.get_manifest(manifest.parent)
+            assert isinstance(folder_manifest, (LocalFolderManifest, LocalWorkspaceManifest))
+            name = get_filename(folder_manifest, entry_id)
+            return name
+        return None
+
     async def _sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True
     ) -> BaseRemoteManifest:
@@ -592,6 +613,7 @@ class WorkspaceFS:
         This guarantees that any change prior to the call is saved remotely when this
         method returns.
         """
+
         # Get the current remote manifest if it has changed
         remote_manifest = None
         if remote_changed:
