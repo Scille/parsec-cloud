@@ -44,8 +44,7 @@ pub fn parsec_data(path: TokenStream) -> TokenStream {
     let path = parse_macro_input!(path as LitStr).value();
     let content = content_from_file(&path_from_str(&path));
 
-    let data: parser::Data =
-        miniserde::json::from_str(&content).unwrap_or_else(|_| panic!("Data is not valid"));
+    let data: parser::Data = miniserde::json::from_str(&content).expect("Data is not valid");
     TokenStream::from(data.quote())
 }
 
@@ -61,7 +60,6 @@ pub fn parsec_cmds(path: TokenStream) -> TokenStream {
         .expect("Directory name contains non-utf-8 character");
     let content = format!(r#"{{"family": "{dir_name}", "cmds": [{content}]}}"#);
 
-    let cmds: parser::Cmds =
-        miniserde::json::from_str(&content).unwrap_or_else(|_| panic!("Protocol is not valid"));
+    let cmds: parser::Cmds = miniserde::json::from_str(&content).expect("Protocol is not valid");
     TokenStream::from(cmds.quote())
 }
