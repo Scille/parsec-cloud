@@ -607,7 +607,9 @@ jobs:
   - bash: |
       sudo apt-get update
       sudo snap install snapcraft --classic
-      echo $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
+      # Credentials contains `\n` which makes things tricky
+      # tl;dr: figuring out the double quote around the env var cost me 2h...
+      printf "$SNAPCRAFT_CREDENTIALS" | snapcraft login --with -
     displayName: 'Bootstrap'
     env:
       SNAPCRAFT_CREDENTIALS: $(SNAPCRAFT_CREDENTIALS)
