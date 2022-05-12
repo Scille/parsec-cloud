@@ -26,6 +26,7 @@ where
 struct SharedState<T> {
     canceled: bool,
     finished: bool,
+    detached: bool,
     value: Option<T>,
     task_waker: Option<Waker>,
     runnable_waker: Option<Waker>,
@@ -36,6 +37,7 @@ impl<T> Default for SharedState<T> {
         Self {
             canceled: false,
             finished: false,
+            detached: false,
             value: None,
             task_waker: None,
             runnable_waker: None,
@@ -50,6 +52,30 @@ pub struct Task<T> {
 impl<T> Task<T> {
     fn new(shared_state: Arc<Mutex<SharedState<T>>>) -> Self {
         Self { shared_state }
+    }
+}
+
+impl<T> crate::task::Task<T> for Task<T> {
+    fn cancel(&self) -> Option<T> {
+        let mut state = self.shared_state.lock().unwrap();
+
+        state.canceled = true;
+        if let Some(ref waker) = state.runnable_waker {
+            waker.wake_by_ref();
+        }
+        state.value.take()
+    }
+
+    fn detach(self) {
+        self.shared_state.lock().unwrap().detached = true;
+    }
+
+    fn is_finised(&self) -> bool {
+        self.shared_state.lock().unwrap().finished
+    }
+
+    fn is_canceled(&self) -> bool {
+        self.shared_state.lock().unwrap().canceled
     }
 }
 
