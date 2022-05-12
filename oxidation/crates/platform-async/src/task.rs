@@ -1,4 +1,6 @@
-pub trait Task<T> {
+use std::future::Future;
+
+pub trait Task<T>: Future<Output = T> {
     /// Cancels the task.
     fn cancel(&self) -> Option<T>;
 
