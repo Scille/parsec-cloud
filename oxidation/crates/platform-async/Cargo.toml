@@ -15,4 +15,4 @@ web-sys = "0.3.57"
 js-sys = "0.3.57"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.18.2", features = ["full"] }
+tokio = { version = "1.18.2", features = ["rt"] }
