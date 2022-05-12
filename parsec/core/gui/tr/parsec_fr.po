@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-05-04 13:37+0200\n"
+"POT-Creation-Date: 2022-05-10 11:01+0200\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -69,6 +69,14 @@ msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
 msgstr ""
 "Vous n'avez pas accès à l'espace de travail auquel appartient ce fichier."
 " Il n'a peut-être pas été partagé avec vous."
+
+msgid "TEXT_INVALID_URL"
+msgstr "L'URL n'est pas valide."
+
+msgid "TEXT_FILE_LINK_NOT_IN_ORG_organization"
+msgstr ""
+"Vous ne pouvez pas accéder à ce fichier car vous n'avez aucun appareil "
+"appartenant à l'organisation {organization} sur cet ordinateur."
 
 msgid "TEXT_SAAS_UPDATE_SUBSCRIPTION_URL"
 msgstr "https://parsec.cloud/comment-changer-dabonnement-parsec/"
@@ -342,6 +350,9 @@ msgstr "Créer une nouvelle organisation"
 
 msgid "ACTION_OK"
 msgstr "OK"
+
+msgid "TEXT_STACKTRACE_COPIED_TO_CLIPBOARD"
+msgstr "L'état de l'application a été copié dans le presse-papier."
 
 msgid "TEXT_ERR_DIALOG_TITLE"
 msgstr "Erreur"
@@ -1986,9 +1997,6 @@ msgstr "parsec://hote:port/organisation?action=action&..."
 msgid "TEXT_JOIN_ORG_INVALID_URL"
 msgstr "L'URL n'est pas valide."
 
-msgid "TEXT_INVALID_URL"
-msgstr "L'URL n'est pas valide."
-
 msgid "TEXT_PKI_ENROLLMENT_NOT_AVAILABLE"
 msgstr ""
 "L'enrôlement par Smartcard n'est pas disponible sur cette version de "
@@ -2029,11 +2037,6 @@ msgstr "Non"
 
 msgid "TEXT_TAB_TITLE_LOG_IN_SCREEN"
 msgstr "Connexion"
-
-msgid "TEXT_FILE_LINK_NOT_IN_ORG_organization"
-msgstr ""
-"Vous ne pouvez pas accéder à ce fichier car vous n'avez aucun appareil "
-"appartenant à l'organisation {organization} sur cet ordinateur."
 
 msgid "TEXT_FILE_LINK_PLEASE_LOG_IN_organization"
 msgstr ""

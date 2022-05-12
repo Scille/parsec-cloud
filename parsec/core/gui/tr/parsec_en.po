@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-05-04 13:37+0200\n"
+"POT-Creation-Date: 2022-05-10 11:01+0200\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -69,6 +69,14 @@ msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
 msgstr ""
 "You do not have access to the workspace containing the file. It may not "
 "have been shared with you."
+
+msgid "TEXT_INVALID_URL"
+msgstr "The link is invalid."
+
+msgid "TEXT_FILE_LINK_NOT_IN_ORG_organization"
+msgstr ""
+"You cannot access this file because you have no device belonging to the "
+"organization <b>{organization}</b> on this machine."
 
 msgid "TEXT_SAAS_UPDATE_SUBSCRIPTION_URL"
 msgstr "https://parsec.cloud/comment-changer-dabonnement-parsec/"
@@ -328,6 +336,9 @@ msgstr "Create a new organization"
 
 msgid "ACTION_OK"
 msgstr "OK"
+
+msgid "TEXT_STACKTRACE_COPIED_TO_CLIPBOARD"
+msgstr "The application state has been copied to the clipboard."
 
 msgid "TEXT_ERR_DIALOG_TITLE"
 msgstr "Error"
@@ -1933,9 +1944,6 @@ msgstr "parsec://host:port/organization?action=action&..."
 msgid "TEXT_JOIN_ORG_INVALID_URL"
 msgstr "The link is invalid."
 
-msgid "TEXT_INVALID_URL"
-msgstr "The link is invalid."
-
 msgid "TEXT_PKI_ENROLLMENT_NOT_AVAILABLE"
 msgstr "This version of Parsec cannot use this type of invitation address."
 
@@ -1973,11 +1981,6 @@ msgstr "No"
 
 msgid "TEXT_TAB_TITLE_LOG_IN_SCREEN"
 msgstr "Log In"
-
-msgid "TEXT_FILE_LINK_NOT_IN_ORG_organization"
-msgstr ""
-"You cannot access this file because you have no device belonging to the "
-"organization <b>{organization}</b> on this machine."
 
 msgid "TEXT_FILE_LINK_PLEASE_LOG_IN_organization"
 msgstr ""
