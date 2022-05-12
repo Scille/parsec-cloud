@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "oxidation/libparsec",
+    "oxidation/libparsec/crates/*",
     "oxidation/libparsec_python",
     "oxidation/crates/*",
     "oxidation/bindings/web",
