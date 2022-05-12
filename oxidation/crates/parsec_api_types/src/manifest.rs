@@ -1,18 +1,21 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
+use parsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::collections::HashMap;
 use std::io::{Read, Write};
+use std::num::NonZeroU64;
 use std::ops::Deref;
 use unicode_normalization::UnicodeNormalization;
 
 use parsec_api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 
-use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
+use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::ext_types::new_uuid_type;
-use crate::{DateTime, DeviceID};
+use crate::{self as parsec_api_types, impl_from_maybe};
+use crate::{DataError, DateTime, DeviceID, EntryNameError};
 
 macro_rules! impl_manifest_dump_load {
     ($name:ident) => {
@@ -37,24 +40,32 @@ macro_rules! impl_manifest_dump_load {
                 author_verify_key: &VerifyKey,
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
-            ) -> Result<Self, &'static str> {
-                let signed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+            ) -> Result<Self, DataError> {
+                let signed = key
+                    .decrypt(encrypted)
+                    .map_err(|_| DataError::InvalidEncryption)?;
                 let compressed = author_verify_key
                     .verify(&signed)
-                    .map_err(|_| "Invalid signature")?;
+                    .map_err(|_| DataError::InvalidSignature)?;
                 let mut serialized = vec![];
 
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
-                    .map_err(|_| "Invalid compression")?;
+                    .map_err(|_| DataError::InvalidCompression)?;
 
-                let obj = ::rmp_serde::from_read_ref::<_, Self>(&serialized)
-                    .map_err(|_| "Invalid serialization")?;
+                let obj = rmp_serde::from_read_ref::<_, Self>(&serialized)
+                    .map_err(|_| DataError::InvalidSerialization)?;
 
                 if obj.author != *expected_author {
-                    Err("Unexpected author")
+                    Err(DataError::UnexpectedAuthor {
+                        expected: expected_author.clone(),
+                        got: obj.author,
+                    })
                 } else if obj.timestamp != expected_timestamp {
-                    Err("Unexpected timestamp")
+                    Err(DataError::UnexpectedTimestamp {
+                        expected: expected_timestamp,
+                        got: obj.timestamp,
+                    })
                 } else {
                     Ok(obj)
                 }
@@ -72,6 +83,7 @@ new_uuid_type!(pub BlockID);
 new_uuid_type!(pub RealmID);
 new_uuid_type!(pub VlobID);
 new_uuid_type!(pub ChunkID);
+impl_from_maybe!(std::collections::HashSet<EntryID>);
 
 /*
  * BlockAccess
@@ -82,7 +94,7 @@ pub struct BlockAccess {
     pub id: BlockID,
     pub key: SecretKey,
     pub offset: u64,
-    pub size: u64,
+    pub size: NonZeroU64,
     pub digest: HashDigest,
 }
 
@@ -130,7 +142,7 @@ impl std::fmt::Debug for EntryName {
 }
 
 impl TryFrom<&str> for EntryName {
-    type Error = &'static str;
+    type Error = EntryNameError;
 
     fn try_from(id: &str) -> Result<Self, Self::Error> {
         let id: String = id.nfc().collect();
@@ -140,14 +152,14 @@ impl TryFrom<&str> for EntryName {
         // - no `/` or null byte in the name
         // - max 255 bytes long name
         if id.len() >= 256 {
-            Err("Name too long")
+            Err(Self::Error::NameTooLong)
         } else if id.is_empty()
             || id == "."
             || id == ".."
             || id.find('/').is_some()
             || id.find('\x00').is_some()
         {
-            Err("Invalid name")
+            Err(Self::Error::InvalidName)
         } else {
             Ok(Self(id))
         }
@@ -161,7 +173,7 @@ impl From<EntryName> for String {
 }
 
 impl std::str::FromStr for EntryName {
-    type Err = &'static str;
+    type Err = EntryNameError;
 
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -280,24 +292,7 @@ pub struct FileManifest {
 
 impl_manifest_dump_load!(FileManifest);
 
-new_data_struct_type!(
-    FileManifestData,
-    type: "file_manifest",
-
-    // Compatibility with versions <= 1.14
-    #[serde(default = "generate_local_author_legacy_placeholder")]
-    author: DeviceID,
-    timestamp: DateTime,
-    id: EntryID,
-    parent: EntryID,
-    version: u32,
-    created: DateTime,
-    updated: DateTime,
-    size: u64,
-    blocksize: u64,
-    blocks: Vec<BlockAccess>,
-
-);
+parsec_data!("schema/manifest/file_manifest.json");
 
 impl TryFrom<FileManifestData> for FileManifest {
     type Error = &'static str;
@@ -320,7 +315,7 @@ impl TryFrom<FileManifestData> for FileManifest {
 impl From<FileManifest> for FileManifestData {
     fn from(obj: FileManifest) -> Self {
         Self {
-            type_: FileManifestDataDataType,
+            ty: Default::default(),
             author: obj.author,
             timestamp: obj.timestamp,
             id: obj.id,
@@ -356,21 +351,7 @@ pub struct FolderManifest {
 
 impl_manifest_dump_load!(FolderManifest);
 
-new_data_struct_type!(
-    FolderManifestData,
-    type: "folder_manifest",
-
-    // Compatibility with versions <= 1.14
-    #[serde(default = "generate_local_author_legacy_placeholder")]
-    author: DeviceID,
-    timestamp: DateTime,
-    id: EntryID,
-    parent: EntryID,
-    version: u32,
-    created: DateTime,
-    updated: DateTime,
-    children: HashMap<EntryName, EntryID>,
-);
+parsec_data!("schema/manifest/folder_manifest.json");
 
 impl_transparent_data_format_conversion!(
     FolderManifest,
@@ -403,22 +384,9 @@ pub struct WorkspaceManifest {
     pub children: HashMap<EntryName, EntryID>,
 }
 
+parsec_data!("schema/manifest/workspace_manifest.json");
+
 impl_manifest_dump_load!(WorkspaceManifest);
-
-new_data_struct_type!(
-    WorkspaceManifestData,
-    type: "workspace_manifest",
-
-    // Compatibility with versions <= 1.14
-    #[serde(default = "generate_local_author_legacy_placeholder")]
-    author: DeviceID,
-    timestamp: DateTime,
-    id: EntryID,
-    version: u32,
-    created: DateTime,
-    updated: DateTime,
-    children: HashMap<EntryName, EntryID>,
-);
 
 impl_transparent_data_format_conversion!(
     WorkspaceManifest,
@@ -447,7 +415,7 @@ pub struct UserManifest {
     pub version: u32,
     pub created: DateTime,
     pub updated: DateTime,
-    pub last_processed_message: u32,
+    pub last_processed_message: u64,
     pub workspaces: Vec<WorkspaceEntry>,
 }
 
@@ -457,23 +425,9 @@ impl UserManifest {
     }
 }
 
+parsec_data!("schema/manifest/user_manifest.json");
+
 impl_manifest_dump_load!(UserManifest);
-
-new_data_struct_type!(
-    UserManifestData,
-    type: "user_manifest",
-
-    // Compatibility with versions <= 1.14
-    #[serde(default = "generate_local_author_legacy_placeholder")]
-    author: DeviceID,
-    timestamp: DateTime,
-    id: EntryID,
-    version: u32,
-    created: DateTime,
-    updated: DateTime,
-    last_processed_message: u32,
-    workspaces: Vec<WorkspaceEntry>,
-);
 
 impl_transparent_data_format_conversion!(
     UserManifest,

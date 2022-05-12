@@ -46,7 +46,7 @@ hex-literal = "0.3.3"
 rmp-serde = "1.0.0"
 
 [features]
-js = ["getrandom_02/js", "getrandom_01/wasm-bindgen"]
+web = ["getrandom_02/js", "getrandom_01/wasm-bindgen"]
 default = ["use-rustcrypto"]
 use-sodiumoxide = ["sodiumoxide", "libsodium-sys"]
 use-rustcrypto = [

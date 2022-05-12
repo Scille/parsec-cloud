@@ -1,17 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from enum import Enum
-from typing import Optional, Union, Tuple, Set, Dict
-from structlog import BoundLogger
+from uuid import uuid4
+from typing import Optional, Tuple, Set, Dict
+from structlog import BoundLogger, get_logger
 import trio
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.event_bus import EventBusConnectionContext
-from parsec.api.version import ApiVersion
+from parsec.api.version import ApiVersion, API_V2_VERSION
 from parsec.api.transport import Transport
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
-    ServerHandshake,
     OrganizationID,
     UserID,
     DeviceName,
@@ -19,27 +19,22 @@ from parsec.api.protocol import (
     RealmID,
     HumanHandle,
     DeviceLabel,
-    HandshakeType,
-    APIV1_HandshakeType,
 )
+from parsec.backend.utils import ClientType
 from parsec.backend.invite import Invitation
 
 
+logger = get_logger()
+
+
 class BaseClientContext:
-    __slots__ = ("transport", "handshake")
+    __slots__ = ("transport", "api_version")
+    TYPE: ClientType
     logger: BoundLogger
 
-    def __init__(self, transport: Transport, handshake: ServerHandshake):
+    def __init__(self, transport: Transport, api_version: ApiVersion):
         self.transport = transport
-        self.handshake = handshake
-
-    @property
-    def api_version(self) -> ApiVersion:
-        return self.handshake.backend_api_version
-
-    @property
-    def handshake_type(self) -> Union[HandshakeType, APIV1_HandshakeType]:
-        return self.handshake.answer_type
+        self.api_version = api_version
 
 
 class AuthenticatedClientContext(BaseClientContext):
@@ -58,11 +53,12 @@ class AuthenticatedClientContext(BaseClientContext):
         "conn_id",
         "logger",
     )
+    TYPE = ClientType.AUTHENTICATED
 
     def __init__(
         self,
         transport: Transport,
-        handshake: ServerHandshake,
+        api_version: ApiVersion,
         organization_id: OrganizationID,
         device_id: DeviceID,
         human_handle: Optional[HumanHandle],
@@ -71,7 +67,7 @@ class AuthenticatedClientContext(BaseClientContext):
         public_key: PublicKey,
         verify_key: VerifyKey,
     ):
-        super().__init__(transport, handshake)
+        super().__init__(transport, api_version)
         self.organization_id = organization_id
         self.profile = profile
         self.device_id = device_id
@@ -87,10 +83,7 @@ class AuthenticatedClientContext(BaseClientContext):
 
         self.conn_id = self.transport.conn_id
         self.logger = self.transport.logger = self.transport.logger.bind(
-            conn_id=self.conn_id,
-            handshake_type=self.handshake_type.value,
-            organization_id=self.organization_id,
-            device_id=self.device_id,
+            conn_id=self.conn_id, organization_id=self.organization_id, device_id=self.device_id
         )
 
     def __repr__(self):
@@ -125,22 +118,22 @@ class AuthenticatedClientContext(BaseClientContext):
 
 class InvitedClientContext(BaseClientContext):
     __slots__ = ("organization_id", "invitation", "conn_id", "logger")
+    TYPE = ClientType.INVITED
 
     def __init__(
         self,
         transport: Transport,
-        handshake: ServerHandshake,
+        api_version: ApiVersion,
         organization_id: OrganizationID,
         invitation: Invitation,
     ):
-        super().__init__(transport, handshake)
+        super().__init__(transport, api_version)
         self.organization_id = organization_id
         self.invitation = invitation
 
         self.conn_id = self.transport.conn_id
         self.logger = self.transport.logger = self.transport.logger.bind(
             conn_id=self.conn_id,
-            handshake_type=self.handshake_type.value,
             organization_id=self.organization_id,
             invitation_token=self.invitation.token,
         )
@@ -149,20 +142,45 @@ class InvitedClientContext(BaseClientContext):
         return f"InvitedClientContext(org={self.organization_id}, invitation={self.invitation})"
 
 
+class AnonymousClientContext(BaseClientContext):
+    __slots__ = ("organization_id", "conn_id", "logger")
+    TYPE = ClientType.ANONYMOUS
+
+    def __init__(self, organization_id: OrganizationID):
+        # Anonymous is a special snowflake: it is accessed trough HTTP instead of
+        # Websocket, hence the transport is not available (given Transport is based
+        # on websocket) and there is no api version negociation for the moment
+        super().__init__(None, API_V2_VERSION)  # type: ignore
+        self.organization_id = organization_id
+
+        self.conn_id = uuid4().hex
+        self.logger = logger.bind(conn_id=self.conn_id, organization_id=self.organization_id)
+
+    @property  # type: ignore
+    def transport(self):
+        raise RuntimeError("Transport is not accessible for anonymous client context !")
+
+    @transport.setter
+    def transport(self, value):
+        pass
+
+    def __repr__(self):
+        return f"InvitedClientContext(org={self.organization_id}, invitation={self.invitation})"
+
+
 class APIV1_AnonymousClientContext(BaseClientContext):
     __slots__ = ("organization_id", "conn_id", "logger")
+    TYPE = ClientType.APIV1_ANONYMOUS
 
     def __init__(
-        self, transport: Transport, handshake: ServerHandshake, organization_id: OrganizationID
+        self, transport: Transport, api_version: ApiVersion, organization_id: OrganizationID
     ):
-        super().__init__(transport, handshake)
+        super().__init__(transport, api_version)
         self.organization_id = organization_id
 
         self.conn_id = self.transport.conn_id
         self.logger = self.transport.logger = self.transport.logger.bind(
-            conn_id=self.conn_id,
-            handshake_type=self.handshake_type.value,
-            organization_id=self.organization_id,
+            conn_id=self.conn_id, organization_id=self.organization_id
         )
 
     def __repr__(self):
@@ -171,14 +189,13 @@ class APIV1_AnonymousClientContext(BaseClientContext):
 
 class APIV1_AdministrationClientContext(BaseClientContext):
     __slots__ = ("conn_id", "logger")
+    TYPE = ClientType.APIV1_ADMINISTRATION
 
-    def __init__(self, transport: Transport, handshake: ServerHandshake):
-        super().__init__(transport, handshake)
+    def __init__(self, transport: Transport, api_version: ApiVersion):
+        super().__init__(transport, api_version)
 
         self.conn_id = self.transport.conn_id
-        self.logger = self.transport.logger = self.transport.logger.bind(
-            conn_id=self.conn_id, handshake_type=self.handshake_type.value
-        )
+        self.logger = self.transport.logger = self.transport.logger.bind(conn_id=self.conn_id)
 
     def __repr__(self):
         return f"APIV1_AdministrationClientContext()"

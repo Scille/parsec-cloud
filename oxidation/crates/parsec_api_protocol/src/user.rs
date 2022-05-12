@@ -1,10 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, Bytes};
 use std::num::NonZeroU64;
 
-use parsec_api_types::{maybe_field, HumanHandle, UserID};
+use parsec_api_types::{HumanHandle, UserID};
+use parsec_schema::parsec_schema;
 
 /*** Access user API ***/
 
@@ -12,14 +11,10 @@ use parsec_api_types::{maybe_field, HumanHandle, UserID};
  * Trustchain
  */
 
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct Trustchain {
-    #[serde_as(as = "Vec<Bytes>")]
     pub devices: Vec<Vec<u8>>,
-    #[serde_as(as = "Vec<Bytes>")]
     pub users: Vec<Vec<u8>>,
-    #[serde_as(as = "Vec<Bytes>")]
     pub revoked_users: Vec<Vec<u8>>,
 }
 
@@ -27,7 +22,7 @@ pub struct Trustchain {
  * UserGetReq
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct UserGetReq {
     pub user_id: UserID,
 }
@@ -36,16 +31,12 @@ pub struct UserGetReq {
  * UserGetRep
  */
 
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum UserGetRep {
     Ok {
-        #[serde_as(as = "Bytes")]
         user_certificate: Vec<u8>,
-        #[serde_as(as = "Bytes")]
         revoked_user_certificate: Vec<u8>,
-        #[serde_as(as = "Vec<Bytes>")]
         device_certificates: Vec<Vec<u8>>,
         trustchain: Trustchain,
     },
@@ -61,17 +52,12 @@ pub enum UserGetRep {
  * UserCreateReq
  */
 
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct UserCreateReq {
-    #[serde_as(as = "Bytes")]
     pub user_certificate: Vec<u8>,
-    #[serde_as(as = "Bytes")]
     pub device_certificate: Vec<u8>,
     // Same certificates than above, but expurged of human_handle/device_label
-    #[serde_as(as = "Bytes")]
     pub redacted_user_certificate: Vec<u8>,
-    #[serde_as(as = "Bytes")]
     pub redacted_device_certificate: Vec<u8>,
 }
 
@@ -79,43 +65,24 @@ pub struct UserCreateReq {
  * UserCreateRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum UserCreateRep {
     Ok,
-    NotAllowed {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    InvalidCertification {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    InvalidData {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    AlreadyExists {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    ActiveUsersLimitReached {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    UnknownError {
-        error: String,
-    },
+    NotAllowed { reason: Option<String> },
+    InvalidCertification { reason: Option<String> },
+    InvalidData { reason: Option<String> },
+    AlreadyExists { reason: Option<String> },
+    ActiveUsersLimitReached { reason: Option<String> },
+    UnknownError { error: String },
 }
 
 /*
  * UserRevokeReq
  */
 
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct UserRevokeReq {
-    #[serde_as(as = "Bytes")]
     pub revoked_user_certificate: Vec<u8>,
 }
 
@@ -123,26 +90,15 @@ pub struct UserRevokeReq {
  * UserRevokeRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum UserRevokeRep {
     Ok,
-    NotAllowed {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    InvalidCertification {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
+    NotAllowed { reason: Option<String> },
+    InvalidCertification { reason: Option<String> },
     NotFound,
-    AlreadyRevoked {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    UnknownError {
-        error: String,
-    },
+    AlreadyRevoked { reason: Option<String> },
+    UnknownError { error: String },
 }
 
 /*** Device creation API ***/
@@ -151,13 +107,10 @@ pub enum UserRevokeRep {
  * DeviceCreateReq
  */
 
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct DeviceCreateReq {
-    #[serde_as(as = "Bytes")]
     pub device_certificate: Vec<u8>,
     // Same certificate than above, but expurged of device_label
-    #[serde_as(as = "Bytes")]
     pub redacted_device_certificate: Vec<u8>,
 }
 
@@ -165,29 +118,15 @@ pub struct DeviceCreateReq {
  * DeviceCreateRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum DeviceCreateRep {
     Ok,
-    InvalidCertification {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    BadUserId {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    InvalidData {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    AlreadyExists {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-        reason: Option<String>,
-    },
-    UnknownError {
-        error: String,
-    },
+    InvalidCertification { reason: Option<String> },
+    BadUserId { reason: Option<String> },
+    InvalidData { reason: Option<String> },
+    AlreadyExists { reason: Option<String> },
+    UnknownError { error: String },
 }
 
 /*** Hman search API ***/
@@ -196,7 +135,7 @@ pub enum DeviceCreateRep {
  * HumanFindReq
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct HumanFindReq {
     pub query: Option<String>,
     pub omit_revoked: bool,
@@ -209,7 +148,7 @@ pub struct HumanFindReq {
  * HumanFindResultItem
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 pub struct HumanFindResultItem {
     pub user_id: UserID,
     pub human_handle: Option<HumanHandle>,
@@ -220,7 +159,7 @@ pub struct HumanFindResultItem {
  * HumanFindRep
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum HumanFindRep {
     Ok {
@@ -230,7 +169,6 @@ pub enum HumanFindRep {
         total: u64,
     },
     NotAllowed {
-        #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
         reason: Option<String>,
     },
     UnknownError {

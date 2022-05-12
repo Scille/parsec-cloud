@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
+from unittest.mock import patch
 from PyQt5 import QtCore, QtWidgets, QtGui
 
 from parsec.api.protocol import InvitationType, OrganizationID
@@ -249,7 +250,13 @@ async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_f
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_file_disconnected(
-    aqtbot, autoclose_dialog, logged_gui_with_files, bob, monkeypatch, bob_available_device
+    aqtbot,
+    autoclose_dialog,
+    logged_gui_with_files,
+    bob,
+    monkeypatch,
+    bob_available_device,
+    snackbar_catcher,
 ):
     gui, w_w, f_w = logged_gui_with_files
     addr = f_w.workspace_fs.generate_file_link("/dir1")
@@ -259,27 +266,30 @@ async def test_link_file_disconnected(
         lambda *args, **kwargs: [bob_available_device],
     )
 
+    snackbar_catcher.reset()
+
     # Log out and send link
     await gui.test_logout_and_switch_to_login_widget()
     gui.add_instance(addr.to_url())
 
-    def _assert_dialogs():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [
+    def _assert_snackbars():
+        assert len(snackbar_catcher.snackbars) == 1
+        assert snackbar_catcher.snackbars == [
             (
-                "",
+                "INFO",
                 translate("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
                     organization=bob.organization_id
                 ),
             )
         ]
 
-    await aqtbot.wait_until(_assert_dialogs)
+    await aqtbot.wait_until(_assert_snackbars)
 
     # Assert login widget is displayed
     lw = gui.test_get_login_widget()
 
     def _password_widget_shown():
+        assert lw.widget.layout().count() == 1
         assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
         password_w = lw.widget.layout().itemAt(0).widget()
         assert password_w.button_login.isEnabled()
@@ -288,8 +298,9 @@ async def test_link_file_disconnected(
 
     password_w = lw.widget.layout().itemAt(0).widget()
 
-    # Connect to the organization
-    aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+    tabw = gui.test_get_tab()
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
+        aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
     def _wait():
         central_widget = gui.test_get_central_widget()
@@ -313,7 +324,13 @@ async def test_link_file_disconnected(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_file_disconnected_cancel_login(
-    aqtbot, autoclose_dialog, logged_gui_with_files, bob, monkeypatch, bob_available_device
+    aqtbot,
+    autoclose_dialog,
+    logged_gui_with_files,
+    bob,
+    monkeypatch,
+    bob_available_device,
+    snackbar_catcher,
 ):
     gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link("/dir1")
@@ -323,22 +340,24 @@ async def test_link_file_disconnected_cancel_login(
         lambda *args, **kwargs: [bob_available_device],
     )
 
+    snackbar_catcher.reset()
+
     # Log out and send link
     await gui.test_logout_and_switch_to_login_widget()
     gui.add_instance(str(url))
 
-    def _assert_dialogs():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [
+    def _assert_snackbars():
+        assert len(snackbar_catcher.snackbars) == 1
+        assert snackbar_catcher.snackbars == [
             (
-                "",
+                "INFO",
                 translate("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
                     organization=bob.organization_id
                 ),
             )
         ]
 
-    await aqtbot.wait_until(_assert_dialogs)
+    await aqtbot.wait_until(_assert_snackbars)
 
     # Assert login widget is displayed
     lw = gui.test_get_login_widget()
@@ -365,6 +384,49 @@ async def test_link_file_disconnected_cancel_login(
         assert not f_w.isVisible()
 
     await aqtbot.wait_until(_folder_ready)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_link_file_unknown_workspace(
+    aqtbot, core_config, gui_factory, autoclose_dialog, running_backend, alice
+):
+    password = "P@ssw0rd"
+    save_device_with_password_in_config(core_config.config_dir, alice, password)
+
+    file_link = BackendOrganizationFileLinkAddr.build(
+        organization_addr=alice.organization_addr,
+        workspace_id=EntryID.new(),
+        encrypted_path=b"<whatever>",
+    )
+
+    gui = await gui_factory(core_config=core_config, start_arg=file_link.to_url())
+    lw = gui.test_get_login_widget()
+
+    def _password_prompt():
+        assert len(autoclose_dialog.dialogs) == 0
+        lpi_w = lw.widget.layout().itemAt(0).widget()
+        assert isinstance(lpi_w, LoginPasswordInputWidget)
+
+    await aqtbot.wait_until(_password_prompt)
+
+    lpi_w = lw.widget.layout().itemAt(0).widget()
+    await aqtbot.key_clicks(lpi_w.line_edit_password, password)
+    await aqtbot.wait_until(lambda: lpi_w.line_edit_password.text() == password)
+
+    tabw = gui.test_get_tab()
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
+        aqtbot.mouse_click(lpi_w.button_login, QtCore.Qt.LeftButton)
+
+    def _error_shown():
+        assert len(autoclose_dialog.dialogs) == 1
+        print(autoclose_dialog.dialogs)
+        assert autoclose_dialog.dialogs[0] == (
+            "Error",
+            "You do not have access to the workspace containing the file. It may not have been shared with you.",
+        )
+
+    await aqtbot.wait_until(_error_shown)
 
 
 @pytest.mark.gui
@@ -580,7 +642,7 @@ async def test_tab_login_logout_two_tabs_logged_in(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_file_unknown_org(
-    core_config, gui_factory, autoclose_dialog, running_backend, alice
+    aqtbot, core_config, gui_factory, autoclose_dialog, running_backend, alice
 ):
     password = "P@ssw0rd"
     save_device_with_password_in_config(core_config.config_dir, alice, password)
@@ -603,6 +665,11 @@ async def test_link_file_unknown_org(
     assert autoclose_dialog.dialogs[0][1] == translate(
         "TEXT_FILE_LINK_NOT_IN_ORG_organization"
     ).format(organization="UnknownOrg")
+
+    def _devices_listed():
+        assert lw.widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
 
     accounts_w = lw.widget.layout().itemAt(0).widget()
     assert accounts_w
@@ -640,3 +707,32 @@ async def test_outsider_profil_limit(
 
     c_w = gui.test_get_central_widget()
     assert c_w.menu.button_users.isVisible() is False
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_commercial_open_switch_offer(aqtbot, gui_factory, alice, monkeypatch):
+    gui = await gui_factory()
+    await gui.test_switch_to_logged_in(alice)
+    c_w = gui.test_get_central_widget()
+    assert c_w is not None
+
+    actions = c_w.button_user.menu().actions()
+    assert len(actions) == 5
+    assert "Update subscription" not in [a.text() for a in actions]
+
+    await gui.test_logout_and_switch_to_login_widget()
+
+    monkeypatch.setattr("parsec.core.gui.central_widget.is_saas_addr", lambda _: True)
+
+    await gui.test_switch_to_logged_in(alice)
+    c_w = gui.test_get_central_widget()
+    assert c_w is not None
+
+    actions = c_w.button_user.menu().actions()
+    assert len(actions) == 6
+    assert actions[0].text() == "Update subscription"
+
+    with patch("parsec.core.gui.central_widget.desktop.open_url") as mock:
+        actions[0].triggered.emit()
+        mock.assert_called_once()

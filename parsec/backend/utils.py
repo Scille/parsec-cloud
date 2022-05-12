@@ -4,16 +4,10 @@ import trio
 from enum import Enum
 from functools import wraps
 from typing_extensions import Final, Literal
-from typing import Union, Sequence
+from typing import Sequence, Dict, Callable
 
-from parsec.api.protocol import (
-    ProtocolError,
-    InvalidMessageError,
-    HandshakeType,
-    APIV1_HandshakeType,
-)
+from parsec.api.protocol import ProtocolError, InvalidMessageError
 from parsec.api.version import API_V1_VERSION, API_V2_VERSION
-
 
 PEER_EVENT_MAX_WAIT = 3  # 5mn
 ALLOWED_API_VERSIONS = {API_V1_VERSION.version, API_V2_VERSION.version}
@@ -22,14 +16,16 @@ ALLOWED_API_VERSIONS = {API_V1_VERSION.version, API_V2_VERSION.version}
 # Enumeration used to check access rights for a given kind of operation
 OperationKind = Enum("OperationKind", "DATA_READ DATA_WRITE MAINTENANCE")
 
+ClientType = Enum(
+    "ClientType", "AUTHENTICATED INVITED ANONYMOUS APIV1_ANONYMOUS APIV1_ADMINISTRATION"
+)
+
 
 def api(
     cmd: str,
     *,
     long_request: bool = False,
-    handshake_types: Sequence[Union[HandshakeType, APIV1_HandshakeType]] = (
-        HandshakeType.AUTHENTICATED,
-    ),
+    client_types: Sequence[ClientType] = (ClientType.AUTHENTICATED,),
 ):
     def wrapper(fn):
         if long_request:
@@ -44,14 +40,14 @@ def api(
             wrapped = fn
 
         assert not hasattr(wrapped, "_api_info")
-        wrapped._api_info = {"cmd": cmd, "handshake_types": handshake_types}
+        wrapped._api_info = {"cmd": cmd, "client_types": client_types}
         return wrapped
 
     return wrapper
 
 
-def collect_apis(*components):
-    apis = {}
+def collect_apis(*components) -> Dict[ClientType, Dict[str, Callable]]:
+    apis: Dict[ClientType, Dict[str, Callable]] = {}
     for component in components:
         for methname in dir(component):
             meth = getattr(component, methname)
@@ -59,12 +55,12 @@ def collect_apis(*components):
             if not info:
                 continue
 
-            for handshake_type in info["handshake_types"]:
-                if handshake_type not in apis:
-                    apis[handshake_type] = {}
+            for client_type in info["client_types"]:
+                if client_type not in apis:
+                    apis[client_type] = {}
 
-                assert info["cmd"] not in apis[handshake_type]
-                apis[handshake_type][info["cmd"]] = meth
+                assert info["cmd"] not in apis[client_type]
+                apis[client_type][info["cmd"]] = meth
     return apis
 
 

@@ -22,7 +22,11 @@ from parsec.core.backend_connection.apiv1_annonymous import (
     APIV1_BackendAnonymousCmds,
     apiv1_backend_anonymous_cmds_factory,
 )
-
+from parsec.core.backend_connection.anonymous import (
+    pki_enrollment_submit,
+    pki_enrollment_info,
+    organization_bootstrap,
+)
 
 __all__ = (
     # Exceptions
@@ -43,6 +47,10 @@ __all__ = (
     # Invited
     "BackendInvitedCmds",
     "backend_invited_cmds_factory",
+    # Anonymous
+    "organization_bootstrap",
+    "pki_enrollment_submit",
+    "pki_enrollment_info",
     # APIv1 Annonymous
     "APIV1_BackendAnonymousCmds",
     "apiv1_backend_anonymous_cmds_factory",

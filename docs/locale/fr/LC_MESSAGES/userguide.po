@@ -7,16 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 1.7.2+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-15 11:20+0100\n"
+"POT-Creation-Date: 2022-04-27 15:47+0200\n"
 "PO-Revision-Date: 2020-02-27 17:57+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: \n"
-"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.10.1\n"
 
 # ######################
 # userguide/index.rst #
@@ -61,38 +61,14 @@ msgstr ""
 "``parsec-vX.Y.Z-win32-setup.exe``)."
 
 #: ../../userguide/installation.rst:14
-msgid "MacOS"
-msgstr "MacOS"
-
-#: ../../userguide/installation.rst:16
-msgid ""
-"MacOS (10.15, >= 11.0) installer is available as a DMG installer on "
-"`GitHub <https://github.com/Scille/parsec/releases/latest>`_ (installer "
-"named ``parsec-vX.Y.Z-macos-amd64.dmg``)."
-msgstr "L'installeur MacOS (10.15, >= 11.0 est disponible en tant que DMG sur "
-"`GitHub <https://github.com/Scille/parsec/releases/latest>`_ (fichier nommé "
-"``parsec-vX.Y.Z-macos-amd64.dmg``"
-
-#: ../../userguide/installation.rst:18
-msgid ""
-"The MacOS version necessitates `macFUSE <https://osxfuse.github.io/>`_ to"
-" be installed, which can be troublesome on Big Sur. See `this discussion "
-"<https://github.com/osxfuse/osxfuse/issues/814>`_ about it and the OS' "
-"limitations. A detailed installation guide is in the making."
-msgstr "La version MacOS nécessite l'installation de macFUSE <https://osxfuse.github.io/>`, "
-"ce qui peut être problématique sur Big Sur. Voir `cette discussion "
-"<https://github.com/osxfuse/osxfuse/issues/814>`_. "
-"Un guide d'installation détaillé est en travaux."
-
-#: ../../userguide/installation.rst:22
 msgid "Linux"
 msgstr "Linux"
 
-#: ../../userguide/installation.rst:24
+#: ../../userguide/installation.rst:16
 msgid "Parsec is available on Snap:"
 msgstr "Parsec est disponible sur Snap:"
 
-#: ../../userguide/installation.rst:30
+#: ../../userguide/installation.rst:22
 msgid ""
 "If you are familiar with Snap, you may notice that Parsec snap is "
 "provided in classic mode (i.e. without sandbox). This is needed because "
@@ -107,15 +83,15 @@ msgstr ""
 "vos données comme un disque virtuel, ce qui n'est pas autorisé par "
 "l'isolation de Snap."
 
-#: ../../userguide/installation.rst:35
+#: ../../userguide/installation.rst:27
 msgid "You can install the snap from the command line by doing:"
 msgstr "Vous pouvez installer le snap depuis la ligne de commande en faisant :"
 
-#: ../../userguide/installation.rst:43
+#: ../../userguide/installation.rst:35
 msgid "Via pip"
 msgstr "Via pip"
 
-#: ../../userguide/installation.rst:45
+#: ../../userguide/installation.rst:37
 msgid ""
 "Given that Parsec is written in Python, an alternative is to install it "
 "through `pip (the Python package repository) <https://pypi.org/project"
@@ -124,15 +100,102 @@ msgstr ""
 "Parsec étant écrit en Python, une autre façon de l'installer est via `pip"
 " (Python package repository) <https://pypi.org/project/parsec-cloud/>`_."
 
-#: ../../userguide/installation.rst:51
+#: ../../userguide/installation.rst:43
 msgid "Or intall it with all its dependencies, for the GUI."
 msgstr ""
 "Ou l'installer avec toutes ses dépendances, pour accéder à l'interface "
 "graphique par exemple."
 
-#: ../../userguide/installation.rst:59
+#: ../../userguide/installation.rst:51
 msgid "Parsec requires Python >= 3.6 to work."
 msgstr "Parsec a besoin de Python >= 3.6 pour fonctionner."
+
+#: ../../userguide/installation.rst:55
+msgid "MacOS"
+msgstr "MacOS"
+
+#: ../../userguide/installation.rst:57
+msgid ""
+"MacOS (10.15, >= 11.0) installer is available as a DMG installer on "
+"`GitHub <https://github.com/Scille/parsec/releases/latest>`_ (installer "
+"named ``parsec-vX.Y.Z-macos-amd64.dmg``)."
+msgstr ""
+"L'installeur MacOS (10.15, >= 11.0 est disponible en tant que DMG sur "
+"`GitHub <https://github.com/Scille/parsec/releases/latest>`_ (fichier "
+"nommé ``parsec-vX.Y.Z-macos-amd64.dmg``"
+
+#: ../../userguide/installation.rst:59
+#, fuzzy
+msgid ""
+"The MacOS version needs `FUSE for MacOS <https://osxfuse.github.io/>`_ to"
+" be installed, which can be troublesome on Big Sur. See `this discussion "
+"<https://github.com/osxfuse/osxfuse/issues/814>`_ about it and the OS' "
+"limitations."
+msgstr ""
+"La version MacOS nécessite l'installation de macFUSE "
+"<https://osxfuse.github.io/>`, ce qui peut être problématique sur Big "
+"Sur. Voir `cette discussion "
+"<https://github.com/osxfuse/osxfuse/issues/814>`_. Un guide "
+"d'installation détaillé est en travaux."
+
+#: ../../userguide/installation.rst:63
+msgid "FUSE for MacOS installation"
+msgstr "Installation de FUSE for MacOS"
+
+#: ../../userguide/installation.rst:65
+msgid ""
+"From `FUSE for MacOS <https://osxfuse.github.io/>`_ website, you can find"
+" the lastest version to download at the indicated location."
+msgstr ""
+"Vous trouverez la dernière version de FUSE for MacOS à cette adresse : "
+"<https://osxfuse.github.io/>`_"
+
+msgid "FUSE for MacOS download screen"
+msgstr "Écran de téléchargement de FUSE for MacOS"
+
+#: ../../userguide/installation.rst:71
+msgid ""
+"Open the ``.dmg`` file and follow its instructions to install. If the "
+"opening fails, check the `App Store and identified developers` box in "
+"System Preferences > Security & Privacy:"
+msgstr ""
+"Ouvrez le fichier en ``.dmg`` et suivez les instruction d'installation. Si "
+"l'ouverture du fichier échoue, cochez la case `App Store et développeurs "
+"identifiés` dans Préférences Système > Sécurité et confidentialité :"
+
+msgid "MacOS path to Security and Privacy"
+msgstr "Chemin vers Sécurité et confidentialité MacOS"
+
+msgid "MacOS allow identified developer"
+msgstr "MacOS autoriser développeurs identifiés"
+
+#: ../../userguide/installation.rst:81
+msgid ""
+"To change this setting, click the lock first which will require admin "
+"rights."
+msgstr ""
+"Pour changer ce paramètre, cliquez d'abord sur le cadenas, qui requiert les "
+"droits d'administrateur."
+
+#: ../../userguide/installation.rst:83
+msgid ""
+"Once the installation is done, a `System Extension Updated` window will "
+"pop up. Click `Open Security Preferences`, and click the lock, then click"
+" `Allow`:"
+msgstr ""
+"Une fois l'installation terminée, une fenêtre suggérant d'autoriser cette "
+"extension système apparaît. Cliquez sur `Ouvrir les préférences de sécurité`, "
+"puis cliquez sur `Autoriser` après avoir cliqué à nouveau sur le cadenas :"
+
+msgid "System Extension Updated window"
+msgstr "Fenêtre de mise à jour d'extension système"
+
+msgid "MacOS allow extension"
+msgstr "Autoriser extension MacOS"
+
+#: ../../userguide/installation.rst:93
+msgid "Finally, reboot your Mac to complete the installation."
+msgstr "Enfin, redémarrez votre Mac pour finaliser l'installation."
 
 # ###########################
 # userguide/new_device.rst #
@@ -832,3 +895,4 @@ msgstr ""
 "(toutefois seules les données présentent localement sont disponibles), la"
 " synchronisation se faisant automatiquement dès que la connexion avec le "
 "serveur Parsec est de nouveau disponible."
+

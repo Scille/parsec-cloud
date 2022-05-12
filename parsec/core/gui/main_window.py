@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import sys
-from typing import Callable, Optional, Tuple, cast
+from typing import Callable, Optional, cast, Awaitable
 from structlog import get_logger
 from distutils.version import LooseVersion
 
@@ -10,6 +10,9 @@ from PyQt5.QtGui import QColor, QIcon, QKeySequence, QResizeEvent, QCloseEvent
 from PyQt5.QtWidgets import QWidget, QMainWindow, QMenu, QShortcut, QMenuBar
 
 from parsec import __version__ as PARSEC_VERSION
+from parsec.core.gui.enrollment_query_widget import EnrollmentQueryWidget
+from parsec.core.gui.snackbar_widget import SnackbarManager
+from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import InvitationType
 from parsec.core.types import (
@@ -21,6 +24,7 @@ from parsec.core.types import (
 )
 from parsec.core.core_events import CoreEvent
 from parsec.core.config import CoreConfig, save_config
+from parsec.core.pki import is_pki_enrollment_available
 from parsec.core.local_device import list_available_devices, get_key_file, DeviceFileType
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
 from parsec.core.gui.lang import translate as _
@@ -29,6 +33,7 @@ from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui import telemetry
 from parsec.core.gui import desktop
 from parsec.core import win_registry
+from parsec.core.gui import validators
 from parsec.core.gui.changelog_widget import ChangelogWidget
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
@@ -347,15 +352,34 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     def _on_add_instance_clicked(self) -> None:
         self.add_instance()
 
+    def _bind_async_callback(
+        self, callback: Callable[[], Awaitable[None]]
+    ) -> Callable[[], Awaitable[None]]:
+        """Async callbacks need to be bound to the MainWindow instance
+        in order to be able to be scheduled in the job context.
+        """
+
+        async def wrapper(instance: "MainWindow") -> None:
+            return await callback()
+
+        return wrapper.__get__(self)  # type: ignore[attr-defined]
+
     def _on_create_org_clicked(
         self, addr: Optional[BackendOrganizationBootstrapAddr] = None
     ) -> None:
-        def _on_finished(ret: Optional[Tuple[LocalDevice, DeviceFileType, str]]) -> None:
-            if ret is None:
+        widget: CreateOrgWidget
+
+        @self._bind_async_callback
+        async def _on_finished() -> None:
+            nonlocal widget
+            # It's safe to access the widget status here since this does not perform a Qt call.
+            # But the underlying C++ widget might already be deleted so we should make sure not
+            # not do anything Qt related with this widget.
+            if widget.status is None:
                 return
             self.reload_login_devices()
-            device, auth_method, password = ret
-            self.try_login(device, auth_method, password)
+            device, auth_method, password = widget.status
+            await self.try_login(device, auth_method, password)
             answer = ask_question(
                 self,
                 _("TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"),
@@ -370,7 +394,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                     self.config, self.jobs_ctx, [device], parent=self
                 )
 
-        CreateOrgWidget.show_modal(
+        widget = CreateOrgWidget.show_modal(
             self.jobs_ctx, self.config, self, on_finished=_on_finished, start_addr=addr
         )
 
@@ -380,6 +404,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             title=_("TEXT_JOIN_ORG_URL_TITLE"),
             message=_("TEXT_JOIN_ORG_URL_INSTRUCTIONS"),
             placeholder=_("TEXT_JOIN_ORG_URL_PLACEHOLDER"),
+            validator=validators.BackendActionAddrValidator(),
         )
         if url is None:
             return
@@ -401,23 +426,55 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 self._on_claim_user_clicked(action_addr)
             elif action_addr.invitation_type == InvitationType.DEVICE:
                 self._on_claim_device_clicked(action_addr)
-            else:
-                show_error(self, _("TEXT_INVALID_URL"))
+        elif isinstance(action_addr, BackendPkiEnrollmentAddr):
+            if not is_pki_enrollment_available():
+                show_error(self, _("TEXT_PKI_ENROLLMENT_NOT_AVAILABLE"))
                 return
+            self._on_claim_pki_clicked(action_addr)
         else:
             show_error(self, _("TEXT_INVALID_URL"))
             return
 
-    def _on_claim_user_clicked(self, action_addr: BackendInvitationAddr) -> None:
-        widget: ClaimDeviceWidget
+    def _on_recover_device_clicked(self) -> None:
+        DeviceRecoveryImportWidget.show_modal(
+            self.config, self.jobs_ctx, parent=self, on_finished=self.reload_login_devices
+        )
+
+    def _on_claim_pki_clicked(self, action_addr: BackendPkiEnrollmentAddr) -> None:
+        widget: EnrollmentQueryWidget
 
         def _on_finished() -> None:
             nonlocal widget
+            # It's safe to access the widget status here since this does not perform a Qt call.
+            # But the underlying C++ widget might already be deleted so we should make sure not
+            # not do anything Qt related with this widget.
+            if not widget.status:
+                return
+            show_info(self, _("TEXT_ENROLLMENT_QUERY_SUCCEEDED"))
+            self.reload_login_devices()
+
+        widget = EnrollmentQueryWidget.show_modal(
+            jobs_ctx=self.jobs_ctx,
+            config=self.config,
+            addr=action_addr,
+            parent=self,
+            on_finished=_on_finished,
+        )
+
+    def _on_claim_user_clicked(self, action_addr: BackendInvitationAddr) -> None:
+        widget: ClaimUserWidget
+
+        @self._bind_async_callback
+        async def _on_finished() -> None:
+            nonlocal widget
+            # It's safe to access the widget status here since this does not perform a Qt call.
+            # But the underlying C++ widget might already be deleted so we should make sure not
+            # not do anything Qt related with this widget.
             if not widget.status:
                 return
             device, auth_method, password = widget.status
             self.reload_login_devices()
-            self.try_login(device, auth_method, password)
+            await self.try_login(device, auth_method, password)
             answer = ask_question(
                 self,
                 _("TEXT_CLAIM_USER_SUCCESSFUL_TITLE"),
@@ -439,13 +496,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     def _on_claim_device_clicked(self, action_addr: BackendInvitationAddr) -> None:
         widget: ClaimDeviceWidget
 
-        def _on_finished() -> None:
+        @self._bind_async_callback
+        async def _on_finished() -> None:
             nonlocal widget
+            # It's safe to access the widget status here since this does not perform a Qt call.
+            # But the underlying C++ widget might already be deleted so we should make sure not
+            # not do anything Qt related with this widget.
             if not widget.status:
                 return
             device, auth_method, password = widget.status
             self.reload_login_devices()
-            self.try_login(device, auth_method, password)
+            await self.try_login(device, auth_method, password)
 
         widget = ClaimDeviceWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
@@ -455,7 +516,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             on_finished=_on_finished,
         )
 
-    def try_login(self, device: LocalDevice, auth_method: DeviceFileType, password: str) -> None:
+    async def try_login(
+        self, device: LocalDevice, auth_method: DeviceFileType, password: str
+    ) -> None:
         idx = self._get_login_tab_index()
         if idx == -1:
             tab = self.add_new_tab()
@@ -465,7 +528,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         if auth_method == DeviceFileType.PASSWORD:
             tab.login_with_password(kf, password)
         elif auth_method == DeviceFileType.SMARTCARD:
-            tab.login_with_smartcard(kf)
+            await tab.login_with_smartcard(kf)
 
     def reload_login_devices(self) -> None:
         idx = self._get_login_tab_index()
@@ -496,9 +559,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         save_config(self.config)
         telemetry.init(self.config)
 
-    def show_window(
-        self, skip_dialogs: bool = False, invitation_link: Optional[str] = None
-    ) -> None:
+    def show_window(self, skip_dialogs: bool = False) -> None:
         try:
             if not self.restoreGeometry(self.config.gui_geometry):
                 self.showMaximized()
@@ -547,23 +608,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             self.event_bus.send(CoreEvent.GUI_CONFIG_CHANGED, gui_last_version=PARSEC_VERSION)
 
         telemetry.init(self.config)
-
-        devices = list_available_devices(self.config.config_dir)
-        if not len(devices) and not invitation_link:
-            r = ask_question(
-                self,
-                _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"),
-                _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_INSTRUCTIONS"),
-                [
-                    _("ACTION_NO_DEVICE_CREATE_ORGANIZATION"),
-                    _("ACTION_NO_DEVICE_JOIN_ORGANIZATION"),
-                ],
-                radio_mode=True,
-            )
-            if r == _("ACTION_NO_DEVICE_JOIN_ORGANIZATION"):
-                self._on_join_org_clicked()
-            elif r == _("ACTION_NO_DEVICE_CREATE_ORGANIZATION"):
-                self._on_create_org_clicked()
 
     def show_top(self) -> None:
         self.activateWindow()
@@ -626,6 +670,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config, self.systray_notification)
         tab.join_organization_clicked.connect(self._on_join_org_clicked)
         tab.create_organization_clicked.connect(self._on_create_org_clicked)
+        tab.recover_device_clicked.connect(self._on_recover_device_clicked)
         idx = self.tab_center.addTab(tab, "")
         tab.state_changed.connect(self.on_tab_state_changed)
         self.tab_center.setCurrentIndex(idx)
@@ -682,11 +727,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         instance_widget.set_workspace_path(file_link_addr)
 
         # Prompt the user for the need to log in first
-        show_info(
-            self,
+        SnackbarManager.inform(
             _("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
                 organization=file_link_addr.organization_id
-            ),
+            )
         )
 
     def go_to_file_link(self, addr: BackendOrganizationFileLinkAddr) -> None:
@@ -747,6 +791,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.switch_to_login_tab()
         self._on_claim_device_clicked(action_addr)
 
+    def show_claim_pki_widget(self, action_addr: BackendPkiEnrollmentAddr) -> None:
+        self.switch_to_login_tab()
+        self._on_claim_pki_clicked(action_addr)
+
     def add_instance(self, start_arg: Optional[str] = None) -> None:
         action_addr = None
         if start_arg:
@@ -772,6 +820,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             and action_addr.invitation_type == InvitationType.DEVICE
         ):
             self.show_claim_device_widget(action_addr)
+        elif isinstance(action_addr, BackendPkiEnrollmentAddr):
+            self.show_claim_pki_widget(action_addr)
         else:
             show_error(self, _("TEXT_INVALID_URL"))
 

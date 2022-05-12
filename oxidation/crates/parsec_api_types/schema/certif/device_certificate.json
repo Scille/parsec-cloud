@@ -1,0 +1,27 @@
+{
+    "label": "DeviceCertificate",
+    "type": "device_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "CertificateSignerOwned"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "device_id",
+            "type": "DeviceID"
+        },
+        {
+            "name": "device_label",
+            "type": "Option<DeviceLabel>",
+            "introduced_in_revision": 14
+        },
+        {
+            "name": "verify_key",
+            "type": "VerifyKey"
+        }
+    ]
+}

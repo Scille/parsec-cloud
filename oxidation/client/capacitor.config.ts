@@ -4,7 +4,16 @@ const config: CapacitorConfig = {
   appId: 'com.scille.parsec',
   appName: 'client',
   webDir: 'dist',
-  bundledWebRuntime: false
+  bundledWebRuntime: false,
+  plugins: {
+    SplashScreen: {
+      launchAutoHide: false,
+      androidScaleType: 'CENTER_CROP',
+      splashFullScreen: true,
+      splashImmersive: false,
+      backgroundColor: '#121212' // YOUR SPLASH SCREEN MAIN COLOR
+    }
+  }
 };
 
 export default config;

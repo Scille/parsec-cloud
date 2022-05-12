@@ -1,12 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import trio
 import click
-from urllib.request import urlopen, Request
 
 from parsec.api.protocol import OrganizationID
 from parsec.api.rest import organization_create_req_serializer, organization_create_rep_serializer
-from parsec.utils import trio_run
+from parsec.utils import http_request, trio_run
 from parsec.cli_utils import spinner, cli_exception_handler
 from parsec.core.types import BackendAddr, BackendOrganizationBootstrapAddr
 from parsec.core.cli.utils import cli_command_base_options
@@ -18,17 +16,12 @@ async def create_organization_req(
     url = backend_addr.to_http_domain_url("/administration/organizations")
     data = organization_create_req_serializer.dumps({"organization_id": organization_id})
 
-    def _do_req():
-        req = Request(
-            url=url,
-            method="POST",
-            headers={"authorization": f"Bearer {administration_token}"},
-            data=data,
-        )
-        with urlopen(req) as rep:
-            return rep.read()
-
-    rep_data = await trio.to_thread.run_sync(_do_req)
+    rep_data = await http_request(
+        url=url,
+        method="POST",
+        headers={"authorization": f"Bearer {administration_token}"},
+        data=data,
+    )
 
     cooked_rep_data = organization_create_rep_serializer.loads(rep_data)
     return cooked_rep_data["bootstrap_token"]

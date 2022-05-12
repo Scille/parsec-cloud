@@ -135,10 +135,9 @@ async def test_create_workspace_same_name(alice_user_fs):
     um = alice_user_fs.get_user_manifest()
     assert um.updated == datetime(2000, 1, 3)
     assert len(um.workspaces) == 2
-    assert [(x.id, x.name) for x in um.workspaces] == [
-        (w1id, EntryName("w")),
-        (w2id, EntryName("w")),
-    ]
+    assert sorted((x.id, x.name) for x in um.workspaces) == sorted(
+        [(w1id, EntryName("w")), (w2id, EntryName("w"))]
+    )
 
 
 @pytest.mark.trio

@@ -17,14 +17,14 @@ fn serde_organization_stats_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::OrganizationStats(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -91,14 +91,14 @@ fn serde_organization_stats_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::organization_stats::Rep::loads(&raw);
+    let data = authenticated_cmds::organization_stats::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::organization_stats::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::organization_stats::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -114,14 +114,14 @@ fn serde_organization_config_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::OrganizationConfig(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -160,14 +160,98 @@ fn serde_organization_config_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::organization_config::Rep::loads(&raw);
+    let data = authenticated_cmds::organization_config::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::organization_config::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::organization_config::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
+}
+
+#[rstest]
+fn specs_organization_stats_req() {
+    assert_eq!(
+        authenticated_cmds::organization_stats::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "organization_stats"
+                },
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_organization_stats_rep() {
+    assert_eq!(
+        authenticated_cmds::organization_stats::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "active_users": {
+                    "type": "u64"
+                },
+                "data_size": {
+                    "type": "u64"
+                },
+                "metadata_size": {
+                    "type": "u64"
+                },
+                "realms": {
+                    "type": "u64"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+                "users": {
+                    "type": "u64"
+                },
+                "users_per_profile_detail": {
+                    "type": "Vec<UsersPerProfileDetailItem>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_organization_config_req() {
+    assert_eq!(
+        authenticated_cmds::organization_config::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "organization_config"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_organization_config_rep() {
+    assert_eq!(
+        authenticated_cmds::organization_config::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "active_users_limit": {
+                    "type": "Option<u64>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+                "user_profile_outsider_allowed": {
+                    "type": "bool"
+                }
+            }
+        })
+    )
 }

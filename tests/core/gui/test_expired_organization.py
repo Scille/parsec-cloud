@@ -32,6 +32,11 @@ async def test_expired_notification_logging(
     lw = gui.test_get_login_widget()
     tabw = gui.test_get_tab()
 
+    def _devices_listed():
+        assert lw.widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
+
     def _password_widget_shown():
         assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
 
@@ -39,7 +44,7 @@ async def test_expired_notification_logging(
 
     password_w = lw.widget.layout().itemAt(0).widget()
 
-    aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
+    await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
         aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
@@ -70,6 +75,11 @@ async def test_expired_notification_from_connection(
     # Force logging on an expired organization
     with freeze_time("1989-12-17"):
 
+        def _devices_listed():
+            assert lw.widget.layout().count() > 0
+
+        await aqtbot.wait_until(_devices_listed)
+
         def _password_widget_shown():
             assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
 
@@ -77,7 +87,7 @@ async def test_expired_notification_from_connection(
 
         password_w = lw.widget.layout().itemAt(0).widget()
 
-        aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
+        await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
 
         async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
             aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)

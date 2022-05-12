@@ -143,13 +143,25 @@ async def fuse_mountpoint_runner(
                     if sys.platform == "darwin":
                         fuse_platform_options = {
                             "local": True,
+                            "defer_permissions": True,
                             "volname": workspace_fs.get_workspace_name(),
                             "volicon": str(parsec_icns_path.absolute()),
                         }
                         # osxfuse-specific options :
-                        # - local : allows mountpoint to show up correctly in finder (+ desktop)
-                        # - volname : specify volume name (default is OSXFUSE [...])
-                        # - volicon : specify volume icon (default is macOS drive icon)
+                        # local: allows mountpoint to show up correctly in finder (+ desktop)
+                        # volname: specify volume name (default is OSXFUSE [...])
+                        # volicon: specify volume icon (default is macOS drive icon)
+
+                    # On defer_permissions: "The defer_permissions option [...] causes macFUSE to assume that all
+                    # accesses are allowed; it will forward all operations to the file system, and it is up to
+                    # somebody else to eventually allow or deny the operations." See
+                    # https://github.com/osxfuse/osxfuse/wiki/Mount-options#default_permissions-and-defer_permissions
+                    # This option is necessary on MacOS to give the right permissions to files inside FUSE drives,
+                    # otherwise it impedes upon saving and auto-saving from Apple softwares (TextEdit, Preview...)
+                    # due to the gid of files seemingly not having writing rights from the software perspective.
+                    # One other solution found for this issue was to change the gid of the mountpoint and its files
+                    # from staff (default) to wheel (admin gid). Checking defer_permissions allows to ignore the gid
+                    # issue entirely and lets Parsec itself handle read/write rights inside workspaces.
 
                     else:
                         fuse_platform_options = {"auto_unmount": True}

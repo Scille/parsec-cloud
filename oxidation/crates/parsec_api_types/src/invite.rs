@@ -1,15 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use fancy_regex::Regex;
 use rand::seq::SliceRandom;
 use rand::Rng;
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::str::FromStr;
 
 use parsec_api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
+use parsec_serialization_format::parsec_data;
 
-use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
+use crate as parsec_api_types;
+use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::ext_types::new_uuid_type;
 use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
 
@@ -17,7 +19,8 @@ use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
  * InvitationType
  */
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum InvitationType {
     User,
     Device,
@@ -82,7 +85,7 @@ impl FromStr for SASCode {
             static ref PATTERN: Regex =
                 Regex::new(SAS_CODE_PATTERN).unwrap_or_else(|_| unreachable!());
         }
-        if PATTERN.is_match(s) {
+        if PATTERN.is_match(s).unwrap_or(false) {
             Ok(Self(s.to_string()))
         } else {
             Err("Invalid SAS code")
@@ -231,18 +234,10 @@ pub struct InviteUserData {
     pub verify_key: VerifyKey,
 }
 
+parsec_data!("schema/invite/invite_user_data.json");
+
 impl_dump_and_encrypt!(InviteUserData);
 impl_decrypt_and_load!(InviteUserData);
-
-new_data_struct_type!(
-    InviteUserDataData,
-    type: "invite_user_data",
-
-    requested_device_label: Option<DeviceLabel>,
-    requested_human_handle: Option<HumanHandle>,
-    public_key: PublicKey,
-    verify_key: VerifyKey,
-);
 
 impl_transparent_data_format_conversion!(
     InviteUserData,
@@ -270,19 +265,10 @@ pub struct InviteUserConfirmation {
     pub root_verify_key: VerifyKey,
 }
 
+parsec_data!("schema/invite/invite_user_confirmation.json");
+
 impl_dump_and_encrypt!(InviteUserConfirmation);
 impl_decrypt_and_load!(InviteUserConfirmation);
-
-new_data_struct_type!(
-    InviteUserConfirmationData,
-    type: "invite_user_confirmation",
-
-    device_id: DeviceID,
-    device_label: Option<DeviceLabel>,
-    human_handle: Option<HumanHandle>,
-    profile: UserProfile,
-    root_verify_key: VerifyKey,
-);
 
 impl_transparent_data_format_conversion!(
     InviteUserConfirmation,
@@ -305,16 +291,10 @@ pub struct InviteDeviceData {
     pub verify_key: VerifyKey,
 }
 
+parsec_data!("schema/invite/invite_device_data.json");
+
 impl_dump_and_encrypt!(InviteDeviceData);
 impl_decrypt_and_load!(InviteDeviceData);
-
-new_data_struct_type!(
-    InviteDeviceDataData,
-    type: "invite_device_data",
-
-    requested_device_label: Option<DeviceLabel>,
-    verify_key: VerifyKey,
-);
 
 impl_transparent_data_format_conversion!(
     InviteDeviceData,
@@ -343,22 +323,10 @@ pub struct InviteDeviceConfirmation {
     pub root_verify_key: VerifyKey,
 }
 
+parsec_data!("schema/invite/invite_device_confirmation.json");
+
 impl_dump_and_encrypt!(InviteDeviceConfirmation);
 impl_decrypt_and_load!(InviteDeviceConfirmation);
-
-new_data_struct_type!(
-    InviteDeviceConfirmationData,
-    type: "invite_device_confirmation",
-
-    device_id: DeviceID,
-    device_label: Option<DeviceLabel>,
-    human_handle: Option<HumanHandle>,
-    profile: UserProfile,
-    private_key: PrivateKey,
-    user_manifest_id: EntryID,
-    user_manifest_key: SecretKey,
-    root_verify_key: VerifyKey,
-);
 
 impl_transparent_data_format_conversion!(
     InviteDeviceConfirmation,

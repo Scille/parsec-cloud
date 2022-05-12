@@ -365,11 +365,6 @@ class WinFSPOperations(BaseFileSystemOperations):
         # NOTE: The "." and ".." directories should ONLY be included
         # if the queried directory is not root
 
-        print(
-            f"READ DIR marker: {marker}, file ctx: {file_context.path!r} (is_root: {file_context.path.is_root()})"
-        )
-        print(f"READ DIR stats: {stat!r}")
-
         # Current directory
         if marker is None and not file_context.path.is_root():
             entry = {"file_name": ".", **stat_to_winfsp_attributes(stat)}
@@ -401,7 +396,6 @@ class WinFSPOperations(BaseFileSystemOperations):
             entry = {"file_name": name, **stat_to_winfsp_attributes(child_stat)}
             entries.append(entry)
 
-        print(f"READ DIR entries: {[e['file_name'] for e in entries]!r}")
         return entries
 
     @handle_error

@@ -23,6 +23,7 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendConnStatus,
 )
+from parsec.core.pki import is_pki_enrollment_available
 from parsec.core.fs import FSWorkspaceNotFoundError
 from parsec.core.fs import (
     FSWorkspaceNoReadAccess,
@@ -34,11 +35,13 @@ from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
+from parsec.core.gui.enrollment_widget import EnrollmentWidget
 from parsec.core.gui.menu_widget import MenuWidget
 from parsec.core.gui import desktop
 from parsec.core.gui.authentication_change_widget import AuthenticationChangeWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import Pixmap
+from parsec.core.gui.commercial import is_saas_addr
 from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
@@ -58,15 +61,15 @@ class GoToFileLinkError(Exception):
     pass
 
 
-class GoToFileLinkBadOrganizationIDError(Exception):
+class GoToFileLinkBadOrganizationIDError(GoToFileLinkError):
     pass
 
 
-class GoToFileLinkBadWorkspaceIDError(Exception):
+class GoToFileLinkBadWorkspaceIDError(GoToFileLinkError):
     pass
 
 
-class GoToFileLinkPathDecryptionError(Exception):
+class GoToFileLinkPathDecryptionError(GoToFileLinkError):
     pass
 
 
@@ -120,6 +123,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
 
         self.set_user_info()
         menu = QMenu()
+        if self.core.device.is_admin and is_saas_addr(self.core.device.organization_addr):
+            update_sub_act = menu.addAction(_("ACTION_UPDATE_SUBSCRIPTION"))
+            update_sub_act.triggered.connect(self._on_update_subscription_clicked)
         copy_backend_addr_act = menu.addAction(_("ACTION_COPY_BACKEND_ADDR"))
         copy_backend_addr_act.triggered.connect(self._on_copy_backend_addr)
         menu.addSeparator()
@@ -135,12 +141,15 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.button_user.clicked.connect(self._show_user_menu)
 
         self.new_notification.connect(self.on_new_notification)
-        self.menu.files_clicked.connect(self.show_mount_widget)
+        self.menu.button_enrollment.setVisible(
+            self.core.device.is_admin and is_pki_enrollment_available()
+        )
         if self.core.device.is_outsider:
             self.menu.button_users.hide()
-        else:
-            self.menu.users_clicked.connect(self.show_users_widget)
+        self.menu.files_clicked.connect(self.show_mount_widget)
+        self.menu.users_clicked.connect(self.show_users_widget)
         self.menu.devices_clicked.connect(self.show_devices_widget)
+        self.menu.enrollment_clicked.connect(self.show_enrollment_widget)
         self.connection_state_changed.connect(self._on_connection_state_changed)
 
         self.navigation_bar_widget.clear()
@@ -167,26 +176,44 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.devices_widget = DevicesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.devices_widget)
 
+        self.enrollment_widget = EnrollmentWidget(
+            self.core, self.jobs_ctx, self.event_bus, parent=self
+        )
+        self.widget_central.layout().insertWidget(0, self.enrollment_widget)
+
         self._on_connection_state_changed(
             self.core.backend_status, self.core.backend_status_exc, allow_systray=False
         )
         if file_link_addr is not None:
             try:
                 self.go_to_file_link(file_link_addr)
-            except FSWorkspaceNotFoundError:
+            except GoToFileLinkBadWorkspaceIDError:
                 show_error(
                     self,
                     _("TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization").format(
                         organization=file_link_addr.organization_id
                     ),
                 )
-
+                self.show_mount_widget()
+            except GoToFileLinkPathDecryptionError:
+                show_error(self, _("TEXT_INVALID_URL"))
+                self.show_mount_widget()
+            except GoToFileLinkBadOrganizationIDError:
+                show_error(
+                    self,
+                    _("TEXT_FILE_LINK_NOT_IN_ORG_organization").format(
+                        organization=file_link_addr.organization_id
+                    ),
+                )
                 self.show_mount_widget()
         else:
             self.show_mount_widget()
 
     def _show_user_menu(self) -> None:
         self.button_user.showMenu()
+
+    def _on_update_subscription_clicked(self) -> None:
+        desktop.open_url(_("TEXT_SAAS_UPDATE_SUBSCRIPTION_URL"))
 
     def _on_copy_backend_addr(self) -> None:
         desktop.copy_to_clipboard(self.core.device.organization_addr.to_url())
@@ -199,8 +226,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.button_user.setText(user_text)
         self.button_user.setToolTip(self.core.device.organization_addr.to_url())
 
-    def change_authentication(self) -> None:
-        AuthenticationChangeWidget.show_modal(
+    async def change_authentication(self) -> None:
+        await AuthenticationChangeWidget.show_modal(
             core=self.core, jobs_ctx=self.jobs_ctx, parent=self, on_finished=None
         )
 
@@ -235,22 +262,22 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             assert isinstance(kwargs["mountpoint"], PurePath)
             assert isinstance(kwargs["path"], FsPath)
             exc = kwargs["exc"]
-            abspath = kwargs["path"].with_mountpoint(kwargs["mountpoint"])
+            mountpoint = kwargs["mountpoint"]
             if isinstance(exc, FSWorkspaceNoReadAccess):
                 msg = _("TEXT_NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_workspace").format(
-                    workspace=abspath
+                    workspace=str(mountpoint)
                 )
             elif isinstance(exc, FSWorkspaceNoWriteAccess):
                 msg = _("TEXT_NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_workspace").format(
-                    workspace=abspath
+                    workspace=str(mountpoint)
                 )
             elif isinstance(exc, FSWorkspaceInMaintenance):
                 msg = _("TEXT_NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_workspace").format(
-                    workspace=abspath
+                    workspace=str(mountpoint)
                 )
             else:
                 msg = _("TEXT_NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_workspace-error").format(
-                    workspace=abspath, error=str(exc)
+                    workspace=str(mountpoint), error=str(exc)
                 )
             self.new_notification.emit("WARN", msg)
         elif event in (
@@ -262,11 +289,12 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             assert isinstance(kwargs["mountpoint"], PurePath)
             assert isinstance(kwargs["path"], FsPath)
             exc = kwargs["exc"]
-            abspath = kwargs["path"].with_mountpoint(kwargs["mountpoint"])
             self.new_notification.emit(
                 "WARN",
                 _("TEXT_NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_workspace_operation_error").format(
-                    operation=kwargs["operation"], workspace=abspath, error=str(kwargs["exc"])
+                    operation=kwargs["operation"],
+                    workspace=str(kwargs["mountpoint"]),
+                    error=str(kwargs["exc"]),
                 ),
             )
         elif event == CoreEvent.SHARING_UPDATED:
@@ -278,7 +306,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
             previous_entry: Optional[WorkspaceEntry] = kwargs["previous_entry"]
             new_role = new_entry.role
             previous_role = previous_entry.role if previous_entry is not None else None
-            print(previous_role, new_role)
             if new_role is not None and previous_role is None:
                 self.new_notification.emit(
                     "INFO",
@@ -457,8 +484,15 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.label_title.setText(_("ACTION_MENU_DEVICES"))
         self.devices_widget.show()
 
+    def show_enrollment_widget(self) -> None:
+        self.clear_widgets()
+        self.menu.activate_enrollment()
+        self.label_title.setText(_("ACTION_MENU_ENROLLMENT"))
+        self.enrollment_widget.show()
+
     def clear_widgets(self) -> None:
         self.navigation_bar_widget.clear()
         self.users_widget.hide()
         self.mount_widget.hide()
         self.devices_widget.hide()
+        self.enrollment_widget.hide()

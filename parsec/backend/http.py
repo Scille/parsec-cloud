@@ -9,7 +9,7 @@ from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode, unquote_plus
 import importlib_resources
 import h11
 
-from parsec.serde import SerdeValidationError, SerdePackingError
+from parsec.serde import SerdeValidationError, SerdePackingError, packb, unpackb
 from parsec.api.protocol import OrganizationID
 from parsec.api.rest import (
     organization_config_req_serializer,
@@ -21,8 +21,9 @@ from parsec.api.rest import (
     organization_stats_req_serializer,
     organization_stats_rep_serializer,
 )
-from parsec.backend.config import BackendConfig
 from parsec.backend import static as http_static_module
+from parsec.backend.config import BackendConfig
+from parsec.backend.client_context import AnonymousClientContext
 from parsec.backend.templates import get_template
 from parsec.backend.organization import (
     BaseOrganizationComponent,
@@ -30,6 +31,7 @@ from parsec.backend.organization import (
     OrganizationNotFoundError,
     generate_bootstrap_token,
 )
+from parsec.backend.pki import BasePkiEnrollmentComponent
 
 try:
     from typing import Protocol
@@ -105,6 +107,14 @@ class HTTPResponse:
         )
 
     @classmethod
+    def build_msgpack(
+        cls, status_code: int, data: dict, headers: Optional[Dict[bytes, bytes]] = None
+    ) -> "HTTPResponse":
+        headers = headers or {}
+        headers[b"content-type"] = b"application/msgpack"
+        return cls.build(status_code=status_code, headers=headers, data=packb(data))
+
+    @classmethod
     def build(
         cls,
         status_code: int,
@@ -119,6 +129,7 @@ class HTTPComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
         self._organization_component: BaseOrganizationComponent
+        self._pki_component: BasePkiEnrollmentComponent
         self.route_mapping: List[Tuple[Pattern[str], Set[str], RequestHandler]] = [
             (re.compile(r"^/?$"), {"GET"}, self._http_root),
             (re.compile(r"^/redirect/(?P<path>.*)$"), {"GET"}, self._http_redirect),
@@ -138,10 +149,19 @@ class HTTPComponent:
                 {"GET", "PATCH"},
                 self._http_api_organization_stats,
             ),
+            (
+                re.compile(r"^/anonymous/(?P<organization_id>[^/]*)$"),
+                {"GET", "POST"},
+                self._http_api_anonymous,
+            ),
         ]
+        # TODO: find a cleaner way to do this ?
+        # This should be set by BackendApp during it init
+        self.anonymous_api: Dict[str, Callable] = {}
 
     def register_components(self, **other_components):
         self._organization_component = other_components["organization"]
+        self._pki_component = other_components["pki"]
 
     async def _http_404(self, req: HTTPRequest, **kwargs: str) -> HTTPResponse:
         data = get_template("404.html").render()
@@ -345,3 +365,53 @@ class HTTPComponent:
             )
 
         return None, data
+
+    async def _http_api_anonymous(self, req: HTTPRequest, **kwargs: str) -> HTTPResponse:
+        # Check whether the organization exists
+        try:
+            organization_id = OrganizationID(kwargs["organization_id"])
+            await self._organization_component.get(organization_id)
+        except OrganizationNotFoundError:
+            organization_exists = False
+        except ValueError:
+            return HTTPResponse.build_msgpack(404, {})
+        else:
+            organization_exists = True
+
+        # Reply to GET
+        if req.method == "GET":
+            status = 200 if organization_exists else 404
+            return HTTPResponse.build_msgpack(status, {})
+
+        # Reply early to POST when the organization doesn't exists
+        if not organization_exists and not self._config.organization_spontaneous_bootstrap:
+            return HTTPResponse.build_msgpack(404, {})
+
+        # Get and unpack the body
+        body = await req.get_body()
+        try:
+            msg = unpackb(body)
+        except SerdePackingError:
+            return HTTPResponse.build_msgpack(200, {"status": "invalid_msg_format"})
+
+        # Lazy creation of the organization if necessary
+        cmd = msg.get("cmd")
+        if cmd == "organization_bootstrap" and not organization_exists:
+            assert self._config.organization_spontaneous_bootstrap
+            try:
+                await self._organization_component.create(id=organization_id, bootstrap_token="")
+            except OrganizationAlreadyExistsError:
+                pass
+
+        # Retreive command
+        client_ctx = AnonymousClientContext(organization_id)
+        try:
+            if not isinstance(cmd, str):
+                raise KeyError()
+            cmd_func = self.anonymous_api[cmd]
+        except KeyError:
+            return HTTPResponse.build_msgpack(200, {"status": "unknown_command"})
+
+        # Run command
+        rep = await cmd_func(client_ctx, msg)
+        return HTTPResponse.build_msgpack(200, rep)

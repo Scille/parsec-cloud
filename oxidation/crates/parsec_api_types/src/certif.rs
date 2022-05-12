@@ -2,14 +2,15 @@
 
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
+use parsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::io::{Read, Write};
 
 use parsec_api_crypto::{PublicKey, SigningKey, VerifyKey};
 
-use crate::data_macros::{impl_transparent_data_format_conversion, new_data_struct_type};
-use crate::ext_types::maybe_field;
+use crate as parsec_api_types;
+use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::{
     DateTime, DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile,
 };
@@ -180,25 +181,7 @@ impl_verify_and_load_allow_root!(UserCertificate);
 impl_unsecure_load!(UserCertificate);
 impl_dump_and_sign!(UserCertificate);
 
-new_data_struct_type!(
-    UserCertificateData,
-    type: "user_certificate",
-
-    author: CertificateSignerOwned,
-    timestamp: DateTime,
-
-    user_id: UserID,
-    // Added in Parsec v1.13
-    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-    human_handle: Option<Option<HumanHandle>>,
-    public_key: PublicKey,
-    // `profile` replaces `is_admin` field (which is still required for
-    // backward compatibility)
-    is_admin: bool,
-    // Added in Parsec v1.14
-    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-    profile: Option<UserProfile>,
-);
+parsec_data!("schema/certif/user_certificate.json");
 
 impl From<UserCertificateData> for UserCertificate {
     fn from(data: UserCertificateData) -> Self {
@@ -210,7 +193,7 @@ impl From<UserCertificateData> for UserCertificate {
             author: data.author,
             timestamp: data.timestamp,
             user_id: data.user_id,
-            human_handle: data.human_handle.unwrap_or_default(),
+            human_handle: data.human_handle.into(),
             public_key: data.public_key,
             profile,
         }
@@ -220,13 +203,13 @@ impl From<UserCertificateData> for UserCertificate {
 impl From<UserCertificate> for UserCertificateData {
     fn from(obj: UserCertificate) -> Self {
         Self {
-            type_: Default::default(),
+            ty: Default::default(),
             author: obj.author,
             timestamp: obj.timestamp,
             user_id: obj.user_id,
-            human_handle: Some(obj.human_handle),
+            human_handle: obj.human_handle.into(),
             public_key: obj.public_key,
-            profile: Some(obj.profile),
+            profile: obj.profile.into(),
             is_admin: obj.profile == UserProfile::Admin,
         }
     }
@@ -252,15 +235,7 @@ impl_verify_and_load_no_root!(RevokedUserCertificate);
 impl_unsecure_load!(RevokedUserCertificate);
 impl_dump_and_sign!(RevokedUserCertificate);
 
-new_data_struct_type!(
-    RevokedUserCertificateData,
-    type: "revoked_user_certificate",
-
-    author: DeviceID,
-    timestamp: DateTime,
-
-    user_id: UserID,
-);
+parsec_data!("schema/certif/revoked_user_certificate.json");
 
 impl_transparent_data_format_conversion!(
     RevokedUserCertificate,
@@ -286,48 +261,21 @@ pub struct DeviceCertificate {
     pub verify_key: VerifyKey,
 }
 
+parsec_data!("schema/certif/device_certificate.json");
+
 impl_verify_and_load_allow_root!(DeviceCertificate);
 impl_unsecure_load!(DeviceCertificate);
 impl_dump_and_sign!(DeviceCertificate);
 
-new_data_struct_type!(
+impl_transparent_data_format_conversion!(
+    DeviceCertificate,
     DeviceCertificateData,
-    type: "device_certificate",
-
-    author: CertificateSignerOwned,
-    timestamp: DateTime,
-
-    device_id: DeviceID,
-    // Added in Parsec v1.14
-    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-    device_label: Option<Option<DeviceLabel>>,
-    verify_key: VerifyKey,
+    author,
+    timestamp,
+    device_id,
+    device_label,
+    verify_key,
 );
-
-impl From<DeviceCertificateData> for DeviceCertificate {
-    fn from(data: DeviceCertificateData) -> Self {
-        Self {
-            author: data.author,
-            timestamp: data.timestamp,
-            device_id: data.device_id,
-            device_label: data.device_label.unwrap_or_default(),
-            verify_key: data.verify_key,
-        }
-    }
-}
-
-impl From<DeviceCertificate> for DeviceCertificateData {
-    fn from(obj: DeviceCertificate) -> Self {
-        Self {
-            type_: Default::default(),
-            author: obj.author,
-            timestamp: obj.timestamp,
-            device_id: obj.device_id,
-            device_label: Some(obj.device_label),
-            verify_key: obj.verify_key,
-        }
-    }
-}
 
 /*
  * RealmRoleCertificate
@@ -349,18 +297,7 @@ impl_verify_and_load_no_root!(RealmRoleCertificate);
 impl_unsecure_load!(RealmRoleCertificate);
 impl_dump_and_sign!(RealmRoleCertificate);
 
-new_data_struct_type!(
-    RealmRoleCertificateData,
-    type: "realm_role_certificate",
-
-    author: DeviceID,
-    timestamp: DateTime,
-
-    realm_id: EntryID,
-    user_id: UserID,
-    // Set to None if role removed
-    role: Option<RealmRole>,  // TODO: use a custom type instead
-);
+parsec_data!("schema/certif/realm_role_certificate.json");
 
 impl_transparent_data_format_conversion!(
     RealmRoleCertificate,

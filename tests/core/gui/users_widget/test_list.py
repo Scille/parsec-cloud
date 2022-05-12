@@ -103,7 +103,7 @@ async def test_filter_users(aqtbot, running_backend, logged_gui, str_len_limiter
     await aqtbot.wait_until(lambda: _assert_all_users_visible(u_w=u_w))
 
     async with aqtbot.wait_signal(u_w.list_success):
-        aqtbot.key_clicks(u_w.line_edit_search, "bo")
+        await aqtbot.key_clicks(u_w.line_edit_search, "bo")
 
     await aqtbot.wait_until(lambda: _users_shown(count=1))
 
@@ -121,7 +121,7 @@ async def test_filter_users(aqtbot, running_backend, logged_gui, str_len_limiter
 
     # Test find()
     async with aqtbot.wait_signal(u_w.list_success):
-        aqtbot.key_clicks(u_w.line_edit_search, "McA")
+        await aqtbot.key_clicks(u_w.line_edit_search, "McA")
 
     assert u_w.layout_users.count() == 2
 

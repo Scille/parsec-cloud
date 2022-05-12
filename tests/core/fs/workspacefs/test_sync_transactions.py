@@ -244,10 +244,10 @@ def test_merge_folder_manifests_with_concurrent_remote_change(
     else:
         assert remote_change == "new_entry_added"
         if local_change == "rename":
-            assert list(merged_manifest.children) == [EntryName("bar.txt"), EntryName("foo2.txt")]
+            assert sorted(merged_manifest.children) == [EntryName("bar.txt"), EntryName("foo2.txt")]
         else:
             assert local_change == "prevent_sync_rename"
-            assert list(merged_manifest.children) == [
+            assert sorted(merged_manifest.children) == [
                 EntryName("bar.txt"),
                 EntryName("foo.txt.tmp"),
             ]

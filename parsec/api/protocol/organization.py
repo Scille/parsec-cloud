@@ -37,6 +37,24 @@ apiv1_organization_bootstrap_serializer = CmdSerializer(
 )
 
 
+class OrganizationBootstrapReqSchema(BaseReqSchema):
+    bootstrap_token = fields.String(required=True)
+    root_verify_key = fields.VerifyKey(required=True)
+    user_certificate = fields.Bytes(required=True)
+    device_certificate = fields.Bytes(required=True)
+    redacted_user_certificate = fields.Bytes(required=True)
+    redacted_device_certificate = fields.Bytes(required=True)
+
+
+class OrganizationBootstrapRepSchema(BaseRepSchema):
+    pass
+
+
+organization_bootstrap_serializer = CmdSerializer(
+    OrganizationBootstrapReqSchema, OrganizationBootstrapRepSchema
+)
+
+
 class OrganizationBootstrapWebhookSchema(BaseSchema):
     organization_id = OrganizationIDField(required=True)
     device_id = DeviceIDField(required=True)

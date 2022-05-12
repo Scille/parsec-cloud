@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+pub use chrono::Duration;
 use chrono::{TimeZone, Timelike};
+use core::ops::Sub;
 use serde_bytes::ByteBuf;
 
 pub(crate) const DATETIME_EXT_ID: i8 = 1;
@@ -87,7 +89,7 @@ impl std::fmt::Display for DateTime {
         write!(
             f,
             "{}",
-            self.0.to_rfc3339_opts(chrono::SecondsFormat::Micros, true)
+            self.0.to_rfc3339_opts(chrono::SecondsFormat::Secs, false)
         )
     }
 }
@@ -137,6 +139,13 @@ impl<'de> serde::Deserialize<'de> for DateTime {
         // rmp_serde this should be treated as an extension type
         deserializer
             .deserialize_newtype_struct(rmp_serde::MSGPACK_EXT_STRUCT_NAME, DateTimeExtVisitor)
+    }
+}
+
+impl Sub for DateTime {
+    type Output = Duration;
+    fn sub(self, rhs: Self) -> Self::Output {
+        self.0 - rhs.0
     }
 }
 
@@ -242,7 +251,7 @@ mod tests {
 
 macro_rules! new_uuid_type {
     (pub $name:ident) => {
-        #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+        #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Hash)]
         pub struct $name(uuid::Uuid);
 
         impl $name {
@@ -401,3 +410,115 @@ pub mod maybe_field {
 
     // serialize is not needed given we never omit fields
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Maybe<T> {
+    Present(T),
+    Absent,
+}
+
+impl<T> Default for Maybe<T> {
+    fn default() -> Self {
+        Self::Absent
+    }
+}
+
+impl<T> Maybe<T> {
+    pub fn is_absent(&self) -> bool {
+        matches!(self, Self::Absent)
+    }
+    pub fn unwrap_or(self, default: T) -> T {
+        match self {
+            Self::Present(data) => data,
+            Self::Absent => default,
+        }
+    }
+}
+
+impl<T> From<T> for Maybe<T> {
+    fn from(data: T) -> Self {
+        Self::Present(data)
+    }
+}
+
+impl<T, U> serde_with::SerializeAs<Maybe<T>> for Maybe<U>
+where
+    U: serde_with::SerializeAs<T>,
+{
+    fn serialize_as<S>(source: &Maybe<T>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match *source {
+            Maybe::Present(ref value) => {
+                serializer.serialize_some(&serde_with::ser::SerializeAsWrap::<T, U>::new(value))
+            }
+            Maybe::Absent => serializer.serialize_none(),
+        }
+    }
+}
+
+impl<'de, T, U> serde_with::DeserializeAs<'de, Maybe<T>> for Maybe<U>
+where
+    U: serde_with::DeserializeAs<'de, T>,
+    T: Default,
+{
+    fn deserialize_as<D>(deserializer: D) -> Result<Maybe<T>, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct MaybeVisitor<T, U>(std::marker::PhantomData<(T, U)>);
+
+        impl<'de, T, U> serde::de::Visitor<'de> for MaybeVisitor<T, U>
+        where
+            U: serde_with::DeserializeAs<'de, T>,
+            T: Default,
+        {
+            type Value = Maybe<T>;
+
+            fn expecting(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                unreachable!()
+            }
+
+            fn visit_unit<E>(self) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(Maybe::Present(T::default()))
+            }
+
+            fn visit_none<E>(self) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(Maybe::Present(T::default()))
+            }
+
+            fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                U::deserialize_as(deserializer).map(Maybe::Present)
+            }
+        }
+
+        deserializer.deserialize_option(MaybeVisitor::<T, U>(std::marker::PhantomData))
+    }
+}
+
+macro_rules! impl_from_maybe {
+    ($name: ty) => {
+        impl From<crate::Maybe<$name>> for $name {
+            fn from(data: crate::Maybe<$name>) -> Self {
+                match data {
+                    crate::Maybe::Present(data) => data,
+                    crate::Maybe::Absent => Default::default(),
+                }
+            }
+        }
+    };
+}
+
+impl_from_maybe!(bool);
+
+pub(crate) use impl_from_maybe;

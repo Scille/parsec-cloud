@@ -9,16 +9,17 @@ trigger:
     - '*'
 
 variables:
-  python.version: '3.7'
+  python.version: '3.9'
   node.version: '16.x'
   # pyinstaller is picky on the version to use
-  python.version_for_macos_packaging: '3.8'
+  python.version_for_macos_packaging: '3.9'
   postgresql.version: '12'
   winfsp.version: '1.8.20304'
   pytest.base_args: |
     --log-level=DEBUG \
     --durations=10 -v \
   debug.stress_flaky_tests: 0  # Repeat all flaky tests X times
+  rust.version: 1.60.0
 
 jobs:
 
@@ -62,7 +63,7 @@ jobs:
 
 - job: 's1_qa'
   displayName: 'Q&A'
-  timeoutInMinutes: 5
+  timeoutInMinutes: 60
   pool:
     vmImage: 'ubuntu-latest'
   steps:
@@ -83,7 +84,7 @@ jobs:
       npm --version
       pip install pre-commit
       # Rust stuff (needed by pre-commit)
-      curl https://sh.rustup.rs -sSf | sh -s -- -y
+      curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $(rust.version) -y
       rustup --version
       echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
       rustup component add rustfmt clippy
@@ -111,24 +112,48 @@ jobs:
       "
     displayName: 'Commits signatures'
   - bash: |
-      set -eux
-      # Patch .pre-commit-config.yaml to force mixed-line-ending checks to LF
-      sed -i '/id: mixed-line-ending/a\      args:\n\        - "--fix=lf"' .pre-commit-config.yaml
-      cat .pre-commit-config.yaml
-      # Run all pre-commit hooks on all files
-      pre-commit run --all-files --show-diff-on-failure
-    displayName: 'Pre-commit hooks check'
-  - bash: |
-      # PRs must contain a newsfragment
-      for FILENAME in newsfragments/*
-      do
-        # If file never existed in master, consider as a new newsfragment
-        # Cannot git diff against master branch here given newsfragments removed in master will be considered as
-        # new items in our branch
-        if git log origin/master --exit-code -- "$FILENAME" > /dev/null
-        then exit 0; fi
-      done
-      echo "NO NEW NEWSFRAGMENT FOUND" >&2
+      # PRs must contain a newsfragment that reference an opened issue
+      python -c "
+      from pathlib import Path
+      from subprocess import run
+      from urllib.request import urlopen, Request, HTTPError
+      from multiprocessing.pool import ThreadPool
+      import json
+      # Hook when nobody ain't no time for this
+      if '$(Build.SourceBranch)'.startswith('yolo-'):
+          print('Skipping newsfragment/issue check')
+          raise SystemExit(0)
+      # If file never existed in master, consider as a new newsfragment
+      # Cannot just git diff against master branch here given newsfragments
+      # removed in master will be considered as new items in our branch
+      # --exit-code makes the command exit with 0 if there are changes
+      basecmd = 'git log origin/master --exit-code --'.split()
+      def check_newsfragment(fragment):
+          ret = run([*basecmd, fragment], capture_output=True)
+          if ret.returncode == 0:
+              print(f'Found new newsfragment {fragment.name}')
+              id, *_ = fragment.name.split('.')
+              req = Request(
+                  method='GET',
+                  url=f'https://api.github.com/repos/Scille/parsec-cloud/issues/{id}',
+                  headers={'Accept': 'application/vnd.github.v3+json'},
+              )
+              try:
+                  ret = urlopen(req)
+              except HTTPError as exc:
+                  raise SystemExit('New newsfragment ID doesn\'t correspond to an issue !')
+              data = json.loads(ret.read())
+              if 'pull_request' in data:
+                  raise SystemExit('New newsfragement ID correspond to a pull request instead of an issue !')
+              if data['state'] != 'open':
+                  raise SystemExit('New newsfragement ID correspond to a closed issue')
+              return True
+          return False
+      with ThreadPool() as pool:
+          ret = pool.map(check_newsfragment, Path('newsfragments').glob('*.rst'))
+      if True not in ret:
+          raise SystemExit('No new newsfragment found')
+      "
     condition: and(eq(variables['Build.Reason'], 'PullRequest'), not(startsWith(variables['System.PullRequest.SourceBranch'], 'dependabot')))
     displayName: 'Newsfragment'
     failOnStderr: true
@@ -136,6 +161,14 @@ jobs:
 #      git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
 #      python ./misc/releaser.py check --verbose
 #    displayName: 'Version check'
+  - bash: |
+      set -eux
+      # Patch .pre-commit-config.yaml to force mixed-line-ending checks to LF
+      sed -i '/id: mixed-line-ending/a\      args:\n\        - "--fix=lf"' .pre-commit-config.yaml
+      cat .pre-commit-config.yaml
+      # Run all pre-commit hooks on all files
+      pre-commit run --all-files --show-diff-on-failure
+    displayName: 'Pre-commit hooks check'
 
 
 #################################################################################
@@ -157,7 +190,7 @@ jobs:
       sudo apt-get update
       python --version
       # Rust stuff
-      curl https://sh.rustup.rs -sSf | sh -s -- -y
+      curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $(rust.version) -y
       echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
       # pip 20.3 introduces the new dependency resolver
       pip install pip>=20.3 --user --upgrade
@@ -225,7 +258,7 @@ jobs:
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow --rundiskfull \
+        tests --runmountpoint --runslow \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-memory.xml
     displayName: 'Tests memory'
@@ -495,7 +528,7 @@ jobs:
 
 - job: 's2_windows_installer_build'
   displayName: 'Windows installer build'
-  # condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
     vmImage: 'windows-latest'
@@ -607,7 +640,9 @@ jobs:
   - bash: |
       sudo apt-get update
       sudo snap install snapcraft --classic
-      echo $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
+      # Credentials contains `\n` which makes things tricky
+      # tl;dr: figuring out the double quote around the env var cost me 2h...
+      printf "$SNAPCRAFT_CREDENTIALS" | snapcraft login --with -
     displayName: 'Bootstrap'
     env:
       SNAPCRAFT_CREDENTIALS: $(SNAPCRAFT_CREDENTIALS)

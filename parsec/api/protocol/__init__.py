@@ -1,11 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+from typing import TYPE_CHECKING
 from parsec.api.protocol.base import (
     ProtocolError,
     MessageSerializationError,
     InvalidMessageError,
     packb,
     unpackb,
+    api_typed_msg_adapter,
+    any_cmd_req_factory,
 )
 from parsec.api.protocol.types import (
     UserID,
@@ -42,6 +45,7 @@ from parsec.api.protocol.handshake import (
     APIV1_AnonymousClientHandshake,
 )
 from parsec.api.protocol.organization import (
+    organization_bootstrap_serializer,
     apiv1_organization_bootstrap_serializer,
     organization_bootstrap_webhook_serializer,
     organization_stats_serializer,
@@ -108,6 +112,10 @@ from parsec.api.protocol.block import (
     BlockIDField,
     block_create_serializer,
     block_read_serializer,
+    BlockReadReq,
+    BlockReadRep,
+    BlockReadRepType,
+    _PyBlockReadReq,
 )
 from parsec.api.protocol.vlob import (
     VlobID,
@@ -121,6 +129,27 @@ from parsec.api.protocol.vlob import (
     vlob_maintenance_save_reencryption_batch_serializer,
 )
 from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS, APIV1_ANONYMOUS_CMDS
+from parsec.api.protocol.pki import (
+    PkiEnrollmentStatus,
+    PkiEnrollmentStatusField,
+    pki_enrollment_submit_serializer,
+    pki_enrollment_info_serializer,
+    pki_enrollment_list_serializer,
+    pki_enrollment_reject_serializer,
+    pki_enrollment_accept_serializer,
+)
+
+
+AuthenticatedAnyCmdReq = any_cmd_req_factory("AuthenticatedAnyCmdReq", _PyBlockReadReq)
+
+_PyAuthenticatedAnyCmdReq = AuthenticatedAnyCmdReq
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import AuthenticatedAnyCmdReq as _RsAuthenticatedAnyCmdReq
+    except:
+        pass
+    else:
+        AuthenticatedAnyCmdReq = _RsAuthenticatedAnyCmdReq
 
 
 __all__ = (
@@ -129,6 +158,7 @@ __all__ = (
     "InvalidMessageError",
     "packb",
     "unpackb",
+    "api_typed_msg_adapter",
     "HandshakeError",
     "HandshakeFailedChallenge",
     "HandshakeBadAdministrationToken",
@@ -144,6 +174,14 @@ __all__ = (
     "InvitedClientHandshake",
     "APIV1_HandshakeType",
     "APIV1_AnonymousClientHandshake",
+    # PKI enrollment
+    "PkiEnrollmentStatus",
+    "PkiEnrollmentStatusField",
+    "pki_enrollment_submit_serializer",
+    "pki_enrollment_info_serializer",
+    "pki_enrollment_list_serializer",
+    "pki_enrollment_reject_serializer",
+    "pki_enrollment_accept_serializer",
     # Types
     "UserID",
     "DeviceID",
@@ -161,6 +199,7 @@ __all__ = (
     "DeviceLabel",
     "StrBased",
     # Organization
+    "organization_bootstrap_serializer",
     "apiv1_organization_bootstrap_serializer",
     "organization_bootstrap_webhook_serializer",
     "organization_stats_serializer",
@@ -234,8 +273,13 @@ __all__ = (
     "BlockIDField",
     "block_create_serializer",
     "block_read_serializer",
+    "BlockReadReq",
+    "BlockReadRep",
+    "BlockReadRepType",
     # List of cmds
     "AUTHENTICATED_CMDS",
     "INVITED_CMDS",
+    "ANONYMOUS_CMDS",
     "APIV1_ANONYMOUS_CMDS",
+    "AuthenticatedAnyCmd",
 )

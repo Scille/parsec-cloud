@@ -145,7 +145,7 @@ def ClaimDeviceTestBed(
         def assert_initial_state(self):
             assert self.claim_device_widget.isVisible()
             assert self.claim_device_instructions_widget.isVisible()
-            assert self.claim_device_instructions_widget.button_start.isEnabled()
+            assert not self.claim_device_instructions_widget.button_start.isEnabled()
             if self.claim_device_code_exchange_widget:
                 assert not self.claim_device_code_exchange_widget.isVisible()
             if self.claim_device_provide_info_widget:
@@ -153,6 +153,12 @@ def ClaimDeviceTestBed(
 
         async def step_1_start_claim(self):
             cdi_w = self.claim_device_instructions_widget
+
+            def _info_retrieved():
+                assert cdi_w.button_start.isEnabled()
+
+            await aqtbot.wait_until(_info_retrieved)
+
             aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
 
             def _claimer_started():
@@ -235,11 +241,11 @@ def ClaimDeviceTestBed(
 
             assert not cdpi_w.button_ok.isEnabled()
 
-            aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
-            aqtbot.key_clicks(
+            await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
+            await aqtbot.key_clicks(
                 cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password, self.password
             )
-            aqtbot.key_clicks(
+            await aqtbot.key_clicks(
                 cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check,
                 self.password,
             )
@@ -320,11 +326,9 @@ async def test_claim_device_offline(
             assert not self.claim_device_instructions_widget.isVisible()
 
         async def offline_step_1_start_claim(self):
-            expected_message = translate("TEXT_CLAIM_DEVICE_WAIT_PEER_ERROR")
-            cdi_w = self.claim_device_instructions_widget
+            expected_message = translate("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
 
             with running_backend.offline():
-                aqtbot.mouse_click(cdi_w.button_start, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
@@ -360,12 +364,12 @@ async def test_claim_device_offline(
 
             with running_backend.offline():
                 cdpi_w.line_edit_device.clear()
-                aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
-                aqtbot.key_clicks(
+                await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
+                await aqtbot.key_clicks(
                     cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password,
                     self.password,
                 )
-                aqtbot.key_clicks(
+                await aqtbot.key_clicks(
                     cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check,
                     self.password,
                 )
@@ -443,12 +447,12 @@ async def test_claim_device_reset_by_peer(
 
             async with self._reset_greeter():
                 cdpi_w.line_edit_device.clear()
-                aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
-                aqtbot.key_clicks(
+                await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
+                await aqtbot.key_clicks(
                     cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password,
                     self.password,
                 )
-                aqtbot.key_clicks(
+                await aqtbot.key_clicks(
                     cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check,
                     self.password,
                 )
@@ -548,11 +552,11 @@ async def test_claim_device_invitation_cancelled(
             await self._cancel_invitation()
 
             cdpi_w.line_edit_device.clear()
-            aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
-            aqtbot.key_clicks(
+            await aqtbot.key_clicks(cdpi_w.line_edit_device, device_label.str)
+            await aqtbot.key_clicks(
                 cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password, self.password
             )
-            aqtbot.key_clicks(
+            await aqtbot.key_clicks(
                 cdpi_w.widget_auth.main_layout.itemAt(0).widget().line_edit_password_check,
                 self.password,
             )

@@ -17,14 +17,14 @@ fn serde_message_get_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::MessageGet(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -57,14 +57,50 @@ fn serde_message_get_rep() {
         }],
     };
 
-    let data = authenticated_cmds::message_get::Rep::loads(&raw);
+    let data = authenticated_cmds::message_get::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::message_get::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::message_get::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
+}
+
+#[rstest]
+fn specs_message_get_req() {
+    assert_eq!(
+        authenticated_cmds::message_get::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "message_get"
+                },
+                "offset": {
+                    "type": "u64"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_message_get_rep() {
+    assert_eq!(
+        authenticated_cmds::message_get::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "messages": {
+                    "type": "Vec<Message>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
 }

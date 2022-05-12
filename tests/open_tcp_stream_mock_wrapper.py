@@ -1,8 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import h11
+import urllib.error
+from typing import Optional, Dict
 from contextlib import contextmanager
 from unittest.mock import patch
 import inspect
+from urllib.parse import urlparse
 import trio
 
 
@@ -56,6 +60,64 @@ class OpenTCPStreamMockWrapper:
                 return sock
 
         raise ConnectionRefusedError(111, "Connection refused")
+
+    async def http_request(
+        self,
+        url: str,
+        data: Optional[bytes] = None,
+        headers: Dict[str, str] = {},
+        method: Optional[str] = None,
+    ) -> bytes:
+        """
+        The `parsec.core.backend_connection.anonymous._http_request` call originally submit a call to
+        `urllib.request.urlopen` to a thread. In order to transparently integrate with the existing
+        mock for TCP stream, a simple HTTP client based on trio and h11 is re-implemented here.
+
+        This allows to perform anonymous calls like `pki_enrollment_submit` and `pki_enrollment_info`
+        along with the mocked `running_backend` fixture.
+        """
+        parse_result = urlparse(url, "http")
+        netloc = parse_result.netloc
+        target = parse_result.path
+        host, port = netloc.split(":")
+        try:
+            sock = await self(host, port)
+        except ConnectionRefusedError as exc:
+            raise urllib.error.URLError(exc)
+        headers = [(key, value) for key, value in headers.items()]
+        headers += [("Host", host), ("Content-Length", str(len(data)))]
+
+        connection = h11.Connection(our_role=h11.CLIENT)
+        await sock.send_all(
+            connection.send(h11.Request(method=method, target=target, headers=headers))
+        )
+        await sock.send_all(connection.send(h11.Data(data=data)))
+        await sock.send_all(connection.send(h11.EndOfMessage()))
+
+        async with sock:
+            out_data = b""
+            response = None
+            while True:
+                # Check if an event is already available
+                event = connection.next_event()
+                if event is h11.NEED_DATA:
+                    data = await sock.receive_some(2048)
+                    connection.receive_data(data)
+                    continue
+                if type(event) is h11.EndOfMessage:
+                    break
+                if type(event) is h11.Response:
+                    response = event
+                if type(event) is h11.Data:
+                    out_data += event.data
+
+        if response is None:
+            raise urllib.error.URLError("No response")
+        if response.status_code != 200:
+            exc = urllib.error.URLError("Error")
+            exc.status = response.status_code
+            raise exc
+        return out_data
 
     def switch_offline(self, addr):
         netloc_suffix = addr_to_netloc(addr)

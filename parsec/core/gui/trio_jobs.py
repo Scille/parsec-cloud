@@ -113,7 +113,7 @@ class QtToTrioJob:
             self.status = "ko"
             self.exc = exc
         else:
-            logger.exception("Uncatched error", exc_info=exc)
+            logger.exception("Uncatched error in Qt/trio job", exc_info=exc)
             wrapped = JobResultError("crashed", exc=exc, info=f"Unexpected error: {repr(exc)}")
             wrapped.__traceback__ = exc.__traceback__
             self.status = wrapped.status

@@ -1,11 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use regex::Regex;
+use fancy_regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 use std::convert::TryFrom;
 use std::str::FromStr;
 use unicode_normalization::UnicodeNormalization;
+
+use crate::impl_from_maybe;
 
 macro_rules! impl_debug_from_display {
     ($name:ident) => {
@@ -20,7 +22,9 @@ macro_rules! impl_debug_from_display {
 
 macro_rules! new_string_based_id_type {
     (pub $name:ident, $bytes_size:expr, $pattern:expr) => {
-        #[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, Hash)]
+        #[derive(
+            Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, Hash, PartialOrd, Ord,
+        )]
         pub struct $name(String);
 
         impl Default for $name {
@@ -56,7 +60,7 @@ macro_rules! new_string_based_id_type {
                         Regex::new($pattern).unwrap_or_else(|_| unreachable!());
                 }
                 // ID must respect regex AND be contained within $bytes_size bytes
-                if PATTERN.is_match(&id) && id.len() <= $bytes_size {
+                if PATTERN.is_match(&id).unwrap_or(false) && id.len() <= $bytes_size {
                     Ok(Self(id))
                 } else {
                     Err(concat!("Invalid ", stringify!($name)))
@@ -104,12 +108,13 @@ new_string_based_id_type!(pub DeviceName, 32, r"^[\w\-]{1,32}$");
 */
 
 new_string_based_id_type!(pub DeviceLabel, 255, r"^.+$");
+impl_from_maybe!(Option<DeviceLabel>);
 
 /*
  * DeviceID
  */
 
-#[derive(Default, Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq)]
+#[derive(Default, Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DeviceID {
     pub user_id: UserID,
     pub device_name: DeviceName,
@@ -209,6 +214,8 @@ impl From<HumanHandle> for (String, String) {
     }
 }
 
+crate::impl_from_maybe!(Option<HumanHandle>);
+
 /*
  * UserProfile
  */
@@ -227,6 +234,12 @@ pub enum UserProfile {
     Admin,
     Standard,
     Outsider,
+}
+
+impl Default for UserProfile {
+    fn default() -> Self {
+        Self::Standard
+    }
 }
 
 impl FromStr for UserProfile {

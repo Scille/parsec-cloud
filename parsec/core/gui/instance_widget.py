@@ -1,11 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.config import CoreConfig
-from typing import Optional
-from parsec.core.core_events import CoreEvent
 import trio
+from typing import Optional
 from structlog import get_logger
-from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
 from packaging.version import Version
 
@@ -14,6 +12,7 @@ from parsec.api.protocol import HandshakeRevokedDevice
 from parsec.core import logged_core_factory
 from parsec.core.local_device import (
     LocalDeviceError,
+    LocalDeviceCertificatePinCodeUnavailableError,
     load_device_with_password,
     load_device_with_smartcard,
 )
@@ -24,6 +23,8 @@ from parsec.core.mountpoint import (
     MountpointWinfspNotAvailable,
 )
 
+from parsec.core.config import CoreConfig
+from parsec.core.core_events import CoreEvent
 from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.trio_jobs import QtToTrioJobScheduler, run_trio_job_scheduler
 from parsec.core.gui.parsec_application import ParsecApp
@@ -64,7 +65,8 @@ def check_macfuse_version() -> bool:
     import plistlib
 
     try:
-        local_version = Version(plistlib.readPlist(macfuse_plist_path)["CFBundleVersion"])
+        with open(macfuse_plist_path, "rb") as plist_file:
+            local_version = Version(plistlib.load(plist_file)["CFBundleVersion"])
     except ValueError:
         return False
 
@@ -103,6 +105,7 @@ class InstanceWidget(QWidget):
     login_failed = pyqtSignal()
     join_organization_clicked = pyqtSignal()
     create_organization_clicked = pyqtSignal()
+    recover_device_clicked = pyqtSignal()
 
     def __init__(
         self,
@@ -132,10 +135,6 @@ class InstanceWidget(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
-
-    @pyqtSlot(object, object)
-    def _core_ready(self, core, core_jobs_ctx):
-        self.run_core_ready.emit(core, core_jobs_ctx)
 
     @property
     def current_device(self):
@@ -177,10 +176,7 @@ class InstanceWidget(QWidget):
         self.core_jobs_ctx = core_jobs_ctx
         self.core.event_bus.connect(CoreEvent.GUI_CONFIG_CHANGED, self.on_core_config_updated)
         self.event_bus.send(
-            CoreEvent.GUI_CONFIG_CHANGED,
-            gui_last_device="{}:{}".format(
-                self.core.device.organization_addr.organization_id, self.core.device.device_id
-            ),
+            CoreEvent.GUI_CONFIG_CHANGED, gui_last_device=self.core.device.device_id.str
         )
         ParsecApp.add_connected_device(
             self.core.device.organization_addr.organization_id, self.core.device.device_id
@@ -273,17 +269,20 @@ class InstanceWidget(QWidget):
                 show_error(self, message, exception=exception)
                 self.login_failed.emit()
 
-    def login_with_smartcard(self, key_file):
+    async def login_with_smartcard(self, key_file):
         message = None
         exception = None
         try:
-            device = load_device_with_smartcard(key_file)
+            device = await load_device_with_smartcard(key_file)
             if ParsecApp.is_device_connected(
                 device.organization_addr.organization_id, device.device_id
             ):
                 message = _("TEXT_LOGIN_ERROR_ALREADY_CONNECTED")
             else:
                 self.start_core(device)
+        except LocalDeviceCertificatePinCodeUnavailableError:
+            # User cancelled the prompt
+            self.login_failed.emit()
         except LocalDeviceError as exc:
             message = _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED")
             exception = exc
@@ -293,7 +292,6 @@ class InstanceWidget(QWidget):
         except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash) as exc:
             message = _("TEXT_LOGIN_MOUNTPOINT_ERROR")
             exception = exc
-
         except Exception as exc:
             message = _("TEXT_LOGIN_UNKNOWN_ERROR")
             exception = exc
@@ -334,6 +332,7 @@ class InstanceWidget(QWidget):
         login_widget.login_with_smartcard_clicked.connect(self.login_with_smartcard)
         login_widget.join_organization_clicked.connect(self.join_organization_clicked.emit)
         login_widget.create_organization_clicked.connect(self.create_organization_clicked.emit)
+        login_widget.recover_device_clicked.connect(self.recover_device_clicked.emit)
         login_widget.login_canceled.connect(self.reset_workspace_path)
         login_widget.show()
 

@@ -1,0 +1,36 @@
+{
+    "label": "UserCertificate",
+    "type": "user_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "CertificateSignerOwned"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
+            "name": "human_handle",
+            "type": "Option<HumanHandle>",
+            "introduced_in_revision": 13
+        },
+        {
+            "name": "public_key",
+            "type": "PublicKey"
+        },
+        {
+            "name": "is_admin",
+            "type": "Boolean"
+        },
+        {
+            "name": "profile",
+            "type": "UserProfile",
+            "introduced_in_revision": 14
+        }
+    ]
+}

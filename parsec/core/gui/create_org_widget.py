@@ -3,11 +3,10 @@
 from typing import Optional
 from structlog import get_logger
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QApplication, QDialog
+from PyQt5.QtWidgets import QWidget, QApplication
 
 from parsec.api.protocol import OrganizationID, HumanHandle, DeviceLabel
 from parsec.core.backend_connection import (
-    apiv1_backend_anonymous_cmds_factory,
     BackendConnectionRefused,
     BackendNotAvailable,
     BackendOutOfBallparkError,
@@ -49,16 +48,15 @@ async def _do_create_org(
     backend_addr: BackendOrganizationBootstrapAddr,
 ):
     try:
-        async with apiv1_backend_anonymous_cmds_factory(addr=backend_addr) as cmds:
-            new_device = await bootstrap_organization(
-                cmds=cmds, human_handle=human_handle, device_label=device_label
-            )
-            # The organization is brand new, of course there is no existing
-            # remote user manifest, hence our placeholder is non-speculative.
-            await user_storage_non_speculative_init(
-                data_base_dir=config.data_base_dir, device=new_device
-            )
-            return new_device
+        new_device = await bootstrap_organization(
+            backend_addr, human_handle=human_handle, device_label=device_label
+        )
+        # The organization is brand new, of course there is no existing
+        # remote user manifest, hence our placeholder is non-speculative.
+        await user_storage_non_speculative_init(
+            data_base_dir=config.data_base_dir, device=new_device
+        )
+        return new_device
     except InviteNotFoundError as exc:
         raise JobResultError("invite-not-found", exc=exc)
     except InviteAlreadyUsedError as exc:
@@ -190,7 +188,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         if self.create_job:
             self.create_job.cancel()
 
-    def _on_next_clicked(self):
+    async def _on_next_clicked(self):
         if isinstance(self.current_widget, CreateOrgUserInfoWidget):
             backend_addr = None
             org_id = None
@@ -233,6 +231,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 show_error(self, _("TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"), exception=exc)
                 return
 
+            # TODO: call `await _do_create_org` directly since the context is now async
             self.create_job = self.jobs_ctx.submit_job(
                 self.req_success,
                 self.req_error,
@@ -251,7 +250,9 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                         self.config.config_dir, self.new_device, self.current_widget.get_auth()
                     )
                 elif auth_method == DeviceFileType.SMARTCARD:
-                    save_device_with_smartcard_in_config(self.config.config_dir, self.new_device)
+                    await save_device_with_smartcard_in_config(
+                        self.config.config_dir, self.new_device
+                    )
                 self.status = (self.new_device, auth_method, self.current_widget.get_auth())
 
                 if self.dialog:
@@ -342,12 +343,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         d = GreyedDialog(w, _("TEXT_ORG_WIZARD_TITLE"), parent=parent, width=1000)
         w.dialog = d
 
-        def _on_finished(result):
-            if result == QDialog.Accepted:
-                return on_finished(w.status)
-            return on_finished(None)
-
-        d.finished.connect(_on_finished)
+        d.finished.connect(on_finished)
         # Unlike exec_, show is asynchronous and works within the main Qt loop
         d.show()
         return w

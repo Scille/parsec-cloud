@@ -45,14 +45,14 @@ use parsec_api_types::HumanHandle;
 fn serde_invite_new_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmdReq)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -111,14 +111,14 @@ fn serde_invite_new_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmd
 fn serde_invite_new_rep(#[case] raw_expected: (&[u8], authenticated_cmds::invite_new::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_new::Rep::loads(&raw);
+    let data = authenticated_cmds::invite_new::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_new::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::invite_new::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -142,14 +142,14 @@ fn serde_invite_delete_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::InviteDelete(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -191,14 +191,14 @@ fn serde_invite_delete_req() {
 fn serde_invite_delete_rep(#[case] raw_expected: (&[u8], authenticated_cmds::invite_delete::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_delete::Rep::loads(&raw);
+    let data = authenticated_cmds::invite_delete::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_delete::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::invite_delete::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -214,14 +214,14 @@ fn serde_invite_list_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::InviteList(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -271,14 +271,14 @@ fn serde_invite_list_rep() {
         ],
     };
 
-    let data = authenticated_cmds::invite_list::Rep::loads(&raw);
+    let data = authenticated_cmds::invite_list::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_list::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::invite_list::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -294,14 +294,14 @@ fn serde_invite_info_req() {
 
     let expected = invited_cmds::AnyCmdReq::InviteInfo(req.clone());
 
-    let data = invited_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -322,7 +322,7 @@ fn serde_invite_info_req() {
             "5f6964d9203130396236386261356364663432386561303031376663366263633034643461"
             "a6737461747573a26f6ba474797065a455534552"
         )[..],
-        invited_cmds::invite_info::Rep::Ok(InviteInfoUserOrDeviceRep::User {
+        invited_cmds::invite_info::Rep::Ok(InviteInfoUserOrDevice::User {
             claimer_email: "alice@dev1".to_owned(),
             greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
             greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
@@ -342,7 +342,7 @@ fn serde_invite_info_req() {
             "677265657465725f757365725f6964d9203130396236386261356364663432386561303031"
             "376663366263633034643461a6737461747573a26f6ba474797065a6444556494345"
         )[..],
-        invited_cmds::invite_info::Rep::Ok(InviteInfoUserOrDeviceRep::Device {
+        invited_cmds::invite_info::Rep::Ok(InviteInfoUserOrDevice::Device {
                 greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
                 greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
             }
@@ -352,14 +352,14 @@ fn serde_invite_info_req() {
 fn serde_invite_info_rep(#[case] raw_expected: (&[u8], invited_cmds::invite_info::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_info::Rep::loads(&raw);
+    let data = invited_cmds::invite_info::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_info::Rep::loads(&raw2);
+    let data2 = invited_cmds::invite_info::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -384,14 +384,14 @@ fn serde_invite_1_claimer_wait_peer_req() {
 
     let expected = invited_cmds::AnyCmdReq::Invite1ClaimerWaitPeer(req.clone());
 
-    let data = invited_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -441,14 +441,14 @@ fn serde_invite_1_claimer_wait_peer_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_1_claimer_wait_peer::Rep::loads(&raw);
+    let data = invited_cmds::invite_1_claimer_wait_peer::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_1_claimer_wait_peer::Rep::loads(&raw2);
+    let data2 = invited_cmds::invite_1_claimer_wait_peer::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -475,14 +475,14 @@ fn serde_invite_1_greeter_wait_peer_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::Invite1GreeterWaitPeer(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -543,14 +543,14 @@ fn serde_invite_1_greeter_wait_peer_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_1_greeter_wait_peer::Rep::loads(&raw);
+    let data = authenticated_cmds::invite_1_greeter_wait_peer::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_1_greeter_wait_peer::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::invite_1_greeter_wait_peer::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -575,14 +575,14 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_req() {
 
     let expected = invited_cmds::AnyCmdReq::Invite2aClaimerSendHashedNonceHashNonce(req.clone());
 
-    let data = invited_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -643,14 +643,14 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::loads(&raw);
+    let data = invited_cmds::invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::loads(&raw2);
+    let data2 = invited_cmds::invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -672,14 +672,14 @@ fn serde_invite_2a_greeter_get_hashed_nonce_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::Invite2aGreeterGetHashedNonce(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -743,14 +743,14 @@ fn serde_invite_2a_greeter_get_hashed_nonce_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::loads(&raw);
+    let data = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -775,14 +775,14 @@ fn serde_invite_2b_greeter_send_nonce_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::Invite2bGreeterSendNonce(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -840,14 +840,14 @@ fn serde_invite_2b_greeter_send_nonce_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::loads(&raw);
+    let data = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -869,14 +869,14 @@ fn serde_invite_2b_claimer_send_nonce_req() {
 
     let expected = invited_cmds::AnyCmdReq::Invite2bClaimerSendNonce(req.clone());
 
-    let data = invited_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -920,14 +920,14 @@ fn serde_invite_2b_claimer_send_nonce_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_2b_claimer_send_nonce::Rep::loads(&raw);
+    let data = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_2b_claimer_send_nonce::Rep::loads(&raw2);
+    let data2 = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -949,14 +949,14 @@ fn serde_invite_3a_greeter_wait_peer_trust_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::Invite3aGreeterWaitPeerTrust(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -1014,14 +1014,14 @@ fn serde_invite_3a_greeter_wait_peer_trust_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Rep::loads(&raw);
+    let data = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -1040,14 +1040,14 @@ fn serde_invite_3b_claimer_wait_peer_trust_req() {
 
     let expected = invited_cmds::AnyCmdReq::Invite3bClaimerWaitPeerTrust(req.clone());
 
-    let data = invited_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -1091,14 +1091,14 @@ fn serde_invite_3b_claimer_wait_peer_trust_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::loads(&raw);
+    let data = invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::loads(&raw2);
+    let data2 = invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -1120,14 +1120,14 @@ fn serde_invite_3b_greeter_signify_trust_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::Invite3bGreeterSignifyTrust(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -1185,14 +1185,14 @@ fn serde_invite_3b_greeter_signify_trust_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_3b_greeter_signify_trust::Rep::loads(&raw);
+    let data = authenticated_cmds::invite_3b_greeter_signify_trust::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_3b_greeter_signify_trust::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::invite_3b_greeter_signify_trust::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -1208,14 +1208,14 @@ fn serde_invite_3a_claimer_signify_trust_req() {
 
     let expected = invited_cmds::AnyCmdReq::Invite3aClaimerSignifyTrust(req.clone());
 
-    let data = invited_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -1259,14 +1259,14 @@ fn serde_invite_3a_claimer_signify_trust_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_3a_claimer_signify_trust::Rep::loads(&raw);
+    let data = invited_cmds::invite_3a_claimer_signify_trust::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_3a_claimer_signify_trust::Rep::loads(&raw2);
+    let data2 = invited_cmds::invite_3a_claimer_signify_trust::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -1276,7 +1276,7 @@ fn serde_invite_4_greeter_communicate_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   cmd: "invite_4_greeter_communicate"
-    //   payloads: hex!("666f6f626172")
+    //   payload: hex!("666f6f626172")
     //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
     let raw = hex!(
         "83a3636d64bc696e766974655f345f677265657465725f636f6d6d756e6963617465a77061"
@@ -1290,14 +1290,14 @@ fn serde_invite_4_greeter_communicate_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::Invite4GreeterCommunicate(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -1307,7 +1307,7 @@ fn serde_invite_4_greeter_communicate_req() {
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
-        //   payloads: hex!("666f6f626172")
+        //   payload: hex!("666f6f626172")
         //   status: "ok"
         &hex!(
             "82a77061796c6f6164c406666f6f626172a6737461747573a26f6b"
@@ -1355,13 +1355,13 @@ fn serde_invite_4_greeter_communicate_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_4_greeter_communicate::Rep::loads(&raw);
+    let data = authenticated_cmds::invite_4_greeter_communicate::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
-    let data2 = authenticated_cmds::invite_4_greeter_communicate::Rep::loads(&raw2);
+    let raw2 = data.dump().unwrap();
+    let data2 = authenticated_cmds::invite_4_greeter_communicate::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -1371,7 +1371,7 @@ fn serde_invite_4_claimer_communicate_req() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   cmd: "invite_4_claimer_communicate"
-    //   payloads: hex!("666f6f626172")
+    //   payload: hex!("666f6f626172")
     let raw = hex!(
         "82a3636d64bc696e766974655f345f636c61696d65725f636f6d6d756e6963617465a77061"
         "796c6f6164c406666f6f626172"
@@ -1383,14 +1383,14 @@ fn serde_invite_4_claimer_communicate_req() {
 
     let expected = invited_cmds::AnyCmdReq::Invite4ClaimerCommunicate(req.clone());
 
-    let data = invited_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = invited_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -1400,7 +1400,7 @@ fn serde_invite_4_claimer_communicate_req() {
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
-        //   payloads: hex!("666f6f626172")
+        //   payload: hex!("666f6f626172")
         //   status: "ok"
         &hex!(
             "82a77061796c6f6164c406666f6f626172a6737461747573a26f6b"
@@ -1437,14 +1437,572 @@ fn serde_invite_4_claimer_communicate_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_4_claimer_communicate::Rep::loads(&raw);
+    let data = invited_cmds::invite_4_claimer_communicate::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_4_claimer_communicate::Rep::loads(&raw2);
+    let data2 = invited_cmds::invite_4_claimer_communicate::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
+}
+
+#[rstest]
+fn specs_invite_new_req() {
+    assert_eq!(
+        authenticated_cmds::invite_new::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_new",
+                },
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_new_rep() {
+    assert_eq!(
+        authenticated_cmds::invite_new::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "email_sent": {
+                    "type": "InvitationEmailSentStatus",
+                },
+                "token": {
+                    "type": "InvitationToken",
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok",
+                },
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_delete_req() {
+    assert_eq!(
+        authenticated_cmds::invite_delete::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_delete",
+                },
+                "reason": {
+                    "type": "InvitationDeletedReason",
+                },
+                "token": {
+                    "type": "InvitationToken",
+                },
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_delete_rep() {
+    assert_eq!(
+        authenticated_cmds::invite_delete::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok",
+                },
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_list_req() {
+    assert_eq!(
+        authenticated_cmds::invite_list::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_list",
+                },
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_list_rep() {
+    assert_eq!(
+        authenticated_cmds::invite_list::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "invitations": {
+                    "type": "Vec<InviteListItem>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok",
+                },
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_1_greeter_wait_peer_req() {
+    assert_eq!(
+        authenticated_cmds::invite_1_greeter_wait_peer::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_1_greeter_wait_peer",
+                },
+                "greeter_public_key": {
+                    "type": "PublicKey"
+                },
+                "token": {
+                    "type": "InvitationToken"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_1_greeter_wait_peer_rep() {
+    assert_eq!(
+        authenticated_cmds::invite_1_greeter_wait_peer::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "claimer_public_key": {
+                    "type": "PublicKey"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_2a_greeter_get_hashed_nonce_req() {
+    assert_eq!(
+        authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_2a_greeter_get_hashed_nonce"
+                },
+                "token": {
+                    "type": "InvitationToken"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_2a_greeter_get_hashed_nonce_rep() {
+    assert_eq!(
+        authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "claimer_hashed_nonce": {
+                    "type": "HashDigest"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_2b_greeter_send_nonce_req() {
+    assert_eq!(
+        authenticated_cmds::invite_2b_greeter_send_nonce::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_2b_greeter_send_nonce"
+                },
+                "greeter_nonce": {
+                    "type": "Vec<u8>"
+                },
+                "token": {
+                    "type": "InvitationToken"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_2b_greeter_send_nonce_rep() {
+    assert_eq!(
+        authenticated_cmds::invite_2b_greeter_send_nonce::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "claimer_nonce": {
+                    "type": "Vec<u8>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_3a_greeter_wait_peer_trust_req() {
+    assert_eq!(
+        authenticated_cmds::invite_3a_greeter_wait_peer_trust::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_3a_greeter_wait_peer_trust"
+                },
+                "token": {
+                    "type": "InvitationToken"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_3a_greeter_wait_peer_trust_rep() {
+    assert_eq!(
+        authenticated_cmds::invite_3a_greeter_wait_peer_trust::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_3b_greeter_signify_trust_req() {
+    assert_eq!(
+        authenticated_cmds::invite_3b_greeter_signify_trust::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_3b_greeter_signify_trust"
+                },
+                "token": {
+                    "type": "InvitationToken"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_3b_greeter_signify_trust_rep() {
+    assert_eq!(
+        authenticated_cmds::invite_3b_greeter_signify_trust::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_4_greeter_communicate_req() {
+    assert_eq!(
+        authenticated_cmds::invite_4_greeter_communicate::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_4_greeter_communicate"
+                },
+                "payload": {
+                    "type": "Vec<u8>"
+                },
+                "token": {
+                    "type": "InvitationToken"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_4_greeter_communicate_rep() {
+    assert_eq!(
+        authenticated_cmds::invite_4_greeter_communicate::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "payload": {
+                    "type": "Vec<u8>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_info_req() {
+    assert_eq!(
+        invited_cmds::invite_info::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_info"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_info_rep() {
+    assert_eq!(
+        invited_cmds::invite_info::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "0": {
+                    "type": "InviteInfoUserOrDevice"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_1_claimer_wait_peer_req() {
+    assert_eq!(
+        invited_cmds::invite_1_claimer_wait_peer::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "claimer_public_key": {
+                    "type": "PublicKey"
+                },
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_1_claimer_wait_peer"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_1_claimer_wait_peer_rep() {
+    assert_eq!(
+        invited_cmds::invite_1_claimer_wait_peer::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "greeter_public_key": {
+                    "type": "PublicKey"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_2a_claimer_send_hashed_nonce_hash_nonce_req() {
+    assert_eq!(
+        invited_cmds::invite_2a_claimer_send_hashed_nonce_hash_nonce::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "claimer_hashed_nonce": {
+                    "type": "HashDigest"
+                },
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_2a_claimer_send_hashed_nonce_hash_nonce"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep() {
+    assert_eq!(
+        invited_cmds::invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "greeter_nonce": {
+                    "type": "Vec<u8>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_2b_claimer_send_nonce_req() {
+    assert_eq!(
+        invited_cmds::invite_2b_claimer_send_nonce::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "claimer_nonce": {
+                    "type": "Vec<u8>"
+                },
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_2b_claimer_send_nonce"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_2b_claimer_send_nonce_rep() {
+    assert_eq!(
+        invited_cmds::invite_2b_claimer_send_nonce::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_3a_claimer_signify_trust_req() {
+    assert_eq!(
+        invited_cmds::invite_3a_claimer_signify_trust::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_3a_claimer_signify_trust"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_3a_claimer_signify_trust_rep() {
+    assert_eq!(
+        invited_cmds::invite_3a_claimer_signify_trust::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_3b_claimer_wait_peer_trust_req() {
+    assert_eq!(
+        invited_cmds::invite_3b_claimer_wait_peer_trust::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_3b_claimer_wait_peer_trust"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_3b_claimer_wait_peer_trust_rep() {
+    assert_eq!(
+        invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_4_claimer_communicate_req() {
+    assert_eq!(
+        invited_cmds::invite_4_claimer_communicate::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "invite_4_claimer_communicate"
+                },
+                "payload": {
+                    "type": "Vec<u8>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_invite_4_claimer_communicate_rep() {
+    assert_eq!(
+        invited_cmds::invite_4_claimer_communicate::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "payload": {
+                    "type": "Vec<u8>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
 }

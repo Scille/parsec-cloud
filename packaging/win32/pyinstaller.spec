@@ -47,15 +47,20 @@ def collect_package_datas(package_name):
 
 block_cipher = None
 
+INCLUDE_PARSEC_EXT = bool(os.environ.get("INCLUDE_PARSEC_EXT", ""))
+
+datas = [*collect_package_datas("parsec")]
+hiddenimports = []
+if INCLUDE_PARSEC_EXT:
+    datas += [*collect_package_datas("parsec_ext")]
+    hiddenimports += ["parsec_ext.smartcard"]
 
 a = Analysis(
     ["launch_script.py"],
     pathex=[str(BASEDIR)],
     binaries=[],
-    datas=[
-        *collect_package_datas("parsec"),
-    ],
-    hiddenimports=[],
+    datas=datas,
+    hiddenimports=hiddenimports,
     hookspath=[],
     runtime_hooks=[],
     excludes=EXCLUDED_MODULES,

@@ -2,7 +2,9 @@
 
 mod block;
 mod cmds;
+mod error;
 mod events;
+mod handshake;
 mod invite;
 mod message;
 mod organization;
@@ -11,21 +13,13 @@ mod realm;
 mod user;
 mod vlob;
 
-use block::*;
 pub use cmds::*;
-use events::*;
-use invite::*;
-use message::*;
-use organization::*;
-use ping::*;
-use realm::*;
-use user::*;
-use vlob::*;
-
+pub use error::*;
 pub use events::APIEvent;
+pub use handshake::*;
 pub use invite::{
-    InvitationDeletedReason, InvitationEmailSentStatus, InvitationStatus, InvitationType,
-    InviteInfoUserOrDeviceRep, InviteListItem,
+    InvitationDeletedReason, InvitationEmailSentStatus, InvitationStatus, InviteInfoUserOrDevice,
+    InviteListItem,
 };
 pub use message::Message;
 pub use organization::{OrganizationBootstrapWebhook, UsersPerProfileDetailItem};
@@ -33,38 +27,17 @@ pub use realm::MaintenanceType;
 pub use user::{HumanFindResultItem, Trustchain};
 pub use vlob::ReencryptionBatchEntry;
 
-macro_rules! impl_dumps_loads {
+macro_rules! impl_dump_load {
     ($name:ident) => {
         impl $name {
-            pub fn dumps(&self) -> Result<Vec<u8>, &'static str> {
+            pub fn dump(&self) -> Result<Vec<u8>, &'static str> {
                 ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
             }
 
-            pub fn loads(buf: &[u8]) -> Result<Self, &'static str> {
+            pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
                 ::rmp_serde::from_read_ref(buf).map_err(|_| "Deserialization failed")
             }
         }
     };
 }
-
-macro_rules! impl_dumps_loads_for_rep {
-    ($name:ident) => {
-        impl $name {
-            pub fn dumps(&self) -> Result<Vec<u8>, &'static str> {
-                ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
-            }
-
-            pub fn loads(buf: &[u8]) -> Self {
-                match ::rmp_serde::from_read_ref(buf) {
-                    Ok(res) => res,
-                    Err(e) => Self::UnknownError {
-                        error: e.to_string(),
-                    },
-                }
-            }
-        }
-    };
-}
-
-pub(crate) use impl_dumps_loads;
-pub(crate) use impl_dumps_loads_for_rep;
+pub(crate) use impl_dump_load;

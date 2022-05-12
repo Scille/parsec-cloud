@@ -39,11 +39,28 @@ DEVICE_FILE_SUFFIX = ".keys"
 RECOVERY_DEVICE_FILE_SUFFIX = ".psrk"
 
 
+# Save key file data for later user
+_KEY_FILE_DATA: Dict[DeviceID, Dict] = {}
+
+
+def get_key_file_data(device_id: DeviceID) -> Dict:
+    """Retrieve key file data for a given device"""
+    return _KEY_FILE_DATA.get(device_id, {})
+
+
 class LocalDeviceError(Exception):
     pass
 
 
 class LocalDeviceCryptoError(LocalDeviceError):
+    pass
+
+
+class LocalDeviceCertificatePinCodeUnavailableError(LocalDeviceError):
+    pass
+
+
+class LocalDeviceSignatureError(LocalDeviceError):
     pass
 
 
@@ -60,6 +77,12 @@ class LocalDeviceValidationError(LocalDeviceError):
 
 
 class LocalDevicePackingError(LocalDeviceError):
+    pass
+
+
+class LocalDeviceCertificateNotFoundError(LocalDeviceError):
+    """Used in parsec-extensions for smartcard devices."""
+
     pass
 
 
@@ -334,10 +357,13 @@ def _load_device(key_file: Path, decrypt_ciphertext: Callable[[dict], bytes]) ->
     plaintext = decrypt_ciphertext(data)
 
     try:
-        return LocalDevice.load(plaintext)
+        local_device = LocalDevice.load(plaintext)
 
     except DataError as exc:
         raise LocalDeviceValidationError(f"Cannot load local device: {exc}") from exc
+
+    _KEY_FILE_DATA[local_device.device_id] = data
+    return local_device
 
 
 def save_device_with_password_in_config(
@@ -530,18 +556,36 @@ def is_smartcard_extension_available() -> bool:
         return False
 
 
-def load_device_with_smartcard(key_file: Path) -> LocalDevice:
+def load_device_with_smartcard_sync(key_file: Path) -> LocalDevice:
     """
         LocalDeviceError
         LocalDeviceNotFoundError
         LocalDeviceCryptoError
         LocalDeviceValidationError
         LocalDevicePackingError
+        LocalDeviceCertificatePinCodeUnavailableError
     """
     return _load_smartcard_extension().load_device_with_smartcard(key_file)
 
 
-def save_device_with_smartcard_in_config(config_dir: Path, device: LocalDevice) -> Path:
+async def load_device_with_smartcard(key_file: Path) -> LocalDevice:
+    """
+        LocalDeviceError
+        LocalDeviceNotFoundError
+        LocalDeviceCryptoError
+        LocalDeviceValidationError
+        LocalDevicePackingError
+        LocalDeviceCertificatePinCodeUnavailableError
+    """
+    return await trio.to_thread.run_sync(load_device_with_smartcard_sync, key_file)
+
+
+async def save_device_with_smartcard_in_config(
+    config_dir: Path,
+    device: LocalDevice,
+    certificate_id: Optional[str] = None,
+    certificate_sha1: Optional[bytes] = None,
+) -> Path:
     """
     Raises:
         LocalDeviceError
@@ -549,6 +593,7 @@ def save_device_with_smartcard_in_config(config_dir: Path, device: LocalDevice) 
         LocalDeviceCryptoError
         LocalDeviceValidationError
         LocalDevicePackingError
+        LocalDeviceCertificatePinCodeUnavailableError
     """
     key_file = get_default_key_file(config_dir, device)
     # Why do we use `force=True` here ?
@@ -561,16 +606,13 @@ def save_device_with_smartcard_in_config(config_dir: Path, device: LocalDevice) 
     #   not possible in theory, but could occur in case of a rollback in the
     #   Parsec server), in this case the old device object is now invalid
     #   and it's a good thing to replace it.
-    _load_smartcard_extension().save_device_with_smartcard(key_file, device, force=True)
+    await trio.to_thread.run_sync(
+        lambda: _load_smartcard_extension().save_device_with_smartcard(
+            key_file,
+            device,
+            force=True,
+            certificate_id=certificate_id,
+            certificate_sha1=certificate_sha1,
+        )
+    )
     return key_file
-
-
-def save_device_with_smartcard(key_file: Path, device: LocalDevice, force: bool) -> None:
-    """
-        LocalDeviceError
-        LocalDeviceNotFoundError
-        LocalDeviceCryptoError
-        LocalDeviceValidationError
-        LocalDevicePackingError
-    """
-    _load_smartcard_extension().save_device_with_smartcard(key_file, device, force)

@@ -6,7 +6,7 @@ from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule, Bundle
 from string import ascii_lowercase
 
-from parsec.api.data import EntryName
+from parsec.api.data import EntryName, EntryID
 from parsec.core.fs import FSWorkspaceNotFoundError
 
 
@@ -70,7 +70,7 @@ def test_fs_online_user(user_fs_online_state_machine, oracle_fs_with_sync_factor
                 await self.user_fs.workspace_rename(wid, EntryName(new_name))
             else:
                 with pytest.raises(FSWorkspaceNotFoundError):
-                    await self.user_fs.workspace_rename(workspace, EntryName(new_name))
+                    await self.user_fs.workspace_rename(EntryID.new(), EntryName(new_name))
             return wid, new_name
 
         @rule(workspace=Workspaces)

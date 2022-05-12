@@ -1,0 +1,14 @@
+{
+    "label": "InviteDeviceData",
+    "type": "invite_device_data",
+    "other_fields": [
+        {
+            "name": "requested_device_label",
+            "type": "Option<DeviceLabel>"
+        },
+        {
+            "name": "verify_key",
+            "type": "VerifyKey"
+        }
+    ]
+}

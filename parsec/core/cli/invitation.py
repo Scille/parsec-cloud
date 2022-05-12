@@ -3,7 +3,7 @@
 import click
 import platform
 from functools import partial
-from typing import Union, Callable
+from typing import Union, Callable, Tuple
 
 from parsec.utils import trio_run
 from parsec.cli_utils import cli_exception_handler, spinner, aprompt
@@ -121,6 +121,40 @@ def invite_user(
         trio_run(_invite_user, config, device, email, send_email)
 
 
+async def ask_info_new_user(
+    default_device_label: str, default_user_label: str, default_user_email: str
+) -> Tuple[DeviceLabel, HumanHandle, UserProfile]:
+    while True:
+        granted_label = await aprompt("New user label", default=default_user_label)
+        granted_email = await aprompt("New user email", default=default_user_email)
+        try:
+            granted_human_handle = HumanHandle(email=granted_email, label=granted_label)
+            break
+        except ValueError:
+            click.echo("Invalid user label and/or email")
+            continue
+
+    while True:
+        try:
+            granted_device_label = DeviceLabel(
+                await aprompt("New user device label", default=default_device_label)
+            )
+            break
+        except ValueError:
+            click.echo("Invalid value")
+            continue
+
+    choices = list(UserProfile)
+    for i, choice in enumerate(UserProfile):
+        display_choice = click.style(choice.value, fg="yellow")
+        click.echo(f" {i} - {display_choice}")
+    choice_index = await aprompt(
+        "New user profile", default="1", type=click.Choice([str(i) for i, _ in enumerate(choices)])
+    )
+    granted_profile = choices[int(choice_index)]
+    return granted_device_label, granted_human_handle, granted_profile
+
+
 async def _do_greet_user(device: LocalDevice, initial_ctx: UserGreetInitialCtx) -> bool:
     async with spinner("Waiting for claimer"):
         in_progress_ctx = await initial_ctx.do_wait_peer()
@@ -146,28 +180,17 @@ async def _do_greet_user(device: LocalDevice, initial_ctx: UserGreetInitialCtx) 
         in_progress_ctx = await in_progress_ctx.do_signify_trust()
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
-    granted_label = await aprompt(
-        "New user label", default=in_progress_ctx.requested_human_handle.label
+    granted_device_label, granted_human_handle, granted_profile = await ask_info_new_user(
+        default_device_label=in_progress_ctx.requested_device_label,
+        default_user_label=in_progress_ctx.requested_human_handle.label,
+        default_user_email=in_progress_ctx.requested_human_handle.email,
     )
-    granted_email = await aprompt(
-        "New user email", default=in_progress_ctx.requested_human_handle.email
-    )
-    granted_device_label = await aprompt(
-        "New user device label", default=in_progress_ctx.requested_device_label
-    )
-    choices = list(UserProfile)
-    for i, choice in enumerate(UserProfile):
-        display_choice = click.style(choice.value, fg="yellow")
-        click.echo(f" {i} - {display_choice}")
-    choice_index = await aprompt(
-        "New user profile", default="0", type=click.Choice([str(i) for i, _ in enumerate(choices)])
-    )
-    granted_profile = choices[int(choice_index)]
+
     async with spinner("Creating the user in the backend"):
         await in_progress_ctx.do_create_new_user(
             author=device,
-            device_label=DeviceLabel(granted_device_label),
-            human_handle=HumanHandle(email=granted_email, label=granted_label),
+            device_label=granted_device_label,
+            human_handle=granted_human_handle,
             profile=granted_profile,
         )
 

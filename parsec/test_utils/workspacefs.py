@@ -12,13 +12,14 @@ async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath):
     Create directory and make it inconsistent by adding an entry refering
     to an unknown EntryID.
     """
+
     await workspace.mkdir(dir)
     await workspace.touch(dir / "foo.txt")
     rep_info = await workspace.transactions.entry_info(dir)
     rep_manifest = await workspace.local_storage.get_manifest(rep_info["id"])
     children = rep_manifest.children
     children[EntryName("newfail.txt")] = EntryID.from_hex("b9295787-d9aa-6cbd-be27-1ff83ac72fa6")
-    rep_manifest.evolve(children=children)
+    rep_manifest = rep_manifest.evolve(children=children)
     async with workspace.local_storage.lock_manifest(rep_info["id"]):
         await workspace.local_storage.set_manifest(rep_info["id"], rep_manifest)
     await workspace.sync()

@@ -112,7 +112,7 @@ async def _do_process_authenticated_answer(
 
     context = AuthenticatedClientContext(
         transport=transport,
-        handshake=handshake,
+        api_version=handshake.backend_api_version,
         organization_id=organization_id,
         device_id=device_id,
         human_handle=user.human_handle,
@@ -182,7 +182,10 @@ async def _process_invited_answer(
         return None, result_req, _make_error_infos("Bad invitation")
 
     context = InvitedClientContext(
-        transport, handshake, organization_id=organization_id, invitation=invitation
+        transport,
+        api_version=handshake.backend_api_version,
+        organization_id=organization_id,
+        invitation=invitation,
     )
     result_req = handshake.build_result_req()
     return context, result_req, None
@@ -225,6 +228,8 @@ async def _apiv1_process_anonymous_answer(
         result_req = handshake.build_rvk_mismatch_result_req()
         return None, result_req, _make_error_infos("Bad root verify key")
 
-    context = APIV1_AnonymousClientContext(transport, handshake, organization_id=organization_id)
+    context = APIV1_AnonymousClientContext(
+        transport, api_version=handshake.backend_api_version, organization_id=organization_id
+    )
     result_req = handshake.build_result_req()
     return context, result_req, None

@@ -1,0 +1,32 @@
+{
+    "label": "LocalFolderManifest",
+    "type": "local_folder_manifest",
+    "other_fields": [
+        {
+            "name": "base",
+            "type": "FolderManifest"
+        },
+        {
+            "name": "need_sync",
+            "type": "Boolean"
+        },
+        {
+            "name": "updated",
+            "type": "DateTime"
+        },
+        {
+            "name": "children",
+            "type": "Map<EntryName, EntryID>"
+        },
+        {
+            "name": "local_confinement_points",
+            "type": "Set<EntryID>",
+            "introduced_in_revision": 15
+        },
+        {
+            "name": "remote_confinement_points",
+            "type": "Set<EntryID>",
+            "introduced_in_revision": 15
+        }
+    ]
+}

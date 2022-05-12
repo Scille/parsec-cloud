@@ -23,7 +23,6 @@ from parsec.api.protocol import (
     OrganizationID,
     UserID,
     HumanHandle,
-    HandshakeType,
     InvitationToken,
     InvitationType,
     InvitationDeletedReason,
@@ -47,7 +46,7 @@ from parsec.api.protocol import (
     invite_4_claimer_communicate_serializer,
 )
 from parsec.backend.templates import get_template
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.utils import catch_protocol_errors, api, ClientType
 from parsec.backend.config import BackendConfig, EmailConfig, SmtpEmailConfig, MockedEmailConfig
 from parsec.core.types import BackendInvitationAddr
 
@@ -294,7 +293,7 @@ class BaseInviteComponent:
             BackendEvent.INVITE_STATUS_CHANGED, cast(EventCallback, _on_status_changed)
         )
 
-    @api("invite_new", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("invite_new")
     @catch_protocol_errors
     async def api_invite_new(self, client_ctx, msg):
         msg = invite_new_serializer.req_load(msg)
@@ -391,7 +390,7 @@ class BaseInviteComponent:
 
         return invite_new_serializer.rep_dump({"status": "ok", "token": invitation.token})
 
-    @api("invite_delete", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("invite_delete")
     @catch_protocol_errors
     async def api_invite_delete(self, client_ctx, msg):
         msg = invite_delete_serializer.req_load(msg)
@@ -412,7 +411,7 @@ class BaseInviteComponent:
 
         return invite_delete_serializer.rep_dump({"status": "ok"})
 
-    @api("invite_list", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("invite_list")
     @catch_protocol_errors
     async def api_invite_list(self, client_ctx, msg):
         msg = invite_list_serializer.req_load(msg)
@@ -438,7 +437,7 @@ class BaseInviteComponent:
             }
         )
 
-    @api("invite_info", handshake_types=[HandshakeType.INVITED])
+    @api("invite_info", client_types=[ClientType.INVITED])
     @catch_protocol_errors
     async def api_invite_info(self, client_ctx, msg):
         invite_info_serializer.req_load(msg)
@@ -463,7 +462,7 @@ class BaseInviteComponent:
             }
         return invite_info_serializer.rep_dump(rep)
 
-    @api("invite_1_claimer_wait_peer", long_request=True, handshake_types=[HandshakeType.INVITED])
+    @api("invite_1_claimer_wait_peer", long_request=True, client_types=[ClientType.INVITED])
     @catch_protocol_errors
     async def api_invite_1_claimer_wait_peer(self, client_ctx, msg):
         """
@@ -494,7 +493,7 @@ class BaseInviteComponent:
             {"status": "ok", "greeter_public_key": PublicKey(greeter_public_key)}
         )
 
-    @api("invite_1_greeter_wait_peer", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("invite_1_greeter_wait_peer")
     @catch_protocol_errors
     async def api_invite_1_greeter_wait_peer(self, client_ctx, msg):
         msg = invite_1_greeter_wait_peer_serializer.req_load(msg)
@@ -521,7 +520,7 @@ class BaseInviteComponent:
             {"status": "ok", "claimer_public_key": PublicKey(claimer_public_key_raw)}
         )
 
-    @api("invite_2a_claimer_send_hashed_nonce", handshake_types=[HandshakeType.INVITED])
+    @api("invite_2a_claimer_send_hashed_nonce", client_types=[ClientType.INVITED])
     @catch_protocol_errors
     async def api_invite_2a_claimer_send_hashed_nonce(self, client_ctx, msg):
         """
@@ -561,7 +560,7 @@ class BaseInviteComponent:
             {"status": "ok", "greeter_nonce": greeter_nonce}
         )
 
-    @api("invite_2a_greeter_get_hashed_nonce", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("invite_2a_greeter_get_hashed_nonce")
     @catch_protocol_errors
     async def api_invite_2a_greeter_get_hashed_nonce(self, client_ctx, msg):
         msg = invite_2a_greeter_get_hashed_nonce_serializer.req_load(msg)
@@ -590,7 +589,7 @@ class BaseInviteComponent:
             {"status": "ok", "claimer_hashed_nonce": claimer_hashed_nonce}
         )
 
-    @api("invite_2b_greeter_send_nonce", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("invite_2b_greeter_send_nonce")
     @catch_protocol_errors
     async def api_invite_2b_greeter_send_nonce(self, client_ctx, msg):
         msg = invite_2b_greeter_send_nonce_serializer.req_load(msg)
@@ -625,7 +624,7 @@ class BaseInviteComponent:
             {"status": "ok", "claimer_nonce": claimer_nonce}
         )
 
-    @api("invite_2b_claimer_send_nonce", handshake_types=[HandshakeType.INVITED])
+    @api("invite_2b_claimer_send_nonce", client_types=[ClientType.INVITED])
     @catch_protocol_errors
     async def api_invite_2b_claimer_send_nonce(self, client_ctx, msg):
         """
@@ -655,7 +654,7 @@ class BaseInviteComponent:
 
         return invite_2b_claimer_send_nonce_serializer.rep_dump({"status": "ok"})
 
-    @api("invite_3a_greeter_wait_peer_trust", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("invite_3a_greeter_wait_peer_trust")
     @catch_protocol_errors
     async def api_invite_3a_greeter_wait_peer_trust(self, client_ctx, msg):
         msg = invite_3a_greeter_wait_peer_trust_serializer.req_load(msg)
@@ -680,7 +679,7 @@ class BaseInviteComponent:
 
         return invite_3a_greeter_wait_peer_trust_serializer.rep_dump({"status": "ok"})
 
-    @api("invite_3b_claimer_wait_peer_trust", handshake_types=[HandshakeType.INVITED])
+    @api("invite_3b_claimer_wait_peer_trust", client_types=[ClientType.INVITED])
     @catch_protocol_errors
     async def api_invite_3b_claimer_wait_peer_trust(self, client_ctx, msg):
         """
@@ -710,7 +709,7 @@ class BaseInviteComponent:
 
         return invite_3b_claimer_wait_peer_trust_serializer.rep_dump({"status": "ok"})
 
-    @api("invite_3b_greeter_signify_trust", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("invite_3b_greeter_signify_trust")
     @catch_protocol_errors
     async def api_invite_3b_greeter_signify_trust(self, client_ctx, msg):
         msg = invite_3b_greeter_signify_trust_serializer.req_load(msg)
@@ -735,7 +734,7 @@ class BaseInviteComponent:
 
         return invite_3b_greeter_signify_trust_serializer.rep_dump({"status": "ok"})
 
-    @api("invite_3a_claimer_signify_trust", handshake_types=[HandshakeType.INVITED])
+    @api("invite_3a_claimer_signify_trust", client_types=[ClientType.INVITED])
     @catch_protocol_errors
     async def api_invite_3a_claimer_signify_trust(self, client_ctx, msg):
         """
@@ -765,7 +764,7 @@ class BaseInviteComponent:
 
         return invite_3a_claimer_signify_trust_serializer.rep_dump({"status": "ok"})
 
-    @api("invite_4_greeter_communicate", handshake_types=[HandshakeType.AUTHENTICATED])
+    @api("invite_4_greeter_communicate")
     @catch_protocol_errors
     async def api_invite_4_greeter_communicate(self, client_ctx, msg):
         msg = invite_4_greeter_communicate_serializer.req_load(msg)
@@ -792,7 +791,7 @@ class BaseInviteComponent:
             {"status": "ok", "payload": answer_payload}
         )
 
-    @api("invite_4_claimer_communicate", handshake_types=[HandshakeType.INVITED])
+    @api("invite_4_claimer_communicate", client_types=[ClientType.INVITED])
     @catch_protocol_errors
     async def api_invite_4_claimer_communicate(self, client_ctx, msg):
         """

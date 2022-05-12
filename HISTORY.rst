@@ -5,30 +5,36 @@ History
 .. towncrier release notes start
 
 
-Parsec v2.7.0-rc4 (2022-03-21)
-------------------------------
+Parsec v2.8.1 (2022-04-08)
+--------------------------
 
 Bugfixes
 ~~~~~~~~
 
-* Updated the documentation (in particular, a lot of missing French translations
-  were added) (`#2080 <https://github.com/Scille/parsec-cloud/issues/2080>`__)
+* Fix regression in Parsec server introduced in version 2.7.0 leading to block
+  being stored and fetched with an incorrect ID  (`#2153
+  <https://github.com/Scille/parsec-cloud/issues/2153>`__)
+
+
+Parsec v2.8.0 (2022-04-06)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a bug in the navigation bar where clicking a parent folder didn't change
+  the current directory.  (`#2138 <https://github.com/Scille/parsec-
+  cloud/issues/2138>`__)
 
 Miscellaneous internal changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Show a dedicated message when getting a local storage error during file import
-  indicating that the disk might be full  (`#2083
-  <https://github.com/Scille/parsec-cloud/issues/2083>`__)
-* Fix connection reset on client side in case of internal server errors.
-  (`#2100 <https://github.com/Scille/parsec-cloud/issues/2100>`__)
-* Fix telemetry support, replace --sentry-url by --sentry-dsn/--sentry-
-  environment parameters for client and server.  (`#2102
-  <https://github.com/Scille/parsec-cloud/issues/2102>`__)
+* Add support for PKI based enrollement  (`#2113
+  <https://github.com/Scille/parsec-cloud/issues/2113>`__)
 
 
-Parsec v2.7.0-rc1 (2022-03-14)
-------------------------------
+Parsec v2.7.0 (2022-04-01)
+--------------------------
 
 Features
 ~~~~~~~~
@@ -72,6 +78,8 @@ Bugfixes
   (`#1909 <https://github.com/Scille/parsec-cloud/issues/1909>`__)
 * Improve client/server handshake mechanism (`#2047
   <https://github.com/Scille/parsec-cloud/issues/2047>`__)
+* Updated the documentation (in particular, a lot of missing French translations
+  were added) (`#2080 <https://github.com/Scille/parsec-cloud/issues/2080>`__)
 
 Miscellaneous internal changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,6 +88,14 @@ Miscellaneous internal changes
   <https://github.com/Scille/parsec-cloud/issues/1889>`__)
 * Fixed some graphical gliches on MacOS when using dark mode.  (`#2037
   <https://github.com/Scille/parsec-cloud/issues/2037>`__)
+* Show a dedicated message when getting a local storage error during file import
+  indicating that the disk might be full  (`#2083
+  <https://github.com/Scille/parsec-cloud/issues/2083>`__)
+* Fix connection reset on client side in case of internal server errors.
+  (`#2100 <https://github.com/Scille/parsec-cloud/issues/2100>`__)
+* Fix telemetry support, replace --sentry-url by --sentry-dsn/--sentry-
+  environment parameters for client and server.  (`#2102
+  <https://github.com/Scille/parsec-cloud/issues/2102>`__)
 
 
 Parsec v2.6.0 (2021-11-09)

@@ -1,0 +1,18 @@
+{
+    "label": "RevokedUserCertificate",
+    "type": "revoked_user_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "user_id",
+            "type": "UserID"
+        }
+    ]
+}

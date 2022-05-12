@@ -213,7 +213,7 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
         else:
             self.button_finalize.setDisabled(True)
 
-    def _on_finalize_clicked(self):
+    async def _on_finalize_clicked(self):
         try:
             if self.widget_auth.get_auth_method() == DeviceFileType.PASSWORD:
                 save_device_with_password_in_config(
@@ -222,7 +222,7 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
                     password=self.widget_auth.get_auth(),
                 )
             elif self.widget_auth.get_auth_method() == DeviceFileType.SMARTCARD:
-                save_device_with_smartcard_in_config(
+                await save_device_with_smartcard_in_config(
                     config_dir=self.config.config_dir, device=self.new_device
                 )
             self.succeeded.emit(
@@ -539,6 +539,11 @@ class ClaimUserInstructionsWidget(QWidget, Ui_ClaimUserInstructionsWidget):
         self.wait_peer_success.connect(self._on_wait_peer_success)
         self.wait_peer_error.connect(self._on_wait_peer_error)
 
+    def switch_to_info_retrieved(self):
+        self.label.setText(_("TEXT_CLAIM_USER_INSTRUCTIONS"))
+        self.button_start.setEnabled(True)
+        self.widget_spinner.setVisible(False)
+
     def _on_button_start_clicked(self):
         self.button_start.setDisabled(True)
         self.button_start.setText(_("TEXT_CLAIM_USER_WAITING"))
@@ -604,6 +609,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.retrieve_info_error.connect(self._on_retrieve_info_error)
         self.claimer = Claimer()
         self._run_claimer()
+        self._goto_page1()
 
     def _run_claimer(self):
         self.claimer_job = self.jobs_ctx.submit_job(
@@ -625,7 +631,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         assert self.retrieve_info_job.status == "ok"
         self.user_email = self.retrieve_info_job.ret
         self.retrieve_info_job = None
-        self._goto_page1()
+        current_page = self.main_layout.itemAt(0).widget()
+        current_page.switch_to_info_retrieved()
 
     def _on_retrieve_info_error(self, job):
         if self.retrieve_info_job is not job:
@@ -677,6 +684,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.status = None
         self.claimer = Claimer()
         self._run_claimer()
+        self._goto_page1()
 
     def _goto_page1(self):
         item = self.main_layout.takeAt(0)

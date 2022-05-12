@@ -25,14 +25,14 @@ fn serde_user_get_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::UserGet(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -84,14 +84,14 @@ fn serde_user_get_req() {
 fn serde_user_get_rep(#[case] raw_expected: (&[u8], authenticated_cmds::user_get::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::user_get::Rep::loads(&raw);
+    let data = authenticated_cmds::user_get::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_get::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::user_get::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -121,14 +121,14 @@ fn serde_user_create_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::UserCreate(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -220,14 +220,14 @@ fn serde_user_create_req() {
 fn serde_user_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::user_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::user_create::Rep::loads(&raw);
+    let data = authenticated_cmds::user_create::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_create::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::user_create::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -249,14 +249,14 @@ fn serde_user_revoke_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::UserRevoke(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -331,14 +331,14 @@ fn serde_user_revoke_req() {
 fn serde_user_revoke_rep(#[case] raw_expected: (&[u8], authenticated_cmds::user_revoke::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::user_revoke::Rep::loads(&raw);
+    let data = authenticated_cmds::user_revoke::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_revoke::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::user_revoke::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -363,14 +363,14 @@ fn serde_device_create_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::DeviceCreate(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -447,14 +447,14 @@ fn serde_device_create_req() {
 fn serde_device_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::device_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::device_create::Rep::loads(&raw);
+    let data = authenticated_cmds::device_create::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::device_create::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::device_create::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -485,14 +485,14 @@ fn serde_human_find_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::HumanFind(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -548,14 +548,227 @@ fn serde_human_find_req() {
 fn serde_human_find_rep(#[case] raw_expected: (&[u8], authenticated_cmds::human_find::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::human_find::Rep::loads(&raw);
+    let data = authenticated_cmds::human_find::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::human_find::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::human_find::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
+}
+
+#[rstest]
+fn specs_user_get_req() {
+    assert_eq!(
+        authenticated_cmds::user_get::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "user_get"
+                },
+                "user_id": {
+                    "type": "UserID"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_user_get_rep() {
+    assert_eq!(
+        authenticated_cmds::user_get::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "device_certificates": {
+                    "type": "Vec<Vec<u8>>"
+                },
+                "revoked_user_certificate": {
+                    "type": "Vec<u8>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+                "trustchain": {
+                    "type": "Trustchain"
+                },
+                "user_certificate": {
+                    "type": "Vec<u8>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_user_create_req() {
+    assert_eq!(
+        authenticated_cmds::user_create::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "user_create"
+                },
+                "device_certificate": {
+                    "type": "Vec<u8>"
+                },
+                "redacted_device_certificate": {
+                    "type": "Vec<u8>"
+                },
+                "redacted_user_certificate": {
+                    "type": "Vec<u8>"
+                },
+                "user_certificate": {
+                    "type": "Vec<u8>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_user_create_rep() {
+    assert_eq!(
+        authenticated_cmds::user_create::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_user_revoke_req() {
+    assert_eq!(
+        authenticated_cmds::user_revoke::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "user_revoke"
+                },
+                "revoked_user_certificate": {
+                    "type": "Vec<u8>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_user_revoke_rep() {
+    assert_eq!(
+        authenticated_cmds::user_revoke::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_device_create_req() {
+    assert_eq!(
+        authenticated_cmds::device_create::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "device_create"
+                },
+                "device_certificate": {
+                    "type": "Vec<u8>"
+                },
+                "redacted_device_certificate": {
+                    "type": "Vec<u8>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_device_create_rep() {
+    assert_eq!(
+        authenticated_cmds::device_create::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_human_find_req() {
+    assert_eq!(
+        authenticated_cmds::human_find::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "human_find"
+                },
+                "omit_non_human": {
+                    "type": "bool"
+                },
+                "omit_revoked": {
+                    "type": "bool"
+                },
+                "page": {
+                    "type": "NonZeroU64"
+                },
+                "per_page": {
+                    "type": "NonZeroU64"
+                },
+                "query": {
+                    "type": "Option<String>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_human_find_rep() {
+    assert_eq!(
+        authenticated_cmds::human_find::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "page": {
+                    "type": "NonZeroU64"
+                },
+                "per_page": {
+                    "type": "NonZeroU64"
+                },
+                "results": {
+                    "type": "Vec<HumanFindResultItem>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+                "total": {
+                    "type": "u64"
+                }
+            }
+        })
+    )
 }

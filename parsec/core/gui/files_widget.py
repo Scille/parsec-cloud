@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QWidget
 from parsec.api.data import EntryName
 from parsec.core.core_events import CoreEvent
 from parsec.core.gui.file_status_widget import FileStatusWidget
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.types import WorkspaceRole, EntryID
 from parsec.core.fs import FsPath, WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
@@ -22,7 +23,7 @@ from parsec.core.fs.exceptions import (
 )
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui import desktop
-from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX, ENTRY_ID_DATA_INDEX
+from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
 from parsec.core.gui.custom_dialogs import (
     ask_question,
     show_error,
@@ -174,10 +175,10 @@ async def _do_folder_stat(workspace_fs, path, default_selection):
         except FSFileNotFoundError:
             # The child entry as been concurrently removed, just ignore it
             continue
-        except FSRemoteManifestNotFound as exc:
+        except FSRemoteManifestNotFound:
             # Cannot get informations about this child entry, this can occur if
             # if the manifest is inconsistent (broken data or signature).
-            child_stat = {"type": "inconsistency", "id": exc.args[0]}
+            child_stat = {"type": "inconsistency", "id": EntryID.new()}
         stats[child] = child_stat
     return path, dir_stat["id"], stats, default_selection
 
@@ -381,7 +382,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         path = self.current_directory / files[0].name
         addr = self.workspace_fs.generate_file_link(path)
         desktop.copy_to_clipboard(addr.to_url())
-        show_info(self, _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
+        SnackbarManager.inform(_("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
 
     def on_copy_clicked(self):
         files = self.table_files.selected_files()
@@ -1028,15 +1029,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if self.current_directory_id == id:
             return
 
-        for i in range(1, self.table_files.rowCount()):
-            item = self.table_files.item(i, 0)
-            if item and item.data(ENTRY_ID_DATA_INDEX) == id:
-                if (
-                    item.data(TYPE_DATA_INDEX) == FileType.File
-                    or item.data(TYPE_DATA_INDEX) == FileType.Folder
-                ):
-                    item.confined = False
-                    item.is_synced = True
+        self.table_files.set_file_status(id, synced=True, confined=False)
 
     def _on_fs_entry_updated(self, event, workspace_id=None, id=None):
         assert id is not None

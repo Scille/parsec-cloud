@@ -23,14 +23,14 @@ fn serde_realm_create_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::RealmCreate(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -104,14 +104,14 @@ fn serde_realm_create_req() {
 fn serde_realm_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_create::Rep::loads(&raw);
+    let data = authenticated_cmds::realm_create::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_create::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::realm_create::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -133,14 +133,14 @@ fn serde_realm_status_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::RealmStatus(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -200,14 +200,14 @@ fn serde_realm_status_req() {
 fn serde_realm_status_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_status::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_status::Rep::loads(&raw);
+    let data = authenticated_cmds::realm_status::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_status::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::realm_status::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -229,14 +229,14 @@ fn serde_realm_stats_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::RealmStats(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -286,14 +286,14 @@ fn serde_realm_stats_req() {
 fn serde_realm_stats_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_stats::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_stats::Rep::loads(&raw);
+    let data = authenticated_cmds::realm_stats::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_stats::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::realm_stats::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -318,14 +318,14 @@ fn serde_realm_get_role_certificates_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::RealmGetRoleCertificates(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -375,14 +375,14 @@ fn serde_realm_get_role_certificates_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_get_role_certificates::Rep::loads(&raw);
+    let data = authenticated_cmds::realm_get_role_certificates::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_get_role_certificates::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::realm_get_role_certificates::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -407,14 +407,14 @@ fn serde_realm_update_roles_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::RealmUpdateRoles(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -530,14 +530,14 @@ fn serde_realm_update_roles_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_update_roles::Rep::loads(&raw);
+    let data = authenticated_cmds::realm_update_roles::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_update_roles::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::realm_update_roles::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -571,14 +571,14 @@ fn serde_realm_start_reencryption_maintenance_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::RealmStartReencryptionMaintenance(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -620,7 +620,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
         }
     )
 )]
-#[case::bad_encryption(
+#[case::bad_encryption_revision(
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
@@ -680,14 +680,14 @@ fn serde_realm_start_reencryption_maintenance_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_start_reencryption_maintenance::Rep::loads(&raw);
+    let data = authenticated_cmds::realm_start_reencryption_maintenance::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_start_reencryption_maintenance::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::realm_start_reencryption_maintenance::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -712,14 +712,14 @@ fn serde_realm_finish_reencryption_maintenance_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::RealmFinishReencryptionMaintenance(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -810,14 +810,287 @@ fn serde_realm_finish_reencryption_maintenance_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_finish_reencryption_maintenance::Rep::loads(&raw);
+    let data = authenticated_cmds::realm_finish_reencryption_maintenance::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_finish_reencryption_maintenance::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::realm_finish_reencryption_maintenance::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
+}
+
+#[rstest]
+fn specs_realm_create_req() {
+    assert_eq!(
+        authenticated_cmds::realm_create::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "realm_create"
+                },
+                "role_certificate": {
+                    "type": "Vec<u8>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_create_rep() {
+    assert_eq!(
+        authenticated_cmds::realm_create::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_stats_req() {
+    assert_eq!(
+        authenticated_cmds::realm_stats::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "realm_stats"
+                },
+                "realm_id": {
+                    "type": "RealmID"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_stats_rep() {
+    assert_eq!(
+        authenticated_cmds::realm_stats::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "blocks_size": {
+                    "type": "u64"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+                "vlobs_size": {
+                    "type": "u64"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_status_req() {
+    assert_eq!(
+        authenticated_cmds::realm_status::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "realm_status"
+                },
+                "realm_id": {
+                    "type": "RealmID"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_status_rep() {
+    assert_eq!(
+        authenticated_cmds::realm_status::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "encryption_revision": {
+                    "type": "u64"
+                },
+                "in_maintenance": {
+                    "type": "bool"
+                },
+                "maintenance_started_by": {
+                    "type": "Option<DeviceID>"
+                },
+                "maintenance_started_on": {
+                    "type": "Option<DateTime>"
+                },
+                "maintenance_type": {
+                    "type": "Option<MaintenanceType>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_get_role_certificates_req() {
+    assert_eq!(
+        authenticated_cmds::realm_get_role_certificates::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "realm_get_role_certificates"
+                },
+                "realm_id": {
+                    "type": "RealmID"
+                },
+                "since": {
+                    "type": "Option<DateTime>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_get_role_certificates_rep() {
+    assert_eq!(
+        authenticated_cmds::realm_get_role_certificates::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "certificates": {
+                    "type": "Vec<Vec<u8>>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_update_roles_req() {
+    assert_eq!(
+        authenticated_cmds::realm_update_roles::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "realm_update_roles"
+                },
+                "recipient_message": {
+                    "type": "Option<Vec<u8>>"
+                },
+                "role_certificate": {
+                    "type": "Vec<u8>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_update_roles_rep() {
+    assert_eq!(
+        authenticated_cmds::realm_update_roles::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_start_reencryption_maintenance_req() {
+    assert_eq!(
+        authenticated_cmds::realm_start_reencryption_maintenance::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "realm_start_reencryption_maintenance"
+                },
+                "encryption_revision": {
+                    "type": "u64"
+                },
+                "per_participant_message": {
+                    "type": "HashMap<UserID,Vec<u8>>"
+                },
+                "realm_id": {
+                    "type": "RealmID"
+                },
+                "timestamp": {
+                    "type": "DateTime"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_start_reencryption_maintenance_rep() {
+    assert_eq!(
+        authenticated_cmds::realm_start_reencryption_maintenance::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_finish_reencryption_maintenance_req() {
+    assert_eq!(
+        authenticated_cmds::realm_finish_reencryption_maintenance::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "realm_finish_reencryption_maintenance"
+                },
+                "encryption_revision": {
+                    "type": "u64"
+                },
+                "realm_id": {
+                    "type": "RealmID"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_realm_finish_reencryption_maintenance_rep() {
+    assert_eq!(
+        authenticated_cmds::realm_finish_reencryption_maintenance::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
 }

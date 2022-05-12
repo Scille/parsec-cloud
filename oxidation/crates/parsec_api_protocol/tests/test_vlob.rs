@@ -34,14 +34,14 @@ fn serde_vlob_create_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::VlobCreate(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -108,14 +108,14 @@ fn serde_vlob_create_req() {
 fn serde_vlob_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_create::Rep::loads(&raw);
+    let data = authenticated_cmds::vlob_create::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_create::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::vlob_create::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -144,14 +144,14 @@ fn serde_vlob_read_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::VlobRead(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -242,14 +242,14 @@ fn serde_vlob_read_req() {
 fn serde_vlob_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_read::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_read::Rep::loads(&raw);
+    let data = authenticated_cmds::vlob_read::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_read::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::vlob_read::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -280,14 +280,14 @@ fn serde_vlob_update_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::VlobUpdate(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -365,14 +365,14 @@ fn serde_vlob_update_req() {
 fn serde_vlob_update_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_update::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_update::Rep::loads(&raw);
+    let data = authenticated_cmds::vlob_update::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_update::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::vlob_update::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -396,14 +396,14 @@ fn serde_vlob_poll_changes_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::VlobPollChanges(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -467,14 +467,14 @@ fn serde_vlob_poll_changes_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_poll_changes::Rep::loads(&raw);
+    let data = authenticated_cmds::vlob_poll_changes::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_poll_changes::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::vlob_poll_changes::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -496,14 +496,14 @@ fn serde_vlob_list_versions_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::VlobListVersions(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -571,14 +571,14 @@ fn serde_vlob_list_versions_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_list_versions::Rep::loads(&raw);
+    let data = authenticated_cmds::vlob_list_versions::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_list_versions::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::vlob_list_versions::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -605,14 +605,14 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::VlobMaintenanceGetReencryptionBatch(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -717,14 +717,14 @@ fn serde_vlob_maintenance_get_reencryption_batch_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::loads(&raw);
+    let data = authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
 }
@@ -763,14 +763,14 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
 
     let expected = authenticated_cmds::AnyCmdReq::VlobMaintenanceSaveReencryptionBatch(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::loads(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::AnyCmdReq::loads(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -863,14 +863,326 @@ fn serde_vlob_maintenance_save_reencryption_batch_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::loads(&raw);
+    let data = authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::load(&raw);
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let raw2 = data.dumps().unwrap();
+    let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::loads(&raw2);
+    let data2 = authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
+}
+
+#[rstest]
+fn specs_vlob_poll_changes_req() {
+    assert_eq!(
+        authenticated_cmds::vlob_poll_changes::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "vlob_poll_changes"
+                },
+                "last_checkpoint": {
+                    "type": "u64"
+                },
+                "realm_id": {
+                    "type": "RealmID"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_poll_changes_rep() {
+    assert_eq!(
+        authenticated_cmds::vlob_poll_changes::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "changes": {
+                    "type": "HashMap<VlobID,u64>"
+                },
+                "current_checkpoint": {
+                    "type": "u64"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_create_req() {
+    assert_eq!(
+        authenticated_cmds::vlob_create::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "blob": {
+                    "type": "Vec<u8>"
+                },
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "vlob_create"
+                },
+                "encryption_revision": {
+                    "type": "u64"
+                },
+                "realm_id": {
+                    "type": "RealmID"
+                },
+                "timestamp": {
+                    "type": "DateTime"
+                },
+                "vlob_id": {
+                    "type": "VlobID"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_create_rep() {
+    assert_eq!(
+        authenticated_cmds::vlob_create::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_read_req() {
+    assert_eq!(
+        authenticated_cmds::vlob_read::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "vlob_read"
+                },
+                "encryption_revision": {
+                    "type": "u64"
+                },
+                "timestamp": {
+                    "type": "Option<DateTime>"
+                },
+                "version": {
+                    "type": "Option<u64>"
+                },
+                "vlob_id": {
+                    "type": "VlobID"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_read_rep() {
+    assert_eq!(
+        authenticated_cmds::vlob_read::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "author": {
+                    "type": "DeviceID"
+                },
+                "author_last_role_granted_on": {
+                    "type": "Option<DateTime>"
+                },
+                "blob": {
+                    "type": "Vec<u8>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+                "timestamp": {
+                    "type": "DateTime"
+                },
+                "version": {
+                    "type": "u64"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_update_req() {
+    assert_eq!(
+        authenticated_cmds::vlob_update::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "blob": {
+                    "type": "Vec<u8>"
+                },
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "vlob_update"
+                },
+                "encryption_revision": {
+                    "type": "u64"
+                },
+                "timestamp": {
+                    "type": "DateTime"
+                },
+                "version": {
+                    "type": "u64"
+                },
+                "vlob_id": {
+                    "type": "VlobID"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_update_rep() {
+    assert_eq!(
+        authenticated_cmds::vlob_update::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_list_versions_req() {
+    assert_eq!(
+        authenticated_cmds::vlob_list_versions::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "vlob_list_versions"
+                },
+                "vlob_id": {
+                    "type": "VlobID"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_list_versions_rep() {
+    assert_eq!(
+        authenticated_cmds::vlob_list_versions::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+                "versions": {
+                    "type": "HashMap<u64,(DateTime,DeviceID)>"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_maintenance_get_reencryption_batch_req() {
+    assert_eq!(
+        authenticated_cmds::vlob_maintenance_get_reencryption_batch::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "vlob_maintenance_get_reencryption_batch"
+                },
+                "encryption_revision": {
+                    "type": "u64"
+                },
+                "realm_id": {
+                    "type": "RealmID"
+                },
+                "size": {
+                    "type": "u64"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_maintenance_get_reencryption_batch_rep() {
+    assert_eq!(
+        authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "batch": {
+                    "type": "Vec<ReencryptionBatchEntry>"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_maintenance_save_reencryption_batch_req() {
+    assert_eq!(
+        authenticated_cmds::vlob_maintenance_save_reencryption_batch::Req::specs(),
+        serde_json::json!({
+            "fields": {
+                "batch": {
+                    "type": "Vec<ReencryptionBatchEntry>"
+                },
+                "cmd": {
+                    "type": "CheckedConstant",
+                    "value": "vlob_maintenance_save_reencryption_batch"
+                },
+                "encryption_revision": {
+                    "type": "u64"
+                },
+                "realm_id": {
+                    "type": "RealmID"
+                }
+            }
+        })
+    )
+}
+
+#[rstest]
+fn specs_vlob_maintenance_save_reencryption_batch_rep() {
+    assert_eq!(
+        authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::specs(),
+        serde_json::json!({
+            "fields": {
+                "done": {
+                    "type": "u64"
+                },
+                "status": {
+                    "type": "CheckedConstant",
+                    "value": "ok"
+                },
+                "total": {
+                    "type": "u64"
+                }
+            }
+        })
+    )
 }

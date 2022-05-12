@@ -18,7 +18,7 @@ class ValidatedLineEdit(QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._validator = None
-        self.textEdited.connect(self._on_text_edited)
+        self.textChanged.connect(self._on_text_edited)
 
     # Override of Qt just to avoid mistakes
     def setValidator(self, validator):
