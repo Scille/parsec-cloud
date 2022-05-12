@@ -13,6 +13,8 @@ from PyQt5.QtWidgets import (
     QWidget,
     QListView,
     QComboBox,
+    QLineEdit,
+    QToolButton,
 )
 from PyQt5.QtSvg import QSvgWidget
 
@@ -325,6 +327,41 @@ class OverlayLabel(ClickableLabel):
             painter.drawPixmap(pos_x, pos_y, icon)
         painter.end()
         super().setPixmap(p)
+
+
+class FilterLineEdit(QLineEdit):
+    clear_clicked = pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.textChanged.connect(self._on_text_changed)
+        self.button_clear = QToolButton()
+        self.button_clear.setVisible(False)
+        self.button_clear.clicked.connect(self._on_button_clear_clicked)
+        self.button_clear.setParent(self)
+        self.button_clear.setCursor(Qt.PointingHandCursor)
+        icon = Pixmap(":/icons/images/material/clear.svg")
+        icon.replace_color(QColor(0, 0, 0), QColor(164, 164, 164))
+        self.button_clear.setIcon(QIcon(icon))
+        self.button_clear.setStyleSheet("border: 0;")
+
+    def resizeEvent(self, event):
+        ret = super().resizeEvent(event)
+        self._move_button()
+        return ret
+
+    def _on_button_clear_clicked(self):
+        self.setText("")
+        self.clear_clicked.emit()
+
+    def _on_text_changed(self, text):
+        self.button_clear.setVisible(len(text))
+
+    def _move_button(self):
+        r = self.geometry()
+        self.button_clear.setGeometry(
+            r.x() + r.width() - self.button_clear.width(), r.y(), r.height(), r.height()
+        )
 
 
 class IconLabel(QLabel):
