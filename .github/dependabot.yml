@@ -1,5 +1,12 @@
 version: 2
 updates:
+  - package-ecosystem: github-action
+    directory: "/"
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: monthly
+
   - package-ecosystem: pip
     directory: "/requirement"
     ignore:
@@ -9,7 +16,7 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: weekly
+      interval: monthly
 
   - package-ecosystem: pip
     directory: "/oxidation/libparsec_python"
@@ -19,23 +26,22 @@ updates:
       interval: monthly
 
   - package-ecosystem: cargo
-    directory: "/oxidation/libparsec_python"
+    directory: "/"
     pull-request-branch-name:
       separator: "-"
     schedule:
       interval: monthly
 
-  - package-ecosystem: cargo
-    directory: "/oxidation/libparsec"
+  - package-ecosystem: "npm"
+    directory: "/oxidation/client"
     pull-request-branch-name:
       separator: "-"
     schedule:
       interval: monthly
 
-  - package-ecosystem: cargo
-    directory: "/oxidation/crates/parsec_api_crypto"
+  - package-ecosystem: "npm"
+    directory: "/oxidation/client/android"
     pull-request-branch-name:
       separator: "-"
     schedule:
       interval: monthly
-
