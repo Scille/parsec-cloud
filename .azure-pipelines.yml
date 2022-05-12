@@ -120,7 +120,7 @@ jobs:
       from multiprocessing.pool import ThreadPool
       import json
       # Hook when nobody ain't no time for this
-      if '$(Build.SourceBranch)'.startswith('yolo-'):
+      if '$(Build.SourceBranch)'.startswith(('yolo-', 'yolo/')):
           print('Skipping newsfragment/issue check')
           raise SystemExit(0)
       # If file never existed in master, consider as a new newsfragment
