@@ -78,7 +78,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QLineEdit" name="line_edit_search">
+        <widget class="FilterLineEdit" name="line_edit_search">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -95,13 +95,6 @@
          </property>
          <property name="placeholderText">
           <string>TEXT_USERS_FILTER_USERS_PLACEHOLDER</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="button_users_filter">
-         <property name="text">
-          <string>ACTION_FILTER_LIST_USERS</string>
          </property>
         </widget>
        </item>
@@ -222,8 +215,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>622</width>
-          <height>428</height>
+          <width>931</width>
+          <height>539</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -386,6 +379,11 @@
    <extends>QWidget</extends>
    <header>parsec.core.gui.custom_widgets</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FilterLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>
  <resources>

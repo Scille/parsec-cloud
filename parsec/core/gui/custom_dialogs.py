@@ -28,6 +28,7 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import Button
 from parsec.core.gui.parsec_application import ParsecApp
+from parsec.core.gui.snackbar_widget import SnackbarManager
 
 from parsec.core.gui.ui.error_widget import Ui_ErrorWidget
 from parsec.core.gui.ui.info_widget import Ui_InfoWidget
@@ -481,11 +482,11 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
             if not stack:
                 self.button_details.hide()
             else:
-                except_text = "<b>{}</b><br /><br />{}".format(
-                    str(exception).replace("\n", "<br />"), "<br />".join(stack)
-                )
-                except_text = except_text.replace("\n", "<br />")
-                self.text_details.setHtml(except_text)
+                self.text_details.insertPlainText(str(exception) + "\n\n")
+                self.text_details.insertPlainText("".join(stack))
+                cursor = self.text_details.textCursor()
+                cursor.setPosition(0)
+                self.text_details.setTextCursor(cursor)
         self.button_details.clicked.connect(self.toggle_details)
         self.button_details.apply_style()
         self.button_copy.clicked.connect(self.copy_to_clipboard)
@@ -494,6 +495,7 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
 
     def copy_to_clipboard(self):
         desktop.copy_to_clipboard(self.text_details.toPlainText())
+        SnackbarManager.inform(_("TEXT_STACKTRACE_COPIED_TO_CLIPBOARD"))
 
     def toggle_details(self, checked):
         if not checked:

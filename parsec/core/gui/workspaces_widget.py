@@ -2,7 +2,7 @@
 
 from parsec.core.core_events import CoreEvent
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, Qt, QTimer
 from PyQt5.QtWidgets import QWidget, QLabel
 
 import pendulum
@@ -209,7 +209,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.button_add_workspace.apply_style()
         self.button_goto_file.apply_style()
 
-        self.line_edit_search.textChanged.connect(self.on_workspace_filter)
+        self.search_timer = QTimer()
+        self.search_timer.setInterval(300)
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(self.on_workspace_filter)
+
+        self.line_edit_search.textChanged.connect(self.search_timer.start)
+        self.line_edit_search.clear_clicked.connect(self.search_timer.start)
 
         self.rename_success.connect(self.on_rename_success)
         self.rename_error.connect(self.on_rename_error)
@@ -308,7 +314,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_WORKSPACE_NOT_FOUND"))
 
-    def on_workspace_filter(self, pattern):
+    def on_workspace_filter(self):
         self.refresh_workspace_layout()
 
     def load_workspace(self, workspace_fs, path=FsPath("/"), selected=False):

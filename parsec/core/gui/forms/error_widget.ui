@@ -48,6 +48,10 @@ border: none;
 background-color: none;
 }
 
+#button_copy:hover, #button_details:hover {
+color: #0092FF;
+}
+
 #text_details
 {
 color: #333333;
@@ -242,6 +246,13 @@ color: #F44336;
          <blue>153</blue>
         </color>
        </property>
+       <property name="hover_color" stdset="0">
+        <color>
+         <red>0</red>
+         <green>146</green>
+         <blue>255</blue>
+        </color>
+       </property>
       </widget>
      </item>
     </layout>
@@ -260,12 +271,21 @@ color: #F44336;
      <property name="horizontalScrollBarPolicy">
       <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
+     <property name="undoRedoEnabled">
+      <bool>false</bool>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
      <property name="html">
       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="acceptRichText">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
