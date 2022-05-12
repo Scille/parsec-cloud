@@ -55,7 +55,7 @@ impl<T> Task<T> {
     }
 }
 
-impl<T> crate::task::Task<T> for Task<T> {
+impl<T> crate::task::Taskable<T> for Task<T> {
     fn cancel(&self) -> Option<T> {
         let mut state = self.shared_state.lock().unwrap();
 

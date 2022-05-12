@@ -1598,6 +1598,8 @@ dependencies = [
  "futures",
  "futures-lite",
  "js-sys",
+ "log",
+ "simple_logger",
  "tokio",
  "wasm-bindgen",
  "wasm-bindgen-futures",

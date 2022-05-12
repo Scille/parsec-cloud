@@ -8,6 +8,9 @@ flume = "0.10.12"
 futures = "0.3.21"
 futures-lite = { version = "1.12.0", default-features = false }
 
+[dev-dependencies]
+log = "0.4.17"
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.63"
 wasm-bindgen-futures = "0.4.30"
@@ -16,3 +19,8 @@ js-sys = "0.3.57"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1.18.2", features = ["rt"] }
+simple_logger = "2.1.0"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies.tokio]
+features = ["full"]
+
