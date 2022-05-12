@@ -153,7 +153,7 @@ def ClaimUserTestBed(
         def assert_initial_state(self):
             assert self.claim_user_widget.isVisible()
             assert self.claim_user_instructions_widget.isVisible()
-            assert self.claim_user_instructions_widget.button_start.isEnabled()
+            assert not self.claim_user_instructions_widget.button_start.isEnabled()
             if self.claim_user_code_exchange_widget:
                 assert not self.claim_user_code_exchange_widget.isVisible()
             if self.claim_user_provide_info_widget:
@@ -161,6 +161,13 @@ def ClaimUserTestBed(
 
         async def step_1_start_claim(self):
             cui_w = self.claim_user_instructions_widget
+
+            def _info_retrieved():
+                assert cui_w.button_start.isEnabled()
+
+            await aqtbot.wait_until(_info_retrieved)
+
+            assert cui_w.button_start.isEnabled()
             aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
 
             def _claimer_started():
@@ -362,11 +369,9 @@ async def test_claim_user_offline(
             assert not self.claim_user_instructions_widget.isVisible()
 
         async def offline_step_1_start_claim(self):
-            expected_message = translate("TEXT_CLAIM_USER_WAIT_PEER_ERROR")
-            cui_w = self.claim_user_instructions_widget
+            expected_message = translate("TEXT_INVITATION_BACKEND_NOT_AVAILABLE")
 
             with running_backend.offline():
-                aqtbot.mouse_click(cui_w.button_start, QtCore.Qt.LeftButton)
                 await aqtbot.wait_until(partial(self._claim_aborted, expected_message))
 
             return None
