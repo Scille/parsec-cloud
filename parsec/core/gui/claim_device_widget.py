@@ -507,6 +507,11 @@ class ClaimDeviceInstructionsWidget(QWidget, Ui_ClaimDeviceInstructionsWidget):
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
+    def switch_to_info_retrieved(self):
+        self.label.setText(_("TEXT_CLAIM_DEVICE_INSTRUCTIONS"))
+        self.button_start.setEnabled(True)
+        self.widget_spinner.setVisible(False)
+
     def cancel(self):
         if self.wait_peer_job:
             self.wait_peer_job.cancel()
@@ -534,6 +539,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.retrieve_info_error.connect(self._on_retrieve_info_error)
         self.claimer = Claimer()
         self._run_claimer()
+        self._goto_page1()
 
     def _run_claimer(self):
         self.claimer_job = self.jobs_ctx.submit_job(
@@ -554,7 +560,8 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         assert job
         assert job.is_finished()
         assert job.status == "ok"
-        self._goto_page1()
+        current_page = self.main_layout.itemAt(0).widget()
+        current_page.switch_to_info_retrieved()
 
     def _on_retrieve_info_error(self, job):
         if self.retrieve_info_job is not job:
@@ -592,6 +599,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.status = None
         self.claimer = Claimer()
         self._run_claimer()
+        self._goto_page1()
 
     def _goto_page1(self):
         item = self.main_layout.takeAt(0)

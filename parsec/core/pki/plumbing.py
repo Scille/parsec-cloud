@@ -36,6 +36,7 @@ async def pki_enrollment_select_certificate(
     """
     Raises:
         PkiEnrollmentCertificateNotFoundError
+        PkiEnrollmentCertificatePinCodeUnavailableError
         PkiEnrollmentCertificateCryptoError
         PkiEnrollmentCertificateError
     """
@@ -50,6 +51,7 @@ async def pki_enrollment_sign_payload(payload: bytes, x509_certificate: X509Cert
     """
     Raises:
         PkiEnrollmentCertificateNotFoundError
+        PkiEnrollmentCertificatePinCodeUnavailableError
         PkiEnrollmentCertificateCryptoError
         PkiEnrollmentCertificateError
     """
@@ -100,6 +102,7 @@ async def pki_enrollment_load_local_pending_secret_part(
         PkiEnrollmentCertificateNotFoundError
         PkiEnrollmentCertificateCryptoError
         PkiEnrollmentCertificateError
+        PkiEnrollmentCertificatePinCodeUnavailableError
         PkiEnrollmentLocalPendingCryptoError
     """
     extension = _load_smartcard_extension()

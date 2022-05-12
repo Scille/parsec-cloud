@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+import re
 import errno
 import trio
 from functools import partial
@@ -278,7 +279,14 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def rename(self, path: FsPath, destination: str):
         destination = FsPath(destination)
-        self.fs_access.entry_rename(path, destination, overwrite=True)
+        if not path.parent.is_root() and re.match(r".*\.sb-\w*-\w*", str(path.parent.name)):
+            # This shouldn't happen with the defer_permission option in the FUSE function,
+            # but if there ever is a permission error while saving with Apple softwares,
+            # this is a fallback to avoid any unintended behavior related to this format
+            # of temporary files. See https://github.com/Scille/parsec-cloud/pull/2211
+            self.fs_access.workspace_move(path, destination)
+        else:
+            self.fs_access.entry_rename(path, destination, overwrite=True)
         return 0
 
     def flush(self, path: FsPath, fh: int):
