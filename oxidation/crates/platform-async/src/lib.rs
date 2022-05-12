@@ -1,2 +1,2 @@
-mod platform;
-mod task;
+pub mod platform;
+pub mod task;
