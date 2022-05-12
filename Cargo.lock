@@ -784,6 +784,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec-platform-async"
+version = "0.1.0"
+dependencies = [
+ "flume",
+ "futures",
+ "futures-lite",
+ "js-sys",
+ "log",
+ "simple_logger",
+ "tokio",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
 name = "libparsec_bindings_common"
 version = "0.1.0"
 dependencies = [
@@ -1305,22 +1321,6 @@ name = "pkg-config"
 version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "58893f751c9b0412871a09abd62ecd2a00298c6c83befa223ef98c52aef40cbe"
-
-[[package]]
-name = "platform-async"
-version = "0.1.0"
-dependencies = [
- "flume",
- "futures",
- "futures-lite",
- "js-sys",
- "log",
- "simple_logger",
- "tokio",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
-]
 
 [[package]]
 name = "poly1305"

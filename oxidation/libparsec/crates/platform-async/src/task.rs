@@ -10,7 +10,7 @@ pub trait Taskable<T>: Future<Output = T> {
     fn detach(self);
 
     /// Return `true` if the current task is finished.
-    fn is_finised(&self) -> bool;
+    fn is_finished(&self) -> bool;
 
     /// Return `true` if the current task is canceled.
     fn is_canceled(&self) -> bool;
