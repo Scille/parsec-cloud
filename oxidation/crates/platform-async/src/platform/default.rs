@@ -79,6 +79,27 @@ impl<T> crate::task::Task<T> for Task<T> {
     }
 }
 
+impl<T> Future for Task<T> {
+    type Output = T;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let s = self.as_mut();
+        let mut state = s.shared_state.lock().unwrap();
+
+        state.task_waker = Some(cx.waker().clone());
+        if state.finished {
+            Poll::Ready(
+                state
+                    .value
+                    .take()
+                    .expect("return value from runnable sohould have been set, but wasn't"),
+            )
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
 pub struct Runnable<F, T> {
     future: Pin<Box<F>>,
     shared_state: Arc<Mutex<SharedState<T>>>,
