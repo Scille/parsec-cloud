@@ -15,6 +15,7 @@ from parsec.backend.memory.user import (
 )
 from parsec.backend.user_type import User, Device
 from parsec.backend.pki import (
+    PkiEnrollementEmailAlreadyUsedError,
     PkiEnrollmentIdAlreadyUsedError,
     PkiEnrollmentInfo,
     PkiEnrollmentInfoSubmitted,
@@ -68,6 +69,15 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         for enrollment in reversed(self._enrollments[organization_id]):
             if enrollment.enrollment_id == enrollment_id:
                 raise PkiEnrollmentIdAlreadyUsedError()
+
+        # Assert email not used.
+        _, total = await self._user_component.find_humans(
+            organization_id=organization_id,
+            query=submitter_der_x509_certificate_email,
+            omit_revoked=True,
+        )
+        if total:
+            raise PkiEnrollementEmailAlreadyUsedError()
 
         # Try to retrieve the last attempt with this x509 certificate
         for enrollment in reversed(self._enrollments[organization_id]):

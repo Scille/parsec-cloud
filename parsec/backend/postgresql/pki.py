@@ -5,6 +5,7 @@ from typing import List
 from uuid import UUID
 from asyncpg import UniqueViolationError
 from pendulum import DateTime
+import pendulum
 
 from parsec.api.protocol import OrganizationID
 from parsec.api.protocol.pki import PkiEnrollmentStatus
@@ -14,6 +15,7 @@ from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.user import UserActiveUsersLimitReached, UserAlreadyExistsError
 from parsec.backend.user_type import User, Device
 from parsec.backend.pki import (
+    PkiEnrollementEmailAlreadyUsedError,
     PkiEnrollmentActiveUsersLimitReached,
     PkiEnrollmentAlreadyEnrolledError,
     PkiEnrollmentAlreadyExistError,
@@ -200,6 +202,19 @@ _q_get_user_from_device_id = Q(
     LIMIT 1
     """
 )
+_q_retrieve_active_human_by_email_for_update = Q(
+    f"""
+    SELECT
+        user_.user_id
+    FROM user_ LEFT JOIN human ON user_.human=human._id
+    WHERE
+        user_.organization = { q_organization_internal_id("$organization_id") }
+        AND human.email = $email
+        AND (user_.revoked_on IS NULL OR user_.revoked_on > $now)
+    FOR UPDATE
+    LIMIT 1
+"""
+)
 
 
 def _build_enrollment_info(entry) -> PkiEnrollmentInfo:
@@ -267,6 +282,17 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             )
             if row:
                 raise PkiEnrollmentIdAlreadyUsedError()
+
+            # Assert email not already used by active human
+            row = await conn.fetchrow(
+                *_q_retrieve_active_human_by_email_for_update(
+                    organization_id=organization_id.str,
+                    email=submitter_der_x509_certificate_email,
+                    now=pendulum.now,
+                )
+            )
+            if row:
+                raise PkiEnrollementEmailAlreadyUsedError()
 
             # Try to retrieve the last attempt with this x509 certificate
             row = await conn.fetchrow(
