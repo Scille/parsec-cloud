@@ -21,7 +21,7 @@ enum Mode {
 
 #[tokio::main]
 async fn main() -> Result<(), ()> {
-    simple_logger::init_with_level(log::Level::Debug).expect("cannot initialise simple logger");
+    simple_logger::init_with_level(log::Level::Debug).expect("cannot initialize simple logger");
 
     let targets = vec![
         Mode::Fail(Duration::from_millis(2300)),
