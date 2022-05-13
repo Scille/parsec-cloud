@@ -331,6 +331,8 @@ class BasePkiEnrollmentComponent:
         Raises:
             PkiEnrollmentCertificateAlreadySubmittedError
             PkiEnrollmentAlreadyEnrolledError
+            PkiEnrollmentIdAlreadyUsedError
+            PkiEnrollementEmailAlreadyUsedError
         """
         raise NotImplementedError()
 
