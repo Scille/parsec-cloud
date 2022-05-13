@@ -3,6 +3,8 @@
 import pytest
 import trio
 
+from tests.common import real_clock_fail_after
+
 from parsec.api.transport import Transport, BytesMessage, Ping, Pong
 from parsec.api.protocol import InvitationType
 from parsec.core.types import BackendInvitationAddr
@@ -14,13 +16,13 @@ from parsec.core.backend_connection import (
 
 
 @pytest.mark.trio
-async def _test_keepalive(mock_clock, monkeypatch, cmds_factory):
+async def _test_keepalive(monkeypatch, cmds_factory):
     ping_events_sender, ping_events_receiver = trio.open_memory_channel(100)
-    tansport_ready = trio.Event()
+    transport_ready = trio.Event()
     _vanilla_next_ws_event = Transport._next_ws_event
 
     async def _mocked_next_ws_event(transport):
-        tansport_ready.set()
+        transport_ready.set()
         while True:
             event = await _vanilla_next_ws_event(transport)
             if isinstance(event, BytesMessage):
@@ -33,19 +35,18 @@ async def _test_keepalive(mock_clock, monkeypatch, cmds_factory):
 
     monkeypatch.setattr(Transport, "_next_ws_event", _mocked_next_ws_event)
 
-    mock_clock.rate = 100
     async with cmds_factory(keepalive=10) as cmds:
         # Backend won't receive our command (remember api level ping has nothing
         # to do with websocket level ping !), so the client will end up sending
         # websocket pings to keep the connection alive while waiting for the
         # never-comming answer
         async with trio.open_service_nursery() as nursery:
-            nursery.start_soon(cmds.ping, "Wathever")
+            nursery.start_soon(cmds.ping, "Whatever")
 
             # Wait for the transport to be ready, then wait until ping is requested
-            await tansport_ready.wait()
-            await trio.sleep(10)  # rate is 100 so 0.1s for real
-            with trio.fail_after(1):
+            await transport_ready.wait()
+            await trio.sleep(10)  # autojump clock makes this instantaneous
+            async with real_clock_fail_after(1):
                 backend_transport, event = await ping_events_receiver.receive()
                 assert isinstance(event, Ping)
                 client_transport, event = await ping_events_receiver.receive()
@@ -53,8 +54,8 @@ async def _test_keepalive(mock_clock, monkeypatch, cmds_factory):
                 assert client_transport is not backend_transport
 
             # Wait for another ping, just to be sure...
-            await trio.sleep(10)  # rate is 100 so 0.1s for real
-            with trio.fail_after(1):
+            await trio.sleep(10)  # autojump clock makes this instantaneous
+            async with real_clock_fail_after(1):
                 backend_transport2, event = await ping_events_receiver.receive()
                 assert isinstance(event, Ping)
                 assert backend_transport is backend_transport2
@@ -66,19 +67,22 @@ async def _test_keepalive(mock_clock, monkeypatch, cmds_factory):
 
 
 @pytest.mark.trio
-async def test_authenticated_cmd_keepalive(mock_clock, monkeypatch, running_backend, alice):
+async def test_authenticated_cmd_keepalive(autojump_clock, monkeypatch, running_backend, alice):
+    autojump_clock.setup()
+
     def _cmds_factory(keepalive):
         return backend_authenticated_cmds_factory(
             alice.organization_addr, alice.device_id, alice.signing_key, keepalive=keepalive
         )
 
-    await _test_keepalive(mock_clock, monkeypatch, _cmds_factory)
+    await _test_keepalive(monkeypatch, _cmds_factory)
 
 
 @pytest.mark.trio
 async def test_invited_cmd_keepalive(
-    mock_clock, monkeypatch, backend, running_backend, backend_addr, alice
+    autojump_clock, monkeypatch, backend, running_backend, backend_addr, alice
 ):
+    autojump_clock.setup()
     invitation = await backend.invite.new_for_device(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
@@ -92,12 +96,14 @@ async def test_invited_cmd_keepalive(
     def _cmds_factory(keepalive):
         return backend_invited_cmds_factory(invitation_addr, keepalive=keepalive)
 
-    await _test_keepalive(mock_clock, monkeypatch, _cmds_factory)
+    await _test_keepalive(monkeypatch, _cmds_factory)
 
 
 @pytest.mark.trio
-async def test_apiv1_anonymous_cmd_keepalive(mock_clock, monkeypatch, running_backend, coolorg):
+async def test_apiv1_anonymous_cmd_keepalive(autojump_clock, monkeypatch, running_backend, coolorg):
+    autojump_clock.setup()
+
     def _cmds_factory(keepalive):
         return apiv1_backend_anonymous_cmds_factory(coolorg.addr, keepalive=keepalive)
 
-    await _test_keepalive(mock_clock, monkeypatch, _cmds_factory)
+    await _test_keepalive(monkeypatch, _cmds_factory)
