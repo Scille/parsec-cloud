@@ -478,11 +478,11 @@ class ErrorWidget(QWidget, Ui_ErrorWidget):
         else:
             import traceback
 
-            stack = traceback.format_exception(None, exception, None)
+            stack = traceback.format_exception(None, exception, getattr(exception, "__traceback__", None))
             if not stack:
                 self.button_details.hide()
             else:
-                self.text_details.insertPlainText(str(exception) + "\n\n")
+                self.text_details.insertPlainText(type(exception).__name__ + "\n\n")
                 self.text_details.insertPlainText("".join(stack))
                 cursor = self.text_details.textCursor()
                 cursor.setPosition(0)

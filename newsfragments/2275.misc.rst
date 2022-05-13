@@ -1,0 +1,1 @@
+Gives more details when an error occurs
