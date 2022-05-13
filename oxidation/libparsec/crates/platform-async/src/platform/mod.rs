@@ -5,4 +5,4 @@ mod native;
 #[cfg(not(target_arch = "wasm32"))]
 use native as platform;
 
-pub use platform::{spawn, Task};
+pub use platform::{spawn, JoinSet, Task};
