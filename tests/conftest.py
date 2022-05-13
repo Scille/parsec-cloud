@@ -33,7 +33,6 @@ from parsec.core.logged_core import logged_core_factory
 from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.mountpoint.manager import get_mountpoint_runner
 from parsec.core.fs.storage import LocalDatabase
-
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
@@ -49,7 +48,7 @@ from parsec.backend.config import (
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
-from tests.common import freeze_time, addr_with_device_subdomain
+from tests.common import freeze_time, addr_with_device_subdomain, real_clock_fail_after
 from tests.postgresql import (
     get_postgresql_url,
     bootstrap_postgresql_testbed,
@@ -305,6 +304,14 @@ async def asyncio_loop(request):
 
 
 @pytest.fixture
+def mock_clock():
+    # Prevent from using pytest_trio's `mock_clock` fixture.
+    # This is because `mock_clock` doesn't handle well timeouts in fixture's
+    # initialization.
+    raise RuntimeError("Use `autojump_clock` fixture instead !!!")
+
+
+@pytest.fixture
 def autojump_clock(request):
     # We don't mock the clock during fixture initialization to avoid weird
     # too slow errors (e.g. logged core monitors waiting for backend).
@@ -338,6 +345,7 @@ def autojump_clock(request):
         clock.rate = rate
 
     clock.setup = _setup
+    clock.real_clock_fail_after = real_clock_fail_after  # Quick access helper
     yield clock
 
     # Easy to forget this fixture must be explicitly used
@@ -714,7 +722,7 @@ class LetterBox:
         self.emails = []
 
     async def get_next_with_timeout(self, timeout=1):
-        with trio.fail_after(timeout):
+        async with real_clock_fail_after(timeout):
             return await self.get_next()
 
     async def get_next(self):
@@ -807,7 +815,7 @@ def core_factory(request, running_backend_ready, event_bus_factory, core_config)
     async def _core_factory(device, event_bus=None):
         # Ensure test doesn't stay frozen if a bug in a fixture prevent the
         # backend from starting
-        with trio.fail_after(3):
+        async with real_clock_fail_after(3):
             await running_backend_ready.wait()
         event_bus = event_bus or event_bus_factory()
 

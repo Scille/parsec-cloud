@@ -2,16 +2,19 @@
 
 import trio
 import pytest
-
 from wsproto.events import Ping, Pong, CloseConnection, AcceptConnection, Request
+
 from parsec.api.transport import Transport
 from parsec.api.protocol import events_listen_serializer, ping_serializer
+
+from tests.common import real_clock_fail_after
 
 
 @pytest.mark.trio
 async def test_events_listen_wait_has_watchdog(
-    monkeypatch, mock_clock, running_backend, backend_sock_factory, alice
+    monkeypatch, autojump_clock, running_backend, backend_sock_factory, alice
 ):
+    autojump_clock.setup()
     KEEPALIVE_TIME = 2
     # Spy on the transport events to detect the wsproto events
     transport_events_sender, transport_events_receiver = trio.open_memory_channel(100)
@@ -32,11 +35,12 @@ async def test_events_listen_wait_has_watchdog(
 
     events_listen_rep = None
 
-    async def _cmd():
+    async def _cmd(task_status):
         nonlocal events_listen_rep
         req = {"cmd": "events_listen", "wait": True}
         raw_req = events_listen_serializer.req_dumps(req)
         await transport.send(raw_req)
+        task_status.started()
         # The events_listen response will be triggered by the next command on the stream
         # so we will be blocked here until the next command will be sent.
         # We may use the same transport for the next request because the websocket
@@ -46,7 +50,6 @@ async def test_events_listen_wait_has_watchdog(
     async with backend_sock_factory(
         running_backend.backend, alice, keepalive=KEEPALIVE_TIME
     ) as transport:
-        mock_clock.rate = 1
 
         await trio.testing.wait_all_tasks_blocked()
         # The backend should upgrade the websocket connection
@@ -59,11 +62,10 @@ async def test_events_listen_wait_has_watchdog(
 
         async with trio.open_service_nursery() as nursery:
 
-            nursery.start_soon(_cmd)
             # Now advance time until ping websocket is requested
-            await trio.testing.wait_all_tasks_blocked()
-            mock_clock.jump(KEEPALIVE_TIME)
-            with trio.fail_after(1):
+            await nursery.start(_cmd)
+            await trio.sleep(KEEPALIVE_TIME)  # autojump clock so instantaneous
+            async with real_clock_fail_after(1):
                 backend_transport1, event = await next_ws_proto_related_event()
                 assert isinstance(event, Ping)
                 client_transport1, event = await next_ws_proto_related_event()
@@ -73,9 +75,8 @@ async def test_events_listen_wait_has_watchdog(
                 assert backend_transport is backend_transport1
 
             # Wait for another ping websocket, just to be sure...
-            await trio.testing.wait_all_tasks_blocked()
-            mock_clock.jump(KEEPALIVE_TIME)
-            with trio.fail_after(1):
+            await trio.sleep(KEEPALIVE_TIME)  # autojump clock so instantaneous
+            async with real_clock_fail_after(1):
                 backend_transport2, event = await next_ws_proto_related_event()
                 assert isinstance(event, Ping)
                 assert backend_transport1 is backend_transport2
