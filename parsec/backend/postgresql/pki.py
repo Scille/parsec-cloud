@@ -283,17 +283,6 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             if row:
                 raise PkiEnrollmentIdAlreadyUsedError()
 
-            # Assert email not already used by active human
-            row = await conn.fetchrow(
-                *_q_retrieve_active_human_by_email_for_update(
-                    organization_id=organization_id.str,
-                    email=submitter_der_x509_certificate_email,
-                    now=pendulum.now,
-                )
-            )
-            if row:
-                raise PkiEnrollementEmailAlreadyUsedError()
-
             # Try to retrieve the last attempt with this x509 certificate
             row = await conn.fetchrow(
                 *_q_get_last_pki_enrollment_from_certificate_sha1_for_update(
@@ -358,6 +347,17 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         raise PkiEnrollmentAlreadyEnrolledError(submitted_on)
                 else:
                     assert False
+
+            # Assert email not already used by active human
+            row = await conn.fetchrow(
+                *_q_retrieve_active_human_by_email_for_update(
+                    organization_id=organization_id.str,
+                    email=submitter_der_x509_certificate_email,
+                    now=pendulum.now(),
+                )
+            )
+            if row:
+                raise PkiEnrollementEmailAlreadyUsedError()
 
             try:
                 result = await conn.execute(
