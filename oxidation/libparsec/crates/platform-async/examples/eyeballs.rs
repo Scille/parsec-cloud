@@ -32,14 +32,14 @@ async fn main() -> Result<(), ()> {
 
     log::debug!("starting with {} targets", targets.len());
     let start_time = Instant::now();
-    assert_eq!(Ok(2), dbg!(eyeballs(targets).await));
+    assert_eq!(Some(2), dbg!(eyeballs(targets).await));
     let elapsed = start_time.elapsed();
     log::info!("elapsed time {}ms", elapsed.as_millis());
     assert!(elapsed < Duration::from_millis(900));
     Ok(())
 }
 
-async fn eyeballs(targets: Vec<Mode>) -> Result<usize, ()> {
+async fn eyeballs(targets: Vec<Mode>) -> Option<usize> {
     let failed_attempt = targets
         .iter()
         .map(|_| Arc::new(Notify::new()))
@@ -54,7 +54,7 @@ async fn eyeballs(targets: Vec<Mode>) -> Result<usize, ()> {
     for task in join_set.lock().unwrap().iter() {
         task.cancel();
     }
-    result.ok_or(())
+    result
 }
 
 fn spawn_attempt(
