@@ -74,6 +74,7 @@ async def pki_enrollment_submit(
     enrollment_id: UUID,
     force: bool,
     submitter_der_x509_certificate: bytes,
+    submitter_der_x509_certificate_email: str,
     submit_payload_signature: bytes,
     submit_payload: bytes,
 ) -> dict:
@@ -85,6 +86,7 @@ async def pki_enrollment_submit(
         enrollment_id=enrollment_id,
         force=force,
         submitter_der_x509_certificate=submitter_der_x509_certificate,
+        submitter_der_x509_certificate_email=submitter_der_x509_certificate_email,
         submit_payload_signature=submit_payload_signature,
         submit_payload=submit_payload,
     )

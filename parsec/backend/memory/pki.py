@@ -58,6 +58,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         enrollment_id: UUID,
         force: bool,
         submitter_der_x509_certificate: bytes,
+        submitter_der_x509_certificate_email: str,
         submit_payload_signature: bytes,
         submit_payload: bytes,
         submitted_on: DateTime,

@@ -59,6 +59,10 @@ class PkiEnrollmentIdAlreadyUsedError(PkiEnrollmentError):
     pass
 
 
+class PkiEnrollementEmailAlreadyUsedError(PkiEnrollmentError):
+    pass
+
+
 class PkiEnrollmentNoLongerAvailableError(PkiEnrollmentError):
     pass
 
@@ -135,6 +139,7 @@ class BasePkiEnrollmentComponent:
                 enrollment_id=msg["enrollment_id"],
                 force=msg["force"],
                 submitter_der_x509_certificate=msg["submitter_der_x509_certificate"],
+                submitter_der_x509_certificate_email=msg["submitter_der_x509_certificate_email"],
                 submit_payload_signature=msg["submit_payload_signature"],
                 submit_payload=msg["submit_payload"],
                 submitted_on=submitted_on,
@@ -146,6 +151,9 @@ class BasePkiEnrollmentComponent:
 
         except PkiEnrollmentIdAlreadyUsedError:
             rep = {"status": "enrollment_id_already_used"}
+
+        except PkiEnrollementEmailAlreadyUsedError:
+            rep = {"status": "email_already_used"}
 
         except PkiEnrollmentAlreadyEnrolledError:
             rep = {"status": "already_enrolled"}
@@ -314,6 +322,7 @@ class BasePkiEnrollmentComponent:
         enrollment_id: UUID,
         force: bool,
         submitter_der_x509_certificate: bytes,
+        submitter_der_x509_certificate_email: str,
         submit_payload_signature: bytes,
         submit_payload: bytes,
         submitted_on: DateTime,

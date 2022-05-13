@@ -110,6 +110,7 @@ class PkiEnrollmentSubmitterInitialCtx:
             enrollment_id=self.enrollment_id,
             force=force,
             submitter_der_x509_certificate=self.x509_certificate.der_x509_certificate,
+            submitter_der_x509_certificate_email=self.x509_certificate.subject_email_address,
             submit_payload_signature=payload_signature,
             submit_payload=raw_submit_payload,
         )
