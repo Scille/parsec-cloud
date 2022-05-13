@@ -29,7 +29,11 @@ async def _submit_request(
     signature=b"<signature>",
     request_id=None,
     force=False,
+    certif_email=None,
 ):
+    if not certif_email:
+        certif_email = bob.human_handle.email
+
     if not request_id:
         request_id = uuid4()
     payload = PkiEnrollmentSubmitPayload(
@@ -42,6 +46,7 @@ async def _submit_request(
         enrollment_id=request_id,
         force=force,
         submitter_der_x509_certificate=certif,
+        submitter_der_x509_certificate_email=certif_email,
         submit_payload_signature=signature,
         submit_payload=payload,
     )
@@ -98,6 +103,7 @@ async def test_pki_submit(anonymous_backend_sock, bob):
         enrollment_id=uuid4(),
         force=False,
         submitter_der_x509_certificate=b"<x509 certif>",
+        submitter_der_x509_certificate_email="random_guy",
         submit_payload_signature=b"<signature>",
         submit_payload=payload,
     )
@@ -111,6 +117,7 @@ async def test_pki_submit(anonymous_backend_sock, bob):
         enrollment_id=uuid4(),
         force=False,
         submitter_der_x509_certificate=b"<x509 certif>",
+        submitter_der_x509_certificate_email="random_guy",
         submit_payload_signature=b"<signature>",
         submit_payload=payload,
     )
@@ -125,6 +132,7 @@ async def test_pki_submit(anonymous_backend_sock, bob):
         enrollment_id=uuid4(),
         force=True,
         submitter_der_x509_certificate=b"<x509 certif>",
+        submitter_der_x509_certificate_email="random_guy",
         submit_payload_signature=b"<signature>",
         submit_payload=payload,
     )
@@ -145,6 +153,7 @@ async def test_pki_submit_same_id(anonymous_backend_sock, bob):
         enrollment_id=enrollment_id,
         force=False,
         submitter_der_x509_certificate=b"<x509 certif>",
+        submitter_der_x509_certificate_email="random_guy",
         submit_payload_signature=b"<signature>",
         submit_payload=payload,
     )
@@ -156,6 +165,7 @@ async def test_pki_submit_same_id(anonymous_backend_sock, bob):
         enrollment_id=enrollment_id,
         force=False,
         submitter_der_x509_certificate=b"<x509 certif>",
+        submitter_der_x509_certificate_email="random_guy",
         submit_payload_signature=b"<signature>",
         submit_payload=payload,
     )
@@ -167,6 +177,7 @@ async def test_pki_submit_same_id(anonymous_backend_sock, bob):
         enrollment_id=enrollment_id,
         force=True,
         submitter_der_x509_certificate=b"<x509 certif>",
+        submitter_der_x509_certificate_email="random_guy",
         submit_payload_signature=b"<signature>",
         submit_payload=payload,
     )
@@ -425,6 +436,7 @@ async def test_pki_submit_already_accepted(
         enrollment_id=uuid4(),
         force=False,
         submitter_der_x509_certificate=b"<x509 certif>",
+        submitter_der_x509_certificate_email="random_guy",
         submit_payload_signature=b"<signature>",
         submit_payload=payload,
     )
@@ -445,6 +457,7 @@ async def test_pki_submit_already_accepted(
         enrollment_id=uuid4(),
         force=False,
         submitter_der_x509_certificate=b"<x509 certif>",
+        submitter_der_x509_certificate_email="random_guy",
         submit_payload_signature=b"<signature>",
         submit_payload=payload,
     )
