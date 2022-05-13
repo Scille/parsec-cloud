@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use diesel::{sql_query, RunQueryDsl};
 use fancy_regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
@@ -11,7 +10,7 @@ use parsec_client_types::{LocalDevice, LocalFileManifest, LocalManifest, LocalWo
 use super::chunk_storage::ChunkStorage;
 use super::manifest_storage::{ChunkOrBlockID, ManifestStorage};
 use crate::error::{FSError, FSResult};
-use crate::storage::chunk_storage::BlockStorage;
+use crate::storage::chunk_storage::{BlockStorage, BlockStorageTrait, ChunkStorageTrait};
 use crate::storage::local_database::SqlitePool;
 use crate::storage::version::{
     get_workspace_cache_storage_db_path, get_workspace_data_storage_db_path,
@@ -24,7 +23,7 @@ pub struct WorkspaceStorage {
     pub workspace_id: EntryID,
     open_fds: HashMap<FileDescriptor, EntryID>,
     fd_counter: i32,
-    pub block_storage: BlockStorage,
+    block_storage: BlockStorage,
     chunk_storage: ChunkStorage,
     manifest_storage: ManifestStorage,
     pub prevent_sync_pattern: Regex,
@@ -80,7 +79,7 @@ impl WorkspaceStorage {
         };
 
         instance.block_storage.cleanup()?;
-        instance.run_cache_vacuum()?;
+        instance.block_storage.run_vacuum()?;
         // Populate the cache with the workspace manifest to be able to
         // access it synchronously at all time
         instance.load_workspace_manifest()?;
@@ -111,19 +110,19 @@ impl WorkspaceStorage {
         }
     }
 
-    pub fn remove_file_descriptor(&mut self, fd: FileDescriptor) {
-        self.open_fds.remove(&fd);
+    pub fn remove_file_descriptor(&mut self, fd: FileDescriptor) -> Option<EntryID> {
+        self.open_fds.remove(&fd)
     }
 
     // Block interface
 
     pub fn set_clean_block(&mut self, block_id: BlockID, block: &[u8]) -> FSResult<()> {
         self.block_storage
-            .set_chunk(ChunkID::from(*block_id), block)
+            .set_chunk_upgraded(ChunkID::from(*block_id), block)
     }
 
-    pub fn clear_clean_block(&mut self, block_id: BlockID) -> FSResult<()> {
-        self.block_storage.clear_chunk(ChunkID::from(*block_id))
+    pub fn clear_clean_block(&mut self, block_id: BlockID) {
+        let _ = self.block_storage.clear_chunk(ChunkID::from(*block_id));
     }
 
     pub fn get_dirty_block(&mut self, block_id: BlockID) -> FSResult<Vec<u8>> {
@@ -146,8 +145,12 @@ impl WorkspaceStorage {
         self.chunk_storage.set_chunk(chunk_id, block)
     }
 
-    pub fn clear_chunk(&mut self, chunk_id: ChunkID) -> FSResult<()> {
-        self.chunk_storage.clear_chunk(chunk_id)
+    pub fn clear_chunk(&mut self, chunk_id: ChunkID, miss_ok: bool) -> FSResult<()> {
+        let res = self.chunk_storage.clear_chunk(chunk_id);
+        if !miss_ok {
+            return res;
+        }
+        Ok(())
     }
 
     // Helpers
@@ -158,7 +161,7 @@ impl WorkspaceStorage {
 
     // Checkpoint interface
 
-    pub fn get_realm_checkpoint(&mut self) -> FSResult<i32> {
+    pub fn get_realm_checkpoint(&mut self) -> i32 {
         self.manifest_storage.get_realm_checkpoint()
     }
 
@@ -252,19 +255,23 @@ impl WorkspaceStorage {
         self.load_prevent_sync_pattern()
     }
 
-    fn run_cache_vacuum(&mut self) -> FSResult<()> {
-        sql_query("VACUUM;")
-            .execute(&mut self.block_storage.conn)
-            .map_err(|_| FSError::Vacuum)?;
-        Ok(())
+    pub fn block_storage_get_local_chunk_ids(
+        &mut self,
+        chunk_ids: &[ChunkID],
+    ) -> FSResult<Vec<ChunkID>> {
+        self.block_storage.get_local_chunk_ids(chunk_ids)
     }
 
-    pub fn run_data_vacuum(&mut self) -> FSResult<()> {
+    pub fn chunk_storage_get_local_chunk_ids(
+        &mut self,
+        chunk_ids: &[ChunkID],
+    ) -> FSResult<Vec<ChunkID>> {
+        self.chunk_storage.get_local_chunk_ids(chunk_ids)
+    }
+
+    pub fn run_vacuum(&mut self) -> FSResult<()> {
         // TODO: Add some condition
-        sql_query("VACUUM;")
-            .execute(&mut self.chunk_storage.conn)
-            .map_err(|_| FSError::Vacuum)?;
-        Ok(())
+        self.chunk_storage.run_vacuum()
     }
 }
 

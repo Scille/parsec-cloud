@@ -4,11 +4,10 @@ import os
 import sys
 import pytest
 from pendulum import datetime
-from pathlib import Path
 from hypothesis_trio.stateful import initialize, rule, run_state_machine_as_test
 from hypothesis import strategies as st
 
-from parsec.core.types import EntryID, LocalFileManifest, Chunk
+from parsec.core.types import EntryID, FileDescriptor, LocalFileManifest, Chunk
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
 from parsec.core.fs.exceptions import FSRemoteBlockNotFound
@@ -58,15 +57,16 @@ async def foo_txt(alice, alice_file_transactions):
 @pytest.mark.trio
 async def test_close_unknown_fd(alice_file_transactions):
     with pytest.raises(FSInvalidFileDescriptor):
-        await alice_file_transactions.fd_close(42)
+        await alice_file_transactions.fd_close(FileDescriptor(42))
 
 
 @pytest.mark.trio
+@pytest.mark.py
 async def test_operations_on_file(alice_file_transactions, foo_txt):
     file_transactions = alice_file_transactions
 
     fd = foo_txt.open()
-    assert isinstance(fd, int)
+    assert isinstance(fd, FileDescriptor)
 
     with freeze_time("2000-01-03"):
         await file_transactions.fd_write(fd, b"hello ", 0)
@@ -116,6 +116,7 @@ async def test_operations_on_file(alice_file_transactions, foo_txt):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 async def test_flush_file(alice_file_transactions, foo_txt):
     file_transactions = alice_file_transactions
 
@@ -215,7 +216,7 @@ size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows file style not compatible with oracle")
 def test_file_operations(
-    tmpdir, hypothesis_settings, user_fs_online_state_machine, file_transactions_factory, alice
+    tmpdir, hypothesis_settings, user_fs_online_state_machine, file_transactions_factory, alice, tmp_path
 ):
     tentative = 0
 
@@ -223,7 +224,7 @@ def test_file_operations(
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
                 async with WorkspaceStorage.run(
-                    Path("/dummy"), alice, EntryID.new()
+                    tmp_path / "dummy", alice, EntryID.new()
                 ) as local_storage:
                     async with file_transactions_factory(
                         self.device, local_storage=local_storage

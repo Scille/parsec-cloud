@@ -16,9 +16,9 @@ mod local_device;
 mod local_manifest;
 mod manifest;
 mod protocol;
+mod storage;
 mod time;
 mod trustchain;
-mod storage;
 
 /// A Python module implemented in Rust. The name of this function must match
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to

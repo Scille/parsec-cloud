@@ -14,7 +14,7 @@ from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
 from parsec.core.gui.lang import translate, format_datetime
 
-from tests.common import freeze_time
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.fixture
@@ -27,6 +27,7 @@ def catch_timestamped_workspace_widget(widget_catcher_factory):
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("invalid_name", (False, True))
+@customize_fixtures(real_data_storage=True)
 async def test_add_workspace(
     aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
 ):
@@ -68,6 +69,7 @@ async def test_add_workspace(
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("invalid_name", (False, True))
+@customize_fixtures(real_data_storage=True)
 async def test_rename_workspace(
     aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
 ):
@@ -219,6 +221,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_workspace_filter_user(
     aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob, bob_user_fs, alice
 ):
@@ -284,6 +287,7 @@ async def test_workspace_filter_user(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_workspace_filter_user_new_workspace(
     aqtbot,
     running_backend,
@@ -356,6 +360,7 @@ async def test_workspace_filter_user_new_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.py
 async def test_display_timestamped_workspace_in_workspaces_list(
     aqtbot, running_backend, logged_gui, monkeypatch, catch_timestamped_workspace_widget, tmp_path
 ):

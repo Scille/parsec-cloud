@@ -8,6 +8,7 @@ import io
 from parsec.core.fs.exceptions import FSUnsupportedOperation, FSOffsetError, FSInvalidFileDescriptor
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 from parsec.core.fs import FsPath
+from tests.common import customize_fixtures
 
 AnyPath = Union[FsPath, str]
 
@@ -66,6 +67,7 @@ async def write_in_both_files(triof, f, text):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_open(alice_workspace, trio_file):
 
     # Testing open multiples times same file
@@ -109,6 +111,7 @@ async def test_open(alice_workspace, trio_file):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_open_non_existent_file(alice_workspace, trio_file, random_text, tmp_path):
     random_text = random_text.encode("utf-8")
 
@@ -161,6 +164,7 @@ async def test_open_non_existent_file(alice_workspace, trio_file, random_text, t
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_open_right(alice_workspace, trio_file, random_text, tmp_path):
     # The text tested in both methods
     random_text = random_text.encode("utf-8")
@@ -206,6 +210,7 @@ async def test_open_right(alice_workspace, trio_file, random_text, tmp_path):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_read_write(alice_workspace, trio_file, random_text, tmp_path):
     # The text tested in both methods
     random_text = random_text.encode("utf-8")
@@ -375,6 +380,7 @@ async def test_read_write(alice_workspace, trio_file, random_text, tmp_path):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_seek(alice_workspace, trio_file):
 
     f = await alice_workspace.open_file("/foo/bar", "wb")
@@ -445,6 +451,7 @@ def open_file_no_ainit(workspace, path: AnyPath, mode):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_file_state(alice_workspace, trio_file, random_text):
     # testing that file state is in INIT mode.
     f = open_file_no_ainit(alice_workspace, "/foo/bar", "wb")
@@ -499,6 +506,7 @@ async def test_file_state(alice_workspace, trio_file, random_text):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_close(alice_workspace, trio_file, random_text):
     # The text tested in both methods
     random_text = random_text.encode("utf-8")
@@ -553,6 +561,7 @@ async def test_close(alice_workspace, trio_file, random_text):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_truncate(alice_workspace, trio_file, random_text):
     f = await alice_workspace.open_file("/foo/bar", "wb")
     triof = await trio.open_file(trio_file, "wb")
@@ -603,6 +612,7 @@ async def test_truncate(alice_workspace, trio_file, random_text):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_mode(alice_workspace, trio_file):
     f = await alice_workspace.open_file("/foo/bar", "wb")
     assert f.mode == "wb"
@@ -610,6 +620,7 @@ async def test_mode(alice_workspace, trio_file):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_name(alice_workspace, trio_file):
     f = await alice_workspace.open_file("/foo/bar", "wb")
     assert f.name == FsPath("/foo/bar")
@@ -617,6 +628,7 @@ async def test_name(alice_workspace, trio_file):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_stat(alice_workspace):
     f = await alice_workspace.open_file("/foo/bar", "wb")
     stat = await f.stat()

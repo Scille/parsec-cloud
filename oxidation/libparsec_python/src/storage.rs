@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use pyo3::exceptions::PyValueError;
-use pyo3::prelude::*;
 use pyo3::types::PyBytes;
+use pyo3::{import_exception, prelude::*};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
@@ -12,6 +12,9 @@ use crate::local_device::LocalDevice;
 use crate::local_manifest::{
     LocalFileManifest, LocalFolderManifest, LocalUserManifest, LocalWorkspaceManifest,
 };
+
+import_exception!(parsec.core.fs.exceptions, FSLocalMissError);
+import_exception!(parsec.core.fs.exceptions, FSInvalidFileDescriptor);
 
 #[pyclass]
 pub(crate) struct WorkspaceStorage(pub parsec_core_fs::WorkspaceStorage);
@@ -40,9 +43,6 @@ impl WorkspaceStorage {
             .map_err(|e| PyValueError::new_err(e.to_string()))?,
         ))
     }
-
-    #[getter]
-    fn teardown(&self) {}
 
     fn set_prevent_sync_pattern(&mut self, pattern: &PyAny) -> PyResult<()> {
         let pattern = py_to_rs_regex(pattern)?;
@@ -81,7 +81,7 @@ impl WorkspaceStorage {
             match self
                 .0
                 .get_manifest(entry_id.0)
-                .map_err(|e| PyValueError::new_err(e.to_string()))?
+                .map_err(|_| FSLocalMissError::new_err(entry_id))?
             {
                 parsec_client_types::LocalManifest::File(manifest) => {
                     LocalFileManifest(manifest).into_py(py)
@@ -136,7 +136,7 @@ impl WorkspaceStorage {
     fn clear_manifest(&mut self, entry_id: EntryID) -> PyResult<()> {
         self.0
             .clear_manifest(entry_id.0)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map_err(|_| FSLocalMissError::new_err(entry_id))
     }
 
     fn create_file_descriptor(&mut self, manifest: LocalFileManifest) -> PyResult<FileDescriptor> {
@@ -147,13 +147,15 @@ impl WorkspaceStorage {
         Ok(LocalFileManifest(
             self.0
                 .load_file_descriptor(fd.0)
-                .map_err(|e| PyValueError::new_err(e.to_string()))?,
+                .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))?,
         ))
     }
 
     fn remove_file_descriptor(&mut self, fd: FileDescriptor) -> PyResult<()> {
-        self.0.remove_file_descriptor(fd.0);
-        Ok(())
+        self.0
+            .remove_file_descriptor(fd.0)
+            .map(|_| ())
+            .ok_or_else(|| FSInvalidFileDescriptor::new_err(""))
     }
 
     fn set_clean_block(&mut self, block_id: BlockID, block: Vec<u8>) -> PyResult<()> {
@@ -163,9 +165,8 @@ impl WorkspaceStorage {
     }
 
     fn clear_clean_block(&mut self, block_id: BlockID) -> PyResult<()> {
-        self.0
-            .clear_clean_block(block_id.0)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+        self.0.clear_clean_block(block_id.0);
+        Ok(())
     }
 
     fn get_dirty_block<'py>(
@@ -176,14 +177,14 @@ impl WorkspaceStorage {
         let block = self
             .0
             .get_dirty_block(block_id.0)
-            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+            .map_err(|_| FSLocalMissError::new_err(block_id))?;
         Ok(PyBytes::new(py, &block))
     }
 
     fn get_chunk(&mut self, chunk_id: ChunkID) -> PyResult<Vec<u8>> {
         self.0
             .get_chunk(chunk_id.0)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map_err(|_| FSLocalMissError::new_err(chunk_id))
     }
 
     fn set_chunk(&mut self, chunk_id: ChunkID, block: Vec<u8>) -> PyResult<()> {
@@ -193,17 +194,14 @@ impl WorkspaceStorage {
     }
 
     #[args(miss_ok = false)]
-    #[allow(unused_variables)]
     fn clear_chunk(&mut self, chunk_id: ChunkID, miss_ok: bool) -> PyResult<()> {
         self.0
-            .clear_chunk(chunk_id.0)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .clear_chunk(chunk_id.0, miss_ok)
+            .map_err(|_| FSLocalMissError::new_err(chunk_id))
     }
 
     fn get_realm_checkpoint(&mut self) -> PyResult<i32> {
-        self.0
-            .get_realm_checkpoint()
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+        Ok(self.0.get_realm_checkpoint())
     }
 
     fn update_realm_checkpoint(
@@ -238,6 +236,49 @@ impl WorkspaceStorage {
         self.0
             .ensure_manifest_persistent(entry_id.0)
             .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    #[args(flush = true)]
+    fn clear_memory_cache(&mut self, flush: bool) -> PyResult<()> {
+        self.0
+            .clear_memory_cache(flush)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    fn run_vacuum(&mut self) -> PyResult<()> {
+        self.0
+            .run_vacuum()
+            .map_err(|_| PyValueError::new_err("Vacuum failed"))
+    }
+
+    fn block_storage_get_local_chunk_ids(
+        &mut self,
+        chunk_ids: Vec<ChunkID>,
+    ) -> PyResult<Vec<ChunkID>> {
+        Ok(self
+            .0
+            .block_storage_get_local_chunk_ids(
+                &chunk_ids.into_iter().map(|id| id.0).collect::<Vec<_>>(),
+            )
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .into_iter()
+            .map(ChunkID)
+            .collect())
+    }
+
+    fn chunk_storage_get_local_chunk_ids(
+        &mut self,
+        chunk_ids: Vec<ChunkID>,
+    ) -> PyResult<Vec<ChunkID>> {
+        Ok(self
+            .0
+            .chunk_storage_get_local_chunk_ids(
+                &chunk_ids.into_iter().map(|id| id.0).collect::<Vec<_>>(),
+            )
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .into_iter()
+            .map(ChunkID)
+            .collect())
     }
 
     #[getter]

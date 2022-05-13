@@ -76,7 +76,7 @@ async def reencryption_needed_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(logged_gui_as_admin=True, real_data_storage=True)
 async def test_workspace_reencryption_display(
     aqtbot,
     running_backend,
@@ -119,7 +119,7 @@ async def test_workspace_reencryption_display(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(logged_gui_as_admin=True, real_data_storage=True)
 async def test_workspace_reencryption(
     aqtbot,
     running_backend,
@@ -147,7 +147,7 @@ async def test_workspace_reencryption(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(logged_gui_as_admin=True, real_data_storage=True)
 async def test_workspace_reencryption_offline_backend(
     aqtbot,
     running_backend,
@@ -176,7 +176,7 @@ async def test_workspace_reencryption_offline_backend(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(logged_gui_as_admin=True, real_data_storage=True)
 async def test_workspace_reencryption_fs_error(
     aqtbot,
     running_backend,
@@ -207,7 +207,7 @@ async def test_workspace_reencryption_fs_error(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(logged_gui_as_admin=True, real_data_storage=True)
 async def test_workspace_reencryption_access_error(
     aqtbot,
     running_backend,
@@ -251,7 +251,7 @@ async def test_workspace_reencryption_access_error(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(logged_gui_as_admin=True, real_data_storage=True)
 async def test_workspace_reencryption_not_found_error(
     aqtbot,
     running_backend,
@@ -291,7 +291,7 @@ async def test_workspace_reencryption_not_found_error(
     "error_type",
     [FSBackendOfflineError, FSError, FSWorkspaceNoAccess, FSWorkspaceNotFoundError, Exception],
 )
-@customize_fixtures(logged_gui_as_admin=True)
+@customize_fixtures(logged_gui_as_admin=True, real_data_storage=True)
 async def test_workspace_reencryption_do_one_batch_error(
     caplog,
     aqtbot,

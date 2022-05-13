@@ -11,8 +11,7 @@ from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 
-from tests.common import freeze_time
-from tests.common.fixtures_customisation import customize_fixtures
+from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.mark.trio
@@ -33,6 +32,7 @@ async def test_user_manifest_access_while_speculative(user_fs_factory, alice):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 async def test_workspace_manifest_access_while_speculative(user_fs_factory, alice):
     # Speculative workspace occurs when workspace is shared to a new user, or
     # when a device gets it local data removed. We use the latter here (even if
@@ -209,6 +209,7 @@ async def test_concurrent_devices_agree_on_user_manifest(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_concurrent_devices_agree_on_workspace_manifest(
     running_backend, user_fs_factory, data_base_dir, initialize_local_user_manifest, alice, alice2
 ):
@@ -264,6 +265,7 @@ async def test_concurrent_devices_agree_on_workspace_manifest(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
     running_backend, user_fs_factory, alice, alice2
 ):
@@ -308,6 +310,7 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
     running_backend, user_fs_factory, data_base_dir, initialize_local_user_manifest, alice, alice2
 ):

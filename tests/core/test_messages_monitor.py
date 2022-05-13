@@ -10,7 +10,7 @@ from parsec.crypto import SecretKey
 from parsec.core.core_events import CoreEvent
 from parsec.core.backend_connection import BackendConnStatus
 
-from tests.common import create_shared_workspace, freeze_time
+from tests.common import create_shared_workspace, customize_fixtures, freeze_time
 
 
 @pytest.mark.trio
@@ -82,6 +82,7 @@ async def test_process_while_offline(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
     KEY = SecretKey.generate()
     # First, create a folder and sync it on backend
@@ -125,6 +126,7 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_revoke_sharing_trigger_event(alice_core, bob_core, running_backend):
     KEY = SecretKey.generate()
 
@@ -173,6 +175,7 @@ async def test_revoke_sharing_trigger_event(alice_core, bob_core, running_backen
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_new_reencryption_trigger_event(alice_core, bob_core, running_backend):
     KEY = SecretKey.generate()
 

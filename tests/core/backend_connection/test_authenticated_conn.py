@@ -15,6 +15,7 @@ from parsec.core.backend_connection import (
     BackendConnectionRefused,
 )
 from parsec.core.core_events import CoreEvent
+from tests.common import customize_fixtures
 
 from tests.common import real_clock_timeout
 
@@ -254,6 +255,7 @@ async def test_concurrency_sends(running_backend, alice, event_bus):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_realm_notif_on_new_entry_sync(running_backend, alice_backend_conn, alice2_user_fs):
     wid = await alice2_user_fs.workspace_create(EntryName("foo"))
     workspace = alice2_user_fs.get_workspace(wid)
@@ -280,6 +282,7 @@ async def test_realm_notif_on_new_entry_sync(running_backend, alice_backend_conn
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_realm_notif_on_new_workspace_sync(
     running_backend, alice_backend_conn, alice2_user_fs
 ):
@@ -307,6 +310,7 @@ async def test_realm_notif_on_new_workspace_sync(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_realm_notif_maintenance(running_backend, alice_backend_conn, alice2_user_fs):
     wid = await alice2_user_fs.workspace_create(EntryName("foo"))
     await alice2_user_fs.sync()

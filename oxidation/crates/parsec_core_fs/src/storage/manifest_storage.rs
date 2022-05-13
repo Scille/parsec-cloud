@@ -30,18 +30,9 @@ impl std::convert::AsRef<[u8]> for ChunkOrBlockID {
     }
 }
 
-#[derive(Queryable)]
-pub struct Vlob {
-    vlob_id: Vec<u8>,
-    base_version: i32,
-    remote_version: i32,
-    need_sync: bool,
-    blob: Vec<u8>,
-}
-
 #[derive(Insertable)]
 #[diesel(table_name = vlobs)]
-pub struct NewVlob<'a> {
+struct NewVlob<'a> {
     vlob_id: &'a [u8],
     base_version: i32,
     remote_version: i32,
@@ -49,29 +40,16 @@ pub struct NewVlob<'a> {
     blob: &'a [u8],
 }
 
-#[derive(Queryable)]
-pub struct RealmCheckpoint {
-    _id: i32,
-    checkpoint: i32,
-}
-
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = realm_checkpoint)]
-pub struct NewRealmCheckpoint {
+struct NewRealmCheckpoint {
     _id: i32,
     checkpoint: i32,
-}
-
-#[derive(Queryable)]
-pub struct PreventSyncPattern {
-    _id: i32,
-    pattern: String,
-    fully_appplied: bool,
 }
 
 #[derive(Insertable)]
 #[diesel(table_name = prevent_sync_pattern)]
-pub struct NewPreventSyncPattern<'a> {
+struct NewPreventSyncPattern<'a> {
     _id: i32,
     pattern: &'a str,
     fully_applied: bool,
@@ -80,7 +58,7 @@ pub struct NewPreventSyncPattern<'a> {
 pub struct ManifestStorage {
     local_symkey: SecretKey,
     conn: SqliteConn,
-    realm_id: EntryID,
+    pub realm_id: EntryID,
     // This cache contains all the manifests that have been set or accessed
     // since the last call to `clear_memory_cache`
     pub(crate) cache: HashMap<EntryID, LocalManifest>,
@@ -91,6 +69,13 @@ pub struct ManifestStorage {
     // manifest is written. Note: this set might be empty but the manifest
     // still requires to be flushed.
     cache_ahead_of_localdb: HashMap<EntryID, HashSet<ChunkOrBlockID>>,
+}
+
+impl Drop for ManifestStorage {
+    fn drop(&mut self) {
+        self.flush_cache_ahead_of_persistance()
+            .expect("Cannot flush cache when ManifestStorage dropped");
+    }
 }
 
 impl ManifestStorage {
@@ -154,22 +139,6 @@ impl ManifestStorage {
         Ok(())
     }
 
-    fn drop_db(&mut self) -> FSResult<()> {
-        sql_query("DROP TABLE IF EXISTS vlobs;")
-            .execute(&mut self.conn)
-            .map_err(|_| FSError::DropTable("vlobs"))?;
-
-        sql_query("DROP TABLE IF EXISTS realm_checkpoints;")
-            .execute(&mut self.conn)
-            .map_err(|_| FSError::DropTable("realm_checkpoints"))?;
-
-        sql_query("DROP TABLE IF EXISTS prevent_sync_pattern;")
-            .execute(&mut self.conn)
-            .map_err(|_| FSError::DropTable("prevent_sync_pattern"))?;
-
-        Ok(())
-    }
-
     pub fn clear_memory_cache(&mut self, flush: bool) -> FSResult<()> {
         if flush {
             self.flush_cache_ahead_of_persistance()?;
@@ -211,7 +180,10 @@ impl ManifestStorage {
                     .and(prevent_sync_pattern::pattern.ne(pattern)),
             ),
         )
-        .set(prevent_sync_pattern::pattern.eq(pattern))
+        .set((
+            prevent_sync_pattern::pattern.eq(pattern),
+            prevent_sync_pattern::fully_applied.eq(false),
+        ))
         .execute(&mut self.conn)
         .map_err(|_| FSError::UpdateTable("prevent_sync_pattern: set_prevent_sync_pattern"))?;
 
@@ -229,7 +201,7 @@ impl ManifestStorage {
             prevent_sync_pattern::table.filter(
                 prevent_sync_pattern::_id
                     .eq(0)
-                    .and(prevent_sync_pattern::pattern.ne(pattern)),
+                    .and(prevent_sync_pattern::pattern.eq(pattern)),
             ),
         )
         .set(prevent_sync_pattern::fully_applied.eq(true))
@@ -243,12 +215,12 @@ impl ManifestStorage {
 
     // Checkpoint operations
 
-    pub fn get_realm_checkpoint(&mut self) -> FSResult<i32> {
+    pub fn get_realm_checkpoint(&mut self) -> i32 {
         realm_checkpoint::table
             .select(realm_checkpoint::checkpoint)
             .filter(realm_checkpoint::_id.eq(0))
             .first(&mut self.conn)
-            .map_err(|_| FSError::QueryTable("realm_checkpoint: get_realm_checkpoint"))
+            .unwrap_or(0)
     }
 
     pub fn update_realm_checkpoint(
@@ -394,6 +366,7 @@ impl ManifestStorage {
                     .collect::<Vec<_>>();
 
                 let vlob_id = (*entry_id).as_ref();
+
                 sql_query("INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
                     VALUES (
                     ?, ?, ?, ?,
@@ -430,7 +403,7 @@ impl ManifestStorage {
         let keys = self
             .cache_ahead_of_localdb
             .keys()
-            .cloned()
+            .copied()
             .collect::<Vec<_>>();
         for entry_id in keys {
             self.ensure_manifest_persistent(entry_id)?;
@@ -484,6 +457,24 @@ mod tests {
     use super::super::local_database::SqlitePool;
     use super::*;
 
+    impl ManifestStorage {
+        fn drop_db(&mut self) -> FSResult<()> {
+            sql_query("DROP TABLE IF EXISTS vlobs;")
+                .execute(&mut self.conn)
+                .map_err(|_| FSError::DropTable("vlobs"))?;
+
+            sql_query("DROP TABLE IF EXISTS realm_checkpoints;")
+                .execute(&mut self.conn)
+                .map_err(|_| FSError::DropTable("realm_checkpoints"))?;
+
+            sql_query("DROP TABLE IF EXISTS prevent_sync_pattern;")
+                .execute(&mut self.conn)
+                .map_err(|_| FSError::DropTable("prevent_sync_pattern"))?;
+
+            Ok(())
+        }
+    }
+
     #[test]
     fn manifest_storage() {
         let now = DateTime::now();
@@ -517,7 +508,7 @@ mod tests {
         let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().unwrap();
 
         assert_eq!(re.as_str(), r"\z");
-        assert_eq!(fully_applied, true);
+        assert_eq!(fully_applied, false);
 
         let entry_id = EntryID::default();
 
@@ -525,7 +516,7 @@ mod tests {
             .update_realm_checkpoint(64, &[(entry_id, 2)])
             .unwrap();
 
-        assert_eq!(manifest_storage.get_realm_checkpoint().unwrap(), 64);
+        assert_eq!(manifest_storage.get_realm_checkpoint(), 64);
 
         let local_file_manifest = LocalManifest::File(LocalFileManifest {
             base: FileManifest {

@@ -130,7 +130,7 @@ pub fn rs_to_py_regex<'py>(py: Python<'py>, regex: &Regex) -> PyResult<&'py PyAn
     let re = py.import("re")?;
     let args = PyTuple::new(
         py,
-        vec![regex.as_str().replace("\\z", "\\Z").replace('\\', "\x20")],
+        vec![regex.as_str().replace("\\z", "\\Z").replace('\x20', "\\ ")],
     );
     re.call_method1("compile", args)
 }

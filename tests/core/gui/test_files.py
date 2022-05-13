@@ -16,6 +16,7 @@ from parsec.core.fs import FsPath
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
 from parsec.test_utils import create_inconsistent_workspace
+from tests.common import customize_fixtures
 
 
 def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f_w, c_w):
@@ -714,6 +715,7 @@ async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed, sn
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_use_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
     tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
@@ -842,6 +844,7 @@ async def test_show_file_status(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_import_file_disk_full(
     monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):

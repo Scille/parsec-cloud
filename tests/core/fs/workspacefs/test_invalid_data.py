@@ -71,18 +71,21 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 async def test_empty_blob(testbed):
     exc_msg = "Cannot decrypt vlob: The nonce must be exactly 24 bytes long"
     await testbed.run(blob=b"", exc_msg=exc_msg)
 
 
 @pytest.mark.trio
+@pytest.mark.py
 async def test_invalid_signature(testbed, alice2):
     exc_msg = "Cannot decrypt vlob: Signature was forged or corrupt"
     await testbed.run(author_signkey=alice2.signing_key, exc_msg=exc_msg)
 
 
 @pytest.mark.trio
+@pytest.mark.py
 async def test_invalid_author(testbed, alice2):
     # Invalid author field in manifest
     exc_msg = "Cannot decrypt vlob: Invalid author: expected `alice@dev1`, got `alice@dev2`"
@@ -94,6 +97,7 @@ async def test_invalid_author(testbed, alice2):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 async def test_invalid_timestamp(testbed, alice, alice2):
     bad_timestamp = datetime(2000, 1, 3)
 
@@ -124,6 +128,7 @@ def backend_disable_vlob_checks(backend):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 @customize_fixtures(backend_force_mocked=True)
 async def test_no_user_certif(running_backend, testbed, alice, bob):
     # Data created before workspace manifest access

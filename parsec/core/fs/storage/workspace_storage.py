@@ -13,6 +13,7 @@ from typing import (
     AsyncIterator,
     NoReturn,
     Pattern,
+    List,
 )
 
 import trio
@@ -132,6 +133,12 @@ class BaseWorkspaceStorage:
         raise NotImplementedError
 
     async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
+        raise NotImplementedError
+
+    async def block_storage_get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+        raise NotImplementedError
+
+    async def chunk_storage_get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
         raise NotImplementedError
 
     # Locking helpers
@@ -431,6 +438,12 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         await self.manifest_storage.mark_prevent_sync_pattern_fully_applied(pattern)
         await self._load_prevent_sync_pattern()
 
+    async def chunk_storage_get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+        return await self.chunk_storage.get_local_chunk_ids(chunk_id)
+
+    async def block_storage_get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+        return await self.block_storage.get_local_chunk_ids(chunk_id)
+
     # Vacuum
 
     async def run_vacuum(self) -> None:
@@ -450,6 +463,14 @@ if not TYPE_CHECKING:
             def __init__(self, *args, **kwargs):
                 self.sync_instance = _RsWorkspaceStorage(*args, **kwargs)
 
+            @property
+            def device(self) -> LocalDevice:
+                return self.sync_instance.device
+
+            @property
+            def workspace_id(self) -> EntryID:
+                return self.sync_instance.workspace_id
+
             @classmethod
             @asynccontextmanager
             async def run(cls, *args, **kwargs):
@@ -457,7 +478,7 @@ if not TYPE_CHECKING:
                 try:
                     yield self
                 finally:
-                    await trio.to_thread.run_sync(self.sync_instance.teardown)
+                    self.sync_instance.clear_memory_cache(flush=True)
 
             @asynccontextmanager
             async def lock_entry_id(self, entry_id: EntryID) -> AsyncIterator[EntryID]:
@@ -485,9 +506,6 @@ if not TYPE_CHECKING:
 
             def get_prevent_sync_pattern_fully_applied(self) -> bool:
                 return self.sync_instance.get_prevent_sync_pattern_fully_applied()
-
-            def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
-                return WorkspaceStorageTimestamped(self, timestamp)
 
             def __getattr__(self, method_name):
                 method = getattr(self.sync_instance, method_name)

@@ -135,6 +135,7 @@ async def test_cache_set_get(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 @customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("cache_only", (False, True))
 @pytest.mark.parametrize("clear_manifest", (False, True))
@@ -351,6 +352,7 @@ async def test_lock_manifest(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 @customize_fixtures(real_data_storage=True)
 async def test_block_interface(alice_workspace_storage):
     data = b"0123456"
@@ -381,6 +383,7 @@ async def test_block_interface(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 @customize_fixtures(real_data_storage=True)
 async def test_chunk_interface(alice_workspace_storage):
     data = b"0123456"
@@ -411,6 +414,7 @@ async def test_chunk_interface(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 @customize_fixtures(real_data_storage=True)
 async def test_chunk_many(alice_workspace_storage):
     data = b"0123456"
@@ -423,7 +427,7 @@ async def test_chunk_many(alice_workspace_storage):
         chunks.append(c.id)
         await aws.chunk_storage.set_chunk(c.id, data)
     assert len(chunks) == chunks_number
-    ret = await aws.chunk_storage.get_local_chunk_ids(chunks)
+    ret = await aws.chunk_storage_get_local_chunk_ids(chunks)
     for i in range(len(ret)):
         assert ret[i]
     assert len(ret) == chunks_number
@@ -456,6 +460,7 @@ async def test_run_vacuum(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 @customize_fixtures(real_data_storage=True)
 async def test_timestamped_storage(alice_workspace_storage):
     timestamp = now()
@@ -506,6 +511,7 @@ async def test_timestamped_storage(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 @customize_fixtures(real_data_storage=True)
 async def test_vacuum(data_base_dir, alice, workspace_id):
     data_size = 1 * 1024 * 1024
@@ -550,6 +556,7 @@ async def test_vacuum(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 @customize_fixtures(real_data_storage=True)
 async def test_garbage_collection(data_base_dir, alice, workspace_id):
     block_size = DEFAULT_BLOCK_SIZE
@@ -574,6 +581,7 @@ async def test_garbage_collection(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@pytest.mark.py
 @customize_fixtures(real_data_storage=True)
 async def test_storage_file_tree(data_base_dir, alice, workspace_id):
     manifest_sqlite_db = data_base_dir / alice.slug / str(workspace_id) / "workspace_data-v1.sqlite"

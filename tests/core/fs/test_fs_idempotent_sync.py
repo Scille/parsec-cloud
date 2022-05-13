@@ -14,7 +14,7 @@ from hypothesis_trio.stateful import (
 )
 from parsec.api.data import EntryName
 
-from tests.common import call_with_control
+from tests.common import call_with_control, customize_fixtures
 
 
 # The point is not to find breaking filenames here, so keep it simple
@@ -31,6 +31,7 @@ def check_fs_dump(entry):
 
 
 @pytest.mark.slow
+@customize_fixtures(real_data_storage=True)
 def test_fs_online_idempotent_sync(
     hypothesis_settings,
     reset_testbed,

@@ -41,6 +41,9 @@ pub enum FSError {
     #[error("Query table {0}")]
     QueryTable(&'static str),
 
+    #[error("PermissionError")]
+    Permission,
+
     #[error("PoolError")]
     Pool,
 

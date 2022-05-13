@@ -29,7 +29,7 @@ impl UserStorage {
 
     // Checkpoint Interface
 
-    pub fn get_realm_checkpoint(&mut self) -> FSResult<i32> {
+    pub fn get_realm_checkpoint(&mut self) -> i32 {
         self.manifest_storage.get_realm_checkpoint()
     }
 
@@ -111,7 +111,7 @@ mod tests {
         let mut user_storage =
             UserStorage::new(alice.local_device(), user_manifest_id, manifest_storage);
 
-        user_storage.get_realm_checkpoint().unwrap();
+        user_storage.get_realm_checkpoint();
         user_storage.update_realm_checkpoint(64, &[]).unwrap();
         user_storage.get_need_sync_entries().unwrap();
         user_storage.load_user_manifest().unwrap();

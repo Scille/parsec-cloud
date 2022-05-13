@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use diesel::dsl::count_star;
-use diesel::{sql_query, ExpressionMethods, Insertable, QueryDsl, Queryable, RunQueryDsl};
+use diesel::{sql_query, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
 
 use parsec_api_crypto::SecretKey;
 use parsec_api_types::{ChunkID, DateTime, DEFAULT_BLOCK_SIZE};
@@ -11,18 +11,9 @@ use crate::error::{FSError, FSResult};
 use crate::extensions::coalesce_total_size;
 use crate::schema::chunks;
 
-#[derive(Queryable)]
-pub struct Chunk {
-    pub chunk_id: Vec<u8>,
-    pub size: i32,
-    pub offline: bool,
-    pub accessed_on: Option<f32>,
-    pub data: Vec<u8>,
-}
-
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = chunks)]
-pub struct NewChunk<'a> {
+struct NewChunk<'a> {
     pub chunk_id: &'a [u8],
     pub size: i32,
     pub offline: bool,
@@ -30,22 +21,11 @@ pub struct NewChunk<'a> {
     pub data: &'a [u8],
 }
 
-// Interface to access the local chunks of data
-pub struct ChunkStorage {
-    pub(crate) conn: SqliteConn,
-    local_symkey: SecretKey,
-}
+pub(crate) trait ChunkStorageTrait {
+    fn conn(&mut self) -> &mut SqliteConn;
+    fn local_symkey(&self) -> &SecretKey;
 
-impl ChunkStorage {
-    pub fn new(local_symkey: SecretKey, conn: SqliteConn) -> FSResult<Self> {
-        let mut instance = Self { conn, local_symkey };
-        instance.create_db()?;
-        Ok(instance)
-    }
-
-    // Database initialization
-
-    pub fn create_db(&mut self) -> FSResult<()> {
+    fn create_db(&mut self) -> FSResult<()> {
         sql_query(
             "CREATE TABLE IF NOT EXISTS chunks (
                 chunk_id BLOB PRIMARY KEY NOT NULL, -- UUID
@@ -55,47 +35,45 @@ impl ChunkStorage {
                 data BLOB NOT NULL
             );",
         )
-        .execute(&mut self.conn)
+        .execute(self.conn())
         .map_err(|_| FSError::CreateTable("chunks"))?;
         Ok(())
     }
 
     fn drop_db(&mut self) -> FSResult<()> {
         sql_query("DROP TABLE IF EXISTS chunks;")
-            .execute(&mut self.conn)
+            .execute(self.conn())
             .map_err(|_| FSError::DropTable("chunks"))?;
         Ok(())
     }
 
     // Size and chunks
 
-    pub fn get_nb_blocks(&mut self) -> FSResult<i64> {
+    fn get_nb_blocks(&mut self) -> FSResult<i64> {
         chunks::table
             .select(count_star())
-            .first(&mut self.conn)
+            .first(self.conn())
             .map_err(|_| FSError::QueryTable("chunks: get_nb_blocks"))
     }
 
-    pub fn get_total_size(&mut self) -> FSResult<i64> {
+    fn get_total_size(&mut self) -> FSResult<i64> {
         chunks::table
             .select(coalesce_total_size())
-            .first(&mut self.conn)
+            .first(self.conn())
             .map_err(|_| FSError::QueryTable("chunks: get_total_size"))
     }
 
-    // Generic chunk operations
-
     #[allow(clippy::wrong_self_convention)]
-    pub fn is_chunk(&mut self, chunk_id: ChunkID) -> FSResult<bool> {
+    fn is_chunk(&mut self, chunk_id: ChunkID) -> FSResult<bool> {
         chunks::table
             .select(count_star())
             .filter(chunks::chunk_id.eq((*chunk_id).as_ref()))
-            .first::<i64>(&mut self.conn)
+            .first::<i64>(self.conn())
             .map_err(|_| FSError::QueryTable("chunks: is_chunk"))
             .map(|res| res > 0)
     }
 
-    pub fn get_local_chunk_ids(&mut self, chunk_ids: &[ChunkID]) -> FSResult<Vec<ChunkID>> {
+    fn get_local_chunk_ids(&mut self, chunk_ids: &[ChunkID]) -> FSResult<Vec<ChunkID>> {
         let bytes_id_list = chunk_ids
             .iter()
             .map(|chunk_id| (**chunk_id).as_ref())
@@ -108,7 +86,7 @@ impl ChunkStorage {
                 &mut chunks::table
                     .select(chunks::chunk_id)
                     .filter(chunks::chunk_id.eq_any(bytes_id_list_chunk))
-                    .load::<Vec<u8>>(&mut self.conn)
+                    .load::<Vec<u8>>(self.conn())
                     .map_err(|_| FSError::QueryTable("chunks: get_local_chunk_ids"))?
                     .into_iter()
                     .map(|chunk_id| {
@@ -125,13 +103,13 @@ impl ChunkStorage {
         Ok(res)
     }
 
-    pub fn get_chunk(&mut self, chunk_id: ChunkID) -> FSResult<Vec<u8>> {
+    fn get_chunk(&mut self, chunk_id: ChunkID) -> FSResult<Vec<u8>> {
         let accessed_on = DateTime::now().get_f64_with_us_precision() as f32;
 
         let changes =
             diesel::update(chunks::table.filter(chunks::chunk_id.eq((*chunk_id).as_ref())))
                 .set(chunks::accessed_on.eq(accessed_on))
-                .execute(&mut self.conn)
+                .execute(self.conn())
                 .map_err(|_| FSError::UpdateTable("chunks: get_chunk"))?
                 > 0;
 
@@ -142,14 +120,14 @@ impl ChunkStorage {
         let ciphered = chunks::table
             .select(chunks::data)
             .filter(chunks::chunk_id.eq((*chunk_id).as_ref()))
-            .first::<Vec<u8>>(&mut self.conn)
+            .first::<Vec<u8>>(self.conn())
             .map_err(|_| FSError::QueryTable("chunks: get_chunk"))?;
 
-        Ok(self.local_symkey.decrypt(&ciphered)?)
+        Ok(self.local_symkey().decrypt(&ciphered)?)
     }
 
-    pub fn set_chunk(&mut self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
-        let ciphered = self.local_symkey.encrypt(raw);
+    fn set_chunk(&mut self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
+        let ciphered = self.local_symkey().encrypt(raw);
         let accessed_on = DateTime::now().get_f64_with_us_precision() as f32;
 
         let new_chunk = NewChunk {
@@ -165,15 +143,15 @@ impl ChunkStorage {
             .on_conflict(chunks::chunk_id)
             .do_update()
             .set(&new_chunk)
-            .execute(&mut self.conn)
+            .execute(self.conn())
             .map_err(|_| FSError::InsertTable("chunks: set_chunk"))?;
         Ok(())
     }
 
-    pub fn clear_chunk(&mut self, chunk_id: ChunkID) -> FSResult<()> {
+    fn clear_chunk(&mut self, chunk_id: ChunkID) -> FSResult<()> {
         let changes =
             diesel::delete(chunks::table.filter(chunks::chunk_id.eq((*chunk_id).as_ref())))
-                .execute(&mut self.conn)
+                .execute(self.conn())
                 .map_err(|_| FSError::DeleteTable("chunks: clear_chunk"))?
                 > 0;
 
@@ -183,95 +161,35 @@ impl ChunkStorage {
 
         Ok(())
     }
-}
 
-// Interface for caching the data blocks.
-pub struct BlockStorage {
-    pub(crate) conn: SqliteConn,
-    local_symkey: SecretKey,
-    cache_size: u64,
-}
-
-impl BlockStorage {
-    pub fn new(local_symkey: SecretKey, conn: SqliteConn, cache_size: u64) -> FSResult<Self> {
-        let mut instance = Self {
-            conn,
-            local_symkey,
-            cache_size,
-        };
-        instance.create_db()?;
-        Ok(instance)
-    }
-
-    pub fn create_db(&mut self) -> FSResult<()> {
-        sql_query(
-            "CREATE TABLE IF NOT EXISTS chunks (
-                chunk_id BLOB PRIMARY KEY NOT NULL, -- UUID
-                size INTEGER NOT NULL,
-                offline BOOLEAN NOT NULL,
-                accessed_on REAL, -- Timestamp
-                data BLOB NOT NULL
-            );",
-        )
-        .execute(&mut self.conn)
-        .map_err(|_| FSError::CreateTable("chunks"))?;
+    fn run_vacuum(&mut self) -> FSResult<()> {
+        sql_query("VACUUM;")
+            .execute(self.conn())
+            .map_err(|_| FSError::Vacuum)?;
         Ok(())
     }
+}
 
-    pub fn get_chunk(&mut self, chunk_id: ChunkID) -> FSResult<Vec<u8>> {
-        let accessed_on = DateTime::now().get_f64_with_us_precision() as f32;
-
-        let changes =
-            diesel::update(chunks::table.filter(chunks::chunk_id.eq((*chunk_id).as_ref())))
-                .set(chunks::accessed_on.eq(accessed_on))
-                .execute(&mut self.conn)
-                .map_err(|_| FSError::UpdateTable("chunks: get_chunk"))?
-                > 0;
-
-        if !changes {
-            return Err(FSError::LocalMiss(*chunk_id));
-        }
-
-        let ciphered = chunks::table
-            .select(chunks::data)
-            .filter(chunks::chunk_id.eq((*chunk_id).as_ref()))
-            .first::<Vec<u8>>(&mut self.conn)
-            .map_err(|_| FSError::QueryTable("chunks: get_chunk"))?;
-
-        Ok(self.local_symkey.decrypt(&ciphered)?)
-    }
-
-    pub fn clear_chunk(&mut self, chunk_id: ChunkID) -> FSResult<()> {
-        let changes =
-            diesel::delete(chunks::table.filter(chunks::chunk_id.eq((*chunk_id).as_ref())))
-                .execute(&mut self.conn)
-                .map_err(|_| FSError::DeleteTable("chunks: clear_chunk"))?
-                > 0;
-
-        if !changes {
-            return Err(FSError::LocalMiss(*chunk_id));
-        }
-
-        Ok(())
-    }
+pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
+    fn cache_size(&self) -> u64;
 
     // Garbage collection
 
-    pub fn block_limit(&self) -> u64 {
-        self.cache_size / DEFAULT_BLOCK_SIZE
+    fn block_limit(&self) -> u64 {
+        self.cache_size() / DEFAULT_BLOCK_SIZE
     }
 
-    pub fn clear_all_blocks(&mut self) -> FSResult<()> {
+    fn clear_all_blocks(&mut self) -> FSResult<()> {
         diesel::delete(chunks::table)
-            .execute(&mut self.conn)
+            .execute(self.conn())
             .map_err(|_| FSError::DeleteTable("chunks: clear_all_blocks"))?;
         Ok(())
     }
 
     // Upgraded set method
 
-    pub fn set_chunk(&mut self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
-        let ciphered = self.local_symkey.encrypt(raw);
+    fn set_chunk_upgraded(&mut self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
+        let ciphered = self.local_symkey().encrypt(raw);
         let accessed_on = DateTime::now().get_f64_with_us_precision() as f32;
 
         let new_chunk = NewChunk {
@@ -288,18 +206,18 @@ impl BlockStorage {
             .on_conflict(chunks::chunk_id)
             .do_update()
             .set(&new_chunk)
-            .execute(&mut self.conn)
+            .execute(self.conn())
             .map_err(|_| FSError::InsertTable("chunks: set_chunk"))?;
 
         // Perform cleanup if necessary
         self.cleanup()
     }
 
-    pub fn cleanup(&mut self) -> FSResult<()> {
+    fn cleanup(&mut self) -> FSResult<()> {
         // Count the chunks
         let nb_blocks = chunks::table
             .select(count_star())
-            .first::<i64>(&mut self.conn)
+            .first::<i64>(self.conn())
             .map_err(|_| FSError::QueryTable("chunks: cleanup"))?;
 
         let block_limit = self.block_limit() as i64;
@@ -321,10 +239,67 @@ impl BlockStorage {
             .into_boxed();
 
         diesel::delete(chunks::table.filter(chunks::chunk_id.eq_any(sub_query)))
-            .execute(&mut self.conn)
+            .execute(self.conn())
             .map_err(|_| FSError::DeleteTable("chunks: cleanup"))?;
 
         Ok(())
+    }
+}
+
+// Interface to access the local chunks of data
+pub(crate) struct ChunkStorage {
+    conn: SqliteConn,
+    local_symkey: SecretKey,
+}
+
+impl ChunkStorageTrait for ChunkStorage {
+    fn conn(&mut self) -> &mut SqliteConn {
+        &mut self.conn
+    }
+    fn local_symkey(&self) -> &SecretKey {
+        &self.local_symkey
+    }
+}
+
+impl ChunkStorage {
+    pub fn new(local_symkey: SecretKey, conn: SqliteConn) -> FSResult<Self> {
+        let mut instance = Self { conn, local_symkey };
+        instance.create_db()?;
+        Ok(instance)
+    }
+}
+
+// Interface for caching the data blocks.
+pub(crate) struct BlockStorage {
+    conn: SqliteConn,
+    local_symkey: SecretKey,
+    cache_size: u64,
+}
+
+impl ChunkStorageTrait for BlockStorage {
+    fn conn(&mut self) -> &mut SqliteConn {
+        &mut self.conn
+    }
+    fn local_symkey(&self) -> &SecretKey {
+        &self.local_symkey
+    }
+}
+
+impl BlockStorageTrait for BlockStorage {
+    fn cache_size(&self) -> u64 {
+        self.cache_size
+    }
+}
+
+impl BlockStorage {
+    pub fn new(local_symkey: SecretKey, conn: SqliteConn, cache_size: u64) -> FSResult<Self> {
+        let mut instance = Self {
+            conn,
+            local_symkey,
+            cache_size,
+        };
+        instance.create_db()?;
+        Ok(instance)
     }
 }
 
@@ -396,7 +371,9 @@ mod tests {
 
         // Generate chunks
         let chunk_id = ChunkID::from(Uuid::new_v4());
-        block_storage.set_chunk(chunk_id, &[1, 2, 3, 4]).unwrap();
+        block_storage
+            .set_chunk_upgraded(chunk_id, &[1, 2, 3, 4])
+            .unwrap();
 
         let blocks_left = std::cmp::min(N as i64 + 1, 1024 - 1024 / 10);
         assert_eq!(chunk_storage.get_nb_blocks().unwrap(), blocks_left);
