@@ -29,11 +29,8 @@ async def _submit_request(
     signature=b"<signature>",
     request_id=None,
     force=False,
-    certif_email=None,
+    certif_email="another_bob_email",
 ):
-    if not certif_email:
-        certif_email = bob.human_handle.email
-
     if not request_id:
         request_id = uuid4()
     payload = PkiEnrollmentSubmitPayload(
@@ -182,6 +179,27 @@ async def test_pki_submit_same_id(anonymous_backend_sock, bob):
         submit_payload=payload,
     )
     assert rep["status"] == "enrollment_id_already_used"
+
+
+@pytest.mark.trio
+async def test_pki_submit_already_used_email(anonymous_backend_sock, bob):
+    payload = PkiEnrollmentSubmitPayload(
+        verify_key=bob.verify_key,
+        public_key=bob.public_key,
+        requested_device_label=bob.device_label,
+    ).dump()
+    enrollment_id = uuid4()
+
+    rep = await pki_enrollment_submit(
+        anonymous_backend_sock,
+        enrollment_id=enrollment_id,
+        force=False,
+        submitter_der_x509_certificate=b"<x509 certif>",
+        submitter_der_x509_certificate_email=bob.human_handle.email,  # bob user with this email already exist
+        submit_payload_signature=b"<signature>",
+        submit_payload=payload,
+    )
+    assert rep["status"] == "email_already_used"
 
 
 # Test pki_enrollment_list
