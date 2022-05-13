@@ -1,16 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import os
-import ssl
 import attr
 import trio
-import certifi
-import urllib.request
 from urllib.error import URLError
 from pendulum import DateTime
 from structlog import get_logger
 from async_generator import asynccontextmanager
-from typing import Optional, Dict
 
 from parsec import service_nursery
 from parsec.monitoring import TaskMonitoringInstrument
@@ -21,7 +16,6 @@ __all__ = [
     "trio_run",
     "open_service_nursery",
     "split_multi_error",
-    "http_request",
     "URLError",
 ]
 
@@ -255,29 +249,3 @@ async def cancel_and_checkpoint(scope):
 # Add it to trio
 trio.open_service_nursery = open_service_nursery
 trio.CancelScope.cancel_and_checkpoint = cancel_and_checkpoint
-
-
-# HTTP client request
-
-
-async def http_request(
-    url: str,
-    data: Optional[bytes] = None,
-    headers: Dict[str, str] = {},
-    method: Optional[str] = None,
-) -> bytes:
-    """Raises: urllib.error.URLError"""
-
-    def _target():
-        request = urllib.request.Request(url, data=data, headers=headers, method=method)
-        context = None
-        if request.type == "https":
-            context = ssl.create_default_context(cafile=certifi.where())
-            # Also provide custom certificates if any
-            cafile = os.environ.get("SSL_CAFILE")
-            if cafile:
-                context.load_verify_locations(cafile)
-        with urllib.request.urlopen(request, context=context) as rep:
-            return rep.read()
-
-    return await trio.to_thread.run_sync(_target)

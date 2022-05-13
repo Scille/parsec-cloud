@@ -4,7 +4,7 @@ from uuid import UUID
 from structlog import get_logger
 
 from parsec.crypto import VerifyKey
-from parsec.utils import http_request, URLError
+from parsec.utils import URLError
 from parsec.api.protocol import (
     OrganizationID,
     ProtocolError,
@@ -17,6 +17,7 @@ from parsec.core.types import (
     BackendPkiEnrollmentAddr,
     BackendOrganizationBootstrapAddr,
 )
+from parsec.core.backend_connection.transport import http_request
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
     BackendProtocolError,

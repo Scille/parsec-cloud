@@ -2,7 +2,8 @@
 
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack, contextmanager, asynccontextmanager
+import time
 
 import trio
 import attr
@@ -23,6 +24,40 @@ def addr_with_device_subdomain(addr, device_id):
     """
     device_specific_hostname = f"{device_id.user_id}_{device_id.device_name}.{addr.hostname}"
     return type(addr).from_url(addr.to_url().replace(addr.hostname, device_specific_hostname, 1))
+
+
+@asynccontextmanager
+async def real_clock_fail_after(seconds: float):
+    # In tests we use a mock clock to make parsec code faster by not staying idle,
+    # however we might also want ensure some test code doesn't take too long.
+    # Hence using `trio.fail_after` in test code doesn't play nice with mock clock
+    # (especially given the CI can be unpredictably slow)...
+    # The solution is to have our own fail_after that use the real monotonic clock.
+
+    # Starting a thread can be very slow (looking at you, Windows) so better
+    # take the starting time here
+    start = time.monotonic()
+    event_occured = False
+    async with trio.open_nursery() as nursery:
+
+        def _run_until_timeout_or_event_occured():
+            while not event_occured and time.monotonic() - start < seconds:
+                # cancelling `_watchdog` coroutine doesn't stope the thread,
+                # so we sleep a short time in order to avoid having our thread
+                # waiting for nothing
+                time.sleep(0.01)
+
+        async def _watchdog():
+            await trio.to_thread.run_sync(_run_until_timeout_or_event_occured)
+            if not event_occured:
+                raise trio.TooSlowError()
+
+        nursery.start_soon(_watchdog)
+        try:
+            yield
+        finally:
+            event_occured = True
+        nursery.cancel_scope.cancel()
 
 
 __freeze_time_dict = {}
