@@ -2,7 +2,7 @@
 
 use std::future::Future;
 
-pub trait Taskable<T>: Future<Output = T> {
+pub trait TaskTrait<T>: Future<Output = T> {
     /// Cancels the task.
     fn cancel(&self) -> Option<T>;
 
