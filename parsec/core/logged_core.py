@@ -257,7 +257,9 @@ class LoggedCore:
         # Invalidate potential cache to avoid displaying the user as not-revoked
         self._remote_devices_manager.invalidate_user_cache(user_id)
 
-    async def new_user_invitation(self, email: str, send_email: bool) -> BackendInvitationAddr:
+    async def new_user_invitation(
+        self, email: str, send_email: bool
+    ) -> Tuple[BackendInvitationAddr, InvitationEmailSentStatus]:
         """
         Raises:
             BackendConnectionError
@@ -285,7 +287,9 @@ class LoggedCore:
             email_sent,
         )
 
-    async def new_device_invitation(self, send_email: bool) -> BackendInvitationAddr:
+    async def new_device_invitation(
+        self, send_email: bool
+    ) -> Tuple[BackendInvitationAddr, InvitationEmailSentStatus]:
         """
         Raises:
             BackendConnectionError
