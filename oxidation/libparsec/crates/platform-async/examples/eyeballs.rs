@@ -2,8 +2,8 @@
 #![cfg(not(target_arch = "wasm32"))]
 
 use libparsec_platform_async::{
-    platform::{spawn, Task},
-    task::Taskable,
+    platform::{spawn, JoinSet, Task},
+    task::TaskTrait,
 };
 use std::{
     sync::{Arc, Mutex},
@@ -13,10 +13,22 @@ use tokio::sync::{mpsc, Notify};
 
 const TIMEOUT: u64 = 250;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug)]
+struct Load {
+    delay: Duration,
+    result: Mode,
+}
+
+impl Load {
+    fn new(delay: Duration, result: Mode) -> Self {
+        Self { delay, result }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 enum Mode {
-    Fail(Duration),
-    Success(Duration),
+    Fail,
+    Success,
 }
 
 #[tokio::main]
@@ -24,10 +36,10 @@ async fn main() -> Result<(), ()> {
     simple_logger::init_with_level(log::Level::Debug).expect("cannot initialize simple logger");
 
     let targets = vec![
-        Mode::Fail(Duration::from_millis(2300)),
-        Mode::Fail(Duration::from_millis(300)),
-        Mode::Success(Duration::from_millis(300)),
-        Mode::Success(Duration::from_millis(100)),
+        Load::new(Duration::from_millis(2300), Mode::Fail),
+        Load::new(Duration::from_millis(300), Mode::Fail),
+        Load::new(Duration::from_millis(300), Mode::Success),
+        Load::new(Duration::from_millis(100), Mode::Success),
     ];
 
     log::debug!("starting with {} targets", targets.len());
@@ -39,49 +51,45 @@ async fn main() -> Result<(), ()> {
     Ok(())
 }
 
-async fn eyeballs(targets: Vec<Mode>) -> Option<usize> {
+async fn eyeballs(targets: Vec<Load>) -> Option<usize> {
     let failed_attempt = targets
         .iter()
         .map(|_| Arc::new(Notify::new()))
         .collect::<Vec<_>>();
     let targets = Arc::new(targets);
-    let join_set = Vec::with_capacity(targets.len());
+    let join_set = JoinSet::default();
     let join_set = Arc::new(Mutex::new(join_set));
     let (tx, mut rx) = mpsc::channel::<usize>(targets.len());
 
     spawn_attempt(0, targets, failed_attempt, join_set.clone(), tx);
     let result = dbg!(rx.recv().await);
-    for task in join_set.lock().unwrap().iter() {
-        task.cancel();
-    }
+    join_set.lock().unwrap().cancel_all();
     result
 }
 
 fn spawn_attempt(
     which: usize,
-    targets: Arc<Vec<Mode>>,
+    targets: Arc<Vec<Load>>,
     failed_attempt: Vec<Arc<Notify>>,
-    join_set: Arc<Mutex<Vec<Task<()>>>>,
+    join_set: Arc<Mutex<JoinSet<()>>>,
     sender: mpsc::Sender<usize>,
 ) {
     log::debug!("spawning task #{which}");
 
-    let task = spawn(attempt(
+    join_set.lock().unwrap().spawn(attempt(
         which,
         targets,
         failed_attempt,
         join_set.clone(),
         sender,
     ));
-
-    join_set.lock().unwrap().push(task);
 }
 
 async fn attempt(
     which: usize,
-    targets: Arc<Vec<Mode>>,
+    targets: Arc<Vec<Load>>,
     failed_attempt: Vec<Arc<Notify>>,
-    join_set: Arc<Mutex<Vec<Task<()>>>>,
+    join_set: Arc<Mutex<JoinSet<()>>>,
     sender: mpsc::Sender<usize>,
 ) {
     log::info!("[#{which}] starting task");
@@ -109,29 +117,21 @@ async fn attempt(
         );
     }
 
-    let load = targets[which];
+    let load = &targets[which];
     log::info!("[#{which}] executing load {load:?}");
     match mock_load(load).await {
-        Err(_) => {
+        Mode::Fail => {
             log::info!("[#{which}] finished with error");
             failed_attempt[which].notify_waiters();
         }
-        Ok(_) => {
+        Mode::Success => {
             log::info!("[#{which}] finished with success");
             sender.send(which).await.unwrap();
         }
     }
 }
 
-async fn mock_load(mode: Mode) -> Result<(), ()> {
-    match mode {
-        Mode::Fail(delay) => {
-            tokio::time::sleep(delay).await;
-            Err(())
-        }
-        Mode::Success(delay) => {
-            tokio::time::sleep(delay).await;
-            Ok(())
-        }
-    }
+async fn mock_load(load: &Load) -> Mode {
+    tokio::time::sleep(load.delay).await;
+    load.result
 }
