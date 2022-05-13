@@ -6,8 +6,11 @@ from parsec.core.fs.workspacefs.versioning_helpers import VersionLister, Timesta
 from parsec.core.fs import FsPath
 from unittest.mock import ANY
 
+from tests.common import customize_fixtures
+
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_file_history(alice, alice_workspace):
     sync_by_id = alice_workspace.sync_by_id
     entry = alice_workspace.get_workspace_entry()

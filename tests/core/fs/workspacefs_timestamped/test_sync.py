@@ -4,6 +4,7 @@ import pytest
 
 
 @pytest.mark.trio
+@pytest.mark.py
 async def test_sync_timestamp_consistency(alice_workspace):
     # Add more files and dirs, without time freezing
     # Not freezing the time is crucial here as it allows for

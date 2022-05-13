@@ -153,6 +153,7 @@ async def logged_gui_with_files(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_link_file(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
@@ -173,6 +174,7 @@ async def test_link_file(aqtbot, logged_gui_with_files):
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_link_file_unmounted(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
 
@@ -210,6 +212,7 @@ async def test_link_file_unmounted(aqtbot, logged_gui_with_files):
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link("/unknown")
@@ -228,6 +231,7 @@ async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("kind", ["bad_workspace_id", "legacy_url_format"])
+@customize_fixtures(real_data_storage=True)
 async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_files, kind):
     logged_gui, w_w, f_w = logged_gui_with_files
     org_addr = f_w.core.device.organization_addr
@@ -249,6 +253,7 @@ async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_f
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_link_file_disconnected(
     aqtbot,
     autoclose_dialog,
@@ -323,6 +328,7 @@ async def test_link_file_disconnected(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_link_file_disconnected_cancel_login(
     aqtbot,
     autoclose_dialog,
@@ -682,7 +688,7 @@ async def test_link_file_unknown_org(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(adam_profile=UserProfile.OUTSIDER)
+@customize_fixtures(adam_profile=UserProfile.OUTSIDER, real_data_storage=True)
 async def test_outsider_profil_limit(
     aqtbot, running_backend, adam, core_config, gui_factory, alice_user_fs
 ):

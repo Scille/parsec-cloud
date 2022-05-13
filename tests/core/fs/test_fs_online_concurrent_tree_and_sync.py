@@ -13,7 +13,7 @@ from hypothesis_trio.stateful import (
 
 from parsec.api.data import EntryName
 
-from tests.common import call_with_control, compare_fs_dumps
+from tests.common import call_with_control, compare_fs_dumps, customize_fixtures
 
 # The point is not to find breaking filenames here, so keep it simple
 st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
@@ -21,6 +21,7 @@ st_fs = st.sampled_from(["fs_1", "fs_2"])
 
 
 @pytest.mark.slow
+@customize_fixtures(real_data_storage=True)
 def test_fs_online_concurrent_tree_and_sync(
     hypothesis_settings,
     reset_testbed,

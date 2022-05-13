@@ -48,6 +48,7 @@ async def gui_workspace_sharing(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_workspace_sharing_list_users(
     aqtbot, running_backend, gui_workspace_sharing, autoclose_dialog
 ):
@@ -215,6 +216,7 @@ async def test_share_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_share_workspace_offline(
     aqtbot, running_backend, logged_gui, gui_workspace_sharing, snackbar_catcher
 ):
@@ -245,6 +247,7 @@ async def test_share_workspace_offline(
 # so we have to login as Alice (hence the `logged_gui_as_admin`...)
 @customize_fixtures(logged_gui_as_admin=True)
 @customize_fixtures(bob_profile=UserProfile.OUTSIDER)
+@customize_fixtures(real_data_storage=True)
 async def test_share_with_outsider_limit_roles(
     aqtbot, running_backend, logged_gui, gui_workspace_sharing, snackbar_catcher
 ):
@@ -278,6 +281,7 @@ async def test_share_with_outsider_limit_roles(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_workspace_sharing_filter_users(
     aqtbot, running_backend, gui_workspace_sharing, autoclose_dialog
 ):
@@ -319,6 +323,7 @@ async def test_workspace_sharing_filter_users(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_share_workspace_while_connected(
     aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob
 ):
@@ -345,6 +350,7 @@ async def test_share_workspace_while_connected(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_unshare_workspace_while_connected(
     aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob, snackbar_catcher
 ):

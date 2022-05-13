@@ -17,7 +17,7 @@ from parsec.core.fs import (
 )
 from parsec.backend.realm import RealmGrantedRole, RealmRole
 
-from tests.common import freeze_time, create_shared_workspace
+from tests.common import customize_fixtures, freeze_time, create_shared_workspace
 
 
 KEY = SecretKey.generate()
@@ -68,6 +68,7 @@ async def test_share_offline(running_backend, alice_user_fs, bob):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("presynced", (True, False))
 async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob, presynced):
     with freeze_time("2000-01-02"):
@@ -110,6 +111,7 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_share_workspace_then_rename_it(
     running_backend, alice_user_fs, bob_user_fs, alice, bob
 ):
@@ -144,6 +146,7 @@ async def test_share_workspace_then_rename_it(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob):
     # Share a workspace...
     with freeze_time("2000-01-02"):
@@ -197,6 +200,7 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_unshare_not_shared(running_backend, alice_user_fs, bob_user_fs, alice, bob):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
@@ -211,6 +215,7 @@ async def test_unshare_not_shared(running_backend, alice_user_fs, bob_user_fs, a
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("synced_workspace_manifest", (True, False))
 async def test_share_to_another_after_beeing_unshared(
     running_backend, alice_user_fs, bob_user_fs, alice, bob, synced_workspace_manifest
@@ -240,6 +245,7 @@ async def test_share_to_another_after_beeing_unshared(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, alice, bob):
     # Share a workspace...
     with freeze_time("2000-01-02"):
@@ -305,6 +311,7 @@ async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, al
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_share_with_different_role(running_backend, alice_user_fs, bob_user_fs, alice, bob):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
@@ -341,6 +348,7 @@ async def test_share_with_different_role(running_backend, alice_user_fs, bob_use
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
@@ -379,6 +387,7 @@ async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_share_with_sharing_name_already_taken(
     running_backend, alice_user_fs, bob_user_fs, alice, bob
 ):
@@ -460,6 +469,7 @@ async def test_share_with_sharing_name_already_taken(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("first_to_sync", ("alice", "alice2"))
 async def test_share_workspace_then_conflict_on_rights(
     running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, alice2, bob, first_to_sync
@@ -585,6 +595,7 @@ async def test_share_workspace_then_conflict_on_rights(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_sharing_events_triggered_on_sync(
     running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, bob
 ):
@@ -673,6 +684,7 @@ async def test_sharing_events_triggered_on_sync(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_no_sharing_event_on_sync_on_unknown_workspace(
     running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, bob
 ):
@@ -691,6 +703,7 @@ async def test_no_sharing_event_on_sync_on_unknown_workspace(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_sharing_event_on_sync_if_same_role(
     running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, bob
 ):

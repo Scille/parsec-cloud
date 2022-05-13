@@ -250,6 +250,7 @@ def test_entry_transactions(
     entry_transactions_factory,
     file_transactions_factory,
     alice,
+    tmp_path,
 ):
     tentative = 0
 
@@ -263,7 +264,7 @@ def test_entry_transactions(
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
                 async with WorkspaceStorage.run(
-                    Path("/dummy"), alice, EntryID.new()
+                    tmp_path / "dummy", alice, EntryID.new()
                 ) as local_storage:
                     async with entry_transactions_factory(
                         self.device, local_storage=local_storage

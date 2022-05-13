@@ -13,7 +13,7 @@ from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs.exceptions import FSBackendOfflineError, FSRemoteOperationError
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
-from tests.common import freeze_time, create_shared_workspace
+from tests.common import customize_fixtures, freeze_time, create_shared_workspace
 
 
 async def assert_same_workspace(workspace, workspace2):
@@ -38,6 +38,7 @@ async def assert_same_workspace(workspace, workspace2):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_fs):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w"))
@@ -86,6 +87,7 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("type", ["file", "folder"])
 async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user_fs):
     with freeze_time("2000-01-01"):
@@ -147,6 +149,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs):
     with freeze_time("2000-01-01"):
         wid = await create_shared_workspace(EntryName("w"), alice_user_fs, alice2_user_fs)
@@ -192,6 +195,7 @@ async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_fs_recursive_sync(running_backend, alice_user_fs):
     with freeze_time("2000-01-01"):
         wid = await create_shared_workspace(EntryName("w"), alice_user_fs)
@@ -237,6 +241,7 @@ async def test_fs_recursive_sync(running_backend, alice_user_fs):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
     with freeze_time("2000-01-01"):
         wid = await create_shared_workspace(EntryName("w"), alice_user_fs, alice2_user_fs)
@@ -299,6 +304,7 @@ async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_sync_growth_by_truncate_file(running_backend, alice_user_fs, alice2_user_fs):
     with freeze_time("2000-01-01"):
         wid = await create_shared_workspace(EntryName("w"), alice_user_fs, alice2_user_fs)
@@ -324,6 +330,7 @@ async def test_sync_growth_by_truncate_file(running_backend, alice_user_fs, alic
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs):
     with freeze_time("2000-01-01"):
         wid = await create_shared_workspace(EntryName("w"), alice_user_fs, alice2_user_fs)
@@ -415,6 +422,7 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_update_invalid_timestamp(running_backend, alice_user_fs, alice2_user_fs):
     with freeze_time("2000-01-01"):
         wid = await create_shared_workspace(EntryName("w"), alice_user_fs, alice2_user_fs)
@@ -442,6 +450,7 @@ async def test_update_invalid_timestamp(running_backend, alice_user_fs, alice2_u
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_create_already_existing_folder_vlob(running_backend, alice_user_fs, alice2_user_fs):
 
     # First create data locally
@@ -485,6 +494,7 @@ async def test_create_already_existing_folder_vlob(running_backend, alice_user_f
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 @pytest.mark.skip  # TODO: rewrite this test
 async def test_create_already_existing_file_vlob(running_backend, alice_user_fs, alice2_user_fs):
     with freeze_time("2000-01-01"):
@@ -593,6 +603,7 @@ async def test_create_already_existing_block(running_backend, alice_user_fs, ali
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_sync_data_before_workspace(running_backend, alice_user_fs):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w"))
@@ -639,6 +650,7 @@ async def test_sync_data_before_workspace(running_backend, alice_user_fs):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_merge_resulting_in_no_need_for_sync(running_backend, user_fs_factory, alice, alice2):
     async with user_fs_factory(alice) as alice_user_fs:
         async with user_fs_factory(alice2) as alice2_user_fs:

@@ -31,11 +31,13 @@ from parsec.core.invite import (
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUsed
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from tests.common import customize_fixtures
 
 from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("with_labels", [False, True])
 async def test_good_device_claim(
     backend, running_backend, alice, bob, alice_backend_cmds, user_fs_factory, with_labels
@@ -173,6 +175,7 @@ async def test_good_device_claim(
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("with_labels", [False, True])
 async def test_good_user_claim(
     backend, running_backend, data_base_dir, alice, alice_backend_cmds, user_fs_factory, with_labels

@@ -135,7 +135,9 @@ class SyncContext:
             changes = rep["changes"]
 
         # 2) Store new checkpoint and changes
-        await self._get_local_storage().update_realm_checkpoint(new_checkpoint, changes)
+        await self._get_local_storage().update_realm_checkpoint(
+            new_checkpoint, {EntryID(name): val for name, val in changes.items()}
+        )
 
         # 3) Compute local and remote changes that need to be synced
         need_sync_local, need_sync_remote = await self._get_local_storage().get_need_sync_entries()
