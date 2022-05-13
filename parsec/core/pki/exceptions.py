@@ -20,6 +20,7 @@ PkiEnrollmentError: all PKI enrollment related errors
         +- PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError: when the enrollment ID is alread used
         +- PkiEnrollmentSubmitCertificateAlreadySubmittedError: when the certificate has already been submited
         +- PkiEnrollmentSubmitCertificateAlreadyEnrolledError: when the certificate is already enrolled
+        +- PkiEnrollementEmailAlreadyUsedError: when the certificate email address is already attributes to an active user
     +- PkiEnrollmentListError: all the errors coming from the pki_enrollment_list command
         +- PkiEnrollmentListNotAllowedError: when listing the enrollments is not allowed
     +- PkiEnrollmentRejectError: all the errors from the pki_enrollment_reject command
@@ -125,6 +126,10 @@ class PkiEnrollmentSubmitCertificateAlreadySubmittedError(PkiEnrollmentSubmitErr
 
 
 class PkiEnrollmentSubmitCertificateAlreadyEnrolledError(PkiEnrollmentSubmitError):
+    pass
+
+
+class PkiEnrollmentSubmitCertificateEmailAlreadyUsedError(PkiEnrollmentSubmitError):
     pass
 
 
