@@ -21,6 +21,5 @@ js-sys = "0.3.57"
 tokio = { version = "1.18.2", features = ["rt"] }
 simple_logger = "2.1.0"
 
-[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies.tokio]
-features = ["full"]
-
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+tokio = { version = "1.18.2", features = ["full"] }
