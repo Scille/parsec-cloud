@@ -4,19 +4,12 @@ description: >
 title: '[🐛 | Bug]: '
 labels: [bug, triage]
 body:
-  - type: dropdown
+  - type: input
     id: version
     attributes:
       label: Version
       description: 'What version of our software are you running ?'
-      options:
-        - 2.8.3
-        - 2.8.2
-        - 2.8.1
-        - 2.8.0
-        - 2.7.1
-        - 2.7.0
-        - Version not listed
+      placeholder: 'version'
     validations:
       required: true
   - type: dropdown
