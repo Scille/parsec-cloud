@@ -11,6 +11,7 @@ use parsec_api_crypto::{PublicKey, SigningKey, VerifyKey};
 
 use crate as parsec_api_types;
 use crate::data_macros::impl_transparent_data_format_conversion;
+use crate::{DataError, DataResult};
 use crate::{
     DateTime, DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile,
 };
@@ -23,24 +24,30 @@ macro_rules! impl_verify_and_load_allow_root {
                 signed: &[u8],
                 author_verify_key: &VerifyKey,
                 expected_author: CertificateSignerRef<'a>,
-            ) -> Result<$name, &'static str> {
-                let compressed = author_verify_key
-                    .verify(signed)
-                    .map_err(|_| "Invalid signature")?;
+            ) -> DataResult<$name> {
+                let compressed = author_verify_key.verify(signed)?;
                 let mut serialized = vec![];
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
-                    .map_err(|_| "Invalid compression")?;
-                let obj: $name =
-                    ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+                    .map_err(|_| DataError::Compression)?;
+                let obj: $name = ::rmp_serde::from_read_ref(&serialized)
+                    .map_err(|_| DataError::Serialization)?;
                 match (&obj.author, expected_author) {
-                    (CertificateSignerOwned::User(ref a_id), CertificateSignerRef::User(ea_id))
-                        if a_id == ea_id =>
-                    {
-                        Ok(obj)
+                    (CertificateSignerOwned::User(ref a_id), CertificateSignerRef::User(ea_id)) => {
+                        if a_id == ea_id {
+                            Ok(obj)
+                        } else {
+                            Err(DataError::UnexpectedAuthor {
+                                expected: ea_id.clone(),
+                                got: Some(a_id.clone()),
+                            })
+                        }
                     }
-                    (CertificateSignerOwned::Root, CertificateSignerRef::Root) => Ok(obj),
-                    _ => Err("Unexpected author"),
+                    (_, CertificateSignerRef::Root) => Ok(obj),
+                    (_, CertificateSignerRef::User(ea_id)) => Err(DataError::UnexpectedAuthor {
+                        expected: ea_id.clone(),
+                        got: None,
+                    }),
                 }
             }
         }
@@ -54,18 +61,19 @@ macro_rules! impl_verify_and_load_no_root {
                 signed: &[u8],
                 author_verify_key: &VerifyKey,
                 expected_author: &DeviceID,
-            ) -> Result<$name, &'static str> {
-                let compressed = author_verify_key
-                    .verify(signed)
-                    .map_err(|_| "Invalid signature")?;
+            ) -> DataResult<$name> {
+                let compressed = author_verify_key.verify(signed)?;
                 let mut serialized = vec![];
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
-                    .map_err(|_| "Invalid compression")?;
-                let obj: $name =
-                    ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+                    .map_err(|_| DataError::Compression)?;
+                let obj: $name = ::rmp_serde::from_read_ref(&serialized)
+                    .map_err(|_| DataError::Serialization)?;
                 if &obj.author != expected_author {
-                    Err("Unexpected author")
+                    Err(DataError::UnexpectedAuthor {
+                        expected: expected_author.clone(),
+                        got: Some(obj.author.clone()),
+                    })
                 } else {
                     Ok(obj)
                 }

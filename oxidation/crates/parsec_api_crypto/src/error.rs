@@ -6,7 +6,7 @@ use thiserror::Error;
 pub enum CryptoError {
     #[error("Invalid signature")]
     Signature,
-    #[error("Signature verification error")]
+    #[error("Signature was forged or corrupt")]
     SignatureVerification,
     #[error("Invalid data size")]
     DataSize,

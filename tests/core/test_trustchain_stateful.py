@@ -185,9 +185,9 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             ]
             user_content, revoked_user_content, devices_contents = ctx.load_user_and_devices(
                 trustchain={
-                    "users": self.users_certifs.values(),
-                    "revoked_users": self.revoked_users_certifs.values(),
-                    "devices": self.devices_certifs.values(),
+                    "users": [certif for certif in self.users_certifs.values()],
+                    "revoked_users": [certif for certif in self.revoked_users_certifs.values()],
+                    "devices": [certif for certif in self.devices_certifs.values()],
                 },
                 user_certif=user_certif,
                 revoked_user_certif=revoked_user_certif,
@@ -213,6 +213,8 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             ]
             assert user_content == expected_user_content
             assert revoked_user_content == expected_revoked_user_content
-            assert devices_contents == expected_devices_contents
+            assert sorted(devices_contents, key=lambda device: device.device_id) == sorted(
+                expected_devices_contents, key=lambda device: device.device_id
+            )
 
     run_state_machine_as_test(TrustchainValidate, settings=hypothesis_settings)

@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Optional, Any, Dict, Type, TypeVar
+from typing import TYPE_CHECKING, Optional, Any, Dict, Type, TypeVar
 from marshmallow import ValidationError
 from pendulum import DateTime
 
@@ -93,6 +93,16 @@ class UserCertificateContent(BaseAPISignedData):
         return data
 
 
+_PyUserCertificateContent = UserCertificateContent
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import UserCertificate as _RsUserCertificateContent
+    except:
+        pass
+    else:
+        UserCertificateContent = _RsUserCertificateContent
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class RevokedUserCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
@@ -121,6 +131,15 @@ class RevokedUserCertificateContent(BaseAPISignedData):
 DeviceCertificateContentTypeVar = TypeVar(
     "DeviceCertificateContentTypeVar", bound="DeviceCertificateContent"
 )
+
+_PyRevokedUserCertificateContent = RevokedUserCertificateContent
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import RevokedUserCertificate as _RsRevokedUserCertificateContent
+    except:
+        pass
+    else:
+        RevokedUserCertificateContent = _RsRevokedUserCertificateContent
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
@@ -160,6 +179,16 @@ class DeviceCertificateContent(BaseAPISignedData):
                 f"Invalid device ID: expected `{expected_device}`, got `{data.device_id}`"
             )
         return data
+
+
+_PyDeviceCertificateContent = DeviceCertificateContent
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import DeviceCertificate as _RsDeviceCertificateContent
+    except:
+        pass
+    else:
+        DeviceCertificateContent = _RsDeviceCertificateContent
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)

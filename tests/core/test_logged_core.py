@@ -94,18 +94,20 @@ async def test_find_and_get_info(running_backend, alice_core, bob, alice, alice2
     ]
 
     infos = await alice_core.get_user_devices_info()
-    assert infos == [
-        DeviceInfo(
-            device_id=alice.device_id,
-            device_label=alice.device_label,
-            created_on=datetime(2000, 1, 1),
-        ),
-        DeviceInfo(
-            device_id=alice2.device_id,
-            device_label=alice2.device_label,
-            created_on=datetime(2000, 1, 1),
-        ),
-    ]
+    assert sorted(infos) == sorted(
+        [
+            DeviceInfo(
+                device_id=alice.device_id,
+                device_label=alice.device_label,
+                created_on=datetime(2000, 1, 1),
+            ),
+            DeviceInfo(
+                device_id=alice2.device_id,
+                device_label=alice2.device_label,
+                created_on=datetime(2000, 1, 1),
+            ),
+        ]
+    )
 
 
 @pytest.mark.trio

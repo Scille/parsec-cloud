@@ -82,6 +82,19 @@ pub fn py_to_rs_user_profile(profile: &PyAny) -> PyResult<parsec_api_types::User
     })
 }
 
+pub fn rs_to_py_user_profile(profile: &parsec_api_types::UserProfile) -> PyResult<PyObject> {
+    Python::with_gil(|py| -> PyResult<PyObject> {
+        let cls = py.import("parsec.api.protocol")?.getattr("UserProfile")?;
+        let profile_name = match profile {
+            parsec_api_types::UserProfile::Admin => "ADMIN",
+            parsec_api_types::UserProfile::Standard => "STANDARD",
+            parsec_api_types::UserProfile::Outsider => "OUTSIDER",
+        };
+        let obj = cls.getattr(profile_name)?;
+        Ok(obj.into_py(py))
+    })
+}
+
 pub fn py_to_rs_invitation_status(
     status: &PyAny,
 ) -> PyResult<parsec_api_protocol::InvitationStatus> {

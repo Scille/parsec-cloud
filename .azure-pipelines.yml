@@ -198,7 +198,7 @@ jobs:
     displayName: 'Bootstrap'
   - bash: |
       set -eux
-      cargo test
+      cargo test --features mock-time
     workingDirectory: $(Build.SourcesDirectory)/oxidation
     displayName: 'Rust Tests'
   - bash: |

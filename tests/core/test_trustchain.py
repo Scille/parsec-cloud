@@ -198,10 +198,11 @@ def test_bad_expected_user(trustchain_data_factory):
         ctx.load_user_and_devices(
             trustchain={"users": [], "revoked_users": [], "devices": []},
             user_certif=data.get_user_certif("alice"),
+            revoked_user_certif=None,
             devices_certifs=[data.get_device_certif("alice@dev1")],
             expected_user_id=UserID("bob"),
         )
-    assert str(exc.value) == "Expected certificate from `bob` but got `alice`"
+    assert str(exc.value) == "Unexpected certificate: expected `bob` but got `alice`"
 
 
 def test_verify_no_trustchain(trustchain_data_factory):
@@ -217,11 +218,9 @@ def test_verify_no_trustchain(trustchain_data_factory):
 
     assert user == data.get_user_certif("alice", content=True)
     assert revoked_user is None
-    assert devices == [
-        data.get_device_certif("alice@dev1", content=True),
-        data.get_device_certif("alice@dev2", content=True),
-        data.get_device_certif("alice@dev3", content=True),
-    ]
+    assert data.get_device_certif("alice@dev1", content=True) in devices
+    assert data.get_device_certif("alice@dev2", content=True) in devices
+    assert data.get_device_certif("alice@dev3", content=True) in devices
 
 
 def test_bad_user_self_signed(trustchain_data_factory):
@@ -262,6 +261,8 @@ def test_invalid_loop_on_device_certif_trustchain_error(trustchain_data_factory)
     assert (
         str(exc.value)
         == "alice@dev1 <-sign- bob@dev1 <-sign- alice@dev1: Invalid signature loop detected"
+        or str(exc.value)
+        == "bob@dev1 <-sign- alice@dev1 <-sign- bob@dev1: Invalid signature loop detected"
     )
 
 
@@ -338,7 +339,7 @@ def test_create_user_not_admin(trustchain_data_factory):
         data.run_trustchain_load_user_and_devices(UserID("alice"))
     assert (
         str(exc.value)
-        == "alice's creation <-sign- bob@dev1:  Invalid signature given bob is not admin"
+        == "alice's creation <-sign- bob@dev1: Invalid signature given bob is not admin"
     )
 
 
@@ -351,7 +352,7 @@ def test_revoked_user_not_admin(trustchain_data_factory):
         data.run_trustchain_load_user_and_devices(UserID("alice"))
     assert (
         str(exc.value)
-        == "alice's revocation <-sign- bob@dev1:  Invalid signature given bob is not admin"
+        == "alice's revocation <-sign- bob@dev1: Invalid signature given bob is not admin"
     )
 
 

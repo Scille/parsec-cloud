@@ -237,6 +237,7 @@ class LoggedCore:
                     created_on=device_certif.timestamp,
                 )
             )
+        results.sort(key=lambda device: device.created_on, reverse=True)
         return results
 
     async def revoke_user(self, user_id: UserID) -> None:

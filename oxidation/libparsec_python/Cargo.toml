@@ -16,8 +16,9 @@ libparsec = { version = "0.1.0", path = "../libparsec" }
 # Temporary dependencies
 parsec_api_crypto = { path = "../crates/parsec_api_crypto" }
 parsec_api_protocol = { path = "../crates/parsec_api_protocol" }
-parsec_api_types = { path = "../crates/parsec_api_types" }
+parsec_api_types = { path = "../crates/parsec_api_types", features = ["mock-time"] }
 parsec_client_types = { path = "../crates/parsec_client_types" }
+parsec_core = { path = "../crates/parsec_core" }
 uuid = { version = "1.0.0-alpha.1", features = ["serde", "v4", "fast-rng"] }
 chrono = {version = "0.4.19", features = ["serde"]}
 fancy-regex = "0.8.0"

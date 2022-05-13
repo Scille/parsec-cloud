@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-pub use chrono::Duration;
-use chrono::{TimeZone, Timelike};
+use chrono::{Duration, TimeZone, Timelike};
 use core::ops::Sub;
 use serde_bytes::ByteBuf;
 
@@ -36,7 +35,7 @@ pub(crate) const UUID_EXT_ID: i8 = 2;
 //
 // Aaaaaand we've learn a lesson here, next time we will stick with good old integer
 // instead of playing smart with float !
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd)]
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
 impl DateTime {
@@ -61,10 +60,31 @@ impl DateTime {
         ts_us as f64 / 1e6
     }
 
+    #[cfg(not(feature = "mock-time"))]
     #[inline]
     pub fn now() -> Self {
         let now = chrono::Utc::now();
         now.into()
+    }
+}
+
+#[cfg(feature = "mock-time")]
+mod mock_time {
+    use super::DateTime;
+    use std::cell::RefCell;
+
+    thread_local! {
+        static MOCK_TIME: RefCell<Option<DateTime>> = RefCell::new(None);
+    }
+
+    impl DateTime {
+        pub fn now() -> Self {
+            MOCK_TIME.with(|cell| cell.borrow().unwrap_or(chrono::Utc::now().into()))
+        }
+
+        pub fn freeze_time(time: Option<Self>) {
+            MOCK_TIME.with(|cell| *cell.borrow_mut() = time)
+        }
     }
 }
 

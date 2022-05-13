@@ -266,9 +266,16 @@ async def test_invite_and_greet_device(
             assert autoclose_dialog.dialogs == [("", "The device was successfully created.")]
             # Devices list should be updated
             assert d_w.layout_devices.count() == 2
-            item = d_w.layout_devices.itemAt(1)
-            assert item.widget().label_device_name.text() == requested_device_label.str
-            assert item.widget().label_is_current.text() == ""
+            # Devices are not sorted in Rust (by insertion)
+            device = next(
+                (
+                    item.widget()
+                    for item in d_w.layout_devices.items
+                    if item.widget().label_device_name.text() == requested_device_label.str
+                ),
+                None,
+            )
+            assert device.label_is_current.text() == ""
 
         await aqtbot.wait_until(_greet_done)
 

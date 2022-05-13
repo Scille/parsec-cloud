@@ -49,3 +49,4 @@ serde_json = "1.0.59"
 [features]
 js = ["uuid/js"]
 default = ["uuid/fast-rng"]
+mock-time = []
