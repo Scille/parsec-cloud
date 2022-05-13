@@ -6,14 +6,6 @@ labels: [bug, triage]
 assignees:
   - touilleMan
 body:
-  - type: textarea
-    id: what-happened
-    attribute:
-      label: What happened ?
-      description: 'Also tell us, what did you expect to happen ?'
-      placeholder: 'Tell us what you see !'
-    validations:
-      required: true
   - type: dropdown
     id: version
     attributes:
@@ -26,6 +18,7 @@ body:
         - 2.8.0
         - 2.7.1
         - 2.7.0
+        - Version not listed
     validations:
       required: true
   - type: dropdown
@@ -42,7 +35,15 @@ body:
     validations:
       required: true
   - type: textarea
-    id: more info
+    id: what-happened
+    attribute:
+      label: What happened ?
+      description: 'Also tell us, what did you expect to happen ?'
+      placeholder: 'Tell us what you see !'
+    validations:
+      required: true
+  - type: textarea
+    id: more-info
     attributes:
       label: 'Relevant output'
       description: 'When the bug happened, Can you include the error message (if any) and/or a screenshot (if possible) ?'
