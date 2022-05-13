@@ -20,7 +20,7 @@ where
     let task = Task::new(shared_state.clone());
     let runnable = Runnable::new(future, shared_state);
 
-    let _handle = tokio::spawn(runnable);
+    drop(tokio::spawn(runnable));
 
     task
 }
