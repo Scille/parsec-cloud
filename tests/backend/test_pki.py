@@ -8,9 +8,13 @@ import pendulum
 from parsec.api.data import PkiEnrollmentSubmitPayload
 from parsec.api.data.certif import RevokedUserCertificateContent
 from parsec.api.data.pki import PkiEnrollmentAcceptPayload
-from parsec.api.protocol.pki import PkiEnrollmentStatus
+from parsec.api.protocol.pki import PkiEnrollmentStatus, pki_enrollment_submit_serializer
 from parsec.api.protocol.types import UserProfile
-from parsec.core.backend_connection.cmds import pki_enrollment_info, pki_enrollment_submit
+from parsec.core.backend_connection.cmds import (
+    _send_cmd,
+    pki_enrollment_info,
+    pki_enrollment_submit,
+)
 from parsec.core.invite.greeter import _create_new_user_certificates
 from tests.backend.common import (
     pki_enrollment_accept,
@@ -200,6 +204,30 @@ async def test_pki_submit_already_used_email(anonymous_backend_sock, bob):
         submit_payload=payload,
     )
     assert rep["status"] == "email_already_used"
+
+
+@pytest.mark.trio
+async def test_pki_submit_no_email_provided(anonymous_backend_sock, bob):
+    # Test backend compatibility with core version < 2.8.3 that does not provide an email address field
+    payload = PkiEnrollmentSubmitPayload(
+        verify_key=bob.verify_key,
+        public_key=bob.public_key,
+        requested_device_label=bob.device_label,
+    ).dump()
+    enrollment_id = uuid4()
+
+    rep = await _send_cmd(
+        anonymous_backend_sock,
+        pki_enrollment_submit_serializer,
+        cmd="pki_enrollment_submit",
+        enrollment_id=enrollment_id,
+        force=False,
+        submitter_der_x509_certificate=b"<x509 certif>",
+        submit_payload_signature=b"<signature>",
+        submit_payload=payload,
+    )
+
+    assert rep["status"] == "ok"
 
 
 # Test pki_enrollment_list

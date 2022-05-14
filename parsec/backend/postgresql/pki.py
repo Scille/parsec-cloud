@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import hashlib
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from asyncpg import UniqueViolationError
 from pendulum import DateTime
@@ -257,10 +257,10 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         enrollment_id: UUID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: str,
         submit_payload_signature: bytes,
         submit_payload: bytes,
         submitted_on: DateTime,
+        submitter_der_x509_certificate_email: Optional[str] = None,
     ) -> None:
         """
         Raises:
@@ -348,16 +348,18 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 else:
                     assert False
 
-            # Assert email not already used by active human
-            row = await conn.fetchrow(
-                *_q_retrieve_active_human_by_email_for_update(
-                    organization_id=organization_id.str,
-                    email=submitter_der_x509_certificate_email,
-                    now=pendulum.now(),
+            # Optional check for client compatibility with version < 2.8.3
+            if submitter_der_x509_certificate_email:
+                # Assert email not already used by active human
+                row = await conn.fetchrow(
+                    *_q_retrieve_active_human_by_email_for_update(
+                        organization_id=organization_id.str,
+                        email=submitter_der_x509_certificate_email,
+                        now=pendulum.now(),
+                    )
                 )
-            )
-            if row:
-                raise PkiEnrollementEmailAlreadyUsedError()
+                if row:
+                    raise PkiEnrollementEmailAlreadyUsedError()
 
             try:
                 result = await conn.execute(

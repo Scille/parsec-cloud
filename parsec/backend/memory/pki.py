@@ -59,10 +59,10 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         enrollment_id: UUID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: str,
         submit_payload_signature: bytes,
         submit_payload: bytes,
         submitted_on: DateTime,
+        submitter_der_x509_certificate_email: Optional[str] = None,
     ) -> None:
 
         # Assert enrollment id not used already
@@ -109,14 +109,16 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 # last one represent the current state of this x509 certificate.
                 break
 
-        # Assert email not used.
-        _, total = await self._user_component.find_humans(
-            organization_id=organization_id,
-            query=submitter_der_x509_certificate_email,
-            omit_revoked=True,
-        )
-        if total:
-            raise PkiEnrollementEmailAlreadyUsedError()
+        # Optional check for client compatibility with version < 2.8.3
+        if submitter_der_x509_certificate_email:
+            # Assert email not used.
+            _, total = await self._user_component.find_humans(
+                organization_id=organization_id,
+                query=submitter_der_x509_certificate_email,
+                omit_revoked=True,
+            )
+            if total:
+                raise PkiEnrollementEmailAlreadyUsedError()
         self._enrollments[organization_id].append(
             PkiEnrollment(
                 enrollment_id=enrollment_id,

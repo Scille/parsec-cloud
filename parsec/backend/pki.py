@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import attr
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from pendulum import DateTime, now as pendulum_now
 
@@ -139,10 +139,12 @@ class BasePkiEnrollmentComponent:
                 enrollment_id=msg["enrollment_id"],
                 force=msg["force"],
                 submitter_der_x509_certificate=msg["submitter_der_x509_certificate"],
-                submitter_der_x509_certificate_email=msg["submitter_der_x509_certificate_email"],
                 submit_payload_signature=msg["submit_payload_signature"],
                 submit_payload=msg["submit_payload"],
                 submitted_on=submitted_on,
+                submitter_der_x509_certificate_email=msg.get(
+                    "submitter_der_x509_certificate_email", None
+                ),
             )
             rep = {"status": "ok", "submitted_on": submitted_on}
 
@@ -322,10 +324,10 @@ class BasePkiEnrollmentComponent:
         enrollment_id: UUID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: str,
         submit_payload_signature: bytes,
         submit_payload: bytes,
         submitted_on: DateTime,
+        submitter_der_x509_certificate_email: Optional[str],
     ) -> None:
         """
         Raises:

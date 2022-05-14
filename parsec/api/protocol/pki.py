@@ -28,7 +28,7 @@ class PkiEnrollmentSubmitReqSchema(BaseReqSchema):
 
     submitter_der_x509_certificate = fields.Bytes(require=True)
     # Duplicated certificate email field. (The backend need to check if the email is used without loading the certificate)
-    submitter_der_x509_certificate_email = fields.String(required=True)
+    submitter_der_x509_certificate_email = fields.String(required=False)
     submit_payload_signature = fields.Bytes(required=True)
     submit_payload = fields.Bytes(required=True)  # Signature should be checked before loading
 
