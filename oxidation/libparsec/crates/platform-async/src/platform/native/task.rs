@@ -55,10 +55,9 @@ impl<T> Task<T> {
     fn new(shared_state: Arc<Mutex<SharedState<T>>>) -> Self {
         Self { shared_state }
     }
-}
 
-impl<T> crate::task::TaskTrait<T> for Task<T> {
-    fn cancel(&self) -> Option<T> {
+    /// Cancels the task
+    pub fn cancel(&self) -> Option<T> {
         let mut state = self.shared_state.lock().unwrap();
 
         state.canceled = true;
@@ -68,15 +67,18 @@ impl<T> crate::task::TaskTrait<T> for Task<T> {
         state.value.take()
     }
 
-    fn detach(self) {
+    /// Detaches the task to let it keep running in the background
+    pub fn detach(self) {
         self.shared_state.lock().unwrap().detached = true;
     }
 
-    fn is_finished(&self) -> bool {
+    /// Return `true` if the current task is finished
+    pub fn is_finished(&self) -> bool {
         self.shared_state.lock().unwrap().finished
     }
 
-    fn is_canceled(&self) -> bool {
+    /// Return `true` if the current task is canceled
+    pub fn is_canceled(&self) -> bool {
         self.shared_state.lock().unwrap().canceled
     }
 }

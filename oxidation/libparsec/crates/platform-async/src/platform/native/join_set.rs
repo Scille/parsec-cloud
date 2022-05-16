@@ -1,5 +1,4 @@
 use super::task::{spawn, Task};
-use crate::task::TaskTrait;
 use futures::future::{join_all, select_all};
 use std::future::Future;
 
