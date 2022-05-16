@@ -52,7 +52,7 @@ class PGRealmComponent(BaseRealmComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: RealmID,
-        since: pendulum.DateTime,
+        since: Optional[pendulum.DateTime],
     ) -> List[bytes]:
         async with self.dbh.pool.acquire() as conn:
             return await query_get_role_certificates(conn, organization_id, author, realm_id, since)

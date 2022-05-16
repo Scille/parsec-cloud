@@ -151,12 +151,12 @@ class MemoryRealmComponent(BaseRealmComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: RealmID,
-        since: pendulum.DateTime,
+        since: Optional[pendulum.DateTime],
     ) -> List[bytes]:
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
             raise RealmAccessError()
-        if since:
+        if since is not None:
             return [x.certificate for x in realm.granted_roles if x.granted_on > since]
         else:
             return [x.certificate for x in realm.granted_roles]

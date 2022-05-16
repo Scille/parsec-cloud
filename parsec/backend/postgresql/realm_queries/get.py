@@ -177,7 +177,7 @@ async def query_get_role_certificates(
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: RealmID,
-    since: pendulum.DateTime,
+    since: Optional[pendulum.DateTime],
 ) -> List[bytes]:
     ret = await conn.fetch(
         *_q_get_role_certificates(organization_id=organization_id.str, realm_id=realm_id.uuid)
@@ -191,7 +191,7 @@ async def query_get_role_certificates(
     author_current_role = None
     for user_id, role, certif, certified_on in ret:
         user_id = UserID(user_id)
-        if not since or certified_on > since:
+        if since is None or certified_on > since:
             out.append(certif)
         if user_id == author.user_id:
             author_current_role = role

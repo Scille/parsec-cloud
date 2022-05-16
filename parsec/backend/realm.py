@@ -465,7 +465,7 @@ class BaseRealmComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: RealmID,
-        since: pendulum.DateTime,
+        since: Optional[pendulum.DateTime],
     ) -> List[bytes]:
         """
         Raises:
