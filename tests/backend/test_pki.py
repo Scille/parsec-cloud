@@ -29,7 +29,7 @@ async def _submit_request(
     signature=b"<signature>",
     request_id=None,
     force=False,
-    certif_email="another_bob_email",
+    certif_email="another@bob.email",
 ):
     if not request_id:
         request_id = uuid4()
