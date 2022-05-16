@@ -114,7 +114,7 @@ class RequireGreaterTimestampRepSchema(BaseRepSchema):
 
 
 class TimestampOutOfBallparkRepSchema(BaseRepSchema):
-    """This schema has been added to API version 2.4.
+    """This schema has been added to API version 2.4 (Parsec v2.7.0).
 
     However, it re-uses the `bad_timestamp` status that was used for similar errors in previous backend versions.
     For compatibility purposes, this schema should be compatible with `ErrorRepSchema` in the sense that:
@@ -128,10 +128,19 @@ class TimestampOutOfBallparkRepSchema(BaseRepSchema):
     # `bad_timestamp` is kept for backward compatibility,
     # even though `timestamp_out_of_ballpark` would be more explicit
     status: fields.CheckedConstant = fields.CheckedConstant("bad_timestamp", required=True)
-    ballpark_client_early_offset = fields.Float(required=False, missing=None)
-    ballpark_client_late_offset = fields.Float(required=False, missing=None)
-    client_timestamp = fields.DateTime(required=False, missing=None)
-    backend_timestamp = fields.DateTime(required=False, missing=None)
+    ballpark_client_early_offset = fields.Float(required=False, allow_none=False)
+    ballpark_client_late_offset = fields.Float(required=False, allow_none=False)
+    client_timestamp = fields.DateTime(required=False, allow_none=False)
+    backend_timestamp = fields.DateTime(required=False, allow_none=False)
+
+    @post_load
+    def make_obj(self, data: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore[misc]
+        # Cannot use `missing=None` with `allow_none=False`
+        data.setdefault("ballpark_client_early_offset", None)
+        data.setdefault("ballpark_client_late_offset", None)
+        data.setdefault("client_timestamp", None)
+        data.setdefault("backend_timestamp", None)
+        return data
 
 
 class CmdSerializer:
