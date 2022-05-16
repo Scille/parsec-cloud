@@ -401,7 +401,7 @@ human_find = CmdSock(
 user_create = CmdSock(
     "user_create",
     user_create_serializer,
-    parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate=None, redacted_device_certificate=None: {
+    parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
         k: v
         for k, v in {
             "user_certificate": user_certificate,
