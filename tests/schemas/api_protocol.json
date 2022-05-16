@@ -211,7 +211,7 @@
                         },
                         "submitter_der_x509_certificate": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "bytesField"
                         },
                         "submitter_der_x509_certificate_email": {
@@ -1095,7 +1095,7 @@
                                         },
                                         "submitter_der_x509_certificate": {
                                             "allow_none": false,
-                                            "required": false,
+                                            "required": true,
                                             "type": "bytesField"
                                         }
                                     }
