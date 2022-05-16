@@ -48,14 +48,10 @@ class PGRealmComponent(BaseRealmComponent):
             return await query_get_current_roles(conn, organization_id, realm_id)
 
     async def get_role_certificates(
-        self,
-        organization_id: OrganizationID,
-        author: DeviceID,
-        realm_id: RealmID,
-        since: Optional[pendulum.DateTime],
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
     ) -> List[bytes]:
         async with self.dbh.pool.acquire() as conn:
-            return await query_get_role_certificates(conn, organization_id, author, realm_id, since)
+            return await query_get_role_certificates(conn, organization_id, author, realm_id)
 
     async def get_realms_for_user(
         self, organization_id: OrganizationID, user: UserID

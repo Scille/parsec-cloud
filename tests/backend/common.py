@@ -250,7 +250,7 @@ realm_stats = CmdSock(
 realm_get_role_certificates = CmdSock(
     "realm_get_role_certificates",
     realm_get_role_certificates_serializer,
-    parse_args=lambda self, realm_id, since=None: {"realm_id": realm_id, "since": since},
+    parse_args=lambda self, realm_id: {"realm_id": realm_id},
 )
 realm_update_roles = CmdSock(
     "realm_update_roles",

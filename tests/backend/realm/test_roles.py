@@ -396,7 +396,7 @@ async def test_role_access_during_maintenance(
 
 
 @pytest.mark.trio
-async def test_get_role_certificates_partial(
+async def test_get_role_certificates_multiple(
     backend,
     alice,
     bob,
@@ -429,18 +429,6 @@ async def test_get_role_certificates_partial(
 
     rep = await realm_get_role_certificates(bob_backend_sock, realm)
     assert rep == {"status": "ok", "certificates": [ANY, c3, c4, c5, c6]}
-
-    rep = await realm_get_role_certificates(bob_backend_sock, realm, datetime(2000, 1, 3))
-    assert rep == {"status": "ok", "certificates": [c4, c5, c6]}
-
-    rep = await realm_get_role_certificates(bob_backend_sock, realm, datetime(2000, 1, 5))
-    assert rep == {"status": "ok", "certificates": [c6]}
-
-    rep = await realm_get_role_certificates(bob_backend_sock, realm, datetime(2000, 1, 7))
-    assert rep == {"status": "ok", "certificates": []}
-
-    rep = await realm_get_role_certificates(bob_backend_sock, realm, datetime(2000, 1, 6))
-    assert rep == {"status": "ok", "certificates": []}
 
 
 @pytest.mark.trio

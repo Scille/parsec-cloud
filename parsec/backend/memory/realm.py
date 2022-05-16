@@ -147,19 +147,12 @@ class MemoryRealmComponent(BaseRealmComponent):
         return roles
 
     async def get_role_certificates(
-        self,
-        organization_id: OrganizationID,
-        author: DeviceID,
-        realm_id: RealmID,
-        since: Optional[pendulum.DateTime],
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
     ) -> List[bytes]:
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
             raise RealmAccessError()
-        if since is not None:
-            return [x.certificate for x in realm.granted_roles if x.granted_on > since]
-        else:
-            return [x.certificate for x in realm.granted_roles]
+        return [x.certificate for x in realm.granted_roles]
 
     async def update_roles(
         self,

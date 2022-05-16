@@ -96,7 +96,6 @@ realm_stats_serializer = CmdSerializer(RealmStatsReqSchema, RealmStatsRepSchema)
 
 class RealmGetRoleCertificatesReqSchema(BaseReqSchema):
     realm_id = RealmIDField(required=True)
-    since = fields.DateTime(missing=None)
 
 
 class RealmGetRoleCertificatesRepSchema(BaseRepSchema):

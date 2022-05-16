@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-import pendulum
 from typing import Dict, List, Optional
 
 from parsec.api.protocol import (
@@ -173,11 +172,7 @@ async def query_get_current_roles(
 
 @query()
 async def query_get_role_certificates(
-    conn,
-    organization_id: OrganizationID,
-    author: DeviceID,
-    realm_id: RealmID,
-    since: Optional[pendulum.DateTime],
+    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
 ) -> List[bytes]:
     ret = await conn.fetch(
         *_q_get_role_certificates(organization_id=organization_id.str, realm_id=realm_id.uuid)
@@ -189,10 +184,9 @@ async def query_get_role_certificates(
 
     out = []
     author_current_role = None
-    for user_id, role, certif, certified_on in ret:
+    for user_id, role, certif, _ in ret:
         user_id = UserID(user_id)
-        if since is None or certified_on > since:
-            out.append(certif)
+        out.append(certif)
         if user_id == author.user_id:
             author_current_role = role
 

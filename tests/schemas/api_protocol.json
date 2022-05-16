@@ -1247,11 +1247,6 @@
                             "allow_none": false,
                             "required": true,
                             "type": "RealmIDField"
-                        },
-                        "since": {
-                            "allow_none": true,
-                            "required": false,
-                            "type": "DateTime"
                         }
                     },
                     "serializing": "msgpack"
