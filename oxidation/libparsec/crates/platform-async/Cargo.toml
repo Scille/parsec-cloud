@@ -12,9 +12,9 @@ futures = "0.3.21"
 log = "0.4.17"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = { version = "0.2.63", features = ["Window"] }
+wasm-bindgen = "0.2.80"
 wasm-bindgen-futures = "0.4.30"
-web-sys = "0.3.57"
+web-sys = { version = "0.3.57", features = ["Window"] }
 js-sys = "0.3.57"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
