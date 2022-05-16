@@ -11,6 +11,7 @@ pub mod wasm32;
 pub use wasm32 as platform;
 
 pub use flume as channel;
-pub use platform::Notify;
-pub use platform::Timer;
-pub use platform::{spawn, JoinSet, Task};
+pub use platform::join_set::JoinSet;
+pub use platform::sync::Notify;
+pub use platform::task::{spawn, Task};
+pub use platform::timer::Timer;
