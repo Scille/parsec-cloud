@@ -188,10 +188,10 @@ impl<T> Task<T> {
     /// assert!(finished.load(Ordering::SeqCst) == true, "task should have finished in background");
     /// # }
     pub fn detach(self) {
-        self.shared_state
-            .lock()
-            .expect("mutex is poisoned")
-            .detached = true;
+        let mut state = self.shared_state.lock().expect("mutex is poisoned");
+
+        state.detached = true;
+        state.task_waker = None;
     }
 
     /// Return `true` if the current task is finished
@@ -290,6 +290,7 @@ where
 
         state.runnable_waker = Some(cx.waker().clone());
         if state.canceled {
+            state.runnable_waker = None;
             Poll::Ready(())
         } else {
             drop(state);
@@ -300,6 +301,7 @@ where
 
                     state.value = Some(value);
                     state.finished = true;
+                    state.runnable_waker = None;
                     if let Some(ref waker) = state.task_waker {
                         waker.wake_by_ref();
                     }
