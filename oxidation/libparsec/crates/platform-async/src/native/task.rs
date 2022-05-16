@@ -9,6 +9,21 @@ use std::{
 };
 
 /// Spawns a new asynchronous task, returning a [Task] for it.
+///
+/// ```
+/// use libparsec_platform_async::{spawn, Timer};
+/// use std::time::Duration;
+///
+/// # #[tokio::main]
+/// # async fn main() {
+/// let task = spawn(async {
+///     Timer::after(Duration::from_millis(20));
+///     42
+/// });
+/// let result = task.await;
+/// assert_eq!(result, 42);
+/// # }
+/// ```
 pub fn spawn<F>(future: F) -> Task<F::Output>
 where
     F: Future + Send + 'static,
