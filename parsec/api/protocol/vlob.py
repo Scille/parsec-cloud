@@ -66,8 +66,10 @@ vlob_create_serializer = CmdSerializer(VlobCreateReqSchema, VlobCreateRepSchema)
 class VlobReadReqSchema(BaseReqSchema):
     encryption_revision = fields.Integer(required=True)
     vlob_id = VlobIDField(required=True)
-    version = fields.Integer(validate=lambda n: n is None or _validate_version(n), missing=None)
-    timestamp = fields.DateTime(allow_none=True, missing=None)
+    version = fields.Integer(
+        required=True, allow_none=True, validate=lambda n: n is None or _validate_version(n)
+    )
+    timestamp = fields.DateTime(required=True, allow_none=True)
 
 
 class VlobReadRepSchema(BaseRepSchema):

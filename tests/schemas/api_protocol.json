@@ -1905,12 +1905,12 @@
                         },
                         "timestamp": {
                             "allow_none": true,
-                            "required": false,
+                            "required": true,
                             "type": "DateTime"
                         },
                         "version": {
                             "allow_none": true,
-                            "required": false,
+                            "required": true,
                             "type": "Integer"
                         },
                         "vlob_id": {
