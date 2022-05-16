@@ -15,4 +15,3 @@ libparsec_platform_native = { path = "../crates/platform_native" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 libparsec_platform_web = { path = "../crates/platform_web" }
-parsec_api_crypto = { path = "../crates/parsec_api_crypto", features = ["web"] }
