@@ -7,10 +7,6 @@ use parsec_schema::parsec_schema;
 
 use crate::InvitationStatus;
 
-/*
- * APIEvent
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "event")]
 pub enum APIEvent {
@@ -44,10 +40,6 @@ pub enum APIEvent {
     RealmRolesUpdated { realm_id: RealmID, role: RealmRole },
 }
 
-/*
- * EventsListenReq
- */
-
 #[parsec_schema]
 pub struct EventsListenReq {
     pub wait: bool,
@@ -62,16 +54,8 @@ pub enum EventsListenRep {
     UnknownError { error: String },
 }
 
-/*
- * EventsSubscribeReq
- */
-
 #[parsec_schema]
 pub struct EventsSubscribeReq;
-
-/*
- * EventsSubscribeRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]

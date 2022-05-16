@@ -8,10 +8,6 @@ use serde_bytes::ByteBuf;
 
 use crate::CryptoError;
 
-/*
- * SigningKey
- */
-
 #[derive(Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct SigningKey(Keypair);
@@ -90,10 +86,6 @@ impl From<SigningKey> for ByteBuf {
         Self::from(data.0.secret.to_bytes())
     }
 }
-
-/*
- * VerifyKey
- */
 
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]

@@ -15,10 +15,6 @@ const ENCRYPTED_PATH: &'static str = "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs";
 const WORKSPACE_ID: &'static str = "2d4ded1274064608833b7f57f01156e2";
 const INVITATION_TYPE: &'static str = "claim_user";
 
-/*
- * Helpers to parametrize the tests on different addr types
- */
-
 trait Testbed {
     fn url(&self) -> String;
 
@@ -50,7 +46,7 @@ macro_rules! impl_testbed_common {
 
             // Test serde
             // `Token::Str` requires `&'static str` but we have a regular `&str` here...
-            // the solution is to explictly leak the memory *shoked*
+            // the solution is to explicitly leak the memory *shocked*
             let static_expected_url = Box::leak(expected_url.to_string().into_boxed_str());
             assert_tokens(&addr, &[Token::Str(static_expected_url)]);
         }
@@ -162,13 +158,9 @@ fn addr_with_org(testbed: &dyn Testbed) {}
 #[rstest(
     testbed,
     case::backend_organizationBootstrap_addr(&BackendOrganizationBootstrapAddrTestbed{}),
-    // BackendInvitationAddrTestbed token format is different from apiv1's token
+    // BackendInvitationAddrTestbed token format is different from api-v1's token
 )]
 fn addr_with_token(testbed: &dyn Testbed) {}
-
-/*
- * Actual tests
- */
 
 #[apply(all_addr)]
 fn test_good_addr(testbed: &dyn Testbed) {

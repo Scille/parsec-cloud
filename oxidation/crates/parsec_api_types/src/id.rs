@@ -76,15 +76,7 @@ macro_rules! new_string_based_id_type {
     };
 }
 
-/*
- * OrganizationID
- */
-
 new_string_based_id_type!(pub OrganizationID, 32, r"^[\w\-]{1,32}$");
-
-/*
- * UserID
- */
 
 new_string_based_id_type!(pub UserID, 32, r"^[\w\-]{1,32}$");
 
@@ -97,10 +89,6 @@ impl UserID {
     }
 }
 
-/*
- * DeviceName
- */
-
 new_string_based_id_type!(pub DeviceName, 32, r"^[\w\-]{1,32}$");
 
 /*
@@ -109,10 +97,6 @@ new_string_based_id_type!(pub DeviceName, 32, r"^[\w\-]{1,32}$");
 
 new_string_based_id_type!(pub DeviceLabel, 255, r"^.+$");
 impl_from_maybe!(Option<DeviceLabel>);
-
-/*
- * DeviceID
- */
 
 #[derive(
     Default, Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, PartialOrd, Ord, Hash,
@@ -152,10 +136,6 @@ impl From<DeviceID> for String {
         format!("{}@{}", item.user_id, item.device_name)
     }
 }
-
-/*
- * HumanHandle
- */
 
 #[derive(Clone, Serialize, Deserialize, Eq)]
 #[serde(try_from = "(&str, &str)", into = "(String, String)")]
@@ -217,10 +197,6 @@ impl From<HumanHandle> for (String, String) {
 }
 
 crate::impl_from_maybe!(Option<HumanHandle>);
-
-/*
- * UserProfile
- */
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]

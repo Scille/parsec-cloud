@@ -9,10 +9,6 @@ use sodiumoxide::crypto::sealedbox::{open, seal};
 
 use crate::{CryptoError, SecretKey};
 
-/*
- * PrivateKey
- */
-
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct PrivateKey(curve25519xsalsa20poly1305::SecretKey);
@@ -53,10 +49,6 @@ impl AsRef<[u8]> for PrivateKey {
         &self.0 .0
     }
 }
-
-/*
- * PublicKey
- */
 
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(transparent)]

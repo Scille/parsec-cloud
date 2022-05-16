@@ -7,10 +7,6 @@ use parsec_schema::parsec_schema;
 
 /*** Access user API ***/
 
-/*
- * Trustchain
- */
-
 #[parsec_schema]
 pub struct Trustchain {
     pub devices: Vec<Vec<u8>>,
@@ -18,18 +14,10 @@ pub struct Trustchain {
     pub revoked_users: Vec<Vec<u8>>,
 }
 
-/*
- * UserGetReq
- */
-
 #[parsec_schema]
 pub struct UserGetReq {
     pub user_id: UserID,
 }
-
-/*
- * UserGetRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -48,22 +36,14 @@ pub enum UserGetRep {
 
 /*** User creation API ***/
 
-/*
- * UserCreateReq
- */
-
 #[parsec_schema]
 pub struct UserCreateReq {
     pub user_certificate: Vec<u8>,
     pub device_certificate: Vec<u8>,
-    // Same certificates than above, but expurged of human_handle/device_label
+    // Same certificates than above, but expunged of human_handle/device_label
     pub redacted_user_certificate: Vec<u8>,
     pub redacted_device_certificate: Vec<u8>,
 }
-
-/*
- * UserCreateRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -77,18 +57,10 @@ pub enum UserCreateRep {
     UnknownError { error: String },
 }
 
-/*
- * UserRevokeReq
- */
-
 #[parsec_schema]
 pub struct UserRevokeReq {
     pub revoked_user_certificate: Vec<u8>,
 }
-
-/*
- * UserRevokeRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -103,20 +75,12 @@ pub enum UserRevokeRep {
 
 /*** Device creation API ***/
 
-/*
- * DeviceCreateReq
- */
-
 #[parsec_schema]
 pub struct DeviceCreateReq {
     pub device_certificate: Vec<u8>,
-    // Same certificate than above, but expurged of device_label
+    // Same certificate than above, but expunged of device_label
     pub redacted_device_certificate: Vec<u8>,
 }
-
-/*
- * DeviceCreateRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -129,11 +93,7 @@ pub enum DeviceCreateRep {
     UnknownError { error: String },
 }
 
-/*** Hman search API ***/
-
-/*
- * HumanFindReq
- */
+/*** Human search API ***/
 
 #[parsec_schema]
 pub struct HumanFindReq {
@@ -144,20 +104,12 @@ pub struct HumanFindReq {
     pub per_page: NonZeroU64,
 }
 
-/*
- * HumanFindResultItem
- */
-
 #[parsec_schema]
 pub struct HumanFindResultItem {
     pub user_id: UserID,
     pub human_handle: Option<HumanHandle>,
     pub revoked: bool,
 }
-
-/*
- * HumanFindRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]

@@ -37,7 +37,7 @@ macro_rules! impl_common_stuff {
             }
 
             pub fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
-                // For wathever reason, Url considers illegal changing scheme
+                // For whatever reason, Url considers illegal changing scheme
                 // from http/https to a custom one, so we cannot just use
                 // `Url::set_scheme` and instead have to do this hack :(
                 let url_with_forced_custom_scheme = format!("x{}", url);
@@ -289,10 +289,6 @@ fn extract_organization_id(parsed: &Url) -> Result<OrganizationID, AddrError> {
     decoded.parse().or(Err(ERR_MSG))
 }
 
-/*
- * BackendAddr
- */
-
 /// Represent the URL to reach a backend (e.g. ``parsec://parsec.example.com/``)
 #[derive(Clone, PartialEq, Eq)]
 pub struct BackendAddr {
@@ -333,10 +329,6 @@ impl BackendAddr {
         url
     }
 }
-
-/*
- * BackendOrganizationAddr
- */
 
 /// Represent the URL to access an organization within a backend
 /// (e.g. ``parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
@@ -402,10 +394,6 @@ impl BackendOrganizationAddr {
     }
 }
 
-/*
- * BackendActionAddr
- */
-
 pub enum BackendActionAddr {
     OrganizationBootstrap(BackendOrganizationBootstrapAddr),
     OrganizationFileLink(BackendOrganizationFileLinkAddr),
@@ -467,10 +455,6 @@ impl std::str::FromStr for BackendActionAddr {
         Err("Invalid URL format")
     }
 }
-
-/*
- * BackendOrganizationBootstrapAddr
- */
 
 // Represent the URL to bootstrap an organization within a backend
 // (e.g. ``parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD``)
@@ -553,10 +537,6 @@ impl BackendOrganizationBootstrapAddr {
         self.base.to_http_domain_url(path)
     }
 }
-
-/*
- * BackendOrganizationFileLinkAddr
- */
 
 /// Represent the URL to share a file link
 /// (e.g. ``parsec://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
@@ -647,10 +627,6 @@ impl BackendOrganizationFileLinkAddr {
     }
 }
 
-/*
- * BackendInvitationAddr
- */
-
 /// Represent the URL to invite a user or a device
 /// (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343``)
 #[derive(Clone, PartialEq, Eq)]
@@ -735,10 +711,6 @@ impl BackendInvitationAddr {
     }
 }
 
-/*
- * BackendPkiEnrollmentAddr
- */
-
 /// Represent the URL to invite a user using PKI
 /// (e.g. ``parsec://parsec.example.com/my_org?action=pki_enrollment``)
 #[derive(Clone, PartialEq, Eq)]
@@ -788,10 +760,6 @@ impl BackendPkiEnrollmentAddr {
         &self.organization_id
     }
 }
-
-/*
- * Helpers
- */
 
 // Binary encoder/decoder for url use.
 // Notes:

@@ -8,10 +8,6 @@ use sodiumoxide::crypto::sign::{
 
 use crate::CryptoError;
 
-/*
- * SigningKey
- */
-
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct SigningKey(ed25519::SecretKey);
@@ -75,10 +71,6 @@ impl From<SigningKey> for ByteBuf {
         Self::from(data.as_ref())
     }
 }
-
-/*
- * VerifyKey
- */
 
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(transparent)]

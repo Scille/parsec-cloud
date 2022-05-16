@@ -7,34 +7,30 @@ use serde_bytes::ByteBuf;
 pub(crate) const DATETIME_EXT_ID: i8 = 1;
 pub(crate) const UUID_EXT_ID: i8 = 2;
 
-/*
- * DateTime
- */
-
-// DateTime with microsecond precision.
-//
-// Python's datetime uses microseconds precision unlike chrono::Datetime (which goes
-// up to the nanosecond).
-// In theory this is not a big deal given microsecond is good enough for our needs.
-// However things get ugly given our serialization protocol encode the datetime
-// as a 64bits floating number.
-//
-// Floating point numbers have a step depending of the size of the number. This may
-// cause rounding issues when converting into datetime if we try to retrieve
-// too much precision.
-// Typically if we consider a 1e9 timestamp (representing 2001-9-9T1:46:40.0Z) the
-// floating point atomic step is 1e-7, hence we are safe to represent microseconds,
-// but not nanoseconds.
-// This property is kept up until ~4e9 (so around year 2096). In our case this is
-// "fine enough" given we use datetime to store events that have occurred (hence
-// further fix is required in 70years ^^).
-//
-// Hence we choose to use microsecond in Rust to avoid potential tenacious bugs due
-// to a datetime with sub-microsecond precision not equal to itself after being
-// serialized (i.e. `dt = now(); dt != load(dump(dt))`).
-//
-// Aaaaaand we've learn a lesson here, next time we will stick with good old integer
-// instead of playing smart with float !
+/// DateTime with microsecond precision.
+///
+/// Python's `datetime` uses **microseconds** precision unlike [chrono::Datetime] (which goes
+/// up to the **nanosecond**).
+/// In theory this is not a big deal given microsecond is good enough for our needs.
+/// However things get ugly given our serialization protocol encode the datetime
+/// as a 64bits floating number.
+///
+/// Floating point numbers have a step depending of the size of the number. This may
+/// cause rounding issues when converting into datetime if we try to retrieve
+/// too much precision.
+/// Typically if we consider a 1e9 timestamp (representing `2001-9-9T1:46:40.0Z`) the
+/// floating point atomic step is 1e-7, hence we are safe to represent microseconds,
+/// but not nanoseconds.
+/// This property is kept up until ~4e9 (so around year 2096). In our case this is
+/// "fine enough" given we use datetime to store events that have occurred (hence
+/// further fix is required in 70years ^^).
+///
+/// Hence we choose to use microsecond in Rust to avoid potential tenacious bugs due
+/// to a datetime with sub-microsecond precision not equal to itself after being
+/// serialized (i.e. `dt = now(); dt != load(dump(dt))`).
+///
+/// And we've learn a lesson here, next time we will stick with good old integer
+/// instead of playing smart with float !
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd)]
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
@@ -197,8 +193,8 @@ impl<'de> serde::de::Visitor<'de> for DateTimeExtVisitor {
             .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
 
         if tag != DATETIME_EXT_ID {
-            let unexp = serde::de::Unexpected::Signed(tag as i64);
-            return Err(serde::de::Error::invalid_value(unexp, &self));
+            let unexpected = serde::de::Unexpected::Signed(tag as i64);
+            return Err(serde::de::Error::invalid_value(unexpected, &self));
         }
 
         const F64_SIZE: usize = std::mem::size_of::<f64>();
@@ -264,10 +260,6 @@ mod tests {
         }
     }
 }
-
-/*
- * UUID
- */
 
 macro_rules! new_uuid_type {
     (pub $name:ident) => {
@@ -406,15 +398,11 @@ impl<'de> serde::de::Visitor<'de> for UuidExtVisitor {
             uuid::Uuid::from_slice(&data)
                 .map_err(|_| serde::de::Error::custom("invalid size of data extension"))
         } else {
-            let unexp = serde::de::Unexpected::Signed(tag as i64);
-            Err(serde::de::Error::invalid_value(unexp, &self))
+            let unexpected = serde::de::Unexpected::Signed(tag as i64);
+            Err(serde::de::Error::invalid_value(unexpected, &self))
         }
     }
 }
-
-/*
- * Optional field helper (used for backward compatibility)
- */
 
 pub mod maybe_field {
     use serde::{Deserialize, Deserializer};

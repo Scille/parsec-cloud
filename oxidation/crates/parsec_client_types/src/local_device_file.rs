@@ -7,10 +7,6 @@ use serde_with::*;
 use parsec_api_types::data_macros::new_data_struct_type;
 use parsec_api_types::*;
 
-/*
- *  for legacy device files where the filename contains complementary information.
- */
-
 new_data_struct_type!(
     LegacyDeviceFile,
     type: "password",
@@ -35,10 +31,6 @@ new_data_struct_type!(
     )]
     device_label: Option<Option<DeviceLabel>>,
 );
-
-/*
- * s for device files that does not rely on the filename for complementary information.
- */
 
 new_data_struct_type!(
     PasswordDeviceFile,

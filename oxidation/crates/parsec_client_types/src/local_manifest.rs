@@ -34,10 +34,6 @@ macro_rules! impl_local_manifest_dump_load {
     };
 }
 
-/*
- * Chunk
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Chunk {
     // Represents a chunk of a data in file manifest.
@@ -106,7 +102,7 @@ impl Chunk {
             return Ok(self);
         }
 
-        // Check alignement
+        // Check alignment
         if self.raw_offset != self.start {
             return Err("This chunk is not aligned");
         }
@@ -158,10 +154,6 @@ impl Chunk {
         Ok(self.access.as_ref().unwrap())
     }
 }
-
-/*
- * LocalFileManifest
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalFileManifestData", try_from = "LocalFileManifestData")]
@@ -325,10 +317,6 @@ impl LocalFileManifest {
         reference == *remote_manifest
     }
 }
-
-/*
- * LocalFolderManifest
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalFolderManifestData", from = "LocalFolderManifestData")]
@@ -603,10 +591,6 @@ impl LocalFolderManifest {
         reference == *remote_manifest
     }
 }
-
-/*
- * LocalWorkspaceManifest
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
@@ -901,10 +885,6 @@ impl LocalWorkspaceManifest {
         reference == *remote_manifest
     }
 }
-
-/*
- * LocalUserManifest
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalUserManifestData", from = "LocalUserManifestData")]

@@ -6,10 +6,6 @@ use parsec_api_crypto::{HashDigest, PublicKey};
 use parsec_api_types::{DateTime, HumanHandle, InvitationToken, UserID};
 use parsec_schema::parsec_schema;
 
-/*
- * InviteNewReq
- */
-
 #[parsec_schema]
 #[serde(tag = "type", rename_all = "UPPERCASE")]
 pub enum InviteNewReq {
@@ -22,10 +18,6 @@ pub enum InviteNewReq {
     },
 }
 
-/*
- * InvitationEmailSentStatus
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InvitationEmailSentStatus {
@@ -33,10 +25,6 @@ pub enum InvitationEmailSentStatus {
     NotAvailable,
     BadRecipient,
 }
-
-/*
- * InviteNewRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -53,10 +41,6 @@ pub enum InviteNewRep {
     },
 }
 
-/*
- * InvitationDeletedReason
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InvitationDeletedReason {
@@ -65,19 +49,11 @@ pub enum InvitationDeletedReason {
     Rotten,
 }
 
-/*
- * InviteDeleteReq
- */
-
 #[parsec_schema]
 pub struct InviteDeleteReq {
     pub token: InvitationToken,
     pub reason: InvitationDeletedReason,
 }
-
-/*
- * InviteDeleteRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -88,16 +64,8 @@ pub enum InviteDeleteRep {
     UnknownError { error: String },
 }
 
-/*
- * InviteListReq
- */
-
 #[parsec_schema]
 pub struct InviteListReq;
-
-/*
- * InvitationStatus
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -106,10 +74,6 @@ pub enum InvitationStatus {
     Ready,
     Deleted,
 }
-
-/*
- * InviteUserOrDevice
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type", rename_all = "UPPERCASE")]
@@ -127,10 +91,6 @@ pub enum InviteListItem {
     },
 }
 
-/*
- * InviteListRep
- */
-
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum InviteListRep {
@@ -138,16 +98,8 @@ pub enum InviteListRep {
     UnknownError { error: String },
 }
 
-/*
- * InviteInfoReq
- */
-
 #[parsec_schema]
 pub struct InviteInfoReq;
-
-/*
- * InviteUserOrDeviceRep
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type", rename_all = "UPPERCASE")]
@@ -163,10 +115,6 @@ pub enum InviteInfoUserOrDevice {
     },
 }
 
-/*
- * InviteInfoRep
- */
-
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum InviteInfoRep {
@@ -174,18 +122,10 @@ pub enum InviteInfoRep {
     UnknownError { error: String },
 }
 
-/*
- * Invite1ClaimerWaitPeerReq
- */
-
 #[parsec_schema]
 pub struct Invite1ClaimerWaitPeerReq {
     pub claimer_public_key: PublicKey,
 }
-
-/*
- * Invite1ClaimerWaitPeerRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -196,19 +136,11 @@ pub enum Invite1ClaimerWaitPeerRep {
     UnknownError { error: String },
 }
 
-/*
- * Invite1GreeterWaitPeerReq
- */
-
 #[parsec_schema]
 pub struct Invite1GreeterWaitPeerReq {
     pub token: InvitationToken,
     pub greeter_public_key: PublicKey,
 }
-
-/*
- * Invite1GreeterWaitPeerRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -220,18 +152,10 @@ pub enum Invite1GreeterWaitPeerRep {
     UnknownError { error: String },
 }
 
-/*
- * Invite2aClaimerSendHashedNonceHashNonceReq
- */
-
 #[parsec_schema]
 pub struct Invite2aClaimerSendHashedNonceHashNonceReq {
     pub claimer_hashed_nonce: HashDigest,
 }
-
-/*
- * Invite2aClaimerSendHashedNonceHashNonceRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -243,18 +167,10 @@ pub enum Invite2aClaimerSendHashedNonceHashNonceRep {
     UnknownError { error: String },
 }
 
-/*
- * Invite2aGreeterGetHashedNonceReq
- */
-
 #[parsec_schema]
 pub struct Invite2aGreeterGetHashedNonceReq {
     pub token: InvitationToken,
 }
-
-/*
- * Invite2aGreeterGetHashedNonceRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -266,18 +182,10 @@ pub enum Invite2aGreeterGetHashedNonceRep {
     UnknownError { error: String },
 }
 
-/*
- * Invite2bClaimerSendNonceReq
- */
-
 #[parsec_schema]
 pub struct Invite2bClaimerSendNonceReq {
     pub claimer_nonce: Vec<u8>,
 }
-
-/*
- * Invite2bClaimerSendNonceRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -288,19 +196,11 @@ pub enum Invite2bClaimerSendNonceRep {
     UnknownError { error: String },
 }
 
-/*
- * Invite2bGreeterSendNonceReq
- */
-
 #[parsec_schema]
 pub struct Invite2bGreeterSendNonceReq {
     pub token: InvitationToken,
     pub greeter_nonce: Vec<u8>,
 }
-
-/*
- * Invite2bGreeterSendNonceRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -312,16 +212,8 @@ pub enum Invite2bGreeterSendNonceRep {
     UnknownError { error: String },
 }
 
-/*
- * Invite3aClaimerSignifyTrustReq
- */
-
 #[parsec_schema]
 pub struct Invite3aClaimerSignifyTrustReq;
-
-/*
- * Invite3aClaimerSignifyTrustRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -332,18 +224,10 @@ pub enum Invite3aClaimerSignifyTrustRep {
     UnknownError { error: String },
 }
 
-/*
- * Invite3aGreeterWaitPeerTrustReq
- */
-
 #[parsec_schema]
 pub struct Invite3aGreeterWaitPeerTrustReq {
     pub token: InvitationToken,
 }
-
-/*
- * Invite3aGreeterWaitPeerTrustRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -355,16 +239,8 @@ pub enum Invite3aGreeterWaitPeerTrustRep {
     UnknownError { error: String },
 }
 
-/*
- * Invite3bClaimerWaitPeerTrustReq
- */
-
 #[parsec_schema]
 pub struct Invite3bClaimerWaitPeerTrustReq;
-
-/*
- * Invite3bClaimerWaitPeerTrustRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -375,18 +251,10 @@ pub enum Invite3bClaimerWaitPeerTrustRep {
     UnknownError { error: String },
 }
 
-/*
- * Invite3bGreeterSignifyTrustReq
- */
-
 #[parsec_schema]
 pub struct Invite3bGreeterSignifyTrustReq {
     pub token: InvitationToken,
 }
-
-/*
- * Invite3bGreeterSignifyTrustRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -398,18 +266,10 @@ pub enum Invite3bGreeterSignifyTrustRep {
     UnknownError { error: String },
 }
 
-/*
- * Invite4ClaimerCommunicateRep
- */
-
 #[parsec_schema]
 pub struct Invite4ClaimerCommunicateReq {
     pub payload: Vec<u8>,
 }
-
-/*
- * Invite4ClaimerCommunicateRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -420,19 +280,11 @@ pub enum Invite4ClaimerCommunicateRep {
     UnknownError { error: String },
 }
 
-/*
- * Invite4GreeterCommunicateReq
- */
-
 #[parsec_schema]
 pub struct Invite4GreeterCommunicateReq {
     pub token: InvitationToken,
     pub payload: Vec<u8>,
 }
-
-/*
- * Invite4GreeterCommunicateRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]

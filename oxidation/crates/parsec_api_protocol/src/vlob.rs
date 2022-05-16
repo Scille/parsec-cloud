@@ -5,10 +5,6 @@ use std::collections::HashMap;
 use parsec_api_types::{DateTime, DeviceID, RealmID, VlobID};
 use parsec_schema::parsec_schema;
 
-/*
- * VlobCreateReq
- */
-
 #[parsec_schema]
 pub struct VlobCreateReq {
     pub realm_id: RealmID,
@@ -24,10 +20,6 @@ pub struct VlobCreateReq {
     pub blob: Vec<u8>,
 }
 
-/*
- * VlobCreateRep
- */
-
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum VlobCreateRep {
@@ -39,10 +31,6 @@ pub enum VlobCreateRep {
     UnknownError { error: String },
 }
 
-/*
- * VlobReadReq
- */
-
 #[parsec_schema]
 pub struct VlobReadReq {
     pub encryption_revision: u64,
@@ -50,10 +38,6 @@ pub struct VlobReadReq {
     pub version: Option<u64>,
     pub timestamp: Option<DateTime>,
 }
-
-/*
- * VlobReadRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -79,10 +63,6 @@ pub enum VlobReadRep {
     },
 }
 
-/*
- * VlobUpdateReq
- */
-
 #[parsec_schema]
 pub struct VlobUpdateReq {
     pub encryption_revision: u64,
@@ -91,10 +71,6 @@ pub struct VlobUpdateReq {
     pub version: u64,
     pub blob: Vec<u8>,
 }
-
-/*
- * VlobUpdateRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -108,19 +84,11 @@ pub enum VlobUpdateRep {
     UnknownError { error: String },
 }
 
-/*
- * VlobPollChangesReq
- */
-
 #[parsec_schema]
 pub struct VlobPollChangesReq {
     pub realm_id: RealmID,
     pub last_checkpoint: u64,
 }
-
-/*
- * VlobPollChangesRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -139,18 +107,10 @@ pub enum VlobPollChangesRep {
     },
 }
 
-/*
- * VlobListVersionsReq
- */
-
 #[parsec_schema]
 pub struct VlobListVersionsReq {
     pub vlob_id: VlobID,
 }
-
-/*
- * VlobListVersionsRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -168,10 +128,6 @@ pub enum VlobListVersionsRep {
     },
 }
 
-/*
- * VlobMaintenanceGetReencryptionBatchReq
- */
-
 #[parsec_schema]
 pub struct VlobMaintenanceGetReencryptionBatchReq {
     pub realm_id: RealmID,
@@ -179,20 +135,12 @@ pub struct VlobMaintenanceGetReencryptionBatchReq {
     pub size: u64,
 }
 
-/*
- * ReencryptionBatchEntry
- */
-
 #[parsec_schema]
 pub struct ReencryptionBatchEntry {
     pub vlob_id: VlobID,
     pub version: u64,
     pub blob: Vec<u8>,
 }
-
-/*
- * VlobMaintenanceGetReencryptionBatchRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -206,20 +154,12 @@ pub enum VlobMaintenanceGetReencryptionBatchRep {
     UnknownError { error: String },
 }
 
-/*
- * VlobMaintenanceSaveReencryptionBatchReq
- */
-
 #[parsec_schema]
 pub struct VlobMaintenanceSaveReencryptionBatchReq {
     pub realm_id: RealmID,
     pub encryption_revision: u64,
     pub batch: Vec<ReencryptionBatchEntry>,
 }
-
-/*
- * VlobMaintenanceSaveReencryptionBatchRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]

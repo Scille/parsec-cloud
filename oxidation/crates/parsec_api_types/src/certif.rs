@@ -112,10 +112,6 @@ macro_rules! impl_dump_and_sign {
     };
 }
 
-/*
- * CertificateSigner
- */
-
 // Signature can be done either by a user (through one of it devices) or
 // by the Root Key when bootstrapping the organization (only the very first
 // user and device certificates are signed this way)
@@ -168,10 +164,6 @@ impl From<CertificateSignerOwned> for Option<DeviceID> {
     }
 }
 
-/*
- * UserCertificate
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "UserCertificateData", from = "UserCertificateData")]
 pub struct UserCertificate {
@@ -223,10 +215,6 @@ impl From<UserCertificate> for UserCertificateData {
     }
 }
 
-/*
- * RevokedUserCertificate
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
     into = "RevokedUserCertificateData",
@@ -252,10 +240,6 @@ impl_transparent_data_format_conversion!(
     timestamp,
     user_id,
 );
-
-/*
- * DeviceCertificate
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceCertificateData", from = "DeviceCertificateData")]
@@ -284,10 +268,6 @@ impl_transparent_data_format_conversion!(
     device_label,
     verify_key,
 );
-
-/*
- * RealmRoleCertificate
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "RealmRoleCertificateData", from = "RealmRoleCertificateData")]

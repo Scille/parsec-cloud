@@ -3,20 +3,12 @@
 use parsec_api_types::{BlockID, RealmID};
 use parsec_schema::parsec_schema;
 
-/*
- * BlockCreateReq
- */
-
 #[parsec_schema]
 pub struct BlockCreateReq {
     pub block_id: BlockID,
     pub realm_id: RealmID,
     pub block: Vec<u8>,
 }
-
-/*
- * BlockCreateRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -30,18 +22,10 @@ pub enum BlockCreateRep {
     UnknownError { error: String },
 }
 
-/*
- * BlockReadReq
- */
-
 #[parsec_schema]
 pub struct BlockReadReq {
     pub block_id: BlockID,
 }
-
-/*
- * BlockReadRep
- */
 
 #[parsec_schema]
 #[serde(tag = "status", rename_all = "snake_case")]

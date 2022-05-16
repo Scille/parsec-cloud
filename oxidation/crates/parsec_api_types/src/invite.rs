@@ -15,10 +15,6 @@ use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::ext_types::new_uuid_type;
 use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
 
-/*
- * InvitationType
- */
-
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum InvitationType {
@@ -47,17 +43,9 @@ impl ToString for InvitationType {
     }
 }
 
-/*
- * InvitationToken
- */
-
 new_uuid_type!(pub InvitationToken);
 
-/*
- * SASCode
- */
-
-// SAS code is composed of 4 hexadecimal characters
+/// SAS code is composed of 4 hexadecimal characters
 macro_rules! SAS_CODE_CHARS {
     () => {
         "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -158,7 +146,7 @@ impl SASCode {
         combined_nonce.extend_from_slice(claimer_nonce);
         combined_nonce.extend_from_slice(greeter_nonce);
 
-        // Digest size of 5 bytes so we can split it beween two 20bits SAS
+        // Digest size of 5 bytes so we can split it between two 20bits SAS
         // Note we have to store is as a 8bytes array to be able to convert it into u64
         let mut combined_hmac = [0; 8];
         combined_hmac[3..8].clone_from_slice(&shared_secret_key.hmac(&combined_nonce, 5)[..]);
@@ -176,10 +164,6 @@ impl SASCode {
         (claimer_sas, greeter_sas)
     }
 }
-
-/*
- * Helpers
- */
 
 macro_rules! impl_dump_and_encrypt {
     ($name:ident) => {
@@ -219,10 +203,6 @@ macro_rules! impl_decrypt_and_load {
     };
 }
 
-/*
- * InviteUserData
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "InviteUserDataData", from = "InviteUserDataData")]
 pub struct InviteUserData {
@@ -247,10 +227,6 @@ impl_transparent_data_format_conversion!(
     public_key,
     verify_key,
 );
-
-/*
- * InviteUserConfirmation
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
@@ -280,10 +256,6 @@ impl_transparent_data_format_conversion!(
     root_verify_key,
 );
 
-/*
- * InviteDeviceData
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "InviteDeviceDataData", from = "InviteDeviceDataData")]
 pub struct InviteDeviceData {
@@ -302,10 +274,6 @@ impl_transparent_data_format_conversion!(
     requested_device_label,
     verify_key,
 );
-
-/*
- * InviteDeviceConfirmation
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(

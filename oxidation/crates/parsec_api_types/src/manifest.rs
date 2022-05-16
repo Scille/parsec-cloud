@@ -70,20 +70,12 @@ macro_rules! impl_manifest_dump_load {
     };
 }
 
-/*
- * EntryID, BlockID, RealmID, VlobID
- */
-
 new_uuid_type!(pub EntryID);
 new_uuid_type!(pub BlockID);
 new_uuid_type!(pub RealmID);
 new_uuid_type!(pub VlobID);
 new_uuid_type!(pub ChunkID);
 impl_from_maybe!(std::collections::HashSet<EntryID>);
-
-/*
- * BlockAccess
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct BlockAccess {
@@ -94,10 +86,6 @@ pub struct BlockAccess {
     pub digest: HashDigest,
 }
 
-/*
- * RealmRole
- */
-
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum RealmRole {
@@ -106,10 +94,6 @@ pub enum RealmRole {
     Contributor,
     Reader,
 }
-
-/*
- * EntryName
- */
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(try_from = "&str", into = "String")]
@@ -177,10 +161,6 @@ impl std::str::FromStr for EntryName {
     }
 }
 
-/*
- * WorkspaceEntry
- */
-
 #[serde_as]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct WorkspaceEntry {
@@ -211,10 +191,6 @@ impl WorkspaceEntry {
     }
 }
 
-/*
- * Helpers
- */
-
 // Prior to Parsec version 1.14, author field in manifest was only mandatory
 // for non-zero manifest version (i.e. unsynced local data had empty author field)
 // TODO: remove this code ? (considering it is unlikely to still have unsynced
@@ -230,10 +206,6 @@ fn generate_local_author_legacy_placeholder() -> DeviceID {
     }
     LEGACY_PLACEHOLDER.clone()
 }
-
-/*
- * Blocksize
- */
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Blocksize(u64);
@@ -262,10 +234,6 @@ impl Deref for Blocksize {
         &self.0
     }
 }
-
-/*
- * FileManifest
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "FileManifestData", try_from = "FileManifestData")]
@@ -326,10 +294,6 @@ impl From<FileManifest> for FileManifestData {
     }
 }
 
-/*
- * FolderManifest
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "FolderManifestData", from = "FolderManifestData")]
 pub struct FolderManifest {
@@ -362,10 +326,6 @@ impl_transparent_data_format_conversion!(
     children,
 );
 
-/*
- * WorkspaceManifest
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "WorkspaceManifestData", from = "WorkspaceManifestData")]
 pub struct WorkspaceManifest {
@@ -395,10 +355,6 @@ impl_transparent_data_format_conversion!(
     updated,
     children,
 );
-
-/*
- * UserManifest
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "UserManifestData", from = "UserManifestData")]
@@ -437,10 +393,6 @@ impl_transparent_data_format_conversion!(
     last_processed_message,
     workspaces,
 );
-
-/*
- * FileOrFolderManifest
- */
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type")]

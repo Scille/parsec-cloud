@@ -96,10 +96,6 @@ use x25519_dalek::x25519;
 
 use crate::{CryptoError, SecretKey};
 
-/*
- * PrivateKey
- */
-
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
 pub struct PrivateKey(crypto_box::SecretKey);
@@ -182,10 +178,6 @@ impl From<PrivateKey> for ByteBuf {
         Self::from(*data.0.as_bytes())
     }
 }
-
-/*
- * PublicKey
- */
 
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(into = "ByteBuf", try_from = "ByteBuf")]
