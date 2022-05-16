@@ -56,6 +56,8 @@ from parsec.api.protocol import (
     pki_enrollment_accept_serializer,
 )
 
+from tests.common import real_clock_fail_after
+
 
 def craft_http_request(
     target: str, method: str, headers: dict, body: Optional[bytes], protocol: str = "1.0"
@@ -183,7 +185,7 @@ class CmdSock:
         yield box
 
         if not box.rep_done:
-            with trio.fail_after(1):
+            async with real_clock_fail_after(1):
                 await box.do_recv()
 
 

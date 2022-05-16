@@ -42,9 +42,9 @@ async def real_clock_fail_after(seconds: float):
 
         def _run_until_timeout_or_event_occured():
             while not event_occured and time.monotonic() - start < seconds:
-                # cancelling `_watchdog` coroutine doesn't stope the thread,
-                # so we sleep a short time in order to avoid having our thread
-                # waiting for nothing
+                # cancelling `_watchdog` coroutine doesn't stop the thread,
+                # so we sleep only by a short amount of time in order to
+                # detect early enough that we are no longer needed
                 time.sleep(0.01)
 
         async def _watchdog():
@@ -52,6 +52,12 @@ async def real_clock_fail_after(seconds: float):
             if not event_occured:
                 raise trio.TooSlowError()
 
+        # Note: We could have started the thread directly instead of using
+        # trio's thread support.
+        # This would allow us to use a non-async contextmanager to better mimic
+        # `trio.fail_after`, however this would prevent us from using trio's
+        # threadpool system which is good given it allows us to reuse the thread
+        # and hence avoid most of it cost
         nursery.start_soon(_watchdog)
         try:
             yield
@@ -314,7 +320,7 @@ async def create_shared_workspace(name, creator, *shared_with):
             if not recipient_core:
                 await recipient_user_fs.process_last_messages()
 
-        with trio.fail_after(1):
+        async with real_clock_fail_after(1):
             if creator_spy:
                 await creator_spy.wait_multiple(
                     [CoreEvent.FS_WORKSPACE_CREATED, CoreEvent.BACKEND_REALM_ROLES_UPDATED]

@@ -14,8 +14,9 @@ from parsec.core.backend_connection import (
     BackendConnectionRefused,
     backend_authenticated_cmds_factory,
 )
-
 from parsec.backend.backend_events import BackendEvent
+
+from tests.common import real_clock_fail_after
 from tests.core.backend_connection.common import ALL_CMDS
 
 
@@ -167,7 +168,8 @@ async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backen
 
 
 @pytest.mark.trio
-async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_backend, alice):
+async def test_events_listen_wait_has_watchdog(monkeypatch, autojump_clock, running_backend, alice):
+    autojump_clock.setup()
     # Spy on the transport events to detect the Pings/Pongs
     # (Note we are talking about websocket ping, not our own higher-level ping api)
     transport_events_sender, transport_events_receiver = trio.open_memory_channel(100)
@@ -208,7 +210,6 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
     async with backend_authenticated_cmds_factory(
         alice.organization_addr, alice.device_id, alice.signing_key, keepalive=2
     ) as cmds:
-        mock_clock.rate = 1
         async with trio.open_service_nursery() as nursery:
 
             async def _cmd():
@@ -218,13 +219,13 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
             nursery.start_soon(_cmd)
 
             # Wait for the connection to be established with the backend
-            with trio.fail_after(1):
+            async with real_clock_fail_after(1):
                 await backend_received_cmd.wait()
 
             # Now advance time until ping is requested
             await trio.testing.wait_all_tasks_blocked()
-            mock_clock.jump(2)
-            with trio.fail_after(2):
+            await trio.sleep(2)
+            async with real_clock_fail_after(1):
                 backend_transport, event = await next_ping_related_event()
                 assert isinstance(event, Ping)
                 client_transport, event = await next_ping_related_event()
@@ -233,8 +234,8 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
 
             # Wait for another ping, just to be sure...
             await trio.testing.wait_all_tasks_blocked()
-            mock_clock.jump(2)
-            with trio.fail_after(1):
+            await trio.sleep(2)
+            async with real_clock_fail_after(1):
                 backend_transport2, event = await next_ping_related_event()
                 assert isinstance(event, Ping)
                 assert backend_transport is backend_transport2
