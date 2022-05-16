@@ -390,16 +390,12 @@ user_get = CmdSock(
 human_find = CmdSock(
     "human_find",
     human_find_serializer,
-    parse_args=lambda self, query=None, omit_revoked=None, omit_non_human=None, page=None, per_page=None: {
-        k: v
-        for k, v in [
-            ("query", query),
-            ("omit_revoked", omit_revoked),
-            ("omit_non_human", omit_non_human),
-            ("page", page),
-            ("per_page", per_page),
-        ]
-        if v is not None
+    parse_args=lambda self, query=None, omit_revoked=False, omit_non_human=False, page=1, per_page=100: {
+        "query": query,
+        "omit_revoked": omit_revoked,
+        "omit_non_human": omit_non_human,
+        "page": page,
+        "per_page": per_page,
     },
 )
 user_create = CmdSock(

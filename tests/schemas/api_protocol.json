@@ -379,12 +379,12 @@
                     "fields": {
                         "page": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Integer"
                         },
                         "per_page": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Integer"
                         },
                         "results": {
@@ -408,7 +408,7 @@
                                                     "type": "String"
                                                 }
                                             ],
-                                            "required": false,
+                                            "required": true,
                                             "type": "HumanHandleField"
                                         },
                                         "revoked": {
@@ -436,7 +436,7 @@
                         },
                         "total": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Integer"
                         }
                     },
@@ -451,27 +451,27 @@
                         },
                         "omit_non_human": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Boolean"
                         },
                         "omit_revoked": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Boolean"
                         },
                         "page": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Integer"
                         },
                         "per_page": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Integer"
                         },
                         "query": {
                             "allow_none": true,
-                            "required": false,
+                            "required": true,
                             "type": "String"
                         }
                     },
