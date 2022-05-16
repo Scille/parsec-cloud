@@ -191,7 +191,7 @@ class LocalPendingEnrollment(BaseLocalData):
         return result
 
     @classmethod
-    def remove_from_enrollment_id(cls, config_dir: Path, enrollment_id: UUID):
+    def remove_from_enrollment_id(cls, config_dir: Path, enrollment_id: UUID) -> None:
         """
         Raises:
             PkiEnrollmentLocalPendingError
