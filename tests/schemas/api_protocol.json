@@ -344,7 +344,7 @@
                         },
                         "wait": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Boolean"
                         }
                     },
