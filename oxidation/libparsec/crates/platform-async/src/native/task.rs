@@ -20,7 +20,7 @@ where
     let task = Task::new(shared_state.clone());
     let runnable = Runnable::new(future, shared_state);
 
-    drop(tokio::spawn(runnable));
+    tokio::spawn(runnable);
 
     task
 }
@@ -96,7 +96,7 @@ impl<T> Future for Task<T> {
                 state
                     .value
                     .take()
-                    .expect("return value from runnable sohould have been set, but wasn't"),
+                    .expect("return value from runnable should have been set, but wasn't"),
             )
         } else {
             Poll::Pending
