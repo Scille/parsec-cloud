@@ -429,7 +429,7 @@
             },
             "enrollment_id": {
                 "allow_none": false,
-                "required": false,
+                "required": true,
                 "type": "UUID"
             },
             "submit_payload": {
