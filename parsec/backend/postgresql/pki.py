@@ -5,7 +5,6 @@ from typing import List, Optional
 from uuid import UUID
 from asyncpg import UniqueViolationError
 from pendulum import DateTime
-import pendulum
 
 from parsec.api.protocol import OrganizationID
 from parsec.api.protocol.pki import PkiEnrollmentStatus
@@ -210,7 +209,7 @@ _q_retrieve_active_human_by_email_for_update = Q(
     WHERE
         user_.organization = { q_organization_internal_id("$organization_id") }
         AND human.email = $email
-        AND (user_.revoked_on IS NULL OR user_.revoked_on > $now)
+        AND user_.revoked_on IS NULL
     FOR UPDATE
     LIMIT 1
 """
@@ -355,7 +354,6 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     *_q_retrieve_active_human_by_email_for_update(
                         organization_id=organization_id.str,
                         email=submitter_der_x509_certificate_email,
-                        now=pendulum.now(),
                     )
                 )
                 if row:
