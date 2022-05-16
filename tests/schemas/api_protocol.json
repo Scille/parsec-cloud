@@ -213,6 +213,11 @@
                             "allow_none": false,
                             "required": false,
                             "type": "bytesField"
+                        },
+                        "submitter_der_x509_certificate_email": {
+                            "allow_none": false,
+                            "required": false,
+                            "type": "String"
                         }
                     },
                     "serializing": "msgpack"
