@@ -1340,7 +1340,7 @@
                                 "REENCRYPTION"
                             ],
                             "enum_type": "MaintenanceType",
-                            "required": false,
+                            "required": true,
                             "type": "MaintenanceTypeField"
                         },
                         "status": {
