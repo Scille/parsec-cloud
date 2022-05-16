@@ -166,7 +166,7 @@ def freeze_time(time=None, device=None):
         except ImportError:
             pass
         else:
-            _Rs_freeze_time(time)
+            _Rs_freeze_time(previous_time)
 
 
 class AsyncMock(Mock):
