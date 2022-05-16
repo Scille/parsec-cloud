@@ -44,23 +44,23 @@ class BackendEvent(Enum):
 class DeviceCreatedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.DEVICE_CREATED, required=True)
-    organization_id = OrganizationIDField(requise=True)
-    device_id = DeviceIDField(requise=True)
-    device_certificate = fields.Bytes(requise=True)
-    encrypted_answer = fields.Bytes(requise=True)
+    organization_id = OrganizationIDField(required=True)
+    device_id = DeviceIDField(required=True)
+    device_certificate = fields.Bytes(required=True)
+    encrypted_answer = fields.Bytes(required=True)
 
 
 class InviteConduitUpdatedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.INVITE_CONDUIT_UPDATED, required=True)
-    organization_id = OrganizationIDField(requise=True)
+    organization_id = OrganizationIDField(required=True)
     token = InvitationTokenField(required=True)
 
 
 class UserCreatedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.USER_CREATED, required=True)
-    organization_id = OrganizationIDField(requise=True)
+    organization_id = OrganizationIDField(required=True)
     user_id = UserIDField(required=True)
     user_certificate = fields.Bytes(required=True)
     first_device_id = DeviceIDField(required=True)
@@ -70,20 +70,20 @@ class UserCreatedSchema(BaseSchema):
 class UserRevokedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.USER_REVOKED, required=True)
-    organization_id = OrganizationIDField(requise=True)
+    organization_id = OrganizationIDField(required=True)
     user_id = UserIDField(required=True)
 
 
 class OrganizationExpiredSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.ORGANIZATION_EXPIRED, required=True)
-    organization_id = OrganizationIDField(requise=True)
+    organization_id = OrganizationIDField(required=True)
 
 
 class PingedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.PINGED, required=True)
-    organization_id = OrganizationIDField(requise=True)
+    organization_id = OrganizationIDField(required=True)
     author = DeviceIDField(required=True)
     ping = fields.String(required=True)
 
@@ -91,7 +91,7 @@ class PingedSchema(BaseSchema):
 class MessageReceivedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.MESSAGE_RECEIVED, required=True)
-    organization_id = OrganizationIDField(requise=True)
+    organization_id = OrganizationIDField(required=True)
     author = DeviceIDField(required=True)
     recipient = UserIDField(required=True)
     index = fields.Integer(required=True)
@@ -100,7 +100,7 @@ class MessageReceivedSchema(BaseSchema):
 class InviteStatusChangedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.INVITE_STATUS_CHANGED, required=True)
-    organization_id = OrganizationIDField(requise=True)
+    organization_id = OrganizationIDField(required=True)
     greeter = UserIDField(required=True)
     token = InvitationTokenField(required=True)
     status = InvitationStatusField(required=True)
@@ -109,7 +109,7 @@ class InviteStatusChangedSchema(BaseSchema):
 class RealmMaintenanceFinishedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.REALM_MAINTENANCE_FINISHED, required=True)
-    organization_id = OrganizationIDField(requise=True)
+    organization_id = OrganizationIDField(required=True)
     author = DeviceIDField(required=True)
     realm_id = RealmIDField(required=True)
     encryption_revision = fields.Integer(required=True)
@@ -118,7 +118,7 @@ class RealmMaintenanceFinishedSchema(BaseSchema):
 class RealmMaintenanceStartedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.REALM_MAINTENANCE_STARTED, required=True)
-    organization_id = OrganizationIDField(requise=True)
+    organization_id = OrganizationIDField(required=True)
     author = DeviceIDField(required=True)
     realm_id = RealmIDField(required=True)
     encryption_revision = fields.Integer(required=True)
@@ -127,7 +127,7 @@ class RealmMaintenanceStartedSchema(BaseSchema):
 class RealmVlobsUpdatedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.REALM_VLOBS_UPDATED, required=True)
-    organization_id = OrganizationIDField(requise=True)
+    organization_id = OrganizationIDField(required=True)
     author = DeviceIDField(required=True)
     realm_id = RealmIDField(required=True)
     checkpoint = fields.Integer(required=True)
@@ -138,7 +138,7 @@ class RealmVlobsUpdatedSchema(BaseSchema):
 class RealmRolesUpdatedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.REALM_ROLES_UPDATED, required=True)
-    organization_id = OrganizationIDField(requise=True)
+    organization_id = OrganizationIDField(required=True)
     author = DeviceIDField(required=True)
     realm_id = RealmIDField(required=True)
     user = UserIDField(required=True)
@@ -148,7 +148,7 @@ class RealmRolesUpdatedSchema(BaseSchema):
 class PkiEnrollmentUpdatedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.PKI_ENROLLMENTS_UPDATED, required=True)
-    organization_id = OrganizationIDField(requise=True)
+    organization_id = OrganizationIDField(required=True)
 
 
 class BackendEventSchema(OneOfSchema):
