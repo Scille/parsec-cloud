@@ -25,11 +25,6 @@ from parsec.api.data.certif import (
     RevokedUserCertificateContent,
     RealmRoleCertificateContent,
 )
-from parsec.api.data.invite_claim import (
-    APIV1_UserClaimContent,
-    APIV1_DeviceClaimContent,
-    APIV1_DeviceClaimAnswerContent,
-)
 from parsec.api.data.invite import (
     SASCode,
     generate_sas_codes,
@@ -82,10 +77,6 @@ __all__ = (
     "DeviceCertificateContent",
     "RevokedUserCertificateContent",
     "RealmRoleCertificateContent",
-    # Invite&Claim
-    "APIV1_UserClaimContent",
-    "APIV1_DeviceClaimContent",
-    "APIV1_DeviceClaimAnswerContent",
     # Invite
     "SASCode",
     "generate_sas_codes",
