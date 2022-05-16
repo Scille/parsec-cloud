@@ -6,7 +6,7 @@ from swiftclient.exceptions import ClientException
 import pytest
 
 from parsec.api.protocol import OrganizationID, BlockID
-from parsec.backend.blockstore import BlockStoreError
+from parsec.backend.block import BlockStoreError
 from parsec.backend.swift_blockstore import SwiftBlockStoreComponent
 
 

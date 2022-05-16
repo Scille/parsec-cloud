@@ -5,7 +5,8 @@ from structlog import get_logger
 
 from parsec.utils import open_service_nursery
 from parsec.api.protocol import OrganizationID, BlockID
-from parsec.backend.blockstore import BaseBlockStoreComponent, BlockStoreError
+from parsec.backend.block import BlockStoreError
+from parsec.backend.blockstore import BaseBlockStoreComponent
 
 
 logger = get_logger()

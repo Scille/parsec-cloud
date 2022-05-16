@@ -6,7 +6,7 @@ import pendulum
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, BlockID
 from parsec.backend.utils import OperationKind
 from parsec.backend.vlob import BaseVlobComponent
-from parsec.backend.blockstore import BaseBlockStoreComponent, BlockStoreError
+from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import (
     BaseBlockComponent,
     BlockError,
@@ -14,7 +14,7 @@ from parsec.backend.block import (
     BlockNotFoundError,
     BlockAccessError,
     BlockInMaintenanceError,
-    BlockTimeoutError,
+    BlockStoreError,
 )
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.utils import (
@@ -156,10 +156,7 @@ class PGBlockComponent(BaseBlockComponent):
 
         # We can do the blockstore read outside of the transaction given the block
         # are never modified/removed
-        try:
-            return await self._blockstore_component.read(organization_id, block_id)
-        except BlockStoreError as exc:
-            raise BlockTimeoutError(exc) from exc
+        return await self._blockstore_component.read(organization_id, block_id)
 
     async def create(
         self,
@@ -201,10 +198,7 @@ class PGBlockComponent(BaseBlockComponent):
             # Hence any blockstore create failure result in postgres transaction
             # cancellation, and blockstore create success can be overwritten by another
             # create in case the postgres transaction was cancelled in step 3)
-            try:
-                await self._blockstore_component.create(organization_id, block_id, block)
-            except BlockStoreError as exc:
-                raise BlockTimeoutError(exc) from exc
+            await self._blockstore_component.create(organization_id, block_id, block)
 
             # 3) Insert the block metadata into the database
             try:

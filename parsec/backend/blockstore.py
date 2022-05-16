@@ -13,10 +13,6 @@ from parsec.backend.config import (
 )
 
 
-class BlockStoreError(Exception):
-    pass
-
-
 class BaseBlockStoreComponent:
     """
     BlockStoreComponent wraps a distributed object storage service, distributed implies

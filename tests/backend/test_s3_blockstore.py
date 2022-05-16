@@ -11,7 +11,7 @@ import pytest
 
 from parsec.api.protocol import OrganizationID, BlockID
 from parsec.backend.s3_blockstore import S3BlockStoreComponent
-from parsec.backend.blockstore import BlockStoreError
+from parsec.backend.block import BlockStoreError
 
 
 @pytest.mark.trio

@@ -7,7 +7,7 @@ import pendulum
 from hypothesis import given, strategies as st
 
 from parsec.backend.realm import RealmGrantedRole
-from parsec.backend.blockstore import BlockStoreError
+from parsec.backend.block import BlockStoreError
 from parsec.backend.raid5_blockstore import (
     split_block_in_chunks,
     generate_checksum_chunk,
