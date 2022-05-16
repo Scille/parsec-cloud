@@ -5,7 +5,7 @@ import trio
 from enum import Enum
 from pathlib import Path, PurePath
 from hashlib import sha256
-from typing import Callable, List, Optional, Iterator, Dict, Type, Tuple
+from typing import Callable, List, Optional, Iterator, Dict, Tuple
 from importlib import import_module
 
 from parsec.serde import BaseSchema, fields, MsgpackSerializer, OneOfSchema
@@ -143,16 +143,11 @@ class SmartcardDeviceFileSchema(BaseDeviceFileSchema):
 
 class DeviceFileSchema(OneOfSchema):
     type_field = "type"
-
-    @property
-    def type_schemas(  # type: ignore[override]
-        self
-    ) -> Dict[DeviceFileType, Type[OneOfSchema]]:
-        return {
-            DeviceFileType.PASSWORD: PasswordDeviceFileSchema,
-            DeviceFileType.RECOVERY: RecoveryDeviceFileSchema,
-            DeviceFileType.SMARTCARD: SmartcardDeviceFileSchema,
-        }
+    type_schemas = {
+        DeviceFileType.PASSWORD: PasswordDeviceFileSchema(),
+        DeviceFileType.RECOVERY: RecoveryDeviceFileSchema(),
+        DeviceFileType.SMARTCARD: SmartcardDeviceFileSchema(),
+    }
 
     def get_obj_type(self, obj: Dict[str, object]) -> object:
         return obj["type"]
