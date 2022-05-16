@@ -10,11 +10,7 @@ from parsec.api.data.certif import RevokedUserCertificateContent
 from parsec.api.data.pki import PkiEnrollmentAcceptPayload
 from parsec.api.protocol.pki import PkiEnrollmentStatus, pki_enrollment_submit_serializer
 from parsec.api.protocol.types import UserProfile
-from parsec.core.backend_connection.cmds import (
-    _send_cmd,
-    pki_enrollment_info,
-    pki_enrollment_submit,
-)
+from tests.backend.common import pki_enrollment_submit, pki_enrollment_info, CmdSock
 from parsec.core.invite.greeter import _create_new_user_certificates
 from tests.backend.common import (
     pki_enrollment_accept,
@@ -99,6 +95,7 @@ async def test_pki_submit(anonymous_backend_sock, bob):
         public_key=bob.public_key,
         requested_device_label=bob.device_label,
     ).dump()
+
     rep = await pki_enrollment_submit(
         anonymous_backend_sock,
         enrollment_id=uuid4(),
@@ -110,7 +107,6 @@ async def test_pki_submit(anonymous_backend_sock, bob):
     )
 
     assert rep["status"] == "ok"
-
     # Retry without force
 
     rep = await pki_enrollment_submit(
@@ -216,10 +212,20 @@ async def test_pki_submit_no_email_provided(anonymous_backend_sock, bob):
     ).dump()
     enrollment_id = uuid4()
 
-    rep = await _send_cmd(
-        anonymous_backend_sock,
+    _pki_enrollment_submit_no_email_field = CmdSock(
+        "pki_enrollment_submit",
         pki_enrollment_submit_serializer,
-        cmd="pki_enrollment_submit",
+        parse_args=lambda self, enrollment_id, force, submitter_der_x509_certificate, submit_payload_signature, submit_payload: {
+            "enrollment_id": enrollment_id,
+            "force": force,
+            "submitter_der_x509_certificate": submitter_der_x509_certificate,
+            "submit_payload_signature": submit_payload_signature,
+            "submit_payload": submit_payload,
+        },
+    )
+
+    rep = await _pki_enrollment_submit_no_email_field(
+        anonymous_backend_sock,
         enrollment_id=enrollment_id,
         force=False,
         submitter_der_x509_certificate=b"<x509 certif>",
