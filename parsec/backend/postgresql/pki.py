@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import hashlib
-from typing import List, Optional
+from typing import List
 from uuid import UUID
 from asyncpg import UniqueViolationError
 from pendulum import DateTime
@@ -256,10 +256,10 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         enrollment_id: UUID,
         force: bool,
         submitter_der_x509_certificate: bytes,
+        submitter_der_x509_certificate_email: str,
         submit_payload_signature: bytes,
         submit_payload: bytes,
         submitted_on: DateTime,
-        submitter_der_x509_certificate_email: Optional[str] = None,
     ) -> None:
         """
         Raises:
