@@ -1,8 +1,15 @@
-use std::{pin::Pin, task::{Context, Poll}, future::Future};
 use futures::FutureExt;
+use js_sys::Promise;
+use std::{
+    future::Future,
+    pin::Pin,
+    task::{Context, Poll},
+    time::Duration,
+};
 use wasm_bindgen_futures::JsFuture;
+use web_sys::window;
 
-pub struct Timer(Pin<Box<<JsFuture>>>);
+pub struct Timer(Pin<Box<JsFuture>>);
 
 impl Timer {
     /// Create a timer that expires after the given duration of time.
@@ -17,7 +24,7 @@ impl Timer {
                 &resolve,
                 duration.as_millis() as i32,
             )
-            .expect("cannot set callback for Timer")
+            .expect("cannot set callback for Timer");
         });
         let js_fut = JsFuture::from(promise);
         Self(Box::pin(js_fut))
@@ -28,6 +35,6 @@ impl Future for Timer {
     type Output = ();
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        self.0.poll_unpin(cx)
+        self.0.poll_unpin(cx).map(|_| ())
     }
 }
