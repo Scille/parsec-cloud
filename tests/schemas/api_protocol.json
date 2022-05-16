@@ -215,7 +215,7 @@
                             "type": "bytesField"
                         },
                         "submitter_der_x509_certificate_email": {
-                            "allow_none": false,
+                            "allow_none": true,
                             "required": false,
                             "type": "String"
                         }
