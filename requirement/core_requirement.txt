@@ -6,4 +6,4 @@ fusepy==3.0.1;platform_system=="Linux" or platform_system=="Darwin"
 winfspy==0.8.3;platform_system=="Windows"
 zxcvbn==4.4.28
 psutil==5.9.0;platform_system=="Windows"
-pypac==0.15.0
+pypac==0.16.0
