@@ -138,7 +138,7 @@ class SmartcardDeviceFileSchema(BaseDeviceFileSchema):
     type = fields.EnumCheckedConstant(DeviceFileType.SMARTCARD, required=True)
     encrypted_key = fields.Bytes(required=True)
     certificate_id = fields.String(required=True)
-    certificate_sha1 = fields.Bytes(allow_none=True, missing=None)
+    certificate_sha1 = fields.Bytes(required=True, allow_none=True)
 
 
 class DeviceFileSchema(OneOfSchema):
