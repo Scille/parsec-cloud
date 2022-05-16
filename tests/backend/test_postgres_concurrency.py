@@ -245,6 +245,7 @@ async def test_concurrency_pki_enrollment_accept(
             enrollment_id=enrollment_id,
             force=False,
             submitter_der_x509_certificate=b"whatever",
+            submitter_der_x509_certificate_email="whatever",
             submit_payload_signature=b"whatever",
             submit_payload=b"whatever",
             submitted_on=pendulum_now(),
