@@ -24,8 +24,8 @@ class APIV1_OrganizationBootstrapReqSchema(BaseReqSchema):
     # redacted fields. In such case we consider the non-redacted can also
     # be used as redacted given the to-be-redacted fields have been introduce
     # in later version of Parsec.
-    redacted_user_certificate = fields.Bytes(allow_none=False)
-    redacted_device_certificate = fields.Bytes(allow_none=False)
+    redacted_user_certificate = fields.Bytes(required=False, allow_none=False)
+    redacted_device_certificate = fields.Bytes(required=False, allow_none=False)
 
 
 class APIV1_OrganizationBootstrapRepSchema(BaseRepSchema):
