@@ -79,7 +79,7 @@ class VlobReadRepSchema(BaseRepSchema):
     # to be able to perform the proper integrity checks on the manifest timestamp.
     # The `missing=None` argument is used to provide compatibilty of new clients with old backends.
     # New in API version 2.3 (Parsec 2.6.0)
-    author_last_role_granted_on = fields.DateTime(allow_none=True, missing=None)
+    author_last_role_granted_on = fields.DateTime(required=False, allow_none=True, missing=None)
 
 
 vlob_read_serializer = CmdSerializer(VlobReadReqSchema, VlobReadRepSchema)
