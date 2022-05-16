@@ -18,7 +18,7 @@ use futures_lite::FutureExt;
 ///
 /// # #[tokio::main]
 /// # async fn main() {
-/// let notify = Arc::new(Notify::new());
+/// let notify = Arc::new(Notify::default());
 /// let notify2 = notify.clone();
 ///
 /// let handle = spawn(async move {
@@ -35,11 +35,6 @@ use futures_lite::FutureExt;
 pub struct Notify(tokio::sync::Notify);
 
 impl Notify {
-    /// Create a new [Notify]
-    pub fn new() -> Self {
-        Self(tokio::sync::Notify::new())
-    }
-
     /// Wait for a notification.
     pub fn notified(&self) -> Notified<'_> {
         Notified(Box::pin(self.0.notified()))
@@ -53,6 +48,12 @@ impl Notify {
     /// Notifies all waiting tasks.
     pub fn notify_waiters(&self) {
         self.0.notify_waiters()
+    }
+}
+
+impl Default for Notify {
+    fn default() -> Self {
+        Self(tokio::sync::Notify::new())
     }
 }
 
