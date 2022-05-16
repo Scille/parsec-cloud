@@ -112,7 +112,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         # Optional check for client compatibility with version < 2.8.3
         if submitter_der_x509_certificate_email:
             # Assert email not used.
-            _, total = await self._user_component.find_humans(
+            _, total = self._user_component._find_humans(
                 organization_id=organization_id,
                 query=submitter_der_x509_certificate_email,
                 omit_revoked=True,
