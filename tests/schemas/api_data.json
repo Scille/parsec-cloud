@@ -416,7 +416,7 @@
             },
             "device_label": {
                 "allow_none": true,
-                "required": false,
+                "required": true,
                 "type": "DeviceLabelField"
             },
             "human_handle": {
@@ -433,7 +433,7 @@
                         "type": "String"
                     }
                 ],
-                "required": false,
+                "required": true,
                 "type": "HumanHandleField"
             },
             "profile": {

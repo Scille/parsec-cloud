@@ -42,8 +42,8 @@ class PkiEnrollmentAcceptPayload(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("pki_enrollment_answer_payload", required=True)
         device_id = DeviceIDField(required=True)
-        device_label = DeviceLabelField(allow_none=True, missing=None)
-        human_handle = HumanHandleField(allow_none=True, missing=None)
+        device_label = DeviceLabelField(allow_none=True, required=True)
+        human_handle = HumanHandleField(allow_none=True, required=True)
         profile = UserProfileField(required=True)
         root_verify_key = fields.VerifyKey(required=True)
 
