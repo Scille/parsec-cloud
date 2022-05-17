@@ -176,8 +176,7 @@ async def test_monitor_crash(caplog, running_backend, event_bus, alice, during_b
 
 
 @pytest.mark.trio
-async def test_switch_offline(autojump_clock, running_backend, event_bus, alice):
-    autojump_clock.setup()
+async def test_switch_offline(frozen_clock, running_backend, event_bus, alice):
     conn = BackendAuthenticatedConn(
         alice.organization_addr, alice.device_id, alice.signing_key, event_bus
     )
@@ -203,7 +202,7 @@ async def test_switch_offline(autojump_clock, running_backend, event_bus, alice)
             spy.clear()
 
             # Backend event manager waits before retrying to connect
-            await trio.sleep(5)
+            await frozen_clock.sleep_with_autojump(5)
             await spy.wait_with_timeout(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.READY, "status_exc": None},
@@ -337,8 +336,7 @@ async def test_realm_notif_maintenance(running_backend, alice_backend_conn, alic
 
 
 @pytest.mark.trio
-async def test_connection_refused(autojump_clock, running_backend, event_bus, mallory):
-    autojump_clock.setup()
+async def test_connection_refused(running_backend, event_bus, mallory):
     conn = BackendAuthenticatedConn(
         mallory.organization_addr, mallory.device_id, mallory.signing_key, event_bus
     )

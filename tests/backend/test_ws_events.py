@@ -2,7 +2,6 @@
 
 import trio
 import pytest
-import math
 from wsproto.events import BytesMessage, Ping, Pong, CloseConnection, AcceptConnection, Request
 
 from parsec.api.transport import Transport
@@ -13,12 +12,8 @@ from tests.common import real_clock_fail_after
 
 @pytest.mark.trio
 async def test_events_listen_wait_has_watchdog(
-    monkeypatch, autojump_clock, running_backend, backend_sock_factory, alice
+    monkeypatch, frozen_clock, running_backend, backend_sock_factory, alice
 ):
-    # Configure clock to only advance when we explicitly say so (i.e. `clock.jump`),
-    # otherwise we would be flooded by Ping/Pong events given it is the only thing
-    # we are waiting on in this test.
-    autojump_clock.setup(autojump_threshold=math.inf, rate=0)
     KEEPALIVE_TIME = 30  # Autojump clock, so we won't wait for that long
     # Spy on the transport events to detect the wsproto events
     transport_events_sender, transport_events_receiver = trio.open_memory_channel(100)
@@ -87,7 +82,7 @@ async def test_events_listen_wait_has_watchdog(
             assert b"events_listen" in event.data  # Quick sanity check
 
             # Now advance time until ping websocket is requested
-            autojump_clock.jump(KEEPALIVE_TIME)
+            frozen_clock.jump(KEEPALIVE_TIME)
             await next_ws_proto_related_event(
                 expected_event_type=Ping, expected_transport=backend_transport
             )
@@ -95,7 +90,7 @@ async def test_events_listen_wait_has_watchdog(
                 expected_event_type=Pong, expected_transport=client_transport
             )
             # Wait for another ping websocket, just to be sure...
-            autojump_clock.jump(KEEPALIVE_TIME)
+            frozen_clock.jump(KEEPALIVE_TIME)
             await next_ws_proto_related_event(
                 expected_event_type=Ping, expected_transport=backend_transport
             )

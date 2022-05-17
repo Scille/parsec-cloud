@@ -19,8 +19,9 @@ async def job(fail=0, task_status=trio.TASK_STATUS_IGNORED):
 
 
 @pytest.mark.trio
-async def test_start_task_and_join(autojump_clock):
-    autojump_clock.setup()
+async def test_start_task_and_join(frozen_clock):
+    # Clock can always autojump since test has no side effects
+    frozen_clock.autojump_threshold = 0
 
     async with trio.open_service_nursery() as nursery:
         status = await start_task(nursery, job)
@@ -33,8 +34,9 @@ async def test_start_task_and_join(autojump_clock):
 
 
 @pytest.mark.trio
-async def test_start_task_cancel_and_join(autojump_clock):
-    autojump_clock.setup()
+async def test_start_task_cancel_and_join(frozen_clock):
+    # Clock can always autojump since test has no side effects
+    frozen_clock.autojump_threshold = 0
 
     async with trio.open_service_nursery() as nursery:
         status = await start_task(nursery, job)
@@ -48,8 +50,9 @@ async def test_start_task_cancel_and_join(autojump_clock):
 
 
 @pytest.mark.trio
-async def test_start_task_with_exception_before_started(autojump_clock):
-    autojump_clock.setup()
+async def test_start_task_with_exception_before_started(frozen_clock):
+    # Clock can always autojump since test has no side effects
+    frozen_clock.autojump_threshold = 0
 
     async with trio.open_service_nursery() as nursery:
         with pytest.raises(RuntimeError):
@@ -57,8 +60,9 @@ async def test_start_task_with_exception_before_started(autojump_clock):
 
 
 @pytest.mark.trio
-async def test_start_task_with_exception_after_started(autojump_clock):
-    autojump_clock.setup()
+async def test_start_task_with_exception_after_started(frozen_clock):
+    # Clock can always autojump since test has no side effects
+    frozen_clock.autojump_threshold = 0
 
     with pytest.raises(RuntimeError):
         async with trio.open_service_nursery() as nursery:

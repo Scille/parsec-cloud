@@ -168,8 +168,8 @@ async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backen
 
 
 @pytest.mark.trio
-async def test_events_listen_wait_has_watchdog(monkeypatch, autojump_clock, running_backend, alice):
-    autojump_clock.setup()
+async def test_events_listen_wait_has_watchdog(monkeypatch, frozen_clock, running_backend, alice):
+    KEEPALIVE_TIME = 10
     # Spy on the transport events to detect the Pings/Pongs
     # (Note we are talking about websocket ping, not our own higher-level ping api)
     transport_events_sender, transport_events_receiver = trio.open_memory_channel(100)
@@ -208,7 +208,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, autojump_clock, runn
 
     events_listen_rep = None
     async with backend_authenticated_cmds_factory(
-        alice.organization_addr, alice.device_id, alice.signing_key, keepalive=2
+        alice.organization_addr, alice.device_id, alice.signing_key, keepalive=KEEPALIVE_TIME
     ) as cmds:
         async with trio.open_service_nursery() as nursery:
 
@@ -223,8 +223,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, autojump_clock, runn
                 await backend_received_cmd.wait()
 
             # Now advance time until ping is requested
-            await trio.testing.wait_all_tasks_blocked()
-            await trio.sleep(2)
+            await frozen_clock.sleep_with_autojump(KEEPALIVE_TIME + 1)
             async with real_clock_fail_after(1):
                 backend_transport, event = await next_ping_related_event()
                 assert isinstance(event, Ping)
@@ -233,8 +232,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, autojump_clock, runn
                 assert client_transport is not backend_transport
 
             # Wait for another ping, just to be sure...
-            await trio.testing.wait_all_tasks_blocked()
-            await trio.sleep(2)
+            await frozen_clock.sleep_with_autojump(KEEPALIVE_TIME + 1)
             async with real_clock_fail_after(1):
                 backend_transport2, event = await next_ping_related_event()
                 assert isinstance(event, Ping)

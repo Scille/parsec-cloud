@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-import trio
 from pendulum import datetime, now as pendulum_now
 
 from parsec.api.data import PingMessageContent, EntryName
@@ -11,7 +10,7 @@ from parsec.crypto import SecretKey
 from parsec.core.core_events import CoreEvent
 from parsec.core.backend_connection import BackendConnStatus
 
-from tests.common import create_shared_workspace, freeze_time
+from tests.common import create_shared_workspace, freeze_time, real_clock_fail_after
 
 
 @pytest.mark.trio
@@ -42,10 +41,8 @@ async def _send_msg(backend, author, recipient, ping="ping"):
 
 @pytest.mark.trio
 async def test_process_while_offline(
-    autojump_clock, running_backend, alice_core, bob_user_fs, alice, bob
+    frozen_clock, running_backend, alice_core, bob_user_fs, alice, bob, monitor
 ):
-    autojump_clock.setup()
-
     assert alice_core.backend_status == BackendConnStatus.READY
 
     with running_backend.offline():
@@ -55,7 +52,7 @@ async def test_process_while_offline(
 
             assert not alice_core.are_monitors_idle()
 
-            with trio.fail_after(60):  # autojump, so not *really* 60s
+            async with real_clock_fail_after(1):
                 await spy.wait(
                     CoreEvent.BACKEND_CONNECTION_CHANGED,
                     {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
@@ -70,7 +67,8 @@ async def test_process_while_offline(
 
     with alice_core.event_bus.listen() as spy:
         # Alice is back online, should retrieve Bob's message fine
-        with trio.fail_after(60):  # autojump, so not *really* 60s
+        await frozen_clock.sleep_with_autojump(30)
+        async with frozen_clock.real_clock_fail_after(1):
             await spy.wait(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.READY, "status_exc": None},
