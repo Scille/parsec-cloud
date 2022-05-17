@@ -16,7 +16,7 @@ use std::{
 /// # #[tokio::main]
 /// # async fn main() {
 /// let task = spawn(async {
-///     Timer::after(Duration::from_millis(20));
+///     Timer::after(Duration::from_millis(10)).await;
 ///     42
 /// });
 /// let result = task.await;
@@ -39,6 +39,8 @@ where
     task
 }
 
+/// It's the state shared between [Task] and [Runnable].
+/// It's configured inside of [spawn]'s function
 struct SharedState<T> {
     canceled: bool,
     finished: bool,
