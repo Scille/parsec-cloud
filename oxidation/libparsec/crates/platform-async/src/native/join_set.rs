@@ -27,7 +27,7 @@ impl<T> JoinSet<T> {
         self.tasks.push(task);
     }
 
-    pub fn cancel_all(&mut self) -> Vec<Option<T>> {
+    pub fn abort_all(&mut self) -> Vec<Option<T>> {
         self.tasks
             .iter()
             .map(|task| task.abort())
