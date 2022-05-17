@@ -108,6 +108,33 @@ impl<T> Task<T> {
     /// # }
     /// ```
     ///
+    /// ```
+    /// use libparsec_platform_async::{spawn, Notify};
+    /// use std::{
+    ///     time::Duration,
+    ///     sync::{Arc, atomic::{AtomicBool, Ordering}}
+    /// };
+    /// # use tokio::time::sleep;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let notify = Arc::new(Notify::default());
+    /// let notify2 = notify.clone();
+    /// let finished = Arc::new(AtomicBool::new(false));
+    /// let finished2 = finished.clone();
+    ///
+    /// let task = spawn(async move {
+    ///     notify2.notified().await;
+    ///     finished2.store(true, Ordering::SeqCst);
+    /// });
+    ///
+    /// task.abort();
+    /// notify.notify_one();
+    /// sleep(Duration::from_millis(10)).await;
+    /// assert!(finished.load(Ordering::SeqCst) == false, "task shouldn't have finished");
+    /// # }
+    /// ```
+    ///
     /// # Panics
     ///
     /// Awaiting a canceled task result in a panic
