@@ -1,5 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+//! This crate implement binding for our python front, and those will never be compile on the arch `wasm32`.
+//! Trying to compile this crate on the target `wasm32-*` will result in a crash of the `pyo3` build script.
+#![cfg(not(target_arch = "wasm32"))]
+
 use pyo3::prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 
 mod addrs;

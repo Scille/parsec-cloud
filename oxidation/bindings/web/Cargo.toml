@@ -11,7 +11,7 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-libparsec = { path = "../../libparsec", default_features = false, features = ["web"] }
+libparsec = { path = "../../libparsec" }
 libparsec_bindings_common = { path = "../common" }
 wasm-bindgen = "0.2.63"
 
