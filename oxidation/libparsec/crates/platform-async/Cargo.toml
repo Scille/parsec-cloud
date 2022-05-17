@@ -5,8 +5,8 @@ edition = "2021"
 
 [dependencies]
 flume = "0.10.12"
+# futures is used for its macros `select_all` and `join_all`
 futures = "0.3.21"
-futures-lite = { version = "1.12.0", default-features = false }
 
 [dev-dependencies]
 log = "0.4.17"
@@ -19,7 +19,7 @@ js-sys = "0.3.57"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1.18.2", features = ["rt", "time"] }
-simple_logger = "2.1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 tokio = { version = "1.18.2", features = ["full"] }
+simple_logger = "2.1.0"
