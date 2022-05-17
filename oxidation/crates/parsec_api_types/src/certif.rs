@@ -30,8 +30,8 @@ macro_rules! impl_verify_and_load_allow_root {
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
                     .map_err(|_| DataError::Compression)?;
-                let obj: $name = ::rmp_serde::from_read_ref(&serialized)
-                    .map_err(|_| DataError::Serialization)?;
+                let obj: $name =
+                    ::rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)?;
                 match (&obj.author, expected_author) {
                     (CertificateSignerOwned::User(ref a_id), CertificateSignerRef::User(ea_id)) => {
                         if a_id == ea_id {
@@ -67,8 +67,8 @@ macro_rules! impl_verify_and_load_no_root {
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
                     .map_err(|_| DataError::Compression)?;
-                let obj: $name = ::rmp_serde::from_read_ref(&serialized)
-                    .map_err(|_| DataError::Serialization)?;
+                let obj: $name =
+                    ::rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)?;
                 if &obj.author != expected_author {
                     Err(DataError::UnexpectedAuthor {
                         expected: expected_author.clone(),
@@ -91,7 +91,7 @@ macro_rules! impl_unsecure_load {
                 ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
                     .map_err(|_| "Invalid compression")?;
-                ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")
+                ::rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")
             }
         }
     };

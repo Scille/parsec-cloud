@@ -244,7 +244,7 @@ impl Cmds {
                         }
 
                         pub fn load(buf: &[u8]) -> Self {
-                            match ::rmp_serde::from_read_ref(buf) {
+                            match ::rmp_serde::from_slice(buf) {
                                 Ok(res) => res,
                                 Err(e) => Self::UnknownError {
                                     error: e.to_string(),
@@ -270,7 +270,7 @@ impl Cmds {
                     }
 
                     pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
-                        ::rmp_serde::from_read_ref(buf).map_err(|_| "Deserialization failed")
+                        ::rmp_serde::from_slice(buf).map_err(|_| "Deserialization failed")
                     }
                 }
 

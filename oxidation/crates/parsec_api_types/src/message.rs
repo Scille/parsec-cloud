@@ -80,7 +80,7 @@ impl MessageContent {
             .read_to_end(&mut serialized)
             .map_err(|_| "Invalid compression")?;
         let data: MessageContent =
-            rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")?;
+            rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")?;
         let (author, timestamp) = match &data {
             MessageContent::SharingGranted {
                 author, timestamp, ..

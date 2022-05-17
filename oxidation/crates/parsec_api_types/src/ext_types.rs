@@ -233,7 +233,7 @@ mod tests {
         let serialized = &hex!("d70141d86ad584cd5d4f")[..];
         let expected_timestamp_nanos = 1638618643208820000;
 
-        let dt: DateTime = rmp_serde::from_read_ref(serialized).unwrap();
+        let dt: DateTime = rmp_serde::from_slice(serialized).unwrap();
         assert_eq!(dt.as_ref().timestamp_nanos(), expected_timestamp_nanos);
 
         // Round trip

@@ -49,7 +49,7 @@ macro_rules! impl_manifest_dump_load {
                     .read_to_end(&mut serialized)
                     .map_err(|_| DataError::Compression)?;
 
-                let obj = rmp_serde::from_read_ref::<_, Self>(&serialized)
+                let obj = rmp_serde::from_slice::<Self>(&serialized)
                     .map_err(|_| DataError::Serialization)?;
 
                 if obj.author != *expected_author {

@@ -156,7 +156,7 @@ pub enum DeviceFile {
 
 impl DeviceFile {
     pub fn load(serialized: &[u8]) -> Result<Self, &'static str> {
-        rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")
+        rmp_serde::from_slice(serialized).map_err(|_| "Invalid serialization")
     }
 
     pub fn dump(&self) -> Vec<u8> {

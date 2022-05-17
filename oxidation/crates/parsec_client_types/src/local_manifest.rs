@@ -28,7 +28,7 @@ macro_rules! impl_local_manifest_dump_load {
                 key: &SecretKey,
             ) -> Result<Self, &'static str> {
                 let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
-                ::rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")
+                ::rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")
             }
         }
     };

@@ -16,7 +16,7 @@ macro_rules! impl_dump_load {
             }
 
             pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
-                ::rmp_serde::from_read_ref(buf).map_err(|_| "Deserialization failed")
+                ::rmp_serde::from_slice(buf).map_err(|_| "Deserialization failed")
             }
         }
     };
