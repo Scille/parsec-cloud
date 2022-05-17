@@ -30,6 +30,7 @@ from parsec.crypto import PrivateKey, SigningKey
 
 from parsec.core.pki.exceptions import (
     PkiEnrollmentError,
+    PkiEnrollmentSubmitCertificateEmailAlreadyUsedError,
     PkiEnrollmentSubmitError,
     PkiEnrollmentSubmitCertificateAlreadySubmittedError,
     PkiEnrollmentSubmitEnrollmentIdAlreadyUsedError,
@@ -110,6 +111,7 @@ class PkiEnrollmentSubmitterInitialCtx:
             enrollment_id=self.enrollment_id,
             force=force,
             submitter_der_x509_certificate=self.x509_certificate.der_x509_certificate,
+            submitter_der_x509_certificate_email=self.x509_certificate.subject_email_address,
             submit_payload_signature=payload_signature,
             submit_payload=raw_submit_payload,
         )
@@ -134,6 +136,14 @@ class PkiEnrollmentSubmitterInitialCtx:
         if rep["status"] == "already_enrolled":
             raise PkiEnrollmentSubmitCertificateAlreadyEnrolledError(
                 f"The certificate `{self.x509_certificate.certificate_sha1.hex()}` has already been enrolled",
+                rep,
+                self.enrollment_id,
+                self.x509_certificate,
+            )
+
+        if rep["status"] == "email_already_used":
+            raise PkiEnrollmentSubmitCertificateEmailAlreadyUsedError(
+                f"The email address `{self.x509_certificate.subject_email_address}` is already used by an active user",
                 rep,
                 self.enrollment_id,
                 self.x509_certificate,

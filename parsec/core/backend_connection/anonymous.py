@@ -47,7 +47,6 @@ async def _anonymous_cmd(
     url = addr.to_http_domain_url(f"/anonymous/{organization_id}")
     try:
         raw_rep = await http_request(url=url, method="POST", data=raw_req)
-
     except URLError as exc:
         logger.debug("Request failed (backend not available)", cmd=req["cmd"], exc_info=exc)
         raise BackendNotAvailable(exc) from exc
@@ -74,6 +73,7 @@ async def pki_enrollment_submit(
     enrollment_id: UUID,
     force: bool,
     submitter_der_x509_certificate: bytes,
+    submitter_der_x509_certificate_email: str,
     submit_payload_signature: bytes,
     submit_payload: bytes,
 ) -> dict:
@@ -85,6 +85,7 @@ async def pki_enrollment_submit(
         enrollment_id=enrollment_id,
         force=force,
         submitter_der_x509_certificate=submitter_der_x509_certificate,
+        submitter_der_x509_certificate_email=submitter_der_x509_certificate_email,
         submit_payload_signature=submit_payload_signature,
         submit_payload=submit_payload,
     )

@@ -59,8 +59,6 @@ from parsec.api.protocol import (
     user_create_serializer,
     user_revoke_serializer,
     device_create_serializer,
-    pki_enrollment_submit_serializer,
-    pki_enrollment_info_serializer,
     pki_enrollment_list_serializer,
     pki_enrollment_reject_serializer,
     pki_enrollment_accept_serializer,
@@ -587,35 +585,6 @@ async def organization_bootstrap(
 
 
 ### PKI enrollment API ###
-
-
-async def pki_enrollment_submit(
-    transport: Transport,
-    enrollment_id: UUID,
-    force: bool,
-    submitter_der_x509_certificate: bytes,
-    submit_payload_signature: bytes,
-    submit_payload: bytes,
-) -> dict:
-    return await _send_cmd(
-        transport,
-        pki_enrollment_submit_serializer,
-        cmd="pki_enrollment_submit",
-        enrollment_id=enrollment_id,
-        force=force,
-        submitter_der_x509_certificate=submitter_der_x509_certificate,
-        submit_payload_signature=submit_payload_signature,
-        submit_payload=submit_payload,
-    )
-
-
-async def pki_enrollment_info(transport: Transport, enrollment_id: UUID) -> dict:
-    return await _send_cmd(
-        transport,
-        pki_enrollment_info_serializer,
-        cmd="pki_enrollment_info",
-        enrollment_id=enrollment_id,
-    )
 
 
 async def pki_enrollment_list(transport: Transport) -> dict:

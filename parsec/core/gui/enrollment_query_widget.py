@@ -16,6 +16,7 @@ from parsec.core.pki.exceptions import (
     PkiEnrollmentCertificatePinCodeUnavailableError,
     PkiEnrollmentCertificateNotFoundError,
     PkiEnrollmentSubmitCertificateAlreadySubmittedError,
+    PkiEnrollmentSubmitCertificateEmailAlreadyUsedError,
 )
 
 
@@ -85,6 +86,9 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
         except PkiEnrollmentCertificatePinCodeUnavailableError:
             # User declined to provide a PIN code (cancelled the prompt). We do nothing.
             pass
+        # Email already attributed to an active user
+        except PkiEnrollmentSubmitCertificateEmailAlreadyUsedError as exc:
+            show_error(self, translate("TEXT_ENROLLMENT_SUBMIT_FAILED_EMAIL_USED"), exc)
         # Enrollment submission failed
         except Exception as exc:
             show_error(self, translate("TEXT_ENROLLMENT_SUBMIT_FAILED"), exc)

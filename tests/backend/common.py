@@ -519,10 +519,11 @@ invite_4_claimer_communicate = CmdSock(
 pki_enrollment_submit = CmdSock(
     "pki_enrollment_submit",
     pki_enrollment_submit_serializer,
-    parse_args=lambda self, enrollment_id, force, submitter_der_x509_certificate, submit_payload_signature, submit_payload: {
+    parse_args=lambda self, enrollment_id, force, submitter_der_x509_certificate, submitter_der_x509_certificate_email, submit_payload_signature, submit_payload: {
         "enrollment_id": enrollment_id,
         "force": force,
         "submitter_der_x509_certificate": submitter_der_x509_certificate,
+        "submitter_der_x509_certificate_email": submitter_der_x509_certificate_email,
         "submit_payload_signature": submit_payload_signature,
         "submit_payload": submit_payload,
     },

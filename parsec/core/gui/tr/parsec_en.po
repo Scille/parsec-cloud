@@ -451,6 +451,9 @@ msgstr "No"
 msgid "TEXT_ENROLLMENT_SUBMIT_FAILED"
 msgstr "Could not make the request."
 
+msgid "TEXT_ENROLLMENT_SUBMIT_FAILED_EMAIL_USED"
+msgstr "The certificate email address is already used by an active user"
+
 msgid "TEXT_ENROLLMENT_ERROR_LOADING_CERTIFICATE"
 msgstr "Error loading certificate."
 

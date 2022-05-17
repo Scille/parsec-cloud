@@ -471,6 +471,9 @@ msgstr "Non"
 msgid "TEXT_ENROLLMENT_SUBMIT_FAILED"
 msgstr "Impossible de faire une demande d'enrôlement"
 
+msgid "TEXT_ENROLLMENT_SUBMIT_FAILED_EMAIL_USED"
+msgstr "L'adresse email du certificat est déja attributée à un utilisateur actif"
+
 msgid "TEXT_ENROLLMENT_ERROR_LOADING_CERTIFICATE"
 msgstr "Impossible de charger le certificate"
 

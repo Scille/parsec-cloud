@@ -210,7 +210,7 @@ class MemoryUserComponent(BaseUserComponent):
         device = self._get_device(organization_id, device_id)
         return user, device
 
-    async def find_humans(
+    def _find_humans(
         self,
         organization_id: OrganizationID,
         query: Optional[str] = None,
@@ -266,6 +266,24 @@ class MemoryUserComponent(BaseUserComponent):
         paginated_results = results[(page - 1) * per_page : page * per_page]
 
         return paginated_results, total
+
+    async def find_humans(
+        self,
+        organization_id: OrganizationID,
+        query: Optional[str] = None,
+        page: int = 1,
+        per_page: int = 100,
+        omit_revoked: bool = False,
+        omit_non_human: bool = False,
+    ) -> Tuple[List[HumanFindResultItem], int]:
+        return self._find_humans(
+            organization_id=organization_id,
+            query=query,
+            page=page,
+            per_page=per_page,
+            omit_revoked=omit_revoked,
+            omit_non_human=omit_non_human,
+        )
 
     async def revoke_user(
         self,
