@@ -12,9 +12,9 @@ autotests = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-parsec_api_crypto = { version = "0.0.0", path = "../parsec_api_crypto" }
-parsec_api_types = { version = "0.0.0", path = "../parsec_api_types" }
-parsec_client_types = { version = "0.0.0", path = "../parsec_client_types" }
+parsec_api_crypto = { path = "../parsec_api_crypto" }
+parsec_api_types = { path = "../parsec_api_types" }
+parsec_client_types = { path = "../parsec_client_types" }
 
 diesel = { version = "2.0.0-rc.0", features = ["sqlite", "r2d2"], git = "https://github.com/diesel-rs/diesel" }
 fancy-regex = "0.8.0"
@@ -22,6 +22,6 @@ thiserror = "1.0.30"
 uuid = { version = "1.0.0-alpha.1", features = ["v4", "fast-rng"] }
 
 [dev-dependencies]
-tests_fixtures = { version = "0.0.0", path = "../tests_fixtures" }
+tests_fixtures = { path = "../tests_fixtures" }
 
 rstest = "0.12.0"
