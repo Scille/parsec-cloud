@@ -71,7 +71,8 @@ impl<T> Task<T> {
         Self { shared_state }
     }
 
-    /// abort the task
+    /// Abort the task. This will stop the spawned [Task] to make any new progress.
+    /// It may return the value returned by the future if it as finished before aborting it.
     ///
     /// ```
     /// use libparsec_platform_async::{spawn, Notify};
