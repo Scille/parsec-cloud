@@ -95,10 +95,8 @@ pub fn rs_to_py_user_profile(profile: &parsec_api_types::UserProfile) -> PyResul
     })
 }
 
-pub fn py_to_rs_invitation_status(
-    status: &PyAny,
-) -> PyResult<parsec_api_protocol::InvitationStatus> {
-    use parsec_api_protocol::InvitationStatus::*;
+pub fn py_to_rs_invitation_status(status: &PyAny) -> PyResult<parsec_api_types::InvitationStatus> {
+    use parsec_api_types::InvitationStatus::*;
     Ok(match status.getattr("name")?.extract::<&str>()? {
         "IDLE" => Idle,
         "READY" => Ready,
