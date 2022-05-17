@@ -69,7 +69,7 @@ impl<T> Task<T> {
     }
 
     /// Cancels the task
-    pub fn cancel(&self) -> Option<T> {
+    pub fn abort(&self) -> Option<T> {
         let mut state = self.shared_state.lock().unwrap();
 
         state.canceled = true;
