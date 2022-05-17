@@ -2,12 +2,14 @@
 
 #![cfg(not(target_arch = "wasm32"))]
 
-use libparsec_platform_async::{JoinSet, Notify};
+use libparsec_platform_async::{
+    channel::{bounded, RecvError, Sender},
+    JoinSet, Notify,
+};
 use std::{
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
-use tokio::sync::mpsc;
 
 const TIMEOUT: u64 = 250;
 
@@ -42,14 +44,14 @@ async fn main() -> Result<(), ()> {
 
     log::debug!("starting with {} targets", targets.len());
     let start_time = Instant::now();
-    assert_eq!(Some(2), dbg!(eyeballs(targets).await));
+    assert_eq!(Ok(2), dbg!(eyeballs(targets).await));
     let elapsed = start_time.elapsed();
     log::info!("elapsed time {}ms", elapsed.as_millis());
     assert!(elapsed < Duration::from_millis(900));
     Ok(())
 }
 
-async fn eyeballs(targets: Vec<Load>) -> Option<usize> {
+async fn eyeballs(targets: Vec<Load>) -> Result<usize, RecvError> {
     let failed_attempt = targets
         .iter()
         .map(|_| Arc::new(Notify::default()))
@@ -57,10 +59,10 @@ async fn eyeballs(targets: Vec<Load>) -> Option<usize> {
     let targets = Arc::new(targets);
     let join_set = JoinSet::default();
     let join_set = Arc::new(Mutex::new(join_set));
-    let (tx, mut rx) = mpsc::channel::<usize>(targets.len());
+    let (tx, rx) = bounded::<usize>(targets.len());
 
     spawn_attempt(0, targets, failed_attempt, join_set.clone(), tx);
-    let result = dbg!(rx.recv().await);
+    let result = dbg!(rx.recv_async().await);
     join_set.lock().unwrap().cancel_all();
     result
 }
@@ -70,7 +72,7 @@ fn spawn_attempt(
     targets: Arc<Vec<Load>>,
     failed_attempt: Vec<Arc<Notify>>,
     join_set: Arc<Mutex<JoinSet<()>>>,
-    sender: mpsc::Sender<usize>,
+    sender: Sender<usize>,
 ) {
     log::debug!("spawning task #{which}");
 
@@ -88,7 +90,7 @@ async fn attempt(
     targets: Arc<Vec<Load>>,
     failed_attempt: Vec<Arc<Notify>>,
     join_set: Arc<Mutex<JoinSet<()>>>,
-    sender: mpsc::Sender<usize>,
+    sender: Sender<usize>,
 ) {
     log::info!("[#{which}] starting task");
     if which > 0 {
@@ -124,7 +126,7 @@ async fn attempt(
         }
         Mode::Success => {
             log::info!("[#{which}] finished with success");
-            sender.send(which).await.unwrap();
+            sender.send_async(which).await.unwrap();
         }
     }
 }
