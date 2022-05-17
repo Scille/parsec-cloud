@@ -13,6 +13,7 @@ from parsec.backend.block import (
     BlockAccessError,
     BlockNotFoundError,
     BlockInMaintenanceError,
+    BlockStoreError,
 )
 
 
@@ -103,8 +104,11 @@ class MemoryBlockComponent(BaseBlockComponent):
         block: bytes,
     ) -> None:
         self._check_realm_write_access(organization_id, realm_id, author.user_id)
+        if (organization_id, block_id) in self._blockmetas:
+            raise BlockAlreadyExistsError()
 
         await self._blockstore_component.create(organization_id, block_id, block)
+
         self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id, len(block))
 
 
@@ -117,14 +121,10 @@ class MemoryBlockStoreComponent(BaseBlockStoreComponent):
             return self._blocks[(organization_id, block_id)]
 
         except KeyError:
-            raise BlockNotFoundError()
+            raise BlockStoreError()
 
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
     ) -> None:
         key = (organization_id, block_id)
-        if key in self._blocks:
-            # Should not happen if client play with uuid randomness
-            raise BlockAlreadyExistsError()
-
         self._blocks[key] = block

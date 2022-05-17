@@ -25,7 +25,7 @@ class BlockNotFoundError(BlockError):
     pass
 
 
-class BlockTimeoutError(BlockError):
+class BlockStoreError(BlockError):
     pass
 
 
@@ -48,7 +48,8 @@ class BaseBlockComponent:
         except BlockNotFoundError:
             return BlockReadRep.NotFound()
 
-        except BlockTimeoutError:
+        except BlockStoreError:
+            # For legacy reasons, block store error status is `timeout`
             return BlockReadRep.Timeout()
 
         except BlockAccessError:
@@ -73,7 +74,8 @@ class BaseBlockComponent:
         except BlockNotFoundError:
             return block_create_serializer.rep_dump({"status": "not_found"})
 
-        except BlockTimeoutError:
+        except BlockStoreError:
+            # For legacy reasons, block store error status is `timeout`
             return block_create_serializer.rep_dump({"status": "timeout"})
 
         except BlockAccessError:
@@ -90,7 +92,7 @@ class BaseBlockComponent:
         """
         Raises:
             BlockNotFoundError
-            BlockTimeoutError
+            BlockStoreError
             BlockAccessError
             BlockInMaintenanceError
         """
@@ -108,7 +110,7 @@ class BaseBlockComponent:
         Raises:
             BlockNotFoundError: if cannot found realm
             BlockAlreadyExistsError
-            BlockTimeoutError
+            BlockStoreError
             BlockAccessError
             BlockInMaintenanceError
         """

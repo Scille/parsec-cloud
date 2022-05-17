@@ -20,10 +20,14 @@ pbr.version.VersionInfo = Mock(side_effect=side_effect)
 
 import swiftclient
 from swiftclient.exceptions import ClientException
+from structlog import get_logger
 
 from parsec.api.protocol import OrganizationID, BlockID
+from parsec.backend.block import BlockStoreError
 from parsec.backend.blockstore import BaseBlockStoreComponent
-from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
+
+
+logger = get_logger()
 
 
 def build_swift_slug(organization_id: OrganizationID, id: BlockID):
@@ -40,35 +44,38 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
         )
         self._container = container
         self.swift_client.head_container(container)
+        self._logger = logger.bind(blockstore_type="Swift", authurl=auth_url)
 
     async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
         slug = build_swift_slug(organization_id=organization_id, id=id)
         try:
-            headers, obj = await trio.to_thread.run_sync(
+            _, obj = await trio.to_thread.run_sync(
                 self.swift_client.get_object, self._container, slug
             )
 
         except ClientException as exc:
-            if exc.http_status == 404:
-                raise BlockNotFoundError() from exc
-
-            else:
-                raise BlockTimeoutError() from exc
+            self._logger.warning(
+                "Block read error",
+                organization_id=str(organization_id),
+                block_id=str(id),
+                exc_info=exc,
+            )
+            raise BlockStoreError(exc) from exc
 
         return obj
 
     async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
         slug = build_swift_slug(organization_id=organization_id, id=id)
         try:
-            await trio.to_thread.run_sync(self.swift_client.get_object, self._container, slug)
+            await trio.to_thread.run_sync(
+                partial(self.swift_client.put_object, self._container, slug, block)
+            )
 
         except ClientException as exc:
-            if exc.http_status == 404:
-                await trio.to_thread.run_sync(
-                    partial(self.swift_client.put_object, self._container, slug, block)
-                )
-            else:
-                raise BlockTimeoutError() from exc
-
-        else:
-            raise BlockAlreadyExistsError()
+            self._logger.warning(
+                "Block create error",
+                organization_id=str(organization_id),
+                block_id=str(id),
+                exc_info=exc,
+            )
+            raise BlockStoreError(exc) from exc

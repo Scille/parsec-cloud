@@ -6,8 +6,8 @@ from unittest.mock import ANY
 import pendulum
 from hypothesis import given, strategies as st
 
-from parsec.backend.block import BlockTimeoutError
 from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.block import BlockStoreError
 from parsec.backend.raid5_blockstore import (
     split_block_in_chunks,
     generate_checksum_chunk,
@@ -153,22 +153,44 @@ async def test_raid1_block_create_and_read(alice_backend_sock, realm):
 
 @pytest.mark.trio
 @customize_fixtures(blockstore_mode="RAID1")
-async def test_raid1_block_create_partial_failure(alice_backend_sock, backend, realm):
+async def test_raid1_block_create_partial_failure(caplog, alice_backend_sock, backend, realm):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
-        raise BlockTimeoutError()
+        raise BlockStoreError()
 
     backend.blockstore.blockstores[1].create = mock_create
 
     rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "timeout"}
 
+    log = caplog.assert_occured_once("[warning  ] Block create error: A node have failed")
+    assert f"organization_id=CoolOrg" in log
+    assert f"block_id={BLOCK_ID}" in log
+
+
+@pytest.mark.trio
+@customize_fixtures(blockstore_mode="RAID1_PARTIAL_CREATE_OK")
+async def test_raid1_partial_create_ok_block_create_partial_failure(
+    alice_backend_sock, backend, realm
+):
+    async def mock_create(organization_id, id, block):
+        await trio.sleep(0)
+        raise BlockStoreError()
+
+    backend.blockstore.blockstores[1].create = mock_create
+
+    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
+    assert rep == {"status": "ok"}
+
+    rep = await block_read(alice_backend_sock, BLOCK_ID)
+    assert rep == {"status": "ok", "block": BLOCK_DATA}
+
 
 @pytest.mark.trio
 @customize_fixtures(blockstore_mode="RAID1")
 async def test_raid1_block_create_partial_exists(alice_backend_sock, alice, backend, realm):
     await backend.blockstore.blockstores[1].create(alice.organization_id, BLOCK_ID, BLOCK_DATA)
-
+    # Blockstore overwrite existing block without questions
     await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
 
 
@@ -177,7 +199,7 @@ async def test_raid1_block_create_partial_exists(alice_backend_sock, alice, back
 async def test_raid1_block_read_partial_failure(alice_backend_sock, backend, block):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
-        raise BlockTimeoutError()
+        raise BlockStoreError()
 
     backend.blockstore.blockstores[1].read = mock_read
 
@@ -205,28 +227,45 @@ async def test_raid5_block_create_single_failure(
 ):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
-        raise BlockTimeoutError()
+        raise BlockStoreError()
+
+    backend.blockstore.blockstores[failing_blockstore].create = mock_create
+
+    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
+    assert rep == {"status": "timeout"}
+
+    log = caplog.assert_occured_once("[warning  ] Block create error: A node have failed")
+    assert f"organization_id=CoolOrg" in log
+    assert f"block_id={BLOCK_ID}" in log
+
+
+@pytest.mark.trio
+@customize_fixtures(blockstore_mode="RAID5_PARTIAL_CREATE_OK")
+@pytest.mark.parametrize("failing_blockstore", (0, 1, 2))
+async def test_raid5_partial_create_ok_block_create_single_failure(
+    caplog, alice_backend_sock, backend, realm, failing_blockstore
+):
+    async def mock_create(organization_id, id, block):
+        await trio.sleep(0)
+        raise BlockStoreError()
 
     backend.blockstore.blockstores[failing_blockstore].create = mock_create
 
     await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
 
-    # Should be notified of blockstore malfunction
-    caplog.assert_occured_once(
-        f"[warning  ] Cannot reach RAID5 blockstore #{failing_blockstore} to "
-        f"create block {BLOCK_ID} [parsec.backend.raid5_blockstore]"
-    )
+    rep = await block_read(alice_backend_sock, BLOCK_ID)
+    assert rep == {"status": "ok", "block": BLOCK_DATA}
 
 
 @pytest.mark.trio
-@customize_fixtures(blockstore_mode="RAID5")
+@customize_fixtures(blockstore_mode="RAID5_PARTIAL_CREATE_OK")
 @pytest.mark.parametrize("failing_blockstores", [(0, 1), (0, 2)])
-async def test_raid5_block_create_multiple_failure(
+async def test_raid5_partial_create_ok_block_create_too_many_failures(
     caplog, alice_backend_sock, backend, realm, failing_blockstores
 ):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
-        raise BlockTimeoutError()
+        raise BlockStoreError()
 
     fb1, fb2 = failing_blockstores
 
@@ -236,19 +275,11 @@ async def test_raid5_block_create_multiple_failure(
     rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "timeout"}
 
-    # Should be notified of blockstore malfunction
-    caplog.assert_occured_once(
-        f"[warning  ] Cannot reach RAID5 blockstore #{fb1} to "
-        f"create block {BLOCK_ID} [parsec.backend.raid5_blockstore]"
+    log = caplog.assert_occured_once(
+        "[warning  ] Block create error: More than 1 nodes have failed"
     )
-    caplog.assert_occured_once(
-        f"[warning  ] Cannot reach RAID5 blockstore #{fb2} to "
-        f"create block {BLOCK_ID} [parsec.backend.raid5_blockstore]"
-    )
-    caplog.assert_occured_once(
-        f"[error    ] Block {BLOCK_ID} cannot be created: Too many failing "
-        "blockstores in the RAID5 cluster [parsec.backend.raid5_blockstore]"
-    )
+    assert f"organization_id=CoolOrg" in log
+    assert f"block_id={BLOCK_ID}" in log
 
 
 @pytest.mark.trio
@@ -263,22 +294,16 @@ async def test_raid5_block_create_partial_exists(alice_backend_sock, alice, back
 @customize_fixtures(blockstore_mode="RAID5")
 @pytest.mark.parametrize("failing_blockstore", (0, 1))  # Ignore checksum blockstore
 async def test_raid5_block_read_single_failure(
-    caplog, alice_backend_sock, backend, block, failing_blockstore
+    alice_backend_sock, backend, block, failing_blockstore
 ):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
-        raise BlockTimeoutError()
+        raise BlockStoreError()
 
     backend.blockstore.blockstores[failing_blockstore].read = mock_read
 
     rep = await block_read(alice_backend_sock, block)
     assert rep == {"status": "ok", "block": BLOCK_DATA}
-
-    # Should be notified of blockstore malfunction
-    caplog.assert_occured_once(
-        f"[warning  ] Cannot reach RAID5 blockstore #{failing_blockstore} to "
-        f"read block {block} [parsec.backend.raid5_blockstore]"
-    )
 
 
 @pytest.mark.trio
@@ -305,7 +330,7 @@ async def test_raid5_block_read_multiple_failure(
 ):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
-        raise BlockTimeoutError()
+        raise BlockStoreError()
 
     fb1, fb2 = failing_blockstores
     backend.blockstore.blockstores[fb1].read = mock_read
@@ -314,19 +339,9 @@ async def test_raid5_block_read_multiple_failure(
     rep = await block_read(alice_backend_sock, block)
     assert rep == {"status": "timeout"}
 
-    # Should be notified of blockstore malfunction
-    caplog.assert_occured_once(
-        f"[warning  ] Cannot reach RAID5 blockstore #{fb1} to "
-        f"read block {block} [parsec.backend.raid5_blockstore]"
-    )
-    caplog.assert_occured_once(
-        f"[warning  ] Cannot reach RAID5 blockstore #{fb2} to "
-        f"read block {block} [parsec.backend.raid5_blockstore]"
-    )
-    caplog.assert_occured_once(
-        f"[error    ] Block {block} cannot be read: Too many failing "
-        "blockstores in the RAID5 cluster [parsec.backend.raid5_blockstore]"
-    )
+    log = caplog.assert_occured_once("[warning  ] Block read error: More than 1 nodes have failed")
+    assert f"organization_id=CoolOrg" in log
+    assert f"block_id={block}" in log
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,1 @@
+Improve server-side error logging when S3/Swift blockstore is not working
