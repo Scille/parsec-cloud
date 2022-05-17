@@ -122,7 +122,7 @@ impl<T> Task<T> {
     /// # }
     /// ```
     pub fn abort(&self) -> Option<T> {
-        let mut state = self.shared_state.lock().unwrap();
+        let mut state = self.shared_state.lock().expect("mutex is poisoned");
 
         state.canceled = true;
         if let Some(ref waker) = state.runnable_waker {
@@ -133,17 +133,26 @@ impl<T> Task<T> {
 
     /// Detaches the task to let it keep running in the background
     pub fn detach(self) {
-        self.shared_state.lock().unwrap().detached = true;
+        self.shared_state
+            .lock()
+            .expect("mutex is poisoned")
+            .detached = true;
     }
 
     /// Return `true` if the current task is finished
     pub fn is_finished(&self) -> bool {
-        self.shared_state.lock().unwrap().finished
+        self.shared_state
+            .lock()
+            .expect("mutex is poisoned")
+            .finished
     }
 
     /// Return `true` if the current task is canceled
     pub fn is_canceled(&self) -> bool {
-        self.shared_state.lock().unwrap().canceled
+        self.shared_state
+            .lock()
+            .expect("mutex is poisoned")
+            .canceled
     }
 }
 
@@ -152,7 +161,7 @@ impl<T> Future for Task<T> {
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let s = self.as_mut();
-        let mut state = s.shared_state.lock().unwrap();
+        let mut state = s.shared_state.lock().expect("mutex is poisoned");
 
         if state.canceled {
             panic!("awaiting a canceled task");
@@ -196,7 +205,7 @@ where
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut s = self.as_mut();
-        let mut state = s.shared_state.lock().unwrap();
+        let mut state = s.shared_state.lock().expect("mutex is poisoned");
 
         state.runnable_waker = Some(cx.waker().clone());
         if state.canceled {
@@ -206,7 +215,7 @@ where
             match s.future.as_mut().poll(cx) {
                 Poll::Pending => Poll::Pending,
                 Poll::Ready(value) => {
-                    let mut state = s.shared_state.lock().unwrap();
+                    let mut state = s.shared_state.lock().expect("mutex is poisoned");
 
                     state.value = Some(value);
                     state.finished = true;
