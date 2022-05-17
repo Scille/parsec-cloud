@@ -112,12 +112,13 @@ jobs:
       "
     displayName: 'Commits signatures'
   - bash: |
+      set -eux
       # PRs must contain a newsfragment that reference an opened issue
       python -c "
       from pathlib import Path
       from subprocess import run
       from urllib.request import urlopen, Request, HTTPError
-      from multiprocessing.pool import ThreadPool
+      from concurrent.futures import ThreadPoolExecutor
       import json
       # If file never existed in master, consider as a new newsfragment
       # Cannot just git diff against master branch here given newsfragments
@@ -145,7 +146,7 @@ jobs:
                   raise SystemExit('New newsfragement ID correspond to a closed issue')
               return True
           return False
-      with ThreadPool() as pool:
+      with ThreadPoolExecutor() as pool:
           ret = pool.map(check_newsfragment, Path('newsfragments').glob('*.rst'))
       if True not in ret:
           raise SystemExit('No new newsfragment found')
