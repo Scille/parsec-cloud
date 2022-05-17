@@ -16,7 +16,7 @@ trio_typing==0.5.1 # updating causes conflict with qtrio dependency
 async_generator>=1.9
 contextvars==2.4;python_version<"3.7"
 typing-extensions==3.10.0.2;python_version<"3.8" # updating causes conflict with qtrio dependency
-sentry-sdk==1.5.11
+sentry-sdk==1.5.12
 structlog==21.5.0
 importlib_resources==5.4.0
 colorama==0.4.4  # structlog colored output
