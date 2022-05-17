@@ -19,7 +19,7 @@ parsec_serialization_format = { path = "../parsec_serialization_format" }
 flate2 = "1.0.22"
 serde = { version = "1.0.127", features = ["derive"] }
 serde_with = "1.11.0"
-serde_repr = "0.1.7"
+serde_repr = "0.1.8"
 rmp-serde = "1.0.0"
 serde_bytes = "0.11.5"
 sha2 = "0.10.0"
