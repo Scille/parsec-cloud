@@ -132,6 +132,32 @@ impl<T> Task<T> {
     }
 
     /// Detaches the task to let it keep running in the background
+    ///
+    /// ```
+    /// use libparsec_platform_async::{spawn, Notify};
+    /// use std::{
+    ///     time::Duration,
+    ///     sync::{Arc, atomic::{AtomicBool, Ordering}},
+    /// };
+    /// # use tokio::time::sleep;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let notify = Arc::new(Notify::default());
+    /// let notify2 = notify.clone();
+    /// let finished = Arc::new(AtomicBool::new(false));
+    /// let finished2 = finished.clone();
+    ///
+    /// let task = spawn(async move {
+    ///     notify2.notified().await;
+    ///     finished2.store(true, Ordering::SeqCst);
+    /// });
+    ///
+    /// task.detach();
+    /// notify.notify_one();
+    /// sleep(Duration::from_millis(10)).await;
+    /// assert!(finished.load(Ordering::SeqCst) == true, "task should have finished in background");
+    /// # }
     pub fn detach(self) {
         self.shared_state
             .lock()
@@ -140,6 +166,20 @@ impl<T> Task<T> {
     }
 
     /// Return `true` if the current task is finished
+    ///
+    /// ```
+    /// use libparsec_platform_async::spawn;
+    /// use std::time::Duration;
+    /// # use tokio::time::sleep;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let task = spawn(futures::future::ready(42));
+    ///
+    /// sleep(Duration::from_millis(10)).await;
+    /// assert!(task.is_finished(), "task should have finished");
+    /// # }
+    /// ```
     pub fn is_finished(&self) -> bool {
         self.shared_state
             .lock()
@@ -148,6 +188,18 @@ impl<T> Task<T> {
     }
 
     /// Return `true` if the current task is canceled
+    ///
+    /// ```
+    /// use libparsec_platform_async::spawn;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let task = spawn(futures::future::ready(42));
+    ///
+    /// task.abort();
+    /// assert!(task.is_canceled(), "task should have been canceled");
+    /// # }
+    /// ```
     pub fn is_canceled(&self) -> bool {
         self.shared_state
             .lock()
