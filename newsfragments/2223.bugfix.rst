@@ -1,1 +1,0 @@
-Fixed clicking on a file link in some instances

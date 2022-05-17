@@ -5,6 +5,58 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.9.0-rc1 (2022-05-17)
+------------------------------
+
+Features
+~~~~~~~~
+
+* Improved how users and workspaces are filtered   (`#2082
+  <https://github.com/Scille/parsec-cloud/issues/2082>`__)
+* Added a "Recover device" button when the login devices list is empty (`#2184
+  <https://github.com/Scille/parsec-cloud/issues/2184>`__)
+* Added a spinner while retrieving the information during a claim  (`#2215
+  <https://github.com/Scille/parsec-cloud/issues/2215>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix the print dialog pop-up in snap builds (introduced in 2.7.0).  (`#2161
+  <https://github.com/Scille/parsec-cloud/issues/2161>`__)
+* Fixed small error when pressing Enter on the log in screen (`#2178
+  <https://github.com/Scille/parsec-cloud/issues/2178>`__)
+* Fixed a bug preventing file saving with Apple softwares such as TextEdit or
+  Preview.  (`#2211 <https://github.com/Scille/parsec-cloud/issues/2211>`__)
+* Fixed clicking on a file link in some instances  (`#2223
+  <https://github.com/Scille/parsec-cloud/issues/2223>`__)
+* Fixed an error message when dragging files  (`#2237
+  <https://github.com/Scille/parsec-cloud/issues/2237>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Updated links to term and conditions  (`#1692
+  <https://github.com/Scille/parsec-cloud/issues/1692>`__)
+* Improve server-side error logging when S3/Swift blockstore is not working
+  (`#2160 <https://github.com/Scille/parsec-cloud/issues/2160>`__)
+* Added an installation guide for FUSE for MacOS.  (`#2210
+  <https://github.com/Scille/parsec-cloud/issues/2210>`__)
+* Updated error message when the backend cannot be reached during an invitation
+  (`#2216 <https://github.com/Scille/parsec-cloud/issues/2216>`__)
+* Add support for HTTP proxy  (`#2217 <https://github.com/Scille/parsec-
+  cloud/issues/2217>`__)
+* Added an error message when failing to load a certificate  (`#2235
+  <https://github.com/Scille/parsec-cloud/issues/2235>`__)
+* Improve handling of keyboard interrupt in client CLI (`#2240
+  <https://github.com/Scille/parsec-cloud/issues/2240>`__)
+* Stacktraces in error messages are more consistent  (`#2253
+  <https://github.com/Scille/parsec-cloud/issues/2253>`__)
+* Add pki certificate email address check in parsec backend on pki enrollment
+  submit.  (`#2255 <https://github.com/Scille/parsec-cloud/issues/2255>`__)
+* Gives more details when an error occurs (`#2275
+  <https://github.com/Scille/parsec-cloud/issues/2275>`__)
+
+
 Parsec v2.8.1 (2022-04-08)
 --------------------------
 

@@ -1,1 +1,0 @@
-Added a spinner while retrieving the information during a claim

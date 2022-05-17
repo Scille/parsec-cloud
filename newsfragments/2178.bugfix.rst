@@ -1,1 +1,0 @@
-Fixed small error when pressing Enter on the log in screen
