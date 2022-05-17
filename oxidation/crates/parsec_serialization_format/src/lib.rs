@@ -17,7 +17,7 @@ fn path_from_str(path: &str) -> PathBuf {
 }
 
 fn content_from_file(path: &PathBuf) -> String {
-    let file = File::open(path).unwrap_or_else(|e| panic!("{e}"));
+    let file = File::open(path).expect("Cannot open the json file");
     let buf = BufReader::new(file);
     let mut content = String::new();
     for (i, line) in buf.lines().enumerate() {
@@ -32,7 +32,7 @@ fn content_from_file(path: &PathBuf) -> String {
 }
 
 fn content_from_dir(path: &PathBuf) -> String {
-    let dir = std::fs::read_dir(path).unwrap_or_else(|e| panic!("{e}"));
+    let dir = std::fs::read_dir(path).expect("Cannot read the directory");
     dir.filter_map(|entry| entry.ok())
         .map(|entry| content_from_file(&entry.path()))
         .collect::<Vec<_>>()
