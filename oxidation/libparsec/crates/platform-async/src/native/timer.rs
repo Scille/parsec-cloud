@@ -7,7 +7,6 @@ use std::{
     time::Duration,
 };
 
-use futures::FutureExt;
 use tokio::time::{sleep, Sleep};
 
 pub struct Timer {
@@ -39,6 +38,6 @@ impl Future for Timer {
     type Output = ();
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        self.sleep.poll_unpin(cx)
+        self.sleep.as_mut().poll(cx)
     }
 }

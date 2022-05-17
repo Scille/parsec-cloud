@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use futures::FutureExt;
 use std::{
     future::Future,
     pin::Pin,
@@ -116,9 +115,7 @@ impl<T> Task<T> {
     ///
     /// # #[tokio::main]
     /// # async fn main() {
-    /// let task = spawn(async {
-    ///     futures::future::ready(42).await
-    /// });
+    /// let task = spawn(futures::future::ready(42));
     ///
     /// task.abort();
     /// task.await; // should panic here!
@@ -206,7 +203,7 @@ where
             Poll::Ready(())
         } else {
             drop(state);
-            match s.future.poll_unpin(cx) {
+            match s.future.as_mut().poll(cx) {
                 Poll::Pending => Poll::Pending,
                 Poll::Ready(value) => {
                     let mut state = s.shared_state.lock().unwrap();

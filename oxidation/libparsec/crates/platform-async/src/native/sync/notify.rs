@@ -6,8 +6,6 @@ use std::{
     task::{Context, Poll},
 };
 
-use futures_lite::FutureExt;
-
 /// Notifies a single task to wake up.
 ///
 /// `Notify` provides a basic mechanism to notify a single task of an event.
@@ -66,6 +64,6 @@ impl<'a> Future for Notified<'a> {
     type Output = ();
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        self.0.poll(cx)
+        self.0.as_mut().poll(cx)
     }
 }
