@@ -3,8 +3,6 @@
 import pytest
 import trio
 
-from tests.common import real_clock_fail_after
-
 from parsec.api.transport import Transport, BytesMessage, Ping, Pong
 from parsec.api.protocol import InvitationType
 from parsec.core.types import BackendInvitationAddr
@@ -47,7 +45,7 @@ async def _test_keepalive(frozen_clock, monkeypatch, cmds_factory):
             # Wait for the transport to be ready, then wait until ping is requested
             await transport_ready.wait()
             await frozen_clock.sleep_with_autojump(KEEPALIVE_TIME + 1)
-            async with real_clock_fail_after(1):
+            async with frozen_clock.real_clock_timeout():
                 backend_transport, event = await ping_events_receiver.receive()
                 assert isinstance(event, Ping)
                 client_transport, event = await ping_events_receiver.receive()
@@ -56,7 +54,7 @@ async def _test_keepalive(frozen_clock, monkeypatch, cmds_factory):
 
             # Wait for another ping, just to be sure...
             await frozen_clock.sleep_with_autojump(KEEPALIVE_TIME + 1)
-            async with real_clock_fail_after(1):
+            async with frozen_clock.real_clock_timeout():
                 backend_transport2, event = await ping_events_receiver.receive()
                 assert isinstance(event, Ping)
                 assert backend_transport is backend_transport2

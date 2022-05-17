@@ -47,7 +47,12 @@ from parsec.backend.config import (
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
-from tests.common import freeze_time, addr_with_device_subdomain, real_clock_fail_after
+from tests.common import (
+    freeze_time,
+    addr_with_device_subdomain,
+    real_clock_timeout,
+    get_side_effects_timeout,
+)
 from tests.postgresql import (
     get_postgresql_url,
     bootstrap_postgresql_testbed,
@@ -63,6 +68,7 @@ from tests.oracles import oracle_fs_factory, oracle_fs_with_sync_factory  # noqa
 
 
 def pytest_addoption(parser):
+    parser.addoption("--side-effects-timeout", default=get_side_effects_timeout(), type=float)
     parser.addoption("--hypothesis-max-examples", default=100, type=int)
     parser.addoption("--hypothesis-derandomize", action="store_true")
     parser.addoption(
@@ -130,6 +136,11 @@ def pytest_configure(config):
         pytest.exit("bye")
     elif config.getoption("--postgresql") and not is_xdist_master(config):
         bootstrap_postgresql_testbed()
+    # Configure custom side effets timeout
+    if config.getoption("--side-effects-timeout"):
+        import tests.common
+
+        tests.common._SIDE_EFFECTS_TIMEOUT = float(config.getoption("--side-effects-timeout"))
 
 
 def patch_caplog():
@@ -334,7 +345,7 @@ def frozen_clock():
     # - Parsec codebase uses the trio clock and `trio.fail_after/move_on_after`
     # - Test codebase can use `trio.fail_after/move_on_after` as long as the test
     #   doesn't use a mock clock
-    # - In case of mock clock, test codebase must use `real_clock_fail_after` that
+    # - In case of mock clock, test codebase must use `real_clock_timeout` that
     #   relies on monotonic clock and hence is totally isolated from trio's clock.
     #
     # On top of that we must be careful about the configuration of the mock clock !
@@ -350,7 +361,7 @@ def frozen_clock():
     # specified in the test (i.e. rate 0 and no autojump_threshold).
     # This way only the test code has control over the application timeout
     # handling, and we have a clean separation with the test timeout (i.e. using
-    # `real_clock_fail_after` to detect the test endup in a deadlock)
+    # `real_clock_timeout` to detect the test endup in a deadlock)
     #
     # The drawback of this approach is manually handling time jump can be cumbersome.
     # For instance the backend connection retry logic:
@@ -371,7 +382,7 @@ def frozen_clock():
 
     clock = MockClock(rate=0, autojump_threshold=math.inf)
 
-    clock.real_clock_fail_after = real_clock_fail_after  # Quick access helper
+    clock.real_clock_timeout = real_clock_timeout  # Quick access helper
 
     async def _sleep_with_autojump(seconds):
         old_rate = clock.rate
@@ -745,8 +756,8 @@ class LetterBox:
         self._send_email, self._recv_email = trio.open_memory_channel(10)
         self.emails = []
 
-    async def get_next_with_timeout(self, timeout=1):
-        async with real_clock_fail_after(timeout):
+    async def get_next_with_timeout(self):
+        async with real_clock_timeout():
             return await self.get_next()
 
     async def get_next(self):
@@ -839,7 +850,7 @@ def core_factory(request, running_backend_ready, event_bus_factory, core_config)
     async def _core_factory(device, event_bus=None):
         # Ensure test doesn't stay frozen if a bug in a fixture prevent the
         # backend from starting
-        async with real_clock_fail_after(3):
+        async with real_clock_timeout():
             await running_backend_ready.wait()
         event_bus = event_bus or event_bus_factory()
 
@@ -852,7 +863,6 @@ def core_factory(request, running_backend_ready, event_bus_factory, core_config)
                     await spy.wait_with_timeout(
                         CoreEvent.BACKEND_CONNECTION_CHANGED,
                         {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
-                        timeout=2.0,  # 1 second might not be enough for postgresql 12 tests running in the CI
                     )
                 assert core.are_monitors_idle()
 

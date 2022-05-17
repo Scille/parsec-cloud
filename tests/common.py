@@ -17,6 +17,31 @@ from parsec.api.transport import Transport, TransportError
 from parsec.core.types.local_device import LocalDevice, DeviceID
 
 
+# In the test we often want to wait on something that in theory would be
+# intaneously available but in fact depends on side effects.
+# Exemple of side effects:
+# - How fast & currently loaded is the CPU (especially when running on the CI)
+# - Network socket
+# - PostgreSQL database
+# We have to decide how long we want to wait on those things, considering:
+# - the shorter we wait, the more convenient it is for when developping
+# - the longer we wait, the more we avoid false positive when side effets are unexpectly long
+# - if we wait forever we get rid of the false positive but we also hang forever
+#   in case a mistake in the code lead to a deadlock :(
+# So the solution is to make this configurable: a good middleground by default
+# and a long long time on the CI.
+_SIDE_EFFECTS_TIMEOUT = 3
+
+
+def get_side_effects_timeout() -> float:
+    return _SIDE_EFFECTS_TIMEOUT
+
+
+def _set_side_effects_timeout(timeout: float) -> None:
+    global _SIDE_EFFECTS_TIMEOUT
+    _SIDE_EFFECTS_TIMEOUT = timeout
+
+
 def addr_with_device_subdomain(addr, device_id):
     """
     Useful to have each device access the same backend with a different hostname
@@ -27,12 +52,16 @@ def addr_with_device_subdomain(addr, device_id):
 
 
 @asynccontextmanager
-async def real_clock_fail_after(seconds: float):
+async def real_clock_timeout():
     # In tests we use a mock clock to make parsec code faster by not staying idle,
     # however we might also want ensure some test code doesn't take too long.
     # Hence using `trio.fail_after` in test code doesn't play nice with mock clock
     # (especially given the CI can be unpredictably slow)...
     # The solution is to have our own fail_after that use the real monotonic clock.
+
+    # Timeout is not configurable by design to avoid letting the user think
+    # this parameter can be used to make the mocked trio clock advance
+    timeout = get_side_effects_timeout()
 
     # Starting a thread can be very slow (looking at you, Windows) so better
     # take the starting time here
@@ -41,7 +70,7 @@ async def real_clock_fail_after(seconds: float):
     async with trio.open_nursery() as nursery:
 
         def _run_until_timeout_or_event_occured():
-            while not event_occured and time.monotonic() - start < seconds:
+            while not event_occured and time.monotonic() - start < timeout:
                 # cancelling `_watchdog` coroutine doesn't stop the thread,
                 # so we sleep only by a short amount of time in order to
                 # detect early enough that we are no longer needed
@@ -320,7 +349,7 @@ async def create_shared_workspace(name, creator, *shared_with):
             if not recipient_core:
                 await recipient_user_fs.process_last_messages()
 
-        async with real_clock_fail_after(1):
+        async with real_clock_timeout():
             if creator_spy:
                 await creator_spy.wait_multiple(
                     [CoreEvent.FS_WORKSPACE_CREATED, CoreEvent.BACKEND_REALM_ROLES_UPDATED]

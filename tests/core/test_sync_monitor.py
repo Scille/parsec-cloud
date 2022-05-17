@@ -14,7 +14,7 @@ from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.fs.exceptions import FSReadOnlyError
 
-from tests.common import create_shared_workspace, customize_fixtures, real_clock_fail_after
+from tests.common import create_shared_workspace, customize_fixtures
 
 
 @pytest.mark.trio
@@ -25,7 +25,7 @@ async def test_monitors_idle(frozen_clock, running_backend, alice_core, alice):
     alice_core.event_bus.send(CoreEvent.FS_ENTRY_UPDATED, id=alice.user_manifest_id)
     assert not alice_core.are_monitors_idle()
     await frozen_clock.sleep_with_autojump(60)
-    async with real_clock_fail_after(1):
+    async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
     assert alice_core.are_monitors_idle()
 
@@ -69,7 +69,7 @@ async def test_process_while_offline(
             assert not alice_core.are_monitors_idle()
 
             await frozen_clock.sleep_with_autojump(60)
-            async with real_clock_fail_after(1):
+            async with frozen_clock.real_clock_timeout():
                 await spy.wait(
                     CoreEvent.BACKEND_CONNECTION_CHANGED,
                     {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
@@ -169,7 +169,7 @@ async def test_autosync_on_modification(
         workspace = alice_core.user_fs.get_workspace(wid)
         # Wait for the sync monitor to sync the new workspace
         await frozen_clock.sleep_with_autojump(60)
-        async with real_clock_fail_after(1):
+        async with frozen_clock.real_clock_timeout():
             await alice_core.wait_idle_monitors()
         spy.assert_events_occured(
             [
@@ -184,7 +184,7 @@ async def test_autosync_on_modification(
         foo_id = await workspace.path_id("/foo")
         # Wait for the sync monitor to sync the new folder
         await frozen_clock.sleep_with_autojump(60)
-        async with real_clock_fail_after(1):
+        async with frozen_clock.real_clock_timeout():
             await alice_core.wait_idle_monitors()
         spy.assert_events_occured(
             [
@@ -213,7 +213,7 @@ async def test_autosync_on_remote_modifications(
 
         # Wait for event to come back to alice_core, then alice_core's sync
         await frozen_clock.sleep_with_autojump(60)
-        async with real_clock_fail_after(1):
+        async with frozen_clock.real_clock_timeout():
             await spy.wait_multiple(
                 [
                     (
@@ -251,7 +251,7 @@ async def test_autosync_on_remote_modifications(
 
         # Wait for event to come back to alice_core
         await frozen_clock.sleep_with_autojump(60)
-        async with real_clock_fail_after(1):
+        async with frozen_clock.real_clock_timeout():
             await spy.wait_multiple(
                 [
                     (
@@ -282,7 +282,7 @@ async def test_reconnect_with_remote_changes(
     await alice_w.touch("/bar.txt")
     # Wait for sync monitor to do it job
     await frozen_clock.sleep_with_autojump(60)
-    async with real_clock_fail_after(1):
+    async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
     with running_backend.offline_for(alice_core.device.device_id):
@@ -373,7 +373,7 @@ async def test_sync_confined_children_after_rename(
 
     # Wait for sync monitor to be idle
     await frozen_clock.sleep_with_autojump(60)
-    async with real_clock_fail_after(1):
+    async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
     # Make sure the root is synced
@@ -392,7 +392,7 @@ async def test_sync_confined_children_after_rename(
 
     # Wait for sync monitor to be idle
     await frozen_clock.sleep_with_autojump(60)
-    async with real_clock_fail_after(1):
+    async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
     # Make sure the root is synced
@@ -411,7 +411,7 @@ async def test_sync_confined_children_after_rename(
 
     # Wait for sync monitor to be idle
     await frozen_clock.sleep_with_autojump(60)
-    async with real_clock_fail_after(1):
+    async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
     # Make sure the root is synced
@@ -430,7 +430,7 @@ async def test_sync_confined_children_after_rename(
 
     # Wait for sync monitor to be idle
     await frozen_clock.sleep_with_autojump(60)
-    async with real_clock_fail_after(1):
+    async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
     # Make sure the root is synced
@@ -458,7 +458,7 @@ async def test_sync_monitor_while_changing_roles(
     with bob_core.event_bus.listen() as spy:
         await alice_workspace.write_bytes("/test.txt", b"test")
         await frozen_clock.sleep_with_autojump(60)
-        async with real_clock_fail_after(1):
+        async with frozen_clock.real_clock_timeout():
             await alice_core.wait_idle_monitors()
 
         # Ensure bob receive the change notification and process it
@@ -466,7 +466,7 @@ async def test_sync_monitor_while_changing_roles(
             CoreEvent.FS_ENTRY_DOWNSYNCED, kwargs={"workspace_id": wid, "id": wid}
         )
         await frozen_clock.sleep_with_autojump(60)
-        async with real_clock_fail_after(1):
+        async with frozen_clock.real_clock_timeout():
             await bob_core.wait_idle_monitors()
 
     # Bob edit the files..
@@ -477,7 +477,7 @@ async def test_sync_monitor_while_changing_roles(
     with bob_core.event_bus.listen() as spy:
         await alice_core.user_fs.workspace_share(wid, bob_core.device.user_id, WorkspaceRole.READER)
         await frozen_clock.sleep_with_autojump(60)
-        async with real_clock_fail_after(1):
+        async with frozen_clock.real_clock_timeout():
             await spy.wait(CoreEvent.SHARING_UPDATED)
             await bob_core.wait_idle_monitors()
 
@@ -495,7 +495,7 @@ async def test_sync_monitor_while_changing_roles(
             wid, bob_core.device.user_id, WorkspaceRole.CONTRIBUTOR
         )
         await frozen_clock.sleep_with_autojump(60)
-        async with real_clock_fail_after(1):
+        async with frozen_clock.real_clock_timeout():
             await spy.wait(CoreEvent.SHARING_UPDATED)
             await bob_core.wait_idle_monitors()
 
@@ -505,14 +505,14 @@ async def test_sync_monitor_while_changing_roles(
 
     # So Alice can read it
     await frozen_clock.sleep_with_autojump(60)
-    async with real_clock_fail_after(1):
+    async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
     assert await alice_workspace.read_bytes("/test.txt") == b"test2"
 
     # The workspace can be written again
     await bob_workspace.write_bytes("/this-should-not-fail", b"abc")
     await frozen_clock.sleep_with_autojump(60)
-    async with real_clock_fail_after(1):
+    async with frozen_clock.real_clock_timeout():
         await bob_core.wait_idle_monitors()
     info = await bob_workspace.path_info("/this-should-not-fail")
     assert not info["need_sync"]
@@ -530,7 +530,7 @@ async def test_sync_with_concurrent_reencryption(
     # Alice creates a files, let it sync
     await alice_workspace.write_bytes("/test.txt", b"v1")
     await frozen_clock.sleep_with_autojump(60)
-    async with real_clock_fail_after(1):
+    async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
     await bob_user_fs.sync()
 
@@ -560,7 +560,7 @@ async def test_sync_with_concurrent_reencryption(
     # allow to do the sync
     allow_message_processing.set()
     await frozen_clock.sleep_with_autojump(60)
-    async with real_clock_fail_after(1):
+    async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
     # Just make sure the sync is done

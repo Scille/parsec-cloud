@@ -7,8 +7,6 @@ from wsproto.events import BytesMessage, Ping, Pong, CloseConnection, AcceptConn
 from parsec.api.transport import Transport
 from parsec.api.protocol import events_listen_serializer, ping_serializer
 
-from tests.common import real_clock_fail_after
-
 
 @pytest.mark.trio
 async def test_events_listen_wait_has_watchdog(
@@ -27,7 +25,7 @@ async def test_events_listen_wait_has_watchdog(
     monkeypatch.setattr(Transport, "_next_ws_event", _mocked_next_ws_event)
 
     async def next_ws_proto_related_event(expected_event_type=None, expected_transport=None):
-        async with real_clock_fail_after(1):
+        async with frozen_clock.real_clock_timeout():
             transport, event = await transport_events_receiver.receive()
         if expected_event_type is not None:
             assert isinstance(event, expected_event_type)

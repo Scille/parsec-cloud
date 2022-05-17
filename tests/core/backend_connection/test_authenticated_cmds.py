@@ -16,7 +16,6 @@ from parsec.core.backend_connection import (
 )
 from parsec.backend.backend_events import BackendEvent
 
-from tests.common import real_clock_fail_after
 from tests.core.backend_connection.common import ALL_CMDS
 
 
@@ -219,12 +218,12 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, frozen_clock, runnin
             nursery.start_soon(_cmd)
 
             # Wait for the connection to be established with the backend
-            async with real_clock_fail_after(1):
+            async with frozen_clock.real_clock_timeout():
                 await backend_received_cmd.wait()
 
             # Now advance time until ping is requested
             await frozen_clock.sleep_with_autojump(KEEPALIVE_TIME + 1)
-            async with real_clock_fail_after(1):
+            async with frozen_clock.real_clock_timeout():
                 backend_transport, event = await next_ping_related_event()
                 assert isinstance(event, Ping)
                 client_transport, event = await next_ping_related_event()
@@ -233,7 +232,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, frozen_clock, runnin
 
             # Wait for another ping, just to be sure...
             await frozen_clock.sleep_with_autojump(KEEPALIVE_TIME + 1)
-            async with real_clock_fail_after(1):
+            async with frozen_clock.real_clock_timeout():
                 backend_transport2, event = await next_ping_related_event()
                 assert isinstance(event, Ping)
                 assert backend_transport is backend_transport2

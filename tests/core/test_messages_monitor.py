@@ -10,7 +10,7 @@ from parsec.crypto import SecretKey
 from parsec.core.core_events import CoreEvent
 from parsec.core.backend_connection import BackendConnStatus
 
-from tests.common import create_shared_workspace, freeze_time, real_clock_fail_after
+from tests.common import create_shared_workspace, freeze_time
 
 
 @pytest.mark.trio
@@ -52,7 +52,7 @@ async def test_process_while_offline(
 
             assert not alice_core.are_monitors_idle()
 
-            async with real_clock_fail_after(1):
+            async with frozen_clock.real_clock_timeout():
                 await spy.wait(
                     CoreEvent.BACKEND_CONNECTION_CHANGED,
                     {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
@@ -68,7 +68,7 @@ async def test_process_while_offline(
     with alice_core.event_bus.listen() as spy:
         # Alice is back online, should retrieve Bob's message fine
         await frozen_clock.sleep_with_autojump(30)
-        async with frozen_clock.real_clock_fail_after(1):
+        async with frozen_clock.real_clock_timeout():
             await spy.wait(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.READY, "status_exc": None},

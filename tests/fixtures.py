@@ -599,7 +599,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 )
 
                 # Avoid possible race condition in tests listening for events
-                await spy.wait_multiple_with_timeout(
+                await spy.wait_multiple(
                     [
                         (
                             BackendEvent.REALM_ROLES_UPDATED,
