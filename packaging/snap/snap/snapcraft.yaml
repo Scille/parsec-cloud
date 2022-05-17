@@ -178,6 +178,7 @@ parts:
     build-packages:
       - python3.9-venv
       - python3.9
+      - python3.9-dev  # Needed by duckpy (itself required by pypac)
     stage-packages:
       # Why so much packages ?
       # Well because Python 3.9 is part of base image core20 so Snapcraft
