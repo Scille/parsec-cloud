@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Tuple, Optional, cast, Dict, Sequence, Union
+from typing import Tuple, Optional, cast, Dict, Sequence, Union, Any
 from enum import Enum
 from secrets import token_bytes
 
@@ -8,7 +8,7 @@ import pendulum
 from pendulum.datetime import DateTime
 
 from parsec.crypto import SigningKey, VerifyKey, CryptoError
-from parsec.serde import BaseSchema, OneOfSchema, fields, validate
+from parsec.serde import BaseSchema, OneOfSchema, fields, validate, post_load
 from parsec.utils import (
     BALLPARK_CLIENT_EARLY_OFFSET,
     BALLPARK_CLIENT_LATE_OFFSET,
@@ -118,14 +118,22 @@ class HandshakeChallengeSchema(BaseSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Bytes(required=True)
     supported_api_versions = fields.List(ApiVersionField(), required=True)
-    # Those fields have been added to API version 2.4
+    # Those fields have been added to API version 2.4 (Parsec 2.7.0)
     # They are provided to the client in order to allow them to detect whether
     # their system clock is out of sync and let them close the connection.
     # They will be missing for older backend so they cannot be strictly required.
     # TODO: This backward compatibility should be removed once Parsec < 2.4 support is dropped
-    ballpark_client_early_offset = fields.Float(required=False, missing=None)
-    ballpark_client_late_offset = fields.Float(required=False, missing=None)
-    backend_timestamp = fields.DateTime(required=False, missing=None)
+    ballpark_client_early_offset = fields.Float(required=False, allow_none=False)
+    ballpark_client_late_offset = fields.Float(required=False, allow_none=False)
+    backend_timestamp = fields.DateTime(required=False, allow_none=False)
+
+    @post_load
+    def make_obj(self, data: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore[misc]
+        # Cannot use `missing=None` with `allow_none=False`
+        data.setdefault("ballpark_client_early_offset", None)
+        data.setdefault("ballpark_client_late_offset", None)
+        data.setdefault("backend_timestamp", None)
+        return data
 
 
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)

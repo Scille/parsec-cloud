@@ -26,7 +26,7 @@ class PkiEnrollmentSubmitReqSchema(BaseReqSchema):
     # enrollment with similir x509 certificate unless force flag is set.
     force = fields.Boolean(required=True)
 
-    submitter_der_x509_certificate = fields.Bytes(require=True)
+    submitter_der_x509_certificate = fields.Bytes(required=True)
     # Duplicated certificate email field. (The backend need to check if the email is used without loading the certificate)
     submitter_der_x509_certificate_email = fields.String(
         required=False, missing=None, allow_none=True
@@ -110,7 +110,7 @@ pki_enrollment_info_serializer = CmdSerializer(
 class PkiEnrollmentListItemSchema(BaseSchema):
     enrollment_id = fields.UUID(required=True)
     submitted_on = fields.DateTime(required=True)
-    submitter_der_x509_certificate = fields.Bytes(require=True)
+    submitter_der_x509_certificate = fields.Bytes(required=True)
     submit_payload_signature = fields.Bytes(required=True)
     submit_payload = fields.Bytes(required=True)  # Signature should be checked before loading
 

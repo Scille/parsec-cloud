@@ -87,24 +87,25 @@ device_create_serializer = CmdSerializer(DeviceCreateReqSchema, DeviceCreateRepS
 
 
 class HumanFindReqSchema(BaseReqSchema):
-    query = fields.String(missing=None)
-    omit_revoked = fields.Boolean(missing=False)
-    omit_non_human = fields.Boolean(missing=False)
-    page = fields.Int(missing=1, validate=lambda n: n > 0)
-    per_page = fields.Integer(missing=100, validate=lambda n: 0 < n <= 100)
+    query = fields.String(required=True, allow_none=True)
+    omit_revoked = fields.Boolean(required=True)
+    omit_non_human = fields.Boolean(required=True)
+    # First page is 1
+    page = fields.Int(required=True, validate=lambda n: n > 0)
+    per_page = fields.Integer(required=True, validate=lambda n: 0 < n <= 100)
 
 
 class HumanFindResultItemSchema(BaseSchema):
     user_id = UserIDField(required=True)
-    human_handle = HumanHandleField(allow_none=True, missing=None)
+    human_handle = HumanHandleField(required=True, allow_none=True)
     revoked = fields.Boolean(required=True)
 
 
 class HumanFindRepSchema(BaseRepSchema):
     results = fields.List(fields.Nested(HumanFindResultItemSchema, required=True))
-    page = fields.Int(validate=lambda n: n > 0)
-    per_page = fields.Integer(validate=lambda n: 0 < n <= 100)
-    total = fields.Int(validate=lambda n: n >= 0)
+    page = fields.Int(required=True, validate=lambda n: n > 0)
+    per_page = fields.Integer(required=True, validate=lambda n: 0 < n <= 100)
+    total = fields.Int(required=True, validate=lambda n: n >= 0)
 
 
 human_find_serializer = CmdSerializer(HumanFindReqSchema, HumanFindRepSchema)

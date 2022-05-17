@@ -72,7 +72,7 @@ class EventPkiEnrollmentUpdated(BaseRepSchema):
 
 
 class EventsListenReqSchema(BaseReqSchema):
-    wait = fields.Boolean(missing=True)
+    wait = fields.Boolean(required=True)
 
 
 class EventsListenRepSchema(OneOfSchema):

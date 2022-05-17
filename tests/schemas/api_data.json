@@ -1,92 +1,4 @@
 {
-    "APIV1_DeviceClaimAnswerContent": {
-        "fields": {
-            "private_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "PrivateKey"
-            },
-            "type": {
-                "allow_none": false,
-                "required": true,
-                "type": "CheckedConstant",
-                "value": "device_claim_answer"
-            },
-            "user_manifest_id": {
-                "allow_none": false,
-                "required": true,
-                "type": "EntryIDField"
-            },
-            "user_manifest_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "SecretKeyField"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
-    "APIV1_DeviceClaimContent": {
-        "fields": {
-            "answer_public_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "PublicKey"
-            },
-            "device_id": {
-                "allow_none": false,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "token": {
-                "allow_none": false,
-                "required": true,
-                "type": "String"
-            },
-            "type": {
-                "allow_none": false,
-                "required": true,
-                "type": "CheckedConstant",
-                "value": "device_claim"
-            },
-            "verify_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "VerifyKey"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
-    "APIV1_UserClaimContent": {
-        "fields": {
-            "device_id": {
-                "allow_none": false,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "public_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "PublicKey"
-            },
-            "token": {
-                "allow_none": false,
-                "required": true,
-                "type": "String"
-            },
-            "type": {
-                "allow_none": false,
-                "required": true,
-                "type": "CheckedConstant",
-                "value": "user_claim"
-            },
-            "verify_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "VerifyKey"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
     "DeviceCertificateContent": {
         "fields": {
             "author": {
@@ -290,7 +202,7 @@
             },
             "device_label": {
                 "allow_none": true,
-                "required": false,
+                "required": true,
                 "type": "DeviceLabelField"
             },
             "human_handle": {
@@ -307,7 +219,7 @@
                         "type": "String"
                     }
                 ],
-                "required": false,
+                "required": true,
                 "type": "HumanHandleField"
             },
             "private_key": {
@@ -354,7 +266,7 @@
         "fields": {
             "requested_device_label": {
                 "allow_none": true,
-                "required": false,
+                "required": true,
                 "type": "DeviceLabelField"
             },
             "type": {
@@ -380,7 +292,7 @@
             },
             "device_label": {
                 "allow_none": true,
-                "required": false,
+                "required": true,
                 "type": "DeviceLabelField"
             },
             "human_handle": {
@@ -397,7 +309,7 @@
                         "type": "String"
                     }
                 ],
-                "required": false,
+                "required": true,
                 "type": "HumanHandleField"
             },
             "profile": {
@@ -434,7 +346,7 @@
             },
             "requested_device_label": {
                 "allow_none": true,
-                "required": false,
+                "required": true,
                 "type": "DeviceLabelField"
             },
             "requested_human_handle": {
@@ -451,7 +363,7 @@
                         "type": "String"
                     }
                 ],
-                "required": false,
+                "required": true,
                 "type": "HumanHandleField"
             },
             "type": {
@@ -504,7 +416,7 @@
             },
             "device_label": {
                 "allow_none": true,
-                "required": false,
+                "required": true,
                 "type": "DeviceLabelField"
             },
             "human_handle": {
@@ -521,7 +433,7 @@
                         "type": "String"
                     }
                 ],
-                "required": false,
+                "required": true,
                 "type": "HumanHandleField"
             },
             "profile": {

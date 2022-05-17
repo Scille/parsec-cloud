@@ -461,11 +461,7 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def get_role_certificates(
-        self,
-        organization_id: OrganizationID,
-        author: DeviceID,
-        realm_id: RealmID,
-        since: pendulum.DateTime,
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
     ) -> List[bytes]:
         """
         Raises:

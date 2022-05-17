@@ -15,6 +15,7 @@ class APIV1_OrganizationBootstrapReqSchema(BaseReqSchema):
     root_verify_key = fields.VerifyKey(required=True)
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
+    # Added Parsec 1.14.0, but we forgot to bump API V1 revision :'(
     # Same certificates than above, but expurged of human_handle/device_label
     # Backward compatibility prevent those field to be required, however
     # they should be considered so by recent version of Parsec (hence the
@@ -23,8 +24,8 @@ class APIV1_OrganizationBootstrapReqSchema(BaseReqSchema):
     # redacted fields. In such case we consider the non-redacted can also
     # be used as redacted given the to-be-redacted fields have been introduce
     # in later version of Parsec.
-    redacted_user_certificate = fields.Bytes(allow_none=False)
-    redacted_device_certificate = fields.Bytes(allow_none=False)
+    redacted_user_certificate = fields.Bytes(required=False, allow_none=False)
+    redacted_device_certificate = fields.Bytes(required=False, allow_none=False)
 
 
 class APIV1_OrganizationBootstrapRepSchema(BaseRepSchema):

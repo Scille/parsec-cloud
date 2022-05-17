@@ -146,7 +146,128 @@
             },
             "pki_enrollment_info": {
                 "rep": {
-                    "fields": {},
+                    "oneof_fallback_schema": null,
+                    "oneof_field": "enrollment_status",
+                    "oneof_schemas": {
+                        "ACCEPTED": {
+                            "fields": {
+                                "accept_payload": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "bytesField"
+                                },
+                                "accept_payload_signature": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "bytesField"
+                                },
+                                "accepted_on": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "DateTime"
+                                },
+                                "accepter_der_x509_certificate": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "bytesField"
+                                },
+                                "enrollment_status": {
+                                    "allow_none": false,
+                                    "enum_type": "PkiEnrollmentStatus",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "ACCEPTED"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                },
+                                "submitted_on": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "DateTime"
+                                }
+                            }
+                        },
+                        "CANCELLED": {
+                            "fields": {
+                                "cancelled_on": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "DateTime"
+                                },
+                                "enrollment_status": {
+                                    "allow_none": false,
+                                    "enum_type": "PkiEnrollmentStatus",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "CANCELLED"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                },
+                                "submitted_on": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "DateTime"
+                                }
+                            }
+                        },
+                        "REJECTED": {
+                            "fields": {
+                                "enrollment_status": {
+                                    "allow_none": false,
+                                    "enum_type": "PkiEnrollmentStatus",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "REJECTED"
+                                },
+                                "rejected_on": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "DateTime"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                },
+                                "submitted_on": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "DateTime"
+                                }
+                            }
+                        },
+                        "SUBMITTED": {
+                            "fields": {
+                                "enrollment_status": {
+                                    "allow_none": false,
+                                    "enum_type": "PkiEnrollmentStatus",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "SUBMITTED"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                },
+                                "submitted_on": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "DateTime"
+                                }
+                            }
+                        }
+                    },
                     "serializing": "msgpack"
                 },
                 "req": {
@@ -211,7 +332,7 @@
                         },
                         "submitter_der_x509_certificate": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "bytesField"
                         },
                         "submitter_der_x509_certificate_email": {
@@ -332,7 +453,229 @@
             },
             "events_listen": {
                 "rep": {
-                    "fields": {},
+                    "oneof_fallback_schema": null,
+                    "oneof_field": "event",
+                    "oneof_schemas": {
+                        "invite.status_changed": {
+                            "fields": {
+                                "event": {
+                                    "allow_none": false,
+                                    "enum_type": "APIEvent",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "invite.status_changed"
+                                },
+                                "invitation_status": {
+                                    "allow_none": false,
+                                    "enum_allowed_values": [
+                                        "IDLE",
+                                        "READY",
+                                        "DELETED"
+                                    ],
+                                    "enum_type": "InvitationStatus",
+                                    "required": true,
+                                    "type": "InvitationStatusField"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                },
+                                "token": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "InvitationTokenField"
+                                }
+                            }
+                        },
+                        "message.received": {
+                            "fields": {
+                                "event": {
+                                    "allow_none": false,
+                                    "enum_type": "APIEvent",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "message.received"
+                                },
+                                "index": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "Integer"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                }
+                            }
+                        },
+                        "pinged": {
+                            "fields": {
+                                "event": {
+                                    "allow_none": false,
+                                    "enum_type": "APIEvent",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "pinged"
+                                },
+                                "ping": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "String"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                }
+                            }
+                        },
+                        "pki_enrollment.updated": {
+                            "fields": {
+                                "event": {
+                                    "allow_none": false,
+                                    "enum_type": "APIEvent",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "pki_enrollment.updated"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                }
+                            }
+                        },
+                        "realm.maintenance_finished": {
+                            "fields": {
+                                "encryption_revision": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "Integer"
+                                },
+                                "event": {
+                                    "allow_none": false,
+                                    "enum_type": "APIEvent",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "realm.maintenance_finished"
+                                },
+                                "realm_id": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "RealmIDField"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                }
+                            }
+                        },
+                        "realm.maintenance_started": {
+                            "fields": {
+                                "encryption_revision": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "Integer"
+                                },
+                                "event": {
+                                    "allow_none": false,
+                                    "enum_type": "APIEvent",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "realm.maintenance_started"
+                                },
+                                "realm_id": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "RealmIDField"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                }
+                            }
+                        },
+                        "realm.roles_updated": {
+                            "fields": {
+                                "event": {
+                                    "allow_none": false,
+                                    "enum_type": "APIEvent",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "realm.roles_updated"
+                                },
+                                "realm_id": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "RealmIDField"
+                                },
+                                "role": {
+                                    "allow_none": true,
+                                    "enum_allowed_values": [
+                                        "OWNER",
+                                        "MANAGER",
+                                        "CONTRIBUTOR",
+                                        "READER"
+                                    ],
+                                    "enum_type": "RealmRole",
+                                    "required": true,
+                                    "type": "RealmRoleField"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                }
+                            }
+                        },
+                        "realm.vlobs_updated": {
+                            "fields": {
+                                "checkpoint": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "Integer"
+                                },
+                                "event": {
+                                    "allow_none": false,
+                                    "enum_type": "APIEvent",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "realm.vlobs_updated"
+                                },
+                                "realm_id": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "RealmIDField"
+                                },
+                                "src_id": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "VlobIDField"
+                                },
+                                "src_version": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "Integer"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                }
+                            }
+                        }
+                    },
                     "serializing": "msgpack"
                 },
                 "req": {
@@ -344,7 +687,7 @@
                         },
                         "wait": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Boolean"
                         }
                     },
@@ -379,12 +722,12 @@
                     "fields": {
                         "page": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Integer"
                         },
                         "per_page": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Integer"
                         },
                         "results": {
@@ -408,7 +751,7 @@
                                                     "type": "String"
                                                 }
                                             ],
-                                            "required": false,
+                                            "required": true,
                                             "type": "HumanHandleField"
                                         },
                                         "revoked": {
@@ -436,7 +779,7 @@
                         },
                         "total": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Integer"
                         }
                     },
@@ -451,27 +794,27 @@
                         },
                         "omit_non_human": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Boolean"
                         },
                         "omit_revoked": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Boolean"
                         },
                         "page": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Integer"
                         },
                         "per_page": {
                             "allow_none": false,
-                            "required": false,
+                            "required": true,
                             "type": "Integer"
                         },
                         "query": {
                             "allow_none": true,
-                            "required": false,
+                            "required": true,
                             "type": "String"
                         }
                     },
@@ -729,7 +1072,79 @@
                                 "allow_none": false,
                                 "required": false,
                                 "schema": {
-                                    "fields": {}
+                                    "oneof_fallback_schema": null,
+                                    "oneof_field": "type",
+                                    "oneof_schemas": {
+                                        "DEVICE": {
+                                            "fields": {
+                                                "created_on": {
+                                                    "allow_none": false,
+                                                    "required": true,
+                                                    "type": "DateTime"
+                                                },
+                                                "status": {
+                                                    "allow_none": false,
+                                                    "enum_allowed_values": [
+                                                        "IDLE",
+                                                        "READY",
+                                                        "DELETED"
+                                                    ],
+                                                    "enum_type": "InvitationStatus",
+                                                    "required": true,
+                                                    "type": "InvitationStatusField"
+                                                },
+                                                "token": {
+                                                    "allow_none": false,
+                                                    "required": true,
+                                                    "type": "InvitationTokenField"
+                                                },
+                                                "type": {
+                                                    "allow_none": false,
+                                                    "enum_type": "InvitationType",
+                                                    "required": true,
+                                                    "type": "EnumCheckedConstant",
+                                                    "value": "DEVICE"
+                                                }
+                                            }
+                                        },
+                                        "USER": {
+                                            "fields": {
+                                                "claimer_email": {
+                                                    "allow_none": false,
+                                                    "required": true,
+                                                    "type": "String"
+                                                },
+                                                "created_on": {
+                                                    "allow_none": false,
+                                                    "required": true,
+                                                    "type": "DateTime"
+                                                },
+                                                "status": {
+                                                    "allow_none": false,
+                                                    "enum_allowed_values": [
+                                                        "IDLE",
+                                                        "READY",
+                                                        "DELETED"
+                                                    ],
+                                                    "enum_type": "InvitationStatus",
+                                                    "required": true,
+                                                    "type": "InvitationStatusField"
+                                                },
+                                                "token": {
+                                                    "allow_none": false,
+                                                    "required": true,
+                                                    "type": "InvitationTokenField"
+                                                },
+                                                "type": {
+                                                    "allow_none": false,
+                                                    "enum_type": "InvitationType",
+                                                    "required": true,
+                                                    "type": "EnumCheckedConstant",
+                                                    "value": "USER"
+                                                }
+                                            }
+                                        }
+                                    }
                                 },
                                 "type": "Nested"
                             },
@@ -785,7 +1200,57 @@
                     "serializing": "msgpack"
                 },
                 "req": {
-                    "fields": {},
+                    "oneof_fallback_schema": null,
+                    "oneof_field": "type",
+                    "oneof_schemas": {
+                        "DEVICE": {
+                            "fields": {
+                                "cmd": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "String"
+                                },
+                                "send_email": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "Boolean"
+                                },
+                                "type": {
+                                    "allow_none": false,
+                                    "enum_type": "InvitationType",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "DEVICE"
+                                }
+                            }
+                        },
+                        "USER": {
+                            "fields": {
+                                "claimer_email": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "String"
+                                },
+                                "cmd": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "String"
+                                },
+                                "send_email": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "Boolean"
+                                },
+                                "type": {
+                                    "allow_none": false,
+                                    "enum_type": "InvitationType",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "USER"
+                                }
+                            }
+                        }
+                    },
                     "serializing": "msgpack"
                 }
             },
@@ -1095,7 +1560,7 @@
                                         },
                                         "submitter_der_x509_certificate": {
                                             "allow_none": false,
-                                            "required": false,
+                                            "required": true,
                                             "type": "bytesField"
                                         }
                                     }
@@ -1247,11 +1712,6 @@
                             "allow_none": false,
                             "required": true,
                             "type": "RealmIDField"
-                        },
-                        "since": {
-                            "allow_none": true,
-                            "required": false,
-                            "type": "DateTime"
                         }
                     },
                     "serializing": "msgpack"
@@ -1340,7 +1800,7 @@
                                 "REENCRYPTION"
                             ],
                             "enum_type": "MaintenanceType",
-                            "required": false,
+                            "required": true,
                             "type": "MaintenanceTypeField"
                         },
                         "status": {
@@ -1905,12 +2365,12 @@
                         },
                         "timestamp": {
                             "allow_none": true,
-                            "required": false,
+                            "required": true,
                             "type": "DateTime"
                         },
                         "version": {
                             "allow_none": true,
-                            "required": false,
+                            "required": true,
                             "type": "Integer"
                         },
                         "vlob_id": {
@@ -2147,7 +2607,93 @@
             },
             "invite_info": {
                 "rep": {
-                    "fields": {},
+                    "oneof_fallback_schema": null,
+                    "oneof_field": "type",
+                    "oneof_schemas": {
+                        "DEVICE": {
+                            "fields": {
+                                "greeter_human_handle": {
+                                    "allow_none": true,
+                                    "args_types": [
+                                        {
+                                            "allow_none": false,
+                                            "required": true,
+                                            "type": "String"
+                                        },
+                                        {
+                                            "allow_none": false,
+                                            "required": true,
+                                            "type": "String"
+                                        }
+                                    ],
+                                    "required": true,
+                                    "type": "HumanHandleField"
+                                },
+                                "greeter_user_id": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "UserIDField"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                },
+                                "type": {
+                                    "allow_none": false,
+                                    "enum_type": "InvitationType",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "DEVICE"
+                                }
+                            }
+                        },
+                        "USER": {
+                            "fields": {
+                                "claimer_email": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "String"
+                                },
+                                "greeter_human_handle": {
+                                    "allow_none": true,
+                                    "args_types": [
+                                        {
+                                            "allow_none": false,
+                                            "required": true,
+                                            "type": "String"
+                                        },
+                                        {
+                                            "allow_none": false,
+                                            "required": true,
+                                            "type": "String"
+                                        }
+                                    ],
+                                    "required": true,
+                                    "type": "HumanHandleField"
+                                },
+                                "greeter_user_id": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "UserIDField"
+                                },
+                                "status": {
+                                    "allow_none": false,
+                                    "required": true,
+                                    "type": "CheckedConstant",
+                                    "value": "ok"
+                                },
+                                "type": {
+                                    "allow_none": false,
+                                    "enum_type": "InvitationType",
+                                    "required": true,
+                                    "type": "EnumCheckedConstant",
+                                    "value": "USER"
+                                }
+                            }
+                        }
+                    },
                     "serializing": "msgpack"
                 },
                 "req": {

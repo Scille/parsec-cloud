@@ -100,8 +100,8 @@ class InviteUserData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_user_data", required=True)
         # Claimer ask for device_label/human_handle, but greeter has final word on this
-        requested_device_label = DeviceLabelField(allow_none=True, missing=None)
-        requested_human_handle = HumanHandleField(allow_none=True, missing=None)
+        requested_device_label = DeviceLabelField(required=True, allow_none=True)
+        requested_human_handle = HumanHandleField(required=True, allow_none=True)
         # Note claiming user also imply creating a first device
         public_key = fields.PublicKey(required=True)
         verify_key = fields.VerifyKey(required=True)
@@ -133,8 +133,8 @@ class InviteUserConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_user_confirmation", required=True)
         device_id = DeviceIDField(required=True)
-        device_label = DeviceLabelField(allow_none=True, missing=None)
-        human_handle = HumanHandleField(allow_none=True, missing=None)
+        device_label = DeviceLabelField(required=True, allow_none=True)
+        human_handle = HumanHandleField(required=True, allow_none=True)
         profile = UserProfileField(required=True)
         root_verify_key = fields.VerifyKey(required=True)
 
@@ -165,7 +165,7 @@ class InviteDeviceData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_device_data", required=True)
         # Claimer ask for device_label, but greeter has final word on this
-        requested_device_label = DeviceLabelField(allow_none=True, missing=None)
+        requested_device_label = DeviceLabelField(required=True, allow_none=True)
         verify_key = fields.VerifyKey(required=True)
 
         @post_load
@@ -192,8 +192,8 @@ class InviteDeviceConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_device_confirmation", required=True)
         device_id = DeviceIDField(required=True)
-        device_label = DeviceLabelField(allow_none=True, missing=None)
-        human_handle = HumanHandleField(allow_none=True, missing=None)
+        device_label = DeviceLabelField(required=True, allow_none=True)
+        human_handle = HumanHandleField(required=True, allow_none=True)
         profile = UserProfileField(required=True)
         private_key = fields.PrivateKey(required=True)
         user_manifest_id = EntryIDField(required=True)

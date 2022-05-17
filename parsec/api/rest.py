@@ -34,9 +34,9 @@ class OrganizationCreateReqSchema(BaseSchema):
     # /!\ Missing field and field set to `None` does not mean the same thing:
     # - missing field: ask the backend to use it default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
-    user_profile_outsider_allowed = fields.Boolean(required=False)
+    user_profile_outsider_allowed = fields.Boolean(required=False, allow_none=False)
     # `None` stands for "no limit" here
-    active_users_limit = fields.Integer(allow_none=True, required=False, validate=lambda x: x >= 0)
+    active_users_limit = fields.Integer(required=False, allow_none=True, validate=lambda x: x >= 0)
 
 
 class OrganizationCreateRepSchema(BaseSchema):
@@ -59,7 +59,7 @@ class OrganizationConfigRepSchema(BaseSchema):
     is_expired = fields.Boolean(required=True)
     user_profile_outsider_allowed = fields.Boolean(required=True)
     # `None` stands for "no limit" here
-    active_users_limit = fields.Integer(allow_none=True, required=True)
+    active_users_limit = fields.Integer(required=True, allow_none=True)
 
 
 organization_config_req_serializer = JSONSerializer(OrganizationConfigReqSchema)
@@ -104,7 +104,7 @@ class OrganizationUpdateReqSchema(BaseSchema):
     is_expired = fields.Boolean(required=False)
     user_profile_outsider_allowed = fields.Boolean(required=False)
     # `None` stands for "no limit" here
-    active_users_limit = fields.Integer(allow_none=True, required=False, validate=lambda x: x >= 0)
+    active_users_limit = fields.Integer(required=False, allow_none=True, validate=lambda x: x >= 0)
 
 
 class OrganizationUpdateRepSchema(BaseSchema):

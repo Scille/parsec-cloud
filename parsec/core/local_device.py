@@ -5,7 +5,7 @@ import trio
 from enum import Enum
 from pathlib import Path, PurePath
 from hashlib import sha256
-from typing import Callable, List, Optional, Iterator, Dict, Type, Tuple
+from typing import Callable, List, Optional, Iterator, Dict, Tuple
 from importlib import import_module
 
 from parsec.serde import BaseSchema, fields, MsgpackSerializer, OneOfSchema
@@ -103,8 +103,10 @@ class LegacyDeviceFileSchema(BaseSchema):
     # redacted (i.e. user_id and device_name are 2 random uuids), hence
     # those fields have been added to the device file so the login page in
     # the GUI can use them to provide useful information.
-    human_handle = HumanHandleField(allow_none=True, missing=None)
-    device_label = DeviceLabelField(allow_none=True, missing=None)
+    # Added in Parsec v1.14
+    human_handle = HumanHandleField(required=False, allow_none=True, missing=None)
+    # Added in Parsec v1.14
+    device_label = DeviceLabelField(required=False, allow_none=True, missing=None)
 
 
 class BaseDeviceFileSchema(BaseSchema):
@@ -136,21 +138,16 @@ class SmartcardDeviceFileSchema(BaseDeviceFileSchema):
     type = fields.EnumCheckedConstant(DeviceFileType.SMARTCARD, required=True)
     encrypted_key = fields.Bytes(required=True)
     certificate_id = fields.String(required=True)
-    certificate_sha1 = fields.Bytes(allow_none=True, missing=None)
+    certificate_sha1 = fields.Bytes(required=True, allow_none=True)
 
 
 class DeviceFileSchema(OneOfSchema):
     type_field = "type"
-
-    @property
-    def type_schemas(  # type: ignore[override]
-        self
-    ) -> Dict[DeviceFileType, Type[OneOfSchema]]:
-        return {
-            DeviceFileType.PASSWORD: PasswordDeviceFileSchema,
-            DeviceFileType.RECOVERY: RecoveryDeviceFileSchema,
-            DeviceFileType.SMARTCARD: SmartcardDeviceFileSchema,
-        }
+    type_schemas = {
+        DeviceFileType.PASSWORD: PasswordDeviceFileSchema(),
+        DeviceFileType.RECOVERY: RecoveryDeviceFileSchema(),
+        DeviceFileType.SMARTCARD: SmartcardDeviceFileSchema(),
+    }
 
     def get_obj_type(self, obj: Dict[str, object]) -> object:
         return obj["type"]

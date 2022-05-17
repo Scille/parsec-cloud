@@ -84,7 +84,7 @@ class LocalPendingEnrollment(BaseLocalData):
         x509_certificate = fields.Nested(X509Certificate.SCHEMA_CLS, required=True)
         addr = BackendPkiEnrollmentAddrField(required=True)
         submitted_on = fields.DateTime(required=True)
-        enrollment_id = fields.UUID()
+        enrollment_id = fields.UUID(required=True)
         submit_payload = fields.Nested(PkiEnrollmentSubmitPayload.SCHEMA_CLS, required=True)
         encrypted_key = fields.Bytes(required=True)
         ciphertext = fields.Bytes(required=True)  # An encrypted PendingDeviceKeys
@@ -191,7 +191,7 @@ class LocalPendingEnrollment(BaseLocalData):
         return result
 
     @classmethod
-    def remove_from_enrollment_id(cls, config_dir: Path, enrollment_id: UUID):
+    def remove_from_enrollment_id(cls, config_dir: Path, enrollment_id: UUID) -> None:
         """
         Raises:
             PkiEnrollmentLocalPendingError

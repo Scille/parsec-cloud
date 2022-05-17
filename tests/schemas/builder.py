@@ -5,7 +5,13 @@ import json
 import pkgutil
 import importlib
 
-from parsec.serde import BaseSerializer, JSONSerializer, MsgpackSerializer, ZipMsgpackSerializer
+from parsec.serde import (
+    BaseSerializer,
+    JSONSerializer,
+    MsgpackSerializer,
+    ZipMsgpackSerializer,
+    OneOfSchema,
+)
 from parsec.serde.fields import (
     List,
     Map,
@@ -83,7 +89,16 @@ def field_to_spec(field):
 
 
 def schema_to_spec(schema):
-    return {"fields": {k: field_to_spec(v) for k, v in schema.fields.items()}}
+    if isinstance(schema, OneOfSchema):
+        return {
+            "oneof_field": schema.type_field,
+            "oneof_schemas": {k.value: schema_to_spec(v) for k, v in schema.type_schemas.items()},
+            "oneof_fallback_schema": schema_to_spec(schema.fallback_type_schema)
+            if schema.fallback_type_schema
+            else None,
+        }
+    else:
+        return {"fields": {k: field_to_spec(v) for k, v in schema.fields.items()}}
 
 
 def data_class_to_spec(data_class):
@@ -130,15 +145,30 @@ def generate_api_data_specs():
 
 def generate_core_data_specs():
     import parsec.core.types
+    from parsec.core.local_device import key_file_serializer, legacy_key_file_serializer
 
     package = parsec.core.types
-
     data_classes = set()
     for submod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
         submod = importlib.import_module(submod_info.name)
         data_classes.update(collect_data_classes_from_module(submod))
 
-    return {data_cls.__name__: data_class_to_spec(data_cls) for data_cls in data_classes}
+    specs = {data_cls.__name__: data_class_to_spec(data_cls) for data_cls in data_classes}
+
+    # Hack to include device file serialization
+
+    def _file_serialization_specs(serializer):
+        assert serializer.__class__.__name__.startswith("Msgpack")
+        return {
+            serializer.schema.__class__.__name__: {
+                "serializing": "msgpack",
+                **schema_to_spec(serializer.schema),
+            }
+        }
+
+    for serializer in (key_file_serializer, legacy_key_file_serializer):
+        specs.update(_file_serialization_specs(serializer))
+    return specs
 
 
 def collect_cmd_serializers_from_module(mod):

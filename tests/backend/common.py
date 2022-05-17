@@ -250,7 +250,7 @@ realm_stats = CmdSock(
 realm_get_role_certificates = CmdSock(
     "realm_get_role_certificates",
     realm_get_role_certificates_serializer,
-    parse_args=lambda self, realm_id, since=None: {"realm_id": realm_id, "since": since},
+    parse_args=lambda self, realm_id: {"realm_id": realm_id},
 )
 realm_update_roles = CmdSock(
     "realm_update_roles",
@@ -390,22 +390,18 @@ user_get = CmdSock(
 human_find = CmdSock(
     "human_find",
     human_find_serializer,
-    parse_args=lambda self, query=None, omit_revoked=None, omit_non_human=None, page=None, per_page=None: {
-        k: v
-        for k, v in [
-            ("query", query),
-            ("omit_revoked", omit_revoked),
-            ("omit_non_human", omit_non_human),
-            ("page", page),
-            ("per_page", per_page),
-        ]
-        if v is not None
+    parse_args=lambda self, query=None, omit_revoked=False, omit_non_human=False, page=1, per_page=100: {
+        "query": query,
+        "omit_revoked": omit_revoked,
+        "omit_non_human": omit_non_human,
+        "page": page,
+        "per_page": per_page,
     },
 )
 user_create = CmdSock(
     "user_create",
     user_create_serializer,
-    parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate=None, redacted_device_certificate=None: {
+    parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
         k: v
         for k, v in {
             "user_certificate": user_certificate,

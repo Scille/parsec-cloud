@@ -73,7 +73,7 @@ class RealmStatusReqSchema(BaseReqSchema):
 
 class RealmStatusRepSchema(BaseRepSchema):
     in_maintenance = fields.Boolean(required=True)
-    maintenance_type = MaintenanceTypeField(allow_none=True)
+    maintenance_type = MaintenanceTypeField(required=True, allow_none=True)
     maintenance_started_on = fields.DateTime(required=True, allow_none=True)
     maintenance_started_by = DeviceIDField(required=True, allow_none=True)
     encryption_revision = fields.Integer(required=True)
@@ -96,7 +96,6 @@ realm_stats_serializer = CmdSerializer(RealmStatsReqSchema, RealmStatsRepSchema)
 
 class RealmGetRoleCertificatesReqSchema(BaseReqSchema):
     realm_id = RealmIDField(required=True)
-    since = fields.DateTime(missing=None)
 
 
 class RealmGetRoleCertificatesRepSchema(BaseRepSchema):
