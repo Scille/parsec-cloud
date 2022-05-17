@@ -62,6 +62,12 @@ impl<T> Default for SharedState<T> {
     }
 }
 
+/// Task is a *task controller*, meaning that it allow to control the spawned future.
+/// You can wait for it to finish or abort it.
+///
+/// A `Task` *detaches* the associated future when it is dropped, meaning that the future will now run in background.
+///
+/// This `struct` is created by the [spawn] functions;
 pub struct Task<T> {
     shared_state: Arc<Mutex<SharedState<T>>>,
 }
@@ -168,7 +174,10 @@ impl<T> Future for Task<T> {
     }
 }
 
-pub struct Runnable<F, T> {
+/// Background Task that will Poll the future given to [spawn].
+///
+/// Listen for message from [Task] passed in the [SharedState]
+struct Runnable<F, T> {
     future: Pin<Box<F>>,
     shared_state: Arc<Mutex<SharedState<T>>>,
 }
