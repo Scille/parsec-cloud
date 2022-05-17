@@ -71,8 +71,26 @@ impl<T> Task<T> {
         Self { shared_state }
     }
 
-    /// Cancels the task
-    pub fn cancel(&self) -> Option<T> {
+    /// abort the task
+    ///
+    /// # Panics
+    ///
+    /// Awaiting a canceled task result in a panic
+    ///
+    /// ```should_panic
+    /// use libparsec_platform_async::spawn;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let task = spawn(async {
+    ///     futures::future::ready(42).await
+    /// });
+    ///
+    /// task.abort();
+    /// task.await; // should panic here!
+    /// # }
+    /// ```
+    pub fn abort(&self) -> Option<T> {
         let mut state = self.shared_state.lock().unwrap();
 
         state.canceled = true;
@@ -105,6 +123,9 @@ impl<T> Future for Task<T> {
         let s = self.as_mut();
         let mut state = s.shared_state.lock().unwrap();
 
+        if state.canceled {
+            panic!("awaiting a canceled task");
+        }
         state.task_waker = Some(cx.waker().clone());
         if state.finished {
             Poll::Ready(

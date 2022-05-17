@@ -30,7 +30,7 @@ impl<T> JoinSet<T> {
     pub fn cancel_all(&mut self) -> Vec<Option<T>> {
         self.tasks
             .iter()
-            .map(|task| task.cancel())
+            .map(|task| task.abort())
             .collect::<Vec<_>>()
     }
 
