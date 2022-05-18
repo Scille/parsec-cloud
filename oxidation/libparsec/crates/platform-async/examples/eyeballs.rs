@@ -63,7 +63,7 @@ async fn eyeballs(targets: Vec<Load>) -> Result<usize, RecvError> {
 
     spawn_attempt(0, targets, failed_attempt, join_set.clone(), tx);
     let result = dbg!(rx.recv_async().await);
-    join_set.lock().unwrap().cancel_all();
+    join_set.lock().unwrap().abort_all();
     result
 }
 
