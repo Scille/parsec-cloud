@@ -28,7 +28,7 @@ impl LocalDevice {
     }
 
     pub fn load(serialized: &[u8]) -> Result<Self, &'static str> {
-        rmp_serde::from_read_ref(&serialized).map_err(|_| "Invalid serialization")
+        rmp_serde::from_slice(serialized).map_err(|_| "Invalid serialization")
     }
 
     pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &'static str> {

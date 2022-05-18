@@ -7,6 +7,8 @@ rust-version = "1.60.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+libparsec_platform_native = { path = "../crates/platform_native", optional = true }
+libparsec_platform_web = { path = "../crates/platform_web", optional = true }
 parsec_api_crypto = { path = "../crates/parsec_api_crypto" }
 parsec_api_types = { path = "../crates/parsec_api_types" }
 

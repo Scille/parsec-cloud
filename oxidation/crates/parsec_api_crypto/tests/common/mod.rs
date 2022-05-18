@@ -23,7 +23,7 @@ macro_rules! test_msgpack_serialization {
             // bytes should be serialized in msgpck using the bin format familly
             // (see. https://github.com/msgpack/msgpack/blob/master/spec.md#bin-format-family)
 
-            let sk: $cls = rmp_serde::from_read_ref(serialized).unwrap();
+            let sk: $cls = rmp_serde::from_slice(serialized).unwrap();
 
             assert_eq!(sk.as_ref(), data);
 
@@ -37,7 +37,7 @@ macro_rules! test_msgpack_serialization {
             assert!(data.len() < 256);
             let mut alternative = vec![0xda, 0x00, data.len() as u8];
             alternative.extend_from_slice(data);
-            let sk: $cls = rmp_serde::from_read_ref(&alternative).unwrap();
+            let sk: $cls = rmp_serde::from_slice(&alternative).unwrap();
             assert_eq!(sk.as_ref(), data);
         }
     };
