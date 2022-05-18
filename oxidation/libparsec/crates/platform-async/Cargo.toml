@@ -1,0 +1,25 @@
+[package]
+name = "libparsec-platform-async"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+flume = "0.10.12"
+# futures is used for its macros `select_all` and `join_all`
+futures = "0.3.21"
+
+[dev-dependencies]
+log = "0.4.17"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2.63"
+wasm-bindgen-futures = "0.4.30"
+web-sys = "0.3.57"
+js-sys = "0.3.57"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1.18.2", features = ["rt", "time"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+tokio = { version = "1.18.2", features = ["full"] }
+simple_logger = "2.1.0"
