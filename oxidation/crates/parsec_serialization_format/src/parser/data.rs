@@ -3,6 +3,7 @@
 use miniserde::Deserialize;
 use proc_macro2::TokenStream;
 use quote::quote;
+use std::collections::HashMap;
 use syn::Ident;
 
 use super::{quote_fields, Field, Vis};
@@ -18,11 +19,11 @@ pub(crate) struct Data {
 impl Data {
     pub(crate) fn quote(&self) -> TokenStream {
         let name: Ident =
-            syn::parse_str(&format!("{}Data", self.label)).unwrap_or_else(|_| unreachable!());
+            syn::parse_str(&format!("{}Data", self.label)).expect("Expected a valid name (Data)");
         let name_type: Ident =
             syn::parse_str(&format!("{}DataType", self.label)).unwrap_or_else(|_| unreachable!());
         let ty = &self.ty;
-        let fields = quote_fields(&self.other_fields, Vis::Public);
+        let fields = quote_fields(&self.other_fields, Vis::Public, &HashMap::new());
         quote! {
             #[serde_with::serde_as]
             #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]

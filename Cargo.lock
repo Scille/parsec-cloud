@@ -1143,7 +1143,7 @@ dependencies = [
  "hex-literal",
  "parsec_api_crypto",
  "parsec_api_types",
- "parsec_schema",
+ "parsec_serialization_format",
  "paste",
  "rand 0.8.5",
  "rmp-serde",
@@ -1231,15 +1231,6 @@ dependencies = [
  "rstest",
  "tests_fixtures",
  "thiserror",
-]
-
-[[package]]
-name = "parsec_schema"
-version = "0.0.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]

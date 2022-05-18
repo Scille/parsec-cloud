@@ -1,0 +1,40 @@
+{
+    "label": "RealmStats",
+    "req": {
+        "cmd": "realm_stats",
+        "other_fields": [
+            {
+                "name": "realm_id",
+                "type": "RealmID"
+            }
+        ]
+    },
+    "reps": [
+        {
+            "status": "ok",
+            "other_fields": [
+                {
+                    "name": "blocks_size",
+                    "type": "Size"
+                },
+                {
+                    "name": "vlobs_size",
+                    "type": "Size"
+                }
+            ]
+        },
+        {
+            "status": "not_allowed",
+            "other_fields": []
+        },
+        {
+            "status": "not_found",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        }
+    ]
+}

@@ -14,7 +14,7 @@ path = "tests/tests.rs"
 [dependencies]
 parsec_api_crypto = { path = "../parsec_api_crypto" }
 parsec_api_types = { path = "../parsec_api_types" }
-parsec_schema = { path = "../parsec_schema" }
+parsec_serialization_format = { path = "../parsec_serialization_format" }
 
 paste = "1.0.5"
 rand = "0.8.5"

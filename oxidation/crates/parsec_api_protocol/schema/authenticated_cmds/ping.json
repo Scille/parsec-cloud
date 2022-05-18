@@ -1,0 +1,23 @@
+{
+    "label": "Ping",
+    "req": {
+        "cmd": "ping",
+        "other_fields": [
+            {
+                "name": "ping",
+                "type": "String"
+            }
+        ]
+    },
+    "reps": [
+        {
+            "status": "ok",
+            "other_fields": [
+                {
+                    "name": "pong",
+                    "type": "String"
+                }
+            ]
+        }
+    ]
+}

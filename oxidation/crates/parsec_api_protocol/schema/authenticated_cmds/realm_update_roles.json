@@ -1,0 +1,75 @@
+{
+    "label": "RealmUpdateRoles",
+    "req": {
+        "cmd": "realm_update_roles",
+        "other_fields": [
+            {
+                "name": "role_certificate",
+                "type": "Bytes"
+            },
+            {
+                "name": "recipient_message",
+                "type": "Option<Bytes>"
+            }
+        ]
+    },
+    "reps": [
+        {
+            "status": "ok",
+            "other_fields": []
+        },
+        {
+            "status": "not_allowed",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        },
+        {
+            "status": "invalid_certification",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        },
+        {
+            "status": "invalid_data",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        },
+        {
+            "status": "already_granted",
+            "other_fields": []
+        },
+        {
+            "status": "incompatible_profile",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        },
+        {
+            "status": "not_found",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        },
+        {
+            "status": "in_maintenance",
+            "other_fields": []
+        }
+    ]
+}

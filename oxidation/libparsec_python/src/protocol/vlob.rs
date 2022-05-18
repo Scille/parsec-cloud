@@ -145,7 +145,7 @@ impl VlobReadReq {
     fn new(
         encryption_revision: u64,
         vlob_id: VlobID,
-        version: Option<u64>,
+        version: Option<u32>,
         timestamp: Option<&PyAny>,
     ) -> PyResult<Self> {
         let vlob_id = vlob_id.0;
@@ -180,7 +180,7 @@ impl VlobReadReq {
     }
 
     #[getter]
-    fn version(&self) -> PyResult<Option<u64>> {
+    fn version(&self) -> PyResult<Option<u32>> {
         Ok(self.0.version)
     }
 
@@ -203,7 +203,7 @@ impl VlobReadRep {
     #[pyo3(name = "Ok")]
     fn ok(
         _cls: &PyType,
-        version: u64,
+        version: u32,
         blob: Vec<u8>,
         author: DeviceID,
         timestamp: &PyAny,
@@ -281,7 +281,7 @@ impl VlobUpdateReq {
         encryption_revision: u64,
         vlob_id: VlobID,
         timestamp: &PyAny,
-        version: u64,
+        version: u32,
         blob: Vec<u8>,
     ) -> PyResult<Self> {
         let vlob_id = vlob_id.0;
@@ -322,7 +322,7 @@ impl VlobUpdateReq {
     }
 
     #[getter]
-    fn version(&self) -> PyResult<u64> {
+    fn version(&self) -> PyResult<u32> {
         Ok(self.0.version)
     }
 
@@ -684,14 +684,14 @@ impl VlobMaintenanceGetReencryptionBatchRep {
 
 #[pyclass]
 #[derive(PartialEq, Clone)]
-pub(crate) struct ReencryptionBatchEntry(pub parsec_api_protocol::ReencryptionBatchEntry);
+pub(crate) struct ReencryptionBatchEntry(pub parsec_api_types::ReencryptionBatchEntry);
 
 #[pymethods]
 impl ReencryptionBatchEntry {
     #[new]
     fn new(vlob_id: VlobID, version: u64, blob: Vec<u8>) -> PyResult<Self> {
         let vlob_id = vlob_id.0;
-        Ok(Self(parsec_api_protocol::ReencryptionBatchEntry {
+        Ok(Self(parsec_api_types::ReencryptionBatchEntry {
             vlob_id,
             version,
             blob,

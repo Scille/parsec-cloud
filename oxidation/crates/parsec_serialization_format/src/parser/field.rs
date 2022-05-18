@@ -3,6 +3,7 @@
 use miniserde::Deserialize;
 use proc_macro2::TokenStream;
 use quote::quote;
+use std::collections::HashMap;
 use syn::{Ident, Type};
 
 use super::utils::{inspect_type, quote_serde_as};
@@ -24,14 +25,14 @@ pub(crate) struct Field {
 }
 
 impl Field {
-    pub(crate) fn quote(&self, vis: Vis) -> TokenStream {
+    pub(crate) fn quote(&self, vis: Vis, types: &HashMap<String, String>) -> TokenStream {
         let rename = match self.name.as_str() {
             "type" => Some("ty"),
             _ => None,
         };
         let name: Ident =
-            syn::parse_str(rename.unwrap_or(&self.name)).unwrap_or_else(|_| unreachable!());
-        let ty = inspect_type(&self.ty);
+            syn::parse_str(rename.unwrap_or(&self.name)).expect("Expected a valid name (Field)");
+        let ty = inspect_type(&self.ty, types);
         let (inspected_ty, serde_skip) = if self.introduced_in_revision.is_some() {
             (
                 "parsec_api_types::Maybe".to_string() + "<" + &ty + ">",
@@ -42,7 +43,7 @@ impl Field {
         } else {
             (ty, quote! {})
         };
-        let ty: Type = syn::parse_str(&inspected_ty).unwrap_or_else(|e| panic!("{e}"));
+        let ty: Type = syn::parse_str(&inspected_ty).expect("Expected a valid type (Field)");
         let rename = SerdeAttr::Rename.quote(rename.map(|_| &self.name));
         let serde_as = quote_serde_as(&ty);
         let serde_default = if let Some(default) = &self.default {
@@ -70,11 +71,15 @@ impl Field {
     }
 }
 
-pub(crate) fn quote_fields(_fields: &[Field], vis: Vis) -> TokenStream {
+pub(crate) fn quote_fields(
+    _fields: &[Field],
+    vis: Vis,
+    types: &HashMap<String, String>,
+) -> TokenStream {
     let mut fields = quote! {};
 
     for field in _fields {
-        let field = field.quote(vis);
+        let field = field.quote(vis, types);
         fields = quote! {
             #fields
             #field,

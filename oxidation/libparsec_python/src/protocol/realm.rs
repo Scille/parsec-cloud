@@ -128,8 +128,8 @@ impl RealmStatusReq {
 
 pub fn py_to_rs_maintenance_type(
     maintenance_type: &PyAny,
-) -> PyResult<parsec_api_protocol::MaintenanceType> {
-    use parsec_api_protocol::MaintenanceType::*;
+) -> PyResult<realm_status::MaintenanceType> {
+    use realm_status::MaintenanceType::*;
     Ok(match maintenance_type.getattr("name")?.extract::<&str>()? {
         "GARBAGE_COLLECTION" => GarbageCollection,
         "REENCRYPTION" => Reencryption,

@@ -44,7 +44,7 @@ impl UserGetReq {
 
 #[pyclass]
 #[derive(PartialEq, Clone)]
-pub(crate) struct Trustchain(pub parsec_api_protocol::Trustchain);
+pub(crate) struct Trustchain(pub user_get::Trustchain);
 
 #[pymethods]
 impl Trustchain {
@@ -54,7 +54,7 @@ impl Trustchain {
         users: Vec<Vec<u8>>,
         revoked_users: Vec<Vec<u8>>,
     ) -> PyResult<Self> {
-        Ok(Self(parsec_api_protocol::Trustchain {
+        Ok(Self(user_get::Trustchain {
             devices,
             users,
             revoked_users,
@@ -455,7 +455,7 @@ impl HumanFindReq {
 
 #[pyclass]
 #[derive(PartialEq, Clone)]
-pub(crate) struct HumanFindResultItem(pub parsec_api_protocol::HumanFindResultItem);
+pub(crate) struct HumanFindResultItem(pub human_find::HumanFindResultItem);
 
 #[pymethods]
 impl HumanFindResultItem {
@@ -463,7 +463,7 @@ impl HumanFindResultItem {
     fn new(user_id: UserID, human_handle: Option<HumanHandle>, revoked: bool) -> PyResult<Self> {
         let user_id = user_id.0;
         let human_handle = human_handle.map(|hh| hh.0);
-        Ok(Self(parsec_api_protocol::HumanFindResultItem {
+        Ok(Self(human_find::HumanFindResultItem {
             user_id,
             human_handle,
             revoked,

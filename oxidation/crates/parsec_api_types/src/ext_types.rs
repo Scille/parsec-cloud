@@ -2,10 +2,12 @@
 
 use chrono::{Duration, TimeZone, Timelike};
 use core::ops::Sub;
+use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 
 pub(crate) const DATETIME_EXT_ID: i8 = 1;
 pub(crate) const UUID_EXT_ID: i8 = 2;
+use crate::VlobID;
 
 /*
  * DateTime
@@ -542,3 +544,12 @@ macro_rules! impl_from_maybe {
 impl_from_maybe!(bool);
 
 pub(crate) use impl_from_maybe;
+
+#[serde_with::serde_as]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ReencryptionBatchEntry {
+    pub vlob_id: VlobID,
+    pub version: u64,
+    #[serde_as(as = "serde_with::Bytes")]
+    pub blob: Vec<u8>,
+}

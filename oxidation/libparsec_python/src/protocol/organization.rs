@@ -35,14 +35,14 @@ impl OrganizationStatsReq {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct UsersPerProfileDetailItem(pub parsec_api_protocol::UsersPerProfileDetailItem);
+pub(crate) struct UsersPerProfileDetailItem(pub organization_stats::UsersPerProfileDetailItem);
 
 #[pymethods]
 impl UsersPerProfileDetailItem {
     #[new]
     fn new(profile: &PyAny, active: u64, revoked: u64) -> PyResult<Self> {
         let profile = py_to_rs_user_profile(profile)?;
-        Ok(Self(parsec_api_protocol::UsersPerProfileDetailItem {
+        Ok(Self(organization_stats::UsersPerProfileDetailItem {
             profile,
             active,
             revoked,

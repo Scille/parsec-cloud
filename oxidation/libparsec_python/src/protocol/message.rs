@@ -41,7 +41,7 @@ impl MessageGetReq {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct Message(pub parsec_api_protocol::Message);
+pub(crate) struct Message(pub message_get::Message);
 
 #[pymethods]
 impl Message {
@@ -49,7 +49,7 @@ impl Message {
     fn new(count: u64, sender: DeviceID, timestamp: &PyAny, body: Vec<u8>) -> PyResult<Self> {
         let sender = sender.0;
         let timestamp = py_to_rs_datetime(timestamp)?;
-        Ok(Self(parsec_api_protocol::Message {
+        Ok(Self(message_get::Message {
             count,
             sender,
             timestamp,

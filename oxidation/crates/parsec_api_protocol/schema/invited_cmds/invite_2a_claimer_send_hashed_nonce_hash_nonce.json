@@ -1,0 +1,35 @@
+{
+    "label": "Invite2aClaimerSendHashedNonceHashNonce",
+    "req": {
+        "cmd": "invite_2a_claimer_send_hashed_nonce_hash_nonce",
+        "other_fields": [
+            {
+                "name": "claimer_hashed_nonce",
+                "type": "HashDigest"
+            }
+        ]
+    },
+    "reps": [
+        {
+            "status": "ok",
+            "other_fields": [
+                {
+                    "name": "greeter_nonce",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        {
+            "status": "not_found",
+            "other_fields": []
+        },
+        {
+            "status": "already_deleted",
+            "other_fields": []
+        },
+        {
+            "status": "invalid_state",
+            "other_fields": []
+        }
+    ]
+}

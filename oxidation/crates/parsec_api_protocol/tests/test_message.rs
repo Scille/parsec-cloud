@@ -49,7 +49,7 @@ fn serde_message_get_rep() {
     );
 
     let expected = authenticated_cmds::message_get::Rep::Ok {
-        messages: vec![Message {
+        messages: vec![authenticated_cmds::message_get::Message {
             count: 1,
             sender: "alice@dev1".parse().unwrap(),
             timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
@@ -67,40 +67,4 @@ fn serde_message_get_rep() {
     let data2 = authenticated_cmds::message_get::Rep::load(&raw2);
 
     assert_eq!(data2, expected);
-}
-
-#[rstest]
-fn specs_message_get_req() {
-    assert_eq!(
-        authenticated_cmds::message_get::Req::specs(),
-        serde_json::json!({
-            "fields": {
-                "cmd": {
-                    "type": "CheckedConstant",
-                    "value": "message_get"
-                },
-                "offset": {
-                    "type": "u64"
-                }
-            }
-        })
-    )
-}
-
-#[rstest]
-fn specs_message_get_rep() {
-    assert_eq!(
-        authenticated_cmds::message_get::Rep::specs(),
-        serde_json::json!({
-            "fields": {
-                "messages": {
-                    "type": "Vec<Message>"
-                },
-                "status": {
-                    "type": "CheckedConstant",
-                    "value": "ok"
-                }
-            }
-        })
-    )
 }
