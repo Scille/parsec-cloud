@@ -51,7 +51,7 @@ async fn main() -> Result<(), ()> {
 async fn eyeballs(targets: Vec<Load>) -> Option<usize> {
     let failed_attempt = targets
         .iter()
-        .map(|_| Arc::new(Notify::new()))
+        .map(|_| Arc::new(Notify::default()))
         .collect::<Vec<_>>();
     let targets = Arc::new(targets);
     let join_set = JoinSet::default();
