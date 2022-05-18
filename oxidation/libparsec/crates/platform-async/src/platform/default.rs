@@ -72,7 +72,7 @@ impl<T> crate::task::Taskable<T> for Task<T> {
         self.shared_state.lock().unwrap().detached = true;
     }
 
-    fn is_finised(&self) -> bool {
+    fn is_finished(&self) -> bool {
         self.shared_state.lock().unwrap().finished
     }
 
