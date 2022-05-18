@@ -6,6 +6,8 @@ updates:
       separator: "-"
     schedule:
       interval: monthly
+      time: "02:00"
+      timezone: "Europe/Paris"
 
   - package-ecosystem: pip
     directory: "/requirement"
@@ -17,6 +19,8 @@ updates:
       separator: "-"
     schedule:
       interval: monthly
+      time: "02:00"
+      timezone: "Europe/Paris"
 
   - package-ecosystem: pip
     directory: "/oxidation/libparsec_python"
@@ -24,6 +28,8 @@ updates:
       separator: "-"
     schedule:
       interval: monthly
+      time: "02:00"
+      timezone: "Europe/Paris"
 
   - package-ecosystem: cargo
     directory: "/"
@@ -31,6 +37,8 @@ updates:
       separator: "-"
     schedule:
       interval: monthly
+      time: "02:00"
+      timezone: "Europe/Paris"
 
   - package-ecosystem: "npm"
     directory: "/oxidation/client"
@@ -38,6 +46,8 @@ updates:
       separator: "-"
     schedule:
       interval: monthly
+      time: "02:00"
+      timezone: "Europe/Paris"
 
   - package-ecosystem: "npm"
     directory: "/oxidation/client/android"
@@ -45,3 +55,5 @@ updates:
       separator: "-"
     schedule:
       interval: monthly
+      time: "02:00"
+      timezone: "Europe/Paris"
