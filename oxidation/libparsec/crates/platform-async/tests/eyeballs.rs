@@ -31,8 +31,8 @@ enum Mode {
     Success,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), ()> {
+#[tokio::test]
+async fn test_eyeballs() -> Result<(), ()> {
     simple_logger::init_with_level(log::Level::Debug).expect("cannot initialize simple logger");
 
     let targets = vec![
@@ -122,7 +122,7 @@ async fn attempt(
     match mock_load(load).await {
         Mode::Fail => {
             log::info!("[#{which}] finished with error");
-            failed_attempt[which].notify_waiters();
+            failed_attempt[which].notify_one();
         }
         Mode::Success => {
             log::info!("[#{which}] finished with success");
