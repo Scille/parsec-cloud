@@ -155,7 +155,8 @@ jobs:
       and(
         eq(variables['Build.Reason'], 'PullRequest'),
         not(startsWith(variables['System.PullRequest.SourceBranch'], 'dependabot')),
-        not(startsWith(variables['System.PullRequest.SourceBranch'], 'yolo'))
+        not(startsWith(variables['System.PullRequest.SourceBranch'], 'yolo')),
+        not(startsWith(variables['System.PullRequest.SourceBranch'], 'release'))
       )
     displayName: 'Newsfragment'
 #  - bash: |
