@@ -50,6 +50,7 @@ def recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=False):
 @pytest.mark.slow
 def test_sync_monitor_stateful(
     hypothesis_settings,
+    frozen_clock,
     reset_testbed,
     backend_addr,
     backend_factory,
@@ -78,8 +79,7 @@ def test_sync_monitor_stateful(
         def __init__(self):
             super().__init__()
             # Core's sync and message monitors must be kept frozen
-            mock_clock = trio.testing.MockClock(rate=0, autojump_threshold=0)
-            self.set_clock(mock_clock)
+            self.set_clock(frozen_clock)
             self.file_count = 0
             self.data_count = 0
             self.workspace_count = 0
@@ -212,14 +212,14 @@ def test_sync_monitor_stateful(
         @rule(target=SyncedFiles)
         async def let_core_monitors_process_changes(self):
             # Wait for alice core to settle down
-            await trio.sleep(300)
+            await frozen_clock.sleep_with_autojump(300)
             # Bob get back alice's changes
             await self.bob_user_fs.sync()
             for bob_workspace_entry in self.bob_user_fs.get_user_manifest().workspaces:
                 bob_w = self.bob_user_fs.get_workspace(bob_workspace_entry.id)
                 await bob_w.sync()
             # Alice get back possible changes from bob's sync
-            await trio.sleep(300)
+            await frozen_clock.sleep_with_autojump(300)
 
             # Now alice and bob should have agreed on the data
             new_synced_files = []

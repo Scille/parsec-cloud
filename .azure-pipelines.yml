@@ -17,7 +17,9 @@ variables:
   winfsp.version: '1.8.20304'
   pytest.base_args: |
     --log-level=DEBUG \
-    --durations=10 -v \
+    --durations=10 \
+    --side-effects-timeout=10 \
+    -v \
   debug.stress_flaky_tests: 0  # Repeat all flaky tests X times
   rust.version: 1.60.0
 

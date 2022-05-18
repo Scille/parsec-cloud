@@ -18,8 +18,7 @@ import structlog
 import trio
 from trio.testing import MockClock
 import trio_asyncio
-from contextlib import contextmanager
-from async_generator import asynccontextmanager
+from contextlib import contextmanager, asynccontextmanager
 import hypothesis
 from pathlib import Path
 import sqlite3
@@ -48,7 +47,12 @@ from parsec.backend.config import (
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
-from tests.common import freeze_time, addr_with_device_subdomain, real_clock_fail_after
+from tests.common import (
+    freeze_time,
+    addr_with_device_subdomain,
+    real_clock_timeout,
+    get_side_effects_timeout,
+)
 from tests.postgresql import (
     get_postgresql_url,
     bootstrap_postgresql_testbed,
@@ -64,6 +68,7 @@ from tests.oracles import oracle_fs_factory, oracle_fs_with_sync_factory  # noqa
 
 
 def pytest_addoption(parser):
+    parser.addoption("--side-effects-timeout", default=get_side_effects_timeout(), type=float)
     parser.addoption("--hypothesis-max-examples", default=100, type=int)
     parser.addoption("--hypothesis-derandomize", action="store_true")
     parser.addoption(
@@ -131,6 +136,11 @@ def pytest_configure(config):
         pytest.exit("bye")
     elif config.getoption("--postgresql") and not is_xdist_master(config):
         bootstrap_postgresql_testbed()
+    # Configure custom side effets timeout
+    if config.getoption("--side-effects-timeout"):
+        import tests.common
+
+        tests.common._SIDE_EFFECTS_TIMEOUT = float(config.getoption("--side-effects-timeout"))
 
 
 def patch_caplog():
@@ -306,62 +316,87 @@ async def asyncio_loop(request):
 @pytest.fixture
 def mock_clock():
     # Prevent from using pytest_trio's `mock_clock` fixture.
-    # This is because `mock_clock` doesn't handle well timeouts in fixture's
-    # initialization.
-    raise RuntimeError("Use `autojump_clock` fixture instead !!!")
+    raise RuntimeError("Use `frozen_clock` fixture instead !!!")
 
 
 @pytest.fixture
-def autojump_clock(request):
-    # We don't mock the clock during fixture initialization to avoid weird
-    # too slow errors (e.g. logged core monitors waiting for backend).
-    clock = MockClock(rate=1, autojump_threshold=math.inf)
+def autojump_clock():
+    # Prevent from using pytest_trio's `autojump` fixture.
+    raise RuntimeError("Use `frozen_clock` fixture instead !!!")
 
-    if request.config.getoption("--postgresql"):
-        # Event dispatching through PostgreSQL LISTEN/NOTIFY is
-        # invisible from trio point of view, hence waiting for
-        # event with autojump_threshold=0 means we jump to timeout
-        default_autojump_threshold = 0.1
-        default_rate = 0
 
-    elif request.node.get_closest_marker("gui"):
-        # Qt also need a non-zero threshold, otherwise Qt and trio threads fight in
-        # busy loops which makes the test a lot slower (and toast your CPU) !
-        default_autojump_threshold = 0.01
-        default_rate = 0
-
-    else:
-        # Data storage makes use of lock and `trio.to_thread.run_sync` which
-        # produces a jump in case of concurrent access
-        default_autojump_threshold = 0.01
-        default_rate = 0
-
-    used = False
-
-    def _setup(autojump_threshold=default_autojump_threshold, rate=default_rate):
-        nonlocal used
-        used = True
-        clock.autojump_threshold = autojump_threshold
-        clock.rate = rate
-
-    clock.setup = _setup
-    clock.real_clock_fail_after = real_clock_fail_after  # Quick access helper
-    yield clock
-
-    # Easy to forget this fixture must be explicitly used
-    assert used
-
-    # Note we don't revert clock setup, so in theory fixtures teardown could
-    # suffer (for the same reason we protected fixtures init).
-    # This is because we cannot guarantee we are the first fixture to teardown,
-    # hence we don't know *when* we would be unsetting the clock, but this
-    # is fine for now given, unlike init, tearndown doesn't do complex waits.
+@pytest.fixture
+def frozen_clock():
+    # Mocked clock is a slippy slope: we want time to go faster (or even to
+    # jump to arbitrary point in time !) on some part of our application while
+    # some other parts should keep using the real time.
+    # For instance we want to make sure some part of a test doesn't take more than
+    # x seconds in real life (typically to detect deadlock), but this test might
+    # be about a ping occurring every 30s so we want to simulate this wait.
     #
-    # BTW, you might be thinking of providing a context manager instead of the
-    # setup method to fix this, however the current fixture must return the
-    # clock object (so pytest know this is the clock we want to use, and pytest
-    # doesn't support a fixture of fixture returning the clock) so we would have
-    # to put __enter__/__exit__ to the clock object which is a bit too much :/
+    # The simple solution is to use `MockClock.rate` to make time go faster,
+    # but it's bad idea given we end up with two antagonistic goals:
+    # - rate should be as high as possible so that ping wait goes as fast as possible
+    # - the highest rate is, the smallest real time window we have when checking for
+    #   deadlock, this is especially an issue given developer machine is a behemoth
+    #   while CI run on potatoes (especially on MacOS) shared with other builds...
+    #
+    # So the solution we choose here is to separate the two times:
+    # - Parsec codebase uses the trio clock and `trio.fail_after/move_on_after`
+    # - Test codebase can use `trio.fail_after/move_on_after` as long as the test
+    #   doesn't use a mock clock
+    # - In case of mock clock, test codebase must use `real_clock_timeout` that
+    #   relies on monotonic clock and hence is totally isolated from trio's clock.
+    #
+    # On top of that we must be careful about the configuration of the mock clock !
+    # As we said the Parsec codebase (i.e. not the tests) uses the trio clock for
+    # timeout handling & sleep (e.g. in the managers), hence:
+    # - Using `MockClock.rate` with a high value still lead to the issue dicussed above.
+    # - `trio.to_thread.run_sync` doesn't play nice with `MockClock.autojump_threshold = 0`
+    #   given trio considers the coroutine waiting for the thread is idle and hence
+    #   trigger the clock jump. So a perfectly fine async code may break tests in
+    #   an unexpected way if it starts using `trio.to_thread.run_sync`...
+    #
+    # So the idea of the `frozen_clock` is to only advance when expecially
+    # specified in the test (i.e. rate 0 and no autojump_threshold).
+    # This way only the test code has control over the application timeout
+    # handling, and we have a clean separation with the test timeout (i.e. using
+    # `real_clock_timeout` to detect the test endup in a deadlock)
+    #
+    # The drawback of this approach is manually handling time jump can be cumbersome.
+    # For instance the backend connection retry logic:
+    # - sleeps for some time
+    # - connects to the backend
+    # - starts sync&message monitors
+    # - message monitor may trigger modifications in the sync monitor
+    # - in case of modification, sync monitor is going to sleep for a short time
+    #   before doing the sync of the modification
+    #
+    # So to avoid having to mix `MockClock.jump` and `trio.testing.wait_all_tasks_blocked`
+    # in a very complex and fragile way, we introduce the `sleep_with_autojump()`
+    # method that is the only place where clock is going to move behind our back, but
+    # for only the amount of time we choose, and only in a very explicit manner.
+    #
+    # Finally, an additional bonus to this approach is we can use breakpoint in the
+    # code without worrying about triggering a timeout ;-)
+
+    clock = MockClock(rate=0, autojump_threshold=math.inf)
+
+    clock.real_clock_timeout = real_clock_timeout  # Quick access helper
+
+    async def _sleep_with_autojump(seconds):
+        old_rate = clock.rate
+        old_autojump_threshold = clock.autojump_threshold
+        clock.rate = 0
+        clock.autojump_threshold = 0.01
+        try:
+            await trio.sleep(seconds)
+        finally:
+            clock.rate = old_rate
+            clock.autojump_threshold = old_autojump_threshold
+
+    clock.sleep_with_autojump = _sleep_with_autojump
+    yield clock
 
 
 @pytest.fixture(scope="session")
@@ -730,8 +765,8 @@ class LetterBox:
         self._send_email, self._recv_email = trio.open_memory_channel(10)
         self.emails = []
 
-    async def get_next_with_timeout(self, timeout=1):
-        async with real_clock_fail_after(timeout):
+    async def get_next_with_timeout(self):
+        async with real_clock_timeout():
             return await self.get_next()
 
     async def get_next(self):
@@ -824,7 +859,7 @@ def core_factory(request, running_backend_ready, event_bus_factory, core_config)
     async def _core_factory(device, event_bus=None):
         # Ensure test doesn't stay frozen if a bug in a fixture prevent the
         # backend from starting
-        async with real_clock_fail_after(3):
+        async with real_clock_timeout():
             await running_backend_ready.wait()
         event_bus = event_bus or event_bus_factory()
 
@@ -837,7 +872,6 @@ def core_factory(request, running_backend_ready, event_bus_factory, core_config)
                     await spy.wait_with_timeout(
                         CoreEvent.BACKEND_CONNECTION_CHANGED,
                         {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
-                        timeout=2.0,  # 1 second might not be enough for postgresql 12 tests running in the CI
                     )
                 assert core.are_monitors_idle()
 

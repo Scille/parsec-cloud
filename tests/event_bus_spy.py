@@ -9,7 +9,7 @@ from enum import Enum
 
 from parsec.event_bus import EventBus
 
-from tests.common import real_clock_fail_after
+from tests.common import real_clock_timeout
 
 
 class PartialDict(dict):
@@ -124,8 +124,8 @@ class EventBusSpy:
     def clear(self):
         self.events.clear()
 
-    async def wait_with_timeout(self, event, kwargs=ANY, dt=ANY, timeout=1, update_event_func=None):
-        async with real_clock_fail_after(timeout):
+    async def wait_with_timeout(self, event, kwargs=ANY, dt=ANY, update_event_func=None):
+        async with real_clock_timeout():
             await self.wait(event, kwargs, dt, update_event_func)
 
     async def wait(self, event, kwargs=ANY, dt=ANY, update_event_func=None):
@@ -156,8 +156,8 @@ class EventBusSpy:
         self._waiters.add(_waiter)
         return await receive_channel.receive()
 
-    async def wait_multiple_with_timeout(self, events, timeout=1, in_order=True):
-        async with real_clock_fail_after(timeout):
+    async def wait_multiple_with_timeout(self, events, in_order=True):
+        async with real_clock_timeout():
             await self.wait_multiple(events, in_order=in_order)
 
     async def wait_multiple(self, events, in_order=True):
