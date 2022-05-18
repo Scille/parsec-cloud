@@ -5,7 +5,6 @@ use std::{
     task::{Context, Poll, Waker},
 };
 
-use futures::FutureExt;
 use wasm_bindgen_futures::spawn_local;
 
 /// Spawns a new asynchronous task, returning a [Task] for it.
@@ -149,7 +148,7 @@ where
             Poll::Ready(())
         } else {
             drop(state);
-            match s.future.poll_unpin(cx) {
+            match s.future.as_mut().poll(cx) {
                 Poll::Pending => Poll::Pending,
                 Poll::Ready(value) => {
                     let mut state = s.shared_state.lock().unwrap();
