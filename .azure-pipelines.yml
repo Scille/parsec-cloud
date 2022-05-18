@@ -258,15 +258,29 @@ jobs:
     displayName: 'Install'
   - bash: |
       set -eux
-      py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow \
+      timeout 200 py.test $(pytest.base_args) \
+        tests \
         -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-memory.xml
-    displayName: 'Tests memory'
+        --junitxml=test-results-fast.xml
+    displayName: 'Tests fast'
+  - bash: |
+      set -eux
+      timeout 200 py.test $(pytest.base_args) \
+        tests --runmountpoint --runslow -m mountpoint \
+        -n auto --max-worker-restart=0 -x \
+        --junitxml=test-results-mountpoint.xml
+    displayName: 'Tests mountpoint'
+  - bash: |
+      set -eux
+      timeout 800 py.test $(pytest.base_args) \
+        tests --runslow -m slow \
+        -n auto --max-worker-restart=0 -x \
+        --junitxml=test-results-slow.xml
+    displayName: 'Tests slow'
   - bash: |
       set -eux
       # `test_cli.py` uses `--postgresql` option to test DB migration cli
-      py.test $(pytest.base_args) \
+      timeout 400 py.test $(pytest.base_args) \
         tests/backend tests/test_cli.py --postgresql --runslow \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-postgresql.xml
