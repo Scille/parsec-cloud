@@ -448,7 +448,7 @@ jobs:
 
 - job: 's2_linux_snap_build'
   displayName: 'Linux snap build'
-  # condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
     # 20.04 requested to build a core20 image with --destructive-mode
