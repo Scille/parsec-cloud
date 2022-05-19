@@ -44,64 +44,68 @@ impl WorkspaceStorage {
         ))
     }
 
-    fn set_prevent_sync_pattern(&mut self, pattern: &PyAny) -> PyResult<()> {
+    fn set_prevent_sync_pattern(&self, py: Python, pattern: &PyAny) -> PyResult<()> {
         let pattern = py_to_rs_regex(pattern)?;
-        self.0
-            .set_prevent_sync_pattern(&pattern)
-            .map_err(|e| PyValueError::new_err(e.to_string()))?;
-        Ok(())
+        py.allow_threads(|| {
+            self.0
+                .set_prevent_sync_pattern(&pattern)
+                .map_err(|e| PyValueError::new_err(e.to_string()))?;
+            Ok(())
+        })
     }
 
-    fn mark_prevent_sync_pattern_fully_applied(&mut self, pattern: &PyAny) -> PyResult<()> {
+    fn mark_prevent_sync_pattern_fully_applied(&self, py: Python, pattern: &PyAny) -> PyResult<()> {
         let pattern = py_to_rs_regex(pattern)?;
-        self.0
-            .mark_prevent_sync_pattern_fully_applied(&pattern)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+        py.allow_threads(|| {
+            self.0
+                .mark_prevent_sync_pattern_fully_applied(&pattern)
+                .map_err(|e| PyValueError::new_err(e.to_string()))
+        })
     }
 
     fn get_prevent_sync_pattern<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_regex(py, &self.0.prevent_sync_pattern)
+        let prevent_sync_pattern = py.allow_threads(|| self.0.get_prevent_sync_pattern());
+        rs_to_py_regex(py, &prevent_sync_pattern)
     }
 
-    fn get_prevent_sync_pattern_fully_applied(&self) -> PyResult<bool> {
-        Ok(self.0.prevent_sync_pattern_fully_applied)
+    fn get_prevent_sync_pattern_fully_applied(&self, py: Python) -> PyResult<bool> {
+        py.allow_threads(|| Ok(self.0.get_prevent_sync_pattern_fully_applied()))
     }
 
-    fn get_workspace_manifest(&self) -> PyResult<LocalWorkspaceManifest> {
-        Ok(LocalWorkspaceManifest(
-            self.0
-                .get_workspace_manifest()
-                .map_err(|e| PyValueError::new_err(e.to_string()))?,
-        ))
+    fn get_workspace_manifest(&self, py: Python) -> PyResult<LocalWorkspaceManifest> {
+        py.allow_threads(|| {
+            Ok(LocalWorkspaceManifest(
+                self.0
+                    .get_workspace_manifest()
+                    .map_err(|e| PyValueError::new_err(e.to_string()))?,
+            ))
+        })
     }
 
-    fn get_manifest(&mut self, py: Python, entry_id: EntryID) -> PyResult<PyObject> {
-        Ok(
-            match self
-                .0
-                .get_manifest(entry_id.0)
-                .map_err(|_| FSLocalMissError::new_err(entry_id))?
-            {
-                parsec_client_types::LocalManifest::File(manifest) => {
-                    LocalFileManifest(manifest).into_py(py)
-                }
-                parsec_client_types::LocalManifest::Folder(manifest) => {
-                    LocalFolderManifest(manifest).into_py(py)
-                }
-                parsec_client_types::LocalManifest::Workspace(manifest) => {
-                    LocalWorkspaceManifest(manifest).into_py(py)
-                }
-                parsec_client_types::LocalManifest::User(manifest) => {
-                    LocalUserManifest(manifest).into_py(py)
-                }
-            },
-        )
+    fn get_manifest(&self, py: Python, entry_id: EntryID) -> PyResult<PyObject> {
+        let manifest = py
+            .allow_threads(|| self.0.get_manifest(entry_id.0))
+            .map_err(|_| FSLocalMissError::new_err(entry_id))?;
+        Ok(match manifest {
+            parsec_client_types::LocalManifest::File(manifest) => {
+                LocalFileManifest(manifest).into_py(py)
+            }
+            parsec_client_types::LocalManifest::Folder(manifest) => {
+                LocalFolderManifest(manifest).into_py(py)
+            }
+            parsec_client_types::LocalManifest::Workspace(manifest) => {
+                LocalWorkspaceManifest(manifest).into_py(py)
+            }
+            parsec_client_types::LocalManifest::User(manifest) => {
+                LocalUserManifest(manifest).into_py(py)
+            }
+        })
     }
 
     #[args(cache_only = false, check_lock_status = true, removed_ids = "None")]
     #[allow(unused_variables)]
     fn set_manifest(
-        &mut self,
+        &self,
         py: Python,
         entry_id: EntryID,
         manifest: PyObject,
@@ -118,166 +122,200 @@ impl WorkspaceStorage {
         } else {
             parsec_client_types::LocalManifest::User(manifest.extract::<LocalUserManifest>(py)?.0)
         };
-        self.0
-            .set_manifest(
-                entry_id.0,
-                manifest,
-                cache_only,
-                removed_ids.map(|x| {
-                    x.into_iter()
-                        .map(|id| parsec_core_fs::ChunkOrBlockID::ChunkID(id.0))
-                        .collect()
-                }),
-            )
-            .map_err(|e| PyValueError::new_err(e.to_string()))
-    }
-
-    fn clear_manifest(&mut self, entry_id: EntryID) -> PyResult<()> {
-        self.0
-            .clear_manifest(entry_id.0)
-            .map_err(|_| FSLocalMissError::new_err(entry_id))
-    }
-
-    fn create_file_descriptor(&mut self, manifest: LocalFileManifest) -> PyResult<FileDescriptor> {
-        Ok(FileDescriptor(self.0.create_file_descriptor(manifest.0)))
-    }
-
-    fn load_file_descriptor(&mut self, fd: FileDescriptor) -> PyResult<LocalFileManifest> {
-        Ok(LocalFileManifest(
+        py.allow_threads(|| {
             self.0
-                .load_file_descriptor(fd.0)
-                .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))?,
-        ))
+                .set_manifest(
+                    entry_id.0,
+                    manifest,
+                    cache_only,
+                    removed_ids.map(|x| {
+                        x.into_iter()
+                            .map(|id| parsec_core_fs::ChunkOrBlockID::ChunkID(id.0))
+                            .collect()
+                    }),
+                )
+                .map_err(|e| PyValueError::new_err(e.to_string()))
+        })
     }
 
-    fn remove_file_descriptor(&mut self, fd: FileDescriptor) -> PyResult<()> {
-        self.0
-            .remove_file_descriptor(fd.0)
-            .map(|_| ())
-            .ok_or_else(|| FSInvalidFileDescriptor::new_err(""))
+    fn clear_manifest(&self, py: Python, entry_id: EntryID) -> PyResult<()> {
+        py.allow_threads(|| {
+            self.0
+                .clear_manifest(entry_id.0)
+                .map_err(|_| FSLocalMissError::new_err(entry_id))
+        })
     }
 
-    fn set_clean_block(&mut self, block_id: BlockID, block: Vec<u8>) -> PyResult<()> {
-        self.0
-            .set_clean_block(block_id.0, &block)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+    fn create_file_descriptor(
+        &self,
+        py: Python,
+        manifest: LocalFileManifest,
+    ) -> PyResult<FileDescriptor> {
+        py.allow_threads(|| Ok(FileDescriptor(self.0.create_file_descriptor(manifest.0))))
     }
 
-    fn clear_clean_block(&mut self, block_id: BlockID) -> PyResult<()> {
-        self.0.clear_clean_block(block_id.0);
-        Ok(())
+    fn load_file_descriptor(&self, py: Python, fd: FileDescriptor) -> PyResult<LocalFileManifest> {
+        py.allow_threads(|| {
+            Ok(LocalFileManifest(
+                self.0
+                    .load_file_descriptor(fd.0)
+                    .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))?,
+            ))
+        })
     }
 
-    fn get_dirty_block<'py>(
-        &mut self,
-        py: Python<'py>,
-        block_id: BlockID,
-    ) -> PyResult<&'py PyBytes> {
-        let block = self
-            .0
-            .get_dirty_block(block_id.0)
+    fn remove_file_descriptor(&self, py: Python, fd: FileDescriptor) -> PyResult<()> {
+        py.allow_threads(|| {
+            self.0
+                .remove_file_descriptor(fd.0)
+                .map(|_| ())
+                .ok_or_else(|| FSInvalidFileDescriptor::new_err(""))
+        })
+    }
+
+    fn set_clean_block(&self, py: Python, block_id: BlockID, block: Vec<u8>) -> PyResult<()> {
+        py.allow_threads(|| {
+            self.0
+                .set_clean_block(block_id.0, &block)
+                .map_err(|e| PyValueError::new_err(e.to_string()))
+        })
+    }
+
+    fn clear_clean_block(&self, py: Python, block_id: BlockID) -> PyResult<()> {
+        py.allow_threads(|| {
+            self.0.clear_clean_block(block_id.0);
+            Ok(())
+        })
+    }
+
+    fn get_dirty_block<'py>(&self, py: Python<'py>, block_id: BlockID) -> PyResult<&'py PyBytes> {
+        let block = py
+            .allow_threads(|| self.0.get_dirty_block(block_id.0))
             .map_err(|_| FSLocalMissError::new_err(block_id))?;
         Ok(PyBytes::new(py, &block))
     }
 
-    fn get_chunk(&mut self, chunk_id: ChunkID) -> PyResult<Vec<u8>> {
-        self.0
-            .get_chunk(chunk_id.0)
-            .map_err(|_| FSLocalMissError::new_err(chunk_id))
+    fn get_chunk(&self, py: Python, chunk_id: ChunkID) -> PyResult<Vec<u8>> {
+        py.allow_threads(|| {
+            self.0
+                .get_chunk(chunk_id.0)
+                .map_err(|_| FSLocalMissError::new_err(chunk_id))
+        })
     }
 
-    fn set_chunk(&mut self, chunk_id: ChunkID, block: Vec<u8>) -> PyResult<()> {
-        self.0
-            .set_chunk(chunk_id.0, &block)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+    fn set_chunk(&self, py: Python, chunk_id: ChunkID, block: Vec<u8>) -> PyResult<()> {
+        py.allow_threads(|| {
+            self.0
+                .set_chunk(chunk_id.0, &block)
+                .map_err(|e| PyValueError::new_err(e.to_string()))
+        })
     }
 
     #[args(miss_ok = false)]
-    fn clear_chunk(&mut self, chunk_id: ChunkID, miss_ok: bool) -> PyResult<()> {
-        self.0
-            .clear_chunk(chunk_id.0, miss_ok)
-            .map_err(|_| FSLocalMissError::new_err(chunk_id))
+    fn clear_chunk(&self, py: Python, chunk_id: ChunkID, miss_ok: bool) -> PyResult<()> {
+        py.allow_threads(|| {
+            self.0
+                .clear_chunk(chunk_id.0, miss_ok)
+                .map_err(|_| FSLocalMissError::new_err(chunk_id))
+        })
     }
 
-    fn get_realm_checkpoint(&mut self) -> PyResult<i32> {
-        Ok(self.0.get_realm_checkpoint())
+    fn get_realm_checkpoint(&self, py: Python) -> PyResult<i32> {
+        py.allow_threads(|| Ok(self.0.get_realm_checkpoint()))
     }
 
     fn update_realm_checkpoint(
-        &mut self,
+        &self,
+        py: Python,
         new_checkpoint: i32,
         changed_vlobs: HashMap<EntryID, i32>,
     ) -> PyResult<()> {
-        self.0
-            .update_realm_checkpoint(
-                new_checkpoint,
-                &changed_vlobs
-                    .into_iter()
-                    .map(|(id, x)| (id.0, x))
-                    .collect::<Vec<_>>()[..],
-            )
-            .map_err(|e| PyValueError::new_err(e.to_string()))
-    }
-
-    fn get_need_sync_entries(&mut self) -> PyResult<(HashSet<EntryID>, HashSet<EntryID>)> {
-        self.0
-            .get_need_sync_entries()
-            .map(|(res0, res1)| {
-                (
-                    res0.into_iter().map(EntryID).collect(),
-                    res1.into_iter().map(EntryID).collect(),
+        py.allow_threads(|| {
+            self.0
+                .update_realm_checkpoint(
+                    new_checkpoint,
+                    &changed_vlobs
+                        .into_iter()
+                        .map(|(id, x)| (id.0, x))
+                        .collect::<Vec<_>>()[..],
                 )
-            })
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+                .map_err(|e| PyValueError::new_err(e.to_string()))
+        })
     }
 
-    fn ensure_manifest_persistent(&mut self, entry_id: EntryID) -> PyResult<()> {
-        self.0
-            .ensure_manifest_persistent(entry_id.0)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+    fn get_need_sync_entries(&self, py: Python) -> PyResult<(HashSet<EntryID>, HashSet<EntryID>)> {
+        py.allow_threads(|| {
+            self.0
+                .get_need_sync_entries()
+                .map(|(res0, res1)| {
+                    (
+                        res0.into_iter().map(EntryID).collect(),
+                        res1.into_iter().map(EntryID).collect(),
+                    )
+                })
+                .map_err(|e| PyValueError::new_err(e.to_string()))
+        })
+    }
+
+    fn ensure_manifest_persistent(&self, py: Python, entry_id: EntryID) -> PyResult<()> {
+        py.allow_threads(|| {
+            self.0
+                .ensure_manifest_persistent(entry_id.0)
+                .map_err(|e| PyValueError::new_err(e.to_string()))
+        })
     }
 
     #[args(flush = true)]
-    fn clear_memory_cache(&mut self, flush: bool) -> PyResult<()> {
-        self.0
-            .clear_memory_cache(flush)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+    fn clear_memory_cache(&self, py: Python, flush: bool) -> PyResult<()> {
+        py.allow_threads(|| {
+            self.0
+                .clear_memory_cache(flush)
+                .map_err(|e| PyValueError::new_err(e.to_string()))
+        })
     }
 
-    fn run_vacuum(&mut self) -> PyResult<()> {
-        self.0
-            .run_vacuum()
-            .map_err(|_| PyValueError::new_err("Vacuum failed"))
+    fn run_vacuum(&self, py: Python) -> PyResult<()> {
+        py.allow_threads(|| {
+            self.0
+                .run_vacuum()
+                .map_err(|_| PyValueError::new_err("Vacuum failed"))
+        })
     }
 
     fn block_storage_get_local_chunk_ids(
-        &mut self,
+        &self,
+        py: Python,
         chunk_ids: Vec<ChunkID>,
     ) -> PyResult<Vec<ChunkID>> {
-        Ok(self
-            .0
-            .block_storage_get_local_chunk_ids(
-                &chunk_ids.into_iter().map(|id| id.0).collect::<Vec<_>>(),
-            )
-            .map_err(|e| PyValueError::new_err(e.to_string()))?
-            .into_iter()
-            .map(ChunkID)
-            .collect())
+        py.allow_threads(|| {
+            Ok(self
+                .0
+                .block_storage_get_local_chunk_ids(
+                    &chunk_ids.into_iter().map(|id| id.0).collect::<Vec<_>>(),
+                )
+                .map_err(|e| PyValueError::new_err(e.to_string()))?
+                .into_iter()
+                .map(ChunkID)
+                .collect())
+        })
     }
 
     fn chunk_storage_get_local_chunk_ids(
-        &mut self,
+        &self,
+        py: Python,
         chunk_ids: Vec<ChunkID>,
     ) -> PyResult<Vec<ChunkID>> {
-        Ok(self
-            .0
-            .chunk_storage_get_local_chunk_ids(
-                &chunk_ids.into_iter().map(|id| id.0).collect::<Vec<_>>(),
-            )
-            .map_err(|e| PyValueError::new_err(e.to_string()))?
-            .into_iter()
-            .map(ChunkID)
-            .collect())
+        py.allow_threads(|| {
+            Ok(self
+                .0
+                .chunk_storage_get_local_chunk_ids(
+                    &chunk_ids.into_iter().map(|id| id.0).collect::<Vec<_>>(),
+                )
+                .map_err(|e| PyValueError::new_err(e.to_string()))?
+                .into_iter()
+                .map(ChunkID)
+                .collect())
+        })
     }
 
     #[getter]
