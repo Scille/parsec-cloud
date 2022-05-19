@@ -1,20 +1,20 @@
 use std::{
-    cell::UnsafeCell,
     future::Future,
     marker::PhantomPinned,
     pin::Pin,
-    sync::Mutex,
+    sync::{Mutex, Arc},
     task::{Context, Poll, Waker},
 };
 
+#[derive(Default)]
 pub struct Notify {
-    state: Mutex<NotifyState>,
-    waiters: Mutex<Vec<Waiter>>,
+    state: Arc<Mutex<NotifyState>>,
+    waiters: Mutex<Vec<Arc<Mutex<Waiter>>>>,
 }
 
 #[derive(Default)]
 struct NotifyState {
-    waiting: bool,
+    /// `true` when no waiter was registered and we have a pending notification.
     notified: bool,
 }
 
@@ -35,29 +35,27 @@ impl Notify {
         Notified {
             notify: self,
             state: State::Init(0),
-            waiter: UnsafeCell::new(Waiter {
+            waiter: Arc::new(Mutex::new(Waiter {
                 waker: None,
                 notified: false,
                 _p: PhantomPinned,
-            }),
+            })),
         }
     }
 
     /// Notifies a waiting task.
     pub fn notify_one(&self) {
-        if let Some(waiter) = self.waiters.lock().expect("mutex poisoned").pop() {
-            todo!("take value from waiters if any");
-        } else {
-            todo!("if no waiter set state as waiting");
-        }
-    }
-}
+        // Lock state to prevent waiter to read it.
+        let mut state = self.state.lock().expect("mutex poisoned");
 
-impl Default for Notify {
-    fn default() -> Self {
-        Self {
-            state: Mutex::default(),
-            waiters: Mutex::default(),
+        if let Some(waiter) = self.waiters.lock().expect("mutex poisoned").pop() {
+            let mut waiter = waiter.lock().expect("mutex poisoned");
+
+            waiter.notified = true;
+            waiter.waker.as_ref().expect("precondition: Notified set its waker before add it's waiter").wake_by_ref();
+            state.notified = false;
+        } else {
+            state.notified = true;
         }
     }
 }
@@ -65,29 +63,29 @@ impl Default for Notify {
 pub struct Notified<'a> {
     notify: &'a Notify,
     state: State,
-    waiter: UnsafeCell<Waiter>,
+    waiter: Arc<Mutex<Waiter>>,
 }
 
 impl<'a> Future for Notified<'a> {
     type Output = ();
 
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut s = self.as_mut();
-        match s.state {
-            State::Init(id) => {
-                todo!("register is waker in the poll");
-                s.state = State::Waiting;
-                Poll::Pending;
-            }
-            State::Waiting => {
-                todo!("wait to be waked");
-                Poll::Pending;
-            }
-            State::Done => {
-                todo!("done");
-                Poll::Ready(())
-            }
+        let mut state = s.notify.state.lock().expect("mutex poisoned");
+        let mut waiter = s.waiter.lock().expect("mutex poisoned");
+
+        waiter.waker = Some(cx.waker().clone());
+
+        if state.notified || waiter.notified {
+            state.notified = false;
+            return Poll::Ready(())
+        } else if let State::Init(_id) = s.state {
+            s.notify.waiters.lock().expect("mutex poisoned").push(s.waiter.clone());
+            drop(waiter);
+            s.state = State::Waiting;
         }
+
+        Poll::Pending
     }
 }
 
