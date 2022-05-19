@@ -1,4 +1,3 @@
-use futures::FutureExt;
 use js_sys::Promise;
 use std::{
     future::Future,
