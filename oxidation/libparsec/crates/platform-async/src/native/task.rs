@@ -41,6 +41,7 @@ where
 
 /// It's the state shared between [Task] and [Runnable].
 /// It's configured inside of [spawn]'s function
+#[derive(Default)]
 struct SharedState<T> {
     canceled: bool,
     finished: bool,
@@ -48,19 +49,6 @@ struct SharedState<T> {
     value: Option<T>,
     task_waker: Option<Waker>,
     runnable_waker: Option<Waker>,
-}
-
-impl<T> Default for SharedState<T> {
-    fn default() -> Self {
-        Self {
-            canceled: false,
-            finished: false,
-            detached: false,
-            value: None,
-            task_waker: None,
-            runnable_waker: None,
-        }
-    }
 }
 
 /// Task is a *task controller*, meaning that it allow to control the spawned future.

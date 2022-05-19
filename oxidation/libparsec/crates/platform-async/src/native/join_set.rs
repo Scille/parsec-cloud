@@ -36,16 +36,9 @@ use std::future::Future;
 /// }
 /// # }
 /// ```
+#[derive(Default)]
 pub struct JoinSet<T> {
     tasks: Vec<Task<T>>,
-}
-
-impl<T> Default for JoinSet<T> {
-    fn default() -> Self {
-        Self {
-            tasks: Vec::default(),
-        }
-    }
 }
 
 impl<T> JoinSet<T> {

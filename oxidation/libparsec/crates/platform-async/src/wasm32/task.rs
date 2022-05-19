@@ -36,6 +36,7 @@ where
     task
 }
 
+#[derive(Default)]
 struct SharedState<T> {
     canceled: bool,
     finished: bool,
@@ -43,19 +44,6 @@ struct SharedState<T> {
     value: Option<T>,
     task_waker: Option<Waker>,
     runnable_waker: Option<Waker>,
-}
-
-impl<T> Default for SharedState<T> {
-    fn default() -> Self {
-        Self {
-            canceled: false,
-            finished: false,
-            detached: false,
-            value: None,
-            task_waker: None,
-            runnable_waker: None,
-        }
-    }
 }
 
 pub struct Task<T> {
@@ -69,7 +57,7 @@ impl<T> Task<T> {
 
     /// Cancels the task
     pub fn abort(&self) -> Option<T> {
-        let mut state = self.shared_state.lock().unwrap();
+        let mut state = self.shared_state.lock().expect("mutex poisoned");
 
         state.canceled = true;
         if let Some(ref waker) = state.runnable_waker {
@@ -80,7 +68,7 @@ impl<T> Task<T> {
 
     /// Detaches the task to let it keep running in the background
     pub fn detach(self) {
-        let mut state = self.shared_state.lock().unwrap();
+        let mut state = self.shared_state.lock().expect("mutex poisoned");
 
         state.detached = true;
         state.task_waker = None;
@@ -88,12 +76,12 @@ impl<T> Task<T> {
 
     /// Return `true` if the current task is finished
     pub fn is_finished(&self) -> bool {
-        self.shared_state.lock().unwrap().finished
+        self.shared_state.lock().expect("mutex poisoned").finished
     }
 
     /// Return `true` if the current task is canceled
     pub fn is_canceled(&self) -> bool {
-        self.shared_state.lock().unwrap().canceled
+        self.shared_state.lock().expect("mutex poisoned").canceled
     }
 }
 
@@ -102,7 +90,7 @@ impl<T> Future for Task<T> {
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let s = self.as_mut();
-        let mut state = s.shared_state.lock().unwrap();
+        let mut state = s.shared_state.lock().expect("mutex poisoned");
 
         state.task_waker = Some(cx.waker().clone());
         if state.finished {
@@ -140,7 +128,7 @@ where
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut s = self.as_mut();
-        let mut state = s.shared_state.lock().unwrap();
+        let mut state = s.shared_state.lock().expect("Mutex poisoned");
 
         state.runnable_waker = Some(cx.waker().clone());
         if state.canceled {
@@ -151,7 +139,7 @@ where
             match s.future.as_mut().poll(cx) {
                 Poll::Pending => Poll::Pending,
                 Poll::Ready(value) => {
-                    let mut state = s.shared_state.lock().unwrap();
+                    let mut state = s.shared_state.lock().expect("Mutex poisoned");
 
                     state.value = Some(value);
                     state.finished = true;
