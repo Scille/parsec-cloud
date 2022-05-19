@@ -1,8 +1,7 @@
 use std::{
     future::Future,
-    marker::PhantomPinned,
     pin::Pin,
-    sync::{Mutex, Arc},
+    sync::{Arc, Mutex},
     task::{Context, Poll, Waker},
 };
 
@@ -24,9 +23,6 @@ struct Waiter {
 
     /// `true` if the notification has been assigned to this waiter.
     notified: bool,
-
-    /// Should not be `Unpin`.
-    _p: PhantomPinned,
 }
 
 impl Notify {
@@ -34,11 +30,10 @@ impl Notify {
     pub fn notified(&self) -> Notified<'_> {
         Notified {
             notify: self,
-            state: State::Init(0),
+            waiting: false,
             waiter: Arc::new(Mutex::new(Waiter {
                 waker: None,
                 notified: false,
-                _p: PhantomPinned,
             })),
         }
     }
@@ -52,7 +47,11 @@ impl Notify {
             let mut waiter = waiter.lock().expect("mutex poisoned");
 
             waiter.notified = true;
-            waiter.waker.as_ref().expect("precondition: Notified set its waker before add it's waiter").wake_by_ref();
+            waiter
+                .waker
+                .as_ref()
+                .expect("precondition: Notified set its waker before add it's waiter")
+                .wake_by_ref();
             state.notified = false;
         } else {
             state.notified = true;
@@ -62,7 +61,7 @@ impl Notify {
 
 pub struct Notified<'a> {
     notify: &'a Notify,
-    state: State,
+    waiting: bool,
     waiter: Arc<Mutex<Waiter>>,
 }
 
@@ -78,19 +77,17 @@ impl<'a> Future for Notified<'a> {
 
         if state.notified || waiter.notified {
             state.notified = false;
-            return Poll::Ready(())
-        } else if let State::Init(_id) = s.state {
-            s.notify.waiters.lock().expect("mutex poisoned").push(s.waiter.clone());
+            return Poll::Ready(());
+        } else if !s.waiting {
+            s.notify
+                .waiters
+                .lock()
+                .expect("mutex poisoned")
+                .push(s.waiter.clone());
             drop(waiter);
-            s.state = State::Waiting;
+            s.waiting = true;
         }
 
         Poll::Pending
     }
-}
-
-enum State {
-    Init(usize),
-    Waiting,
-    Done,
 }
