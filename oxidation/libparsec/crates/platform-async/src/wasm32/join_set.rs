@@ -41,7 +41,7 @@ impl<T> JoinSet<T> {
     /// Aborts all tasks on this `JoinSet`.
     ///
     /// This does not remove the tasks from the `JoinSet`
-    pub fn abort_all(&mut self) -> Vec<Option<T>> {
+    pub fn abort_all(&self) -> Vec<Option<T>> {
         self.tasks.iter().map(Task::abort).collect::<Vec<_>>()
     }
 
