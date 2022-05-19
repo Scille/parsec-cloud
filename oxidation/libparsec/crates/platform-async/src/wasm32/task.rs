@@ -36,7 +36,6 @@ where
     task
 }
 
-#[derive(Default)]
 struct SharedState<T> {
     canceled: bool,
     finished: bool,
@@ -44,6 +43,19 @@ struct SharedState<T> {
     value: Option<T>,
     task_waker: Option<Waker>,
     runnable_waker: Option<Waker>,
+}
+
+impl<T> Default for SharedState<T> {
+    fn default() -> Self {
+        Self {
+            canceled: false,
+            finished: false,
+            detached: false,
+            value: None,
+            task_waker: None,
+            runnable_waker: None,
+        }
+    }
 }
 
 pub struct Task<T> {
