@@ -2,6 +2,7 @@
 
 use diesel::dsl::count_star;
 use diesel::{sql_query, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
+use std::sync::Mutex;
 
 use parsec_api_crypto::SecretKey;
 use parsec_api_types::{ChunkID, DateTime, DEFAULT_BLOCK_SIZE};
@@ -22,10 +23,11 @@ struct NewChunk<'a> {
 }
 
 pub(crate) trait ChunkStorageTrait {
-    fn conn(&mut self) -> &mut SqliteConn;
+    fn conn(&self) -> &Mutex<SqliteConn>;
     fn local_symkey(&self) -> &SecretKey;
 
-    fn create_db(&mut self) -> FSResult<()> {
+    fn create_db(&self) -> FSResult<()> {
+        let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         sql_query(
             "CREATE TABLE IF NOT EXISTS chunks (
                 chunk_id BLOB PRIMARY KEY NOT NULL, -- UUID
@@ -35,45 +37,50 @@ pub(crate) trait ChunkStorageTrait {
                 data BLOB NOT NULL
             );",
         )
-        .execute(self.conn())
+        .execute(conn)
         .map_err(|_| FSError::CreateTable("chunks"))?;
         Ok(())
     }
 
-    fn drop_db(&mut self) -> FSResult<()> {
+    #[cfg(test)]
+    fn drop_db(&self) -> FSResult<()> {
+        let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         sql_query("DROP TABLE IF EXISTS chunks;")
-            .execute(self.conn())
+            .execute(conn)
             .map_err(|_| FSError::DropTable("chunks"))?;
         Ok(())
     }
 
     // Size and chunks
 
-    fn get_nb_blocks(&mut self) -> FSResult<i64> {
+    fn get_nb_blocks(&self) -> FSResult<i64> {
+        let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         chunks::table
             .select(count_star())
-            .first(self.conn())
+            .first(conn)
             .map_err(|_| FSError::QueryTable("chunks: get_nb_blocks"))
     }
 
-    fn get_total_size(&mut self) -> FSResult<i64> {
+    fn get_total_size(&self) -> FSResult<i64> {
+        let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         chunks::table
             .select(coalesce_total_size())
-            .first(self.conn())
+            .first(conn)
             .map_err(|_| FSError::QueryTable("chunks: get_total_size"))
     }
 
     #[allow(clippy::wrong_self_convention)]
-    fn is_chunk(&mut self, chunk_id: ChunkID) -> FSResult<bool> {
+    fn is_chunk(&self, chunk_id: ChunkID) -> FSResult<bool> {
+        let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         chunks::table
             .select(count_star())
             .filter(chunks::chunk_id.eq((*chunk_id).as_ref()))
-            .first::<i64>(self.conn())
+            .first::<i64>(conn)
             .map_err(|_| FSError::QueryTable("chunks: is_chunk"))
             .map(|res| res > 0)
     }
 
-    fn get_local_chunk_ids(&mut self, chunk_ids: &[ChunkID]) -> FSResult<Vec<ChunkID>> {
+    fn get_local_chunk_ids(&self, chunk_ids: &[ChunkID]) -> FSResult<Vec<ChunkID>> {
         let bytes_id_list = chunk_ids
             .iter()
             .map(|chunk_id| (**chunk_id).as_ref())
@@ -81,12 +88,13 @@ pub(crate) trait ChunkStorageTrait {
 
         let mut res = Vec::with_capacity(chunk_ids.len());
 
+        let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         for bytes_id_list_chunk in bytes_id_list.chunks(SQLITE_MAX_VARIABLE_NUMBER) {
             res.append(
                 &mut chunks::table
                     .select(chunks::chunk_id)
                     .filter(chunks::chunk_id.eq_any(bytes_id_list_chunk))
-                    .load::<Vec<u8>>(self.conn())
+                    .load::<Vec<u8>>(conn)
                     .map_err(|_| FSError::QueryTable("chunks: get_local_chunk_ids"))?
                     .into_iter()
                     .map(|chunk_id| {
@@ -103,13 +111,14 @@ pub(crate) trait ChunkStorageTrait {
         Ok(res)
     }
 
-    fn get_chunk(&mut self, chunk_id: ChunkID) -> FSResult<Vec<u8>> {
+    fn get_chunk(&self, chunk_id: ChunkID) -> FSResult<Vec<u8>> {
         let accessed_on = DateTime::now().get_f64_with_us_precision() as f32;
 
+        let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         let changes =
             diesel::update(chunks::table.filter(chunks::chunk_id.eq((*chunk_id).as_ref())))
                 .set(chunks::accessed_on.eq(accessed_on))
-                .execute(self.conn())
+                .execute(conn)
                 .map_err(|_| FSError::UpdateTable("chunks: get_chunk"))?
                 > 0;
 
@@ -120,13 +129,13 @@ pub(crate) trait ChunkStorageTrait {
         let ciphered = chunks::table
             .select(chunks::data)
             .filter(chunks::chunk_id.eq((*chunk_id).as_ref()))
-            .first::<Vec<u8>>(self.conn())
+            .first::<Vec<u8>>(conn)
             .map_err(|_| FSError::QueryTable("chunks: get_chunk"))?;
 
         Ok(self.local_symkey().decrypt(&ciphered)?)
     }
 
-    fn set_chunk(&mut self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
+    fn set_chunk(&self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
         let ciphered = self.local_symkey().encrypt(raw);
         let accessed_on = DateTime::now().get_f64_with_us_precision() as f32;
 
@@ -138,20 +147,22 @@ pub(crate) trait ChunkStorageTrait {
             data: &ciphered,
         };
 
+        let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         diesel::insert_into(chunks::table)
             .values(&new_chunk)
             .on_conflict(chunks::chunk_id)
             .do_update()
             .set(&new_chunk)
-            .execute(self.conn())
+            .execute(conn)
             .map_err(|_| FSError::InsertTable("chunks: set_chunk"))?;
         Ok(())
     }
 
-    fn clear_chunk(&mut self, chunk_id: ChunkID) -> FSResult<()> {
+    fn clear_chunk(&self, chunk_id: ChunkID) -> FSResult<()> {
+        let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         let changes =
             diesel::delete(chunks::table.filter(chunks::chunk_id.eq((*chunk_id).as_ref())))
-                .execute(self.conn())
+                .execute(conn)
                 .map_err(|_| FSError::DeleteTable("chunks: clear_chunk"))?
                 > 0;
 
@@ -162,9 +173,10 @@ pub(crate) trait ChunkStorageTrait {
         Ok(())
     }
 
-    fn run_vacuum(&mut self) -> FSResult<()> {
+    fn run_vacuum(&self) -> FSResult<()> {
+        let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         sql_query("VACUUM;")
-            .execute(self.conn())
+            .execute(conn)
             .map_err(|_| FSError::Vacuum)?;
         Ok(())
     }
@@ -179,16 +191,17 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
         self.cache_size() / DEFAULT_BLOCK_SIZE
     }
 
-    fn clear_all_blocks(&mut self) -> FSResult<()> {
+    fn clear_all_blocks(&self) -> FSResult<()> {
+        let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         diesel::delete(chunks::table)
-            .execute(self.conn())
+            .execute(conn)
             .map_err(|_| FSError::DeleteTable("chunks: clear_all_blocks"))?;
         Ok(())
     }
 
     // Upgraded set method
 
-    fn set_chunk_upgraded(&mut self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
+    fn set_chunk_upgraded(&self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
         let ciphered = self.local_symkey().encrypt(raw);
         let accessed_on = DateTime::now().get_f64_with_us_precision() as f32;
 
@@ -201,23 +214,27 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
         };
 
         // Insert the chunk
-        diesel::insert_into(chunks::table)
-            .values(&new_chunk)
-            .on_conflict(chunks::chunk_id)
-            .do_update()
-            .set(&new_chunk)
-            .execute(self.conn())
-            .map_err(|_| FSError::InsertTable("chunks: set_chunk"))?;
+        {
+            let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
+            diesel::insert_into(chunks::table)
+                .values(&new_chunk)
+                .on_conflict(chunks::chunk_id)
+                .do_update()
+                .set(&new_chunk)
+                .execute(conn)
+                .map_err(|_| FSError::InsertTable("chunks: set_chunk"))?;
+        }
 
         // Perform cleanup if necessary
         self.cleanup()
     }
 
-    fn cleanup(&mut self) -> FSResult<()> {
+    fn cleanup(&self) -> FSResult<()> {
         // Count the chunks
+        let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         let nb_blocks = chunks::table
             .select(count_star())
-            .first::<i64>(self.conn())
+            .first::<i64>(conn)
             .map_err(|_| FSError::QueryTable("chunks: cleanup"))?;
 
         let block_limit = self.block_limit() as i64;
@@ -239,7 +256,7 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
             .into_boxed();
 
         diesel::delete(chunks::table.filter(chunks::chunk_id.eq_any(sub_query)))
-            .execute(self.conn())
+            .execute(conn)
             .map_err(|_| FSError::DeleteTable("chunks: cleanup"))?;
 
         Ok(())
@@ -248,13 +265,13 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
 
 // Interface to access the local chunks of data
 pub(crate) struct ChunkStorage {
-    conn: SqliteConn,
+    conn: Mutex<SqliteConn>,
     local_symkey: SecretKey,
 }
 
 impl ChunkStorageTrait for ChunkStorage {
-    fn conn(&mut self) -> &mut SqliteConn {
-        &mut self.conn
+    fn conn(&self) -> &Mutex<SqliteConn> {
+        &self.conn
     }
     fn local_symkey(&self) -> &SecretKey {
         &self.local_symkey
@@ -262,8 +279,8 @@ impl ChunkStorageTrait for ChunkStorage {
 }
 
 impl ChunkStorage {
-    pub fn new(local_symkey: SecretKey, conn: SqliteConn) -> FSResult<Self> {
-        let mut instance = Self { conn, local_symkey };
+    pub fn new(local_symkey: SecretKey, conn: Mutex<SqliteConn>) -> FSResult<Self> {
+        let instance = Self { conn, local_symkey };
         instance.create_db()?;
         Ok(instance)
     }
@@ -271,14 +288,14 @@ impl ChunkStorage {
 
 // Interface for caching the data blocks.
 pub(crate) struct BlockStorage {
-    conn: SqliteConn,
+    conn: Mutex<SqliteConn>,
     local_symkey: SecretKey,
     cache_size: u64,
 }
 
 impl ChunkStorageTrait for BlockStorage {
-    fn conn(&mut self) -> &mut SqliteConn {
-        &mut self.conn
+    fn conn(&self) -> &Mutex<SqliteConn> {
+        &self.conn
     }
     fn local_symkey(&self) -> &SecretKey {
         &self.local_symkey
@@ -292,8 +309,12 @@ impl BlockStorageTrait for BlockStorage {
 }
 
 impl BlockStorage {
-    pub fn new(local_symkey: SecretKey, conn: SqliteConn, cache_size: u64) -> FSResult<Self> {
-        let mut instance = Self {
+    pub fn new(
+        local_symkey: SecretKey,
+        conn: Mutex<SqliteConn>,
+        cache_size: u64,
+    ) -> FSResult<Self> {
+        let instance = Self {
             conn,
             local_symkey,
             cache_size,
@@ -315,10 +336,10 @@ mod tests {
     #[test]
     fn chunk_storage() {
         let pool = SqlitePool::new("/tmp/chunk_storage.sqlite").unwrap();
-        let conn = pool.conn().unwrap();
+        let conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
 
-        let mut chunk_storage = ChunkStorage::new(local_symkey, conn).unwrap();
+        let chunk_storage = ChunkStorage::new(local_symkey, conn).unwrap();
 
         // Initialization
         chunk_storage.drop_db().unwrap();
@@ -361,11 +382,11 @@ mod tests {
         assert_eq!(chunk_storage.get_nb_blocks().unwrap(), N as i64);
         assert_eq!(chunk_storage.get_total_size().unwrap(), N as i64 * 44);
 
-        let new_conn = pool.conn().unwrap();
+        let new_conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
         let cache_size = DEFAULT_BLOCK_SIZE * 1024;
 
-        let mut block_storage = BlockStorage::new(local_symkey, new_conn, cache_size).unwrap();
+        let block_storage = BlockStorage::new(local_symkey, new_conn, cache_size).unwrap();
 
         assert_eq!(block_storage.block_limit(), 1024);
 

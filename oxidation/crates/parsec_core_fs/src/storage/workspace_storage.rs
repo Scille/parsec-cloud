@@ -3,6 +3,7 @@
 use fancy_regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
+use std::sync::Mutex;
 
 use parsec_api_types::{BlockID, ChunkID, EntryID, FileDescriptor};
 use parsec_client_types::{LocalDevice, LocalFileManifest, LocalManifest, LocalWorkspaceManifest};
@@ -51,13 +52,17 @@ impl WorkspaceStorage {
                 .expect("Non-Utf-8 character found in cache_path"),
         )?;
 
-        let block_storage =
-            BlockStorage::new(device.local_symkey.clone(), cache_pool.conn()?, cache_size)?;
+        let block_storage = BlockStorage::new(
+            device.local_symkey.clone(),
+            Mutex::new(cache_pool.conn()?),
+            cache_size,
+        )?;
 
         let mut manifest_storage =
             ManifestStorage::new(device.local_symkey.clone(), data_pool.conn()?, workspace_id)?;
 
-        let chunk_storage = ChunkStorage::new(device.local_symkey.clone(), data_pool.conn()?)?;
+        let chunk_storage =
+            ChunkStorage::new(device.local_symkey.clone(), Mutex::new(data_pool.conn()?))?;
 
         let (prevent_sync_pattern, prevent_sync_pattern_fully_applied) =
             manifest_storage.get_prevent_sync_pattern()?;
