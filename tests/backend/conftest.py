@@ -20,11 +20,110 @@ from parsec.api.protocol import (
 )
 from parsec.api.transport import Transport
 from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.asgi import app_factory
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.types import LocalDevice
 
 from tests.common import FreezeTestOnTransportError
 from tests.backend.common import do_http_request
+
+
+@pytest.fixture
+def backend_asgi_app(backend):
+    return app_factory(backend)
+
+
+@pytest.fixture
+def backend_invited_ws_factory():
+    @asynccontextmanager
+    async def _backend_invited_ws_factory(
+        backend_asgi_app,
+        organization_id: OrganizationID,
+        invitation_type: InvitationType,
+        token: InvitationToken,
+    ):
+        client = backend_asgi_app.test_client()
+        async with client.websocket("/ws") as ws:
+
+            ch = InvitedClientHandshake(
+                organization_id=organization_id, invitation_type=invitation_type, token=token
+            )
+            challenge_req = await ws.receive()
+            answer_req = ch.process_challenge_req(challenge_req)
+            await ws.send(answer_req)
+            result_req = await ws.receive()
+            ch.process_result_req(result_req)
+
+            yield ws
+
+    return _backend_invited_ws_factory
+
+
+@pytest.fixture
+def backend_authenticated_ws_factory():
+    # APIv2's invited handshake is not compatible with this
+    # fixture because it requires purpose information (invitation_type/token)
+    @asynccontextmanager
+    async def _backend_authenticated_ws_factory(backend_asgi_app, auth_as: LocalDevice):
+        client = backend_asgi_app.test_client()
+        async with client.websocket("/ws") as ws:
+            # Handshake
+            ch = AuthenticatedClientHandshake(
+                auth_as.organization_id,
+                auth_as.device_id,
+                auth_as.signing_key,
+                auth_as.root_verify_key,
+            )
+            challenge_req = await ws.receive()
+            answer_req = ch.process_challenge_req(challenge_req)
+            await ws.send(answer_req)
+            result_req = await ws.receive()
+            ch.process_result_req(result_req)
+
+            yield ws
+
+    return _backend_authenticated_ws_factory
+
+
+@pytest.fixture
+async def alice_ws(backend_asgi_app, alice, backend_authenticated_ws_factory):
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice) as sock:
+        yield sock
+
+
+# TODO: legacy fixture, remove this when APIv1 is deprecated
+@pytest.fixture
+def apiv1_backend_ws_factory(coolorg):
+    @asynccontextmanager
+    async def _apiv1_backend_ws_factory(backend_asgi_app, auth_as):
+        client = backend_asgi_app.test_client()
+        async with client.websocket("/ws") as ws:
+            if auth_as:
+                # Handshake
+                if isinstance(auth_as, OrganizationID):
+                    ch = APIV1_AnonymousClientHandshake(auth_as)
+                elif auth_as == "anonymous":
+                    # TODO: for legacy test, refactorise this ?
+                    ch = APIV1_AnonymousClientHandshake(coolorg.organization_id)
+                elif auth_as == "administration":
+                    assert False, "APIv1 Administration sock no longer supported"
+                else:
+                    assert False, "APIv1 Authenticated sock no longer supported"
+                challenge_req = await ws.receive()
+                answer_req = ch.process_challenge_req(challenge_req)
+                await ws.send(answer_req)
+                result_req = await ws.receive()
+                ch.process_result_req(result_req)
+
+            yield ws
+
+    return _apiv1_backend_ws_factory
+
+
+@pytest.fixture
+async def apiv1_anonymous_ws(apiv1_backend_ws_factory, backend_asgi_app):
+    async with apiv1_backend_ws_factory(backend_asgi_app, "anonymous") as sock:
+        yield sock
 
 
 @pytest.fixture

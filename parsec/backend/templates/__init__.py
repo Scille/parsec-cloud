@@ -18,9 +18,12 @@ class PackageLoader(BaseLoader):
         return source, self.path, lambda: True
 
 
-JINJA_ENV = Environment(
-    loader=PackageLoader("parsec.backend.http.templates"), undefined=StrictUndefined
-)
+# Env config is also needed to configure the ASGI app
+JINJA_ENV_CONFIG = {
+    "loader": PackageLoader("parsec.backend.http.templates"),
+    "undefined": StrictUndefined,
+}
+JINJA_ENV = Environment(**JINJA_ENV_CONFIG)  # type: ignore
 
 
 def get_template(name):

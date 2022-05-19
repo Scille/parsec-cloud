@@ -22,7 +22,13 @@ def alice_nd(local_device_factory, alice):
 )  # Any profile is be allowed to create new devices
 @pytest.mark.parametrize("with_labels", [False, True])
 async def test_device_create_ok(
-    backend, backend_sock_factory, alice_backend_sock, alice, alice_nd, with_labels
+    backend,
+    backend_asgi_app,
+    backend_authenticated_ws_factory,
+    alice_ws,
+    alice,
+    alice_nd,
+    with_labels,
 ):
     now = pendulum.now()
     device_certificate = DeviceCertificateContent(
@@ -40,7 +46,7 @@ async def test_device_create_ok(
 
     with backend.event_bus.listen() as spy:
         rep = await device_create(
-            alice_backend_sock,
+            alice_ws,
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
@@ -58,7 +64,7 @@ async def test_device_create_ok(
         )
 
     # Make sure the new device can connect now
-    async with backend_sock_factory(backend, alice_nd) as sock:
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice_nd) as sock:
         rep = await ping(sock, ping="Hello world !")
         assert rep == {"status": "ok", "pong": "Hello world !"}
 

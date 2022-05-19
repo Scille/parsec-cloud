@@ -616,7 +616,8 @@ async def _run_backend(
                 retry_policy.success()
 
                 # Serve backend through TCP
-                await _serve_backend(backend, host, port, ssl_context)
+                await _serve_backend_quart(backend, host, port, ssl_context)
+                # await _serve_backend(backend, host, port, ssl_context)
 
         except ConnectionError as exc:
             # The maximum number of attempt is reached
@@ -627,6 +628,33 @@ async def _run_backend(
                 f"Database connection lost ({exc}), retrying in {retry_policy.pause_before_retry} seconds"
             )
             await retry_policy.pause()
+
+
+async def _serve_backend_quart(
+    backend: BackendApp, host: str, port: int, ssl_context: Optional[ssl.SSLContext]
+) -> None:
+    from hypercorn.config import Config as HyperConfig
+    from hypercorn.trio import serve
+    import logging
+    from parsec.backend.asgi import app_factory
+
+    # TODO: handle ssl_context
+
+    app = app_factory(backend)
+    if backend.config.debug:
+        await app.run_task(host=host, port=port, use_reloader=True, debug=True)
+
+    else:
+        hyper_config = HyperConfig.from_mapping(
+            {
+                "bind": [f"{host}:{port}"],
+                "accesslog": logging.getLogger("hypercorn.access"),
+                "errorlog": logging.getLogger("hypercorn.error"),
+                # ca_certs: Optional[str] = None
+                # certfile: Optional[str] = None
+            }
+        )
+        await serve(app, hyper_config)
 
 
 async def _serve_backend(
