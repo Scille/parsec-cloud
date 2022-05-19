@@ -22,13 +22,13 @@ pub const DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE: u64 = 512 * 1024 * 1024;
 pub struct WorkspaceStorage {
     pub device: LocalDevice,
     pub workspace_id: EntryID,
-    open_fds: HashMap<FileDescriptor, EntryID>,
-    fd_counter: i32,
+    open_fds: Mutex<HashMap<FileDescriptor, EntryID>>,
+    fd_counter: Mutex<i32>,
     block_storage: BlockStorage,
     chunk_storage: ChunkStorage,
     manifest_storage: ManifestStorage,
-    pub prevent_sync_pattern: Regex,
-    pub prevent_sync_pattern_fully_applied: bool,
+    prevent_sync_pattern: Mutex<Regex>,
+    prevent_sync_pattern_fully_applied: Mutex<bool>,
 }
 
 impl WorkspaceStorage {
@@ -71,19 +71,19 @@ impl WorkspaceStorage {
             manifest_storage.get_prevent_sync_pattern()?;
 
         // Instanciate workspace storage
-        let mut instance = Self {
+        let instance = Self {
             device,
             workspace_id,
             // File descriptors
-            open_fds: HashMap::new(),
-            fd_counter: 0,
+            open_fds: Mutex::new(HashMap::new()),
+            fd_counter: Mutex::new(0),
             // Manifest and block storage
             block_storage,
             chunk_storage,
             manifest_storage,
             // Pattern attributes
-            prevent_sync_pattern,
-            prevent_sync_pattern_fully_applied,
+            prevent_sync_pattern: Mutex::new(prevent_sync_pattern),
+            prevent_sync_pattern_fully_applied: Mutex::new(prevent_sync_pattern_fully_applied),
         };
 
         instance.block_storage.cleanup()?;
@@ -95,21 +95,39 @@ impl WorkspaceStorage {
         Ok(instance)
     }
 
-    fn get_next_fd(&mut self) -> FileDescriptor {
-        self.fd_counter += 1;
-        FileDescriptor(self.fd_counter)
+    pub fn get_prevent_sync_pattern(&self) -> Regex {
+        self.prevent_sync_pattern
+            .lock()
+            .expect("Mutex is poisoned")
+            .clone()
+    }
+
+    pub fn get_prevent_sync_pattern_fully_applied(&self) -> bool {
+        *self
+            .prevent_sync_pattern_fully_applied
+            .lock()
+            .expect("Mutex is poisoned")
+    }
+
+    fn get_next_fd(&self) -> FileDescriptor {
+        let mut fd_counter = self.fd_counter.lock().expect("Mutex is poisoned");
+        *fd_counter += 1;
+        FileDescriptor(*fd_counter)
     }
 
     // File management interface
 
-    pub fn create_file_descriptor(&mut self, manifest: LocalFileManifest) -> FileDescriptor {
+    pub fn create_file_descriptor(&self, manifest: LocalFileManifest) -> FileDescriptor {
         let fd = self.get_next_fd();
-        self.open_fds.insert(fd, manifest.base.id);
+        self.open_fds
+            .lock()
+            .expect("Mutex is poisoned")
+            .insert(fd, manifest.base.id);
         fd
     }
 
-    pub fn load_file_descriptor(&mut self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
-        match self.open_fds.get(&fd) {
+    pub fn load_file_descriptor(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
+        match self.open_fds.lock().expect("Mutex is poisoned").get(&fd) {
             Some(&entry_id) => match self.get_manifest(entry_id) {
                 Ok(LocalManifest::File(manifest)) => Ok(manifest),
                 _ => Err(FSError::LocalMiss(*entry_id)),
@@ -118,28 +136,28 @@ impl WorkspaceStorage {
         }
     }
 
-    pub fn remove_file_descriptor(&mut self, fd: FileDescriptor) -> Option<EntryID> {
-        self.open_fds.remove(&fd)
+    pub fn remove_file_descriptor(&self, fd: FileDescriptor) -> Option<EntryID> {
+        self.open_fds.lock().expect("Mutex is poisoned").remove(&fd)
     }
 
     // Block interface
 
-    pub fn set_clean_block(&mut self, block_id: BlockID, block: &[u8]) -> FSResult<()> {
+    pub fn set_clean_block(&self, block_id: BlockID, block: &[u8]) -> FSResult<()> {
         self.block_storage
             .set_chunk_upgraded(ChunkID::from(*block_id), block)
     }
 
-    pub fn clear_clean_block(&mut self, block_id: BlockID) {
+    pub fn clear_clean_block(&self, block_id: BlockID) {
         let _ = self.block_storage.clear_chunk(ChunkID::from(*block_id));
     }
 
-    pub fn get_dirty_block(&mut self, block_id: BlockID) -> FSResult<Vec<u8>> {
+    pub fn get_dirty_block(&self, block_id: BlockID) -> FSResult<Vec<u8>> {
         self.chunk_storage.get_chunk(ChunkID::from(*block_id))
     }
 
     // Chunk interface
 
-    pub fn get_chunk(&mut self, chunk_id: ChunkID) -> FSResult<Vec<u8>> {
+    pub fn get_chunk(&self, chunk_id: ChunkID) -> FSResult<Vec<u8>> {
         if let Ok(raw) = self.chunk_storage.get_chunk(chunk_id) {
             Ok(raw)
         } else if let Ok(raw) = self.block_storage.get_chunk(chunk_id) {
@@ -149,11 +167,11 @@ impl WorkspaceStorage {
         }
     }
 
-    pub fn set_chunk(&mut self, chunk_id: ChunkID, block: &[u8]) -> FSResult<()> {
+    pub fn set_chunk(&self, chunk_id: ChunkID, block: &[u8]) -> FSResult<()> {
         self.chunk_storage.set_chunk(chunk_id, block)
     }
 
-    pub fn clear_chunk(&mut self, chunk_id: ChunkID, miss_ok: bool) -> FSResult<()> {
+    pub fn clear_chunk(&self, chunk_id: ChunkID, miss_ok: bool) -> FSResult<()> {
         let res = self.chunk_storage.clear_chunk(chunk_id);
         if !miss_ok {
             return res;
@@ -163,18 +181,18 @@ impl WorkspaceStorage {
 
     // Helpers
 
-    pub fn clear_memory_cache(&mut self, flush: bool) -> FSResult<()> {
+    pub fn clear_memory_cache(&self, flush: bool) -> FSResult<()> {
         self.manifest_storage.clear_memory_cache(flush)
     }
 
     // Checkpoint interface
 
-    pub fn get_realm_checkpoint(&mut self) -> i32 {
+    pub fn get_realm_checkpoint(&self) -> i32 {
         self.manifest_storage.get_realm_checkpoint()
     }
 
     pub fn update_realm_checkpoint(
-        &mut self,
+        &self,
         new_checkpoint: i32,
         changed_vlobs: &[(EntryID, i32)],
     ) -> FSResult<()> {
@@ -182,13 +200,13 @@ impl WorkspaceStorage {
             .update_realm_checkpoint(new_checkpoint, changed_vlobs)
     }
 
-    pub fn get_need_sync_entries(&mut self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
+    pub fn get_need_sync_entries(&self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
         self.manifest_storage.get_need_sync_entries()
     }
 
     // Manifest interface
 
-    fn load_workspace_manifest(&mut self) -> FSResult<()> {
+    fn load_workspace_manifest(&self) -> FSResult<()> {
         if self
             .manifest_storage
             .get_manifest(self.workspace_id)
@@ -224,12 +242,12 @@ impl WorkspaceStorage {
         }
     }
 
-    pub fn get_manifest(&mut self, entry_id: EntryID) -> FSResult<LocalManifest> {
+    pub fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
         self.manifest_storage.get_manifest(entry_id)
     }
 
     pub fn set_manifest(
-        &mut self,
+        &self,
         entry_id: EntryID,
         manifest: LocalManifest,
         cache_only: bool,
@@ -239,50 +257,53 @@ impl WorkspaceStorage {
             .set_manifest(entry_id, manifest, cache_only, removed_ids)
     }
 
-    pub fn ensure_manifest_persistent(&mut self, entry_id: EntryID) -> FSResult<()> {
+    pub fn ensure_manifest_persistent(&self, entry_id: EntryID) -> FSResult<()> {
         self.manifest_storage.ensure_manifest_persistent(entry_id)
     }
 
-    pub fn clear_manifest(&mut self, entry_id: EntryID) -> FSResult<()> {
+    pub fn clear_manifest(&self, entry_id: EntryID) -> FSResult<()> {
         self.manifest_storage.clear_manifest(entry_id)
     }
 
     // Prevent sync pattern interface
 
-    fn load_prevent_sync_pattern(&mut self) -> FSResult<()> {
+    fn load_prevent_sync_pattern(&self) -> FSResult<()> {
         (
-            self.prevent_sync_pattern,
-            self.prevent_sync_pattern_fully_applied,
+            *self.prevent_sync_pattern.lock().expect("Mutex is poisoned"),
+            *self
+                .prevent_sync_pattern_fully_applied
+                .lock()
+                .expect("Mutex is poisoned"),
         ) = self.manifest_storage.get_prevent_sync_pattern()?;
         Ok(())
     }
 
-    pub fn set_prevent_sync_pattern(&mut self, pattern: &Regex) -> FSResult<()> {
+    pub fn set_prevent_sync_pattern(&self, pattern: &Regex) -> FSResult<()> {
         self.manifest_storage.set_prevent_sync_pattern(pattern)?;
         self.load_prevent_sync_pattern()
     }
 
-    pub fn mark_prevent_sync_pattern_fully_applied(&mut self, pattern: &Regex) -> FSResult<()> {
+    pub fn mark_prevent_sync_pattern_fully_applied(&self, pattern: &Regex) -> FSResult<()> {
         self.manifest_storage
             .mark_prevent_sync_pattern_fully_applied(pattern)?;
         self.load_prevent_sync_pattern()
     }
 
     pub fn block_storage_get_local_chunk_ids(
-        &mut self,
+        &self,
         chunk_ids: &[ChunkID],
     ) -> FSResult<Vec<ChunkID>> {
         self.block_storage.get_local_chunk_ids(chunk_ids)
     }
 
     pub fn chunk_storage_get_local_chunk_ids(
-        &mut self,
+        &self,
         chunk_ids: &[ChunkID],
     ) -> FSResult<Vec<ChunkID>> {
         self.chunk_storage.get_local_chunk_ids(chunk_ids)
     }
 
-    pub fn run_vacuum(&mut self) -> FSResult<()> {
+    pub fn run_vacuum(&self) -> FSResult<()> {
         // TODO: Add some condition
         self.chunk_storage.run_vacuum()
     }

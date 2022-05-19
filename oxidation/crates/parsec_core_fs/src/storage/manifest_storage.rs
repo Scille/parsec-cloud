@@ -393,25 +393,24 @@ impl ManifestStorage {
 
         // Cleanup
         if let Some(removed_ids) = &removed_ids {
+            let value = self
+                .cache_ahead_of_localdb
+                .lock()
+                .expect("Mutex is poisoned")
+                .get(&entry_id)
+                .unwrap()
+                | removed_ids;
+
             self.cache_ahead_of_localdb
                 .lock()
                 .expect("Mutex is poisoned")
-                .insert(
-                    entry_id,
-                    self.cache_ahead_of_localdb
-                        .lock()
-                        .expect("Mutex is poisoned")
-                        .get(&entry_id)
-                        .unwrap()
-                        | removed_ids,
-                );
+                .insert(entry_id, value);
         }
 
         // Flush the cached value to the localdb
         if !cache_only {
             self.ensure_manifest_persistent(entry_id)?;
         }
-
         Ok(())
     }
 

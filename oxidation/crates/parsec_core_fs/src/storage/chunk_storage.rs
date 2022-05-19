@@ -214,16 +214,13 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
         };
 
         // Insert the chunk
-        {
-            let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
-            diesel::insert_into(chunks::table)
-                .values(&new_chunk)
-                .on_conflict(chunks::chunk_id)
-                .do_update()
-                .set(&new_chunk)
-                .execute(conn)
-                .map_err(|_| FSError::InsertTable("chunks: set_chunk"))?;
-        }
+        diesel::insert_into(chunks::table)
+            .values(&new_chunk)
+            .on_conflict(chunks::chunk_id)
+            .do_update()
+            .set(&new_chunk)
+            .execute(&mut *self.conn().lock().expect("Mutex is poisoned"))
+            .map_err(|_| FSError::InsertTable("chunks: set_chunk"))?;
 
         // Perform cleanup if necessary
         self.cleanup()
