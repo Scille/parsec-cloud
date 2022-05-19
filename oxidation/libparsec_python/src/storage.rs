@@ -71,8 +71,7 @@ impl WorkspaceStorage {
         Ok(LocalWorkspaceManifest(
             self.0
                 .get_workspace_manifest()
-                .map_err(|e| PyValueError::new_err(e.to_string()))?
-                .clone(),
+                .map_err(|e| PyValueError::new_err(e.to_string()))?,
         ))
     }
 

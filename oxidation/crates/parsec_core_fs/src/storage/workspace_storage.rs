@@ -58,8 +58,11 @@ impl WorkspaceStorage {
             cache_size,
         )?;
 
-        let mut manifest_storage =
-            ManifestStorage::new(device.local_symkey.clone(), data_pool.conn()?, workspace_id)?;
+        let manifest_storage = ManifestStorage::new(
+            device.local_symkey.clone(),
+            Mutex::new(data_pool.conn()?),
+            workspace_id,
+        )?;
 
         let chunk_storage =
             ChunkStorage::new(device.local_symkey.clone(), Mutex::new(data_pool.conn()?))?;
@@ -209,9 +212,14 @@ impl WorkspaceStorage {
         Ok(())
     }
 
-    pub fn get_workspace_manifest(&self) -> FSResult<&LocalWorkspaceManifest> {
-        match self.manifest_storage.cache.get(&self.workspace_id) {
-            Some(LocalManifest::Workspace(manifest)) => Ok(manifest),
+    pub fn get_workspace_manifest(&self) -> FSResult<LocalWorkspaceManifest> {
+        let cache = self
+            .manifest_storage
+            .cache
+            .lock()
+            .expect("Mutex is poisoned");
+        match cache.get(&self.workspace_id) {
+            Some(LocalManifest::Workspace(manifest)) => Ok(manifest.clone()),
             _ => Err(FSError::LocalMiss(*self.workspace_id)),
         }
     }

@@ -48,9 +48,14 @@ impl UserStorage {
 
     // User manifest
 
-    pub fn get_user_manifest(&self) -> FSResult<&LocalUserManifest> {
-        match self.manifest_storage.cache.get(&self.user_manifest_id) {
-            Some(LocalManifest::User(manifest)) => Ok(manifest),
+    pub fn get_user_manifest(&self) -> FSResult<LocalUserManifest> {
+        let cache = self
+            .manifest_storage
+            .cache
+            .lock()
+            .expect("Mutex is poisoned");
+        match cache.get(&self.user_manifest_id) {
+            Some(LocalManifest::User(manifest)) => Ok(manifest.clone()),
             _ => Err(FSError::UserManifestMissing),
         }
     }
@@ -90,6 +95,8 @@ impl UserStorage {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Mutex;
+
     use parsec_api_crypto::SecretKey;
     use parsec_api_types::{DateTime, UserManifest};
     use rstest::rstest;
@@ -102,7 +109,7 @@ mod tests {
     fn user_storage(alice: &Device) {
         let now = DateTime::now();
         let pool = SqlitePool::new("/tmp/manifest_storage.sqlite").unwrap();
-        let conn = pool.conn().unwrap();
+        let conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();
         let user_manifest_id = alice.user_manifest_id;
@@ -139,6 +146,6 @@ mod tests {
             .set_user_manifest(user_manifest.clone())
             .unwrap();
 
-        assert_eq!(user_storage.get_user_manifest().unwrap(), &user_manifest);
+        assert_eq!(user_storage.get_user_manifest().unwrap(), user_manifest);
     }
 }
