@@ -5,6 +5,7 @@ use fancy_regex::Regex;
 use parsec_api_crypto::{CryptoError, SecretKey};
 use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
+use std::sync::Mutex;
 
 use parsec_api_types::{BlockID, ChunkID, EntryID};
 use parsec_client_types::LocalManifest;
@@ -57,18 +58,18 @@ struct NewPreventSyncPattern<'a> {
 
 pub struct ManifestStorage {
     local_symkey: SecretKey,
-    conn: SqliteConn,
+    conn: Mutex<SqliteConn>,
     pub realm_id: EntryID,
     // This cache contains all the manifests that have been set or accessed
     // since the last call to `clear_memory_cache`
-    pub(crate) cache: HashMap<EntryID, LocalManifest>,
+    pub(crate) cache: Mutex<HashMap<EntryID, LocalManifest>>,
     // This dictionnary keeps track of all the entry ids of the manifests
     // that have been added to the cache but still needs to be written to
     // the conn. The corresponding value is a set with the ids of all
     // the chunks that needs to be removed from the conn after the
     // manifest is written. Note: this set might be empty but the manifest
     // still requires to be flushed.
-    cache_ahead_of_localdb: HashMap<EntryID, HashSet<ChunkOrBlockID>>,
+    cache_ahead_of_localdb: Mutex<HashMap<EntryID, HashSet<ChunkOrBlockID>>>,
 }
 
 impl Drop for ManifestStorage {
@@ -79,13 +80,17 @@ impl Drop for ManifestStorage {
 }
 
 impl ManifestStorage {
-    pub fn new(local_symkey: SecretKey, conn: SqliteConn, realm_id: EntryID) -> FSResult<Self> {
-        let mut instance = Self {
+    pub fn new(
+        local_symkey: SecretKey,
+        conn: Mutex<SqliteConn>,
+        realm_id: EntryID,
+    ) -> FSResult<Self> {
+        let instance = Self {
             local_symkey,
             conn,
             realm_id,
-            cache: HashMap::new(),
-            cache_ahead_of_localdb: HashMap::new(),
+            cache: Mutex::new(HashMap::new()),
+            cache_ahead_of_localdb: Mutex::new(HashMap::new()),
         };
         instance.create_db()?;
         Ok(instance)
@@ -93,7 +98,8 @@ impl ManifestStorage {
 
     // Database initialization
 
-    pub fn create_db(&mut self) -> FSResult<()> {
+    pub fn create_db(&self) -> FSResult<()> {
+        let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         sql_query(
             "CREATE TABLE IF NOT EXISTS vlobs (
               vlob_id BLOB PRIMARY KEY NOT NULL, -- UUID
@@ -103,7 +109,7 @@ impl ManifestStorage {
               blob BLOB NOT NULL
             );",
         )
-        .execute(&mut self.conn)
+        .execute(conn)
         .map_err(|_| FSError::CreateTable("vlobs"))?;
         // Singleton storing the checkpoint
         sql_query(
@@ -112,7 +118,7 @@ impl ManifestStorage {
               checkpoint INTEGER NOT NULL
             );",
         )
-        .execute(&mut self.conn)
+        .execute(conn)
         .map_err(|_| FSError::CreateTable("realm_checkpoint"))?;
         // Singleton storing the prevent_sync_pattern
         sql_query(
@@ -122,7 +128,7 @@ impl ManifestStorage {
               fully_applied BOOLEAN NOT NULL
             );",
         )
-        .execute(&mut self.conn)
+        .execute(conn)
         .map_err(|_| FSError::CreateTable("prevent_sync_pattern"))?;
 
         let pattern = NewPreventSyncPattern {
@@ -133,32 +139,54 @@ impl ManifestStorage {
         // Set the default "prevent sync" pattern if it doesn't exist
         diesel::insert_or_ignore_into(prevent_sync_pattern::table)
             .values(pattern)
-            .execute(&mut self.conn)
+            .execute(conn)
             .map_err(|_| FSError::InsertTable("prevent_sync_pattern: create_db"))?;
 
         Ok(())
     }
 
-    pub fn clear_memory_cache(&mut self, flush: bool) -> FSResult<()> {
+    #[cfg(test)]
+    fn drop_db(&self) -> FSResult<()> {
+        let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
+        sql_query("DROP TABLE IF EXISTS vlobs;")
+            .execute(conn)
+            .map_err(|_| FSError::DropTable("vlobs"))?;
+
+        sql_query("DROP TABLE IF EXISTS realm_checkpoints;")
+            .execute(conn)
+            .map_err(|_| FSError::DropTable("realm_checkpoints"))?;
+
+        sql_query("DROP TABLE IF EXISTS prevent_sync_pattern;")
+            .execute(conn)
+            .map_err(|_| FSError::DropTable("prevent_sync_pattern"))?;
+
+        Ok(())
+    }
+
+    pub fn clear_memory_cache(&self, flush: bool) -> FSResult<()> {
         if flush {
             self.flush_cache_ahead_of_persistance()?;
         }
-        self.cache_ahead_of_localdb.clear();
-        self.cache.clear();
+        self.cache_ahead_of_localdb
+            .lock()
+            .expect("Mutex is poisoned")
+            .clear();
+        self.cache.lock().expect("Mutex is poisoned").clear();
 
         Ok(())
     }
 
     // "Prevent sync" pattern operations
 
-    pub fn get_prevent_sync_pattern(&mut self) -> FSResult<(Regex, bool)> {
+    pub fn get_prevent_sync_pattern(&self) -> FSResult<(Regex, bool)> {
+        let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         let (re, fully_applied) = prevent_sync_pattern::table
             .select((
                 prevent_sync_pattern::pattern,
                 prevent_sync_pattern::fully_applied,
             ))
             .filter(prevent_sync_pattern::_id.eq(0))
-            .first::<(String, _)>(&mut self.conn)
+            .first::<(String, _)>(conn)
             .map_err(|_| FSError::QueryTable("prevent_sync_pattern: get_prevent_sync_pattern"))?;
 
         let re = Regex::new(&re)
@@ -167,12 +195,13 @@ impl ManifestStorage {
         Ok((re, fully_applied))
     }
 
-    pub fn set_prevent_sync_pattern(&mut self, pattern: &Regex) -> FSResult<()> {
+    pub fn set_prevent_sync_pattern(&self, pattern: &Regex) -> FSResult<()> {
         // Set the "prevent sync" pattern for the corresponding workspace
 
         // This operation is idempotent,
         // i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
         let pattern = pattern.as_str();
+        let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         diesel::update(
             prevent_sync_pattern::table.filter(
                 prevent_sync_pattern::_id
@@ -184,19 +213,20 @@ impl ManifestStorage {
             prevent_sync_pattern::pattern.eq(pattern),
             prevent_sync_pattern::fully_applied.eq(false),
         ))
-        .execute(&mut self.conn)
+        .execute(conn)
         .map_err(|_| FSError::UpdateTable("prevent_sync_pattern: set_prevent_sync_pattern"))?;
 
         Ok(())
     }
 
-    pub fn mark_prevent_sync_pattern_fully_applied(&mut self, pattern: &Regex) -> FSResult<()> {
+    pub fn mark_prevent_sync_pattern_fully_applied(&self, pattern: &Regex) -> FSResult<()> {
         // Mark the provided pattern as fully applied.
 
         // This is meant to be called after one made sure that all the manifests in the
         // workspace are compliant with the new pattern. The applied pattern is provided
         // as an argument in order to avoid concurrency issues.
         let pattern = pattern.as_str();
+        let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         diesel::update(
             prevent_sync_pattern::table.filter(
                 prevent_sync_pattern::_id
@@ -205,7 +235,7 @@ impl ManifestStorage {
             ),
         )
         .set(prevent_sync_pattern::fully_applied.eq(true))
-        .execute(&mut self.conn)
+        .execute(conn)
         .map_err(|_| {
             FSError::UpdateTable("prevent_sync_pattern: mark_prevent_sync_pattern_fully_applied")
         })?;
@@ -215,16 +245,17 @@ impl ManifestStorage {
 
     // Checkpoint operations
 
-    pub fn get_realm_checkpoint(&mut self) -> i32 {
+    pub fn get_realm_checkpoint(&self) -> i32 {
+        let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         realm_checkpoint::table
             .select(realm_checkpoint::checkpoint)
             .filter(realm_checkpoint::_id.eq(0))
-            .first(&mut self.conn)
+            .first(conn)
             .unwrap_or(0)
     }
 
     pub fn update_realm_checkpoint(
-        &mut self,
+        &self,
         new_checkpoint: i32,
         changed_vlobs: &[(EntryID, i32)],
     ) -> FSResult<()> {
@@ -237,11 +268,12 @@ impl ManifestStorage {
         // TODO: How to improve ?
         // It is difficult to build a raw sql query with bind in a for loop
         // Another solution is to query all data then insert
+        let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         for (id, version) in changed_vlobs {
             sql_query("UPDATE vlobs SET remote_version = ? WHERE vlob_id = ?;")
                 .bind::<diesel::sql_types::Integer, _>(version)
                 .bind::<diesel::sql_types::Binary, _>((**id).as_ref())
-                .execute(&mut self.conn)
+                .execute(conn)
                 .map_err(|_| FSError::UpdateTable("vlobs: update_realm_checkpoint"))?;
         }
 
@@ -250,23 +282,29 @@ impl ManifestStorage {
             .on_conflict(realm_checkpoint::_id)
             .do_update()
             .set(&new_realm_checkpoint)
-            .execute(&mut self.conn)
+            .execute(conn)
             .map_err(|_| FSError::InsertTable("realm_checkpoint: update_realm_checkpoint"))?;
 
         Ok(())
     }
 
-    pub fn get_need_sync_entries(&mut self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
+    pub fn get_need_sync_entries(&self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
         let mut remote_changes = HashSet::new();
-        let mut local_changes =
-            HashSet::<_, RandomState>::from_iter(self.cache.iter().filter_map(|(id, manifest)| {
-                if manifest.need_sync() {
-                    Some(*id)
-                } else {
-                    None
-                }
-            }));
+        let mut local_changes = HashSet::<_, RandomState>::from_iter(
+            self.cache
+                .lock()
+                .expect("Mutex is poisoned")
+                .iter()
+                .filter_map(|(id, manifest)| {
+                    if manifest.need_sync() {
+                        Some(*id)
+                    } else {
+                        None
+                    }
+                }),
+        );
 
+        let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         for (manifest_id, need_sync, bv, rv) in vlobs::table
             .select((
                 vlobs::vlob_id,
@@ -279,7 +317,7 @@ impl ManifestStorage {
                     .eq(true)
                     .or(vlobs::base_version.ne(vlobs::remote_version)),
             )
-            .load::<(Vec<u8>, bool, i32, i32)>(&mut self.conn)
+            .load::<(Vec<u8>, bool, i32, i32)>(conn)
             .map_err(|_| FSError::QueryTable("vlobs: get_need_sync_entries"))?
         {
             let manifest_id = EntryID::from(
@@ -301,48 +339,72 @@ impl ManifestStorage {
 
     // Manifest operations
 
-    pub fn get_manifest(&mut self, entry_id: EntryID) -> FSResult<LocalManifest> {
+    pub fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
         // Look in cache first
-        if let Some(manifest) = self.cache.get(&entry_id) {
+        if let Some(manifest) = self.cache.lock().expect("Mutex is poisoned").get(&entry_id) {
             return Ok(manifest.clone());
         }
 
         // Look into the database
+        let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         let manifest = vlobs::table
             .select(vlobs::blob)
             .filter(vlobs::vlob_id.eq((*entry_id).as_ref()))
-            .first::<Vec<u8>>(&mut self.conn)
+            .first::<Vec<u8>>(conn)
             .map_err(|_| FSError::QueryTable("vlobs: get_manifest"))?;
 
         let manifest = LocalManifest::decrypt_and_load(&manifest, &self.local_symkey)
             .map_err(|_| FSError::Crypto(CryptoError::Decryption))?;
 
         // Fill the cache
-        self.cache.insert(entry_id, manifest.clone());
+        self.cache
+            .lock()
+            .expect("Mutex is poisoned")
+            .insert(entry_id, manifest.clone());
 
         Ok(manifest)
     }
 
     pub fn set_manifest(
-        &mut self,
+        &self,
         entry_id: EntryID,
         manifest: LocalManifest,
         cache_only: bool,
         removed_ids: Option<HashSet<ChunkOrBlockID>>,
     ) -> FSResult<()> {
         // Set the cache first
-        self.cache.insert(entry_id, manifest);
+        self.cache
+            .lock()
+            .expect("Mutex is poisoned")
+            .insert(entry_id, manifest);
         // Tag the entry as ahead of localdb
-        if self.cache_ahead_of_localdb.get(&entry_id).is_none() {
-            self.cache_ahead_of_localdb.insert(entry_id, HashSet::new());
+        if self
+            .cache_ahead_of_localdb
+            .lock()
+            .expect("Mutex is poisoned")
+            .get(&entry_id)
+            .is_none()
+        {
+            self.cache_ahead_of_localdb
+                .lock()
+                .expect("Mutex is poisoned")
+                .insert(entry_id, HashSet::new());
         }
 
         // Cleanup
         if let Some(removed_ids) = &removed_ids {
-            self.cache_ahead_of_localdb.insert(
-                entry_id,
-                self.cache_ahead_of_localdb.get(&entry_id).unwrap() | removed_ids,
-            );
+            self.cache_ahead_of_localdb
+                .lock()
+                .expect("Mutex is poisoned")
+                .insert(
+                    entry_id,
+                    self.cache_ahead_of_localdb
+                        .lock()
+                        .expect("Mutex is poisoned")
+                        .get(&entry_id)
+                        .unwrap()
+                        | removed_ids,
+                );
         }
 
         // Flush the cached value to the localdb
@@ -353,10 +415,13 @@ impl ManifestStorage {
         Ok(())
     }
 
-    pub fn ensure_manifest_persistent(&mut self, entry_id: EntryID) -> FSResult<()> {
+    pub fn ensure_manifest_persistent(&self, entry_id: EntryID) -> FSResult<()> {
         match (
-            self.cache_ahead_of_localdb.get(&entry_id),
-            self.cache.get(&entry_id),
+            self.cache_ahead_of_localdb
+                .lock()
+                .expect("Mutex is poisoned")
+                .get(&entry_id),
+            self.cache.lock().expect("Mutex is poisoned").get(&entry_id),
         ) {
             (Some(pending_chunk_ids), Some(manifest)) => {
                 let ciphered = manifest.dump_and_encrypt(&self.local_symkey);
@@ -367,6 +432,7 @@ impl ManifestStorage {
 
                 let vlob_id = (*entry_id).as_ref();
 
+                let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
                 sql_query("INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
                     VALUES (
                     ?, ?, ?, ?,
@@ -381,7 +447,7 @@ impl ManifestStorage {
                     .bind::<diesel::sql_types::Integer, _>(manifest.base_version() as i32)
                     .bind::<diesel::sql_types::Integer, _>(manifest.base_version() as i32)
                     .bind::<diesel::sql_types::Binary, _>(vlob_id)
-                    .execute(&mut self.conn)
+                    .execute(conn)
                     .map_err(|_| FSError::InsertTable("vlobs: _ensure_manifest_persistent"))?;
 
                 for pending_chunk_ids_chunk in pending_chunk_ids.chunks(SQLITE_MAX_VARIABLE_NUMBER)
@@ -389,7 +455,7 @@ impl ManifestStorage {
                     diesel::delete(
                         chunks::table.filter(chunks::chunk_id.eq_any(pending_chunk_ids_chunk)),
                     )
-                    .execute(&mut self.conn)
+                    .execute(conn)
                     .map_err(|_| FSError::DeleteTable("chunks: clear_manifest"))?;
                 }
 
@@ -399,9 +465,11 @@ impl ManifestStorage {
         }
     }
 
-    pub fn flush_cache_ahead_of_persistance(&mut self) -> FSResult<()> {
+    pub fn flush_cache_ahead_of_persistance(&self) -> FSResult<()> {
         let keys = self
             .cache_ahead_of_localdb
+            .lock()
+            .expect("Mutex is poisoned")
             .keys()
             .copied()
             .collect::<Vec<_>>();
@@ -415,17 +483,28 @@ impl ManifestStorage {
     // This method is not used in the code base but it is still tested
     // as it might come handy in a cleanup routine later
 
-    pub fn clear_manifest(&mut self, entry_id: EntryID) -> FSResult<()> {
+    pub fn clear_manifest(&self, entry_id: EntryID) -> FSResult<()> {
         // Remove from cache
-        let in_cache = self.cache.remove(&entry_id).is_some();
+        let in_cache = self
+            .cache
+            .lock()
+            .expect("Mutex is poisoned")
+            .remove(&entry_id)
+            .is_some();
 
         // Remove from local database
+        let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         let deleted = diesel::delete(vlobs::table.filter(vlobs::vlob_id.eq((*entry_id).as_ref())))
-            .execute(&mut self.conn)
+            .execute(conn)
             .map_err(|_| FSError::DeleteTable("vlobs: clear_manifest"))?
             > 0;
 
-        if let Some(pending_chunk_ids) = self.cache_ahead_of_localdb.remove(&entry_id) {
+        if let Some(pending_chunk_ids) = self
+            .cache_ahead_of_localdb
+            .lock()
+            .expect("Mutex is poisoned")
+            .remove(&entry_id)
+        {
             let pending_chunk_ids = pending_chunk_ids
                 .iter()
                 .map(ChunkOrBlockID::as_ref)
@@ -435,7 +514,7 @@ impl ManifestStorage {
                 diesel::delete(
                     chunks::table.filter(chunks::chunk_id.eq_any(pending_chunk_ids_chunk)),
                 )
-                .execute(&mut self.conn)
+                .execute(conn)
                 .map_err(|_| FSError::DeleteTable("chunks: clear_manifest"))?;
             }
         }
@@ -457,33 +536,15 @@ mod tests {
     use super::super::local_database::SqlitePool;
     use super::*;
 
-    impl ManifestStorage {
-        fn drop_db(&mut self) -> FSResult<()> {
-            sql_query("DROP TABLE IF EXISTS vlobs;")
-                .execute(&mut self.conn)
-                .map_err(|_| FSError::DropTable("vlobs"))?;
-
-            sql_query("DROP TABLE IF EXISTS realm_checkpoints;")
-                .execute(&mut self.conn)
-                .map_err(|_| FSError::DropTable("realm_checkpoints"))?;
-
-            sql_query("DROP TABLE IF EXISTS prevent_sync_pattern;")
-                .execute(&mut self.conn)
-                .map_err(|_| FSError::DropTable("prevent_sync_pattern"))?;
-
-            Ok(())
-        }
-    }
-
     #[test]
     fn manifest_storage() {
         let now = DateTime::now();
         let pool = SqlitePool::new("/tmp/manifest_storage.sqlite").unwrap();
-        let conn = pool.conn().unwrap();
+        let conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();
 
-        let mut manifest_storage = ManifestStorage::new(local_symkey, conn, realm_id).unwrap();
+        let manifest_storage = ManifestStorage::new(local_symkey, conn, realm_id).unwrap();
         manifest_storage.drop_db().unwrap();
         manifest_storage.create_db().unwrap();
 
