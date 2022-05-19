@@ -71,6 +71,7 @@ impl<'a> Future for Notified<'a> {
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut s = self.as_mut();
         let mut state = s.notify.state.lock().expect("mutex poisoned");
+        let mut waiters = s.notify.waiters.lock().expect("mutex poisoned");
         let mut waiter = s.waiter.lock().expect("mutex poisoned");
 
         waiter.waker = Some(cx.waker().clone());
@@ -79,11 +80,7 @@ impl<'a> Future for Notified<'a> {
             state.notified = false;
             return Poll::Ready(());
         } else if !s.waiting {
-            s.notify
-                .waiters
-                .lock()
-                .expect("mutex poisoned")
-                .push(s.waiter.clone());
+            waiters.push(s.waiter.clone());
             drop(waiter);
             s.waiting = true;
         }
