@@ -29,12 +29,12 @@ impl UserStorage {
 
     // Checkpoint Interface
 
-    pub fn get_realm_checkpoint(&mut self) -> i32 {
+    pub fn get_realm_checkpoint(&self) -> i32 {
         self.manifest_storage.get_realm_checkpoint()
     }
 
     pub fn update_realm_checkpoint(
-        &mut self,
+        &self,
         new_checkpoint: i32,
         changed_vlobs: &[(EntryID, i32)],
     ) -> FSResult<()> {
@@ -42,7 +42,7 @@ impl UserStorage {
             .update_realm_checkpoint(new_checkpoint, changed_vlobs)
     }
 
-    pub fn get_need_sync_entries(&mut self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
+    pub fn get_need_sync_entries(&self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
         self.manifest_storage.get_need_sync_entries()
     }
 
@@ -60,7 +60,7 @@ impl UserStorage {
         }
     }
 
-    fn load_user_manifest(&mut self) -> FSResult<()> {
+    fn load_user_manifest(&self) -> FSResult<()> {
         if self
             .manifest_storage
             .get_manifest(self.user_manifest_id)
@@ -83,7 +83,7 @@ impl UserStorage {
         Ok(())
     }
 
-    pub fn set_user_manifest(&mut self, user_manifest: LocalUserManifest) -> FSResult<()> {
+    pub fn set_user_manifest(&self, user_manifest: LocalUserManifest) -> FSResult<()> {
         self.manifest_storage.set_manifest(
             self.user_manifest_id,
             LocalManifest::User(user_manifest),
@@ -115,7 +115,7 @@ mod tests {
         let user_manifest_id = alice.user_manifest_id;
 
         let manifest_storage = ManifestStorage::new(local_symkey, conn, realm_id).unwrap();
-        let mut user_storage =
+        let user_storage =
             UserStorage::new(alice.local_device(), user_manifest_id, manifest_storage);
 
         user_storage.get_realm_checkpoint();
