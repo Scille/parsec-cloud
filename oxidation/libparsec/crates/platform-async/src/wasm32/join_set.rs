@@ -10,16 +10,9 @@ use std::future::Future;
 /// All of the tasks must have the same return type `T`.
 ///
 /// When the `JoinSet` is dropped, all the tasks in the `JoinSet` are immediately aborted.
+#[derive(Default)]
 pub struct JoinSet<T> {
     tasks: Vec<Task<T>>,
-}
-
-impl<T> Default for JoinSet<T> {
-    fn default() -> Self {
-        Self {
-            tasks: Vec::default(),
-        }
-    }
 }
 
 impl<T> JoinSet<T> {
