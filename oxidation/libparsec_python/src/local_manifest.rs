@@ -3,7 +3,7 @@
 use pyo3::basic::CompareOp;
 use pyo3::exceptions::{PyAssertionError, PyTypeError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyBytes, PyDict, PyTuple, PyType};
+use pyo3::types::{IntoPyDict, PyByteArray, PyBytes, PyDict, PyTuple, PyType};
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 use std::panic;
@@ -119,11 +119,23 @@ impl Chunk {
         ))
     }
 
-    fn evolve_as_block(&self, data: Vec<u8>) -> PyResult<Self> {
+    fn evolve_as_block(&self, py: Python, data: PyObject) -> PyResult<Self> {
+        let data = if let Ok(data) = data.extract::<&PyByteArray>(py) {
+            // Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
+            // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
+            // python thread modifying the bytearray behind our back.
+            unsafe { data.as_bytes() }
+        } else if let Ok(data) = data.extract::<&[u8]>(py) {
+            data
+        } else {
+            return Err(PyValueError::new_err(
+                "evolve_as_block: invalid input for data",
+            ));
+        };
         Ok(Self(
             self.0
                 .clone()
-                .evolve_as_block(&data)
+                .evolve_as_block(data)
                 .map_err(PyValueError::new_err)?,
         ))
     }
