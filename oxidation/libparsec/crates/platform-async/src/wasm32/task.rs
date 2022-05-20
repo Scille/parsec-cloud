@@ -18,7 +18,7 @@ use wasm_bindgen_futures::spawn_local;
 /// # futures_lite::future::block_on(async {
 /// let future = ready(42);
 /// let task = spawn(future);
-/// let result = task.await
+/// let result = task.await;
 /// assert_eq!(result, 42);
 /// # });
 /// ```
