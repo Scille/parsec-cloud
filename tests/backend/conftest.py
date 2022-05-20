@@ -32,7 +32,7 @@ def backend_raw_transport_factory(server_factory):
     @asynccontextmanager
     async def _backend_sock_factory(backend, freeze_on_transport_error=True, keepalive=None):
         async with server_factory(backend.handle_client) as server:
-            stream = server.connection_factory()
+            stream = await server.connection_factory()
             transport = await Transport.init_for_client(stream, server.addr.hostname, keepalive)
             if freeze_on_transport_error:
                 transport = FreezeTestOnTransportError(transport)
@@ -216,7 +216,8 @@ class AnonymousTransport:
 
     async def send(self, msg: bytes) -> None:
         assert self.last_request_response is None
-        async with self.connection_factory() as stream:
+        stream = await self.connection_factory()
+        async with stream:
             status, _, body = await do_http_request(
                 stream=stream,
                 target=f"/anonymous/{self.organization_id}",

@@ -41,8 +41,8 @@ def mock_api_versions(monkeypatch):
 @customize_fixtures(backend_not_populated=True)
 async def test_anonymous_handshake_invalid_format(backend, server_factory):
     async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+        stream = await server.connection_factory()
+        transport = await Transport.init_for_client(stream, "127.0.0.1")
 
         await transport.recv()  # Get challenge
         req = {
@@ -63,8 +63,8 @@ async def test_anonymous_handshake_invalid_format(backend, server_factory):
 @pytest.mark.trio
 async def test_authenticated_handshake_no_longer_supported(backend, server_factory, alice):
     async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+        stream = await server.connection_factory()
+        transport = await Transport.init_for_client(stream, "127.0.0.1")
 
         challenge_req = await transport.recv()
         challenge = unpackb(challenge_req)["challenge"]
@@ -92,8 +92,8 @@ async def test_authenticated_handshake_no_longer_supported(backend, server_facto
 @customize_fixtures(backend_not_populated=True)
 async def test_administration_handshake_no_longer_supported(backend, server_factory):
     async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+        stream = await server.connection_factory()
+        transport = await Transport.init_for_client(stream, "127.0.0.1")
 
         await transport.recv()
         answer_req = {
@@ -120,8 +120,8 @@ async def test_anonymous_handshake_good(
     to_check_rvk = coolorg.root_verify_key if check_rvk else None
     ch = APIV1_AnonymousClientHandshake(coolorg.organization_id, to_check_rvk)
     async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+        stream = await server.connection_factory()
+        transport = await Transport.init_for_client(stream, "127.0.0.1")
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
@@ -138,8 +138,8 @@ async def test_anonymous_handshake_good(
 async def test_anonymous_handshake_bad_rvk(backend, server_factory, coolorg, otherorg):
     ch = APIV1_AnonymousClientHandshake(coolorg.organization_id, otherorg.root_verify_key)
     async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+        stream = await server.connection_factory()
+        transport = await Transport.init_for_client(stream, "127.0.0.1")
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
@@ -155,8 +155,8 @@ async def test_handshake_unknown_organization(backend, server_factory, organizat
     bad_org = organization_factory()
     ch = APIV1_AnonymousClientHandshake(bad_org.organization_id, bad_org.root_verify_key)
     async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+        stream = await server.connection_factory()
+        transport = await Transport.init_for_client(stream, "127.0.0.1")
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)

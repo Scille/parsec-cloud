@@ -119,6 +119,9 @@ async def do_http_request(
     # Of course this is totally dependant of the backend's implementation
     # so things may change in the future ;-)
     rep = await stream.receive_some()
+    if not rep:
+        # Connection closed by peer
+        raise trio.BrokenResourceError
     status, rep_headers = parse_http_response(rep)
     rep_body = rep.split(b"\r\n\r\n", 1)[1]
     content_size = int(rep_headers.get("content-length", "0"))

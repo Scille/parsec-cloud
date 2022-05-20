@@ -9,12 +9,12 @@ import json
 from tests.backend.common import do_http_request
 
 
-async def open_stream_to_backend(backend_addr):
-    stream = await trio.open_tcp_stream(backend_addr.hostname, backend_addr.port)
-    if backend_addr.use_ssl:
+async def open_stream_to_backend(hostname, port, use_ssl):
+    stream = await trio.open_tcp_stream(hostname, port)
+    if use_ssl:
         ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         ssl_context.load_default_certs()
-        stream = trio.SSLStream(stream, ssl_context, server_hostname=backend_addr.hostname)
+        stream = trio.SSLStream(stream, ssl_context, server_hostname=hostname)
     return stream
 
 
@@ -29,7 +29,9 @@ def backend_http_send(running_backend, backend_addr):
         sanity_checks: bool = True,
         addr=backend_addr,
     ) -> Tuple[int, dict, bytes]:
-        stream = await open_stream_to_backend(addr)
+        stream = await open_stream_to_backend(
+            running_backend.hostname, running_backend.port, backend_addr.use_ssl
+        )
 
         status, rep_headers, rep_body = await do_http_request(
             stream, target=target, method=method, req=req, headers=headers, body=body
