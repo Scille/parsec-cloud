@@ -136,7 +136,7 @@ class SyncContext:
 
         # 2) Store new checkpoint and changes
         await self._get_local_storage().update_realm_checkpoint(
-            new_checkpoint, {EntryID(name): val for name, val in changes.items()}
+            new_checkpoint, {EntryID.from_hex(name.hex): val for name, val in changes.items()}
         )
 
         # 3) Compute local and remote changes that need to be synced
