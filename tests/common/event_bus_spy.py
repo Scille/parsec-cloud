@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import pytest
 import trio
 import attr
 import pendulum
@@ -260,3 +261,13 @@ class SpiedEventBus(EventBus):
 
         finally:
             self.destroy_spy(spy)
+
+
+@pytest.fixture(scope="session")
+def event_bus_factory():
+    return SpiedEventBus
+
+
+@pytest.fixture
+def event_bus(event_bus_factory):
+    return event_bus_factory()

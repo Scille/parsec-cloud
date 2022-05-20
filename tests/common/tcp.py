@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import pytest
 import h11
 import urllib.error
 from typing import Optional, Dict
-from contextlib import contextmanager
+from contextlib import contextmanager, closing as contextlib_closing
 from unittest.mock import patch
+import socket
 import inspect
 from urllib.parse import urlparse
 import trio
@@ -181,3 +183,28 @@ def offline(addr):
 
     finally:
         trio.open_tcp_stream.switch_online(addr)
+
+
+@pytest.fixture
+def tcp_stream_spy(request, monkeypatch):
+    if request.node.get_closest_marker("real_tcp"):
+        return None
+    else:
+        open_tcp_stream_mock_wrapper = OpenTCPStreamMockWrapper()
+        monkeypatch.setattr(
+            "trio.open_tcp_stream", open_tcp_stream_mock_wrapper.mocked_open_tcp_stream
+        )
+        monkeypatch.setattr("trio.serve_tcp", open_tcp_stream_mock_wrapper.mocked_serve_tcp)
+        monkeypatch.setattr(
+            "parsec.core.backend_connection.anonymous.http_request",
+            open_tcp_stream_mock_wrapper.mocked_http_request,
+        )
+        return open_tcp_stream_mock_wrapper
+
+
+@pytest.fixture(scope="session")
+def unused_tcp_port():
+    """Find an unused localhost TCP port from 1024-65535 and return it."""
+    with contextlib_closing(socket.socket()) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
