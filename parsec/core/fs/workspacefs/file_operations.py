@@ -4,7 +4,7 @@
 
 import bisect
 from functools import partial
-from typing import Tuple, List, Set, Iterator, Callable, Union, Sequence
+from typing import Tuple, List, Set, Iterator, Callable, Union, Sequence, TYPE_CHECKING
 from pendulum import DateTime
 
 from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
@@ -259,3 +259,13 @@ def prepare_reshape(
 
         # Yield operations
         yield (chunks, new_chunk, block_update, removed_ids)
+
+
+_py_prepare_read = prepare_read
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import prepare_read as _rs_prepare_read
+    except:
+        pass
+    else:
+        prepare_read = _rs_prepare_read
