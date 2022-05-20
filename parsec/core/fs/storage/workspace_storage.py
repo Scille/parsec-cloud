@@ -517,6 +517,32 @@ if not TYPE_CHECKING:
             def get_prevent_sync_pattern_fully_applied(self) -> bool:
                 return self.sync_instance.get_prevent_sync_pattern_fully_applied()
 
+            async def set_manifest(
+                self,
+                entry_id: EntryID,
+                manifest: BaseLocalManifest,
+                cache_only: bool = False,
+                check_lock_status: bool = True,
+                removed_ids: Optional[Set[Union[BlockID, ChunkID]]] = None,
+            ) -> None:
+                if check_lock_status:
+                    self._check_lock_status(entry_id)
+                await trio.to_thread.run_sync(
+                    lambda: self.sync_instance.set_manifest(
+                        entry_id, manifest, cache_only=cache_only, removed_ids=removed_ids
+                    )
+                )
+
+            async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
+                self._check_lock_status(entry_id)
+                await trio.to_thread.run_sync(
+                    lambda: self.sync_instance.ensure_manifest_persistent(entry_id)
+                )
+
+            async def clear_manifest(self, entry_id: EntryID) -> None:
+                self._check_lock_status(entry_id)
+                await trio.to_thread.run_sync(lambda: self.sync_instance.clear_manifest(entry_id))
+
             def __getattr__(self, method_name):
                 method = getattr(self.sync_instance, method_name)
 
