@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+
 use super::{spawn, Task};
 use futures::future::{join_all, select_all};
 use std::future::Future;
