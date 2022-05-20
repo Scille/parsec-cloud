@@ -229,12 +229,3 @@ def next_timestamp():
         return last_timestamp
 
     return _next_timestamp
-
-
-def addr_with_device_subdomain(addr, device_id):
-    """
-    Useful to have each device access the same backend with a different hostname
-    so tcp_stream_spy can put some offline and leave others online
-    """
-    device_specific_hostname = f"{device_id.user_id}_{device_id.device_name}.{addr.hostname}"
-    return type(addr).from_url(addr.to_url().replace(addr.hostname, device_specific_hostname, 1))

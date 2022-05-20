@@ -185,21 +185,23 @@ def offline(addr):
         trio.open_tcp_stream.switch_online(addr)
 
 
+# TODO: remove me
 @pytest.fixture
 def tcp_stream_spy(request, monkeypatch):
-    if request.node.get_closest_marker("real_tcp"):
-        return None
-    else:
-        open_tcp_stream_mock_wrapper = OpenTCPStreamMockWrapper()
-        monkeypatch.setattr(
-            "trio.open_tcp_stream", open_tcp_stream_mock_wrapper.mocked_open_tcp_stream
-        )
-        monkeypatch.setattr("trio.serve_tcp", open_tcp_stream_mock_wrapper.mocked_serve_tcp)
-        monkeypatch.setattr(
-            "parsec.core.backend_connection.anonymous.http_request",
-            open_tcp_stream_mock_wrapper.mocked_http_request,
-        )
-        return open_tcp_stream_mock_wrapper
+    return None
+    # if request.node.get_closest_marker("real_tcp"):
+    #     return None
+    # else:
+    #     open_tcp_stream_mock_wrapper = OpenTCPStreamMockWrapper()
+    #     monkeypatch.setattr(
+    #         "trio.open_tcp_stream", open_tcp_stream_mock_wrapper.mocked_open_tcp_stream
+    #     )
+    #     monkeypatch.setattr("trio.serve_tcp", open_tcp_stream_mock_wrapper.mocked_serve_tcp)
+    #     monkeypatch.setattr(
+    #         "parsec.core.backend_connection.anonymous.http_request",
+    #         open_tcp_stream_mock_wrapper.mocked_http_request,
+    #     )
+    #     return open_tcp_stream_mock_wrapper
 
 
 @pytest.fixture(scope="session")
