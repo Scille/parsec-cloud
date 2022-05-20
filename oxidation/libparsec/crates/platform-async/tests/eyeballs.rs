@@ -4,7 +4,7 @@
 
 use libparsec_platform_async::{
     channel::{bounded, RecvError, Sender},
-    JoinSet, Notify,
+    JoinSet, Notify, Timer,
 };
 use std::{
     sync::{Arc, Mutex},
@@ -96,7 +96,7 @@ async fn attempt(
     if which > 0 {
         let attempt_to_wait = which - 1;
         tokio::select! {
-            _ = tokio::time::sleep(Duration::from_millis(TIMEOUT)) => {
+            _ = Timer::after(Duration::from_millis(TIMEOUT)) => {
                 log::info!("[#{which}] previous task timed out");
             }
             _ = failed_attempt[attempt_to_wait].notified() => {
@@ -132,6 +132,6 @@ async fn attempt(
 }
 
 async fn mock_load(load: &Load) -> Mode {
-    tokio::time::sleep(load.delay).await;
+    Timer::after(load.delay).await;
     load.result
 }
