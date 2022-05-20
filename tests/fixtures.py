@@ -537,11 +537,10 @@ def certificates_store(backend_data_binder_factory, backend):
 
 
 @pytest.fixture
-def backend_data_binder_factory(request, backend_addr, initial_user_manifest_state):
+def backend_data_binder_factory(initial_user_manifest_state):
     class BackendDataBinder:
-        def __init__(self, backend, backend_addr=backend_addr):
+        def __init__(self, backend):
             self.backend = backend
-            self.backend_addr = backend_addr
             self.binded_local_devices = []
             self.certificates_store = CertificatesStore()
 
@@ -732,12 +731,12 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
 
     binders = []
 
-    def _backend_data_binder_factory(backend, backend_addr=backend_addr):
+    def _backend_data_binder_factory(backend):
         for binder, candidate_backend in binders:
             if candidate_backend is backend:
                 return binder
 
-        binder = BackendDataBinder(backend, backend_addr)
+        binder = BackendDataBinder(backend)
         binders.append((binder, backend))
         return binder
 
