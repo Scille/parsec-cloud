@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use pyo3::exceptions::PyValueError;
-use pyo3::types::PyBytes;
+use pyo3::types::{PyByteArray, PyBytes};
 use pyo3::{import_exception, prelude::*};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -173,10 +173,10 @@ impl WorkspaceStorage {
         })
     }
 
-    fn set_clean_block(&self, py: Python, block_id: BlockID, block: Vec<u8>) -> PyResult<()> {
+    fn set_clean_block(&self, py: Python, block_id: BlockID, block: &[u8]) -> PyResult<()> {
         py.allow_threads(|| {
             self.0
-                .set_clean_block(block_id.0, &block)
+                .set_clean_block(block_id.0, block)
                 .map_err(|e| PyValueError::new_err(e.to_string()))
         })
     }
@@ -195,18 +195,30 @@ impl WorkspaceStorage {
         Ok(PyBytes::new(py, &block))
     }
 
-    fn get_chunk(&self, py: Python, chunk_id: ChunkID) -> PyResult<Vec<u8>> {
-        py.allow_threads(|| {
-            self.0
-                .get_chunk(chunk_id.0)
-                .map_err(|_| FSLocalMissError::new_err(chunk_id))
-        })
+    fn get_chunk<'py>(&self, py: Python<'py>, chunk_id: ChunkID) -> PyResult<&'py PyBytes> {
+        let chunk = py
+            .allow_threads(|| self.0.get_chunk(chunk_id.0))
+            .map_err(|_| FSLocalMissError::new_err(chunk_id))?;
+        Ok(PyBytes::new(py, &chunk))
     }
 
-    fn set_chunk(&self, py: Python, chunk_id: ChunkID, block: Vec<u8>) -> PyResult<()> {
+    fn set_chunk(&self, py: Python, chunk_id: ChunkID, block: PyObject) -> PyResult<()> {
+        let block = if let Ok(block) = block.extract::<&PyByteArray>(py) {
+            // Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
+            // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
+            // python thread modifying the bytearray behind our back.
+            unsafe { block.as_bytes() }
+        } else if let Ok(block) = block.extract::<&[u8]>(py) {
+            block
+        } else {
+            return Err(PyValueError::new_err(
+                "evolve_as_block: invalid input for block",
+            ));
+        };
+
         py.allow_threads(|| {
             self.0
-                .set_chunk(chunk_id.0, &block)
+                .set_chunk(chunk_id.0, block)
                 .map_err(|e| PyValueError::new_err(e.to_string()))
         })
     }
