@@ -12,8 +12,7 @@ from parsec.core.gui.create_org_widget import CreateOrgUserInfoWidget
 from parsec.core.gui.authentication_choice_widget import AuthenticationChoiceWidget
 from parsec.core.gui.lang import translate
 
-from tests.fixtures import local_device_to_backend_user
-from tests.common import customize_fixtures, freeze_time
+from tests.common import customize_fixtures, freeze_time, local_device_to_backend_user
 
 
 @pytest.fixture

@@ -6,13 +6,13 @@ import triopg
 from uuid import uuid4
 from contextlib import contextmanager
 from pendulum import now as pendulum_now
+from unittest.mock import patch
 
 from parsec.backend.organization import OrganizationAlreadyBootstrappedError
 from parsec.backend.user import UserAlreadyExistsError, UserActiveUsersLimitReached
 from parsec.backend.pki import PkiEnrollmentNoLongerAvailableError
 
-from unittest.mock import patch
-from tests.fixtures import local_device_to_backend_user
+from tests.common import local_device_to_backend_user
 
 
 # Testing concurrency interractions is hard given it involve precise timing
