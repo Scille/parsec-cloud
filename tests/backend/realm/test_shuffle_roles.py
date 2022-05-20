@@ -25,7 +25,6 @@ from tests.backend.common import realm_get_role_certificates, realm_update_roles
 def test_shuffle_roles(
     hypothesis_settings,
     reset_testbed,
-    backend_addr,
     backend_factory,
     server_factory,
     backend_data_binder_factory,
@@ -43,7 +42,7 @@ def test_shuffle_roles(
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory(populated=False) as backend:
-                    async with server_factory(backend.handle_client, backend_addr) as server:
+                    async with server_factory(backend.handle_client) as server:
                         await started_cb(backend=backend, server=server)
 
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)
