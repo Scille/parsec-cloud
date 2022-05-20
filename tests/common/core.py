@@ -35,7 +35,7 @@ def core_factory(request, running_backend_ready, event_bus_factory, core_config)
         # Ensure test doesn't stay frozen if a bug in a fixture prevent the
         # backend from starting
         async with real_clock_timeout():
-            await running_backend_ready.wait()
+            await running_backend_ready()
         event_bus = event_bus or event_bus_factory()
 
         with event_bus.listen() as spy:

@@ -1,103 +1,129 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-import sys
-import attr
 import json
+import trio
 import ssl
 import trustme
-import trio
+from inspect import iscoroutine
 from contextlib import contextmanager, asynccontextmanager
 import tempfile
+from typing import Optional, Callable, Union
 
-from parsec.core.types import BackendAddr
+from parsec.core.types import BackendAddr, LocalDevice
 from parsec.backend import backend_app_factory
 from parsec.backend.config import BackendConfig, MockedEmailConfig, MockedBlockStoreConfig
 
 from tests.common.freeze_time import freeze_time
-from tests.common.helpers import addr_with_device_subdomain
 from tests.common.timeout import real_clock_timeout
-from tests.common.tcp import offline
+from tests.common.binder import OrganizationFullData
 
 
-@attr.s
+def correct_addr(
+    to_correct: Union[BackendAddr, LocalDevice, OrganizationFullData], port: int
+) -> BackendAddr:
+    """
+    Helper to fix a backend address so that it will reach the current server.
+    This not needed when using `running_backend` (given in this case the
+    alice/bob/coolorg etc. fixtures are created with the correct port), but
+    must be used when the test has to manually start server (e.g. in
+    the hypothesis tests)
+    """
+    if isinstance(to_correct, LocalDevice):
+        return LocalDevice(
+            organization_addr=correct_addr(to_correct.organization_addr, port),
+            device_id=to_correct.device_id,
+            device_label=to_correct.device_label,
+            human_handle=to_correct.human_handle,
+            signing_key=to_correct.signing_key,
+            private_key=to_correct.private_key,
+            profile=to_correct.profile,
+            user_manifest_id=to_correct.user_manifest_id,
+            user_manifest_key=to_correct.user_manifest_key,
+            local_symkey=to_correct.local_symkey,
+        )
+    elif isinstance(to_correct, OrganizationFullData):
+        return OrganizationFullData(
+            bootstrap_addr=correct_addr(to_correct.bootstrap_addr, port),
+            addr=correct_addr(to_correct.addr, port),
+            root_signing_key=to_correct.root_signing_key,
+        )
+    else:
+        # Consider it's a regular addr
+        *_, to_keep = to_correct.to_url().removeprefix("parsec://").split("/", 1)
+        url = f"parsec://127.0.0.1:{port}/{to_keep}"
+        return to_correct.__class__.from_url(url)
+
+
 class AppServer:
-    entry_point = attr.ib()
-    addr = attr.ib()
-    connection_factory = attr.ib()
+    def __init__(self, hostname: str, port: int, use_ssl: bool, entry_point: Callable):
+        self.hostname = hostname
+        self.port = port
+        self.use_ssl = use_ssl
+        self.entry_point = entry_point
+        self._on_offline = trio.Event()
 
+    @contextmanager
     def offline(self):
-        return offline(self.addr)
+        self._on_offline.set()
+        try:
+            yield
+        finally:
+            self._on_offline = trio.Event()
+
+    def correct_addr(self, addr: BackendAddr) -> BackendAddr:
+        return correct_addr(addr, self.port)
+
+    async def connection_factory(self) -> trio.abc.Stream:
+        return await trio.open_tcp_stream(self.hostname, self.port)
 
 
 @pytest.fixture
-def server_factory(tcp_stream_spy):
-    count = 0
-
+def server_factory():
     @asynccontextmanager
-    async def _server_factory(entry_point, addr=None):
-        nonlocal count
-        count += 1
-
-        if not addr:
-            addr = BackendAddr(hostname=f"server-{count}.localhost", port=9999, use_ssl=False)
+    async def _server_factory(entry_point, *, use_ssl: bool = False):
+        hostname = "127.0.0.1"
 
         async def _serve_client(stream):
-            if addr.use_ssl:
-                ssl_context = ssl.create_default_context()
-                stream = trio.SSLStream(
-                    stream, ssl_context, server_hostname=addr.hostname, server_side=True
-                )
-            await entry_point(stream)
+            async def _offline_watchdog(
+                on_offline, cancel_scope, task_status=trio.TASK_STATUS_IGNORED
+            ):
+                if on_offline.is_set():
+                    cancel_scope.cancel()
+                task_status.started()
+                await on_offline.wait()
+                cancel_scope.cancel()
+
+            async with trio.open_nursery() as nursery:
+                # Small hack: server is define later in the parent scope
+                await nursery.start(_offline_watchdog, server._on_offline, nursery.cancel_scope)
+
+                if use_ssl:
+                    ssl_context = ssl.create_default_context()
+                    stream = trio.SSLStream(
+                        stream, ssl_context, server_hostname=hostname, server_side=True
+                    )
+                await entry_point(stream)
 
         async with trio.open_service_nursery() as nursery:
 
-            def connection_factory(*args, **kwargs):
-                client_stream, server_stream = trio.testing.memory_stream_pair()
-                nursery.start_soon(_serve_client, server_stream)
-                return client_stream
+            listeners = await nursery.start(
+                lambda task_status: trio.serve_tcp(
+                    _serve_client,
+                    host=hostname,
+                    port=0,
+                    handler_nursery=nursery,
+                    task_status=task_status,
+                )
+            )
+            _, port, *_ = listeners[0].socket.getsockname()
 
-            tcp_stream_spy.push_hook(addr.hostname, addr.port, connection_factory)
-            try:
-                yield AppServer(entry_point, addr, connection_factory)
-                nursery.cancel_scope.cancel()
+            server = AppServer(hostname, port, use_ssl, entry_point)
+            yield server
 
-            finally:
-                # It's important to remove the hook just after having cancelled
-                # the nursery. Otherwise another coroutine trying to connect would
-                # end up with a `RuntimeError('Nursery is closed to new arrivals',)`
-                # given `connection_factory` make use of the now-closed nursery.
-                tcp_stream_spy.pop_hook(addr.hostname, addr.port)
+            nursery.cancel_scope.cancel()
 
     return _server_factory
-
-
-@pytest.fixture()
-def backend_addr(tcp_stream_spy, fixtures_customization, monkeypatch):
-    # Depending on tcp_stream_spy fixture prevent from doing real connection
-    # attempt (which can be long to resolve) when backend is not running
-    use_ssl = fixtures_customization.get("backend_over_ssl", False)
-    addr = BackendAddr(hostname="example.com", port=9999, use_ssl=use_ssl)
-    if use_ssl:
-        # TODO: Trustme & Windows doesn't seem to play well
-        # (that and Python < 3.7 & Windows bug https://bugs.python.org/issue35941)
-        if sys.platform == "win32":
-            pytest.skip("Windows and Trustme are not friends :'(")
-
-        # Create a ssl certificate and overload default ssl context generation
-        ca = trustme.CA()
-        cert = ca.issue_cert("*.example.com", "example.com")
-        vanilla_create_default_context = ssl.create_default_context
-
-        def patched_create_default_context(*args, **kwargs):
-            ctx = vanilla_create_default_context(*args, **kwargs)
-            ca.configure_trust(ctx)
-            cert.configure_cert(ctx)  # TODO: only server should load this part ?
-            return ctx
-
-        monkeypatch.setattr("ssl.create_default_context", patched_create_default_context)
-
-    return addr
 
 
 @pytest.fixture
@@ -264,28 +290,192 @@ def webhook_spy(monkeypatch):
     return events
 
 
+# `running_backend` is a really useful fixture, but comes with it own issue:
+# - the TCP port on which the backend is running is only known once we have started the server
+# - we need the TCP port to determine the backend address
+# - we need the backend address to create the alice/bob/coolorg etc. fixtures
+# - those fixtures are needed to populate the backend
+# - the running_backend fixture should only resolve once the backend is populated and running
+#
+# So to break this dependency loop, we introduce `running_backend_unconfigured_server`
+# fixture which starts a server (hence getting it TCP port) but allow us to plug the
+# actual backend server code later on.
+#
+# On top of that, we have the `running_backend_ready` that allows other fixtures (typically
+# the core related ones) to be able to ensure the server is up and running (the fixtures
+# cannot directly depend on the `running_backend` fixture for this given it should be
+# up to the test to decide weither or not the backend should be running)
+#
+# In case `running_backend` is among the test's fixtures:
+# <test>
+# ├─ running_backend
+# |  ├─ backend
+# |  |  └─ backend_factory
+# |  |     └─ alice/bob/coolorg etc.
+# |  |        └─ backend_addr  <- wait port to be known
+# |  |           └─ running_backend_port_known
+# |  ├─ running_backend_unconfigured_server  <- signal port is known
+# |  |  └─ running_backend_port_known
+# |  └─ running_backend_ready
+# └─ core  <- wait for running_backend before it own init
+#    └─ running_backend_ready
+#
+# In case `running_backend` is not among the test's fixtures
+# <test>
+# ├─ core
+# |  └─ running_backend_ready <- nothing to wait for !
+# └─ alice/bob/coolorg etc.
+#    └─ backend_addr
+#       └─ running_backend_port_known
+#          └─ unused_tcp_port
+
+
 @pytest.fixture
 def running_backend_ready(request):
     # Useful to synchronize other fixtures that need to connect to
     # the backend if it is available
     event = trio.Event()
-    # Nothing to wait if current test doesn't use `running_backend` fixture
-    if "running_backend" not in request.fixturenames:
+
+    # Called by `running_backend`` fixture once port is known
+    def _set_running_backend_ready() -> None:
+        assert not event.is_set()
         event.set()
 
-    return event
+    async def _wait_running_backend_ready() -> None:
+        await event.wait()
+
+    # Nothing to wait if current test doesn't use `running_backend` fixture
+    if "running_backend" not in request.fixturenames:
+        _set_running_backend_ready()
+
+    # Only accessed by `running_backend` fixture
+    _wait_running_backend_ready._set_running_backend_ready = _set_running_backend_ready
+
+    return _wait_running_backend_ready
 
 
 @pytest.fixture
-async def running_backend(server_factory, backend_addr, backend, running_backend_ready):
+def running_backend_port_known(request, unused_tcp_port):
+    # Useful to synchronize other fixtures that need to connect to
+    # the backend if it is available
+    # This is also needed to create backend addr with a valid port
+    event = trio.Event()
+    backend_port = None
 
-    async with server_factory(backend.handle_client, backend_addr) as server:
-        server.backend = backend
+    # Called by `running_backend`` fixture once port is known
+    def _set_running_backend_port_known(port: int) -> None:
+        nonlocal backend_port
+        assert not event.is_set()
+        event.set()
+        backend_port = port
 
-        def _offline_for(device_id):
-            return offline(addr_with_device_subdomain(server.addr, device_id))
+    async def _wait_running_backend_port_known() -> int:
+        nonlocal backend_port
+        await event.wait()
+        assert backend_port is not None
+        return backend_port
 
-        server.offline_for = _offline_for
+    # Nothing to wait if current test doesn't use `running_backend` fixture
+    if "running_backend" not in request.fixturenames:
+        _set_running_backend_port_known(unused_tcp_port)
 
-        running_backend_ready.set()
+    # Only accessed by `running_backend` fixture
+    _wait_running_backend_port_known._set_running_backend_port_known = (
+        _set_running_backend_port_known
+    )
+
+    return _wait_running_backend_port_known
+
+
+@pytest.fixture
+async def async_fixture_backend_addr(running_backend_port_known, fixtures_customization):
+    port = await running_backend_port_known()
+    use_ssl = fixtures_customization.get("backend_over_ssl", False)
+    return BackendAddr(hostname="127.0.0.1", port=port, use_ssl=use_ssl)
+
+
+@pytest.fixture
+def backend_addr(async_fixture_backend_addr, unused_tcp_port):
+    # Given server port is not known until `running_backend_unconfigured_server`
+    # is ready, `backend_addr` should be an asynchronous fixture.
+    # However `backend_addr` is a really common fixture and we want to be able
+    # to use it event in the non-trio tests (for instance in hypothesis tests).
+    # So we cheat by pretending `backend_addr` is a sync fixture and fallback to
+    # a default addr value if we are in a non-trio test.
+    if iscoroutine(async_fixture_backend_addr):
+        # We are in a non-trio test, just close the coroutine and provide
+        # an addr which is guaranteed to cause connection error
+        async_fixture_backend_addr.close()
+        # `use_ssl=False` is useful if this address is later modified by `correct_addr`
+        return BackendAddr(hostname="127.0.0.1", port=unused_tcp_port, use_ssl=False)
+    else:
+        return async_fixture_backend_addr
+
+
+# Generating CA & Certificate are costly, so cache them once created
+_ca_and_cert = None
+
+
+def get_ca_and_cert():
+    global _ca_and_cert
+    if _ca_and_cert is None:
+        _ca = trustme.CA()
+        _cert = _ca.issue_cert("127.0.0.1")
+        _ca_and_cert = (_ca, _cert)
+    return _ca_and_cert
+
+
+@pytest.fixture
+async def running_backend_unconfigured_server(
+    asyncio_loop, monkeypatch, server_factory, running_backend_port_known, fixtures_customization
+):
+    # `asyncio_loop` is already declared by `backend_factory` (since it's only the
+    # backend that need an asyncio loop for postgresql stuff), however this is not
+    # enough here given we create the server *before* `backend_factory` is required
+
+    # Create a ssl certificate and overload default ssl context generation
+    if fixtures_customization.get("backend_over_ssl", False):
+        ca, cert = get_ca_and_cert()
+        vanilla_create_default_context = ssl.create_default_context
+
+        def patched_create_default_context(*args, **kwargs):
+            ctx = vanilla_create_default_context(*args, **kwargs)
+            ca.configure_trust(ctx)
+            cert.configure_cert(ctx)  # TODO: only server should load this part ?
+            return ctx
+
+        monkeypatch.setattr("ssl.create_default_context", patched_create_default_context)
+
+        use_ssl = True
+    else:
+        use_ssl = False
+
+    configured_entry_point: Optional[Callable] = None
+
+    async def _entry_point(stream: trio.abc.Stream) -> None:
+        nonlocal configured_entry_point
+        assert configured_entry_point is not None, "Using server before it has been configured !!!!"
+        return await configured_entry_point(stream)
+
+    def _configure_entry_point(entry_point):
+        nonlocal configured_entry_point
+        assert configured_entry_point is None, "Server already configured !!!"
+        configured_entry_point = entry_point
+
+    async with server_factory(_entry_point, use_ssl=use_ssl) as server:
+        running_backend_port_known._set_running_backend_port_known(server.port)
+        server._configure_entry_point = _configure_entry_point
         yield server
+
+
+@pytest.fixture
+def running_backend(
+    running_backend_unconfigured_server, running_backend_ready, backend, backend_addr
+):
+    running_backend_unconfigured_server._configure_entry_point(backend.handle_client)
+    running_backend_ready._set_running_backend_ready()
+
+    running_backend_unconfigured_server.backend = backend
+    running_backend_unconfigured_server.addr = backend_addr
+
+    return running_backend_unconfigured_server

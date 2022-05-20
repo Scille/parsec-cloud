@@ -14,7 +14,6 @@ from parsec.core.local_device import generate_new_device
 
 from tests.common.binder import OrganizationFullData
 from tests.common.freeze_time import freeze_time
-from tests.common.helpers import addr_with_device_subdomain
 
 
 @pytest.fixture
@@ -112,12 +111,8 @@ def local_device_factory(coolorg):
         except StopIteration:
             profile = profile or UserProfile.STANDARD
 
-        # Force each device to access the backend trough a different hostname so
-        # tcp stream spy can switch offline certains while keeping the others online
-        org_addr = addr_with_device_subdomain(org.addr, device_id)
-
         device = generate_new_device(
-            organization_addr=org_addr,
+            organization_addr=org.addr,
             device_id=device_id,
             profile=profile,
             human_handle=human_handle,
