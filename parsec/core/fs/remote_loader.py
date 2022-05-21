@@ -8,6 +8,7 @@ from pendulum import DateTime
 from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
 
 from parsec.crypto import HashDigest, CryptoError
+from parsec.utils import open_service_nursery
 from parsec.api.protocol import UserID, DeviceID, RealmID, RealmRole, VlobID
 from parsec.api.data import (
     DataError,
@@ -15,9 +16,7 @@ from parsec.api.data import (
     RealmRoleCertificateContent,
     BaseManifest as BaseRemoteManifest,
 )
-
 from parsec.core.types import EntryID, ChunkID, LocalDevice, WorkspaceEntry
-
 from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
@@ -60,8 +59,6 @@ from parsec.core.fs.storage import BaseWorkspaceStorage
 # when a manifest restamping is required. This value should be kept small
 # compared to the certificate stamp ahead value, so the certificate updates have
 # priority over manifest updates.
-from parsec.service_nursery import open_service_nursery
-
 MANIFEST_STAMP_AHEAD_US = 100_000  # microseconds, or 0.1 seconds
 
 # This value is used to increment the timestamp provided by the backend
