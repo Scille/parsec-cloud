@@ -101,7 +101,7 @@ def test_sync_monitor_stateful(
 
         async def start_alice_core(self):
             async def _core_controlled_cb(started_cb):
-                async with core_factory(alice) as core:
+                async with core_factory(self.alice) as core:
                     await started_cb(core=core)
 
             self.alice_core_controller = await self.get_root_nursery().start(
@@ -111,7 +111,7 @@ def test_sync_monitor_stateful(
 
         async def start_bob_user_fs(self):
             async def _user_fs_controlled_cb(started_cb):
-                async with user_fs_factory(device=bob) as user_fs:
+                async with user_fs_factory(device=self.bob) as user_fs:
                     await started_cb(user_fs=user_fs)
 
             self.bob_user_fs_controller = await self.get_root_nursery().start(
@@ -122,7 +122,7 @@ def test_sync_monitor_stateful(
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client, backend_addr) as server:
+                    async with server_factory(backend.handle_client) as server:
                         await started_cb(backend=backend, server=server)
 
             self.backend_controller = await self.get_root_nursery().start(
@@ -134,6 +134,8 @@ def test_sync_monitor_stateful(
             await reset_testbed()
 
             await self.start_backend()
+            self.alice = self.backend_controller.server.correct_addr(alice)
+            self.bob = self.backend_controller.server.correct_addr(bob)
             self.bob_user_fs = await self.start_bob_user_fs()
             self.alice_core = await self.start_alice_core()
             self.user_fs_per_device = {

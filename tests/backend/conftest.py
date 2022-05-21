@@ -33,7 +33,7 @@ def backend_raw_transport_factory(server_factory):
     async def _backend_sock_factory(backend, freeze_on_transport_error=True, keepalive=None):
         async with server_factory(backend.handle_client) as server:
             stream = await server.connection_factory()
-            transport = await Transport.init_for_client(stream, server.addr.hostname, keepalive)
+            transport = await Transport.init_for_client(stream, "127.0.0.1", keepalive)
             if freeze_on_transport_error:
                 transport = FreezeTestOnTransportError(transport)
 

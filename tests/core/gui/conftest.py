@@ -275,7 +275,7 @@ def gui_factory(
         throttle_job_no_wait=True,
     ):
         # Wait for the backend to run if necessary
-        await running_backend_ready.wait()
+        await running_backend_ready()
 
         # First start popup blocks the test
         # Check version and mountpoint are useless for most tests
