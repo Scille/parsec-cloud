@@ -30,11 +30,12 @@ def test_fs_online_tree_and_sync(user_fs_online_state_machine, oracle_fs_with_sy
         @initialize(target=Folders)
         async def init(self):
             await self.reset_all()
+            await self.start_backend()
+
             self.oracle_fs = oracle_fs_with_sync_factory()
             self.oracle_fs.create_workspace("/w")
-            self.device = alice
+            self.device = self.backend_controller.server.correct_addr(alice)
 
-            await self.start_backend()
             await self.restart_user_fs(self.device)
             self.wid = await self.user_fs.workspace_create(EntryName("w"))
             workspace = self.user_fs.get_workspace(self.wid)

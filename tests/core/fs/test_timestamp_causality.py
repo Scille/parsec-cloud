@@ -127,23 +127,28 @@ def test_timestamp_causality(
             # Start backend
             await self.start_backend(populated=False)
 
+            self.alice = self.backend_controller.server.correct_addr(alice)
+            self.bob = self.backend_controller.server.correct_addr(bob)
+            self.carl = self.backend_controller.server.correct_addr(carl)
+            self.diana = self.backend_controller.server.correct_addr(diana)
+
             # Carl and diana are not bound to the default organization
             binder = backend_data_binder_factory(self.backend)
-            await binder.bind_organization(coolorg, alice)
-            for local_device in (bob, carl, diana):
+            await binder.bind_organization(coolorg, self.alice)
+            for local_device in (self.bob, self.carl, self.diana):
                 await binder.bind_device(local_device)
 
             # Start user FS
-            self.alice_controller = await self.start_user_fs(alice)
-            self.bob_controller = await self.start_user_fs(bob)
-            self.carl_controller = await self.start_user_fs(carl)
-            self.diana_controller = await self.start_user_fs(diana)
+            self.alice_controller = await self.start_user_fs(self.alice)
+            self.bob_controller = await self.start_user_fs(self.bob)
+            self.carl_controller = await self.start_user_fs(self.carl)
+            self.diana_controller = await self.start_user_fs(self.diana)
 
             # Carl
             self.wid = await self.carl_fs.workspace_create(EntryName("w"))
-            await self.carl_fs.workspace_share(self.wid, alice.user_id, RealmRole.READER)
-            await self.carl_fs.workspace_share(self.wid, bob.user_id, RealmRole.CONTRIBUTOR)
-            await self.carl_fs.workspace_share(self.wid, diana.user_id, RealmRole.OWNER)
+            await self.carl_fs.workspace_share(self.wid, self.alice.user_id, RealmRole.READER)
+            await self.carl_fs.workspace_share(self.wid, self.bob.user_id, RealmRole.CONTRIBUTOR)
+            await self.carl_fs.workspace_share(self.wid, self.diana.user_id, RealmRole.OWNER)
             await self.carl_fs.sync()
 
             # Diana
@@ -169,10 +174,10 @@ def test_timestamp_causality(
             self.alice_fs.remote_loader.clear_realm_role_certificate_cache()
 
             # Set device time offsets
-            set_device_time_offset(alice, alice_offset)
-            set_device_time_offset(bob, bob_offset)
-            set_device_time_offset(carl, carl_offset)
-            set_device_time_offset(diana, diana_offset)
+            set_device_time_offset(self.alice, alice_offset)
+            set_device_time_offset(self.bob, bob_offset)
+            set_device_time_offset(self.carl, carl_offset)
+            set_device_time_offset(self.diana, diana_offset)
 
         @rule()
         async def bob_updates_the_file(self):

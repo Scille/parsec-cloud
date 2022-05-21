@@ -19,7 +19,7 @@ from parsec.core.core_events import CoreEvent
 
 @pytest.fixture
 async def alice_backend_conn(alice, event_bus_factory, running_backend_ready):
-    await running_backend_ready.wait()
+    await running_backend_ready()
     event_bus = event_bus_factory()
     conn = BackendAuthenticatedConn(
         alice.organization_addr, alice.device_id, alice.signing_key, event_bus

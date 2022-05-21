@@ -16,6 +16,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.backend.backend_events import BackendEvent
 
+from tests.common import correct_addr
 from tests.core.backend_connection.common import ALL_CMDS
 
 
@@ -132,7 +133,7 @@ async def test_organization_expired(running_backend, alice, expiredorg):
 
 
 @pytest.mark.trio
-async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backend_addr):
+async def test_backend_disconnect_during_handshake(alice):
     client_answered = False
 
     async def poorly_serve_client(stream):
@@ -149,17 +150,16 @@ async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backen
 
     async with trio.open_service_nursery() as nursery:
 
-        async def connection_factory(*args, **kwargs):
-            client_stream, server_stream = trio.testing.memory_stream_pair()
-            nursery.start_soon(poorly_serve_client, server_stream)
-            return client_stream
+        listeners = await nursery.start(trio.serve_tcp, poorly_serve_client, 0)
 
-        with tcp_stream_spy.install_hook(backend_addr, connection_factory):
-            with pytest.raises(BackendNotAvailable):
-                async with backend_authenticated_cmds_factory(
-                    alice.organization_addr, alice.device_id, alice.signing_key
-                ) as cmds:
-                    await cmds.ping()
+        organization_addr = correct_addr(
+            alice.organization_addr, listeners[0].socket.getsockname()[1]
+        )
+        with pytest.raises(BackendNotAvailable):
+            async with backend_authenticated_cmds_factory(
+                organization_addr, alice.device_id, alice.signing_key
+            ) as cmds:
+                await cmds.ping()
 
         nursery.cancel_scope.cancel()
 

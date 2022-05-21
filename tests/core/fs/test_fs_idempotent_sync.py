@@ -56,7 +56,7 @@ def test_fs_online_idempotent_sync(
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client, backend_addr) as server:
+                    async with server_factory(backend.handle_client) as server:
                         await started_cb(backend=backend, server=server)
 
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)
@@ -69,8 +69,8 @@ def test_fs_online_idempotent_sync(
         async def init(self):
             await reset_testbed()
             self.backend_controller = await self.start_backend()
-            self.device = alice
-            self.user_fs_controller = await self.start_user_fs(alice)
+            self.device = self.backend_controller.server.correct_addr(alice)
+            self.user_fs_controller = await self.start_user_fs(self.device)
 
             wid = await self.user_fs.workspace_create(EntryName("w"))
             self.workspace = self.user_fs.get_workspace(wid)

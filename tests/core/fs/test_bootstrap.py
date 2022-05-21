@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
+import trio
 from pendulum import datetime
 
 from parsec.crypto import SecretKey
@@ -11,6 +12,7 @@ from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 
 from tests.common import freeze_time
+from tests.common.fixtures_customisation import customize_fixtures
 
 
 @pytest.mark.trio
@@ -72,11 +74,10 @@ async def test_workspace_manifest_access_while_speculative(user_fs_factory, alic
 
 @pytest.mark.trio
 @pytest.mark.parametrize("with_speculative", ("none", "alice2", "both"))
+@customize_fixtures(backend_not_populated=True)
 async def test_concurrent_devices_agree_on_user_manifest(
-    backend_factory,
-    backend_addr,
-    backend_data_binder_factory,
-    server_factory,
+    running_backend,
+    backend_data_binder,
     data_base_dir,
     user_fs_factory,
     coolorg,
@@ -86,114 +87,125 @@ async def test_concurrent_devices_agree_on_user_manifest(
 ):
     KEY = SecretKey.generate()
 
+    async def _switch_running_backend_offline(task_status):
+        should_switch_online = trio.Event()
+        backend_online = trio.Event()
+
+        async def _switch_backend_online():
+            should_switch_online.set()
+            await backend_online.wait()
+
+        with running_backend.offline():
+            task_status.started(_switch_backend_online)
+            await should_switch_online.wait()
+        backend_online.set()
+
     # I call this "diagonal programming"...
-    with freeze_time("2000-01-01"):
-        if with_speculative != "both":
-            await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=alice)
-        async with user_fs_factory(alice, data_base_dir=data_base_dir) as user_fs1:
-            wksp1_id = await user_fs1.workspace_create(EntryName("wksp1"))
+    async with trio.open_nursery() as nursery:
+        switch_back_online = await nursery.start(_switch_running_backend_offline)
 
-            with freeze_time("2000-01-02"):
-                if with_speculative not in ("both", "alice2"):
-                    await user_storage_non_speculative_init(
-                        data_base_dir=data_base_dir, device=alice2
-                    )
-                async with user_fs_factory(alice2, data_base_dir=data_base_dir) as user_fs2:
-                    wksp2_id = await user_fs2.workspace_create(EntryName("wksp2"))
+        with freeze_time("2000-01-01"):
+            if with_speculative != "both":
+                await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=alice)
+            async with user_fs_factory(alice, data_base_dir=data_base_dir) as user_fs1:
+                wksp1_id = await user_fs1.workspace_create(EntryName("wksp1"))
 
-                    with freeze_time("2000-01-03"):
-                        # Only now the backend appear online, this is to ensure each
-                        # userfs has created a user manifest in isolation
-                        async with backend_factory(populated=False) as backend:
+                with freeze_time("2000-01-02"):
+                    if with_speculative not in ("both", "alice2"):
+                        await user_storage_non_speculative_init(
+                            data_base_dir=data_base_dir, device=alice2
+                        )
+                    async with user_fs_factory(alice2, data_base_dir=data_base_dir) as user_fs2:
+                        wksp2_id = await user_fs2.workspace_create(EntryName("wksp2"))
 
-                            binder = backend_data_binder_factory(backend)
-                            await binder.bind_organization(
+                        with freeze_time("2000-01-03"):
+                            # Only now the backend appear offline, this is to ensure each
+                            # userfs has created a user manifest in isolation
+                            await backend_data_binder.bind_organization(
                                 coolorg, alice, initial_user_manifest="not_synced"
                             )
-                            await binder.bind_device(alice2, certifier=alice)
+                            await backend_data_binder.bind_device(alice2, certifier=alice)
 
-                            async with server_factory(backend.handle_client, backend_addr):
+                            await switch_back_online()
 
-                                # Sync user_fs2 first to ensure created_on field is
-                                # kept even if further syncs have an earlier value
-                                with freeze_time("2000-01-04"):
-                                    await user_fs2.sync()
-                                with freeze_time("2000-01-05"):
-                                    await user_fs1.sync()
-                                with freeze_time("2000-01-06"):
-                                    await user_fs2.sync()
+                            # Sync user_fs2 first to ensure created_on field is
+                            # kept even if further syncs have an earlier value
+                            with freeze_time("2000-01-04"):
+                                await user_fs2.sync()
+                            with freeze_time("2000-01-05"):
+                                await user_fs1.sync()
+                            with freeze_time("2000-01-06"):
+                                await user_fs2.sync()
 
-                                # Now, both user fs should have the same view on data
-                                expected_workspaces_entries = (
-                                    WorkspaceEntry(
-                                        name=EntryName("wksp1"),
-                                        id=wksp1_id,
-                                        key=KEY,
-                                        encryption_revision=1,
-                                        encrypted_on=datetime(2000, 1, 1),
-                                        role_cached_on=datetime(2000, 1, 1),
-                                        role=WorkspaceRole.OWNER,
-                                    ),
-                                    WorkspaceEntry(
-                                        name=EntryName("wksp2"),
-                                        id=wksp2_id,
-                                        key=KEY,
-                                        encryption_revision=1,
-                                        encrypted_on=datetime(2000, 1, 2),
-                                        role_cached_on=datetime(2000, 1, 2),
-                                        role=WorkspaceRole.OWNER,
-                                    ),
-                                )
-                                expected_user_manifest = LocalUserManifest(
-                                    base=UserManifest(
-                                        id=alice.user_manifest_id,
-                                        version=2,
-                                        timestamp=datetime(2000, 1, 5),
-                                        author=alice.device_id,
-                                        created=datetime(2000, 1, 2),
-                                        updated=datetime(2000, 1, 2),
-                                        last_processed_message=0,
-                                        workspaces=expected_workspaces_entries,
-                                    ),
-                                    need_sync=False,
+                            # Now, both user fs should have the same view on data
+                            expected_workspaces_entries = (
+                                WorkspaceEntry(
+                                    name=EntryName("wksp1"),
+                                    id=wksp1_id,
+                                    key=KEY,
+                                    encryption_revision=1,
+                                    encrypted_on=datetime(2000, 1, 1),
+                                    role_cached_on=datetime(2000, 1, 1),
+                                    role=WorkspaceRole.OWNER,
+                                ),
+                                WorkspaceEntry(
+                                    name=EntryName("wksp2"),
+                                    id=wksp2_id,
+                                    key=KEY,
+                                    encryption_revision=1,
+                                    encrypted_on=datetime(2000, 1, 2),
+                                    role_cached_on=datetime(2000, 1, 2),
+                                    role=WorkspaceRole.OWNER,
+                                ),
+                            )
+                            expected_user_manifest = LocalUserManifest(
+                                base=UserManifest(
+                                    id=alice.user_manifest_id,
+                                    version=2,
+                                    timestamp=datetime(2000, 1, 5),
+                                    author=alice.device_id,
+                                    created=datetime(2000, 1, 2),
                                     updated=datetime(2000, 1, 2),
                                     last_processed_message=0,
                                     workspaces=expected_workspaces_entries,
-                                    speculative=False,
-                                )
+                                ),
+                                need_sync=False,
+                                updated=datetime(2000, 1, 2),
+                                last_processed_message=0,
+                                workspaces=expected_workspaces_entries,
+                                speculative=False,
+                            )
 
-                                user_fs1_manifest = user_fs1.get_user_manifest()
-                                user_fs2_manifest = user_fs2.get_user_manifest()
+                            user_fs1_manifest = user_fs1.get_user_manifest()
+                            user_fs2_manifest = user_fs2.get_user_manifest()
 
-                                # We use to use ANY for the "key" argument in expected_user_manifest,
-                                # so that we could compare the two instances safely. Sadly, ANY doesn't
-                                # play nicely with the Rust bindings, so we instead update the instances
-                                # to change the key.
-                                user_fs1_manifest = user_fs1_manifest.evolve(
+                            # We use to use ANY for the "key" argument in expected_user_manifest,
+                            # so that we could compare the two instances safely. Sadly, ANY doesn't
+                            # play nicely with the Rust bindings, so we instead update the instances
+                            # to change the key.
+                            user_fs1_manifest = user_fs1_manifest.evolve(
+                                workspaces=tuple(
+                                    w.evolve(key=KEY) for w in user_fs1_manifest.workspaces
+                                ),
+                                base=user_fs1_manifest.base.evolve(
                                     workspaces=tuple(
-                                        w.evolve(key=KEY) for w in user_fs1_manifest.workspaces
-                                    ),
-                                    base=user_fs1_manifest.base.evolve(
-                                        workspaces=tuple(
-                                            w.evolve(key=KEY)
-                                            for w in user_fs1_manifest.base.workspaces
-                                        )
-                                    ),
-                                )
-                                user_fs2_manifest = user_fs2_manifest.evolve(
+                                        w.evolve(key=KEY) for w in user_fs1_manifest.base.workspaces
+                                    )
+                                ),
+                            )
+                            user_fs2_manifest = user_fs2_manifest.evolve(
+                                workspaces=tuple(
+                                    w.evolve(key=KEY) for w in user_fs2_manifest.workspaces
+                                ),
+                                base=user_fs2_manifest.base.evolve(
                                     workspaces=tuple(
-                                        w.evolve(key=KEY) for w in user_fs2_manifest.workspaces
-                                    ),
-                                    base=user_fs2_manifest.base.evolve(
-                                        workspaces=tuple(
-                                            w.evolve(key=KEY)
-                                            for w in user_fs2_manifest.base.workspaces
-                                        )
-                                    ),
-                                )
+                                        w.evolve(key=KEY) for w in user_fs2_manifest.base.workspaces
+                                    )
+                                ),
+                            )
 
-                                assert user_fs1_manifest == expected_user_manifest
-                                assert user_fs2_manifest == expected_user_manifest
+                            assert user_fs1_manifest == expected_user_manifest
+                            assert user_fs2_manifest == expected_user_manifest
 
 
 @pytest.mark.trio
