@@ -135,9 +135,7 @@ async def test_organization_create_already_exists_not_bootstrapped(
 
 
 @pytest.mark.trio
-async def test_organization_create_already_exists_and_bootstrapped(
-    backend, backend_rest_send, coolorg
-):
+async def test_organization_create_already_exists_and_bootstrapped(backend_rest_send, coolorg):
     status, _, body = await backend_rest_send(
         f"/administration/organizations",
         method="POST",
@@ -576,7 +574,7 @@ async def test_organization_stats_users(
 
 
 @pytest.mark.trio
-async def test_handles_escaped_path(backend, backend_rest_send):
+async def test_handles_escaped_path(backend_rest_send):
     organization_id = "CéTACé"
     escaped_organization_id = "C%C3%A9TAC%C3%A9"
     bad_escaped_organization_id = "C%C3%A9TAC%+C3%A9"
