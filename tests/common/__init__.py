@@ -7,6 +7,7 @@ from .event_bus_spy import *  # noqa
 from .fixtures_customisation import *  # noqa
 from .freeze_time import *  # noqa
 from .helpers import *  # noqa
+from .oracles import *  # noqa
 from .population import *  # noqa
 from .postgresql import *  # noqa
 from .smartcard import *  # noqa

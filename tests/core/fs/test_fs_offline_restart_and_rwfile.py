@@ -6,7 +6,7 @@ from hypothesis_trio.stateful import initialize, rule
 
 from parsec.api.data import EntryName
 
-from tests.oracles import FileOracle
+from tests.common import FileOracle
 
 
 BLOCK_SIZE = 16
