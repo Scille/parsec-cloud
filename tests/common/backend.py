@@ -5,8 +5,9 @@ import json
 import trio
 import ssl
 import trustme
+import socket
 from inspect import iscoroutine
-from contextlib import contextmanager, asynccontextmanager
+from contextlib import contextmanager, asynccontextmanager, closing as contextlib_closing
 import tempfile
 from typing import Optional, Callable, Union
 
@@ -17,6 +18,14 @@ from parsec.backend.config import BackendConfig, MockedEmailConfig, MockedBlockS
 from tests.common.freeze_time import freeze_time
 from tests.common.timeout import real_clock_timeout
 from tests.common.binder import OrganizationFullData
+
+
+@pytest.fixture(scope="session")
+def unused_tcp_port():
+    """Find an unused localhost TCP port from 1024-65535 and return it."""
+    with contextlib_closing(socket.socket()) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
 
 
 def correct_addr(
