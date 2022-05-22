@@ -48,22 +48,6 @@ async def bob_remote_devices_manager(remote_devices_manager_factory, bob):
 
 
 @pytest.fixture
-def backend_addr_factory(running_backend, tcp_stream_spy):
-    # Creating new addr for backend make it easy be selective on what to
-    # turn offline
-    counter = 0
-
-    def _backend_addr_factory():
-        nonlocal counter
-        addr = f"tcp://backend-addr-{counter}.localhost:9999"
-        tcp_stream_spy.push_hook(addr, running_backend.connection_factory)
-        counter += 1
-        return addr
-
-    return _backend_addr_factory
-
-
-@pytest.fixture
 async def alice_backend_cmds(running_backend, alice):
     async with backend_authenticated_cmds_factory(
         alice.organization_addr, alice.device_id, alice.signing_key
