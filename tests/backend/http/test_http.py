@@ -6,7 +6,7 @@ import h11
 
 from parsec import __version__ as parsec_version
 from parsec.api.protocol import OrganizationID, InvitationToken, InvitationType
-from parsec.core.types.backend_address import BackendInvitationAddr
+from parsec.core.types.backend_address import BackendAddr, BackendInvitationAddr
 from parsec.backend.app import MAX_INITIAL_HTTP_REQUEST_SIZE
 
 from tests.common import customize_fixtures
@@ -56,19 +56,19 @@ async def _do_test_redirect(backend_http_send):
 
 @customize_fixtures(backend_forward_proto_enforce_https=(b"x-forwarded-proto", b"https"))
 @pytest.mark.trio
-async def test_redirect_proxy(backend, backend_http_send):
+async def test_redirect_proxy(backend_http_send, running_backend):
     await _do_test_redirect(backend_http_send)
 
 
 @customize_fixtures(backend_forward_proto_enforce_https=(b"x-forwarded-proto", b"https"))
 @customize_fixtures(backend_over_ssl=True)
 @pytest.mark.trio
-async def test_forward_proto_enforce_https(backend, backend_http_send):
+async def test_forward_proto_enforce_https(backend_http_send, running_backend):
     await _do_test_redirect(backend_http_send)
 
 
 @pytest.mark.trio
-async def test_invalid_request_line(backend_http_send):
+async def test_invalid_request_line(backend_http_send, running_backend):
     for req in [
         b"\x00",  # Early check should detect this has no chance of being an HTTP request
         b"\r\n\r\n",  # Missing everything :/
@@ -84,7 +84,7 @@ async def test_invalid_request_line(backend_http_send):
 
 
 @pytest.mark.trio
-async def test_upgrade_impossible_from_http_1_0(backend_http_send):
+async def test_upgrade_impossible_from_http_1_0(backend_http_send, running_backend):
     # Upgrade header has been introduced in HTTP 1.1
     req_with_host = (
         b"GET /ws HTTP/1.0\r\n"
@@ -114,20 +114,37 @@ async def test_upgrade_impossible_from_http_1_0(backend_http_send):
 async def test_sender_use_100_continue(running_backend, backend_addr):
     req = b"GET / HTTP/1.1\r\n" b"host: parsec.example.com\r\n" b"Expect: 100-continue\r\n" b"\r\n"
 
-    stream = await open_stream_to_backend(backend_addr)
+    stream = await open_stream_to_backend(
+        hostname=backend_addr.hostname, port=backend_addr.port, use_ssl=backend_addr.use_ssl
+    )
     await stream.send_all(req)
+
+    rep_buf = b""
+
+    async def _receive_rep():
+        nonlocal rep_buf
+        while True:
+            try:
+                rep, rep_buf = rep_buf.split(b"\r\n\r\n", 1)
+                return parse_http_response(rep + b"\r\n\r\n")
+            except ValueError:
+                sub = await stream.receive_some()
+                if not sub:
+                    rep = rep_buf
+                    rep_buf = b""
+                    return parse_http_response(rep + b"\r\n\r\n")
+                rep_buf += sub
+
     # First we should have the continue...
-    rep = await stream.receive_some()
-    status, headers = parse_http_response(rep)
+    status, headers = await _receive_rep()
     assert status == (100, "")
     # ...then the actual response
-    rep = await stream.receive_some()
-    status, headers = parse_http_response(rep)
+    status, headers = await _receive_rep()
     assert status == (200, "OK")
 
 
 @pytest.mark.trio
-async def test_request_is_too_big(backend_http_send):
+async def test_request_is_too_big(backend_http_send, running_backend):
     real_max_initial_http_request_size = MAX_INITIAL_HTTP_REQUEST_SIZE
     max_size_req = b"GET /dummy HTTP/1.0\r\n"
     # Total request is request line + headers + final "\r\n"
@@ -152,8 +169,12 @@ async def test_request_is_too_big(backend_http_send):
     assert len(max_size_req) == real_max_initial_http_request_size
     assert len(too_big_req) == real_max_initial_http_request_size + 1
 
-    status, _, _ = await backend_http_send(req=too_big_req)
-    assert status == (431, "Request Header Fields Too Large")
+    # The server send the response then close the connection rigth away, this is
+    # not really elegant given the client most likely only receive the closed
+    # connection information
+    with pytest.raises(trio.BrokenResourceError):
+        status, _, _ = await backend_http_send(req=too_big_req)
+        assert status == (431, "Request Header Fields Too Large")
 
     # Make sure max size is ok
     status, _, _ = await backend_http_send(req=max_size_req)
@@ -161,7 +182,7 @@ async def test_request_is_too_big(backend_http_send):
 
 
 @pytest.mark.trio
-async def test_upgrade_to_websocket(backend_http_send):
+async def test_upgrade_to_websocket(backend_http_send, running_backend):
     req = (
         b"GET /ws HTTP/1.1\r\n"
         b"connection: upgrade\r\n"
@@ -176,7 +197,7 @@ async def test_upgrade_to_websocket(backend_http_send):
 
 
 @pytest.mark.trio
-async def test_upgrade_to_websocket_bad_target(backend_http_send):
+async def test_upgrade_to_websocket_bad_target(backend_http_send, running_backend):
     # Only /ws target is allowed for upgrade
     req = (
         b"GET /dummy HTTP/1.1\r\n"
@@ -192,7 +213,7 @@ async def test_upgrade_to_websocket_bad_target(backend_http_send):
 
 
 @pytest.mark.trio
-async def test_unknown_upgrade(backend_http_send):
+async def test_unknown_upgrade(backend_http_send, running_backend):
     req_unknown_upgrade_type = (
         b"GET /ws HTTP/1.1\r\n"
         b"connection: upgrade\r\n"
@@ -218,14 +239,14 @@ async def test_unknown_upgrade(backend_http_send):
 
 
 @pytest.mark.trio
-async def test_bad_method(backend_http_send):
+async def test_bad_method(backend_http_send, running_backend):
     req = b"SPAM / HTTP/1.0\r\n\r\n"
     status, _, _ = await backend_http_send(req=req)
     assert status == (405, "Method Not Allowed")
 
 
 @pytest.mark.trio
-async def test_try_keep_alive(backend_http_send):
+async def test_try_keep_alive(backend_http_send, running_backend):
     # Typical request send from a web browser
     req = (
         b"GET / HTTP/1.1\r\n"
@@ -254,16 +275,15 @@ async def test_server_header_in_debug(backend_factory, server_factory, backend_h
 
     async with backend_factory(populated=False, config=config) as backend:
         async with server_factory(backend.handle_client) as server:
+            addr = BackendAddr(hostname="127.0.0.1", port=server.port, use_ssl=False)
             req = b"GET / HTTP/1.0\r\n\r\n"
-            status, headers, _ = await backend_http_send(
-                req=req, addr=server.addr, sanity_checks=False
-            )
+            status, headers, _ = await backend_http_send(req=req, addr=addr, sanity_checks=False)
             assert status == (200, "OK")
             assert headers["server"] == expected_server_label
 
 
 @pytest.mark.trio
-async def test_get_404(backend_http_send):
+async def test_get_404(backend_http_send, running_backend):
     status, headers, body = await backend_http_send("/dummy")
     assert status == (404, "Not Found")
     assert headers["content-type"] == "text/html;charset=utf-8"
@@ -285,21 +305,22 @@ async def test_unexpected_exception_get_500(
     async def _run_server_until_unexpected_exception(*, task_status=trio.TASK_STATUS_IGNORED):
         try:
             async with server_factory(backend.handle_client) as server:
-                task_status.started(server.addr)
+                task_status.started(server.port)
                 await trio.sleep_forever()
         except MyUnexpectedException:
             pass
 
     async with trio.open_nursery() as nursery:
-        backend_addr = await nursery.start(_run_server_until_unexpected_exception)
+        backend_port = await nursery.start(_run_server_until_unexpected_exception)
+        addr = BackendAddr(hostname="127.0.0.1", port=backend_port, use_ssl=False)
 
-        status, *_ = await backend_http_send("/dummy", addr=backend_addr)
+        status, *_ = await backend_http_send("/dummy", addr=addr)
 
         assert status == (500, "Internal Server Error")
 
 
 @pytest.mark.trio
-async def test_get_root(backend_http_send):
+async def test_get_root(backend_http_send, running_backend):
     status, headers, body = await backend_http_send("/")
     assert status == (200, "OK")
     assert headers["content-type"] == "text/html;charset=utf-8"
@@ -307,7 +328,7 @@ async def test_get_root(backend_http_send):
 
 
 @pytest.mark.trio
-async def test_get_static(backend_http_send):
+async def test_get_static(backend_http_send, running_backend):
     # Get resource
     status, headers, body = await backend_http_send("/static/favicon.ico")
     assert status == (200, "OK")
@@ -339,7 +360,7 @@ async def test_get_static(backend_http_send):
 
 @pytest.mark.trio
 @pytest.mark.parametrize("kind", ["ascii", "unicode"])
-async def test_get_redirect(backend_http_send, kind):
+async def test_get_redirect(backend_http_send, running_backend, kind):
     if kind == "ascii":
         target = "foo/bar?a=1&b=2"
     else:
@@ -348,38 +369,42 @@ async def test_get_redirect(backend_http_send, kind):
 
     status, headers, body = await backend_http_send(f"/redirect/{target}")
     assert status == (302, "Found")
-    assert headers["location"] == f"parsec://example.com:9999/{target}&no_ssl=true"
+    assert headers["location"] == f"parsec://127.0.0.1:{running_backend.port}/{target}&no_ssl=true"
     assert not body
 
 
 @pytest.mark.trio
 @customize_fixtures(backend_over_ssl=True)
-async def test_get_redirect_over_ssl(backend_http_send):
+async def test_get_redirect_over_ssl(backend_http_send, running_backend):
     status, headers, body = await backend_http_send("/redirect/foo/bar?a=1&b=2")
     assert status == (302, "Found")
-    assert headers["location"] == "parsec://example.com:9999/foo/bar?a=1&b=2"
+    assert headers["location"] == f"parsec://127.0.0.1:{running_backend.port}/foo/bar?a=1&b=2"
     assert not body
 
 
 @pytest.mark.trio
-async def test_get_redirect_no_ssl_param_overwritten(backend_http_send):
+async def test_get_redirect_no_ssl_param_overwritten(backend_http_send, running_backend):
     status, headers, body = await backend_http_send("/redirect/spam?no_ssl=false&a=1&b=2")
     assert status == (302, "Found")
-    assert headers["location"] == "parsec://example.com:9999/spam?a=1&b=2&no_ssl=true"
+    assert (
+        headers["location"] == f"parsec://127.0.0.1:{running_backend.port}/spam?a=1&b=2&no_ssl=true"
+    )
     assert not body
 
 
 @pytest.mark.trio
 @customize_fixtures(backend_over_ssl=True)
-async def test_get_redirect_no_ssl_param_overwritten_with_ssl_enabled(backend_http_send):
+async def test_get_redirect_no_ssl_param_overwritten_with_ssl_enabled(
+    backend_http_send, running_backend
+):
     status, headers, body = await backend_http_send(f"/redirect/spam?a=1&b=2&no_ssl=true")
     assert status == (302, "Found")
-    assert headers["location"] == "parsec://example.com:9999/spam?a=1&b=2"
+    assert headers["location"] == f"parsec://127.0.0.1:{running_backend.port}/spam?a=1&b=2"
     assert not body
 
 
 @pytest.mark.trio
-async def test_get_redirect_invitation(backend_http_send, backend_addr):
+async def test_get_redirect_invitation(backend_http_send, running_backend, backend_addr):
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=backend_addr,
         organization_id=OrganizationID("Org"),
@@ -396,5 +421,5 @@ async def test_get_redirect_invitation(backend_http_send, backend_addr):
 
 @pytest.mark.trio
 @customize_fixtures(backend_over_ssl=True)
-async def test_get_redirect_invitation_over_ssl(backend_http_send, backend_addr):
-    await test_get_redirect_invitation(backend_http_send, backend_addr)
+async def test_get_redirect_invitation_over_ssl(backend_http_send, running_backend, backend_addr):
+    await test_get_redirect_invitation(backend_http_send, running_backend, backend_addr)
