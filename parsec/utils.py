@@ -231,7 +231,7 @@ async def open_service_nursery():
     patched with extra MultiError capabilities.
     """
     try:
-        async with service_nursery.open_service_nursery() as nursery:
+        async with service_nursery.open_service_nursery_with_multierror() as nursery:
             yield nursery
     except trio.MultiError as exc:
         # Re-raise a Cancelled() if the exception contains a Cancelled()
