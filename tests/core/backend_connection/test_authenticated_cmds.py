@@ -3,6 +3,7 @@
 import trio
 import pytest
 import pendulum
+from functools import partial
 
 from parsec.backend.utils import ClientType
 from parsec.api.transport import Transport, Ping, Pong
@@ -150,7 +151,9 @@ async def test_backend_disconnect_during_handshake(alice):
 
     async with trio.open_service_nursery() as nursery:
 
-        listeners = await nursery.start(trio.serve_tcp, poorly_serve_client, 0)
+        listeners = await nursery.start(
+            partial(trio.serve_tcp, poorly_serve_client, port=0, host="127.0.0.1")
+        )
 
         organization_addr = correct_addr(
             alice.organization_addr, listeners[0].socket.getsockname()[1]

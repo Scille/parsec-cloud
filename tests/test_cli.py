@@ -39,8 +39,6 @@ from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
 from tests.common import AsyncMock
 
 CWD = Path(__file__).parent.parent
-BACKEND_ADDR = "parsec://localhost"
-EMAIL_HOST = "MOCKED"
 
 
 @pytest.fixture(params=WORKSPACE_ROLE_CHOICES.keys())
@@ -276,7 +274,7 @@ def ssl_conf(request):
         yield SSLConf()
     else:
         ca = trustme.CA()
-        server_cert = ca.issue_cert("localhost")
+        server_cert = ca.issue_cert("127.0.0.1")
         with ca.cert_pem.tempfile() as ca_certfile, server_cert.cert_chain_pems[
             0
         ].tempfile() as server_certfile, server_cert.private_key_pem.tempfile() as server_keyfile:
@@ -309,27 +307,28 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
     password = "P@ssw0rd."
     administration_token = "9e57754ddfe62f7f8780edc0"
 
+    backend_url = f"parsec://127.0.0.1:{unused_tcp_port}"
+    if not ssl_conf.use_ssl:
+        backend_url += "?no_ssl=true"
+
     print("######## START BACKEND #########")
     with _running(
         (
             f"backend run --db=MOCKED --blockstore=MOCKED"
             f" --administration-token={administration_token}"
             f" --port={unused_tcp_port}"
-            f" --backend-addr={BACKEND_ADDR}"
-            f" --email-host={EMAIL_HOST}"
+            f" --backend-addr={backend_url}"
+            f" --email-host=MOCKED"
             f" {ssl_conf.backend_opts}"
         ),
         wait_for="Starting Parsec Backend",
     ):
 
         print("####### Create organization #######")
-        admin_url = f"parsec://localhost:{unused_tcp_port}"
-        if not ssl_conf.use_ssl:
-            admin_url += "?no_ssl=true"
 
         p = _run(
             "core create_organization "
-            f"{org} --addr={admin_url} "
+            f"{org} --addr={backend_url} "
             f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
         )
@@ -363,7 +362,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         print("####### Stats organization #######")
         _run(
             "core stats_organization "
-            f"{org} --addr={admin_url} "
+            f"{org} --addr={backend_url} "
             f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
         )
@@ -371,7 +370,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         print("####### Status organization #######")
         _run(
             "core status_organization "
-            f"{org} --addr={admin_url} "
+            f"{org} --addr={backend_url} "
             f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
         )
@@ -689,13 +688,9 @@ async def cli_with_running_backend_testbed(backend, *devices):
     # unexpected errors !
     async with trio.open_service_nursery() as nursery:
         listeners = await nursery.start(
-            lambda task_status: trio.serve_tcp(
-                backend.handle_client, host="0.0.0.0", port=0, task_status=task_status
-            )
+            partial(trio.serve_tcp, backend.handle_client, port=0, host="127.0.0.1")
         )
         _, port, *_ = listeners[0].socket.getsockname()
-        # Given we specified host=0.0.0.0, we are sure the listener is for IPv4 and
-        # hence is accessible with 127.0.0.1
         backend_addr = BackendAddr("127.0.0.1", port, use_ssl=False)
 
         # Now the local device point to an invalid backend address, must fix this

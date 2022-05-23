@@ -9,6 +9,7 @@ import socket
 from inspect import iscoroutine
 from contextlib import contextmanager, asynccontextmanager, closing as contextlib_closing
 import tempfile
+from functools import partial
 from typing import Optional, Callable, Union
 
 from parsec.core.types import BackendAddr, LocalDevice
@@ -117,12 +118,8 @@ def server_factory():
         async with trio.open_service_nursery() as nursery:
 
             listeners = await nursery.start(
-                lambda task_status: trio.serve_tcp(
-                    _serve_client,
-                    host=hostname,
-                    port=0,
-                    handler_nursery=nursery,
-                    task_status=task_status,
+                partial(
+                    trio.serve_tcp, _serve_client, port=0, host=hostname, handler_nursery=nursery
                 )
             )
             _, port, *_ = listeners[0].socket.getsockname()

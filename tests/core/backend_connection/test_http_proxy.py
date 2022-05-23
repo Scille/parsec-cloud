@@ -21,13 +21,13 @@ async def start_proxy_for_websocket(nursery, target_port, event_hook):
     async def _proxy_client_handler(stream):
         # To simplify things, we consider a the http requests/responses are
         # contained in single tcp trame. This is not strictly true in real life
-        # but is close enough when staying on localhost.
+        # but is close enough when staying on localhost
         # 1) Receive proxy connection request
         req = await stream.receive_some(1024)
         match = re.match(
             (
-                rb"^CONNECT localhost:([0-9]+) HTTP/1.1\r\n"
-                rb"Host: localhost:([0-9]+)\r\n"
+                rb"^CONNECT 127.0.0.1:([0-9]+) HTTP/1.1\r\n"
+                rb"Host: 127.0.0.1:([0-9]+)\r\n"
                 rb"User-Agent: parsec/[^\r]+\r\n"
                 rb"\r\n$"
             ),
@@ -44,7 +44,7 @@ async def start_proxy_for_websocket(nursery, target_port, event_hook):
         assert re.match(
             (
                 rb"^GET /ws HTTP/1.1\r\n"
-                rb"Host: localhost\r\n"
+                rb"Host: 127.0.0.1\r\n"
                 rb"Upgrade: WebSocket\r\n"
                 rb"Connection: Upgrade\r\n"
                 rb"Sec-WebSocket-Key: [^\r]+\r\n"
@@ -63,7 +63,7 @@ async def start_proxy_for_websocket(nursery, target_port, event_hook):
         await trio.sleep_forever()  # Let peer close the connection
 
     proxy_listeners = await nursery.start(
-        partial(trio.serve_tcp, _proxy_client_handler, 0, host="localhost")
+        partial(trio.serve_tcp, _proxy_client_handler, 0, host="127.0.0.1")
     )
     proxy_port = proxy_listeners[0].socket.getsockname()[1]
 
@@ -88,7 +88,7 @@ async def start_pac_server(nursery, pac_rule, event_hook):
         await trio.sleep_forever()  # Let peer close the connection
 
     pac_listeners = await nursery.start(
-        partial(trio.serve_tcp, _pac_client_handler, 0, host="localhost")
+        partial(trio.serve_tcp, _pac_client_handler, 0, host="127.0.0.1")
     )
     pac_port = pac_listeners[0].socket.getsockname()[1]
 
@@ -104,7 +104,7 @@ async def start_port_watchdog(nursery, event_hook):
         await trio.sleep_forever()  # Let peer close the connection
 
     target_listeners = await nursery.start(
-        partial(trio.serve_tcp, _target_client_handler, 0, host="localhost")
+        partial(trio.serve_tcp, _target_client_handler, 0, host="127.0.0.1")
     )
     target_port = target_listeners[0].socket.getsockname()[1]
 
@@ -128,24 +128,24 @@ async def test_proxy_with_websocket(monkeypatch, connection_type, proxy_type):
         proxy_port = await start_proxy_for_websocket(nursery, target_port, _event_hook)
 
         if proxy_type == "http_proxy":
-            proxy_url = f"http://localhost:{proxy_port}"
+            proxy_url = f"http://127.0.0.1:{proxy_port}"
             monkeypatch.setitem(os.environ, "http_proxy", proxy_url)
         else:
             assert proxy_type == "http_proxy_pac"
             pac_server_port = await start_pac_server(
-                nursery=nursery, pac_rule=f"PROXY localhost:{proxy_port}", event_hook=_event_hook
+                nursery=nursery, pac_rule=f"PROXY 127.0.0.1:{proxy_port}", event_hook=_event_hook
             )
-            pac_server_url = f"http://localhost:{pac_server_port}"
+            pac_server_url = f"http://127.0.0.1:{pac_server_port}"
             monkeypatch.setitem(os.environ, "http_proxy_pac", pac_server_url)
             # HTTP_PROXY_PAC has priority over HTTP_PROXY
-            monkeypatch.setitem(os.environ, "http_proxy", f"http://localhost:{target_port}")
+            monkeypatch.setitem(os.environ, "http_proxy", f"http://127.0.0.1:{target_port}")
 
         with trio.fail_after(1):
             with pytest.raises(BackendNotAvailable):
                 if connection_type == "authenticated":
                     await connect_as_authenticated(
                         addr=BackendOrganizationAddr.from_url(
-                            f"parsec://localhost:{target_port}/CoolOrg?no_ssl=true&rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss"
+                            f"parsec://127.0.0.1:{target_port}/CoolOrg?no_ssl=true&rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss"
                         ),
                         device_id=device_id,
                         signing_key=signing_key,
@@ -155,7 +155,7 @@ async def test_proxy_with_websocket(monkeypatch, connection_type, proxy_type):
                     assert connection_type == "invited"
                     await connect_as_invited(
                         addr=BackendInvitationAddr.from_url(
-                            f"parsec://localhost:{target_port}/CoolOrg?no_ssl=true&action=claim_user&token=3a50b191122b480ebb113b10216ef343"
+                            f"parsec://127.0.0.1:{target_port}/CoolOrg?no_ssl=true&action=claim_user&token=3a50b191122b480ebb113b10216ef343"
                         )
                     )
 
@@ -182,14 +182,14 @@ async def test_proxy_with_http(monkeypatch, proxy_type):
         async def _proxy_client_handler(stream):
             # To simplify things, we consider a the http requests/responses are
             # contained in single tcp trame. This is not strictly true in real life
-            # but is close enough when staying on localhost.
+            # but is close enough when staying on 127.0.0.1.
             req = await stream.receive_some(1024)
             match = re.match(
                 (
-                    rb"^POST http://localhost:([0-9]+)/foo HTTP/1.1\r\n"
+                    rb"^POST http://127.0.0.1:([0-9]+)/foo HTTP/1.1\r\n"
                     rb"Accept-Encoding: identity\r\n"
                     rb"Content-Length: 0\r\n"
-                    rb"Host: localhost:([0-9]+)\r\n"
+                    rb"Host: 127.0.0.1:([0-9]+)\r\n"
                     rb"User-Agent: [^\r]+\r\n"
                     rb"Connection: close\r\n"
                     rb"\r\n$"
@@ -203,26 +203,26 @@ async def test_proxy_with_http(monkeypatch, proxy_type):
             _event_hook("Connected to proxy")
 
         proxy_listeners = await nursery.start(
-            partial(trio.serve_tcp, _proxy_client_handler, 0, host="localhost")
+            partial(trio.serve_tcp, _proxy_client_handler, 0, host="127.0.0.1")
         )
         proxy_port = proxy_listeners[0].socket.getsockname()[1]
         target_port = await start_port_watchdog(nursery, _event_hook)
 
         if proxy_type == "http_proxy":
-            proxy_url = f"http://localhost:{proxy_port}"
+            proxy_url = f"http://127.0.0.1:{proxy_port}"
             monkeypatch.setitem(os.environ, "http_proxy", proxy_url)
         else:
             assert proxy_type == "http_proxy_pac"
             pac_server_port = await start_pac_server(
-                nursery=nursery, pac_rule=f"PROXY localhost:{proxy_port}", event_hook=_event_hook
+                nursery=nursery, pac_rule=f"PROXY 127.0.0.1:{proxy_port}", event_hook=_event_hook
             )
-            pac_server_url = f"http://localhost:{pac_server_port}"
+            pac_server_url = f"http://127.0.0.1:{pac_server_port}"
             monkeypatch.setitem(os.environ, "http_proxy_pac", pac_server_url)
             # HTTP_PROXY_PAC has priority over HTTP_PROXY
-            monkeypatch.setitem(os.environ, "http_proxy", f"http://localhost:{target_port}")
+            monkeypatch.setitem(os.environ, "http_proxy", f"http://127.0.0.1:{target_port}")
 
         with trio.fail_after(1):
-            rep = await http_request(f"http://localhost:{target_port}/foo", method="POST")
+            rep = await http_request(f"http://127.0.0.1:{target_port}/foo", method="POST")
             assert rep == b"hello"
 
         assert proxy_events == [
@@ -249,7 +249,7 @@ async def test_no_proxy_with_http(monkeypatch, type):
             pass
         elif type == "no_proxy_from_env":
             dont_use_proxy_port = await start_port_watchdog(nursery, _event_hook)
-            dont_use_proxy_url = f"http://localhost:{dont_use_proxy_port}"
+            dont_use_proxy_url = f"http://127.0.0.1:{dont_use_proxy_port}"
             monkeypatch.setitem(os.environ, "no_proxy", "*")
             # Should be ignored
             monkeypatch.setitem(os.environ, "http_proxy", dont_use_proxy_url)
@@ -257,11 +257,11 @@ async def test_no_proxy_with_http(monkeypatch, type):
         else:
             assert type == "no_proxy_from_pac"
             dont_use_proxy_port = await start_port_watchdog(nursery, _event_hook)
-            dont_use_proxy_url = f"http://localhost:{dont_use_proxy_port}"
+            dont_use_proxy_url = f"http://127.0.0.1:{dont_use_proxy_port}"
             pac_server_port = await start_pac_server(
                 nursery=nursery, pac_rule="DIRECT", event_hook=_event_hook
             )
-            pac_server_url = f"http://localhost:{pac_server_port}"
+            pac_server_url = f"http://127.0.0.1:{pac_server_port}"
             monkeypatch.setitem(os.environ, "http_proxy_pac", pac_server_url)
             # Should be ignored
             monkeypatch.setitem(os.environ, "http_proxy", dont_use_proxy_url)
@@ -270,14 +270,14 @@ async def test_no_proxy_with_http(monkeypatch, type):
         async def _target_client_handler(stream):
             # To simplify things, we consider a the http requests/responses are
             # contained in single tcp trame. This is not strictly true in real life
-            # but is close enough when staying on localhost.
+            # but is close enough when staying on 127.0.0.1.
             req = await stream.receive_some(1024)
             match = re.match(
                 (
                     rb"^POST /foo HTTP/1.1\r\n"
                     rb"Accept-Encoding: identity\r\n"
                     rb"Content-Length: 0\r\n"
-                    rb"Host: localhost:([0-9]+)\r\n"
+                    rb"Host: 127.0.0.1:([0-9]+)\r\n"
                     rb"User-Agent: [^\r]+\r\n"
                     rb"Connection: close\r\n"
                     rb"\r\n$"
@@ -291,12 +291,12 @@ async def test_no_proxy_with_http(monkeypatch, type):
             _event_hook("Connected to target")
 
         target_listeners = await nursery.start(
-            partial(trio.serve_tcp, _target_client_handler, 0, host="localhost")
+            partial(trio.serve_tcp, _target_client_handler, 0, host="127.0.0.1")
         )
         target_port = target_listeners[0].socket.getsockname()[1]
 
         with trio.fail_after(1):
-            rep = await http_request(f"http://localhost:{target_port}/foo", method="POST")
+            rep = await http_request(f"http://127.0.0.1:{target_port}/foo", method="POST")
             assert rep == b"hello"
 
         assert proxy_events == [
