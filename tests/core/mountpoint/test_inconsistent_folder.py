@@ -9,6 +9,7 @@ from pathlib import Path
 
 from parsec.core.mountpoint import mountpoint_manager_factory
 from parsec.test_utils import create_inconsistent_workspace
+from tests.common import customize_fixtures
 
 
 # winerror codes corresponding to ntstatus errors
@@ -35,6 +36,7 @@ async def test_inconsistent_folder_no_network(base_mountpoint, running_backend, 
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
+@customize_fixtures(real_data_storage=True)
 async def test_inconsistent_folder_with_network(base_mountpoint, running_backend, alice_user_fs):
     async with mountpoint_manager_factory(
         alice_user_fs, alice_user_fs.event_bus, base_mountpoint

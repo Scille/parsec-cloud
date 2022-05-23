@@ -11,7 +11,7 @@ from parsec.core.fs import FsPath
 from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint.manager import mountpoint_manager_factory
 
-from tests.common import create_shared_workspace
+from tests.common import create_shared_workspace, customize_fixtures
 
 
 @pytest.mark.mountpoint

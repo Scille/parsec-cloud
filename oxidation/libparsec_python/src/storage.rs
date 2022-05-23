@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use crate::binding_utils::{py_to_rs_regex, rs_to_py_regex};
-use crate::ids::{BlockID, ChunkID, EntryID, FileDescriptor};
+use crate::ids::{BlockID, ChunkID, EntryID};
 use crate::local_device::LocalDevice;
 use crate::local_manifest::{
     LocalFileManifest, LocalFolderManifest, LocalUserManifest, LocalWorkspaceManifest,
@@ -47,14 +47,13 @@ impl WorkspaceStorage {
 
     fn set_prevent_sync_pattern(&mut self, py: Python, pattern: &PyAny) -> PyResult<()> {
         self.1 = Some(PyObject::from(pattern));
-        println!("1");
-        crate::timer!(let pattern = py_to_rs_regex(pattern)?;
+        let pattern = py_to_rs_regex(pattern)?;
         py.allow_threads(|| {
             self.0
                 .set_prevent_sync_pattern(&pattern)
                 .map_err(|e| PyValueError::new_err(e.to_string()))?;
             Ok(())
-        }))
+        })
     }
 
     fn mark_prevent_sync_pattern_fully_applied(
@@ -62,13 +61,12 @@ impl WorkspaceStorage {
         py: Python,
         pattern: &PyAny,
     ) -> PyResult<()> {
-        println!("2");
-        crate::timer!(let pattern = py_to_rs_regex(pattern)?;
+        let pattern = py_to_rs_regex(pattern)?;
         py.allow_threads(|| {
             self.0
                 .mark_prevent_sync_pattern_fully_applied(&pattern)
                 .map_err(|e| PyValueError::new_err(e.to_string()))
-        }))
+        })
     }
 
     fn get_prevent_sync_pattern<'py>(&'py self, py: Python<'py>) -> PyResult<&'py PyAny> {
@@ -127,8 +125,7 @@ impl WorkspaceStorage {
         check_lock_status: bool,
         removed_ids: Option<HashSet<ChunkID>>,
     ) -> PyResult<()> {
-        println!("7");
-        crate::timer!(let manifest = if let Ok(manifest) = manifest.extract::<LocalFileManifest>(py) {
+        let manifest = if let Ok(manifest) = manifest.extract::<LocalFileManifest>(py) {
             parsec_client_types::LocalManifest::File(manifest.0)
         } else if let Ok(manifest) = manifest.extract::<LocalFolderManifest>(py) {
             parsec_client_types::LocalManifest::Folder(manifest.0)
@@ -150,81 +147,71 @@ impl WorkspaceStorage {
                     }),
                 )
                 .map_err(|e| PyValueError::new_err(e.to_string()))
-        }))
+        })
     }
 
     fn clear_manifest(&self, py: Python, entry_id: EntryID) -> PyResult<()> {
-        println!("8");
-        crate::timer!(py.allow_threads(|| {
+        py.allow_threads(|| {
             self.0
                 .clear_manifest(entry_id.0)
                 .map_err(|_| FSLocalMissError::new_err(entry_id))
-        }))
+        })
     }
 
-    fn create_file_descriptor(
-        &self,
-        py: Python,
-        manifest: LocalFileManifest,
-    ) -> PyResult<FileDescriptor> {
-        py.allow_threads(|| Ok(FileDescriptor(self.0.create_file_descriptor(manifest.0))))
+    fn create_file_descriptor(&self, py: Python, manifest: LocalFileManifest) -> PyResult<i32> {
+        py.allow_threads(|| Ok(self.0.create_file_descriptor(manifest.0).0))
     }
 
-    fn load_file_descriptor(&self, py: Python, fd: FileDescriptor) -> PyResult<LocalFileManifest> {
+    fn load_file_descriptor(&self, py: Python, fd: i32) -> PyResult<LocalFileManifest> {
         py.allow_threads(|| {
             Ok(LocalFileManifest(
                 self.0
-                    .load_file_descriptor(fd.0)
+                    .load_file_descriptor(parsec_api_types::FileDescriptor(fd))
                     .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))?,
             ))
         })
     }
 
-    fn remove_file_descriptor(&self, py: Python, fd: FileDescriptor) -> PyResult<()> {
+    fn remove_file_descriptor(&self, py: Python, fd: i32) -> PyResult<()> {
         py.allow_threads(|| {
             self.0
-                .remove_file_descriptor(fd.0)
+                .remove_file_descriptor(parsec_api_types::FileDescriptor(fd))
                 .map(|_| ())
                 .ok_or_else(|| FSInvalidFileDescriptor::new_err(""))
         })
     }
 
     fn set_clean_block(&self, py: Python, block_id: BlockID, block: &[u8]) -> PyResult<()> {
-        println!("12");
-        crate::timer!(py.allow_threads(|| {
+        py.allow_threads(|| {
             self.0
                 .set_clean_block(block_id.0, block)
                 .map_err(|e| PyValueError::new_err(e.to_string()))
-        }))
+        })
     }
 
     fn clear_clean_block(&self, py: Python, block_id: BlockID) -> PyResult<()> {
-        println!("13");
-        crate::timer!(py.allow_threads(|| {
+        py.allow_threads(|| {
             self.0.clear_clean_block(block_id.0);
             Ok(())
-        }))
+        })
     }
 
     fn get_dirty_block<'py>(&self, py: Python<'py>, block_id: BlockID) -> PyResult<&'py PyBytes> {
-        println!("14");
-        crate::timer!(let block = py
+        let block = py
             .allow_threads(|| self.0.get_dirty_block(block_id.0))
             .map_err(|_| FSLocalMissError::new_err(block_id))?;
-        Ok(PyBytes::new(py, &block)))
+        Ok(PyBytes::new(py, &block))
     }
 
     fn get_chunk<'py>(&self, py: Python<'py>, chunk_id: ChunkID) -> PyResult<&'py PyBytes> {
-        println!("15");
-        crate::timer!(let chunk = py
+        let chunk = py
             .allow_threads(|| self.0.get_chunk(chunk_id.0))
             .map_err(|_| FSLocalMissError::new_err(chunk_id))?;
-        Ok(PyBytes::new(py, &chunk)))
+        Ok(PyBytes::new(py, &chunk))
     }
 
     fn set_chunk(&self, py: Python, chunk_id: ChunkID, block: PyObject) -> PyResult<()> {
-        println!("16");
-        crate::timer!(let block = if let Ok(block) = block.extract::<&PyByteArray>(py) {
+        let block = if let Ok(block) = block.extract::<&PyByteArray>(py) {
             // Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
             // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
             // python thread modifying the bytearray behind our back.
@@ -241,17 +228,16 @@ impl WorkspaceStorage {
             self.0
                 .set_chunk(chunk_id.0, block)
                 .map_err(|e| PyValueError::new_err(e.to_string()))
-        }))
+        })
     }
 
     #[args(miss_ok = false)]
     fn clear_chunk(&self, py: Python, chunk_id: ChunkID, miss_ok: bool) -> PyResult<()> {
-        println!("17");
-        crate::timer!(py.allow_threads(|| {
+        py.allow_threads(|| {
             self.0
                 .clear_chunk(chunk_id.0, miss_ok)
                 .map_err(|_| FSLocalMissError::new_err(chunk_id))
-        }))
+        })
     }
 
     fn get_realm_checkpoint(&self, py: Python) -> PyResult<i32> {
@@ -292,12 +278,11 @@ impl WorkspaceStorage {
     }
 
     fn ensure_manifest_persistent(&self, py: Python, entry_id: EntryID) -> PyResult<()> {
-        println!("20");
-        crate::timer!(py.allow_threads(|| {
+        py.allow_threads(|| {
             self.0
                 .ensure_manifest_persistent(entry_id.0)
                 .map_err(|e| PyValueError::new_err(e.to_string()))
-        }))
+        })
     }
 
     #[args(flush = true)]
@@ -322,8 +307,7 @@ impl WorkspaceStorage {
         py: Python,
         chunk_ids: Vec<ChunkID>,
     ) -> PyResult<Vec<ChunkID>> {
-        println!("23");
-        crate::timer!(py.allow_threads(|| {
+        py.allow_threads(|| {
             Ok(self
                 .0
                 .block_storage_get_local_chunk_ids(
@@ -333,7 +317,7 @@ impl WorkspaceStorage {
                 .into_iter()
                 .map(ChunkID)
                 .collect())
-        }))
+        })
     }
 
     fn chunk_storage_get_local_chunk_ids(
@@ -341,8 +325,7 @@ impl WorkspaceStorage {
         py: Python,
         chunk_ids: Vec<ChunkID>,
     ) -> PyResult<Vec<ChunkID>> {
-        println!("24");
-        crate::timer!(py.allow_threads(|| {
+        py.allow_threads(|| {
             Ok(self
                 .0
                 .chunk_storage_get_local_chunk_ids(
@@ -352,7 +335,7 @@ impl WorkspaceStorage {
                 .into_iter()
                 .map(ChunkID)
                 .collect())
-        }))
+        })
     }
 
     #[getter]
@@ -364,16 +347,4 @@ impl WorkspaceStorage {
     fn workspace_id(&self) -> PyResult<EntryID> {
         Ok(EntryID(self.0.workspace_id))
     }
-}
-
-#[macro_export]
-macro_rules! timer {
-    ($($tt:tt)*) => {
-        {
-            let t0 = std::time::Instant::now();
-            let v = { $($tt)* };
-            println!("{:?}", t0.elapsed());
-            v
-        }
-    };
 }

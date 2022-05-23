@@ -765,34 +765,3 @@ impl HumanHandle {
         Ok(&self.0.label)
     }
 }
-
-#[pyclass]
-#[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct FileDescriptor(pub parsec_api_types::FileDescriptor);
-
-#[pymethods]
-impl FileDescriptor {
-    #[new]
-    pub fn new(index: i32) -> PyResult<Self> {
-        Ok(Self(parsec_api_types::FileDescriptor(index)))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0 .0.to_string(), py)
-    }
-
-    fn __richcmp__(&self, other: i32, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 .0 == other,
-            CompareOp::Ne => self.0 .0 != other,
-            CompareOp::Lt => self.0 .0 < other,
-            CompareOp::Gt => self.0 .0 > other,
-            CompareOp::Le => self.0 .0 <= other,
-            CompareOp::Ge => self.0 .0 >= other,
-        }
-    }
-}
