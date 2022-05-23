@@ -1,1 +1,0 @@
-Fix 500 error in the server when using redirection with an organization containing non-ascii characters

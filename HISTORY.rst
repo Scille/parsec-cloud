@@ -5,6 +5,17 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.9.2 (2022-05-23)
+--------------------------
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Fix 500 error in the server when using redirection with an organization
+  containing non-ascii characters  (`#2339 <https://github.com/Scille/parsec-
+  cloud/issues/2339>`__)
+
+
 Parsec v2.9.1 (2022-05-23)
 --------------------------
 
