@@ -12,4 +12,4 @@ winfspy[test]==0.8.3;platform_system=="Windows"
 sphinx==4.5.0
 sphinx-intl==2.0.1
 sphinx-rtd-theme==1.0.0
-psutil==5.9.0
+psutil==5.9.1
