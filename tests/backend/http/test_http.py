@@ -338,10 +338,17 @@ async def test_get_static(backend_http_send):
 
 
 @pytest.mark.trio
-async def test_get_redirect(backend_http_send):
-    status, headers, body = await backend_http_send("/redirect/foo/bar?a=1&b=2")
+@pytest.mark.parametrize("kind", ["ascii", "unicode"])
+async def test_get_redirect(backend_http_send, kind):
+    if kind == "ascii":
+        target = "foo/bar?a=1&b=2"
+    else:
+        assert kind == "unicode"
+        target = "%E4%BD%A0%E5%A5%BD/%E8%82%AF%E8%AF%BA%E6%AF%94?%E4%B8%8A%E5%B0%86=%E8%A1%8C"
+
+    status, headers, body = await backend_http_send(f"/redirect/{target}")
     assert status == (302, "Found")
-    assert headers["location"] == "parsec://example.com:9999/foo/bar?a=1&b=2&no_ssl=true"
+    assert headers["location"] == f"parsec://example.com:9999/{target}&no_ssl=true"
     assert not body
 
 
