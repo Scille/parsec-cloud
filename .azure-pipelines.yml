@@ -396,7 +396,7 @@ jobs:
       python.exe --version
       pip uninstall pipx -y  # dunno why this thing is here...
       # pip 20.3 introduces the new dependency resolver
-      pip install pip>=20.3 --user --upgrade
+      python -m pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
       choco install -y --limit-output winfsp --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
