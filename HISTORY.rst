@@ -5,6 +5,13 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.9.1 (2022-05-23)
+--------------------------
+
+* Fix rare error when loading remote data under load (`#2336
+  <https://github.com/Scille/parsec-cloud/issues/2336>`__)
+
+
 Parsec v2.9.0 (2022-05-20)
 --------------------------
 
