@@ -119,3 +119,14 @@ class WorkspaceNameValidator(QValidator):
 class NotEmptyValidator(QValidator):
     def validate(self, string, pos):
         return QValidator.Acceptable if len(string) else QValidator.Invalid, string, pos
+
+
+class FileNameValidator(QValidator):
+    def validate(self, string, pos):
+        try:
+            if len(string) == 0:
+                return QValidator.Intermediate, string, pos
+            EntryName(string)
+            return QValidator.Acceptable, string, pos
+        except ValueError:
+            return QValidator.Invalid, string, pos
