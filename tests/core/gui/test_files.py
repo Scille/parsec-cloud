@@ -413,6 +413,7 @@ async def test_file_browsing_and_edit(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_show_inconsistent_dir(
     aqtbot, autoclose_dialog, files_widget_testbed, running_backend
 ):
@@ -750,6 +751,7 @@ def catch_file_status_widget(widget_catcher_factory):
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_show_file_status(
     running_backend, aqtbot, autoclose_dialog, files_widget_testbed, catch_file_status_widget
 ):
@@ -844,7 +846,6 @@ async def test_show_file_status(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_import_file_disk_full(
     monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):

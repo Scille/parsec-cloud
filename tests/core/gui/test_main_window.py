@@ -116,7 +116,7 @@ async def logged_gui_with_files(
         # Important: this is necessary for the incoming click to reliably work
         assert wk_button.switch_button.isChecked()
 
-    await aqtbot.wait_until(_workspace_button_ready)
+    await aqtbot.wait_until(_workspace_button_ready, timeout=3000)
 
     f_w = logged_gui.test_get_files_widget()
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
@@ -708,7 +708,7 @@ async def test_outsider_profil_limit(
         workspace_button = layout_workspace.widget()
         assert not isinstance(workspace_button, QtWidgets.QLabel)
 
-    await aqtbot.wait_until(_workspace_button_shown)
+    await aqtbot.wait_until(_workspace_button_shown, timeout=3000)
     layout_workspace = w_w.layout_workspaces.itemAt(0)
     workspace_button = layout_workspace.widget()
     assert workspace_button.button_share.isVisible() is False

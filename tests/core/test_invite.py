@@ -411,6 +411,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
 @pytest.mark.parametrize(
     "fail_on_step", ["wait_peer", "signify_trust", "wait_peer_trust", "claim_device"]
 )
+@customize_fixtures(real_data_storage=True)
 async def test_claimer_handle_cancel_event(
     backend, running_backend, alice, alice_backend_cmds, fail_on_step
 ):

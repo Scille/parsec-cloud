@@ -605,7 +605,7 @@ async def test_greet_user_invitation_cancelled(
             # expected_message = translate("TEXT_GREET_USER_GET_REQUESTS_ERROR")
             await self._cancel_invitation()
 
-            await aqtbot.wait_until(partial(self._greet_restart, expected_message))
+            await aqtbot.wait_until(partial(self._greet_restart, expected_message), timeout=2000)
 
             return None
 

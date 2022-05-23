@@ -117,6 +117,7 @@ async def test_rename_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui, snackbar_catcher):
     c_w = logged_gui.test_get_central_widget()
 
@@ -150,6 +151,7 @@ async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui
 
 @pytest.mark.gui
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logged_gui, monkeypatch):
     # Disable actual mount given we are only testing the GUI here
     open_workspace_mock = Mock()

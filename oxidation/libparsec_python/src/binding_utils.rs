@@ -120,7 +120,7 @@ pub fn py_to_rs_regex(regex: &PyAny) -> PyResult<Regex> {
     let regex = regex
         .getattr("pattern")
         .unwrap_or(regex)
-        .extract::<String>()?
+        .extract::<&str>()?
         .replace("\\Z", "\\z")
         .replace("\\ ", "\x20");
     Regex::new(&regex).map_err(|e| PyValueError::new_err(e.to_string()))
