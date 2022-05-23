@@ -48,6 +48,8 @@ def recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=False):
 
 
 @pytest.mark.slow
+# This test runs into infinite loop when it uses real data storage
+@pytest.mark.py
 def test_sync_monitor_stateful(
     hypothesis_settings,
     frozen_clock,

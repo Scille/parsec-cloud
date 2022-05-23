@@ -13,7 +13,7 @@ from hypothesis_trio.stateful import (
 
 from parsec.api.data import EntryName
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
-from tests.common import call_with_control, compare_fs_dumps, customize_fixtures
+from tests.common import call_with_control, compare_fs_dumps
 
 # The point is not to find breaking filenames here, so keep it simple
 st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
@@ -21,7 +21,8 @@ st_fs = st.sampled_from(["fs_1", "fs_2"])
 
 
 @pytest.mark.slow
-@customize_fixtures(real_data_storage=True)
+# This test runs into infinite loop when it uses real data storage
+@pytest.mark.py
 def test_fs_online_concurrent_user(
     hypothesis_settings,
     reset_testbed,

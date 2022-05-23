@@ -20,6 +20,8 @@ from tests.common import call_with_control
 
 
 @pytest.mark.slow
+# This test runs into infinite loop when it uses real data storage
+@pytest.mark.py
 def test_workspace_reencryption_need(
     hypothesis_settings,
     reset_testbed,

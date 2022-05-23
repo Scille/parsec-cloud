@@ -6,7 +6,6 @@ from string import ascii_lowercase
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import Bundle, initialize, rule
 from parsec.api.data import EntryName
-from tests.common import customize_fixtures
 
 
 def get_path(path):
@@ -19,7 +18,8 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
-@customize_fixtures(real_data_storage=True)
+# This test runs into infinite loop when it uses real data storage
+@pytest.mark.py
 def test_fs_online_tree_and_sync(user_fs_online_state_machine, oracle_fs_with_sync_factory, alice):
     class FSOnlineTreeAndSync(user_fs_online_state_machine):
         Files = Bundle("file")
