@@ -20,7 +20,7 @@ fn split_read(size: u64, offset: u64, blocksize: u64) -> Box<dyn Iterator<Item =
         let blockstart = block * blocksize;
         let substart = max(offset, blockstart);
         let substop = min(offset + size, blockstart + blocksize);
-        (block, substop - substart, substart)
+        (block, substop.checked_sub(substart).unwrap(), substart)
     }))
 }
 
@@ -30,7 +30,7 @@ fn block_read(chunks: &[Chunk], size: u64, start: u64) -> Box<dyn Iterator<Item 
     // Bisect
     let start_index = match chunks.binary_search_by_key(&start, |x| x.start) {
         Ok(x) => x,
-        Err(x) => x - 1,
+        Err(x) => x.checked_sub(1).unwrap(),
     };
     let stop_index = match chunks.binary_search_by_key(&stop, |x| x.start) {
         Ok(x) => x,
@@ -38,17 +38,23 @@ fn block_read(chunks: &[Chunk], size: u64, start: u64) -> Box<dyn Iterator<Item 
     };
 
     // Loop over chunks
-    Box::new(chunks[start_index..stop_index].iter().map(move |chunk| {
-        let mut new_chunk = chunk.clone();
-        new_chunk.start = max(chunk.start, start);
-        new_chunk.stop = min(chunk.stop, NonZeroU64::new(stop).unwrap());
-        new_chunk
-    }))
+    Box::new(
+        chunks
+            .get(start_index..stop_index)
+            .unwrap()
+            .iter()
+            .map(move |chunk| {
+                let mut new_chunk = chunk.clone();
+                new_chunk.start = max(chunk.start, start);
+                new_chunk.stop = min(chunk.stop, NonZeroU64::new(stop).unwrap());
+                new_chunk
+            }),
+    )
 }
 
 pub fn prepare_read(manifest: LocalFileManifest, size: u64, offset: u64) -> Vec<Chunk> {
     let offset = min(offset, manifest.size);
-    let size = min(size, manifest.size - offset);
+    let size = min(size, manifest.size.checked_sub(offset).unwrap());
     let blocksize = u64::from(manifest.blocksize);
 
     split_read(size, offset, blocksize)
