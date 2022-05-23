@@ -20,4 +20,4 @@ tests_fixtures = { path = "../tests_fixtures" }
 parsec_api_protocol = { path = "../parsec_api_protocol" }
 parsec_api_types = { path = "../parsec_api_types" }
 
-rstest = "0.12.0"
+rstest = "0.13.0"
