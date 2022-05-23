@@ -4,6 +4,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
 use crate::local_manifest::{Chunk, LocalFileManifest};
+use libparsec_fs::file_operations;
 
 #[pyfunction]
 pub(crate) fn prepare_read(
@@ -12,7 +13,7 @@ pub(crate) fn prepare_read(
     size: u64,
     offset: u64,
 ) -> PyResult<&PyTuple> {
-    let result = parsec_file_operations::prepare_read(manifest.0, size, offset);
+    let result = file_operations::prepare_read(manifest.0, size, offset);
     Ok(PyTuple::new(
         py,
         result.into_iter().map(|x| Chunk(x).into_py(py)),

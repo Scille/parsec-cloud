@@ -1,10 +1,10 @@
 [package]
-name = "parsec_file_operations"
+name = "libparsec_fs"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-parsec_api_types = { path = "../parsec_api_types" }
-parsec_client_types = { path = "../parsec_client_types" }
+parsec_api_types = { path = "../../../crates/parsec_api_types" }
+parsec_client_types = { path = "../../../crates/parsec_client_types" }
