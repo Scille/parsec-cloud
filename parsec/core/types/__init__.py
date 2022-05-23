@@ -42,7 +42,6 @@ from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
 from parsec.api.data import FolderManifest as RemoteFolderManifest
 
 FileDescriptor = NewType("FileDescriptor", int)
-
 LocalFolderishManifests = Union[LocalFolderManifest, LocalWorkspaceManifest]
 RemoteFolderishManifests = Union[RemoteFolderManifest, RemoteWorkspaceManifest]
 LocalNonRootManifests = Union[LocalFileManifest, LocalFolderManifest]

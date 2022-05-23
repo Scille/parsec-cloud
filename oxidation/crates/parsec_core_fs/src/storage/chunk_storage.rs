@@ -69,7 +69,6 @@ pub(crate) trait ChunkStorageTrait {
             .map_err(|_| FSError::QueryTable("chunks: get_total_size"))
     }
 
-    #[allow(clippy::wrong_self_convention)]
     fn is_chunk(&self, chunk_id: ChunkID) -> FSResult<bool> {
         let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         chunks::table
