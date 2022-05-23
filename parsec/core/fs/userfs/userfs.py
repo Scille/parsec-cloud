@@ -610,7 +610,6 @@ class UserFS:
             author_signkey=self.device.signing_key, key=self.device.user_manifest_key
         )
 
-        print("###", to_sync_um.version)
         # Sync the vlob with backend
         try:
             # Note encryption_revision is always 1 given we never reencrypt
