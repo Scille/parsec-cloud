@@ -22,7 +22,7 @@ from parsec.core.fs.exceptions import (
     FSFileNotFoundError,
 )
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
-from parsec.core.gui import desktop
+from parsec.core.gui import desktop, validators
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
 from parsec.core.gui.custom_dialogs import (
     ask_question,
@@ -508,6 +508,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 _("TEXT_FILE_RENAME_INSTRUCTIONS"),
                 placeholder=_("TEXT_FILE_RENAME_PLACEHOLDER"),
                 default_text=files[0].name,
+                validator=validators.FileNameValidator(),
                 button_text=_("ACTION_FILE_RENAME"),
             )
             if not new_name:
@@ -531,6 +532,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 _("TEXT_FILE_RENAME_MULTIPLE_TITLE_count").format(count=len(files)),
                 _("TEXT_FILE_RENAME_MULTIPLE_INSTRUCTIONS_count").format(count=len(files)),
                 placeholder=_("TEXT_FILE_RENAME_MULTIPLE_PLACEHOLDER"),
+                validator=validators.FileNameValidator(),
                 button_text=_("ACTION_FILE_RENAME_MULTIPLE"),
             )
             if not new_name:
@@ -886,6 +888,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             _("TEXT_FILE_CREATE_FOLDER_INSTRUCTIONS"),
             placeholder=_("TEXT_FILE_CREATE_FOLDER_PLACEHOLDER"),
             button_text=_("ACTION_FILE_CREATE_FOLDER"),
+            validator=validators.FileNameValidator(),
         )
         if not folder_name:
             return
