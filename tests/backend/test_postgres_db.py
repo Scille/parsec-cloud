@@ -49,10 +49,8 @@ async def test_postgresql_notification_listener_terminated(postgresql_url, backe
 
 @pytest.mark.trio
 @pytest.mark.postgresql
-async def test_postgresql_connection_not_ok(
-    postgresql_url, backend_factory, caplog, unused_tcp_port
-):
-    postgresql_url = f"postgresql://localhost:{unused_tcp_port}/dummy"
+async def test_postgresql_connection_not_ok(postgresql_url, backend_factory, unused_tcp_port):
+    postgresql_url = f"postgresql://127.0.0.1:{unused_tcp_port}/dummy"
     with pytest.raises(OSError) as exc:
         async with backend_factory(config={"db_url": postgresql_url}):
             pass
@@ -66,7 +64,7 @@ async def test_postgresql_connection_not_ok(
 @pytest.mark.trio
 @pytest.mark.postgresql
 async def test_retry_policy_no_retry(postgresql_url, unused_tcp_port, asyncio_loop):
-    host = "localhost"
+    host = "127.0.0.1"
     port = unused_tcp_port
     app_config = BackendConfig(
         administration_token="s3cr3t",
@@ -110,7 +108,7 @@ async def test_retry_policy_no_retry(postgresql_url, unused_tcp_port, asyncio_lo
 @pytest.mark.trio
 @pytest.mark.postgresql
 async def test_retry_policy_allow_retry(postgresql_url, unused_tcp_port, asyncio_loop):
-    host = "localhost"
+    host = "127.0.0.1"
     port = unused_tcp_port
     app_config = BackendConfig(
         administration_token="s3cr3t",

@@ -29,7 +29,11 @@ async def serve_tcp_testbed(unused_tcp_port):
             handler_nursery = await nursery.start(_store_handlers)
             await nursery.start(
                 partial(
-                    trio.serve_tcp, _serve_client, unused_tcp_port, handler_nursery=handler_nursery
+                    trio.serve_tcp,
+                    _serve_client,
+                    port=unused_tcp_port,
+                    host="127.0.0.1",
+                    handler_nursery=handler_nursery,
                 )
             )
             assert not handler_nursery.child_tasks

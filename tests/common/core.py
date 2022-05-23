@@ -16,7 +16,7 @@ from tests.common.timeout import real_clock_timeout
 @pytest.fixture
 def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
     if fixtures_customization.get("fake_preferred_org_creation_backend_addr", False):
-        backend_addr = BackendAddr.from_url(f"parsec://localhost:{unused_tcp_port}")
+        backend_addr = BackendAddr.from_url(f"parsec://127.0.0.1:{unused_tcp_port}")
 
     tmpdir = Path(tmpdir)
     return CoreConfig(
