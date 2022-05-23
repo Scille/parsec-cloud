@@ -4,7 +4,6 @@ use std::cmp::{max, min};
 // use std::collections::HashSet;
 use std::num::NonZeroU64;
 
-use bisection::{bisect_left_by, bisect_right_by};
 // use parsec_api_types::{BlockID, ChunkID};
 use parsec_client_types::{Chunk, LocalFileManifest};
 
@@ -41,8 +40,14 @@ pub fn prepare_read(manifest: LocalFileManifest, size: u64, offset: u64) -> Chun
         let block_chunks = manifest.get_chunks(block as usize).unwrap();
 
         // Bisect
-        let start_index = bisect_right_by(block_chunks, |x| substart.cmp(&x.start)) - 1;
-        let stop_index = bisect_left_by(block_chunks, |x| x.start.cmp(&substop));
+        let start_index = match block_chunks.binary_search_by_key(&substart, |x| x.start) {
+            Ok(x) => x,
+            Err(x) => x - 1,
+        };
+        let stop_index = match block_chunks.binary_search_by_key(&substop, |x| x.start) {
+            Ok(x) => x,
+            Err(x) => x,
+        };
 
         // Loop over chunks
         for chunk in &block_chunks[start_index..stop_index] {
