@@ -550,7 +550,7 @@ async def test_greet_user_reset_by_peer(aqtbot, GreetUserTestBed, autoclose_dial
         "step_6_validate_claim_info",
     ],
 )
-@customize_fixtures(logged_gui_as_admin=True, real_data_storage=True)
+@customize_fixtures(logged_gui_as_admin=True)
 async def test_greet_user_invitation_cancelled(
     aqtbot, GreetUserTestBed, backend, autoclose_dialog, cancelled_step
 ):

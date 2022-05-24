@@ -13,18 +13,15 @@ from parsec.core.fs import FsPath
 from parsec.core.fs.exceptions import FSError, FSBackendOfflineError, FSLocalMissError
 from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed
 from parsec.backend.block import BlockNotFoundError
-from tests.common import customize_fixtures
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_workspace_properties(alice_workspace):
     assert alice_workspace.get_workspace_name() == EntryName("w")
     assert alice_workspace.get_encryption_revision() == 1
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_path_info(alice_workspace):
     info = await alice_workspace.path_info("/")
     assert {
@@ -67,7 +64,6 @@ async def test_path_info(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_get_user_roles(alice_workspace):
     assert await alice_workspace.get_user_roles() == {
         alice_workspace.device.user_id: RealmRole.OWNER
@@ -75,7 +71,6 @@ async def test_get_user_roles(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_exists(alice_workspace):
     assert await alice_workspace.exists("/") is True
     assert await alice_workspace.exists("/foo") is True
@@ -89,7 +84,6 @@ async def test_exists(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_is_dir(alice_workspace):
     assert await alice_workspace.is_dir("/") is True
     assert await alice_workspace.is_dir("/foo") is True
@@ -100,7 +94,6 @@ async def test_is_dir(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_is_file(alice_workspace):
     assert await alice_workspace.is_file("/") is False
     assert await alice_workspace.is_file("/foo") is False
@@ -111,7 +104,6 @@ async def test_is_file(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_iterdir(alice_workspace):
     lst = [child async for child in alice_workspace.iterdir("/")]
     assert lst == [FsPath("/foo")]
@@ -127,7 +119,6 @@ async def test_iterdir(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_listdir(alice_workspace):
     lst = await alice_workspace.listdir("/")
     assert lst == [FsPath("/foo")]
@@ -141,7 +132,6 @@ async def test_listdir(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_rename(alice_workspace):
     await alice_workspace.rename("/foo", "/foz")
     await alice_workspace.rename("/foz/bar", "/foz/bal")
@@ -155,7 +145,6 @@ async def test_rename(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_mkdir(alice_workspace):
     await alice_workspace.mkdir("/foz")
     assert await alice_workspace.is_dir("/foz")
@@ -175,7 +164,6 @@ async def test_mkdir(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_rmdir(alice_workspace):
     await alice_workspace.mkdir("/foz")
     await alice_workspace.rmdir("/foz")
@@ -194,7 +182,6 @@ async def test_rmdir(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_touch(alice_workspace):
     await alice_workspace.touch("/bar")
     assert await alice_workspace.is_file("/bar")
@@ -213,7 +200,6 @@ async def test_touch(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_unlink(alice_workspace):
     await alice_workspace.unlink("/foo/bar")
     lst = await alice_workspace.listdir("/foo")
@@ -229,7 +215,6 @@ async def test_unlink(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_truncate(alice_workspace):
     await alice_workspace.write_bytes("/foo/bar", b"abcde")
     await alice_workspace.truncate("/foo/bar", 3)
@@ -248,7 +233,6 @@ async def test_truncate(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_read_bytes(alice_workspace):
     assert await alice_workspace.read_bytes("/foo/bar") == b""
 
@@ -261,7 +245,6 @@ async def test_read_bytes(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_write_bytes(alice_workspace):
     # Pathlib mode (truncate=True)
     await alice_workspace.write_bytes("/foo/bar", b"abcde")
@@ -278,7 +261,6 @@ async def test_write_bytes(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_move(alice_workspace):
     await alice_workspace.move("/foo", "/foz")
     await alice_workspace.move("/foz/bar", "/foz/bal")
@@ -316,7 +298,6 @@ async def test_move(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_copytree(alice_workspace):
     await alice_workspace.write_bytes("/foo/bar", b"a" * 9000 + b"b" * 40000)
     await alice_workspace.write_bytes("/foo/baz", b"a" * 40000 + b"b" * 9000)
@@ -331,7 +312,6 @@ async def test_copytree(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_copyfile(alice_workspace):
     await alice_workspace.write_bytes("/foo/bar", b"a" * 9000 + b"b" * 40000)
     await alice_workspace.copyfile("/foo/bar", "/copied")
@@ -339,7 +319,6 @@ async def test_copyfile(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_rmtree(alice_workspace):
     await alice_workspace.mkdir("/foz")
     await alice_workspace.rmtree("/foz")
@@ -361,7 +340,6 @@ async def test_rmtree(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_dump(alice_workspace):
     baz_id = await alice_workspace.path_id("/foo/baz")
     async with alice_workspace.local_storage.lock_entry_id(baz_id):
@@ -408,7 +386,6 @@ async def test_dump(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, alice):
     manifest, _ = await alice_workspace.transactions._get_manifest_from_path(FsPath("/foo/bar"))
     async with alice_workspace.local_storage.lock_entry_id(manifest.id):
@@ -440,7 +417,6 @@ async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, 
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_get_reencryption_need(alice_workspace, running_backend, monkeypatch):
     expected = ReencryptionNeed(user_revoked=(), role_revoked=())
     assert await alice_workspace.get_reencryption_need() == expected
@@ -614,7 +590,6 @@ async def test_backend_block_data_online(
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_backend_block_upload_error_during_sync(
     alice_user_fs, alice2_user_fs, running_backend, monkeypatch
 ):

@@ -156,6 +156,8 @@ except ImportError as exc:
 
 
 class WorkspaceStorage:
+    binding = True
+
     def __init__(self, *args, **kwargs):
         self.sync_instance = _SyncWorkspaceStorage(*args, **kwargs)
         # Locking structures

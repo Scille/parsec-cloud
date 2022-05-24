@@ -167,7 +167,6 @@ async def test_autosync_placeholder_workspace_manifest(
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_autosync_on_modification(
     frozen_clock, running_backend, alice, alice_core, alice2_user_fs
 ):
@@ -211,7 +210,6 @@ async def test_autosync_on_modification(
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_autosync_on_remote_modifications(
     frozen_clock, running_backend, alice, alice_core, alice2_user_fs
 ):
@@ -281,7 +279,6 @@ async def test_autosync_on_remote_modifications(
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_reconnect_with_remote_changes(
     frozen_clock, alice2, running_backend, server_factory, alice_core, user_fs_factory
 ):
@@ -373,7 +370,6 @@ async def test_reconnect_with_remote_changes(
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_sync_confined_children_after_rename(
     frozen_clock, alice, running_backend, alice_core
 ):
@@ -463,7 +459,6 @@ async def test_sync_confined_children_after_rename(
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_sync_monitor_while_changing_roles(
     frozen_clock, running_backend, alice_core, bob_core
 ):
@@ -537,7 +532,6 @@ async def test_sync_monitor_while_changing_roles(
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_sync_with_concurrent_reencryption(
     frozen_clock, running_backend, alice_core, bob_user_fs, monkeypatch
 ):

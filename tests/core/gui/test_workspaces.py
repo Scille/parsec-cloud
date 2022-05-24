@@ -14,7 +14,7 @@ from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
 from parsec.core.gui.lang import translate, format_datetime
 
-from tests.common import customize_fixtures, freeze_time
+from tests.common import freeze_time
 
 
 @pytest.fixture
@@ -27,7 +27,6 @@ def catch_timestamped_workspace_widget(widget_catcher_factory):
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("invalid_name", (False, True))
-@customize_fixtures(real_data_storage=True)
 async def test_add_workspace(
     aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
 ):
@@ -69,7 +68,6 @@ async def test_add_workspace(
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("invalid_name", (False, True))
-@customize_fixtures(real_data_storage=True)
 async def test_rename_workspace(
     aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, invalid_name
 ):
@@ -117,7 +115,6 @@ async def test_rename_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui, snackbar_catcher):
     c_w = logged_gui.test_get_central_widget()
 
@@ -151,7 +148,6 @@ async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logged_gui, monkeypatch):
     # Disable actual mount given we are only testing the GUI here
     open_workspace_mock = Mock()
@@ -223,7 +219,6 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_workspace_filter_user(
     aqtbot, running_backend, logged_gui, autoclose_dialog, alice_user_fs, bob, bob_user_fs, alice
 ):
@@ -289,7 +284,6 @@ async def test_workspace_filter_user(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_workspace_filter_user_new_workspace(
     aqtbot,
     running_backend,

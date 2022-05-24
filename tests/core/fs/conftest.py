@@ -148,7 +148,8 @@ def user_fs_offline_state_machine(
 
         async def reset_user_fs(self, device):
             await self.stop_user_fs()
-            persistent_mockup.clear()
+            if persistent_mockup:
+                persistent_mockup.clear()
             await self.start_user_fs(device)
 
         async def reset_all(self):

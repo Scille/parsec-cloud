@@ -116,7 +116,7 @@ async def logged_gui_with_files(
         # Important: this is necessary for the incoming click to reliably work
         assert wk_button.switch_button.isChecked()
 
-    await aqtbot.wait_until(_workspace_button_ready, timeout=3000)
+    await aqtbot.wait_until(_workspace_button_ready)
 
     f_w = logged_gui.test_get_files_widget()
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
@@ -153,7 +153,6 @@ async def logged_gui_with_files(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_link_file(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
@@ -174,7 +173,6 @@ async def test_link_file(aqtbot, logged_gui_with_files):
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_link_file_unmounted(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
 
@@ -212,7 +210,6 @@ async def test_link_file_unmounted(aqtbot, logged_gui_with_files):
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link("/unknown")
@@ -231,7 +228,6 @@ async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_
 @pytest.mark.gui
 @pytest.mark.trio
 @pytest.mark.parametrize("kind", ["bad_workspace_id", "legacy_url_format"])
-@customize_fixtures(real_data_storage=True)
 async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_files, kind):
     logged_gui, w_w, f_w = logged_gui_with_files
     org_addr = f_w.core.device.organization_addr
@@ -253,7 +249,6 @@ async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_f
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_link_file_disconnected(
     aqtbot,
     autoclose_dialog,
@@ -328,7 +323,6 @@ async def test_link_file_disconnected(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_link_file_disconnected_cancel_login(
     aqtbot,
     autoclose_dialog,
@@ -688,7 +682,7 @@ async def test_link_file_unknown_org(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@customize_fixtures(adam_profile=UserProfile.OUTSIDER, real_data_storage=True)
+@customize_fixtures(adam_profile=UserProfile.OUTSIDER)
 async def test_outsider_profil_limit(
     aqtbot, running_backend, adam, core_config, gui_factory, alice_user_fs
 ):
@@ -708,7 +702,7 @@ async def test_outsider_profil_limit(
         workspace_button = layout_workspace.widget()
         assert not isinstance(workspace_button, QtWidgets.QLabel)
 
-    await aqtbot.wait_until(_workspace_button_shown, timeout=3000)
+    await aqtbot.wait_until(_workspace_button_shown)
     layout_workspace = w_w.layout_workspaces.itemAt(0)
     workspace_button = layout_workspace.widget()
     assert workspace_button.button_share.isVisible() is False
