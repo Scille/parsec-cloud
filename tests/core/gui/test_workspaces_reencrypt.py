@@ -167,7 +167,7 @@ async def test_workspace_reencryption_offline_backend(
         def _assert_error():
             assert len(autoclose_dialog.dialogs) == 1
             assert autoclose_dialog.dialogs == [
-                ("Error", translate("TEXT_WORKSPACE_REENCRYPT_OFFLINE_ERROR"))
+                ("Error", translate("TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR"))
             ]
             assert wk_button.button_reencrypt.isVisible()
 
@@ -198,7 +198,7 @@ async def test_workspace_reencryption_fs_error(
     def _assert_error():
         assert len(autoclose_dialog.dialogs) == 1
         assert autoclose_dialog.dialogs == [
-            ("Error", translate("TEXT_WORKSPACE_REENCRYPT_FS_ERROR"))
+            ("Error", translate("TEXT_WORKPACE_REENCRYPT_FS_ERROR"))
         ]
         assert wk_button.button_reencrypt.isVisible()
 
@@ -242,7 +242,7 @@ async def test_workspace_reencryption_access_error(
         assert len(autoclose_dialog.dialogs) == 2
         assert (
             "Error",
-            translate("TEXT_WORKSPACE_REENCRYPT_ACCESS_ERROR"),
+            translate("TEXT_WORKPACE_REENCRYPT_ACCESS_ERROR"),
         ) in autoclose_dialog.dialogs
         assert wk_button.button_reencrypt.isVisible()
 
@@ -278,7 +278,7 @@ async def test_workspace_reencryption_not_found_error(
     def _assert_error():
         assert len(autoclose_dialog.dialogs) == 1
         assert autoclose_dialog.dialogs == [
-            ("Error", translate("TEXT_WORKSPACE_REENCRYPT_NOT_FOUND_ERROR"))
+            ("Error", translate("TEXT_WORKPACE_REENCRYPT_NOT_FOUND_ERROR"))
         ]
         assert wk_button.button_reencrypt.isVisible()
 
@@ -304,10 +304,10 @@ async def test_workspace_reencryption_do_one_batch_error(
 ):
 
     expected_errors = {
-        FSBackendOfflineError: translate("TEXT_WORKSPACE_REENCRYPT_OFFLINE_ERROR"),
-        FSError: translate("TEXT_WORKSPACE_REENCRYPT_FS_ERROR"),
-        FSWorkspaceNoAccess: translate("TEXT_WORKSPACE_REENCRYPT_ACCESS_ERROR"),
-        FSWorkspaceNotFoundError: translate("TEXT_WORKSPACE_REENCRYPT_NOT_FOUND_ERROR"),
+        FSBackendOfflineError: translate("TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR"),
+        FSError: translate("TEXT_WORKPACE_REENCRYPT_FS_ERROR"),
+        FSWorkspaceNoAccess: translate("TEXT_WORKPACE_REENCRYPT_ACCESS_ERROR"),
+        FSWorkspaceNotFoundError: translate("TEXT_WORKPACE_REENCRYPT_NOT_FOUND_ERROR"),
         Exception: translate("TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR"),
     }
 
