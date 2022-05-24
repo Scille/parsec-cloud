@@ -3,7 +3,6 @@
 import trio
 from typing import Optional
 from structlog import get_logger
-from urllib.error import URLError
 from urllib.request import urlopen, Request
 
 from parsec.api.protocol import (
@@ -28,7 +27,7 @@ def _do_urllib_request(url: str, data: bytes) -> None:
                     "webhook bad return status", url=url, data=data, return_status=rep.status
                 )
 
-    except URLError as exc:
+    except OSError as exc:
         logger.warning("webhook failure", url=url, data=data, exc_info=exc)
 
 

@@ -220,7 +220,7 @@ async def http_request(
     headers: Dict[str, str] = {},
     method: Optional[str] = None,
 ) -> bytes:
-    """Raises: urllib.error.URLError"""
+    """Raises: urllib.error.URLError or OSError"""
 
     def _target():
         request = urllib.request.Request(url, data=data, headers=headers, method=method)

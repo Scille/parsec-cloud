@@ -2,7 +2,6 @@
 
 import attr
 import trio
-from urllib.error import URLError
 from pendulum import DateTime
 from structlog import get_logger
 from contextlib import asynccontextmanager
@@ -16,7 +15,6 @@ __all__ = [
     "trio_run",
     "open_service_nursery",
     "split_multi_error",
-    "URLError",
 ]
 
 logger = get_logger()
