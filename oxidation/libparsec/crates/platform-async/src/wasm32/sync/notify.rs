@@ -29,7 +29,7 @@ struct Waiter {
 
 impl Notify {
     /// Wait for a notification.
-    pub fn notified(&self) -> Notified<'_> {
+    pub fn notified(&self) -> Notified {
         Notified {
             notify: self,
             waiting: false,
@@ -70,7 +70,7 @@ pub struct Notified<'a> {
 impl<'a> Future for Notified<'a> {
     type Output = ();
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         let mut s = self.as_mut();
         let mut state = s.notify.state.lock().expect("mutex poisoned");
         let mut waiters = s.notify.waiters.lock().expect("mutex poisoned");

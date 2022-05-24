@@ -102,7 +102,7 @@ impl<T> Task<T> {
 impl<T> Future for Task<T> {
     type Output = T;
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         let s = self.as_mut();
         let mut state = s.shared_state.lock().expect("mutex poisoned");
 
@@ -140,7 +140,7 @@ where
 {
     type Output = ();
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         let mut s = self.as_mut();
         let mut state = s.shared_state.lock().expect("Mutex poisoned");
 
