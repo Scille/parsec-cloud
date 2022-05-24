@@ -60,15 +60,15 @@ pub struct ManifestStorage {
     local_symkey: SecretKey,
     conn: Mutex<SqliteConn>,
     pub realm_id: EntryID,
-    // This cache contains all the manifests that have been set or accessed
-    // since the last call to `clear_memory_cache`
+    /// This cache contains all the manifests that have been set or accessed
+    /// since the last call to `clear_memory_cache`
     pub(crate) cache: Mutex<HashMap<EntryID, LocalManifest>>,
-    // This dictionnary keeps track of all the entry ids of the manifests
-    // that have been added to the cache but still needs to be written to
-    // the conn. The corresponding value is a set with the ids of all
-    // the chunks that needs to be removed from the conn after the
-    // manifest is written. Note: this set might be empty but the manifest
-    // still requires to be flushed.
+    /// This dictionnary keeps track of all the entry ids of the manifests
+    /// that have been added to the cache but still needs to be written to
+    /// the conn. The corresponding value is a set with the ids of all
+    /// the chunks that needs to be removed from the conn after the
+    /// manifest is written. Note: this set might be empty but the manifest
+    /// still requires to be flushed.
     cache_ahead_of_localdb: Mutex<HashMap<EntryID, HashSet<ChunkOrBlockID>>>,
 }
 
@@ -96,8 +96,7 @@ impl ManifestStorage {
         Ok(instance)
     }
 
-    // Database initialization
-
+    /// Database initialization
     pub fn create_db(&self) -> FSResult<()> {
         let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         sql_query(
@@ -495,6 +494,7 @@ impl ManifestStorage {
     // This method is not used in the code base but it is still tested
     // as it might come handy in a cleanup routine later
 
+    #[deprecated]
     pub fn clear_manifest(&self, entry_id: EntryID) -> FSResult<()> {
         // Remove from cache
         let in_cache = self
@@ -545,8 +545,8 @@ mod tests {
     use parsec_api_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
     use parsec_client_types::{Chunk, LocalFileManifest};
 
-    use super::super::local_database::SqlitePool;
     use super::*;
+    use crate::storage::local_database::SqlitePool;
 
     #[test]
     fn manifest_storage() {
