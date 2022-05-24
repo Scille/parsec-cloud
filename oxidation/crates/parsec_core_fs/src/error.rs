@@ -11,11 +11,11 @@ pub enum FSError {
     #[error("ConfigurationError")]
     Configuration,
 
-    #[error("ConnectionError")]
-    Connection,
+    #[error("ConnectionError: {0}")]
+    Connection(String),
 
-    #[error("CreateTableError {0}")]
-    CreateTable(&'static str),
+    #[error("CreateTableError: {0}")]
+    CreateTable(String),
 
     #[error("CreateDirError")]
     CreateDir,
@@ -23,14 +23,14 @@ pub enum FSError {
     #[error("CryptoError: {0}")]
     Crypto(CryptoError),
 
-    #[error("DeleteTableError {0}")]
-    DeleteTable(&'static str),
+    #[error("DeleteTableError: {0}")]
+    DeleteTable(String),
 
-    #[error("DropTableError {0}")]
-    DropTable(&'static str),
+    #[error("DropTableError: {0}")]
+    DropTable(String),
 
-    #[error("Insert table {0}")]
-    InsertTable(&'static str),
+    #[error("InsertTableError: {0}")]
+    InsertTable(String),
 
     #[error("Invalid FileDescriptor {0:?}")]
     InvalidFileDescriptor(FileDescriptor),
@@ -38,8 +38,8 @@ pub enum FSError {
     #[error("LocalMissError: {0}")]
     LocalMiss(Uuid),
 
-    #[error("Query table {0}")]
-    QueryTable(&'static str),
+    #[error("QueryTableError: {0}")]
+    QueryTable(String),
 
     #[error("PermissionError")]
     Permission,
@@ -47,14 +47,14 @@ pub enum FSError {
     #[error("PoolError")]
     Pool,
 
-    #[error("Update table {0}")]
-    UpdateTable(&'static str),
+    #[error("UpdateTableError {0}")]
+    UpdateTable(String),
 
     #[error("UserManifest is missing")]
     UserManifestMissing,
 
-    #[error("VacuumError")]
-    Vacuum,
+    #[error("VacuumError: {0}")]
+    Vacuum(String),
 }
 
 pub type FSResult<T> = Result<T, FSError>;

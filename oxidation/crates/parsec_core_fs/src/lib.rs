@@ -3,7 +3,6 @@
 mod error;
 #[allow(dead_code)]
 mod extensions;
-mod remote_loader;
 mod schema;
 mod storage;
 mod workspacefs;

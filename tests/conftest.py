@@ -61,7 +61,7 @@ def pytest_addoption(parser):
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
     parser.addoption("--runrust", action="store_true", help="Don't skip rust tests")
-    parser.addoption("--runpy", action="store_true", help="Don't skip py tests")
+    parser.addoption("--runpy", action="store_true", help="Don't skip python tests")
     parser.addoption(
         "--run-postgresql-cluster",
         action="store_true",

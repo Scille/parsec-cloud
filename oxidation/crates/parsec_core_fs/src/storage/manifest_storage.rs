@@ -110,7 +110,7 @@ impl ManifestStorage {
             );",
         )
         .execute(conn)
-        .map_err(|_| FSError::CreateTable("vlobs"))?;
+        .map_err(|e| FSError::CreateTable(format!("vlobs {e}")))?;
         // Singleton storing the checkpoint
         sql_query(
             "CREATE TABLE IF NOT EXISTS realm_checkpoint (
@@ -119,7 +119,7 @@ impl ManifestStorage {
             );",
         )
         .execute(conn)
-        .map_err(|_| FSError::CreateTable("realm_checkpoint"))?;
+        .map_err(|e| FSError::CreateTable(format!("realm_checkpoint {e}")))?;
         // Singleton storing the prevent_sync_pattern
         sql_query(
             "CREATE TABLE IF NOT EXISTS prevent_sync_pattern (
@@ -129,7 +129,7 @@ impl ManifestStorage {
             );",
         )
         .execute(conn)
-        .map_err(|_| FSError::CreateTable("prevent_sync_pattern"))?;
+        .map_err(|e| FSError::CreateTable(format!("prevent_sync_pattern {e}")))?;
 
         let pattern = NewPreventSyncPattern {
             _id: 0,
@@ -140,7 +140,7 @@ impl ManifestStorage {
         diesel::insert_or_ignore_into(prevent_sync_pattern::table)
             .values(pattern)
             .execute(conn)
-            .map_err(|_| FSError::InsertTable("prevent_sync_pattern: create_db"))?;
+            .map_err(|e| FSError::InsertTable(format!("prevent_sync_pattern: create_db {e}")))?;
 
         Ok(())
     }
@@ -150,15 +150,15 @@ impl ManifestStorage {
         let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         sql_query("DROP TABLE IF EXISTS vlobs;")
             .execute(conn)
-            .map_err(|_| FSError::DropTable("vlobs"))?;
+            .map_err(|e| FSError::DropTable(format!("vlobs {e}")))?;
 
         sql_query("DROP TABLE IF EXISTS realm_checkpoints;")
             .execute(conn)
-            .map_err(|_| FSError::DropTable("realm_checkpoints"))?;
+            .map_err(|e| FSError::DropTable(format!("realm_checkpoints {e}")))?;
 
         sql_query("DROP TABLE IF EXISTS prevent_sync_pattern;")
             .execute(conn)
-            .map_err(|_| FSError::DropTable("prevent_sync_pattern"))?;
+            .map_err(|e| FSError::DropTable(format!("prevent_sync_pattern {e}")))?;
 
         Ok(())
     }
@@ -187,10 +187,15 @@ impl ManifestStorage {
             ))
             .filter(prevent_sync_pattern::_id.eq(0))
             .first::<(String, _)>(conn)
-            .map_err(|_| FSError::QueryTable("prevent_sync_pattern: get_prevent_sync_pattern"))?;
+            .map_err(|e| {
+                FSError::QueryTable(format!(
+                    "prevent_sync_pattern: get_prevent_sync_pattern {e}"
+                ))
+            })?;
 
-        let re = Regex::new(&re)
-            .map_err(|_| FSError::QueryTable("prevent_sync_pattern: corrupted pattern"))?;
+        let re = Regex::new(&re).map_err(|e| {
+            FSError::QueryTable(format!("prevent_sync_pattern: corrupted pattern {e}"))
+        })?;
 
         Ok((re, fully_applied))
     }
@@ -214,7 +219,11 @@ impl ManifestStorage {
             prevent_sync_pattern::fully_applied.eq(false),
         ))
         .execute(conn)
-        .map_err(|_| FSError::UpdateTable("prevent_sync_pattern: set_prevent_sync_pattern"))?;
+        .map_err(|e| {
+            FSError::UpdateTable(format!(
+                "prevent_sync_pattern: set_prevent_sync_pattern {e}"
+            ))
+        })?;
 
         Ok(())
     }
@@ -236,8 +245,10 @@ impl ManifestStorage {
         )
         .set(prevent_sync_pattern::fully_applied.eq(true))
         .execute(conn)
-        .map_err(|_| {
-            FSError::UpdateTable("prevent_sync_pattern: mark_prevent_sync_pattern_fully_applied")
+        .map_err(|e| {
+            FSError::UpdateTable(format!(
+                "prevent_sync_pattern: mark_prevent_sync_pattern_fully_applied {e}"
+            ))
         })?;
 
         Ok(())
@@ -274,7 +285,7 @@ impl ManifestStorage {
                 .bind::<diesel::sql_types::Integer, _>(version)
                 .bind::<diesel::sql_types::Binary, _>((**id).as_ref())
                 .execute(conn)
-                .map_err(|_| FSError::UpdateTable("vlobs: update_realm_checkpoint"))?;
+                .map_err(|e| FSError::UpdateTable(format!("vlobs: update_realm_checkpoint {e}")))?;
         }
 
         diesel::insert_into(realm_checkpoint::table)
@@ -283,7 +294,9 @@ impl ManifestStorage {
             .do_update()
             .set(&new_realm_checkpoint)
             .execute(conn)
-            .map_err(|_| FSError::InsertTable("realm_checkpoint: update_realm_checkpoint"))?;
+            .map_err(|e| {
+                FSError::InsertTable(format!("realm_checkpoint: update_realm_checkpoint {e}"))
+            })?;
 
         Ok(())
     }
@@ -318,12 +331,12 @@ impl ManifestStorage {
                     .or(vlobs::base_version.ne(vlobs::remote_version)),
             )
             .load::<(Vec<u8>, bool, i32, i32)>(conn)
-            .map_err(|_| FSError::QueryTable("vlobs: get_need_sync_entries"))?
+            .map_err(|e| FSError::QueryTable(format!("vlobs: get_need_sync_entries {e}")))?
         {
-            let manifest_id = EntryID::from(
-                <[u8; 16]>::try_from(&manifest_id[..])
-                    .map_err(|_| FSError::QueryTable("vlobs: corrupted manifest_id"))?,
-            );
+            let manifest_id =
+                EntryID::from(<[u8; 16]>::try_from(&manifest_id[..]).map_err(|e| {
+                    FSError::QueryTable(format!("vlobs: corrupted manifest_id {e}"))
+                })?);
 
             if need_sync {
                 local_changes.insert(manifest_id);
@@ -351,7 +364,7 @@ impl ManifestStorage {
             .select(vlobs::blob)
             .filter(vlobs::vlob_id.eq((*entry_id).as_ref()))
             .first::<Vec<u8>>(conn)
-            .map_err(|_| FSError::QueryTable("vlobs: get_manifest"))?;
+            .map_err(|e| FSError::QueryTable(format!("vlobs: get_manifest {e}")))?;
 
         let manifest = LocalManifest::decrypt_and_load(&manifest, &self.local_symkey)
             .map_err(|_| FSError::Crypto(CryptoError::Decryption))?;
@@ -447,7 +460,7 @@ impl ManifestStorage {
                     .bind::<diesel::sql_types::Integer, _>(manifest.base_version() as i32)
                     .bind::<diesel::sql_types::Binary, _>(vlob_id)
                     .execute(conn)
-                    .map_err(|_| FSError::InsertTable("vlobs: _ensure_manifest_persistent"))?;
+                    .map_err(|e| FSError::InsertTable(format!("vlobs: _ensure_manifest_persistent {e}")))?;
 
                 for pending_chunk_ids_chunk in pending_chunk_ids.chunks(SQLITE_MAX_VARIABLE_NUMBER)
                 {
@@ -455,7 +468,7 @@ impl ManifestStorage {
                         chunks::table.filter(chunks::chunk_id.eq_any(pending_chunk_ids_chunk)),
                     )
                     .execute(conn)
-                    .map_err(|_| FSError::DeleteTable("chunks: clear_manifest"))?;
+                    .map_err(|e| FSError::DeleteTable(format!("chunks: clear_manifest {e}")))?;
                 }
 
                 Ok(())
@@ -495,7 +508,7 @@ impl ManifestStorage {
         let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         let deleted = diesel::delete(vlobs::table.filter(vlobs::vlob_id.eq((*entry_id).as_ref())))
             .execute(conn)
-            .map_err(|_| FSError::DeleteTable("vlobs: clear_manifest"))?
+            .map_err(|e| FSError::DeleteTable(format!("vlobs: clear_manifest {e}")))?
             > 0;
 
         if let Some(pending_chunk_ids) = self
@@ -514,7 +527,7 @@ impl ManifestStorage {
                     chunks::table.filter(chunks::chunk_id.eq_any(pending_chunk_ids_chunk)),
                 )
                 .execute(conn)
-                .map_err(|_| FSError::DeleteTable("chunks: clear_manifest"))?;
+                .map_err(|e| FSError::DeleteTable(format!("chunks: clear_manifest {e}")))?;
             }
         }
 
