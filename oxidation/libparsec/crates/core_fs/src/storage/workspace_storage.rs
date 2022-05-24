@@ -261,6 +261,7 @@ impl WorkspaceStorage {
         self.manifest_storage.ensure_manifest_persistent(entry_id)
     }
 
+    #[allow(deprecated)]
     pub fn clear_manifest(&self, entry_id: EntryID) -> FSResult<()> {
         self.manifest_storage.clear_manifest(entry_id)
     }
