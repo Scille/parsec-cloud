@@ -47,7 +47,7 @@ pub enum FSError {
     #[error("PoolError")]
     Pool,
 
-    #[error("UpdateTableError {0}")]
+    #[error("UpdateTableError: {0}")]
     UpdateTable(String),
 
     #[error("UserManifest is missing")]
