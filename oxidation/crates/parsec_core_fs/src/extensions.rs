@@ -6,11 +6,7 @@ use diesel::query_builder::{AstPass, QueryFragment};
 use diesel::sql_types::BigInt;
 use diesel::{Expression, QueryResult};
 
-pub fn coalesce_total_size() -> CoalesceTotalSize {
-    CoalesceTotalSize
-}
-
-#[derive(Debug, Clone, Copy, QueryId, DieselNumericOps, ValidGrouping)]
+#[derive(Default, Debug, Clone, Copy, QueryId, DieselNumericOps, ValidGrouping)]
 pub struct CoalesceTotalSize;
 
 impl Expression for CoalesceTotalSize {
