@@ -47,20 +47,16 @@ try:
         LocalFolderManifest,
         LocalWorkspaceManifest,
         LocalUserManifest,
-        # Block
         BlockCreateReq,
         BlockCreateRep,
         BlockReadReq,
         BlockReadRep,
-        # Cmd
         AuthenticatedAnyCmdReq,
         InvitedAnyCmdReq,
-        # Events
         EventsListenReq,
         EventsListenRep,
         EventsSubscribeReq,
         EventsSubscribeRep,
-        # Invite
         InviteNewReq,
         InviteNewRep,
         InviteDeleteReq,
@@ -94,22 +90,18 @@ try:
         Invite4GreeterCommunicateReq,
         Invite4GreeterCommunicateRep,
         InviteListItem,
-        # Message
         MessageGetReq,
         MessageGetRep,
         Message,
-        # Organization
         OrganizationStatsReq,
         OrganizationStatsRep,
         OrganizationConfigReq,
         OrganizationConfigRep,
         UsersPerProfileDetailItem,
-        # Ping
         AuthenticatedPingReq,
         AuthenticatedPingRep,
         InvitedPingReq,
         InvitedPingRep,
-        # Realm
         RealmCreateReq,
         RealmCreateRep,
         RealmStatusReq,
@@ -124,7 +116,6 @@ try:
         RealmStartReencryptionMaintenanceRep,
         RealmFinishReencryptionMaintenanceReq,
         RealmFinishReencryptionMaintenanceRep,
-        # User
         UserGetReq,
         UserGetRep,
         UserCreateReq,
@@ -137,7 +128,6 @@ try:
         HumanFindRep,
         Trustchain,
         HumanFindResultItem,
-        # Vlob
         VlobCreateReq,
         VlobCreateRep,
         VlobReadReq,
@@ -153,15 +143,12 @@ try:
         VlobMaintenanceSaveReencryptionBatchReq,
         VlobMaintenanceSaveReencryptionBatchRep,
         ReencryptionBatchEntry,
-        # Trustchain
         UserCertificate,
         DeviceCertificate,
         RevokedUserCertificate,
         TrustchainContext,
         freeze_time,
-        # LocalDevice
         LocalDevice,
-        # WorkspaceStorage
         WorkspaceStorage as _SyncWorkspaceStorage,
     )
 except ImportError as exc:
@@ -300,20 +287,16 @@ __all__ = (
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
     "LocalUserManifest",
-    # Block
     "BlockCreateReq",
     "BlockCreateRep",
     "BlockReadReq",
     "BlockReadRep",
-    # Cmd
     "AuthenticatedAnyCmdReq",
     "InvitedAnyCmdReq",
-    # Events
     "EventsListenReq",
     "EventsListenRep",
     "EventsSubscribeReq",
     "EventsSubscribeRep",
-    # Invite
     "InviteNewReq",
     "InviteNewRep",
     "InviteDeleteReq",
@@ -347,22 +330,18 @@ __all__ = (
     "Invite4GreeterCommunicateReq",
     "Invite4GreeterCommunicateRep",
     "InviteListItem",
-    # Message
     "MessageGetReq",
     "MessageGetRep",
     "Message",
-    # Organization
     "OrganizationStatsReq",
     "OrganizationStatsRep",
     "OrganizationConfigReq",
     "OrganizationConfigRep",
     "UsersPerProfileDetailItem",
-    # Ping
     "AuthenticatedPingReq",
     "AuthenticatedPingRep",
     "InvitedPingReq",
     "InvitedPingRep",
-    # Realm
     "RealmCreateReq",
     "RealmCreateRep",
     "RealmStatusReq",
@@ -377,7 +356,6 @@ __all__ = (
     "RealmStartReencryptionMaintenanceRep",
     "RealmFinishReencryptionMaintenanceReq",
     "RealmFinishReencryptionMaintenanceRep",
-    # User
     "UserGetReq",
     "UserGetRep",
     "UserCreateReq",
@@ -390,7 +368,6 @@ __all__ = (
     "HumanFindRep",
     "Trustchain",
     "HumanFindResultItem",
-    # Vlob
     "VlobCreateReq",
     "VlobCreateRep",
     "VlobReadReq",
@@ -406,14 +383,11 @@ __all__ = (
     "VlobMaintenanceSaveReencryptionBatchReq",
     "VlobMaintenanceSaveReencryptionBatchRep",
     "ReencryptionBatchEntry",
-    # Trustchain
     "UserCertificate",
     "DeviceCertificate",
     "RevokedUserCertificate",
     "TrustchainContext",
     "freeze_time",
-    # LocalDevice
     "LocalDevice",
-    # Storage
     "WorkspaceStorage",
 )

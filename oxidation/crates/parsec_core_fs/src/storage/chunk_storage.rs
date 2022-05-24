@@ -38,7 +38,7 @@ pub(crate) trait ChunkStorageTrait {
             );",
         )
         .execute(conn)
-        .map_err(|_| FSError::CreateTable("chunks"))?;
+        .map_err(|e| FSError::CreateTable(format!("chunks {e}")))?;
         Ok(())
     }
 
@@ -47,7 +47,7 @@ pub(crate) trait ChunkStorageTrait {
         let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         sql_query("DROP TABLE IF EXISTS chunks;")
             .execute(conn)
-            .map_err(|_| FSError::DropTable("chunks"))?;
+            .map_err(|e| FSError::DropTable(format!("chunks {e}")))?;
         Ok(())
     }
 
@@ -58,7 +58,7 @@ pub(crate) trait ChunkStorageTrait {
         chunks::table
             .select(count_star())
             .first(conn)
-            .map_err(|_| FSError::QueryTable("chunks: get_nb_blocks"))
+            .map_err(|e| FSError::QueryTable(format!("chunks: get_nb_blocks {e}")))
     }
 
     fn get_total_size(&self) -> FSResult<i64> {
@@ -66,7 +66,7 @@ pub(crate) trait ChunkStorageTrait {
         chunks::table
             .select(coalesce_total_size())
             .first(conn)
-            .map_err(|_| FSError::QueryTable("chunks: get_total_size"))
+            .map_err(|e| FSError::QueryTable(format!("chunks: get_total_size {e}")))
     }
 
     fn is_chunk(&self, chunk_id: ChunkID) -> FSResult<bool> {
@@ -75,7 +75,7 @@ pub(crate) trait ChunkStorageTrait {
             .select(count_star())
             .filter(chunks::chunk_id.eq((*chunk_id).as_ref()))
             .first::<i64>(conn)
-            .map_err(|_| FSError::QueryTable("chunks: is_chunk"))
+            .map_err(|e| FSError::QueryTable(format!("chunks: is_chunk {e}")))
             .map(|res| res > 0)
     }
 
@@ -94,11 +94,12 @@ pub(crate) trait ChunkStorageTrait {
                     .select(chunks::chunk_id)
                     .filter(chunks::chunk_id.eq_any(bytes_id_list_chunk))
                     .load::<Vec<u8>>(conn)
-                    .map_err(|_| FSError::QueryTable("chunks: get_local_chunk_ids"))?
+                    .map_err(|e| FSError::QueryTable(format!("chunks: get_local_chunk_ids {e}")))?
                     .into_iter()
                     .map(|chunk_id| {
-                        <[u8; 16]>::try_from(&chunk_id[..])
-                            .map_err(|_| FSError::QueryTable("chunks: corrupted chunk_id"))
+                        <[u8; 16]>::try_from(&chunk_id[..]).map_err(|e| {
+                            FSError::QueryTable(format!("chunks: corrupted chunk_id {e}"))
+                        })
                     })
                     .collect::<Result<Vec<_>, _>>()?
                     .into_iter()
@@ -118,7 +119,7 @@ pub(crate) trait ChunkStorageTrait {
             diesel::update(chunks::table.filter(chunks::chunk_id.eq((*chunk_id).as_ref())))
                 .set(chunks::accessed_on.eq(accessed_on))
                 .execute(conn)
-                .map_err(|_| FSError::UpdateTable("chunks: get_chunk"))?
+                .map_err(|e| FSError::UpdateTable(format!("chunks: get_chunk {e}")))?
                 > 0;
 
         if !changes {
@@ -129,7 +130,7 @@ pub(crate) trait ChunkStorageTrait {
             .select(chunks::data)
             .filter(chunks::chunk_id.eq((*chunk_id).as_ref()))
             .first::<Vec<u8>>(conn)
-            .map_err(|_| FSError::QueryTable("chunks: get_chunk"))?;
+            .map_err(|e| FSError::QueryTable(format!("chunks: get_chunk {e}")))?;
 
         Ok(self.local_symkey().decrypt(&ciphered)?)
     }
@@ -153,7 +154,7 @@ pub(crate) trait ChunkStorageTrait {
             .do_update()
             .set(&new_chunk)
             .execute(conn)
-            .map_err(|_| FSError::InsertTable("chunks: set_chunk"))?;
+            .map_err(|e| FSError::InsertTable(format!("chunks: set_chunk {e}")))?;
         Ok(())
     }
 
@@ -162,7 +163,7 @@ pub(crate) trait ChunkStorageTrait {
         let changes =
             diesel::delete(chunks::table.filter(chunks::chunk_id.eq((*chunk_id).as_ref())))
                 .execute(conn)
-                .map_err(|_| FSError::DeleteTable("chunks: clear_chunk"))?
+                .map_err(|e| FSError::DeleteTable(format!("chunks: clear_chunk {e}")))?
                 > 0;
 
         if !changes {
@@ -176,7 +177,7 @@ pub(crate) trait ChunkStorageTrait {
         let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         sql_query("VACUUM;")
             .execute(conn)
-            .map_err(|_| FSError::Vacuum)?;
+            .map_err(|e| FSError::Vacuum(e.to_string()))?;
         Ok(())
     }
 }
@@ -194,7 +195,7 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
         let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         diesel::delete(chunks::table)
             .execute(conn)
-            .map_err(|_| FSError::DeleteTable("chunks: clear_all_blocks"))?;
+            .map_err(|e| FSError::DeleteTable(format!("chunks: clear_all_blocks {e}")))?;
         Ok(())
     }
 
@@ -219,7 +220,7 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
             .do_update()
             .set(&new_chunk)
             .execute(&mut *self.conn().lock().expect("Mutex is poisoned"))
-            .map_err(|_| FSError::InsertTable("chunks: set_chunk"))?;
+            .map_err(|e| FSError::InsertTable(format!("chunks: set_chunk {e}")))?;
 
         // Perform cleanup if necessary
         self.cleanup()
@@ -231,7 +232,7 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
         let nb_blocks = chunks::table
             .select(count_star())
             .first::<i64>(conn)
-            .map_err(|_| FSError::QueryTable("chunks: cleanup"))?;
+            .map_err(|e| FSError::QueryTable(format!("chunks: cleanup {e}")))?;
 
         let block_limit = self.block_limit() as i64;
 
@@ -253,7 +254,7 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
 
         diesel::delete(chunks::table.filter(chunks::chunk_id.eq_any(sub_query)))
             .execute(conn)
-            .map_err(|_| FSError::DeleteTable("chunks: cleanup"))?;
+            .map_err(|e| FSError::DeleteTable(format!("chunks: cleanup {e}")))?;
 
         Ok(())
     }

@@ -7,8 +7,9 @@ use std::path::PathBuf;
 
 use crate::error::{FSError, FSResult};
 
+// https://www.sqlite.org/limits.html
+// #9 Maximum Number Of Host Parameters In A Single SQL Statement
 pub const SQLITE_MAX_VARIABLE_NUMBER: usize = 999;
-
 pub struct SqlitePool(Pool<ConnectionManager<SqliteConnection>>);
 pub type SqliteConn = PooledConnection<ConnectionManager<SqliteConnection>>;
 
@@ -26,7 +27,10 @@ impl SqlitePool {
     }
 
     pub fn conn(&self) -> FSResult<SqliteConn> {
-        let mut conn = self.0.get().map_err(|_| FSError::Connection)?;
+        let mut conn = self
+            .0
+            .get()
+            .map_err(|e| FSError::Connection(e.to_string()))?;
         // The combination of WAL journal mode and NORMAL synchronous mode
         // is a great combination: it allows for fast commits (~10 us compare
         // to 15 ms the default mode) but still protects the database against
