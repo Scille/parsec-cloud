@@ -10,7 +10,7 @@ from parsec.api.data import EntryID, FolderManifest, EntryName
 from parsec.core.cli import rsync
 from parsec.core.fs import FsPath
 
-from tests.common import AsyncMock, customize_fixtures
+from tests.common import AsyncMock
 
 
 class ReadSideEffect:
@@ -38,7 +38,6 @@ async def alice_workspace(alice_user_fs, running_backend):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_import_file(alice_workspace):
     with mock.patch(
         "parsec.core.cli.rsync._chunks_from_path",
@@ -77,7 +76,6 @@ async def test_chunks_from_path():
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_update_file(alice_workspace, monkeypatch):
     block_mock1 = mock.Mock()
     block_mock1.digest = b"block1"
@@ -151,7 +149,6 @@ async def test_update_file(alice_workspace, monkeypatch):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_create_path(alice_workspace):
     mkdir_mock = AsyncMock(spec=mock.Mock)
     alice_workspace.mkdir = mkdir_mock
@@ -202,7 +199,6 @@ async def test_create_path(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_clear_path(alice_workspace):
     is_dir_mock = AsyncMock(spec=mock.Mock, side_effect=lambda x: True)
     alice_workspace.is_dir = is_dir_mock
@@ -237,7 +233,6 @@ async def test_clear_path(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_clear_directory(alice_workspace):
     local_item1 = mock.Mock()
     local_item1.name = "item1"
@@ -282,7 +277,6 @@ async def test_clear_directory(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_get_or_create_directory(alice_workspace):
     manifest1 = mock.Mock(spec=FolderManifest)
     manifest2 = mock.Mock(spec=FolderManifest)
@@ -314,7 +308,6 @@ async def test_get_or_create_directory(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_upsert_file(alice_workspace):
 
     _update_file_mock = AsyncMock(spec=mock.Mock())
@@ -343,7 +336,6 @@ async def test_upsert_file(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_sync_directory(alice_workspace):
 
     _get_or_create_directory_mock = AsyncMock(
@@ -396,7 +388,6 @@ async def test_sync_directory(alice_workspace):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_sync_directory_content(alice_workspace):
 
     path_dir1 = trio.Path("/test_dir1")
@@ -524,7 +515,6 @@ def test_parse_destination():
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_root_manifest_parent(alice_workspace):
     workspace_manifest = mock.Mock(spec=WorkspaceManifest)
 

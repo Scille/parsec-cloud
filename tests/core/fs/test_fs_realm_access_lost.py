@@ -5,11 +5,10 @@ import pytest
 from parsec.api.data import EntryName
 from parsec.core.fs import FSWorkspaceNoAccess
 
-from tests.common import create_shared_workspace, customize_fixtures
+from tests.common import create_shared_workspace
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_manifest_no_access(running_backend, alice_user_fs, bob_user_fs):
     wid = await create_shared_workspace(EntryName("w"), alice_user_fs, bob_user_fs)
     alice_w = alice_user_fs.get_workspace(wid)
@@ -41,7 +40,6 @@ async def test_manifest_no_access(running_backend, alice_user_fs, bob_user_fs):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_block_no_access(running_backend, alice_user_fs, bob_user_fs):
     wid = await create_shared_workspace(EntryName("w"), alice_user_fs, bob_user_fs)
     alice_w = alice_user_fs.get_workspace(wid)

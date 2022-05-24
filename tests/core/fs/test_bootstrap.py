@@ -11,7 +11,8 @@ from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 
-from tests.common import customize_fixtures, freeze_time
+from tests.common import freeze_time
+from tests.common.fixtures_customisation import customize_fixtures
 
 
 @pytest.mark.trio
@@ -209,7 +210,6 @@ async def test_concurrent_devices_agree_on_user_manifest(
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_concurrent_devices_agree_on_workspace_manifest(
     running_backend, user_fs_factory, data_base_dir, initialize_local_user_manifest, alice, alice2
 ):
@@ -265,7 +265,6 @@ async def test_concurrent_devices_agree_on_workspace_manifest(
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
     running_backend, user_fs_factory, alice, alice2
 ):
@@ -310,7 +309,6 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
     running_backend, user_fs_factory, data_base_dir, initialize_local_user_manifest, alice, alice2
 ):

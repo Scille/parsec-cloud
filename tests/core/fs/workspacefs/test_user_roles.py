@@ -5,11 +5,9 @@ import pytest
 from parsec.api.data import EntryName
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FSBackendOfflineError
-from tests.common import customize_fixtures
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_on_shared(running_backend, alice_user_fs, alice, bob):
     wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
@@ -19,7 +17,6 @@ async def test_on_shared(running_backend, alice_user_fs, alice, bob):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_manifest_not_in_local_cache(running_backend, alice_user_fs, alice2_user_fs, alice):
     wid = await alice_user_fs.workspace_create(EntryName("w"))
     await alice_user_fs.sync()
@@ -30,7 +27,6 @@ async def test_manifest_not_in_local_cache(running_backend, alice_user_fs, alice
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_on_placeholder(alice_user_fs, alice):
     wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)

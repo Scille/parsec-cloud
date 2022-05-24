@@ -4,7 +4,6 @@ import pytest
 from PyQt5 import QtWidgets
 
 from parsec.api.data import EntryName
-from tests.common import customize_fixtures
 
 
 @pytest.fixture

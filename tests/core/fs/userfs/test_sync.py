@@ -14,7 +14,7 @@ from parsec.core.types import (
 )
 from parsec.core.fs import FSWorkspaceNotFoundError, FSBackendOfflineError
 
-from tests.common import customize_fixtures, freeze_time
+from tests.common import freeze_time
 
 
 KEY = SecretKey.generate()
@@ -36,7 +36,6 @@ async def test_get_manifest(alice_user_fs):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_create_workspace(initial_user_manifest_state, alice_user_fs, alice):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
@@ -71,7 +70,6 @@ async def test_create_workspace(initial_user_manifest_state, alice_user_fs, alic
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_create_workspace_offline(
     initial_user_manifest_state, alice_user_fs, alice, running_backend
 ):

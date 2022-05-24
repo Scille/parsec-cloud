@@ -6,7 +6,7 @@ import pytest
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
 
-from tests.common import create_shared_workspace, customize_fixtures
+from tests.common import create_shared_workspace
 
 
 @pytest.fixture
@@ -31,7 +31,6 @@ def bob_workspace(shared_workspaces):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("remote_changed", [False, True])
 async def test_sync_by_id_single(alice_workspace, remote_changed):
     # Assuming the the remote has changed when it hasn't should not be an issue
@@ -71,7 +70,6 @@ async def test_sync_by_id_single(alice_workspace, remote_changed):
 
 
 @pytest.mark.trio
-@customize_fixtures(real_data_storage=True)
 async def test_sync_by_id_couple(alice_workspace, bob_workspace):
     alice_entry = alice_workspace.get_workspace_entry()
     alice_wid = alice_entry.id

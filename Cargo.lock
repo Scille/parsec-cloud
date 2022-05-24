@@ -625,7 +625,8 @@ checksum = "3ee2393c4a91429dffb4bedf19f4d6abf27d8a732c8ce4980305d782e5426d57"
 [[package]]
 name = "diesel"
 version = "2.0.0-rc.0"
-source = "git+https://github.com/diesel-rs/diesel#983209a6188392552efa51fe76284eb3097b012a"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e531d0abf8147036383c88ce3785d9cda6fe1b8b1183021ffa01cf49c5819d24"
 dependencies = [
  "diesel_derives",
  "libsqlite3-sys",
@@ -635,7 +636,8 @@ dependencies = [
 [[package]]
 name = "diesel_derives"
 version = "2.0.0-rc.0"
-source = "git+https://github.com/diesel-rs/diesel#983209a6188392552efa51fe76284eb3097b012a"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "212ba0cdc611523c37f26c7b3b4aedb4af7cbfe9239c4e7736a8a7c82284d77b"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -713,16 +715,6 @@ name = "event-listener"
 version = "2.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77f3309417938f28bf8228fcff79a4a37103981e3e186d2ccd19c74b38f4eb71"
-
-[[package]]
-name = "fancy-regex"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d95b4efe5be9104a4a18a9916e86654319895138be727b229820c39257c30dda"
-dependencies = [
- "bit-set",
- "regex",
-]
 
 [[package]]
 name = "fancy-regex"
@@ -1172,7 +1164,7 @@ name = "libparsec_core_fs"
 version = "0.0.0"
 dependencies = [
  "diesel",
- "fancy-regex 0.8.0",
+ "fancy-regex",
  "parsec_api_crypto",
  "parsec_api_types",
  "parsec_client_types",
@@ -1207,7 +1199,7 @@ name = "libparsec_python"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "fancy-regex 0.10.0",
+ "fancy-regex",
  "libparsec",
  "libparsec_core_fs",
  "parsec_api_crypto",
@@ -1551,7 +1543,7 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "data-encoding",
- "fancy-regex 0.10.0",
+ "fancy-regex",
  "flate2",
  "hex-literal",
  "lazy_static",
@@ -1590,7 +1582,7 @@ dependencies = [
 name = "parsec_client_types"
 version = "0.0.0"
 dependencies = [
- "fancy-regex 0.10.0",
+ "fancy-regex",
  "flate2",
  "hex-literal",
  "parsec_api_crypto",

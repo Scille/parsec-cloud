@@ -12,7 +12,6 @@ from parsec.api.data import EntryName
 from parsec.api.protocol import UserID
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
-from tests.common import customize_fixtures
 
 
 FUZZ_PARALLELISM = 10
@@ -233,7 +232,6 @@ async def _fuzzer_cmd(id, core, workspace, fs_state):
 
 @pytest.mark.trio
 @pytest.mark.slow
-@customize_fixtures(real_data_storage=True)
 async def test_fuzz_core(request, running_backend, alice_core):
     await trio.sleep(0.1)  # Somehow fixes the test
     wid = await alice_core.user_fs.workspace_create(EntryName("w"))
