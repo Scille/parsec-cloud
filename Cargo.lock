@@ -1168,6 +1168,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_core_fs"
+version = "0.0.0"
+dependencies = [
+ "diesel",
+ "fancy-regex 0.8.0",
+ "parsec_api_crypto",
+ "parsec_api_types",
+ "parsec_client_types",
+ "rstest 0.12.0",
+ "tests_fixtures",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
 name = "libparsec_platform_native"
 version = "0.0.0"
 dependencies = [
@@ -1194,12 +1209,12 @@ dependencies = [
  "chrono",
  "fancy-regex 0.10.0",
  "libparsec",
+ "libparsec_core_fs",
  "parsec_api_crypto",
  "parsec_api_protocol",
  "parsec_api_types",
  "parsec_client_types",
  "parsec_core",
- "parsec_core_fs",
  "pyo3",
  "uuid",
 ]
@@ -1606,21 +1621,6 @@ dependencies = [
  "rstest 0.13.0",
  "tests_fixtures",
  "thiserror",
-]
-
-[[package]]
-name = "parsec_core_fs"
-version = "0.0.0"
-dependencies = [
- "diesel",
- "fancy-regex 0.8.0",
- "parsec_api_crypto",
- "parsec_api_types",
- "parsec_client_types",
- "rstest 0.12.0",
- "tests_fixtures",
- "thiserror",
- "uuid",
 ]
 
 [[package]]
