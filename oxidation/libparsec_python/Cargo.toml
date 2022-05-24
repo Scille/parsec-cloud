@@ -19,7 +19,7 @@ parsec_api_protocol = { path = "../crates/parsec_api_protocol" }
 parsec_api_types = { path = "../crates/parsec_api_types", features = ["mock-time"] }
 parsec_client_types = { path = "../crates/parsec_client_types" }
 parsec_core = { path = "../crates/parsec_core" }
-parsec_core_fs = { path = "../crates/parsec_core_fs" }
+libparsec_core_fs = { path = "../libparsec/crates/core_fs" }
 uuid = { version = "1.1.0", features = ["serde", "v4", "fast-rng"] }
 chrono = {version = "0.4.19", features = ["serde"]}
 fancy-regex = "0.10.0"

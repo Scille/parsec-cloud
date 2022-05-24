@@ -17,7 +17,10 @@ import_exception!(parsec.core.fs.exceptions, FSLocalMissError);
 import_exception!(parsec.core.fs.exceptions, FSInvalidFileDescriptor);
 
 #[pyclass]
-pub(crate) struct WorkspaceStorage(pub parsec_core_fs::WorkspaceStorage, pub Option<PyObject>);
+pub(crate) struct WorkspaceStorage(
+    pub libparsec_core_fs::WorkspaceStorage,
+    pub Option<PyObject>,
+);
 
 #[pymethods]
 impl WorkspaceStorage {
@@ -34,7 +37,7 @@ impl WorkspaceStorage {
         let data_base_dir =
             PathBuf::from(data_base_dir.call_method0("__str__")?.extract::<String>()?);
         Ok(Self(
-            parsec_core_fs::WorkspaceStorage::new(
+            libparsec_core_fs::WorkspaceStorage::new(
                 &data_base_dir,
                 device.0,
                 workspace_id.0,
@@ -142,7 +145,7 @@ impl WorkspaceStorage {
                     cache_only,
                     removed_ids.map(|x| {
                         x.into_iter()
-                            .map(|id| parsec_core_fs::ChunkOrBlockID::ChunkID(id.0))
+                            .map(|id| libparsec_core_fs::ChunkOrBlockID::ChunkID(id.0))
                             .collect()
                     }),
                 )
