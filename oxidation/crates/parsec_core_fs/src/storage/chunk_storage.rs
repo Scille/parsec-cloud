@@ -9,7 +9,7 @@ use parsec_api_types::{ChunkID, DateTime, DEFAULT_BLOCK_SIZE};
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
 use crate::error::{FSError, FSResult};
-use crate::extensions::coalesce_total_size;
+use crate::extensions::CoalesceTotalSize;
 use crate::schema::chunks;
 
 #[derive(Insertable, AsChangeset)]
@@ -64,7 +64,7 @@ pub(crate) trait ChunkStorageTrait {
     fn get_total_size(&self) -> FSResult<i64> {
         let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         chunks::table
-            .select(coalesce_total_size())
+            .select(CoalesceTotalSize::default())
             .first(conn)
             .map_err(|e| FSError::QueryTable(format!("chunks: get_total_size {e}")))
     }
