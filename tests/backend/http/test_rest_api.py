@@ -21,57 +21,55 @@ from tests.common import customize_fixtures
 
 @pytest.mark.trio
 @pytest.mark.parametrize("bad_auth_reason", ["no_header", "bad_header"])
-async def test_administration_api_auth(backend_rest_send, coolorg, bad_auth_reason):
+async def test_administration_api_auth(backend_asgi_app, coolorg, bad_auth_reason):
+
     if bad_auth_reason == "bad_header":
         headers = {"authorization": "Bearer dummy"}
     else:
         assert bad_auth_reason == "no_header"
         headers = {}
 
-    status, _, body = await backend_rest_send(
-        f"/administration/organizations/{coolorg.organization_id}",
-        method="GET",
-        headers=headers,
-        with_administration_token=False,
-    )
-    assert (status, body) == ((403, "Forbidden"), {"error": "not_allowed"})
+    client = backend_asgi_app.test_client()
 
-    status, _, body = await backend_rest_send(
-        f"/administration/organizations/{coolorg.organization_id}",
-        method="PATCH",
-        body={},
-        headers=headers,
-        with_administration_token=False,
+    response = await client.get(
+        f"/administration/organizations/{coolorg.organization_id}", headers=headers
     )
-    assert (status, body) == ((403, "Forbidden"), {"error": "not_allowed"})
+    assert response.status_code == 403
+    assert await response.get_json() == {"error": "not_allowed"}
 
-    status, _, body = await backend_rest_send(
-        f"/administration/organizations",
-        method="POST",
-        body={},
-        headers=headers,
-        with_administration_token=False,
+    response = await client.patch(
+        f"/administration/organizations/{coolorg.organization_id}", json={}, headers=headers
     )
-    assert (status, body) == ((403, "Forbidden"), {"error": "not_allowed"})
+    assert response.status_code == 403
+    assert await response.get_json() == {"error": "not_allowed"}
+
+    response = await client.post(f"/administration/organizations", json={}, headers=headers)
+    assert response.status_code == 403
+    assert await response.get_json() == {"error": "not_allowed"}
 
 
 ### organization_create ###
 
 
 @pytest.mark.trio
-async def test_organization_create(backend, backend_rest_send):
+async def test_organization_create(backend_asgi_app):
     organization_id = OrganizationID("NewOrg")
-    status, _, body = await backend_rest_send(
-        f"/administration/organizations",
-        method="POST",
-        body={"organization_id": str(organization_id)},
-    )
-    assert (status, body) == ((200, "OK"), {"bootstrap_token": ANY})
+    client = backend_asgi_app.test_client()
 
-    org = await backend.organization.get(organization_id)
+    response = await client.post(
+        f"/administration/organizations",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"organization_id": organization_id.str},
+    )
+
+    response_content = await response.get_json()
+    assert response.status_code == 200
+    assert response_content == {"bootstrap_token": ANY}
+
+    org = await backend_asgi_app.backend.organization.get(organization_id)
     assert org == Organization(
         organization_id=organization_id,
-        bootstrap_token=body["bootstrap_token"],
+        bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
@@ -80,8 +78,8 @@ async def test_organization_create(backend, backend_rest_send):
 
 
 @pytest.mark.trio
-async def test_organization_create_bad_data(backend_rest_send):
-    organization_id = "NewOrg"
+async def test_organization_create_bad_data(backend_asgi_app):
+    organization_id = OrganizationID("NewOrg")
     for bad_body in [
         # Bad OrganizationID
         {"organization_id": ""},  # Empty
@@ -91,42 +89,52 @@ async def test_organization_create_bad_data(backend_rest_send):
         # Missing required field
         {"active_users_limit": 10},
         # Bad field value
-        {"organization_id": str(organization_id), "active_users_limit": -1},
-        {"organization_id": str(organization_id), "active_users_limit": "foo"},
-        {"organization_id": str(organization_id), "user_profile_outsider_allowed": 42},
-        {"organization_id": str(organization_id), "user_profile_outsider_allowed": "foo"},
+        {"organization_id": organization_id.str, "active_users_limit": -1},
+        {"organization_id": organization_id.str, "active_users_limit": "foo"},
+        {"organization_id": organization_id.str, "user_profile_outsider_allowed": 42},
+        {"organization_id": organization_id.str, "user_profile_outsider_allowed": "foo"},
     ]:
-        status, _, body = await backend_rest_send(
-            f"/administration/organizations", method="POST", body=bad_body
+        client = backend_asgi_app.test_client()
+        response = await client.post(
+            "/administration/organizations",
+            json=bad_body,
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
         )
-        assert (status, body) == ((400, "Bad Request"), {"error": "bad_data", "reason": ANY})
+        assert response.status_code == 400
+        assert await response.get_json() == {"error": "bad_data", "reason": ANY}
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("expired", (False, True))
-async def test_organization_create_already_exists_not_bootstrapped(
-    backend, backend_rest_send, expired
-):
+async def test_organization_create_already_exists_not_bootstrapped(backend_asgi_app, expired):
     organization_id = OrganizationID("NewOrg")
     original_bootstrap_token = "123"
-    await backend.organization.create(id=organization_id, bootstrap_token=original_bootstrap_token)
-    if expired:
-        await backend.organization.update(id=organization_id, is_expired=True)
-
-    status, _, body = await backend_rest_send(
-        f"/administration/organizations",
-        method="POST",
-        body={"organization_id": str(organization_id)},
+    await backend_asgi_app.backend.organization.create(
+        id=organization_id, bootstrap_token=original_bootstrap_token
     )
-    assert (status, body) == ((200, "OK"), {"bootstrap_token": ANY})
+    if expired:
+        await backend_asgi_app.backend.organization.update(id=organization_id, is_expired=True)
+
+    client = backend_asgi_app.test_client()
+
+    response = await client.post(
+        f"/administration/organizations",
+        json={"organization_id": organization_id.str},
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 200
+    response_content = await response.get_json()
+    assert response_content == {"bootstrap_token": ANY}
 
     # Token should be regenerated each time, and the configuration should be overwritten
-    assert body["bootstrap_token"] != original_bootstrap_token
+    assert response_content["bootstrap_token"] != original_bootstrap_token
 
-    org = await backend.organization.get(id=organization_id)
+    org = await backend_asgi_app.backend.organization.get(id=organization_id)
     assert org == Organization(
         organization_id=organization_id,
-        bootstrap_token=body["bootstrap_token"],
+        bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
@@ -135,36 +143,44 @@ async def test_organization_create_already_exists_not_bootstrapped(
 
 
 @pytest.mark.trio
-async def test_organization_create_already_exists_and_bootstrapped(backend_rest_send, coolorg):
-    status, _, body = await backend_rest_send(
+async def test_organization_create_already_exists_and_bootstrapped(backend_asgi_app, coolorg):
+    client = backend_asgi_app.test_client()
+
+    response = await client.post(
         f"/administration/organizations",
-        method="POST",
-        body={"organization_id": str(coolorg.organization_id)},
+        json={"organization_id": coolorg.organization_id.str},
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
-    assert (status, body) == ((400, "Bad Request"), {"error": "already_exists"})
+    assert response.status_code == 400
+    assert await response.get_json() == {"error": "already_exists"}
 
 
 @pytest.mark.trio
-async def test_organization_create_with_custom_initial_config(backend, backend_rest_send):
+async def test_organization_create_with_custom_initial_config(backend_asgi_app):
     organization_id = OrganizationID("NewOrg")
     original_bootstrap_token = "123"
-    await backend.organization.create(id=organization_id, bootstrap_token=original_bootstrap_token)
 
-    status, _, body = await backend_rest_send(
+    await backend_asgi_app.backend.organization.create(
+        id=organization_id, bootstrap_token=original_bootstrap_token
+    )
+    client = backend_asgi_app.test_client()
+    response = await client.post(
         f"/administration/organizations",
-        method="POST",
-        body={
-            "organization_id": str(organization_id),
+        json={
+            "organization_id": organization_id.str,
             "user_profile_outsider_allowed": False,
             "active_users_limit": None,
         },
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
-    assert (status, body) == ((200, "OK"), {"bootstrap_token": ANY})
+    assert response.status_code == 200
+    response_content = await response.get_json()
+    assert response_content == {"bootstrap_token": ANY}
 
-    org = await backend.organization.get(organization_id)
+    org = await backend_asgi_app.backend.organization.get(organization_id)
     assert org == Organization(
         organization_id=organization_id,
-        bootstrap_token=body["bootstrap_token"],
+        bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
         root_verify_key=None,
         user_profile_outsider_allowed=False,
@@ -172,21 +188,23 @@ async def test_organization_create_with_custom_initial_config(backend, backend_r
     )
 
     # New custom initial config should be taken into account each time the org is recreated
-    status, _, body = await backend_rest_send(
+    response = await client.post(
         f"/administration/organizations",
-        method="POST",
-        body={
-            "organization_id": str(organization_id),
+        json={
+            "organization_id": organization_id.str,
             "user_profile_outsider_allowed": True,
             "active_users_limit": 10,
         },
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
-    assert (status, body) == ((200, "OK"), {"bootstrap_token": ANY})
+    response_content = await response.get_json()
+    assert response.status_code == 200
+    assert response_content == {"bootstrap_token": ANY}
 
-    org = await backend.organization.get(organization_id)
+    org = await backend_asgi_app.backend.organization.get(organization_id)
     assert org == Organization(
         organization_id=organization_id,
-        bootstrap_token=body["bootstrap_token"],
+        bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
@@ -194,17 +212,19 @@ async def test_organization_create_with_custom_initial_config(backend, backend_r
     )
 
     # Default initial config should also be used if org is recreated without custom config
-    status, _, body = await backend_rest_send(
+    response = await client.post(
         f"/administration/organizations",
-        method="POST",
-        body={"organization_id": str(organization_id)},
+        json={"organization_id": str(organization_id)},
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
-    assert (status, body) == ((200, "OK"), {"bootstrap_token": ANY})
+    assert response.status_code == 200
+    response_content = await response.get_json()
+    assert response_content == {"bootstrap_token": ANY}
 
-    org = await backend.organization.get(organization_id)
+    org = await backend_asgi_app.backend.organization.get(organization_id)
     assert org == Organization(
         organization_id=organization_id,
-        bootstrap_token=body["bootstrap_token"],
+        bootstrap_token=response_content["bootstrap_token"],
         is_expired=False,
         root_verify_key=None,
         user_profile_outsider_allowed=True,
@@ -217,44 +237,57 @@ async def test_organization_create_with_custom_initial_config(backend, backend_r
 
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ("unknown", "invalid"))
-async def test_organization_config_not_found(backend_rest_send, type):
+async def test_organization_config_not_found(backend_asgi_app, type):
     org = "dummy" if type == "unknown" else "x" * 33
-    status, _, body = await backend_rest_send(f"/administration/organizations/{org}")
-    assert (status, body) == ((404, "Not Found"), {"error": "not_found"})
+    client = backend_asgi_app.test_client()
+    response = await client.get(
+        f"/administration/organizations/{org}",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 404
+    assert await response.get_json() == {"error": "not_found"}
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("bootstrapped", (True, False))
-async def test_organization_config_ok(backend, backend_rest_send, coolorg, bootstrapped):
+async def test_organization_config_ok(backend_asgi_app, coolorg, bootstrapped):
     if not bootstrapped:
         organization_id = OrganizationID("NewOrg")
-        await backend.organization.create(id=organization_id, bootstrap_token="123")
+        await backend_asgi_app.backend.organization.create(
+            id=organization_id, bootstrap_token="123"
+        )
     else:
         organization_id = coolorg.organization_id
 
-    status, _, body = await backend_rest_send(f"/administration/organizations/{organization_id}")
-    assert (status, body) == (
-        (200, "OK"),
-        {
-            "active_users_limit": None,
-            "is_bootstrapped": bootstrapped,
-            "is_expired": False,
-            "user_profile_outsider_allowed": True,
-        },
+    client = backend_asgi_app.test_client()
+
+    response = await client.get(
+        f"/administration/organizations/{organization_id}",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "active_users_limit": None,
+        "is_bootstrapped": bootstrapped,
+        "is_expired": False,
+        "user_profile_outsider_allowed": True,
+    }
 
     # Ensure config change is taken into account
-    await backend.organization.update(id=organization_id, active_users_limit=42, is_expired=True)
-    status, _, body = await backend_rest_send(f"/administration/organizations/{organization_id}")
-    assert (status, body) == (
-        (200, "OK"),
-        {
-            "active_users_limit": 42,
-            "is_bootstrapped": bootstrapped,
-            "is_expired": True,
-            "user_profile_outsider_allowed": True,
-        },
+    await backend_asgi_app.backend.organization.update(
+        id=organization_id, active_users_limit=42, is_expired=True
     )
+    response = await client.get(
+        f"/administration/organizations/{organization_id}",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "active_users_limit": 42,
+        "is_bootstrapped": bootstrapped,
+        "is_expired": True,
+        "user_profile_outsider_allowed": True,
+    }
 
 
 ### organization_update ###
@@ -262,69 +295,93 @@ async def test_organization_config_ok(backend, backend_rest_send, coolorg, boots
 
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ("unknown", "invalid"))
-async def test_organization_update_not_found(backend_rest_send, type):
+async def test_organization_update_not_found(backend_asgi_app, type):
     org = "dummy" if type == "unknown" else "x" * 33
-    status, _, body = await backend_rest_send(
-        f"/administration/organizations/{org}", method="PATCH", body={"bootstrap_token": "123"}
+    client = backend_asgi_app.test_client()
+    response = await client.patch(
+        f"/administration/organizations/{org}",
+        json={"bootstrap_token": "123"},
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
-    assert (status, body) == ((404, "Not Found"), {"error": "not_found"})
+    assert response.status_code == 404
+    assert await response.get_json() == {"error": "not_found"}
 
     # Empty update is an interesting case
-    status, _, body = await backend_rest_send(
-        f"/administration/organizations/dummy", method="PATCH", body={}
+    response = await client.patch(
+        f"/administration/organizations/dummy",
+        json={},
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
-    assert (status, body) == ((404, "Not Found"), {"error": "not_found"})
+    assert response.status_code == 404
+    assert await response.get_json() == {"error": "not_found"}
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("bootstrapped", (True, False))
-async def test_organization_update_ok(backend, backend_rest_send, coolorg, bootstrapped):
+async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
     if not bootstrapped:
         organization_id = OrganizationID("NewOrg")
-        await backend.organization.create(id=organization_id, bootstrap_token="123")
+        await backend_asgi_app.backend.organization.create(
+            id=organization_id, bootstrap_token="123"
+        )
     else:
         organization_id = coolorg.organization_id
 
-    with backend.event_bus.listen() as spy:
+    client = backend_asgi_app.test_client()
 
-        status, _, body = await backend_rest_send(
+    with backend_asgi_app.backend.event_bus.listen() as spy:
+        response = await client.patch(
             f"/administration/organizations/{organization_id}",
-            method="PATCH",
-            body={"user_profile_outsider_allowed": False, "active_users_limit": 10},
+            json={"user_profile_outsider_allowed": False, "active_users_limit": 10},
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
         )
-        assert (status, body) == ((200, "OK"), {})
+        assert response.status_code == 200
+        assert await response.get_json() == {}
 
-        org = await backend.organization.get(organization_id)
+        org = await backend_asgi_app.backend.organization.get(organization_id)
         assert org.user_profile_outsider_allowed is False
         assert org.active_users_limit == 10
 
         # Partial update
-        status, _, body = await backend_rest_send(
+        response = await client.patch(
             f"/administration/organizations/{organization_id}",
-            method="PATCH",
-            body={"active_users_limit": None},
+            json={"active_users_limit": None},
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
         )
-        assert (status, body) == ((200, "OK"), {})
+        assert response.status_code == 200
+        assert await response.get_json() == {}
 
-        org = await backend.organization.get(organization_id)
+        org = await backend_asgi_app.backend.organization.get(organization_id)
         assert org.user_profile_outsider_allowed is False
         assert org.active_users_limit is None
 
         # Partial update with unknown field
-        status, _, body = await backend_rest_send(
+        response = await client.patch(
             f"/administration/organizations/{organization_id}",
-            method="PATCH",
-            body={"dummy": "whatever"},
+            json={"dummy": "whatever"},
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
         )
-        assert (status, body) == ((200, "OK"), {})
+        assert response.status_code == 200
+        assert await response.get_json() == {}
 
         # Empty update
-        status, _, body = await backend_rest_send(
-            f"/administration/organizations/{organization_id}", method="PATCH", body={}
+        response = await client.patch(
+            f"/administration/organizations/{organization_id}",
+            json={},
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
         )
-        assert (status, body) == ((200, "OK"), {})
+        assert response.status_code == 200
+        assert await response.get_json() == {}
 
-        org = await backend.organization.get(organization_id)
+        org = await backend_asgi_app.backend.organization.get(organization_id)
         assert org.user_profile_outsider_allowed is False
         assert org.active_users_limit is None
 
@@ -335,44 +392,49 @@ async def test_organization_update_ok(backend, backend_rest_send, coolorg, boots
 
 @pytest.mark.trio
 async def test_organization_update_expired_field(
-    backend, backend_rest_send, coolorg, alice, backend_sock_factory
+    backend_asgi_app, coolorg, alice, backend_sock_factory
 ):
     organization_id = coolorg.organization_id
 
-    with backend.event_bus.listen() as spy:
-        status, _, body = await backend_rest_send(
+    client = backend_asgi_app.test_client()
+
+    with backend_asgi_app.backend.event_bus.listen() as spy:
+        response = await client.patch(
             f"/administration/organizations/{organization_id}",
-            method="PATCH",
-            body={"is_expired": True},
+            json={"is_expired": True},
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
         )
-        assert (status, body) == ((200, "OK"), {})
+        assert response.status_code == 200
+        assert await response.get_json() == {}
         await spy.wait_with_timeout(
             BackendEvent.ORGANIZATION_EXPIRED, {"organization_id": organization_id}
         )
 
-    org = await backend.organization.get(organization_id)
+    org = await backend_asgi_app.backend.organization.get(organization_id)
     assert org.is_expired is True
 
     # Not longer allowed to use the organization
     with pytest.raises(HandshakeOrganizationExpired):
-        async with backend_sock_factory(backend, alice):
+        async with backend_sock_factory(backend_asgi_app.backend, alice):
             pass
 
     # Re-enable the organization
-
-    status, _, body = await backend_rest_send(
+    response = await client.patch(
         f"/administration/organizations/{organization_id}",
-        method="PATCH",
-        body={"is_expired": False},
+        json={"is_expired": False},
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
-    assert (status, body) == ((200, "OK"), {})
+    assert response.status_code == 200
+    assert await response.get_json() == {}
 
-    org = await backend.organization.get(organization_id)
+    org = await backend_asgi_app.backend.organization.get(organization_id)
     assert org.is_expired is False
 
     # Now device can connect to the organization
 
-    async with backend_sock_factory(backend, alice):
+    async with backend_sock_factory(backend_asgi_app.backend, alice):
         pass
 
 
@@ -380,7 +442,8 @@ async def test_organization_update_expired_field(
 
 
 @pytest.mark.trio
-async def test_organization_update_bad_data(backend_rest_send, coolorg):
+async def test_organization_update_bad_data(backend_asgi_app, coolorg):
+    client = backend_asgi_app.test_client()
     for bad_body in [
         # Bad field value
         {"active_users_limit": -1},
@@ -388,12 +451,15 @@ async def test_organization_update_bad_data(backend_rest_send, coolorg):
         {"user_profile_outsider_allowed": 42},
         {"user_profile_outsider_allowed": "foo"},
     ]:
-        status, _, body = await backend_rest_send(
+        response = await client.patch(
             f"/administration/organizations/{coolorg.organization_id}",
-            method="PATCH",
-            body=bad_body,
+            json=bad_body,
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
         )
-        assert (status, body) == ((400, "Bad Request"), {"error": "bad_data", "reason": ANY})
+        assert response.status_code == 400
+        assert await response.get_json() == {"error": "bad_data", "reason": ANY}
 
 
 ### organization_stats ###
@@ -401,20 +467,30 @@ async def test_organization_update_bad_data(backend_rest_send, coolorg):
 
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ("unknown", "invalid"))
-async def test_organization_stats_not_found(backend_rest_send, type):
+async def test_organization_stats_not_found(backend_asgi_app, type):
     org = "dummy" if type == "unknown" else "x" * 33
-    status, _, body = await backend_rest_send(f"/administration/organizations/{org}/stats")
-    assert (status, body) == ((404, "Not Found"), {"error": "not_found"})
+    client = backend_asgi_app.test_client()
+    response = await client.get(
+        f"/administration/organizations/{org}/stats",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 404
+    assert await response.get_json() == {"error": "not_found"}
 
 
 @pytest.mark.trio
-async def test_organization_stats_data(backend_rest_send, realm, realm_factory, alice, backend):
+async def test_organization_stats_data(backend_asgi_app, realm, realm_factory, alice):
+    client = backend_asgi_app.test_client()
+
     async def organization_stats():
-        status, _, body = await backend_rest_send(
-            f"/administration/organizations/{alice.organization_id}/stats"
+        response = await client.get(
+            f"/administration/organizations/{alice.organization_id}/stats",
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
         )
-        assert status == (200, "OK")
-        return organization_stats_rep_serializer.load(body)
+        assert response.status_code == 200
+        return organization_stats_rep_serializer.load(await response.get_json())
 
     rep = await organization_stats()
     assert rep == {
@@ -432,7 +508,7 @@ async def test_organization_stats_data(backend_rest_send, realm, realm_factory, 
     initial_metadata_size = rep["metadata_size"]
 
     # Create new metadata
-    await backend.vlob.create(
+    await backend_asgi_app.backend.vlob.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
         realm_id=realm,
@@ -456,7 +532,7 @@ async def test_organization_stats_data(backend_rest_send, realm, realm_factory, 
     }
 
     # Create new data
-    await backend.block.create(
+    await backend_asgi_app.backend.block.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
         block_id=BlockID.new(),
@@ -478,7 +554,7 @@ async def test_organization_stats_data(backend_rest_send, realm, realm_factory, 
     }
 
     # create new workspace
-    await realm_factory(backend, alice)
+    await realm_factory(backend_asgi_app.backend, alice)
     rep = await organization_stats()
     assert rep == {
         "data_size": 4,
@@ -497,21 +573,25 @@ async def test_organization_stats_data(backend_rest_send, realm, realm_factory, 
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
 async def test_organization_stats_users(
-    backend,
+    backend_asgi_app,
     backend_data_binder_factory,
     organization_factory,
     local_device_factory,
     otherorg,
-    backend_rest_send,
 ):
-    async def organization_stats(organization_id):
-        status, _, body = await backend_rest_send(
-            f"/administration/organizations/{organization_id}/stats"
-        )
-        assert status == (200, "OK")
-        return organization_stats_rep_serializer.load(body)
+    client = backend_asgi_app.test_client()
 
-    binder = backend_data_binder_factory(backend)
+    async def organization_stats(organization_id):
+        response = await client.get(
+            f"/administration/organizations/{organization_id}/stats",
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
+        )
+        assert response.status_code == 200
+        return organization_stats_rep_serializer.load(await response.get_json())
+
+    binder = backend_data_binder_factory(backend_asgi_app.backend)
     org = organization_factory("IFD")
     godfrey1 = local_device_factory(
         org=org,
@@ -574,7 +654,7 @@ async def test_organization_stats_users(
 
 
 @pytest.mark.trio
-async def test_handles_escaped_path(backend_rest_send):
+async def test_handles_escaped_path(backend_asgi_app):
     organization_id = "CéTACé"
     escaped_organization_id = "C%C3%A9TAC%C3%A9"
     bad_escaped_organization_id = "C%C3%A9TAC%+C3%A9"
@@ -584,25 +664,44 @@ async def test_handles_escaped_path(backend_rest_send):
         "/administration/organizations/{organization_id}/stats",
     )
 
+    client = backend_asgi_app.test_client()
+
     # Not found
     for route_pattern in ROUTES_PATTERN:
         route = route_pattern.format(organization_id=escaped_organization_id)
-        status, _, body = await backend_rest_send(route)
-        assert (status, body) == ((404, "Not Found"), {"error": "not_found"}), route
+        response = await client.get(
+            route,
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
+        )
+        assert response.status_code == 404, route
+        assert await response.get_json() == {"error": "not_found"}, route
 
     # Now create the org
-    status, _, body = await backend_rest_send(
+    response = await client.post(
         f"/administration/organizations",
-        method="POST",
-        body={"organization_id": str(organization_id)},
+        json={"organization_id": str(organization_id)},
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
+    assert response.status_code == 200
 
     # Found !
     for route_pattern in ROUTES_PATTERN:
         route = route_pattern.format(organization_id=escaped_organization_id)
-        status, _, _ = await backend_rest_send(route)
-        assert status == (200, "OK"), route
+        response = await client.get(
+            route,
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
+        )
+        assert response.status_code == 200, route
 
         route = route_pattern.format(organization_id=bad_escaped_organization_id)
-        status, _, _ = await backend_rest_send(route)
-        assert status == (404, "Not Found"), route
+        response = await client.get(
+            route,
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
+        )
+        assert response.status_code == 404, route

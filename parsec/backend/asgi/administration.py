@@ -11,7 +11,6 @@ from parsec.api.rest import (
     organization_create_req_serializer,
     organization_create_rep_serializer,
     organization_update_req_serializer,
-    organization_stats_req_serializer,
     organization_stats_rep_serializer,
 )
 from parsec.backend.organization import (
@@ -26,17 +25,18 @@ administration_bp = Blueprint("administration_api", __name__)
 
 def administration_authenticated(fn):
     @wraps(fn)
-    def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs):
         authorization = request.headers.get("Authorization")
         if authorization != f"Bearer {current_app.backend.config.administration_token}":
-            return abort(403)
-        return fn(*args, **kwargs)
+            return await json_abort({"error": "not_allowed"}, 403)
+        return await fn(*args, **kwargs)
 
     return wrapper
 
 
-def json_abort(data: dict, status: int) -> NoReturn:  # type: ignore
-    abort(make_response(jsonify(data), status))
+async def json_abort(data: dict, status: int) -> NoReturn:  # type: ignore
+    response = await make_response(jsonify(data), status)
+    abort(response)
 
 
 async def load_req_data(req_serializer) -> dict:
@@ -44,9 +44,9 @@ async def load_req_data(req_serializer) -> dict:
     try:
         return req_serializer.loads(raw)
     except SerdeValidationError as exc:
-        json_abort({"error": "bad_data", "reason": exc.errors}, 400)
+        return await json_abort({"error": "bad_data", "reason": exc.errors}, 400)
     except SerdePackingError:
-        json_abort({"error": "bad_data", "reason": "Invalid JSON"}, 400)
+        return await json_abort({"error": "bad_data", "reason": "Invalid JSON"}, 400)
 
 
 def make_rep_response(rep_serializer, data, **kwargs) -> Response:
@@ -67,7 +67,7 @@ async def administration_create_organizations():
             id=organization_id, bootstrap_token=bootstrap_token, **data
         )
     except OrganizationAlreadyExistsError:
-        return json_abort({"error": "already_exists"}, 400)
+        await json_abort({"error": "already_exists"}, 400)
 
     return make_rep_response(
         organization_create_rep_serializer, data={"bootstrap_token": bootstrap_token}, status=200
@@ -75,19 +75,19 @@ async def administration_create_organizations():
 
 
 @administration_bp.route(
-    "/administration/organizations/<organization_id>", methods=["GET", "PATCH"]
+    "/administration/organizations/<raw_organization_id>", methods=["GET", "PATCH"]
 )
 @administration_authenticated
 async def administration_organization_item(raw_organization_id: str):
     try:
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
-        json_abort({"error": "not_found"}, 404)
+        await json_abort({"error": "not_found"}, 404)
     # Check whether the organization actually exists
     try:
         organization = await current_app.backend.organization.get(id=organization_id)
     except OrganizationNotFoundError:
-        json_abort({"error": "not_found"}, 404)
+        await json_abort({"error": "not_found"}, 404)
 
     if request.method == "GET":
 
@@ -110,7 +110,7 @@ async def administration_organization_item(raw_organization_id: str):
         try:
             await current_app.backend.organization.update(id=organization_id, **data)
         except OrganizationNotFoundError:
-            json_abort({"error": "not_found"}, 404)
+            await json_abort({"error": "not_found"}, 404)
 
         return make_rep_response(organization_config_rep_serializer, data={}, status=200)
 
@@ -118,18 +118,17 @@ async def administration_organization_item(raw_organization_id: str):
 @administration_bp.route(
     "/administration/organizations/<raw_organization_id>/stats", methods=["GET", "PATCH"]
 )
+@administration_authenticated
 async def administration_organization_stat(raw_organization_id: str):
     try:
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
-        json_abort({"error": "not_found"}, 404)
-
-    _ = await load_req_data(organization_stats_req_serializer)
+        await json_abort({"error": "not_found"}, 404)
 
     try:
         stats = await current_app.backend.organization.stats(id=organization_id)
     except OrganizationNotFoundError:
-        json_abort({"error": "not_found"}, 404)
+        await json_abort({"error": "not_found"}, 404)
 
     return make_rep_response(
         organization_stats_rep_serializer,
