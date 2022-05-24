@@ -97,8 +97,8 @@ pub(crate) trait ChunkStorageTrait {
                     .map_err(|e| FSError::QueryTable(format!("chunks: get_local_chunk_ids {e}")))?
                     .into_iter()
                     .map(|chunk_id| {
-                        <[u8; 16]>::try_from(&chunk_id[..]).map_err(|e| {
-                            FSError::QueryTable(format!("chunks: corrupted chunk_id {e}"))
+                        <[u8; 16]>::try_from(&chunk_id[..]).map_err(|_| {
+                            FSError::QueryTable(format!("chunks: corrupted chunk_id {chunk_id:?}"))
                         })
                     })
                     .collect::<Result<Vec<_>, _>>()?
