@@ -28,7 +28,7 @@ def administration_authenticated(fn):
     async def wrapper(*args, **kwargs):
         authorization = request.headers.get("Authorization")
         if authorization != f"Bearer {current_app.backend.config.administration_token}":
-            return await json_abort({"error": "not_allowed"}, 403)
+            await json_abort({"error": "not_allowed"}, 403)
         return await fn(*args, **kwargs)
 
     return wrapper
