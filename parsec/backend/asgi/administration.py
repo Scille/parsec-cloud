@@ -39,14 +39,14 @@ async def json_abort(data: dict, status: int) -> NoReturn:  # type: ignore
     abort(response)
 
 
-async def load_req_data(req_serializer) -> dict:
+async def load_req_data(req_serializer) -> dict:  # type: ignore
     raw = await request.get_data()
     try:
         return req_serializer.loads(raw)
     except SerdeValidationError as exc:
-        return await json_abort({"error": "bad_data", "reason": exc.errors}, 400)
+        await json_abort({"error": "bad_data", "reason": exc.errors}, 400)
     except SerdePackingError:
-        return await json_abort({"error": "bad_data", "reason": "Invalid JSON"}, 400)
+        await json_abort({"error": "bad_data", "reason": "Invalid JSON"}, 400)
 
 
 def make_rep_response(rep_serializer, data, **kwargs) -> Response:
