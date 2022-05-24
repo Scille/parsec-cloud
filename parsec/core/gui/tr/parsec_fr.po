@@ -2452,18 +2452,18 @@ msgstr "Rechiffrer l'espace de travail"
 msgid "ACTION_WORKSPACE_REENCRYPTION_CONFIRM"
 msgstr "Rechiffrer"
 
-msgid "TEXT_WORKSPACE_REENCRYPT_OFFLINE_ERROR"
+msgid "TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR"
 msgstr "Échec lors du rechiffrement, impossible de joindre le serveur."
 
-msgid "TEXT_WORKSPACE_REENCRYPT_ACCESS_ERROR"
+msgid "TEXT_WORKPACE_REENCRYPT_ACCESS_ERROR"
 msgstr ""
 "Échec lors du rechiffrement, vous n'avez pas la permission de rechiffrer "
 "cet espace de travail."
 
-msgid "TEXT_WORKSPACE_REENCRYPT_NOT_FOUND_ERROR"
+msgid "TEXT_WORKPACE_REENCRYPT_NOT_FOUND_ERROR"
 msgstr "Échec lors du rechiffrement, l'espace de travail n'a pas été trouvé."
 
-msgid "TEXT_WORKSPACE_REENCRYPT_FS_ERROR"
+msgid "TEXT_WORKPACE_REENCRYPT_FS_ERROR"
 msgstr "Échec lors du rechiffrement, l'espace de travail est déjà en maintenance."
 
 msgid "TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR"
