@@ -1,30 +1,29 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use std::cmp::{max, min};
-use std::iter::empty;
 use std::num::NonZeroU64;
 
 use parsec_client_types::{Chunk, LocalFileManifest};
 
-fn split_read(size: u64, offset: u64, blocksize: u64) -> Box<dyn Iterator<Item = (u64, u64, u64)>> {
-    // Nothing to read
-    if size == 0 {
-        return Box::new(empty());
-    }
-
+fn split_read(size: u64, offset: u64, blocksize: u64) -> impl Iterator<Item = (u64, u64, u64)> {
     // Loop over blocks
     let start_block = offset / blocksize;
-    let stop_block = (offset + size).checked_sub(1).unwrap() / blocksize;
-    Box::new((start_block..stop_block + 1).map(move |block| {
+    let stop_block = if size != 0 {
+        (offset + size).checked_sub(1).unwrap() / blocksize + 1
+    } else {
+        0
+    };
+
+    (start_block..stop_block).map(move |block| {
         // Get substart / substop
         let blockstart = block * blocksize;
         let substart = max(offset, blockstart);
         let substop = min(offset + size, blockstart + blocksize);
         (block, substop.checked_sub(substart).unwrap(), substart)
-    }))
+    })
 }
 
-fn block_read(chunks: &[Chunk], size: u64, start: u64) -> Box<dyn Iterator<Item = Chunk> + '_> {
+fn block_read(chunks: &[Chunk], size: u64, start: u64) -> impl Iterator<Item = Chunk> + '_ {
     let stop = start + size;
 
     // Bisect
@@ -38,18 +37,16 @@ fn block_read(chunks: &[Chunk], size: u64, start: u64) -> Box<dyn Iterator<Item 
     };
 
     // Loop over chunks
-    Box::new(
-        chunks
-            .get(start_index..stop_index)
-            .unwrap()
-            .iter()
-            .map(move |chunk| {
-                let mut new_chunk = chunk.clone();
-                new_chunk.start = max(chunk.start, start);
-                new_chunk.stop = min(chunk.stop, NonZeroU64::new(stop).unwrap());
-                new_chunk
-            }),
-    )
+    chunks
+        .get(start_index..stop_index)
+        .unwrap()
+        .iter()
+        .map(move |chunk| {
+            let mut new_chunk = chunk.clone();
+            new_chunk.start = max(chunk.start, start);
+            new_chunk.stop = min(chunk.stop, NonZeroU64::new(stop).unwrap());
+            new_chunk
+        })
 }
 
 pub fn prepare_read(manifest: LocalFileManifest, size: u64, offset: u64) -> Vec<Chunk> {
@@ -69,7 +66,6 @@ pub fn prepare_read(manifest: LocalFileManifest, size: u64, offset: u64) -> Vec<
 mod tests {
     #[test]
     fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
+        todo!()
     }
 }
