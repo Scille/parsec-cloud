@@ -662,9 +662,18 @@ version = "2.0.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "876a12f2d98c35d1dfaf74083664be5bb71606b72f4756f3792cdb1ddb192b46"
 dependencies = [
- "diesel_derives",
+ "diesel_derives 2.0.0-rc.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libsqlite3-sys",
  "r2d2",
+]
+
+[[package]]
+name = "diesel"
+version = "2.0.0-rc.0"
+source = "git+https://github.com/diesel-rs/diesel#b51e6584ac4c6dc4495010e6e2f282c6de327e1f"
+dependencies = [
+ "diesel_derives 2.0.0-rc.0 (git+https://github.com/diesel-rs/diesel)",
+ "libsqlite3-sys",
 ]
 
 [[package]]
@@ -672,6 +681,17 @@ name = "diesel_derives"
 version = "2.0.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2497d9cefebedc40492310f3c94493e1d0bd5b11b5e1bfc0a7f4b106012203ea"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "diesel_derives"
+version = "2.0.0-rc.0"
+source = "git+https://github.com/diesel-rs/diesel#b51e6584ac4c6dc4495010e6e2f282c6de327e1f"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -1398,7 +1418,7 @@ dependencies = [
 name = "libparsec_core_fs"
 version = "0.0.0"
 dependencies = [
- "diesel",
+ "diesel 2.0.0-rc.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "fancy-regex",
  "libparsec_client_types",
  "libparsec_crypto",
@@ -1779,9 +1799,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.10.0"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87f3e037eac156d1775da914196f0f37741a274155e34a0b7e427c35d2a2ecb9"
+checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
 
 [[package]]
 name = "opaque-debug"
@@ -2275,9 +2295,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.5.5"
+version = "1.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a11647b6b25ff05a515cb92c365cec08801e83423a235b51e231e1808747286"
+checksum = "d83f127d94bdbcda4c8cc2e50f6f84f4b611f69c902699ca385a39c3a75f9ff1"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -2286,9 +2306,9 @@ dependencies = [
 
 [[package]]
 name = "regex-syntax"
-version = "0.6.25"
+version = "0.6.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
+checksum = "49b3de9ec5dc0a3417da371aab17d729997c15010e7fd24ff707773a33bddb64"
 
 [[package]]
 name = "remove_dir_all"
@@ -2830,9 +2850,9 @@ dependencies = [
 
 [[package]]
 name = "target-lexicon"
-version = "0.12.3"
+version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7fa7e55043acb85fca6b3c01485a2eeb6b69c5d21002e273c79e465f43b7ac1"
+checksum = "c02424087780c9b71cc96799eaeddff35af2bc513278cda5c99fc1f5d026d3c1"
 
 [[package]]
 name = "tempfile"
