@@ -1,33 +1,47 @@
 .. Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-.. _doc_development:
+.. _doc_development_quickstart:
 
-===========
-Development
-===========
+
+==================
+Hacking Quickstart
+==================
 
 Get the sources
 ---------------
 
 Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
 
-1. You should fist clone it with ``git`` and move to the project dir::
+1. You should fist clone it with ``git`` and move to the project dir
 
-    $ git clone git@github.com:Scille/parsec-cloud.git
-    $ cd parsec-cloud
+.. code-block:: shell
 
-2. Create a Python virtual environment for the project::
+    git clone git@github.com:Scille/parsec-cloud.git
+    cd parsec-cloud
 
-    $ python -m venv venv
-    $ . ./venv/script/activate
+2. Create a Python virtual environment for the project
+
+.. code-block:: shell
+
+    python -m venv venv
+    . ./venv/bin/activate
+
+or on Windows
+
+.. code-block:: shell
+
+    python -m venv venv
+    .\\venv\\Scripts\\activate.bat
 
 .. note::
 
-    Parsec requires Python >= 3.6
+    Parsec requires Python 3.9
 
-3. Install Parsec within the virtualenv::
+3. Install Parsec within the virtualenv
 
-    $ pip install --editable .[all]
+.. code-block:: shell
+
+    pip install --editable .[all]
 
 Note the ``--editable`` option, this tell the virtualenv to directly rely on the
 source code within the parsec-cloud directory instead of copying it into it install
@@ -38,9 +52,11 @@ something in the project source code.
 Run the tests
 -------------
 
-Run the tests with pytest::
+Run the tests with pytest
 
-    $ py.test tests
+.. code-block:: shell
+
+    py.test tests
 
 On top of that, multiple options are available:
 
@@ -55,10 +71,12 @@ On top of that, multiple options are available:
 Note you can mix&match the flags, e.g. ``py.test tests --runmountpoint --postgresql --runslow -n auto``.
 
 If you want to run GUI test, it is a good idea to install ``pytest-xvfb`` in order to
-hide the Qt windows when running the GUI tests::
+hide the Qt windows when running the GUI tests
 
-    $ apt install xvfb
-    $ pip install pytest-xvfb
+.. code-block:: shell
+
+    apt install xvfb
+    pip install pytest-xvfb
 
 
 Run Parsec in local
@@ -66,13 +84,17 @@ Run Parsec in local
 
 You can use the ``run_testenv`` scripts to easily create a development environment:
 
-On linux::
+On linux:
 
-    $ . ./tests/scripts/run_testenv.sh
+.. code-block:: shell
 
-On Windows::
+    . ./tests/scripts/run_testenv.sh
 
-    $ tests\\scripts\\run_testenv.bat
+On Windows:
+
+.. code-block:: shell
+
+    tests\\scripts\\run_testenv.bat
 
 This script will:
 
