@@ -3,6 +3,7 @@
 import click
 import platform
 from typing import Optional, Callable
+from path import Path
 
 from parsec.utils import trio_run
 from parsec.cli_utils import spinner, cli_exception_handler, aprompt
@@ -20,6 +21,8 @@ async def _bootstrap_organization(
     device_label: Optional[DeviceLabel],
     human_label: Optional[str],
     human_email: Optional[str],
+    enable_tpek: bool,
+    enable_tpek: bool,
     save_device_with_selected_auth: Callable,
 ) -> None:
     if not human_label:
@@ -51,6 +54,11 @@ async def _bootstrap_organization(
 @click.option("--device-label")
 @click.option("--human-label")
 @click.option("--human-email")
+@click.argument(
+    "--third-party-encryption-key-signing-certificate",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+    # TODO: help
+)
 @save_device_options
 @core_config_options
 @cli_command_base_options
@@ -60,6 +68,7 @@ def bootstrap_organization(
     device_label: Optional[DeviceLabel],
     human_label: Optional[str],
     human_email: Optional[str],
+    third_party_encryption_key_signing_certificate: Optional[Path],
     save_device_with_selected_auth: Callable,
     **kwargs
 ) -> None:
@@ -68,6 +77,14 @@ def bootstrap_organization(
     """
     with cli_exception_handler(config.debug):
         # Disable task monitoring given user prompt will block the coroutine
+
+        if third_party_encryption_key_signing_certificate is not None:
+            # TODO: print a dialogue with confirmation to make sure user understand
+            # what this option imply
+            tpek_signing_cert = third_party_encryption_key_signing_certificate.read_bytes()
+        else:
+            tpek_signing_cert = None
+
         trio_run(
             _bootstrap_organization,
             config,
@@ -75,5 +92,6 @@ def bootstrap_organization(
             device_label,
             human_label,
             human_email,
+            tpek_signing_cert,
             save_device_with_selected_auth,
         )

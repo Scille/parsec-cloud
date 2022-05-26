@@ -35,9 +35,14 @@ async def bootstrap_organization(
     addr: BackendOrganizationBootstrapAddr,
     human_handle: Optional[HumanHandle],
     device_label: Optional[DeviceLabel],
+    tpek_signing_cert: Optional[bytes],
 ) -> LocalDevice:
     root_signing_key = SigningKey.generate()
     root_verify_key = root_signing_key.verify_key
+
+    # TODO: validate the cert before signing it (to avoid bootstrapping the orga
+    # while the wrong file as been chosen...)
+    signed_tpek_signing_cert = root_signing_key.sign(tpek_signing_cert)
 
     organization_addr = BackendOrganizationAddr.build(
         backend_addr=addr.get_backend_addr(),
@@ -96,6 +101,7 @@ async def failsafe_organization_bootstrap(
     device_certificate: bytes,
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
+    signed_tpek_signing_cert: Optional[bytes],
 ) -> dict:
     # Try the new anonymous API
     try:
@@ -106,6 +112,7 @@ async def failsafe_organization_bootstrap(
             device_certificate=device_certificate,
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
+            signed_tpek_signing_cert=signed_tpek_signing_cert,
         )
     # If we get a 404 error, maybe the backend is too old to know about the anonymous route (API version < 2.6)
     except BackendNotAvailable as exc:
@@ -118,6 +125,9 @@ async def failsafe_organization_bootstrap(
             return rep
     # Then we try again with the legacy version
     async with apiv1_backend_anonymous_cmds_factory(addr) as anonymous_cmds:
+        if signed_tpek_signing_cert is not None:
+            raise InviteError("Server doesn't support third party encryption key feature")
+
         return await anonymous_cmds.organization_bootstrap(
             organization_id=addr.organization_id,
             bootstrap_token=addr.token,
