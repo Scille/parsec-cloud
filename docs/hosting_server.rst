@@ -35,19 +35,21 @@ web application.
 Installation
 ============
 
-.. code::
+.. code-block:: shell
 
-    $ python -m venv venv
-    $ . ./venv/bin/activate
-    $ pip install parsec-cloud[backend]
+    python -m venv venv
+    . ./venv/bin/activate
+    pip install parsec-cloud[backend]
 
 
 Run
 ===
 
-Use the ``parsec backend run`` command to start Parsec server, for instance::
+Use the ``parsec backend run`` command to start Parsec server, for instance:
 
-    $ parsec backend run --port $PORT --host 0.0.0.0 --db postgresql://<...> --blockstore s3:<...> --administration-token <token>
+.. code-block:: shell
+
+    parsec backend run --port $PORT --host 0.0.0.0 --db postgresql://<...> --blockstore s3:<...> --administration-token <token>
 
 
 Settings
@@ -58,9 +60,11 @@ Settings
 
     Settings can be specified by using environment variable ``PARSEC_CMD_ARGS``.
     All available command line arguments can be used and environ variables
-    within it will be expanded. For instance::
+    within it will be expanded. For instance:
 
-        $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
+    .. code-block:: shell
+
+        DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
 
 Host
 ----
@@ -278,7 +282,7 @@ with an ``application/json`` body with the following fields:
 
 Example:
 
-.. code:: json
+.. code-block:: json
 
     {
       "organization_id": "MyOrg",
