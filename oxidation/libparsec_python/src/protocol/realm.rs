@@ -276,10 +276,9 @@ pub(crate) struct RealmGetRoleCertificateReq(pub realm_get_role_certificates::Re
 #[pymethods]
 impl RealmGetRoleCertificateReq {
     #[new]
-    fn new(realm_id: RealmID, since: Option<&PyAny>) -> PyResult<Self> {
+    fn new(realm_id: RealmID) -> PyResult<Self> {
         let realm_id = realm_id.0;
-        let since = since.map(py_to_rs_datetime).transpose()?;
-        Ok(Self(realm_get_role_certificates::Req { realm_id, since }))
+        Ok(Self(realm_get_role_certificates::Req { realm_id }))
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -296,14 +295,6 @@ impl RealmGetRoleCertificateReq {
     #[getter]
     fn realm_id(&self) -> PyResult<RealmID> {
         Ok(RealmID(self.0.realm_id))
-    }
-
-    #[getter]
-    fn since<'py>(&self, py: Python<'py>) -> PyResult<Option<&'py PyAny>> {
-        self.0
-            .since
-            .map(|since| rs_to_py_datetime(py, since))
-            .transpose()
     }
 }
 

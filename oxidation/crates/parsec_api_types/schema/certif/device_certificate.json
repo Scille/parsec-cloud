@@ -15,6 +15,8 @@
             "type": "DeviceID"
         },
         {
+            // Added in Parsec v1.14
+            // Device label can be none in case of redacted certificate
             "name": "device_label",
             "type": "Option<DeviceLabel>",
             "introduced_in_revision": 14

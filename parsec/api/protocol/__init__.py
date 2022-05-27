@@ -281,7 +281,6 @@ __all__ = (
     # List of cmds
     "AUTHENTICATED_CMDS",
     "INVITED_CMDS",
-    "ANONYMOUS_CMDS",
     "APIV1_ANONYMOUS_CMDS",
-    "AuthenticatedAnyCmd",
+    "AuthenticatedAnyCmdReq",
 )

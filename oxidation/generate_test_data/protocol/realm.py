@@ -95,7 +95,6 @@ serialized = serializer.req_dumps(
     {
         "cmd": "realm_get_role_certificates",
         "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
-        "since": datetime(2000, 1, 2, 1),
     }
 )
 serializer.req_loads(serialized)

@@ -15,6 +15,7 @@
             "type": "UserID"
         },
         {
+            // Added in Parsec v1.13
             "name": "human_handle",
             "type": "Option<HumanHandle>",
             "introduced_in_revision": 13
@@ -24,10 +25,13 @@
             "type": "PublicKey"
         },
         {
+            // `profile` replaces `is_admin` field (which is still required for backward
+            // compatibility), hence `None` is not allowed
             "name": "is_admin",
             "type": "Boolean"
         },
         {
+            // Added in Parsec v1.14
             "name": "profile",
             "type": "UserProfile",
             "introduced_in_revision": 14
