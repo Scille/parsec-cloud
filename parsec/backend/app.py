@@ -5,7 +5,7 @@ import trio
 from trio.abc import Stream
 from structlog import get_logger
 from functools import partial
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 from wsgiref.handlers import format_date_time
 from http import HTTPStatus
 import h11

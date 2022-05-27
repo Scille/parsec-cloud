@@ -2,9 +2,8 @@
 
 from pathlib import Path
 from typing import AsyncIterator, Optional, Union
-
 import trio
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 from sqlite3 import Connection, Cursor, OperationalError, connect as sqlite_connect
 
 from parsec.core.fs.exceptions import FSLocalStorageClosedError, FSLocalStorageOperationalError

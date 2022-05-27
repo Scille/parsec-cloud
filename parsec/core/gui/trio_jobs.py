@@ -2,10 +2,10 @@
 
 import threading
 from inspect import iscoroutinefunction, signature
-from async_generator import asynccontextmanager
-
+from contextlib import asynccontextmanager
 import trio
 from structlog import get_logger
+
 from parsec.core.fs import FSError
 from parsec.core.mountpoint import MountpointError
 from parsec.utils import split_multi_error

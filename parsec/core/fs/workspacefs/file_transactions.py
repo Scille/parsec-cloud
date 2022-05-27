@@ -2,18 +2,16 @@
 
 from parsec.core.core_events import CoreEvent
 from typing import Tuple, List, Callable, Dict, Optional, cast, AsyncIterator
-
 from collections import defaultdict
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.event_bus import EventBus
+from parsec.api.data import BlockAccess
 from parsec.api.protocol import DeviceID
 from parsec.core.types import FileDescriptor, EntryID, LocalDevice
-
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import BaseWorkspaceStorage
 from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor, FSEndOfFileError
-
 from parsec.core.types import (
     Chunk,
     WorkspaceEntry,
@@ -28,7 +26,6 @@ from parsec.core.fs.workspacefs.file_operations import (
     prepare_resize,
     prepare_reshape,
 )
-from parsec.api.data import BlockAccess
 
 
 __all__ = ("FSInvalidFileDescriptor", "FileTransactions")

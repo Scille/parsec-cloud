@@ -4,7 +4,7 @@ import pytest
 import trio
 from pendulum import now as pendulum_now
 from PyQt5 import QtCore
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 from functools import partial
 
 from parsec.utils import start_task

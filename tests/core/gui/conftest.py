@@ -2,7 +2,7 @@
 
 from importlib import import_module
 from async_exit_stack import AsyncExitStack
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 import trio
 import qtrio

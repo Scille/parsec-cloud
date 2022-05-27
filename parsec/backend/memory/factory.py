@@ -3,9 +3,8 @@
 import math
 from enum import Enum
 from typing import Tuple, Dict
-
 import trio
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery

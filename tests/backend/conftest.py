@@ -3,7 +3,7 @@
 import pytest
 from typing import Optional
 from pendulum import datetime
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 from structlog import get_logger
 
 from parsec.api.data import RealmRoleCertificateContent

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 from typing import Optional, AsyncGenerator
 
 from parsec.core.types import BackendOrganizationBootstrapAddr

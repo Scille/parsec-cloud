@@ -6,7 +6,7 @@ import ssl
 import certifi
 import urllib.request
 from structlog import get_logger
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 from typing import Optional, Dict
 
 from parsec.crypto import SigningKey

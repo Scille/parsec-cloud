@@ -14,14 +14,12 @@ except ModuleNotFoundError:  # Not available on Windows
 import sys
 import subprocess
 from time import sleep
-from contextlib import contextmanager
+from contextlib import contextmanager, asynccontextmanager
 from unittest.mock import ANY, patch
-
 import attr
 import pytest
 import trustme
 from click.testing import CliRunner
-from async_generator import asynccontextmanager
 
 from parsec import __version__ as parsec_version
 from parsec.cli import cli

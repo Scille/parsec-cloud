@@ -10,8 +10,7 @@ from structlog import get_logger
 from typing import Sequence, Optional
 from importlib import __import__ as import_function
 from subprocess import CalledProcessError
-
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import EntryID
