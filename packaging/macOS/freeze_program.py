@@ -6,10 +6,8 @@ import re
 from typing import Optional
 import shutil
 import argparse
-import platform
 import subprocess
 from hashlib import sha256
-from urllib.request import urlopen
 from pathlib import Path
 
 
@@ -22,17 +20,10 @@ if not python:
 
 BUILD_DIR = Path("build").resolve()
 
-WINFSP_URL = "https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-1.8.20304.msi"
-WINFSP_HASH = "8d6f2c519f3f064881b576452fbbd35fe7ad96445aa15d9adcea1e76878b4f00"
 TOOLS_VENV_DIR = BUILD_DIR / "tools_venv"
 DEFAULT_WHEEL_IT_DIR = BUILD_DIR / "wheel_it"
 
 PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-
-
-def get_archslug():
-    bits, _ = platform.architecture()
-    return "win32" if bits == "32bit" else "win64"
 
 
 def run(cmd, **kwargs):
@@ -73,16 +64,8 @@ def main(
     program_version_without_v_prefix = program_version[1:]
     print(f"### Detected Parsec version {program_version} ###")
 
-    winfsp_installer = BUILD_DIR / WINFSP_URL.rsplit("/", 1)[1]
-    if not winfsp_installer.is_file():
-        print("### Fetching WinFSP installer (will be needed by NSIS packager later) ###")
-        req = urlopen(WINFSP_URL)
-        data = req.read()
-        assert sha256(data).hexdigest() == WINFSP_HASH
-        winfsp_installer.write_bytes(data)
-
     # Bootstrap tools virtualenv
-    tools_python = TOOLS_VENV_DIR / "Scripts/python.exe"
+    tools_python = TOOLS_VENV_DIR / "bin/python"
     if not TOOLS_VENV_DIR.is_dir():
         print("### Create tool virtualenv ###")
         run(f"{ python } -m venv {TOOLS_VENV_DIR}")
@@ -117,7 +100,7 @@ def main(
 
     # Bootstrap PyInstaller virtualenv containing both pyinstaller, parsec & it dependencies
     pyinstaller_venv_dir = BUILD_DIR / "pyinstaller_venv"
-    pyinstaller_python = pyinstaller_venv_dir / "Scripts/python.exe"
+    pyinstaller_python = pyinstaller_venv_dir / "bin/python"
     if not pyinstaller_venv_dir.is_dir() or True:
         print("### Installing program & PyInstaller in temporary virtualenv ###")
         run(f"{ python } -m venv {pyinstaller_venv_dir}")
@@ -161,72 +144,10 @@ def main(
             env=env,
         )
 
-    target_dir = BUILD_DIR / f"parsec-{program_version}-{get_archslug()}"
-    if target_dir.exists():
-        raise SystemExit(f"{target_dir} already exists, exiting...")
-    shutil.move(pyinstaller_dist / "parsec", target_dir)
-
     # Include LICENSE file
-    (target_dir / "LICENSE.txt").write_text((program_source / "licenses/AGPL3.txt").read_text())
-
-    # Create build info file for NSIS installer
-    (BUILD_DIR / "BUILD.tmp").write_text(
-        f'target = "{target_dir}"\n'
-        f'program_version = "{program_version}"\n'
-        f'python_version = "{PYTHON_VERSION}"\n'
-        f'platform = "{get_archslug()}"\n'
-        f'winfsp_installer_name = "{winfsp_installer.name}"\n'
-        f'winfsp_installer_path = "{winfsp_installer}"\n'
+    (pyinstaller_dist / "Parsec.app/Contents/LICENSE.txt").write_text(
+        (program_source / "licenses/AGPL3.txt").read_text()
     )
-
-    # Create the install and uninstall file list for NSIS installer
-    # Crawling order is important in [install|uninstall]_files.nsh, we cannot
-    # create a file if it parent folder doesn't exist and we cannot remove a
-    # folder if it is not empty.
-    # On top of that, we have to jump into a directory before installing it
-    # files (see the `SetOutPath` command).
-    # We don't use `Path.rglob` given it would require further tweaking
-    # due to it crawling order, so it's just simpler to roll our own crawler.
-    target_files = []
-
-    def _recursive_collect_target_files(curr_dir):
-        subdirs = []
-        for entry in curr_dir.iterdir():
-            if entry.is_dir():
-                subdirs.append(entry)
-            else:
-                target_files.append((False, entry.relative_to(target_dir)))
-        for subdir in subdirs:
-            target_files.append((True, subdir.relative_to(target_dir)))
-            _recursive_collect_target_files(subdir)
-
-    _recursive_collect_target_files(target_dir)
-
-    install_files_txt = '; Files to install\nSetOutPath "$INSTDIR\\"\n'
-    installed_check = {Path(".")}
-    for target_is_dir, target_file in target_files:
-        if target_is_dir:
-            # Jump into the folder (create it if needed)
-            install_files_txt += f'SetOutPath "$INSTDIR\\{target_file}"\n'
-        else:
-            # Copy the file in the current folder
-            install_files_txt += f'File "${{PROGRAM_FREEZE_BUILD_DIR}}\\{target_file}"\n'
-        # Installation simulation sanity check
-        assert target_file not in installed_check
-        assert target_file.parent in installed_check
-        installed_check.add(target_file)
-    (BUILD_DIR / "install_files.nsh").write_text(install_files_txt)
-
-    uninstall_files_txt = "; Files to uninstall\n"
-    for target_is_dir, target_file in reversed(target_files):
-        if target_is_dir:
-            uninstall_files_txt += f'RMDir "$INSTDIR\\{target_file}"\n'
-        else:
-            uninstall_files_txt += f'Delete "$INSTDIR\\{target_file}"\n'
-        # Uninstallation simulation sanity check
-        assert target_file.parent in installed_check
-        installed_check.remove(target_file)
-    (BUILD_DIR / "uninstall_files.nsh").write_text(uninstall_files_txt)
 
 
 def check_python_version():
@@ -242,6 +163,7 @@ if __name__ == "__main__":
     parser.add_argument("--disable-check-python", action="store_true")
     parser.add_argument("--include-parsec-ext", type=Path)
     parser.add_argument("--wheel-it-dir", type=Path)
+    parser.add_argument("--install", action="store_true")
     args = parser.parse_args()
     if not args.disable_check_python:
         check_python_version()
@@ -250,3 +172,15 @@ if __name__ == "__main__":
         include_parsec_ext=args.include_parsec_ext,
         wheel_it_dir=args.wheel_it_dir,
     )
+
+    # Helper for testing
+    if args.install:
+        target = Path("/Applications/parsec.app")
+        new_app = BUILD_DIR / "pyinstaller_dist/Parsec.app"
+        try:
+            print(f"Remove {target}")
+            shutil.rmtree(target)
+        except FileNotFoundError:
+            pass
+        print(f"Copy {new_app} -> {target}")
+        shutil.copytree(new_app, target)
