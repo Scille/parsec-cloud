@@ -35,7 +35,7 @@ async def display_reencryption_button(aqtbot, monkeypatch, workspace_widget):
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.name == EntryName("w1")
 
-    await aqtbot.wait_until(_workspace_displayed, timeout=2000)
+    await aqtbot.wait_until(_workspace_displayed)
     wk_button = workspace_widget.layout_workspaces.itemAt(0).widget()
 
     def _reencrypt_button_displayed():
@@ -95,26 +95,26 @@ async def test_workspace_reencryption_display(
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.name == EntryName("w1")
 
-    await aqtbot.wait_until(partial(_workspace_displayed, w_w), timeout=2000)
+    await aqtbot.wait_until(partial(_workspace_displayed, w_w))
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     def _reencrypt_button_not_displayed():
         assert wk_button.button_reencrypt.isHidden()
         assert not wk_button.button_reencrypt.isVisible()
 
-    await aqtbot.wait_until(_reencrypt_button_not_displayed, timeout=2000)
+    await aqtbot.wait_until(_reencrypt_button_not_displayed)
 
     await revoke_user_workspace_right(shared_workspace, alice_user_fs, bob_user_fs, bob.user_id)
 
     w_w = await logged_gui.test_switch_to_workspaces_widget()
 
-    await aqtbot.wait_until(partial(_workspace_displayed, w_w), timeout=2000)
+    await aqtbot.wait_until(partial(_workspace_displayed, w_w))
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     def _reencrypt_button_displayed():
         assert wk_button.button_reencrypt.isVisible()
 
-    await aqtbot.wait_until(_reencrypt_button_displayed, timeout=2000)
+    await aqtbot.wait_until(_reencrypt_button_displayed)
 
 
 @pytest.mark.gui

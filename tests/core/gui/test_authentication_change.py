@@ -9,7 +9,7 @@ from parsec.core.gui.lang import translate
 @pytest.fixture
 def catch_auth_change_widget(widget_catcher_factory):
     return widget_catcher_factory(
-        "parsec.core.gui.authentication_change_widget.AuthenticationChangeWidget", timeout=2000
+        "parsec.core.gui.authentication_change_widget.AuthenticationChangeWidget"
     )
 
 

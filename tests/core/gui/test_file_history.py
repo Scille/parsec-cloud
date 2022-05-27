@@ -60,4 +60,4 @@ async def test_file_history(
         assert hb2_w.label_user.text() == "Boby McBobFace"
         assert hb2_w.label_version.text() == "2"
 
-    await aqtbot.wait_until(_history_displayed, timeout=3000)
+    await aqtbot.wait_until(_history_displayed)
