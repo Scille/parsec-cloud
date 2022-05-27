@@ -63,7 +63,7 @@ async def test_add_workspace(
             assert wk_button.name == EntryName("Workspace1")
             assert not autoclose_dialog.dialogs
 
-    await aqtbot.wait_until(_outcome_occured, timeout=2000)
+    await aqtbot.wait_until(_outcome_occured)
 
 
 @pytest.mark.gui
@@ -84,7 +84,7 @@ async def test_rename_workspace(
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.name == EntryName("Workspace1")
 
-    await aqtbot.wait_until(_workspace_displayed, timeout=2000)
+    await aqtbot.wait_until(_workspace_displayed)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
     # Now do the rename
@@ -183,7 +183,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
         # Be sure that the workspave is mounted
         assert core.mountpoint_manager.is_workspace_mounted(wid)
 
-    await aqtbot.wait_until(_initially_mounted, timeout=3000)
+    await aqtbot.wait_until(_initially_mounted)
 
     # Now switch to umounted
     aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
@@ -195,7 +195,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
         assert not wk_button.switch_button.isChecked()
         assert not core.mountpoint_manager.is_workspace_mounted(wid)
 
-    await aqtbot.wait_until(_unmounted, timeout=3000)
+    await aqtbot.wait_until(_unmounted)
 
     def _mounted():
         nonlocal wk_button
@@ -207,7 +207,7 @@ async def test_mountpoint_open_in_explorer_button(aqtbot, running_backend, logge
 
     # Now switch back to mounted
     aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
-    await aqtbot.wait_until(_mounted, timeout=3000)
+    await aqtbot.wait_until(_mounted)
 
     # Test open button
 
@@ -246,7 +246,7 @@ async def test_workspace_filter_user(
         assert isinstance(wk_button3, WorkspaceButton)
         assert not w_w.filter_remove_button.isVisible()
 
-    await aqtbot.wait_until(_workspace_listed, timeout=3000)
+    await aqtbot.wait_until(_workspace_listed)
 
     u_w = await logged_gui.test_switch_to_users_widget()
 
@@ -280,7 +280,7 @@ async def test_workspace_filter_user(
 
     aqtbot.mouse_click(w_w.filter_remove_button, QtCore.Qt.LeftButton)
 
-    await aqtbot.wait_until(_workspace_listed, timeout=2000)
+    await aqtbot.wait_until(_workspace_listed)
 
 
 @pytest.mark.gui
@@ -310,7 +310,7 @@ async def test_workspace_filter_user_new_workspace(
         assert isinstance(wk_button1, WorkspaceButton)
         assert not w_w.filter_remove_button.isVisible()
 
-    await aqtbot.wait_until(_workspace_listed, timeout=2000)
+    await aqtbot.wait_until(_workspace_listed)
 
     u_w = await logged_gui.test_switch_to_users_widget()
 
@@ -352,7 +352,7 @@ async def test_workspace_filter_user_new_workspace(
         assert wk_button2.name in [EntryName("Workspace1"), EntryName("Workspace2")]
         assert not w_w.filter_remove_button.isVisible()
 
-    await aqtbot.wait_until(_new_workspace_listed, timeout=2000)
+    await aqtbot.wait_until(_new_workspace_listed)
 
 
 @pytest.mark.gui
