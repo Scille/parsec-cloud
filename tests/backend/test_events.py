@@ -13,6 +13,7 @@ from tests.backend.common import (
     events_listen_wait,
     events_listen_nowait,
     ping,
+    real_clock_timeout,
 )
 
 
@@ -50,7 +51,7 @@ async def test_cancel_connection_after_events_subscribe(
         else:
             await _do_revoke()
             with pytest.raises(TransportError):
-                with trio.fail_after(1):
+                async with real_clock_timeout():
                     await events_listen_wait(bob_backend_sock)
 
 
@@ -120,7 +121,7 @@ async def test_cross_backend_event(backend_factory, backend_sock_factory, alice,
 
             # There is no guarantee an event is ready to be received once
             # the sender got it answer
-            with trio.fail_after(1):
+            async with real_clock_timeout():
                 while True:
                     rep = await events_listen_nowait(alice_sock)
                     if rep["status"] != "no_events":

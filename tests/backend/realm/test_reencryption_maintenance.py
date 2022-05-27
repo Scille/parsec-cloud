@@ -2,7 +2,6 @@
 
 import pendulum
 import pytest
-import trio
 from pendulum import datetime, now as pendulum_now
 
 from parsec.backend.backend_events import BackendEvent
@@ -11,7 +10,7 @@ from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.vlob import VlobNotFoundError, VlobVersionError
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
-from tests.common import freeze_time
+from tests.common import freeze_time, real_clock_timeout
 from tests.backend.test_message import message_get
 from tests.backend.common import (
     realm_status,
@@ -667,7 +666,7 @@ async def test_reencryption_events(
             alice2_backend_sock, realm, 2, pendulum_now(), {alice.user_id: b"foo"}
         )
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             # No guarantees those events occur before the commands' return
             await spy.wait_multiple(
                 [BackendEvent.REALM_MAINTENANCE_STARTED, BackendEvent.MESSAGE_RECEIVED]

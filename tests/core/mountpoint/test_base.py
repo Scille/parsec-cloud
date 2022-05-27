@@ -23,7 +23,7 @@ from parsec.core import logged_core_factory
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FsPath
 
-from tests.common import create_shared_workspace
+from tests.common import create_shared_workspace, real_clock_timeout
 
 
 # Helper
@@ -611,7 +611,7 @@ async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus)
         for timeout in count(0, 0.002):
             print(f"timeout: {timeout}")
 
-            with trio.fail_after(5):
+            async with real_clock_timeout():
 
                 with trio.move_on_after(timeout) as cancel_scope:
                     await mountpoint_manager.mount_workspace(wid)

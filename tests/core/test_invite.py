@@ -28,10 +28,11 @@ from parsec.core.invite import (
     DeviceGreetInitialCtx,
     UserGreetInitialCtx,
 )
-
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUsed
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+
+from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
@@ -111,7 +112,7 @@ async def test_good_device_claim(
 
         await in_progress_ctx.do_create_new_device(author=alice, device_label=granted_device_label)
 
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         async with trio.open_nursery() as nursery:
             nursery.start_soon(_run_claimer)
             nursery.start_soon(_run_greeter)
@@ -269,7 +270,7 @@ async def test_good_user_claim(
             profile=granted_profile,
         )
 
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         async with trio.open_nursery() as nursery:
             nursery.start_soon(_run_claimer)
             nursery.start_soon(_run_greeter)
@@ -358,7 +359,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
         greeter_in_progress_ctx = None
 
         # Step 1
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             async with trio.open_nursery() as nursery:
 
                 async def _do_claimer():
@@ -373,7 +374,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
                 nursery.start_soon(_do_greeter)
 
         # Claimer restart the conduit while greeter try to do step 2
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             async with trio.open_nursery() as nursery:
 
                 async def _do_claimer():
@@ -388,7 +389,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
                 greeter_in_progress_ctx = await greeter_initial_ctx.do_wait_peer()
 
         # Now do the other way around: greeter restart conduit while claimer try step 2
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             async with trio.open_nursery() as nursery:
 
                 async def _do_greeter():
@@ -462,13 +463,13 @@ async def test_claimer_handle_cancel_event(
                 return
             greeter_in_progress_ctx = await greeter_in_progress_ctx.do_signify_trust()
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             async with trio.open_nursery() as nursery:
 
                 nursery.start_soon(_do_claimer)
                 nursery.start_soon(_do_greeter)
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
 
             async with trio.open_nursery() as nursery:
 
@@ -569,7 +570,7 @@ async def test_claimer_handle_command_failure(
                 return
             greeter_in_progress_ctx = await greeter_in_progress_ctx.do_signify_trust()
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
 
             async with trio.open_nursery() as nursery:
                 nursery.start_soon(_do_claimer)
@@ -587,7 +588,7 @@ async def test_claimer_handle_command_failure(
         backend.invite._send_event = _send_event
         monkeypatch.setattr("parsec.backend.postgresql.invite.send_signal", _send_event)
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             await _cancel_invitation()
             await deleted_event.wait()
             with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
@@ -654,7 +655,7 @@ async def test_user_claim_but_active_users_limit_reached(backend, running_backen
                 requested_device_label=None, requested_human_handle=None
             )
 
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         async with trio.open_nursery() as nursery:
             nursery.start_soon(_run_claimer)
             await _run_greeter()
