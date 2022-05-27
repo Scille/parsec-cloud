@@ -353,9 +353,12 @@ jobs:
     displayName: 'Install'
   - bash: |
       set -eux
+      # Don't use `-n auto` option given pytest-xdist doesn't guarantee test to be run
+      # run on the main thread of spawned processes, this cause random crash on macOS
+      # (see: https://github.com/pytest-dev/pytest-xdist/issues/739)
       py.test $(pytest.base_args) \
         tests --runmountpoint --runslow \
-        -n auto --max-worker-restart=0 -x \
+        --max-worker-restart=0 -x \
         --junitxml=test-results-memory.xml
     displayName: 'Tests memory'
   #- bash: |
