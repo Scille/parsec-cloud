@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-import trio
 from pendulum import datetime
 
 from parsec.api.protocol import InvitationType, InvitationStatus, APIEvent
 
+from tests.common import real_clock_timeout
 from tests.backend.common import (
     events_subscribe,
     events_listen_wait,
@@ -36,7 +36,7 @@ async def test_greeter_event_on_claimer_join_and_leave(
 
         # Claimer is ready, this should be notified to greeter
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             rep = await events_listen_wait(alice_backend_sock)
             # PostgreSQL event dispatching might be lagging behind and return
             # the IDLE event first
@@ -67,7 +67,7 @@ async def test_greeter_event_on_claimer_join_and_leave(
         }
 
     # Now claimer has left, greeter should be again notified
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         rep = await events_listen_wait(alice_backend_sock)
     assert rep == {
         "status": "ok",

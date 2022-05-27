@@ -259,7 +259,8 @@ async def test_pki_list(anonymous_backend_sock, bob, adam, alice_backend_sock):
     assert submited_request["enrollment_id"] == bob_request_id
     assert submited_request["submitter_der_x509_certificate"] == bob_certif
     assert submited_request["submit_payload_signature"] == bob_certif_signature
-    assert submited_request["submitted_on"] > ref_time
+    # In theory we should have sumitted_on > ref_time, but clock resolution on Windows is poor
+    assert submited_request["submitted_on"] >= ref_time
 
     submited_payload = PkiEnrollmentSubmitPayload.load(submited_request["submit_payload"])
     assert submited_payload.verify_key == bob.verify_key

@@ -20,7 +20,7 @@ from parsec.core.gui.greet_device_widget import (
 )
 from parsec.core.gui.devices_widget import DeviceButton
 
-from tests.common import customize_fixtures
+from tests.common import customize_fixtures, real_clock_timeout
 
 
 @pytest.fixture
@@ -223,7 +223,7 @@ def GreetDeviceTestBed(
             self.claimer_claim_task = await start_task(
                 self.nursery, _claimer_claim, self.claimer_in_progress_ctx
             )
-            with trio.fail_after(1):
+            async with real_clock_timeout():
                 await self.claimer_claim_task.join()
 
             def _greet_done():

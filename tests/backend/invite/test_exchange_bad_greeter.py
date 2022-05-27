@@ -1,12 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-import trio
 from pendulum import datetime
 
 from parsec.crypto import PrivateKey
 from parsec.api.protocol import InvitationDeletedReason, InvitationToken
 
+from tests.common import real_clock_timeout
 from tests.backend.common import (
     invite_1_greeter_wait_peer,
     invite_2a_greeter_get_hashed_nonce,
@@ -50,6 +50,6 @@ async def test_greeter_exchange_bad_access(alice, backend, alice_backend_sock, r
         (invite_3b_greeter_signify_trust, {"token": token}),
         (invite_4_greeter_communicate, {"token": token, "payload": b"<payload>"}),
     ]:
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             rep = await command(alice_backend_sock, **params)
         assert rep == {"status": status}

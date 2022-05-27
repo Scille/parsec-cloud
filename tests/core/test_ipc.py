@@ -1,14 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-import trio
 import sys
 import subprocess
 from uuid import uuid4
 from pathlib import Path
-from parsec.core.ipcinterface import IPCCommand
 
 from parsec.core.ipcinterface import (
+    IPCCommand,
     _install_win32_mutex,
     _install_posix_file_lock,
     run_ipc_server,
@@ -17,6 +16,8 @@ from parsec.core.ipcinterface import (
     IPCServerBadResponse,
     IPCServerAlreadyRunning,
 )
+
+from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
@@ -118,7 +119,7 @@ async def test_ipc_server(tmpdir, monkeypatch):
         return {"status": "ok"}
 
     mut1 = uuid4().hex
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         async with run_ipc_server(_cmd_handler, socket_file=file1, win32_mutex_name=mut1):
 
             with pytest.raises(IPCServerAlreadyRunning):

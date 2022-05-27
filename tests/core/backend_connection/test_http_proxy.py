@@ -16,14 +16,27 @@ from parsec.core.backend_connection.transport import (
     http_request,
 )
 
+from tests.common import real_clock_timeout
+
 
 async def start_proxy_for_websocket(nursery, target_port, event_hook):
     async def _proxy_client_handler(stream):
+        buff = b""
+
+        async def _next_req():
+            nonlocal buff
+            while True:
+                try:
+                    msg, buff = buff.split(b"\r\n\r\n", 1)
+                    return msg + b"\r\n\r\n"
+                except ValueError:
+                    buff = await stream.receive_some(1024)
+
         # To simplify things, we consider a the http requests/responses are
         # contained in single tcp trame. This is not strictly true in real life
         # but is close enough when staying on localhost
         # 1) Receive proxy connection request
-        req = await stream.receive_some(1024)
+        req = await _next_req()
         match = re.match(
             (
                 rb"^CONNECT 127.0.0.1:([0-9]+) HTTP/1.1\r\n"
@@ -40,7 +53,7 @@ async def start_proxy_for_websocket(nursery, target_port, event_hook):
         event_hook("Connected to proxy")
 
         # 2) Proxy is connected, receive actual target request
-        req = await stream.receive_some(1024)
+        req = await _next_req()
         assert re.match(
             (
                 rb"^GET /ws HTTP/1.1\r\n"
@@ -140,7 +153,7 @@ async def test_proxy_with_websocket(monkeypatch, connection_type, proxy_type):
             # HTTP_PROXY_PAC has priority over HTTP_PROXY
             monkeypatch.setitem(os.environ, "http_proxy", f"http://127.0.0.1:{target_port}")
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             with pytest.raises(BackendNotAvailable):
                 if connection_type == "authenticated":
                     await connect_as_authenticated(
@@ -221,7 +234,7 @@ async def test_proxy_with_http(monkeypatch, proxy_type):
             # HTTP_PROXY_PAC has priority over HTTP_PROXY
             monkeypatch.setitem(os.environ, "http_proxy", f"http://127.0.0.1:{target_port}")
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             rep = await http_request(f"http://127.0.0.1:{target_port}/foo", method="POST")
             assert rep == b"hello"
 
@@ -295,7 +308,7 @@ async def test_no_proxy_with_http(monkeypatch, type):
         )
         target_port = target_listeners[0].socket.getsockname()[1]
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             rep = await http_request(f"http://127.0.0.1:{target_port}/foo", method="POST")
             assert rep == b"hello"
 

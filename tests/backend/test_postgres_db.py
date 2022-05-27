@@ -8,13 +8,15 @@ import triopg
 from parsec.backend.cli.run import _run_backend, RetryPolicy
 from parsec.backend.config import BackendConfig, PostgreSQLBlockStoreConfig
 
+from tests.common import real_clock_timeout
+
 
 def records_filter_debug(records):
     return [record for record in records if record.levelname != "DEBUG"]
 
 
-async def wait_for_listeners(conn, to_terminate=False, timeout=3.0):
-    with trio.fail_after(timeout):
+async def wait_for_listeners(conn, to_terminate=False):
+    async with real_clock_timeout():
         while True:
             rows = await conn.fetch(
                 "SELECT pid FROM pg_stat_activity WHERE query ILIKE 'listen %' AND state ILIKE 'idle'"
@@ -43,7 +45,7 @@ async def test_postgresql_notification_listener_terminated(postgresql_url, backe
                 value, = await conn.fetchrow("SELECT pg_terminate_backend($1)", pid)
                 assert value
                 # Wait to get cancelled by the backend app
-                with trio.fail_after(3):
+                async with real_clock_timeout():
                     await trio.sleep_forever()
 
 
@@ -101,7 +103,7 @@ async def test_retry_policy_no_retry(postgresql_url, unused_tcp_port, asyncio_lo
                 value, = await conn.fetchrow("SELECT pg_terminate_backend($1)", pid)
                 assert value
                 # Wait to get cancelled by the connection error `_run_backend`
-                with trio.fail_after(3):
+                async with real_clock_timeout():
                     await trio.sleep_forever()
 
 

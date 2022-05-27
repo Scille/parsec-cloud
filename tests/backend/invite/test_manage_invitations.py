@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-import trio
 from unittest.mock import ANY
 from pendulum import datetime
 
@@ -16,7 +15,7 @@ from parsec.api.protocol import (
     APIEvent,
 )
 
-from tests.common import freeze_time, customize_fixtures
+from tests.common import freeze_time, customize_fixtures, real_clock_timeout
 from tests.backend.common import (
     invite_new,
     invite_list,
@@ -57,7 +56,7 @@ async def test_user_new_invitation_and_info(
     assert rep == {"status": "ok", "token": ANY}
     token = rep["token"]
 
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         rep = await events_listen_wait(alice2_backend_sock)
     assert rep == {
         "status": "ok",
@@ -131,7 +130,7 @@ async def test_device_new_invitation_and_info(
     assert rep == {"status": "ok", "token": ANY}
     token = rep["token"]
 
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         rep = await events_listen_wait(alice2_backend_sock)
     assert rep == {
         "status": "ok",
@@ -391,7 +390,7 @@ async def test_delete_invitation(
         assert rep == {"status": "ok"}
         await spy.wait_with_timeout(BackendEvent.INVITE_STATUS_CHANGED)
 
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         rep = await events_listen_wait(alice2_backend_sock)
     assert rep == {
         "status": "ok",

@@ -9,7 +9,7 @@ from parsec.api.protocol import OrganizationID, InvitationToken, InvitationType
 from parsec.core.types.backend_address import BackendAddr, BackendInvitationAddr
 from parsec.backend.app import MAX_INITIAL_HTTP_REQUEST_SIZE
 
-from tests.common import customize_fixtures
+from tests.common import customize_fixtures, real_clock_timeout
 from tests.backend.http.conftest import open_stream_to_backend
 from tests.backend.common import parse_http_response
 
@@ -78,7 +78,7 @@ async def test_invalid_request_line(backend_http_send, running_backend):
         b"G\xf1T / HTTP/1.0\r\n\r\n",  # Method must be ISO-8859-1
         b"GET / HTTP/42.0\r\n\r\n",  # Only supported in Cyberpunk 2077
     ]:
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             status, _, _ = await backend_http_send(req=req)
             assert status == (400, "Bad Request")
 

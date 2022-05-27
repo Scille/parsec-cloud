@@ -27,7 +27,7 @@ from parsec.core.gui.greet_user_widget import (
     GreetUserWidget,
 )
 
-from tests.common import customize_fixtures
+from tests.common import customize_fixtures, real_clock_timeout
 
 
 @pytest.fixture
@@ -303,7 +303,7 @@ def GreetUserTestBed(
             # Finally confirm the claimer info and finish the greeting !
             aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
 
-            with trio.fail_after(1):
+            async with real_clock_timeout():
                 await self.claimer_claim_task.join()
 
             def _greet_done():

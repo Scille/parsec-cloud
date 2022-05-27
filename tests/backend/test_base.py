@@ -10,6 +10,8 @@ from trio.testing import open_stream_to_socket_listener
 from parsec.api.protocol import packb, unpackb, AuthenticatedClientHandshake
 from parsec.api.transport import Transport
 
+from tests.common import real_clock_timeout
+
 
 @pytest.mark.trio
 async def test_connection(alice_backend_sock):
@@ -85,7 +87,7 @@ async def test_handle_client_coroutine_destroyed_on_client_left(
                     )
                     client_stream.socket.close()
 
-                with trio.fail_after(1):
+                async with real_clock_timeout():
                     await outcome_available.wait()
 
             if close_on == "tcp_ready":
