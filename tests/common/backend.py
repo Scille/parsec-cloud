@@ -17,7 +17,7 @@ from parsec.backend import backend_app_factory
 from parsec.backend.config import BackendConfig, MockedEmailConfig, MockedBlockStoreConfig
 
 from tests.common.freeze_time import freeze_time
-from tests.common.timeout import real_clock_timeout
+from tests.common.trio_clock import real_clock_timeout
 from tests.common.binder import OrganizationFullData
 
 
