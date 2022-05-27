@@ -7,91 +7,45 @@ mod model;
 mod schema;
 
 use clap::Parser;
-use diesel::{Connection, QueryDsl, RunQueryDsl, SqliteConnection};
-use parsec_api_crypto::SecretKey;
+use diesel::{Connection, SqliteConnection};
+use std::path::PathBuf;
 
-use crate::{
-    model::{Block, Data, VlobAtom},
-    schema::{block, device, realm_role, user_ as user, vlob_atom},
-};
+use crate::model::Data;
+use parsec_api_crypto::SecretKey;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
+    /// Sqlite input file (e.g `my/workspace_export.sqlite`)
     #[clap(short, long)]
-    input: String,
+    input: PathBuf,
 
+    /// Secret key (e.g `my/keyfile.key`)
     #[clap(short, long)]
     key: String,
 
+    /// Output disk file (e.g `./output`)
     #[clap(short, long)]
-    output: String,
-}
-
-fn query_all(conn: &mut SqliteConnection) -> Data {
-    let blocks = block::table
-        .select((
-            block::block_id,
-            block::data,
-            block::author,
-            block::size,
-            block::created_on,
-        ))
-        .load::<Block>(conn)
-        .unwrap();
-
-    let vlob_atoms = vlob_atom::table
-        .select((
-            vlob_atom::vlob_id,
-            vlob_atom::version,
-            vlob_atom::blob,
-            vlob_atom::size,
-            vlob_atom::author,
-            vlob_atom::timestamp,
-        ))
-        .load::<VlobAtom>(conn)
-        .unwrap();
-
-    let role_certificates = realm_role::table
-        .select(realm_role::role_certificate)
-        .load::<Vec<u8>>(conn)
-        .unwrap();
-
-    let user_certificates = user::table
-        .select(user::user_certificate)
-        .load::<Vec<u8>>(conn)
-        .unwrap();
-
-    let device_certificates = device::table
-        .select(device::device_certificate)
-        .load::<Vec<u8>>(conn)
-        .unwrap();
-
-    Data {
-        blocks,
-        vlob_atoms,
-        role_certificates,
-        user_certificates,
-        device_certificates,
-    }
+    output: PathBuf,
 }
 
 fn main() {
     let args = Args::parse();
 
-    let input = args.input.as_str();
+    let input = args.input.to_str().unwrap();
     let key = SecretKey::try_from(&std::fs::read(args.key.as_str()).unwrap()[..]).unwrap();
-    let output = args.output.as_str();
+    let output = args.output.to_str().unwrap();
 
     let mut conn = SqliteConnection::establish(input).unwrap();
 
-    let data = query_all(&mut conn);
+    let data = Data::query_all(&mut conn);
 
-    data.save(&key, output);
+    data.dump(&key, output);
 }
 
 #[test]
 fn test_parsec_sequestre_dump() {
+    use crate::model::{Block, Info, VlobAtom};
     use diesel::connection::SimpleConnection;
 
     let input = "/tmp/parsec_sequestre_dump.sqlite";
@@ -107,24 +61,14 @@ fn test_parsec_sequestre_dump() {
 
     let mut conn = SqliteConnection::establish(input).unwrap();
 
-    // Drop all
-    let sql = read_sql!("0000_block/down.sql")
-        + &read_sql!("0001_vlob_atom/down.sql")
-        + &read_sql!("0002_realm_role/down.sql")
-        + &read_sql!("0003_user/down.sql")
-        + &read_sql!("0004_device/down.sql")
-        + &read_sql!("0005_info/down.sql")
-        // Generate all
-        + &read_sql!("0000_block/up.sql")
-        + &read_sql!("0001_vlob_atom/up.sql")
-        + &read_sql!("0002_realm_role/up.sql")
-        + &read_sql!("0003_user/up.sql")
-        + &read_sql!("0004_device/up.sql")
-        + &read_sql!("0005_info/up.sql");
+    let sql = read_sql!("0000_init/down.sql") + &read_sql!("0000_init/up.sql");
 
     conn.batch_execute(&sql).unwrap();
 
-    let data = query_all(&mut conn);
+    Data::init_db(&mut conn);
+
+    let data = Data::query_all(&mut conn);
+
     assert_eq!(
         data,
         Data {
@@ -133,7 +77,7 @@ fn test_parsec_sequestre_dump() {
                 data: b"data".to_vec(),
                 author: 0,
                 size: 4,
-                created_on: 0.,
+                created_on: "2000-01-01T00:00:00".parse().unwrap(),
             }],
             vlob_atoms: vec![VlobAtom {
                 vlob_id: b"vlob_id".to_vec(),
@@ -141,17 +85,23 @@ fn test_parsec_sequestre_dump() {
                 blob: b"blob".to_vec(),
                 size: 4,
                 author: 0,
-                timestamp: 0.,
+                timestamp: "2000-01-01T00:00:00".parse().unwrap(),
             }],
             role_certificates: vec![b"role".to_vec()],
             user_certificates: vec![b"user".to_vec()],
             device_certificates: vec![b"device".to_vec()],
+            info: vec![Info {
+                magic: 87947,
+                version: 1,
+                realm_id: b"realm_id".to_vec(),
+            }]
         }
     );
 
-    data.save(&key, output);
+    data.dump(&key, output);
 
     let loaded_data = Data::load(&key, output);
+
     assert_eq!(data, loaded_data);
 
     std::fs::remove_file(input).unwrap();
