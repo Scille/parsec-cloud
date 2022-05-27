@@ -21,7 +21,7 @@ parsec_client_types = { path = "../crates/parsec_client_types" }
 parsec_core = { path = "../crates/parsec_core" }
 uuid = { version = "1.0.0-alpha.1", features = ["serde", "v4", "fast-rng"] }
 chrono = {version = "0.4.19", features = ["serde"]}
-fancy-regex = "0.8.0"
+fancy-regex = "0.10.0"
 
 # This crate will never be compiled on platform `wasm32` but when we configure rust-analyzer to target `wasm32`
 # It will crash when it try to compile `pyo3` for wasm32
