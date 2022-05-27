@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS block (
     author INTEGER REFERENCES device (_id) NOT NULL,
     size INTEGER NOT NULL,
     -- this field is created by the backend when inserting (unlike vlob's timestamp, see below)
-    created_on TIMESTAMP NOT NULL,
+    created_on REAL NOT NULL,
 
     UNIQUE(block_id)
 );
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS vlob_atom (
     -- this field is called created_on in Parsec datamodel, but it correspond to the timestamp field in the API
     -- (the value is provided by the client when sending request and not created on backend side) so better
     -- give it the better understandable name
-    timestamp TIMESTAMP NOT NULL,
+    timestamp REAL NOT NULL,
 
     UNIQUE(vlob_id, version)
 );

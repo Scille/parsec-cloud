@@ -77,7 +77,7 @@ fn test_parsec_sequestre_dump() {
                 data: b"data".to_vec(),
                 author: 0,
                 size: 4,
-                created_on: "2000-01-01T00:00:00".parse().unwrap(),
+                created_on: 0.,
             }],
             vlob_atoms: vec![VlobAtom {
                 vlob_id: b"vlob_id".to_vec(),
@@ -85,7 +85,7 @@ fn test_parsec_sequestre_dump() {
                 blob: b"blob".to_vec(),
                 size: 4,
                 author: 0,
-                timestamp: "2000-01-01T00:00:00".parse().unwrap(),
+                timestamp: 0.,
             }],
             role_certificates: vec![b"role".to_vec()],
             user_certificates: vec![b"user".to_vec()],

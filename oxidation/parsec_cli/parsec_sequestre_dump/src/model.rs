@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use crate::schema::{block, device, info, realm_role, user_ as user, vlob_atom};
-use chrono::NaiveDateTime;
 use diesel::{QueryDsl, RunQueryDsl, SqliteConnection};
 use parsec_api_crypto::SecretKey;
 use serde::{Deserialize, Serialize};
@@ -12,7 +11,7 @@ pub struct Block {
     pub data: Vec<u8>,
     pub author: i32,
     pub size: i32,
-    pub created_on: NaiveDateTime,
+    pub created_on: f64,
 }
 
 #[derive(Debug, Queryable, Serialize, Deserialize, PartialEq)]
@@ -22,7 +21,7 @@ pub struct VlobAtom {
     pub blob: Vec<u8>,
     pub size: i32,
     pub author: i32,
-    pub timestamp: NaiveDateTime,
+    pub timestamp: f64,
 }
 
 #[derive(Debug, Queryable, Serialize, Deserialize, PartialEq)]
@@ -148,7 +147,7 @@ impl Data {
                 block::data.eq(&b"data"[..]),
                 block::author.eq(0),
                 block::size.eq(4),
-                block::created_on.eq("2000-01-01T00:00:00"),
+                block::created_on.eq(0.),
             ))
             .execute(conn)
             .unwrap();
@@ -161,7 +160,7 @@ impl Data {
                 vlob_atom::blob.eq(&b"blob"[..]),
                 vlob_atom::size.eq(4),
                 vlob_atom::author.eq(0),
-                vlob_atom::timestamp.eq("2000-01-01T00:00:00"),
+                vlob_atom::timestamp.eq(0.),
             ))
             .execute(conn)
             .unwrap();
