@@ -14,7 +14,7 @@ from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import UserFS
 from parsec.api.transport import Transport, TransportError
 
-from .timeout import real_clock_timeout
+from tests.common.trio_clock import real_clock_timeout
 
 
 class AsyncMock(Mock):
