@@ -662,18 +662,10 @@ version = "2.0.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "876a12f2d98c35d1dfaf74083664be5bb71606b72f4756f3792cdb1ddb192b46"
 dependencies = [
- "diesel_derives 2.0.0-rc.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrono",
+ "diesel_derives",
  "libsqlite3-sys",
  "r2d2",
-]
-
-[[package]]
-name = "diesel"
-version = "2.0.0-rc.0"
-source = "git+https://github.com/diesel-rs/diesel#b51e6584ac4c6dc4495010e6e2f282c6de327e1f"
-dependencies = [
- "diesel_derives 2.0.0-rc.0 (git+https://github.com/diesel-rs/diesel)",
- "libsqlite3-sys",
 ]
 
 [[package]]
@@ -681,17 +673,6 @@ name = "diesel_derives"
 version = "2.0.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2497d9cefebedc40492310f3c94493e1d0bd5b11b5e1bfc0a7f4b106012203ea"
-dependencies = [
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "diesel_derives"
-version = "2.0.0-rc.0"
-source = "git+https://github.com/diesel-rs/diesel#b51e6584ac4c6dc4495010e6e2f282c6de327e1f"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -1418,7 +1399,7 @@ dependencies = [
 name = "libparsec_core_fs"
 version = "0.0.0"
 dependencies = [
- "diesel 2.0.0-rc.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "diesel",
  "fancy-regex",
  "libparsec_client_types",
  "libparsec_crypto",
@@ -1924,13 +1905,148 @@ dependencies = [
 ]
 
 [[package]]
-name = "parsec"
+name = "parsec_api_crypto"
+version = "0.0.0"
+dependencies = [
+ "blake2",
+ "crypto_box",
+ "digest 0.10.3",
+ "ed25519-dalek",
+ "generic-array",
+ "getrandom 0.1.16",
+ "getrandom 0.2.6",
+ "hex",
+ "hex-literal",
+ "libsodium-sys",
+ "paste",
+ "pretty_assertions",
+ "rand 0.7.3",
+ "rand 0.8.5",
+ "rmp-serde",
+ "serde",
+ "serde_bytes",
+ "serde_test",
+ "sha2 0.10.2",
+ "sodiumoxide",
+ "thiserror",
+ "x25519-dalek",
+ "xsalsa20poly1305",
+]
+
+[[package]]
+name = "parsec_api_protocol"
+version = "0.0.0"
+dependencies = [
+ "async-std",
+ "async-tungstenite",
+ "dotenv",
+ "futures",
+ "hex-literal",
+ "http",
+ "parsec_api_crypto",
+ "parsec_api_types",
+ "parsec_serialization_format",
+ "paste",
+ "rand 0.8.5",
+ "rmp-serde",
+ "rstest 0.13.0",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "smol",
+ "tests_fixtures",
+ "thiserror",
+]
+
+[[package]]
+name = "parsec_api_types"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "data-encoding",
+ "fancy-regex",
+ "flate2",
+ "hex-literal",
+ "lazy_static",
+ "parsec_api_crypto",
+ "parsec_serialization_format",
+ "paste",
+ "percent-encoding",
+ "pretty_assertions",
+ "rand 0.8.5",
+ "rmp-serde",
+ "rstest 0.13.0",
+ "rstest_reuse",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "serde_repr",
+ "serde_test",
+ "serde_with",
+ "tests_fixtures",
+ "thiserror",
+ "unicode-normalization",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "parsec_cli"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "diesel",
+ "parsec_api_crypto",
+ "rmp-serde",
+ "serde",
+]
+
+[[package]]
+name = "parsec_client_types"
 version = "0.0.0"
 dependencies = [
  "fancy-regex",
- "libparsec",
- "pyo3",
- "uuid",
+ "flate2",
+ "hex-literal",
+ "parsec_api_crypto",
+ "parsec_api_types",
+ "parsec_serialization_format",
+ "paste",
+ "pretty_assertions",
+ "rmp-serde",
+ "rstest 0.13.0",
+ "rstest_reuse",
+ "serde",
+ "serde_bytes",
+ "serde_repr",
+ "serde_test",
+ "serde_with",
+ "sha2 0.10.2",
+ "tests_fixtures",
+]
+
+[[package]]
+name = "parsec_core"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "parsec_api_crypto",
+ "parsec_api_protocol",
+ "parsec_api_types",
+ "rstest 0.13.0",
+ "tests_fixtures",
+ "thiserror",
+]
+
+[[package]]
+name = "parsec_serialization_format"
+version = "0.0.0"
+dependencies = [
+ "miniserde",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

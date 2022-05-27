@@ -7,7 +7,7 @@ table! {
         data -> Binary,
         author -> Integer,
         size -> Integer,
-        created_on -> Float,
+        created_on -> Timestamp,
     }
 }
 
@@ -48,7 +48,7 @@ table! {
         blob -> Binary,
         size -> Integer,
         author -> Integer,
-        timestamp -> Float,
+        timestamp -> Timestamp,
     }
 }
 
