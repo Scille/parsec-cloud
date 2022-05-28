@@ -71,6 +71,24 @@ def pytest_addoption(parser):
         ),
     )
 
+    def _parse_slice_tests(value):
+        try:
+            currs, total = value.split("/")
+            total = int(total)
+            currs = [int(x) for x in currs.split(",")]
+            if total >= 1 and all(1 <= x <= total for x in currs):
+                return (currs, total)
+        except ValueError:
+            pass
+        raise ValueError("--slice-tests option must be of the type `1/3`, `2/3`, `1,2/3` etc.")
+
+    parser.addoption(
+        "--slice-tests",
+        default="1/1",
+        help="Only run a portion of tests (useful starting tests in parallel)",
+        type=_parse_slice_tests,
+    )
+
 
 def pytest_configure(config):
     # Configure structlog to redirect everything in logging
@@ -192,6 +210,27 @@ def pytest_collection_modifyitems(config, items):
             import qtrio
 
             item.add_marker(pytest.mark.trio(run=qtrio.run))
+
+    # Divide tests into slices of equal size
+    slices_to_run, total_slices = config.getoption("--slice-tests")
+    if total_slices > 1:
+        # Reorder tests to be deterministic given they will be ran across multiples instances
+        # Note this must be done as an in-place update to have it taken into account
+        # Aaand finally note we order by hash instead of by name, this is to improve
+        # dispatching across jobs, the idea being a slow test is likely to be sorounded
+        # by other slow tests.
+        from zlib import adler32
+
+        items.sort(key=lambda x: adler32(repr(x.location).encode("utf8")))
+
+        per_slice_count = (len(items) // total_slices) + 1
+
+        skip = pytest.mark.skip(reason="Test not in the requested slice range")
+        for cur_slice in range(1, total_slices + 1):
+            if cur_slice not in slices_to_run:
+                for item in items[(cur_slice - 1) * per_slice_count : cur_slice * per_slice_count]:
+                    item.user_properties.append(("test_out_of_slice", True))
+                    item.add_marker(skip)
 
 
 # Autouse fixtures
