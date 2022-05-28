@@ -213,7 +213,7 @@ jobs:
     displayName: 'Install'
   - bash: |
       set -eux
-      py.test $(pytest.base_args) tests -n auto --runrust
+      python tests/run_parallel.py -n auto $(pytest.base_args) tests --runrust
     displayName: 'Python Tests'
 
 
@@ -261,31 +261,35 @@ jobs:
     displayName: 'Install'
   - bash: |
       set -eux
-      timeout 200 py.test $(pytest.base_args) \
+      timeout 200 python tests/run_parallel.py -n auto \
+        $(pytest.base_args) \
         tests \
-        -n auto --max-worker-restart=0 -x \
+        --max-worker-restart=0 -x \
         --junitxml=test-results-fast.xml
     displayName: 'Tests fast'
   - bash: |
       set -eux
-      timeout 200 py.test $(pytest.base_args) \
+      timeout 200 python tests/run_parallel.py -n auto \
+        $(pytest.base_args) \
         tests --runmountpoint --runslow -m mountpoint \
-        -n auto --max-worker-restart=0 -x \
+        --max-worker-restart=0 -x \
         --junitxml=test-results-mountpoint.xml
     displayName: 'Tests mountpoint'
   - bash: |
       set -eux
-      timeout 800 py.test $(pytest.base_args) \
+      timeout 800 python tests/run_parallel.py -n auto \
+        $(pytest.base_args) \
         tests --runslow -m slow \
-        -n auto --max-worker-restart=0 -x \
+        --max-worker-restart=0 -x \
         --junitxml=test-results-slow.xml
     displayName: 'Tests slow'
   - bash: |
       set -eux
       # `test_cli.py` uses `--postgresql` option to test DB migration cli
-      timeout 400 py.test $(pytest.base_args) \
+      timeout 400 python tests/run_parallel.py -n auto \
+        $(pytest.base_args) \
         tests/backend tests/test_cli.py --postgresql --runslow \
-        -n auto --max-worker-restart=0 -x \
+        --max-worker-restart=0 -x \
         --junitxml=test-results-postgresql.xml
     displayName: 'Tests PostgreSQL'
   # The full disk test are run separately since they rely on running a sqlite3 database
@@ -353,17 +357,14 @@ jobs:
     displayName: 'Install'
   - bash: |
       set -eux
-      # Don't use `-n auto` option given pytest-xdist doesn't guarantee test to be run
-      # run on the main thread of spawned processes, this cause random crash on macOS
-      # (see: https://github.com/pytest-dev/pytest-xdist/issues/739)
-      py.test $(pytest.base_args) \
+      python tests/run_parallel.py -n auto $(pytest.base_args) \
         tests --runmountpoint --runslow \
         --max-worker-restart=0 -x \
         --junitxml=test-results-memory.xml
     displayName: 'Tests memory'
   #- bash: |
   #    set -eux
-  #    py.test $(pytest.base_args) \
+  #    python tests/run_parallel.py -n auto $(pytest.base_args) \
   #      tests -m gui --runmountpoint --runslow --rungui -x \
   #      --junitxml=test-results-gui.xml
   #  displayName: 'Tests GUI'
@@ -432,8 +433,8 @@ jobs:
     condition: and(succeeded(), gt(variables['debug.stress_flaky_tests'], 0))
   - bash: |
       set -eux
-      py.test $(pytest.base_args) \
-        tests -n auto --max-worker-restart=0 -x \
+      python tests/run_parallel.py -n auto $(pytest.base_args) \
+        tests --max-worker-restart=0 -x \
         --junitxml=test-results-fast.xml
     displayName: 'Tests fast'
   - bash: |
@@ -450,9 +451,9 @@ jobs:
     displayName: 'Tests GUI'
   - bash: |
       set -eux
-      py.test $(pytest.base_args) \
+      python tests/run_parallel.py -n auto $(pytest.base_args) \
         tests --runslow -m slow \
-        -n auto --max-worker-restart=0 -x \
+        --max-worker-restart=0 -x \
         --junitxml=test-results-slow.xml
     displayName: 'Tests slow'
   - task: PublishTestResults@2
