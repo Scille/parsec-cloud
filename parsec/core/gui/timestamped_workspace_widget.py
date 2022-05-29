@@ -48,6 +48,8 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
             workspace_fs=workspace_fs,
         )
         self.button_show.clicked.connect(self._on_show_clicked)
+        # Only enable widget once limits_job has finished
+        self.setEnabled(False)
 
     @property
     def date(self):
@@ -110,6 +112,8 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
         self.calendar_widget.selectionChanged.connect(self.set_time_limits)
         self.set_time_limits()
         self.time_edit.setDisplayFormat("h:mm:ss")
+        # All set, now user can pick date&time !
+        self.setEnabled(True)
 
     def on_close(self):
         self.cancel()
