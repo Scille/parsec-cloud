@@ -277,7 +277,7 @@ jobs:
     displayName: 'Tests mountpoint'
   - bash: |
       set -eux
-      timeout 800 python tests/run_parallel.py -n auto \
+      timeout 1000 python tests/run_parallel.py -n auto \
         $(pytest.base_args) \
         tests --runslow -m slow \
         --max-worker-restart=0 -x \
@@ -286,7 +286,7 @@ jobs:
   - bash: |
       set -eux
       # `test_cli.py` uses `--postgresql` option to test DB migration cli
-      timeout 400 python tests/run_parallel.py -n auto \
+      timeout 1000 python tests/run_parallel.py -n auto \
         $(pytest.base_args) \
         tests/backend tests/test_cli.py --postgresql --runslow \
         --max-worker-restart=0 -x \
