@@ -18,6 +18,7 @@ WINDOWS_ERROR_HOST_UNREACHABLE = 1232  # ntstatus.STATUS_HOST_UNREACHABLE
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
+@pytest.mark.skipif(sys.platform == "darwin", reason="TODO : crash on macOS")
 async def test_inconsistent_folder_no_network(base_mountpoint, running_backend, alice_user_fs):
     async with mountpoint_manager_factory(
         alice_user_fs, alice_user_fs.event_bus, base_mountpoint
