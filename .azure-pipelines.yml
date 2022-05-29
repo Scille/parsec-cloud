@@ -357,14 +357,21 @@ jobs:
     displayName: 'Install'
   - bash: |
       set -eux
-      python tests/run_parallel.py -n auto $(pytest.base_args) \
+      # Don't use `-n auto` option given macOS on Azure is basically as stable
+      # as an average irishman in a pub during St Patrick.
+      # I though pytest-xdist might be the root cause of the random crash given
+      # it doesn't guarantee tests to be run run on the main thread of
+      # spawned processes (see: https://github.com/pytest-dev/pytest-xdist/issues/739)
+      # However even with run_parallel.py (our own custom rewrite of xdist using
+      # multiprocessing) we end up with random crashes...
+      py.test $(pytest.base_args) \
         tests --runmountpoint --runslow \
         --max-worker-restart=0 -x \
         --junitxml=test-results-memory.xml
     displayName: 'Tests memory'
   #- bash: |
   #    set -eux
-  #    python tests/run_parallel.py -n auto $(pytest.base_args) \
+  #    py.test $(pytest.base_args) \
   #      tests -m gui --runmountpoint --runslow --rungui -x \
   #      --junitxml=test-results-gui.xml
   #  displayName: 'Tests GUI'
