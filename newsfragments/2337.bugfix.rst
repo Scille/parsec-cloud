@@ -1,0 +1,1 @@
+Fix GUI sometime not detecting invitation deletion or peer has left during invitation greet
