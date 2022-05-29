@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from parsec.backend.backend_events import BackendEvent
 import attr
 import trio
 import smtplib
@@ -45,6 +44,7 @@ from parsec.api.protocol import (
     invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
 )
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.templates import get_template
 from parsec.backend.utils import catch_protocol_errors, api, ClientType
 from parsec.backend.config import BackendConfig, EmailConfig, SmtpEmailConfig, MockedEmailConfig
@@ -840,17 +840,27 @@ class BaseInviteComponent:
         filter_organization_id = organization_id
         filter_token = token
 
-        def _conduit_updated_filter(
-            event: Enum, organization_id: OrganizationID, token: InvitationToken
+        def _event_filter(
+            event: Enum, organization_id: OrganizationID, token: InvitationToken, **kwargs
         ):
             return organization_id == filter_organization_id and token == filter_token
 
-        with self._event_bus.waiter_on(
+        with self._event_bus.waiter_on_first(
             BackendEvent.INVITE_CONDUIT_UPDATED,
-            filter=cast(EventFilterCallback, _conduit_updated_filter),
+            BackendEvent.INVITE_STATUS_CHANGED,
+            filter=cast(EventFilterCallback, _event_filter),
         ) as waiter:
+
             listen_ctx = await self._conduit_talk(organization_id, greeter, token, state, payload)
 
+            # Unlike what it name may imply, `_conduit_listen` doesn't wait for the peer
+            # to answer (it returns `None` instead), so we wait for some events to occure
+            # before calling:
+            # - INVITE_CONDUIT_UPDATED: Triggered when the peer has completed it own talk
+            #   step, `_conduit_listen` will most likely return the peer payload now
+            # - INVITE_STATUS_CHANGED: Triggered if the peer reset the invitation or if the
+            #   invitation has been deleted, in any case `_conduit_listen` will detect the
+            #   listen is not longer possible and raise an exception accordingly
             while True:
                 await waiter.wait()
                 waiter.clear()
