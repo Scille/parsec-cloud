@@ -457,8 +457,14 @@ async def test_display_timestamped_workspace_in_workspaces_list(
     ts_wk_w.calendar_widget.setSelectedDate(
         QtCore.QDate(selected_date.year, selected_date.month, selected_date.day)
     )
-    assert ts_wk_w.date == QtCore.QDate(selected_date.year, selected_date.month, selected_date.day)
-    assert ts_wk_w.time == QtCore.QTime(0, 0)
+
+    def _widget_updated_with_new_date():
+        assert ts_wk_w.date == QtCore.QDate(
+            selected_date.year, selected_date.month, selected_date.day
+        )
+        assert ts_wk_w.time == QtCore.QTime(0, 0)
+
+    await aqtbot.wait_until(_widget_updated_with_new_date)
 
     async with aqtbot.wait_signal(w_w.mount_success):
         aqtbot.mouse_click(ts_wk_w.button_show, QtCore.Qt.LeftButton)
