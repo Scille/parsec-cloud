@@ -438,6 +438,10 @@ jobs:
       py.test tests --runmountpoint --runslow --rungui -m flaky --count $(debug.stress_flaky_tests) -v
     displayName: 'Debug: stress flaky tests'
     condition: and(succeeded(), gt(variables['debug.stress_flaky_tests'], 0))
+  - powershell: |
+       Get-NetTCPConnection -State Listen -RemoteAddress "0.0.0.0"
+       netsh interface ipv4 show excludedportrange protocol=tcp
+    displayName: 'Show used/reserved TCP ports'
   - bash: |
       set -eux
       python tests/run_parallel.py -n auto $(pytest.base_args) \
