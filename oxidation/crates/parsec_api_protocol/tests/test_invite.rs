@@ -5,7 +5,7 @@ use rstest::rstest;
 
 use parsec_api_crypto::{HashDigest, PublicKey};
 use parsec_api_protocol::*;
-use parsec_api_types::{HumanHandle, InvitationStatus};
+use parsec_api_types::{HumanHandle, InvitationStatus, Maybe};
 
 #[rstest]
 #[case::user(
@@ -75,7 +75,7 @@ fn serde_invite_new_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmd
         )[..],
         authenticated_cmds::invite_new::Rep::Ok {
             token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
-            email_sent: authenticated_cmds::invite_new::InvitationEmailSentStatus::Success,
+            email_sent: Maybe::Present(Some(authenticated_cmds::invite_new::InvitationEmailSentStatus::Success)),
         }
     )
 )]

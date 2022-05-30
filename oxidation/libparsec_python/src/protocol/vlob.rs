@@ -211,9 +211,15 @@ impl VlobReadRep {
     ) -> PyResult<Self> {
         let author = author.0;
         let timestamp = py_to_rs_datetime(timestamp)?;
-        let author_last_role_granted_on = author_last_role_granted_on
+        let author_last_role_granted_on = match author_last_role_granted_on
             .map(py_to_rs_datetime)
-            .transpose()?;
+            .transpose()
+        {
+            Ok(author_last_role_granted_on) => {
+                parsec_api_types::Maybe::Present(author_last_role_granted_on)
+            }
+            _ => parsec_api_types::Maybe::Absent,
+        };
         Ok(Self(vlob_read::Rep::Ok {
             version,
             blob,

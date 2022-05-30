@@ -16,6 +16,7 @@
                 "type": "Boolean"
             },
             {
+                // First page is 1
                 "name": "page",
                 "type": "NonZeroInteger"
             },

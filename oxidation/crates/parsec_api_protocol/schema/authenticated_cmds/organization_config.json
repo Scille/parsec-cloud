@@ -12,8 +12,8 @@
                     "name": "user_profile_outsider_allowed",
                     "type": "Boolean"
                 },
-                // `None` stands for "no limit" here
                 {
+                    // `None` stands for "no limit" here
                     "name": "active_users_limit",
                     "type": "Option<Size>"
                 }

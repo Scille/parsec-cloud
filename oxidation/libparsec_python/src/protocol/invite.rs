@@ -81,7 +81,10 @@ impl InviteNewRep {
     #[pyo3(name = "Ok")]
     fn ok(_cls: &PyType, token: InvitationToken, email_sent: &PyAny) -> PyResult<Self> {
         let token = token.0;
-        let email_sent = py_to_rs_invitation_email_sent_status(email_sent)?;
+        let email_sent = match py_to_rs_invitation_email_sent_status(email_sent) {
+            Ok(email_sent) => parsec_api_types::Maybe::Present(Some(email_sent)),
+            _ => parsec_api_types::Maybe::Absent,
+        };
         Ok(Self(invite_new::Rep::Ok { token, email_sent }))
     }
 

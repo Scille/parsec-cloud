@@ -158,14 +158,6 @@ fn all_addr(testbed: &dyn Testbed) {}
 )]
 fn addr_with_org(testbed: &dyn Testbed) {}
 
-#[template]
-#[rstest(
-    testbed,
-    case::backend_organizationBootstrap_addr(&BackendOrganizationBootstrapAddrTestbed{}),
-    // BackendInvitationAddrTestbed token format is different from apiv1's token
-)]
-fn addr_with_token(testbed: &dyn Testbed) {}
-
 /*
  * Actual tests
  */

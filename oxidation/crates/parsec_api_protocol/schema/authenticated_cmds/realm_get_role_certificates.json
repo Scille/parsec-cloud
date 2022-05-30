@@ -6,10 +6,6 @@
             {
                 "name": "realm_id",
                 "type": "RealmID"
-            },
-            {
-                "name": "since",
-                "type": "Option<DateTime>"
             }
         ]
     },

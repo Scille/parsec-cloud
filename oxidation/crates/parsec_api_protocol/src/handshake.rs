@@ -116,7 +116,7 @@ pub enum Handshake {
         #[serde_as(as = "Bytes")]
         challenge: [u8; HANDSHAKE_CHALLENGE_SIZE],
         supported_api_versions: Vec<ApiVersion>,
-        // Those fields have been added to API version 2.4
+        // Those fields have been added to API version 2.4 (Parsec 2.7.0)
         // They are provided to the client in order to allow them to detect whether
         // their system clock is out of sync and let them close the connection.
         // They will be missing for older backend so they cannot be strictly required.

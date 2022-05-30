@@ -3,6 +3,7 @@
     "type": "invite_user_data",
     "other_fields": [
         {
+            // Claimer ask for device_label/human_handle, but greeter has final word on this
             "name": "requested_device_label",
             "type": "Option<DeviceLabel>"
         },
@@ -11,6 +12,7 @@
             "type": "Option<HumanHandle>"
         },
         {
+            // Note claiming user also imply creating a first device
             "name": "public_key",
             "type": "PublicKey"
         },
