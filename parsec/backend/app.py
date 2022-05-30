@@ -135,18 +135,22 @@ class BackendApp:
         conn = h11.Connection(
             h11.SERVER, max_incomplete_event_size=MAX_INITIAL_HTTP_REQUEST_SIZE - 1
         )
+        print(f"[handle_client] called with {stream}")
         try:
             # Fetch the initial request
             while True:
                 try:
                     data = await stream.receive_some(MAX_INITIAL_HTTP_REQUEST_SIZE)
-                except trio.BrokenResourceError:
+                    print(f"[handle_client] got data {data!r}")
+                except trio.BrokenResourceError as exc:
+                    print(f"[handle_client] got BrokenResourceError {exc!r}")
                     # The socket got broken in an unexpected way (the peer has most
                     # likely left without telling us, or has reseted the connection)
                     return
 
                 conn.receive_data(data)
                 event = conn.next_event()
+                print(f"[handle_client] got event {event}")
 
                 if event is h11.NEED_DATA:
                     continue
