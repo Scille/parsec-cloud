@@ -37,7 +37,8 @@
             // Prevented to be `required=True` by backward compatibility
             "name": "speculative",
             "type": "Boolean",
-            "introduced_in_revision": 15
+            // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
+            "introduced_in_revision": 115
         }
     ]
 }

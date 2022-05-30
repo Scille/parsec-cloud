@@ -26,7 +26,8 @@
             // the last change (or when a new filter was successfully applied)
             "name": "local_confinement_points",
             "type": "Set<EntryID>",
-            "introduced_in_revision": 15
+            // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
+            "introduced_in_revision": 115
         },
         {
             // Added in Parsec v1.15
@@ -36,7 +37,8 @@
             // to upload.
             "name": "remote_confinement_points",
             "type": "Set<EntryID>",
-            "introduced_in_revision": 15
+            // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
+            "introduced_in_revision": 115
         },
         {
             // Added in Parsec v1.15
@@ -52,7 +54,8 @@
             // Prevented to be `required=True` by backward compatibility
             "name": "speculative",
             "type": "Boolean",
-            "introduced_in_revision": 15
+            // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
+            "introduced_in_revision": 115
         }
     ]
 }
