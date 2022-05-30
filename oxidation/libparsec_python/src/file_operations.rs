@@ -13,7 +13,7 @@ pub(crate) fn prepare_read(
     size: u64,
     offset: u64,
 ) -> PyResult<&PyTuple> {
-    let result = file_operations::prepare_read(manifest.0, size, offset);
+    let result = file_operations::prepare_read(&manifest.0, size, offset);
     Ok(PyTuple::new(
         py,
         result.into_iter().map(|x| Chunk(x).into_py(py)),

@@ -5,31 +5,15 @@ use std::num::NonZeroU64;
 
 use parsec_client_types::{Chunk, LocalFileManifest};
 
-fn split_read(size: u64, offset: u64, blocksize: u64) -> impl Iterator<Item = (u64, u64, u64)> {
-    // Loop over blocks
-    let start_block = offset / blocksize;
-    let stop_block = if size != 0 {
-        (offset + size).checked_sub(1).unwrap() / blocksize + 1
-    } else {
-        0
-    };
-
-    (start_block..stop_block).map(move |block| {
-        // Get substart / substop
-        let blockstart = block * blocksize;
-        let substart = max(offset, blockstart);
-        let substop = min(offset + size, blockstart + blocksize);
-        (block, substop.checked_sub(substart).unwrap(), substart)
-    })
-}
-
 fn block_read(chunks: &[Chunk], size: u64, start: u64) -> impl Iterator<Item = Chunk> + '_ {
     let stop = start + size;
 
     // Bisect
     let start_index = match chunks.binary_search_by_key(&start, |x| x.start) {
         Ok(x) => x,
-        Err(x) => x.checked_sub(1).unwrap(),
+        Err(x) => x
+            .checked_sub(1)
+            .expect("First chunk should always start at 0"),
     };
     let stop_index = match chunks.binary_search_by_key(&stop, |x| x.start) {
         Ok(x) => x,
@@ -39,26 +23,53 @@ fn block_read(chunks: &[Chunk], size: u64, start: u64) -> impl Iterator<Item = C
     // Loop over chunks
     chunks
         .get(start_index..stop_index)
-        .unwrap()
+        .expect("Indexes are found using binary search and hence always valid")
         .iter()
         .map(move |chunk| {
             let mut new_chunk = chunk.clone();
             new_chunk.start = max(chunk.start, start);
-            new_chunk.stop = min(chunk.stop, NonZeroU64::new(stop).unwrap());
+            new_chunk.stop = min(
+                chunk.stop,
+                NonZeroU64::new(stop)
+                    .expect("The stop offset can only be 0 if the index range is empty"),
+            );
             new_chunk
         })
 }
 
-pub fn prepare_read(manifest: LocalFileManifest, size: u64, offset: u64) -> Vec<Chunk> {
+pub fn prepare_read(manifest: &LocalFileManifest, size: u64, offset: u64) -> Vec<Chunk> {
+    // Sanitize size and offset to fit the manifest
     let offset = min(offset, manifest.size);
-    let size = min(size, manifest.size.checked_sub(offset).unwrap());
-    let blocksize = u64::from(manifest.blocksize);
+    let size = min(
+        size,
+        manifest
+            .size
+            .checked_sub(offset)
+            .expect("The offset computed above cannot be greater than the manifest size"),
+    );
 
-    split_read(size, offset, blocksize)
-        .flat_map(|(block, length, start)| {
-            let block_chunks = manifest.get_chunks(block as usize).unwrap();
-            block_read(block_chunks, length, start)
+    // Find proper block indexes
+    let blocksize = u64::from(manifest.blocksize);
+    let start_block = offset / blocksize;
+    let stop_block = (offset + size + blocksize - 1) / blocksize;
+
+    // Loop over blocks
+    (start_block..stop_block)
+        .flat_map(move |block| {
+            // Get substart, substop and subsize
+            let blockstart = block * blocksize;
+            let substart = max(offset, blockstart);
+            let substop = min(offset + size, blockstart + blocksize);
+            let subsize = substop
+                .checked_sub(substart)
+                .expect("Substop is always greater than substart");
+            // Get the corresponding chunks
+            let block_chunks = manifest
+                .get_chunks(block as usize)
+                .expect("A valid manifest must have enough blocks to cover its full range.");
+            block_read(block_chunks, subsize, substart)
         })
+        // Collect as a flatten vec of Chunks
         .collect()
 }
 
