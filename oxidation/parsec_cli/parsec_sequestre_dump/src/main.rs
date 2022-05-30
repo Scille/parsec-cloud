@@ -13,8 +13,9 @@ use std::path::PathBuf;
 use crate::model::Data;
 use parsec_api_crypto::SecretKey;
 
+/// Simple program that dumps files and folders in a file
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[clap(version, about)]
 struct Args {
     /// Sqlite input file (e.g `my/workspace_export.sqlite`)
     #[clap(short, long)]
@@ -24,7 +25,7 @@ struct Args {
     #[clap(short, long)]
     key: String,
 
-    /// Output disk file (e.g `./output`)
+    /// Output file (e.g `./output`)
     #[clap(short, long)]
     output: PathBuf,
 }
