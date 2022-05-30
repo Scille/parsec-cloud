@@ -95,6 +95,8 @@ def server_factory():
         hostname = "127.0.0.1"
 
         async def _serve_client(stream):
+            print(f"[_serve_client] handling {stream}")
+
             async def _offline_watchdog(
                 on_offline, cancel_scope, task_status=trio.TASK_STATUS_IGNORED
             ):
@@ -107,12 +109,16 @@ def server_factory():
             async with trio.open_nursery() as nursery:
                 # Small hack: server is define later in the parent scope
                 await nursery.start(_offline_watchdog, server._on_offline, nursery.cancel_scope)
+                print(f"[_serve_client] watchdog started")
 
                 if use_ssl:
                     ssl_context = ssl.create_default_context()
                     stream = trio.SSLStream(
                         stream, ssl_context, server_hostname=hostname, server_side=True
                     )
+                    print(f"[_serve_client] stream wrapped in SSL")
+
+                print(f"[_serve_client] call entry_point")
                 await entry_point(stream)
 
         async with trio.open_service_nursery() as nursery:
@@ -123,6 +129,7 @@ def server_factory():
                 )
             )
             _, port, *_ = listeners[0].socket.getsockname()
+            print(f"[_server_factory] Got port {port}")
 
             server = AppServer(hostname, port, use_ssl, entry_point)
             yield server

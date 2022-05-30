@@ -45,8 +45,10 @@ async def _anonymous_cmd(
 
     url = addr.to_http_domain_url(f"/anonymous/{organization_id}")
     try:
+        print(f"[_anonymous_cmd] Request {url}")
         raw_rep = await http_request(url=url, method="POST", data=raw_req)
     except OSError as exc:
+        print(f"[_anonymous_cmd] Error {exc}")
         logger.debug("Request failed (backend not available)", cmd=req["cmd"], exc_info=exc)
         raise BackendNotAvailable(exc) from exc
 
