@@ -20,7 +20,7 @@ variables:
     --durations=10 \
     --side-effects-timeout=10 \
     -v \
-  debug.stress_flaky_tests: 0  # Repeat all flaky tests X times
+  debug.stress_flaky_tests: 20  # Repeat all flaky tests X times
   rust.version: 1.61.0
 
 jobs:
@@ -64,6 +64,7 @@ jobs:
 
 
 - job: 's1_qa'
+  condition: False
   displayName: 'Q&A'
   timeoutInMinutes: 60
   pool:
@@ -179,6 +180,7 @@ jobs:
 
 
 - job: 's1_oxidation'
+  condition: False
   displayName: 'Rust Oxidation'
   timeoutInMinutes: 60
   pool:
@@ -221,6 +223,7 @@ jobs:
 
 
 - job: 's1_linux_test'
+  condition: False
   displayName: 'Linux tests'
   dependsOn: s0_build_wheel
   timeoutInMinutes: 60
@@ -319,6 +322,7 @@ jobs:
 
 
 - job: 's1_macos_test'
+  condition: False
   displayName: 'MacOS tests'
   dependsOn: s0_build_wheel
   timeoutInMinutes: 60
@@ -442,24 +446,28 @@ jobs:
        Get-NetTCPConnection -State Listen -RemoteAddress "0.0.0.0"
        netsh interface ipv4 show excludedportrange protocol=tcp
     displayName: 'Show used/reserved TCP ports'
+    condition: False
   - bash: |
       set -eux
       python tests/run_parallel.py -n auto $(pytest.base_args) \
         tests --max-worker-restart=0 -x \
         --junitxml=test-results-fast.xml
     displayName: 'Tests fast'
+    condition: False
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
         tests --runmountpoint --runslow -m mountpoint -x \
         --junitxml=test-results-mountpoint.xml
     displayName: 'Tests mountpoint'
+    condition: False
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
         tests --runmountpoint --runslow --rungui -m gui -x \
         --junitxml=test-results-gui.xml
     displayName: 'Tests GUI'
+    condition: False
   - bash: |
       set -eux
       python tests/run_parallel.py -n auto $(pytest.base_args) \
@@ -467,6 +475,7 @@ jobs:
         --max-worker-restart=0 -x \
         --junitxml=test-results-slow.xml
     displayName: 'Tests slow'
+    condition: False
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: 'test-results-*.xml'

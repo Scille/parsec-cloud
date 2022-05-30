@@ -12,6 +12,7 @@ from parsec.core.fs.storage.user_storage import user_storage_non_speculative_ini
 
 
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=0)
 @pytest.mark.parametrize("with_labels", [False, True])
 @pytest.mark.parametrize("backend_version", ["2.5", "2.6", "latest"])
 async def test_good(
