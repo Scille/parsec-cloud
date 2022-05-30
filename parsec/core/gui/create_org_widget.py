@@ -241,6 +241,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 device_label=device_label,
                 backend_addr=backend_addr,
             )
+            self.dialog.button_close.setVisible(False)
             self.button_validate.setEnabled(False)
         else:
             auth_method = self.current_widget.get_auth_method()
@@ -336,6 +337,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.status = None
         self.create_job = None
         self.button_validate.setEnabled(True)
+        self.dialog.button_close.setVisible(True)
 
     @classmethod
     def show_modal(cls, jobs_ctx, config, parent, on_finished, start_addr=None):
