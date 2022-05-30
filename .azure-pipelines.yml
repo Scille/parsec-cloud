@@ -20,7 +20,7 @@ variables:
     --durations=10 \
     --side-effects-timeout=10 \
     -v \
-  debug.stress_flaky_tests: 40  # Repeat all flaky tests X times
+  debug.stress_flaky_tests: 10  # Repeat all flaky tests X times
   rust.version: 1.61.0
 
 jobs:
@@ -439,7 +439,7 @@ jobs:
       # Install pytest-repeat
       pip install pytest-repeat
       # Repeat flaky tests X times
-      py.test tests --runmountpoint --runslow --rungui -m flaky --count $(debug.stress_flaky_tests) -v -s
+      for n in {1..50}; do py.test tests --runmountpoint --runslow --rungui -m flaky --count $(debug.stress_flaky_tests) -v || ! break; done;
     displayName: 'Debug: stress flaky tests'
     condition: and(succeeded(), gt(variables['debug.stress_flaky_tests'], 0))
   - powershell: |
