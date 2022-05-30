@@ -165,6 +165,7 @@ class BackendApp:
 
             # See https://h11.readthedocs.io/en/v0.10.0/api.html#flow-control
             if conn.they_are_waiting_for_100_continue:
+                print(f"[handle_client] they_are_waiting_for_100_continue")
                 await stream.send_all(
                     conn.send(h11.InformationalResponse(status_code=100, headers=[]))
                 )
@@ -175,6 +176,7 @@ class BackendApp:
 
             # Do https redirection if incoming request doesn't follow forward proto rules
             if self.config.forward_proto_enforce_https:
+                print(f"[handle_client] forward_proto_enforce_https")
                 header_key, header_expected_value = self.config.forward_proto_enforce_https
                 header_value = _get_header(header_key)
                 # If redirection header match and protocol match, then no need for a redirection.
@@ -292,11 +294,14 @@ class BackendApp:
                     return b""
 
         req = HTTPRequest.from_h11_req(request, _get_body)
+        print(f"[handle_client_http] Got req {req}")
 
         rep = await self.http.handle_request(req)
+        print(f"[handle_client_http] Built rep {rep}")
         await self._send_http_reply(
             stream, conn, status_code=rep.status_code, headers=rep.headers, data=rep.data
         )
+        print(f"[handle_client_http] Reply sent")
         logger.info("Request", method=req.method, path=req.path, status=rep.status_code)
 
     async def _handle_client_websocket(self, stream: Stream, request: h11.Request) -> None:
