@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use super::task::{spawn, Task};
+use super::{spawn, Task};
 use futures::future::{join_all, select_all};
 use std::future::Future;
 
@@ -12,30 +12,6 @@ use std::future::Future;
 /// All of the tasks must have the same return type `T`.
 ///
 /// When the `JoinSet` is dropped, all the tasks in the `JoinSet` are immediately aborted.
-///
-/// # Examples
-///
-/// ```
-/// use libparsec_platform_async::JoinSet;
-///
-/// # #[tokio::main]
-/// # async fn main() {
-/// let mut set = JoinSet::default();
-///
-/// for i in 0..10 {
-///     set.spawn(async move { i });
-/// }
-///
-/// let mut seen = [false; 10];
-/// while let Some(res) = set.join_one().await {
-///     seen[res] = true;
-/// }
-///
-/// for i in 0..10 {
-///     assert!(seen[i]);
-/// }
-/// # }
-/// ```
 #[derive(Default)]
 pub struct JoinSet<T> {
     tasks: Vec<Task<T>>,
@@ -46,14 +22,15 @@ impl<T> JoinSet<T> {
     pub fn spawn<F>(&mut self, future: F)
     where
         F: Future<Output = T>,
-        F: Send + 'static,
-        T: Send + 'static,
+        F: 'static,
+        T: 'static,
     {
         let task = spawn(future);
+
         self.tasks.push(task);
     }
 
-    /// Returns the number of tasks currently in the `JoinSet`
+    /// Returns the number of tasks currently in the `JoinSet`.
     pub fn len(&self) -> usize {
         self.tasks.len()
     }
@@ -63,21 +40,11 @@ impl<T> JoinSet<T> {
         self.tasks.is_empty()
     }
 
-    /// Removes all tasks from this `JoinSet` without aborting them.
-    ///
-    /// The tasks removed by this call will continue to run in the background even if the `JoinSet` is dropped
-    pub fn detach_all(&mut self) {
-        self.tasks.drain(..).for_each(|task| task.detach())
-    }
-
     /// Aborts all tasks on this `JoinSet`.
     ///
-    /// This does not remove the tasks from the `JoinSet`.
-    pub fn abort_all(&mut self) -> Vec<Option<T>> {
-        self.tasks
-            .iter()
-            .map(|task| task.abort())
-            .collect::<Vec<_>>()
+    /// This does not remove the tasks from the `JoinSet`
+    pub fn abort_all(&self) -> Vec<Option<T>> {
+        self.tasks.iter().map(Task::abort).collect::<Vec<_>>()
     }
 
     /// Waits until all of the tasks in the set completes and returns their outputs.
@@ -86,7 +53,7 @@ impl<T> JoinSet<T> {
     }
 
     /// Waits until one of the tasks in the set completes and returns its output.
-    /// Returns `None` if the set is empty.
+    /// Return `None` if the set is empty
     pub async fn join_one(&mut self) -> Option<T> {
         if self.is_empty() {
             None

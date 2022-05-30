@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-#![cfg(not(target_arch = "wasm32"))]
+#![cfg(target_arch = "wasm32")]
 
 use libparsec_platform_async::{
     channel::{bounded, RecvError, Sender},
@@ -10,6 +10,9 @@ use std::{
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
+use wasm_bindgen_test::*;
+
+wasm_bindgen_test_configure!(run_in_browser);
 
 const TIMEOUT: u64 = 250;
 
@@ -31,10 +34,12 @@ enum Mode {
     Success,
 }
 
-#[tokio::test]
-async fn test_eyeballs() -> Result<(), ()> {
-    simple_logger::init_with_level(log::Level::Debug).expect("cannot initialize simple logger");
+#[wasm_bindgen_test]
+async fn test_eyeballs() {
+    console_log::init_with_level(log::Level::Debug).expect("cannot initialize console logger");
 
+    let window = web_sys::window().unwrap();
+    let performance = window.performance().unwrap();
     let targets = vec![
         Load::new(Duration::from_millis(2300), Mode::Fail),
         Load::new(Duration::from_millis(300), Mode::Fail),
@@ -43,12 +48,12 @@ async fn test_eyeballs() -> Result<(), ()> {
     ];
 
     log::debug!("starting with {} targets", targets.len());
-    let start_time = Instant::now();
+    let start_time = performance.now();
     assert_eq!(Ok(2), dbg!(eyeballs(targets).await));
-    let elapsed = start_time.elapsed();
+    let end_time = performance.now();
+    let elapsed = Duration::from_secs_f64((end_time - start_time) / 1000_f64);
     log::info!("elapsed time {}ms", elapsed.as_millis());
     assert!(elapsed < Duration::from_millis(900));
-    Ok(())
 }
 
 async fn eyeballs(targets: Vec<Load>) -> Result<usize, RecvError> {
@@ -95,14 +100,17 @@ async fn attempt(
     log::info!("[#{which}] starting task");
     if which > 0 {
         let attempt_to_wait = which - 1;
-        tokio::select! {
-            _ = Timer::after(Duration::from_millis(TIMEOUT)) => {
+        futures_lite::future::or(
+            async {
+                Timer::after(Duration::from_millis(TIMEOUT)).await;
                 log::info!("[#{which}] previous task timed out");
-            }
-            _ = failed_attempt[attempt_to_wait].notified() => {
+            },
+            async {
+                failed_attempt[attempt_to_wait].notified().await;
                 log::info!("[#{which}] previous task finished");
-            }
-        }
+            },
+        )
+        .await;
     }
 
     if which + 1 < targets.len() {

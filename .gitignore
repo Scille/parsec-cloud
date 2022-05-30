@@ -102,3 +102,6 @@ target/
 
 # Vscode configuration
 .vscode
+
+# jetbrains file
+.idea

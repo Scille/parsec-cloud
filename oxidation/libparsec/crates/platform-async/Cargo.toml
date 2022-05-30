@@ -12,10 +12,20 @@ futures = "0.3.21"
 log = "0.4.17"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = "0.2.63"
+wasm-bindgen = "0.2.80"
 wasm-bindgen-futures = "0.4.30"
-web-sys = "0.3.57"
+# Window feature is require for `Timer`.
+web-sys = { version = "0.3.57", features = ["Window"] }
 js-sys = "0.3.57"
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test = "0.3.30"
+# Used for binding `log` with `console.log*`
+console_log = "0.2.0"
+# Used for `futures_lite::future::or` and don't require `Unpin`
+futures-lite = "1.12.0"
+# Need to add the feature `Performance` to be able to estimate the time tasken during the tests.
+web-sys = { version = "0.3.57", features = ["Window", "Performance"]}
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1.18.2", features = ["rt", "time"] }
