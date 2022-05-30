@@ -1,14 +1,15 @@
+# .readthedocs.yml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
 version: 2
 
 # The Docker image used for building the docs.
 build:
-  image: stable
+  image: latest
 
-python:
-  version: 3.7
-  install:
-    - requirements: ./pre-requirements.txt
-    - method: pip
-      path: .
-      extra_requirements:
-        - all
+sphinx:
+  configuration: docs/conf.py
+
+# Note we don't need to install the project to generate documentation, this should
+# save us from random breakage when updating minimal Python and dependencies ;-)
