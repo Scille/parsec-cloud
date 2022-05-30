@@ -249,10 +249,14 @@ class BackendApp:
             await stream.send_all(
                 conn.send(h11.Response(status_code=status_code, headers=headers, reason=reason))
             )
+            print(f"[_send_http_reply] Response sent")
             if data:
                 await stream.send_all(conn.send(h11.Data(data=data)))
+            print(f"[_send_http_reply] Data sent")
             await stream.send_all(conn.send(h11.EndOfMessage()))
-        except trio.BrokenResourceError:
+            print(f"[_send_http_reply] EOF sent")
+        except trio.BrokenResourceError as exc:
+            print(f"[_send_http_reply] Got exception {exc!r}")
             # Given we don't support keep-alive, the connection is going to be
             # shutdown anyway, so we can safely ignore the fact peer has left
             pass
