@@ -303,6 +303,10 @@ class BackendApp:
         req = HTTPRequest.from_h11_req(request, _get_body)
         print(f"[handle_client_http] Got req {req}")
 
+        body = await req.get_body()
+        body = await req.get_body()
+        print(f"[handle_client_http] Got body {body!r}")
+
         rep = await self.http.handle_request(req)
         print(f"[handle_client_http] Built rep {rep}")
         await self._send_http_reply(
