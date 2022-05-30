@@ -5,7 +5,7 @@ import trio
 from urllib.error import URLError
 from pendulum import DateTime
 from structlog import get_logger
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec import service_nursery
 from parsec.monitoring import TaskMonitoringInstrument

@@ -2,7 +2,7 @@
 
 import trio
 import pytest
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 try:
     from tests.fuse_loopback import loopback_fs

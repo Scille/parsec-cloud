@@ -7,7 +7,7 @@ from zlib import adler32
 from pathlib import PurePath
 from functools import partial
 from structlog import get_logger
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 from winfspy import FileSystem, enable_debug_log
 from winfspy.plumbing import filetime_now, FileSystemNotStarted
 

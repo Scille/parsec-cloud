@@ -8,10 +8,8 @@ import pytest
 import pendulum
 from collections import defaultdict
 from typing import Union, Optional, Tuple, Iterable
-from async_generator import asynccontextmanager
-
+from contextlib import asynccontextmanager
 from hashlib import sha1
-
 from uuid import UUID
 from pathlib import Path
 

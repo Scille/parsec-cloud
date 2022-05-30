@@ -2,7 +2,7 @@
 
 import trio
 from enum import Enum
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 from typing import Optional, List, AsyncGenerator, Callable, TypeVar
 from structlog import get_logger
 from functools import partial

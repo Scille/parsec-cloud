@@ -11,8 +11,7 @@ import importlib_resources
 from pathlib import PurePath
 from fuse import FUSE
 from structlog import get_logger
-from contextlib import contextmanager
-from async_generator import asynccontextmanager
+from contextlib import contextmanager, asynccontextmanager
 from itertools import count
 
 from parsec.event_bus import EventBus
