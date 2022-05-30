@@ -20,7 +20,7 @@ variables:
     --durations=10 \
     --side-effects-timeout=10 \
     -v \
-  debug.stress_flaky_tests: 20  # Repeat all flaky tests X times
+  debug.stress_flaky_tests: 40  # Repeat all flaky tests X times
   rust.version: 1.61.0
 
 jobs:
