@@ -207,6 +207,7 @@ class BackendApp:
                 await self._handle_client_websocket(stream, event)
             else:
                 await self._handle_client_http(stream, conn, event)
+            print(f"[handle_client] client handled")
 
         except h11.RemoteProtocolError as exc:
             # Peer is drunk, tell him and leave...
@@ -223,7 +224,9 @@ class BackendApp:
         finally:
             # Note the stream might already be closed (e.g. through `Transport.aclose`)
             # but it's ok given this operation is idempotent
+            print(f"[handle_client] closing stream")
             await stream.aclose()
+            print(f"[handle_client] stream closed")
 
     async def _send_http_reply(
         self,
