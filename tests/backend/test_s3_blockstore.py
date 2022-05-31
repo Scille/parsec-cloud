@@ -65,7 +65,10 @@ async def test_s3_read(caplog):
         _assert_log()
 
 
+# This test has been detected as flaky.
+# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 async def test_s3_create(caplog):
     org_id = OrganizationID("org42")
     block_id = BlockID.from_hex("0694a21176354e8295e28a543e5887f9")
