@@ -106,8 +106,13 @@ impl PartialEq for Data {
 }
 
 impl Data {
-    fn load(conn: &mut SqliteConnection, key: &SecretKey, name: String, manifest: &[u8]) -> Self {
-        match Manifest::decrypt_and_load(manifest, key).expect("Couldn't decrypt") {
+    fn load(
+        conn: &mut SqliteConnection,
+        key: &SecretKey,
+        name: String,
+        manifest: &[u8],
+    ) -> Result<Self, Box<dyn Error>> {
+        Ok(match Manifest::decrypt_and_load(manifest, key)? {
             Manifest::File(FileManifest {
                 author,
                 timestamp,
@@ -124,16 +129,13 @@ impl Data {
                 let content = blocks
                     .iter()
                     .map(|x| {
-                        String::from_utf8_lossy(
-                            &block::table
-                                .select(block::data)
-                                .filter(block::block_id.eq((*x.id).as_ref()))
-                                .first::<Vec<u8>>(conn)
-                                .expect("Couldn't find block"),
-                        )
-                        .to_string()
+                        block::table
+                            .select(block::data)
+                            .filter(block::block_id.eq((*x.id).as_ref()))
+                            .first::<Vec<u8>>(conn)
+                            .map(|x| String::from_utf8_lossy(&x).to_string())
                     })
-                    .collect::<String>();
+                    .collect::<Result<_, _>>()?;
 
                 Self {
                     name,
@@ -170,16 +172,15 @@ impl Data {
             }) => {
                 let children = children
                     .into_iter()
-                    .filter_map(|(name, id)| {
+                    .map(|(name, id)| {
                         vlob_atom::table
                             .select(vlob_atom::blob)
                             .filter(vlob_atom::vlob_id.eq((*id).as_ref()))
                             .order_by(vlob_atom::timestamp.desc())
                             .first::<Vec<u8>>(conn)
                             .map(|x| Self::load(conn, key, name.as_ref().to_string(), &x))
-                            .ok()
                     })
-                    .collect::<Vec<_>>();
+                    .collect::<Result<Result<Vec<_>, _>, _>>()??;
 
                 let size = children.iter().map(|x| x.size).sum();
 
@@ -197,7 +198,7 @@ impl Data {
                 }
             }
             _ => unreachable!(),
-        }
+        })
     }
 }
 
@@ -220,7 +221,7 @@ impl Workspace {
             .filter(vlob_atom::vlob_id.eq(workspace_id))
             .first::<Vec<u8>>(conn)?;
 
-        Ok(Self(Data::load(conn, key, String::new(), &workspace)))
+        Ok(Self(Data::load(conn, key, String::new(), &workspace)?))
     }
 
     #[cfg(test)]
