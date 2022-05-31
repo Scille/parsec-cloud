@@ -6,5 +6,5 @@ trio-asyncio==0.12.0
 boto3==1.23.1
 botocore==1.26.5
 # Swift
-python-swiftclient==3.13.1
+python-swiftclient==4.0.0
 pbr==5.9.0
