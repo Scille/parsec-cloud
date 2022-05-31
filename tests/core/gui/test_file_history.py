@@ -11,8 +11,11 @@ def catch_file_history_widget(widget_catcher_factory):
     return widget_catcher_factory("parsec.core.gui.file_history_widget.FileHistoryWidget")
 
 
+# This test has been detected as flaky.
+# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 async def test_file_history(
     aqtbot, running_backend, logged_gui, autoclose_dialog, catch_file_history_widget
 ):
