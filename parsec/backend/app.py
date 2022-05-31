@@ -289,6 +289,26 @@ class BackendApp:
 
         req = HTTPRequest.from_h11_req(request, _get_body)
 
+        # Force the receiving of the body (this operation is indempotent)
+        # Initially, HTTPRequest was designed to lazily receive the body if it is necessary.
+        # For instance, there is no point in getting the body if the request path is unkown.
+        # However, this causes inconsistencies in the tests as the following scenario might happen:
+        # - Client sends the header
+        # - Server receives the request and choose to not support it
+        # - Server sends the corresponding reply and closes the connection
+        # - Client sends the body
+        # - Client try to receive the reply but gets the following error instead:
+        #   [WinError 10053] An established connection was aborted by the software in your host machine
+        # Note that this only happens under the following condition:
+        # - The client must send the body after the connection is closed by the server
+        # - The platform must be windows (linux does behave properly)
+        # Typical tests exhibiting this behavior are:
+        # - tests/core/test_bootstrap_organization.py::test_good[2.5-...]
+        # - tests/core/test_bootstrap_organization.py::test_good[2.6-...]
+        # This is a simple workaround to this issue as this logic will soon be replaced by qwart.
+        # It will be interesting to check how frameworks like qwart typically deal with this kind of problem.
+        await req.get_body()
+
         rep = await self.http.handle_request(req)
         await self._send_http_reply(
             stream, conn, status_code=rep.status_code, headers=rep.headers, data=rep.data
