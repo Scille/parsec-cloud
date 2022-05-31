@@ -360,10 +360,8 @@ jobs:
       # spawned processes (see: https://github.com/pytest-dev/pytest-xdist/issues/739)
       # However even with run_parallel.py (our own custom rewrite of xdist using
       # multiprocessing) we end up with random crashes...
-      py.test $(pytest.base_args) \
-        tests --runslow \
-        --max-worker-restart=0 -x \
-        --junitxml=test-results-memory.xml
+      # Also, do not run slow and mountpoint tests as they are slow and unstable in the CI
+      py.test $(pytest.base_args) tests --junitxml=test-results-memory.xml
     displayName: 'Tests memory'
   #- bash: |
   #    set -eux
