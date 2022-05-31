@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
+use parsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::collections::HashMap;
@@ -14,7 +15,7 @@ use serialization_format::parsec_data;
 
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::ext_types::new_uuid_type;
-use crate::{self as libparsec_types, impl_from_maybe};
+use crate::{self as libparsec_types, impl_from_maybe, DataResult};
 use crate::{DataError, DateTime, DeviceID, EntryNameError};
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
@@ -27,7 +28,8 @@ macro_rules! impl_manifest_dump_load {
             pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
                 let serialized =
                     ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
-                let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
+                let mut e =
+                    ::flate2::write::ZlibEncoder::new(Vec::new(), ::flate2::Compression::default());
                 e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
                 let compressed = e.finish().unwrap_or_else(|_| unreachable!());
 
@@ -56,11 +58,11 @@ macro_rules! impl_manifest_dump_load {
                 let compressed = author_verify_key.verify(&signed)?;
                 let mut serialized = vec![];
 
-                ZlibDecoder::new(&compressed[..])
+                ::flate2::read::ZlibDecoder::new(&compressed[..])
                     .read_to_end(&mut serialized)
                     .map_err(|_| DataError::Compression)?;
 
-                let obj = rmp_serde::from_slice::<Self>(&serialized)
+                let obj = ::rmp_serde::from_slice::<Self>(&serialized)
                     .map_err(|_| DataError::Serialization)?;
 
                 if obj.author != *expected_author {
@@ -274,10 +276,6 @@ impl Deref for Blocksize {
     }
 }
 
-/*
- * FileManifest
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "FileManifestData", try_from = "FileManifestData")]
 pub struct FileManifest {
@@ -337,10 +335,6 @@ impl From<FileManifest> for FileManifestData {
     }
 }
 
-/*
- * FolderManifest
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "FolderManifestData", from = "FolderManifestData")]
 pub struct FolderManifest {
@@ -373,10 +367,6 @@ impl_transparent_data_format_conversion!(
     children,
 );
 
-/*
- * WorkspaceManifest
- */
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "WorkspaceManifestData", from = "WorkspaceManifestData")]
 pub struct WorkspaceManifest {
@@ -406,10 +396,6 @@ impl_transparent_data_format_conversion!(
     updated,
     children,
 );
-
-/*
- * UserManifest
- */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "UserManifestData", from = "UserManifestData")]
@@ -449,15 +435,21 @@ impl_transparent_data_format_conversion!(
     workspaces,
 );
 
-/*
- * FileOrFolderManifest
- */
-
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "type")]
-pub enum FileOrFolderManifest {
-    #[serde(rename = "file_manifest")]
+pub enum Manifest {
     File(FileManifest),
-    #[serde(rename = "folder_manifest")]
     Folder(FolderManifest),
+    Workspace(WorkspaceManifest),
+    User(UserManifest),
+}
+
+impl Manifest {
+    pub fn dump_and_encrypt(&self, key: &SecretKey) -> DataResult<Vec<u8>> {
+        Ok(key.encrypt(&rmp_serde::to_vec_named(&self).map_err(|_| DataError::Serialization)?))
+    }
+
+    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
+        rmp_serde::from_slice::<Self>(&key.decrypt(encrypted)?)
+            .map_err(|_| DataError::Serialization)
+    }
 }

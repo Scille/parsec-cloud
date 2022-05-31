@@ -8,9 +8,9 @@ mod schema;
 
 use clap::Parser;
 use diesel::{Connection, SqliteConnection};
-use std::path::PathBuf;
+use std::{error::Error, path::PathBuf};
 
-use crate::model::Data;
+use crate::model::Workspace;
 use parsec_api_crypto::SecretKey;
 
 /// Simple program that dumps files and folders in a file
@@ -30,81 +30,147 @@ struct Args {
     output: PathBuf,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
     let input = args.input.to_str().unwrap();
-    let key = SecretKey::try_from(&std::fs::read(args.key.as_str()).unwrap()[..]).unwrap();
+    let key_path = args.key.as_str();
     let output = args.output.to_str().unwrap();
 
-    let mut conn = SqliteConnection::establish(input).unwrap();
+    let mut conn = SqliteConnection::establish(input)?;
 
-    let data = Data::query_all(&mut conn);
+    let key_file = std::fs::read(key_path)?;
+    let key = SecretKey::try_from(&key_file[..])?;
+    let workspace = Workspace::query_all(&mut conn, &key)?;
 
-    data.dump(&key, output);
+    workspace.dump(output)
 }
 
-#[test]
-fn test_parsec_sequestre_dump() {
-    use crate::model::{Block, Info, VlobAtom};
-    use diesel::connection::SimpleConnection;
+#[cfg(test)]
+mod tests {
+    use diesel::{Connection, SqliteConnection};
+    use rstest::rstest;
+    use tests_fixtures::{alice, Device};
 
-    let input = "/tmp/parsec_sequestre_dump.sqlite";
-    let key = SecretKey::generate();
-    let output = "/tmp/out";
-    let dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR should be set");
+    use crate::model::{Data, Workspace};
 
-    macro_rules! read_sql {
-        ($file: literal) => {
-            std::fs::read_to_string(format!("{dir}/migrations/{}", $file)).unwrap()
-        };
-    }
+    #[rstest]
+    fn test_parsec_sequestre_dump(alice: &Device) {
+        use diesel::connection::SimpleConnection;
 
-    let mut conn = SqliteConnection::establish(input).unwrap();
+        let input = "/tmp/parsec_sequestre_dump.sqlite";
+        let output = "/tmp/out";
+        let dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR should be set");
+        let t0 = "2000-01-01T00:00:00Z".parse().unwrap();
 
-    let sql = read_sql!("0000_init/down.sql") + &read_sql!("0000_init/up.sql");
-
-    conn.batch_execute(&sql).unwrap();
-
-    Data::init_db(&mut conn);
-
-    let data = Data::query_all(&mut conn);
-
-    assert_eq!(
-        data,
-        Data {
-            blocks: vec![Block {
-                block_id: b"block_id".to_vec(),
-                data: b"data".to_vec(),
-                author: 0,
-                size: 4,
-                created_on: 0.,
-            }],
-            vlob_atoms: vec![VlobAtom {
-                vlob_id: b"vlob_id".to_vec(),
-                version: 1,
-                blob: b"blob".to_vec(),
-                size: 4,
-                author: 0,
-                timestamp: 0.,
-            }],
-            role_certificates: vec![b"role".to_vec()],
-            user_certificates: vec![b"user".to_vec()],
-            device_certificates: vec![b"device".to_vec()],
-            info: vec![Info {
-                magic: 87947,
-                version: 1,
-                realm_id: b"realm_id".to_vec(),
-            }]
+        macro_rules! read_sql {
+            ($file: literal) => {
+                std::fs::read_to_string(format!("{dir}/migrations/{}", $file)).unwrap()
+            };
         }
-    );
 
-    data.dump(&key, output);
+        let mut conn = SqliteConnection::establish(input).unwrap();
 
-    let loaded_data = Data::load(&key, output);
+        let sql = read_sql!("0000_init/down.sql") + &read_sql!("0000_init/up.sql");
 
-    assert_eq!(data, loaded_data);
+        conn.batch_execute(&sql).unwrap();
 
-    std::fs::remove_file(input).unwrap();
-    std::fs::remove_file(output).unwrap();
+        Workspace::init_db(&mut conn, alice);
+
+        let workspace = Workspace::query_all(&mut conn, &alice.local_symkey).unwrap();
+
+        assert_eq!(
+            workspace,
+            Workspace(Data {
+                author: alice.device_id.clone(),
+                version: 1,
+                created: t0,
+                updated: t0,
+                size: 63,
+                children: vec![
+                    Data {
+                        name: "file0".into(),
+                        author: alice.device_id.clone(),
+                        version: 1,
+                        created: t0,
+                        updated: t0,
+                        size: 13,
+                        content: "Hello World \0".into(),
+                        ..Default::default()
+                    },
+                    Data {
+                        name: "folder0".into(),
+                        author: alice.device_id.clone(),
+                        version: 1,
+                        created: t0,
+                        updated: t0,
+                        size: 50,
+                        children: vec![
+                            Data {
+                                name: "file00".into(),
+                                author: alice.device_id.clone(),
+                                version: 1,
+                                created: t0,
+                                updated: t0,
+                                size: 16,
+                                content: "file00's content".into(),
+                                ..Default::default()
+                            },
+                            Data {
+                                name: "folder00".into(),
+                                author: alice.device_id.clone(),
+                                version: 1,
+                                created: t0,
+                                updated: t0,
+                                size: 0,
+                                ..Default::default()
+                            },
+                            Data {
+                                name: "folder01".into(),
+                                author: alice.device_id.clone(),
+                                version: 1,
+                                created: t0,
+                                updated: t0,
+                                size: 34,
+                                children: vec![
+                                    Data {
+                                        name: "file010".into(),
+                                        author: alice.device_id.clone(),
+                                        version: 1,
+                                        created: t0,
+                                        updated: t0,
+                                        size: 17,
+                                        content: "file010's content".into(),
+                                        ..Default::default()
+                                    },
+                                    Data {
+                                        name: "file011".into(),
+                                        author: alice.device_id.clone(),
+                                        version: 1,
+                                        created: t0,
+                                        updated: t0,
+                                        size: 17,
+                                        content: "file011's content".into(),
+                                        ..Default::default()
+                                    }
+                                ],
+                                ..Default::default()
+                            },
+                        ],
+                        ..Default::default()
+                    }
+                ],
+                ..Default::default()
+            })
+        );
+
+        workspace.dump(output).unwrap();
+
+        let loaded_data = Workspace::load(output);
+
+        assert_eq!(workspace, loaded_data);
+
+        std::fs::remove_file(input).unwrap();
+        std::fs::remove_file(output).unwrap();
+    }
 }

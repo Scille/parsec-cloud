@@ -1,5 +1,5 @@
 [package]
-name = "parsec_cli"
+name = "parsec_sequestre_dump"
 version = "0.0.0"
 edition = "2021"
 license = " BUSL-1.1"
@@ -8,9 +8,15 @@ license = " BUSL-1.1"
 
 [dependencies]
 parsec_api_crypto = { path = "../../crates/parsec_api_crypto" }
+parsec_api_types = { path = "../../crates/parsec_api_types" }
 
 diesel = { version = "2.0.0-rc.0", features = ["sqlite", "chrono"] }
 clap = { version = "3.1.18", features = ["derive"] }
-rmp-serde = "1.0.0"
 serde = { version = "1.0.127", features = ["derive"] }
+serde_json = "1.0.81"
 chrono = { version = "0.4.19", features = ["serde"] }
+uuid = { version = "1.1.0", features = ["serde"] }
+
+[dev-dependencies]
+tests_fixtures = { path = "../../crates/tests_fixtures" }
+rstest = "0.13.0"

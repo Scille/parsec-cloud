@@ -1991,18 +1991,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "parsec_cli"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "clap",
- "diesel",
- "parsec_api_crypto",
- "rmp-serde",
- "serde",
-]
-
-[[package]]
 name = "parsec_client_types"
 version = "0.0.0"
 dependencies = [
@@ -2037,6 +2025,22 @@ dependencies = [
  "rstest 0.13.0",
  "tests_fixtures",
  "thiserror",
+]
+
+[[package]]
+name = "parsec_sequestre_dump"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "diesel",
+ "parsec_api_crypto",
+ "parsec_api_types",
+ "rstest",
+ "serde",
+ "serde_json",
+ "tests_fixtures",
+ "uuid",
 ]
 
 [[package]]

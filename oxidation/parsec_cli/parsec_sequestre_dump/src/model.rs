@@ -1,9 +1,21 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use crate::schema::{block, device, info, realm_role, user_ as user, vlob_atom};
-use diesel::{QueryDsl, RunQueryDsl, SqliteConnection};
-use parsec_api_crypto::SecretKey;
+use std::error::Error;
+
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::schema::{block, info, vlob_atom};
+use parsec_api_crypto::SecretKey;
+use parsec_api_types::{DeviceID, FileManifest, FolderManifest, Manifest, WorkspaceManifest};
+
+type Time = chrono::DateTime<chrono::Utc>;
+
+#[cfg(test)]
+use crate::schema::{device, realm_role, user_ as user};
+#[cfg(test)]
+use tests_fixtures::Device;
 
 #[derive(Debug, Queryable, Serialize, Deserialize, PartialEq)]
 pub struct Block {
@@ -31,93 +43,202 @@ pub struct Info {
     pub realm_id: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Serialize, Deserialize)]
 pub struct Data {
-    pub blocks: Vec<Block>,
-    pub vlob_atoms: Vec<VlobAtom>,
-    pub role_certificates: Vec<Vec<u8>>,
-    pub user_certificates: Vec<Vec<u8>>,
-    pub device_certificates: Vec<Vec<u8>>,
-    pub info: Vec<Info>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub name: String,
+    pub author: DeviceID,
+    pub timestamp: Time,
+    pub id: Uuid,
+    pub version: u32,
+    pub created: Time,
+    pub updated: Time,
+    pub size: u64,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub children: Vec<Data>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub content: String,
+}
+
+impl std::fmt::Debug for Data {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Data")
+            .field("name", &self.name)
+            .field("children", &self.children)
+            .finish()
+    }
+}
+
+impl Default for Data {
+    fn default() -> Self {
+        Self {
+            name: String::default(),
+            author: DeviceID::default(),
+            timestamp: chrono::Utc::now(),
+            id: Uuid::default(),
+            version: u32::default(),
+            created: chrono::Utc::now(),
+            updated: chrono::Utc::now(),
+            size: u64::default(),
+            children: Vec::default(),
+            content: String::default(),
+        }
+    }
+}
+
+impl PartialEq for Data {
+    // This implementation is slow, it is used only in test
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+            && self.author == other.author
+            && self.version == other.version
+            && self.created == other.created
+            && self.updated == other.updated
+            && self.size == other.size
+            && self
+                .children
+                .iter()
+                .map(|x| other.children.contains(x))
+                .reduce(|acc, x| acc & x)
+                .unwrap_or(true)
+            && self.content == other.content
+    }
 }
 
 impl Data {
-    pub fn dump(&self, key: &SecretKey, path: &str) {
-        let data = rmp_serde::to_vec_named(self).unwrap();
-        let encrypted = key.encrypt(&data);
-        std::fs::write(path, &encrypted).unwrap();
-    }
+    fn load(conn: &mut SqliteConnection, key: &SecretKey, name: String, manifest: &[u8]) -> Self {
+        match Manifest::decrypt_and_load(manifest, key).expect("Couldn't decrypt") {
+            Manifest::File(FileManifest {
+                author,
+                timestamp,
+                id,
+                version,
+                created,
+                updated,
+                size,
+                mut blocks,
+                ..
+            }) => {
+                blocks.sort_by(|x, y| x.offset.cmp(&y.offset));
 
-    pub fn query_all(conn: &mut SqliteConnection) -> Data {
-        let blocks = block::table
-            .select((
-                block::block_id,
-                block::data,
-                block::author,
-                block::size,
-                block::created_on,
-            ))
-            .load::<Block>(conn)
-            .unwrap();
+                let content = blocks
+                    .iter()
+                    .map(|x| {
+                        String::from_utf8_lossy(
+                            &block::table
+                                .select(block::data)
+                                .filter(block::block_id.eq((*x.id).as_ref()))
+                                .first::<Vec<u8>>(conn)
+                                .expect("Couldn't find block"),
+                        )
+                        .to_string()
+                    })
+                    .collect::<String>();
 
-        let vlob_atoms = vlob_atom::table
-            .select((
-                vlob_atom::vlob_id,
-                vlob_atom::version,
-                vlob_atom::blob,
-                vlob_atom::size,
-                vlob_atom::author,
-                vlob_atom::timestamp,
-            ))
-            .load::<VlobAtom>(conn)
-            .unwrap();
+                Self {
+                    name,
+                    author,
+                    timestamp: *timestamp.as_ref(),
+                    id: *id,
+                    version,
+                    created: *created.as_ref(),
+                    updated: *updated.as_ref(),
+                    size,
+                    children: vec![],
+                    content,
+                }
+            }
+            Manifest::Folder(FolderManifest {
+                author,
+                timestamp,
+                id,
+                version,
+                created,
+                updated,
+                children,
+                ..
+            })
+            | Manifest::Workspace(WorkspaceManifest {
+                author,
+                timestamp,
+                id,
+                version,
+                created,
+                updated,
+                children,
+                ..
+            }) => {
+                let children = children
+                    .into_iter()
+                    .filter_map(|(name, id)| {
+                        vlob_atom::table
+                            .select(vlob_atom::blob)
+                            .filter(vlob_atom::vlob_id.eq((*id).as_ref()))
+                            .order_by(vlob_atom::timestamp.desc())
+                            .first::<Vec<u8>>(conn)
+                            .map(|x| Self::load(conn, key, name.as_ref().to_string(), &x))
+                            .ok()
+                    })
+                    .collect::<Vec<_>>();
 
-        let role_certificates = realm_role::table
-            .select(realm_role::role_certificate)
-            .load::<Vec<u8>>(conn)
-            .unwrap();
+                let size = children.iter().map(|x| x.size).sum();
 
-        let user_certificates = user::table
-            .select(user::user_certificate)
-            .load::<Vec<u8>>(conn)
-            .unwrap();
-
-        let device_certificates = device::table
-            .select(device::device_certificate)
-            .load::<Vec<u8>>(conn)
-            .unwrap();
-
-        let info = info::table.load::<Info>(conn).unwrap();
-
-        Self {
-            blocks,
-            vlob_atoms,
-            role_certificates,
-            user_certificates,
-            device_certificates,
-            info,
+                Self {
+                    name,
+                    author,
+                    timestamp: *timestamp.as_ref(),
+                    id: *id,
+                    version,
+                    created: *created.as_ref(),
+                    updated: *updated.as_ref(),
+                    size,
+                    children,
+                    content: String::new(),
+                }
+            }
+            _ => unreachable!(),
         }
     }
+}
 
-    #[cfg(test)]
-    pub fn load(key: &SecretKey, path: &str) -> Self {
-        let encrypted = std::fs::read(path).unwrap();
-        let data = key.decrypt(&encrypted).unwrap();
-        rmp_serde::from_slice(&data).unwrap()
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct Workspace(pub Data);
+
+impl Workspace {
+    pub fn dump(&self, path: &str) -> Result<(), Box<dyn Error>> {
+        let data = serde_json::to_string_pretty(self)?;
+        std::fs::write(path, &data)?;
+
+        Ok(())
+    }
+
+    pub fn query_all(conn: &mut SqliteConnection, key: &SecretKey) -> Result<Self, Box<dyn Error>> {
+        let workspace_id = info::table.select(info::realm_id).first::<Vec<u8>>(conn)?;
+
+        let workspace = vlob_atom::table
+            .select(vlob_atom::blob)
+            .filter(vlob_atom::vlob_id.eq(workspace_id))
+            .first::<Vec<u8>>(conn)?;
+
+        Ok(Self(Data::load(conn, key, String::new(), &workspace)))
     }
 
     #[cfg(test)]
-    pub fn init_db(conn: &mut SqliteConnection) {
-        use diesel::ExpressionMethods;
+    pub fn load(path: &str) -> Self {
+        let data = std::fs::read(path).unwrap();
+        serde_json::from_slice(&data).unwrap()
+    }
 
-        diesel::insert_or_ignore_into(info::table)
-            .values((
-                info::magic.eq(87947),
-                info::version.eq(1),
-                info::realm_id.eq(&b"realm_id"[..]),
-            ))
-            .execute(conn)
-            .unwrap();
+    #[cfg(test)]
+    pub fn init_db(conn: &mut SqliteConnection, device: &Device) {
+        use parsec_api_crypto::HashDigest;
+        use parsec_api_types::{BlockAccess, BlockID, Blocksize, DateTime, EntryID};
+        use std::{collections::HashMap, num::NonZeroU64};
+
+        let now = DateTime::now();
+        let _now = now.get_f64_with_us_precision();
+        let t0 = "2000-1-1T00:00:00Z".parse::<DateTime>().unwrap();
+        let _t0 = t0.get_f64_with_us_precision();
 
         diesel::insert_or_ignore_into(realm_role::table)
             .values((
@@ -152,17 +273,248 @@ impl Data {
             .execute(conn)
             .unwrap();
 
-        diesel::insert_or_ignore_into(vlob_atom::table)
+        // WorkspaceManifest
+        // |_ FileManifest (file0)
+        // |_ FolderManifest (folder0)
+        //    |_ FileManifest (file00)
+        //    |_ FolderManifest (folder00)
+        //    |_ FolderManifest (folder01)
+        //       |_ FileManifest (file010)
+        //       |_ FileManifest (file011)
+
+        let workspace_id = EntryID::default();
+        let file0_id = EntryID::default();
+        let folder0_id = EntryID::default();
+        let file00_id = EntryID::default();
+        let folder00_id = EntryID::default();
+        let folder01_id = EntryID::default();
+        let file010_id = EntryID::default();
+        let file011_id = EntryID::default();
+
+        let file0_block0_id = BlockID::default();
+        let file0_block1_id = BlockID::default();
+        let file0_block2_id = BlockID::default();
+        let file00_block_id = BlockID::default();
+        let file010_block_id = BlockID::default();
+        let file011_block_id = BlockID::default();
+
+        let file0_data0 = b"Hello ";
+        let file0_data1 = b"World ";
+        let file0_data2 = [0; 1];
+        let file00_data = b"file00's content";
+        let file010_data = b"file010's content";
+        let file011_data = b"file011's content";
+
+        let insert_manifest = |conn: &mut SqliteConnection, id: &[u8], manifest: &[u8]| {
+            diesel::insert_or_ignore_into(vlob_atom::table)
+                .values((
+                    vlob_atom::vlob_id.eq(id),
+                    vlob_atom::version.eq(1),
+                    vlob_atom::blob.eq(manifest),
+                    vlob_atom::size.eq(manifest.len() as i32),
+                    vlob_atom::author.eq(0),
+                    vlob_atom::timestamp.eq(_now),
+                ))
+                .execute(conn)
+                .unwrap()
+        };
+
+        let insert_data = |conn: &mut SqliteConnection, id: &[u8], data: &[u8]| {
+            diesel::insert_or_ignore_into(block::table)
+                .values((
+                    block::block_id.eq(id),
+                    block::data.eq(data),
+                    block::author.eq(0),
+                    block::size.eq(data.len() as i32),
+                    block::created_on.eq(_t0),
+                ))
+                .execute(conn)
+                .unwrap()
+        };
+
+        diesel::insert_or_ignore_into(info::table)
             .values((
-                vlob_atom::_id.eq(0),
-                vlob_atom::vlob_id.eq(&b"vlob_id"[..]),
-                vlob_atom::version.eq(1),
-                vlob_atom::blob.eq(&b"blob"[..]),
-                vlob_atom::size.eq(4),
-                vlob_atom::author.eq(0),
-                vlob_atom::timestamp.eq(0.),
+                info::magic.eq(87947),
+                info::version.eq(1),
+                info::realm_id.eq((*workspace_id).as_ref()),
             ))
             .execute(conn)
             .unwrap();
+
+        let workspace_manifest = Manifest::Workspace(WorkspaceManifest {
+            author: device.device_id.clone(),
+            timestamp: now,
+            id: workspace_id,
+            version: 1,
+            created: t0,
+            updated: t0,
+            children: HashMap::from([
+                ("file0".parse().unwrap(), file0_id),
+                ("folder0".parse().unwrap(), folder0_id),
+            ]),
+        })
+        .dump_and_encrypt(&device.local_symkey)
+        .unwrap();
+
+        let file0 = Manifest::File(FileManifest {
+            author: device.device_id.clone(),
+            timestamp: now,
+            id: file0_id,
+            parent: workspace_id,
+            version: 1,
+            created: t0,
+            updated: t0,
+            size: (file0_data0.len() + file0_data1.len() + file0_data2.len()) as u64,
+            blocksize: Blocksize::try_from(512).expect("Invalid blocksize"),
+            blocks: vec![
+                BlockAccess {
+                    id: file0_block0_id,
+                    key: device.local_symkey.clone(),
+                    offset: 0,
+                    size: NonZeroU64::try_from(file0_data0.len() as u64).unwrap(),
+                    digest: HashDigest::from_data(&file0_data0[..]),
+                },
+                BlockAccess {
+                    id: file0_block1_id,
+                    key: device.local_symkey.clone(),
+                    offset: file0_data0.len() as u64,
+                    size: NonZeroU64::try_from(file0_data1.len() as u64).unwrap(),
+                    digest: HashDigest::from_data(&file0_data1[..]),
+                },
+                BlockAccess {
+                    id: file0_block2_id,
+                    key: device.local_symkey.clone(),
+                    offset: (file0_data0.len() + file0_data1.len()) as u64,
+                    size: NonZeroU64::try_from(file0_data2.len() as u64).unwrap(),
+                    digest: HashDigest::from_data(&file0_data2[..]),
+                },
+            ],
+        })
+        .dump_and_encrypt(&device.local_symkey)
+        .unwrap();
+
+        let folder0 = Manifest::Folder(FolderManifest {
+            author: device.device_id.clone(),
+            timestamp: now,
+            id: folder0_id,
+            parent: workspace_id,
+            version: 1,
+            created: t0,
+            updated: t0,
+            children: HashMap::from([
+                ("file00".parse().unwrap(), file00_id),
+                ("folder00".parse().unwrap(), folder00_id),
+                ("folder01".parse().unwrap(), folder01_id),
+            ]),
+        })
+        .dump_and_encrypt(&device.local_symkey)
+        .unwrap();
+
+        let file00 = Manifest::File(FileManifest {
+            author: device.device_id.clone(),
+            timestamp: now,
+            id: file00_id,
+            parent: EntryID::from(folder0_id),
+            version: 1,
+            created: t0,
+            updated: t0,
+            size: file00_data.len() as u64,
+            blocksize: Blocksize::try_from(512).expect("Invalid blocksize"),
+            blocks: vec![BlockAccess {
+                id: file00_block_id,
+                key: device.local_symkey.clone(),
+                offset: 0,
+                size: NonZeroU64::try_from(file00_data.len() as u64).unwrap(),
+                digest: HashDigest::from_data(&file00_data[..]),
+            }],
+        })
+        .dump_and_encrypt(&device.local_symkey)
+        .unwrap();
+
+        let folder00 = Manifest::Folder(FolderManifest {
+            author: device.device_id.clone(),
+            timestamp: now,
+            id: folder00_id,
+            parent: EntryID::from(folder0_id),
+            version: 1,
+            created: t0,
+            updated: t0,
+            children: HashMap::new(),
+        })
+        .dump_and_encrypt(&device.local_symkey)
+        .unwrap();
+
+        let folder01 = Manifest::Folder(FolderManifest {
+            author: device.device_id.clone(),
+            timestamp: now,
+            id: folder01_id,
+            parent: EntryID::from(folder0_id),
+            version: 1,
+            created: t0,
+            updated: t0,
+            children: HashMap::from([
+                ("file010".parse().unwrap(), file010_id),
+                ("file011".parse().unwrap(), file011_id),
+            ]),
+        })
+        .dump_and_encrypt(&device.local_symkey)
+        .unwrap();
+
+        let file010 = Manifest::File(FileManifest {
+            author: device.device_id.clone(),
+            timestamp: now,
+            id: file010_id,
+            parent: EntryID::from(folder01_id),
+            version: 1,
+            created: t0,
+            updated: t0,
+            size: file010_data.len() as u64,
+            blocksize: Blocksize::try_from(512).expect("Invalid blocksize"),
+            blocks: vec![BlockAccess {
+                id: file010_block_id,
+                key: device.local_symkey.clone(),
+                offset: 0,
+                size: NonZeroU64::try_from(file010_data.len() as u64).unwrap(),
+                digest: HashDigest::from_data(&file010_data[..]),
+            }],
+        })
+        .dump_and_encrypt(&device.local_symkey)
+        .unwrap();
+
+        let file011 = Manifest::File(FileManifest {
+            author: device.device_id.clone(),
+            timestamp: now,
+            id: file011_id,
+            parent: EntryID::from(folder01_id),
+            version: 1,
+            created: t0,
+            updated: t0,
+            size: file011_data.len() as u64,
+            blocksize: Blocksize::try_from(512).expect("Invalid blocksize"),
+            blocks: vec![BlockAccess {
+                id: file011_block_id,
+                key: device.local_symkey.clone(),
+                offset: 0,
+                size: NonZeroU64::try_from(file011_data.len() as u64).unwrap(),
+                digest: HashDigest::from_data(&file011_data[..]),
+            }],
+        })
+        .dump_and_encrypt(&device.local_symkey)
+        .unwrap();
+
+        insert_manifest(conn, (*workspace_id).as_ref(), &workspace_manifest);
+        insert_manifest(conn, (*file0_id).as_ref(), &file0);
+        insert_data(conn, (*file0_block0_id).as_ref(), &file0_data0[..]);
+        insert_data(conn, (*file0_block1_id).as_ref(), &file0_data1[..]);
+        insert_data(conn, (*file0_block2_id).as_ref(), &file0_data2[..]);
+        insert_manifest(conn, (*folder0_id).as_ref(), &folder0);
+        insert_manifest(conn, (*file00_id).as_ref(), &file00);
+        insert_data(conn, (*file00_block_id).as_ref(), &file00_data[..]);
+        insert_manifest(conn, (*folder00_id).as_ref(), &folder00);
+        insert_manifest(conn, (*folder01_id).as_ref(), &folder01);
+        insert_manifest(conn, (*file010_id).as_ref(), &file010);
+        insert_data(conn, (*file010_block_id).as_ref(), &file010_data[..]);
+        insert_manifest(conn, (*file011_id).as_ref(), &file011);
+        insert_data(conn, (*file011_block_id).as_ref(), &file011_data[..]);
     }
 }
