@@ -538,9 +538,9 @@ checksum = "77f3309417938f28bf8228fcff79a4a37103981e3e186d2ccd19c74b38f4eb71"
 
 [[package]]
 name = "fancy-regex"
-version = "0.8.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d95b4efe5be9104a4a18a9916e86654319895138be727b229820c39257c30dda"
+checksum = "0678ab2d46fa5195aaf59ad034c083d351377d4af57f3e073c074d0da3e3c766"
 dependencies = [
  "bit-set",
  "regex",
@@ -1508,6 +1508,16 @@ dependencies = [
  "cfg-if",
  "cpufeatures",
  "digest 0.10.3",
+ "sha2-asm",
+]
+
+[[package]]
+name = "sha2-asm"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf27176fb5d15398e3a479c652c20459d9dac830dedd1fa55b42a77dbcdbfcea"
+dependencies = [
+ "cc",
 ]
 
 [[package]]
@@ -1744,9 +1754,9 @@ checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
 
 [[package]]
 name = "uuid"
-version = "1.0.0-alpha.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb3ab47baa004111b323696c6eaa2752e7356f7f77cf6b6dc7a2087368ce1ca4"
+checksum = "93bbc61e655a4833cf400d0d15bf3649313422fa7572886ad6dab16d79886365"
 dependencies = [
  "getrandom 0.2.3",
  "rand 0.8.5",
