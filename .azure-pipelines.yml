@@ -365,6 +365,9 @@ jobs:
         --max-worker-restart=0 -x \
         --junitxml=test-results-memory.xml
     displayName: 'Tests memory'
+    # Disable macOS testing for the moment as it is very unstable
+    # An investigation should be happen soon.
+    condition: False
   #- bash: |
   #    set -eux
   #    py.test $(pytest.base_args) \
