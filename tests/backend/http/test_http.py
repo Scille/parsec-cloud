@@ -54,8 +54,11 @@ async def _do_test_redirect(backend_http_send):
     assert status == (200, "OK")
 
 
-@customize_fixtures(backend_forward_proto_enforce_https=(b"x-forwarded-proto", b"https"))
+# This test has been detected as flaky.
+# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
+@customize_fixtures(backend_forward_proto_enforce_https=(b"x-forwarded-proto", b"https"))
 async def test_redirect_proxy(backend_http_send, running_backend):
     await _do_test_redirect(backend_http_send)
 
