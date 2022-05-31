@@ -119,9 +119,11 @@ def pytest_configure(config):
         bootstrap_postgresql_testbed()
     # Configure custom side effets timeout
     if config.getoption("--side-effects-timeout"):
-        import tests.common
+        import tests.common.trio_clock
 
-        tests.common._SIDE_EFFECTS_TIMEOUT = float(config.getoption("--side-effects-timeout"))
+        tests.common.trio_clock._set_side_effects_timeout(
+            float(config.getoption("--side-effects-timeout"))
+        )
 
 
 def _is_xdist_master(config):
