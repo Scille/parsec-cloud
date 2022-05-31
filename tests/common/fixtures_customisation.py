@@ -59,4 +59,10 @@ def fixtures_customization(request):
     try:
         return request.node.function._fixtures_customization
     except AttributeError:
+        pass
+    try:
+        # In the case of reruns, the original function can be found like so:
+        function = getattr(request.node.module, request.node.originalname)
+        return function._fixtures_customization
+    except AttributeError:
         return {}
