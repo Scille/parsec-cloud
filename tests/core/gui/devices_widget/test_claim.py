@@ -140,7 +140,7 @@ def ClaimDeviceTestBed(
             self.claim_device_widget = cd_w
             self.claim_device_instructions_widget = cdi_w
 
-            self.assert_initial_state()  # Sanity check
+            await aqtbot.wait_until(self.assert_initial_state)  # Sanity check
 
         def assert_initial_state(self):
             assert self.claim_device_widget.isVisible()

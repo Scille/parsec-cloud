@@ -148,7 +148,8 @@ def ClaimUserTestBed(
 
             self.claim_user_widget = cu_w
             self.claim_user_instructions_widget = cui_w
-            self.assert_initial_state()  # Sanity check
+
+            await aqtbot.wait_until(self.assert_initial_state)  # Sanity check
 
         def assert_initial_state(self):
             assert self.claim_user_widget.isVisible()

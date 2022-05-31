@@ -161,7 +161,7 @@ def GreetUserTestBed(
             self.greet_user_widget = greet_user_widget
             self.greet_user_information_widget = greet_user_information_widget
 
-            self.assert_initial_state()  # Sanity check
+            await aqtbot.wait_until(self.assert_initial_state)  # Sanity check
 
         def assert_initial_state(self):
             assert self.greet_user_widget.isVisible()
