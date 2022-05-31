@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import os
+import trio
 from pathlib import Path
 import pytest
 from PyQt5 import QtCore, QtWidgets, QtGui
@@ -439,8 +440,11 @@ async def test_show_inconsistent_dir(
     )
 
 
+# This test has been detected as flaky.
+# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widget_testbed):
     tb = files_widget_testbed
 
@@ -460,6 +464,11 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
     await tb.workspace_fs.touch("/foo/spam.txt")
     await tb.check_files_view(path="/", expected_entries=["foo/"])
 
+    # This helps a lot with the consistency of this test but I have no idea why
+    # This shoud be investigated in the future.
+    relax = 0.1  # s
+    await trio.sleep(relax)
+
     # 1) Test the copy
     await tb.copy("foo")
     await tb.logged_gui.test_switch_to_files_widget(workspace_name=EntryName("wksp2"))
@@ -467,10 +476,19 @@ async def test_copy_cut_between_workspaces(aqtbot, autoclose_dialog, files_widge
     await tb.check_files_view(
         workspace_name=EntryName("wksp2"), path="/", expected_entries=["foo/"]
     )
+
+    # This helps a lot with the consistency of this test but I have no idea why
+    # This shoud be investigated in the future.
+    await trio.sleep(relax)
+
     await tb.cd("foo")
     await tb.check_files_view(
         workspace_name=EntryName("wksp2"), path="/foo", expected_entries=["bar.txt", "spam.txt"]
     )
+
+    # This helps a lot with the consistency of this test but I have no idea why
+    # This shoud be investigated in the future.
+    await trio.sleep(relax)
 
     # 2) Test the cut
     await tb.cut(["bar.txt", "spam.txt"])
