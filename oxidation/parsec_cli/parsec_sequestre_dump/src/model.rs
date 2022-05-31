@@ -236,8 +236,6 @@ impl Workspace {
         use parsec_api_types::{BlockAccess, BlockID, Blocksize, DateTime, EntryID};
         use std::{collections::HashMap, num::NonZeroU64};
 
-        let now = DateTime::now();
-        let _now = now.get_f64_with_us_precision();
         let t0 = "2000-1-1T00:00:00Z".parse::<DateTime>().unwrap();
         let _t0 = t0.get_f64_with_us_precision();
 
@@ -314,7 +312,7 @@ impl Workspace {
                     vlob_atom::blob.eq(manifest),
                     vlob_atom::size.eq(manifest.len() as i32),
                     vlob_atom::author.eq(0),
-                    vlob_atom::timestamp.eq(_now),
+                    vlob_atom::timestamp.eq(_t0),
                 ))
                 .execute(conn)
                 .unwrap()
@@ -344,7 +342,7 @@ impl Workspace {
 
         let workspace_manifest = Manifest::Workspace(WorkspaceManifest {
             author: device.device_id.clone(),
-            timestamp: now,
+            timestamp: t0,
             id: workspace_id,
             version: 1,
             created: t0,
@@ -359,7 +357,7 @@ impl Workspace {
 
         let file0 = Manifest::File(FileManifest {
             author: device.device_id.clone(),
-            timestamp: now,
+            timestamp: t0,
             id: file0_id,
             parent: workspace_id,
             version: 1,
@@ -396,7 +394,7 @@ impl Workspace {
 
         let folder0 = Manifest::Folder(FolderManifest {
             author: device.device_id.clone(),
-            timestamp: now,
+            timestamp: t0,
             id: folder0_id,
             parent: workspace_id,
             version: 1,
@@ -413,7 +411,7 @@ impl Workspace {
 
         let file00 = Manifest::File(FileManifest {
             author: device.device_id.clone(),
-            timestamp: now,
+            timestamp: t0,
             id: file00_id,
             parent: EntryID::from(folder0_id),
             version: 1,
@@ -434,7 +432,7 @@ impl Workspace {
 
         let folder00 = Manifest::Folder(FolderManifest {
             author: device.device_id.clone(),
-            timestamp: now,
+            timestamp: t0,
             id: folder00_id,
             parent: EntryID::from(folder0_id),
             version: 1,
@@ -447,7 +445,7 @@ impl Workspace {
 
         let folder01 = Manifest::Folder(FolderManifest {
             author: device.device_id.clone(),
-            timestamp: now,
+            timestamp: t0,
             id: folder01_id,
             parent: EntryID::from(folder0_id),
             version: 1,
@@ -463,7 +461,7 @@ impl Workspace {
 
         let file010 = Manifest::File(FileManifest {
             author: device.device_id.clone(),
-            timestamp: now,
+            timestamp: t0,
             id: file010_id,
             parent: EntryID::from(folder01_id),
             version: 1,
@@ -484,7 +482,7 @@ impl Workspace {
 
         let file011 = Manifest::File(FileManifest {
             author: device.device_id.clone(),
-            timestamp: now,
+            timestamp: t0,
             id: file011_id,
             parent: EntryID::from(folder01_id),
             version: 1,
