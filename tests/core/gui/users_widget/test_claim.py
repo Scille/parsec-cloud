@@ -149,12 +149,14 @@ def ClaimUserTestBed(
             self.claim_user_widget = cu_w
             self.claim_user_instructions_widget = cui_w
 
-            await aqtbot.wait_until(self.assert_initial_state)  # Sanity check
+            self.assert_initial_state()  # Sanity check
 
         def assert_initial_state(self):
             assert self.claim_user_widget.isVisible()
             assert self.claim_user_instructions_widget.isVisible()
-            assert not self.claim_user_instructions_widget.button_start.isEnabled()
+            # By the time we're checking, the widget might already be ready to start
+            # Hence, this test is not reliable (this is especially true when bootstraping after restart)
+            # assert not self.claim_user_instructions_widget.button_start.isEnabled()
             if self.claim_user_code_exchange_widget:
                 assert not self.claim_user_code_exchange_widget.isVisible()
             if self.claim_user_provide_info_widget:
@@ -432,11 +434,8 @@ async def test_claim_user_offline(
     await OfflineTestBed().run()
 
 
-# This test has been detected as flaky.
-# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
 @pytest.mark.parametrize(
     "reset_step",
     [
