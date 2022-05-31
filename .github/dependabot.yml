@@ -5,7 +5,7 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
+      interval: "monthly"
       time: "02:00"
       timezone: "Europe/Paris"
 
@@ -18,7 +18,7 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
+      interval: "monthly"
       time: "02:00"
       timezone: "Europe/Paris"
 
@@ -27,7 +27,7 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
+      interval: "monthly"
       time: "02:00"
       timezone: "Europe/Paris"
 
@@ -36,7 +36,7 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
+      interval: "monthly"
       time: "02:00"
       timezone: "Europe/Paris"
 
@@ -45,7 +45,7 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
+      interval: "monthly"
       time: "02:00"
       timezone: "Europe/Paris"
 
@@ -54,6 +54,6 @@ updates:
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: monthly
+      interval: "monthly"
       time: "02:00"
       timezone: "Europe/Paris"
