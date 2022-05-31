@@ -16,7 +16,7 @@ parsec_api_crypto = { path = "../parsec_api_crypto" }
 parsec_api_types = { path = "../parsec_api_types" }
 parsec_serialization_format = { path = "../parsec_serialization_format" }
 
-flate2 = "1.0.22"
+flate2 = "1.0.24"
 serde = { version = "1.0.127", features = ["derive"] }
 serde_with = "1.11.0"
 serde_repr = "0.1.7"
