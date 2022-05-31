@@ -81,7 +81,7 @@ async def test_process_while_offline(
 # This test has been detected as flaky.
 # Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
+@pytest.mark.flaky(reruns=10)
 @customize_fixtures(backend_not_populated=True)
 async def test_autosync_placeholder_user_manifest(
     frozen_clock,
@@ -119,7 +119,7 @@ async def test_autosync_placeholder_user_manifest(
 # This test has been detected as flaky.
 # Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
+@pytest.mark.flaky(reruns=10)
 @customize_fixtures(backend_not_populated=True)
 async def test_autosync_placeholder_workspace_manifest(
     frozen_clock,
