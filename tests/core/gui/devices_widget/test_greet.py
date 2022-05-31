@@ -20,7 +20,7 @@ from parsec.core.gui.greet_device_widget import (
 )
 from parsec.core.gui.devices_widget import DeviceButton
 
-from tests.common import customize_fixtures
+from tests.common import customize_fixtures, real_clock_timeout
 
 
 @pytest.fixture
@@ -138,7 +138,11 @@ def GreetDeviceTestBed(
         def assert_initial_state(self):
             assert self.greet_device_widget.isVisible()
             assert self.greet_device_information_widget.isVisible()
-            assert self.greet_device_information_widget.button_start.isEnabled()
+
+            # By the time we're checking, the widget might already be ready to start
+            # Hence, this test is not reliable (this is especially true when bootstraping after restart)
+            # assert self.greet_device_information_widget.button_start.isEnabled()
+
             if self.greet_device_code_exchange_widget:
                 assert not self.greet_device_code_exchange_widget.isVisible()
 
@@ -223,7 +227,7 @@ def GreetDeviceTestBed(
             self.claimer_claim_task = await start_task(
                 self.nursery, _claimer_claim, self.claimer_in_progress_ctx
             )
-            with trio.fail_after(1):
+            async with real_clock_timeout():
                 await self.claimer_claim_task.join()
 
             def _greet_done():

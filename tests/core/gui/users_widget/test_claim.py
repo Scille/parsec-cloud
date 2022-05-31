@@ -148,12 +148,15 @@ def ClaimUserTestBed(
 
             self.claim_user_widget = cu_w
             self.claim_user_instructions_widget = cui_w
+
             self.assert_initial_state()  # Sanity check
 
         def assert_initial_state(self):
             assert self.claim_user_widget.isVisible()
             assert self.claim_user_instructions_widget.isVisible()
-            assert not self.claim_user_instructions_widget.button_start.isEnabled()
+            # By the time we're checking, the widget might already be ready to start
+            # Hence, this test is not reliable (this is especially true when bootstraping after restart)
+            # assert not self.claim_user_instructions_widget.button_start.isEnabled()
             if self.claim_user_code_exchange_widget:
                 assert not self.claim_user_code_exchange_widget.isVisible()
             if self.claim_user_provide_info_widget:

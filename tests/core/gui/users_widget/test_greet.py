@@ -27,7 +27,7 @@ from parsec.core.gui.greet_user_widget import (
     GreetUserWidget,
 )
 
-from tests.common import customize_fixtures
+from tests.common import customize_fixtures, real_clock_timeout
 
 
 @pytest.fixture
@@ -166,7 +166,9 @@ def GreetUserTestBed(
         def assert_initial_state(self):
             assert self.greet_user_widget.isVisible()
             assert self.greet_user_information_widget.isVisible()
-            assert self.greet_user_information_widget.button_start.isEnabled()
+            # By the time we're checking, the widget might already be ready to start
+            # Hence, this test is not reliable (this is especially true when bootstraping after restart)
+            # assert self.greet_user_information_widget.button_start.isEnabled()
             if self.greet_user_code_exchange_widget:
                 assert not self.greet_user_code_exchange_widget.isVisible()
             if self.greet_user_check_informations_widget:
@@ -303,7 +305,7 @@ def GreetUserTestBed(
             # Finally confirm the claimer info and finish the greeting !
             aqtbot.mouse_click(guci_w.button_create_user, QtCore.Qt.LeftButton)
 
-            with trio.fail_after(1):
+            async with real_clock_timeout():
                 await self.claimer_claim_task.join()
 
             def _greet_done():

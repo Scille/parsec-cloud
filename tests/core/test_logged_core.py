@@ -16,6 +16,8 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.core_events import CoreEvent
 
+from tests.common import real_clock_timeout
+
 
 @pytest.mark.trio
 async def test_init_online_backend_late_reply(
@@ -27,12 +29,13 @@ async def test_init_online_backend_late_reply(
         await can_serve_client.wait()
         return await backend.handle_client(stream)
 
-    async with server_factory(_handle_client, alice.organization_addr):
-        with trio.fail_after(1):
+    async with server_factory(_handle_client) as server:
+        alice = server.correct_addr(alice)
+        async with real_clock_timeout():
             async with logged_core_factory(
                 config=core_config, device=alice, event_bus=event_bus
             ) as core:
-                # We don't want for backend to reply finish core init
+                # We don't want for backend to reply to finish core init
                 with core.event_bus.listen() as spy:
                     can_serve_client.set()
                     # Now backend reply, monitor should send events accordingly
@@ -50,8 +53,9 @@ async def test_init_offline_backend_late_reply(server_factory, core_config, alic
         await can_serve_client.wait()
         await stream.aclose()
 
-    async with server_factory(_handle_client, alice.organization_addr):
-        with trio.fail_after(1):
+    async with server_factory(_handle_client) as server:
+        alice = server.correct_addr(alice)
+        async with real_clock_timeout():
             async with logged_core_factory(
                 config=core_config, device=alice, event_bus=event_bus
             ) as core:

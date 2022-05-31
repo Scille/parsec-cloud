@@ -23,11 +23,12 @@ def test_fs_online_user(user_fs_online_state_machine, oracle_fs_with_sync_factor
         @initialize()
         async def init(self):
             await self.reset_all()
-            self.device = alice
+            await self.start_backend()
+
+            self.device = self.backend_controller.server.correct_addr(alice)
             self.oracle_fs = oracle_fs_with_sync_factory()
             self.workspace = None
 
-            await self.start_backend()
             await self.restart_user_fs(self.device)
 
         @rule()

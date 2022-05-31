@@ -9,9 +9,8 @@ from parsec.api.data import UserCertificateContent, DeviceCertificateContent, Us
 from parsec.api.protocol import UserID, apiv1_organization_bootstrap_serializer
 from parsec.api.protocol.handshake import HandshakeOrganizationExpired
 
-from tests.common import customize_fixtures
+from tests.common import customize_fixtures, local_device_to_backend_user
 from tests.backend.common import ping
-from tests.fixtures import local_device_to_backend_user
 
 
 _missing = object()

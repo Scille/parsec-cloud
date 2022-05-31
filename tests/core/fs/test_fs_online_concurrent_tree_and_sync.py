@@ -43,10 +43,10 @@ def test_fs_online_concurrent_tree_and_sync(
 
             return await self.get_root_nursery().start(call_with_control, _user_fs_controlled_cb)
 
-        async def start_backend(self, devices):
+        async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client, backend_addr) as server:
+                    async with server_factory(backend.handle_client) as server:
                         await started_cb(backend=backend, server=server)
 
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)
@@ -62,10 +62,10 @@ def test_fs_online_concurrent_tree_and_sync(
         @initialize(target=Folders)
         async def init(self):
             await reset_testbed()
-            self.device1 = alice
-            self.device2 = alice2
+            self.backend_controller = await self.start_backend()
 
-            self.backend_controller = await self.start_backend([self.device1, self.device2])
+            self.device1 = self.backend_controller.server.correct_addr(alice)
+            self.device2 = self.backend_controller.server.correct_addr(alice2)
             self.user_fs1_controller = await self.start_fs(self.device1)
             self.user_fs2_controller = await self.start_fs(self.device2)
 

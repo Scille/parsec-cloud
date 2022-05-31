@@ -12,7 +12,6 @@ from PyQt5.QtCore import Qt, pyqtSignal, QSysInfo
 from PyQt5.QtWidgets import QDialog, QWidget
 
 from parsec import __version__
-from parsec.utils import URLError
 from parsec.serde import BaseSchema, fields, JSONSerializer, SerdeError
 from parsec.core.backend_connection.transport import http_request
 from parsec.core.gui import desktop
@@ -66,7 +65,7 @@ async def fetch_json_releases(api_url: str) -> Optional[List]:
     except JSONDecodeError as exc:
         logger.error("Cannot deserialize releases info from API", exc_info=exc, api_url=api_url)
         return None
-    except URLError:
+    except OSError:
         return None
 
 

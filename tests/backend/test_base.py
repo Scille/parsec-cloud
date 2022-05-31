@@ -4,10 +4,13 @@ import pytest
 import trio
 import struct
 import socket
+from functools import partial
 from trio.testing import open_stream_to_socket_listener
 
 from parsec.api.protocol import packb, unpackb, AuthenticatedClientHandshake
 from parsec.api.transport import Transport
+
+from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
@@ -62,7 +65,11 @@ async def test_handle_client_coroutine_destroyed_on_client_left(
     async with trio.open_nursery() as nursery:
         try:
             # Start server
-            listeners = await nursery.start(trio.serve_tcp, _handle_client_with_captured_outcome, 0)
+            listeners = await nursery.start(
+                partial(
+                    trio.serve_tcp, _handle_client_with_captured_outcome, port=0, host="127.0.0.1"
+                )
+            )
 
             # Client connect to the server
             client_stream = await open_stream_to_socket_listener(listeners[0])
@@ -80,7 +87,7 @@ async def test_handle_client_coroutine_destroyed_on_client_left(
                     )
                     client_stream.socket.close()
 
-                with trio.fail_after(1):
+                async with real_clock_timeout():
                     await outcome_available.wait()
 
             if close_on == "tcp_ready":

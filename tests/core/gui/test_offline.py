@@ -1,23 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import trio
-import pendulum
-
 import pytest
+import pendulum
 
 from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
+from parsec.core.backend_connection.authenticated import DESYNC_RETRY_TIME
 
-
-async def wait_for_log(caplog, logger, level, message, timeout=1.0, tick=0.01):
-    caplog.clear()
-    caplog.set_level(level)
-    with trio.fail_after(timeout):
-        while True:
-            await trio.sleep(tick)
-            for record in caplog.records:
-                if record.name == logger and message in record.message:
-                    return record
+from tests.common import real_clock_timeout
 
 
 @pytest.mark.gui
@@ -48,7 +38,14 @@ async def test_offline_notification(aqtbot, running_backend, logged_gui):
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_backend_desync_notification(
-    aqtbot, running_backend, logged_gui, monkeypatch, autoclose_dialog, caplog, snackbar_catcher
+    aqtbot,
+    frozen_clock,
+    running_backend,
+    logged_gui,
+    monkeypatch,
+    autoclose_dialog,
+    caplog,
+    snackbar_catcher,
 ):
     central_widget = logged_gui.test_get_central_widget()
     assert central_widget is not None
@@ -59,7 +56,6 @@ async def test_backend_desync_notification(
 
     monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
     monkeypatch.setattr("parsec.core.types.local_device.LocalDevice.timestamp", _timestamp)
-    monkeypatch.setattr("parsec.core.backend_connection.authenticated.DESYNC_RETRY_TIME", 0.1)
 
     def _online():
         assert central_widget.menu.label_connection_state.text() == translate(
@@ -75,6 +71,7 @@ async def test_backend_desync_notification(
         assert snackbar_catcher.snackbars == [("WARN", translate("TEXT_BACKEND_STATE_DESYNC"))]
 
     # Wait until we're online
+    await frozen_clock.sleep_with_autojump(DESYNC_RETRY_TIME)
     await aqtbot.wait_until(_online)
 
     # Shift by 5 minutes
@@ -87,7 +84,8 @@ async def test_backend_desync_notification(
         await central_widget.core.user_fs.workspace_create(EntryName("test1"))
 
         # Wait until we're offline
-        await aqtbot.wait_until(_offline, timeout=3000)
+        await frozen_clock.sleep_with_autojump(DESYNC_RETRY_TIME)
+        await aqtbot.wait_until(_offline)
 
     # Wait for the dialog
     await aqtbot.wait_until(_assert_desync_dialog)
@@ -97,19 +95,20 @@ async def test_backend_desync_notification(
 
     # Wait for a few reconnections
     for _ in range(3):
-        await wait_for_log(
-            caplog,
-            "parsec.core.backend_connection.authenticated",
-            "INFO",
-            "Backend connection is desync",
-        )
+        caplog.clear()
+        async with real_clock_timeout():
+            with caplog.at_level("INFO"):
+                await frozen_clock.sleep_with_autojump(DESYNC_RETRY_TIME)
+            caplog.assert_occured(
+                "[info     ] Backend connection is desync   [parsec.core.backend_connection.authenticated]"
+            )
 
     # There should be no new dialog
     assert len(autoclose_dialog.dialogs) == 0
 
     # Re-sync
-    # DESYNC_RETRY_TIME has been monkeypatched so this should take less than 100 ms
     timestamp_shift_minutes = 0
+    await frozen_clock.sleep_with_autojump(DESYNC_RETRY_TIME)
     await aqtbot.wait_until(_online)
 
     # Shift again
@@ -119,7 +118,8 @@ async def test_backend_desync_notification(
     await central_widget.core.user_fs.workspace_create(EntryName("test2"))
 
     # Wait until we get the notification
-    await aqtbot.wait_until(_offline, timeout=3000)
+    await frozen_clock.sleep_with_autojump(DESYNC_RETRY_TIME)
+    await aqtbot.wait_until(_offline)
 
     # There should be no new dialog
     assert len(autoclose_dialog.dialogs) == 0

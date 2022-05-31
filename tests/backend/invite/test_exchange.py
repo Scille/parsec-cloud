@@ -8,6 +8,7 @@ from pendulum import datetime
 from parsec.crypto import PrivateKey, HashDigest
 from parsec.api.protocol import InvitationType
 
+from tests.common import real_clock_timeout
 from tests.backend.common import (
     invite_1_claimer_wait_peer,
     invite_1_greeter_wait_peer,
@@ -540,7 +541,7 @@ async def test_claimer_step_1_retry(
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     ) as invited_sock:
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             with backend.event_bus.listen() as spy:
                 async with invite_1_claimer_wait_peer.async_call(
                     invited_sock, claimer_public_key=claimer_privkey.public_key
@@ -580,7 +581,7 @@ async def test_claimer_step_2_retry(
     claimer_retry_privkey = PrivateKey.generate()
 
     # Step 1
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         async with invite_1_greeter_wait_peer.async_call(
             alice_backend_sock,
             token=invitation.token,
@@ -596,7 +597,7 @@ async def test_claimer_step_2_retry(
         }
 
     # Greeter initiates step 2a...
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         with backend.event_bus.listen() as spy:
 
             async with invite_2a_greeter_get_hashed_nonce.async_call(
@@ -665,7 +666,7 @@ async def test_claimer_step_2_retry(
                 )
                 assert rep == {"status": "ok"}
 
-            with trio.fail_after(1):
+            async with real_clock_timeout():
                 async with trio.open_nursery() as nursery:
                     nursery.start_soon(_claimer_step_2)
                     nursery.start_soon(_greeter_step_2)

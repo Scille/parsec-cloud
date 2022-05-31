@@ -78,7 +78,10 @@ async def test_process_while_offline(
             assert alice_core.backend_status == BackendConnStatus.LOST
 
 
+# This test has been detected as flaky.
+# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 @customize_fixtures(backend_not_populated=True)
 async def test_autosync_placeholder_user_manifest(
     frozen_clock,
@@ -113,7 +116,10 @@ async def test_autosync_placeholder_user_manifest(
             )
 
 
+# This test has been detected as flaky.
+# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 @customize_fixtures(backend_not_populated=True)
 async def test_autosync_placeholder_workspace_manifest(
     frozen_clock,
@@ -274,7 +280,7 @@ async def test_autosync_on_remote_modifications(
 
 @pytest.mark.trio
 async def test_reconnect_with_remote_changes(
-    frozen_clock, alice2, running_backend, alice_core, alice2_user_fs
+    frozen_clock, alice2, running_backend, server_factory, alice_core, user_fs_factory
 ):
     wid = await alice_core.user_fs.workspace_create(EntryName("w"))
     alice_w = alice_core.user_fs.get_workspace(wid)
@@ -285,75 +291,82 @@ async def test_reconnect_with_remote_changes(
     async with frozen_clock.real_clock_timeout():
         await alice_core.wait_idle_monitors()
 
-    with running_backend.offline_for(alice_core.device.device_id):
-        # Get back modifications from alice
-        await alice2_user_fs.sync()
-        alice2_w = alice2_user_fs.get_workspace(wid)
-        await alice2_w.sync()
-        # Modify the workspace while alice is offline
-        await alice2_w.mkdir("/foo/spam")
-        await alice2_w.write_bytes("/bar.txt", b"v2")
+    # Alice2 connect to the backend through a different server so that we can
+    # switch alice offline while keeping alice2 connected
+    async with server_factory(running_backend.backend.handle_client) as server:
+        alice2 = server.correct_addr(alice2)
+        async with user_fs_factory(alice2) as alice2_user_fs:
 
-        foo_id = await alice2_w.path_id("/foo")
-        spam_id = await alice2_w.path_id("/foo/spam")
-        bar_id = await alice2_w.path_id("/bar.txt")
+            # Switch backend offline for alice (but not alice2 !)
+            with running_backend.offline():
+                # Get back modifications from alice
+                await alice2_user_fs.sync()
+                alice2_w = alice2_user_fs.get_workspace(wid)
+                await alice2_w.sync()
+                # Modify the workspace while alice is offline
+                await alice2_w.mkdir("/foo/spam")
+                await alice2_w.write_bytes("/bar.txt", b"v2")
 
-        with running_backend.backend.event_bus.listen() as spy:
-            await alice2_w.sync()
-            # Alice misses the vlob updated events before being back online
-            await spy.wait_multiple_with_timeout(
-                [
-                    (
-                        BackendEvent.REALM_VLOBS_UPDATED,
-                        {
-                            "organization_id": alice2.organization_id,
-                            "author": alice2.device_id,
-                            "realm_id": RealmID(wid.uuid),
-                            "checkpoint": ANY,
-                            "src_id": VlobID(spam_id.uuid),
-                            "src_version": 1,
-                        },
-                    ),
-                    (
-                        BackendEvent.REALM_VLOBS_UPDATED,
-                        {
-                            "organization_id": alice2.organization_id,
-                            "author": alice2.device_id,
-                            "realm_id": RealmID(wid.uuid),
-                            "checkpoint": ANY,
-                            "src_id": VlobID(foo_id.uuid),
-                            "src_version": 2,
-                        },
-                    ),
-                    (
-                        BackendEvent.REALM_VLOBS_UPDATED,
-                        {
-                            "organization_id": alice2.organization_id,
-                            "author": alice2.device_id,
-                            "realm_id": RealmID(wid.uuid),
-                            "checkpoint": ANY,
-                            "src_id": VlobID(bar_id.uuid),
-                            "src_version": 2,
-                        },
-                    ),
-                ],
-                in_order=False,
-            )
+                foo_id = await alice2_w.path_id("/foo")
+                spam_id = await alice2_w.path_id("/foo/spam")
+                bar_id = await alice2_w.path_id("/bar.txt")
 
-    with alice_core.event_bus.listen() as spy:
-        # Now alice should sync back the changes
-        await frozen_clock.sleep_with_autojump(60)
-        await spy.wait_multiple_with_timeout(
-            [
-                (
-                    CoreEvent.BACKEND_CONNECTION_CHANGED,
-                    {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
-                ),
-                (CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": foo_id}),
-                (CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": bar_id}),
-            ],
-            in_order=False,
-        )
+                with running_backend.backend.event_bus.listen() as spy:
+                    await alice2_w.sync()
+                    # Alice misses the vlob updated events before being back online
+                    await spy.wait_multiple_with_timeout(
+                        [
+                            (
+                                BackendEvent.REALM_VLOBS_UPDATED,
+                                {
+                                    "organization_id": alice2.organization_id,
+                                    "author": alice2.device_id,
+                                    "realm_id": RealmID(wid.uuid),
+                                    "checkpoint": ANY,
+                                    "src_id": VlobID(spam_id.uuid),
+                                    "src_version": 1,
+                                },
+                            ),
+                            (
+                                BackendEvent.REALM_VLOBS_UPDATED,
+                                {
+                                    "organization_id": alice2.organization_id,
+                                    "author": alice2.device_id,
+                                    "realm_id": RealmID(wid.uuid),
+                                    "checkpoint": ANY,
+                                    "src_id": VlobID(foo_id.uuid),
+                                    "src_version": 2,
+                                },
+                            ),
+                            (
+                                BackendEvent.REALM_VLOBS_UPDATED,
+                                {
+                                    "organization_id": alice2.organization_id,
+                                    "author": alice2.device_id,
+                                    "realm_id": RealmID(wid.uuid),
+                                    "checkpoint": ANY,
+                                    "src_id": VlobID(bar_id.uuid),
+                                    "src_version": 2,
+                                },
+                            ),
+                        ],
+                        in_order=False,
+                    )
+
+            with alice_core.event_bus.listen() as spy:
+                # Now alice should sync back the changes
+                await frozen_clock.sleep_with_autojump(60)
+                await spy.wait_multiple_with_timeout(
+                    [
+                        (
+                            CoreEvent.BACKEND_CONNECTION_CHANGED,
+                            {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
+                        ),
+                        (CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": foo_id}),
+                        (CoreEvent.FS_ENTRY_DOWNSYNCED, {"workspace_id": wid, "id": bar_id}),
+                    ],
+                    in_order=False,
+                )
 
 
 @pytest.mark.trio

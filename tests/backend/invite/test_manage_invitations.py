@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-import trio
 from unittest.mock import ANY
 from pendulum import datetime
 
@@ -16,7 +15,7 @@ from parsec.api.protocol import (
     APIEvent,
 )
 
-from tests.common import freeze_time, customize_fixtures
+from tests.common import freeze_time, customize_fixtures, real_clock_timeout
 from tests.backend.common import (
     invite_new,
     invite_list,
@@ -57,7 +56,7 @@ async def test_user_new_invitation_and_info(
     assert rep == {"status": "ok", "token": ANY}
     token = rep["token"]
 
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         rep = await events_listen_wait(alice2_backend_sock)
     assert rep == {
         "status": "ok",
@@ -131,7 +130,7 @@ async def test_device_new_invitation_and_info(
     assert rep == {"status": "ok", "token": ANY}
     token = rep["token"]
 
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         rep = await events_listen_wait(alice2_backend_sock)
     assert rep == {
         "status": "ok",
@@ -177,6 +176,10 @@ async def test_device_new_invitation_and_info(
 
 @pytest.mark.trio
 async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox):
+    base_url = (
+        "https" if alice.organization_addr.use_ssl else "http"
+    ) + f"://127.0.0.1:{alice.organization_addr.port}"
+
     # User invitation
     rep = await invite_new(
         alice_backend_sock,
@@ -206,11 +209,11 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
     )
     # Check urls in the email
     assert (
-        f'<a href="http://example.com:9999/redirect/CoolOrg?action=claim_user&token={token.hex}" target="_blank">Claim invitation</a>'
+        f'<a href="{base_url}/redirect/CoolOrg?action=claim_user&token={token.hex}" target="_blank">Claim invitation</a>'
         in body
     )
     assert (
-        '<img src="http://example.com:9999/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100"/>'
+        f'<img src="{base_url}/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100"/>'
         in body
     )
 
@@ -237,11 +240,11 @@ async def test_invite_with_send_mail(alice, alice_backend_sock, email_letterbox)
     )
     # Check urls in the email
     assert (
-        f'<a href="http://example.com:9999/redirect/CoolOrg?action=claim_device&token={token.hex}" target="_blank">Claim invitation</a>'
+        f'<a href="{base_url}/redirect/CoolOrg?action=claim_device&token={token.hex}" target="_blank">Claim invitation</a>'
         in body
     )
     assert (
-        '<img src="http://example.com:9999/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100"/>'
+        f'<img src="{base_url}/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100"/>'
         in body
     )
 
@@ -387,7 +390,7 @@ async def test_delete_invitation(
         assert rep == {"status": "ok"}
         await spy.wait_with_timeout(BackendEvent.INVITE_STATUS_CHANGED)
 
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         rep = await events_listen_wait(alice2_backend_sock)
     assert rep == {
         "status": "ok",

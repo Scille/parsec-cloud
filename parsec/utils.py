@@ -2,7 +2,6 @@
 
 import attr
 import trio
-from urllib.error import URLError
 from pendulum import DateTime
 from structlog import get_logger
 from contextlib import asynccontextmanager
@@ -16,7 +15,6 @@ __all__ = [
     "trio_run",
     "open_service_nursery",
     "split_multi_error",
-    "URLError",
 ]
 
 logger = get_logger()
@@ -237,7 +235,7 @@ async def open_service_nursery():
         # Re-raise a Cancelled() if the exception contains a Cancelled()
         await check_cancellation(exc)
         # Collapse the MultiError into a single exception
-        logger.exception("A MultiError has been detected")
+        logger.warning("A MultiError has been detected")
         raise collapse_multi_error(exc)
 
 

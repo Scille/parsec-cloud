@@ -65,7 +65,7 @@ async def test_good(
     assert new_device.profile == UserProfile.ADMIN
 
     # This function should always be called as part of bootstrap organization
-    # (yeah, we should improve the erognomics...)
+    # (yeah, we should improve the ergonomics...)
     await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=new_device)
 
     # Test the behavior of this new device

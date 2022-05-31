@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-import trio
 import pytest
 from pendulum import datetime
 
 from parsec.api.transport import TransportError
 from parsec.api.protocol import InvitationDeletedReason
 from parsec.backend.events import BackendEvent
+
+from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
@@ -27,7 +28,7 @@ async def test_delete_invitation_while_claimer_connected(exchange_testbed, backe
             await spy.wait_with_timeout(BackendEvent.INVITE_STATUS_CHANGED)
 
         with pytest.raises(TransportError):
-            with trio.fail_after(1):
+            async with real_clock_timeout():
                 if retrieve_previous_result:
                     await tb.get_result("claimer")
                 # Even if we had to retrieve an existing result, it could have
@@ -136,6 +137,6 @@ async def test_delete_invitation_then_claimer_action_before_backend_closes_conne
         "4_communicate",
     ]:
         with pytest.raises(TransportError):
-            with trio.fail_after(1):
+            async with real_clock_timeout():
                 await tb.send_order("claimer", action)
                 await tb.get_result("claimer")

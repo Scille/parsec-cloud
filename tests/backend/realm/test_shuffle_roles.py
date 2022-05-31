@@ -25,7 +25,6 @@ from tests.backend.common import realm_get_role_certificates, realm_update_roles
 def test_shuffle_roles(
     hypothesis_settings,
     reset_testbed,
-    backend_addr,
     backend_factory,
     server_factory,
     backend_data_binder_factory,
@@ -33,7 +32,6 @@ def test_shuffle_roles(
     local_device_factory,
     realm_factory,
     coolorg,
-    alice,
     next_timestamp,
 ):
     class ShuffleRoles(TrioAsyncioRuleBasedStateMachine):
@@ -43,7 +41,7 @@ def test_shuffle_roles(
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory(populated=False) as backend:
-                    async with server_factory(backend.handle_client, backend_addr) as server:
+                    async with server_factory(backend.handle_client) as server:
                         await started_cb(backend=backend, server=server)
 
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)
@@ -56,18 +54,20 @@ def test_shuffle_roles(
         async def init(self):
             await reset_testbed()
             self.backend_controller = await self.start_backend()
+            self.org = self.backend_controller.server.correct_addr(coolorg)
+            device = local_device_factory(org=self.org)
 
             # Create organization and first user
             self.backend_data_binder = backend_data_binder_factory(self.backend)
-            await self.backend_data_binder.bind_organization(coolorg, alice)
+            await self.backend_data_binder.bind_organization(self.org, device)
 
             # Create realm
-            self.realm_id = await realm_factory(self.backend, alice)
-            self.current_roles = {alice.user_id: RealmRole.OWNER}
+            self.realm_id = await realm_factory(self.backend, device)
+            self.current_roles = {device.user_id: RealmRole.OWNER}
             self.certifs = [ANY]
 
             self.socks = {}
-            return alice
+            return device
 
         async def get_sock(self, device):
             try:
@@ -87,7 +87,7 @@ def test_shuffle_roles(
         @rule(target=User, author=User, role=realm_role_strategy)
         async def give_role_to_new_user(self, author, role):
             # Create new user/device
-            new_device = local_device_factory()
+            new_device = local_device_factory(org=self.org)
             await self.backend_data_binder.bind_device(new_device)
             self.current_roles[new_device.user_id] = None
             # Assign role
@@ -158,7 +158,7 @@ def test_shuffle_roles(
                 backend = self.backend
             except AttributeError:
                 return
-            roles = await backend.realm.get_current_roles(alice.organization_id, self.realm_id)
+            roles = await backend.realm.get_current_roles(self.org.organization_id, self.realm_id)
             assert roles == {k: v for k, v in self.current_roles.items() if v is not None}
 
     run_state_machine_as_test(ShuffleRoles, settings=hypothesis_settings)

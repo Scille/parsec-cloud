@@ -8,7 +8,6 @@ import trio
 import qtrio
 import pytest
 from PyQt5 import QtCore, QtTest
-from pytestqt.exceptions import TimeoutError
 
 from parsec import __version__ as parsec_version
 from parsec.api.data import EntryName
@@ -27,6 +26,8 @@ from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.lang import switch_language
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.local_device import LocalDeviceAlreadyExistsError
+
+from tests.common import real_clock_timeout
 
 
 DEFAULT_PASSWORD = "P@ssw0rd"
@@ -72,48 +73,38 @@ class AsyncQtBot:
         self.qtbot.keyClicks(widget, text, *args, **kwargs)
         await self.wait_until(lambda: method() in (text, expected))
 
-    async def wait(self, timeout):
-        await trio.sleep(timeout / 1000)
-
-    async def wait_until(self, callback, *, timeout=1000):
+    async def wait_until(self, callback):
         """Implementation shamelessly adapted from:
         https://github.com/pytest-dev/pytest-qt/blob/16b989d700dfb91fe389999d8e2676437169ed44/src/pytestqt/qtbot.py#L459
         """
         __tracebackhide__ = True
+        last_exc = None
+        try:
+            async with real_clock_timeout():
+                while True:
+                    try:
+                        result = callback()
+                    except AssertionError as exc:
+                        last_exc = exc
+                        result = False
 
-        start = trio.current_time()
-
-        def timed_out():
-            elapsed = trio.current_time() - start
-            elapsed_ms = elapsed * 1000
-            return elapsed_ms > timeout
-
-        timeout_msg = f"wait_until timed out in {timeout} milliseconds"
-
-        while True:
-            try:
-                result = callback()
-            except AssertionError as exc:
-                if timed_out():
-                    # Raise from the last AssertionError in order to produce a helpful trace
-                    raise TimeoutError(timeout_msg) from exc
+                    if result not in (None, True, False):
+                        msg = f"waitUntil() callback must return None, True or False, returned {result!r}"
+                        raise ValueError(msg)
+                    if result in (True, None):
+                        return
+                    await trio.sleep(0.01)
+        except trio.TooSlowError:
+            if last_exc:
+                raise trio.TooSlowError() from last_exc
             else:
-                if result not in (None, True, False):
-                    msg = (
-                        f"waitUntil() callback must return None, True or False, returned {result!r}"
-                    )
-                    raise ValueError(msg)
-                if result in (True, None):
-                    return
-                if timed_out():
-                    raise TimeoutError(timeout_msg)
-            await trio.sleep(0.010)
+                raise
 
     @asynccontextmanager
-    async def wait_signals(self, signals, *, timeout=5000):
+    async def wait_signals(self, signals):
         __tracebackhide__ = True
         try:
-            with trio.fail_after(timeout / 1000):
+            async with real_clock_timeout():
                 async with AsyncExitStack() as stack:
                     for signal in signals:
                         await stack.enter_async_context(qtrio._core.wait_signal_context(signal))
@@ -123,34 +114,30 @@ class AsyncQtBot:
             raise trio.TooSlowError from None
 
     @asynccontextmanager
-    async def wait_signal(self, signal, *, timeout=5000):
+    async def wait_signal(self, signal, *d):
         __tracebackhide__ = True
-        async with self.wait_signals((signal,), timeout=timeout):
+        async with self.wait_signals((signal,)):
             yield
 
     @asynccontextmanager
-    async def wait_active(self, widget, *, timeout=5000):
+    async def wait_active(self, widget):
         __tracebackhide__ = True
-        deadline = trio.current_time() + timeout / 1000
         yield
-        while True:
-            if QtTest.QTest.qWaitForWindowActive(widget, 10):
-                return
-            if trio.current_time() > deadline:
-                raise TimeoutError
-            await trio.sleep(0.010)
+        async with real_clock_timeout():
+            while True:
+                if QtTest.QTest.qWaitForWindowActive(widget, 10):
+                    return
+                await trio.sleep(0.01)
 
     @asynccontextmanager
-    async def wait_exposed(self, widget, *, timeout=5000):
+    async def wait_exposed(self, widget):
         __tracebackhide__ = True
-        deadline = trio.current_time() + timeout / 1000
         yield
-        while True:
-            if QtTest.QTest.qWaitForWindowExposed(widget, 10):
-                return
-            if trio.current_time() > deadline:
-                raise TimeoutError
-            await trio.sleep(0.010)
+        async with real_clock_timeout():
+            while True:
+                if QtTest.QTest.qWaitForWindowExposed(widget, 10):
+                    return
+                await trio.sleep(0.010)
 
 
 @pytest.fixture
@@ -214,7 +201,7 @@ def snackbar_catcher(monkeypatch):
 def widget_catcher_factory(aqtbot, monkeypatch):
     """Useful to capture lazily created widget such as modals"""
 
-    def _widget_catcher_factory(*widget_cls_pathes, timeout=1000):
+    def _widget_catcher_factory(*widget_cls_pathes):
         widgets = []
 
         def _catch_init(self, *args, **kwargs):
@@ -233,7 +220,7 @@ def widget_catcher_factory(aqtbot, monkeypatch):
             def _invitation_shown():
                 assert len(widgets)
 
-            await aqtbot.wait_until(_invitation_shown, timeout=timeout)
+            await aqtbot.wait_until(_invitation_shown)
             return widgets.pop(0)
 
         return _wait_next
@@ -275,7 +262,7 @@ def gui_factory(
         throttle_job_no_wait=True,
     ):
         # Wait for the backend to run if necessary
-        await running_backend_ready.wait()
+        await running_backend_ready()
 
         # First start popup blocks the test
         # Check version and mountpoint are useless for most tests
@@ -488,7 +475,7 @@ def testing_main_window_cls(aqtbot):
         async def test_switch_to_enrollment_widget(self):
             central_widget = self.test_get_central_widget()
             e_w = self.test_get_enrollment_widget()
-            async with aqtbot.wait_exposed(e_w), aqtbot.wait_signal(e_w.list_success, timeout=3000):
+            async with aqtbot.wait_exposed(e_w), aqtbot.wait_signal(e_w.list_success):
                 aqtbot.mouse_click(central_widget.menu.button_enrollment, QtCore.Qt.LeftButton)
             return e_w
 
@@ -496,7 +483,7 @@ def testing_main_window_cls(aqtbot):
             central_widget = self.test_get_central_widget()
             d_w = self.test_get_devices_widget()
             signal = d_w.list_error if error else d_w.list_success
-            async with aqtbot.wait_exposed(d_w), aqtbot.wait_signal(signal, timeout=3000):
+            async with aqtbot.wait_exposed(d_w), aqtbot.wait_signal(signal):
                 aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
             return d_w
 
@@ -504,7 +491,7 @@ def testing_main_window_cls(aqtbot):
             central_widget = self.test_get_central_widget()
             u_w = self.test_get_users_widget()
             signal = u_w.list_error if error else u_w.list_success
-            async with aqtbot.wait_exposed(u_w), aqtbot.wait_signal(signal, timeout=3000):
+            async with aqtbot.wait_exposed(u_w), aqtbot.wait_signal(signal):
                 aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
             return u_w
 
@@ -512,7 +499,7 @@ def testing_main_window_cls(aqtbot):
             central_widget = self.test_get_central_widget()
             w_w = self.test_get_workspaces_widget()
             signal = w_w.list_error if error else w_w.list_success
-            async with aqtbot.wait_exposed(w_w), aqtbot.wait_signal(signal, timeout=3000):
+            async with aqtbot.wait_exposed(w_w), aqtbot.wait_signal(signal):
                 aqtbot.mouse_click(central_widget.menu.button_files, QtCore.Qt.LeftButton)
             return w_w
 

@@ -6,7 +6,7 @@ from hypothesis_trio.stateful import initialize, rule
 
 from parsec.api.data import EntryName
 
-from tests.oracles import FileOracle
+from tests.common import FileOracle
 
 
 BLOCK_SIZE = 16
@@ -19,8 +19,8 @@ def test_fs_online_rwfile_and_sync(user_fs_online_state_machine, alice):
         @initialize()
         async def init(self):
             await self.reset_all()
-            self.device = alice
             await self.start_backend()
+            self.device = self.correct_addr(alice)
             await self.restart_user_fs(self.device)
             self.wid = await self.user_fs.workspace_create(EntryName("w"))
             workspace = self.user_fs.get_workspace(self.wid)

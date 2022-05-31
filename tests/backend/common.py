@@ -109,29 +109,34 @@ async def do_http_request(
 
     # In theory there is no guarantee `stream.receive_some()` outputs
     # an entire HTTP request (it typically depends on the TCP stack and
-    # the network). However given we mock the TCP stack in the tests
-    # (see `OpenTCPStreamMockWrapper` class), we have the guarantee
-    # a buffer send through `stream.send_data()` on the backend side
-    # won't be splitted into multiple `stream.receive_some()` on the
-    # client side (and vice-versa). However it's still possible for
-    # multiple `stream.send_data()` to be merged and outputed on a
-    # single `stream.receive_some()`.
-    # Of course this is totally dependant of the backend's implementation
-    # so things may change in the future ;-)
-    rep = await stream.receive_some()
+    # the network).
+    # However given we communicate only on the localhost loop, we can
+    # cross our fingers really hard and expect the http header part will come
+    # as a single trame.
+    rep = b""
+    while b"\r\n\r\n" not in rep:
+        part = await stream.receive_some()
+        if not part:
+            # Connection closed by peer
+            raise trio.BrokenResourceError
+        rep += part
     status, rep_headers = parse_http_response(rep)
-    rep_body = rep.split(b"\r\n\r\n", 1)[1]
+    rep_content = rep.split(b"\r\n\r\n", 1)[1]
     content_size = int(rep_headers.get("content-length", "0"))
     if content_size:
-        while len(rep_body) < content_size:
-            rep_body += await stream.receive_some()
+        while len(rep_content) < content_size:
+            rep_content += await stream.receive_some()
         # No need to check for another request beeing put after the
         # body in the buffer given we don't use keep alive
-        assert len(rep_body) == content_size
+        assert len(rep_content) == content_size
     else:
-        assert rep_body == b""
+        # In case the current request is a connection upgrade to websocket, the
+        # server is allowed to start sending websocket messages right away that
+        # may end up as part of the TCP trame that contained the response
+        if b"Connection: Upgrade" not in rep:
+            assert rep_content == b""
 
-    return status, rep_headers, rep_body
+    return status, rep_headers, rep_content
 
 
 class CmdSock:

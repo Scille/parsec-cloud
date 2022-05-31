@@ -6,20 +6,21 @@ import ssl
 from typing import Optional, Tuple, Union
 import json
 
+from tests.common import real_clock_timeout
 from tests.backend.common import do_http_request
 
 
-async def open_stream_to_backend(backend_addr):
-    stream = await trio.open_tcp_stream(backend_addr.hostname, backend_addr.port)
-    if backend_addr.use_ssl:
+async def open_stream_to_backend(hostname, port, use_ssl):
+    stream = await trio.open_tcp_stream(hostname, port)
+    if use_ssl:
         ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         ssl_context.load_default_certs()
-        stream = trio.SSLStream(stream, ssl_context, server_hostname=backend_addr.hostname)
+        stream = trio.SSLStream(stream, ssl_context, server_hostname=hostname)
     return stream
 
 
 @pytest.fixture
-def backend_http_send(running_backend, backend_addr):
+def backend_http_send(backend_addr):
     async def _http_send(
         target: Optional[str] = None,
         method: str = "GET",
@@ -29,7 +30,7 @@ def backend_http_send(running_backend, backend_addr):
         sanity_checks: bool = True,
         addr=backend_addr,
     ) -> Tuple[int, dict, bytes]:
-        stream = await open_stream_to_backend(addr)
+        stream = await open_stream_to_backend(addr.hostname, addr.port, addr.use_ssl)
 
         status, rep_headers, rep_body = await do_http_request(
             stream, target=target, method=method, req=req, headers=headers, body=body
@@ -48,7 +49,7 @@ def backend_http_send(running_backend, backend_addr):
 
 
 @pytest.fixture
-def backend_rest_send(backend, backend_http_send, backend_addr):
+def backend_rest_send(running_backend, backend_http_send, backend_addr):
     async def _rest_send(
         target: str,
         method: str = "GET",
@@ -60,7 +61,9 @@ def backend_rest_send(backend, backend_http_send, backend_addr):
     ) -> Tuple[int, dict, Union[list, dict]]:
         headers = headers or {}
         if with_administration_token:
-            headers.setdefault("Authorization", f"Bearer {backend.config.administration_token}")
+            headers.setdefault(
+                "Authorization", f"Bearer {running_backend.backend.config.administration_token}"
+            )
         if body is not None:
             body = json.dumps(body).encode("utf-8")
             headers.setdefault("content-type", "application/json;charset=utf-8")
@@ -84,8 +87,12 @@ def backend_rest_send(backend, backend_http_send, backend_addr):
 
 async def assert_stream_closed_on_peer_side(stream):
     # Peer should send EOF and close connection
-    rep = await stream.receive_some()
-    assert rep == b""
-    # From now on, trying to send new request should fail
-    with pytest.raises(trio.BrokenResourceError):
-        await stream.send_all(b"GET / HTTP/1.0\r\n\r\n")
+    async with real_clock_timeout():
+        rep = await stream.receive_some()
+        assert rep == b""
+        # From now on, trying to send new request should fail
+        with pytest.raises(trio.BrokenResourceError):
+            # Peer side closing of TCP socket may take time, so it's possible
+            # we can still send for a small amount of time
+            while True:
+                await stream.send_all(b"GET / HTTP/1.0\r\n\r\n")

@@ -275,7 +275,7 @@ jobs:
     displayName: 'Tests mountpoint'
   - bash: |
       set -eux
-      timeout 800 py.test $(pytest.base_args) \
+      timeout 1000 py.test $(pytest.base_args) \
         tests --runslow -m slow \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-slow.xml
@@ -283,7 +283,7 @@ jobs:
   - bash: |
       set -eux
       # `test_cli.py` uses `--postgresql` option to test DB migration cli
-      timeout 400 py.test $(pytest.base_args) \
+      timeout 1000 py.test $(pytest.base_args) \
         tests/backend tests/test_cli.py --postgresql --runslow \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-postgresql.xml
@@ -353,10 +353,15 @@ jobs:
     displayName: 'Install'
   - bash: |
       set -eux
-      py.test $(pytest.base_args) \
-        tests --runmountpoint --runslow \
-        -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-memory.xml
+      # Don't use `-n auto` option given macOS on Azure is basically as stable
+      # as an average irishman in a pub during St Patrick.
+      # I though pytest-xdist might be the root cause of the random crash given
+      # it doesn't guarantee tests to be run run on the main thread of
+      # spawned processes (see: https://github.com/pytest-dev/pytest-xdist/issues/739)
+      # However even with run_parallel.py (our own custom rewrite of xdist using
+      # multiprocessing) we end up with random crashes...
+      # Also, do not run slow and mountpoint tests as they are slow and unstable in the CI
+      py.test $(pytest.base_args) tests --junitxml=test-results-memory.xml
     displayName: 'Tests memory'
   #- bash: |
   #    set -eux
@@ -427,6 +432,10 @@ jobs:
       py.test tests --runmountpoint --runslow --rungui -m flaky --count $(debug.stress_flaky_tests) -v
     displayName: 'Debug: stress flaky tests'
     condition: and(succeeded(), gt(variables['debug.stress_flaky_tests'], 0))
+  - powershell: |
+       Get-NetTCPConnection -State Listen -RemoteAddress "0.0.0.0"
+       netsh interface ipv4 show excludedportrange protocol=tcp
+    displayName: 'Show used/reserved TCP ports'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \

@@ -16,10 +16,12 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.core_events import CoreEvent
 
+from tests.common import real_clock_timeout
+
 
 @pytest.fixture
 async def alice_backend_conn(alice, event_bus_factory, running_backend_ready):
-    await running_backend_ready.wait()
+    await running_backend_ready()
     event_bus = event_bus_factory()
     conn = BackendAuthenticatedConn(
         alice.organization_addr, alice.device_id, alice.signing_key, event_bus
@@ -247,7 +249,7 @@ async def test_concurrency_sends(running_backend, alice, event_bus):
             for x in range(CONCURRENCY):
                 nursery.start_soon(sender, conn.cmds, str(x))
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             await work_all_done.wait()
 
 

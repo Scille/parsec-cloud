@@ -10,6 +10,8 @@ from parsec.api.data import EntryName
 from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint import mountpoint_manager_factory, MountpointDriverCrash
 
+from tests.common import real_clock_timeout
+
 
 @pytest.mark.linux  # win32 doesn't allow to remove an opened file
 @pytest.mark.mountpoint
@@ -53,7 +55,7 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, ev
             expected = {"mountpoint": mountpoint_path, "workspace_id": wid, "timestamp": None}
 
             completed_process = await trio.run_process(command)
-            with trio.fail_after(1):
+            async with real_clock_timeout():
                 # fusermount might fail for some reasons
                 while completed_process.returncode:
                     completed_process = await trio.run_process(command)

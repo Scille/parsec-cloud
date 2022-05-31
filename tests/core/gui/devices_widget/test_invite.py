@@ -14,7 +14,7 @@ from parsec.core.gui.greet_device_widget import (
     GreetDeviceWidget,
 )
 
-from tests.common import customize_fixtures
+from tests.common import customize_fixtures, real_clock_timeout
 
 
 @pytest.fixture
@@ -279,7 +279,7 @@ async def test_invite_and_greet_device(
 
         await aqtbot.wait_until(_greet_done)
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             await claimer_done.wait()
 
 
