@@ -39,7 +39,10 @@ async def _send_msg(backend, author, recipient, ping="ping"):
     )
 
 
+# This test has been detected as flaky.
+# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 async def test_process_while_offline(
     frozen_clock, running_backend, alice_core, bob_user_fs, alice, bob
 ):
