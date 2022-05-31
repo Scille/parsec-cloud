@@ -5,8 +5,7 @@ import trio
 import click
 import traceback
 from functools import partial, wraps
-from async_generator import asynccontextmanager
-from contextlib import contextmanager
+from contextlib import contextmanager, asynccontextmanager
 
 from parsec.logging import configure_logging, configure_sentry_logging
 

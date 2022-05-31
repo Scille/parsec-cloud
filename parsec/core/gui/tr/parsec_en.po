@@ -2380,18 +2380,18 @@ msgstr "Reencrypt the workspace"
 msgid "ACTION_WORKSPACE_REENCRYPTION_CONFIRM"
 msgstr "Reencrypt"
 
-msgid "TEXT_WORKPACE_REENCRYPT_OFFLINE_ERROR"
+msgid "TEXT_WORKSPACE_REENCRYPT_OFFLINE_ERROR"
 msgstr "Reencryption failure, can not reach the server."
 
-msgid "TEXT_WORKPACE_REENCRYPT_ACCESS_ERROR"
+msgid "TEXT_WORKSPACE_REENCRYPT_ACCESS_ERROR"
 msgstr ""
 "Reencryption failure, you don't have permission to reencrypt the "
 "workspace."
 
-msgid "TEXT_WORKPACE_REENCRYPT_NOT_FOUND_ERROR"
+msgid "TEXT_WORKSPACE_REENCRYPT_NOT_FOUND_ERROR"
 msgstr "Reencryption failure, workspace not found."
 
-msgid "TEXT_WORKPACE_REENCRYPT_FS_ERROR"
+msgid "TEXT_WORKSPACE_REENCRYPT_FS_ERROR"
 msgstr "Reencryption failure, workspace already in maintenance."
 
 msgid "TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR"

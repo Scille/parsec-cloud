@@ -4,7 +4,7 @@ import trio
 from typing import Optional
 from functools import partial
 from pendulum import now as pendulum_now
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.api.protocol import (
     ping_serializer,

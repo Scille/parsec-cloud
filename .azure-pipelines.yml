@@ -46,7 +46,7 @@ jobs:
       sudo apt-get update
       python --version
       # pip 20.3 introduces the new dependency resolver
-      pip install pip>=20.3 --user --upgrade
+      python -m pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
     displayName: 'Bootstrap'
   - bash: |
@@ -197,7 +197,7 @@ jobs:
       curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $(rust.version) -y
       echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
       # pip 20.3 introduces the new dependency resolver
-      pip install pip>=20.3 --user --upgrade
+      python -m pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
     displayName: 'Bootstrap'
   - bash: |
@@ -241,7 +241,7 @@ jobs:
       sudo apt-get update
       python --version
       # pip 20.3 introduces the new dependency resolver
-      pip install pip>=20.3 --user --upgrade
+      python -m pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
       sudo apt-get install \
         postgresql-$(postgresql.version) \
@@ -334,7 +334,7 @@ jobs:
       set -eux
       python --version
       # pip 20.3 introduces the new dependency resolver
-      pip install pip>=20.3 --user --upgrade
+      python -m pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
       brew install \
         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
@@ -396,7 +396,7 @@ jobs:
       python.exe --version
       pip uninstall pipx -y  # dunno why this thing is here...
       # pip 20.3 introduces the new dependency resolver
-      pip install pip>=20.3 --user --upgrade
+      python -m pip install pip>=20.3 --user --upgrade
       pip install -r pre-requirements.txt
       choco install -y --limit-output winfsp --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
@@ -573,7 +573,7 @@ jobs:
   - bash: |
       set -eux
       # pip 20.3 introduces the new dependency resolver
-      pip install pip>=20.3 --user --upgrade
+      python -m pip install pip>=20.3 --user --upgrade
       # Path with backslash are a pain...
       SOURCES_DIRECTORY=`python -c 'print(r"$(Build.SourcesDirectory)".replace("\\\\", "/"))'`
       # Retrieve Parsec version and customize it if we are not building on a tag

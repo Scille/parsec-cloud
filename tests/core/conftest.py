@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,

@@ -21,6 +21,9 @@ A typical release process looks as follow:
     # Push the produced tag and commits
     $ git push --follow-tags
 
+    # Alternally, you can revert the commits and delete the tag in case you made
+    # an error (of course don't do that if you have already push the changes !)
+    $ ./misc/releaser.py rollback
 
 """
 
@@ -51,6 +54,10 @@ FRAGMENT_TYPES = {
     "misc": "Miscellaneous internal changes",
     "empty": "Miscellaneous internal changes that shouldn't even be collected",
 }
+COLOR_END = "\033[0m"
+COLOR_RED = "\033[91m"
+COLOR_GREEN = "\033[92m"
+COLOR_YELLOW = "\033[93m"
 
 
 RELEASE_REGEX = (
@@ -194,7 +201,10 @@ def run_git(*cmd, verbose=False):
         )
     stderr = proc.stderr.decode()
     if verbose and stderr:
-        print(f"[Stderr stream from `{cmd}`]\n{stderr}[End stderr stream]", file=sys.stderr)
+        print(
+            f"[Stderr stream from {COLOR_RED}{cmd}{COLOR_END}]\n{stderr}[End stderr stream]",
+            file=sys.stderr,
+        )
     return proc.stdout.decode()
 
 
@@ -251,14 +261,14 @@ def collect_newsfragments():
     return fragments
 
 
-def build_release(version, stage_pause):
+def build_release(version):
     if version.is_dev:
         raise ReleaseError(f"Invalid release version: {version}")
-    print(f"Build release {version}")
+    print(f"Build release {COLOR_GREEN}{version}{COLOR_END}")
     old_version = get_version_from_code()
-    if version < old_version:
+    if version <= old_version:
         raise ReleaseError(
-            f"Previous version incompatible with new one ({old_version} vs {version})"
+            f"Previous version incompatible with new one ({COLOR_YELLOW}{old_version}{COLOR_END} vs {COLOR_YELLOW}{version}{COLOR_END})"
         )
 
     now = datetime.utcnow()
@@ -322,9 +332,12 @@ def build_release(version, stage_pause):
 
     # Make git commit
     commit_msg = f"Bump version {old_version} -> {version}"
-    print(f"Create commit `{commit_msg}`")
-    if stage_pause:
-        input("Pausing, press enter when ready")
+
+    print(f"Create commit {COLOR_GREEN}{commit_msg}{COLOR_END}")
+    input(
+        f"Pausing so you can check {COLOR_YELLOW}HISTORY.rst{COLOR_END} is okay, press enter when ready"
+    )
+
     run_git("add", HISTORY_FILE.absolute(), BSL_LICENSE_FILE.absolute(), VERSION_FILE.absolute())
     if newsfragments:
         fragments_pathes = [str(x.absolute()) for x in newsfragments]
@@ -332,32 +345,28 @@ def build_release(version, stage_pause):
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
     run_git("commit", "-m", commit_msg, "--no-verify")
 
-    print(f"Create tag {version}")
-    if stage_pause:
-        input("Pausing, press enter when ready")
+    print(f"Create tag {COLOR_GREEN}{version}{COLOR_END}")
     run_git("tag", str(version), "-m", f"Release version {version}", "-a", "-s")
 
     # Update __version__ with dev suffix
     dev_version = version.evolve(is_dev=True)
     commit_msg = f"Bump version {version} -> {dev_version}"
-    print(f"Create commit `{commit_msg}`")
+    print(f"Create commit {COLOR_GREEN}{commit_msg}{COLOR_END}")
     update_version_file(dev_version)
     update_license_file(dev_version, license_conversion_date)
-    if stage_pause:
-        input("Pausing, press enter when ready")
     run_git("add", BSL_LICENSE_FILE.absolute(), VERSION_FILE.absolute())
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
     run_git("commit", "-m", commit_msg, "--no-verify")
 
 
 def check_release(version):
-    print(f"Checking release {version}")
+    print(f"Checking release {COLOR_GREEN}{version}{COLOR_END}")
 
     # Check __version__
     code_version = get_version_from_code()
     if code_version != version:
         raise ReleaseError(
-            f"Invalid __version__ in parsec/_version.py: expected `{version}`, got `{code_version}`"
+            f"Invalid __version__ in parsec/_version.py: expected `{COLOR_YELLOW}{version}{COLOR_END}`, got `{COLOR_YELLOW}{code_version}{COLOR_END}`"
         )
 
     # Check newsfragments
@@ -377,13 +386,43 @@ def check_release(version):
         raise ReleaseError(f"{version} is not signed")
 
 
+def rollback_last_release():
+    if run_git("diff-index", "HEAD", "--").strip():
+        raise ReleaseError("Local changes are present, aborting...")
+
+    current_version = get_version_from_code()
+    if not current_version.is_dev:
+        raise ReleaseError(
+            f"Invalid __version__ in parsec/_version.py: expected {COLOR_YELLOW}vX.Y.Z+dev{COLOR_END}, got {COLOR_YELLOW}{current_version}{COLOR_END}"
+        )
+
+    version = current_version.evolve(is_dev=False)
+    print(
+        f"__version__ in parsec/_version.py contains version {COLOR_GREEN}{current_version}{COLOR_END}, hence we should rollback version {COLOR_GREEN}{version}{COLOR_END}"
+    )
+
+    # Retrieve `Bump version vX.Y.A+dev -> vX.Y.B` and `Bump version vX.Y.B -> vX.Y.B+dev` commits
+    head, head_minus_1, head_minus_2 = run_git("rev-list", "-n", "3", "HEAD").strip().splitlines()
+
+    tag_commit = run_git("rev-list", "-n", "1", str(version)).strip()
+    if tag_commit != head_minus_1:
+        raise ReleaseError(
+            f"Cannot rollback as tag {COLOR_YELLOW}{version}{COLOR_END} doesn't point on {COLOR_YELLOW}HEAD^{COLOR_END}"
+        )
+
+    print(f"Removing tag {COLOR_GREEN}{version}{COLOR_END}")
+    run_git("tag", "--delete", str(version))
+    print(f"Reset mastor to {COLOR_GREEN}{head_minus_2}{COLOR_END} (i.e. HEAD~2)")
+    run_git("reset", "--hard", head_minus_2)
+
+
 def check_non_release(version):
-    print(f"Checking non-release {version}")
+    print(f"Checking non-release {COLOR_GREEN}{version}{COLOR_END}")
     # Check __version__
     code_version = get_version_from_code()
     if code_version != version:
         raise ReleaseError(
-            f"Invalid __version__ in parsec/_version.py: expected `{version}`, got `{code_version}`"
+            f"Invalid __version__ in parsec/_version.py: expected {COLOR_YELLOW}{version}{COLOR_END}, got {COLOR_YELLOW}{code_version}{COLOR_END}"
         )
 
     # Force newsfragments format sanity check
@@ -391,13 +430,19 @@ def check_non_release(version):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    description = (
+        f"""tl;dr:
+Create release commit&tag: {COLOR_GREEN}./misc/releaser.py build v1.2.3{COLOR_END}
+Oops I've made a mistake: {COLOR_GREEN}./misc/releaser.py rollback{COLOR_END}
+    """
+        + __doc__
     )
-    parser.add_argument("command", choices=("build", "check"))
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("command", choices=("build", "check", "rollback"))
     parser.add_argument("version", type=Version, nargs="?")
     parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("-P", "--stage-pause", action="store_true")
     args = parser.parse_args()
 
     try:
@@ -407,7 +452,10 @@ if __name__ == "__main__":
             # TODO: rethink the non-release checks
             # current_version = get_version_from_repo_describe_tag(args.verbose)
             # check_non_release(current_version)
-            build_release(args.version, args.stage_pause)
+            build_release(args.version)
+
+        elif args.command == "rollback":
+            rollback_last_release()
 
         else:  # Check
 
@@ -419,6 +467,9 @@ if __name__ == "__main__":
             if version.is_dev:
                 # TODO: rethink the non-release checks
                 # check_non_release(version)
+                print(
+                    f"Detected dev version {COLOR_GREEN}{version}{COLOR_END}, nothing to check..."
+                )
                 pass
 
             else:

@@ -3,8 +3,7 @@
 import sys
 import trio
 from functools import partial
-from contextlib import contextmanager
-from async_generator import asynccontextmanager
+from contextlib import contextmanager, asynccontextmanager
 from structlog import get_logger
 from pathlib import Path
 from enum import Enum

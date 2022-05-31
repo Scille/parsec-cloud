@@ -6,7 +6,7 @@ import trio
 from pathlib import Path
 from structlog import get_logger
 from typing import Dict, Tuple, Set, Optional, Union, Pattern, AsyncIterator, AsyncContextManager
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
 from parsec.core.types import EntryID, ChunkID, LocalDevice, BaseLocalManifest, BlockID

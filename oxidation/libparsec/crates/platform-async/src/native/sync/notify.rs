@@ -15,7 +15,7 @@ pub struct Notify(tokio::sync::Notify);
 
 impl Notify {
     /// Wait for a notification.
-    pub fn notified(&self) -> Notified<'_> {
+    pub fn notified(&self) -> Notified {
         Notified(Box::pin(self.0.notified()))
     }
 
@@ -58,7 +58,7 @@ pub struct Notified<'a>(Pin<Box<tokio::sync::futures::Notified<'a>>>);
 impl<'a> Future for Notified<'a> {
     type Output = ();
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         self.0.as_mut().poll(cx)
     }
 }

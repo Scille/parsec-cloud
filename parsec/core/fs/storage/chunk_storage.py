@@ -5,7 +5,7 @@ import time
 import trio
 from pathlib import Path
 from typing import AsyncIterator, AsyncContextManager, TypeVar, List, Optional
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 
 from parsec.core.types import ChunkID

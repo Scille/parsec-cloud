@@ -5,7 +5,13 @@ pub mod native;
 #[cfg(not(target_arch = "wasm32"))]
 pub use native as platform;
 
+#[cfg(target_arch = "wasm32")]
+pub mod wasm32;
+#[cfg(target_arch = "wasm32")]
+pub use wasm32 as platform;
+
 pub use flume as channel;
-pub use platform::Notify;
-pub use platform::Timer;
-pub use platform::{spawn, JoinSet, Task};
+pub use platform::join_set::JoinSet;
+pub use platform::sync::Notify;
+pub use platform::task::{spawn, Task};
+pub use platform::timer::Timer;

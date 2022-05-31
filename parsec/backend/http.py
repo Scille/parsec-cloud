@@ -5,7 +5,7 @@ import attr
 import json
 from typing import Awaitable, Callable, List, Dict, Set, Optional, Pattern, Tuple, Union
 import mimetypes
-from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode, unquote_plus
+from urllib.parse import quote_plus, parse_qs, urlsplit, urlunsplit, urlencode, unquote_plus
 import importlib_resources
 import h11
 
@@ -67,7 +67,7 @@ class HTTPRequest:
         # h11 makes sure the headers and target are ISO-8859-1
         target_split = urlsplit(h11_req.target.decode("ISO-8859-1"))
         # Deal with percent-encoding of non-ASCII characters
-        path = unquote_plus(target_split.path)
+        path = unquote_plus(target_split.path, encoding="utf8")
         # `parse_qs` also handles percent-encoding of non-ASCII characters
         query_params = parse_qs(target_split.query)
 
@@ -172,10 +172,14 @@ class HTTPComponent:
         return HTTPResponse.build_html(200, data=data)
 
     async def _http_redirect(self, req: HTTPRequest, **kwargs: str) -> HTTPResponse:
-        path = kwargs["path"]
         if not self._config.backend_addr:
             return HTTPResponse.build(501, data=b"Url redirection is not available")
         backend_addr_split = urlsplit(self._config.backend_addr.to_url())
+
+        # Url may contains utf8 characters, so we have to encode it back to
+        # the all ascii format compatible with HTTP. This cannot raises error
+        # given path comes from `unquote_plus`.
+        path = quote_plus(kwargs["path"], safe="/", encoding="utf8", errors="strict")
 
         # Build location url by merging provided path and query params with backend addr
         location_url_query_params = req.query.copy()

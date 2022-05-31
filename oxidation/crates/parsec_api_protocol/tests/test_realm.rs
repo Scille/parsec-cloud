@@ -304,16 +304,13 @@ fn serde_realm_get_role_certificates_req() {
     // Content:
     //   cmd: "realm_get_role_certificates"
     //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
-    //   since: ext(1, 946774800.0)
     let raw = hex!(
-        "83a3636d64bb7265616c6d5f6765745f726f6c655f636572746966696361746573a8726561"
-        "6c6d5f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5a573696e6365d70141cc37518800"
-        "0000"
+        "82a3636d64bb7265616c6d5f6765745f726f6c655f636572746966696361746573a8726561"
+        "6c6d5f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5"
     );
 
     let req = authenticated_cmds::realm_get_role_certificates::Req {
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
-        since: Some("2000-1-2T01:00:00Z".parse().unwrap()),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::RealmGetRoleCertificates(req.clone());

@@ -8,7 +8,7 @@ import importlib_resources
 from typing import Optional, Tuple, List, Pattern
 from structlog import get_logger
 from functools import partial
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.event_bus import EventBus
 from parsec.api.protocol import (

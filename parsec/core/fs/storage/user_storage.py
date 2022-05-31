@@ -1,12 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from pathlib import Path
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 from typing import Dict, Set, Tuple, AsyncIterator, cast
 
-from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import EntryID, LocalDevice, LocalUserManifest
-
+from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.fs.storage.version import get_user_data_storage_db_path
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage

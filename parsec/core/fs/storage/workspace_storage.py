@@ -3,12 +3,11 @@
 from pathlib import Path
 from collections import defaultdict
 from typing import cast, Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern
-
 import trio
 from trio import lowlevel
 from pendulum import DateTime
 from structlog import get_logger
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.core.types import (
     EntryID,
@@ -22,7 +21,6 @@ from parsec.core.types import (
 )
 from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
-
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.chunk_storage import ChunkStorage, BlockStorage

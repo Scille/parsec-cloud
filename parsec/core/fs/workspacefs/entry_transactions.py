@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+
 from typing import Tuple, cast, Optional, AsyncIterator, Dict, List, NamedTuple
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.api.data import BlockAccess
 from parsec.core.types import (
@@ -13,8 +14,6 @@ from parsec.core.types import (
     FileDescriptor,
     LocalFolderishManifests,
 )
-
-
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs.path import FsPath
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions

@@ -12,7 +12,7 @@ from typing import Any, AsyncIterator, Awaitable, Callable, MutableSet, Optional
 
 import attr
 import trio
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 
 @attr.s(cmp=False)

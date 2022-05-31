@@ -17,8 +17,7 @@ from typing import (
     List,
 )
 from structlog import get_logger
-
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.utils import open_service_nursery
 from parsec.core.core_events import CoreEvent
@@ -53,7 +52,6 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
 )
 from parsec.core.remote_devices_manager import RemoteDevicesManager
-
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import UserRemoteLoader
 from parsec.core.fs.remote_loader import ROLE_CERTIFICATE_STAMP_AHEAD_US, MANIFEST_STAMP_AHEAD_US

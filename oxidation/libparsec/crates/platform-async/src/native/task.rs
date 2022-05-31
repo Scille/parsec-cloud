@@ -41,6 +41,7 @@ where
 
 /// It's the state shared between [Task] and [Runnable].
 /// It's configured inside of [spawn]'s function
+
 struct SharedState<T> {
     canceled: bool,
     finished: bool,
@@ -104,7 +105,7 @@ impl<T> Task<T> {
     /// task.abort();
     /// notify.notify_one();
     /// sleep(Duration::from_millis(10)).await;
-    /// assert!(finished.load(Ordering::SeqCst) == false, "task shouldn't have finished");
+    /// assert_eq!(finished.load(Ordering::SeqCst), false, "task shouldn't have finished");
     /// # }
     /// ```
     ///
@@ -158,13 +159,13 @@ impl<T> Task<T> {
     /// task.detach();
     /// notify.notify_one();
     /// sleep(Duration::from_millis(10)).await;
-    /// assert!(finished.load(Ordering::SeqCst) == true, "task should have finished in background");
+    /// assert_eq!(finished.load(Ordering::SeqCst), true, "task should have finished in background");
     /// # }
     pub fn detach(self) {
-        self.shared_state
-            .lock()
-            .expect("mutex is poisoned")
-            .detached = true;
+        let mut state = self.shared_state.lock().expect("mutex is poisoned");
+
+        state.detached = true;
+        state.task_waker = None;
     }
 
     /// Return `true` if the current task is finished
@@ -213,7 +214,7 @@ impl<T> Task<T> {
 impl<T> Future for Task<T> {
     type Output = T;
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         let s = self.as_mut();
         let mut state = s.shared_state.lock().expect("mutex is poisoned");
 
@@ -257,12 +258,13 @@ where
 {
     type Output = ();
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         let mut s = self.as_mut();
         let mut state = s.shared_state.lock().expect("mutex is poisoned");
 
         state.runnable_waker = Some(cx.waker().clone());
         if state.canceled {
+            state.runnable_waker = None;
             Poll::Ready(())
         } else {
             drop(state);
@@ -273,6 +275,7 @@ where
 
                     state.value = Some(value);
                     state.finished = true;
+                    state.runnable_waker = None;
                     if let Some(ref waker) = state.task_waker {
                         waker.wake_by_ref();
                     }

@@ -11,8 +11,8 @@
                 "name": "device_certificate",
                 "type": "Bytes"
             },
-            // Same certificates than above, but expurged of human_handle/device_label
             {
+                // Same certificates than above, but expurged of human_handle/device_label
                 "name": "redacted_user_certificate",
                 "type": "Bytes"
             },

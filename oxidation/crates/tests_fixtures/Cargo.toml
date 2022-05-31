@@ -9,6 +9,6 @@ parsec_api_protocol = { path = "../parsec_api_protocol" }
 parsec_api_types = { path = "../parsec_api_types" }
 parsec_client_types = { path = "../parsec_client_types" }
 
-rstest = "0.12.0"
+rstest = "0.13.0"
 hex-literal = "0.3.3"
 chrono = "0.4.19"
