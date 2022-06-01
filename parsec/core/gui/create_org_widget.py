@@ -152,6 +152,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.req_success.connect(self._on_req_success)
         self.req_error.connect(self._on_req_error)
 
+        self.button_validate.setText(_("ACTION_CREATE_ORG"))
+
         self.start_addr = start_addr
 
         if self.start_addr:
@@ -241,6 +243,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 device_label=device_label,
                 backend_addr=backend_addr,
             )
+            self.dialog.button_close.setVisible(False)
             self.button_validate.setEnabled(False)
         else:
             auth_method = self.current_widget.get_auth_method()
@@ -288,8 +291,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.main_layout.addWidget(self.current_widget)
         self.current_widget.exclude_strings(excl_strings)
         self.current_widget.authentication_state_changed.connect(self._on_authentication_changed)
-
-        self.button_validate.setText(_("ACTION_CREATE_ORG"))
+        self.button_validate.setText(_("ACTION_CREATE_DEVICE"))
         self.button_validate.setEnabled(self.current_widget.is_auth_valid())
 
     def _on_authentication_changed(self, auth_method, valid):
@@ -336,6 +338,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.status = None
         self.create_job = None
         self.button_validate.setEnabled(True)
+        self.dialog.button_close.setVisible(True)
 
     @classmethod
     def show_modal(cls, jobs_ctx, config, parent, on_finished, start_addr=None):
