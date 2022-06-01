@@ -15,7 +15,7 @@ trio==0.19.0
 trio_typing==0.5.1 # updating causes conflict with qtrio dependency
 sentry-sdk==1.5.12
 structlog==21.5.0
-importlib_resources==5.4.0
+importlib_resources==5.7.1
 colorama==0.4.4  # structlog colored output
 async_exit_stack==1.0.1
 outcome==1.1.0
