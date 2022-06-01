@@ -4,7 +4,7 @@ pytest-xdist==2.5.0
 pytest-trio==0.7.0
 pytest-qt==4.0.2
 pytest-rerunfailures==10.2
-hypothesis==6.31.4
+hypothesis==6.46.9
 hypothesis-trio==0.6.0
 trustme==0.9.0
 winfspy[test]==0.8.3;platform_system=="Windows"
