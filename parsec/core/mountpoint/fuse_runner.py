@@ -6,7 +6,7 @@ import trio
 import errno
 import signal
 import threading
-import importlib_resources
+import importlib.resources
 from pathlib import PurePath
 from fuse import FUSE
 from structlog import get_logger
@@ -156,7 +156,7 @@ async def fuse_mountpoint_runner(
             encoding = sys.getfilesystemencoding()
 
             def _run_fuse_thread():
-                with importlib_resources.files(resources_module).joinpath(
+                with importlib.resources.files(resources_module).joinpath(
                     "parsec.icns"
                 ) as parsec_icns_path:
 
