@@ -481,8 +481,11 @@ async def test_link_claim_device_disconnected(
     assert logged_gui.tab_center.count() == 1
 
 
+# This test has been detected as flaky.
+# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.parametrize("http_redirection_url", (True, False))
 async def test_link_claim_user(
     aqtbot, logged_gui, catch_claim_user_widget, user_invitation_addr, http_redirection_url

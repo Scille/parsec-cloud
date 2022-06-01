@@ -72,8 +72,11 @@ async def test_workspace_sharing_list_users(
         assert user_w.isEnabled() is True
 
 
+# This test has been detected as flaky.
+# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 async def test_share_workspace(
     aqtbot,
     running_backend,

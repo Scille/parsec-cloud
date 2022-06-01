@@ -35,8 +35,11 @@ async def test_offline_notification(aqtbot, running_backend, logged_gui):
             await aqtbot.wait_until(_offline)
 
 
+# This test has been detected as flaky.
+# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 async def test_backend_desync_notification(
     aqtbot,
     frozen_clock,
