@@ -5,6 +5,7 @@ use pyo3::types::{PyByteArray, PyBytes};
 use pyo3::{import_exception, prelude::*};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 
 use crate::binding_utils::{py_to_rs_regex, rs_to_py_regex};
 use crate::ids::{BlockID, ChunkID, EntryID};
@@ -21,6 +22,9 @@ pub(crate) struct WorkspaceStorage(
     pub libparsec_core_fs::WorkspaceStorage,
     pub Option<PyObject>,
 );
+
+#[pyclass]
+struct Lock(Arc<Mutex<()>>);
 
 #[pymethods]
 impl WorkspaceStorage {
@@ -59,11 +63,7 @@ impl WorkspaceStorage {
         })
     }
 
-    fn mark_prevent_sync_pattern_fully_applied(
-        &mut self,
-        py: Python,
-        pattern: &PyAny,
-    ) -> PyResult<()> {
+    fn mark_prevent_sync_pattern_fully_applied(&self, py: Python, pattern: &PyAny) -> PyResult<()> {
         let pattern = py_to_rs_regex(pattern)?;
         py.allow_threads(|| {
             self.0
@@ -143,6 +143,7 @@ impl WorkspaceStorage {
                     entry_id.0,
                     manifest,
                     cache_only,
+                    false,
                     removed_ids.map(|x| {
                         x.into_iter()
                             .map(|id| libparsec_core_fs::ChunkOrBlockID::ChunkID(id.0))
@@ -156,7 +157,7 @@ impl WorkspaceStorage {
     fn clear_manifest(&self, py: Python, entry_id: EntryID) -> PyResult<()> {
         py.allow_threads(|| {
             self.0
-                .clear_manifest(entry_id.0)
+                .clear_manifest(entry_id.0, false)
                 .map_err(|_| FSLocalMissError::new_err(entry_id))
         })
     }
@@ -283,7 +284,7 @@ impl WorkspaceStorage {
     fn ensure_manifest_persistent(&self, py: Python, entry_id: EntryID) -> PyResult<()> {
         py.allow_threads(|| {
             self.0
-                .ensure_manifest_persistent(entry_id.0)
+                .ensure_manifest_persistent(entry_id.0, false)
                 .map_err(|e| PyValueError::new_err(e.to_string()))
         })
     }

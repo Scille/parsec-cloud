@@ -2,8 +2,9 @@
 
 use fancy_regex::Regex;
 use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 use std::path::Path;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
 
 use parsec_api_types::{BlockID, ChunkID, EntryID, FileDescriptor};
 use parsec_client_types::{LocalDevice, LocalFileManifest, LocalManifest, LocalWorkspaceManifest};
@@ -19,6 +20,35 @@ use crate::storage::version::{
 
 pub const DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE: u64 = 512 * 1024 * 1024;
 
+#[derive(Default)]
+struct Locker<T: Eq + Hash>(Mutex<HashMap<T, Arc<Mutex<()>>>>);
+
+enum Status {
+    Locked,
+    Released,
+}
+
+impl<T: Eq + Hash + Copy> Locker<T> {
+    fn acquire(&self, id: T) -> Arc<Mutex<()>> {
+        let mut map = self.0.lock().expect("Mutex is poisoned");
+        map.entry(id).or_insert_with(|| Arc::new(Mutex::new(())));
+        map.get(&id).unwrap_or_else(|| unreachable!()).clone()
+    }
+    fn release(&self, id: T, guard: MutexGuard<()>) {
+        drop(guard);
+        self.0.lock().expect("Mutex is poisoned").remove(&id);
+    }
+    fn check(&self, id: T) -> Status {
+        if let Some(mutex) = self.0.lock().expect("Mutex is poisoned").get(&id) {
+            if let Err(TryLockError::WouldBlock) = mutex.try_lock() {
+                return Status::Locked;
+            }
+        }
+
+        Status::Released
+    }
+}
+
 pub struct WorkspaceStorage {
     pub device: LocalDevice,
     pub workspace_id: EntryID,
@@ -29,6 +59,7 @@ pub struct WorkspaceStorage {
     manifest_storage: ManifestStorage,
     prevent_sync_pattern: Mutex<Regex>,
     prevent_sync_pattern_fully_applied: Mutex<bool>,
+    entry_locks: Locker<EntryID>,
 }
 
 impl WorkspaceStorage {
@@ -84,6 +115,8 @@ impl WorkspaceStorage {
             // Pattern attributes
             prevent_sync_pattern: Mutex::new(prevent_sync_pattern),
             prevent_sync_pattern_fully_applied: Mutex::new(prevent_sync_pattern_fully_applied),
+            // Locking structure
+            entry_locks: Locker::default(),
         };
 
         instance.block_storage.cleanup()?;
@@ -93,6 +126,21 @@ impl WorkspaceStorage {
         instance.load_workspace_manifest()?;
 
         Ok(instance)
+    }
+
+    pub fn lock_entry_id(&self, entry_id: EntryID) -> Arc<Mutex<()>> {
+        self.entry_locks.acquire(entry_id)
+    }
+
+    pub fn release_entry_id(&self, entry_id: EntryID, guard: MutexGuard<()>) {
+        self.entry_locks.release(entry_id, guard)
+    }
+
+    fn check_lock_status(&self, entry_id: EntryID) -> FSResult<()> {
+        if let Status::Released = self.entry_locks.check(entry_id) {
+            return Err(FSError::Runtime(entry_id));
+        }
+        Ok(())
     }
 
     pub fn get_prevent_sync_pattern(&self) -> Regex {
@@ -251,18 +299,32 @@ impl WorkspaceStorage {
         entry_id: EntryID,
         manifest: LocalManifest,
         cache_only: bool,
+        check_lock_status: bool,
         removed_ids: Option<HashSet<ChunkOrBlockID>>,
     ) -> FSResult<()> {
+        if check_lock_status {
+            self.check_lock_status(entry_id)?;
+        }
         self.manifest_storage
             .set_manifest(entry_id, manifest, cache_only, removed_ids)
     }
 
-    pub fn ensure_manifest_persistent(&self, entry_id: EntryID) -> FSResult<()> {
+    pub fn ensure_manifest_persistent(
+        &self,
+        entry_id: EntryID,
+        check_lock_status: bool,
+    ) -> FSResult<()> {
+        if check_lock_status {
+            self.check_lock_status(entry_id)?;
+        }
         self.manifest_storage.ensure_manifest_persistent(entry_id)
     }
 
     #[allow(deprecated)]
-    pub fn clear_manifest(&self, entry_id: EntryID) -> FSResult<()> {
+    pub fn clear_manifest(&self, entry_id: EntryID, check_lock_status: bool) -> FSResult<()> {
+        if check_lock_status {
+            self.check_lock_status(entry_id)?;
+        }
         self.manifest_storage.clear_manifest(entry_id)
     }
 
