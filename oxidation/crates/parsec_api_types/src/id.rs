@@ -267,6 +267,8 @@ impl ToString for UserProfile {
     }
 }
 
+/// FileDescriptor is related to kernel stuff, and most of these
+/// entity are `int` type in C
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FileDescriptor(pub i32);
 
