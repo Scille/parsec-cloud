@@ -12,6 +12,7 @@ extern crate diesel;
 pub use error::*;
 pub use storage::*;
 
+/// Translations used to for File/Folder conflict renaming
 pub enum Language {
     En,
     Fr,
