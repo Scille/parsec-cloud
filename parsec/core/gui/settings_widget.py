@@ -25,6 +25,8 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
 
         self.button_save.clicked.connect(self.save)
         self.check_box_tray.setChecked(self.core_config.gui_tray_enabled)
+        if sys.platform == "darwin" and self.core_config.gui_tray_enabled:
+            self.check_box_tray.setEnabled(False)
         current = None
         for lg, key in lang.LANGUAGES.items():
             self.combo_languages.addItem(lg, key)
