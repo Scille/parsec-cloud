@@ -280,6 +280,21 @@ pub fn prepare_truncate(
     (new_manifest, removed_ids)
 }
 
+// Prepare resize
+
+pub fn prepare_resize(
+    manifest: &LocalFileManifest,
+    size: u64,
+    timestamp: DateTime,
+) -> (LocalFileManifest, Vec<WriteOperation>, HashSet<ChunkID>) {
+    if size >= manifest.size {
+        prepare_write(manifest, 0, size, timestamp)
+    } else {
+        let (manifest, removed_ids) = prepare_truncate(manifest, size, timestamp);
+        (manifest, vec![], removed_ids)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

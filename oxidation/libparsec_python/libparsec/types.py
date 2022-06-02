@@ -167,6 +167,7 @@ try:
         prepare_read,
         prepare_write,
         prepare_truncate,
+        prepare_resize,
     )
 except ImportError as exc:
     print(f"Import error in libparsec/types: {exc}")
@@ -420,4 +421,5 @@ __all__ = (
     "prepare_read",
     "prepare_write",
     "prepare_truncate",
+    "prepare_resize",
 )

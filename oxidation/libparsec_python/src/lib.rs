@@ -191,5 +191,6 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
     m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;
     m.add_function(wrap_pyfunction!(file_operations::prepare_truncate, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_resize, m)?)?;
     Ok(())
 }
