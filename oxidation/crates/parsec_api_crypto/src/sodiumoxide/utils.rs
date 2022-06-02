@@ -6,7 +6,6 @@ macro_rules! impl_try_from {
             type Error = CryptoError;
 
             fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
-                // if you wonder, `try_into` will also fail if v is too small
                 let arr: [u8; Self::SIZE] = v.try_into().map_err(|_| CryptoError::DataSize)?;
                 Ok(Self($sub_type(arr)))
             }

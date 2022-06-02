@@ -44,7 +44,6 @@ impl AsRef<[u8]> for HashDigest {
 impl TryFrom<&[u8]> for HashDigest {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        // if you wonder, `try_into` will also fail if data is too small
         <[u8; Self::SIZE]>::try_from(data)
             .map(Self::from)
             .map_err(|_| CryptoError::DataSize)
