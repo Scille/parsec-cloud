@@ -90,18 +90,13 @@ mod sealed_box {
 
 use crypto_box::KEY_SIZE;
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
-use std::convert::TryInto;
+use serde_bytes::Bytes;
 use x25519_dalek::x25519;
 
 use crate::{CryptoError, SecretKey};
 
-/*
- * PrivateKey
- */
-
-#[derive(Clone, Deserialize, Serialize)]
-#[serde(into = "ByteBuf", try_from = "ByteBuf")]
+#[derive(Clone, Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct PrivateKey(crypto_box::SecretKey);
 
 crate::macros::impl_key_debug!(PrivateKey);
@@ -111,6 +106,7 @@ impl PartialEq for PrivateKey {
         self.as_ref() == other.as_ref()
     }
 }
+
 impl Eq for PrivateKey {}
 
 impl PrivateKey {
@@ -130,65 +126,49 @@ impl PrivateKey {
     }
 
     pub fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
-        SecretKey::from(x25519(
-            *self.0.as_bytes(),
-            peer_public_key.0.as_bytes().to_owned(),
-        ))
+        SecretKey::from(x25519(*self.0.as_bytes(), *peer_public_key.0.as_bytes()))
     }
 }
 
 impl AsRef<[u8]> for PrivateKey {
-    #[inline]
     fn as_ref(&self) -> &[u8] {
-        // Unsafe on private key, what could possibly go wrong ?
-        // TODO: crypto_box::SecretKey should implement AsRef<[u8]> instead
-        unsafe {
-            ::std::slice::from_raw_parts(
-                (self as *const Self) as *const u8,
-                ::std::mem::size_of::<Self>(),
-            )
-        }
+        self.0.as_bytes()
     }
 }
 
 impl TryFrom<&[u8]> for PrivateKey {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        let key: [u8; KEY_SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
-        Ok(Self(crypto_box::SecretKey::from(key)))
+        <[u8; Self::SIZE]>::try_from(data)
+            .map(Self::from)
+            .map_err(|_| CryptoError::DataSize)
     }
 }
 
 impl From<[u8; Self::SIZE]> for PrivateKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
-        // TODO: zerocopy
-        Self::try_from(key.as_ref()).unwrap()
+        Self(key.into())
     }
 }
 
-impl TryFrom<ByteBuf> for PrivateKey {
+impl TryFrom<&Bytes> for PrivateKey {
     type Error = CryptoError;
-    fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
-        let key: [u8; KEY_SIZE] = data
-            .to_vec()
-            .try_into()
-            .map_err(|_| CryptoError::DataSize)?;
-        Ok(Self(crypto_box::SecretKey::from(key)))
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
     }
 }
 
-impl From<PrivateKey> for ByteBuf {
-    fn from(data: PrivateKey) -> Self {
-        Self::from(*data.0.as_bytes())
+impl Serialize for PrivateKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
     }
 }
 
-/*
- * PublicKey
- */
-
-#[derive(Clone, Deserialize, Serialize)]
-#[serde(into = "ByteBuf", try_from = "ByteBuf")]
+#[derive(Clone, Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct PublicKey(crypto_box::PublicKey);
 
 crate::macros::impl_key_debug!(PublicKey);
@@ -198,6 +178,7 @@ impl PartialEq for PublicKey {
         self.as_ref() == other.as_ref()
     }
 }
+
 impl Eq for PublicKey {}
 
 impl PublicKey {
@@ -210,7 +191,6 @@ impl PublicKey {
 }
 
 impl AsRef<[u8]> for PublicKey {
-    #[inline]
     fn as_ref(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -219,32 +199,30 @@ impl AsRef<[u8]> for PublicKey {
 impl TryFrom<&[u8]> for PublicKey {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        let key: [u8; KEY_SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
-        Ok(Self(crypto_box::PublicKey::from(key)))
+        <[u8; Self::SIZE]>::try_from(data)
+            .map(Self::from)
+            .map_err(|_| CryptoError::DataSize)
     }
 }
 
 impl From<[u8; Self::SIZE]> for PublicKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
-        // TODO: zerocopy
-        Self::try_from(key.as_ref()).unwrap()
+        Self(key.into())
     }
 }
 
-impl TryFrom<ByteBuf> for PublicKey {
+impl TryFrom<&Bytes> for PublicKey {
     type Error = CryptoError;
-    fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
-        let key: [u8; KEY_SIZE] = data
-            .to_vec()
-            .try_into()
-            .map_err(|_| CryptoError::DataSize)?;
-        Ok(Self(crypto_box::PublicKey::from(key)))
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
     }
 }
 
-impl From<PublicKey> for ByteBuf {
-    fn from(data: PublicKey) -> Self {
-        // TODO: convert to Bytes instead of ByteBuf for zerocopy ?
-        Self::from(data.0.as_bytes().to_owned())
+impl Serialize for PublicKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
     }
 }

@@ -1,14 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
+use serde_bytes::Bytes;
 use sha2::{Digest, Sha256};
 use std::hash::Hash;
 
 use crate::CryptoError;
 
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
-#[serde(into = "ByteBuf", try_from = "ByteBuf")]
+#[derive(Clone, PartialEq, Eq, Deserialize, Hash)]
+#[serde(try_from = "&Bytes")]
 pub struct HashDigest(digest::Output<Sha256>);
 
 impl HashDigest {
@@ -36,7 +36,6 @@ impl std::fmt::Debug for HashDigest {
 }
 
 impl AsRef<[u8]> for HashDigest {
-    #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
@@ -46,8 +45,9 @@ impl TryFrom<&[u8]> for HashDigest {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         // if you wonder, `try_into` will also fail if data is too small
-        let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
-        Ok(Self(arr.into()))
+        <[u8; Self::SIZE]>::try_from(data)
+            .map(Self::from)
+            .map_err(|_| CryptoError::DataSize)
     }
 }
 
@@ -57,21 +57,19 @@ impl From<[u8; Self::SIZE]> for HashDigest {
     }
 }
 
-impl TryFrom<ByteBuf> for HashDigest {
+impl TryFrom<&Bytes> for HashDigest {
     type Error = CryptoError;
-    fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
-        // if you wonder, `try_into` will also fail if data is too small
-        let arr: [u8; Self::SIZE] = data
-            .into_vec()
-            .try_into()
-            .map_err(|_| CryptoError::DataSize)?;
-        Ok(Self(arr.into()))
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
     }
 }
 
-impl From<HashDigest> for ByteBuf {
-    fn from(data: HashDigest) -> Self {
-        Self::from(data.0.to_vec())
+impl Serialize for HashDigest {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
     }
 }
 
@@ -85,8 +83,7 @@ mod tests {
         + AsRef<[u8]>
         + TryFrom<&'f [u8]>
         + From<[u8; HashDigest::SIZE]>
-        + TryFrom<ByteBuf>
-        + Into<ByteBuf>
+        + TryFrom<&'f Bytes>
     {
         const ALGORITHM: &'static str;
         const SIZE: usize;

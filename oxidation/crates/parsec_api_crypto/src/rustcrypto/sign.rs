@@ -4,7 +4,7 @@ use ed25519_dalek::{
     Keypair, Signature, Signer, Verifier, PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH, SIGNATURE_LENGTH,
 };
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
+use serde_bytes::Bytes;
 
 use crate::CryptoError;
 
@@ -12,8 +12,8 @@ use crate::CryptoError;
  * SigningKey
  */
 
-#[derive(Deserialize, Serialize)]
-#[serde(into = "ByteBuf", try_from = "ByteBuf")]
+#[derive(Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct SigningKey(Keypair);
 
 crate::macros::impl_key_debug!(SigningKey);
@@ -29,6 +29,7 @@ impl PartialEq for SigningKey {
         self.as_ref() == other.as_ref()
     }
 }
+
 impl Eq for SigningKey {}
 
 impl SigningKey {
@@ -77,17 +78,19 @@ impl From<[u8; Self::SIZE]> for SigningKey {
     }
 }
 
-impl TryFrom<ByteBuf> for SigningKey {
+impl TryFrom<&Bytes> for SigningKey {
     type Error = CryptoError;
-    fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
-        // TODO: zerocopy
-        Self::try_from(data.into_vec().as_ref())
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
     }
 }
 
-impl From<SigningKey> for ByteBuf {
-    fn from(data: SigningKey) -> Self {
-        Self::from(data.0.secret.to_bytes())
+impl Serialize for SigningKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
     }
 }
 
@@ -95,8 +98,8 @@ impl From<SigningKey> for ByteBuf {
  * VerifyKey
  */
 
-#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(into = "ByteBuf", try_from = "ByteBuf")]
+#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct VerifyKey(ed25519_dalek::PublicKey);
 
 crate::macros::impl_key_debug!(VerifyKey);
@@ -134,8 +137,9 @@ impl AsRef<[u8]> for VerifyKey {
 impl TryFrom<&[u8]> for VerifyKey {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        let pk = ed25519_dalek::PublicKey::from_bytes(data).map_err(|_| Self::Error::DataSize)?;
-        Ok(Self(pk))
+        ed25519_dalek::PublicKey::from_bytes(data)
+            .map(Self)
+            .map_err(|_| Self::Error::DataSize)
     }
 }
 
@@ -146,16 +150,18 @@ impl From<[u8; Self::SIZE]> for VerifyKey {
     }
 }
 
-impl TryFrom<ByteBuf> for VerifyKey {
+impl TryFrom<&Bytes> for VerifyKey {
     type Error = CryptoError;
-    fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
-        // TODO: zerocopy
-        Self::try_from(data.into_vec().as_ref())
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
     }
 }
 
-impl From<VerifyKey> for ByteBuf {
-    fn from(data: VerifyKey) -> Self {
-        Self::from(data.0.to_bytes())
+impl Serialize for VerifyKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
     }
 }
