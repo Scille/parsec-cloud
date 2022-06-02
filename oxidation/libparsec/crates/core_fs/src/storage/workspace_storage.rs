@@ -19,6 +19,8 @@ use crate::storage::version::{
 
 pub const DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE: u64 = 512 * 1024 * 1024;
 
+/// WorkspaceStorage is implemented with interior mutability because
+/// we want some parallelism between its fields (e.g entry_locks)
 pub struct WorkspaceStorage {
     pub device: LocalDevice,
     pub workspace_id: EntryID,

@@ -16,6 +16,8 @@ use crate::local_manifest::{
 import_exception!(parsec.core.fs.exceptions, FSLocalMissError);
 import_exception!(parsec.core.fs.exceptions, FSInvalidFileDescriptor);
 
+/// WorkspaceStorage's binding is implemented with allow_threads because its
+/// methods are called in trio.to_thread to connect the sync and async world
 #[pyclass]
 pub(crate) struct WorkspaceStorage(
     pub libparsec_core_fs::WorkspaceStorage,
