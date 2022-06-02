@@ -246,7 +246,7 @@ async def test_workspace_reencryption_access_error(
         ) in autoclose_dialog.dialogs
         assert wk_button.button_reencrypt.isVisible()
 
-    await aqtbot.wait_until(_assert_error, timeout=3000)
+    await aqtbot.wait_until(_assert_error)
 
 
 @pytest.mark.gui
@@ -282,7 +282,7 @@ async def test_workspace_reencryption_not_found_error(
         ]
         assert wk_button.button_reencrypt.isVisible()
 
-    await aqtbot.wait_until(_assert_error, timeout=3000)
+    await aqtbot.wait_until(_assert_error)
 
 
 @pytest.mark.gui
