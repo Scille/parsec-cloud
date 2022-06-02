@@ -5,7 +5,6 @@ use pyo3::types::{PyByteArray, PyBytes};
 use pyo3::{import_exception, prelude::*};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 
 use crate::binding_utils::{py_to_rs_regex, rs_to_py_regex};
 use crate::ids::{BlockID, ChunkID, EntryID};
@@ -22,9 +21,6 @@ pub(crate) struct WorkspaceStorage(
     pub libparsec_core_fs::WorkspaceStorage,
     pub Option<PyObject>,
 );
-
-#[pyclass]
-struct Lock(Arc<Mutex<()>>);
 
 #[pymethods]
 impl WorkspaceStorage {
