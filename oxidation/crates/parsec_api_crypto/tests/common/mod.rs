@@ -7,7 +7,7 @@ macro_rules! test_serde {
         fn $name() {
             const RAW_KEY: [u8; $cls::SIZE] = [42; $cls::SIZE];
             let key = $cls::try_from(&RAW_KEY[..]).unwrap();
-            assert_tokens(&key, &[Token::Bytes(&RAW_KEY)]);
+            assert_tokens(&key, &[Token::BorrowedBytes(&RAW_KEY)]);
         }
     };
 }

@@ -39,7 +39,6 @@ impl SigningKey {
 impl TryFrom<&[u8]> for SigningKey {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        // if you wonder, `try_into` will also fail if data is too small
         let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
         let (_, sk) = ed25519::keypair_from_seed(&ed25519::Seed(arr));
         Ok(Self(sk))

@@ -3,7 +3,7 @@
 use blake2::Blake2bMac;
 use digest::{consts::U5, Mac};
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
+use serde_bytes::Bytes;
 use xsalsa20poly1305::aead::{Aead, NewAead};
 use xsalsa20poly1305::{generate_nonce, Key, XSalsa20Poly1305, KEY_SIZE, NONCE_SIZE};
 
@@ -11,8 +11,8 @@ use crate::CryptoError;
 
 type Blake2bMac40 = Blake2bMac<U5>;
 
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(into = "ByteBuf", try_from = "ByteBuf")]
+#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct SecretKey(Key);
 
 crate::macros::impl_key_debug!(SecretKey);
@@ -63,7 +63,6 @@ impl SecretKey {
 }
 
 impl AsRef<[u8]> for SecretKey {
-    #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
@@ -72,32 +71,30 @@ impl AsRef<[u8]> for SecretKey {
 impl TryFrom<&[u8]> for SecretKey {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        // if you wonder, `try_into` will also fail if data is too small
-        let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
-        Ok(Self(Key::from(arr)))
+        <[u8; Self::SIZE]>::try_from(data)
+            .map(Self::from)
+            .map_err(|_| CryptoError::DataSize)
     }
 }
 
 impl From<[u8; Self::SIZE]> for SecretKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
-        Self(Key::from(key))
+        Self(key.into())
     }
 }
 
-impl TryFrom<ByteBuf> for SecretKey {
+impl TryFrom<&Bytes> for SecretKey {
     type Error = CryptoError;
-    fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
-        // if you wonder, `try_into` will also fail if data is too small
-        let arr: [u8; Self::SIZE] = data
-            .into_vec()
-            .try_into()
-            .map_err(|_| CryptoError::DataSize)?;
-        Ok(Self(Key::from(arr)))
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
     }
 }
 
-impl From<SecretKey> for ByteBuf {
-    fn from(data: SecretKey) -> Self {
-        Self::from(data.0.to_vec())
+impl Serialize for SecretKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
     }
 }
