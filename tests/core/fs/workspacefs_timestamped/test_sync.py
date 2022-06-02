@@ -2,9 +2,11 @@
 
 import pytest
 
+from parsec import IS_OXIDIZED
+
 
 @pytest.mark.trio
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 async def test_sync_timestamp_consistency(alice_workspace):
     # Add more files and dirs, without time freezing
     # Not freezing the time is crucial here as it allows for

@@ -12,6 +12,8 @@ from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
     multiple,
 )
+
+from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 
 from tests.common import call_with_control
@@ -32,7 +34,7 @@ def check_fs_dump(entry):
 
 @pytest.mark.slow
 # This test runs into infinite loop when it uses real data storage
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 def test_fs_online_idempotent_sync(
     hypothesis_settings,
     reset_testbed,

@@ -2,6 +2,7 @@
 import pytest
 from pendulum import now
 
+from parsec import IS_OXIDIZED
 from parsec.api.data.manifest import LOCAL_AUTHOR_LEGACY_PLACEHOLDER
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs import FSError, FSInvalidFileDescriptor
@@ -135,7 +136,7 @@ async def test_cache_set_get(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 @customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("cache_only", (False, True))
 @pytest.mark.parametrize("clear_manifest", (False, True))
@@ -352,7 +353,7 @@ async def test_lock_manifest(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 @customize_fixtures(real_data_storage=True)
 async def test_block_interface(alice_workspace_storage):
     data = b"0123456"
@@ -383,7 +384,7 @@ async def test_block_interface(alice_workspace_storage):
 
 
 @pytest.mark.trio
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 @customize_fixtures(real_data_storage=True)
 async def test_chunk_interface(alice_workspace_storage):
     data = b"0123456"
@@ -414,7 +415,7 @@ async def test_chunk_interface(alice_workspace_storage):
 
 
 @pytest.mark.trio
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 @customize_fixtures(real_data_storage=True)
 async def test_chunk_many(alice_workspace_storage):
     data = b"0123456"
@@ -460,7 +461,7 @@ async def test_run_vacuum(alice_workspace_storage):
 
 
 @pytest.mark.trio
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 @customize_fixtures(real_data_storage=True)
 async def test_timestamped_storage(alice_workspace_storage):
     timestamp = now()
@@ -511,7 +512,7 @@ async def test_timestamped_storage(alice_workspace_storage):
 
 
 @pytest.mark.trio
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 @customize_fixtures(real_data_storage=True)
 async def test_vacuum(data_base_dir, alice, workspace_id):
     data_size = 1 * 1024 * 1024
@@ -556,7 +557,7 @@ async def test_vacuum(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 @customize_fixtures(real_data_storage=True)
 async def test_garbage_collection(data_base_dir, alice, workspace_id):
     block_size = DEFAULT_BLOCK_SIZE
@@ -581,7 +582,7 @@ async def test_garbage_collection(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 @customize_fixtures(real_data_storage=True)
 async def test_storage_file_tree(data_base_dir, alice, workspace_id):
     manifest_sqlite_db = data_base_dir / alice.slug / str(workspace_id) / "workspace_data-v1.sqlite"

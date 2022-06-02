@@ -12,6 +12,7 @@ from hypothesis_trio.stateful import (
 )
 from pendulum import now as pendulum_now
 
+from parsec import IS_OXIDIZED
 from parsec.api.protocol import RealmID, RealmRole
 from parsec.api.data import RealmRoleCertificateContent, EntryName
 from parsec.backend.realm import RealmGrantedRole
@@ -21,7 +22,7 @@ from tests.common import call_with_control
 
 @pytest.mark.slow
 # This test runs into infinite loop when it uses real data storage
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 def test_workspace_reencryption_need(
     hypothesis_settings,
     reset_testbed,

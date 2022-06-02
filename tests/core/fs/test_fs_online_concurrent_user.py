@@ -11,6 +11,7 @@ from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
 )
 
+from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 from tests.common import call_with_control, compare_fs_dumps
@@ -22,7 +23,7 @@ st_fs = st.sampled_from(["fs_1", "fs_2"])
 
 @pytest.mark.slow
 # This test runs into infinite loop when it uses real data storage
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 def test_fs_online_concurrent_user(
     hypothesis_settings,
     reset_testbed,

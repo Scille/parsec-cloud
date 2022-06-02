@@ -13,6 +13,7 @@ from hypothesis_trio.stateful import (
     multiple,
 )
 
+from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FSWorkspaceNotFoundError, FSWorkspaceNoAccess
@@ -49,7 +50,7 @@ def recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=False):
 
 @pytest.mark.slow
 # This test runs into infinite loop when it uses real data storage
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 def test_sync_monitor_stateful(
     hypothesis_settings,
     frozen_clock,

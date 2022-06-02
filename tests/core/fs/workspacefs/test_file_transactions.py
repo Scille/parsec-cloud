@@ -7,6 +7,7 @@ from pendulum import datetime
 from hypothesis_trio.stateful import initialize, rule, run_state_machine_as_test
 from hypothesis import strategies as st
 
+from parsec import IS_OXIDIZED
 from parsec.core.types import EntryID, FileDescriptor, LocalFileManifest, Chunk
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
@@ -61,12 +62,12 @@ async def test_close_unknown_fd(alice_file_transactions):
 
 
 @pytest.mark.trio
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 async def test_operations_on_file(alice_file_transactions, foo_txt):
     file_transactions = alice_file_transactions
 
     fd = foo_txt.open()
-    assert isinstance(fd, FileDescriptor)
+    assert isinstance(fd, int)
 
     with freeze_time("2000-01-03"):
         await file_transactions.fd_write(fd, b"hello ", 0)
@@ -116,7 +117,7 @@ async def test_operations_on_file(alice_file_transactions, foo_txt):
 
 
 @pytest.mark.trio
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 async def test_flush_file(alice_file_transactions, foo_txt):
     file_transactions = alice_file_transactions
 

@@ -5,6 +5,7 @@ from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
 from pendulum import now
 
+from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmRole, UserProfile
 from parsec.core.fs.exceptions import FSReadOnlyError, FSWorkspaceNoWriteAccess
@@ -57,7 +58,7 @@ def set_device_time_offset(monkeypatch):
 
 @pytest.mark.slow
 # This test runs into infinite loop when it uses real data storage
-@pytest.mark.py
+@pytest.mark.skipif(IS_OXIDIZED, reason="Test not compatible with oxidation extension")
 def test_timestamp_causality(
     user_fs_online_state_machine,
     coolorg,
