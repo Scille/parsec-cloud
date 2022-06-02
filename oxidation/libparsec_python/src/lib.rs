@@ -187,6 +187,8 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<local_device::LocalDevice>()?;
     // Storage
     m.add_class::<storage::WorkspaceStorage>()?;
+    // File operations
     m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;
     Ok(())
 }

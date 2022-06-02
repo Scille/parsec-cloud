@@ -324,6 +324,19 @@ impl LocalFileManifest {
         reference.version = remote_manifest.version;
         reference == *remote_manifest
     }
+
+    pub fn evolve_and_mark_updated(
+        mut self,
+        size: u64,
+        blocks: Vec<Vec<Chunk>>,
+        timestamp: DateTime,
+    ) -> Self {
+        self.need_sync = true;
+        self.size = size;
+        self.blocks = blocks;
+        self.updated = timestamp;
+        self
+    }
 }
 
 /*

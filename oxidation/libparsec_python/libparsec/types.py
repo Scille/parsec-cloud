@@ -165,6 +165,7 @@ try:
         WorkspaceStorage as _SyncWorkspaceStorage,
         # File operations
         prepare_read,
+        prepare_write,
     )
 except ImportError as exc:
     print(f"Import error in libparsec/types: {exc}")
@@ -416,4 +417,5 @@ __all__ = (
     "WorkspaceStorage",
     # File operations
     "prepare_read",
+    "prepare_write",
 )

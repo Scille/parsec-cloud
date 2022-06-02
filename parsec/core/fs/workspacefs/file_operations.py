@@ -262,6 +262,7 @@ def prepare_reshape(
 
 
 _py_prepare_read = prepare_read
+_py_prepare_write = prepare_write
 if not TYPE_CHECKING:
     try:
         from libparsec.types import prepare_read as _rs_prepare_read
@@ -269,3 +270,10 @@ if not TYPE_CHECKING:
         pass
     else:
         prepare_read = _rs_prepare_read
+
+    try:
+        from libparsec.types import prepare_write as _rs_prepare_write
+    except:
+        pass
+    else:
+        prepare_write = _rs_prepare_write
