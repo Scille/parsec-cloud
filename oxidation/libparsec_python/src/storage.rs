@@ -59,11 +59,7 @@ impl WorkspaceStorage {
         })
     }
 
-    fn mark_prevent_sync_pattern_fully_applied(
-        &mut self,
-        py: Python,
-        pattern: &PyAny,
-    ) -> PyResult<()> {
+    fn mark_prevent_sync_pattern_fully_applied(&self, py: Python, pattern: &PyAny) -> PyResult<()> {
         let pattern = py_to_rs_regex(pattern)?;
         py.allow_threads(|| {
             self.0
