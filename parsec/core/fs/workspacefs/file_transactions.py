@@ -331,7 +331,7 @@ class FileTransactions:
         missing = []
 
         # Perform operations
-        for source, destination, update, removed_ids in prepare_reshape(manifest):
+        for source, destination, block, removed_ids in prepare_reshape(manifest):
 
             # Build data block
             data, extra_missing = await self._build_data(source)
@@ -347,7 +347,7 @@ class FileTransactions:
                 await self._write_chunk(new_chunk, data)
 
             # Craft the new manifest
-            manifest = update(manifest, new_chunk)
+            manifest = manifest.evolve_single_block(block, new_chunk)
 
             # Set the new manifest, acting as a checkpoint
             await self.local_storage.set_manifest(

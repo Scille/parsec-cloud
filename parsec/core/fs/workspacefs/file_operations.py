@@ -3,8 +3,7 @@
 # Imports
 
 import bisect
-from functools import partial
-from typing import Tuple, List, Set, Iterator, Callable, Union, Sequence, TYPE_CHECKING
+from typing import Tuple, List, Set, Iterator, Union, Sequence, TYPE_CHECKING
 from pendulum import DateTime
 
 from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
@@ -13,7 +12,7 @@ from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
 Chunks = Tuple[Chunk, ...]
 ChunkIDSet = Set[Union[ChunkID, BlockID]]
 WriteOperationList = List[Tuple[Chunk, int]]
-UpdateLocalFileManifestCallable = Callable[[LocalFileManifest, Chunk], LocalFileManifest]
+
 
 # Helpers
 
@@ -223,17 +222,7 @@ def prepare_resize(
 # Reshape
 
 
-def prepare_reshape(
-    manifest: LocalFileManifest
-) -> Iterator[Tuple[Chunks, Chunk, UpdateLocalFileManifestCallable, ChunkIDSet]]:
-
-    # Update manifest
-    def update_manifest(
-        block: int, manifest: LocalFileManifest, new_chunk: Chunk
-    ) -> LocalFileManifest:
-        blocks = list(manifest.blocks)
-        blocks[block] = (new_chunk,)
-        return manifest.evolve(blocks=tuple(blocks))
+def prepare_reshape(manifest: LocalFileManifest) -> Iterator[Tuple[Chunks, Chunk, int, ChunkIDSet]]:
 
     # Loop over blocks
     for block, chunks in enumerate(manifest.blocks):
@@ -242,12 +231,9 @@ def prepare_reshape(
         if len(chunks) == 1 and chunks[0].is_block():
             continue
 
-        # Update callback
-        block_update = partial(update_manifest, block)
-
         # Already a pseudo-block
         if len(chunks) == 1 and chunks[0].is_pseudo_block():
-            yield (chunks, chunks[0], block_update, set())
+            yield (chunks, chunks[0], block, set())
             continue
 
         # Prepare new block
@@ -258,7 +244,7 @@ def prepare_reshape(
         removed_ids = chunk_id_set(chunks)
 
         # Yield operations
-        yield (chunks, new_chunk, block_update, removed_ids)
+        yield (chunks, new_chunk, block, removed_ids)
 
 
 _py_prepare_read = prepare_read

@@ -95,12 +95,12 @@ class Storage(dict):
 
     def reshape(self, manifest: LocalFileManifest) -> LocalFileManifest:
 
-        for source, destination, update, removed_ids in prepare_reshape(manifest):
+        for source, destination, block, removed_ids in prepare_reshape(manifest):
             data = self.build_data(source)
             new_chunk = destination.evolve_as_block(data)
             if source != (destination,):
                 self.write_chunk(new_chunk, data)
-            manifest = update(manifest, new_chunk)
+            manifest = manifest.evolve_single_block(block, new_chunk)
             for removed_id in removed_ids:
                 self.clear_chunk_data(removed_id)
 

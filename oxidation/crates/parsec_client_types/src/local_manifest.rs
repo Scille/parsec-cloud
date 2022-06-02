@@ -337,6 +337,11 @@ impl LocalFileManifest {
         self.updated = timestamp;
         self
     }
+
+    pub fn evolve_single_block(mut self, block: u64, new_chunk: Chunk) -> Self {
+        self.blocks[block as usize] = vec![new_chunk];
+        self
+    }
 }
 
 /*
