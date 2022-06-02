@@ -54,3 +54,28 @@ pub(crate) fn prepare_write<'a>(
         ],
     ))
 }
+
+#[pyfunction]
+pub(crate) fn prepare_truncate<'a>(
+    py: Python<'a>,
+    manifest: LocalFileManifest,
+    size: u64,
+    timestamp: &PyAny,
+) -> PyResult<&'a PyTuple> {
+    let (new_manifest, to_remove) =
+        file_operations::prepare_truncate(&manifest.0, size, py_to_rs_datetime(timestamp)?);
+    Ok(PyTuple::new(
+        py,
+        vec![
+            LocalFileManifest(new_manifest).into_py(py),
+            PySet::new(
+                py,
+                &to_remove
+                    .iter()
+                    .map(|x| ChunkID(*x).into_py(py))
+                    .collect::<Vec<_>>(),
+            )?
+            .into_py(py),
+        ],
+    ))
+}

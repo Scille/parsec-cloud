@@ -221,6 +221,65 @@ pub fn prepare_write(
     (new_manifest, write_operations, removed_ids)
 }
 
+// Prepare truncate
+
+pub fn prepare_truncate(
+    manifest: &LocalFileManifest,
+    size: u64,
+    timestamp: DateTime,
+) -> (LocalFileManifest, HashSet<ChunkID>) {
+    // Find limit block
+    let blocksize = u64::from(manifest.blocksize);
+    let block = size / blocksize;
+    let remainder = size % blocksize;
+
+    // Prepare removed ids and new blocks
+    let mut removed_ids: HashSet<ChunkID> = manifest
+        .blocks
+        .get(block as usize..)
+        .unwrap()
+        .iter()
+        .flatten()
+        .map(|x| x.id)
+        .collect();
+    let mut new_blocks = manifest.blocks.get(0..block as usize).unwrap().to_vec();
+
+    // Last block needs to be split
+    if remainder != 0 {
+        let chunks = manifest.get_chunks(block as usize).unwrap();
+
+        // Find the index of the last chunk to include
+        let chunk_index = match chunks.binary_search_by_key(&size, |x| x.start) {
+            Ok(x) => x - 1,
+            Err(x) => x - 1,
+        };
+
+        // Create the new last chunk
+        let last_chunk = chunks.get(chunk_index).unwrap();
+        let mut new_chunk = last_chunk.clone();
+        new_chunk.stop =
+            NonZeroU64::new(size).expect("Cannot be zero since the remainder is not zero");
+
+        // Create the new chunks for the last block
+        let mut new_chunks = chunks.get(..chunk_index).unwrap().to_vec();
+        new_chunks.push(new_chunk);
+
+        // Those new chunks should not be removed
+        for chunk in &new_chunks {
+            removed_ids.remove(&chunk.id);
+        }
+
+        // Add to the new blocks
+        new_blocks.push(new_chunks);
+    }
+
+    // Create the new manifest
+    let new_manifest = manifest
+        .clone()
+        .evolve_and_mark_updated(size, new_blocks, timestamp);
+    (new_manifest, removed_ids)
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

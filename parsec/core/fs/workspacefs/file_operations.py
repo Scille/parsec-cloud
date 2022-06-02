@@ -263,6 +263,7 @@ def prepare_reshape(
 
 _py_prepare_read = prepare_read
 _py_prepare_write = prepare_write
+_py_prepare_truncate = prepare_truncate
 if not TYPE_CHECKING:
     try:
         from libparsec.types import prepare_read as _rs_prepare_read
@@ -277,3 +278,11 @@ if not TYPE_CHECKING:
         pass
     else:
         prepare_write = _rs_prepare_write
+
+    try:
+        from libparsec.types import prepare_truncate as _rs_prepare_truncate
+    except:
+        assert False
+        pass
+    else:
+        prepare_truncate = _rs_prepare_truncate
