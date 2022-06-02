@@ -216,7 +216,12 @@ size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows file style not compatible with oracle")
 def test_file_operations(
-    tmpdir, hypothesis_settings, user_fs_online_state_machine, file_transactions_factory, alice, tmp_path
+    tmpdir,
+    hypothesis_settings,
+    user_fs_online_state_machine,
+    file_transactions_factory,
+    alice,
+    tmp_path,
 ):
     tentative = 0
 
