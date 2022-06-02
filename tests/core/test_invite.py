@@ -33,8 +33,6 @@ from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUs
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from tests.common import real_clock_timeout
 
-from tests.common import real_clock_timeout
-
 
 @pytest.mark.trio
 @pytest.mark.parametrize("with_labels", [False, True])
