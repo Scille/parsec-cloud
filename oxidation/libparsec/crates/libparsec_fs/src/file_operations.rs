@@ -29,7 +29,7 @@ fn block_read(chunks: &[Chunk], size: u64, start: u64) -> impl Iterator<Item = C
     // Loop over chunks
     chunks
         .get(start_index..stop_index)
-        .expect("Indexes are found using binary search and hence always valid")
+        .unwrap_or_default()
         .iter()
         .map(move |chunk| {
             let mut new_chunk = chunk.clone();
@@ -109,16 +109,18 @@ fn block_write(
     // Removed ids
     let mut removed_ids: HashSet<ChunkID> = chunks
         .get(start_index..stop_index)
-        .unwrap()
+        .unwrap_or_default()
         .iter()
         .map(|x| x.id)
         .collect();
 
     // New chunks
-    let mut new_chunks: Vec<Chunk> = chunks.get(0..start_index).unwrap().to_vec();
+    let mut new_chunks: Vec<Chunk> = chunks.get(0..start_index).unwrap_or_default().to_vec();
 
     // Test start chunk
-    let start_chunk = chunks.get(start_index).unwrap();
+    let start_chunk = chunks
+        .get(start_index)
+        .expect("Indexes are found using binary search and hence always valid");
     if start_chunk.start < start {
         let mut new_start_chunk = start_chunk.clone();
         new_start_chunk.stop = NonZeroU64::new(start)
@@ -131,7 +133,9 @@ fn block_write(
     new_chunks.push(new_chunk);
 
     // Test stop_chunk
-    let stop_chunk = chunks.get(stop_index - 1).unwrap();
+    let stop_chunk = chunks
+        .get(stop_index - 1)
+        .expect("Indexes are found using binary search and hence always valid");
     if stop_chunk.stop.get() > stop {
         let mut new_stop_chunk = stop_chunk.clone();
         new_stop_chunk.start = stop;
@@ -140,7 +144,7 @@ fn block_write(
     }
 
     // Fill up
-    new_chunks.extend(chunks.get(stop_index..).unwrap().iter().cloned());
+    new_chunks.extend(chunks.get(stop_index..).unwrap_or_default().iter().cloned());
 
     // IDs might appear multiple times
     for chunk in &new_chunks {
@@ -190,7 +194,11 @@ pub fn prepare_write(
         let content_offset = substart - offset;
 
         // Prepare new chunk
-        let new_chunk = Chunk::new(substart, NonZeroU64::new(substart + subsize).unwrap());
+        let new_chunk = Chunk::new(
+            substart,
+            NonZeroU64::new(substart + subsize)
+                .expect("subsize is always strictly greater than zero"),
+        );
         write_operations.push((new_chunk.clone(), content_offset as i64 - padding as i64));
 
         // Get the corresponding chunks
@@ -228,6 +236,11 @@ pub fn prepare_truncate(
     size: u64,
     timestamp: DateTime,
 ) -> (LocalFileManifest, HashSet<ChunkID>) {
+    // Check that there is something to truncate
+    if size >= manifest.size {
+        return (manifest.clone(), HashSet::new());
+    }
+
     // Find limit block
     let blocksize = u64::from(manifest.blocksize);
     let block = size / blocksize;
@@ -237,16 +250,22 @@ pub fn prepare_truncate(
     let mut removed_ids: HashSet<ChunkID> = manifest
         .blocks
         .get(block as usize..)
-        .unwrap()
+        .unwrap_or_default()
         .iter()
         .flatten()
         .map(|x| x.id)
         .collect();
-    let mut new_blocks = manifest.blocks.get(0..block as usize).unwrap().to_vec();
+    let mut new_blocks = manifest
+        .blocks
+        .get(0..block as usize)
+        .unwrap_or_default()
+        .to_vec();
 
     // Last block needs to be split
     if remainder != 0 {
-        let chunks = manifest.get_chunks(block as usize).unwrap();
+        let chunks = manifest
+            .get_chunks(block as usize)
+            .expect("Block is expected to be part of the manifest");
 
         // Find the index of the last chunk to include
         let chunk_index = match chunks.binary_search_by_key(&size, |x| x.start) {
@@ -255,13 +274,15 @@ pub fn prepare_truncate(
         };
 
         // Create the new last chunk
-        let last_chunk = chunks.get(chunk_index).unwrap();
+        let last_chunk = chunks
+            .get(chunk_index)
+            .expect("The index is found using binary search and hence always valid");
         let mut new_chunk = last_chunk.clone();
         new_chunk.stop =
             NonZeroU64::new(size).expect("Cannot be zero since the remainder is not zero");
 
         // Create the new chunks for the last block
-        let mut new_chunks = chunks.get(..chunk_index).unwrap().to_vec();
+        let mut new_chunks = chunks.get(..chunk_index).unwrap_or_default().to_vec();
         new_chunks.push(new_chunk);
 
         // Those new chunks should not be removed
@@ -288,8 +309,10 @@ pub fn prepare_resize(
     timestamp: DateTime,
 ) -> (LocalFileManifest, Vec<WriteOperation>, HashSet<ChunkID>) {
     if size >= manifest.size {
+        // Extend
         prepare_write(manifest, 0, size, timestamp)
     } else {
+        // Truncate
         let (manifest, removed_ids) = prepare_truncate(manifest, size, timestamp);
         (manifest, vec![], removed_ids)
     }
@@ -300,20 +323,25 @@ pub fn prepare_resize(
 pub fn prepare_reshape(
     manifest: &LocalFileManifest,
 ) -> impl Iterator<Item = (Vec<Chunk>, Chunk, u64, HashSet<ChunkID>)> + '_ {
+    // Loop over blocks
     manifest
         .blocks
         .iter()
         .enumerate()
         .filter_map(|(block, chunks)| {
+            // Already a valid block
             if chunks.len() == 1 && chunks[0].is_block() {
                 None
+            // Already a pseudo-block, we can keep the chunk as it is
             } else if chunks.len() == 1 && chunks[0].is_pseudo_block() {
                 let new_chunk = chunks[0].clone();
                 let to_remove = HashSet::new();
                 Some((chunks.to_vec(), new_chunk, block as u64, to_remove))
+            // Reshape those chunks as a single block
             } else {
-                let start = chunks[0].start; // Should be 0
-                let stop = chunks.last().unwrap().stop; // Should be blocksize
+                // Start and stop should be 0 and blocksize respectively
+                let start = chunks[0].start;
+                let stop = chunks.last().expect("A block cannot be empty").stop;
                 let new_chunk = Chunk::new(start, stop);
                 let to_remove = chunks.iter().map(|x| x.id).collect();
                 Some((chunks.to_vec(), new_chunk, block as u64, to_remove))
