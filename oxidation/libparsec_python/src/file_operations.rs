@@ -1,12 +1,48 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use std::collections::HashSet;
+
 use pyo3::prelude::*;
 use pyo3::types::{PyList, PySet, PyTuple};
+
+use libparsec_fs::file_operations;
 
 use crate::binding_utils::py_to_rs_datetime;
 use crate::ids::ChunkID;
 use crate::local_manifest::{Chunk, LocalFileManifest};
-use libparsec_fs::file_operations;
+
+// Conversion helpers
+
+fn to_py_chunks(py: Python, chunks: Vec<parsec_client_types::Chunk>) -> &PyTuple {
+    PyTuple::new(py, chunks.into_iter().map(|x| Chunk(x).into_py(py)))
+}
+
+fn to_py_removed_ids(
+    py: Python,
+    to_remove: HashSet<parsec_api_types::ChunkID>,
+) -> PyResult<&PySet> {
+    PySet::new(
+        py,
+        &to_remove
+            .iter()
+            .map(|x| ChunkID(*x).into_py(py))
+            .collect::<Vec<_>>(),
+    )
+}
+
+fn to_py_write_operations(
+    py: Python,
+    write_operations: Vec<(parsec_client_types::Chunk, i64)>,
+) -> &PyList {
+    PyList::new(
+        py,
+        write_operations
+            .into_iter()
+            .map(|(x, y)| (Chunk(x).into_py(py), y)),
+    )
+}
+
+// Exposed functions
 
 #[pyfunction]
 pub(crate) fn prepare_read(
@@ -16,10 +52,7 @@ pub(crate) fn prepare_read(
     offset: u64,
 ) -> PyResult<&PyTuple> {
     let result = file_operations::prepare_read(&manifest.0, size, offset);
-    Ok(PyTuple::new(
-        py,
-        result.into_iter().map(|x| Chunk(x).into_py(py)),
-    ))
+    Ok(to_py_chunks(py, result))
 }
 
 #[pyfunction]
@@ -36,21 +69,8 @@ pub(crate) fn prepare_write<'a>(
         py,
         vec![
             LocalFileManifest(new_manifest).into_py(py),
-            PyList::new(
-                py,
-                write_operations
-                    .into_iter()
-                    .map(|(x, y)| (Chunk(x).into_py(py), y)),
-            )
-            .into_py(py),
-            PySet::new(
-                py,
-                &to_remove
-                    .iter()
-                    .map(|x| ChunkID(*x).into_py(py))
-                    .collect::<Vec<_>>(),
-            )?
-            .into_py(py),
+            to_py_write_operations(py, write_operations).into_py(py),
+            to_py_removed_ids(py, to_remove)?.into_py(py),
         ],
     ))
 }
@@ -68,14 +88,7 @@ pub(crate) fn prepare_truncate<'a>(
         py,
         vec![
             LocalFileManifest(new_manifest).into_py(py),
-            PySet::new(
-                py,
-                &to_remove
-                    .iter()
-                    .map(|x| ChunkID(*x).into_py(py))
-                    .collect::<Vec<_>>(),
-            )?
-            .into_py(py),
+            to_py_removed_ids(py, to_remove)?.into_py(py),
         ],
     ))
 }
@@ -93,21 +106,8 @@ pub(crate) fn prepare_resize<'a>(
         py,
         vec![
             LocalFileManifest(new_manifest).into_py(py),
-            PyList::new(
-                py,
-                write_operations
-                    .into_iter()
-                    .map(|(x, y)| (Chunk(x).into_py(py), y)),
-            )
-            .into_py(py),
-            PySet::new(
-                py,
-                &to_remove
-                    .iter()
-                    .map(|x| ChunkID(*x).into_py(py))
-                    .collect::<Vec<_>>(),
-            )?
-            .into_py(py),
+            to_py_write_operations(py, write_operations).into_py(py),
+            to_py_removed_ids(py, to_remove)?.into_py(py),
         ],
     ))
 }
@@ -115,27 +115,18 @@ pub(crate) fn prepare_resize<'a>(
 #[pyfunction]
 pub(crate) fn prepare_reshape(py: Python, manifest: LocalFileManifest) -> PyResult<&PyList> {
     let iterator = file_operations::prepare_reshape(&manifest.0);
-    let vec: Vec<_> = iterator
+    let collected: Vec<_> = iterator
         .map(|(old_chunks, new_chunk, block, to_remove)| {
-            PyTuple::new(
+            Ok(PyTuple::new(
                 py,
                 vec![
-                    PyTuple::new(py, old_chunks.into_iter().map(|x| Chunk(x).into_py(py)))
-                        .into_py(py),
+                    to_py_chunks(py, old_chunks).into_py(py),
                     Chunk(new_chunk).into_py(py),
                     block.into_py(py),
-                    PySet::new(
-                        py,
-                        &to_remove
-                            .iter()
-                            .map(|x| ChunkID(*x).into_py(py))
-                            .collect::<Vec<_>>(),
-                    )
-                    .unwrap()
-                    .into_py(py),
+                    to_py_removed_ids(py, to_remove)?.into_py(py),
                 ],
-            )
+            ))
         })
-        .collect();
-    Ok(PyList::new(py, vec))
+        .collect::<PyResult<_>>()?;
+    Ok(PyList::new(py, collected))
 }
