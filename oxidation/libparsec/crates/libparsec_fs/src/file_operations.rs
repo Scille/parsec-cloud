@@ -260,28 +260,24 @@ pub fn prepare_truncate(
 
     // Find limit block
     let blocksize = u64::from(manifest.blocksize);
-    let block = size / blocksize;
+    let block = (size / blocksize) as usize;
     let remainder = size % blocksize;
 
     // Prepare removed ids and new blocks
     let mut removed_ids: HashSet<ChunkID> = manifest
         .blocks
-        .get(block as usize..)
+        .get(block..)
         .unwrap_or_default()
         .iter()
         .flatten()
         .map(|x| x.id)
         .collect();
-    let mut new_blocks = manifest
-        .blocks
-        .get(0..block as usize)
-        .unwrap_or_default()
-        .to_vec();
+    let mut new_blocks = manifest.blocks.get(0..block).unwrap_or_default().to_vec();
 
     // Last block needs to be split
     if remainder != 0 {
         let chunks = manifest
-            .get_chunks(block as usize)
+            .get_chunks(block)
             .expect("Block is expected to be part of the manifest");
 
         // Find the index of the last chunk to include
