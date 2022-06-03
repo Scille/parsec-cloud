@@ -111,3 +111,31 @@ pub(crate) fn prepare_resize<'a>(
         ],
     ))
 }
+
+#[pyfunction]
+pub(crate) fn prepare_reshape(py: Python, manifest: LocalFileManifest) -> PyResult<&PyList> {
+    let iterator = file_operations::prepare_reshape(&manifest.0);
+    let vec: Vec<_> = iterator
+        .map(|(old_chunks, new_chunk, block, to_remove)| {
+            PyTuple::new(
+                py,
+                vec![
+                    PyTuple::new(py, old_chunks.into_iter().map(|x| Chunk(x).into_py(py)))
+                        .into_py(py),
+                    Chunk(new_chunk).into_py(py),
+                    block.into_py(py),
+                    PySet::new(
+                        py,
+                        &to_remove
+                            .iter()
+                            .map(|x| ChunkID(*x).into_py(py))
+                            .collect::<Vec<_>>(),
+                    )
+                    .unwrap()
+                    .into_py(py),
+                ],
+            )
+        })
+        .collect();
+    Ok(PyList::new(py, vec))
+}

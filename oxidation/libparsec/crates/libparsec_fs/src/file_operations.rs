@@ -295,6 +295,32 @@ pub fn prepare_resize(
     }
 }
 
+// Prepare reshape
+
+pub fn prepare_reshape(
+    manifest: &LocalFileManifest,
+) -> impl Iterator<Item = (Vec<Chunk>, Chunk, u64, HashSet<ChunkID>)> + '_ {
+    manifest
+        .blocks
+        .iter()
+        .enumerate()
+        .filter_map(|(block, chunks)| {
+            if chunks.len() == 1 && chunks[0].is_block() {
+                None
+            } else if chunks.len() == 1 && chunks[0].is_pseudo_block() {
+                let new_chunk = chunks[0].clone();
+                let to_remove = HashSet::new();
+                Some((chunks.to_vec(), new_chunk, block as u64, to_remove))
+            } else {
+                let start = chunks[0].start; // Should be 0
+                let stop = chunks.last().unwrap().stop; // Should be blocksize
+                let new_chunk = Chunk::new(start, stop);
+                let to_remove = chunks.iter().map(|x| x.id).collect();
+                Some((chunks.to_vec(), new_chunk, block as u64, to_remove))
+            }
+        })
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
