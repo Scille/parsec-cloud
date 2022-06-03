@@ -15,7 +15,7 @@ fn serde_message_get_req() {
 
     let req = authenticated_cmds::message_get::Req { offset: 8 };
 
-    let expected = authenticated_cmds::AnyCmdReq::MessageGet(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::MessageGet(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 

@@ -49,7 +49,7 @@ use parsec_api_types::{HumanHandle, InvitationStatus, Maybe};
 fn serde_invite_new_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmdReq)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
@@ -115,7 +115,7 @@ fn serde_invite_new_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmd
 fn serde_invite_new_rep(#[case] raw_expected: (&[u8], authenticated_cmds::invite_new::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_new::Rep::load(&raw);
+    let data = authenticated_cmds::invite_new::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -144,7 +144,7 @@ fn serde_invite_delete_req() {
         reason: authenticated_cmds::invite_delete::InvitationDeletedReason::Finished,
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::InviteDelete(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::InviteDelete(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -195,7 +195,7 @@ fn serde_invite_delete_req() {
 fn serde_invite_delete_rep(#[case] raw_expected: (&[u8], authenticated_cmds::invite_delete::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_delete::Rep::load(&raw);
+    let data = authenticated_cmds::invite_delete::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -216,7 +216,7 @@ fn serde_invite_list_req() {
 
     let req = authenticated_cmds::invite_list::Req;
 
-    let expected = authenticated_cmds::AnyCmdReq::InviteList(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::InviteList(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -296,7 +296,7 @@ fn serde_invite_info_req() {
 
     let req = invited_cmds::invite_info::Req;
 
-    let expected = invited_cmds::AnyCmdReq::InviteInfo(req.clone());
+    let expected = invited_cmds::AnyCmdReq::InviteInfo(req);
 
     let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -359,7 +359,7 @@ fn serde_invite_info_req() {
 fn serde_invite_info_rep(#[case] raw_expected: (&[u8], invited_cmds::invite_info::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_info::Rep::load(&raw);
+    let data = invited_cmds::invite_info::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -389,7 +389,7 @@ fn serde_invite_1_claimer_wait_peer_req() {
         )),
     };
 
-    let expected = invited_cmds::AnyCmdReq::Invite1ClaimerWaitPeer(req.clone());
+    let expected = invited_cmds::AnyCmdReq::Invite1ClaimerWaitPeer(req);
 
     let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -448,7 +448,7 @@ fn serde_invite_1_claimer_wait_peer_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_1_claimer_wait_peer::Rep::load(&raw);
+    let data = invited_cmds::invite_1_claimer_wait_peer::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -480,7 +480,7 @@ fn serde_invite_1_greeter_wait_peer_req() {
         )),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::Invite1GreeterWaitPeer(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::Invite1GreeterWaitPeer(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -550,7 +550,7 @@ fn serde_invite_1_greeter_wait_peer_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_1_greeter_wait_peer::Rep::load(&raw);
+    let data = authenticated_cmds::invite_1_greeter_wait_peer::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -580,7 +580,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_req() {
         )),
     };
 
-    let expected = invited_cmds::AnyCmdReq::Invite2aClaimerSendHashedNonceHashNonce(req.clone());
+    let expected = invited_cmds::AnyCmdReq::Invite2aClaimerSendHashedNonceHashNonce(req);
 
     let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -650,7 +650,7 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::load(&raw);
+    let data = invited_cmds::invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -677,7 +677,7 @@ fn serde_invite_2a_greeter_get_hashed_nonce_req() {
         token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::Invite2aGreeterGetHashedNonce(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::Invite2aGreeterGetHashedNonce(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -750,7 +750,7 @@ fn serde_invite_2a_greeter_get_hashed_nonce_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::load(&raw);
+    let data = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -780,7 +780,7 @@ fn serde_invite_2b_greeter_send_nonce_req() {
         greeter_nonce: b"foobar".to_vec(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::Invite2bGreeterSendNonce(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::Invite2bGreeterSendNonce(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -847,7 +847,7 @@ fn serde_invite_2b_greeter_send_nonce_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::load(&raw);
+    let data = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -874,7 +874,7 @@ fn serde_invite_2b_claimer_send_nonce_req() {
         claimer_nonce: b"foobar".to_vec(),
     };
 
-    let expected = invited_cmds::AnyCmdReq::Invite2bClaimerSendNonce(req.clone());
+    let expected = invited_cmds::AnyCmdReq::Invite2bClaimerSendNonce(req);
 
     let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -927,7 +927,7 @@ fn serde_invite_2b_claimer_send_nonce_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(&raw);
+    let data = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -954,7 +954,7 @@ fn serde_invite_3a_greeter_wait_peer_trust_req() {
         token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::Invite3aGreeterWaitPeerTrust(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::Invite3aGreeterWaitPeerTrust(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -1021,7 +1021,7 @@ fn serde_invite_3a_greeter_wait_peer_trust_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Rep::load(&raw);
+    let data = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -1045,7 +1045,7 @@ fn serde_invite_3b_claimer_wait_peer_trust_req() {
 
     let req = invited_cmds::invite_3b_claimer_wait_peer_trust::Req;
 
-    let expected = invited_cmds::AnyCmdReq::Invite3bClaimerWaitPeerTrust(req.clone());
+    let expected = invited_cmds::AnyCmdReq::Invite3bClaimerWaitPeerTrust(req);
 
     let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -1098,7 +1098,7 @@ fn serde_invite_3b_claimer_wait_peer_trust_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::load(&raw);
+    let data = invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -1125,7 +1125,7 @@ fn serde_invite_3b_greeter_signify_trust_req() {
         token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::Invite3bGreeterSignifyTrust(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::Invite3bGreeterSignifyTrust(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -1192,7 +1192,7 @@ fn serde_invite_3b_greeter_signify_trust_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_3b_greeter_signify_trust::Rep::load(&raw);
+    let data = authenticated_cmds::invite_3b_greeter_signify_trust::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -1213,7 +1213,7 @@ fn serde_invite_3a_claimer_signify_trust_req() {
 
     let req = invited_cmds::invite_3a_claimer_signify_trust::Req;
 
-    let expected = invited_cmds::AnyCmdReq::Invite3aClaimerSignifyTrust(req.clone());
+    let expected = invited_cmds::AnyCmdReq::Invite3aClaimerSignifyTrust(req);
 
     let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -1266,7 +1266,7 @@ fn serde_invite_3a_claimer_signify_trust_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_3a_claimer_signify_trust::Rep::load(&raw);
+    let data = invited_cmds::invite_3a_claimer_signify_trust::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -1295,7 +1295,7 @@ fn serde_invite_4_greeter_communicate_req() {
         payload: b"foobar".to_vec(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::Invite4GreeterCommunicate(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::Invite4GreeterCommunicate(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -1362,7 +1362,7 @@ fn serde_invite_4_greeter_communicate_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_4_greeter_communicate::Rep::load(&raw);
+    let data = authenticated_cmds::invite_4_greeter_communicate::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -1388,7 +1388,7 @@ fn serde_invite_4_claimer_communicate_req() {
         payload: b"foobar".to_vec(),
     };
 
-    let expected = invited_cmds::AnyCmdReq::Invite4ClaimerCommunicate(req.clone());
+    let expected = invited_cmds::AnyCmdReq::Invite4ClaimerCommunicate(req);
 
     let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -1444,7 +1444,7 @@ fn serde_invite_4_claimer_communicate_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_4_claimer_communicate::Rep::load(&raw);
+    let data = invited_cmds::invite_4_claimer_communicate::Rep::load(raw);
 
     assert_eq!(data, expected);
 

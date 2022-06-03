@@ -2,6 +2,7 @@
 
 use hex_literal::hex;
 use serde_json::{json, Value};
+use core::panic;
 use std::str::FromStr;
 
 use parsec_api_types::{DateTime, InvitationToken, OrganizationID};
@@ -137,7 +138,7 @@ fn test_good_authenticated_handshake(alice: &Device) {
         assert_eq!(*device_id, alice.device_id);
         assert_eq!(**rvk, *alice.root_verify_key());
     } else {
-        assert!(false)
+        panic!("unexpected value `sh.data`")
     }
 
     let sh = sh.build_result_req(Some(alice.verify_key())).unwrap();
@@ -287,7 +288,7 @@ fn test_good_invited_handshake_client(#[case] input: (&[u8], InvitationType, Inv
         "2022-03-21T17:50:16.474222Z".parse().unwrap(),
     );
 
-    ch.process_challenge_req(&challenge_req).unwrap();
+    ch.process_challenge_req(challenge_req).unwrap();
 }
 
 #[rstest]
@@ -303,8 +304,8 @@ fn test_good_invited_handshake(#[case] _invitation_type: InvitationType) {
 
     let ch = InvitedClientHandshakeStalled::new(
         _organization_id.clone(),
-        _invitation_type.clone(),
-        _token.clone(),
+        _invitation_type,
+        _token,
         DateTime::now(),
     )
     .process_challenge_req(&sh.raw)
@@ -325,7 +326,7 @@ fn test_good_invited_handshake(#[case] _invitation_type: InvitationType) {
         assert_eq!(*invitation_type, _invitation_type);
         assert_eq!(*token, _token);
     } else {
-        assert!(false)
+        panic!("unexpected value for `sh.data`")
     }
 
     let sh = sh.build_result_req(None).unwrap();
@@ -389,10 +390,7 @@ fn test_process_challenge_req_bad_format(alice: &Device, #[case] req: Value) {
     .process_challenge_req(&req)
     .unwrap_err();
 
-    match err {
-        HandshakeError::InvalidMessage(_) => assert!(true),
-        _ => assert!(false),
-    }
+    assert!(matches!(err, HandshakeError::InvalidMessage(_)));
 }
 
 // 2-b) Client check API version
@@ -443,10 +441,10 @@ fn test_process_challenge_req_good_api_version(
                 assert_eq!(client_versions, vec![client_version]);
                 assert_eq!(backend_versions, vec![backend_version]);
             }
-            _ => assert!(false),
+            _ => panic!("unexpected value err `{err}`"),
         }
     } else {
-        // Valid versionning
+        // Valid versioning
         let ch = ch.process_challenge_req(&req).unwrap();
         assert_eq!(ch.supported_api_versions, vec![backend_version]);
         assert_eq!(ch.backend_api_version, backend_version);
@@ -582,7 +580,7 @@ fn test_process_challenge_req_good_multiple_api_version(
                 assert_eq!(client_versions, _client_versions);
                 assert_eq!(backend_versions, _backend_versions);
             }
-            _ => assert!(false),
+            _ => panic!("unexpected value err `{err}`"),
         }
     } else {
         // Valid versionning
@@ -679,7 +677,7 @@ fn test_process_answer_req_bad_format(alice: &Device, #[case] mut req: Value) {
         ("rvk", json!(alice.root_verify_key())),
         ("token", json!(&InvitationToken::default())),
     ] {
-        if let Some("<good>") = req.get(key).map(|v| v.as_str()).flatten() {
+        if let Some("<good>") = req.get(key).and_then(|v| v.as_str()) {
             req[key] = good_value
         }
     }
@@ -691,10 +689,7 @@ fn test_process_answer_req_bad_format(alice: &Device, #[case] mut req: Value) {
         .process_answer_req(req)
         .unwrap_err();
 
-    match err {
-        HandshakeError::InvalidMessage(_) => assert!(true),
-        _ => assert!(false),
-    }
+    assert!(matches!(err, HandshakeError::InvalidMessage(_)));
 }
 
 // 4) Server build result
@@ -725,10 +720,7 @@ fn test_build_result_req_bad_key(alice: &Device, bob: &Device) {
         .build_result_req(Some(bob.verify_key()))
         .unwrap_err();
 
-    match err {
-        HandshakeError::FailedChallenge => assert!(true),
-        _ => assert!(false),
-    }
+    assert!(matches!(err, HandshakeError::FailedChallenge));
 }
 
 #[rstest]
@@ -757,10 +749,7 @@ fn test_build_result_req_bad_challenge(alice: &Device) {
         .build_result_req(Some(alice.verify_key()))
         .unwrap_err();
 
-    match err {
-        HandshakeError::FailedChallenge => assert!(true),
-        _ => assert!(false),
-    }
+    assert!(matches!(err, HandshakeError::FailedChallenge));
 }
 
 #[rstest]
@@ -822,7 +811,7 @@ fn test_build_bad_outcomes(
     if let Handshake::Result { result, .. } = Handshake::load(&sh.raw).unwrap() {
         assert_eq!(result, expected);
     } else {
-        assert!(false);
+        panic!("unexpected value for `Handshake::load`");
     }
 }
 
@@ -842,13 +831,10 @@ fn test_process_result_req_bad_format(#[case] req: Value) {
         InvitationToken::default(),
         DateTime::now(),
     )
-    .process_result_req(&req)
+    .process_result_req(req)
     .unwrap_err();
 
-    match err {
-        HandshakeError::InvalidMessage(_) => assert!(true),
-        _ => assert!(false),
-    }
+    assert!(matches!(err, HandshakeError::InvalidMessage(_)));
 }
 
 #[rstest]
@@ -857,7 +843,7 @@ fn test_process_result_req_bad_format(#[case] req: Value) {
 #[case(("rvk_mismatch", HandshakeError::RVKMismatch))]
 #[case(("revoked_device", HandshakeError::RevokedDevice))]
 #[case(("bad_admin_token", HandshakeError::BadAdministrationToken))]
-#[case(("dummy", HandshakeError::InvalidMessage("Deserialization failed".into())))]
+#[case(("dummy", HandshakeError::InvalidMessage("Deserialization failed")))]
 fn test_process_result_req_bad_outcome(#[case] result_expected: (&str, HandshakeError)) {
     let (result, expected) = result_expected;
 
@@ -872,7 +858,7 @@ fn test_process_result_req_bad_outcome(#[case] result_expected: (&str, Handshake
         InvitationToken::default(),
         DateTime::now(),
     )
-    .process_result_req(&req)
+    .process_result_req(req)
     .unwrap_err();
 
     assert_eq!(err, expected)

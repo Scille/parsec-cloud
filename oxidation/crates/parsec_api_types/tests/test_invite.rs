@@ -102,7 +102,7 @@ fn serde_invite_user_data(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let data = InviteUserData::decrypt_and_load(&encrypted, &key).unwrap();
+    let data = InviteUserData::decrypt_and_load(encrypted, &key).unwrap();
 
     assert_eq!(data, expected);
 
@@ -211,7 +211,7 @@ fn serde_invite_user_confirmation(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let data = InviteUserConfirmation::decrypt_and_load(&encrypted, &key).unwrap();
+    let data = InviteUserConfirmation::decrypt_and_load(encrypted, &key).unwrap();
 
     assert_eq!(data, expected);
 
@@ -265,7 +265,7 @@ fn serde_invite_device_data(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let data = InviteDeviceData::decrypt_and_load(&encrypted, &key).unwrap();
+    let data = InviteDeviceData::decrypt_and_load(encrypted, &key).unwrap();
 
     assert_eq!(data, expected);
 
@@ -400,7 +400,7 @@ fn serde_invite_device_confirmation(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let data = InviteDeviceConfirmation::decrypt_and_load(&encrypted, &key).unwrap();
+    let data = InviteDeviceConfirmation::decrypt_and_load(encrypted, &key).unwrap();
 
     assert_eq!(data, expected);
 

@@ -209,6 +209,7 @@ fn test_invalid_loop_on_device_certif_trustchain_error(
 }
 
 #[rstest]
+#[allow(clippy::too_many_arguments)]
 fn test_device_signature_while_revoked(
     alice: &Device,
     bob: &Device,
@@ -261,6 +262,7 @@ fn test_device_signature_while_revoked(
 }
 
 #[rstest]
+#[allow(clippy::too_many_arguments)]
 fn test_user_signature_while_revoked(
     alice: &Device,
     bob: &Device,
@@ -313,6 +315,7 @@ fn test_user_signature_while_revoked(
 }
 
 #[rstest]
+#[allow(clippy::too_many_arguments)]
 fn test_revoked_user_signature_while_revoked(
     alice: &Device,
     bob: &Device,
@@ -371,6 +374,7 @@ fn test_revoked_user_signature_while_revoked(
 }
 
 #[rstest]
+#[allow(clippy::too_many_arguments)]
 fn test_create_user_not_admin(
     alice: &Device,
     bob: &Device,
@@ -413,6 +417,7 @@ fn test_create_user_not_admin(
 }
 
 #[rstest]
+#[allow(clippy::too_many_arguments)]
 fn test_revoked_user_not_admin(
     alice: &Device,
     bob: &Device,
@@ -453,6 +458,7 @@ fn test_revoked_user_not_admin(
 }
 
 #[rstest]
+#[allow(clippy::too_many_arguments)]
 fn test_verify_user_with_broken_trustchain(
     alice: &Device,
     bob: &Device,

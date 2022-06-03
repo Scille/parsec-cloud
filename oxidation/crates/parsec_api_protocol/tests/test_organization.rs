@@ -15,7 +15,7 @@ fn serde_organization_stats_req() {
 
     let req = authenticated_cmds::organization_stats::Req;
 
-    let expected = authenticated_cmds::AnyCmdReq::OrganizationStats(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::OrganizationStats(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -91,7 +91,7 @@ fn serde_organization_stats_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::organization_stats::Rep::load(&raw);
+    let data = authenticated_cmds::organization_stats::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -112,7 +112,7 @@ fn serde_organization_config_req() {
 
     let req = authenticated_cmds::organization_config::Req;
 
-    let expected = authenticated_cmds::AnyCmdReq::OrganizationConfig(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::OrganizationConfig(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -160,7 +160,7 @@ fn serde_organization_config_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::organization_config::Rep::load(&raw);
+    let data = authenticated_cmds::organization_config::Rep::load(raw);
 
     assert_eq!(data, expected);
 

@@ -33,7 +33,7 @@ fn serde_vlob_create_req() {
         blob: b"foobar".to_vec(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::VlobCreate(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::VlobCreate(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -109,7 +109,7 @@ fn serde_vlob_create_req() {
 fn serde_vlob_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_create::Rep::load(&raw);
+    let data = authenticated_cmds::vlob_create::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -143,7 +143,7 @@ fn serde_vlob_read_req() {
         timestamp: Some("2000-1-2T01:00:00Z".parse().unwrap()),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::VlobRead(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::VlobRead(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -243,7 +243,7 @@ fn serde_vlob_read_req() {
 fn serde_vlob_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_read::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_read::Rep::load(&raw);
+    let data = authenticated_cmds::vlob_read::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -279,7 +279,7 @@ fn serde_vlob_update_req() {
         blob: b"foobar".to_vec(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::VlobUpdate(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::VlobUpdate(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -366,7 +366,7 @@ fn serde_vlob_update_req() {
 fn serde_vlob_update_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_update::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_update::Rep::load(&raw);
+    let data = authenticated_cmds::vlob_update::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -395,7 +395,7 @@ fn serde_vlob_poll_changes_req() {
         last_checkpoint: 8,
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::VlobPollChanges(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::VlobPollChanges(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -468,7 +468,7 @@ fn serde_vlob_poll_changes_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_poll_changes::Rep::load(&raw);
+    let data = authenticated_cmds::vlob_poll_changes::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -495,7 +495,7 @@ fn serde_vlob_list_versions_req() {
         vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::VlobListVersions(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::VlobListVersions(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -572,7 +572,7 @@ fn serde_vlob_list_versions_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_list_versions::Rep::load(&raw);
+    let data = authenticated_cmds::vlob_list_versions::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -604,7 +604,7 @@ fn serde_vlob_maintenance_get_reencryption_batch_req() {
         size: 8,
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::VlobMaintenanceGetReencryptionBatch(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::VlobMaintenanceGetReencryptionBatch(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -718,7 +718,7 @@ fn serde_vlob_maintenance_get_reencryption_batch_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::load(&raw);
+    let data = authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -762,7 +762,7 @@ fn serde_vlob_maintenance_save_reencryption_batch_req() {
         }],
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::VlobMaintenanceSaveReencryptionBatch(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::VlobMaintenanceSaveReencryptionBatch(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -864,7 +864,7 @@ fn serde_vlob_maintenance_save_reencryption_batch_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::load(&raw);
+    let data = authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::load(raw);
 
     assert_eq!(data, expected);
 

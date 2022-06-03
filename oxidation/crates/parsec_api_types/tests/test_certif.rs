@@ -38,7 +38,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
         human_handle: bob.human_handle.to_owned(),
-        public_key: bob.public_key().to_owned(),
+        public_key: bob.public_key(),
         profile: bob.profile,
     };
 
@@ -90,7 +90,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
         human_handle: None,
-        public_key: bob.public_key().to_owned(),
+        public_key: bob.public_key(),
         profile: bob.profile,
     };
 
@@ -157,7 +157,7 @@ fn serde_user_certificate_legacy_format(alice: &Device, bob: &Device) {
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
         human_handle: None,
-        public_key: bob.public_key().to_owned(),
+        public_key: bob.public_key(),
         profile: UserProfile::Admin,
     };
     let expected_is_admin_false = {
@@ -168,14 +168,14 @@ fn serde_user_certificate_legacy_format(alice: &Device, bob: &Device) {
 
     let check = |data: &[u8], expected: &UserCertificate| {
         let certif = UserCertificate::verify_and_load(
-            &data,
+            data,
             &alice.verify_key(),
             CertificateSignerRef::User(&alice.device_id),
         )
         .unwrap();
         assert_eq!(&certif, expected);
 
-        let unsecure_certif = UserCertificate::unsecure_load(&data).unwrap();
+        let unsecure_certif = UserCertificate::unsecure_load(data).unwrap();
         assert_eq!(&unsecure_certif, expected);
     };
 
@@ -207,7 +207,7 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         device_id: bob.device_id.to_owned(),
         device_label: bob.device_label.to_owned(),
-        verify_key: bob.verify_key().to_owned(),
+        verify_key: bob.verify_key(),
     };
 
     let certif = DeviceCertificate::verify_and_load(
@@ -257,7 +257,7 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         device_id: bob.device_id.to_owned(),
         device_label: None,
-        verify_key: bob.verify_key().to_owned(),
+        verify_key: bob.verify_key(),
     };
 
     let certif = DeviceCertificate::verify_and_load(
@@ -305,7 +305,7 @@ fn serde_device_certificate_legacy_format(alice: &Device, bob: &Device) {
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         device_id: bob.device_id.to_owned(),
         device_label: None,
-        verify_key: bob.verify_key().to_owned(),
+        verify_key: bob.verify_key(),
     };
 
     let certif = DeviceCertificate::verify_and_load(

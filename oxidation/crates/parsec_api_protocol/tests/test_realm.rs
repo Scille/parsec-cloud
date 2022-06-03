@@ -21,7 +21,7 @@ fn serde_realm_create_req() {
         role_certificate: b"foobar".to_vec(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::RealmCreate(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::RealmCreate(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -104,7 +104,7 @@ fn serde_realm_create_req() {
 fn serde_realm_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_create::Rep::load(&raw);
+    let data = authenticated_cmds::realm_create::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -131,7 +131,7 @@ fn serde_realm_status_req() {
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::RealmStatus(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::RealmStatus(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -200,7 +200,7 @@ fn serde_realm_status_req() {
 fn serde_realm_status_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_status::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_status::Rep::load(&raw);
+    let data = authenticated_cmds::realm_status::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -227,7 +227,7 @@ fn serde_realm_stats_req() {
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::RealmStats(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::RealmStats(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -286,7 +286,7 @@ fn serde_realm_stats_req() {
 fn serde_realm_stats_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_stats::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_stats::Rep::load(&raw);
+    let data = authenticated_cmds::realm_stats::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -313,7 +313,7 @@ fn serde_realm_get_role_certificates_req() {
         realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::RealmGetRoleCertificates(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::RealmGetRoleCertificates(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -372,7 +372,7 @@ fn serde_realm_get_role_certificates_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_get_role_certificates::Rep::load(&raw);
+    let data = authenticated_cmds::realm_get_role_certificates::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -402,7 +402,7 @@ fn serde_realm_update_roles_req() {
         recipient_message: Some(b"foobar".to_vec()),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::RealmUpdateRoles(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::RealmUpdateRoles(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -527,7 +527,7 @@ fn serde_realm_update_roles_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_update_roles::Rep::load(&raw);
+    let data = authenticated_cmds::realm_update_roles::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -566,7 +566,7 @@ fn serde_realm_start_reencryption_maintenance_req() {
         )]),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::RealmStartReencryptionMaintenance(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::RealmStartReencryptionMaintenance(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -677,7 +677,7 @@ fn serde_realm_start_reencryption_maintenance_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_start_reencryption_maintenance::Rep::load(&raw);
+    let data = authenticated_cmds::realm_start_reencryption_maintenance::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -707,7 +707,7 @@ fn serde_realm_finish_reencryption_maintenance_req() {
         encryption_revision: 8,
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::RealmFinishReencryptionMaintenance(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::RealmFinishReencryptionMaintenance(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -807,7 +807,7 @@ fn serde_realm_finish_reencryption_maintenance_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_finish_reencryption_maintenance::Rep::load(&raw);
+    let data = authenticated_cmds::realm_finish_reencryption_maintenance::Rep::load(raw);
 
     assert_eq!(data, expected);
 

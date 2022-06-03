@@ -210,7 +210,7 @@ fn serde_local_device_data(
         expected
     };
 
-    let manifest = LocalDevice::decrypt_and_load(&data, &key).unwrap();
+    let manifest = LocalDevice::decrypt_and_load(data, &key).unwrap();
 
     assert_eq!(manifest, expected);
 
