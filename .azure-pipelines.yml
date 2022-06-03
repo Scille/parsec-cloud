@@ -203,6 +203,7 @@ jobs:
   - bash: |
       set -eux
       cargo test --features mock-time
+      cargo test --workspace
     workingDirectory: $(Build.SourcesDirectory)/oxidation
     displayName: 'Rust Tests'
   - bash: |
