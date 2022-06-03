@@ -42,8 +42,8 @@ def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
         "" if no proxy should be used
         `None` if no config was found
     """
-    # Hack to disable check on content-type (given server migh not be well
-    # configured, and `get_pac` silently fails on wrong content-type by returing None)
+    # Hack to disable check on content-type (given server might not be well
+    # configured, and `get_pac` silently fails on wrong content-type by returning None)
     # Also disable WPAD protocol to retrieve PAC from DNS given it produce annoying
     # WARNING logs
     get_pac_kwargs: dict = {"from_dns": False, "allowed_content_types": {""}}
@@ -52,11 +52,11 @@ def _get_proxy_from_pac(url: str, hostname: str) -> Optional[str]:
     if force_proxy_pac_url:
         get_pac_kwargs["url"] = force_proxy_pac_url
         logger.debug(
-            "Retreiving .PAC proxy config url from `HTTP_PROXY_PAC` env var",
+            "Retrieving .PAC proxy config url from `HTTP_PROXY_PAC` env var",
             pac_url=force_proxy_pac_url,
         )
     else:
-        logger.debug("Retreiving .PAC proxy config url from system")
+        logger.debug("Retrieving .PAC proxy config url from system")
 
     try:
         pacfile = pypac.get_pac(**get_pac_kwargs)
