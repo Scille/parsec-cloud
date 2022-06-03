@@ -45,6 +45,7 @@ class OrganizationBootstrapReqSchema(BaseReqSchema):
     device_certificate = fields.Bytes(required=True)
     redacted_user_certificate = fields.Bytes(required=True)
     redacted_device_certificate = fields.Bytes(required=True)
+    tpek_x509_certificate_verify_key = fields.Bytes(required=True, allow_none=False)
 
 
 class OrganizationBootstrapRepSchema(BaseRepSchema):

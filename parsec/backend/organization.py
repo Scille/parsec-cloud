@@ -158,6 +158,7 @@ class BaseOrganizationComponent:
 
         bootstrap_token = msg["bootstrap_token"]
         root_verify_key = msg["root_verify_key"]
+        tpek_x509_certificate_verify_key = msg["tpek_x509_certificate_verify_key"]
 
         try:
             u_data = UserCertificateContent.verify_and_load(
@@ -265,7 +266,12 @@ class BaseOrganizationComponent:
         )
         try:
             await self.bootstrap(
-                client_ctx.organization_id, user, first_device, bootstrap_token, root_verify_key
+                client_ctx.organization_id,
+                user,
+                first_device,
+                bootstrap_token,
+                root_verify_key,
+                tpek_x509_certificate_verify_key,
             )
 
         except OrganizationAlreadyBootstrappedError:
@@ -318,6 +324,7 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        tpek_x509_certificate_verify_key: bytes,
     ) -> None:
         """
         Raises:
