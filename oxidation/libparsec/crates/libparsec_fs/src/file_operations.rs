@@ -114,8 +114,20 @@ fn block_write(
         .map(|x| x.id)
         .collect();
 
-    // New chunks
-    let mut new_chunks: Vec<Chunk> = chunks.get(0..start_index).unwrap_or_default().to_vec();
+    // Chunks before start chunk
+    let mut new_chunks: Vec<Chunk> = chunks
+        .get(0..start_index)
+        .unwrap_or_default()
+        .iter()
+        .map(|chunk| {
+            // The same ID might appear in multiple chunks,
+            // so it's crucial that we make sure to not remove an ID
+            // that ends up being part of the new manifest
+            removed_ids.remove(&chunk.id);
+            chunk
+        })
+        .cloned()
+        .collect();
 
     // Test start chunk
     let start_chunk = chunks
@@ -143,16 +155,21 @@ fn block_write(
         removed_ids.remove(&stop_chunk.id);
     }
 
-    // Fill up
-    new_chunks.extend(chunks.get(stop_index..).unwrap_or_default().iter().cloned());
-
-    // IDs might appear multiple times
-    for chunk in &new_chunks {
-        removed_ids.remove(&chunk.id);
-        if removed_ids.is_empty() {
-            break;
-        }
-    }
+    // Chunks after start chunk
+    new_chunks.extend(
+        chunks
+            .get(stop_index..)
+            .unwrap_or_default()
+            .iter()
+            .map(|chunk| {
+                // The same ID might appear in multiple chunks,
+                // so it's crucial that we make sure to not remove an ID
+                // that ends up being part of the new manifest
+                removed_ids.remove(&chunk.id);
+                chunk
+            })
+            .cloned(),
+    );
 
     (new_chunks, removed_ids)
 }
