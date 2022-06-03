@@ -3,9 +3,10 @@
 import pytest
 from pendulum import datetime
 
-from parsec.api.transport import TransportError
 from parsec.api.protocol import InvitationDeletedReason
 from parsec.backend.events import BackendEvent
+
+from quart.testing.connections import WebsocketDisconnectError
 
 from tests.common import real_clock_timeout
 
@@ -27,7 +28,7 @@ async def test_delete_invitation_while_claimer_connected(exchange_testbed, backe
             )
             await spy.wait_with_timeout(BackendEvent.INVITE_STATUS_CHANGED)
 
-        with pytest.raises(TransportError):
+        with pytest.raises(WebsocketDisconnectError):
             async with real_clock_timeout():
                 if retrieve_previous_result:
                     await tb.get_result("claimer")
@@ -136,7 +137,7 @@ async def test_delete_invitation_then_claimer_action_before_backend_closes_conne
         "3b_wait_peer_trust",
         "4_communicate",
     ]:
-        with pytest.raises(TransportError):
+        with pytest.raises(WebsocketDisconnectError):
             async with real_clock_timeout():
                 await tb.send_order("claimer", action)
                 await tb.get_result("claimer")

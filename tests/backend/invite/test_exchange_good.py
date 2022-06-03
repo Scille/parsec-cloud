@@ -258,7 +258,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
 
 @pytest.mark.trio
 async def test_change_connection_during_exchange(
-    backend, backend_invited_sock_factory, backend_sock_factory, exchange_testbed
+    backend_asgi_app, backend_invited_ws_factory, backend_authenticated_ws_factory, exchange_testbed
 ):
     tb = exchange_testbed
 
@@ -272,13 +272,11 @@ async def test_change_connection_during_exchange(
     await tb.send_order("greeter", "2a_get_hashed_nonce")
 
     # Change claimer sock, don't close previous sock
-    async with backend_invited_sock_factory(
-        backend,
+    async with backend_invited_ws_factory(
+        backend_asgi_app,
         organization_id=tb.organization_id,
         invitation_type=tb.invitation.TYPE,
         token=tb.invitation.token,
-        # claimer gets it connection closed if invitation is deleted
-        freeze_on_transport_error=False,
     ) as claimer_sock:
 
         tb.claimer_sock = claimer_sock
@@ -287,7 +285,7 @@ async def test_change_connection_during_exchange(
         await tb.assert_ok_rep("greeter")
 
         # Change greeter sock, don't close previous sock
-        async with backend_sock_factory(backend, tb.greeter) as greeter_sock:
+        async with backend_authenticated_ws_factory(backend_asgi_app, tb.greeter) as greeter_sock:
             tb.greeter_sock = greeter_sock
             await tb.send_order("greeter", "2b_send_nonce")
 
@@ -299,16 +297,14 @@ async def test_change_connection_during_exchange(
 
     # Close previously used claimer&greeter socks and continue with new ones
     # Step 3a
-    async with backend_invited_sock_factory(
-        backend,
+    async with backend_invited_ws_factory(
+        backend_asgi_app,
         organization_id=tb.organization_id,
         invitation_type=tb.invitation.TYPE,
         token=tb.invitation.token,
-        # claimer gets it connection closed if invitation is deleted
-        freeze_on_transport_error=False,
     ) as claimer_sock:
         tb.claimer_sock = claimer_sock
-        async with backend_sock_factory(backend, tb.greeter) as greeter_sock:
+        async with backend_authenticated_ws_factory(backend_asgi_app, tb.greeter) as greeter_sock:
             tb.greeter_sock = greeter_sock
 
             await tb.send_order("greeter", "3a_wait_peer_trust")

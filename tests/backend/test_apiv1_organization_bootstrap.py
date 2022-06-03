@@ -39,7 +39,7 @@ async def organization_bootstrap(
         data["redacted_device_certificate"] = redacted_device_certificate
 
     raw_rep = await sock.send(apiv1_organization_bootstrap_serializer.req_dumps(data))
-    raw_rep = await sock.recv()
+    raw_rep = await sock.receive()
     return apiv1_organization_bootstrap_serializer.rep_loads(raw_rep)
 
 
@@ -47,15 +47,15 @@ async def organization_bootstrap(
 @customize_fixtures(backend_has_webhook=True)
 async def test_organization_bootstrap(
     webhook_spy,
-    backend,
+    backend_asgi_app,
     organization_factory,
     local_device_factory,
     alice,
-    apiv1_backend_sock_factory,
-    backend_sock_factory,
+    apiv1_backend_ws_factory,
+    backend_authenticated_ws_factory,
 ):
     neworg = organization_factory("NewOrg")
-    await backend.organization.create(
+    await backend_asgi_app.backend.organization.create(
         id=neworg.organization_id, bootstrap_token=neworg.bootstrap_token
     )
 
@@ -65,7 +65,7 @@ async def test_organization_bootstrap(
     newalice = local_device_factory(alice.device_id, neworg, profile=UserProfile.ADMIN)
     backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
 
-    async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
+    async with apiv1_backend_ws_factory(backend_asgi_app, neworg.organization_id) as sock:
         rep = await organization_bootstrap(
             sock,
             bootstrap_token=neworg.bootstrap_token,
@@ -93,16 +93,16 @@ async def test_organization_bootstrap(
 
     # 2) Now our new device can connect the backend
 
-    async with backend_sock_factory(backend, newalice) as sock:
+    async with backend_authenticated_ws_factory(backend_asgi_app, newalice) as sock:
         await ping(sock)
 
     # 3) Make sure alice from the other organization is still working
 
-    async with backend_sock_factory(backend, alice) as sock:
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice) as sock:
         await ping(sock)
 
     # 4) Finally, check the resulting data in the backend
-    backend_user, backend_device = await backend.user.get_user_with_device(
+    backend_user, backend_device = await backend_asgi_app.backend.user.get_user_with_device(
         newalice.organization_id, newalice.device_id
     )
     assert backend_user == backend_newalice
@@ -112,40 +112,40 @@ async def test_organization_bootstrap(
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
 async def test_organization_expired_create_and_bootstrap(
-    backend, organization_factory, apiv1_backend_sock_factory
+    backend_asgi_app, organization_factory, apiv1_backend_ws_factory
 ):
     neworg = organization_factory("NewOrg")
 
     # 1) Create an organization and mark it expired
-    await backend.organization.create(
+    await backend_asgi_app.backend.organization.create(
         id=neworg.organization_id, bootstrap_token=neworg.bootstrap_token
     )
-    await backend.organization.update(id=neworg.organization_id, is_expired=True)
+    await backend_asgi_app.backend.organization.update(id=neworg.organization_id, is_expired=True)
 
     # 2) Connection to backend for bootstrap purpose is not possible
 
     with pytest.raises(HandshakeOrganizationExpired):
-        async with apiv1_backend_sock_factory(backend, neworg.organization_id):
+        async with apiv1_backend_ws_factory(backend_asgi_app, neworg.organization_id):
             pass
 
     # 3) Now re-create the organization to overwrite the expiration date
-    await backend.organization.create(
+    await backend_asgi_app.backend.organization.create(
         id=neworg.organization_id, bootstrap_token=neworg.bootstrap_token
     )
 
     # 4) This time, bootstrap is possible
 
-    async with apiv1_backend_sock_factory(backend, neworg.organization_id):
+    async with apiv1_backend_ws_factory(backend_asgi_app, neworg.organization_id):
         pass
 
 
 @pytest.mark.trio
 async def test_organization_bootstrap_bad_data(
-    apiv1_backend_sock_factory, organization_factory, local_device_factory, backend, coolorg
+    apiv1_backend_ws_factory, organization_factory, local_device_factory, backend_asgi_app, coolorg
 ):
     neworg = organization_factory("NewOrg")
     newalice = local_device_factory("alice@dev1", neworg)
-    await backend.organization.create(
+    await backend_asgi_app.backend.organization.create(
         id=neworg.organization_id, bootstrap_token=neworg.bootstrap_token
     )
 
@@ -361,12 +361,12 @@ async def test_organization_bootstrap_bad_data(
         ]
     ):
         print(f"sub test {i}")
-        async with apiv1_backend_sock_factory(backend, organization_id) as sock:
+        async with apiv1_backend_ws_factory(backend_asgi_app, organization_id) as sock:
             rep = await organization_bootstrap(sock, *params)
         assert rep["status"] == status
 
     # Finally cheap test to make sure our "good" data were really good
-    async with apiv1_backend_sock_factory(backend, good_organization_id) as sock:
+    async with apiv1_backend_ws_factory(backend_asgi_app, good_organization_id) as sock:
         rep = await organization_bootstrap(
             sock,
             good_bootstrap_token,
@@ -383,7 +383,7 @@ async def test_organization_bootstrap_bad_data(
 @pytest.mark.parametrize("flavour", ["no_create", "create_different_token", "create_same_token"])
 @customize_fixtures(backend_spontaneous_organization_boostrap=True, backend_not_populated=True)
 async def test_organization_spontaneous_bootstrap(
-    backend, organization_factory, local_device_factory, apiv1_backend_sock_factory, flavour
+    backend_asgi_app, organization_factory, local_device_factory, apiv1_backend_ws_factory, flavour
 ):
     neworg = organization_factory("NewOrg")
     # Spontaneous bootstrap must have empty token
@@ -400,13 +400,15 @@ async def test_organization_spontaneous_bootstrap(
         # we shouldn't be able to overwrite it
         step1_token = "123"
     if flavour != "no_create":
-        await backend.organization.create(id=neworg.organization_id, bootstrap_token=step1_token)
+        await backend_asgi_app.backend.organization.create(
+            id=neworg.organization_id, bootstrap_token=step1_token
+        )
 
     # Step 2: organization bootstrap
 
     newalice = local_device_factory(org=neworg, profile=UserProfile.ADMIN)
     backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
-    async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
+    async with apiv1_backend_ws_factory(backend_asgi_app, neworg.organization_id) as sock:
         rep = await organization_bootstrap(
             sock,
             empty_token,
@@ -421,7 +423,7 @@ async def test_organization_spontaneous_bootstrap(
 
     # Check organization informations
 
-    org = await backend.organization.get(id=neworg.organization_id)
+    org = await backend_asgi_app.backend.organization.get(id=neworg.organization_id)
     if flavour == "create_different_token":
         assert org.root_verify_key is None
         assert org.bootstrap_token == step1_token
@@ -433,7 +435,7 @@ async def test_organization_spontaneous_bootstrap(
 @pytest.mark.trio
 @customize_fixtures(backend_spontaneous_organization_boostrap=True, backend_not_populated=True)
 async def test_concurrent_organization_bootstrap(
-    backend, organization_factory, local_device_factory, apiv1_backend_sock_factory
+    backend_asgi_app, organization_factory, local_device_factory, apiv1_backend_ws_factory
 ):
     concurrency = 5
     unleash_bootstraps = trio.Event()
@@ -448,7 +450,7 @@ async def test_concurrent_organization_bootstrap(
         backend_newalice, backend_newalice_first_device = local_device_to_backend_user(
             newalice, neworg
         )
-        async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
+        async with apiv1_backend_ws_factory(backend_asgi_app, neworg.organization_id) as sock:
             task_status.started()
             await unleash_bootstraps.wait()
             rep = await organization_bootstrap(

@@ -4,6 +4,7 @@ import pytest
 from unittest.mock import ANY
 
 from parsec.api.data import UserProfile
+from parsec.backend.asgi import app_factory
 
 from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import human_find
@@ -13,7 +14,7 @@ from tests.backend.common import human_find
 async def access_testbed(
     backend_factory,
     backend_data_binder_factory,
-    backend_sock_factory,
+    backend_authenticated_ws_factory,
     organization_factory,
     local_device_factory,
 ):
@@ -30,27 +31,28 @@ async def access_testbed(
         with freeze_time("2000-01-01"):
             await binder.bind_organization(org, device)
 
-        async with backend_sock_factory(backend, device) as sock:
+        backend_asgi_app = app_factory(backend)
 
+        async with backend_authenticated_ws_factory(backend_asgi_app, device) as sock:
             yield binder, org, device, sock
 
 
 @pytest.mark.trio
 async def test_isolation_from_other_organization(
-    backend, alice, sock_from_other_organization_factory, alice_backend_sock
+    backend_asgi_app, alice, ws_from_other_organization_factory, alice_ws
 ):
-    async with sock_from_other_organization_factory(backend) as sock:
+    async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await human_find(sock, query=alice.human_handle.label)
         assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
         rep = await human_find(sock)
-        rep_alice_sock = await human_find(alice_backend_sock)
+        rep_alice_sock = await human_find(alice_ws)
         assert rep != rep_alice_sock
 
 
 @pytest.mark.trio
 @customize_fixtures(alice_profile=UserProfile.OUTSIDER)
-async def test_not_allowed_for_outsider(alice_backend_sock):
-    rep = await human_find(alice_backend_sock, query="whatever")
+async def test_not_allowed_for_outsider(alice_ws):
+    rep = await human_find(alice_ws, query="whatever")
     assert rep == {"status": "not_allowed", "reason": "Not allowed for user with OUTSIDER profile."}
 
 
@@ -315,9 +317,9 @@ async def test_bad_query(access_testbed):
 @customize_fixtures(
     alice_has_human_handle=False, bob_has_human_handle=False, adam_has_human_handle=False
 )
-async def test_find_with_query_ignore_non_human(alice_backend_sock, alice, bob, adam):
+async def test_find_with_query_ignore_non_human(alice_ws, alice, bob, adam):
     # Find all first
-    rep = await human_find(alice_backend_sock)
+    rep = await human_find(alice_ws)
     assert rep == {"status": "ok", "results": ANY, "per_page": 100, "page": 1, "total": 3}
 
     assert sorted(rep["results"], key=lambda x: x["user_id"]) == [
@@ -326,9 +328,9 @@ async def test_find_with_query_ignore_non_human(alice_backend_sock, alice, bob, 
         {"user_id": bob.user_id, "revoked": False, "human_handle": None},
     ]
 
-    rep = await human_find(alice_backend_sock, query=alice.user_id)
+    rep = await human_find(alice_ws, query=alice.user_id)
     assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
-    rep = await human_find(alice_backend_sock, query="alice")
+    rep = await human_find(alice_ws, query="alice")
     assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
 
 

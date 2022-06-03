@@ -237,18 +237,54 @@ def mallory(fixtures_customization, local_device_factory):
     )
 
 
+# @pytest.fixture
+# def sock_from_other_organization_factory(
+#     backend_sock_factory, backend_data_binder_factory, organization_factory, local_device_factory
+# ):
+#     @asynccontextmanager
+#     async def _sock_from_other_organization_factory(
+#         backend,
+#         mimick: Optional[str] = None,
+#         anonymous: bool = False,
+#         profile: UserProfile = UserProfile.STANDARD,
+#     ):
+#         binder = backend_data_binder_factory(backend)
+
+#         other_org = organization_factory()
+#         if mimick:
+#             other_device = local_device_factory(
+#                 base_device_id=mimick, org=other_org, profile=profile
+#             )
+#         else:
+#             other_device = local_device_factory(org=other_org, profile=profile)
+#         await binder.bind_organization(other_org, other_device)
+
+#         if anonymous:
+#             auth_as = other_org.organization_id
+#         else:
+#             auth_as = other_device
+#         async with backend_sock_factory(backend, auth_as) as sock:
+#             sock.device = other_device
+#             yield sock
+
+#     return _sock_from_other_organization_factory
+
+
 @pytest.fixture
-def sock_from_other_organization_factory(
-    backend_sock_factory, backend_data_binder_factory, organization_factory, local_device_factory
+def ws_from_other_organization_factory(
+    backend_authenticated_ws_factory,
+    backend_data_binder_factory,
+    organization_factory,
+    local_device_factory,
 ):
     @asynccontextmanager
-    async def _sock_from_other_organization_factory(
-        backend,
+    async def _ws_from_other_organization_factory(
+        backend_asgi_app,
         mimick: Optional[str] = None,
         anonymous: bool = False,
         profile: UserProfile = UserProfile.STANDARD,
     ):
-        binder = backend_data_binder_factory(backend)
+        binder = backend_data_binder_factory(backend_asgi_app.backend)
 
         other_org = organization_factory()
         if mimick:
@@ -263,9 +299,8 @@ def sock_from_other_organization_factory(
             auth_as = other_org.organization_id
         else:
             auth_as = other_device
-
-        async with backend_sock_factory(backend, auth_as) as sock:
+        async with backend_authenticated_ws_factory(backend_asgi_app, auth_as) as sock:
             sock.device = other_device
             yield sock
 
-    return _sock_from_other_organization_factory
+    return _ws_from_other_organization_factory

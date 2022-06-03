@@ -27,23 +27,23 @@ async def _test_create_ok(backend, device, device_backend_sock):
 
 
 @pytest.mark.trio
-async def test_create_ok(backend, alice, alice_backend_sock):
-    await _test_create_ok(backend, alice, alice_backend_sock)
+async def test_create_ok(backend, alice, alice_ws):
+    await _test_create_ok(backend, alice, alice_ws)
 
 
 @pytest.mark.trio
 @customize_fixtures(alice_profile=UserProfile.OUTSIDER)
-async def test_create_allowed_for_outsider(backend, alice, alice_backend_sock):
-    await _test_create_ok(backend, alice, alice_backend_sock)
+async def test_create_allowed_for_outsider(backend, alice, alice_ws):
+    await _test_create_ok(backend, alice, alice_ws)
 
 
 @pytest.mark.trio
-async def test_create_invalid_certif(bob, alice_backend_sock):
+async def test_create_invalid_certif(bob, alice_ws):
     realm_id = RealmID.from_hex("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=bob.device_id, timestamp=pendulum.now(), realm_id=realm_id
     ).dump_and_sign(bob.signing_key)
-    rep = await realm_create(alice_backend_sock, certif)
+    rep = await realm_create(alice_ws, certif)
     assert rep == {
         "status": "invalid_certification",
         "reason": "Invalid certification data (Signature was forged or corrupt).",
@@ -51,7 +51,7 @@ async def test_create_invalid_certif(bob, alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_create_certif_not_self_signed(alice, bob, alice_backend_sock):
+async def test_create_certif_not_self_signed(alice, bob, alice_ws):
     realm_id = RealmID.from_hex("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent(
         author=alice.device_id,
@@ -60,7 +60,7 @@ async def test_create_certif_not_self_signed(alice, bob, alice_backend_sock):
         user_id=bob.user_id,
         role=RealmRole.OWNER,
     ).dump_and_sign(alice.signing_key)
-    rep = await realm_create(alice_backend_sock, certif)
+    rep = await realm_create(alice_ws, certif)
     assert rep == {
         "status": "invalid_data",
         "reason": "Initial realm role certificate must be self-signed.",
@@ -68,7 +68,7 @@ async def test_create_certif_not_self_signed(alice, bob, alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_create_certif_role_not_owner(alice, alice_backend_sock):
+async def test_create_certif_role_not_owner(alice, alice_ws):
     realm_id = RealmID.from_hex("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent(
         author=alice.device_id,
@@ -77,7 +77,7 @@ async def test_create_certif_role_not_owner(alice, alice_backend_sock):
         user_id=alice.user_id,
         role=RealmRole.MANAGER,
     ).dump_and_sign(alice.signing_key)
-    rep = await realm_create(alice_backend_sock, certif)
+    rep = await realm_create(alice_ws, certif)
     assert rep == {
         "status": "invalid_data",
         "reason": "Initial realm role certificate must set OWNER role.",
@@ -85,7 +85,7 @@ async def test_create_certif_role_not_owner(alice, alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_create_certif_too_old(alice, alice_backend_sock):
+async def test_create_certif_too_old(alice, alice_ws):
     now = pendulum.now()
 
     # Generate a certificate
@@ -99,7 +99,7 @@ async def test_create_certif_too_old(alice, alice_backend_sock):
 
     later = now.add(seconds=BALLPARK_CLIENT_LATE_OFFSET)
     with freeze_time(later):
-        rep = await realm_create(alice_backend_sock, certif)
+        rep = await realm_create(alice_ws, certif)
     assert rep == {
         "status": "bad_timestamp",
         "backend_timestamp": later,
@@ -112,7 +112,7 @@ async def test_create_certif_too_old(alice, alice_backend_sock):
 
     later = now.add(seconds=BALLPARK_CLIENT_LATE_OFFSET, microseconds=-1)
     with freeze_time(later):
-        rep = await realm_create(alice_backend_sock, certif)
+        rep = await realm_create(alice_ws, certif)
     assert rep["status"] == "ok"
 
     # Generate a new certificate
@@ -126,7 +126,7 @@ async def test_create_certif_too_old(alice, alice_backend_sock):
 
     sooner = now.subtract(seconds=BALLPARK_CLIENT_EARLY_OFFSET)
     with freeze_time(sooner):
-        rep = await realm_create(alice_backend_sock, certif)
+        rep = await realm_create(alice_ws, certif)
     assert rep == {
         "status": "bad_timestamp",
         "backend_timestamp": sooner,
@@ -139,14 +139,14 @@ async def test_create_certif_too_old(alice, alice_backend_sock):
 
     sooner = now.subtract(seconds=BALLPARK_CLIENT_EARLY_OFFSET, microseconds=-1)
     with freeze_time(sooner):
-        rep = await realm_create(alice_backend_sock, certif)
+        rep = await realm_create(alice_ws, certif)
     assert rep["status"] == "ok"
 
 
 @pytest.mark.trio
-async def test_create_realm_already_exists(alice, alice_backend_sock, realm):
+async def test_create_realm_already_exists(alice, alice_ws, realm):
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=alice.device_id, timestamp=pendulum.now(), realm_id=realm
     ).dump_and_sign(alice.signing_key)
-    rep = await realm_create(alice_backend_sock, certif)
+    rep = await realm_create(alice_ws, certif)
     assert rep == {"status": "already_exists"}

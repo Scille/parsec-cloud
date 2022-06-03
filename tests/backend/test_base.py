@@ -14,16 +14,16 @@ from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
-async def test_connection(alice_backend_sock):
-    await alice_backend_sock.send(packb({"cmd": "ping", "ping": "42"}))
-    rep = await alice_backend_sock.recv()
+async def test_connection(alice_ws):
+    await alice_ws.send(packb({"cmd": "ping", "ping": "42"}))
+    rep = await alice_ws.receive()
     assert unpackb(rep) == {"status": "ok", "pong": "42"}
 
 
 @pytest.mark.trio
-async def test_bad_cmd(alice_backend_sock):
-    await alice_backend_sock.send(packb({"cmd": "dummy"}))
-    rep = await alice_backend_sock.recv()
+async def test_bad_cmd(alice_ws):
+    await alice_ws.send(packb({"cmd": "dummy"}))
+    rep = await alice_ws.receive()
     assert unpackb(rep) == {"status": "unknown_command", "reason": "Unknown command"}
 
 

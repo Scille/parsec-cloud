@@ -27,12 +27,12 @@ VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
 
 
 @pytest.mark.trio
-async def test_create_and_read(alice, alice_backend_sock, alice2_backend_sock, realm):
+async def test_create_and_read(alice, alice_ws, alice2_ws, realm):
     blob = b"Initial commit."
     with freeze_time("2000-01-03"):
-        await vlob_create(alice_backend_sock, realm, VLOB_ID, blob)
+        await vlob_create(alice_ws, realm, VLOB_ID, blob)
 
-    rep = await vlob_read(alice2_backend_sock, VLOB_ID)
+    rep = await vlob_read(alice2_ws, VLOB_ID)
     assert rep == {
         "status": "ok",
         "version": 1,
@@ -44,14 +44,12 @@ async def test_create_and_read(alice, alice_backend_sock, alice2_backend_sock, r
 
 
 @pytest.mark.trio
-async def test_create_bad_timestamp(alice_backend_sock, realm):
+async def test_create_bad_timestamp(alice_ws, realm):
     blob = b"Initial commit."
     d1 = datetime(2000, 1, 1)
     with freeze_time(d1):
         d2 = d1.add(seconds=3600)
-        rep = await vlob_create(
-            alice_backend_sock, realm, VLOB_ID, blob, timestamp=d2, check_rep=False
-        )
+        rep = await vlob_create(alice_ws, realm, VLOB_ID, blob, timestamp=d2, check_rep=False)
     assert rep == {
         "status": "bad_timestamp",
         "backend_timestamp": d1,
@@ -72,41 +70,39 @@ async def test_create_bad_timestamp(alice_backend_sock, realm):
     ],
 )
 @pytest.mark.trio
-async def test_create_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send(packb({"cmd": "vlob_create", **bad_msg}))
-    raw_rep = await alice_backend_sock.recv()
+async def test_create_bad_msg(alice_ws, bad_msg):
+    await alice_ws.send(packb({"cmd": "vlob_create", **bad_msg}))
+    raw_rep = await alice_ws.receive()
     rep = vlob_create_serializer.rep_loads(raw_rep)
     assert rep["status"] == "bad_message"
 
 
 @pytest.mark.trio
-async def test_create_but_already_exists(alice_backend_sock, realm):
+async def test_create_but_already_exists(alice_ws, realm):
     blob = b"Initial commit."
 
-    await vlob_create(alice_backend_sock, realm, VLOB_ID, blob)
+    await vlob_create(alice_ws, realm, VLOB_ID, blob)
 
-    rep = await vlob_create(alice_backend_sock, realm, VLOB_ID, blob, check_rep=False)
+    rep = await vlob_create(alice_ws, realm, VLOB_ID, blob, check_rep=False)
     assert rep["status"] == "already_exists"
 
 
 @pytest.mark.trio
-async def test_create_but_unknown_realm(alice_backend_sock):
+async def test_create_but_unknown_realm(alice_ws):
     bad_realm_id = RealmID.new()
     blob = b"Initial commit."
 
-    rep = await vlob_create(alice_backend_sock, bad_realm_id, VLOB_ID, blob, check_rep=False)
+    rep = await vlob_create(alice_ws, bad_realm_id, VLOB_ID, blob, check_rep=False)
     assert rep["status"] == "not_allowed"
 
 
 @pytest.mark.trio
-async def test_create_check_access_rights(
-    backend, alice, bob, bob_backend_sock, realm, next_timestamp
-):
+async def test_create_check_access_rights(backend, alice, bob, bob_ws, realm, next_timestamp):
     vlob_id = VlobID.new()
 
     # User not part of the realm
     rep = await vlob_create(
-        bob_backend_sock, realm, vlob_id, b"Initial version.", next_timestamp(), check_rep=False
+        bob_ws, realm, vlob_id, b"Initial version.", next_timestamp(), check_rep=False
     )
     assert rep == {"status": "not_allowed"}
 
@@ -130,7 +126,7 @@ async def test_create_check_access_rights(
         )
         vlob_id = VlobID.new()
         rep = await vlob_create(
-            bob_backend_sock, realm, vlob_id, b"Initial version.", next_timestamp(), check_rep=False
+            bob_ws, realm, vlob_id, b"Initial version.", next_timestamp(), check_rep=False
         )
         if access_granted:
             assert rep == {"status": "ok"}
@@ -151,14 +147,14 @@ async def test_create_check_access_rights(
         ),
     )
     rep = await vlob_create(
-        bob_backend_sock, realm, vlob_id, b"Initial version.", next_timestamp(), check_rep=False
+        bob_ws, realm, vlob_id, b"Initial version.", next_timestamp(), check_rep=False
     )
     assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio
-async def test_read_not_found(alice_backend_sock):
-    rep = await vlob_read(alice_backend_sock, VLOB_ID)
+async def test_read_not_found(alice_ws):
+    rep = await vlob_read(alice_ws, VLOB_ID)
     assert rep == {
         "status": "not_found",
         "reason": "Vlob `00000000000000000000000000000001` doesn't exist",
@@ -166,8 +162,8 @@ async def test_read_not_found(alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_read_ok(alice, alice_backend_sock, vlobs):
-    rep = await vlob_read(alice_backend_sock, vlobs[0])
+async def test_read_ok(alice, alice_ws, vlobs):
+    rep = await vlob_read(alice_ws, vlobs[0])
     assert rep == {
         "status": "ok",
         "blob": b"r:A b:1 v:2",
@@ -179,8 +175,8 @@ async def test_read_ok(alice, alice_backend_sock, vlobs):
 
 
 @pytest.mark.trio
-async def test_read_ok_v1(alice, alice_backend_sock, vlobs):
-    rep = await vlob_read(alice_backend_sock, vlobs[0], version=1)
+async def test_read_ok_v1(alice, alice_ws, vlobs):
+    rep = await vlob_read(alice_ws, vlobs[0], version=1)
     assert rep == {
         "status": "ok",
         "blob": b"r:A b:1 v:1",
@@ -192,8 +188,8 @@ async def test_read_ok_v1(alice, alice_backend_sock, vlobs):
 
 
 @pytest.mark.trio
-async def test_read_ok_timestamp_after_v2(alice, alice_backend_sock, vlobs):
-    rep = await vlob_read(alice_backend_sock, vlobs[0], timestamp=datetime(2000, 1, 4))
+async def test_read_ok_timestamp_after_v2(alice, alice_ws, vlobs):
+    rep = await vlob_read(alice_ws, vlobs[0], timestamp=datetime(2000, 1, 4))
     assert rep == {
         "status": "ok",
         "blob": b"r:A b:1 v:2",
@@ -205,8 +201,8 @@ async def test_read_ok_timestamp_after_v2(alice, alice_backend_sock, vlobs):
 
 
 @pytest.mark.trio
-async def test_read_ok_timestamp_is_v2(alice, alice_backend_sock, vlobs):
-    rep = await vlob_read(alice_backend_sock, vlobs[0], timestamp=datetime(2000, 1, 3))
+async def test_read_ok_timestamp_is_v2(alice, alice_ws, vlobs):
+    rep = await vlob_read(alice_ws, vlobs[0], timestamp=datetime(2000, 1, 3))
     assert rep == {
         "status": "ok",
         "blob": b"r:A b:1 v:2",
@@ -218,8 +214,8 @@ async def test_read_ok_timestamp_is_v2(alice, alice_backend_sock, vlobs):
 
 
 @pytest.mark.trio
-async def test_read_ok_timestamp_between_v1_and_v2(alice, alice_backend_sock, vlobs):
-    rep = await vlob_read(alice_backend_sock, vlobs[0], timestamp=datetime(2000, 1, 2, 10))
+async def test_read_ok_timestamp_between_v1_and_v2(alice, alice_ws, vlobs):
+    rep = await vlob_read(alice_ws, vlobs[0], timestamp=datetime(2000, 1, 2, 10))
     assert rep == {
         "status": "ok",
         "blob": b"r:A b:1 v:1",
@@ -231,8 +227,8 @@ async def test_read_ok_timestamp_between_v1_and_v2(alice, alice_backend_sock, vl
 
 
 @pytest.mark.trio
-async def test_read_ok_timestamp_is_v1(alice, alice_backend_sock, vlobs):
-    rep = await vlob_read(alice_backend_sock, vlobs[0], timestamp=datetime(2000, 1, 2, 1))
+async def test_read_ok_timestamp_is_v1(alice, alice_ws, vlobs):
+    rep = await vlob_read(alice_ws, vlobs[0], timestamp=datetime(2000, 1, 2, 1))
     assert rep == {
         "status": "ok",
         "blob": b"r:A b:1 v:1",
@@ -244,17 +240,15 @@ async def test_read_ok_timestamp_is_v1(alice, alice_backend_sock, vlobs):
 
 
 @pytest.mark.trio
-async def test_read_before_v1(alice_backend_sock, vlobs):
-    rep = await vlob_read(alice_backend_sock, vlobs[0], timestamp=datetime(2000, 1, 1))
+async def test_read_before_v1(alice_ws, vlobs):
+    rep = await vlob_read(alice_ws, vlobs[0], timestamp=datetime(2000, 1, 1))
     assert rep == {"status": "bad_version"}
 
 
 @pytest.mark.trio
-async def test_read_check_access_rights(
-    backend, alice, bob, bob_backend_sock, realm, vlobs, next_timestamp
-):
+async def test_read_check_access_rights(backend, alice, bob, bob_ws, realm, vlobs, next_timestamp):
     # Not part of the realm
-    rep = await vlob_read(bob_backend_sock, vlobs[0])
+    rep = await vlob_read(bob_ws, vlobs[0])
     assert rep == {"status": "not_allowed"}
 
     for role in RealmRole:
@@ -269,7 +263,7 @@ async def test_read_check_access_rights(
                 granted_on=next_timestamp(),
             ),
         )
-        rep = await vlob_read(bob_backend_sock, vlobs[0])
+        rep = await vlob_read(bob_ws, vlobs[0])
         assert rep["status"] == "ok"
 
     # Ensure user that used to be part of the realm have no longer access
@@ -284,13 +278,13 @@ async def test_read_check_access_rights(
             granted_on=next_timestamp(),
         ),
     )
-    rep = await vlob_read(bob_backend_sock, vlobs[0])
+    rep = await vlob_read(bob_ws, vlobs[0])
     assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio
-async def test_read_other_organization(backend, sock_from_other_organization_factory, vlobs):
-    async with sock_from_other_organization_factory(backend) as sock:
+async def test_read_other_organization(backend_asgi_app, ws_from_other_organization_factory, vlobs):
+    async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await vlob_read(sock, vlobs[0])
     assert rep == {
         "status": "not_found",
@@ -312,9 +306,9 @@ async def test_read_other_organization(backend, sock_from_other_organization_fac
     ],
 )
 @pytest.mark.trio
-async def test_read_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send(packb({"cmd": "vlob_read", **bad_msg}))
-    raw_rep = await alice_backend_sock.recv()
+async def test_read_bad_msg(alice_ws, bad_msg):
+    await alice_ws.send(packb({"cmd": "vlob_read", **bad_msg}))
+    raw_rep = await alice_ws.receive()
     rep = vlob_read_serializer.rep_loads(raw_rep)
     # Id and trust_seed are invalid anyway, but here we test another layer
     # so it's not important as long as we get our `bad_message` status
@@ -322,24 +316,24 @@ async def test_read_bad_msg(alice_backend_sock, bad_msg):
 
 
 @pytest.mark.trio
-async def test_read_bad_version(alice_backend_sock, vlobs):
-    rep = await vlob_read(alice_backend_sock, vlobs[0], version=3)
+async def test_read_bad_version(alice_ws, vlobs):
+    rep = await vlob_read(alice_ws, vlobs[0], version=3)
     assert rep == {"status": "bad_version"}
 
 
 @pytest.mark.trio
-async def test_update_ok(alice_backend_sock, vlobs):
-    await vlob_update(alice_backend_sock, vlobs[0], version=3, blob=b"Next version.")
+async def test_update_ok(alice_ws, vlobs):
+    await vlob_update(alice_ws, vlobs[0], version=3, blob=b"Next version.")
 
 
 @pytest.mark.trio
-async def test_update_bad_timestamp(alice_backend_sock, vlobs):
+async def test_update_bad_timestamp(alice_ws, vlobs):
     blob = b"Initial commit."
     d1 = datetime(2000, 1, 1)
     with freeze_time(d1):
         d2 = d1.add(seconds=3600)
         rep = await vlob_update(
-            alice_backend_sock, vlobs[0], version=3, blob=blob, timestamp=d2, check_rep=False
+            alice_ws, vlobs[0], version=3, blob=blob, timestamp=d2, check_rep=False
         )
     assert rep == {
         "status": "bad_timestamp",
@@ -351,10 +345,8 @@ async def test_update_bad_timestamp(alice_backend_sock, vlobs):
 
 
 @pytest.mark.trio
-async def test_update_not_found(alice_backend_sock):
-    rep = await vlob_update(
-        alice_backend_sock, VLOB_ID, version=2, blob=b"Next version.", check_rep=False
-    )
+async def test_update_not_found(alice_ws):
+    rep = await vlob_update(alice_ws, VLOB_ID, version=2, blob=b"Next version.", check_rep=False)
     assert rep == {
         "status": "not_found",
         "reason": "Vlob `00000000000000000000000000000001` doesn't exist",
@@ -363,11 +355,11 @@ async def test_update_not_found(alice_backend_sock):
 
 @pytest.mark.trio
 async def test_update_check_access_rights(
-    backend, alice, bob, bob_backend_sock, realm, vlobs, next_timestamp
+    backend, alice, bob, bob_ws, realm, vlobs, next_timestamp
 ):
     # User not part of the realm
     rep = await vlob_update(
-        bob_backend_sock,
+        bob_ws,
         vlobs[0],
         version=3,
         blob=b"Next version.",
@@ -396,7 +388,7 @@ async def test_update_check_access_rights(
             ),
         )
         rep = await vlob_update(
-            bob_backend_sock,
+            bob_ws,
             vlobs[0],
             version=next_version,
             blob=b"Next version.",
@@ -423,7 +415,7 @@ async def test_update_check_access_rights(
         ),
     )
     rep = await vlob_update(
-        bob_backend_sock,
+        bob_ws,
         vlobs[0],
         version=next_version,
         blob=b"Next version.",
@@ -434,8 +426,10 @@ async def test_update_check_access_rights(
 
 
 @pytest.mark.trio
-async def test_update_other_organization(backend, sock_from_other_organization_factory, vlobs):
-    async with sock_from_other_organization_factory(backend) as sock:
+async def test_update_other_organization(
+    backend_asgi_app, ws_from_other_organization_factory, vlobs
+):
+    async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await vlob_update(sock, vlobs[0], version=3, blob=b"Next version.", check_rep=False)
     assert rep == {
         "status": "not_found",
@@ -459,9 +453,9 @@ async def test_update_other_organization(backend, sock_from_other_organization_f
     ],
 )
 @pytest.mark.trio
-async def test_update_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send(packb({"cmd": "vlob_update", **bad_msg}))
-    raw_rep = await alice_backend_sock.recv()
+async def test_update_bad_msg(alice_ws, bad_msg):
+    await alice_ws.send(packb({"cmd": "vlob_update", **bad_msg}))
+    raw_rep = await alice_ws.receive()
     rep = vlob_update_serializer.rep_loads(raw_rep)
     # Id and version are invalid anyway, but here we test another layer
     # so it's not important as long as we get our `bad_message` status
@@ -469,30 +463,23 @@ async def test_update_bad_msg(alice_backend_sock, bad_msg):
 
 
 @pytest.mark.trio
-async def test_update_bad_version(alice_backend_sock, vlobs):
-    rep = await vlob_update(
-        alice_backend_sock, vlobs[0], version=4, blob=b"Next version.", check_rep=False
-    )
+async def test_update_bad_version(alice_ws, vlobs):
+    rep = await vlob_update(alice_ws, vlobs[0], version=4, blob=b"Next version.", check_rep=False)
     assert rep == {"status": "bad_version"}
 
 
 @pytest.mark.trio
-async def test_bad_encryption_revision(alice_backend_sock, realm, vlobs):
+async def test_bad_encryption_revision(alice_ws, realm, vlobs):
     rep = await vlob_create(
-        alice_backend_sock,
-        realm,
-        VLOB_ID,
-        blob=b"First version.",
-        encryption_revision=42,
-        check_rep=False,
+        alice_ws, realm, VLOB_ID, blob=b"First version.", encryption_revision=42, check_rep=False
     )
     assert rep == {"status": "bad_encryption_revision"}
 
-    rep = await vlob_read(alice_backend_sock, vlobs[0], encryption_revision=42)
+    rep = await vlob_read(alice_ws, vlobs[0], encryption_revision=42)
     assert rep == {"status": "bad_encryption_revision"}
 
     rep = await vlob_update(
-        alice_backend_sock,
+        alice_ws,
         vlobs[0],
         version=3,
         blob=b"Next version.",
@@ -503,8 +490,8 @@ async def test_bad_encryption_revision(alice_backend_sock, realm, vlobs):
 
 
 @pytest.mark.trio
-async def test_list_versions_ok(alice, alice_backend_sock, vlobs):
-    rep = await vlob_list_versions(alice_backend_sock, vlobs[0])
+async def test_list_versions_ok(alice, alice_ws, vlobs):
+    rep = await vlob_list_versions(alice_ws, vlobs[0])
     assert rep == {
         "status": "ok",
         "versions": {
@@ -515,8 +502,8 @@ async def test_list_versions_ok(alice, alice_backend_sock, vlobs):
 
 
 @pytest.mark.trio
-async def test_list_versions_not_found(alice_backend_sock):
-    rep = await vlob_list_versions(alice_backend_sock, VLOB_ID)
+async def test_list_versions_not_found(alice_ws):
+    rep = await vlob_list_versions(alice_ws, VLOB_ID)
     assert rep == {
         "status": "not_found",
         "reason": "Vlob `00000000000000000000000000000001` doesn't exist",
@@ -525,10 +512,10 @@ async def test_list_versions_not_found(alice_backend_sock):
 
 @pytest.mark.trio
 async def test_list_versions_check_access_rights(
-    backend, alice, bob, bob_backend_sock, realm, vlobs, next_timestamp
+    backend, alice, bob, bob_ws, realm, vlobs, next_timestamp
 ):
     # Not part of the realm
-    rep = await vlob_list_versions(bob_backend_sock, vlobs[0])
+    rep = await vlob_list_versions(bob_ws, vlobs[0])
     assert rep == {"status": "not_allowed"}
 
     for role in RealmRole:
@@ -543,7 +530,7 @@ async def test_list_versions_check_access_rights(
                 granted_on=next_timestamp(),
             ),
         )
-        rep = await vlob_list_versions(bob_backend_sock, vlobs[0])
+        rep = await vlob_list_versions(bob_ws, vlobs[0])
         assert rep["status"] == "ok"
 
     # Ensure user that used to be part of the realm have no longer access
@@ -558,15 +545,15 @@ async def test_list_versions_check_access_rights(
             granted_on=next_timestamp(),
         ),
     )
-    rep = await vlob_list_versions(bob_backend_sock, vlobs[0])
+    rep = await vlob_list_versions(bob_ws, vlobs[0])
     assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio
 async def test_list_versions_other_organization(
-    backend, sock_from_other_organization_factory, vlobs
+    backend_asgi_app, ws_from_other_organization_factory, vlobs
 ):
-    async with sock_from_other_organization_factory(backend) as sock:
+    async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await vlob_list_versions(sock, vlobs[0])
     assert rep == {
         "status": "not_found",
@@ -587,9 +574,9 @@ async def test_list_versions_other_organization(
     ],
 )
 @pytest.mark.trio
-async def test_list_versions_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send(packb({"cmd": "vlob_list_versions", **bad_msg}))
-    raw_rep = await alice_backend_sock.recv()
+async def test_list_versions_bad_msg(alice_ws, bad_msg):
+    await alice_ws.send(packb({"cmd": "vlob_list_versions", **bad_msg}))
+    raw_rep = await alice_ws.receive()
     rep = vlob_list_versions_serializer.rep_loads(raw_rep)
     # Id and trust_seed are invalid anyway, but here we test another layer
     # so it's not important as long as we get our `bad_message` status
@@ -597,7 +584,7 @@ async def test_list_versions_bad_msg(alice_backend_sock, bad_msg):
 
 
 @pytest.mark.trio
-async def test_access_during_maintenance(backend, alice, alice_backend_sock, realm, vlobs):
+async def test_access_during_maintenance(backend, alice, alice_ws, realm, vlobs):
     await backend.realm.start_reencryption_maintenance(
         alice.organization_id,
         alice.device_id,
@@ -608,25 +595,15 @@ async def test_access_during_maintenance(backend, alice, alice_backend_sock, rea
     )
 
     rep = await vlob_create(
-        alice_backend_sock,
-        realm,
-        VLOB_ID,
-        blob=b"First version.",
-        encryption_revision=2,
-        check_rep=False,
+        alice_ws, realm, VLOB_ID, blob=b"First version.", encryption_revision=2, check_rep=False
     )
     assert rep == {"status": "in_maintenance"}
 
-    rep = await vlob_read(alice_backend_sock, vlobs[0], encryption_revision=2)
+    rep = await vlob_read(alice_ws, vlobs[0], encryption_revision=2)
     assert rep == {"status": "in_maintenance"}
 
     rep = await vlob_update(
-        alice_backend_sock,
-        vlobs[0],
-        version=3,
-        blob=b"Next version.",
-        encryption_revision=2,
-        check_rep=False,
+        alice_ws, vlobs[0], version=3, blob=b"Next version.", encryption_revision=2, check_rep=False
     )
     assert rep == {"status": "in_maintenance"}
 
@@ -637,8 +614,8 @@ async def test_vlob_updates_causality_checks(
     alice,
     bob,
     adam,
-    alice_backend_sock,
-    bob_backend_sock,
+    alice_ws,
+    bob_ws,
     realm,
     realm_generate_certif_and_update_roles_or_fail,
     next_timestamp,
@@ -648,14 +625,14 @@ async def test_vlob_updates_causality_checks(
 
     # Grant a role to bob
     rep = await realm_generate_certif_and_update_roles_or_fail(
-        alice_backend_sock, alice, realm, bob.user_id, RealmRole.MANAGER, ref
+        alice_ws, alice, realm, bob.user_id, RealmRole.MANAGER, ref
     )
     assert rep == {"status": "ok"}
 
     # Now bob writes to the corresponding realm with the same timestamp or lower: this should fail
     for timestamp in (ref, ref.subtract(seconds=1)):
         rep = await vlob_create(
-            bob_backend_sock, realm, VLOB_ID, blob=b"ciphered", timestamp=timestamp, check_rep=False
+            bob_ws, realm, VLOB_ID, blob=b"ciphered", timestamp=timestamp, check_rep=False
         )
         assert rep == {"status": "require_greater_timestamp", "strictly_greater_than": ref}
 
@@ -664,13 +641,13 @@ async def test_vlob_updates_causality_checks(
 
     # Bob successfuly write version 1
     rep = await vlob_create(
-        bob_backend_sock, realm, VLOB_ID, blob=b"ciphered", timestamp=ref, check_rep=False
+        bob_ws, realm, VLOB_ID, blob=b"ciphered", timestamp=ref, check_rep=False
     )
     assert rep == {"status": "ok"}
 
     # Now bob writes to the corresponding vlob with a lower timestamp: this should fail
     rep = await vlob_update(
-        bob_backend_sock,
+        bob_ws,
         VLOB_ID,
         version=2,
         blob=b"ciphered",

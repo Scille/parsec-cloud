@@ -392,7 +392,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
 
 @pytest.mark.trio
 async def test_organization_update_expired_field(
-    backend_asgi_app, coolorg, alice, backend_sock_factory
+    backend_asgi_app, coolorg, alice, backend_authenticated_ws_factory
 ):
     organization_id = coolorg.organization_id
 
@@ -417,7 +417,7 @@ async def test_organization_update_expired_field(
 
     # Not longer allowed to use the organization
     with pytest.raises(HandshakeOrganizationExpired):
-        async with backend_sock_factory(backend_asgi_app.backend, alice):
+        async with backend_authenticated_ws_factory(backend_asgi_app, alice):
             pass
 
     # Re-enable the organization
@@ -434,7 +434,7 @@ async def test_organization_update_expired_field(
 
     # Now device can connect to the organization
 
-    async with backend_sock_factory(backend_asgi_app.backend, alice):
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice):
         pass
 
 

@@ -12,8 +12,8 @@ from tests.backend.common import organization_stats
 
 
 @pytest.mark.trio
-async def test_organization_stats_data(alice_backend_sock, realm, realm_factory, alice, backend):
-    stats = await organization_stats(alice_backend_sock)
+async def test_organization_stats_data(alice_ws, realm, realm_factory, alice, backend):
+    stats = await organization_stats(alice_ws)
     assert stats == {
         "status": "ok",
         "data_size": 0,
@@ -39,7 +39,7 @@ async def test_organization_stats_data(alice_backend_sock, realm, realm_factory,
         timestamp=pendulum.now(),
         blob=b"1234",
     )
-    stats = await organization_stats(alice_backend_sock)
+    stats = await organization_stats(alice_ws)
     assert stats == {
         "status": "ok",
         "data_size": 0,
@@ -62,7 +62,7 @@ async def test_organization_stats_data(alice_backend_sock, realm, realm_factory,
         realm_id=realm,
         block=b"1234",
     )
-    stats = await organization_stats(alice_backend_sock)
+    stats = await organization_stats(alice_ws)
     assert stats == {
         "status": "ok",
         "data_size": 4,
@@ -79,7 +79,7 @@ async def test_organization_stats_data(alice_backend_sock, realm, realm_factory,
 
     # create new workspace
     await realm_factory(backend, alice)
-    stats = await organization_stats(alice_backend_sock)
+    stats = await organization_stats(alice_ws)
     assert stats == {
         "status": "ok",
         "data_size": 4,
@@ -98,14 +98,14 @@ async def test_organization_stats_data(alice_backend_sock, realm, realm_factory,
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
 async def test_organization_stats_users(
-    backend,
+    backend_asgi_app,
     backend_data_binder_factory,
     organization_factory,
     local_device_factory,
     otherorg,
-    backend_sock_factory,
+    backend_authenticated_ws_factory,
 ):
-    binder = backend_data_binder_factory(backend)
+    binder = backend_data_binder_factory(backend_asgi_app.backend)
     org = organization_factory("IFD")
     godfrey1 = local_device_factory(
         org=org,
@@ -129,7 +129,7 @@ async def test_organization_stats_users(
         "realms": 0,
     }
 
-    async with backend_sock_factory(backend, godfrey1) as sock:
+    async with backend_authenticated_ws_factory(backend_asgi_app, godfrey1) as sock:
         for profile in UserProfile:
             i = [
                 i
@@ -154,7 +154,7 @@ async def test_organization_stats_users(
     # Also make sure stats are isolated between organizations
     otherorg_device = local_device_factory(org=otherorg, profile=UserProfile.ADMIN)
     await binder.bind_organization(otherorg, otherorg_device, initial_user_manifest="not_synced")
-    async with backend_sock_factory(backend, otherorg_device) as sock:
+    async with backend_authenticated_ws_factory(backend_asgi_app, otherorg_device) as sock:
         stats = await organization_stats(sock)
     assert stats == {
         "status": "ok",

@@ -116,7 +116,7 @@ class ExchangeTestBed:
 
 
 @pytest.fixture
-async def exchange_testbed(backend, alice, alice_backend_sock, backend_invited_sock_factory):
+async def exchange_testbed(backend_asgi_app, alice, alice_ws, backend_invited_ws_factory):
     async def _run_greeter(tb):
         peer_controller = tb.greeter_ctlr
         while True:
@@ -212,18 +212,16 @@ async def exchange_testbed(backend, alice, alice_backend_sock, backend_invited_s
     greeter_privkey = PrivateKey.generate()
     claimer_privkey = PrivateKey.generate()
 
-    invitation = await backend.invite.new_for_device(
+    invitation = await backend_asgi_app.backend.invite.new_for_device(
         organization_id=alice.organization_id,
         greeter_user_id=alice.user_id,
         created_on=datetime(2000, 1, 2),
     )
-    async with backend_invited_sock_factory(
-        backend,
+    async with backend_invited_ws_factory(
+        backend_asgi_app,
         organization_id=alice.organization_id,
         invitation_type=invitation.TYPE,
         token=invitation.token,
-        # claimer gets it connection closed if invitation is deleted
-        freeze_on_transport_error=False,
     ) as claimer_sock:
 
         async with trio.open_nursery() as nursery:
@@ -235,7 +233,7 @@ async def exchange_testbed(backend, alice, alice_backend_sock, backend_invited_s
                 claimer_privkey=claimer_privkey,
                 greeter_ctlr=greeter_ctlr,
                 claimer_ctlr=claimer_ctlr,
-                greeter_sock=alice_backend_sock,
+                greeter_sock=alice_ws,
                 claimer_sock=claimer_sock,
             )
             nursery.start_soon(_run_greeter, tb)

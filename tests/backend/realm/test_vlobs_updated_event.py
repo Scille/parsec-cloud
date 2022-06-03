@@ -18,9 +18,7 @@ REALM_ID = RealmID.from_hex("0000000000000000000000000000000A")
 
 
 @pytest.mark.trio
-async def test_vlobs_updated_event_ok(
-    backend, alice_backend_sock, alice, alice2, realm, other_realm
-):
+async def test_vlobs_updated_event_ok(backend, alice_ws, alice, alice2, realm, other_realm):
     # Not listened events
     with backend.event_bus.listen() as spy:
         await backend.vlob.create(
@@ -35,7 +33,7 @@ async def test_vlobs_updated_event_ok(
         await spy.wait_with_timeout(BackendEvent.REALM_VLOBS_UPDATED)
 
     # Start listening events
-    await events_subscribe(alice_backend_sock)
+    await events_subscribe(alice_ws)
 
     # Good events
     with backend.event_bus.listen() as spy:
@@ -112,10 +110,10 @@ async def test_vlobs_updated_event_ok(
         )
 
     reps = [
-        await events_listen_nowait(alice_backend_sock),
-        await events_listen_nowait(alice_backend_sock),
-        await events_listen_nowait(alice_backend_sock),
-        await events_listen_nowait(alice_backend_sock),
+        await events_listen_nowait(alice_ws),
+        await events_listen_nowait(alice_ws),
+        await events_listen_nowait(alice_ws),
+        await events_listen_nowait(alice_ws),
     ]
     assert reps == [
         {
@@ -147,8 +145,8 @@ async def test_vlobs_updated_event_ok(
 
 
 @pytest.mark.trio
-async def test_vlobs_updated_event_handle_self_events(backend, alice_backend_sock, alice, realm):
-    await events_subscribe(alice_backend_sock)
+async def test_vlobs_updated_event_handle_self_events(backend, alice_ws, alice, realm):
+    await events_subscribe(alice_ws)
 
     with backend.event_bus.listen() as spy:
 
@@ -191,13 +189,13 @@ async def test_vlobs_updated_event_handle_self_events(backend, alice_backend_soc
         )
 
     # Self-events should have been ignored
-    rep = await events_listen_nowait(alice_backend_sock)
+    rep = await events_listen_nowait(alice_ws)
     assert rep == {"status": "no_events"}
 
 
 @pytest.mark.trio
-async def test_vlobs_updated_event_not_participant(backend, alice_backend_sock, bob, bob_realm):
-    await events_subscribe(alice_backend_sock)
+async def test_vlobs_updated_event_not_participant(backend, alice_ws, bob, bob_realm):
+    await events_subscribe(alice_ws)
 
     with backend.event_bus.listen() as spy:
 
@@ -225,17 +223,17 @@ async def test_vlobs_updated_event_not_participant(backend, alice_backend_sock, 
             [BackendEvent.REALM_VLOBS_UPDATED, BackendEvent.REALM_VLOBS_UPDATED]
         )
 
-    rep = await events_listen_nowait(alice_backend_sock)
+    rep = await events_listen_nowait(alice_ws)
     assert rep == {"status": "no_events"}
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("realm_created_by_self", (True, False))
 async def test_vlobs_updated_event_realm_created_after_subscribe(
-    backend, alice_backend_sock, alice, alice2, realm_created_by_self
+    backend, alice_ws, alice, alice2, realm_created_by_self
 ):
     realm_id = RealmID.from_hex("0000000000000000000000000000000A")
-    await events_subscribe(alice_backend_sock)
+    await events_subscribe(alice_ws)
 
     # New realm, should get events anyway
     with backend.event_bus.listen() as spy:
@@ -283,7 +281,7 @@ async def test_vlobs_updated_event_realm_created_after_subscribe(
         )
 
     # Realm access granted
-    rep = await events_listen_nowait(alice_backend_sock)
+    rep = await events_listen_nowait(alice_ws)
     assert rep == {
         "status": "ok",
         "event": APIEvent.REALM_ROLES_UPDATED,
@@ -293,7 +291,7 @@ async def test_vlobs_updated_event_realm_created_after_subscribe(
 
     # Create vlob in realm event
     if not realm_created_by_self:
-        rep = await events_listen_nowait(alice_backend_sock)
+        rep = await events_listen_nowait(alice_ws)
         assert rep == {
             "status": "ok",
             "event": APIEvent.REALM_VLOBS_UPDATED,
@@ -304,7 +302,7 @@ async def test_vlobs_updated_event_realm_created_after_subscribe(
         }
 
     # Update vlob in realm event
-    rep = await events_listen_nowait(alice_backend_sock)
+    rep = await events_listen_nowait(alice_ws)
     assert rep == {
         "status": "ok",
         "event": APIEvent.REALM_VLOBS_UPDATED,
@@ -314,5 +312,5 @@ async def test_vlobs_updated_event_realm_created_after_subscribe(
         "src_version": 2,
     }
 
-    rep = await events_listen_nowait(alice_backend_sock)
+    rep = await events_listen_nowait(alice_ws)
     assert rep == {"status": "no_events"}

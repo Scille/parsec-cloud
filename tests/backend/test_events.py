@@ -3,8 +3,9 @@
 import pytest
 import trio
 
+from quart.testing.connections import WebsocketDisconnectError
+
 from parsec.api.protocol import APIEvent
-from parsec.api.transport import TransportError
 from parsec.backend.backend_events import BackendEvent
 
 from tests.backend.common import (
@@ -20,14 +21,14 @@ from tests.backend.common import (
 @pytest.mark.trio
 @pytest.mark.parametrize("revoked_during", ("idle", "listen_event"))
 async def test_cancel_connection_after_events_subscribe(
-    backend, backend_sock_factory, bob, alice, revoked_during
+    backend_asgi_app, backend_authenticated_ws_factory, bob, alice, revoked_during
 ):
     # The event system is also used to detect a connection should be dropped
     # given the corresponding device has been revoked.
     # Let's make sure `events_subscribe` command plays well with this behavior.
 
     async def _do_revoke():
-        await backend.user.revoke_user(
+        await backend_asgi_app.backend.user.revoke_user(
             organization_id=bob.organization_id,
             user_id=bob.user_id,
             revoked_user_certificate=b"wathever",
@@ -37,69 +38,67 @@ async def test_cancel_connection_after_events_subscribe(
         # for things to settle down to make sure there is no pending event
         await trio.testing.wait_all_tasks_blocked()
 
-    async with backend_sock_factory(
-        backend, bob, freeze_on_transport_error=False
-    ) as bob_backend_sock:
+    async with backend_authenticated_ws_factory(backend_asgi_app, bob) as bob_backend_sock:
 
         await events_subscribe(bob_backend_sock)
 
         if revoked_during == "listen_event":
-            with pytest.raises(TransportError):
+            with pytest.raises(WebsocketDisconnectError):
                 async with events_listen(bob_backend_sock):
                     await _do_revoke()
 
         else:
             await _do_revoke()
-            with pytest.raises(TransportError):
+            with pytest.raises(WebsocketDisconnectError):
                 async with real_clock_timeout():
                     await events_listen_wait(bob_backend_sock)
 
 
 @pytest.mark.trio
-async def test_events_subscribe(backend, alice_backend_sock, alice2_backend_sock):
-    await events_subscribe(alice_backend_sock)
+async def test_events_subscribe(backend, alice_ws, alice2_ws):
+    await events_subscribe(alice_ws)
 
     # Should ignore our own events
     with backend.event_bus.listen() as spy:
-        await ping(alice_backend_sock, "bar")
-        await ping(alice2_backend_sock, "foo")
+        await ping(alice_ws, "bar")
+        await ping(alice2_ws, "foo")
 
         # No guarantees those events occur before the commands' return
         await spy.wait_multiple_with_timeout([BackendEvent.PINGED, BackendEvent.PINGED])
 
-    rep = await events_listen_nowait(alice_backend_sock)
+    rep = await events_listen_nowait(alice_ws)
     assert rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "foo"}
-    rep = await events_listen_nowait(alice_backend_sock)
+    rep = await events_listen_nowait(alice_ws)
     assert rep == {"status": "no_events"}
 
 
 @pytest.mark.trio
-async def test_event_resubscribe(backend, alice_backend_sock, alice2_backend_sock):
-    await events_subscribe(alice_backend_sock)
+async def test_event_resubscribe(backend, alice_ws, alice2_ws):
+    await events_subscribe(alice_ws)
 
     with backend.event_bus.listen() as spy:
-        await ping(alice2_backend_sock, "foo")
+        await ping(alice2_ws, "foo")
 
         # No guarantees those events occur before the commands' return
         await spy.wait_with_timeout(BackendEvent.PINGED)
 
     # Resubscribing should have no effect
-    await events_subscribe(alice_backend_sock)
+    await events_subscribe(alice_ws)
 
     with backend.event_bus.listen() as spy:
-        await ping(alice2_backend_sock, "bar")
-        await ping(alice2_backend_sock, "spam")
+        await ping(alice2_ws, "bar")
+        await ping(alice2_ws, "spam")
 
         # No guarantees those events occur before the commands' return
         await spy.wait_multiple_with_timeout([BackendEvent.PINGED, BackendEvent.PINGED])
 
-    rep = await events_listen_nowait(alice_backend_sock)
+    rep = await events_listen_nowait(alice_ws)
     assert rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "foo"}
-    rep = await events_listen_nowait(alice_backend_sock)
+    rep = await events_listen_nowait(alice_ws)
     assert rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "bar"}
-    rep = await events_listen_nowait(alice_backend_sock)
+    rep = await events_listen_nowait(alice_ws)
     assert rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "spam"}
-    rep = await events_listen_nowait(alice_backend_sock)
+    rep = await events_listen_nowait(alice_ws)
     assert rep == {"status": "no_events"}
 
 

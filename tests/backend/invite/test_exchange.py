@@ -36,9 +36,9 @@ async def invitation(backend, alice):
 
 
 @pytest.fixture
-async def invited_sock(backend, backend_invited_sock_factory, alice, invitation):
-    async with backend_invited_sock_factory(
-        backend,
+async def invited_sock(backend_asgi_app, backend_invited_ws_factory, alice, invitation):
+    async with backend_invited_ws_factory(
+        backend_asgi_app,
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -78,7 +78,7 @@ class PeerControler:
 
 
 @pytest.fixture
-async def exchange_testbed(alice_backend_sock, invitation, invited_sock):
+async def exchange_testbed(alice_ws, invitation, invited_sock):
     greeter_privkey = PrivateKey.generate()
     claimer_privkey = PrivateKey.generate()
 
@@ -89,38 +89,38 @@ async def exchange_testbed(alice_backend_sock, invitation, invited_sock):
             if order == "1_wait_peer":
                 await peer_controller.peer_do(
                     invite_1_greeter_wait_peer,
-                    alice_backend_sock,
+                    alice_ws,
                     token=invitation.token,
                     greeter_public_key=greeter_privkey.public_key,
                 )
 
             elif order == "2a_get_hashed_nonce":
                 await peer_controller.peer_do(
-                    invite_2a_greeter_get_hashed_nonce, alice_backend_sock, token=invitation.token
+                    invite_2a_greeter_get_hashed_nonce, alice_ws, token=invitation.token
                 )
 
             elif order == "2b_send_nonce":
                 await peer_controller.peer_do(
                     invite_2b_greeter_send_nonce,
-                    alice_backend_sock,
+                    alice_ws,
                     token=invitation.token,
                     greeter_nonce=b"<greeter_nonce>",
                 )
 
             elif order == "3a_wait_peer_trust":
                 await peer_controller.peer_do(
-                    invite_3a_greeter_wait_peer_trust, alice_backend_sock, token=invitation.token
+                    invite_3a_greeter_wait_peer_trust, alice_ws, token=invitation.token
                 )
 
             elif order == "3b_signify_trust":
                 await peer_controller.peer_do(
-                    invite_3b_greeter_signify_trust, alice_backend_sock, token=invitation.token
+                    invite_3b_greeter_signify_trust, alice_ws, token=invitation.token
                 )
 
             elif order == "4_communicate":
                 await peer_controller.peer_do(
                     invite_4_greeter_communicate,
-                    alice_backend_sock,
+                    alice_ws,
                     token=invitation.token,
                     payload=order_arg,
                 )
@@ -508,18 +508,18 @@ async def test_conduit_exchange_reset(exchange_testbed):
 
 @pytest.mark.trio
 async def test_claimer_step_1_retry(
-    backend, alice, backend_invited_sock_factory, alice_backend_sock, invitation
+    backend_asgi_app, alice, backend_invited_ws_factory, alice_ws, invitation
 ):
     greeter_privkey = PrivateKey.generate()
     claimer_privkey = PrivateKey.generate()
 
-    async with backend_invited_sock_factory(
-        backend,
+    async with backend_invited_ws_factory(
+        backend_asgi_app,
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     ) as invited_sock:
-        with backend.event_bus.listen() as spy:
+        with backend_asgi_app.backend.event_bus.listen() as spy:
             with trio.CancelScope() as cancel_scope:
                 async with invite_1_claimer_wait_peer.async_call(
                     invited_sock, claimer_public_key=claimer_privkey.public_key
@@ -535,14 +535,14 @@ async def test_claimer_step_1_retry(
                     cancel_scope.cancel()
 
     # Now retry the first step with a new connection
-    async with backend_invited_sock_factory(
-        backend,
+    async with backend_invited_ws_factory(
+        backend_asgi_app,
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     ) as invited_sock:
         async with real_clock_timeout():
-            with backend.event_bus.listen() as spy:
+            with backend_asgi_app.backend.event_bus.listen() as spy:
                 async with invite_1_claimer_wait_peer.async_call(
                     invited_sock, claimer_public_key=claimer_privkey.public_key
                 ) as claimer_async_rep:
@@ -557,7 +557,7 @@ async def test_claimer_step_1_retry(
                         },
                     )
                     greeter_rep = await invite_1_greeter_wait_peer(
-                        alice_backend_sock,
+                        alice_ws,
                         token=invitation.token,
                         greeter_public_key=greeter_privkey.public_key,
                     )
@@ -573,7 +573,7 @@ async def test_claimer_step_1_retry(
 
 @pytest.mark.trio
 async def test_claimer_step_2_retry(
-    backend, alice, backend_sock_factory, alice_backend_sock, invitation, invited_sock
+    backend_asgi_app, alice, backend_authenticated_ws_factory, alice_ws, invitation, invited_sock
 ):
     greeter_privkey = PrivateKey.generate()
     claimer_privkey = PrivateKey.generate()
@@ -583,9 +583,7 @@ async def test_claimer_step_2_retry(
     # Step 1
     async with real_clock_timeout():
         async with invite_1_greeter_wait_peer.async_call(
-            alice_backend_sock,
-            token=invitation.token,
-            greeter_public_key=greeter_privkey.public_key,
+            alice_ws, token=invitation.token, greeter_public_key=greeter_privkey.public_key
         ) as greeter_async_rep:
             claimer_rep = await invite_1_claimer_wait_peer(
                 invited_sock, claimer_public_key=claimer_privkey.public_key
@@ -598,10 +596,10 @@ async def test_claimer_step_2_retry(
 
     # Greeter initiates step 2a...
     async with real_clock_timeout():
-        with backend.event_bus.listen() as spy:
+        with backend_asgi_app.backend.event_bus.listen() as spy:
 
             async with invite_2a_greeter_get_hashed_nonce.async_call(
-                alice_backend_sock, token=invitation.token
+                alice_ws, token=invitation.token
             ) as greeter_2a_async_rep:
                 await spy.wait_with_timeout(
                     BackendEvent.INVITE_CONDUIT_UPDATED,
@@ -609,7 +607,9 @@ async def test_claimer_step_2_retry(
                 )
 
                 # ...but changes his mind and reset from another connection !
-                async with backend_sock_factory(backend, alice) as alice_backend_sock2:
+                async with backend_authenticated_ws_factory(
+                    backend_asgi_app, alice
+                ) as alice_backend_sock2:
                     async with invite_1_greeter_wait_peer.async_call(
                         alice_backend_sock2,
                         token=invitation.token,
@@ -644,15 +644,13 @@ async def test_claimer_step_2_retry(
             # Finally retry and achieve step 2
 
             async def _claimer_step_2():
-                rep = await invite_2a_greeter_get_hashed_nonce(
-                    alice_backend_sock, token=invitation.token
-                )
+                rep = await invite_2a_greeter_get_hashed_nonce(alice_ws, token=invitation.token)
                 assert rep == {
                     "status": "ok",
                     "claimer_hashed_nonce": HashDigest.from_data(b"<retry_nonce>"),
                 }
                 rep = await invite_2b_greeter_send_nonce(
-                    alice_backend_sock, token=invitation.token, greeter_nonce=b"greeter nonce"
+                    alice_ws, token=invitation.token, greeter_nonce=b"greeter nonce"
                 )
                 assert rep == {"status": "ok", "claimer_nonce": b"claimer nonce"}
 

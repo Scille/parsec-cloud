@@ -16,19 +16,19 @@ from tests.backend.common import (
 
 @pytest.mark.trio
 async def test_greeter_event_on_claimer_join_and_leave(
-    alice, backend, bob_backend_sock, alice_backend_sock, backend_invited_sock_factory
+    alice, backend_asgi_app, bob_ws, alice_ws, backend_invited_ws_factory
 ):
-    invitation = await backend.invite.new_for_device(
+    invitation = await backend_asgi_app.backend.invite.new_for_device(
         organization_id=alice.organization_id,
         greeter_user_id=alice.user_id,
         created_on=datetime(2000, 1, 2),
     )
 
-    await events_subscribe(alice_backend_sock)
-    await events_subscribe(bob_backend_sock)
+    await events_subscribe(alice_ws)
+    await events_subscribe(bob_ws)
 
-    async with backend_invited_sock_factory(
-        backend,
+    async with backend_invited_ws_factory(
+        backend_asgi_app,
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -37,11 +37,11 @@ async def test_greeter_event_on_claimer_join_and_leave(
         # Claimer is ready, this should be notified to greeter
 
         async with real_clock_timeout():
-            rep = await events_listen_wait(alice_backend_sock)
+            rep = await events_listen_wait(alice_ws)
             # PostgreSQL event dispatching might be lagging behind and return
             # the IDLE event first
             if rep.get("invitation_status") == InvitationStatus.IDLE:
-                rep = await events_listen_wait(alice_backend_sock)
+                rep = await events_listen_wait(alice_ws)
         assert rep == {
             "status": "ok",
             "event": APIEvent.INVITE_STATUS_CHANGED,
@@ -50,10 +50,10 @@ async def test_greeter_event_on_claimer_join_and_leave(
         }
 
         # No other authenticated users should be notified
-        rep = await events_listen_nowait(bob_backend_sock)
+        rep = await events_listen_nowait(bob_ws)
         assert rep == {"status": "no_events"}
 
-        rep = await invite_list(alice_backend_sock)
+        rep = await invite_list(alice_ws)
         assert rep == {
             "status": "ok",
             "invitations": [
@@ -68,7 +68,7 @@ async def test_greeter_event_on_claimer_join_and_leave(
 
     # Now claimer has left, greeter should be again notified
     async with real_clock_timeout():
-        rep = await events_listen_wait(alice_backend_sock)
+        rep = await events_listen_wait(alice_ws)
     assert rep == {
         "status": "ok",
         "event": APIEvent.INVITE_STATUS_CHANGED,
@@ -76,7 +76,7 @@ async def test_greeter_event_on_claimer_join_and_leave(
         "invitation_status": InvitationStatus.IDLE,
     }
 
-    rep = await invite_list(alice_backend_sock)
+    rep = await invite_list(alice_ws)
     assert rep == {
         "status": "ok",
         "invitations": [

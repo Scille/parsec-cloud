@@ -68,7 +68,7 @@ async def anonymous_api(raw_organization_id: str):
     try:
         if not isinstance(cmd, str):
             raise KeyError()
-        cmd_func = backend.apis[ClientType.ANONYMOUS]
+        cmd_func = backend.apis[ClientType.ANONYMOUS][cmd]
     except KeyError:
         return rpc_msgpack_rep({"status": "unknown_command"})
 

@@ -19,7 +19,7 @@ from tests.backend.common import (
 
 @pytest.mark.trio
 @pytest.mark.parametrize("reason", ("deleted_invitation", "unknown_token"))
-async def test_greeter_exchange_bad_access(alice, backend, alice_backend_sock, reason):
+async def test_greeter_exchange_bad_access(alice, backend, alice_ws, reason):
     if reason == "deleted_invitation":
         invitation = await backend.invite.new_for_device(
             organization_id=alice.organization_id, greeter_user_id=alice.user_id
@@ -51,5 +51,5 @@ async def test_greeter_exchange_bad_access(alice, backend, alice_backend_sock, r
         (invite_4_greeter_communicate, {"token": token, "payload": b"<payload>"}),
     ]:
         async with real_clock_timeout():
-            rep = await command(alice_backend_sock, **params)
+            rep = await command(alice_ws, **params)
         assert rep == {"status": status}

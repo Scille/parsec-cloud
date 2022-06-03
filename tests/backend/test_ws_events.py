@@ -10,7 +10,7 @@ from parsec.api.protocol import events_listen_serializer, ping_serializer
 
 @pytest.mark.trio
 async def test_events_listen_wait_has_watchdog(
-    monkeypatch, frozen_clock, running_backend, backend_sock_factory, alice
+    monkeypatch, frozen_clock, backend_asgi_app, backend_authenticated_ws_factory, alice
 ):
     KEEPALIVE_TIME = 30  # Autojump clock, so we won't wait for that long
     # Spy on the transport events to detect the wsproto events
@@ -41,9 +41,7 @@ async def test_events_listen_wait_has_watchdog(
         # and send Ping events from time to time
         await client_transport.recv()
 
-    async with backend_sock_factory(
-        running_backend.backend, alice, keepalive=KEEPALIVE_TIME, freeze_on_transport_error=False
-    ) as client_transport:
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice) as client_transport:
 
         # The backend should upgrade the websocket connection
         backend_transport, event = await next_ws_proto_related_event(expected_event_type=Request)

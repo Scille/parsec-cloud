@@ -15,6 +15,7 @@ from hypothesis_trio.stateful import (
 from unittest.mock import ANY
 
 from parsec import IS_OXIDIZED
+from parsec.backend.asgi import app_factory
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import RealmRole
 
@@ -30,7 +31,7 @@ def test_shuffle_roles(
     backend_factory,
     server_factory,
     backend_data_binder_factory,
-    backend_sock_factory,
+    backend_authenticated_ws_factory,
     local_device_factory,
     realm_factory,
     coolorg,
@@ -49,22 +50,23 @@ def test_shuffle_roles(
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)
 
         @property
-        def backend(self):
-            return self.backend_controller.backend
+        def backend_asgi_app(self):
+            return self._backend_asgi_app
 
         @initialize(target=User)
         async def init(self):
             await reset_testbed()
             self.backend_controller = await self.start_backend()
             self.org = self.backend_controller.server.correct_addr(coolorg)
+            self._backend_asgi_app = app_factory(self.backend_controller.backend)
             device = local_device_factory(org=self.org)
 
             # Create organization and first user
-            self.backend_data_binder = backend_data_binder_factory(self.backend)
+            self.backend_data_binder = backend_data_binder_factory(self.backend_asgi_app.backend)
             await self.backend_data_binder.bind_organization(self.org, device)
 
             # Create realm
-            self.realm_id = await realm_factory(self.backend, device)
+            self.realm_id = await realm_factory(self.backend_asgi_app.backend, device)
             self.current_roles = {device.user_id: RealmRole.OWNER}
             self.certifs = [ANY]
 
@@ -78,7 +80,7 @@ def test_shuffle_roles(
                 pass
 
             async def _start_sock(device, *, task_status=trio.TASK_STATUS_IGNORED):
-                async with backend_sock_factory(self.backend, device) as sock:
+                async with backend_authenticated_ws_factory(self.backend_asgi_app, device) as sock:
                     task_status.started(sock)
                     await trio.sleep_forever()
 
@@ -157,7 +159,7 @@ def test_shuffle_roles(
         @invariant()
         async def check_current_roles(self):
             try:
-                backend = self.backend
+                backend = self.backend_agi_app.backend
             except AttributeError:
                 return
             roles = await backend.realm.get_current_roles(self.org.organization_id, self.realm_id)
