@@ -2,3 +2,4 @@
 
 [print_schema]
 file = "src/schema.rs"
+patch_file = "src/schema.rs.patch"
