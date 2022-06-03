@@ -2371,6 +2371,7 @@ dependencies = [
  "parsec_api_protocol",
  "parsec_api_types",
  "parsec_client_types",
+ "rand 0.8.5",
  "rstest 0.13.0",
 ]
 

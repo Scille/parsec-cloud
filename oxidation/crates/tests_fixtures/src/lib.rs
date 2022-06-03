@@ -5,6 +5,7 @@ mod trustchain;
 pub use trustchain::*;
 
 use hex_literal::hex;
+use rand::Rng;
 use rstest::fixture;
 
 use parsec_api_crypto::*;
@@ -153,4 +154,33 @@ pub fn mallory(coolorg: &Organization) -> Device {
         user_manifest_key: SecretKey::generate(),
         local_symkey: SecretKey::generate(),
     }
+}
+
+#[fixture]
+#[once]
+pub fn manifest_dir() -> std::path::PathBuf {
+    std::env::var("CARGO_MANIFEST_DIR")
+        .expect("CARGO_MANIFEST_DIR should be set")
+        .parse()
+        .expect("CARGO_MANIFEST_DIR must be a valid path")
+}
+
+pub struct TempPath(pub String);
+
+impl TempPath {
+    pub fn generate(&self, path: &str) -> String {
+        self.0.clone() + path
+    }
+}
+
+impl Drop for TempPath {
+    fn drop(&mut self) {
+        std::fs::remove_dir_all(&self.0).unwrap();
+    }
+}
+
+#[fixture]
+pub fn tmp() -> TempPath {
+    let mut rng = rand::thread_rng();
+    TempPath(format!("/tmp/rstest/{:016x}/", rng.gen::<u128>()))
 }

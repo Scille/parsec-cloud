@@ -545,13 +545,17 @@ mod tests {
     use parsec_api_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
     use parsec_client_types::{Chunk, LocalFileManifest};
 
+    use rstest::rstest;
+    use tests_fixtures::{tmp, TempPath};
+
     use super::*;
     use crate::storage::local_database::SqlitePool;
 
-    #[test]
-    fn manifest_storage() {
+    #[rstest]
+    fn manifest_storage(tmp: TempPath) {
+        let db_path = tmp.generate("manifest_storage.sqlite");
         let now = DateTime::now();
-        let pool = SqlitePool::new("/tmp/manifest_storage.sqlite").unwrap();
+        let pool = SqlitePool::new(db_path).unwrap();
         let conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();

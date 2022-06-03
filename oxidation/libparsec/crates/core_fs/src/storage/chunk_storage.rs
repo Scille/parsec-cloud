@@ -327,12 +327,16 @@ mod tests {
     use std::collections::HashSet;
     use uuid::Uuid;
 
-    use super::super::local_database::SqlitePool;
-    use super::*;
+    use rstest::rstest;
+    use tests_fixtures::{tmp, TempPath};
 
-    #[test]
-    fn chunk_storage() {
-        let pool = SqlitePool::new("/tmp/chunk_storage.sqlite").unwrap();
+    use super::*;
+    use crate::storage::local_database::SqlitePool;
+
+    #[rstest]
+    fn chunk_storage(tmp: TempPath) {
+        let db_path = tmp.generate("chunk_storage.sqlite");
+        let pool = SqlitePool::new(db_path).unwrap();
         let conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
 

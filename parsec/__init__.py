@@ -9,7 +9,7 @@ __all__ = ("__version__",)
 
 try:
     import libparsec  # noqa
-except:
+except ImportError:
     IS_OXIDIZED = False
 else:
     IS_OXIDIZED = True

@@ -99,16 +99,18 @@ mod tests {
 
     use parsec_api_crypto::SecretKey;
     use parsec_api_types::{DateTime, UserManifest};
+
     use rstest::rstest;
-    use tests_fixtures::{alice, Device};
+    use tests_fixtures::{alice, tmp, Device, TempPath};
 
     use super::super::local_database::SqlitePool;
     use super::*;
 
     #[rstest]
-    fn user_storage(alice: &Device) {
+    fn user_storage(alice: &Device, tmp: TempPath) {
+        let db_path = tmp.generate("/user_storage.sqlite");
         let now = DateTime::now();
-        let pool = SqlitePool::new("/tmp/manifest_storage.sqlite").unwrap();
+        let pool = SqlitePool::new(db_path).unwrap();
         let conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();

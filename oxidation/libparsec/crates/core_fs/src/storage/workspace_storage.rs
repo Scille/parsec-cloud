@@ -315,14 +315,15 @@ impl WorkspaceStorage {
 #[cfg(test)]
 mod tests {
     use rstest::rstest;
-    use tests_fixtures::{alice, Device};
+    use tests_fixtures::{alice, tmp, Device, TempPath};
 
     use super::*;
 
     #[rstest]
-    fn workspace_storage(alice: &Device) {
+    fn workspace_storage(alice: &Device, tmp: TempPath) {
+        let db_path = tmp.generate("workspace_storage");
         let _workspace_storage = WorkspaceStorage::new(
-            &Path::new("/tmp/workspace_storage/"),
+            &Path::new(&db_path),
             alice.local_device(),
             EntryID::default(),
             DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
