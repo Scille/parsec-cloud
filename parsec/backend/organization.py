@@ -59,6 +59,7 @@ class Organization:
     root_verify_key: Optional[VerifyKey]
     user_profile_outsider_allowed: bool
     active_users_limit: Optional[int]
+    tpek_verify_key: Optional[VerifyKey]
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
@@ -158,7 +159,7 @@ class BaseOrganizationComponent:
 
         bootstrap_token = msg["bootstrap_token"]
         root_verify_key = msg["root_verify_key"]
-        tpek_x509_certificate_verify_key = msg["tpek_x509_certificate_verify_key"]
+        tpek_verify_key = msg["tpek_verify_key"]
 
         try:
             u_data = UserCertificateContent.verify_and_load(
@@ -183,6 +184,7 @@ class BaseOrganizationComponent:
                     author_verify_key=root_verify_key,
                     expected_author=None,
                 )
+            # TODO: Verify tpek_verify_key
 
         except DataError as exc:
             return {
@@ -271,7 +273,7 @@ class BaseOrganizationComponent:
                 first_device,
                 bootstrap_token,
                 root_verify_key,
-                tpek_x509_certificate_verify_key,
+                tpek_verify_key,
             )
 
         except OrganizationAlreadyBootstrappedError:
@@ -324,7 +326,7 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        tpek_x509_certificate_verify_key: bytes,
+        tpek_verify_key: VerifyKey,
     ) -> None:
         """
         Raises:

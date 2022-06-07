@@ -75,6 +75,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             root_verify_key=None,
             active_users_limit=active_users_limit,
             user_profile_outsider_allowed=user_profile_outsider_allowed,
+            tpek_verify_key=None,
         )
 
     async def get(self, id: OrganizationID) -> Organization:
@@ -89,7 +90,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        tpek_x509_certificate_verify_key: bytes,
+        tpek_verify_key: VerifyKey,
     ) -> None:
         # Organization bootstrap involves multiple modifications (in user,
         # device and organization) and is not atomic (given await is used),
@@ -111,7 +112,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 raise OrganizationFirstUserCreationError(exc) from exc
 
             self._organizations[organization.organization_id] = organization.evolve(
-                root_verify_key=root_verify_key
+                root_verify_key=root_verify_key, tpek_verify_key=tpek_verify_key
             )
 
     async def stats(self, id: OrganizationID) -> OrganizationStats:
