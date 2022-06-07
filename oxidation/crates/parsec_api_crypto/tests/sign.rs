@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use hex_literal::hex;
-// use pretty_assertions::assert_eq;
+use pretty_assertions::assert_eq;
 use serde_test::{assert_tokens, Token};
 use std::convert::TryFrom;
 
