@@ -276,6 +276,10 @@ impl Deref for Blocksize {
     }
 }
 
+/*
+ * FileManifest
+ */
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "FileManifestData", try_from = "FileManifestData")]
 pub struct FileManifest {
@@ -335,6 +339,10 @@ impl From<FileManifest> for FileManifestData {
     }
 }
 
+/*
+ * FolderManifest
+ */
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "FolderManifestData", from = "FolderManifestData")]
 pub struct FolderManifest {
@@ -367,6 +375,10 @@ impl_transparent_data_format_conversion!(
     children,
 );
 
+/*
+ * WorkspaceManifest
+ */
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "WorkspaceManifestData", from = "WorkspaceManifestData")]
 pub struct WorkspaceManifest {
@@ -396,6 +408,10 @@ impl_transparent_data_format_conversion!(
     updated,
     children,
 );
+
+/*
+ * UserManifest
+ */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "UserManifestData", from = "UserManifestData")]
