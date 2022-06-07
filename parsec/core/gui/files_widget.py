@@ -172,6 +172,7 @@ async def _do_folder_stat(workspace_fs, path, default_selection):
     for child in dir_stat["children"]:
         try:
             child_stat = await workspace_fs.path_info(path / child)
+            await trio.sleep(1)
         except FSFileNotFoundError:
             # The child entry as been concurrently removed, just ignore it
             continue
@@ -648,7 +649,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         )
 
     def load(self, directory, default_selection=None):
-        #self.spinner.show()
+        self.spinner.show()
+        self.spinner.start()
         self.table_files.setEnabled(False)
         self.current_directory = directory
         self.current_directory_id = None
@@ -944,7 +946,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             old_selection = [x.name for x in self.table_files.selected_files()]
 
         self.table_files.clear()
-        #self.spinner.hide()
         old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
         old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
         self.table_files.setSortingEnabled(False)
@@ -987,6 +988,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if default_selection and not file_found:
             show_error(self, _("TEXT_FILE_GOTO_LINK_NOT_FOUND"))
         workspace_name = self.workspace_fs.get_workspace_name()
+        self.spinner.hide()
+        self.spinner.stop()
         self.table_files.setEnabled(True)
         self.folder_changed.emit(workspace_name, str(self.current_directory))
 
@@ -994,7 +997,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.clear()
         self.table_files.setEnabled(True)
         
-#        self.spinner.hide()
+        self.spinner.hide()
+        self.spinner.stop()
         if isinstance(job.exc, FSFileNotFoundError):
             show_error(self, _("TEXT_FILE_FOLDER_NOT_FOUND"))
             self.table_files.add_parent_workspace()

@@ -958,6 +958,26 @@
         <file>images/icons/spinner.svg</file>
         <file>images/material/engineering.svg</file>
         <file>images/material/manage_accounts.svg</file>
+        <file>images/icons/frame-1.png</file>        
+        <file>images/icons/frame-2.png</file>        
+        <file>images/icons/frame-3.png</file>        
+        <file>images/icons/frame-4.png</file>        
+        <file>images/icons/frame-5.png</file>        
+        <file>images/icons/frame-6.png</file>        
+        <file>images/icons/frame-7.png</file>        
+        <file>images/icons/frame-8.png</file>        
+        <file>images/icons/frame-9.png</file>        
+        <file>images/icons/frame-10.png</file>        
+        <file>images/icons/frame-11.png</file>        
+        <file>images/icons/frame-12.png</file>        
+        <file>images/icons/frame-13.png</file>        
+        <file>images/icons/frame-14.png</file>        
+        <file>images/icons/frame-15.png</file>        
+        <file>images/icons/frame-16.png</file>        
+        <file>images/icons/frame-17.png</file>        
+        <file>images/icons/frame-18.png</file>        
+        <file>images/icons/frame-19.png</file>        
+        <file>images/icons/frame-20.png</file>                
     </qresource>
     <qresource prefix="/file_ext">
         <file>images/file_formats/3dm-file-format.svg</file>

@@ -4,7 +4,7 @@ import math
 
 from enum import Enum
 
-from PyQt5.QtCore import Qt, pyqtSignal, QSize
+from PyQt5.QtCore import Qt, pyqtSignal, QSize, QTimer
 from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor, QPixmap, QFont, QFontMetrics
 from PyQt5.QtWidgets import (
     QPushButton,
@@ -24,11 +24,34 @@ from parsec.core.gui.ui.spinner_widget import Ui_SpinnerWidget
 
 
 class SpinnerWidget(QWidget, Ui_SpinnerWidget):
+    FRAMES = []
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setupUi(self)
-        self.spinner = QSvgWidget(":/icons/images/icons/spinner.svg")
+        if not self.FRAMES:
+            for i in range(1, 20):
+                self.FRAMES.append(QPixmap(f":/icons/images/icons/frame-{i}.png")) 
+        self.spinner = QLabel()
+        self.current_frame = 0
+        self.timer = QTimer()
+        self.timer.setInterval(200)
+        self.timer.setSingleShot(False)
+        self.timer.timeout.connect(self._on_timeout)
+        self.spinner.setPixmap(self.FRAMES[self.current_frame])
         self.widget.layout().insertWidget(1, self.spinner)
+
+    def _on_timeout(self):
+        self.current_frame += 1
+        if self.current_frame >= len(self.FRAMES):
+            self.current_frame = 0
+        self.spinner.setPixmap(self.FRAMES[self.current_frame])
+
+    def start(self):
+        self.timer.start()
+
+    def stop(self):
+        self.timer.stop()
 
 
 class CenteredSpinnerWidget(SpinnerWidget):
