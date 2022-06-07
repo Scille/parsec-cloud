@@ -319,7 +319,7 @@ jobs:
   dependsOn: s0_build_wheel
   timeoutInMinutes: 60
   pool:
-    vmImage: 'macOS-10.15'
+    vmImage: 'macOS-12'
   variables:
     PGINSTALLATION: '/usr/local/bin'
   steps:
@@ -338,7 +338,7 @@ jobs:
       pip install -r pre-requirements.txt
       brew install \
         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
-      brew install --cask osxfuse
+      brew install --cask macfuse
     displayName: 'Bootstrap'
   - bash: |
       set -eux
@@ -532,7 +532,7 @@ jobs:
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
-    vmImage: 'macOS-10.15'
+    vmImage: 'macOS-12'
   steps:
   - checkout: self
     submodules: true

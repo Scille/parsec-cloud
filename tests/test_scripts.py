@@ -66,7 +66,7 @@ def run_testenv():
 @pytest.mark.slow
 @pytest.mark.skipif(
     "linux" not in sys.platform,
-    reason="causes a freeze in appveyor for some reasons, and crashes on Catalina",
+    reason="causes a freeze in appveyor for some reasons, and raises a CalledProcessError on MacOS",
 )
 def test_run_testenv(run_testenv):
     available_devices = list_available_devices(run_testenv.config_dir)
