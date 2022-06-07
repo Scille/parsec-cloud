@@ -130,11 +130,11 @@ impl LocalDevice {
         }
     }
 
-    // /// This method centralizes the production of parsec timestamps for a given device.
-    // /// At the moment it is simply an alias to `pendulum.now` but it has two main benefits:
-    // /// 1. Allowing for easier testing by patching this method in device-sepecific way
-    // /// 2. Allowing for other implementation in the future allowing to track, check and
-    // ///    possibly alter the production of timestamps.
+    /// This method centralizes the production of parsec timestamps for a given device.
+    /// At the moment it is simply an alias to `pendulum.now` but it has two main benefits:
+    /// 1. Allowing for easier testing by patching this method in device-sepecific way
+    /// 2. Allowing for other implementation in the future allowing to track, check and
+    ///    possibly alter the production of timestamps.
     pub fn timestamp(&self) -> DateTime {
         DateTime::now()
     }

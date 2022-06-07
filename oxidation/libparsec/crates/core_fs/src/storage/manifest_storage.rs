@@ -199,11 +199,11 @@ impl ManifestStorage {
         Ok((re, fully_applied))
     }
 
-    pub fn set_prevent_sync_pattern(&self, pattern: &Regex) -> FSResult<()> {
-        // Set the "prevent sync" pattern for the corresponding workspace
+    /// Set the "prevent sync" pattern for the corresponding workspace
 
-        // This operation is idempotent,
-        // i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
+    /// This operation is idempotent,
+    /// i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
+    pub fn set_prevent_sync_pattern(&self, pattern: &Regex) -> FSResult<()> {
         let pattern = pattern.as_str();
         let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         diesel::update(
@@ -227,12 +227,12 @@ impl ManifestStorage {
         Ok(())
     }
 
-    pub fn mark_prevent_sync_pattern_fully_applied(&self, pattern: &Regex) -> FSResult<()> {
-        // Mark the provided pattern as fully applied.
+    /// Mark the provided pattern as fully applied.
 
-        // This is meant to be called after one made sure that all the manifests in the
-        // workspace are compliant with the new pattern. The applied pattern is provided
-        // as an argument in order to avoid concurrency issues.
+    /// This is meant to be called after one made sure that all the manifests in the
+    /// workspace are compliant with the new pattern. The applied pattern is provided
+    /// as an argument in order to avoid concurrency issues.
+    pub fn mark_prevent_sync_pattern_fully_applied(&self, pattern: &Regex) -> FSResult<()> {
         let pattern = pattern.as_str();
         let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         diesel::update(
@@ -567,7 +567,7 @@ mod tests {
         let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().unwrap();
 
         assert_eq!(re.as_str(), EMPTY_PATTERN);
-        assert_eq!(fully_applied, false);
+        assert!(!fully_applied);
 
         manifest_storage
             .set_prevent_sync_pattern(&Regex::new(r"\z").unwrap())
@@ -576,7 +576,7 @@ mod tests {
         let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().unwrap();
 
         assert_eq!(re.as_str(), r"\z");
-        assert_eq!(fully_applied, false);
+        assert!(!fully_applied);
 
         manifest_storage
             .mark_prevent_sync_pattern_fully_applied(&Regex::new(EMPTY_PATTERN).unwrap())
@@ -585,7 +585,7 @@ mod tests {
         let (re, fully_applied) = manifest_storage.get_prevent_sync_pattern().unwrap();
 
         assert_eq!(re.as_str(), r"\z");
-        assert_eq!(fully_applied, false);
+        assert!(!fully_applied);
 
         let entry_id = EntryID::default();
 

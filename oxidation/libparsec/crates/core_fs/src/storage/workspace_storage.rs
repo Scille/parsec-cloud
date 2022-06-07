@@ -323,7 +323,7 @@ mod tests {
     fn workspace_storage(alice: &Device, tmp: TempPath) {
         let db_path = tmp.generate("workspace_storage");
         let _workspace_storage = WorkspaceStorage::new(
-            &Path::new(&db_path),
+            Path::new(&db_path),
             alice.local_device(),
             EntryID::default(),
             DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,

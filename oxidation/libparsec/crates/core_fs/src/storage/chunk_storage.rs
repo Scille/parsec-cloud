@@ -368,7 +368,7 @@ mod tests {
         assert_eq!(chunk_storage.get_total_size().unwrap(), (N as i64 + 1) * 44);
 
         // Retrieve chunks
-        assert_eq!(chunk_storage.is_chunk(chunk_id).unwrap(), true);
+        assert!(chunk_storage.is_chunk(chunk_id).unwrap());
         assert_eq!(&chunk_storage.get_chunk(chunk_id).unwrap(), &[1, 2, 3, 4]);
 
         let local_chunk_ids = chunk_storage.get_local_chunk_ids(&chunk_ids).unwrap();
