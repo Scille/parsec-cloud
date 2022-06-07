@@ -2034,7 +2034,7 @@ dependencies = [
  "diesel",
  "parsec_api_crypto",
  "parsec_api_types",
- "rstest",
+ "rstest 0.13.0",
  "tests_fixtures",
 ]
 
