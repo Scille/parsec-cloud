@@ -31,8 +31,16 @@ impl SigningKey {
         Self(gen_keypair().1)
     }
 
+    /// Sign the message and prefix it with the signature.
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
         sign(data, &self.0)
+    }
+
+    /// Sign the message and return only the signature.
+    pub fn sign_only_signature(&self, data: &[u8]) -> [u8; SIGNATUREBYTES] {
+        use sodiumoxide::crypto::sign::Signer;
+
+        self.0.sign(data).to_bytes()
     }
 }
 

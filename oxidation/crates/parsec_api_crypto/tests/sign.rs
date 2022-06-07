@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use hex_literal::hex;
-use pretty_assertions::assert_eq;
+// use pretty_assertions::assert_eq;
 use serde_test::{assert_tokens, Token};
 use std::convert::TryFrom;
 
@@ -50,6 +50,24 @@ fn signature_verification_spec() {
 
     let unwrappedtext = VerifyKey::unsecure_unwrap(&signedtext).unwrap();
     assert_eq!(unwrappedtext, b"all your base are belong to us");
+}
+
+#[test]
+fn signature_only() {
+    let sk = SigningKey::generate();
+
+    let data = b"Hello world, I would like to sign this message!";
+    let signed = sk.sign_only_signature(data);
+    let expected_signed_message = sk.sign(data);
+    let expected_signature = &expected_signed_message[..64];
+
+    assert_eq!(signed, expected_signature);
+
+    let vk = sk.verify_key();
+    let signed_message = Vec::from_iter(signed.iter().chain(data).copied());
+    let res = vk.verify(&signed_message);
+
+    assert_eq!(res, Ok(data.to_vec()));
 }
 
 test_msgpack_serialization!(

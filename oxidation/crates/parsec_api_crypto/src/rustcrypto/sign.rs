@@ -44,11 +44,17 @@ impl SigningKey {
         Self(Keypair::generate(&mut rand_07::thread_rng()))
     }
 
+    /// Sign the message and prefix it with the signature.
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
         let mut signed = Vec::with_capacity(SIGNATURE_LENGTH + data.len());
         signed.extend(self.0.sign(data).to_bytes());
         signed.extend_from_slice(data);
         signed
+    }
+
+    /// Sign the message and return only the signature.
+    pub fn sign_only_signature(&self, data: &[u8]) -> [u8; SIGNATURE_LENGTH] {
+        self.0.sign(data).to_bytes()
     }
 }
 
