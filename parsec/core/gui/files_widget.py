@@ -648,7 +648,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         )
 
     def load(self, directory, default_selection=None):
-        self.spinner.show()
+        #self.spinner.show()
+        self.table_files.setEnabled(False)
         self.current_directory = directory
         self.current_directory_id = None
         self.jobs_ctx.submit_job(
@@ -943,7 +944,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             old_selection = [x.name for x in self.table_files.selected_files()]
 
         self.table_files.clear()
-        self.spinner.hide()
+        #self.spinner.hide()
         old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
         old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
         self.table_files.setSortingEnabled(False)
@@ -986,11 +987,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if default_selection and not file_found:
             show_error(self, _("TEXT_FILE_GOTO_LINK_NOT_FOUND"))
         workspace_name = self.workspace_fs.get_workspace_name()
+        self.table_files.setEnabled(True)
         self.folder_changed.emit(workspace_name, str(self.current_directory))
 
     def _on_folder_stat_error(self, job):
         self.table_files.clear()
-        self.spinner.hide()
+        self.table_files.setEnabled(True)
+        
+#        self.spinner.hide()
         if isinstance(job.exc, FSFileNotFoundError):
             show_error(self, _("TEXT_FILE_FOLDER_NOT_FOUND"))
             self.table_files.add_parent_workspace()
