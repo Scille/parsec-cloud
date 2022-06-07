@@ -190,7 +190,7 @@ fn serde_events_listen_req() {
 fn serde_events_listen_rep(#[case] raw_expected: (&[u8], authenticated_cmds::events_listen::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::events_listen::Rep::load(&raw);
+    let data = authenticated_cmds::events_listen::Rep::load(raw);
 
     assert_eq!(data, expected);
 

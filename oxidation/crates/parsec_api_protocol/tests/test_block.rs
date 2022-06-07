@@ -109,7 +109,7 @@ fn serde_block_create_req() {
 fn serde_block_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::block_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::block_create::Rep::load(&raw);
+    let data = authenticated_cmds::block_create::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -212,7 +212,7 @@ fn serde_block_read_req() {
 fn serde_block_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::block_read::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::block_read::Rep::load(&raw);
+    let data = authenticated_cmds::block_read::Rep::load(raw);
 
     assert_eq!(data, expected);
 

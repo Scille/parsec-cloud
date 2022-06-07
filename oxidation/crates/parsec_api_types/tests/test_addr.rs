@@ -7,13 +7,13 @@ use serde_test::{assert_tokens, Token};
 
 use parsec_api_types::*;
 
-const ORG: &'static str = "MyOrg";
-const RVK: &'static str = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss";
-const TOKEN: &'static str = "a0000000000000000000000000000001";
-const DOMAIN: &'static str = "parsec.cloud.com";
-const ENCRYPTED_PATH: &'static str = "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs";
-const WORKSPACE_ID: &'static str = "2d4ded1274064608833b7f57f01156e2";
-const INVITATION_TYPE: &'static str = "claim_user";
+const ORG: &str = "MyOrg";
+const RVK: &str = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss";
+const TOKEN: &str = "a0000000000000000000000000000001";
+const DOMAIN: &str = "parsec.cloud.com";
+const ENCRYPTED_PATH: &str = "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs";
+const WORKSPACE_ID: &str = "2d4ded1274064608833b7f57f01156e2";
+const INVITATION_TYPE: &str = "claim_user";
 
 /*
  * Helpers to parametrize the tests on different addr types
@@ -479,7 +479,7 @@ fn test_invitation_addr_to_redirection(#[values("http", "https")] redirection_sc
     }
 
     let addr: BackendInvitationAddr = url.parse().unwrap();
-    let redirection_url = addr.clone().to_http_redirection_url().to_string();
+    let redirection_url = addr.to_http_redirection_url().to_string();
 
     let expected_redirection_url = testbed
         .url()
@@ -500,7 +500,7 @@ fn test_addr_to_redirection(
     // this information is provided by the http/https scheme
     let mut url = testbed.url();
     if redirection_scheme == "http" {
-        match url.find("?") {
+        match url.find('?') {
             Some(_) => url.push('&'),
             None => url.push('?'),
         }

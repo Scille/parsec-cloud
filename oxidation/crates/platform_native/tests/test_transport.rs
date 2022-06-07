@@ -17,7 +17,7 @@ fn test_transport(alice: &Device) {
         let listener = TcpListener::bind(addr).await.unwrap();
         let server_addr = listener.local_addr().unwrap();
 
-        let verify_key = alice.verify_key().clone();
+        let verify_key = alice.verify_key();
         task::spawn(async move {
             let (server_stream, _) = listener.accept().await.unwrap();
             let mut server = Transport::init_for_server(server_stream).await;

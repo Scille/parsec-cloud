@@ -185,7 +185,7 @@ fn serde_local_file_manifest(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let manifest = LocalFileManifest::decrypt_and_load(&data, &key).unwrap();
+    let manifest = LocalFileManifest::decrypt_and_load(data, &key).unwrap();
 
     assert_eq!(manifest, expected);
 
@@ -366,7 +366,7 @@ fn serde_local_folder_manifest(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let manifest = LocalFolderManifest::decrypt_and_load(&data, &key).unwrap();
+    let manifest = LocalFolderManifest::decrypt_and_load(data, &key).unwrap();
 
     assert_eq!(manifest, expected);
 
@@ -553,7 +553,7 @@ fn serde_local_workspace_manifest(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let manifest = LocalWorkspaceManifest::decrypt_and_load(&data, &key).unwrap();
+    let manifest = LocalWorkspaceManifest::decrypt_and_load(data, &key).unwrap();
 
     assert_eq!(manifest, expected);
 
@@ -906,7 +906,7 @@ fn serde_local_user_manifest(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let manifest = LocalUserManifest::decrypt_and_load(&data, &key).unwrap();
+    let manifest = LocalUserManifest::decrypt_and_load(data, &key).unwrap();
 
     assert_eq!(manifest, expected);
 
@@ -964,7 +964,7 @@ fn chunk_evolve_as_block() {
         digest: HashDigest::from_data(&[]),
     };
 
-    let chunk = Chunk::from_block_access(block_access.clone()).unwrap();
+    let chunk = Chunk::from_block_access(block_access).unwrap();
     let block = chunk.clone().evolve_as_block(&[]).unwrap();
     assert_eq!(chunk, block);
 
@@ -992,48 +992,48 @@ fn chunk_is_block() {
         access: None,
     };
 
-    assert_eq!(chunk.is_pseudo_block(), true);
-    assert_eq!(chunk.is_block(), false);
+    assert!(chunk.is_pseudo_block());
+    assert!(!chunk.is_block());
 
     let mut block = chunk.evolve_as_block(&[]).unwrap();
 
-    assert_eq!(block.is_pseudo_block(), true);
-    assert_eq!(block.is_block(), true);
+    assert!(block.is_pseudo_block());
+    assert!(block.is_block());
 
     block.start = 1;
 
-    assert_eq!(block.is_pseudo_block(), false);
-    assert_eq!(block.is_block(), false);
+    assert!(!block.is_pseudo_block());
+    assert!(!block.is_block());
 
     block.access.as_mut().unwrap().offset = 1;
 
-    assert_eq!(block.is_pseudo_block(), false);
-    assert_eq!(block.is_block(), false);
+    assert!(!block.is_pseudo_block());
+    assert!(!block.is_block());
 
     block.raw_offset = 1;
 
-    assert_eq!(block.is_pseudo_block(), false);
-    assert_eq!(block.is_block(), false);
+    assert!(!block.is_pseudo_block());
+    assert!(!block.is_block());
 
     block.stop = NonZeroU64::try_from(2).unwrap();
 
-    assert_eq!(block.is_pseudo_block(), true);
-    assert_eq!(block.is_block(), true);
+    assert!(block.is_pseudo_block());
+    assert!(block.is_block());
 
     block.stop = NonZeroU64::try_from(5).unwrap();
 
-    assert_eq!(block.is_pseudo_block(), false);
-    assert_eq!(block.is_block(), false);
+    assert!(!block.is_pseudo_block());
+    assert!(!block.is_block());
 
     block.raw_size = NonZeroU64::try_from(4).unwrap();
 
-    assert_eq!(block.is_pseudo_block(), true);
-    assert_eq!(block.is_block(), false);
+    assert!(block.is_pseudo_block());
+    assert!(!block.is_block());
 
     block.access.as_mut().unwrap().size = NonZeroU64::try_from(4).unwrap();
 
-    assert_eq!(block.is_pseudo_block(), true);
-    assert_eq!(block.is_block(), true);
+    assert!(block.is_pseudo_block());
+    assert!(block.is_block());
 }
 
 #[rstest]
@@ -1053,7 +1053,7 @@ fn local_file_manifest_new() {
     assert_eq!(lfm.base.blocksize, blocksize);
     assert_eq!(lfm.base.size, 0);
     assert_eq!(lfm.base.blocks.len(), 0);
-    assert_eq!(lfm.need_sync, true);
+    assert!(lfm.need_sync);
     assert_eq!(lfm.updated, timestamp);
     assert_eq!(lfm.blocksize, blocksize);
     assert_eq!(lfm.size, 0);
@@ -1066,9 +1066,9 @@ fn local_file_manifest_is_reshaped() {
     let parent = EntryID::default();
     let timestamp = DateTime::now();
     let blocksize = Blocksize::try_from(512).unwrap();
-    let mut lfm = LocalFileManifest::new(author.clone(), parent, timestamp, blocksize);
+    let mut lfm = LocalFileManifest::new(author, parent, timestamp, blocksize);
 
-    assert_eq!(lfm.is_reshaped(), true);
+    assert!(lfm.is_reshaped());
 
     let block = Chunk {
         id: ChunkID::default(),
@@ -1083,16 +1083,16 @@ fn local_file_manifest_is_reshaped() {
 
     lfm.blocks.push(vec![block.clone()]);
 
-    assert_eq!(lfm.is_reshaped(), true);
+    assert!(lfm.is_reshaped());
 
     lfm.blocks[0].push(block);
 
-    assert_eq!(lfm.is_reshaped(), false);
+    assert!(!lfm.is_reshaped());
 
     lfm.blocks[0].pop();
     lfm.blocks[0][0].access = None;
 
-    assert_eq!(lfm.is_reshaped(), false);
+    assert!(!lfm.is_reshaped());
 }
 
 #[rstest]
@@ -1132,7 +1132,7 @@ fn local_file_manifest_from_remote(#[case] input: (u64, Vec<BlockAccess>)) {
     let lfm = LocalFileManifest::from_remote(fm.clone()).unwrap();
 
     assert_eq!(lfm.base, fm);
-    assert_eq!(lfm.need_sync, false);
+    assert!(!lfm.need_sync);
     assert_eq!(lfm.updated, timestamp);
     assert_eq!(lfm.size, size);
     assert_eq!(lfm.blocksize, Blocksize::try_from(512).unwrap());
@@ -1238,7 +1238,7 @@ fn local_folder_manifest_new() {
     assert_eq!(lfm.base.version, 0);
     assert_eq!(lfm.base.created, timestamp);
     assert_eq!(lfm.base.updated, timestamp);
-    assert_eq!(lfm.need_sync, true);
+    assert!(lfm.need_sync);
     assert_eq!(lfm.updated, timestamp);
     assert_eq!(lfm.children.len(), 0);
     assert_eq!(lfm.local_confinement_points.len(), 0);
@@ -1294,7 +1294,7 @@ fn local_folder_manifest_from_remote(
     let lfm = LocalFolderManifest::from_remote(fm.clone(), &Regex::new(regex).unwrap());
 
     assert_eq!(lfm.base, fm);
-    assert_eq!(lfm.need_sync, false);
+    assert!(!lfm.need_sync);
     assert_eq!(lfm.updated, timestamp);
     assert_eq!(lfm.children, expected_children);
     assert_eq!(lfm.local_confinement_points.len(), 0);
@@ -1302,16 +1302,8 @@ fn local_folder_manifest_from_remote(
 }
 
 #[rstest]
-#[case::empty((
-    HashMap::new(),
-    HashMap::new(),
-    HashMap::new(),
-    0,
-    0,
-    false,
-    "",
-))]
-#[case::children_filtered((
+#[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, 0, false, "")]
+#[case::children_filtered(
     HashMap::from([
         ("file1.png".parse().unwrap(), "936DA01F9ABD4d9d80C702AF85C822A8".parse().unwrap())
     ]),
@@ -1321,8 +1313,8 @@ fn local_folder_manifest_from_remote(
     0,
     false,
     ".+",
-))]
-#[case::children((
+)]
+#[case::children(
     HashMap::from([
         ("file1.png".parse().unwrap(), "936DA01F9ABD4d9d80C702AF85C822A8".parse().unwrap())
     ]),
@@ -1334,8 +1326,8 @@ fn local_folder_manifest_from_remote(
     0,
     false,
     ".mp4",
-))]
-#[case::children_merged((
+)]
+#[case::children_merged(
     HashMap::from([
         ("file1.png".parse().unwrap(), "936DA01F9ABD4d9d80C702AF85C822A8".parse().unwrap())
     ]),
@@ -1350,8 +1342,8 @@ fn local_folder_manifest_from_remote(
     1,
     false,
     ".mp4",
-))]
-#[case::need_sync((
+)]
+#[case::need_sync(
     HashMap::new(),
     HashMap::from([
         ("file2.mp4".parse().unwrap(), "3DF3AC53967C43D889860AE2F459F42B".parse().unwrap())
@@ -1363,20 +1355,17 @@ fn local_folder_manifest_from_remote(
     0,
     true,
     ".png",
-))]
+)]
 fn local_folder_manifest_from_remote_with_local_context(
-    #[case] input: (
-        HashMap<EntryName, EntryID>,
-        HashMap<EntryName, EntryID>,
-        HashMap<EntryName, EntryID>,
-        usize,
-        usize,
-        bool,
-        &str,
-    ),
+    #[case] children: HashMap<EntryName, EntryID>,
+    #[case] local_children: HashMap<EntryName, EntryID>,
+    #[case] expected_children: HashMap<EntryName, EntryID>,
+    #[case] filtered: usize,
+    #[case] merged: usize,
+    #[case] need_sync: bool,
+    #[case] regex: &str,
 ) {
     let timestamp = DateTime::now();
-    let (children, local_children, expected_children, filtered, merged, need_sync, regex) = input;
     let fm = FolderManifest {
         author: DeviceID::default(),
         timestamp,
@@ -1463,15 +1452,8 @@ fn local_folder_manifest_match_remote() {
 }
 
 #[rstest]
-#[case::empty((
-    HashMap::new(),
-    HashMap::new(),
-    HashMap::new(),
-    0,
-    false,
-    "",
-))]
-#[case::no_data((
+#[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, false, "")]
+#[case::no_data(
     HashMap::new(),
     HashMap::from([
         ("file2.mp4".parse().unwrap(), "3DF3AC53967C43D889860AE2F459F42B".parse().unwrap())
@@ -1482,8 +1464,8 @@ fn local_folder_manifest_match_remote() {
     0,
     false,
     ".mp4",
-))]
-#[case::data((
+)]
+#[case::data(
     HashMap::from([
         ("file1.png".parse().unwrap(), Some("936DA01F9ABD4d9d80C702AF85C822A8".parse().unwrap())),
         ("file2.mp4".parse().unwrap(), Some("3DF3AC53967C43D889860AE2F459F42B".parse().unwrap())),
@@ -1498,19 +1480,16 @@ fn local_folder_manifest_match_remote() {
     1,
     true,
     ".png",
-))]
+)]
 fn local_folder_manifest_evolve_children_and_mark_updated(
-    #[case] input: (
-        HashMap<EntryName, Option<EntryID>>,
-        HashMap<EntryName, EntryID>,
-        HashMap<EntryName, EntryID>,
-        usize,
-        bool,
-        &str,
-    ),
+    #[case] data: HashMap<EntryName, Option<EntryID>>,
+    #[case] children: HashMap<EntryName, EntryID>,
+    #[case] expected_children: HashMap<EntryName, EntryID>,
+    #[case] merged: usize,
+    #[case] need_sync: bool,
+    #[case] regex: &str,
 ) {
     let timestamp = DateTime::now();
-    let (data, children, expected_children, merged, need_sync, regex) = input;
     let prevent_sync_pattern = Regex::new(regex).unwrap();
 
     let fm = FolderManifest {
@@ -1570,7 +1549,7 @@ fn local_folder_manifest_apply_prevent_sync_pattern() {
     .apply_prevent_sync_pattern(&prevent_sync_pattern, timestamp);
 
     assert_eq!(lfm.base, fm);
-    assert_eq!(lfm.need_sync, false);
+    assert!(!lfm.need_sync);
     assert_eq!(lfm.updated, timestamp);
     assert_eq!(lfm.children, HashMap::new());
     assert_eq!(lfm.local_confinement_points, HashSet::new());
@@ -1591,7 +1570,7 @@ fn local_workspace_manifest_new() {
     assert_eq!(lwm.base.version, 0);
     assert_eq!(lwm.base.created, timestamp);
     assert_eq!(lwm.base.updated, timestamp);
-    assert_eq!(lwm.need_sync, true);
+    assert!(lwm.need_sync);
     assert_eq!(lwm.updated, timestamp);
     assert_eq!(lwm.children.len(), 0);
     assert_eq!(lwm.local_confinement_points.len(), 0);
@@ -1647,25 +1626,17 @@ fn local_workspace_manifest_from_remote(
     let lwm = LocalWorkspaceManifest::from_remote(wm.clone(), &Regex::new(regex).unwrap());
 
     assert_eq!(lwm.base, wm);
-    assert_eq!(lwm.need_sync, false);
+    assert!(!lwm.need_sync);
     assert_eq!(lwm.updated, timestamp);
     assert_eq!(lwm.children, expected_children);
     assert_eq!(lwm.local_confinement_points.len(), 0);
     assert_eq!(lwm.remote_confinement_points.len(), filtered);
-    assert_eq!(lwm.speculative, false);
+    assert!(!lwm.speculative);
 }
 
 #[rstest]
-#[case::empty((
-    HashMap::new(),
-    HashMap::new(),
-    HashMap::new(),
-    0,
-    0,
-    false,
-    "",
-))]
-#[case::children_filtered((
+#[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, 0, false, "")]
+#[case::children_filtered(
     HashMap::from([
         ("file1.png".parse().unwrap(), "936DA01F9ABD4d9d80C702AF85C822A8".parse().unwrap())
     ]),
@@ -1675,8 +1646,8 @@ fn local_workspace_manifest_from_remote(
     0,
     false,
     ".+",
-))]
-#[case::children((
+)]
+#[case::children(
     HashMap::from([
         ("file1.png".parse().unwrap(), "936DA01F9ABD4d9d80C702AF85C822A8".parse().unwrap())
     ]),
@@ -1688,8 +1659,8 @@ fn local_workspace_manifest_from_remote(
     0,
     false,
     ".mp4",
-))]
-#[case::children_merged((
+)]
+#[case::children_merged(
     HashMap::from([
         ("file1.png".parse().unwrap(), "936DA01F9ABD4d9d80C702AF85C822A8".parse().unwrap())
     ]),
@@ -1704,8 +1675,8 @@ fn local_workspace_manifest_from_remote(
     1,
     false,
     ".mp4",
-))]
-#[case::need_sync((
+)]
+#[case::need_sync(
     HashMap::new(),
     HashMap::from([
         ("file2.mp4".parse().unwrap(), "3DF3AC53967C43D889860AE2F459F42B".parse().unwrap())
@@ -1717,20 +1688,17 @@ fn local_workspace_manifest_from_remote(
     0,
     true,
     ".png",
-))]
+)]
 fn local_workspace_manifest_from_remote_with_local_context(
-    #[case] input: (
-        HashMap<EntryName, EntryID>,
-        HashMap<EntryName, EntryID>,
-        HashMap<EntryName, EntryID>,
-        usize,
-        usize,
-        bool,
-        &str,
-    ),
+    #[case] children: HashMap<EntryName, EntryID>,
+    #[case] local_children: HashMap<EntryName, EntryID>,
+    #[case] expected_children: HashMap<EntryName, EntryID>,
+    #[case] filtered: usize,
+    #[case] merged: usize,
+    #[case] need_sync: bool,
+    #[case] regex: &str,
 ) {
     let timestamp = DateTime::now();
-    let (children, local_children, expected_children, filtered, merged, need_sync, regex) = input;
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
         timestamp,
@@ -1764,7 +1732,7 @@ fn local_workspace_manifest_from_remote_with_local_context(
     assert_eq!(lwm.children, expected_children);
     assert_eq!(lwm.local_confinement_points.len(), merged);
     assert_eq!(lwm.remote_confinement_points.len(), filtered);
-    assert_eq!(lwm.speculative, false);
+    assert!(!lwm.speculative);
 }
 
 #[rstest]
@@ -1818,15 +1786,8 @@ fn local_workspace_manifest_match_remote() {
 }
 
 #[rstest]
-#[case::empty((
-    HashMap::new(),
-    HashMap::new(),
-    HashMap::new(),
-    0,
-    false,
-    "",
-))]
-#[case::no_data((
+#[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, false, "")]
+#[case::no_data(
     HashMap::new(),
     HashMap::from([
         ("file2.mp4".parse().unwrap(), "3DF3AC53967C43D889860AE2F459F42B".parse().unwrap())
@@ -1837,8 +1798,8 @@ fn local_workspace_manifest_match_remote() {
     0,
     false,
     ".mp4",
-))]
-#[case::data((
+)]
+#[case::data(
     HashMap::from([
         ("file1.png".parse().unwrap(), Some("936DA01F9ABD4d9d80C702AF85C822A8".parse().unwrap())),
         ("file2.mp4".parse().unwrap(), Some("3DF3AC53967C43D889860AE2F459F42B".parse().unwrap())),
@@ -1853,19 +1814,16 @@ fn local_workspace_manifest_match_remote() {
     1,
     true,
     ".png",
-))]
+)]
 fn local_workspace_manifest_evolve_children_and_mark_updated(
-    #[case] input: (
-        HashMap<EntryName, Option<EntryID>>,
-        HashMap<EntryName, EntryID>,
-        HashMap<EntryName, EntryID>,
-        usize,
-        bool,
-        &str,
-    ),
+    #[case] data: HashMap<EntryName, Option<EntryID>>,
+    #[case] children: HashMap<EntryName, EntryID>,
+    #[case] expected_children: HashMap<EntryName, EntryID>,
+    #[case] merged: usize,
+    #[case] need_sync: bool,
+    #[case] regex: &str,
 ) {
     let timestamp = DateTime::now();
-    let (data, children, expected_children, merged, need_sync, regex) = input;
     let prevent_sync_pattern = Regex::new(regex).unwrap();
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
@@ -1924,7 +1882,7 @@ fn local_workspace_manifest_apply_prevent_sync_pattern() {
     .apply_prevent_sync_pattern(&prevent_sync_pattern, timestamp);
 
     assert_eq!(lwm.base, wm);
-    assert_eq!(lwm.need_sync, false);
+    assert!(!lwm.need_sync);
     assert_eq!(lwm.updated, timestamp);
     assert_eq!(lwm.children, HashMap::new());
     assert_eq!(lwm.local_confinement_points, HashSet::new());
@@ -1945,7 +1903,7 @@ fn local_user_manifest_new() {
     assert_eq!(lum.base.version, 0);
     assert_eq!(lum.base.created, timestamp);
     assert_eq!(lum.base.updated, timestamp);
-    assert_eq!(lum.need_sync, true);
+    assert!(lum.need_sync);
     assert_eq!(lum.updated, timestamp);
     assert_eq!(lum.workspaces.len(), 0);
     assert_eq!(lum.speculative, speculative);
@@ -1972,7 +1930,7 @@ fn local_user_manifest_from_remote(#[case] input: (u64, Vec<WorkspaceEntry>)) {
     let lum = LocalUserManifest::from_remote(um.clone());
 
     assert_eq!(lum.base, um);
-    assert_eq!(lum.need_sync, false);
+    assert!(!lum.need_sync);
     assert_eq!(lum.updated, timestamp);
     assert_eq!(lum.workspaces, um.workspaces);
 }

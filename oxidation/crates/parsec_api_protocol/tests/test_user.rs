@@ -23,7 +23,7 @@ fn serde_user_get_req() {
         user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::UserGet(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::UserGet(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -84,7 +84,7 @@ fn serde_user_get_req() {
 fn serde_user_get_rep(#[case] raw_expected: (&[u8], authenticated_cmds::user_get::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::user_get::Rep::load(&raw);
+    let data = authenticated_cmds::user_get::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -119,7 +119,7 @@ fn serde_user_create_req() {
         redacted_device_certificate: b"foobar".to_vec(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::UserCreate(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::UserCreate(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -220,7 +220,7 @@ fn serde_user_create_req() {
 fn serde_user_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::user_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::user_create::Rep::load(&raw);
+    let data = authenticated_cmds::user_create::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -247,7 +247,7 @@ fn serde_user_revoke_req() {
         revoked_user_certificate: b"foobar".to_vec(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::UserRevoke(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::UserRevoke(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -331,7 +331,7 @@ fn serde_user_revoke_req() {
 fn serde_user_revoke_rep(#[case] raw_expected: (&[u8], authenticated_cmds::user_revoke::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::user_revoke::Rep::load(&raw);
+    let data = authenticated_cmds::user_revoke::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -361,7 +361,7 @@ fn serde_device_create_req() {
         redacted_device_certificate: b"foobar".to_vec(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::DeviceCreate(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::DeviceCreate(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -447,7 +447,7 @@ fn serde_device_create_req() {
 fn serde_device_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::device_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::device_create::Rep::load(&raw);
+    let data = authenticated_cmds::device_create::Rep::load(raw);
 
     assert_eq!(data, expected);
 
@@ -483,7 +483,7 @@ fn serde_human_find_req() {
         per_page: NonZeroU64::new(8).unwrap(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::HumanFind(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::HumanFind(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -548,7 +548,7 @@ fn serde_human_find_req() {
 fn serde_human_find_rep(#[case] raw_expected: (&[u8], authenticated_cmds::human_find::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::human_find::Rep::load(&raw);
+    let data = authenticated_cmds::human_find::Rep::load(raw);
 
     assert_eq!(data, expected);
 

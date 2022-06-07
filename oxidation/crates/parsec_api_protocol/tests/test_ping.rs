@@ -17,7 +17,7 @@ fn serde_authenticated_ping_req() {
         ping: "ping".to_owned(),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::Ping(req.clone());
+    let expected = authenticated_cmds::AnyCmdReq::Ping(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
@@ -67,7 +67,7 @@ fn serde_invited_ping_req() {
         ping: "ping".to_owned(),
     };
 
-    let expected = invited_cmds::AnyCmdReq::Ping(req.clone());
+    let expected = invited_cmds::AnyCmdReq::Ping(req);
 
     let data = invited_cmds::AnyCmdReq::load(&raw).unwrap();
 
