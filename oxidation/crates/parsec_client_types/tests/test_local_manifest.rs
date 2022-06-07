@@ -1302,15 +1302,7 @@ fn local_folder_manifest_from_remote(
 }
 
 #[rstest]
-#[case::empty(
-    HashMap::new(),
-    HashMap::new(),
-    HashMap::new(),
-    0,
-    0,
-    false,
-    "",
-)]
+#[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, 0, false, "")]
 #[case::children_filtered(
     HashMap::from([
         ("file1.png".parse().unwrap(), "936DA01F9ABD4d9d80C702AF85C822A8".parse().unwrap())
@@ -1460,14 +1452,7 @@ fn local_folder_manifest_match_remote() {
 }
 
 #[rstest]
-#[case::empty(
-    HashMap::new(),
-    HashMap::new(),
-    HashMap::new(),
-    0,
-    false,
-    "",
-)]
+#[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, false, "")]
 #[case::no_data(
     HashMap::new(),
     HashMap::from([
@@ -1650,15 +1635,7 @@ fn local_workspace_manifest_from_remote(
 }
 
 #[rstest]
-#[case::empty(
-    HashMap::new(),
-    HashMap::new(),
-    HashMap::new(),
-    0,
-    0,
-    false,
-    "",
-)]
+#[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, 0, false, "")]
 #[case::children_filtered(
     HashMap::from([
         ("file1.png".parse().unwrap(), "936DA01F9ABD4d9d80C702AF85C822A8".parse().unwrap())
@@ -1809,14 +1786,7 @@ fn local_workspace_manifest_match_remote() {
 }
 
 #[rstest]
-#[case::empty(
-    HashMap::new(),
-    HashMap::new(),
-    HashMap::new(),
-    0,
-    false,
-    "",
-)]
+#[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, false, "")]
 #[case::no_data(
     HashMap::new(),
     HashMap::from([

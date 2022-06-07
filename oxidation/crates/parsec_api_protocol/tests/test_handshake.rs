@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use core::panic;
 use hex_literal::hex;
 use serde_json::{json, Value};
-use core::panic;
 use std::str::FromStr;
 
 use parsec_api_types::{DateTime, InvitationToken, OrganizationID};
