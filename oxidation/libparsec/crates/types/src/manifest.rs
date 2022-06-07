@@ -452,6 +452,7 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
 pub enum Manifest {
     File(FileManifest),
     Folder(FolderManifest),
@@ -460,12 +461,57 @@ pub enum Manifest {
 }
 
 impl Manifest {
-    pub fn dump_and_encrypt(&self, key: &SecretKey) -> DataResult<Vec<u8>> {
-        Ok(key.encrypt(&rmp_serde::to_vec_named(&self).map_err(|_| DataError::Serialization)?))
+    pub fn author(&self) -> &DeviceID {
+        match self {
+            Self::File(manifest) => &manifest.author,
+            Self::Folder(manifest) => &manifest.author,
+            Self::Workspace(manifest) => &manifest.author,
+            Self::User(manifest) => &manifest.author,
+        }
     }
 
-    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
-        rmp_serde::from_slice::<Self>(&key.decrypt(encrypted)?)
-            .map_err(|_| DataError::Serialization)
+    pub fn timestamp(&self) -> DateTime {
+        match self {
+            Self::File(manifest) => manifest.timestamp,
+            Self::Folder(manifest) => manifest.timestamp,
+            Self::Workspace(manifest) => manifest.timestamp,
+            Self::User(manifest) => manifest.timestamp,
+        }
+    }
+
+    // Avoid multiple decrypt, decompression
+    pub fn decrypt_verify_and_load(
+        encrypted: &[u8],
+        key: &SecretKey,
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: DateTime,
+    ) -> Result<Self, DataError> {
+        let signed = key.decrypt(encrypted)?;
+        let compressed = author_verify_key.verify(&signed)?;
+        let mut serialized = vec![];
+
+        flate2::read::ZlibDecoder::new(&compressed[..])
+            .read_to_end(&mut serialized)
+            .map_err(|_| DataError::Compression)?;
+
+        let obj = rmp_serde::from_slice::<Self>(&serialized).map_err(|e| {
+            println!("{e} {:?}", String::from_utf8_lossy(&serialized));
+            DataError::Serialization
+        })?;
+
+        if obj.author() != expected_author {
+            Err(DataError::UnexpectedAuthor {
+                expected: expected_author.clone(),
+                got: Some(obj.author().clone()),
+            })
+        } else if obj.timestamp() != expected_timestamp {
+            Err(DataError::UnexpectedTimestamp {
+                expected: expected_timestamp,
+                got: obj.timestamp(),
+            })
+        } else {
+            Ok(obj)
+        }
     }
 }

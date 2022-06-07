@@ -1,23 +1,24 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use std::error::Error;
+use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::Write;
+use std::{error::Error, path::PathBuf};
 
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-
-use crate::schema::{block, info, vlob_atom};
-use parsec_api_crypto::SecretKey;
-use parsec_api_types::{DeviceID, FileManifest, FolderManifest, Manifest, WorkspaceManifest};
-
-type Time = chrono::DateTime<chrono::Utc>;
+use crate::schema::{block, device, info, vlob_atom};
+use parsec_api_crypto::{SecretKey, VerifyKey};
+use parsec_api_types::{
+    DateTime, DeviceCertificate, DeviceID, FileManifest, FolderManifest, Manifest,
+    WorkspaceManifest,
+};
 
 #[cfg(test)]
-use crate::schema::{device, realm_role, user_ as user};
+use crate::schema::{realm_role, user_ as user};
 #[cfg(test)]
 use tests_fixtures::Device;
 
-#[derive(Debug, Queryable, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Queryable, PartialEq)]
 pub struct Block {
     pub block_id: Vec<u8>,
     pub data: Vec<u8>,
@@ -26,7 +27,7 @@ pub struct Block {
     pub created_on: f64,
 }
 
-#[derive(Debug, Queryable, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Queryable, PartialEq)]
 pub struct VlobAtom {
     pub vlob_id: Vec<u8>,
     pub version: i32,
@@ -36,94 +37,69 @@ pub struct VlobAtom {
     pub timestamp: f64,
 }
 
-#[derive(Debug, Queryable, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Queryable, PartialEq)]
 pub struct Info {
     pub magic: i32,
     pub version: i32,
     pub realm_id: Vec<u8>,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Data {
-    #[serde(default, skip_serializing_if = "String::is_empty")]
-    pub name: String,
-    pub author: DeviceID,
-    pub timestamp: Time,
-    pub id: Uuid,
-    pub version: u32,
-    pub created: Time,
-    pub updated: Time,
-    pub size: u64,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub children: Vec<Data>,
-    #[serde(default, skip_serializing_if = "String::is_empty")]
-    pub content: String,
-}
+#[derive(Debug)]
+pub struct Workspace;
 
-impl std::fmt::Debug for Data {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Data")
-            .field("name", &self.name)
-            .field("children", &self.children)
-            .finish()
-    }
-}
-
-impl Default for Data {
-    fn default() -> Self {
-        Self {
-            name: String::default(),
-            author: DeviceID::default(),
-            timestamp: chrono::Utc::now(),
-            id: Uuid::default(),
-            version: u32::default(),
-            created: chrono::Utc::now(),
-            updated: chrono::Utc::now(),
-            size: u64::default(),
-            children: Vec::default(),
-            content: String::default(),
-        }
-    }
-}
-
-impl PartialEq for Data {
-    // This implementation is slow, it is used only in test
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-            && self.author == other.author
-            && self.version == other.version
-            && self.created == other.created
-            && self.updated == other.updated
-            && self.size == other.size
-            && self
-                .children
-                .iter()
-                .map(|x| other.children.contains(x))
-                .reduce(|acc, x| acc & x)
-                .unwrap_or(true)
-            && self.content == other.content
-    }
-}
-
-impl Data {
-    fn load(
+impl Workspace {
+    pub fn dump(
         conn: &mut SqliteConnection,
         key: &SecretKey,
-        name: String,
-        manifest: &[u8],
-    ) -> Result<Self, Box<dyn Error>> {
-        Ok(match Manifest::decrypt_and_load(manifest, key)? {
-            Manifest::File(FileManifest {
-                author,
-                timestamp,
-                id,
-                version,
-                created,
-                updated,
-                size,
-                mut blocks,
-                ..
-            }) => {
+        out: &PathBuf,
+    ) -> Result<(), Box<dyn Error>> {
+        let workspace_id = info::table
+            .select(info::realm_id)
+            .filter(info::magic.eq(87947).and(info::version.eq(1)))
+            .first::<Vec<u8>>(conn)?;
+
+        let mut devices = HashMap::new();
+
+        Self::_dump(conn, key, out, &workspace_id, &mut devices)?;
+
+        Ok(())
+    }
+
+    fn _dump(
+        conn: &mut SqliteConnection,
+        key: &SecretKey,
+        path: &PathBuf,
+        manifest_id: &[u8],
+        devices: &mut HashMap<i32, (VerifyKey, DeviceID)>,
+    ) -> Result<(), Box<dyn Error>> {
+        let (manifest, author, timestamp) = vlob_atom::table
+            .select((vlob_atom::blob, vlob_atom::author, vlob_atom::timestamp))
+            .filter(vlob_atom::vlob_id.eq(manifest_id))
+            .order_by(vlob_atom::timestamp.desc())
+            .first::<(Vec<u8>, i32, f64)>(conn)?;
+
+        let (verify_key, device_id) = if let Some(device) = devices.get(&author) {
+            device
+        } else {
+            let device = device::table
+                .select(device::device_certificate)
+                .filter(device::_id.eq(author))
+                .first::<Vec<u8>>(conn)?;
+
+            let certif = DeviceCertificate::unsecure_load(&device)?;
+
+            devices.insert(author, (certif.verify_key, certif.device_id));
+            devices.get(&author).expect("Inserted before")
+        };
+
+        match Manifest::decrypt_verify_and_load(
+            &manifest,
+            key,
+            verify_key,
+            device_id,
+            DateTime::from_f64_with_us_precision(timestamp),
+        )? {
+            Manifest::File(FileManifest { mut blocks, .. }) => {
                 blocks.sort_by(|x, y| x.offset.cmp(&y.offset));
 
                 let content = blocks
@@ -133,108 +109,32 @@ impl Data {
                             .select(block::data)
                             .filter(block::block_id.eq((*x.id).as_ref()))
                             .first::<Vec<u8>>(conn)
-                            .map(|x| String::from_utf8_lossy(&x).to_string())
                     })
-                    .collect::<Result<_, _>>()?;
+                    .collect::<Result<Vec<_>, _>>()?
+                    .concat();
 
-                Self {
-                    name,
-                    author,
-                    timestamp: *timestamp.as_ref(),
-                    id: *id,
-                    version,
-                    created: *created.as_ref(),
-                    updated: *updated.as_ref(),
-                    size,
-                    children: vec![],
-                    content,
-                }
+                let mut file = File::create(path)?;
+                file.write_all(&content)?;
             }
-            Manifest::Folder(FolderManifest {
-                author,
-                timestamp,
-                id,
-                version,
-                created,
-                updated,
-                children,
-                ..
-            })
-            | Manifest::Workspace(WorkspaceManifest {
-                author,
-                timestamp,
-                id,
-                version,
-                created,
-                updated,
-                children,
-                ..
-            }) => {
-                let children = children
-                    .into_iter()
-                    .map(|(name, id)| {
-                        vlob_atom::table
-                            .select(vlob_atom::blob)
-                            .filter(vlob_atom::vlob_id.eq((*id).as_ref()))
-                            .order_by(vlob_atom::timestamp.desc())
-                            .first::<Vec<u8>>(conn)
-                            .map(|x| Self::load(conn, key, name.as_ref().to_string(), &x))
-                    })
-                    .collect::<Result<Result<Vec<_>, _>, _>>()??;
-
-                let size = children.iter().map(|x| x.size).sum();
-
-                Self {
-                    name,
-                    author,
-                    timestamp: *timestamp.as_ref(),
-                    id: *id,
-                    version,
-                    created: *created.as_ref(),
-                    updated: *updated.as_ref(),
-                    size,
-                    children,
-                    content: String::new(),
+            Manifest::Folder(FolderManifest { children, .. })
+            | Manifest::Workspace(WorkspaceManifest { children, .. }) => {
+                std::fs::create_dir(&path)?;
+                for (name, id) in children.into_iter() {
+                    let path = path.join(name.as_ref());
+                    Self::_dump(conn, key, &path, (*id).as_ref(), devices)?;
                 }
             }
             _ => unreachable!(),
-        })
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct Workspace(pub Data);
-
-impl Workspace {
-    pub fn dump(&self, path: &str) -> Result<(), Box<dyn Error>> {
-        let data = serde_json::to_string_pretty(self)?;
-        std::fs::write(path, &data)?;
+        }
 
         Ok(())
-    }
-
-    pub fn query_all(conn: &mut SqliteConnection, key: &SecretKey) -> Result<Self, Box<dyn Error>> {
-        let workspace_id = info::table.select(info::realm_id).first::<Vec<u8>>(conn)?;
-
-        let workspace = vlob_atom::table
-            .select(vlob_atom::blob)
-            .filter(vlob_atom::vlob_id.eq(workspace_id))
-            .first::<Vec<u8>>(conn)?;
-
-        Ok(Self(Data::load(conn, key, String::new(), &workspace)?))
-    }
-
-    #[cfg(test)]
-    pub fn load(path: &str) -> Self {
-        let data = std::fs::read(path).unwrap();
-        serde_json::from_slice(&data).unwrap()
     }
 
     #[cfg(test)]
     pub fn init_db(conn: &mut SqliteConnection, device: &Device) {
         use parsec_api_crypto::HashDigest;
-        use parsec_api_types::{BlockAccess, BlockID, Blocksize, DateTime, EntryID};
-        use std::{collections::HashMap, num::NonZeroU64};
+        use parsec_api_types::{BlockAccess, BlockID, Blocksize, CertificateSignerOwned, EntryID};
+        use std::num::NonZeroU64;
 
         let t0 = "2000-1-1T00:00:00Z".parse::<DateTime>().unwrap();
         let _t0 = t0.get_f64_with_us_precision();
@@ -252,10 +152,19 @@ impl Workspace {
             .execute(conn)
             .unwrap();
 
+        let device_certif = DeviceCertificate {
+            author: CertificateSignerOwned::Root,
+            timestamp: t0,
+            device_id: device.device_id.clone(),
+            device_label: None,
+            verify_key: device.signing_key.verify_key().clone(),
+        }
+        .dump_and_sign(&device.signing_key);
+
         diesel::insert_or_ignore_into(device::table)
             .values((
                 device::_id.eq(0),
-                device::device_certificate.eq(&b"device"[..]),
+                device::device_certificate.eq(&device_certif),
             ))
             .execute(conn)
             .unwrap();
@@ -340,7 +249,7 @@ impl Workspace {
             .execute(conn)
             .unwrap();
 
-        let workspace_manifest = Manifest::Workspace(WorkspaceManifest {
+        let workspace_manifest = WorkspaceManifest {
             author: device.device_id.clone(),
             timestamp: t0,
             id: workspace_id,
@@ -351,11 +260,10 @@ impl Workspace {
                 ("file0".parse().unwrap(), file0_id),
                 ("folder0".parse().unwrap(), folder0_id),
             ]),
-        })
-        .dump_and_encrypt(&device.local_symkey)
-        .unwrap();
+        }
+        .dump_sign_and_encrypt(&device.signing_key, &device.local_symkey);
 
-        let file0 = Manifest::File(FileManifest {
+        let file0 = FileManifest {
             author: device.device_id.clone(),
             timestamp: t0,
             id: file0_id,
@@ -388,11 +296,10 @@ impl Workspace {
                     digest: HashDigest::from_data(&file0_data2[..]),
                 },
             ],
-        })
-        .dump_and_encrypt(&device.local_symkey)
-        .unwrap();
+        }
+        .dump_sign_and_encrypt(&device.signing_key, &device.local_symkey);
 
-        let folder0 = Manifest::Folder(FolderManifest {
+        let folder0 = FolderManifest {
             author: device.device_id.clone(),
             timestamp: t0,
             id: folder0_id,
@@ -405,11 +312,10 @@ impl Workspace {
                 ("folder00".parse().unwrap(), folder00_id),
                 ("folder01".parse().unwrap(), folder01_id),
             ]),
-        })
-        .dump_and_encrypt(&device.local_symkey)
-        .unwrap();
+        }
+        .dump_sign_and_encrypt(&device.signing_key, &device.local_symkey);
 
-        let file00 = Manifest::File(FileManifest {
+        let file00 = FileManifest {
             author: device.device_id.clone(),
             timestamp: t0,
             id: file00_id,
@@ -426,11 +332,10 @@ impl Workspace {
                 size: NonZeroU64::try_from(file00_data.len() as u64).unwrap(),
                 digest: HashDigest::from_data(&file00_data[..]),
             }],
-        })
-        .dump_and_encrypt(&device.local_symkey)
-        .unwrap();
+        }
+        .dump_sign_and_encrypt(&device.signing_key, &device.local_symkey);
 
-        let folder00 = Manifest::Folder(FolderManifest {
+        let folder00 = FolderManifest {
             author: device.device_id.clone(),
             timestamp: t0,
             id: folder00_id,
@@ -439,11 +344,10 @@ impl Workspace {
             created: t0,
             updated: t0,
             children: HashMap::new(),
-        })
-        .dump_and_encrypt(&device.local_symkey)
-        .unwrap();
+        }
+        .dump_sign_and_encrypt(&device.signing_key, &device.local_symkey);
 
-        let folder01 = Manifest::Folder(FolderManifest {
+        let folder01 = FolderManifest {
             author: device.device_id.clone(),
             timestamp: t0,
             id: folder01_id,
@@ -455,11 +359,10 @@ impl Workspace {
                 ("file010".parse().unwrap(), file010_id),
                 ("file011".parse().unwrap(), file011_id),
             ]),
-        })
-        .dump_and_encrypt(&device.local_symkey)
-        .unwrap();
+        }
+        .dump_sign_and_encrypt(&device.signing_key, &device.local_symkey);
 
-        let file010 = Manifest::File(FileManifest {
+        let file010 = FileManifest {
             author: device.device_id.clone(),
             timestamp: t0,
             id: file010_id,
@@ -476,11 +379,10 @@ impl Workspace {
                 size: NonZeroU64::try_from(file010_data.len() as u64).unwrap(),
                 digest: HashDigest::from_data(&file010_data[..]),
             }],
-        })
-        .dump_and_encrypt(&device.local_symkey)
-        .unwrap();
+        }
+        .dump_sign_and_encrypt(&device.signing_key, &device.local_symkey);
 
-        let file011 = Manifest::File(FileManifest {
+        let file011 = FileManifest {
             author: device.device_id.clone(),
             timestamp: t0,
             id: file011_id,
@@ -497,9 +399,8 @@ impl Workspace {
                 size: NonZeroU64::try_from(file011_data.len() as u64).unwrap(),
                 digest: HashDigest::from_data(&file011_data[..]),
             }],
-        })
-        .dump_and_encrypt(&device.local_symkey)
-        .unwrap();
+        }
+        .dump_sign_and_encrypt(&device.signing_key, &device.local_symkey);
 
         insert_manifest(conn, (*workspace_id).as_ref(), &workspace_manifest);
         insert_manifest(conn, (*file0_id).as_ref(), &file0);
