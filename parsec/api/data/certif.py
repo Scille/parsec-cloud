@@ -244,3 +244,17 @@ class RealmRoleCertificateContent(BaseAPISignedData):
                 f"Invalid role: expected `{expected_role}`, got `{data.role}`"
             )
         return data
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class TpekVerifyKeyCertificateContent(BaseAPISignedData):
+    class SCHEMA_CLS(BaseSignedDataSchema):
+        type = fields.CheckedConstant("tpek_verify_key_certificate", required=True)
+        verify_key: VerifyKey
+
+        @post_load
+        def make_obj(self, data: Dict[str, Any]) -> "RealmRoleCertificateContent":
+            data.pop("type")
+            return RealmRoleCertificateContent(**data)
+
+    verify_key: VerifyKey

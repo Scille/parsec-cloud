@@ -4,6 +4,7 @@ import attr
 import pendulum
 from typing import Optional, Union, List
 from secrets import token_hex
+from parsec.api.data.certif import TpekVerifyKeyCertificateContent
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
@@ -159,7 +160,16 @@ class BaseOrganizationComponent:
 
         bootstrap_token = msg["bootstrap_token"]
         root_verify_key = msg["root_verify_key"]
-        tpek_verify_key = msg["tpek_verify_key"]
+
+        try:
+            tpek_certicate = TpekVerifyKeyCertificateContent.verify_and_load(
+                msg["tpek_verify_key"], author_verify_key=root_verify_key, expected_author=None
+            )
+        except DataError:
+            return {
+                "status": "invalid tpek_verify_key",
+                "reason": "Invalid signature for tpel verify key",
+            }
 
         try:
             u_data = UserCertificateContent.verify_and_load(
@@ -184,7 +194,6 @@ class BaseOrganizationComponent:
                     author_verify_key=root_verify_key,
                     expected_author=None,
                 )
-            # TODO: Verify tpek_verify_key
 
         except DataError as exc:
             return {
@@ -273,7 +282,7 @@ class BaseOrganizationComponent:
                 first_device,
                 bootstrap_token,
                 root_verify_key,
-                tpek_verify_key,
+                tpek_certicate.verify_key,
             )
 
         except OrganizationAlreadyBootstrappedError:
