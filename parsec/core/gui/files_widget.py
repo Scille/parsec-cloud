@@ -262,6 +262,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.setupUi(self)
 
         self.spinner.hide()
+        self.label_elements.hide()
 
         self.core = core
         self.jobs_ctx = jobs_ctx
@@ -303,6 +304,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.cut_clicked.connect(self.on_cut_clicked)
         self.table_files.file_path_clicked.connect(self.on_get_file_path_clicked)
         self.table_files.open_current_dir_clicked.connect(self.on_open_current_dir_clicked)
+        self.table_files.itemSelectionChanged.connect(self._on_selection_changed)
 
         self.rename_success.connect(self._on_rename_success)
         self.rename_error.connect(self._on_rename_error)
@@ -364,6 +366,24 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     source_workspace=self.clipboard.source_workspace.get_workspace_name().str,
                 )
         self.reset(default_selection)
+
+    def _on_selection_changed(self):
+        selected_count = len(self.table_files.selected_files())
+        file_count = max(self.table_files.rowCount() - 1, 0)
+        if not file_count:
+            self.label_elements.hide()
+            return
+        self.label_elements.show()
+        if selected_count:
+            self.label_elements.setText(
+                _("TEXT_FILE_FOLDER_INFO_WITH_SELECTED_count-selected").format(
+                    count=file_count, selected=selected_count
+                )
+            )
+        else:
+            self.label_elements.setText(
+                _("TEXT_FILE_FOLDER_INFO_NO_SELECTED_count").format(count=file_count)
+            )
 
     def reset(self, default_selection=None):
         workspace_name = self.workspace_fs.get_workspace_name()
@@ -646,6 +666,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def load(self, directory, default_selection=None):
         self.spinner.show()
+        self.label_elements.hide()
         self.table_files.setEnabled(False)
         self.current_directory = directory
         self.current_directory_id = None
@@ -985,12 +1006,26 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         workspace_name = self.workspace_fs.get_workspace_name()
         self.spinner.hide()
         self.table_files.setEnabled(True)
+        selected_count = len(self.table_files.selected_files())
+        if selected_count:
+            self.label_elements.setText(
+                _("TEXT_FILE_FOLDER_INFO_WITH_SELECTED_count-selected").format(
+                    count=len(files_stats), selected=selected_count
+                )
+            )
+        else:
+            self.label_elements.setText(
+                _("TEXT_FILE_FOLDER_INFO_NO_SELECTED_count").format(count=len(files_stats))
+            )
+        self.label_elements.show()
         self.folder_changed.emit(workspace_name, str(self.current_directory))
 
     def _on_folder_stat_error(self, job):
         self.table_files.clear()
         self.spinner.hide()
         self.table_files.setEnabled(True)
+        self.label_elements.show()
+        self.label_elements.setText(_("TEXT_FILE_FOLDER_INFO_NO_SELECTED_count").format(count=0))
         if isinstance(job.exc, FSFileNotFoundError):
             show_error(self, _("TEXT_FILE_FOLDER_NOT_FOUND"))
             self.table_files.add_parent_workspace()

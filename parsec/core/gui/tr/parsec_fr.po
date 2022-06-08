@@ -7,16 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-05-12 06:21+0200\n"
+"POT-Creation-Date: 2022-06-08 12:56+0200\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.10.1\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
@@ -218,7 +218,9 @@ msgid "TEXT_CLAIM_DEVICE_INVITATION_NOT_FOUND"
 msgstr "L'invitation n'a pas été trouvée."
 
 msgid "TEXT_INVITATION_BACKEND_NOT_AVAILABLE"
-msgstr "La connexion au serveur a été perdue. Veuillez vérifier votre connexion et redémarrer le processus."
+msgstr ""
+"La connexion au serveur a été perdue. Veuillez vérifier votre connexion "
+"et redémarrer le processus."
 
 msgid "TEXT_CLAIM_DEVICE_UNKNOWN_ERROR"
 msgstr "Erreur interne. Veuillez redémarrer le processus."
@@ -301,6 +303,9 @@ msgstr "Erreur interne. Veuillez redémarrer le processus."
 msgid "TEXT_CLAIM_USER_TITLE"
 msgstr "Enregistrer un utilisateur"
 
+msgid "ACTION_CREATE_ORG"
+msgstr "Créer l'organisation"
+
 msgid "TEXT_BOOTSTRAP_ORGANIZATION_INSTRUCTIONS_organization"
 msgstr ""
 "Veuillez fournir les informations suivantes pour démarrer l'organisation "
@@ -318,8 +323,8 @@ msgstr "L'adresse email n'est pas valide."
 msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"
 msgstr "Le nom de d'appareil n'est pas valide."
 
-msgid "ACTION_CREATE_ORG"
-msgstr "Créer l'organisation"
+msgid "ACTION_CREATE_DEVICE"
+msgstr "Créer l'appareil"
 
 msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
 msgstr "Une organisation du même nom existe déjà."
@@ -431,9 +436,6 @@ msgstr "Impossible d'importer cette clef d'appareil."
 msgid "TEXT_RECOVERY_IMPORT_SUCCESS"
 msgstr "L'appareil a été récupéré avec succès"
 
-msgid "ACTION_CREATE_DEVICE"
-msgstr "Créer l'appareil"
-
 msgid "TEXT_DEVICE_RECOVERY_IMPORT_WIZARD_TITLE"
 msgstr "Récupérer un appareil"
 
@@ -468,11 +470,11 @@ msgstr "Écraser la requête"
 msgid "ACTION_NO"
 msgstr "Non"
 
-msgid "TEXT_ENROLLMENT_SUBMIT_FAILED"
-msgstr "Impossible de faire une demande d'enrôlement"
-
 msgid "TEXT_ENROLLMENT_SUBMIT_FAILED_EMAIL_USED"
 msgstr "L'adresse email du certificat est déja attributée à un utilisateur actif"
+
+msgid "TEXT_ENROLLMENT_SUBMIT_FAILED"
+msgstr "Impossible de faire une demande d'enrôlement"
 
 msgid "TEXT_ENROLLMENT_ERROR_LOADING_CERTIFICATE"
 msgstr "Impossible de charger le certificate"
@@ -636,6 +638,12 @@ msgid "TEXT_FILE_DROP_WORKSPACE_IS_READ_ONLY"
 msgstr ""
 "Impossible d'importer des fichiers car vous n'avez pas accès à cet espace"
 " de travail en écriture."
+
+msgid "TEXT_FILE_FOLDER_INFO_WITH_SELECTED_count-selected"
+msgstr "{count} éléments au total, {selected} sélectionnés"
+
+msgid "TEXT_FILE_FOLDER_INFO_NO_SELECTED_count"
+msgstr "{count} éléments au total"
 
 msgid "TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"
 msgstr "Le lien vers le fichier a été copié dans le presse-papier."
@@ -2951,11 +2959,11 @@ msgstr "Interface"
 msgid "TEXT_SETTINGS_CHECK_SHOW_CONFINED_FILES"
 msgstr "Afficher les fichiers exclus de la synchronisation"
 
-msgid "TEXT_SETTINGS_CHECK_USE_WORKSPACES_COLORS"
-msgstr "Utiliser des couleurs pour les espaces de travail"
-
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
+
+msgid "TEXT_SETTINGS_CHECK_USE_WORKSPACES_COLORS"
+msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "Il vous sera demandé de sélectionner votre carte à puce"
@@ -2986,9 +2994,6 @@ msgstr "Accueillir l'utilisateur"
 
 msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
 msgstr "Filtrer les utilisateurs"
-
-msgid "ACTION_FILTER_LIST_USERS"
-msgstr "Rechercher utilisateurs"
 
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Inviter un utilisateur"
@@ -3040,4 +3045,7 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+
+#~ msgid "ACTION_FILTER_LIST_USERS"
+#~ msgstr "Rechercher utilisateurs"
 
