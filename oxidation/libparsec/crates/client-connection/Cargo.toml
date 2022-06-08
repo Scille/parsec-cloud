@@ -6,8 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# Used to send HTTP request to the server.
 reqwest = "0.11.10"
+# Used to perform operation on URL.
 url = "2.2.2"
+# Used to encoded binary data.
+base64 = "0.13.0"
 parsec_api_types = { path = "../../../crates/parsec_api_types" }
 parsec_api_protocol = { path = "../../../crates/parsec_api_protocol" }
-base64 = "0.13.0"
+# Use abstract crypto primitive, to allow to sign request.
+parsec_api_crypto = { path = "../../../crates/parsec_api_crypto" }

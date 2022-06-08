@@ -14,54 +14,88 @@
 //! 2. `timestamp` (u128 in big-endian)
 //! 3. `body` (as bytes)
 
+use parsec_api_crypto::SigningKey;
 use parsec_api_protocol::authenticated_cmds;
 use parsec_api_types::UserID;
 use reqwest::{
-    header::{HeaderMap, HeaderValue},
+    header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
 
+/// Endpoint path were will be sending authenticated cmds.
 pub const AUTHENTICATED_API_URI: &str = "/authenticated";
-/// Method name that will be used for the header `Authorization` to indicate that will be using this method
+/// Method name that will be used for the header `Authorization` to indicate that will be using this method.
 pub const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
+/// How we serialize the data before sending a request.
+pub const PARSEC_CONTENT_TYPE: &str = "application/msgpack";
 
 /// Factory that send commands in a authenticated context.
 pub struct AuthenticatedCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
     client: Client,
-    user_id: String,
     url: Url,
+    user_id: String,
+    signing_key: SigningKey,
 }
 
 impl AuthenticatedCmds {
     /// Create a new `AuthenticatedCmds`
-    pub fn new(client: Client, root_url: &str, user_id: &[u8]) -> Result<Self, url::ParseError> {
+    pub fn new(
+        client: Client,
+        root_url: &str,
+        user_id: &[u8],
+        signing_key: SigningKey,
+    ) -> Result<Self, url::ParseError> {
         let root_url = Url::parse(root_url)?;
         let url = root_url.join(AUTHENTICATED_API_URI)?;
         let user_id = base64::encode(user_id);
 
         Ok(Self {
             client,
-            user_id,
             url,
+            user_id,
+            signing_key,
         })
     }
 
     /// Prepare a new request, the body will be added to the Request using [RequestBuilder::body]
     fn prepare_request(&self, body: Vec<u8>) -> RequestBuilder {
+        let mut request_builder = self.client.post(self.url.clone());
+
+        request_builder = self.sign_request(request_builder, &body);
+
+        let mut content_headers = HeaderMap::with_capacity(2);
+        content_headers.insert(CONTENT_TYPE, HeaderValue::from_static(PARSEC_CONTENT_TYPE));
+        content_headers.insert(
+            CONTENT_LENGTH,
+            HeaderValue::from_str(&body.len().to_string()).expect("numeric value are valid char"),
+        );
+
+        request_builder.headers(content_headers).body(body)
+    }
+
+    /// Sing a request by adding specific headers.
+    fn sign_request(&self, request_builder: RequestBuilder, body: &[u8]) -> RequestBuilder {
         use std::time::SystemTime;
 
         let timestamp = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .expect("Clock may have gone backwards but not before the EPOCH")
             .as_millis();
-        let signature = "foo".to_string();
-        let mut authorization_headers = HeaderMap::with_capacity(4); // we will be adding 4 field.
-
-        authorization_headers.insert(
-            "Authorization",
-            HeaderValue::from_static(PARSEC_AUTH_METHOD),
+        let data_to_sign = Vec::from_iter(
+            self.user_id
+                .as_bytes()
+                .iter()
+                .chain(&timestamp.to_be_bytes())
+                .chain(body)
+                .copied(),
         );
+        let signature = self.signing_key.sign_only_signature(&data_to_sign);
+        let signature = base64::encode(signature);
+
+        let mut authorization_headers = HeaderMap::with_capacity(4);
+
+        authorization_headers.insert(AUTHORIZATION, HeaderValue::from_static(PARSEC_AUTH_METHOD));
         authorization_headers.insert(
             "Author",
             HeaderValue::from_str(&self.user_id).expect("base64 shouldn't contain invalid char"),
@@ -76,10 +110,7 @@ impl AuthenticatedCmds {
             HeaderValue::from_str(&signature).expect("base64 shouldn't contain invalid char"),
         );
 
-        self.client
-            .post(self.url.clone())
-            .headers(authorization_headers)
-            .body(body)
+        request_builder.headers(authorization_headers)
     }
 }
 

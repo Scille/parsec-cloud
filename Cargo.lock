@@ -1225,6 +1225,7 @@ name = "libparsec-client-connection"
 version = "0.1.0"
 dependencies = [
  "base64",
+ "parsec_api_crypto",
  "parsec_api_protocol",
  "parsec_api_types",
  "reqwest",
