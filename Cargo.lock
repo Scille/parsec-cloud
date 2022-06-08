@@ -2265,6 +2265,7 @@ dependencies = [
  "parsec_api_types",
  "parsec_client_types",
  "rstest",
+ "uuid",
 ]
 
 [[package]]

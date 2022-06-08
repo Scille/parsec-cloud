@@ -6,6 +6,8 @@ pub use trustchain::*;
 
 use hex_literal::hex;
 use rstest::fixture;
+use std::path::PathBuf;
+use uuid::Uuid;
 
 use parsec_api_crypto::*;
 use parsec_api_types::*;
@@ -153,4 +155,28 @@ pub fn mallory(coolorg: &Organization) -> Device {
         user_manifest_key: SecretKey::generate(),
         local_symkey: SecretKey::generate(),
     }
+}
+
+pub struct TmpPath(PathBuf);
+
+impl std::ops::Deref for TmpPath {
+    type Target = PathBuf;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Drop for TmpPath {
+    fn drop(&mut self) {
+        std::fs::remove_dir_all(&self.0).unwrap();
+    }
+}
+
+#[fixture]
+pub fn tmp_path() -> TmpPath {
+    let mut path = std::env::temp_dir();
+
+    path.extend(["rstest", &Uuid::new_v4().to_string()]);
+
+    TmpPath(path)
 }
