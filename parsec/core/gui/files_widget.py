@@ -338,6 +338,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def set_workspace_fs(
         self, wk_fs, current_directory=FsPath("/"), default_selection=None, clipboard=None
     ):
+        self.table_files.clear()
         self.current_directory = current_directory
         self.workspace_fs = wk_fs
         self.load(current_directory)
