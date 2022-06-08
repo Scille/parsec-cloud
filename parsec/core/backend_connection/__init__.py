@@ -51,7 +51,7 @@ __all__ = (
     "organization_bootstrap",
     "pki_enrollment_submit",
     "pki_enrollment_info",
-    # APIv1 Annonymous
+    # APIv1 Anonymous
     "APIV1_BackendAnonymousCmds",
     "apiv1_backend_anonymous_cmds_factory",
 )

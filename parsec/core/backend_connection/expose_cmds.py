@@ -43,7 +43,7 @@ def expose_cmds(cmd: ExposedCmdInput) -> ExposedCmdOutput:
 def expose_cmds_with_retrier(cmd: ExposedCmdInput) -> ExposedCmdOutput:
     @wraps(cmd)
     async def wrapper(self, *args: PArgs, **kwargs: PKwargs) -> R:
-        # Reusing the transports expose us to `BackendNotAvaiable` exceptions
+        # Reusing the transports expose us to `BackendNotAvailable` exceptions
         # due to inactivity timeout while the transport was in the pool.
         try:
             async with self.acquire_transport(allow_not_available=True) as transport:

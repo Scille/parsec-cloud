@@ -280,8 +280,8 @@ class BackendAuthenticatedConn:
                 # (e.g. 0, 1, 2, 4, 8, 15, 15, 15 etc. if max cooldown is 15s)
                 if self._backend_connection_failures < 1:
                     # A cooldown time of 0 second is useful for the specific case of a
-                    # revokation when the event listener is the only running transport.
-                    # This way, we don't have to wait 1 second before the revokation is
+                    # revocation when the event listener is the only running transport.
+                    # This way, we don't have to wait 1 second before the revocation is
                     # detected.
                     cooldown_time = 0
                 else:
@@ -378,7 +378,7 @@ class BackendAuthenticatedConn:
         if not ignore_status:
             if self.status_exc:
                 # Re-raising an already raised exception is bad practice
-                # as its internal state gets mutated everytime is raised.
+                # as its internal state gets mutated every time is raised.
                 # Note that this copy preserves the __cause__ attribute.
                 raise copy_exception(self.status_exc)
 
