@@ -2,9 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use sodiumoxide::crypto::sign::{
-    ed25519, gen_keypair, sign, verify, PUBLICKEYBYTES, SEEDBYTES, SIGNATUREBYTES,
-};
+use sodiumoxide::crypto::sign::{ed25519, gen_keypair, sign, verify};
 
 use crate::CryptoError;
 
@@ -20,8 +18,10 @@ crate::macros::impl_key_debug!(SigningKey);
 
 impl SigningKey {
     pub const ALGORITHM: &'static str = "ed25519";
-    // SEEDBYTES is the size of the private key alone where SECRETKEYBYTES also contains the public part
-    pub const SIZE: usize = SEEDBYTES;
+    /// Size of the secret key.
+    /// `SEEDBYTES` is the size of the private key alone where `SECRETKEYBYTES` also contains the public part
+    pub const SIZE: usize = ed25519::SEEDBYTES;
+    pub const SIGNATURE_LENGTH: usize = ed25519::SIGNATUREBYTES;
 
     pub fn verify_key(&self) -> VerifyKey {
         VerifyKey::try_from(self.0.public_key().0).unwrap()
@@ -37,7 +37,7 @@ impl SigningKey {
     }
 
     /// Sign the message and return only the signature.
-    pub fn sign_only_signature(&self, data: &[u8]) -> [u8; SIGNATUREBYTES] {
+    pub fn sign_only_signature(&self, data: &[u8]) -> [u8; Self::SIGNATURE_LENGTH] {
         use sodiumoxide::crypto::sign::Signer;
 
         self.0.sign(data).to_bytes()
@@ -97,10 +97,11 @@ super::utils::impl_try_from!(VerifyKey, ed25519::PublicKey);
 
 impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
-    pub const SIZE: usize = PUBLICKEYBYTES;
+    /// Size of the public key.
+    pub const SIZE: usize = ed25519::PUBLICKEYBYTES;
 
     pub fn unsecure_unwrap(signed: &[u8]) -> Option<&[u8]> {
-        signed.get(SIGNATUREBYTES..)
+        signed.get(SigningKey::SIGNATURE_LENGTH..)
     }
 
     pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {

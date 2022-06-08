@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use ed25519_dalek::{
-    Keypair, Signature, Signer, Verifier, PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH, SIGNATURE_LENGTH,
-};
+use ed25519_dalek::{Keypair, Signature, Signer, Verifier};
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
 
@@ -34,7 +32,10 @@ impl Eq for SigningKey {}
 
 impl SigningKey {
     pub const ALGORITHM: &'static str = "ed25519";
-    pub const SIZE: usize = SECRET_KEY_LENGTH;
+    /// Size of the secret key.
+    pub const SIZE: usize = ed25519_dalek::SECRET_KEY_LENGTH;
+    /// Size of the signature generate by the signing key.
+    pub const SIGNATURE_LENGTH: usize = ed25519_dalek::SIGNATURE_LENGTH;
 
     pub fn verify_key(&self) -> VerifyKey {
         VerifyKey(self.0.public)
@@ -46,14 +47,14 @@ impl SigningKey {
 
     /// Sign the message and prefix it with the signature.
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
-        let mut signed = Vec::with_capacity(SIGNATURE_LENGTH + data.len());
+        let mut signed = Vec::with_capacity(Self::SIGNATURE_LENGTH + data.len());
         signed.extend(self.0.sign(data).to_bytes());
         signed.extend_from_slice(data);
         signed
     }
 
     /// Sign the message and return only the signature.
-    pub fn sign_only_signature(&self, data: &[u8]) -> [u8; SIGNATURE_LENGTH] {
+    pub fn sign_only_signature(&self, data: &[u8]) -> [u8; Self::SIGNATURE_LENGTH] {
         self.0.sign(data).to_bytes()
     }
 }
@@ -112,20 +113,21 @@ crate::macros::impl_key_debug!(VerifyKey);
 
 impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
-    pub const SIZE: usize = PUBLIC_KEY_LENGTH;
+    /// Size of the public key.
+    pub const SIZE: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
     pub fn unsecure_unwrap(signed: &[u8]) -> Option<&[u8]> {
-        signed.get(SIGNATURE_LENGTH..)
+        signed.get(SigningKey::SIGNATURE_LENGTH..)
     }
 
     pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {
         // Signature::try_from expects a [u8;64] and I have no idea how to get
         // one except by slicing, so we make sure the array is large enough before slicing.
-        if signed.len() < SIGNATURE_LENGTH {
+        if signed.len() < SigningKey::SIGNATURE_LENGTH {
             return Err(CryptoError::Signature);
         }
-        let signature = Signature::try_from(&signed[..SIGNATURE_LENGTH]).unwrap();
-        let message = &signed[SIGNATURE_LENGTH..];
+        let signature = Signature::try_from(&signed[..SigningKey::SIGNATURE_LENGTH]).unwrap();
+        let message = &signed[SigningKey::SIGNATURE_LENGTH..];
         self.0
             .verify(message, &signature)
             .map_err(|_| CryptoError::SignatureVerification)?;
