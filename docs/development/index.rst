@@ -11,4 +11,5 @@ Hack on Parsec
    :name: toc-development
 
    quickstart
+   styleguide
    release
