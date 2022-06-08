@@ -122,6 +122,7 @@ impl AuthenticatedCmds {
             .unwrap();
         let req = self.prepare_request(data).send();
         let resp = req.await.unwrap();
-        todo!()
+        let response_body = resp.bytes().await.unwrap();
+        authenticated_cmds::user_get::Rep::load(&response_body)
     }
 }
