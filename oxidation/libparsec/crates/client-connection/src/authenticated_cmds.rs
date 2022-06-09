@@ -22,6 +22,8 @@ use reqwest::{
     Client, RequestBuilder, Url,
 };
 
+use crate::command_error::{self, CommandError};
+
 /// Endpoint path were will be sending authenticated cmds.
 pub const AUTHENTICATED_API_URI: &str = "/authenticated";
 /// Method name that will be used for the header `Authorization` to indicate that will be using this method.
@@ -116,13 +118,19 @@ impl AuthenticatedCmds {
 
 impl AuthenticatedCmds {
     /// Retrieve the user identified by `id`
-    pub async fn user_get(&self, id: UserID) -> authenticated_cmds::user_get::Rep {
+    pub async fn user_get(
+        &self,
+        id: UserID,
+    ) -> command_error::Result<authenticated_cmds::user_get::Rep> {
         let data = authenticated_cmds::user_get::Req { user_id: id }
             .dump()
-            .unwrap();
+            .map_err(|e| CommandError::Serialization)?;
+
         let req = self.prepare_request(data).send();
-        let resp = req.await.unwrap();
-        let response_body = resp.bytes().await.unwrap();
+        let resp = req.await.map_err(|e| CommandError::Response)?;
+        let response_body = resp.bytes().await.map_err(|e| CommandError::Response)?;
+
         authenticated_cmds::user_get::Rep::load(&response_body)
+            .map_err(|e| CommandError::Deserialization)
     }
 }
