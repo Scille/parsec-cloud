@@ -59,7 +59,7 @@ fn signature_only() {
     let data = b"Hello world, I would like to sign this message!";
     let signed = sk.sign_only_signature(data);
     let expected_signed_message = sk.sign(data);
-    let expected_signature = &expected_signed_message[..SigningKey::SIGNATURE_LENGTH];
+    let expected_signature = &expected_signed_message[..SigningKey::SIGNATURE_SIZE];
 
     assert_eq!(signed, expected_signature);
 

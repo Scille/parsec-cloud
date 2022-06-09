@@ -21,7 +21,7 @@ impl SigningKey {
     /// Size of the secret key.
     /// `SEEDBYTES` is the size of the private key alone where `SECRETKEYBYTES` also contains the public part
     pub const SIZE: usize = ed25519::SEEDBYTES;
-    pub const SIGNATURE_LENGTH: usize = ed25519::SIGNATUREBYTES;
+    pub const SIGNATURE_SIZE: usize = ed25519::SIGNATUREBYTES;
 
     pub fn verify_key(&self) -> VerifyKey {
         VerifyKey::try_from(self.0.public_key().0).unwrap()
@@ -37,7 +37,7 @@ impl SigningKey {
     }
 
     /// Sign the message and return only the signature.
-    pub fn sign_only_signature(&self, data: &[u8]) -> [u8; Self::SIGNATURE_LENGTH] {
+    pub fn sign_only_signature(&self, data: &[u8]) -> [u8; Self::SIGNATURE_SIZE] {
         use sodiumoxide::crypto::sign::Signer;
 
         self.0.sign(data).to_bytes()
@@ -101,7 +101,7 @@ impl VerifyKey {
     pub const SIZE: usize = ed25519::PUBLICKEYBYTES;
 
     pub fn unsecure_unwrap(signed: &[u8]) -> Option<&[u8]> {
-        signed.get(SigningKey::SIGNATURE_LENGTH..)
+        signed.get(SigningKey::SIGNATURE_SIZE..)
     }
 
     pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {

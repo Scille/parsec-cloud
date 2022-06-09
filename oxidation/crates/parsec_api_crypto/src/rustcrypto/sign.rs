@@ -35,7 +35,7 @@ impl SigningKey {
     /// Size of the secret key.
     pub const SIZE: usize = ed25519_dalek::SECRET_KEY_LENGTH;
     /// Size of the signature generate by the signing key.
-    pub const SIGNATURE_LENGTH: usize = ed25519_dalek::SIGNATURE_LENGTH;
+    pub const SIGNATURE_SIZE: usize = ed25519_dalek::SIGNATURE_LENGTH;
 
     pub fn verify_key(&self) -> VerifyKey {
         VerifyKey(self.0.public)
@@ -47,14 +47,14 @@ impl SigningKey {
 
     /// Sign the message and prefix it with the signature.
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
-        let mut signed = Vec::with_capacity(Self::SIGNATURE_LENGTH + data.len());
+        let mut signed = Vec::with_capacity(Self::SIGNATURE_SIZE + data.len());
         signed.extend(self.0.sign(data).to_bytes());
         signed.extend_from_slice(data);
         signed
     }
 
     /// Sign the message and return only the signature.
-    pub fn sign_only_signature(&self, data: &[u8]) -> [u8; Self::SIGNATURE_LENGTH] {
+    pub fn sign_only_signature(&self, data: &[u8]) -> [u8; Self::SIGNATURE_SIZE] {
         self.0.sign(data).to_bytes()
     }
 }
@@ -117,17 +117,17 @@ impl VerifyKey {
     pub const SIZE: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
     pub fn unsecure_unwrap(signed: &[u8]) -> Option<&[u8]> {
-        signed.get(SigningKey::SIGNATURE_LENGTH..)
+        signed.get(SigningKey::SIGNATURE_SIZE..)
     }
 
     pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {
         // Signature::try_from expects a [u8;64] and I have no idea how to get
         // one except by slicing, so we make sure the array is large enough before slicing.
-        if signed.len() < SigningKey::SIGNATURE_LENGTH {
+        if signed.len() < SigningKey::SIGNATURE_SIZE {
             return Err(CryptoError::Signature);
         }
-        let signature = Signature::try_from(&signed[..SigningKey::SIGNATURE_LENGTH]).unwrap();
-        let message = &signed[SigningKey::SIGNATURE_LENGTH..];
+        let signature = Signature::try_from(&signed[..SigningKey::SIGNATURE_SIZE]).unwrap();
+        let message = &signed[SigningKey::SIGNATURE_SIZE..];
         self.0
             .verify(message, &signature)
             .map_err(|_| CryptoError::SignatureVerification)?;
