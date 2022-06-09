@@ -1013,3 +1013,54 @@ impl LocalUserManifest {
         reference == *remote_manifest
     }
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum LocalManifest {
+    File(LocalFileManifest),
+    Folder(LocalFolderManifest),
+    Workspace(LocalWorkspaceManifest),
+    User(LocalUserManifest),
+}
+
+impl LocalManifest {
+    pub fn need_sync(&self) -> bool {
+        match self {
+            Self::File(manifest) => manifest.need_sync,
+            Self::Folder(manifest) => manifest.need_sync,
+            Self::Workspace(manifest) => manifest.need_sync,
+            Self::User(manifest) => manifest.need_sync,
+        }
+    }
+
+    pub fn base_version(&self) -> u32 {
+        match self {
+            Self::File(manifest) => manifest.base.version,
+            Self::Folder(manifest) => manifest.base.version,
+            Self::Workspace(manifest) => manifest.base.version,
+            Self::User(manifest) => manifest.base.version,
+        }
+    }
+
+    pub fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
+        match self {
+            Self::File(manifest) => manifest.dump_and_encrypt(key),
+            Self::Folder(manifest) => manifest.dump_and_encrypt(key),
+            Self::Workspace(manifest) => manifest.dump_and_encrypt(key),
+            Self::User(manifest) => manifest.dump_and_encrypt(key),
+        }
+    }
+
+    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &'static str> {
+        if let Ok(manifest) = LocalFileManifest::decrypt_and_load(encrypted, key) {
+            Ok(Self::File(manifest))
+        } else if let Ok(manifest) = LocalFolderManifest::decrypt_and_load(encrypted, key) {
+            Ok(Self::Folder(manifest))
+        } else if let Ok(manifest) = LocalWorkspaceManifest::decrypt_and_load(encrypted, key) {
+            Ok(Self::Workspace(manifest))
+        } else if let Ok(manifest) = LocalUserManifest::decrypt_and_load(encrypted, key) {
+            Ok(Self::User(manifest))
+        } else {
+            Err("Cannot decrypt and load into LocalManifest")
+        }
+    }
+}
