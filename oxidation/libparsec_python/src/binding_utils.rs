@@ -83,12 +83,13 @@ pub fn py_to_rs_user_profile(profile: &PyAny) -> PyResult<parsec_api_types::User
 }
 
 pub fn rs_to_py_user_profile(profile: &parsec_api_types::UserProfile) -> PyResult<PyObject> {
+    use parsec_api_types::UserProfile::*;
     Python::with_gil(|py| -> PyResult<PyObject> {
-        let cls = py.import("parsec.api.protocol")?.getattr("UserProfile")?;
+        let cls = py.import("parsec.api.data")?.getattr("UserProfile")?;
         let profile_name = match profile {
-            parsec_api_types::UserProfile::Admin => "ADMIN",
-            parsec_api_types::UserProfile::Standard => "STANDARD",
-            parsec_api_types::UserProfile::Outsider => "OUTSIDER",
+            Admin => "ADMIN",
+            Standard => "STANDARD",
+            Outsider => "OUTSIDER",
         };
         let obj = cls.getattr(profile_name)?;
         Ok(obj.into_py(py))
@@ -119,7 +120,7 @@ pub fn py_to_rs_regex(regex: &PyAny) -> PyResult<Regex> {
     let regex = regex
         .getattr("pattern")
         .unwrap_or(regex)
-        .extract::<String>()?
+        .extract::<&str>()?
         .replace("\\Z", "\\z")
         .replace("\\ ", "\x20");
     Regex::new(&regex).map_err(|e| PyValueError::new_err(e.to_string()))
