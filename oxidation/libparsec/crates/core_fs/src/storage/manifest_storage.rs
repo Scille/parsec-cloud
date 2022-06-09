@@ -228,7 +228,6 @@ impl ManifestStorage {
     }
 
     /// Set the "prevent sync" pattern for the corresponding workspace
-
     /// This operation is idempotent,
     /// i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
     pub fn set_prevent_sync_pattern(&self, pattern: &Regex) -> FSResult<()> {
