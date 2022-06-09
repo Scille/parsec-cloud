@@ -124,13 +124,13 @@ impl AuthenticatedCmds {
     ) -> command_error::Result<authenticated_cmds::user_get::Rep> {
         let data = authenticated_cmds::user_get::Req { user_id: id }
             .dump()
-            .map_err(|e| CommandError::Serialization)?;
+            .map_err(|e| CommandError::Serialization(e.to_string()))?;
 
         let req = self.prepare_request(data).send();
-        let resp = req.await.map_err(|e| CommandError::Response)?;
-        let response_body = resp.bytes().await.map_err(|e| CommandError::Response)?;
+        let resp = req.await.map_err(CommandError::Response)?;
+        let response_body = resp.bytes().await.map_err(CommandError::Response)?;
 
         authenticated_cmds::user_get::Rep::load(&response_body)
-            .map_err(|e| CommandError::Deserialization)
+            .map_err(CommandError::Deserialization)
     }
 }
