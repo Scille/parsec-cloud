@@ -176,7 +176,9 @@ impl Drop for TmpPath {
 pub fn tmp_path() -> TmpPath {
     let mut path = std::env::temp_dir();
 
-    path.extend(["rstest", &Uuid::new_v4().to_string()]);
+    path.extend(["parsec-tests", &Uuid::new_v4().to_string()]);
+
+    std::fs::create_dir_all(&path).expect("Cannot create tmp_path dir");
 
     TmpPath(path)
 }
