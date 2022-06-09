@@ -256,7 +256,6 @@ impl ManifestStorage {
     }
 
     /// Mark the provided pattern as fully applied.
-
     /// This is meant to be called after one made sure that all the manifests in the
     /// workspace are compliant with the new pattern. The applied pattern is provided
     /// as an argument in order to avoid concurrency issues.

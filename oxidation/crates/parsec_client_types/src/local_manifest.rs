@@ -1014,7 +1014,8 @@ impl LocalUserManifest {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
 pub enum LocalManifest {
     File(LocalFileManifest),
     Folder(LocalFolderManifest),
@@ -1051,16 +1052,7 @@ impl LocalManifest {
     }
 
     pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &'static str> {
-        if let Ok(manifest) = LocalFileManifest::decrypt_and_load(encrypted, key) {
-            Ok(Self::File(manifest))
-        } else if let Ok(manifest) = LocalFolderManifest::decrypt_and_load(encrypted, key) {
-            Ok(Self::Folder(manifest))
-        } else if let Ok(manifest) = LocalWorkspaceManifest::decrypt_and_load(encrypted, key) {
-            Ok(Self::Workspace(manifest))
-        } else if let Ok(manifest) = LocalUserManifest::decrypt_and_load(encrypted, key) {
-            Ok(Self::User(manifest))
-        } else {
-            Err("Cannot decrypt and load into LocalManifest")
-        }
+        let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+        rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")
     }
 }
