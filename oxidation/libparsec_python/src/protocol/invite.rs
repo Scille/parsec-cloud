@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use pyo3::exceptions::PyValueError;
 use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyType};
@@ -119,7 +120,9 @@ impl InviteNewRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_new::Rep::load(&buf)))
+        invite_new::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -197,7 +200,9 @@ impl InviteDeleteRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_delete::Rep::load(&buf)))
+        invite_delete::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -299,7 +304,9 @@ impl InviteListRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_list::Rep::load(&buf)))
+        invite_list::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -381,7 +388,9 @@ impl InviteInfoRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_info::Rep::load(&buf)))
+        invite_info::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -449,7 +458,9 @@ impl Invite1ClaimerWaitPeerRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_1_claimer_wait_peer::Rep::load(&buf)))
+        invite_1_claimer_wait_peer::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -527,7 +538,9 @@ impl Invite1GreeterWaitPeerRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_1_greeter_wait_peer::Rep::load(&buf)))
+        invite_1_greeter_wait_peer::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -612,9 +625,9 @@ impl Invite2aClaimerSendHashedNonceHashNonceRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(
-            invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::load(&buf),
-        ))
+        invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -690,7 +703,9 @@ impl Invite2aGreeterGetHashedNonceRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_2a_greeter_get_hashed_nonce::Rep::load(&buf)))
+        invite_2a_greeter_get_hashed_nonce::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -754,7 +769,9 @@ impl Invite2bClaimerSendNonceRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_2b_claimer_send_nonce::Rep::load(&buf)))
+        invite_2b_claimer_send_nonce::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -830,7 +847,9 @@ impl Invite2bGreeterSendNonceRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_2b_greeter_send_nonce::Rep::load(&buf)))
+        invite_2b_greeter_send_nonce::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -894,7 +913,9 @@ impl Invite3aClaimerSignifyTrustRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_3a_claimer_signify_trust::Rep::load(&buf)))
+        invite_3a_claimer_signify_trust::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -965,7 +986,9 @@ impl Invite3aGreeterWaitPeerTrustRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_3a_greeter_wait_peer_trust::Rep::load(&buf)))
+        invite_3a_greeter_wait_peer_trust::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -1029,7 +1052,9 @@ impl Invite3bClaimerWaitPeerTrustRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_3b_claimer_wait_peer_trust::Rep::load(&buf)))
+        invite_3b_claimer_wait_peer_trust::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -1100,7 +1125,9 @@ impl Invite3bGreeterSignifyTrustRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_3b_greeter_signify_trust::Rep::load(&buf)))
+        invite_3b_greeter_signify_trust::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -1164,7 +1191,9 @@ impl Invite4ClaimerCommunicateRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_4_claimer_communicate::Rep::load(&buf)))
+        invite_4_claimer_communicate::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -1235,6 +1264,8 @@ impl Invite4GreeterCommunicateRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(invite_4_greeter_communicate::Rep::load(&buf)))
+        invite_4_greeter_communicate::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }

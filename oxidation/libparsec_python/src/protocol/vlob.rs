@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 
+use pyo3::exceptions::PyValueError;
 use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
@@ -131,7 +132,9 @@ impl VlobCreateRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_create::Rep::load(&buf)))
+        vlob_create::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -272,7 +275,9 @@ impl VlobReadRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_read::Rep::load(&buf)))
+        vlob_read::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -393,7 +398,9 @@ impl VlobUpdateRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_update::Rep::load(&buf)))
+        vlob_update::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -481,7 +488,9 @@ impl VlobPollChangesRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_poll_changes::Rep::load(&buf)))
+        vlob_poll_changes::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -563,7 +572,9 @@ impl VlobListVersionsRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_list_versions::Rep::load(&buf)))
+        vlob_list_versions::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -682,9 +693,9 @@ impl VlobMaintenanceGetReencryptionBatchRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_maintenance_get_reencryption_batch::Rep::load(
-            &buf,
-        )))
+        vlob_maintenance_get_reencryption_batch::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -851,8 +862,8 @@ impl VlobMaintenanceSaveReencryptionBatchRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(vlob_maintenance_save_reencryption_batch::Rep::load(
-            &buf,
-        )))
+        vlob_maintenance_save_reencryption_batch::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
