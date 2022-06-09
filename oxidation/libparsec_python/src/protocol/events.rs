@@ -134,7 +134,7 @@ impl EventsListenRep {
     }
 
     #[classmethod]
-    #[pyo3(name = "OkRealmRolesUdpated")]
+    #[pyo3(name = "OkRealmRolesUpdated")]
     fn ok_realm_roles_updated(_cls: &PyType, realm_id: RealmID, role: &PyAny) -> PyResult<Self> {
         let realm_id = realm_id.0;
         let role =
