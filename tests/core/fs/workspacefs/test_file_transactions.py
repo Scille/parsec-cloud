@@ -4,7 +4,6 @@ import os
 import sys
 import pytest
 from pendulum import datetime
-from pathlib import Path
 from hypothesis_trio.stateful import initialize, rule, run_state_machine_as_test
 from hypothesis import strategies as st
 
@@ -215,7 +214,12 @@ size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows file style not compatible with oracle")
 def test_file_operations(
-    tmpdir, hypothesis_settings, user_fs_online_state_machine, file_transactions_factory, alice
+    tmpdir,
+    hypothesis_settings,
+    user_fs_online_state_machine,
+    file_transactions_factory,
+    alice,
+    tmp_path,
 ):
     tentative = 0
 
@@ -223,7 +227,7 @@ def test_file_operations(
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
                 async with WorkspaceStorage.run(
-                    Path("/dummy"), alice, EntryID.new()
+                    tmp_path / f"file_operations-{tentative}", alice, EntryID.new()
                 ) as local_storage:
                     async with file_transactions_factory(
                         self.device, local_storage=local_storage

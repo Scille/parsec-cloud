@@ -2,7 +2,8 @@
 
 from pathlib import Path
 from collections import defaultdict
-from typing import cast, Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern
+from typing import cast, Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern, List
+
 import trio
 from trio import lowlevel
 from pendulum import DateTime
@@ -120,6 +121,12 @@ class BaseWorkspaceStorage:
         raise NotImplementedError
 
     async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
+        raise NotImplementedError
+
+    async def block_storage_get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+        raise NotImplementedError
+
+    async def chunk_storage_get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
         raise NotImplementedError
 
     # Locking helpers
@@ -418,6 +425,12 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         """
         await self.manifest_storage.mark_prevent_sync_pattern_fully_applied(pattern)
         await self._load_prevent_sync_pattern()
+
+    async def chunk_storage_get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+        return await self.chunk_storage.get_local_chunk_ids(chunk_id)
+
+    async def block_storage_get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+        return await self.block_storage.get_local_chunk_ids(chunk_id)
 
     # Vacuum
 

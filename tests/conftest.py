@@ -14,6 +14,7 @@ import trio_asyncio
 from contextlib import contextmanager
 import hypothesis
 import sqlite3
+from parsec import IS_OXIDIZED
 
 from parsec.monitoring import TaskMonitoringInstrument
 from parsec.core.mountpoint.manager import get_mountpoint_runner
@@ -406,7 +407,7 @@ def blockstore(backend_store, fixtures_customization):
 
 @pytest.fixture(autouse=True)
 def persistent_mockup(monkeypatch, fixtures_customization):
-    if fixtures_customization.get("real_data_storage", False):
+    if fixtures_customization.get("real_data_storage", False) or IS_OXIDIZED:
         yield
         return
 

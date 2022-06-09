@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from pathlib import Path
 from pendulum import datetime
 from contextlib import asynccontextmanager
 from hypothesis_trio.stateful import run_state_machine_as_test, TrioAsyncioRuleBasedStateMachine
@@ -77,8 +76,10 @@ def file_transactions_factory(event_bus, remote_devices_manager_factory, transac
 
 
 @pytest.fixture
-async def alice_transaction_local_storage(alice):
-    async with WorkspaceStorage.run(Path("/dummy"), alice, EntryID.new()) as storage:
+async def alice_transaction_local_storage(alice, tmp_path):
+    async with WorkspaceStorage.run(
+        tmp_path / "alice_transaction_local_storage", alice, EntryID.new()
+    ) as storage:
         yield storage
 
 

@@ -423,7 +423,7 @@ async def test_chunk_many(alice_workspace_storage):
         chunks.append(c.id)
         await aws.chunk_storage.set_chunk(c.id, data)
     assert len(chunks) == chunks_number
-    ret = await aws.chunk_storage.get_local_chunk_ids(chunks)
+    ret = await aws.chunk_storage_get_local_chunk_ids(chunks)
     for i in range(len(ret)):
         assert ret[i]
     assert len(ret) == chunks_number
