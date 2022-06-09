@@ -134,7 +134,7 @@ impl EventsListenRep {
     }
 
     #[classmethod]
-    #[pyo3(name = "OkRealmRolesUdpated")]
+    #[pyo3(name = "OkRealmRolesUpdated")]
     fn ok_realm_roles_updated(_cls: &PyType, realm_id: RealmID, role: &PyAny) -> PyResult<Self> {
         let realm_id = realm_id.0;
         let role =
@@ -165,7 +165,9 @@ impl EventsListenRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(events_listen::Rep::load(&buf)))
+        events_listen::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -213,6 +215,8 @@ impl EventsSubscribeRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(events_subscribe::Rep::load(&buf)))
+        events_subscribe::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }

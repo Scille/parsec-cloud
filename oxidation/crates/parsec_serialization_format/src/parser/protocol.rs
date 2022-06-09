@@ -233,9 +233,6 @@ impl Cmds {
                     #[serde(tag = "status")]
                     pub enum Rep {
                         #variants_rep
-                        UnknownError {
-                            error: String,
-                        },
                     }
 
                     impl Rep {
@@ -243,13 +240,8 @@ impl Cmds {
                             ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
                         }
 
-                        pub fn load(buf: &[u8]) -> Self {
-                            match ::rmp_serde::from_slice(buf) {
-                                Ok(res) => res,
-                                Err(e) => Self::UnknownError {
-                                    error: e.to_string(),
-                                },
-                            }
+                        pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
+                            ::rmp_serde::from_slice(buf)
                         }
                     }
                 }
