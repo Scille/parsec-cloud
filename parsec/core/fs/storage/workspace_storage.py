@@ -123,10 +123,10 @@ class BaseWorkspaceStorage:
     async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
         raise NotImplementedError
 
-    async def block_storage_get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+    async def get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
         raise NotImplementedError
 
-    async def chunk_storage_get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+    async def get_local_block_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
         raise NotImplementedError
 
     # Locking helpers
@@ -426,10 +426,10 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         await self.manifest_storage.mark_prevent_sync_pattern_fully_applied(pattern)
         await self._load_prevent_sync_pattern()
 
-    async def chunk_storage_get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+    async def get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
         return await self.chunk_storage.get_local_chunk_ids(chunk_id)
 
-    async def block_storage_get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+    async def get_local_block_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
         return await self.block_storage.get_local_chunk_ids(chunk_id)
 
     # Vacuum

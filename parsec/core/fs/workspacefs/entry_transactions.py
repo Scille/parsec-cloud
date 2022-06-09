@@ -214,11 +214,9 @@ class EntryTransactions(FileTransactions):
 
         # To avoid concurrency problems block storage is called first
         local_and_remote_block_ids = set(
-            await self.local_storage.block_storage_get_local_chunk_ids(list(block_ids))
+            await self.local_storage.get_local_block_ids(list(block_ids))
         )
-        local_only_block_ids = set(
-            await self.local_storage.chunk_storage_get_local_chunk_ids(list(block_ids))
-        )
+        local_only_block_ids = set(await self.local_storage.get_local_chunk_ids(list(block_ids)))
         remote_only_block_ids = block_ids - local_and_remote_block_ids - local_only_block_ids
 
         local_only_blocks = [block_dict[block_id].access for block_id in local_only_block_ids]
