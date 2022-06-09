@@ -14,9 +14,15 @@
 //! 2. `timestamp` (u128 in big-endian)
 //! 3. `body` (as bytes)
 
-use libparsec_crypto::SigningKey;
-use libparsec_protocol::authenticated_cmds;
-use libparsec_types::UserID;
+use std::{collections::HashMap, num::NonZeroU64};
+
+use libparsec_crypto::{PublicKey, SigningKey};
+use libparsec_protocol::authenticated_cmds::{
+    self, invite_delete::InvitationDeletedReason, invite_new::UserOrDevice,
+};
+use libparsec_types::{
+    BlockID, DateTime, InvitationToken, RealmID, ReencryptionBatchEntry, UserID, VlobID,
+};
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
@@ -116,21 +122,181 @@ impl AuthenticatedCmds {
     }
 }
 
-impl AuthenticatedCmds {
-    /// Retrieve the user identified by `id`
-    pub async fn user_get(
-        &self,
-        id: UserID,
-    ) -> command_error::Result<authenticated_cmds::user_get::Rep> {
-        let data = authenticated_cmds::user_get::Req { user_id: id }
-            .dump()
-            .map_err(|e| CommandError::Serialization(e.to_string()))?;
+macro_rules! impl_auth_cmds {
+    (
+        $(
+            $(#[$outer:meta])*
+            $name:ident($($key:ident: $type:ty),*)
+        )+
+    ) => {
+        $(
+            $(#[$outer])*
+            pub async fn $name(&self, $($key: $type),*) -> command_error::Result<authenticated_cmds::$name::Rep> {
+                let data = authenticated_cmds::$name::Req::new($($key),*).dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
 
                 let req = self.prepare_request(data).send();
                 let resp = req.await?;
                 let response_body = resp.bytes().await?;
 
-        authenticated_cmds::user_get::Rep::load(&response_body)
-            .map_err(CommandError::Deserialization)
-    }
+                authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::Deserialization)
+            }
+        )+
+    };
+}
+
+impl AuthenticatedCmds {
+    impl_auth_cmds!(
+        /// Create a new block.
+        block_create(block_id: BlockID, realm_id: RealmID, block: Vec<u8>)
+        /// Read a block.
+        block_read(block_id: BlockID)
+    );
+
+    impl_auth_cmds!(
+        /// Create a new device.
+        device_create(
+            device_certificate: Vec<u8>,
+            redacted_device_certificate: Vec<u8>
+        )
+    );
+
+    // TODO: use HTTP SSE to receive continuous events
+    // impl_auth_cmd!(
+    //     /// Listen to events
+    //     events_listen(wait: bool)
+    // );
+    // impl_auth_cmd!(
+    //     /// Subscribe to events
+    //     events_subscribe()
+    // );
+
+    impl_auth_cmds!(
+        /// Search a human.
+        human_find(
+            query: Option<String>,
+            omit_revoked: bool,
+            omit_non_human: bool,
+            page: NonZeroU64,
+            per_page: NonZeroU64
+        )
+    );
+
+    impl_auth_cmds!(
+        /// Wait for the peer to begin invitation procedure.
+        invite_1_greeter_wait_peer(token: InvitationToken, greeter_public_key: PublicKey)
+        /// Retrieve the hashed nonce during an invitation procedure.
+        invite_2a_greeter_get_hashed_nonce(token: InvitationToken)
+        /// Send the nonce during an invitation procedure.
+        invite_2b_greeter_send_nonce(token: InvitationToken, greeter_nonce: Vec<u8>)
+        /// Wait trust from peer during an invitation procedure.
+        invite_3a_greeter_wait_peer_trust(token: InvitationToken)
+        /// Trust establishment during an invitation procedure.
+        invite_3b_greeter_signify_trust(token: InvitationToken)
+        /// Last step of an invitation procedure.
+        invite_4_greeter_communicate(token: InvitationToken, payload: Vec<u8>)
+        /// Delete an invitation.
+        invite_delete(token: InvitationToken, reason: InvitationDeletedReason)
+        /// Retrieve a list of invited users.
+        invite_list()
+        /// Invite a new `User` or `Device`
+        invite_new(user_or_device: UserOrDevice)
+    );
+
+    impl_auth_cmds!(
+        /// Retrieve a message at `offset`
+        message_get(offset: u64)
+    );
+
+    impl_auth_cmds!(
+        /// Retrieve the config of an organization.
+        organization_config()
+        /// Retrieve the stats of an organization.
+        organization_stats()
+    );
+
+    impl_auth_cmds!(
+        /// Ping the server.
+        ping(ping: String)
+    );
+
+    impl_auth_cmds!(
+        /// create a new realm
+        realm_create(role_certificate: Vec<u8>)
+        /// notify that we've finish re-encrypting the realm
+        realm_finish_reencryption_maintenance(realm_id: RealmID, encryption_revision: u64)
+        /// retrieve the role certificates of a realm
+        realm_get_role_certificates(realm_id: RealmID)
+        /// start the re-encryption maintenance on a realm and notify participant
+        realm_start_reencryption_maintenance(
+            realm_id: RealmID,
+            encryption_revision: u64,
+            timestamp: DateTime,
+            per_participant_message: HashMap<UserID, Vec<u8>>
+        )
+        /// retrieve the stats of a realm
+        realm_stats(realm_id: RealmID)
+        /// get the status of a realm
+        realm_status(realm_id: RealmID)
+        /// update role in a realm
+        realm_update_roles(
+            role_certificate: Vec<u8>,
+            recipient_message: Option<Vec<u8>>
+        )
+    );
+
+    impl_auth_cmds!(
+        /// create a new user with its device
+        user_create(
+            user_certificate: Vec<u8>,
+            device_certificate: Vec<u8>,
+            redacted_user_certificate: Vec<u8>,
+            redacted_device_certificate: Vec<u8>
+        )
+        /// Retrieve an user by it's id
+        user_get(user_id: UserID)
+        /// revoke a user certificate
+        user_revoke(revoked_user_certificate: Vec<u8>)
+    );
+
+    impl_auth_cmds!(
+        /// create a new Vlob
+        vlob_create(
+            realm_id: RealmID,
+            encryption_revision: u64,
+            vlob_id: VlobID,
+            timestamp: DateTime,
+            blob: Vec<u8>
+        )
+        /// list version of a vlob
+        vlob_list_versions(vlob_id: VlobID)
+        /// get a Vlob at a certain encryption revision
+        vlob_maintenance_get_reencryption_batch(
+            realm_id: RealmID,
+            encryption_revision: u64,
+            size: u64
+        )
+        /// save Vlob encryption revision
+        vlob_maintenance_save_reencryption_batch(
+            realm_id: RealmID,
+            encryption_revision: u64,
+            batch: Vec<ReencryptionBatchEntry>
+        )
+        /// pool changes since last checkpoint
+        vlob_poll_changes(realm_id: RealmID, last_checkpoint: u64)
+        /// read a Vlob, can read a vlob at a specific version or time
+        vlob_read(
+            encryption_revision: u64,
+            vlob_id: VlobID,
+            version: Option<u32>,
+            timestamp: Option<DateTime>
+        )
+        /// update a Vlob
+        vlob_update(
+            encryption_revision: u64,
+            vlob_id: VlobID,
+            timestamp: DateTime,
+            version: u32,
+            blob: Vec<u8>
+        )
+    );
 }
