@@ -97,7 +97,7 @@ impl BackendAddr {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct BackendOrganizationAddr(parsec_api_types::BackendOrganizationAddr);
+pub(crate) struct BackendOrganizationAddr(pub parsec_api_types::BackendOrganizationAddr);
 
 #[pymethods]
 impl BackendOrganizationAddr {

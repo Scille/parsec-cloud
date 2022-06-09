@@ -152,6 +152,8 @@ try:
         RevokedUserCertificate,
         TrustchainContext,
         freeze_time,
+        # LocalDevice
+        LocalDevice,
     )
 except ImportError as exc:
     print(f"Import error in libparsec/types: {exc}")
@@ -307,4 +309,6 @@ __all__ = (
     "RevokedUserCertificate",
     "TrustchainContext",
     "freeze_time",
+    # LocalDevice
+    "LocalDevice",
 )
