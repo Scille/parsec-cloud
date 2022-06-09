@@ -6,6 +6,7 @@ from unittest.mock import Mock
 from pathlib import Path
 from pendulum import datetime
 
+from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName, EntryID
 from parsec.core.types import WorkspaceRole
 from parsec.core.core_events import CoreEvent
@@ -356,6 +357,7 @@ async def test_workspace_filter_user_new_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
 async def test_display_timestamped_workspace_in_workspaces_list(
     aqtbot, running_backend, logged_gui, monkeypatch, catch_timestamped_workspace_widget, tmp_path
 ):

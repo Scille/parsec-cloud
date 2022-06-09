@@ -126,6 +126,15 @@ pub fn py_to_rs_regex(regex: &PyAny) -> PyResult<Regex> {
     Regex::new(&regex).map_err(|e| PyValueError::new_err(e.to_string()))
 }
 
+pub fn rs_to_py_regex<'py>(py: Python<'py>, regex: &Regex) -> PyResult<&'py PyAny> {
+    let re = py.import("re")?;
+    let args = PyTuple::new(
+        py,
+        vec![regex.as_str().replace("\\z", "\\Z").replace('\x20', "\\ ")],
+    );
+    re.call_method1("compile", args)
+}
+
 macro_rules! parse_kwargs_optional {
     ($kwargs: ident $(,[$var: ident $(:$ty: ty)?, $name: literal $(,$function: ident)?])* $(,)?) => {
         $(let mut $var = None;)*

@@ -5,6 +5,7 @@ import pytest
 import pendulum
 from PyQt5 import QtCore
 
+from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.core.types import WorkspaceRole, UserInfo
 from parsec.core.fs.workspacefs import ReencryptionNeed, WorkspaceFSTimestamped
@@ -44,6 +45,7 @@ def bob_user_info(bob):
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
 async def test_workspace_button(qtbot, workspace_fs, core_config, alice_user_info):
     switch_language(core_config, "en")
 

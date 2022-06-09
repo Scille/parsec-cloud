@@ -16,6 +16,7 @@ mod local_device;
 mod local_manifest;
 mod manifest;
 mod protocol;
+mod storage;
 mod time;
 mod trustchain;
 
@@ -183,5 +184,7 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(time::freeze_time, m)?)?;
     // LocalDevice
     m.add_class::<local_device::LocalDevice>()?;
+    // Storage
+    m.add_class::<storage::WorkspaceStorage>()?;
     Ok(())
 }

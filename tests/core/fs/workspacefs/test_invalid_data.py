@@ -3,6 +3,7 @@
 import pytest
 from pendulum import datetime
 
+from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.api.protocol import VlobID
 from parsec.core.fs import FSError
@@ -71,18 +72,21 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
 
 
 @pytest.mark.trio
+@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
 async def test_empty_blob(testbed):
     exc_msg = "Cannot decrypt vlob: The nonce must be exactly 24 bytes long"
     await testbed.run(blob=b"", exc_msg=exc_msg)
 
 
 @pytest.mark.trio
+@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
 async def test_invalid_signature(testbed, alice2):
     exc_msg = "Cannot decrypt vlob: Signature was forged or corrupt"
     await testbed.run(author_signkey=alice2.signing_key, exc_msg=exc_msg)
 
 
 @pytest.mark.trio
+@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
 async def test_invalid_author(testbed, alice2):
     # Invalid author field in manifest
     exc_msg = "Cannot decrypt vlob: Invalid author: expected `alice@dev1`, got `alice@dev2`"
@@ -94,6 +98,7 @@ async def test_invalid_author(testbed, alice2):
 
 
 @pytest.mark.trio
+@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
 async def test_invalid_timestamp(testbed, alice, alice2):
     bad_timestamp = datetime(2000, 1, 3)
 
@@ -124,6 +129,7 @@ def backend_disable_vlob_checks(backend):
 
 
 @pytest.mark.trio
+@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
 @customize_fixtures(backend_force_mocked=True)
 async def test_no_user_certif(running_backend, testbed, alice, bob):
     # Data created before workspace manifest access
