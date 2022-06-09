@@ -117,10 +117,13 @@ impl AuthenticatedCmds {
 }
 
 macro_rules! impl_auth_cmd {
-    ($name:ident, { $($key:ident: $type:ty),+ }, $doc:literal) => {
-        #[doc = $doc]
-        pub async fn $name(&self, $($key: $type),+) -> command_error::Result<authenticated_cmds::$name::Rep> {
-            let data = authenticated_cmds::$name::Req { $($key),+ }.dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
+    (
+        $(#[$outer:meta])*
+        $name:ident($($key:ident: $type:ty),*)
+    ) => {
+        $(#[$outer])*
+        pub async fn $name(&self, $($key: $type),*) -> command_error::Result<authenticated_cmds::$name::Rep> {
+            let data = authenticated_cmds::$name::Req { $($key),* }.dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
 
             let req = self.prepare_request(data).send();
             let resp = req.await.map_err(CommandError::Response)?;
