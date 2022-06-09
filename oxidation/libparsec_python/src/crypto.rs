@@ -57,7 +57,7 @@ impl HashDigest {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub(crate) struct SigningKey(pub parsec_api_crypto::SigningKey);
 
 #[pymethods]

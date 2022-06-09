@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import attr
-from typing import Tuple, Optional
+from typing import TYPE_CHECKING, Tuple, Optional
 from hashlib import sha256
 from marshmallow import ValidationError
 from pendulum import DateTime, now as pendulum_now
@@ -160,6 +160,16 @@ class LocalDevice(BaseLocalData):
            possibly alter the production of timestamps.
         """
         return pendulum_now()
+
+
+_PyLocalDevice = LocalDevice
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import LocalDevice as _RsLocalDevice
+    except:
+        pass
+    else:
+        LocalDevice = _RsLocalDevice
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
