@@ -8,7 +8,7 @@
                 "type": "Bytes"
             },
             {
-                // Same certificate than above, but expurged of device_label
+                // Same certificate than above, but expunged of device_label
                 "name": "redacted_device_certificate",
                 "type": "Bytes"
             }
