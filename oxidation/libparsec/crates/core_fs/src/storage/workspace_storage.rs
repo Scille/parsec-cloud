@@ -189,14 +189,14 @@ impl WorkspaceStorage {
 
     // Checkpoint interface
 
-    pub fn get_realm_checkpoint(&self) -> i32 {
+    pub fn get_realm_checkpoint(&self) -> i64 {
         self.manifest_storage.get_realm_checkpoint()
     }
 
     pub fn update_realm_checkpoint(
         &self,
-        new_checkpoint: i32,
-        changed_vlobs: &[(EntryID, i32)],
+        new_checkpoint: i64,
+        changed_vlobs: &[(EntryID, i64)],
     ) -> FSResult<()> {
         self.manifest_storage
             .update_realm_checkpoint(new_checkpoint, changed_vlobs)
@@ -315,14 +315,14 @@ impl WorkspaceStorage {
 #[cfg(test)]
 mod tests {
     use rstest::rstest;
-    use tests_fixtures::{alice, tmp, Device, TempPath};
+    use tests_fixtures::{alice, tmp_path, Device, TmpPath};
 
     use super::*;
 
     #[rstest]
-    fn workspace_storage(alice: &Device, tmp: TempPath) {
-        let db_path = tmp.generate("workspace_storage");
-        let _workspace_storage = WorkspaceStorage::new(
+    fn workspace_storage(alice: &Device, tmp_path: TmpPath) {
+        let db_path = tmp_path.join("workspace_storage.sqlite");
+        WorkspaceStorage::new(
             Path::new(&db_path),
             alice.local_device(),
             EntryID::default(),

@@ -2,12 +2,8 @@
 
 mod error;
 mod extensions;
-mod schema;
 mod storage;
 mod workspacefs;
-
-#[macro_use]
-extern crate diesel;
 
 pub use error::*;
 pub use storage::*;

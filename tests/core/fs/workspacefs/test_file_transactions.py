@@ -230,7 +230,7 @@ def test_file_operations(
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
                 async with WorkspaceStorage.run(
-                    tmp_path / "dummy", alice, EntryID.new()
+                    tmp_path / f"file_operations-{tentative}", alice, EntryID.new()
                 ) as local_storage:
                     async with file_transactions_factory(
                         self.device, local_storage=local_storage

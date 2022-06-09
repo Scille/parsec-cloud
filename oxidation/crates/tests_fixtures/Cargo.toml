@@ -12,4 +12,4 @@ parsec_client_types = { path = "../parsec_client_types" }
 rstest = "0.13.0"
 hex-literal = "0.3.3"
 chrono = "0.4.19"
-rand = "0.8.5"
+uuid = { version = "1.0.0-alpha.1", features = ["v4", "fast-rng"] }

@@ -1,6 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use diesel::{sql_query, BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl};
+use diesel::{
+    sql_query, table, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl,
+    RunQueryDsl,
+};
 use fancy_regex::Regex;
 use parsec_api_crypto::{CryptoError, SecretKey};
 use std::collections::hash_map::RandomState;
@@ -12,7 +15,32 @@ use parsec_client_types::LocalManifest;
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
 use crate::error::{FSError, FSResult};
-use crate::schema::{chunks, prevent_sync_pattern, realm_checkpoint, vlobs};
+use crate::storage::chunk_storage::chunks;
+
+table! {
+    prevent_sync_pattern (_id) {
+        _id -> BigInt,
+        pattern -> Text,
+        fully_applied -> Bool,
+    }
+}
+
+table! {
+    realm_checkpoint (_id) {
+        _id -> BigInt,
+        checkpoint -> BigInt,
+    }
+}
+
+table! {
+    vlobs (vlob_id) {
+        vlob_id -> Binary, // UUID
+        base_version -> BigInt,
+        remote_version -> BigInt,
+        need_sync -> Bool,
+        blob -> Binary,
+    }
+}
 
 const EMPTY_PATTERN: &str = r"^\b$"; // Do not match anything (https://stackoverflow.com/a/2302992/2846140)
 
@@ -35,8 +63,8 @@ impl std::convert::AsRef<[u8]> for ChunkOrBlockID {
 #[diesel(table_name = vlobs)]
 struct NewVlob<'a> {
     vlob_id: &'a [u8],
-    base_version: i32,
-    remote_version: i32,
+    base_version: i64,
+    remote_version: i64,
     need_sync: bool,
     blob: &'a [u8],
 }
@@ -44,14 +72,14 @@ struct NewVlob<'a> {
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = realm_checkpoint)]
 struct NewRealmCheckpoint {
-    _id: i32,
-    checkpoint: i32,
+    _id: i64,
+    checkpoint: i64,
 }
 
 #[derive(Insertable)]
 #[diesel(table_name = prevent_sync_pattern)]
 struct NewPreventSyncPattern<'a> {
-    _id: i32,
+    _id: i64,
     pattern: &'a str,
     fully_applied: bool,
 }
@@ -255,7 +283,7 @@ impl ManifestStorage {
 
     // Checkpoint operations
 
-    pub fn get_realm_checkpoint(&self) -> i32 {
+    pub fn get_realm_checkpoint(&self) -> i64 {
         let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         realm_checkpoint::table
             .select(realm_checkpoint::checkpoint)
@@ -266,8 +294,8 @@ impl ManifestStorage {
 
     pub fn update_realm_checkpoint(
         &self,
-        new_checkpoint: i32,
-        changed_vlobs: &[(EntryID, i32)],
+        new_checkpoint: i64,
+        changed_vlobs: &[(EntryID, i64)],
     ) -> FSResult<()> {
         let new_realm_checkpoint = NewRealmCheckpoint {
             _id: 0,
@@ -281,7 +309,7 @@ impl ManifestStorage {
         let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         for (id, version) in changed_vlobs {
             sql_query("UPDATE vlobs SET remote_version = ? WHERE vlob_id = ?;")
-                .bind::<diesel::sql_types::Integer, _>(version)
+                .bind::<diesel::sql_types::BigInt, _>(version)
                 .bind::<diesel::sql_types::Binary, _>((**id).as_ref())
                 .execute(conn)
                 .map_err(|e| FSError::UpdateTable(format!("vlobs: update_realm_checkpoint {e}")))?;
@@ -329,7 +357,7 @@ impl ManifestStorage {
                     .eq(true)
                     .or(vlobs::base_version.ne(vlobs::remote_version)),
             )
-            .load::<(Vec<u8>, bool, i32, i32)>(conn)
+            .load::<(Vec<u8>, bool, i64, i64)>(conn)
             .map_err(|e| FSError::QueryTable(format!("vlobs: get_need_sync_entries {e}")))?
         {
             let manifest_id =
@@ -455,11 +483,11 @@ impl ManifestStorage {
                     .bind::<diesel::sql_types::Binary, _>(vlob_id)
                     .bind::<diesel::sql_types::Binary, _>(ciphered)
                     .bind::<diesel::sql_types::Bool, _>(manifest.need_sync())
-                    .bind::<diesel::sql_types::Integer, _>(manifest.base_version() as i32)
-                    .bind::<diesel::sql_types::Integer, _>(manifest.base_version() as i32)
+                    .bind::<diesel::sql_types::BigInt, _>(manifest.base_version() as i64)
+                    .bind::<diesel::sql_types::BigInt, _>(manifest.base_version() as i64)
                     .bind::<diesel::sql_types::Binary, _>(vlob_id)
                     .execute(conn)
-                    .map_err(|e| FSError::InsertTable(format!("vlobs: _ensure_manifest_persistent {e}")))?;
+                    .map_err(|e| FSError::InsertTable(format!("vlobs: ensure_manifest_persistent {e}")))?;
 
                 for pending_chunk_ids_chunk in pending_chunk_ids.chunks(SQLITE_MAX_VARIABLE_NUMBER)
                 {
@@ -546,16 +574,16 @@ mod tests {
     use parsec_client_types::{Chunk, LocalFileManifest};
 
     use rstest::rstest;
-    use tests_fixtures::{tmp, TempPath};
+    use tests_fixtures::{tmp_path, TmpPath};
 
     use super::*;
     use crate::storage::local_database::SqlitePool;
 
     #[rstest]
-    fn manifest_storage(tmp: TempPath) {
-        let db_path = tmp.generate("manifest_storage.sqlite");
+    fn manifest_storage(tmp_path: TmpPath) {
+        let db_path = tmp_path.join("manifest_storage.sqlite");
         let now = DateTime::now();
-        let pool = SqlitePool::new(db_path).unwrap();
+        let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
         let conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();

@@ -241,15 +241,15 @@ impl WorkspaceStorage {
         })
     }
 
-    fn get_realm_checkpoint(&self, py: Python) -> PyResult<i32> {
+    fn get_realm_checkpoint(&self, py: Python) -> PyResult<i64> {
         py.allow_threads(|| Ok(self.0.get_realm_checkpoint()))
     }
 
     fn update_realm_checkpoint(
         &self,
         py: Python,
-        new_checkpoint: i32,
-        changed_vlobs: HashMap<EntryID, i32>,
+        new_checkpoint: i64,
+        changed_vlobs: HashMap<EntryID, i64>,
     ) -> PyResult<()> {
         py.allow_threads(|| {
             self.0

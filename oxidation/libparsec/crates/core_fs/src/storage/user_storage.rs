@@ -29,14 +29,14 @@ impl UserStorage {
 
     // Checkpoint Interface
 
-    pub fn get_realm_checkpoint(&self) -> i32 {
+    pub fn get_realm_checkpoint(&self) -> i64 {
         self.manifest_storage.get_realm_checkpoint()
     }
 
     pub fn update_realm_checkpoint(
         &self,
-        new_checkpoint: i32,
-        changed_vlobs: &[(EntryID, i32)],
+        new_checkpoint: i64,
+        changed_vlobs: &[(EntryID, i64)],
     ) -> FSResult<()> {
         self.manifest_storage
             .update_realm_checkpoint(new_checkpoint, changed_vlobs)
@@ -101,16 +101,16 @@ mod tests {
     use parsec_api_types::{DateTime, UserManifest};
 
     use rstest::rstest;
-    use tests_fixtures::{alice, tmp, Device, TempPath};
+    use tests_fixtures::{alice, tmp_path, Device, TmpPath};
 
     use super::super::local_database::SqlitePool;
     use super::*;
 
     #[rstest]
-    fn user_storage(alice: &Device, tmp: TempPath) {
-        let db_path = tmp.generate("/user_storage.sqlite");
+    fn user_storage(alice: &Device, tmp_path: TmpPath) {
+        let db_path = tmp_path.join("user_storage.sqlite");
         let now = DateTime::now();
-        let pool = SqlitePool::new(db_path).unwrap();
+        let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
         let conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();

@@ -13,9 +13,13 @@ pub(crate) fn get_workspace_data_storage_db_path(
     workspace_id: EntryID,
 ) -> PathBuf {
     let slug = device.slug();
-    data_base_dir.join(&PathBuf::from(format!(
-        "{slug}/{workspace_id}/workspace_data-v{STORAGE_REVISION}.sqlite"
-    )))
+    let mut path = PathBuf::from(data_base_dir);
+    path.extend([
+        slug,
+        workspace_id.to_string(),
+        format!("workspace_data-v{STORAGE_REVISION}.sqlite"),
+    ]);
+    path
 }
 
 pub(crate) fn get_workspace_cache_storage_db_path(
@@ -24,7 +28,11 @@ pub(crate) fn get_workspace_cache_storage_db_path(
     workspace_id: EntryID,
 ) -> PathBuf {
     let slug = device.slug();
-    data_base_dir.join(&PathBuf::from(format!(
-        "{slug}/{workspace_id}/workspace_cache-v{STORAGE_REVISION}.sqlite"
-    )))
+    let mut path = PathBuf::from(data_base_dir);
+    path.extend([
+        slug,
+        workspace_id.to_string(),
+        format!("workspace_cache-v{STORAGE_REVISION}.sqlite"),
+    ]);
+    path
 }

@@ -5,8 +5,9 @@ mod trustchain;
 pub use trustchain::*;
 
 use hex_literal::hex;
-use rand::Rng;
 use rstest::fixture;
+use std::path::PathBuf;
+use uuid::Uuid;
 
 use parsec_api_crypto::*;
 use parsec_api_types::*;
@@ -156,31 +157,26 @@ pub fn mallory(coolorg: &Organization) -> Device {
     }
 }
 
-#[fixture]
-#[once]
-pub fn manifest_dir() -> std::path::PathBuf {
-    std::env::var("CARGO_MANIFEST_DIR")
-        .expect("CARGO_MANIFEST_DIR should be set")
-        .parse()
-        .expect("CARGO_MANIFEST_DIR must be a valid path")
-}
+pub struct TmpPath(PathBuf);
 
-pub struct TempPath(pub String);
-
-impl TempPath {
-    pub fn generate(&self, path: &str) -> String {
-        self.0.clone() + path
+impl std::ops::Deref for TmpPath {
+    type Target = PathBuf;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
-impl Drop for TempPath {
+impl Drop for TmpPath {
     fn drop(&mut self) {
         std::fs::remove_dir_all(&self.0).unwrap();
     }
 }
 
 #[fixture]
-pub fn tmp() -> TempPath {
-    let mut rng = rand::thread_rng();
-    TempPath(format!("/tmp/rstest/{:016x}/", rng.gen::<u128>()))
+pub fn tmp_path() -> TmpPath {
+    let mut path = std::env::temp_dir();
+
+    path.extend(["rstest", &Uuid::new_v4().to_string()]);
+
+    TmpPath(path)
 }

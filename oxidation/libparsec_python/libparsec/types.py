@@ -47,16 +47,20 @@ try:
         LocalFolderManifest,
         LocalWorkspaceManifest,
         LocalUserManifest,
+        # Block
         BlockCreateReq,
         BlockCreateRep,
         BlockReadReq,
         BlockReadRep,
+        # Cmd
         AuthenticatedAnyCmdReq,
         InvitedAnyCmdReq,
+        # Events
         EventsListenReq,
         EventsListenRep,
         EventsSubscribeReq,
         EventsSubscribeRep,
+        # Invite
         InviteNewReq,
         InviteNewRep,
         InviteDeleteReq,
@@ -90,18 +94,22 @@ try:
         Invite4GreeterCommunicateReq,
         Invite4GreeterCommunicateRep,
         InviteListItem,
+        # Message
         MessageGetReq,
         MessageGetRep,
         Message,
+        # Organization
         OrganizationStatsReq,
         OrganizationStatsRep,
         OrganizationConfigReq,
         OrganizationConfigRep,
         UsersPerProfileDetailItem,
+        # Ping
         AuthenticatedPingReq,
         AuthenticatedPingRep,
         InvitedPingReq,
         InvitedPingRep,
+        # Realm
         RealmCreateReq,
         RealmCreateRep,
         RealmStatusReq,
@@ -116,6 +124,7 @@ try:
         RealmStartReencryptionMaintenanceRep,
         RealmFinishReencryptionMaintenanceReq,
         RealmFinishReencryptionMaintenanceRep,
+        # User
         UserGetReq,
         UserGetRep,
         UserCreateReq,
@@ -128,6 +137,7 @@ try:
         HumanFindRep,
         Trustchain,
         HumanFindResultItem,
+        # Vlob
         VlobCreateReq,
         VlobCreateRep,
         VlobReadReq,
@@ -143,12 +153,15 @@ try:
         VlobMaintenanceSaveReencryptionBatchReq,
         VlobMaintenanceSaveReencryptionBatchRep,
         ReencryptionBatchEntry,
+        # Trustchain
         UserCertificate,
         DeviceCertificate,
         RevokedUserCertificate,
         TrustchainContext,
         freeze_time,
+        # LocalDevice
         LocalDevice,
+        # Storage
         WorkspaceStorage as _SyncWorkspaceStorage,
     )
 except ImportError as exc:
@@ -226,20 +239,20 @@ class WorkspaceStorage:
         if check_lock_status:
             self._check_lock_status(entry_id)
         await trio.to_thread.run_sync(
-            lambda: self.sync_instance.set_manifest(
-                entry_id, manifest, cache_only=cache_only, removed_ids=removed_ids
-            )
+            self.sync_instance.set_manifest,
+            entry_id,
+            manifest,
+            cache_only=cache_only,
+            removed_ids=removed_ids,
         )
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         self._check_lock_status(entry_id)
-        await trio.to_thread.run_sync(
-            lambda: self.sync_instance.ensure_manifest_persistent(entry_id)
-        )
+        await trio.to_thread.run_sync(self.sync_instance.ensure_manifest_persistent, entry_id)
 
     async def clear_manifest(self, entry_id: EntryID) -> None:
         self._check_lock_status(entry_id)
-        await trio.to_thread.run_sync(lambda: self.sync_instance.clear_manifest(entry_id))
+        await trio.to_thread.run_sync(self.sync_instance.clear_manifest, entry_id)
 
     def __getattr__(self, method_name):
         method = getattr(self.sync_instance, method_name)
@@ -289,16 +302,20 @@ __all__ = (
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
     "LocalUserManifest",
+    # Block
     "BlockCreateReq",
     "BlockCreateRep",
     "BlockReadReq",
     "BlockReadRep",
+    # Cmd
     "AuthenticatedAnyCmdReq",
     "InvitedAnyCmdReq",
+    # Events
     "EventsListenReq",
     "EventsListenRep",
     "EventsSubscribeReq",
     "EventsSubscribeRep",
+    # Invite
     "InviteNewReq",
     "InviteNewRep",
     "InviteDeleteReq",
@@ -332,18 +349,22 @@ __all__ = (
     "Invite4GreeterCommunicateReq",
     "Invite4GreeterCommunicateRep",
     "InviteListItem",
+    # Message
     "MessageGetReq",
     "MessageGetRep",
     "Message",
+    # Organization
     "OrganizationStatsReq",
     "OrganizationStatsRep",
     "OrganizationConfigReq",
     "OrganizationConfigRep",
     "UsersPerProfileDetailItem",
+    # Ping
     "AuthenticatedPingReq",
     "AuthenticatedPingRep",
     "InvitedPingReq",
     "InvitedPingRep",
+    # Realm
     "RealmCreateReq",
     "RealmCreateRep",
     "RealmStatusReq",
@@ -358,6 +379,7 @@ __all__ = (
     "RealmStartReencryptionMaintenanceRep",
     "RealmFinishReencryptionMaintenanceReq",
     "RealmFinishReencryptionMaintenanceRep",
+    # User
     "UserGetReq",
     "UserGetRep",
     "UserCreateReq",
@@ -370,6 +392,7 @@ __all__ = (
     "HumanFindRep",
     "Trustchain",
     "HumanFindResultItem",
+    # Vlob
     "VlobCreateReq",
     "VlobCreateRep",
     "VlobReadReq",
@@ -385,11 +408,14 @@ __all__ = (
     "VlobMaintenanceSaveReencryptionBatchReq",
     "VlobMaintenanceSaveReencryptionBatchRep",
     "ReencryptionBatchEntry",
+    # Trustchain
     "UserCertificate",
     "DeviceCertificate",
     "RevokedUserCertificate",
     "TrustchainContext",
     "freeze_time",
+    # LocalDevice
     "LocalDevice",
+    # Storage
     "WorkspaceStorage",
 )

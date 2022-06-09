@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from parsec.core.fs.storage.workspace_storage import WorkspaceStorage
+from parsec import IS_OXIDIZED
 import pytest
 import os
 import re
@@ -407,9 +407,7 @@ def blockstore(backend_store, fixtures_customization):
 
 @pytest.fixture(autouse=True)
 def persistent_mockup(monkeypatch, fixtures_customization):
-    if fixtures_customization.get("real_data_storage", False) or hasattr(
-        WorkspaceStorage, "binding"
-    ):
+    if fixtures_customization.get("real_data_storage", False) or IS_OXIDIZED:
         yield
         return
 

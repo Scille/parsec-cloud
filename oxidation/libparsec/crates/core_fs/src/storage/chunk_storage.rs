@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use diesel::dsl::count_star;
-use diesel::{sql_query, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
+use diesel::{sql_query, table, AsChangeset, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
 use std::sync::Mutex;
 
 use parsec_api_crypto::SecretKey;
@@ -10,15 +10,24 @@ use parsec_api_types::{ChunkID, DateTime, DEFAULT_BLOCK_SIZE};
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
 use crate::error::{FSError, FSResult};
 use crate::extensions::CoalesceTotalSize;
-use crate::schema::chunks;
+
+table! {
+    chunks (chunk_id) {
+        chunk_id -> Binary, // UUID
+        size -> BigInt,
+        offline -> Bool,
+        accessed_on -> Nullable<Double>, // Timestamp
+        data -> Binary,
+    }
+}
 
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = chunks)]
 struct NewChunk<'a> {
     pub chunk_id: &'a [u8],
-    pub size: i32,
+    pub size: i64,
     pub offline: bool,
-    pub accessed_on: Option<f32>,
+    pub accessed_on: Option<f64>,
     pub data: &'a [u8],
 }
 
@@ -88,6 +97,15 @@ pub(crate) trait ChunkStorageTrait {
         let mut res = Vec::with_capacity(chunk_ids.len());
 
         let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
+        // The number of loop iteration is expected to be rather low:
+        // typically considering 4ko per chunk (i.e. the size of the buffer the
+        // Linux Kernel send us through Fuse), each query could perform ~4mo of data.
+
+        // If performance ever becomes an issue, we could further optimize this by
+        // having the caller filter the chunks: a block containing multiple chunk
+        // means those correspond to local modification and hence can be filtered out.
+        // With this we would only provide the chunks corresponding to a synced block
+        // which are 512ko big, so each query performs up to 512Mo !
         for bytes_id_list_chunk in bytes_id_list.chunks(SQLITE_MAX_VARIABLE_NUMBER) {
             res.append(
                 &mut chunks::table
@@ -112,7 +130,7 @@ pub(crate) trait ChunkStorageTrait {
     }
 
     fn get_chunk(&self, chunk_id: ChunkID) -> FSResult<Vec<u8>> {
-        let accessed_on = DateTime::now().get_f64_with_us_precision() as f32;
+        let accessed_on = DateTime::now().get_f64_with_us_precision();
 
         let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         let changes =
@@ -137,11 +155,11 @@ pub(crate) trait ChunkStorageTrait {
 
     fn set_chunk(&self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
         let ciphered = self.local_symkey().encrypt(raw);
-        let accessed_on = DateTime::now().get_f64_with_us_precision() as f32;
+        let accessed_on = DateTime::now().get_f64_with_us_precision();
 
         let new_chunk = NewChunk {
             chunk_id: (*chunk_id).as_ref(),
-            size: ciphered.len() as i32,
+            size: ciphered.len() as i64,
             offline: false,
             accessed_on: Some(accessed_on),
             data: &ciphered,
@@ -203,11 +221,11 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
 
     fn set_chunk_upgraded(&self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
         let ciphered = self.local_symkey().encrypt(raw);
-        let accessed_on = DateTime::now().get_f64_with_us_precision() as f32;
+        let accessed_on = DateTime::now().get_f64_with_us_precision();
 
         let new_chunk = NewChunk {
             chunk_id: (*chunk_id).as_ref(),
-            size: ciphered.len() as i32,
+            size: ciphered.len() as i64,
             offline: false,
             accessed_on: Some(accessed_on),
             data: &ciphered,
@@ -328,15 +346,15 @@ mod tests {
     use uuid::Uuid;
 
     use rstest::rstest;
-    use tests_fixtures::{tmp, TempPath};
+    use tests_fixtures::{tmp_path, TmpPath};
 
     use super::*;
     use crate::storage::local_database::SqlitePool;
 
     #[rstest]
-    fn chunk_storage(tmp: TempPath) {
-        let db_path = tmp.generate("chunk_storage.sqlite");
-        let pool = SqlitePool::new(db_path).unwrap();
+    fn chunk_storage(tmp_path: TmpPath) {
+        let db_path = tmp_path.join("chunk_storage.sqlite");
+        let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
         let conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
 

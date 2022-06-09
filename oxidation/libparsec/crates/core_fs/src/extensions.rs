@@ -4,7 +4,7 @@ use diesel::backend::Backend;
 use diesel::expression::ValidGrouping;
 use diesel::query_builder::{AstPass, QueryFragment};
 use diesel::sql_types::BigInt;
-use diesel::{Expression, QueryResult};
+use diesel::{impl_selectable_expression, DieselNumericOps, Expression, QueryId, QueryResult};
 
 #[derive(Default, Debug, Clone, Copy, QueryId, DieselNumericOps, ValidGrouping)]
 pub struct CoalesceTotalSize;

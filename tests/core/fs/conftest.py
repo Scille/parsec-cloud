@@ -77,7 +77,9 @@ def file_transactions_factory(event_bus, remote_devices_manager_factory, transac
 
 @pytest.fixture
 async def alice_transaction_local_storage(alice, tmp_path):
-    async with WorkspaceStorage.run(tmp_path / "dummy", alice, EntryID.new()) as storage:
+    async with WorkspaceStorage.run(
+        tmp_path / "alice_transaction_local_storage", alice, EntryID.new()
+    ) as storage:
         yield storage
 
 

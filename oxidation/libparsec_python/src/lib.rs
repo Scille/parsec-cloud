@@ -70,20 +70,20 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<local_manifest::LocalFolderManifest>()?;
     m.add_class::<local_manifest::LocalWorkspaceManifest>()?;
     m.add_class::<local_manifest::LocalUserManifest>()?;
-
+    // Block
     m.add_class::<protocol::BlockCreateReq>()?;
     m.add_class::<protocol::BlockCreateRep>()?;
     m.add_class::<protocol::BlockReadReq>()?;
     m.add_class::<protocol::BlockReadRep>()?;
-
+    // Cmd
     m.add_class::<protocol::AuthenticatedAnyCmdReq>()?;
     m.add_class::<protocol::InvitedAnyCmdReq>()?;
-
+    // Events
     m.add_class::<protocol::EventsListenReq>()?;
     m.add_class::<protocol::EventsListenRep>()?;
     m.add_class::<protocol::EventsSubscribeReq>()?;
     m.add_class::<protocol::EventsSubscribeRep>()?;
-
+    // Invite
     m.add_class::<protocol::InviteNewReq>()?;
     m.add_class::<protocol::InviteNewRep>()?;
     m.add_class::<protocol::InviteDeleteReq>()?;
@@ -117,22 +117,22 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::Invite4GreeterCommunicateReq>()?;
     m.add_class::<protocol::Invite4GreeterCommunicateRep>()?;
     m.add_class::<protocol::InviteListItem>()?;
-
+    // Message
     m.add_class::<protocol::MessageGetReq>()?;
     m.add_class::<protocol::MessageGetRep>()?;
     m.add_class::<protocol::Message>()?;
-
+    // Organization
     m.add_class::<protocol::OrganizationStatsReq>()?;
     m.add_class::<protocol::OrganizationStatsRep>()?;
     m.add_class::<protocol::OrganizationConfigReq>()?;
     m.add_class::<protocol::OrganizationConfigRep>()?;
     m.add_class::<protocol::UsersPerProfileDetailItem>()?;
-
+    // Ping
     m.add_class::<protocol::AuthenticatedPingReq>()?;
     m.add_class::<protocol::AuthenticatedPingRep>()?;
     m.add_class::<protocol::InvitedPingReq>()?;
     m.add_class::<protocol::InvitedPingRep>()?;
-
+    // Realm
     m.add_class::<protocol::RealmCreateReq>()?;
     m.add_class::<protocol::RealmCreateRep>()?;
     m.add_class::<protocol::RealmStatusReq>()?;
@@ -147,7 +147,7 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::RealmStartReencryptionMaintenanceRep>()?;
     m.add_class::<protocol::RealmFinishReencryptionMaintenanceReq>()?;
     m.add_class::<protocol::RealmFinishReencryptionMaintenanceRep>()?;
-
+    // User
     m.add_class::<protocol::UserGetReq>()?;
     m.add_class::<protocol::UserGetRep>()?;
     m.add_class::<protocol::UserCreateReq>()?;
@@ -160,7 +160,7 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::HumanFindRep>()?;
     m.add_class::<protocol::Trustchain>()?;
     m.add_class::<protocol::HumanFindResultItem>()?;
-
+    // Vlob
     m.add_class::<protocol::VlobCreateReq>()?;
     m.add_class::<protocol::VlobCreateRep>()?;
     m.add_class::<protocol::VlobReadReq>()?;
@@ -176,15 +176,15 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchReq>()?;
     m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchRep>()?;
     m.add_class::<protocol::ReencryptionBatchEntry>()?;
-
+    // Trustchain
     m.add_class::<certif::UserCertificate>()?;
     m.add_class::<certif::RevokedUserCertificate>()?;
     m.add_class::<certif::DeviceCertificate>()?;
     m.add_class::<trustchain::TrustchainContext>()?;
     m.add_function(wrap_pyfunction!(time::freeze_time, m)?)?;
-
+    // LocalDevice
     m.add_class::<local_device::LocalDevice>()?;
-
+    // Storage
     m.add_class::<storage::WorkspaceStorage>()?;
     Ok(())
 }
