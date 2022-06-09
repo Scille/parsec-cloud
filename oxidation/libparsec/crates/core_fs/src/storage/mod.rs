@@ -3,6 +3,9 @@
 mod chunk_storage;
 mod local_database;
 mod manifest_storage;
+// Not used for the moment
+#[allow(dead_code)]
+mod user_storage;
 mod version;
 mod workspace_storage;
 
