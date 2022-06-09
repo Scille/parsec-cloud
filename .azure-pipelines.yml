@@ -202,6 +202,11 @@ jobs:
     displayName: 'Bootstrap'
   - bash: |
       set -eux
+
+      # Test parsec-api-crypto with both features
+      cargo test -p parsec_api_crypto --features use-sodiumoxide
+      cargo test -p parsec_api_crypto --features use-rustcrypto
+
       cargo test --workspace --features mock-time
     workingDirectory: $(Build.SourcesDirectory)/oxidation
     displayName: 'Rust Tests'
