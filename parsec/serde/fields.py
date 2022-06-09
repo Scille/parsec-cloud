@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import oscrypto.asymmetric
 from pendulum import DateTime as PendulumDateTime
 from uuid import UUID as _UUID
 from enum import Enum
@@ -411,3 +412,23 @@ class SecretKeyField(Field):
 
 
 SecretKey = SecretKeyField
+
+
+class DerPublicKeyField(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+        return value.unwrap().dump()
+
+    def _deserialize(self, value, attr, data):
+        if not isinstance(value, bytes):
+            raise ValidationError("Not bytes")
+
+        try:
+            return oscrypto.asymetric.load_public_key(value)
+
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+DerPublicKey = DerPublicKeyField

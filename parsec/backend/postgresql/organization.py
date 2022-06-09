@@ -27,6 +27,8 @@ from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 from parsec.backend.postgresql.handler import send_signal
 
 
+from oscrypto.asymmetric import PublicKey as DerPublicKey
+
 _q_insert_organization = Q(
     """
 INSERT INTO organization (
@@ -222,7 +224,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        tpek_verify_key: VerifyKey,
+        tpek_verify_key: DerPublicKey,
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the
@@ -246,7 +248,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     organization_id=id.str,
                     bootstrap_token=bootstrap_token,
                     root_verify_key=root_verify_key.encode(),
-                    tpek_verify_key=tpek_verify_key.encode(),
+                    tpek_verify_key=tpek_verify_key.unwrap().dump(),
                 )
             )
 

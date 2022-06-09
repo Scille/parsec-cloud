@@ -25,6 +25,8 @@ from parsec.backend.memory.block import MemoryBlockComponent
 from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.events import BackendEvent
 
+from oscrypto.asymmetric import PublicKey as DerPublicKey
+
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):
     def __init__(self, send_event, *args, **kwargs):
@@ -90,7 +92,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        tpek_verify_key: VerifyKey,
+        tpek_verify_key: DerPublicKey,
     ) -> None:
         # Organization bootstrap involves multiple modifications (in user,
         # device and organization) and is not atomic (given await is used),

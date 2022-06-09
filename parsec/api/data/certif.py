@@ -247,14 +247,14 @@ class RealmRoleCertificateContent(BaseAPISignedData):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class TpekVerifyKeyCertificateContent(BaseAPISignedData):
+class TpekDerVerifyKeyCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
-        type = fields.CheckedConstant("tpek_verify_key_certificate", required=True)
-        verify_key: VerifyKey
+        type = fields.CheckedConstant("tpek_der_verify_key_certificate", required=True)
+        verify_key = fields.DerPublicKey(required=True)
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "RealmRoleCertificateContent":
+        def make_obj(self, data: Dict[str, Any]) -> "TpekDerVerifyKeyCertificateContent":
             data.pop("type")
-            return RealmRoleCertificateContent(**data)
+            return TpekDerVerifyKeyCertificateContent(**data)
 
-    verify_key: VerifyKey
+    verify_key: fields.DerPublicKey

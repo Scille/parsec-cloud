@@ -3,6 +3,9 @@
 import click
 import platform
 from typing import Optional, Callable
+
+import oscrypto
+import oscrypto.asymmetric
 from path import Path
 
 from parsec.utils import trio_run
@@ -21,8 +24,7 @@ async def _bootstrap_organization(
     device_label: Optional[DeviceLabel],
     human_label: Optional[str],
     human_email: Optional[str],
-    enable_tpek: bool,
-    enable_tpek: bool,
+    tpek_der_public_key: Optional[bytes],
     save_device_with_selected_auth: Callable,
 ) -> None:
     if not human_label:
@@ -36,7 +38,10 @@ async def _bootstrap_organization(
 
     async with spinner("Bootstrapping organization in the backend"):
         new_device = await do_bootstrap_organization(
-            addr, human_handle=human_handle, device_label=device_label
+            addr,
+            human_handle=human_handle,
+            device_label=device_label,
+            tpek_der_public_key=tpek_der_public_key,
         )
 
     # We don't have to worry about overwritting an existing keyfile
@@ -81,9 +86,13 @@ def bootstrap_organization(
         if third_party_encryption_key_signing_certificate is not None:
             # TODO: print a dialogue with confirmation to make sure user understand
             # what this option imply
-            tpek_signing_cert = third_party_encryption_key_signing_certificate.read_bytes()
+            tpek_der_private_key = oscrypto.asymmetric.load_private_key(
+                third_party_encryption_key_signing_certificate
+            )
+            # Load the key to check key format
+            tpek_der_public_key = tpek_der_private_key.public_key.unwrap().dump()
         else:
-            tpek_signing_cert = None
+            tpek_der_public_key = None
 
         trio_run(
             _bootstrap_organization,
@@ -92,6 +101,6 @@ def bootstrap_organization(
             device_label,
             human_label,
             human_email,
-            tpek_signing_cert,
+            tpek_der_public_key,
             save_device_with_selected_auth,
         )
