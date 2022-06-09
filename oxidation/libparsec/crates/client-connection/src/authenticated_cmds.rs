@@ -116,21 +116,18 @@ impl AuthenticatedCmds {
     }
 }
 
-impl AuthenticatedCmds {
-    /// Retrieve the user identified by `id`
-    pub async fn user_get(
-        &self,
-        id: UserID,
-    ) -> command_error::Result<authenticated_cmds::user_get::Rep> {
-        let data = authenticated_cmds::user_get::Req { user_id: id }
-            .dump()
-            .map_err(|e| CommandError::Serialization(e.to_string()))?;
+macro_rules! impl_auth_cmd {
+    ($name:ident, { $($key:ident: $type:ty),+ }, $doc:literal) => {
+        #[doc = $doc]
+        pub async fn $name(&self, $($key: $type),+) -> command_error::Result<authenticated_cmds::$name::Rep> {
+            let data = authenticated_cmds::$name::Req { $($key),+ }.dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
 
-        let req = self.prepare_request(data).send();
-        let resp = req.await.map_err(CommandError::Response)?;
-        let response_body = resp.bytes().await.map_err(CommandError::Response)?;
+            let req = self.prepare_request(data).send();
+            let resp = req.await.map_err(CommandError::Response)?;
+            let response_body = resp.bytes().await.map_err(CommandError::Response)?;
 
-        authenticated_cmds::user_get::Rep::load(&response_body)
-            .map_err(CommandError::Deserialization)
-    }
+            authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::Deserialization)
+        }
+    };
+}
 }
