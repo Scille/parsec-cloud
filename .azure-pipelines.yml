@@ -91,68 +91,33 @@ jobs:
       echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
       rustup component add rustfmt clippy
     displayName: 'Bootstrap'
-  - bash: |
-      set -eux
-      # Commit signature is not mandatory for the repo (yet ?), however we
-      # want to make sure the signed commits are actually valid.
-      # Indeed, it seems the signature process breaks from time to time,
-      # see for instance commit 1e1535b010050c025d85b685e96e08db5e9cd7bb
-      # that is considered invalid, but has been generated 3mn after the valid
-      # 2df2c661a4774097615b7f66078207b15a56316b on the same computer with
-      # the same key...)
-      python -c "
-      from urllib.request import urlopen
-      import json
-      import re
-      match = re.match(r'refs/pull/([0-9]+)/merge', '$(Build.SourceBranch)')
-      if match:
-        pr_id = match.group(1)
-        r = urlopen(f'https://api.github.com/repos/Scille/parsec-cloud/pulls/{pr_id}/commits')
-        bad_commits = [c['sha'] for c in json.load(r) if c['commit']['verification']['reason'] == 'invalid']
-        if bad_commits:
-          raise SystemExit(f'''Invalid signatures in commits: {', '.join(bad_commits)}''')
-      "
-    displayName: 'Commits signatures'
-  - bash: |
-      set -eux
-      # PRs must contain a newsfragment that reference an opened issue
-      python -c "
-      from pathlib import Path
-      from subprocess import run
-      from urllib.request import urlopen, Request, HTTPError
-      from concurrent.futures import ThreadPoolExecutor
-      import json
-      # If file never existed in master, consider as a new newsfragment
-      # Cannot just git diff against master branch here given newsfragments
-      # removed in master will be considered as new items in our branch
-      # --exit-code makes the command exit with 0 if there are changes
-      basecmd = 'git log origin/master --exit-code --'.split()
-      def check_newsfragment(fragment):
-          ret = run([*basecmd, fragment], capture_output=True)
-          if ret.returncode == 0:
-              print(f'Found new newsfragment {fragment.name}')
-              id, *_ = fragment.name.split('.')
-              req = Request(
-                  method='GET',
-                  url=f'https://api.github.com/repos/Scille/parsec-cloud/issues/{id}',
-                  headers={'Accept': 'application/vnd.github.v3+json'},
-              )
-              try:
-                  ret = urlopen(req)
-              except HTTPError as exc:
-                  raise SystemExit('New newsfragment ID doesn\'t correspond to an issue !')
-              data = json.loads(ret.read())
-              if 'pull_request' in data:
-                  raise SystemExit('New newsfragement ID correspond to a pull request instead of an issue !')
-              if data['state'] != 'open':
-                  raise SystemExit('New newsfragement ID correspond to a closed issue')
-              return True
-          return False
-      with ThreadPoolExecutor() as pool:
-          ret = pool.map(check_newsfragment, Path('newsfragments').glob('*.rst'))
-      if True not in ret:
-          raise SystemExit('No new newsfragment found')
-      "
+  - task: PythonScript@0
+    displayName: Commits signatures
+    inputs:
+      scriptSource: inline
+      script: |
+        # Commit signature is not mandatory for the repo (yet ?), however we
+        # want to make sure the signed commits are actually valid.
+        # Indeed, it seems the signature process breaks from time to time,
+        # see for instance commit 1e1535b010050c025d85b685e96e08db5e9cd7bb
+        # that is considered invalid, but has been generated 3mn after the valid
+        # 2df2c661a4774097615b7f66078207b15a56316b on the same computer with
+        # the same key...)
+        from urllib.request import urlopen
+        import json
+        import re
+
+        match = re.match(r'refs/pull/([0-9]+)/merge', '$(Build.SourceBranch)')
+
+        if match:
+          pr_id = match.group(1)
+          r = urlopen(f'https://api.github.com/repos/Scille/parsec-cloud/pulls/{pr_id}/commits')
+          bad_commits = [c['sha'] for c in json.load(r) if c['commit']['verification']['reason'] == 'invalid']
+
+          if bad_commits:
+            raise SystemExit(f'''Invalid signatures in commits: {', '.join(bad_commits)}''')
+  - task: PythonScript@0
+    displayName: Newsfragment
     condition: |
       and(
         eq(variables['Build.Reason'], 'PullRequest'),
@@ -160,7 +125,48 @@ jobs:
         not(startsWith(variables['System.PullRequest.SourceBranch'], 'yolo')),
         not(startsWith(variables['System.PullRequest.SourceBranch'], 'release'))
       )
-    displayName: 'Newsfragment'
+    inputs:
+      scriptSource: inline
+      script: |
+        # PRs must contain a newsfragment that reference an opened issue
+        from pathlib import Path
+        from subprocess import run
+        from urllib.request import urlopen, Request, HTTPError
+        from concurrent.futures import ThreadPoolExecutor
+        import json
+        # If file never existed in master, consider as a new newsfragment
+        # Cannot just git diff against master branch here given newsfragments
+        # removed in master will be considered as new items in our branch
+        # --exit-code makes the command exit with 0 if there are changes
+        basecmd = 'git log origin/master --exit-code --'.split()
+
+        def check_newsfragment(fragment):
+            ret = run([*basecmd, fragment], capture_output=True)
+            if ret.returncode == 0:
+                print(f'Found new newsfragment {fragment.name}')
+                id, *_ = fragment.name.split('.')
+                req = Request(
+                    method='GET',
+                    url=f'https://api.github.com/repos/Scille/parsec-cloud/issues/{id}',
+                    headers={'Accept': 'application/vnd.github.v3+json'},
+                )
+                try:
+                    ret = urlopen(req)
+                except HTTPError as exc:
+                    raise SystemExit('New newsfragment ID doesn\'t correspond to an issue !')
+                data = json.loads(ret.read())
+                if 'pull_request' in data:
+                    raise SystemExit('New newsfragement ID correspond to a pull request instead of an issue !')
+                if data['state'] != 'open':
+                    raise SystemExit('New newsfragement ID correspond to a closed issue')
+                return True
+            return False
+
+        with ThreadPoolExecutor() as pool:
+            ret = pool.map(check_newsfragment, Path('newsfragments').glob('*.rst'))
+
+        if True not in ret:
+            raise SystemExit('No new newsfragment found')
 #  - bash: |
 #      git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
 #      python ./misc/releaser.py check --verbose
