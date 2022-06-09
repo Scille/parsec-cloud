@@ -178,5 +178,7 @@ pub fn tmp_path() -> TmpPath {
 
     path.extend(["parsec-tests", &Uuid::new_v4().to_string()]);
 
+    std::fs::create_dir_all(&path).expect("Cannot create tmp_path dir");
+
     TmpPath(path)
 }
