@@ -11,7 +11,15 @@ pub enum CommandError {
     Deserialization(parsec_api_protocol::DecodeError),
 }
 
-impl Error for CommandError {}
+impl Error for CommandError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            CommandError::Deserialization(e) => Some(e),
+            CommandError::Response(e) => Some(e),
+            CommandError::Serialization(_) => None,
+        }
+    }
+}
 
 impl Display for CommandError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
