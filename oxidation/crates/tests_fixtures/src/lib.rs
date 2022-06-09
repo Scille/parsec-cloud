@@ -176,7 +176,7 @@ impl Drop for TmpPath {
 pub fn tmp_path() -> TmpPath {
     let mut path = std::env::temp_dir();
 
-    path.extend(["rstest", &Uuid::new_v4().to_string()]);
+    path.extend(["parsec-tests", &Uuid::new_v4().to_string()]);
 
     TmpPath(path)
 }
