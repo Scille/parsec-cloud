@@ -109,14 +109,14 @@ fn serde_vlob_create_req() {
 fn serde_vlob_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_create::Rep::load(raw);
+    let data = authenticated_cmds::vlob_create::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_create::Rep::load(&raw2);
+    let data2 = authenticated_cmds::vlob_create::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -243,14 +243,14 @@ fn serde_vlob_read_req() {
 fn serde_vlob_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_read::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_read::Rep::load(raw);
+    let data = authenticated_cmds::vlob_read::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_read::Rep::load(&raw2);
+    let data2 = authenticated_cmds::vlob_read::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -366,14 +366,14 @@ fn serde_vlob_update_req() {
 fn serde_vlob_update_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_update::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_update::Rep::load(raw);
+    let data = authenticated_cmds::vlob_update::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_update::Rep::load(&raw2);
+    let data2 = authenticated_cmds::vlob_update::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -468,14 +468,14 @@ fn serde_vlob_poll_changes_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_poll_changes::Rep::load(raw);
+    let data = authenticated_cmds::vlob_poll_changes::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_poll_changes::Rep::load(&raw2);
+    let data2 = authenticated_cmds::vlob_poll_changes::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -572,14 +572,14 @@ fn serde_vlob_list_versions_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_list_versions::Rep::load(raw);
+    let data = authenticated_cmds::vlob_list_versions::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_list_versions::Rep::load(&raw2);
+    let data2 = authenticated_cmds::vlob_list_versions::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -718,14 +718,15 @@ fn serde_vlob_maintenance_get_reencryption_batch_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::load(raw);
+    let data = authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::load(&raw2);
+    let data2 =
+        authenticated_cmds::vlob_maintenance_get_reencryption_batch::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -864,14 +865,16 @@ fn serde_vlob_maintenance_save_reencryption_batch_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::load(raw);
+    let data =
+        authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::load(&raw2);
+    let data2 =
+        authenticated_cmds::vlob_maintenance_save_reencryption_batch::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }

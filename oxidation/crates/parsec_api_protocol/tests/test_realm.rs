@@ -104,14 +104,14 @@ fn serde_realm_create_req() {
 fn serde_realm_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_create::Rep::load(raw);
+    let data = authenticated_cmds::realm_create::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_create::Rep::load(&raw2);
+    let data2 = authenticated_cmds::realm_create::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -200,14 +200,14 @@ fn serde_realm_status_req() {
 fn serde_realm_status_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_status::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_status::Rep::load(raw);
+    let data = authenticated_cmds::realm_status::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_status::Rep::load(&raw2);
+    let data2 = authenticated_cmds::realm_status::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -286,14 +286,14 @@ fn serde_realm_stats_req() {
 fn serde_realm_stats_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_stats::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_stats::Rep::load(raw);
+    let data = authenticated_cmds::realm_stats::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_stats::Rep::load(&raw2);
+    let data2 = authenticated_cmds::realm_stats::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -372,14 +372,14 @@ fn serde_realm_get_role_certificates_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_get_role_certificates::Rep::load(raw);
+    let data = authenticated_cmds::realm_get_role_certificates::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_get_role_certificates::Rep::load(&raw2);
+    let data2 = authenticated_cmds::realm_get_role_certificates::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -527,14 +527,14 @@ fn serde_realm_update_roles_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_update_roles::Rep::load(raw);
+    let data = authenticated_cmds::realm_update_roles::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_update_roles::Rep::load(&raw2);
+    let data2 = authenticated_cmds::realm_update_roles::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -677,14 +677,14 @@ fn serde_realm_start_reencryption_maintenance_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_start_reencryption_maintenance::Rep::load(raw);
+    let data = authenticated_cmds::realm_start_reencryption_maintenance::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_start_reencryption_maintenance::Rep::load(&raw2);
+    let data2 = authenticated_cmds::realm_start_reencryption_maintenance::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -807,14 +807,15 @@ fn serde_realm_finish_reencryption_maintenance_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::realm_finish_reencryption_maintenance::Rep::load(raw);
+    let data = authenticated_cmds::realm_finish_reencryption_maintenance::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::realm_finish_reencryption_maintenance::Rep::load(&raw2);
+    let data2 =
+        authenticated_cmds::realm_finish_reencryption_maintenance::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
