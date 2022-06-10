@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
+use diesel::{
+    BoolExpressionMethods, ExpressionMethods, QueryDsl, Queryable, RunQueryDsl, SqliteConnection,
+};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;

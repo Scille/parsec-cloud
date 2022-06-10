@@ -3,7 +3,6 @@
 use diesel::{Connection, ExpressionMethods, RunQueryDsl, SqliteConnection};
 use rstest::rstest;
 use std::num::NonZeroU64;
-use std::path::PathBuf;
 
 use parsec_api_crypto::HashDigest;
 use parsec_api_types::{
@@ -14,7 +13,7 @@ use parsec_api_types::{
 use crate::model::Workspace;
 use crate::schema::{block, device, info, realm_role, user_ as user, vlob_atom};
 
-use tests_fixtures::{alice, Device};
+use tests_fixtures::{alice, tmp_path, Device, TmpPath};
 
 impl Workspace {
     pub fn init_db(conn: &mut SqliteConnection, device: &Device) {
@@ -43,7 +42,7 @@ impl Workspace {
             timestamp: t0,
             device_id: device.device_id.clone(),
             device_label: None,
-            verify_key: device.signing_key.verify_key().clone(),
+            verify_key: device.signing_key.verify_key(),
         }
         .dump_and_sign(&device.signing_key);
 
@@ -205,7 +204,7 @@ impl Workspace {
             author: device.device_id.clone(),
             timestamp: t0,
             id: file00_id,
-            parent: EntryID::from(folder0_id),
+            parent: folder0_id,
             version: 1,
             created: t0,
             updated: t0,
@@ -225,7 +224,7 @@ impl Workspace {
             author: device.device_id.clone(),
             timestamp: t0,
             id: folder00_id,
-            parent: EntryID::from(folder0_id),
+            parent: folder0_id,
             version: 1,
             created: t0,
             updated: t0,
@@ -237,7 +236,7 @@ impl Workspace {
             author: device.device_id.clone(),
             timestamp: t0,
             id: folder01_id,
-            parent: EntryID::from(folder0_id),
+            parent: folder0_id,
             version: 1,
             created: t0,
             updated: t0,
@@ -252,7 +251,7 @@ impl Workspace {
             author: device.device_id.clone(),
             timestamp: t0,
             id: file010_id,
-            parent: EntryID::from(folder01_id),
+            parent: folder01_id,
             version: 1,
             created: t0,
             updated: t0,
@@ -272,7 +271,7 @@ impl Workspace {
             author: device.device_id.clone(),
             timestamp: t0,
             id: file011_id,
-            parent: EntryID::from(folder01_id),
+            parent: folder01_id,
             version: 1,
             created: t0,
             updated: t0,
@@ -306,40 +305,88 @@ impl Workspace {
 }
 
 #[rstest]
-fn test_parsec_sequestre_dump(alice: &Device) {
+fn test_parsec_sequestre_dump(alice: &Device, tmp_path: TmpPath) {
     use diesel::connection::SimpleConnection;
 
-    let input = "/tmp/parsec_sequestre_dump.sqlite";
-    let output = PathBuf::from("/tmp/out");
-    let dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR should be set");
+    let input = tmp_path.join("parsec_sequestre_dump.sqlite");
+    let output = tmp_path.join("output");
 
-    macro_rules! read_sql {
-        ($file: literal) => {
-            std::fs::read_to_string(format!("{dir}/migrations/{}", $file)).unwrap()
-        };
-    }
+    let mut conn = SqliteConnection::establish(input.to_str().unwrap()).unwrap();
 
-    let mut conn = SqliteConnection::establish(input).unwrap();
+    conn.batch_execute("
+        CREATE TABLE IF NOT EXISTS block (
+            -- _id is not SERIAL given we will take the one present in the Parsec database
+            _id INTEGER PRIMARY KEY,
+            block_id BLOB NOT NULL,
+            data BLOB NOT NULL,
+            -- TODO: are author/size/created_on useful ?
+            author INTEGER REFERENCES device (_id) NOT NULL,
+            size INTEGER NOT NULL,
+            -- this field is created by the backend when inserting (unlike vlob's timestamp, see below)
+            created_on REAL NOT NULL,
 
-    let sql = read_sql!("0000_init/down.sql") + &read_sql!("0000_init/up.sql");
+            UNIQUE(block_id)
+        );
 
-    conn.batch_execute(&sql).unwrap();
+        CREATE TABLE IF NOT EXISTS vlob_atom (
+            -- Compared to Parsec's datamodel, we don't store `vlob_encryption_revision` given
+            -- the vlob is provided with third party encrytion key only once at creation time
+            _id INTEGER PRIMARY KEY,
+            vlob_id BLOB NOT NULL,
+            version INTEGER NOT NULL,
+            blob BLOB NOT NULL,
+            size INTEGER NOT NULL,
+            -- author/timestamp are required to validate the consistency of blob
+            -- Care must be taken when exporting this field (and the device_ table) to
+            -- keep this relationship valid !
+            author INTEGER REFERENCES device (_id) NOT NULL,
+            -- this field is called created_on in Parsec datamodel, but it correspond to the timestamp field in the API
+            -- (the value is provided by the client when sending request and not created on backend side) so better
+            -- give it the better understandable name
+            timestamp REAL NOT NULL,
+
+            UNIQUE(vlob_id, version)
+        );
+
+        CREATE TABLE IF NOT EXISTS realm_role (
+            _id INTEGER PRIMARY KEY,
+            role_certificate BLOB NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS user_ (
+            _id INTEGER PRIMARY KEY,
+            user_certificate BLOB NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS device (
+            _id INTEGER PRIMARY KEY,
+            device_certificate BLOB NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS info (
+            magic INTEGER UNIQUE NOT NULL DEFAULT 87947 PRIMARY KEY,
+            version INTEGER NOT NULL,  -- should be 1 for now
+            realm_id BLOB NOT NULL
+        );").unwrap();
 
     Workspace::init_db(&mut conn, alice);
 
     Workspace::dump(&mut conn, &alice.local_symkey, &output).unwrap();
 
-    assert_eq!(std::fs::read("/tmp/out/file0").unwrap(), b"Hello World \0");
     assert_eq!(
-        std::fs::read("/tmp/out/folder0/file00").unwrap(),
+        std::fs::read(output.join("file0")).unwrap(),
+        b"Hello World \0"
+    );
+    assert_eq!(
+        std::fs::read(output.join("folder0").join("file00")).unwrap(),
         b"file00's content"
     );
     assert_eq!(
-        std::fs::read("/tmp/out/folder0/folder01/file010").unwrap(),
+        std::fs::read(output.join("folder0").join("folder01").join("file010")).unwrap(),
         b"file010's content"
     );
     assert_eq!(
-        std::fs::read("/tmp/out/folder0/folder01/file011").unwrap(),
+        std::fs::read(output.join("folder0").join("folder01").join("file011")).unwrap(),
         b"file011's content"
     );
 }

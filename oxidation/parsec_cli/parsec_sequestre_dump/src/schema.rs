@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use diesel::{allow_tables_to_appear_in_same_query, joinable, table};
+
 table! {
     block (_id) {
         _id -> Nullable<Integer>,
