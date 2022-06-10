@@ -25,19 +25,58 @@ impl Req {
             quote! {
                 #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                 pub struct Req(pub #unit);
+
+                impl Req {
+                    pub fn new(value: #unit) -> Self {
+                        Self(value)
+                    }
+                }
             }
         } else if self.other_fields.is_empty() {
             quote! {
                 #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                 pub struct Req;
+
+                impl Req {
+                    pub fn new() -> Self { Self }
+                }
             }
         } else {
             let fields = quote_fields(&self.other_fields, Vis::Public, types);
+            let args = self
+                .other_fields
+                .iter()
+                .fold(TokenStream::new(), |args, field| {
+                    let name = field.quote_name().1;
+                    let ty = field.quote_type(types).0;
+
+                    let arg = quote! { #name: #ty };
+
+                    quote! {
+                        #args
+                        #arg,
+                    }
+                });
+            let params = self.other_fields.iter().fold(quote! {}, |params, field| {
+                let name: Ident = field.quote_name().1;
+                quote! {
+                    #params
+                    #name,
+                }
+            });
             quote! {
                 #[::serde_with::serde_as]
                 #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
                 pub struct Req {
                     #fields
+                }
+
+                impl Req {
+                    pub fn new(#args) -> Self {
+                        Self {
+                            #params
+                        }
+                    }
                 }
             }
         }
