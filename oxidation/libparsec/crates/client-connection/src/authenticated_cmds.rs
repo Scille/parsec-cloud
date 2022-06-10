@@ -120,35 +120,37 @@ impl AuthenticatedCmds {
     }
 }
 
-macro_rules! impl_auth_cmd {
+macro_rules! impl_auth_cmds {
     (
-        $(#[$outer:meta])*
-        $name:ident($($key:ident: $type:ty),*)
+        $(
+            $(#[$outer:meta])*
+            $name:ident($($key:ident: $type:ty),*)
+        )+
     ) => {
-        $(#[$outer])*
-        pub async fn $name(&self, $($key: $type),*) -> command_error::Result<authenticated_cmds::$name::Rep> {
-            let data = authenticated_cmds::$name::Req { $($key),* }.dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
+        $(
+            $(#[$outer])*
+            pub async fn $name(&self, $($key: $type),*) -> command_error::Result<authenticated_cmds::$name::Rep> {
+                let data = authenticated_cmds::$name::Req { $($key),* }.dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
 
-            let req = self.prepare_request(data).send();
-            let resp = req.await.map_err(CommandError::Response)?;
-            let response_body = resp.bytes().await.map_err(CommandError::Response)?;
+                let req = self.prepare_request(data).send();
+                let resp = req.await.map_err(CommandError::Response)?;
+                let response_body = resp.bytes().await.map_err(CommandError::Response)?;
 
-            authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::Deserialization)
-        }
+                authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::Deserialization)
+            }
+        )+
     };
 }
 
 impl AuthenticatedCmds {
-    impl_auth_cmd!(
+    impl_auth_cmds!(
         /// Create a new block.
         block_create(block_id: BlockID, realm_id: RealmID, block: Vec<u8>)
-    );
-    impl_auth_cmd!(
         /// Read a block.
         block_read(block_id: BlockID)
     );
 
-    impl_auth_cmd!(
+    impl_auth_cmds!(
         /// Create a new device.
         device_create(
             device_certificate: Vec<u8>,
@@ -166,7 +168,7 @@ impl AuthenticatedCmds {
     //     events_subscribe()
     // );
 
-    impl_auth_cmd!(
+    impl_auth_cmds!(
         /// Search a human.
         human_find(
             query: Option<String>,
@@ -177,35 +179,21 @@ impl AuthenticatedCmds {
         )
     );
 
-    impl_auth_cmd!(
+    impl_auth_cmds!(
         /// Wait for the peer to begin invitation procedure.
         invite_1_greeter_wait_peer(token: InvitationToken, greeter_public_key: PublicKey)
-    );
-    impl_auth_cmd!(
         /// Retrieve the hashed nonce during an invitation procedure.
         invite_2a_greeter_get_hashed_nonce(token: InvitationToken)
-    );
-    impl_auth_cmd!(
         /// Send the nonce during an invitation procedure.
         invite_2b_greeter_send_nonce(token: InvitationToken, greeter_nonce: Vec<u8>)
-    );
-    impl_auth_cmd!(
         /// Wait trust from peer during an invitation procedure.
         invite_3a_greeter_wait_peer_trust(token: InvitationToken)
-    );
-    impl_auth_cmd!(
         /// Trust establishment during an invitation procedure.
         invite_3b_greeter_signify_trust(token: InvitationToken)
-    );
-    impl_auth_cmd!(
         /// Last step of an invitation procedure.
         invite_4_greeter_communicate(token: InvitationToken, payload: Vec<u8>)
-    );
-    impl_auth_cmd!(
         /// Delete an invitation.
         invite_delete(token: InvitationToken, reason: InvitationDeletedReason)
-    );
-    impl_auth_cmd!(
         /// Retrieve a list of invited users.
         invite_list()
     );
@@ -215,38 +203,30 @@ impl AuthenticatedCmds {
     //     invite_new(user_or_device: UserOrDevice)
     // );
 
-    impl_auth_cmd!(
+    impl_auth_cmds!(
         /// Retrieve a message at `offset`
         message_get(offset: u64)
     );
 
-    impl_auth_cmd!(
+    impl_auth_cmds!(
         /// Retrieve the config of an organization.
         organization_config()
-    );
-    impl_auth_cmd!(
         /// Retrieve the stats of an organization.
         organization_stats()
     );
 
-    impl_auth_cmd!(
+    impl_auth_cmds!(
         /// Ping the server.
         ping(ping: String)
     );
 
-    impl_auth_cmd!(
+    impl_auth_cmds!(
         /// create a new realm
         realm_create(role_certificate: Vec<u8>)
-    );
-    impl_auth_cmd!(
         /// notify that we've finish re-encrypting the realm
         realm_finish_reencryption_maintenance(realm_id: RealmID, encryption_revision: u64)
-    );
-    impl_auth_cmd!(
         /// retrieve the role certificates of a realm
         realm_get_role_certificates(realm_id: RealmID)
-    );
-    impl_auth_cmd!(
         /// start the re-encryption maintenance on a realm and notify participant
         realm_start_reencryption_maintenance(
             realm_id: RealmID,
@@ -254,16 +234,10 @@ impl AuthenticatedCmds {
             timestamp: DateTime,
             per_participant_message: HashMap<UserID, Vec<u8>>
         )
-    );
-    impl_auth_cmd!(
         /// retrieve the stats of a realm
         realm_stats(realm_id: RealmID)
-    );
-    impl_auth_cmd!(
         /// get the status of a realm
         realm_status(realm_id: RealmID)
-    );
-    impl_auth_cmd!(
         /// update role in a realm
         realm_update_roles(
             role_certificate: Vec<u8>,
@@ -271,7 +245,7 @@ impl AuthenticatedCmds {
         )
     );
 
-    impl_auth_cmd!(
+    impl_auth_cmds!(
         /// create a new user with its device
         user_create(
             user_certificate: Vec<u8>,
@@ -279,17 +253,13 @@ impl AuthenticatedCmds {
             redacted_user_certificate: Vec<u8>,
             redacted_device_certificate: Vec<u8>
         )
-    );
-    impl_auth_cmd!(
         /// Retrieve an user by it's id
         user_get(user_id: UserID)
-    );
-    impl_auth_cmd!(
         /// revoke a user certificate
         user_revoke(revoked_user_certificate: Vec<u8>)
     );
 
-    impl_auth_cmd!(
+    impl_auth_cmds!(
         /// create a new Vlob
         vlob_create(
             realm_id: RealmID,
@@ -298,32 +268,22 @@ impl AuthenticatedCmds {
             timestamp: DateTime,
             blob: Vec<u8>
         )
-    );
-    impl_auth_cmd!(
         /// list version of a vlob
         vlob_list_versions(vlob_id: VlobID)
-    );
-    impl_auth_cmd!(
         /// get a Vlob at a certain encryption revision
         vlob_maintenance_get_reencryption_batch(
             realm_id: RealmID,
             encryption_revision: u64,
             size: u64
         )
-    );
-    impl_auth_cmd!(
         /// save Vlob encryption revision
         vlob_maintenance_save_reencryption_batch(
             realm_id: RealmID,
             encryption_revision: u64,
             batch: Vec<ReencryptionBatchEntry>
         )
-    );
-    impl_auth_cmd!(
         /// pool changes since last checkpoint
         vlob_poll_changes(realm_id: RealmID, last_checkpoint: u64)
-    );
-    impl_auth_cmd!(
         /// read a Vlob, can read a vlob at a specific version or time
         vlob_read(
             encryption_revision: u64,
@@ -331,8 +291,6 @@ impl AuthenticatedCmds {
             version: Option<u32>,
             timestamp: Option<DateTime>
         )
-    );
-    impl_auth_cmd!(
         /// update a Vlob
         vlob_update(
             encryption_revision: u64,
