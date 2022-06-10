@@ -8,6 +8,13 @@ pub mod file_operations;
 // TODO: Wait a fix from diesel
 #[allow(clippy::extra_unused_lifetimes)]
 mod storage;
+mod workspacefs;
 
 pub use error::*;
 pub use storage::*;
+
+/// Translations used to for File/Folder conflict renaming
+pub enum Language {
+    En,
+    Fr,
+}
