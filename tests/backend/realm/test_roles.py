@@ -36,7 +36,7 @@ async def _realm_get_clear_role_certifs(sock, realm_id):
 @pytest.fixture
 def realm_generate_certif_and_update_roles_or_fail(next_timestamp):
     async def _realm_generate_certif_and_update_roles_or_fail(
-        backend_sock, author, realm_id, user_id, role, timestamp=None
+        ws, author, realm_id, user_id, role, timestamp=None
     ):
         certif = RealmRoleCertificateContent(
             author=author.device_id,
@@ -45,7 +45,7 @@ def realm_generate_certif_and_update_roles_or_fail(next_timestamp):
             user_id=user_id,
             role=role,
         ).dump_and_sign(author.signing_key)
-        return await realm_update_roles(backend_sock, certif, check_rep=False)
+        return await realm_update_roles(ws, certif, check_rep=False)
 
     return _realm_generate_certif_and_update_roles_or_fail
 

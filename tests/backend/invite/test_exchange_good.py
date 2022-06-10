@@ -277,16 +277,16 @@ async def test_change_connection_during_exchange(
         organization_id=tb.organization_id,
         invitation_type=tb.invitation.TYPE,
         token=tb.invitation.token,
-    ) as claimer_sock:
+    ) as claimer_ws:
 
-        tb.claimer_sock = claimer_sock
+        tb.claimer_ws = claimer_ws
         await tb.send_order("claimer", "2a_send_hashed_nonce")
 
         await tb.assert_ok_rep("greeter")
 
         # Change greeter sock, don't close previous sock
-        async with backend_authenticated_ws_factory(backend_asgi_app, tb.greeter) as greeter_sock:
-            tb.greeter_sock = greeter_sock
+        async with backend_authenticated_ws_factory(backend_asgi_app, tb.greeter) as greeter_ws:
+            tb.greeter_ws = greeter_ws
             await tb.send_order("greeter", "2b_send_nonce")
 
             await tb.assert_ok_rep("claimer")
@@ -302,10 +302,10 @@ async def test_change_connection_during_exchange(
         organization_id=tb.organization_id,
         invitation_type=tb.invitation.TYPE,
         token=tb.invitation.token,
-    ) as claimer_sock:
-        tb.claimer_sock = claimer_sock
-        async with backend_authenticated_ws_factory(backend_asgi_app, tb.greeter) as greeter_sock:
-            tb.greeter_sock = greeter_sock
+    ) as claimer_ws:
+        tb.claimer_ws = claimer_ws
+        async with backend_authenticated_ws_factory(backend_asgi_app, tb.greeter) as greeter_ws:
+            tb.greeter_ws = greeter_ws
 
             await tb.send_order("greeter", "3a_wait_peer_trust")
             await tb.send_order("claimer", "3a_signify_trust")

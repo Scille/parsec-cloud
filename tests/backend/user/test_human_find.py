@@ -41,12 +41,12 @@ async def access_testbed(
 async def test_isolation_from_other_organization(
     backend_asgi_app, alice, ws_from_other_organization_factory, alice_ws
 ):
-    async with ws_from_other_organization_factory(backend_asgi_app) as sock:
-        rep = await human_find(sock, query=alice.human_handle.label)
+    async with ws_from_other_organization_factory(backend_asgi_app) as ws:
+        rep = await human_find(ws, query=alice.human_handle.label)
         assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
-        rep = await human_find(sock)
-        rep_alice_sock = await human_find(alice_ws)
-        assert rep != rep_alice_sock
+        rep = await human_find(ws)
+        rep_alice_ws = await human_find(alice_ws)
+        assert rep != rep_alice_ws
 
 
 @pytest.mark.trio

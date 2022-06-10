@@ -81,26 +81,26 @@ def backend_authenticated_ws_factory():
 
 @pytest.fixture
 async def alice_ws(backend_asgi_app, alice, backend_authenticated_ws_factory):
-    async with backend_authenticated_ws_factory(backend_asgi_app, alice) as sock:
-        yield sock
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice) as ws:
+        yield ws
 
 
 @pytest.fixture
 async def alice2_ws(backend_asgi_app, alice2, backend_authenticated_ws_factory):
-    async with backend_authenticated_ws_factory(backend_asgi_app, alice2) as sock:
-        yield sock
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice2) as ws:
+        yield ws
 
 
 @pytest.fixture
 async def bob_ws(backend_asgi_app, bob, backend_authenticated_ws_factory):
-    async with backend_authenticated_ws_factory(backend_asgi_app, bob) as sock:
-        yield sock
+    async with backend_authenticated_ws_factory(backend_asgi_app, bob) as ws:
+        yield ws
 
 
 @pytest.fixture
 async def adam_ws(backend_asgi_app, adam, backend_authenticated_ws_factory):
-    async with backend_authenticated_ws_factory(backend_asgi_app, adam) as sock:
-        yield sock
+    async with backend_authenticated_ws_factory(backend_asgi_app, adam) as ws:
+        yield ws
 
 
 # TODO: legacy fixture, remove this when APIv1 is deprecated
@@ -134,8 +134,8 @@ def apiv1_backend_ws_factory(coolorg):
 
 @pytest.fixture
 async def apiv1_anonymous_ws(apiv1_backend_ws_factory, backend_asgi_app):
-    async with apiv1_backend_ws_factory(backend_asgi_app, "anonymous") as sock:
-        yield sock
+    async with apiv1_backend_ws_factory(backend_asgi_app, "anonymous") as ws:
+        yield ws
 
 
 class AnonymousWsTransport:
@@ -172,8 +172,8 @@ def backend_anonymous_ws_factory(server_factory):
 
 @pytest.fixture
 async def anonymous_backend_ws(backend_asgi_app, backend_anonymous_ws_factory, coolorg):
-    async with backend_anonymous_ws_factory(backend_asgi_app, coolorg.organization_id) as sock:
-        yield sock
+    async with backend_anonymous_ws_factory(backend_asgi_app, coolorg.organization_id) as ws:
+        yield ws
 
 
 # @pytest.fixture

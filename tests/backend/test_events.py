@@ -39,20 +39,20 @@ async def test_cancel_connection_after_events_subscribe(
         # for things to settle down to make sure there is no pending event
         await trio.testing.wait_all_tasks_blocked()
 
-    async with backend_authenticated_ws_factory(backend_asgi_app, bob) as bob_backend_sock:
+    async with backend_authenticated_ws_factory(backend_asgi_app, bob) as bob_ws:
 
-        await events_subscribe(bob_backend_sock)
+        await events_subscribe(bob_ws)
 
         if revoked_during == "listen_event":
             with pytest.raises(WebsocketDisconnectError):
-                async with events_listen(bob_backend_sock):
+                async with events_listen(bob_ws):
                     await _do_revoke()
 
         else:
             await _do_revoke()
             with pytest.raises(WebsocketDisconnectError):
                 async with real_clock_timeout():
-                    await events_listen_wait(bob_backend_sock)
+                    await events_listen_wait(bob_ws)
 
 
 @pytest.mark.trio

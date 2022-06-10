@@ -13,15 +13,15 @@ from tests.backend.test_events import events_subscribe
 from tests.backend.common import realm_create
 
 
-async def _test_create_ok(backend, device, device_backend_sock):
-    await events_subscribe(device_backend_sock)
+async def _test_create_ok(backend, device, ws):
+    await events_subscribe(ws)
 
     realm_id = RealmID.from_hex("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent.build_realm_root_certif(
         author=device.device_id, timestamp=pendulum.now(), realm_id=realm_id
     ).dump_and_sign(device.signing_key)
     with backend.event_bus.listen() as spy:
-        rep = await realm_create(device_backend_sock, certif)
+        rep = await realm_create(ws, certif)
         assert rep == {"status": "ok"}
         await spy.wait_with_timeout(BackendEvent.REALM_ROLES_UPDATED)
 

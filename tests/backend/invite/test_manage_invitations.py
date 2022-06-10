@@ -95,8 +95,8 @@ async def test_user_new_invitation_and_info(
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
         token=token,
-    ) as invited_sock:
-        rep = await invite_info(invited_sock)
+    ) as invited_ws:
+        rep = await invite_info(invited_ws)
         assert rep == {
             "status": "ok",
             "type": InvitationType.USER,
@@ -162,8 +162,8 @@ async def test_device_new_invitation_and_info(
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=token,
-    ) as invited_sock:
-        rep = await invite_info(invited_sock)
+    ) as invited_ws:
+        rep = await invite_info(invited_ws)
         assert rep == {
             "status": "ok",
             "type": InvitationType.DEVICE,

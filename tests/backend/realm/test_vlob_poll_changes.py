@@ -18,9 +18,7 @@ UNKNOWN_REALM_ID = RealmID.from_hex("0000000000000000000000000000000F")
 
 @pytest.fixture
 def realm_generate_certif_and_update_roles_or_fail(next_timestamp):
-    async def _realm_generate_certif_and_update_roles_or_fail(
-        backend_sock, author, realm_id, user_id, role
-    ):
+    async def _realm_generate_certif_and_update_roles_or_fail(ws, author, realm_id, user_id, role):
         certif = RealmRoleCertificateContent(
             author=author.device_id,
             timestamp=next_timestamp(),
@@ -28,7 +26,7 @@ def realm_generate_certif_and_update_roles_or_fail(next_timestamp):
             user_id=user_id,
             role=role,
         ).dump_and_sign(author.signing_key)
-        return await realm_update_roles(backend_sock, certif, check_rep=False)
+        return await realm_update_roles(ws, certif, check_rep=False)
 
     return _realm_generate_certif_and_update_roles_or_fail
 

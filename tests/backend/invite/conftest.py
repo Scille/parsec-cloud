@@ -86,8 +86,8 @@ class ExchangeTestBed:
         claimer_privkey,
         greeter_ctlr,
         claimer_ctlr,
-        greeter_sock,
-        claimer_sock,
+        greeter_ws,
+        claimer_ws,
     ):
         self.organization_id = organization_id
         self.greeter = greeter
@@ -96,8 +96,8 @@ class ExchangeTestBed:
         self.claimer_privkey = claimer_privkey
         self.greeter_ctlr = greeter_ctlr
         self.claimer_ctlr = claimer_ctlr
-        self.greeter_sock = greeter_sock
-        self.claimer_sock = claimer_sock
+        self.greeter_ws = greeter_ws
+        self.claimer_ws = claimer_ws
 
     async def send_order(self, who, order, step_4_payload=b""):
         assert who in ("greeter", "claimer")
@@ -125,39 +125,39 @@ async def exchange_testbed(backend_asgi_app, alice, alice_ws, backend_invited_ws
             if order == "1_wait_peer":
                 await peer_controller.peer_do(
                     invite_1_greeter_wait_peer,
-                    tb.greeter_sock,
+                    tb.greeter_ws,
                     token=tb.invitation.token,
                     greeter_public_key=tb.greeter_privkey.public_key,
                 )
 
             elif order == "2a_get_hashed_nonce":
                 await peer_controller.peer_do(
-                    invite_2a_greeter_get_hashed_nonce, tb.greeter_sock, token=tb.invitation.token
+                    invite_2a_greeter_get_hashed_nonce, tb.greeter_ws, token=tb.invitation.token
                 )
 
             elif order == "2b_send_nonce":
                 await peer_controller.peer_do(
                     invite_2b_greeter_send_nonce,
-                    tb.greeter_sock,
+                    tb.greeter_ws,
                     token=tb.invitation.token,
                     greeter_nonce=b"<greeter_nonce>",
                 )
 
             elif order == "3a_wait_peer_trust":
                 await peer_controller.peer_do(
-                    invite_3a_greeter_wait_peer_trust, tb.greeter_sock, token=tb.invitation.token
+                    invite_3a_greeter_wait_peer_trust, tb.greeter_ws, token=tb.invitation.token
                 )
 
             elif order == "3b_signify_trust":
                 await peer_controller.peer_do(
-                    invite_3b_greeter_signify_trust, tb.greeter_sock, token=tb.invitation.token
+                    invite_3b_greeter_signify_trust, tb.greeter_ws, token=tb.invitation.token
                 )
 
             elif order == "4_communicate":
                 assert step_4_payload is not None
                 await peer_controller.peer_do(
                     invite_4_greeter_communicate,
-                    tb.greeter_sock,
+                    tb.greeter_ws,
                     token=tb.invitation.token,
                     payload=step_4_payload,
                 )
@@ -171,37 +171,37 @@ async def exchange_testbed(backend_asgi_app, alice, alice_ws, backend_invited_ws
             order, step_4_payload = await peer_controller.peer_next_order()
 
             if order == "invite_info":
-                await peer_controller.peer_do(invite_info, tb.claimer_sock)
+                await peer_controller.peer_do(invite_info, tb.claimer_ws)
 
             elif order == "1_wait_peer":
                 await peer_controller.peer_do(
                     invite_1_claimer_wait_peer,
-                    tb.claimer_sock,
+                    tb.claimer_ws,
                     claimer_public_key=tb.claimer_privkey.public_key,
                 )
 
             elif order == "2a_send_hashed_nonce":
                 await peer_controller.peer_do(
                     invite_2a_claimer_send_hashed_nonce,
-                    tb.claimer_sock,
+                    tb.claimer_ws,
                     claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                 )
 
             elif order == "2b_send_nonce":
                 await peer_controller.peer_do(
-                    invite_2b_claimer_send_nonce, tb.claimer_sock, claimer_nonce=b"<claimer_nonce>"
+                    invite_2b_claimer_send_nonce, tb.claimer_ws, claimer_nonce=b"<claimer_nonce>"
                 )
 
             elif order == "3a_signify_trust":
-                await peer_controller.peer_do(invite_3a_claimer_signify_trust, tb.claimer_sock)
+                await peer_controller.peer_do(invite_3a_claimer_signify_trust, tb.claimer_ws)
 
             elif order == "3b_wait_peer_trust":
-                await peer_controller.peer_do(invite_3b_claimer_wait_peer_trust, tb.claimer_sock)
+                await peer_controller.peer_do(invite_3b_claimer_wait_peer_trust, tb.claimer_ws)
 
             elif order == "4_communicate":
                 assert step_4_payload is not None
                 await peer_controller.peer_do(
-                    invite_4_claimer_communicate, tb.claimer_sock, payload=step_4_payload
+                    invite_4_claimer_communicate, tb.claimer_ws, payload=step_4_payload
                 )
 
             else:
@@ -222,7 +222,7 @@ async def exchange_testbed(backend_asgi_app, alice, alice_ws, backend_invited_ws
         organization_id=alice.organization_id,
         invitation_type=invitation.TYPE,
         token=invitation.token,
-    ) as claimer_sock:
+    ) as claimer_ws:
 
         async with trio.open_nursery() as nursery:
             tb = ExchangeTestBed(
@@ -233,8 +233,8 @@ async def exchange_testbed(backend_asgi_app, alice, alice_ws, backend_invited_ws
                 claimer_privkey=claimer_privkey,
                 greeter_ctlr=greeter_ctlr,
                 claimer_ctlr=claimer_ctlr,
-                greeter_sock=alice_ws,
-                claimer_sock=claimer_sock,
+                greeter_ws=alice_ws,
+                claimer_ws=claimer_ws,
             )
             nursery.start_soon(_run_greeter, tb)
             nursery.start_soon(_run_claimer, tb)
