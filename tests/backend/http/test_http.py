@@ -7,7 +7,7 @@ import h11
 from parsec import __version__ as parsec_version
 from parsec.api.protocol import OrganizationID, InvitationToken, InvitationType
 from parsec.core.types.backend_address import BackendAddr, BackendInvitationAddr
-from parsec.backend.app import MAX_INITIAL_HTTP_REQUEST_SIZE
+from parsec.backend.asgi import MAX_CONTENT_LENGTH
 
 from tests.common import customize_fixtures, real_clock_timeout
 from tests.backend.http.conftest import open_stream_to_backend
@@ -147,11 +147,10 @@ async def test_sender_use_100_continue(running_backend, backend_addr):
 
 
 @pytest.mark.trio
-async def test_request_is_too_big(backend_http_send, running_backend):
-    real_max_initial_http_request_size = MAX_INITIAL_HTTP_REQUEST_SIZE
+async def test_request_body_is_too_big(backend_http_send, running_backend):
     max_size_req = b"GET /dummy HTTP/1.0\r\n"
     # Total request is request line + headers + final "\r\n"
-    fillup_size = real_max_initial_http_request_size - len(max_size_req) - 2
+    fillup_size = MAX_CONTENT_LENGTH - len(max_size_req) - 2
     # Divide size between multiple headers
     per_header_size = 500
     headers_count = fillup_size // per_header_size
@@ -169,15 +168,11 @@ async def test_request_is_too_big(backend_http_send, running_backend):
     # Too big contains one more byte
     too_big_req = max_size_req + b"y\r\n\r\n"
     max_size_req += b"\r\n\r\n"
-    assert len(max_size_req) == real_max_initial_http_request_size
-    assert len(too_big_req) == real_max_initial_http_request_size + 1
+    assert len(max_size_req) == MAX_CONTENT_LENGTH
+    assert len(too_big_req) == MAX_CONTENT_LENGTH + 1
 
-    # The server send the response then close the connection rigth away, this is
-    # not really elegant given the client most likely only receive the closed
-    # connection information
-    with pytest.raises(trio.BrokenResourceError):
-        status, _, _ = await backend_http_send(req=too_big_req)
-        assert status == (431, "Request Header Fields Too Large")
+    status, _, _ = await backend_http_send(req=too_big_req)
+    assert status == (431, "Request Header Fields Too Large")
 
     # Make sure max size is ok
     status, _, _ = await backend_http_send(req=max_size_req)

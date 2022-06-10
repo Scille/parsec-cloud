@@ -12,10 +12,16 @@ from parsec.backend.asgi.ws import ws_bp
 from parsec.backend.templates import JINJA_ENV_CONFIG
 
 
+# Max size for HTTP body, 1Mo seems plenty given our API never upload big chunk of data
+# (biggest request should be the `block_create` command with typically ~512Ko of data)
+MAX_CONTENT_LENGTH = 1 * 1024 ** 2
+
+
 def app_factory(backend: BackendApp) -> QuartTrio:
     app = QuartTrio(
         __name__, static_folder="../static", static_url_path="/static", template_folder="templates"
     )
+    app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
     app.jinja_options = JINJA_ENV_CONFIG  # Overload config
     app.backend = backend
     app.register_blueprint(administration_bp)

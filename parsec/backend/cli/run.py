@@ -645,6 +645,8 @@ async def _serve_backend_quart(
         await app.run_task(host=host, port=port, use_reloader=True, debug=True)
 
     else:
+        # Note: Hypercorn comes with default values for incoming data size to
+        # avoid DoS abuse, so just trust them on that ;-)
         hyper_config = HyperConfig.from_mapping(
             {
                 "bind": [f"{host}:{port}"],
