@@ -12,7 +12,7 @@ use std::{error::Error, path::PathBuf};
 use crate::model::Workspace;
 use parsec_api_crypto::SecretKey;
 
-/// Simple program that dumps files and folders in a file
+/// Simple program that dumps files and folders in a workspace
 #[derive(Parser, Debug)]
 #[clap(version, about)]
 struct Args {
