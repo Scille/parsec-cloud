@@ -8,7 +8,6 @@ import pytest
 import pendulum
 from collections import defaultdict
 from typing import Union, Optional, Tuple, Iterable
-from contextlib import asynccontextmanager
 from hashlib import sha1
 from uuid import UUID
 from pathlib import Path
@@ -741,40 +740,6 @@ def backend_data_binder_factory(initial_user_manifest_state):
         return binder
 
     return _backend_data_binder_factory
-
-
-@pytest.fixture
-def sock_from_other_organization_factory(
-    backend_sock_factory, backend_data_binder_factory, organization_factory, local_device_factory
-):
-    @asynccontextmanager
-    async def _sock_from_other_organization_factory(
-        backend,
-        mimick: Optional[str] = None,
-        anonymous: bool = False,
-        profile: UserProfile = UserProfile.STANDARD,
-    ):
-        binder = backend_data_binder_factory(backend)
-
-        other_org = organization_factory()
-        if mimick:
-            other_device = local_device_factory(
-                base_device_id=mimick, org=other_org, profile=profile
-            )
-        else:
-            other_device = local_device_factory(org=other_org, profile=profile)
-        await binder.bind_organization(other_org, other_device)
-
-        if anonymous:
-            auth_as = other_org.organization_id
-        else:
-            auth_as = other_device
-
-        async with backend_sock_factory(backend, auth_as) as sock:
-            sock.device = other_device
-            yield sock
-
-    return _sock_from_other_organization_factory
 
 
 def create_test_certificates(tmp_path):
