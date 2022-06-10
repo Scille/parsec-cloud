@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Optional, Any, Dict, Type, TypeVar
 from marshmallow import ValidationError
 from pendulum import DateTime
 
+# from oscrypto.asymmetric import PublicKey as DerPublicKey
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.serde import fields, post_load
 from parsec.api.protocol import (
@@ -265,7 +266,7 @@ class TpekDerServiceEncryptionKeyCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("tpek_service_der_encryption_key_certificate", required=True)
         encryption_key = fields.DerPublicKey(required=True)
-        tpek_service_signature = fields.Bytes(required=True)
+        signed_encryptrion_key = fields.Bytes(required=True)
 
         @post_load
         def make_obj(self, data: Dict[str, Any]) -> "TpekDerServiceEncryptionKeyCertificateContent":
@@ -273,3 +274,4 @@ class TpekDerServiceEncryptionKeyCertificateContent(BaseAPISignedData):
             return TpekDerServiceEncryptionKeyCertificateContent(**data)
 
     encryption_key: fields.DerPublicKey
+    signed_encryption_key: bytes

@@ -1,11 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+from uuid import UUID
+import oscrypto
 from parsec.api.data.certif import TpekDerServiceEncryptionKeyCertificateContent
 from parsec.api.protocol.types import OrganizationID, UserProfile
 from parsec.backend.client_context import AuthenticatedClientContext
 from parsec.backend.utils import ClientType, api, catch_protocol_errors
 from parsec.event_bus import EventBus
-from parsec.api.protocol.tpek import tpek_register_service_serializer
+from parsec.api.protocol.tpek import TpekServiceType, tpek_register_service_serializer
+
+from oscrypto.asymmetric import PublicKey as DerPublicKey
+
+
+class TpekError(Exception):
+    pass
+
+
+class TpekSignatureError(TpekError):
+    pass
 
 
 class BaseTpekComponent:
@@ -29,10 +41,17 @@ class BaseTpekComponent:
             author_verify_key=client_ctx.verify_key,
             expected_author=client_ctx.device_id,
         )
-        # Check signature
-        await self._verify_and_store_tpek_der_signature(
-            tpek_certificate, client_ctx.organization_id
-        )
+        try:
+            await self.register_service(
+                client_ctx.organization_id,
+                msg["service_id"],
+                msg["service_type"],
+                tpek_certificate.encryption_key,
+                tpek_certificate.signed_encryption_key,
+                msg["service_certificate"],
+            )
+        except TpekSignatureError:
+            return {"status": "signature_error", "reason": "Bad tpek signature"}
         return tpek_register_service_serializer.rep_dump({"status": "ok"})
 
     # @api("tpek_list_services", client_types=[ClientType.AUTHENTICATED])
@@ -46,13 +65,30 @@ class BaseTpekComponent:
     #             "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
     #         }
 
-    def _verify_and_store_tpek_der_signature(
+    async def register_service(
         self,
-        tpek_certificate: TpekDerServiceEncryptionKeyCertificateContent,
         organization_id: OrganizationID,
+        service_id: UUID,
+        service_type: TpekServiceType,
+        tpek_certificate_encryption_key: DerPublicKey,
+        tpek_certificate_signed_encryption_key: bytes,
+        tpek_certificate: bytes,
     ):
         """
         Raises:
             UserNotFoundError
         """
         raise NotImplementedError()
+
+
+def verify_tpek_der_signature(
+    tpek_verify_key: DerPublicKey, signed_data: bytes, data: bytes, hash_algorithm: str = "sha1"
+):
+    """
+    Raises:
+        TpekSignatureError
+    """
+    try:
+        oscrypto.asymetric.rsa_pkcs1v15_verify(tpek_verify_key, signed_data, data, hash_algorithm)
+    except oscrypto.errors.SignatureError:
+        raise TpekSignatureError()
