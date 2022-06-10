@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
+import trio
 from pendulum import datetime
 
 from parsec.api.protocol import InvitationDeletedReason
@@ -137,7 +138,9 @@ async def test_delete_invitation_then_claimer_action_before_backend_closes_conne
         "3b_wait_peer_trust",
         "4_communicate",
     ]:
-        with pytest.raises(WebsocketDisconnectError):
+        # In theory we should also watch for `WebsocketDisconnectError`, but
+        # `quart_trio.testing.connection` implementation seems a bit broken...
+        with pytest.raises((WebsocketDisconnectError, trio.EndOfChannel)):
             async with real_clock_timeout():
                 await tb.send_order("claimer", action)
                 await tb.get_result("claimer")
