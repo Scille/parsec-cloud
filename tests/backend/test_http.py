@@ -5,7 +5,7 @@ import pytest
 from parsec import __version__ as parsec_version
 from parsec.api.protocol import OrganizationID, InvitationToken, InvitationType
 from parsec.core.types.backend_address import BackendInvitationAddr
-from parsec.backend.asgi import app_factory
+from parsec.backend.asgi import MAX_CONTENT_LENGTH, app_factory
 
 from tests.common import customize_fixtures
 
@@ -196,3 +196,22 @@ async def test_get_redirect_invitation(backend_asgi_app, backend_addr):
 @customize_fixtures(backend_over_ssl=True)
 async def test_get_redirect_invitation_over_ssl(backend_asgi_app, backend_addr):
     await test_get_redirect_invitation(backend_asgi_app, backend_addr)
+
+
+@pytest.mark.trio
+async def test_content_is_too_big(backend_asgi_app):
+    client = backend_asgi_app.test_client()
+
+    max_length_content = b"x" * MAX_CONTENT_LENGTH
+    headers = {"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"}
+
+    response = await client.post(
+        "/administration/organizations", headers=headers, data=max_length_content + b"y"
+    )
+    assert response.status == "413 REQUEST ENTITY TOO LARGE"
+
+    # Make sure max length is ok
+    response = await client.post(
+        "/administration/organizations", headers=headers, data=max_length_content
+    )
+    assert response.status == "400 BAD REQUEST"
