@@ -1,5 +1,7 @@
 use std::{error::Error, fmt::Display};
 
+pub type Result<T> = core::result::Result<T, CommandError>;
+
 /// Sending a command isn't risk-free, we have multiple possible way to fail.
 #[derive(Debug)]
 pub enum CommandError {
@@ -37,4 +39,14 @@ impl Display for CommandError {
     }
 }
 
-pub type Result<T> = core::result::Result<T, CommandError>;
+impl From<parsec_api_protocol::DecodeError> for CommandError {
+    fn from(e: parsec_api_protocol::DecodeError) -> Self {
+        Self::Deserialization(e)
+    }
+}
+
+impl From<reqwest::Error> for CommandError {
+    fn from(e: reqwest::Error) -> Self {
+        Self::Response(e)
+    }
+}

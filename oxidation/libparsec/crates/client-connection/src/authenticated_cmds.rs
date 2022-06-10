@@ -135,8 +135,8 @@ macro_rules! impl_auth_cmds {
                 let data = authenticated_cmds::$name::Req::new($($key),*).dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
 
                 let req = self.prepare_request(data).send();
-                let resp = req.await.map_err(CommandError::Response)?;
-                let response_body = resp.bytes().await.map_err(CommandError::Response)?;
+                let resp = req.await?;
+                let response_body = resp.bytes().await?;
 
                 authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::Deserialization)
             }
