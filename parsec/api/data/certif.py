@@ -258,3 +258,18 @@ class TpekDerVerifyKeyCertificateContent(BaseAPISignedData):
             return TpekDerVerifyKeyCertificateContent(**data)
 
     verify_key: fields.DerPublicKey
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class TpekDerServiceEncryptionKeyCertificateContent(BaseAPISignedData):
+    class SCHEMA_CLS(BaseSignedDataSchema):
+        type = fields.CheckedConstant("tpek_service_der_encryption_key_certificate", required=True)
+        encryption_key = fields.DerPublicKey(required=True)
+        tpek_service_signature = fields.Bytes(required=True)
+
+        @post_load
+        def make_obj(self, data: Dict[str, Any]) -> "TpekDerServiceEncryptionKeyCertificateContent":
+            data.pop("type")
+            return TpekDerServiceEncryptionKeyCertificateContent(**data)
+
+    encryption_key: fields.DerPublicKey
