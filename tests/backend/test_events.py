@@ -6,6 +6,7 @@ import trio
 from quart.testing.connections import WebsocketDisconnectError
 
 from parsec.api.protocol import APIEvent
+from parsec.backend.asgi import app_factory
 from parsec.backend.backend_events import BackendEvent
 
 from tests.backend.common import (
@@ -104,31 +105,34 @@ async def test_event_resubscribe(backend, alice_ws, alice2_ws):
 
 @pytest.mark.trio
 @pytest.mark.postgresql
-async def test_cross_backend_event(backend_factory, backend_sock_factory, alice, bob):
+async def test_cross_backend_event(backend_factory, backend_authenticated_ws_factory, alice, bob):
     async with backend_factory() as backend_1, backend_factory(populated=False) as backend_2:
-        async with backend_sock_factory(backend_1, alice) as alice_sock, backend_sock_factory(
-            backend_2, bob
-        ) as bob_sock:
+        app_1 = app_factory(backend_1)
+        app_2 = app_factory(backend_2)
 
-            await events_subscribe(alice_sock)
+        async with backend_authenticated_ws_factory(
+            app_1, bob
+        ) as bob_ws, backend_authenticated_ws_factory(app_2, alice) as alice_ws:
 
-            async with events_listen(alice_sock) as listen:
-                await ping(bob_sock, "foo")
+            await events_subscribe(alice_ws)
+
+            async with events_listen(alice_ws) as listen:
+                await ping(bob_ws, "foo")
             assert listen.rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "foo"}
 
-            await ping(bob_sock, "foo")
+            await ping(bob_ws, "foo")
 
             # There is no guarantee an event is ready to be received once
             # the sender got it answer
             async with real_clock_timeout():
                 while True:
-                    rep = await events_listen_nowait(alice_sock)
+                    rep = await events_listen_nowait(alice_ws)
                     if rep["status"] != "no_events":
                         break
                     await trio.sleep(0.1)
             assert rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "foo"}
 
-            rep = await events_listen_nowait(alice_sock)
+            rep = await events_listen_nowait(alice_ws)
             assert rep == {"status": "no_events"}
 
 
