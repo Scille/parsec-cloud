@@ -132,4 +132,14 @@ async def test_cross_backend_event(backend_factory, backend_sock_factory, alice,
             assert rep == {"status": "no_events"}
 
 
+@pytest.mark.trio
+async def test_events_listen_wait_cancelled(backend_asgi_app, alice_ws):
+    async with events_listen(alice_ws) as listen:
+        # Cancel `events_listen` by sending another command
+        rep = await ping(alice_ws, ping="foo")
+        assert rep == {"status": "ok", "pong": "foo"}
+
+        listen.rep_done = True
+
+
 # TODO: test message.received and beacon.updated events
