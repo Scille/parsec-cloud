@@ -13,7 +13,6 @@ from parsec.core.backend_connection import (
 )
 
 
-@pytest.mark.trio
 async def _test_keepalive(frozen_clock, monkeypatch, cmds_factory):
     KEEPALIVE_TIME = 10
     ping_events_sender, ping_events_receiver = trio.open_memory_channel(100)
