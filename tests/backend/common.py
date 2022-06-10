@@ -146,17 +146,13 @@ class CmdSock:
         self.parse_args = parse_args
         self.check_rep_by_default = check_rep_by_default
 
-    async def _do_send(self, sock_or_ws, args, kwargs):
+    async def _do_send(self, ws, args, kwargs):
         req = {"cmd": self.cmd, **self.parse_args(self, *args, **kwargs)}
         raw_req = self.serializer.req_dumps(req)
-        await sock_or_ws.send(raw_req)
+        await ws.send(raw_req)
 
-    async def _do_recv(self, sock_or_ws, check_rep):
-        # Old `sock.recv` vs new `ws.receive()`
-        try:
-            receive = sock_or_ws.receive
-        except AttributeError:
-            receive = sock_or_ws.recv
+    async def _do_recv(self, ws, check_rep):
+        receive = ws.receive
         raw_rep = await receive()
         rep = self.serializer.rep_loads(raw_rep)
 
@@ -165,10 +161,10 @@ class CmdSock:
 
         return rep
 
-    async def __call__(self, sock_or_ws, *args, **kwargs):
+    async def __call__(self, ws, *args, **kwargs):
         check_rep = kwargs.pop("check_rep", self.check_rep_by_default)
-        await self._do_send(sock_or_ws, args, kwargs)
-        return await self._do_recv(sock_or_ws, check_rep)
+        await self._do_send(ws, args, kwargs)
+        return await self._do_recv(ws, check_rep)
 
     class AsyncCallRepBox:
         def __init__(self, do_recv):
