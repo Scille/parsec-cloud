@@ -6,6 +6,7 @@ from uuid import uuid4
 from structlog import get_logger
 from functools import partial
 from quart import current_app, websocket, Websocket, Blueprint
+from parsec.api.protocol.base import MessageSerializationError
 
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.transport import Transport
@@ -196,33 +197,47 @@ async def _handle_client_websocket_loop(
         # while processing a command
         raw_req = raw_req or await transport.recv()
         rep: dict
-        req = unpackb(raw_req)
         try:
-            cmd = req.get("cmd", "<missing>")
-            if not isinstance(cmd, str):
-                raise KeyError()
+            req = unpackb(raw_req)
 
-            cmd_func = api_cmds[cmd]
-
-        except KeyError:
-            rep = {"status": "unknown_command", "reason": "Unknown command"}
+        except MessageSerializationError:
+            rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
+            cmd = ""  # Dummy placeholder for the log
 
         else:
+
             try:
-                rep = await cmd_func(client_ctx, req)
+                cmd = req.get("cmd", "<missing>")
+                if not isinstance(cmd, str):
+                    raise KeyError()
 
-            except InvalidMessageError as exc:
-                rep = {"status": "bad_message", "errors": exc.errors, "reason": "Invalid message."}
+                cmd_func = api_cmds[cmd]
 
-            except ProtocolError as exc:
-                rep = {"status": "bad_message", "reason": str(exc)}
+            except KeyError:
+                rep = {"status": "unknown_command", "reason": "Unknown command"}
 
-            except CancelledByNewRequest as exc:
-                # Long command handling such as message_get can be cancelled
-                # when the peer send a new request
-                raw_req = exc.new_raw_req
-                continue
-        client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
+            else:
+                try:
+                    rep = await cmd_func(client_ctx, req)
+
+                except InvalidMessageError as exc:
+                    rep = {
+                        "status": "bad_message",
+                        "errors": exc.errors,
+                        "reason": "Invalid message.",
+                    }
+
+                except ProtocolError as exc:
+                    rep = {"status": "bad_message", "reason": str(exc)}
+
+                except CancelledByNewRequest as exc:
+                    # Long command handling such as message_get can be cancelled
+                    # when the peer send a new request
+                    raw_req = exc.new_raw_req
+                    continue
+
+            client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
+
         raw_rep = packb(rep)
         await transport.send(raw_rep)
         raw_req = None

@@ -41,7 +41,7 @@ async def test_bad_cmd(alice_ws):
 )
 @pytest.mark.parametrize("clean_close", [True, False])
 async def test_handle_client_coroutine_destroyed_on_client_left(
-    backend, alice, close_on, clean_close, recwarn
+    backend, alice, close_on, clean_close
 ):
     # For this test we want to use a real TCP socket (instead of relying on
     # the `tcp_stream_spy` mock fixture) test the backend on
@@ -142,8 +142,8 @@ async def test_handle_client_coroutine_destroyed_on_client_left(
             nursery.cancel_scope.cancel()
 
 
-# @pytest.mark.trio
-# async def test_bad_msg_format(alice_backend_sock):
-#     await alice_backend_sock.stream.send_all(b"\x00\x00\x00\x04fooo")
-#     rep = await alice_backend_sock.recv()
-#     assert unpackb(rep) == {"status": "invalid_msg_format", "reason": "Invalid message format"}
+@pytest.mark.trio
+async def test_bad_msg_format(alice_ws):
+    await alice_ws.send(b"\x00\x00\x00\x04fooo")
+    rep = await alice_ws.receive()
+    assert unpackb(rep) == {"status": "invalid_msg_format", "reason": "Invalid message format"}
