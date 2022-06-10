@@ -4,6 +4,7 @@ import pytest
 from pendulum import datetime
 
 from parsec.api.protocol import message_get_serializer, APIEvent
+from parsec.backend.asgi import app_factory
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.config import PostgreSQLBlockStoreConfig
 
@@ -57,7 +58,7 @@ async def test_message_get_with_offset(backend, alice, bob, alice_ws):
 @pytest.mark.trio
 @pytest.mark.postgresql
 async def test_message_from_bob_to_alice_multi_backends(
-    postgresql_url, alice, bob, backend_factory, backend_sock_factory
+    postgresql_url, alice, bob, backend_factory, backend_authenticated_ws_factory
 ):
     d1 = datetime(2000, 1, 1)
     async with backend_factory(
@@ -67,7 +68,8 @@ async def test_message_from_bob_to_alice_multi_backends(
         config={"blockstore_config": PostgreSQLBlockStoreConfig(), "db_url": postgresql_url},
     ) as backend_2:
 
-        async with backend_sock_factory(backend_1, alice) as alice_ws:
+        app_1 = app_factory(backend_1)
+        async with backend_authenticated_ws_factory(app_1, alice) as alice_ws:
 
             await events_subscribe(alice_ws)
             async with events_listen(alice_ws) as listen:
