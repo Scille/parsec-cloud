@@ -67,14 +67,15 @@ repos:
       - id: fmt
       - id: clippy
         args:
-          - --workspace
-          - --tests
-          - --bins
-          - --lib
-          - --
-          - --deny=warnings
-          - --deny=clippy::self_named_module_files
-
+          [
+            --workspace,
+            --tests,
+            --bins,
+            --lib,
+            --,
+            --deny=warnings,
+            --deny=clippy::self_named_module_files,
+          ]
 
   ####
   # Js
