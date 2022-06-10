@@ -6,7 +6,7 @@ from typing import Optional, Callable
 
 import oscrypto
 import oscrypto.asymmetric
-from path import Path
+from pathlib import Path
 
 from parsec.utils import trio_run
 from parsec.cli_utils import spinner, cli_exception_handler, aprompt
