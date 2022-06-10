@@ -139,6 +139,7 @@ impl WorkspaceStorage {
                     entry_id.0,
                     manifest,
                     cache_only,
+                    false,
                     removed_ids.map(|x| {
                         x.into_iter()
                             .map(|id| libparsec_core_fs::ChunkOrBlockID::ChunkID(id.0))
@@ -152,7 +153,7 @@ impl WorkspaceStorage {
     fn clear_manifest(&self, py: Python, entry_id: EntryID) -> PyResult<()> {
         py.allow_threads(|| {
             self.0
-                .clear_manifest(entry_id.0)
+                .clear_manifest(entry_id.0, false)
                 .map_err(|_| FSLocalMissError::new_err(entry_id))
         })
     }
@@ -268,7 +269,7 @@ impl WorkspaceStorage {
     fn ensure_manifest_persistent(&self, py: Python, entry_id: EntryID) -> PyResult<()> {
         py.allow_threads(|| {
             self.0
-                .ensure_manifest_persistent(entry_id.0)
+                .ensure_manifest_persistent(entry_id.0, false)
                 .map_err(|e| PyValueError::new_err(e.to_string()))
         })
     }

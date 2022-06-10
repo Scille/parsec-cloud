@@ -1024,6 +1024,15 @@ pub enum LocalManifest {
 }
 
 impl LocalManifest {
+    pub fn id(&self) -> EntryID {
+        match self {
+            Self::File(manifest) => manifest.base.id,
+            Self::Folder(manifest) => manifest.base.id,
+            Self::Workspace(manifest) => manifest.base.id,
+            Self::User(manifest) => manifest.base.id,
+        }
+    }
+
     pub fn need_sync(&self) -> bool {
         match self {
             Self::File(manifest) => manifest.need_sync,

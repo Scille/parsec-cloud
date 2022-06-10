@@ -4,7 +4,7 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use parsec_api_crypto::CryptoError;
-use parsec_api_types::FileDescriptor;
+use parsec_api_types::{EntryID, FileDescriptor};
 
 #[derive(Error, Debug)]
 pub enum FSError {
@@ -35,6 +35,13 @@ pub enum FSError {
     #[error("Invalid FileDescriptor {0:?}")]
     InvalidFileDescriptor(FileDescriptor),
 
+    #[error("Invalid indexes, trying to access {begin}..{end} in data of length {len}")]
+    InvalidIndexes {
+        begin: usize,
+        end: usize,
+        len: usize,
+    },
+
     #[error("LocalMissError: {0}")]
     LocalMiss(Uuid),
 
@@ -46,6 +53,9 @@ pub enum FSError {
 
     #[error("PoolError")]
     Pool,
+
+    #[error("Entry `{0}` modified without beeing locked")]
+    Runtime(EntryID),
 
     #[error("UpdateTableError: {0}")]
     UpdateTable(String),
