@@ -2,6 +2,10 @@
 name = "libparsec-client-connection"
 version = "0.1.0"
 edition = "2021"
+autotests = false
+
+[[test]]
+name = "auth_cmds"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,3 +20,6 @@ parsec_api_types = { path = "../../../crates/parsec_api_types" }
 parsec_api_protocol = { path = "../../../crates/parsec_api_protocol" }
 # Use abstract crypto primitive, to allow to sign request.
 parsec_api_crypto = { path = "../../../crates/parsec_api_crypto" }
+
+[dev-dependencies]
+tokio = { version = "1.19", features = ["rt"] }
