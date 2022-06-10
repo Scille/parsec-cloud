@@ -3,7 +3,7 @@
 .. _doc_development_release:
 
 ==================
-Release cheatsheet
+Release Cheat-Sheet
 ==================
 
 Major/minor vs patch versions
@@ -29,7 +29,7 @@ In the following we will consider we want to release version ``v2.9.0``.
 0 - Create release candidate version
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Release is complexe and fails pretty often, so you should create release
+Release is complex and fails pretty often, so you should create release
 candidate versions.
 
 As a matter of fact you should only consider creating a final version only
@@ -43,7 +43,7 @@ Release candidate versions must have the naming ``v2.9.0-rc1``, ``v2.9.0-rc2`` e
 1 - Create the release branch and it associated Pull Request
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Master branch beeing protected, we do our work on a dedicated branch that we call the release branch.
+Master branch being protected, we do our work on a dedicated branch that we call the release branch.
 Release branch naming must be ``<major>.<minor>``, so in our case ``2.9``:
 
 .. code-block:: shell
@@ -102,7 +102,7 @@ The CI is going to generate the installers for Linux, Mac and Windows.
 On Linux the snap installer is automatically released on the edge channel of snapcraft.
 
 On Windows and Mac, the installers must be downloaded from the CI build artifacts and
-signed. See the documentation in ``packaging/`` for more informations.
+signed. See the documentation in ``packaging/`` for more information.
 
 On top of that the Python wheel of the project is going to be uploaded to Pypi.
 
@@ -127,8 +127,8 @@ If you were dealing with a final release (e.g. ``2.9.0``), you can merge the bra
 
 However if you just release a RC release:
 - for quickfix you can commit directly on the version branch
-- for bigger fix, open a PR targetting master. Once merged you can then merge back master
-  on your version branch to get the changes. Alternally, if the master contains other
+- for bigger fix, open a PR targeting master. Once merged you can then merge back master
+  on your version branch to get the changes. Alternatively, if the master contains other
   changes you don't want, you can cherry-pick the merge commit.
 
 Once you're happy with the changes, you can release a new RC.
