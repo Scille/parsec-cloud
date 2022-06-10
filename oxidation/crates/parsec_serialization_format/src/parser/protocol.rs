@@ -21,61 +21,74 @@ struct Req {
 impl Req {
     fn quote(&self, types: &HashMap<String, String>) -> TokenStream {
         if let Some(unit) = &self.unit {
-            let unit: Ident = syn::parse_str(unit).expect("Expected a valid name (Req)");
-            quote! {
-                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
-                pub struct Req(pub #unit);
-
-                impl Req {
-                    pub fn new(value: #unit) -> Self {
-                        Self(value)
-                    }
-                }
-            }
+            Req::quote_unit(unit)
         } else if self.other_fields.is_empty() {
-            quote! {
-                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
-                pub struct Req;
+            Req::quote_empty()
+        } else {
+            self.quote_many_fields(types)
+        }
+    }
 
-                impl Req {
-                    pub fn new() -> Self { Self }
+    fn quote_unit(unit: &str) -> TokenStream {
+        let unit: Ident = syn::parse_str(unit).expect("Expected a valid name (Req)");
+        quote! {
+            #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+            pub struct Req(pub #unit);
+
+            impl Req {
+                pub fn new(value: #unit) -> Self {
+                    Self(value)
                 }
             }
-        } else {
-            let fields = quote_fields(&self.other_fields, Vis::Public, types);
-            let args = self
-                .other_fields
-                .iter()
-                .fold(TokenStream::new(), |args, field| {
-                    let name = field.quote_name().1;
-                    let ty = field.quote_type(types).0;
+        }
+    }
 
-                    let arg = quote! { #name: #ty };
+    fn quote_empty() -> TokenStream {
+        quote! {
+            #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+            pub struct Req;
 
-                    quote! {
-                        #args
-                        #arg,
-                    }
-                });
-            let params = self.other_fields.iter().fold(quote! {}, |params, field| {
-                let name: Ident = field.quote_name().1;
+            impl Req {
+                pub fn new() -> Self { Self }
+            }
+        }
+    }
+
+    fn quote_many_fields(&self, types: &HashMap<String, String>) -> TokenStream {
+        let fields = quote_fields(&self.other_fields, Vis::Public, types);
+        let args = self
+            .other_fields
+            .iter()
+            .fold(TokenStream::new(), |args, field| {
+                let name = field.quote_name().1;
+                let ty = field.quote_type(types).0;
+
+                let arg = quote! { #name: #ty };
+
                 quote! {
-                    #params
-                    #name,
+                    #args
+                    #arg,
                 }
             });
+        let params = self.other_fields.iter().fold(quote! {}, |params, field| {
+            let name: Ident = field.quote_name().1;
             quote! {
-                #[::serde_with::serde_as]
-                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
-                pub struct Req {
-                    #fields
-                }
+                #params
+                #name,
+            }
+        });
 
-                impl Req {
-                    pub fn new(#args) -> Self {
-                        Self {
-                            #params
-                        }
+        quote! {
+            #[::serde_with::serde_as]
+            #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+            pub struct Req {
+                #fields
+            }
+
+            impl Req {
+                pub fn new(#args) -> Self {
+                    Self {
+                        #params
                     }
                 }
             }
