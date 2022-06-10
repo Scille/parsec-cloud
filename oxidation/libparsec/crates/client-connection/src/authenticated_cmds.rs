@@ -17,7 +17,9 @@
 use std::{collections::HashMap, num::NonZeroU64};
 
 use parsec_api_crypto::{PublicKey, SigningKey};
-use parsec_api_protocol::authenticated_cmds::{self, invite_delete::InvitationDeletedReason};
+use parsec_api_protocol::authenticated_cmds::{
+    self, invite_delete::InvitationDeletedReason, invite_new::UserOrDevice,
+};
 use parsec_api_types::{
     BlockID, DateTime, InvitationToken, RealmID, ReencryptionBatchEntry, UserID, VlobID,
 };
@@ -130,7 +132,7 @@ macro_rules! impl_auth_cmds {
         $(
             $(#[$outer])*
             pub async fn $name(&self, $($key: $type),*) -> command_error::Result<authenticated_cmds::$name::Rep> {
-                let data = authenticated_cmds::$name::Req { $($key),* }.dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
+                let data = authenticated_cmds::$name::Req::new($($key),*).dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
 
                 let req = self.prepare_request(data).send();
                 let resp = req.await.map_err(CommandError::Response)?;
@@ -196,12 +198,9 @@ impl AuthenticatedCmds {
         invite_delete(token: InvitationToken, reason: InvitationDeletedReason)
         /// Retrieve a list of invited users.
         invite_list()
+        /// Invite a new `User` or `Device`
+        invite_new(user_or_device: UserOrDevice)
     );
-    // TODO: can't create the Req by using the pattern `Req { .. }`
-    // impl_auth_cmd!(
-    //     /// Invite a new `User` or `Device`
-    //     invite_new(user_or_device: UserOrDevice)
-    // );
 
     impl_auth_cmds!(
         /// Retrieve a message at `offset`
