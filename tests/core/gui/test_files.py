@@ -7,6 +7,7 @@ import pytest
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QGuiApplication
 
+from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 from parsec.core.gui.file_size import get_filesize
@@ -842,6 +843,7 @@ async def test_show_file_status(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.skipif(IS_OXIDIZED, reason="Cannot monkeypatch sqlite from oxidized code")
 async def test_import_file_disk_full(
     monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):

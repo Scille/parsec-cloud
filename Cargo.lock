@@ -1201,6 +1201,7 @@ dependencies = [
  "chrono",
  "fancy-regex",
  "libparsec",
+ "libparsec_core_fs",
  "parsec_api_crypto",
  "parsec_api_protocol",
  "parsec_api_types",

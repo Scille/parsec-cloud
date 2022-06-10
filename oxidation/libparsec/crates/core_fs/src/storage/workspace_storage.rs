@@ -292,17 +292,11 @@ impl WorkspaceStorage {
         self.load_prevent_sync_pattern()
     }
 
-    pub fn block_storage_get_local_chunk_ids(
-        &self,
-        chunk_ids: &[ChunkID],
-    ) -> FSResult<Vec<ChunkID>> {
+    pub fn get_local_block_ids(&self, chunk_ids: &[ChunkID]) -> FSResult<Vec<ChunkID>> {
         self.block_storage.get_local_chunk_ids(chunk_ids)
     }
 
-    pub fn chunk_storage_get_local_chunk_ids(
-        &self,
-        chunk_ids: &[ChunkID],
-    ) -> FSResult<Vec<ChunkID>> {
+    pub fn get_local_chunk_ids(&self, chunk_ids: &[ChunkID]) -> FSResult<Vec<ChunkID>> {
         self.chunk_storage.get_local_chunk_ids(chunk_ids)
     }
 

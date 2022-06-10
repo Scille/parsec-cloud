@@ -2,8 +2,19 @@
 
 from pathlib import Path
 from collections import defaultdict
-from typing import cast, Dict, Tuple, Set, Optional, Union, AsyncIterator, NoReturn, Pattern, List
-
+from typing import (
+    TYPE_CHECKING,
+    cast,
+    Dict,
+    Tuple,
+    Set,
+    Optional,
+    Union,
+    AsyncIterator,
+    NoReturn,
+    Pattern,
+    List,
+)
 import trio
 from trio import lowlevel
 from pendulum import DateTime
@@ -437,6 +448,16 @@ class WorkspaceStorage(BaseWorkspaceStorage):
     async def run_vacuum(self) -> None:
         # Only the data storage needs to get vacuuumed
         await self.data_localdb.run_vacuum()
+
+
+_PyWorkspaceStorage = WorkspaceStorage
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import WorkspaceStorage as _RsWorkspaceStorage
+    except:
+        pass
+    else:
+        WorkspaceStorage = _RsWorkspaceStorage
 
 
 class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
