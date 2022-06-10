@@ -35,8 +35,8 @@ pub enum FSError {
     #[error("Invalid FileDescriptor {0:?}")]
     InvalidFileDescriptor(FileDescriptor),
 
-    #[error("Invalid index, trying to access {begin}..{end} in data of length {len}")]
-    InvalidIndex {
+    #[error("Invalid indexes, trying to access {begin}..{end} in data of length {len}")]
+    InvalidIndexes {
         begin: usize,
         end: usize,
         len: usize,
