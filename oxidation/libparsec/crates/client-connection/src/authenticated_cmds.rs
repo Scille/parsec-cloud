@@ -14,7 +14,7 @@
 //! 2. `timestamp` (u128 in big-endian)
 //! 3. `body` (as bytes)
 
-use std::{collections::HashMap, num::NonZeroU64};
+use std::{collections::HashMap, future::Future, num::NonZeroU64};
 
 use libparsec_crypto::{PublicKey, SigningKey};
 use libparsec_protocol::authenticated_cmds::{
@@ -65,61 +65,6 @@ impl AuthenticatedCmds {
             signing_key,
         })
     }
-
-    /// Prepare a new request, the body will be added to the Request using [RequestBuilder::body]
-    fn prepare_request(&self, body: Vec<u8>) -> RequestBuilder {
-        let mut request_builder = self.client.post(self.url.clone());
-
-        request_builder = self.sign_request(request_builder, &body);
-
-        let mut content_headers = HeaderMap::with_capacity(2);
-        content_headers.insert(CONTENT_TYPE, HeaderValue::from_static(PARSEC_CONTENT_TYPE));
-        content_headers.insert(
-            CONTENT_LENGTH,
-            HeaderValue::from_str(&body.len().to_string()).expect("numeric value are valid char"),
-        );
-
-        request_builder.headers(content_headers).body(body)
-    }
-
-    /// Sing a request by adding specific headers.
-    fn sign_request(&self, request_builder: RequestBuilder, body: &[u8]) -> RequestBuilder {
-        use std::time::SystemTime;
-
-        let timestamp = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .expect("Clock may have gone backwards but not before the EPOCH")
-            .as_millis();
-        let data_to_sign = Vec::from_iter(
-            self.user_id
-                .as_bytes()
-                .iter()
-                .chain(&timestamp.to_be_bytes())
-                .chain(body)
-                .copied(),
-        );
-        let signature = self.signing_key.sign_only_signature(&data_to_sign);
-        let signature = base64::encode(signature);
-
-        let mut authorization_headers = HeaderMap::with_capacity(4);
-
-        authorization_headers.insert(AUTHORIZATION, HeaderValue::from_static(PARSEC_AUTH_METHOD));
-        authorization_headers.insert(
-            "Author",
-            HeaderValue::from_str(&self.user_id).expect("base64 shouldn't contain invalid char"),
-        );
-        authorization_headers.insert(
-            "Timestamp",
-            HeaderValue::from_str(&timestamp.to_string())
-                .expect("should contain only numeric char which are valid char"),
-        );
-        authorization_headers.insert(
-            "Signature",
-            HeaderValue::from_str(&signature).expect("base64 shouldn't contain invalid char"),
-        );
-
-        request_builder.headers(authorization_headers)
-    }
 }
 
 macro_rules! impl_auth_cmds {
@@ -131,17 +76,86 @@ macro_rules! impl_auth_cmds {
     ) => {
         $(
             $(#[$outer])*
-            pub async fn $name(&self, $($key: $type),*) -> command_error::Result<authenticated_cmds::$name::Rep> {
-                let data = authenticated_cmds::$name::Req::new($($key),*).dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
+            pub fn $name(&self, $($key: $type),*) -> impl Future<Output = command_error::Result<authenticated_cmds::$name::Rep>> {
+                let request_builder = self.client.post(self.url.clone());
+                let user_id = self.user_id.clone();
+                let signing_key = self.signing_key.clone();
 
-                let req = self.prepare_request(data).send();
-                let resp = req.await?;
-                let response_body = resp.bytes().await?;
+                async move {
+                    let data = authenticated_cmds::$name::Req::new($($key),*).dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
 
-                authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::Deserialization)
+                    let req = prepare_request(request_builder, signing_key, &user_id, data).send();
+                    let resp = req.await?;
+                    let response_body = resp.bytes().await?;
+
+                    authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::Deserialization)
+                }
             }
         )+
     };
+}
+
+/// Prepare a new request, the body will be added to the Request using [RequestBuilder::body]
+fn prepare_request(
+    request_builder: RequestBuilder,
+    signing_key: SigningKey,
+    user_id: &str,
+    body: Vec<u8>,
+) -> RequestBuilder {
+    let request_builder = sign_request(request_builder, signing_key, user_id, &body);
+
+    let mut content_headers = HeaderMap::with_capacity(2);
+    content_headers.insert(CONTENT_TYPE, HeaderValue::from_static(PARSEC_CONTENT_TYPE));
+    content_headers.insert(
+        CONTENT_LENGTH,
+        HeaderValue::from_str(&body.len().to_string()).expect("numeric value are valid char"),
+    );
+
+    request_builder.headers(content_headers).body(body)
+}
+
+/// Sing a request by adding specific headers.
+fn sign_request(
+    request_builder: RequestBuilder,
+    signing_key: SigningKey,
+    user_id: &str,
+    body: &[u8],
+) -> RequestBuilder {
+    use std::time::SystemTime;
+
+    let timestamp = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .expect("Clock may have gone backwards but not before the EPOCH")
+        .as_millis();
+    let data_to_sign = Vec::from_iter(
+        user_id
+            .as_bytes()
+            .iter()
+            .chain(&timestamp.to_be_bytes())
+            .chain(body)
+            .copied(),
+    );
+    let signature = signing_key.sign_only_signature(&data_to_sign);
+    let signature = base64::encode(signature);
+
+    let mut authorization_headers = HeaderMap::with_capacity(4);
+
+    authorization_headers.insert(AUTHORIZATION, HeaderValue::from_static(PARSEC_AUTH_METHOD));
+    authorization_headers.insert(
+        "Author",
+        HeaderValue::from_str(&user_id).expect("base64 shouldn't contain invalid char"),
+    );
+    authorization_headers.insert(
+        "Timestamp",
+        HeaderValue::from_str(&timestamp.to_string())
+            .expect("should contain only numeric char which are valid char"),
+    );
+    authorization_headers.insert(
+        "Signature",
+        HeaderValue::from_str(&signature).expect("base64 shouldn't contain invalid char"),
+    );
+
+    request_builder.headers(authorization_headers)
 }
 
 impl AuthenticatedCmds {
