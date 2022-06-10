@@ -21,4 +21,5 @@ libparsec_crypto = { path = "../crypto" }
 base64 = "0.13.0"
 
 [dev-dependencies]
-tokio = { version = "1.19", features = ["rt"] }
+hyper = "0.14.19"
+tokio = { version = "1.19", features = ["rt", "macros"] }
