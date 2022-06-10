@@ -76,7 +76,7 @@ class BaseTpekComponent:
     ):
         """
         Raises:
-            UserNotFoundError
+            TpekSignatureError
         """
         raise NotImplementedError()
 
