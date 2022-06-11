@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-import ssl
 import trio
 import click
 from structlog import get_logger
@@ -620,14 +619,13 @@ async def _run_backend(
                 retry_policy.success()
 
                 # Serve backend through TCP
-                await _serve_backend_quart(
+                await _serve_backend_with_asgi(
                     backend=backend,
                     host=host,
                     port=port,
                     ssl_certfile=ssl_certfile,
                     ssl_keyfile=ssl_keyfile,
                 )
-                # await _serve_backend(backend, host, port, ssl_context)
 
         except ConnectionError as exc:
             # The maximum number of attempt is reached
@@ -640,7 +638,7 @@ async def _run_backend(
             await retry_policy.pause()
 
 
-async def _serve_backend_quart(
+async def _serve_backend_with_asgi(
     backend: BackendApp,
     host: str,
     port: int,
@@ -660,28 +658,3 @@ async def _serve_backend_quart(
         }
     )
     await serve(app, hyper_config)
-
-
-async def _serve_backend(
-    backend: BackendApp, host: str, port: int, ssl_context: Optional[ssl.SSLContext]
-) -> None:
-    # Client handler
-    async def _serve_client(stream: trio.abc.Stream) -> None:
-        if ssl_context:
-            stream = trio.SSLStream(stream, ssl_context, server_side=True)
-
-        try:
-            await backend.handle_client(stream)
-
-        except ConnectionError:
-            # Should be handled by the reconnection logic (see `_run_and_retry_back`)
-            raise
-
-        except Exception:
-            # If we are here, something unexpected happened...
-            logger.exception("Unexpected crash")
-            await stream.aclose()
-
-    # Provide a service nursery so multi-errors errors are handled
-    async with trio.open_service_nursery() as nursery:  # type: ignore[attr-defined]
-        await trio.serve_tcp(_serve_client, port, handler_nursery=nursery, host=host)
