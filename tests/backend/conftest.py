@@ -161,7 +161,7 @@ class AnonymousWsTransport:
 
 
 @pytest.fixture
-def backend_anonymous_ws_factory(server_factory):
+def backend_anonymous_ws_factory():
     """
     Not really a ws, but we keep the name because it usage is similar than alice_ws&co
     """
