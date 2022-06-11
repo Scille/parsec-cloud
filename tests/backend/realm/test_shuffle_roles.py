@@ -29,7 +29,6 @@ def test_shuffle_roles(
     hypothesis_settings,
     reset_testbed,
     backend_factory,
-    server_factory,
     backend_data_binder_factory,
     backend_authenticated_ws_factory,
     local_device_factory,
@@ -44,8 +43,7 @@ def test_shuffle_roles(
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory(populated=False) as backend:
-                    async with server_factory(backend.handle_client) as server:
-                        await started_cb(backend=backend, server=server)
+                    await started_cb(backend=backend)
 
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)
 
@@ -57,8 +55,8 @@ def test_shuffle_roles(
         async def init(self):
             await reset_testbed()
             self.backend_controller = await self.start_backend()
-            self.org = self.backend_controller.server.correct_addr(coolorg)
             self._backend_asgi_app = app_factory(self.backend_controller.backend)
+            self.org = coolorg
             device = local_device_factory(org=self.org)
 
             # Create organization and first user
