@@ -7,8 +7,12 @@ from structlog import get_logger
 from typing import Optional, Tuple, List
 from itertools import count
 from collections import defaultdict
+from functools import partial
 import tempfile
 from pathlib import Path
+from hypercorn.config import Config as HyperConfig
+from hypercorn.trio import serve
+import logging
 
 from parsec.utils import trio_run
 from parsec.cli_utils import (
@@ -18,6 +22,7 @@ from parsec.cli_utils import (
     debug_config_options,
 )
 from parsec.backend import backend_app_factory, BackendApp
+from parsec.backend.asgi import app_factory
 from parsec.backend.config import (
     BackendConfig,
     EmailConfig,
@@ -510,16 +515,6 @@ def run_cmd(
     # Start a local backend
 
     with cli_exception_handler(debug):
-        ssl_context: Optional[ssl.SSLContext]
-        if ssl_certfile or ssl_keyfile:
-            ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            if ssl_certfile:
-                ssl_context.load_cert_chain(ssl_certfile, ssl_keyfile)
-            else:
-                ssl_context.load_default_certs()
-        else:
-            ssl_context = None
-
         email_config: EmailConfig
         if email_host == "MOCKED":
             tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
@@ -547,7 +542,6 @@ def run_cmd(
             db_max_connections=db_max_connections,
             blockstore_config=blockstore,
             email_config=email_config,
-            ssl_context=True if ssl_context else False,
             forward_proto_enforce_https=forward_proto_enforce_https,
             backend_addr=backend_addr,
             debug=debug,
@@ -571,7 +565,16 @@ def run_cmd(
                 maximum_database_connection_attempts, pause_before_retry_database_connection
             )
             trio_run(
-                _run_backend, host, port, ssl_context, retry_policy, app_config, use_asyncio=True
+                partial(
+                    _run_backend,
+                    host=host,
+                    port=port,
+                    ssl_certfile=ssl_certfile,
+                    ssl_keyfile=ssl_keyfile,
+                    retry_policy=retry_policy,
+                    app_config=app_config,
+                ),
+                use_asyncio=True,
             )
         except KeyboardInterrupt:
             click.echo("bye ;-)")
@@ -599,7 +602,8 @@ class RetryPolicy:
 async def _run_backend(
     host: str,
     port: int,
-    ssl_context: Optional[ssl.SSLContext],
+    ssl_certfile: Optional[Path],
+    ssl_keyfile: Optional[Path],
     retry_policy: RetryPolicy,
     app_config: BackendConfig,
 ) -> None:
@@ -616,7 +620,13 @@ async def _run_backend(
                 retry_policy.success()
 
                 # Serve backend through TCP
-                await _serve_backend_quart(backend, host, port, ssl_context)
+                await _serve_backend_quart(
+                    backend=backend,
+                    host=host,
+                    port=port,
+                    ssl_certfile=ssl_certfile,
+                    ssl_keyfile=ssl_keyfile,
+                )
                 # await _serve_backend(backend, host, port, ssl_context)
 
         except ConnectionError as exc:
@@ -631,32 +641,25 @@ async def _run_backend(
 
 
 async def _serve_backend_quart(
-    backend: BackendApp, host: str, port: int, ssl_context: Optional[ssl.SSLContext]
+    backend: BackendApp,
+    host: str,
+    port: int,
+    ssl_certfile: Optional[Path],
+    ssl_keyfile: Optional[Path],
 ) -> None:
-    from hypercorn.config import Config as HyperConfig
-    from hypercorn.trio import serve
-    import logging
-    from parsec.backend.asgi import app_factory
-
-    # TODO: handle ssl_context
-
     app = app_factory(backend)
-    if backend.config.debug:
-        await app.run_task(host=host, port=port, use_reloader=True, debug=True)
-
-    else:
-        # Note: Hypercorn comes with default values for incoming data size to
-        # avoid DoS abuse, so just trust them on that ;-)
-        hyper_config = HyperConfig.from_mapping(
-            {
-                "bind": [f"{host}:{port}"],
-                "accesslog": logging.getLogger("hypercorn.access"),
-                "errorlog": logging.getLogger("hypercorn.error"),
-                # ca_certs: Optional[str] = None
-                # certfile: Optional[str] = None
-            }
-        )
-        await serve(app, hyper_config)
+    # Note: Hypercorn comes with default values for incoming data size to
+    # avoid DoS abuse, so just trust them on that ;-)
+    hyper_config = HyperConfig.from_mapping(
+        {
+            "bind": [f"{host}:{port}"],
+            "accesslog": logging.getLogger("hypercorn.access"),
+            "errorlog": logging.getLogger("hypercorn.error"),
+            "certfile": str(ssl_certfile) if ssl_certfile else None,
+            "keyfile": str(ssl_keyfile) if ssl_certfile else None,
+        }
+    )
+    await serve(app, hyper_config)
 
 
 async def _serve_backend(

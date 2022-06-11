@@ -109,7 +109,6 @@ class BackendConfig:
     blockstore_config: BaseBlockStoreConfig
 
     email_config: Union[SmtpEmailConfig, MockedEmailConfig]
-    ssl_context: bool
     forward_proto_enforce_https: Optional[Tuple[bytes, bytes]]
     backend_addr: Optional[BackendAddr]
 
