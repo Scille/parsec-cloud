@@ -103,7 +103,7 @@ impl Service<Request<Body>> for SignatureVerifier {
             };
             let ping_rep = authenticated_cmds::ping::Rep::Ok {
                 pong: format!(
-                    "hello from the server side!, thank for your message: \"{}\"",
+                    "hello from the server side!, thanks for your message: \"{}\"",
                     ping_req.ping
                 ),
             };
