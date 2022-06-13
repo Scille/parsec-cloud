@@ -1239,6 +1239,7 @@ dependencies = [
  "parsec_api_protocol",
  "parsec_api_types",
  "reqwest",
+ "simple_logger",
  "tokio",
  "url",
 ]
