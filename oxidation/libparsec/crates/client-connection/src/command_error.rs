@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+
 use std::{error::Error, fmt::Display};
 
 pub type Result<T> = core::result::Result<T, CommandError>;
