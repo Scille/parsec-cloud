@@ -2,7 +2,7 @@ mod utils;
 
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 
-use libparsec_client_connection::AuthenticatedCmds;
+use libparsec_client_connection::{AuthenticatedCmds, CommandError};
 use parsec_api_crypto::SigningKey;
 use parsec_api_protocol::authenticated_cmds;
 use tokio::{
@@ -91,13 +91,21 @@ async fn invalid_request() {
     log::debug!("[test] client response: {client_response:?}");
     assert!(client_response.is_err());
     let client_response = dbg!(client_response.unwrap_err());
+
+    assert!(
+        matches!(
+            client_response,
+            CommandError::InvalidResponseStatus(reqwest::StatusCode::UNAUTHORIZED, _)
+        ),
+        r#"expected "unexpected response status" with code 401, but got {client_response}"#
+    );
 }
 
 fn setup_logger() {
     if let Err(e) = env_logger::builder()
         .filter_level(log::LevelFilter::Debug)
-        .parse_write_style("always")
-        // .is_test(true)
+        .parse_write_style("auto")
+        .is_test(true)
         .try_init()
     {
         log::warn!("failed to initialize logger, reason: {e}");
@@ -119,7 +127,7 @@ async fn send_ping(
     message: &str,
 ) -> (
     JoinHandle<anyhow::Result<()>>,
-    JoinHandle<anyhow::Result<authenticated_cmds::ping::Rep>>,
+    JoinHandle<libparsec_client_connection::command_error::Result<authenticated_cmds::ping::Rep>>,
 ) {
     let (ready_send, ready_recv) = channel();
     let (stop_send, stop_recv) = channel();
@@ -163,8 +171,8 @@ async fn client(
     client: AuthenticatedCmds,
     notify_stop: Sender<()>,
     message: String,
-) -> anyhow::Result<authenticated_cmds::ping::Rep> {
-    let rep = client.ping(message).await.map_err(anyhow::Error::from);
+) -> libparsec_client_connection::command_error::Result<authenticated_cmds::ping::Rep> {
+    let rep = client.ping(message).await;
     log::info!("[client] recv response: {rep:?}");
     log::debug!("[client] notify server to stop");
     notify_stop
