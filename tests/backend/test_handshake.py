@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
+from unittest.mock import ANY
 
 from parsec.api.protocol import packb, unpackb
 from parsec.api.protocol.handshake import ServerHandshake
@@ -18,19 +19,28 @@ from parsec.backend.backend_events import BackendEvent
 
 
 @pytest.mark.trio
-async def test_handshake_invalid_format(backend_asgi_app):
+@pytest.mark.parametrize(
+    "kind",
+    ["bad_handshake_type", "irrelevant_dict", "valid_msgpack_but_not_a_dict", "invalid_msgpack"],
+)
+async def test_handshake_send_invalid_answer_data(backend_asgi_app, kind):
+    if kind == "bad_handshake_type":
+        bad_req = packb({"handshake": "dummy", "client_api_version": API_VERSION})
+    elif kind == "irrelevant_dict":
+        bad_req = packb({"foo": "bar"})
+    elif kind == "valid_msgpack_but_not_a_dict":
+        bad_req = b"\x00"  # Encodes the number 0 as positive fixint
+    else:
+        assert kind == "invalid_msgpack"
+        bad_req = b"\xc1"  # Never used value according to msgpack spec
+
     client = backend_asgi_app.test_client()
     async with client.websocket("/ws") as ws:
 
         await ws.receive()  # Get challenge
-        req = {"handshake": "dummy", "client_api_version": API_VERSION}
-        await ws.send(packb(req))
+        await ws.send(bad_req)
         result_req = await ws.receive()
-        assert unpackb(result_req) == {
-            "handshake": "result",
-            "result": "bad_protocol",
-            "help": "{'handshake': ['Invalid value, should be `answer`']}",
-        }
+        assert unpackb(result_req) == {"handshake": "result", "result": "bad_protocol", "help": ANY}
 
 
 @pytest.mark.trio
