@@ -55,6 +55,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.57"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
+
+[[package]]
 name = "async-attributes"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1183,11 +1189,14 @@ dependencies = [
 name = "libparsec-client-connection"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "base64",
+ "http-body",
  "hyper",
  "libparsec_crypto",
  "libparsec_protocol",
  "libparsec_types",
+ "log",
  "reqwest",
  "tokio",
  "url",
