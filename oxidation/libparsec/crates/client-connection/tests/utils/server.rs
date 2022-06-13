@@ -2,7 +2,6 @@ use http_body::Full;
 use hyper::{
     body::{self, Bytes},
     header::AUTHORIZATION,
-    http::HeaderValue,
     service::Service,
     Body, HeaderMap, Request, Response, StatusCode,
 };
@@ -22,7 +21,6 @@ pub type ID = String;
 
 #[derive(Debug)]
 pub struct AuthRequest {
-    author: ID,
     author_b64: String,
     verify_key: VerifyKey,
     timestamp: u128,
@@ -55,7 +53,7 @@ impl Service<Request<Body>> for SignatureVerifier {
         log::debug!("server recv request");
         let res =
             parse_headers(req.headers()).and_then(|(raw_author, timestamp, raw_signature)| {
-                let (author, verify_key) = base64::decode(&raw_author)
+                let (_author, verify_key) = base64::decode(&raw_author)
                     .map_err(anyhow::Error::from)
                     .and_then(|bytes| {
                         String::from_utf8(bytes)
@@ -69,7 +67,6 @@ impl Service<Request<Body>> for SignatureVerifier {
                             })
                     })?;
                 Ok(AuthRequest {
-                    author,
                     author_b64: raw_author,
 
                     verify_key,
@@ -105,7 +102,10 @@ impl Service<Request<Body>> for SignatureVerifier {
                 anyhow::bail!("mock server only support ping command")
             };
             let ping_rep = authenticated_cmds::ping::Rep::Ok {
-                pong: "hello from the server side!".to_string(),
+                pong: format!(
+                    "hello from the server side!, thank for your message: \"{}\"",
+                    ping_req.ping
+                ),
             };
 
             let rep_body: Full<Bytes> = ping_rep
@@ -130,21 +130,21 @@ fn parse_headers(headers: &HeaderMap) -> anyhow::Result<(String, u128, String)> 
     }
     let raw_user_id = headers
         .get("Author")
-        .ok_or(anyhow::anyhow!("missing author header"))?
+        .ok_or_else(|| anyhow::anyhow!("missing author header"))?
         .to_str()
         .map_err(anyhow::Error::from)?
         .to_string();
 
     let raw_timestamp = headers
         .get("Timestamp")
-        .ok_or(anyhow::anyhow!("missing timestamp header"))?
+        .ok_or_else(|| anyhow::anyhow!("missing timestamp header"))?
         .to_str()
         .map_err(anyhow::Error::from)?;
-    let timestamp = u128::from_str_radix(raw_timestamp, 10).map_err(anyhow::Error::from)?;
+    let timestamp = raw_timestamp.parse().map_err(anyhow::Error::from)?;
 
     let raw_signature = headers
         .get("Signature")
-        .ok_or(anyhow::anyhow!("missing signature header"))?
+        .ok_or_else(|| anyhow::anyhow!("missing signature header"))?
         .to_str()
         .map_err(anyhow::Error::from)?
         .to_string();
@@ -152,16 +152,9 @@ fn parse_headers(headers: &HeaderMap) -> anyhow::Result<(String, u128, String)> 
     Ok((raw_user_id, timestamp, raw_signature))
 }
 
+#[derive(Default)]
 pub struct MakeSignatureVerifier {
     registered_public_keys: HashMap<String, VerifyKey>,
-}
-
-impl Default for MakeSignatureVerifier {
-    fn default() -> Self {
-        Self {
-            registered_public_keys: HashMap::default(),
-        }
-    }
 }
 
 impl MakeSignatureVerifier {
