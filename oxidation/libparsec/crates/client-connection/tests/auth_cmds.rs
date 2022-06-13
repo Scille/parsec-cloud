@@ -15,7 +15,7 @@ use hyper::server::Server;
 
 #[tokio::test]
 async fn valid_request() {
-    simple_logger::init_with_level(log::Level::Debug).expect("cannot initialize simple logger");
+    setup_logger();
 
     const PING_MESSAGE: &str = "hello from the client side!";
     const USER_ID: &str = "foobar";
@@ -59,12 +59,12 @@ async fn valid_request() {
 
 #[tokio::test]
 async fn invalid_request() {
-    simple_logger::init_with_level(log::Level::Debug).expect("cannot initialize simple logger");
+    setup_logger();
 
     const PING_MESSAGE: &str = "hello from the client side!";
-    const USER_ID: &str = "foobar";
+    const USER_ID: &str = "foobar_invalid";
     const IP: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
-    const PORT: u16 = 14689;
+    const PORT: u16 = 14690;
     let socket_addr: SocketAddr = SocketAddr::V4(SocketAddrV4::new(IP, PORT));
 
     let client_kp = SigningKey::generate();
@@ -91,6 +91,17 @@ async fn invalid_request() {
     log::debug!("[test] client response: {client_response:?}");
     assert!(client_response.is_err());
     let client_response = dbg!(client_response.unwrap_err());
+}
+
+fn setup_logger() {
+    if let Err(e) = env_logger::builder()
+        .filter_level(log::LevelFilter::Debug)
+        .parse_write_style("always")
+        // .is_test(true)
+        .try_init()
+    {
+        log::warn!("failed to initialize logger, reason: {e}");
+    }
 }
 
 fn generate_client(signing_key: SigningKey, user_id: &[u8], root_url: &str) -> AuthenticatedCmds {
