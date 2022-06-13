@@ -14,7 +14,7 @@ use utils::server::MakeSignatureVerifier;
 use hyper::server::Server;
 
 #[tokio::test]
-async fn verify_signed_request() {
+async fn valid_request() {
     simple_logger::init_with_level(log::Level::Debug).expect("cannot initialize simple logger");
 
     const PING_MESSAGE: &str = "hello from the client side!";
