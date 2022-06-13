@@ -143,7 +143,7 @@ fn sign_request(
     authorization_headers.insert(AUTHORIZATION, HeaderValue::from_static(PARSEC_AUTH_METHOD));
     authorization_headers.insert(
         "Author",
-        HeaderValue::from_str(&user_id).expect("base64 shouldn't contain invalid char"),
+        HeaderValue::from_str(user_id).expect("base64 shouldn't contain invalid char"),
     );
     authorization_headers.insert(
         "Timestamp",
