@@ -22,8 +22,8 @@ base64 = "0.13.0"
 
 [dev-dependencies]
 anyhow = "1.0.57"
+env_logger = "0.9.0"
 http-body = "0.4.5"
 hyper = { version = "0.14.19", features = ["server"] }
 log = "0.4.17"
-simple_logger = "2.1.0"
 tokio = { version = "1.19", features = ["rt", "macros", "sync"] }
