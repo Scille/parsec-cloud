@@ -9,7 +9,6 @@ import trio
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.event_bus import EventBusConnectionContext
 from parsec.api.version import ApiVersion, API_V2_VERSION
-from parsec.api.transport import Transport
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     OrganizationID,
@@ -28,13 +27,13 @@ logger = get_logger()
 
 
 class BaseClientContext:
-    __slots__ = ("transport", "api_version")
+    __slots__ = ("conn_id", "api_version")
     TYPE: ClientType
     logger: BoundLogger
 
-    def __init__(self, transport: Transport, api_version: ApiVersion):
-        self.transport = transport
+    def __init__(self, api_version: ApiVersion):
         self.api_version = api_version
+        self.conn_id = uuid4().hex
 
 
 class AuthenticatedClientContext(BaseClientContext):
@@ -50,14 +49,12 @@ class AuthenticatedClientContext(BaseClientContext):
         "channels",
         "realms",
         "events_subscribed",
-        "conn_id",
         "logger",
     )
     TYPE = ClientType.AUTHENTICATED
 
     def __init__(
         self,
-        transport: Transport,
         api_version: ApiVersion,
         organization_id: OrganizationID,
         device_id: DeviceID,
@@ -67,7 +64,12 @@ class AuthenticatedClientContext(BaseClientContext):
         public_key: PublicKey,
         verify_key: VerifyKey,
     ):
-        super().__init__(transport, api_version)
+        super().__init__(api_version)
+
+        self.logger = logger.bind(
+            conn_id=self.conn_id, organization_id=organization_id, device_id=device_id
+        )
+
         self.organization_id = organization_id
         self.profile = profile
         self.device_id = device_id
@@ -80,11 +82,6 @@ class AuthenticatedClientContext(BaseClientContext):
         self.channels = trio.open_memory_channel[Tuple[Enum, Dict[str, object]]](100)
         self.realms: Set[RealmID] = set()
         self.events_subscribed = False
-
-        self.conn_id = self.transport.conn_id
-        self.logger = self.transport.logger = self.transport.logger.bind(
-            conn_id=self.conn_id, organization_id=self.organization_id, device_id=self.device_id
-        )
 
     def __repr__(self):
         return f"AuthenticatedClientContext(org={self.organization_id}, device={self.device_id})"
@@ -117,85 +114,65 @@ class AuthenticatedClientContext(BaseClientContext):
 
 
 class InvitedClientContext(BaseClientContext):
-    __slots__ = ("organization_id", "invitation", "conn_id", "logger")
+    __slots__ = ("organization_id", "invitation", "logger")
     TYPE = ClientType.INVITED
 
     def __init__(
-        self,
-        transport: Transport,
-        api_version: ApiVersion,
-        organization_id: OrganizationID,
-        invitation: Invitation,
+        self, api_version: ApiVersion, organization_id: OrganizationID, invitation: Invitation
     ):
-        super().__init__(transport, api_version)
+        super().__init__(api_version)
+
+        self.logger = logger.bind(
+            conn_id=self.conn_id, organization_id=organization_id, invitation_token=invitation.token
+        )
+
         self.organization_id = organization_id
         self.invitation = invitation
-
-        self.conn_id = self.transport.conn_id
-        self.logger = self.transport.logger = self.transport.logger.bind(
-            conn_id=self.conn_id,
-            organization_id=self.organization_id,
-            invitation_token=self.invitation.token,
-        )
 
     def __repr__(self):
         return f"InvitedClientContext(org={self.organization_id}, invitation={self.invitation})"
 
 
 class AnonymousClientContext(BaseClientContext):
-    __slots__ = ("organization_id", "conn_id", "logger")
+    __slots__ = ("organization_id", "logger")
     TYPE = ClientType.ANONYMOUS
 
     def __init__(self, organization_id: OrganizationID):
         # Anonymous is a special snowflake: it is accessed trough HTTP instead of
-        # Websocket, hence the transport is not available (given Transport is based
-        # on websocket) and there is no api version negociation for the moment
-        super().__init__(None, API_V2_VERSION)  # type: ignore
+        # Websocket, hence there is no api version negotiation for the moment
+        super().__init__(API_V2_VERSION)
+
+        self.logger = logger.bind(conn_id=self.conn_id, organization_id=organization_id)
+
         self.organization_id = organization_id
-
-        self.conn_id = uuid4().hex
-        self.logger = logger.bind(conn_id=self.conn_id, organization_id=self.organization_id)
-
-    @property  # type: ignore
-    def transport(self):
-        raise RuntimeError("Transport is not accessible for anonymous client context !")
-
-    @transport.setter
-    def transport(self, value):
-        pass
 
     def __repr__(self):
         return f"InvitedClientContext(org={self.organization_id}, invitation={self.invitation})"
 
 
 class APIV1_AnonymousClientContext(BaseClientContext):
-    __slots__ = ("organization_id", "conn_id", "logger")
+    __slots__ = ("organization_id", "logger")
     TYPE = ClientType.APIV1_ANONYMOUS
 
-    def __init__(
-        self, transport: Transport, api_version: ApiVersion, organization_id: OrganizationID
-    ):
-        super().__init__(transport, api_version)
-        self.organization_id = organization_id
+    def __init__(self, api_version: ApiVersion, organization_id: OrganizationID):
+        super().__init__(api_version)
 
-        self.conn_id = self.transport.conn_id
-        self.logger = self.transport.logger = self.transport.logger.bind(
-            conn_id=self.conn_id, organization_id=self.organization_id
-        )
+        self.logger = logger.bind(conn_id=self.conn_id, organization_id=organization_id)
+
+        self.organization_id = organization_id
 
     def __repr__(self):
         return f"APIV1_AnonymousClientContext(org={self.organization_id})"
 
 
 class APIV1_AdministrationClientContext(BaseClientContext):
-    __slots__ = ("conn_id", "logger")
+    __slots__ = ("logger",)
     TYPE = ClientType.APIV1_ADMINISTRATION
 
-    def __init__(self, transport: Transport, api_version: ApiVersion):
-        super().__init__(transport, api_version)
+    def __init__(self, api_version: ApiVersion):
+        super().__init__(api_version)
 
-        self.conn_id = self.transport.conn_id
-        self.logger = self.transport.logger = self.transport.logger.bind(conn_id=self.conn_id)
+        self.logger = logger.bind(conn_id=self.conn_id)
 
     def __repr__(self):
         return f"APIV1_AdministrationClientContext()"

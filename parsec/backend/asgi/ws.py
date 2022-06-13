@@ -2,14 +2,11 @@
 
 from typing import Dict, NoReturn, Callable
 import trio
-from uuid import uuid4
 from structlog import get_logger
 from functools import partial
 from quart import current_app, websocket, Websocket, Blueprint
-from parsec.api.protocol.base import MessageSerializationError
 
-from parsec.backend.backend_events import BackendEvent
-from parsec.api.transport import Transport
+from parsec.api.protocol.base import MessageSerializationError
 from parsec.api.protocol import (
     packb,
     unpackb,
@@ -20,7 +17,8 @@ from parsec.api.protocol import (
     UserID,
     InvitationToken,
 )
-from parsec.backend.utils import CancelledByNewRequest
+from parsec.backend.utils import run_with_cancel_on_client_sending_new_cmd, CancelledByNewCmd
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.client_context import (
     AuthenticatedClientContext,
     InvitedClientContext,
@@ -36,45 +34,16 @@ logger = get_logger()
 ws_bp = Blueprint("ws_api", __name__)
 
 
-class QuartTransport:
-    def __init__(self, websocket: Websocket):
-        self._websocket = websocket
-        self.conn_id = uuid4().hex
-        self.logger = logger.bind(conn_id=self.conn_id)
-
-    async def aclose(self) -> None:
-        raise NotImplementedError
-
-    async def send(self, msg: bytes) -> None:
-        """
-        Raises:
-            TransportError
-        """
-        await self._websocket.send(msg)
-
-    async def recv(self) -> bytes:
-        """
-        Raises:
-            TransportError
-        """
-        data = await self._websocket.receive()
-        if not isinstance(data, bytes):
-            # TODO: respond `{"status": "invalid_msg_format", "reason": "Invalid message format"}` then close connection
-            raise NotImplementedError
-        return data
-
-
 @ws_bp.websocket("/ws")
 async def handle_ws():
-    transport = QuartTransport(websocket)
     backend = current_app.backend
-    selected_logger = transport.logger
+    selected_logger = logger
 
     # TODO: try/except on TransportError & MessageSerializationError ?
 
     # 1) Handshake
 
-    client_ctx, error_infos = await do_handshake(backend, transport)
+    client_ctx, error_infos = await do_handshake(backend, websocket)
     if not client_ctx:
         # Invalid handshake
         # TODO Fragile test based on reason, make it more robust
@@ -126,7 +95,7 @@ async def handle_ws():
                 )
 
                 # 3) Serve commands
-                await _handle_client_websocket_loop(api_cmds, transport, client_ctx)
+                await _handle_client_websocket_loop(api_cmds, websocket, client_ctx)
 
     elif isinstance(client_ctx, InvitedClientContext):
         await backend.invite.claimer_joined(
@@ -159,7 +128,7 @@ async def handle_ws():
                     )
 
                     # 3) Serve commands
-                    await _handle_client_websocket_loop(api_cmds, transport, client_ctx)
+                    await _handle_client_websocket_loop(api_cmds, websocket, client_ctx)
 
         except CloseInviteConnection:
             # If the invitation has been deleted after the invited handshake,
@@ -184,18 +153,18 @@ async def handle_ws():
     # TODO: remove me once APIv1 is deprecated
     else:
         assert isinstance(client_ctx, APIV1_AnonymousClientContext)
-        await _handle_client_websocket_loop(api_cmds, transport, client_ctx)
+        await _handle_client_websocket_loop(api_cmds, websocket, client_ctx)
 
 
 async def _handle_client_websocket_loop(
-    api_cmds: Dict[str, Callable], transport: Transport, client_ctx
+    api_cmds: Dict[str, Callable], websocket: Websocket, client_ctx
 ) -> NoReturn:
 
     raw_req = None
     while True:
         # raw_req can be already defined if we received a new request
         # while processing a command
-        raw_req = raw_req or await transport.recv()
+        raw_req = raw_req or await websocket.receive()
         rep: dict
         try:
             req = unpackb(raw_req)
@@ -218,7 +187,12 @@ async def _handle_client_websocket_loop(
 
             else:
                 try:
-                    rep = await cmd_func(client_ctx, req)
+                    if cmd_func._api_info["cancel_on_client_sending_new_cmd"]:  # type: ignore
+                        rep = await run_with_cancel_on_client_sending_new_cmd(
+                            websocket, cmd_func, client_ctx, req
+                        )
+                    else:
+                        rep = await cmd_func(client_ctx, req)
 
                 except InvalidMessageError as exc:
                     rep = {
@@ -230,7 +204,7 @@ async def _handle_client_websocket_loop(
                 except ProtocolError as exc:
                     rep = {"status": "bad_message", "reason": str(exc)}
 
-                except CancelledByNewRequest as exc:
+                except CancelledByNewCmd as exc:
                     # Long command handling such as message_get can be cancelled
                     # when the peer send a new request
                     raw_req = exc.new_raw_req
@@ -239,5 +213,5 @@ async def _handle_client_websocket_loop(
             client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
 
         raw_rep = packb(rep)
-        await transport.send(raw_rep)
+        await websocket.send(raw_rep)
         raw_req = None

@@ -2,8 +2,8 @@
 
 from pendulum import now as pendulum_now
 from typing import Tuple, Dict, Optional, cast, Type
+from quart import Websocket
 
-from parsec.api.transport import Transport
 from parsec.api.protocol import (
     DeviceID,
     OrganizationID,
@@ -12,7 +12,9 @@ from parsec.api.protocol import (
     HandshakeType,
     APIV1_HandshakeType,
     ServerHandshake,
+    InvitationToken,
 )
+from parsec.backend.app import BackendApp
 from parsec.backend.client_context import (
     BaseClientContext,
     AuthenticatedClientContext,
@@ -31,29 +33,27 @@ from parsec.backend.invite import (
 
 
 async def do_handshake(
-    backend, transport: Transport
+    backend: BackendApp, websocket: Websocket
 ) -> Tuple[Optional[BaseClientContext], Optional[Dict]]:
     try:
         handshake = ServerHandshake()
         challenge_req = handshake.build_challenge_req()
-        await transport.send(challenge_req)
-        answer_req = await transport.recv()
+        await websocket.send(challenge_req)
+        answer_req = await websocket.receive()
 
         handshake.process_answer_req(answer_req)
         if handshake.answer_type == HandshakeType.AUTHENTICATED:
             context, result_req, error_infos = await _process_authenticated_answer(
-                backend, transport, handshake
+                backend, handshake
             )
 
         elif handshake.answer_type == HandshakeType.INVITED:
-            context, result_req, error_infos = await _process_invited_answer(
-                backend, transport, handshake
-            )
+            context, result_req, error_infos = await _process_invited_answer(backend, handshake)
 
         else:
             assert handshake.answer_type == APIV1_HandshakeType.ANONYMOUS
             context, result_req, error_infos = await _apiv1_process_anonymous_answer(
-                backend, transport, handshake
+                backend, handshake
             )
 
     except ProtocolError as exc:
@@ -61,21 +61,19 @@ async def do_handshake(
         result_req = handshake.build_bad_protocol_result_req(str(exc))
         error_infos = {"reason": str(exc), "handshake_type": handshake.answer_type}
 
-    await transport.send(result_req)
+    await websocket.send(result_req)
 
     return context, error_infos
 
 
 async def _process_authenticated_answer(
-    backend, transport: Transport, handshake: ServerHandshake
+    backend: BackendApp, handshake: ServerHandshake
 ) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
-    return await _do_process_authenticated_answer(
-        backend, transport, handshake, HandshakeType.AUTHENTICATED
-    )
+    return await _do_process_authenticated_answer(backend, handshake, HandshakeType.AUTHENTICATED)
 
 
 async def _do_process_authenticated_answer(
-    backend, transport: Transport, handshake: ServerHandshake, handshake_type
+    backend: BackendApp, handshake: ServerHandshake, handshake_type
 ) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
 
     organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
@@ -111,7 +109,6 @@ async def _do_process_authenticated_answer(
         return None, result_req, _make_error_infos("Revoked device")
 
     context = AuthenticatedClientContext(
-        transport=transport,
         api_version=handshake.backend_api_version,
         organization_id=organization_id,
         device_id=device_id,
@@ -126,7 +123,7 @@ async def _do_process_authenticated_answer(
 
 
 async def _process_invited_answer(
-    backend, transport: Transport, handshake: ServerHandshake
+    backend: BackendApp, handshake: ServerHandshake
 ) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
     organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
     invitation_type = cast(InvitationType, handshake.answer_data["invitation_type"])
@@ -154,7 +151,7 @@ async def _process_invited_answer(
 
     try:
         invitation = await backend.invite.info(
-            organization_id, token=handshake.answer_data["token"]
+            organization_id, token=cast(InvitationToken, handshake.answer_data["token"])
         )
     except InvitationAlreadyDeletedError:
         result_req = handshake.build_bad_identity_result_req(
@@ -182,7 +179,6 @@ async def _process_invited_answer(
         return None, result_req, _make_error_infos("Bad invitation")
 
     context = InvitedClientContext(
-        transport,
         api_version=handshake.backend_api_version,
         organization_id=organization_id,
         invitation=invitation,
@@ -192,7 +188,7 @@ async def _process_invited_answer(
 
 
 async def _apiv1_process_anonymous_answer(
-    backend, transport: Transport, handshake: ServerHandshake
+    backend: BackendApp, handshake: ServerHandshake
 ) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
     organization_id = cast(OrganizationID, handshake.answer_data["organization_id"])
     expected_rvk = handshake.answer_data["rvk"]
@@ -229,7 +225,7 @@ async def _apiv1_process_anonymous_answer(
         return None, result_req, _make_error_infos("Bad root verify key")
 
     context = APIV1_AnonymousClientContext(
-        transport, api_version=handshake.backend_api_version, organization_id=organization_id
+        api_version=handshake.backend_api_version, organization_id=organization_id
     )
     result_req = handshake.build_result_req()
     return context, result_req, None
