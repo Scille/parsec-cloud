@@ -20,8 +20,10 @@ use std::{
 
 pub type ID = String;
 
+#[derive(Debug)]
 pub struct AuthRequest {
     author: ID,
+    author_b64: String,
     verify_key: VerifyKey,
     timestamp: u128,
     signature_b64: String,
@@ -50,9 +52,10 @@ impl Service<Request<Body>> for SignatureVerifier {
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
+        log::debug!("server recv request");
         let res =
             parse_headers(req.headers()).and_then(|(raw_author, timestamp, raw_signature)| {
-                let (author, vk) = base64::decode(raw_author)
+                let (author, verify_key) = base64::decode(&raw_author)
                     .map_err(anyhow::Error::from)
                     .and_then(|bytes| {
                         String::from_utf8(bytes)
@@ -67,22 +70,32 @@ impl Service<Request<Body>> for SignatureVerifier {
                     })?;
                 Ok(AuthRequest {
                     author,
-                    verify_key: vk,
+                    author_b64: raw_author,
+
+                    verify_key,
                     timestamp,
                     signature_b64: raw_signature,
                 })
             });
+        log::debug!("parsed header: {res:?}");
 
         let fut = async move {
             let auth_req = res?;
             let body = body::to_bytes(req.into_body()).await?;
 
             let signature = base64::decode(auth_req.signature_b64)?;
-            let signed_message = Vec::from_iter((&signature).iter().chain(body.deref()).copied());
-            anyhow::ensure!(
-                auth_req.verify_key.verify(&signed_message).is_ok(),
-                "cannot validate signed request"
+            let signed_message = Vec::from_iter(
+                (&signature)
+                    .iter()
+                    .chain(auth_req.author_b64.as_bytes())
+                    .chain(&auth_req.timestamp.to_be_bytes())
+                    .chain(body.deref())
+                    .copied(),
             );
+            if let Err(e) = auth_req.verify_key.verify(&signed_message) {
+                log::error!("invalid signed request: {e}");
+                anyhow::bail!("cannot validate signed request");
+            }
 
             let cmd = authenticated_cmds::AnyCmdReq::load(body.as_ref())
                 .map_err(|e| anyhow::anyhow!("{e}"))?;
