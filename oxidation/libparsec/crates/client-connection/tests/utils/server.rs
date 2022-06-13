@@ -1,7 +1,7 @@
 use http_body::Full;
 use hyper::{
     body::{self, Bytes},
-    header::AUTHORIZATION,
+    header::{AUTHORIZATION, WWW_AUTHENTICATE},
     service::Service,
     Body, HeaderMap, Request, Response, StatusCode,
 };
@@ -93,6 +93,10 @@ impl Service<Request<Body>> for SignatureVerifier {
                 log::error!("invalid signed request: {e}");
                 return Ok(Response::builder()
                     .status(StatusCode::UNAUTHORIZED)
+                    .header(
+                        WWW_AUTHENTICATE,
+                        libparsec_client_connection::authenticated_cmds::PARSEC_AUTH_METHOD,
+                    )
                     .body(Full::from(Bytes::from_static(b"invalid signed request")))?);
             }
 
