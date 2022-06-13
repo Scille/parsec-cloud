@@ -86,6 +86,10 @@ macro_rules! impl_auth_cmds {
 
                     let req = prepare_request(request_builder, signing_key, &user_id, data).send();
                     let resp = req.await?;
+                    if resp.status() != reqwest::StatusCode::OK {
+                        return Err(CommandError::UnexpectedResponseStatus(resp.status(), resp));
+                    }
+
                     let response_body = resp.bytes().await?;
 
                     authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::Deserialization)
