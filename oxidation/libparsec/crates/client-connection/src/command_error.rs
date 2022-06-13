@@ -9,8 +9,8 @@ pub enum CommandError {
     Serialization(String),
     /// We failed to retrieve the reply.
     Response(reqwest::Error),
-    /// We receive a response with an unexpected code.
-    UnexpectedResponseStatus(reqwest::StatusCode, reqwest::Response),
+    /// We receive a response but with an unexpected status code.
+    InvalidResponseStatus(reqwest::StatusCode, reqwest::Response),
     /// We failed to deserialize the reply.
     Deserialization(parsec_api_protocol::DecodeError),
 }
@@ -20,7 +20,7 @@ impl Error for CommandError {
         match self {
             CommandError::Deserialization(e) => Some(e),
             CommandError::Response(e) => Some(e),
-            CommandError::UnexpectedResponseStatus(_, _) | CommandError::Serialization(_) => None,
+            CommandError::InvalidResponseStatus(_, _) | CommandError::Serialization(_) => None,
         }
     }
 }
@@ -34,7 +34,7 @@ impl Display for CommandError {
             CommandError::Response(reason) => {
                 write!(f, "failed to retrieving the response: {reason}")
             }
-            CommandError::UnexpectedResponseStatus(code, _response) => {
+            CommandError::InvalidResponseStatus(code, _response) => {
                 write!(f, "unexpected response status {code}")
             }
             CommandError::Deserialization(reason) => {
