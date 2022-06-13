@@ -27,7 +27,7 @@ struct NewChunk<'a> {
     pub chunk_id: &'a [u8],
     pub size: i64,
     pub offline: bool,
-    pub accessed_on: Option<f64>,
+    pub accessed_on: Option<super::types::DateTime>,
     pub data: &'a [u8],
 }
 
@@ -155,13 +155,13 @@ pub(crate) trait ChunkStorageTrait {
 
     fn set_chunk(&self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
         let ciphered = self.local_symkey().encrypt(raw);
-        let accessed_on = DateTime::now().get_f64_with_us_precision();
+        let accessed_on = DateTime::now();
 
         let new_chunk = NewChunk {
             chunk_id: (*chunk_id).as_ref(),
             size: ciphered.len() as i64,
             offline: false,
-            accessed_on: Some(accessed_on),
+            accessed_on: Some(accessed_on.into()),
             data: &ciphered,
         };
 
@@ -221,13 +221,13 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
 
     fn set_chunk_upgraded(&self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
         let ciphered = self.local_symkey().encrypt(raw);
-        let accessed_on = DateTime::now().get_f64_with_us_precision();
+        let accessed_on = DateTime::now();
 
         let new_chunk = NewChunk {
             chunk_id: (*chunk_id).as_ref(),
             size: ciphered.len() as i64,
             offline: false,
-            accessed_on: Some(accessed_on),
+            accessed_on: Some(accessed_on.into()),
             data: &ciphered,
         };
 
