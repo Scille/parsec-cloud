@@ -1,3 +1,5 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+
 //! Send Authenticated commands to the server.
 //!
 //! The HTTP-request will contain the following headers:
