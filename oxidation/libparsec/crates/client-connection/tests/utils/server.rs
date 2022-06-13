@@ -91,7 +91,9 @@ impl Service<Request<Body>> for SignatureVerifier {
             );
             if let Err(e) = auth_req.verify_key.verify(&signed_message) {
                 log::error!("invalid signed request: {e}");
-                anyhow::bail!("cannot validate signed request");
+                return Ok(Response::builder()
+                    .status(StatusCode::UNAUTHORIZED)
+                    .body(Full::from(Bytes::from_static(b"invalid signed request")))?);
             }
 
             let cmd = authenticated_cmds::AnyCmdReq::load(body.as_ref())
