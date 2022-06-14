@@ -86,7 +86,7 @@ macro_rules! impl_auth_cmds {
                 async move {
                     let data = authenticated_cmds::$name::Req::new($($key),*).dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
 
-                    let req = prepare_request(request_builder, signing_key, &user_id, data).send();
+                    let req = prepare_request(request_builder, &signing_key, &user_id, data).send();
                     let resp = req.await?;
                     if resp.status() != reqwest::StatusCode::OK {
                         return Err(CommandError::InvalidResponseStatus(resp.status(), resp));
@@ -104,7 +104,7 @@ macro_rules! impl_auth_cmds {
 /// Prepare a new request, the body will be added to the Request using [RequestBuilder::body]
 fn prepare_request(
     request_builder: RequestBuilder,
-    signing_key: SigningKey,
+    signing_key: &SigningKey,
     user_id: &str,
     body: Vec<u8>,
 ) -> RequestBuilder {
@@ -123,7 +123,7 @@ fn prepare_request(
 /// Sing a request by adding specific headers.
 fn sign_request(
     request_builder: RequestBuilder,
-    signing_key: SigningKey,
+    signing_key: &SigningKey,
     user_id: &str,
     body: &[u8],
 ) -> RequestBuilder {
