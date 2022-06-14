@@ -17,7 +17,7 @@ use crate::ext_types::new_uuid_type;
 use crate::{self as parsec_api_types, impl_from_maybe};
 use crate::{DataError, DateTime, DeviceID, EntryNameError};
 
-pub const DEFAULT_BLOCK_SIZE: Blocksize = unsafe { Blocksize::new_unchecked(512 * 1024) }; // 512 KB
+pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
 
 macro_rules! impl_manifest_dump_load {
     ($name:ident) => {
@@ -262,16 +262,6 @@ impl Deref for Blocksize {
 
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-impl Blocksize {
-    /// Blocksize const constructor
-    /// # Safety
-    ///
-    /// This is safe if n >= 8
-    pub const unsafe fn new_unchecked(n: u64) -> Self {
-        Self(n)
     }
 }
 
