@@ -2,7 +2,6 @@
 
 
 from uuid import UUID
-import oscrypto
 from parsec.api.protocol.tpek import TpekServiceType
 from parsec.api.protocol.types import OrganizationID
 from parsec.backend.postgresql.handler import PGHandler
@@ -11,6 +10,7 @@ from parsec.backend.tpek import BaseTpekComponent, TpekError, verify_tpek_der_si
 from parsec.serde.fields import DerPublicKey
 
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
+from parsec.tpek_crypto import load_der_public_key
 
 _q_create_tpek_service = Q(
     f"""
@@ -85,7 +85,7 @@ class PGPTpekComponent(BaseTpekComponent):
             if not row:
                 # TODO:error
                 pass
-            tpek_verify_key = oscrypto.asymetric.load_public_key(row["tpek_verify_key"])
+            tpek_verify_key = load_der_public_key(row["tpek_verify_key"])
             verify_tpek_der_signature(
                 tpek_verify_key,
                 tpek_certificate_signed_encryption_key,

@@ -2,11 +2,11 @@
 
 import attr
 import pendulum
-from oscrypto.asymmetric import PublicKey as DerPublicKey
 from typing import Optional, Union, List
 from secrets import token_hex
 from parsec.api.data.certif import TpekDerVerifyKeyCertificateContent
 
+from parsec.tpek_crypto import DerPublicKey
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import (

@@ -20,7 +20,7 @@ from parsec.core.invite.exceptions import (
     InvitePeerResetError,
 )
 
-from oscrypto.asymmetric import PublicKey as DerPublicKey
+from parsec.tpek_crypto import DerPublicKey
 
 
 def _check_rep(rep, step_name):

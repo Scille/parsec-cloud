@@ -4,8 +4,6 @@ import click
 import platform
 from typing import Optional, Callable
 
-import oscrypto
-import oscrypto.asymmetric
 from pathlib import Path
 
 from parsec.utils import trio_run
@@ -16,6 +14,7 @@ from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import bootstrap_organization as do_bootstrap_organization
 from parsec.core.cli.utils import cli_command_base_options, core_config_options, save_device_options
+from parsec.tpek_crypto import load_der_private_key
 
 
 async def _bootstrap_organization(
@@ -86,7 +85,7 @@ def bootstrap_organization(
         if third_party_encryption_key_signing_certificate is not None:
             # TODO: print a dialogue with confirmation to make sure user understand
             # what this option imply
-            tpek_der_private_key = oscrypto.asymmetric.load_private_key(
+            tpek_der_private_key = load_der_private_key(
                 third_party_encryption_key_signing_certificate
             )
             # Load the key to check key format

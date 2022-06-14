@@ -27,7 +27,7 @@ from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 from parsec.backend.postgresql.handler import send_signal
 
 
-from oscrypto.asymmetric import PublicKey as DerPublicKey
+from parsec.tpek_crypto import DerPublicKey
 
 _q_insert_organization = Q(
     """

@@ -8,7 +8,7 @@ from parsec.backend.tpek import BaseTpekComponent, verify_tpek_der_signature
 
 from uuid import UUID
 from typing import Dict
-from oscrypto.asymmetric import PublicKey as DerPublicKey
+from parsec.tpek_crypto import DerPublicKey
 
 
 @attr.s(slots=True, auto_attribs=True)

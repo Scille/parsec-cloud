@@ -25,7 +25,7 @@ from parsec.backend.memory.block import MemoryBlockComponent
 from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.events import BackendEvent
 
-from oscrypto.asymmetric import PublicKey as DerPublicKey
+from parsec.tpek_crypto import DerPublicKey
 
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):
