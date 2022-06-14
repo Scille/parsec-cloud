@@ -40,11 +40,7 @@ async fn valid_request() {
     let server_response = server_handle.await.expect("server handle failed");
 
     log::debug!("[test] server response: {server_response:?}");
-    assert!(
-        server_response.is_ok(),
-        "server failed with error {}",
-        server_response.unwrap_err()
-    );
+    server_response.expect("server failed with error");
 
     log::debug!("[test] client response: {client_response:?}");
     let client_response = client_response.expect("unexpected error for client response");
@@ -84,11 +80,7 @@ async fn invalid_request() {
     let server_response = server_handle.await.expect("server handle failed");
 
     log::debug!("[test] server response: {server_response:?}");
-    assert!(
-        server_response.is_ok(),
-        "server failed with error {}",
-        server_response.unwrap_err()
-    );
+    server_response.expect("server failed with error");
 
     log::debug!("[test] client response: {client_response:?}");
     let client_response =
