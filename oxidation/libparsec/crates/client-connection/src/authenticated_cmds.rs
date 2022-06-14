@@ -240,24 +240,24 @@ impl AuthenticatedCmds {
     );
 
     impl_auth_cmds!(
-        /// create a new realm
+        /// Create a new realm
         realm_create(role_certificate: Vec<u8>)
-        /// notify that we've finish re-encrypting the realm
+        /// Notify that we've finish re-encrypting the realm
         realm_finish_reencryption_maintenance(realm_id: RealmID, encryption_revision: u64)
-        /// retrieve the role certificates of a realm
+        /// Retrieve the role certificates of a realm
         realm_get_role_certificates(realm_id: RealmID)
-        /// start the re-encryption maintenance on a realm and notify participant
+        /// Start the re-encryption maintenance on a realm and notify participant
         realm_start_reencryption_maintenance(
             realm_id: RealmID,
             encryption_revision: u64,
             timestamp: DateTime,
             per_participant_message: HashMap<UserID, Vec<u8>>
         )
-        /// retrieve the stats of a realm
+        /// Retrieve the stats of a realm
         realm_stats(realm_id: RealmID)
-        /// get the status of a realm
+        /// Get the status of a realm
         realm_status(realm_id: RealmID)
-        /// update role in a realm
+        /// Update role in a realm
         realm_update_roles(
             role_certificate: Vec<u8>,
             recipient_message: Option<Vec<u8>>
@@ -265,7 +265,7 @@ impl AuthenticatedCmds {
     );
 
     impl_auth_cmds!(
-        /// create a new user with its device
+        /// Create a new user with its device
         user_create(
             user_certificate: Vec<u8>,
             device_certificate: Vec<u8>,
@@ -274,12 +274,12 @@ impl AuthenticatedCmds {
         )
         /// Retrieve an user by it's id
         user_get(user_id: UserID)
-        /// revoke a user certificate
+        /// Revoke a user certificate
         user_revoke(revoked_user_certificate: Vec<u8>)
     );
 
     impl_auth_cmds!(
-        /// create a new Vlob
+        /// Create a new Vlob
         vlob_create(
             realm_id: RealmID,
             encryption_revision: u64,
@@ -287,30 +287,30 @@ impl AuthenticatedCmds {
             timestamp: DateTime,
             blob: Vec<u8>
         )
-        /// list version of a vlob
+        /// List version of a vlob
         vlob_list_versions(vlob_id: VlobID)
-        /// get a Vlob at a certain encryption revision
+        /// Get a Vlob at a certain encryption revision
         vlob_maintenance_get_reencryption_batch(
             realm_id: RealmID,
             encryption_revision: u64,
             size: u64
         )
-        /// save Vlob encryption revision
+        /// Save Vlob encryption revision
         vlob_maintenance_save_reencryption_batch(
             realm_id: RealmID,
             encryption_revision: u64,
             batch: Vec<ReencryptionBatchEntry>
         )
-        /// pool changes since last checkpoint
+        /// Pool changes since last checkpoint
         vlob_poll_changes(realm_id: RealmID, last_checkpoint: u64)
-        /// read a Vlob, can read a vlob at a specific version or time
+        /// Read a Vlob, can read a vlob at a specific version or time
         vlob_read(
             encryption_revision: u64,
             vlob_id: VlobID,
             version: Option<u32>,
             timestamp: Option<DateTime>
         )
-        /// update a Vlob
+        /// Update a Vlob
         vlob_update(
             encryption_revision: u64,
             vlob_id: VlobID,
