@@ -17,7 +17,7 @@ use crate::ext_types::new_uuid_type;
 use crate::{self as parsec_api_types, impl_from_maybe};
 use crate::{DataError, DateTime, DeviceID, EntryNameError};
 
-pub const DEFAULT_BLOCK_SIZE: u64 = 512 * 1024; // 512 KB
+pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
 
 macro_rules! impl_manifest_dump_load {
     ($name:ident) => {

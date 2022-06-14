@@ -206,7 +206,7 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
     // Garbage collection
 
     fn block_limit(&self) -> u64 {
-        self.cache_size() / DEFAULT_BLOCK_SIZE
+        self.cache_size() / *DEFAULT_BLOCK_SIZE
     }
 
     fn clear_all_blocks(&self) -> FSResult<()> {
@@ -403,7 +403,7 @@ mod tests {
 
         let new_conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
-        let cache_size = DEFAULT_BLOCK_SIZE * 1024;
+        let cache_size = *DEFAULT_BLOCK_SIZE * 1024;
 
         let block_storage = BlockStorage::new(local_symkey, new_conn, cache_size).unwrap();
 
