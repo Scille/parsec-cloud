@@ -16,7 +16,8 @@ TpekServiceTypeField = fields.enum_field_factory(TpekServiceType)
 class TpekRegisterServiceReqSchema(BaseReqSchema):
     service_type = TpekServiceTypeField(required=True)
     service_id = fields.UUID(required=True)
-    service_certificate = fields.Bytes(required=True)
+    tpek_der_payload = fields.Bytes(required=True)
+    tpek_der_payload_signature = fields.Bytes(required=True)
 
 
 class TpekRegisterServiceRepSchema(BaseRepSchema):

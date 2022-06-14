@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from uuid import UUID
+from parsec.api.data.base import DataError
+from parsec.api.data.tpek import TpekDerServiceEncryptionKey
 
 from parsec.api.protocol.types import OrganizationID, UserProfile
 from parsec.backend.client_context import AuthenticatedClientContext
@@ -35,25 +37,24 @@ class BaseTpekComponent:
             }
 
         msg = tpek_register_service_serializer.req_load(msg)
-        return {}
-        # tpek_certificate = TpekDerServiceEncryptionKeyCertificateContent.verify_and_load(
-        #     msg["service_certificate"],
-        #     author_verify_key=client_ctx.verify_key,
-        #     expected_author=client_ctx.device_id,
-        # )
+        tpek_encryption_key_payload = msg["tpek_der_payload"]
+        try:
+            # Ensure tpek_encrypotion_payload is loadable
+            TpekDerServiceEncryptionKey.load(tpek_encryption_key_payload)
+        except DataError as exc:
+            return {"status": "invalid_der_payload", "reason": str(exc)}
 
-        # try:
-        #     await self.register_service(
-        #         client_ctx.organization_id,
-        #         msg["service_id"],
-        #         msg["service_type"],
-        #         tpek_certificate.encryption_key,
-        #         tpek_certificate.signed_encryption_key,
-        #         msg["service_certificate"],
-        #     )
-        # except TpekSignatureError:
-        #     return {"status": "signature_error", "reason": "Bad tpek signature"}
-        # return tpek_register_service_serializer.rep_dump({"status": "ok"})
+        try:
+            await self.register_service(
+                client_ctx.organization_id,
+                msg["service_id"],
+                msg["service_type"],
+                tpek_encryption_key_payload,
+                msg["tpek_der_payload_signature"],
+            )
+        except TpekSignatureError:
+            return {"status": "signature_error", "reason": "Bad tpek signature"}
+        return tpek_register_service_serializer.rep_dump({"status": "ok"})
 
     # @api("tpek_list_services", client_types=[ClientType.AUTHENTICATED])
     # @catch_protocol_errors
@@ -71,9 +72,8 @@ class BaseTpekComponent:
         organization_id: OrganizationID,
         service_id: UUID,
         service_type: TpekServiceType,
-        tpek_certificate_encryption_key: DerPublicKey,
-        tpek_certificate_signed_encryption_key: bytes,
-        tpek_certificate: bytes,
+        tpek_encryption_key: bytes,
+        tpek_encryption_key_signature: bytes,
     ):
         """
         Raises:
@@ -82,14 +82,12 @@ class BaseTpekComponent:
         raise NotImplementedError()
 
 
-def verify_tpek_der_signature(
-    tpek_verify_key: DerPublicKey, signed_data: bytes, data: bytes, hash_algorithm: str = "sha1"
-):
+def verify_tpek_der_signature(tpek_verify_key: DerPublicKey, signed_data: bytes, data: bytes):
     """
     Raises:
         TpekSignatureError
     """
     try:
-        verify_tpek
+        verify_tpek(tpek_verify_key, data, signed_data)
     except TpekCryptoSignatureError:
         raise TpekSignatureError()

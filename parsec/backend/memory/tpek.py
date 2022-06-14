@@ -8,14 +8,14 @@ from parsec.backend.tpek import BaseTpekComponent, verify_tpek_der_signature
 
 from uuid import UUID
 from typing import Dict
-from parsec.tpek_crypto import DerPublicKey
 
 
 @attr.s(slots=True, auto_attribs=True)
 class TpekService:
     service_id: UUID
     service_type: TpekServiceType
-    service_certificate: bytes
+    tpek_encryption_key_payload: bytes
+    tpek_encryption_key_payload_signature: bytes
 
 
 class MemoryTpekComponent(BaseTpekComponent):
@@ -32,17 +32,19 @@ class MemoryTpekComponent(BaseTpekComponent):
         organization_id: OrganizationID,
         service_id: UUID,
         service_type: TpekServiceType,
-        tpek_certificate_encryption_key: DerPublicKey,
-        tpek_certificate_signed_encryption_key: bytes,
-        tpek_certificate: bytes,
+        tpek_encryption_key_payload: bytes,
+        tpek_encryption_key_payload_signature: bytes,
     ):
         organization = await self._organization_component.get(organization_id)
         verify_tpek_der_signature(
             organization.tpek_verify_key,
-            tpek_certificate_signed_encryption_key,
-            tpek_certificate_encryption_key.unwrap().dump(),
+            tpek_encryption_key_payload,
+            tpek_encryption_key_payload_signature,
         )
 
         self._services[organization_id][service_id] = TpekService(
-            service_id=service_id, service_type=service_type, service_certificate=tpek_certificate
+            service_id=service_id,
+            service_type=service_type,
+            tpek_encryption_key_payload=tpek_encryption_key_payload,
+            tpek_encryption_key_payload_signature=tpek_encryption_key_payload_signature,
         )
