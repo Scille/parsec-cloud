@@ -47,8 +47,7 @@ async fn valid_request() {
     );
 
     log::debug!("[test] client response: {client_response:?}");
-    assert!(client_response.is_ok());
-    let client_response = client_response.unwrap();
+    let client_response = client_response.expect("unexpected error for client response");
     assert_eq!(
         authenticated_cmds::ping::Rep::Ok {
             pong: format!(
@@ -92,8 +91,8 @@ async fn invalid_request() {
     );
 
     log::debug!("[test] client response: {client_response:?}");
-    assert!(client_response.is_err());
-    let client_response = dbg!(client_response.unwrap_err());
+    let client_response =
+        client_response.expect_err("unexpected valid result for a client response");
 
     assert!(
         matches!(
