@@ -506,8 +506,8 @@ mod tests {
         let mut storage = Storage::default();
         let blocksize = Blocksize::try_from(16).unwrap();
         let t1 = DateTime::from_str("2000-01-01 01:00:00 UTC").unwrap();
-        let base = LocalFileManifest::new(DeviceID::default(), EntryID::default(), t1, blocksize);
-        let mut manifest = base.clone();
+        let mut manifest =
+            LocalFileManifest::new(DeviceID::default(), EntryID::default(), t1, blocksize);
 
         // Write some data and read it back
         let t2 = DateTime::from_str("2000-01-01 02:00:00 UTC").unwrap();
@@ -666,8 +666,8 @@ mod tests {
         assert_eq!(
             manifest.blocks,
             vec![
-                vec![chunk0.clone(), chunk1.clone(), chunk2.clone()],
-                vec![chunk4.clone(), chunk5.clone(), chunk9.clone()],
+                vec![chunk0, chunk1, chunk2],
+                vec![chunk4, chunk5, chunk9.clone()],
             ]
         );
 

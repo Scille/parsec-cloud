@@ -22,7 +22,6 @@ parsec_core = { path = "../crates/parsec_core" }
 libparsec_core_fs = { path = "../libparsec/crates/core_fs" }
 
 uuid = { version = "1.1.0", features = ["serde", "v4", "fast-rng"] }
-libparsec_fs = { path = "../libparsec/crates/libparsec_fs" }
 chrono = {version = "0.4.19", features = ["serde"]}
 fancy-regex = "0.10.0"
 

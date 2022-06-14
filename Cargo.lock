@@ -1175,14 +1175,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libparsec_fs"
-version = "0.1.0"
-dependencies = [
- "parsec_api_types",
- "parsec_client_types",
-]
-
-[[package]]
 name = "libparsec_platform_native"
 version = "0.0.0"
 dependencies = [
@@ -1210,7 +1202,6 @@ dependencies = [
  "fancy-regex",
  "libparsec",
  "libparsec_core_fs",
- "libparsec_fs",
  "parsec_api_crypto",
  "parsec_api_protocol",
  "parsec_api_types",
