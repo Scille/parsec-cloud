@@ -16,7 +16,7 @@
 //! 2. `timestamp` (u128 in big-endian)
 //! 3. `body` (as bytes)
 
-use std::{collections::HashMap, future::Future, num::NonZeroU64};
+use std::{collections::HashMap, num::NonZeroU64};
 
 use libparsec_crypto::{PublicKey, SigningKey};
 use libparsec_protocol::authenticated_cmds::{
@@ -78,24 +78,20 @@ macro_rules! impl_auth_cmds {
     ) => {
         $(
             $(#[$outer])*
-            pub fn $name(&self, $($key: $type),*) -> impl Future<Output = command_error::Result<authenticated_cmds::$name::Rep>> {
+            pub async fn $name(&self, $($key: $type),*) -> command_error::Result<authenticated_cmds::$name::Rep> {
                 let request_builder = self.client.post(self.url.clone());
-                let user_id = self.user_id.clone();
-                let signing_key = self.signing_key.clone();
 
-                async move {
-                    let data = authenticated_cmds::$name::Req::new($($key),*).dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
+                let data = authenticated_cmds::$name::Req::new($($key),*).dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
 
-                    let req = prepare_request(request_builder, &signing_key, &user_id, data).send();
-                    let resp = req.await?;
-                    if resp.status() != reqwest::StatusCode::OK {
-                        return Err(CommandError::InvalidResponseStatus(resp.status(), resp));
-                    }
-
-                    let response_body = resp.bytes().await?;
-
-                    authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::Deserialization)
+                let req = prepare_request(request_builder, &self.signing_key, &self.user_id, data).send();
+                let resp = req.await?;
+                if resp.status() != reqwest::StatusCode::OK {
+                    return Err(CommandError::InvalidResponseStatus(resp.status(), resp));
                 }
+
+                let response_body = resp.bytes().await?;
+
+                authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::Deserialization)
             }
         )+
     };
