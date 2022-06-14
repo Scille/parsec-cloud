@@ -26,11 +26,12 @@ async fn valid_request() {
     let socket_addr: SocketAddr = SocketAddr::V4(SocketAddrV4::new(IP, PORT));
 
     let kp = SigningKey::generate();
+    let vk = kp.verify_key();
     let url = format!("http://{}:{}", IP, PORT);
-    let auth_cmds = generate_client(kp.clone(), USER_ID.as_bytes(), &url);
+    let auth_cmds = generate_client(kp, USER_ID.as_bytes(), &url);
 
     let mut signature_verifier = MakeSignatureVerifier::default();
-    signature_verifier.register_public_key(USER_ID.to_string(), kp.verify_key());
+    signature_verifier.register_public_key(USER_ID.to_string(), vk);
 
     let (server_handle, client_handle) =
         send_ping(socket_addr, signature_verifier, auth_cmds, PING_MESSAGE).await;
