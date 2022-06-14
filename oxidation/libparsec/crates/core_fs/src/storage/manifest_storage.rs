@@ -389,7 +389,7 @@ impl ManifestStorage {
             .select(vlobs::blob)
             .filter(vlobs::vlob_id.eq((*entry_id).as_ref()))
             .first::<Vec<u8>>(conn)
-            .map_err(|e| FSError::QueryTable(format!("vlobs: get_manifest {e}")))?;
+            .map_err(|_| FSError::LocalMiss(*entry_id))?;
 
         let manifest = LocalManifest::decrypt_and_load(&manifest, &self.local_symkey)
             .map_err(|_| FSError::Crypto(CryptoError::Decryption))?;
