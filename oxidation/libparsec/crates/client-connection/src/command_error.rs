@@ -22,7 +22,7 @@ impl Error for CommandError {
         match self {
             CommandError::Deserialization(e) => Some(e),
             CommandError::Response(e) => Some(e),
-            CommandError::InvalidResponseStatus(_, _) | CommandError::Serialization(_) => None,
+            _ => None,
         }
     }
 }
