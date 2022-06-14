@@ -116,7 +116,7 @@ impl Service<Request<Body>> for SignatureVerifier {
                 ),
             };
 
-            let rep_body: Full<Bytes> = ping_rep
+            let rep_body = ping_rep
                 .dump()
                 .map_err(|e| anyhow::anyhow!("{e}"))
                 .map(|bytes| Full::from(Bytes::from(bytes)))?;
