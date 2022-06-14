@@ -3,6 +3,8 @@
 from typing import Optional
 from uuid import UUID
 from structlog import get_logger
+from parsec.api.protocol.tpek import TpekServiceType
+from parsec.core.types.backend_address import BackendTpekServiceAddr
 
 from parsec.crypto import VerifyKey
 from parsec.utils import URLError
@@ -11,6 +13,7 @@ from parsec.api.protocol import (
     ProtocolError,
     pki_enrollment_submit_serializer,
     pki_enrollment_info_serializer,
+    tpek_register_service_serializer,
     organization_bootstrap_serializer,
 )
 from parsec.core.types import (
@@ -123,4 +126,23 @@ async def organization_bootstrap(
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
         tpek_verify_key_certificate=signed_tpek_certificate,
+    )
+
+
+async def tpek_register_service(
+    addr: BackendTpekServiceAddr,
+    service_type: TpekServiceType,
+    service_id: UUID,
+    tpek_der_payload: bytes,
+    tpek_der_payload_signature: bytes,
+) -> dict:
+    return await _anonymous_cmd(
+        tpek_register_service_serializer,
+        cmd="tpek_register_service",
+        addr=addr,
+        organization_id=addr.organization_id,
+        service_type=service_type,
+        service_id=service_id,
+        tpek_der_payload=tpek_der_payload,
+        tpek_der_payload_signature=tpek_der_payload_signature,
     )
