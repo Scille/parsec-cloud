@@ -175,11 +175,11 @@ fn block_write(
 }
 
 pub fn prepare_write(
-    manifest: &LocalFileManifest,
+    manifest: &mut LocalFileManifest,
     mut size: u64,
     mut offset: u64,
     timestamp: DateTime,
-) -> (LocalFileManifest, Vec<WriteOperation>, HashSet<ChunkID>) {
+) -> (Vec<WriteOperation>, HashSet<ChunkID>) {
     let mut padding = 0;
     let mut removed_ids = HashSet::new();
     let mut write_operations = vec![];
@@ -190,9 +190,6 @@ pub fn prepare_write(
         size += padding;
         offset = manifest.size;
     }
-
-    // Copy buffers
-    let mut blocks = manifest.blocks.clone();
 
     // Find proper block indexes
     let blocksize = u64::from(manifest.blocksize);
@@ -230,32 +227,34 @@ pub fn prepare_write(
         };
 
         // Update data structures
-        if blocks.len() == block as usize {
-            blocks.push(new_chunks);
+        if manifest.blocks.len() == block as usize {
+            manifest.blocks.push(new_chunks);
         } else {
-            blocks[block as usize] = new_chunks;
+            manifest.blocks[block as usize] = new_chunks;
         }
     }
 
     // Evolve manifest
     let new_size = max(manifest.size, offset + size);
-    let new_manifest = manifest
-        .clone()
-        .evolve_and_mark_updated(new_size, blocks, timestamp);
 
-    (new_manifest, write_operations, removed_ids)
+    // Update manifest
+    manifest.need_sync = true;
+    manifest.updated = timestamp;
+    manifest.size = new_size;
+
+    (write_operations, removed_ids)
 }
 
 // Prepare truncate
 
 pub fn prepare_truncate(
-    manifest: &LocalFileManifest,
+    manifest: &mut LocalFileManifest,
     size: u64,
     timestamp: DateTime,
-) -> (LocalFileManifest, HashSet<ChunkID>) {
+) -> HashSet<ChunkID> {
     // Check that there is something to truncate
     if size >= manifest.size {
-        return (manifest.clone(), HashSet::new());
+        return HashSet::new();
     }
 
     // Find limit block
@@ -263,7 +262,7 @@ pub fn prepare_truncate(
     let block = (size / blocksize) as usize;
     let remainder = size % blocksize;
 
-    // Prepare removed ids and new blocks
+    // Prepare removed ids
     let mut removed_ids: HashSet<ChunkID> = manifest
         .blocks
         .get(block..)
@@ -272,10 +271,14 @@ pub fn prepare_truncate(
         .flatten()
         .map(|x| x.id)
         .collect();
-    let mut new_blocks = manifest.blocks.get(0..block).unwrap_or_default().to_vec();
+
+    // No block to split
+    if remainder == 0 {
+        // Simply truncate to the correct amount of blocks
+        manifest.blocks.truncate(block);
 
     // Last block needs to be split
-    if remainder != 0 {
+    } else {
         let chunks = manifest
             .get_chunks(block)
             .expect("Block is expected to be part of the manifest");
@@ -303,31 +306,33 @@ pub fn prepare_truncate(
             removed_ids.remove(&chunk.id);
         }
 
-        // Add to the new blocks
-        new_blocks.push(new_chunks);
+        // Truncate and add the new chunks
+        manifest.blocks.truncate(block);
+        manifest.blocks.push(new_chunks);
     }
 
-    // Create the new manifest
-    let new_manifest = manifest
-        .clone()
-        .evolve_and_mark_updated(size, new_blocks, timestamp);
-    (new_manifest, removed_ids)
+    // Update the manifest
+    manifest.need_sync = true;
+    manifest.size = size;
+    manifest.updated = timestamp;
+
+    removed_ids
 }
 
 // Prepare resize
 
 pub fn prepare_resize(
-    manifest: &LocalFileManifest,
+    manifest: &mut LocalFileManifest,
     size: u64,
     timestamp: DateTime,
-) -> (LocalFileManifest, Vec<WriteOperation>, HashSet<ChunkID>) {
+) -> (Vec<WriteOperation>, HashSet<ChunkID>) {
     if size >= manifest.size {
         // Extend
         prepare_write(manifest, 0, size, timestamp)
     } else {
         // Truncate
-        let (manifest, removed_ids) = prepare_truncate(manifest, size, timestamp);
-        (manifest, vec![], removed_ids)
+        let removed_ids = prepare_truncate(manifest, size, timestamp);
+        (vec![], removed_ids)
     }
 }
 
@@ -439,17 +444,17 @@ mod tests {
 
         fn write(
             &mut self,
-            manifest: &LocalFileManifest,
+            manifest: &mut LocalFileManifest,
             content: &[u8],
             offset: u64,
             timestamp: DateTime,
-        ) -> LocalFileManifest {
+        ) {
             // No-op
             if content.is_empty() {
-                return manifest.clone();
+                return;
             }
             // Write
-            let (new_manifest, write_operations, removed_ids) =
+            let (write_operations, removed_ids) =
                 prepare_write(manifest, content.len() as u64, offset, timestamp);
             for (chunk, offset) in write_operations {
                 self.write_chunk(&chunk, content, offset);
@@ -457,46 +462,37 @@ mod tests {
             for removed_id in removed_ids {
                 self.clear_chunk_data(removed_id);
             }
-            new_manifest
         }
 
-        fn resize(
-            &mut self,
-            manifest: &LocalFileManifest,
-            size: u64,
-            timestamp: DateTime,
-        ) -> LocalFileManifest {
+        fn resize(&mut self, manifest: &mut LocalFileManifest, size: u64, timestamp: DateTime) {
             // No-op
             if size == manifest.size {
-                return manifest.clone();
+                return;
             }
             // Resize
             let empty = vec![];
-            let (new_manifest, write_operations, removed_ids) =
-                prepare_resize(manifest, size, timestamp);
+            let (write_operations, removed_ids) = prepare_resize(manifest, size, timestamp);
             for (chunk, offset) in write_operations {
                 self.write_chunk(&chunk, &empty, offset);
             }
             for removed_id in removed_ids {
                 self.clear_chunk_data(removed_id);
             }
-            new_manifest
         }
 
-        fn reshape(&mut self, manifest: &LocalFileManifest) -> LocalFileManifest {
-            let mut new_manifest = manifest.clone();
-            for (source, destination, block, removed_ids) in prepare_reshape(manifest) {
+        fn reshape(&mut self, manifest: &mut LocalFileManifest) {
+            let collected: Vec<_> = prepare_reshape(manifest).collect();
+            for (source, destination, block, removed_ids) in collected {
                 let data = self.build_data(&source);
                 let new_chunk = destination.evolve_as_block(&data).unwrap();
                 if source.len() != 1 || source[0].id != new_chunk.id {
                     self.write_chunk(&new_chunk, &data, 0);
                 }
-                new_manifest = new_manifest.evolve_single_block(block, new_chunk);
+                manifest.set_single_block(block, new_chunk);
                 for removed_id in removed_ids {
                     self.clear_chunk_data(removed_id);
                 }
             }
-            new_manifest
         }
     }
 
@@ -511,7 +507,7 @@ mod tests {
 
         // Write some data and read it back
         let t2 = DateTime::from_str("2000-01-01 02:00:00 UTC").unwrap();
-        manifest = storage.write(&manifest, b"Hello ", 0, t2);
+        storage.write(&mut manifest, b"Hello ", 0, t2);
         assert_eq!(storage.read(&manifest, 6, 0), b"Hello ");
 
         // Check manifest
@@ -531,7 +527,7 @@ mod tests {
 
         // Append more data to the file and read everything back
         let t3 = DateTime::from_str("2000-01-01 03:00:00 UTC").unwrap();
-        manifest = storage.write(&manifest, b"world !", 6, t3);
+        storage.write(&mut manifest, b"world !", 6, t3);
         assert_eq!(storage.read(&manifest, 13, 0), b"Hello world !");
 
         // Check manifest
@@ -552,7 +548,7 @@ mod tests {
 
         // Append even more data to reach the second block and read everything back
         let t4 = DateTime::from_str("2000-01-01 04:00:00 UTC").unwrap();
-        manifest = storage.write(&manifest, b"\n More kontent", 13, t4);
+        storage.write(&mut manifest, b"\n More kontent", 13, t4);
         assert_eq!(
             storage.read(&manifest, 27, 0),
             b"Hello world !\n More kontent"
@@ -590,7 +586,7 @@ mod tests {
 
         // Fix the typo and read everything back
         let t5 = DateTime::from_str("2000-01-01 05:00:00 UTC").unwrap();
-        manifest = storage.write(&manifest, b"c", 20, t5);
+        storage.write(&mut manifest, b"c", 20, t5);
         assert_eq!(
             storage.read(&manifest, 27, 0),
             b"Hello world !\n More content"
@@ -617,7 +613,7 @@ mod tests {
 
         // Extend file and read everything back
         let t6 = DateTime::from_str("2000-01-01 06:00:00 UTC").unwrap();
-        manifest = storage.resize(&manifest, 40, t6);
+        storage.resize(&mut manifest, 40, t6);
         let mut expected = b"Hello world !\n More content".to_vec();
         expected.extend([0; 13]);
         assert_eq!(storage.read(&manifest, 40, 0), expected);
@@ -651,7 +647,7 @@ mod tests {
 
         // Extend file and read everything back
         let t7 = DateTime::from_str("2000-01-01 07:00:00 UTC").unwrap();
-        manifest = storage.resize(&manifest, 25, t7);
+        storage.resize(&mut manifest, 25, t7);
         assert_eq!(
             storage.read(&manifest, 25, 0),
             b"Hello world !\n More conte"
@@ -681,7 +677,7 @@ mod tests {
 
         // Reshape manifest and read everything back
         assert!(!manifest.is_reshaped());
-        manifest = storage.reshape(&manifest);
+        storage.reshape(&mut manifest);
         assert_eq!(
             storage.read(&manifest, 25, 0),
             b"Hello world !\n More conte"

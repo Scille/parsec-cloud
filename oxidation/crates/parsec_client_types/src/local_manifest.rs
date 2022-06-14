@@ -325,22 +325,8 @@ impl LocalFileManifest {
         reference == *remote_manifest
     }
 
-    pub fn evolve_and_mark_updated(
-        mut self,
-        size: u64,
-        blocks: Vec<Vec<Chunk>>,
-        timestamp: DateTime,
-    ) -> Self {
-        self.need_sync = true;
-        self.size = size;
-        self.blocks = blocks;
-        self.updated = timestamp;
-        self
-    }
-
-    pub fn evolve_single_block(mut self, block: u64, new_chunk: Chunk) -> Self {
+    pub fn set_single_block(&mut self, block: u64, new_chunk: Chunk) {
         self.blocks[block as usize] = vec![new_chunk];
-        self
     }
 }
 

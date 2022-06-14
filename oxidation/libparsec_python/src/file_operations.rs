@@ -58,17 +58,21 @@ pub(crate) fn prepare_read(
 #[pyfunction]
 pub(crate) fn prepare_write<'a>(
     py: Python<'a>,
-    manifest: LocalFileManifest,
+    mut manifest: LocalFileManifest,
     size: u64,
     offset: u64,
     timestamp: &PyAny,
 ) -> PyResult<&'a PyTuple> {
-    let (new_manifest, write_operations, to_remove) =
-        file_operations::prepare_write(&manifest.0, size, offset, py_to_rs_datetime(timestamp)?);
+    let (write_operations, to_remove) = file_operations::prepare_write(
+        &mut manifest.0,
+        size,
+        offset,
+        py_to_rs_datetime(timestamp)?,
+    );
     Ok(PyTuple::new(
         py,
         vec![
-            LocalFileManifest(new_manifest).into_py(py),
+            LocalFileManifest(manifest.0).into_py(py),
             to_py_write_operations(py, write_operations).into_py(py),
             to_py_removed_ids(py, to_remove)?.into_py(py),
         ],
@@ -78,16 +82,16 @@ pub(crate) fn prepare_write<'a>(
 #[pyfunction]
 pub(crate) fn prepare_truncate<'a>(
     py: Python<'a>,
-    manifest: LocalFileManifest,
+    mut manifest: LocalFileManifest,
     size: u64,
     timestamp: &PyAny,
 ) -> PyResult<&'a PyTuple> {
-    let (new_manifest, to_remove) =
-        file_operations::prepare_truncate(&manifest.0, size, py_to_rs_datetime(timestamp)?);
+    let to_remove =
+        file_operations::prepare_truncate(&mut manifest.0, size, py_to_rs_datetime(timestamp)?);
     Ok(PyTuple::new(
         py,
         vec![
-            LocalFileManifest(new_manifest).into_py(py),
+            LocalFileManifest(manifest.0).into_py(py),
             to_py_removed_ids(py, to_remove)?.into_py(py),
         ],
     ))
@@ -96,16 +100,16 @@ pub(crate) fn prepare_truncate<'a>(
 #[pyfunction]
 pub(crate) fn prepare_resize<'a>(
     py: Python<'a>,
-    manifest: LocalFileManifest,
+    mut manifest: LocalFileManifest,
     size: u64,
     timestamp: &PyAny,
 ) -> PyResult<&'a PyTuple> {
-    let (new_manifest, write_operations, to_remove) =
-        file_operations::prepare_resize(&manifest.0, size, py_to_rs_datetime(timestamp)?);
+    let (write_operations, to_remove) =
+        file_operations::prepare_resize(&mut manifest.0, size, py_to_rs_datetime(timestamp)?);
     Ok(PyTuple::new(
         py,
         vec![
-            LocalFileManifest(new_manifest).into_py(py),
+            LocalFileManifest(manifest.0).into_py(py),
             to_py_write_operations(py, write_operations).into_py(py),
             to_py_removed_ids(py, to_remove)?.into_py(py),
         ],

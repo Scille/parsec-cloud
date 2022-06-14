@@ -272,7 +272,7 @@ impl LocalFileManifest {
 
     fn evolve_single_block(&self, block: u64, new_chunk: Chunk) -> PyResult<Self> {
         let mut new_manifest = self.0.clone();
-        new_manifest = new_manifest.evolve_single_block(block, new_chunk.0);
+        new_manifest.set_single_block(block, new_chunk.0);
         Ok(Self(new_manifest))
     }
 
