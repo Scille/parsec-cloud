@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
+use serde_bytes::Bytes;
 use sodiumoxide::crypto::sign::{ed25519, gen_keypair, sign, verify};
 
 use crate::CryptoError;
@@ -10,8 +10,8 @@ use crate::CryptoError;
  * SigningKey
  */
 
-#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(into = "ByteBuf", try_from = "ByteBuf")]
+#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct SigningKey(ed25519::SecretKey);
 
 crate::macros::impl_key_debug!(SigningKey);
@@ -69,17 +69,19 @@ impl AsRef<[u8]> for SigningKey {
     }
 }
 
-impl TryFrom<ByteBuf> for SigningKey {
+impl TryFrom<&Bytes> for SigningKey {
     type Error = CryptoError;
-    fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
-        // TODO: zerocopy
-        Self::try_from(data.into_vec().as_ref())
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
     }
 }
 
-impl From<SigningKey> for ByteBuf {
-    fn from(data: SigningKey) -> Self {
-        Self::from(data.as_ref())
+impl Serialize for SigningKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
     }
 }
 
@@ -87,8 +89,8 @@ impl From<SigningKey> for ByteBuf {
  * VerifyKey
  */
 
-#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(transparent)]
+#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct VerifyKey(ed25519::PublicKey);
 
 crate::macros::impl_key_debug!(VerifyKey);
@@ -113,5 +115,21 @@ impl AsRef<[u8]> for VerifyKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.0 .0
+    }
+}
+
+impl TryFrom<&Bytes> for VerifyKey {
+    type Error = CryptoError;
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
+    }
+}
+
+impl Serialize for VerifyKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
     }
 }
