@@ -80,24 +80,6 @@ pub(crate) fn prepare_write<'a>(
 }
 
 #[pyfunction]
-pub(crate) fn prepare_truncate<'a>(
-    py: Python<'a>,
-    mut manifest: LocalFileManifest,
-    size: u64,
-    timestamp: &PyAny,
-) -> PyResult<&'a PyTuple> {
-    let to_remove =
-        file_operations::prepare_truncate(&mut manifest.0, size, py_to_rs_datetime(timestamp)?);
-    Ok(PyTuple::new(
-        py,
-        vec![
-            LocalFileManifest(manifest.0).into_py(py),
-            to_py_removed_ids(py, to_remove)?.into_py(py),
-        ],
-    ))
-}
-
-#[pyfunction]
 pub(crate) fn prepare_resize<'a>(
     py: Python<'a>,
     mut manifest: LocalFileManifest,

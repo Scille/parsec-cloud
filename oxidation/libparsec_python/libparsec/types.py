@@ -166,7 +166,6 @@ try:
         # File operations
         prepare_read,
         prepare_write,
-        prepare_truncate,
         prepare_resize,
         prepare_reshape,
     )
@@ -421,7 +420,6 @@ __all__ = (
     # File operations
     "prepare_read",
     "prepare_write",
-    "prepare_truncate",
     "prepare_resize",
     "prepare_reshape",
 )

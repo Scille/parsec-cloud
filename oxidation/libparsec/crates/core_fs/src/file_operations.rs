@@ -43,6 +43,9 @@ fn block_read(chunks: &[Chunk], size: u64, start: u64) -> impl Iterator<Item = C
         })
 }
 
+/// Prepare a read operation on a provided manifest.
+///
+/// Return a contiguous `Vec` of chunks that must be read and concatenated.
 pub fn prepare_read(manifest: &LocalFileManifest, size: u64, offset: u64) -> Vec<Chunk> {
     // Sanitize size and offset to fit the manifest
     let offset = min(offset, manifest.size);
@@ -174,6 +177,12 @@ fn block_write(
     (new_chunks, removed_ids)
 }
 
+/// Prepare a write operation by updating the provided manifest.
+///
+/// Return a `Vec` of write operations that must be performed in order for the updated manifest to become valid.
+/// Each write operation consists of a new chunk to store, along with an offset to apply to the corresponding raw data.
+/// Note that the raw data also needs to be sliced to the chunk size and padded with null bytes if necessary.
+/// Also return a `HashSet` of chunk IDs that must cleaned up from the storage, after the updated manifest has been successfully stored.
 pub fn prepare_write(
     manifest: &mut LocalFileManifest,
     mut size: u64,
@@ -245,9 +254,9 @@ pub fn prepare_write(
     (write_operations, removed_ids)
 }
 
-// Prepare truncate
+// Prepare resize
 
-pub fn prepare_truncate(
+fn prepare_truncate(
     manifest: &mut LocalFileManifest,
     size: u64,
     timestamp: DateTime,
@@ -319,8 +328,12 @@ pub fn prepare_truncate(
     removed_ids
 }
 
-// Prepare resize
-
+/// Prepare a resize operation by updating the provided manifest.
+///
+/// Return a `Vec` of write operations that must be performed in order for the updated manifest to become valid.
+/// Each write operation consists of a new chunk to store, along with an offset to apply to the corresponding raw data.
+/// Note that the raw data also needs to be sliced to the chunk size and padded with null bytes if necessary.
+/// Also return a `HashSet` of chunk IDs that must cleaned up from the storage, after the updated manifest has been successfully stored.
 pub fn prepare_resize(
     manifest: &mut LocalFileManifest,
     size: u64,
@@ -338,6 +351,14 @@ pub fn prepare_resize(
 
 // Prepare reshape
 
+/// Prepare a reshape operation without updating the provided manifest.
+///
+/// Return an iterator where each item corresponds to a block to reshape.
+/// Each item consists of:
+/// - a source block, represented as a `Vec` of chunks
+/// - a destination block, represented as a single chunk
+/// - the index of the block that is being reshaped
+/// - a `HashSet` of chunk IDs that must cleaned up from the storage
 pub fn prepare_reshape(
     manifest: &LocalFileManifest,
 ) -> impl Iterator<Item = (Vec<Chunk>, Chunk, u64, HashSet<ChunkID>)> + '_ {
