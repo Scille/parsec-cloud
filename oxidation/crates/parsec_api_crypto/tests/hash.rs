@@ -40,3 +40,14 @@ test_msgpack_serialization!(
     hex!("7d486915b914332bb5730fd772223e8b276919e51edca2de0f82c5fc1bce7eb5"),
     hex!("c4207d486915b914332bb5730fd772223e8b276919e51edca2de0f82c5fc1bce7eb5")
 );
+
+#[test]
+fn hashdigest_should_verify_length_when_deserialize() {
+    let data = hex!("c40564756d6d79");
+    assert_eq!(
+        rmp_serde::from_slice::<HashDigest>(&data)
+            .unwrap_err()
+            .to_string(),
+        "Invalid data size"
+    );
+}

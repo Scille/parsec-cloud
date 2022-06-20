@@ -64,3 +64,14 @@ fn hmac() {
     let hmac = sk.hmac(data, 5);
     assert_eq!(hmac, hex!("a0f507f4be"));
 }
+
+#[test]
+fn secret_key_should_verify_length_when_deserialize() {
+    let data = hex!("c40564756d6d79");
+    assert_eq!(
+        rmp_serde::from_slice::<SecretKey>(&data)
+            .unwrap_err()
+            .to_string(),
+        "Invalid data size"
+    );
+}
