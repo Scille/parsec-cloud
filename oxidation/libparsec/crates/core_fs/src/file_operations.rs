@@ -236,7 +236,7 @@ pub fn prepare_write(
         };
 
         // Update data structures
-        if manifest.blocks.len() == block as usize {
+        if manifest.blocks.len() as u64 == block {
             manifest.blocks.push(new_chunks);
         } else {
             manifest.blocks[block as usize] = new_chunks;
