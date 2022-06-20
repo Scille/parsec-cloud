@@ -62,7 +62,7 @@ impl FileTransactions {
         &self.device.device_id
     }
 
-    fn normalize_argument(arg: i32, manifest: LocalFileManifest) -> u64 {
+    fn normalize_argument(arg: i64, manifest: LocalFileManifest) -> u64 {
         if arg < 0 {
             manifest.size
         } else {
@@ -88,7 +88,7 @@ impl FileTransactions {
 
     fn read_chunk<'a>(chunk: &Chunk, data: &'a [u8]) -> FSResult<&'a [u8]> {
         let begin = (chunk.start - chunk.raw_offset) as usize;
-        let end = (u64::from(chunk.stop) - chunk.raw_offset) as usize;
+        let end = (chunk.stop.get() - chunk.raw_offset) as usize;
         let len = data.len();
         if begin < end && end <= len {
             Ok(&data[begin..end])
@@ -101,7 +101,7 @@ impl FileTransactions {
         let data = Self::padded_data(
             content,
             offset,
-            offset + u64::from(chunk.stop) as i64 - chunk.start as i64,
+            offset + chunk.stop.get() as i64 - chunk.start as i64,
         );
         self.local_storage.set_chunk(chunk.id, &data)?;
         Ok(data.len())
@@ -114,13 +114,13 @@ impl FileTransactions {
 
         let mut missing = vec![];
         let (start, stop) = (chunks[0].start, chunks[chunks.len() - 1].stop);
-        let mut result = vec![0; (u64::from(stop) - start) as usize];
+        let mut result = vec![0; (stop.get() - start) as usize];
 
         for chunk in chunks {
             let data = self.local_storage.get_chunk(chunk.id)?;
             match Self::read_chunk(chunk, &data) {
                 Ok(data) => (&mut result
-                    [(chunk.start - start) as usize..(u64::from(chunk.stop) - start) as usize])
+                    [(chunk.start - start) as usize..(chunk.stop.get() - start) as usize])
                     .copy_from_slice(data),
                 _ => {
                     if let Some(access) = &chunk.access {
@@ -216,7 +216,7 @@ impl FileTransactions {
         &self,
         fd: FileDescriptor,
         mut content: &[u8],
-        offset: i32,
+        offset: i64,
         constrained: bool,
     ) -> FSResult<usize> {
         let manifest = self.local_storage.load_file_descriptor(fd)?;
@@ -227,7 +227,7 @@ impl FileTransactions {
 
         // Constrained - truncate content to the right length
         if constrained {
-            let end_offset = min(manifest.size as i32, offset + content.len() as i32);
+            let end_offset = min(manifest.size as i64, offset + content.len() as i64);
             let len = max(end_offset - offset, 0);
             content = &content[..len as usize];
         }
@@ -277,8 +277,8 @@ impl FileTransactions {
     pub async fn fd_read(
         &self,
         _fd: FileDescriptor,
-        _size: i32,
-        _offset: i32,
+        _size: i64,
+        _offset: i64,
         _raise_eof: bool,
     ) -> FSResult<Vec<u8>> {
         todo!();
