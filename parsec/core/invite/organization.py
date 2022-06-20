@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Optional
-from parsec.api.data.certif import TpekDerVerifyKeyCertificateContent
+from parsec.api.data.certif import SequesterDerVerifyKeyCertificateContent
 
 from parsec.crypto import SigningKey, VerifyKey
 from parsec.api.protocol import HumanHandle, DeviceLabel
@@ -20,7 +20,7 @@ from parsec.core.invite.exceptions import (
     InvitePeerResetError,
 )
 
-from parsec.tpek_crypto import DerPublicKey
+from parsec.sequester_crypto import DerPublicKey
 
 
 def _check_rep(rep, step_name):
@@ -38,13 +38,13 @@ async def bootstrap_organization(
     addr: BackendOrganizationBootstrapAddr,
     human_handle: Optional[HumanHandle],
     device_label: Optional[DeviceLabel],
-    tpek_der_public_key: Optional[DerPublicKey],
+    sequester_der_public_key: Optional[DerPublicKey],
 ) -> LocalDevice:
     root_signing_key = SigningKey.generate()
     root_verify_key = root_signing_key.verify_key
 
     # # TODO: shall it be a certificate from an authority, can it be validated
-    # signed_tpek_der_public_key = root_signing_key.sign(tpek_der_public_key)
+    # signed_sequester_der_public_key = root_signing_key.sign(sequester_der_public_key)
 
     organization_addr = BackendOrganizationAddr.build(
         backend_addr=addr.get_backend_addr(),
@@ -82,14 +82,14 @@ async def bootstrap_organization(
     device_certificate = device_certificate.dump_and_sign(root_signing_key)
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(root_signing_key)
 
-    if tpek_der_public_key:
-        tpek_certificate = TpekDerVerifyKeyCertificateContent(
-            author=None, verify_key=tpek_der_public_key
+    if sequester_der_public_key:
+        sequester_certificate = SequesterDerVerifyKeyCertificateContent(
+            author=None, verify_key=sequester_der_public_key
         )
 
-        tpek_certificate = tpek_certificate.dump_and_sign(root_verify_key)
+        sequester_certificate = sequester_certificate.dump_and_sign(root_verify_key)
     else:
-        tpek_certificate = None
+        sequester_certificate = None
 
     rep = await failsafe_organization_bootstrap(
         addr=addr,
@@ -98,7 +98,7 @@ async def bootstrap_organization(
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
-        signed_tpek_cerificate=tpek_certificate,
+        signed_sequester_cerificate=sequester_certificate,
     )
     _check_rep(rep, step_name="organization bootstrap")
 
@@ -112,7 +112,7 @@ async def failsafe_organization_bootstrap(
     device_certificate: bytes,
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
-    signed_tpek_certificate: Optional[bytes],
+    signed_sequester_certificate: Optional[bytes],
 ) -> dict:
     # Try the new anonymous API
     try:
@@ -123,7 +123,7 @@ async def failsafe_organization_bootstrap(
             device_certificate=device_certificate,
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
-            signed_tpek_signing_cert=signed_tpek_certificate,
+            signed_sequester_signing_cert=signed_sequester_certificate,
         )
     # If we get a 404 error, maybe the backend is too old to know about the anonymous route (API version < 2.6)
     except BackendNotAvailable as exc:
@@ -136,7 +136,7 @@ async def failsafe_organization_bootstrap(
             return rep
     # Then we try again with the legacy version
     async with apiv1_backend_anonymous_cmds_factory(addr) as anonymous_cmds:
-        if signed_tpek_certificate is not None:
+        if signed_sequester_certificate is not None:
             raise InviteError("Server doesn't support third party encryption key feature")
 
         return await anonymous_cmds.organization_bootstrap(

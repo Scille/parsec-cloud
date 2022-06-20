@@ -14,7 +14,7 @@ from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import bootstrap_organization as do_bootstrap_organization
 from parsec.core.cli.utils import cli_command_base_options, core_config_options, save_device_options
-from parsec.tpek_crypto import load_der_private_key
+from parsec.sequester_crypto import load_der_private_key
 
 
 async def _bootstrap_organization(
@@ -23,7 +23,7 @@ async def _bootstrap_organization(
     device_label: Optional[DeviceLabel],
     human_label: Optional[str],
     human_email: Optional[str],
-    tpek_der_public_key: Optional[bytes],
+    sequester_der_public_key: Optional[bytes],
     save_device_with_selected_auth: Callable,
 ) -> None:
     if not human_label:
@@ -40,7 +40,7 @@ async def _bootstrap_organization(
             addr,
             human_handle=human_handle,
             device_label=device_label,
-            tpek_der_public_key=tpek_der_public_key,
+            sequester_der_public_key=sequester_der_public_key,
         )
 
     # We don't have to worry about overwritting an existing keyfile
@@ -85,13 +85,13 @@ def bootstrap_organization(
         if third_party_encryption_key_signing_certificate is not None:
             # TODO: print a dialogue with confirmation to make sure user understand
             # what this option imply
-            tpek_der_private_key = load_der_private_key(
+            sequester_der_private_key = load_der_private_key(
                 third_party_encryption_key_signing_certificate
             )
             # Load the key to check key format
-            tpek_der_public_key = tpek_der_private_key.public_key.unwrap().dump()
+            sequester_der_public_key = sequester_der_private_key.public_key.unwrap().dump()
         else:
-            tpek_der_public_key = None
+            sequester_der_public_key = None
 
         trio_run(
             _bootstrap_organization,
@@ -100,6 +100,6 @@ def bootstrap_organization(
             device_label,
             human_label,
             human_email,
-            tpek_der_public_key,
+            sequester_der_public_key,
             save_device_with_selected_auth,
         )

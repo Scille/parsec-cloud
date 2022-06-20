@@ -716,8 +716,3 @@ class BackendPkiEnrollmentAddrField(fields.Field):
             return None
 
         return value.to_url()
-
-
-class BackendTpekServiceAddr(_PyBackendActionAddr):
-    # TODO
-    pass

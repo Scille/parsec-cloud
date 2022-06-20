@@ -4,13 +4,13 @@
 -------------------------------------------------------
 --  Migration
 -------------------------------------------------------
-ALTER TABLE organization ADD tpek_verify_key BYTEA;
+ALTER TABLE organization ADD sequester_verify_key BYTEA;
 
-CREATE TYPE tpek_service AS ENUM ('SEQUESTRE', 'WEBHOOK');
+CREATE TYPE sequester_service AS ENUM ('SEQUESTRE', 'WEBHOOK');
 
-CREATE TABLE tpek(
+CREATE TABLE sequester(
     _id SERIAL PRIMARY KEY,
-    service_type tpek_service NOT NULL,
+    service_type sequester_service NOT NULL,
     service_id TEXT NOT NULL,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     encryption_key BYTEA,  -- Encryption key signed by the certificate

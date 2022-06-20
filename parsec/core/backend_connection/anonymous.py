@@ -3,8 +3,8 @@
 from typing import Optional
 from uuid import UUID
 from structlog import get_logger
-from parsec.api.protocol.tpek import TpekServiceType
-from parsec.core.types.backend_address import BackendTpekServiceAddr
+from parsec.api.protocol.sequester import SequesterServiceType
+from parsec.core.types.backend_address import BackendSequesterServiceAddr
 
 from parsec.crypto import VerifyKey
 from parsec.utils import URLError
@@ -13,7 +13,7 @@ from parsec.api.protocol import (
     ProtocolError,
     pki_enrollment_submit_serializer,
     pki_enrollment_info_serializer,
-    tpek_register_service_serializer,
+    sequester_register_service_serializer,
     organization_bootstrap_serializer,
 )
 from parsec.core.types import (
@@ -112,7 +112,7 @@ async def organization_bootstrap(
     device_certificate: bytes,
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
-    signed_tpek_certificate: Optional[bytes],
+    signed_sequester_certificate: Optional[bytes],
 ) -> dict:
     return await _anonymous_cmd(
         organization_bootstrap_serializer,
@@ -125,24 +125,24 @@ async def organization_bootstrap(
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
-        tpek_verify_key_certificate=signed_tpek_certificate,
+        sequester_verify_key_certificate=signed_sequester_certificate,
     )
 
 
-async def tpek_register_service(
-    addr: BackendTpekServiceAddr,
-    service_type: TpekServiceType,
+async def sequester_register_service(
+    addr: BackendSequesterServiceAddr,
+    service_type: SequesterServiceType,
     service_id: UUID,
-    tpek_der_payload: bytes,
-    tpek_der_payload_signature: bytes,
+    sequester_der_payload: bytes,
+    sequester_der_payload_signature: bytes,
 ) -> dict:
     return await _anonymous_cmd(
-        tpek_register_service_serializer,
-        cmd="tpek_register_service",
+        sequester_register_service_serializer,
+        cmd="sequester_register_service",
         addr=addr,
         organization_id=addr.organization_id,
         service_type=service_type,
         service_id=service_id,
-        tpek_der_payload=tpek_der_payload,
-        tpek_der_payload_signature=tpek_der_payload_signature,
+        sequester_der_payload=sequester_der_payload,
+        sequester_der_payload_signature=sequester_der_payload_signature,
     )

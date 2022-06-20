@@ -28,8 +28,8 @@ from parsec.crypto import (
     PrivateKey as _PrivateKey,
     PublicKey as _PublicKey,
 )
-from parsec.tpek_crypto import DerPublicKey as _DerPublicKey
-from parsec.tpek_crypto import load_der_public_key
+from parsec.sequester_crypto import DerPublicKey as _DerPublicKey
+from parsec.sequester_crypto import load_der_public_key
 
 
 __all__ = (

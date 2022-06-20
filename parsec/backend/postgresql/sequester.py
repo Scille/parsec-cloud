@@ -2,17 +2,17 @@
 
 
 from uuid import UUID
-from parsec.api.protocol.tpek import TpekServiceType
+from parsec.api.protocol.sequester import SequesterServiceType
 from parsec.api.protocol.types import OrganizationID
 from parsec.backend.postgresql.handler import PGHandler
 
-from parsec.backend.tpek import BaseTpekComponent
+from parsec.backend.sequester import BaseSequesterComponent
 
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 
-_q_create_tpek_service = Q(
+_q_create_sequester_service = Q(
     f"""
-    INSERT  INTO tpek(
+    INSERT  INTO sequester(
         service_type,
         service_id,
         organization,
@@ -28,9 +28,9 @@ _q_create_tpek_service = Q(
     """
 )
 
-_q_update_tpek_service = Q(
+_q_update_sequester_service = Q(
     f"""
-    UPDATE tpek
+    UPDATE sequester
     SET
         encryption_key=$encryption_key,
         service_type=$service_type
@@ -41,10 +41,10 @@ _q_update_tpek_service = Q(
     """
 )
 
-_q_get_tpek_service_for_update = Q(
+_q_get_sequester_service_for_update = Q(
     f"""
     SELECT _id
-    FROM tpek
+    FROM sequester
     WHERE
         organization={q_organization_internal_id("$organization_id") }
         AND service_id = $service_id
@@ -53,16 +53,16 @@ _q_get_tpek_service_for_update = Q(
     """
 )
 
-_q_get_organisation_tpek_verify_key = Q(
+_q_get_organisation_sequester_verify_key = Q(
     f"""
-    SELECT tpek_verify_key
+    SELECT sequester_verify_key
     FROM organization
     WHERE organization.organization_id={q_organization_internal_id("$organization_id")}
     """
 )
 
 
-class PGPTpekComponent(BaseTpekComponent):
+class PGPSequesterComponent(BaseSequesterComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 
@@ -70,46 +70,46 @@ class PGPTpekComponent(BaseTpekComponent):
         self,
         organization_id: OrganizationID,
         service_id: UUID,
-        service_type: TpekServiceType,
-        tpek_encryption_key_payload: bytes,
-        tpek_encryption_key_payload_signature: bytes,
+        service_type: SequesterServiceType,
+        sequester_encryption_key_payload: bytes,
+        sequester_encryption_key_payload_signature: bytes,
     ):
         pass
 
         # async with self.dbh.pool.acquire() as conn, conn.transaction():
         #     row = await conn.fetchrow(
-        #         *_q_get_organisation_tpek_verify_key(organization_id=organization_id.str)
+        #         *_q_get_organisation_sequester_verify_key(organization_id=organization_id.str)
         #     )
         #     if not row:
         #         # TODO:error
         #         pass
-        #     tpek_verify_key = load_der_public_key(row["tpek_verify_key"])
-        #     verify_tpek_der_signature(
-        #         tpek_verify_key,
-        #         tpek_certificate_signed_encryption_key,
-        #         tpek_certificate_encryption_key.unwrap().dump(),
+        #     sequester_verify_key = load_der_public_key(row["sequester_verify_key"])
+        #     verify_sequester_der_signature(
+        #         sequester_verify_key,
+        #         sequester_certificate_signed_encryption_key,
+        #         sequester_certificate_encryption_key.unwrap().dump(),
         #     )
         #     row = await conn.fetchrow(
-        #         *_q_get_tpek_service_for_update(
+        #         *_q_get_sequester_service_for_update(
         #             organization_id=organization_id.str, sercice_id=service_id
         #         )
         #     )
         #     if not row:
         #         result = await conn.execute(
-        #             *_q_create_tpek_service(
+        #             *_q_create_sequester_service(
         #                 organization_id=organization_id.str,
         #                 service_type=service_type.value,
         #                 service_id=service_id,
-        #                 encryption_key=tpek_certificate,
+        #                 encryption_key=sequester_certificate,
         #             )
         #         )
         #         if result != "INSERT 0 1":
-        #             raise TpekError(f"Insertion Error: {result}")
+        #             raise SequesterError(f"Insertion Error: {result}")
         #     else:
         #         result = await conn.execute(
-        #             *_q_update_tpek_service(
-        #                 service_type=service_type.value, encryption_key=tpek_certificate
+        #             *_q_update_sequester_service(
+        #                 service_type=service_type.value, encryption_key=sequester_certificate
         #             )
         #         )
         #         if result != "UPDATE 1":
-        #             raise TpekError(f"Update Error: {result}")
+        #             raise SequesterError(f"Update Error: {result}")

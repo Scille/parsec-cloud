@@ -13,11 +13,11 @@ DerPrivateKey = _PrivateKey
 hash_algorithm = "sha256"
 
 
-class TpekCryptoError(Exception):
+class SequesterCryptoError(Exception):
     pass
 
 
-class TpekCryptoSignatureError(TpekCryptoError):
+class SequesterCryptoSignatureError(SequesterCryptoError):
     pass
 
 
@@ -29,19 +29,19 @@ def load_der_private_key(path: Path) -> DerPrivateKey:
     return oscrypto.asymmetric.load_private_key(path)
 
 
-def verify_tpek(public_key: DerPublicKey, data: bytes, signature: bytes) -> None:
+def verify_sequester(public_key: DerPublicKey, data: bytes, signature: bytes) -> None:
     """
     Raises:
-        TpekCryptoSignatureError
-        TpekCryptoError
+        SequesterCryptoSignatureError
+        SequesterCryptoError
     """
     try:
         oscrypto.asymmetric.rsa_pss_verify(public_key, signature, data, hash_algorithm)
     except oscrypto.errors.SignatureError:
-        raise TpekCryptoSignatureError()
+        raise SequesterCryptoSignatureError()
     except OSError:
-        raise TpekCryptoError()
+        raise SequesterCryptoError()
 
 
-def sign_tpek(private_key: DerPrivateKey, data: bytes) -> bytes:
+def sign_sequester(private_key: DerPrivateKey, data: bytes) -> bytes:
     return oscrypto.asymmetric.rsa_pss_sign(private_key, data, hash_algorithm)

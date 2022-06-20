@@ -25,7 +25,7 @@ from parsec.backend.memory.block import MemoryBlockComponent
 from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.events import BackendEvent
 
-from parsec.tpek_crypto import DerPublicKey
+from parsec.sequester_crypto import DerPublicKey
 
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):
@@ -77,7 +77,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             root_verify_key=None,
             active_users_limit=active_users_limit,
             user_profile_outsider_allowed=user_profile_outsider_allowed,
-            tpek_verify_key=None,
+            sequester_verify_key=None,
         )
 
     async def get(self, id: OrganizationID) -> Organization:
@@ -92,7 +92,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        tpek_verify_key: DerPublicKey,
+        sequester_verify_key: DerPublicKey,
     ) -> None:
         # Organization bootstrap involves multiple modifications (in user,
         # device and organization) and is not atomic (given await is used),
@@ -114,7 +114,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 raise OrganizationFirstUserCreationError(exc) from exc
 
             self._organizations[organization.organization_id] = organization.evolve(
-                root_verify_key=root_verify_key, tpek_verify_key=tpek_verify_key
+                root_verify_key=root_verify_key, sequester_verify_key=sequester_verify_key
             )
 
     async def stats(self, id: OrganizationID) -> OrganizationStats:

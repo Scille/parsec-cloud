@@ -4,9 +4,9 @@ import attr
 import pendulum
 from typing import Optional, Union, List
 from secrets import token_hex
-from parsec.api.data.certif import TpekDerVerifyKeyCertificateContent
+from parsec.api.data.certif import SequesterDerVerifyKeyCertificateContent
 
-from parsec.tpek_crypto import DerPublicKey
+from parsec.sequester_crypto import DerPublicKey
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import (
@@ -61,7 +61,7 @@ class Organization:
     root_verify_key: Optional[VerifyKey]
     user_profile_outsider_allowed: bool
     active_users_limit: Optional[int]
-    tpek_verify_key: Optional[DerPublicKey]
+    sequester_verify_key: Optional[DerPublicKey]
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
@@ -163,12 +163,12 @@ class BaseOrganizationComponent:
         root_verify_key = msg["root_verify_key"]
 
         try:
-            tpek_der_public_key = TpekDerVerifyKeyCertificateContent.verify_and_load(
-                msg["tpek_verify_key"], author_verify_key=root_verify_key, expected_author=None
+            sequester_der_public_key = SequesterDerVerifyKeyCertificateContent.verify_and_load(
+                msg["sequester_verify_key"], author_verify_key=root_verify_key, expected_author=None
             )
         except DataError:
             return {
-                "status": "invalid tpek_verify_key",
+                "status": "invalid sequester_verify_key",
                 "reason": "Invalid signature for tpel verify key",
             }
 
@@ -283,7 +283,7 @@ class BaseOrganizationComponent:
                 first_device,
                 bootstrap_token,
                 root_verify_key,
-                tpek_der_public_key.verify_key,
+                sequester_der_public_key.verify_key,
             )
 
         except OrganizationAlreadyBootstrappedError:
@@ -336,7 +336,7 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        tpek_verify_key: DerPublicKey,
+        sequester_verify_key: DerPublicKey,
     ) -> None:
         """
         Raises:

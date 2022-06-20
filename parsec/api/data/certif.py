@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional, Any, Dict, Type, TypeVar
 from marshmallow import ValidationError
 from pendulum import DateTime
 
-from parsec.tpek_crypto import DerPublicKey
+from parsec.sequester_crypto import DerPublicKey
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.serde import fields, post_load
 from parsec.api.protocol import (
@@ -248,14 +248,14 @@ class RealmRoleCertificateContent(BaseAPISignedData):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class TpekDerVerifyKeyCertificateContent(BaseAPISignedData):
+class SequesterDerVerifyKeyCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
-        type = fields.CheckedConstant("tpek_der_verify_key_certificate", required=True)
+        type = fields.CheckedConstant("sequester_der_verify_key_certificate", required=True)
         verify_key = fields.DerPublicKey(required=True)
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "TpekDerVerifyKeyCertificateContent":
+        def make_obj(self, data: Dict[str, Any]) -> "SequesterDerVerifyKeyCertificateContent":
             data.pop("type")
-            return TpekDerVerifyKeyCertificateContent(**data)
+            return SequesterDerVerifyKeyCertificateContent(**data)
 
     verify_key: DerPublicKey

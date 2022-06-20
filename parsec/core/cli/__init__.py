@@ -15,7 +15,7 @@ from parsec.core.cli import bootstrap_organization
 from parsec.core.cli import rsync
 from parsec.core.cli import run
 from parsec.core.cli import pki
-from parsec.core.cli import tpek
+from parsec.core.cli import sequester
 
 __all__ = ("core_cmd",)
 
@@ -52,4 +52,4 @@ core_cmd.add_command(pki.pki_enrollment_poll, "pki_enrollment_poll")
 core_cmd.add_command(pki.pki_enrollment_review_pendings, "pki_enrollment_review_pendings")
 
 
-core_cmd.add_command(tpek.tpek_register_service, "tpek_register_service")
+core_cmd.add_command(sequester.sequester_register_service, "sequester_register_service")

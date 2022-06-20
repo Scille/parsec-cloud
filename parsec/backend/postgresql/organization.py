@@ -27,7 +27,7 @@ from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 from parsec.backend.postgresql.handler import send_signal
 
 
-from parsec.tpek_crypto import DerPublicKey
+from parsec.sequester_crypto import DerPublicKey
 
 _q_insert_organization = Q(
     """
@@ -66,7 +66,7 @@ ON CONFLICT (organization_id) DO
 
 _q_get_organization = Q(
     """
-SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed, tpek_verify_key
+SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed, sequester_verify_key
 FROM organization
 WHERE organization_id = $organization_id
 """
@@ -75,7 +75,7 @@ WHERE organization_id = $organization_id
 
 _q_get_organization_for_update = Q(
     """
-SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed, tpek_verify_key
+SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed, sequester_verify_key
 FROM organization
 WHERE organization_id = $organization_id
 FOR UPDATE
@@ -89,7 +89,7 @@ UPDATE organization
 SET
     root_verify_key = $root_verify_key,
     _bootstrapped_on = NOW(),
-    tpek_verify_key = $tpek_verify_key
+    sequester_verify_key = $sequester_verify_key
 
 WHERE
     organization_id = $organization_id
@@ -214,7 +214,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             is_expired=data[2],
             active_users_limit=data[3],
             user_profile_outsider_allowed=data[4],
-            tpek_verify_key=data[5],
+            sequester_verify_key=data[5],
         )
 
     async def bootstrap(
@@ -224,7 +224,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        tpek_verify_key: DerPublicKey,
+        sequester_verify_key: DerPublicKey,
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the
@@ -248,7 +248,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     organization_id=id.str,
                     bootstrap_token=bootstrap_token,
                     root_verify_key=root_verify_key.encode(),
-                    tpek_verify_key=tpek_verify_key.unwrap().dump(),
+                    sequester_verify_key=sequester_verify_key.unwrap().dump(),
                 )
             )
 
