@@ -164,8 +164,8 @@ async def test_chunk_clearing(alice_workspace_storage, cache_only, clear_manifes
 
         # The chunks are still accessible
         if cache_only:
-            await aws.get_chunk(chunk1.id) == b"abc"
-            await aws.get_chunk(chunk2.id) == b"def"
+            assert await aws.get_chunk(chunk1.id) == b"abc"
+            assert await aws.get_chunk(chunk2.id) == b"def"
 
         # The chunks are gone
         else:
