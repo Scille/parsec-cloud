@@ -1,0 +1,35 @@
+parameters:
+  - name: cargo_home_dir
+    type: string
+    default: $(HOME)/.cargo
+  - name: cargo_target_dir
+    type: string
+    default: ./target
+
+steps:
+  - task: Cache@2
+    inputs:
+      key: '"cargo-target" | "$(Agent.OS)" | Cargo.lock'
+      restoreKeys: |
+        cargo-target | "$(Agent.OS)"
+        cargo-target
+      path: $(cargo_target_dir)
+    displayName: Cache cargo target
+
+  - task: Cache@2
+    inputs:
+      key: '"cargo-git" | "$(Agent.OS)" | Cargo.lock'
+      restoreKeys: |
+        cargo-git | "$(Agent.OS)"
+        cargo-git
+      path: $(cargo_home_dir)/git
+    displayName: Cache cargo git
+
+  - task: Cache@2
+    inputs:
+      key: '"cargo-registry" | "$(Agent.OS)" | Cargo.lock'
+      restoreKeys: |
+        cargo-registry | "$(Agent.OS)"
+        cargo-registry
+      path: $(cargo_home_dir)/registry
+    displayName: Cache cargo registry

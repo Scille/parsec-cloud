@@ -112,6 +112,8 @@ jobs:
           rustup component add rustfmt clippy
         displayName: Bootstrap
 
+      - template: ci/cache-rust.yml
+
       - bash: |
           sed -i '/id: mixed-line-ending/a\        args:\n\          - "--fix=lf"' .pre-commit-config.yaml
           cat .pre-commit-config.yaml
@@ -226,11 +228,14 @@ jobs:
     steps:
       - checkout: self
         submodules: true
+
       - download: current
         artifact: wheel
+
       - task: UsePythonVersion@0
         inputs:
           versionSpec: $(python.version)
+
       - bash: |
           set -eux
           sudo apt-get update
@@ -242,6 +247,9 @@ jobs:
           python -m pip install 'pip>=21.3' --user --upgrade
           python -m pip --version
         displayName: Bootstrap
+
+      - template: ci/cache-rust.yml
+
       - bash: |
           set -eux
 
@@ -252,6 +260,7 @@ jobs:
           cargo test --workspace --features mock-time
         workingDirectory: $(Build.SourcesDirectory)/oxidation
         displayName: Rust Tests
+
       - bash: |
           set -eux
           # Remove the parsec folder from the source to force use of the wheel
@@ -267,6 +276,7 @@ jobs:
           python -m pip check parsec[core,backend]
           python -m pip check libparsec_python
         displayName: Install
+
       - bash: |
           set -eux
           python -m pytest $(pytest.base_args) tests -n auto --runrust
@@ -301,6 +311,7 @@ jobs:
             desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
           psql --version
         displayName: Bootstrap
+
       - bash: |
           set -eux
           # Remove the parsec folder from the source to force use of the wheel
