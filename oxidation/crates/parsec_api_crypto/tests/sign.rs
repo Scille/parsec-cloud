@@ -83,3 +83,25 @@ test_msgpack_serialization!(
     hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537"),
     hex!("c42078958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537")
 );
+
+#[test]
+fn signing_key_should_verify_length_when_deserialize() {
+    let data = hex!("c40564756d6d79");
+    assert_eq!(
+        rmp_serde::from_slice::<SigningKey>(&data)
+            .unwrap_err()
+            .to_string(),
+        "Invalid data size"
+    );
+}
+
+#[test]
+fn verify_key_should_verify_length_when_deserialize() {
+    let data = hex!("c40564756d6d79");
+    assert_eq!(
+        rmp_serde::from_slice::<VerifyKey>(&data)
+            .unwrap_err()
+            .to_string(),
+        "Invalid data size"
+    );
+}

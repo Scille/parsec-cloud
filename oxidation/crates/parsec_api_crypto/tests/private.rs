@@ -81,3 +81,25 @@ test_msgpack_serialization!(
     hex!("397120b8638d42d15c2280d580010b010546d5f4c9d2d6ea8bf80baed7f28f11"),
     hex!("c420397120b8638d42d15c2280d580010b010546d5f4c9d2d6ea8bf80baed7f28f11")
 );
+
+#[test]
+fn private_key_should_verify_length_when_deserialize() {
+    let data = hex!("c40564756d6d79");
+    assert_eq!(
+        rmp_serde::from_slice::<PrivateKey>(&data)
+            .unwrap_err()
+            .to_string(),
+        "Invalid data size"
+    );
+}
+
+#[test]
+fn public_key_should_verify_length_when_deserialize() {
+    let data = hex!("c40564756d6d79");
+    assert_eq!(
+        rmp_serde::from_slice::<PublicKey>(&data)
+            .unwrap_err()
+            .to_string(),
+        "Invalid data size"
+    );
+}
