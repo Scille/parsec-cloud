@@ -53,6 +53,7 @@ async def test_organization_bootstrap(
     alice,
     apiv1_backend_ws_factory,
     backend_authenticated_ws_factory,
+    unused_tcp_port,
 ):
     neworg = organization_factory("NewOrg")
     await backend_asgi_app.backend.organization.create(
@@ -80,7 +81,7 @@ async def test_organization_bootstrap(
     # Ensure webhook has been triggered
     assert webhook_spy == [
         (
-            "http://example.com:888888/webhook",
+            f"http://127.0.0.1:{unused_tcp_port}/webhook",
             {
                 "device_id": "alice@dev1",
                 "device_label": "My dev1 machine",

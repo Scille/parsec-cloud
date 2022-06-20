@@ -26,9 +26,8 @@ st_fs = st.sampled_from(["fs_1", "fs_2"])
 def test_fs_online_concurrent_tree_and_sync(
     hypothesis_settings,
     reset_testbed,
-    backend_addr,
     backend_factory,
-    server_factory,
+    running_backend_factory,
     user_fs_factory,
     alice,
     alice2,
@@ -48,7 +47,7 @@ def test_fs_online_concurrent_tree_and_sync(
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client) as server:
+                    async with running_backend_factory(backend) as server:
                         await started_cb(backend=backend, server=server)
 
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)

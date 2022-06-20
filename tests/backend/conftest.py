@@ -17,14 +17,8 @@ from parsec.api.protocol import (
     APIV1_AnonymousClientHandshake,
 )
 from parsec.backend.realm import RealmGrantedRole
-from parsec.backend.asgi import app_factory
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.types import LocalDevice
-
-
-@pytest.fixture
-def backend_asgi_app(backend):
-    return app_factory(backend)
 
 
 @pytest.fixture
@@ -138,7 +132,7 @@ async def apiv1_anonymous_ws(apiv1_backend_ws_factory, backend_asgi_app):
         yield ws
 
 
-class AnonymousWsTransport:
+class AnonymousClientFakingWebsocket:
     def __init__(self, client, organization_id: OrganizationID):
         self.organization_id = organization_id
         self.client = client
@@ -169,7 +163,7 @@ def backend_anonymous_ws_factory():
     @asynccontextmanager
     async def _backend_anonymous_ws_factory(backend_asgi_app, organization_id: OrganizationID):
         client = backend_asgi_app.test_client()
-        yield AnonymousWsTransport(client, organization_id)
+        yield AnonymousClientFakingWebsocket(client, organization_id)
 
     return _backend_anonymous_ws_factory
 

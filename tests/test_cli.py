@@ -34,7 +34,7 @@ from parsec.core.types import (
 )
 from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
 
-from tests.common import AsyncMock, real_clock_timeout, backend_handle_client_factory
+from tests.common import AsyncMock, real_clock_timeout, asgi_app_handle_client_factory
 
 CWD = Path(__file__).parent.parent
 
@@ -682,14 +682,17 @@ def test_pki_enrollment_not_available(tmp_path, alice, no_parsec_extension):
 
 
 @asynccontextmanager
-async def cli_with_running_backend_testbed(backend, *devices):
+async def cli_with_running_backend_testbed(backend_asgi_app, *devices):
     # The cli commands are going to run in a separate thread with they own trio loop,
     # hence we should not share memory channel / events between trio loops otherwise
     # unexpected errors will occur !
     async with trio.open_service_nursery() as nursery:
         listeners = await nursery.start(
             partial(
-                trio.serve_tcp, backend_handle_client_factory(backend), port=0, host="127.0.0.1"
+                trio.serve_tcp,
+                asgi_app_handle_client_factory(backend_asgi_app),
+                port=0,
+                host="127.0.0.1",
             )
         )
         _, port, *_ = listeners[0].socket.getsockname()
@@ -725,8 +728,8 @@ async def cli_with_running_backend_testbed(backend, *devices):
 @pytest.mark.trio
 @pytest.mark.real_tcp
 @pytest.mark.flaky(reruns=1)
-async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, alice):
-    async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
+async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend_asgi_app, alice):
+    async with cli_with_running_backend_testbed(backend_asgi_app, alice) as (backend_addr, alice):
         # First, save the local device needed for pki_enrollment_review_pendings command
         config_dir = tmp_path / "config"
         alice_password = "S3cr3t"

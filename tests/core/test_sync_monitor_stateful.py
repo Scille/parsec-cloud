@@ -54,9 +54,8 @@ def test_sync_monitor_stateful(
     hypothesis_settings,
     frozen_clock,
     reset_testbed,
-    backend_addr,
     backend_factory,
-    server_factory,
+    running_backend_factory,
     core_factory,
     user_fs_factory,
     alice,
@@ -124,7 +123,7 @@ def test_sync_monitor_stateful(
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client) as server:
+                    async with running_backend_factory(backend) as server:
                         await started_cb(backend=backend, server=server)
 
             self.backend_controller = await self.get_root_nursery().start(

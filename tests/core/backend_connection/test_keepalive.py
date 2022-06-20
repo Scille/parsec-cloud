@@ -31,6 +31,7 @@ async def _test_keepalive(frozen_clock, monkeypatch, cmds_factory):
                 await ping_events_sender.send((transport, event))
             return event
 
+    # Transport is only used by client
     monkeypatch.setattr(Transport, "_next_ws_event", _mocked_next_ws_event)
 
     async with cmds_factory(keepalive=KEEPALIVE_TIME) as cmds:
@@ -45,18 +46,12 @@ async def _test_keepalive(frozen_clock, monkeypatch, cmds_factory):
             await transport_ready.wait()
             await frozen_clock.sleep_with_autojump(KEEPALIVE_TIME + 1)
             async with frozen_clock.real_clock_timeout():
-                backend_transport, event = await ping_events_receiver.receive()
-                assert isinstance(event, Ping)
                 client_transport, event = await ping_events_receiver.receive()
                 assert isinstance(event, Pong)
-                assert client_transport is not backend_transport
 
             # Wait for another ping, just to be sure...
             await frozen_clock.sleep_with_autojump(KEEPALIVE_TIME + 1)
             async with frozen_clock.real_clock_timeout():
-                backend_transport2, event = await ping_events_receiver.receive()
-                assert isinstance(event, Ping)
-                assert backend_transport is backend_transport2
                 client_transport2, event = await ping_events_receiver.receive()
                 assert isinstance(event, Pong)
                 assert client_transport is client_transport2

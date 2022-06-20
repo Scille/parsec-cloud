@@ -27,7 +27,7 @@ def test_workspace_reencryption_need(
     reset_testbed,
     backend_factory,
     backend_data_binder_factory,
-    server_factory,
+    running_backend_factory,
     user_fs_factory,
     local_device_factory,
     alice,
@@ -52,7 +52,7 @@ def test_workspace_reencryption_need(
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client) as server:
+                    async with running_backend_factory(backend) as server:
                         await started_cb(backend=backend, server=server)
 
             self.backend_controller = await self.get_root_nursery().start(

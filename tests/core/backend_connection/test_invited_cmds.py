@@ -62,6 +62,7 @@ async def test_ping(running_backend, invitation_addr):
 
 @pytest.mark.trio
 async def test_handshake_organization_expired(running_backend, expiredorg, expiredorgalice):
+    print("===============")
     invitation = await running_backend.backend.invite.new_for_device(
         organization_id=expiredorgalice.organization_id, greeter_user_id=expiredorgalice.user_id
     )

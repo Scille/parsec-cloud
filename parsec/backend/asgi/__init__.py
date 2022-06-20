@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+from typing import Type
 from quart import render_template, Response, request, redirect as quart_redirect
 from quart_trio import QuartTrio
 
@@ -17,8 +18,8 @@ from parsec.backend.templates import JINJA_ENV_CONFIG
 MAX_CONTENT_LENGTH = 1 * 1024 ** 2
 
 
-def app_factory(backend: BackendApp) -> QuartTrio:
-    app = QuartTrio(
+def app_factory(backend: BackendApp, app_cls: Type[QuartTrio] = QuartTrio) -> QuartTrio:
+    app = app_cls(
         __name__, static_folder="../static", static_url_path="/static", template_folder="templates"
     )
     app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH

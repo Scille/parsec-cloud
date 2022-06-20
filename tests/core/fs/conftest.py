@@ -170,13 +170,13 @@ def user_fs_offline_state_machine(
 
 @pytest.fixture
 def user_fs_online_state_machine(
-    user_fs_offline_state_machine, backend_factory, server_factory, reset_testbed
+    user_fs_offline_state_machine, backend_factory, running_backend_factory, reset_testbed
 ):
     class UserFSOnlineStateMachine(user_fs_offline_state_machine):
         async def start_backend(self, **kwargs):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory(**kwargs) as backend:
-                    async with server_factory(backend.handle_client) as server:
+                    async with running_backend_factory(backend) as server:
                         await started_cb(backend=backend, server=server)
 
             self.backend_controller = await self.get_root_nursery().start(
