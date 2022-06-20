@@ -488,7 +488,8 @@ mod tests {
                 if source.len() != 1 || source[0].id != new_chunk.id {
                     self.write_chunk(&new_chunk, &data, 0);
                 }
-                manifest.set_single_block(block, new_chunk);
+                let old_block = manifest.set_single_block(block, new_chunk);
+                assert!(old_block.is_some());
                 for removed_id in removed_ids {
                     self.clear_chunk_data(removed_id);
                 }
