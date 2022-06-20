@@ -102,13 +102,14 @@ pub(crate) fn prepare_resize<'a>(
 pub(crate) fn prepare_reshape(py: Python, manifest: LocalFileManifest) -> PyResult<&PyList> {
     let iterator = file_operations::prepare_reshape(&manifest.0);
     let collected: Vec<_> = iterator
-        .map(|(old_chunks, new_chunk, block, to_remove)| {
+        .map(|(block, old_chunks, new_chunk, write_back, to_remove)| {
             Ok(PyTuple::new(
                 py,
                 vec![
+                    block.into_py(py),
                     to_py_chunks(py, old_chunks).into_py(py),
                     Chunk(new_chunk).into_py(py),
-                    block.into_py(py),
+                    write_back.into_py(py),
                     to_py_removed_ids(py, to_remove)?.into_py(py),
                 ],
             ))

@@ -222,7 +222,9 @@ def prepare_resize(
 # Reshape
 
 
-def prepare_reshape(manifest: LocalFileManifest) -> Iterator[Tuple[Chunks, Chunk, int, ChunkIDSet]]:
+def prepare_reshape(
+    manifest: LocalFileManifest
+) -> Iterator[Tuple[int, Chunks, Chunk, bool, ChunkIDSet]]:
 
     # Loop over blocks
     for block, chunks in enumerate(manifest.blocks):
@@ -233,7 +235,7 @@ def prepare_reshape(manifest: LocalFileManifest) -> Iterator[Tuple[Chunks, Chunk
 
         # Already a pseudo-block
         if len(chunks) == 1 and chunks[0].is_pseudo_block():
-            yield (chunks, chunks[0], block, set())
+            yield (block, chunks, chunks[0], False, set())
             continue
 
         # Prepare new block
@@ -244,7 +246,7 @@ def prepare_reshape(manifest: LocalFileManifest) -> Iterator[Tuple[Chunks, Chunk
         removed_ids = chunk_id_set(chunks)
 
         # Yield operations
-        yield (chunks, new_chunk, block, removed_ids)
+        yield (block, chunks, new_chunk, True, removed_ids)
 
 
 _py_prepare_read = prepare_read

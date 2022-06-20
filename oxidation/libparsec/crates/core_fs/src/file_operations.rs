@@ -352,22 +352,26 @@ pub fn prepare_resize(
 // Prepare reshape
 
 /// Prepare a reshape operation without updating the provided manifest.
+/// The reason why the manifest is not updated is because the hash of the corresponding data is required to turn a chunk into a block.
+/// Instead, it's up to the caller to call `chunk.evolve_as_block` and `manifest.set_single_block` to update the manifest.
 ///
 /// Return an iterator where each item corresponds to a block to reshape.
 /// Each item consists of:
+/// - the index of the block that is being reshaped
 /// - a source block, represented as a `Vec` of chunks
 /// - a destination block, represented as a single chunk
-/// - the index of the block that is being reshaped
+/// - a write back boolean indicating the new chunk must be written
 /// - a `HashSet` of chunk IDs that must cleaned up from the storage
 pub fn prepare_reshape(
     manifest: &LocalFileManifest,
-) -> impl Iterator<Item = (Vec<Chunk>, Chunk, u64, HashSet<ChunkID>)> + '_ {
+) -> impl Iterator<Item = (u64, Vec<Chunk>, Chunk, bool, HashSet<ChunkID>)> + '_ {
     // Loop over blocks
     manifest
         .blocks
         .iter()
         .enumerate()
         .filter_map(|(block, chunks)| {
+            let block = block as u64;
             // Already a valid block
             if chunks.len() == 1 && chunks[0].is_block() {
                 None
@@ -375,7 +379,8 @@ pub fn prepare_reshape(
             } else if chunks.len() == 1 && chunks[0].is_pseudo_block() {
                 let new_chunk = chunks[0].clone();
                 let to_remove = HashSet::new();
-                Some((chunks.to_vec(), new_chunk, block as u64, to_remove))
+                let write_back = false;
+                Some((block, chunks.to_vec(), new_chunk, write_back, to_remove))
             // Reshape those chunks as a single block
             } else {
                 // Start and stop should be 0 and blocksize respectively
@@ -383,7 +388,8 @@ pub fn prepare_reshape(
                 let stop = chunks.last().expect("A block cannot be empty").stop;
                 let new_chunk = Chunk::new(start, stop);
                 let to_remove = chunks.iter().map(|x| x.id).collect();
-                Some((chunks.to_vec(), new_chunk, block as u64, to_remove))
+                let write_back = true;
+                Some((block, chunks.to_vec(), new_chunk, write_back, to_remove))
             }
         })
 }
@@ -503,10 +509,10 @@ mod tests {
 
         fn reshape(&mut self, manifest: &mut LocalFileManifest) {
             let collected: Vec<_> = prepare_reshape(manifest).collect();
-            for (source, destination, block, removed_ids) in collected {
+            for (block, source, destination, write_back, removed_ids) in collected {
                 let data = self.build_data(&source);
                 let new_chunk = destination.evolve_as_block(&data).unwrap();
-                if source.len() != 1 || source[0].id != new_chunk.id {
+                if write_back {
                     self.write_chunk(&new_chunk, &data, 0);
                 }
                 let old_block = manifest.set_single_block(block, new_chunk);
