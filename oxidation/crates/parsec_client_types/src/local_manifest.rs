@@ -81,8 +81,7 @@ impl Chunk {
             stop,
             raw_offset: start,
             // TODO: what to do with overflow
-            raw_size: NonZeroU64::try_from(u64::from(stop) - start)
-                .unwrap_or_else(|_| unreachable!()),
+            raw_size: NonZeroU64::try_from(stop.get() - start).unwrap_or_else(|_| unreachable!()),
             access: None,
         }
     }
@@ -93,7 +92,7 @@ impl Chunk {
             raw_size: block_access.size,
             start: block_access.offset,
             // TODO: what to do with overflow
-            stop: (block_access.offset + u64::from(block_access.size))
+            stop: (block_access.offset + block_access.size.get())
                 .try_into()
                 .unwrap_or_else(|_| unreachable!()),
             access: Some(block_access),
@@ -116,7 +115,7 @@ impl Chunk {
             id: BlockID::from(*self.id),
             key: SecretKey::generate(),
             offset: self.start,
-            size: (u64::from(self.stop) - self.start)
+            size: (self.stop.get() - self.start)
                 .try_into()
                 .map_err(|_| "Stop - Start must be > 0")?,
             digest: HashDigest::from_data(data),
@@ -145,7 +144,7 @@ impl Chunk {
             return false;
         }
         // Not right aligned
-        if u64::from(self.stop) != self.raw_offset + u64::from(self.raw_size) {
+        if self.stop.get() != self.raw_offset + self.raw_size.get() {
             return false;
         }
         true
@@ -256,7 +255,7 @@ impl LocalFileManifest {
                 assert_eq!(chunk.start, current);
                 assert!(chunk.start < chunk.stop.into());
                 assert!(chunk.raw_offset <= chunk.start);
-                assert!(u64::from(chunk.stop) <= chunk.raw_offset + u64::from(chunk.raw_size));
+                assert!(chunk.stop.get() <= chunk.raw_offset + chunk.raw_size.get());
                 current = chunk.stop.into()
             }
         }
