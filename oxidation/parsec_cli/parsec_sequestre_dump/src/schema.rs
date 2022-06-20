@@ -4,52 +4,52 @@ use diesel::{allow_tables_to_appear_in_same_query, joinable, table};
 
 table! {
     block (_id) {
-        _id -> Nullable<Integer>,
+        _id -> BigInt,
         block_id -> Binary,
         data -> Binary,
-        author -> Integer,
-        size -> Integer,
+        author -> BigInt,
+        size -> BigInt,
         created_on -> Double,
     }
 }
 
 table! {
     device (_id) {
-        _id -> Nullable<Integer>,
+        _id -> BigInt,
         device_certificate -> Binary,
     }
 }
 
 table! {
     info (magic) {
-        magic -> Integer,
-        version -> Integer,
+        magic -> BigInt,
+        version -> BigInt,
         realm_id -> Binary,
     }
 }
 
 table! {
     realm_role (_id) {
-        _id -> Nullable<Integer>,
+        _id -> BigInt,
         role_certificate -> Binary,
     }
 }
 
 table! {
     user_ (_id) {
-        _id -> Nullable<Integer>,
+        _id -> BigInt,
         user_certificate -> Binary,
     }
 }
 
 table! {
     vlob_atom (_id) {
-        _id -> Nullable<Integer>,
+        _id -> BigInt,
         vlob_id -> Binary,
-        version -> Integer,
+        version -> BigInt,
         blob -> Binary,
-        size -> Integer,
-        author -> Integer,
+        size -> BigInt,
+        author -> BigInt,
         timestamp -> Double,
     }
 }

@@ -7,12 +7,13 @@ license = " BUSL-1.1"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-parsec_api_crypto = { path = "../../crates/parsec_api_crypto" }
-parsec_api_types = { path = "../../crates/parsec_api_types" }
+libparsec_crypto = { path = "../../libparsec/crates/crypto" }
+libparsec_types = { path = "../../libparsec/crates/types" }
 
 diesel = { version = "2.0.0-rc.0", features = ["sqlite"] }
 clap = { version = "3.1.18", features = ["derive"] }
+thiserror = "1.0.30"
 
 [dev-dependencies]
-tests_fixtures = { path = "../../crates/tests_fixtures" }
+tests_fixtures = { path = "../../libparsec/crates/tests_fixtures" }
 rstest = "0.13.0"

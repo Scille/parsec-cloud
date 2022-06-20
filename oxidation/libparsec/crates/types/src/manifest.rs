@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
-use parsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::collections::HashMap;
@@ -15,7 +13,7 @@ use serialization_format::parsec_data;
 
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::ext_types::new_uuid_type;
-use crate::{self as libparsec_types, impl_from_maybe, DataResult};
+use crate::{self as libparsec_types, impl_from_maybe};
 use crate::{DataError, DateTime, DeviceID, EntryNameError};
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB

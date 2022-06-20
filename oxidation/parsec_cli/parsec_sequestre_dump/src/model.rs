@@ -6,12 +6,13 @@ use diesel::{
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
-use std::{error::Error, path::PathBuf};
+use std::path::PathBuf;
 
+use crate::error::ExportError;
 use crate::schema::{block, device, info, vlob_atom};
-use parsec_api_crypto::{SecretKey, VerifyKey};
-use parsec_api_types::{
-    DateTime, DeviceCertificate, DeviceID, FileManifest, FolderManifest, Manifest,
+use libparsec_crypto::{SecretKey, VerifyKey};
+use libparsec_types::{
+    DateTime, DeviceCertificate, DeviceID, EntryID, FileManifest, FolderManifest, Manifest,
     WorkspaceManifest,
 };
 
@@ -19,25 +20,25 @@ use parsec_api_types::{
 pub struct Block {
     pub block_id: Vec<u8>,
     pub data: Vec<u8>,
-    pub author: i32,
-    pub size: i32,
+    pub author: i64,
+    pub size: i64,
     pub created_on: f64,
 }
 
 #[derive(Debug, Queryable, PartialEq)]
 pub struct VlobAtom {
     pub vlob_id: Vec<u8>,
-    pub version: i32,
+    pub version: i64,
     pub blob: Vec<u8>,
-    pub size: i32,
-    pub author: i32,
+    pub size: i64,
+    pub author: i64,
     pub timestamp: f64,
 }
 
 #[derive(Debug, Queryable, PartialEq)]
 pub struct Info {
-    pub magic: i32,
-    pub version: i32,
+    pub magic: i64,
+    pub version: i64,
     pub realm_id: Vec<u8>,
 }
 
@@ -49,15 +50,30 @@ impl Workspace {
         conn: &mut SqliteConnection,
         key: &SecretKey,
         out: &PathBuf,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), ExportError> {
         let workspace_id = info::table
             .select(info::realm_id)
             .filter(info::magic.eq(87947).and(info::version.eq(1)))
-            .first::<Vec<u8>>(conn)?;
+            .first::<Vec<u8>>(conn)
+            .map_err(|_| ExportError::MissingWorkspaceID)?;
+        let workspace_id = EntryID::from(
+            <[u8; 16]>::try_from(&workspace_id[..])
+                .map_err(|_| ExportError::InvalidEntryID(workspace_id))?,
+        );
 
         let mut devices = HashMap::new();
 
-        Self::_dump(conn, key, out, &workspace_id, &mut devices)?;
+        for (author, device) in device::table
+            .select((device::_id, device::device_certificate))
+            .load::<(i64, Vec<u8>)>(conn)
+            .map_err(|_| ExportError::MissingDevice)?
+        {
+            let certif = DeviceCertificate::unsecure_load(&device)
+                .map_err(|_| ExportError::InvalidCertificate { author })?;
+            devices.insert(author, (certif.verify_key, certif.device_id));
+        }
+
+        Self::_dump(conn, key, out, workspace_id, &mut devices)?;
 
         Ok(())
     }
@@ -66,27 +82,21 @@ impl Workspace {
         conn: &mut SqliteConnection,
         key: &SecretKey,
         path: &PathBuf,
-        manifest_id: &[u8],
-        devices: &mut HashMap<i32, (VerifyKey, DeviceID)>,
-    ) -> Result<(), Box<dyn Error>> {
+        manifest_id: EntryID,
+        devices: &mut HashMap<i64, (VerifyKey, DeviceID)>,
+    ) -> Result<(), ExportError> {
         let (manifest, author, timestamp) = vlob_atom::table
             .select((vlob_atom::blob, vlob_atom::author, vlob_atom::timestamp))
-            .filter(vlob_atom::vlob_id.eq(manifest_id))
+            .filter(vlob_atom::vlob_id.eq((*manifest_id).as_ref()))
             .order_by(vlob_atom::timestamp.desc())
-            .first::<(Vec<u8>, i32, f64)>(conn)?;
+            .first::<(Vec<u8>, i64, f64)>(conn)
+            .map_err(|_| ExportError::MissingManifest {
+                entry_id: manifest_id,
+            })?;
 
-        let (verify_key, device_id) = if let Some(device) = devices.get(&author) {
-            device
-        } else {
-            let device = device::table
-                .select(device::device_certificate)
-                .filter(device::_id.eq(author))
-                .first::<Vec<u8>>(conn)?;
-
-            let certif = DeviceCertificate::unsecure_load(&device)?;
-
-            devices.insert(author, (certif.verify_key, certif.device_id));
-            devices.get(&author).expect("Inserted before")
+        let (verify_key, device_id) = match devices.get(&author) {
+            Some(device) => device,
+            None => return Err(ExportError::MissingSpecificDevice { author }),
         };
 
         match Manifest::decrypt_verify_and_load(
@@ -106,19 +116,23 @@ impl Workspace {
                             .select(block::data)
                             .filter(block::block_id.eq((*x.id).as_ref()))
                             .first::<Vec<u8>>(conn)
+                            .map_err(|_| ExportError::MissingSpecificBlock { block_id: x.id })
                     })
                     .collect::<Result<Vec<_>, _>>()?
                     .concat();
 
-                let mut file = File::create(path)?;
-                file.write_all(&content)?;
+                let mut file = File::create(path)
+                    .map_err(|_| ExportError::CreateFileFailed { path: path.clone() })?;
+                file.write_all(&content)
+                    .map_err(|_| ExportError::WriteFailed)?;
             }
             Manifest::Folder(FolderManifest { children, .. })
             | Manifest::Workspace(WorkspaceManifest { children, .. }) => {
-                std::fs::create_dir(&path)?;
+                std::fs::create_dir(&path)
+                    .map_err(|_| ExportError::CreateDirFailed { path: path.clone() })?;
                 for (name, id) in children.into_iter() {
                     let path = path.join(name.as_ref());
-                    Self::_dump(conn, key, &path, (*id).as_ref(), devices)?;
+                    Self::_dump(conn, key, &path, id, devices)?;
                 }
             }
             _ => unreachable!(),
