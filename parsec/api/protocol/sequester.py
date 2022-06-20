@@ -2,7 +2,9 @@
 
 
 from enum import Enum
-from parsec.api.protocol.base import BaseRepSchema, BaseReqSchema, CmdSerializer, fields
+from parsec.api.protocol.base import fields
+from parsec.serde.schema import BaseSchema
+from parsec.serde.serializer import JSONSerializer
 
 
 class SequesterServiceType(Enum):
@@ -13,17 +15,11 @@ class SequesterServiceType(Enum):
 SequesterServiceTypeField = fields.enum_field_factory(SequesterServiceType)
 
 
-class SequesterRegisterServiceReqSchema(BaseReqSchema):
+class SequesterRegisterServiceSchema(BaseSchema):
     service_type = SequesterServiceTypeField(required=True)
     service_id = fields.UUID(required=True)
     sequester_der_payload = fields.Bytes(required=True)
     sequester_der_payload_signature = fields.Bytes(required=True)
 
 
-class SequesterRegisterServiceRepSchema(BaseRepSchema):
-    pass
-
-
-sequester_register_service_serializer = CmdSerializer(
-    SequesterRegisterServiceReqSchema, SequesterRegisterServiceRepSchema
-)
+sequester_register_service_serializer = JSONSerializer(SequesterRegisterServiceSchema)
