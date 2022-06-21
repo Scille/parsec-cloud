@@ -140,8 +140,6 @@ from parsec.api.protocol.pki import (
     pki_enrollment_accept_serializer,
 )
 
-from parsec.api.protocol.sequester import sequester_register_service_serializer
-
 
 AuthenticatedAnyCmdReq = any_cmd_req_factory("AuthenticatedAnyCmdReq", _PyBlockReadReq)
 
@@ -286,6 +284,4 @@ __all__ = (
     "ANONYMOUS_CMDS",
     "APIV1_ANONYMOUS_CMDS",
     "AuthenticatedAnyCmd",
-    # Sequester
-    "sequester_register_service_serializer",
 )
