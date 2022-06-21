@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import attr
 from parsec.api.data.sequester import EncryptionKeyFormat, SequesterServiceEncryptionKey
@@ -15,7 +15,7 @@ from parsec.sequester_crypto import (
     load_sequester_public_key,
     verify_sequester,
 )
-from parsec.types import UUID4
+from parsec.types import UUID
 
 
 class SequesterError(Exception):
@@ -33,7 +33,7 @@ class SequesterKeyFormatError(SequesterError):
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class SequesterServiceRequest:
     service_type: SequesterServiceType
-    service_id: UUID4
+    service_id: UUID
     sequester_encryption_key: bytes
     sequester_encryption_key_signature: bytes
 
