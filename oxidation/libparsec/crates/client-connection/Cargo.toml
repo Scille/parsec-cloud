@@ -18,6 +18,7 @@ libparsec_types = { path = "../types" }
 libparsec_protocol = { path = "../protocol" }
 # Use abstract crypto primitive, to allow to sign request.
 libparsec_crypto = { path = "../crypto" }
+# Used to encoded binary data.
 base64 = "0.13.0"
 
 [dev-dependencies]
