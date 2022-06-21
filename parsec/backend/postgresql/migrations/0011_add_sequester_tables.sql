@@ -13,8 +13,8 @@ CREATE TABLE sequester(
     service_type sequester_service NOT NULL,
     service_id TEXT NOT NULL,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
-    encryption_key_payload BYTEA,
-    encryption_key__payload_signature BYTEA,
+    encryption_key_payload BYTEA NOT NULL,
+    encryption_key__payload_signature BYTEA NOT NULLS,
     webhook_url TEXT,
 
     UNIQUE(organization, service_id)

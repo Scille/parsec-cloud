@@ -83,7 +83,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
         #     if not row:
         #         # TODO:error
         #         pass
-        #     sequester_verify_key = load_der_public_key(row["sequester_verify_key"])
+        #     sequester_verify_key = load_sequester_public_key(row["sequester_verify_key"])
         #     verify_sequester_der_signature(
         #         sequester_verify_key,
         #         sequester_certificate_signed_encryption_key,

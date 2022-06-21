@@ -35,7 +35,9 @@ class MemorySequesterComponent(BaseSequesterComponent):
         sequester_encryption_key_payload: bytes,
         sequester_encryption_key_payload_signature: bytes,
     ):
+
         organization = await self._organization_component.get(organization_id)
+
         self.verify_sequester_signature(
             organization.sequester_verify_key,
             sequester_encryption_key_payload,

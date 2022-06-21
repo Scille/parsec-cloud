@@ -29,7 +29,7 @@ from parsec.crypto import (
     PublicKey as _PublicKey,
 )
 from parsec.sequester_crypto import SequesterPublicKey as _SequesterPublicKey
-from parsec.sequester_crypto import load_der_public_key
+from parsec.sequester_crypto import load_sequester_public_key
 
 
 __all__ = (
@@ -426,7 +426,7 @@ class SequesterPublicKeyField(Field):
             raise ValidationError("Not bytes")
 
         try:
-            return load_der_public_key(value)
+            return load_sequester_public_key(value)
 
         except Exception as exc:
             raise ValidationError(str(exc)) from exc
