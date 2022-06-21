@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-06-08 12:56+0200\n"
+"POT-Creation-Date: 2022-06-21 11:01+0200\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -2962,9 +2962,6 @@ msgstr "Afficher les fichiers exclus de la synchronisation"
 msgid "ACTION_SAVE"
 msgstr "Sauvegarder"
 
-msgid "TEXT_SETTINGS_CHECK_USE_WORKSPACES_COLORS"
-msgstr "Utiliser des couleurs pour les espaces de travail"
-
 msgid "TEXT_SELECT_SMARTCARD"
 msgstr "Il vous sera demandé de sélectionner votre carte à puce"
 
@@ -3045,7 +3042,3 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
-
-#~ msgid "ACTION_FILTER_LIST_USERS"
-#~ msgstr "Rechercher utilisateurs"
-
