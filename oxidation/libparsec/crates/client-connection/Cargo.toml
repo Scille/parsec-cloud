@@ -14,7 +14,7 @@ name = "auth_cmds"
 reqwest = "0.11.10"
 # Used to perform operation on URL.
 url = "2.2.2"
-# Used to encoded binary data.
+# Used to encode binary data.
 base64 = "0.13.0"
 parsec_api_types = { path = "../../../crates/parsec_api_types" }
 parsec_api_protocol = { path = "../../../crates/parsec_api_protocol" }
