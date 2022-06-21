@@ -81,7 +81,8 @@ macro_rules! impl_auth_cmds {
             pub async fn $name(&self, $($key: $type),*) -> command_error::Result<authenticated_cmds::$name::Rep> {
                 let request_builder = self.client.post(self.url.clone());
 
-                let data = authenticated_cmds::$name::Req::new($($key),*).dump().map_err(|e| CommandError::Serialization(e.to_string()))?;
+                let data = authenticated_cmds::$name::Req::new($($key),*).dump()
+                    .expect(concat!("failed to serialize the command ", stringify!($name)));
 
                 let req = prepare_request(request_builder, &self.signing_key, &self.user_id, data).send();
                 let resp = req.await?;
