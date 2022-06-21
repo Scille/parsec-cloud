@@ -50,13 +50,13 @@ pub struct AuthenticatedCmds {
 
 impl AuthenticatedCmds {
     /// Create a new `AuthenticatedCmds`
-    pub fn new(
+    pub fn new<U: AsRef<str>>(
         client: Client,
-        root_url: &str,
+        root_url: U,
         user_id: &[u8],
         signing_key: SigningKey,
     ) -> Result<Self, url::ParseError> {
-        let root_url = Url::parse(root_url)?;
+        let root_url = Url::parse(root_url.as_ref())?;
         let url = root_url.join(AUTHENTICATED_API_URI)?;
         let user_id = base64::encode(user_id);
 
@@ -92,7 +92,7 @@ macro_rules! impl_auth_cmds {
 
                 let response_body = resp.bytes().await?;
 
-                authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::Deserialization)
+                authenticated_cmds::$name::Rep::load(&response_body).map_err(CommandError::InvalidResponseContent)
             }
         )+
     };
