@@ -1,5 +1,5 @@
 [package]
-name = "libparsec-client-connection"
+name = "libparsec_client_connection"
 version = "0.1.0"
 edition = "2021"
 autotests = false
