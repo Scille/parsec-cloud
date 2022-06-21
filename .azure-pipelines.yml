@@ -220,11 +220,9 @@ jobs:
       - bash: pre-commit run --all-files --show-diff-on-failure
         displayName: Pre-commit hooks check
 
-      - bash: |
-          # inspect cargo home
-          ls -l $(HOME)/.cargo/{git,registry} .target || true
+      - bash: ls -la ./{.target,oxidation} $(HOME)/.cargo/{git,registry} || true
         workingDirectory: $(Build.SourcesDirectory)
-        displayName: Inspect Cargo home
+        displayName: Inspect Cargo directory
 
 
   - job: s1_oxidation
@@ -292,11 +290,9 @@ jobs:
           python -m pytest $(pytest.base_args) tests -n auto --runrust
         displayName: Python Tests
 
-      - bash: |
-          # inspect cargo home
-          ls -l $(HOME)/.cargo/{git,registry} .target oxidation || true
+      - bash: ls -la ./{.target,oxidation} $(HOME)/.cargo/{git,registry} || true
         workingDirectory: $(Build.SourcesDirectory)
-        displayName: Inspect Cargo home
+        displayName: Inspect Cargo directory
 
   - job: s1_linux_test
     displayName: Linux tests
