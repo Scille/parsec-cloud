@@ -215,43 +215,21 @@ class DevOption(click.Option):
         return value, args
 
 
-@click.command(
-    context_settings={"max_content_width": 400},
-    short_help="run the server",
-    epilog="""Note each parameter has a corresponding environ variable with the `PARSEC_` prefix
-(e.g. `--email-port=42` parameter is equivalent to environ variable `PARSEC_EMAIL_PORT=42`).
-
-\b
-Parameters can also be specified by using the special environment variable `PARSEC_CMD_ARGS`.
-All available command line arguments can be used and environ variables within it will be expanded.
-For instance:
-
-    $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
-""",
-)
-@click.option(
-    "--host",
-    "-H",
-    default="127.0.0.1",
-    show_default=True,
-    envvar="PARSEC_HOST",
-    help="Host to listen on",
-)
-@click.option(
-    "--port",
-    "-P",
-    default=DEFAULT_BACKEND_PORT,
-    type=int,
-    show_default=True,
-    envvar="PARSEC_PORT",
-    help="Port to listen on",
-)
-@click.option(
-    "--db",
-    required=True,
-    envvar="PARSEC_DB",
-    metavar="URL",
-    help="""Database configuration.
+def basic_backend_options(fn):
+    decorators = [
+        click.option(
+            "--administration-token",
+            required=True,
+            envvar="PARSEC_ADMINISTRATION_TOKEN",
+            metavar="TOKEN",
+            help="Secret token to access the administration api",
+        ),
+        click.option(
+            "--db",
+            required=True,
+            envvar="PARSEC_DB",
+            metavar="URL",
+            help="""Database configuration.
 Allowed values:
 
 \b
@@ -260,45 +238,30 @@ Allowed values:
 
 \b
 """,
-)
-@click.option(
-    "--db-min-connections",
-    default=5,
-    show_default=True,
-    envvar="PARSEC_DB_MIN_CONNECTIONS",
-    help="Minimal number of connections to the database if using PostgreSQL",
-)
-@click.option(
-    "--db-max-connections",
-    default=7,
-    show_default=True,
-    envvar="PARSEC_DB_MAX_CONNECTIONS",
-    help="Maximum number of connections to the database if using PostgreSQL",
-)
-@click.option(
-    "--maximum-database-connection-attempts",
-    default=10,
-    show_default=True,
-    envvar="PARSEC_MAXIMUM_DATABASE_CONNECTION_ATTEMPTS",
-    help="Maximum number of attempts at connecting to the database (0 means never retry)",
-)
-@click.option(
-    "--pause-before-retry-database-connection",
-    type=float,
-    default=1.0,
-    show_default=True,
-    envvar="PARSEC_PAUSE_BEFORE_RETRY_DATABASE_CONNECTION",
-    help="Number of seconds before a new attempt at connecting to the database",
-)
-@click.option(
-    "--blockstore",
-    "-b",
-    required=True,
-    multiple=True,
-    callback=lambda ctx, param, value: _parse_blockstore_params(value),
-    envvar="PARSEC_BLOCKSTORE",
-    metavar="CONFIG",
-    help="""Blockstore configuration.
+        ),
+        click.option(
+            "--db-min-connections",
+            default=5,
+            show_default=True,
+            envvar="PARSEC_DB_MIN_CONNECTIONS",
+            help="Minimal number of connections to the database if using PostgreSQL",
+        ),
+        click.option(
+            "--db-max-connections",
+            default=7,
+            show_default=True,
+            envvar="PARSEC_DB_MAX_CONNECTIONS",
+            help="Maximum number of connections to the database if using PostgreSQL",
+        ),
+        click.option(
+            "--blockstore",
+            "-b",
+            required=True,
+            multiple=True,
+            callback=lambda ctx, param, value: _parse_blockstore_params(value),
+            envvar="PARSEC_BLOCKSTORE",
+            metavar="CONFIG",
+            help="""Blockstore configuration.
 Allowed values:
 
 \b
@@ -320,23 +283,67 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
 
 \b
 """,
+        ),
+    ]
+    for decorator in decorators:
+        fn = decorator(fn)
+    return fn
+
+
+@click.command(
+    context_settings={"max_content_width": 400},
+    short_help="run the server",
+    epilog="""Note each parameter has a corresponding environ variable with the `PARSEC_` prefix
+(e.g. `--email-port=42` parameter is equivalent to environ variable `PARSEC_EMAIL_PORT=42`).
+
+\b
+Parameters can also be specified by using the special environment variable `PARSEC_CMD_ARGS`.
+All available command line arguments can be used and environ variables within it will be expanded.
+For instance:
+
+    $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
+""",
+)
+@basic_backend_options
+@click.option(
+    "--host",
+    "-H",
+    default="127.0.0.1",
+    show_default=True,
+    envvar="PARSEC_HOST",
+    help="Host to listen on",
 )
 @click.option(
-    "--administration-token",
-    required=True,
-    envvar="PARSEC_ADMINISTRATION_TOKEN",
-    metavar="TOKEN",
-    help="Secret token to access the administration api",
+    "--port",
+    "-P",
+    default=DEFAULT_BACKEND_PORT,
+    type=int,
+    show_default=True,
+    envvar="PARSEC_PORT",
+    help="Port to listen on",
+)
+@click.option(
+    "--maximum-database-connection-attempts",
+    default=10,
+    show_default=True,
+    envvar="PARSEC_MAXIMUM_DATABASE_CONNECTION_ATTEMPTS",
+    help="Maximum number of attempts at connecting to the database (0 means never retry)",
+)
+@click.option(
+    "--pause-before-retry-database-connection",
+    type=float,
+    default=1.0,
+    show_default=True,
+    envvar="PARSEC_PAUSE_BEFORE_RETRY_DATABASE_CONNECTION",
+    help="Number of seconds before a new attempt at connecting to the database",
 )
 @click.option(
     "--spontaneous-organization-bootstrap",
     envvar="PARSEC_SPONTANEOUS_ORGANIZATION_BOOTSTRAP",
     is_flag=True,
     help="""Allow organization bootstrap without prior creation.
-
 Without this flag, an organization must be created by administration (see
  `parsec core create_organization` command) before bootstrap can occur.
-
 With this flag, the server allows anybody to bootstrap an organanization
 by providing an empty bootstrap token given 1) the organization is not boostrapped yet
 and 2) the organization hasn't been created by administration (which would act as a
@@ -348,7 +355,6 @@ reservation and change the bootstrap token)
     envvar="PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK",
     metavar="URL",
     help="""URL to notify 3rd party service that a new organization has been bootstrapped.
-
 Each time an organization is bootstrapped, an HTTP POST will be send to the URL
 with an `application/json` body with the following fields:
 organization_id, device_id, device_label (can be null), human_email (can be null), human_label (can be null)
