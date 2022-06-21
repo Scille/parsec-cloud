@@ -5,40 +5,47 @@ parameters:
   - name: cargo_target_dir
     type: string
     default: ./target
+  - name: cache_version
+    type: number
+    default: 1
 
 steps:
   - task: Cache@2
     inputs:
-      key: '"cargo-target" | "$(Agent.OS)" | Cargo.lock'
+      key: '"cargo-target" | "${{ variables.cache_version }}" | "$(Agent.OS)" | Cargo.lock'
       restoreKeys: |
-        cargo-target | "$(Agent.OS)"
+        cargo-target | "${{ variables.cache_version }}" | "$(Agent.OS)"
+        cargo-target | "${{ variables.cache_version }}"
         cargo-target
-      path: $(cargo_target_dir)
+      path: ${{ parameters.cargo_target_dir }}
     displayName: Cache cargo target
 
   - task: Cache@2
     inputs:
-      key: '"cargo-git" | "$(Agent.OS)" | Cargo.lock'
+      key: '"cargo-git" | "${{ variables.cache_version }}" | "$(Agent.OS)" | Cargo.lock'
       restoreKeys: |
-        cargo-git | "$(Agent.OS)"
+        cargo-git | "${{ variables.cache_version }}" | "$(Agent.OS)"
+        cargo-git | "${{ variables.cache_version }}"
         cargo-git
-      path: $(cargo_home_dir)/git/db
+      path: ${{ parameters.cargo_home_dir }}/git/db
     displayName: Cache cargo git database
 
   - task: Cache@2
     inputs:
-      key: '"cargo-registry-index" | "$(Agent.OS)" | Cargo.lock'
+      key: '"cargo-registry-index" | "${{ variables.cache_version }}" | "$(Agent.OS)" | Cargo.lock'
       restoreKeys: |
-        cargo-registry-index | "$(Agent.OS)"
+        cargo-registry-index | "${{ variables.cache_version }}" | "$(Agent.OS)"
+        cargo-registry-index | "${{ variables.cache_version }}"
         cargo-registry-index
-      path: $(cargo_home_dir)/registry/index
+      path: ${{ parameters.cargo_home_dir }}/registry/index
     displayName: Cache cargo index registry
 
   - task: Cache@2
     inputs:
-      key: '"cargo-registry-cache" | "$(Agent.OS)" | Cargo.lock'
+      key: '"cargo-registry-cache" | "${{ variables.cache_version }}" | "$(Agent.OS)" | Cargo.lock'
       restoreKeys: |
-        cargo-registry-cache | "$(Agent.OS)"
+        cargo-registry-cache | "${{ variables.cache_version }}" | "$(Agent.OS)"
+        cargo-registry-cache | "${{ variables.cache_version }}"
         cargo-registry-cache
-      path: $(cargo_home_dir)/registry/cache
+      path: ${{ parameters.cargo_home_dir }}/registry/cache
     displayName: Cache cargo cache registry
