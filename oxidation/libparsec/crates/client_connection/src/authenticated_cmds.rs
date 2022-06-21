@@ -23,7 +23,7 @@ use libparsec_protocol::authenticated_cmds::{
     self, invite_delete::InvitationDeletedReason, invite_new::UserOrDevice,
 };
 use libparsec_types::{
-    BlockID, DateTime, InvitationToken, RealmID, ReencryptionBatchEntry, UserID, VlobID,
+    BlockID, DateTime, DeviceID, InvitationToken, RealmID, ReencryptionBatchEntry, UserID, VlobID,
 };
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
@@ -44,7 +44,7 @@ pub struct AuthenticatedCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
     client: Client,
     url: Url,
-    user_id: String,
+    device_id: String,
     signing_key: SigningKey,
 }
 
@@ -53,17 +53,17 @@ impl AuthenticatedCmds {
     pub fn new<U: AsRef<str>>(
         client: Client,
         root_url: U,
-        user_id: &[u8],
+        device_id: DeviceID,
         signing_key: SigningKey,
     ) -> Result<Self, url::ParseError> {
         let root_url = Url::parse(root_url.as_ref())?;
         let url = root_url.join(AUTHENTICATED_API_URI)?;
-        let user_id = base64::encode(user_id);
+        let device_id = base64::encode(device_id.to_string().as_bytes());
 
         Ok(Self {
             client,
             url,
-            user_id,
+            device_id,
             signing_key,
         })
     }
@@ -84,7 +84,7 @@ macro_rules! impl_auth_cmds {
                 let data = authenticated_cmds::$name::Req::new($($key),*).dump()
                     .expect(concat!("failed to serialize the command ", stringify!($name)));
 
-                let req = prepare_request(request_builder, &self.signing_key, &self.user_id, data).send();
+                let req = prepare_request(request_builder, &self.signing_key, &self.device_id, data).send();
                 let resp = req.await?;
                 if resp.status() != reqwest::StatusCode::OK {
                     return Err(CommandError::InvalidResponseStatus(resp.status(), resp));
@@ -102,10 +102,10 @@ macro_rules! impl_auth_cmds {
 fn prepare_request(
     request_builder: RequestBuilder,
     signing_key: &SigningKey,
-    user_id: &str,
+    device_id: &str,
     body: Vec<u8>,
 ) -> RequestBuilder {
-    let request_builder = sign_request(request_builder, signing_key, user_id, &body);
+    let request_builder = sign_request(request_builder, signing_key, device_id, &body);
 
     let mut content_headers = HeaderMap::with_capacity(2);
     content_headers.insert(CONTENT_TYPE, HeaderValue::from_static(PARSEC_CONTENT_TYPE));
@@ -121,7 +121,7 @@ fn prepare_request(
 fn sign_request(
     request_builder: RequestBuilder,
     signing_key: &SigningKey,
-    user_id: &str,
+    device_id: &str,
     body: &[u8],
 ) -> RequestBuilder {
     use std::time::SystemTime;
@@ -131,7 +131,7 @@ fn sign_request(
         .expect("Clock may have gone backwards but not before the EPOCH")
         .as_millis();
     let data_to_sign = Vec::from_iter(
-        user_id
+        device_id
             .as_bytes()
             .iter()
             .chain(&timestamp.to_be_bytes())
@@ -146,7 +146,7 @@ fn sign_request(
     authorization_headers.insert(AUTHORIZATION, HeaderValue::from_static(PARSEC_AUTH_METHOD));
     authorization_headers.insert(
         "Author",
-        HeaderValue::from_str(user_id).expect("base64 shouldn't contain invalid char"),
+        HeaderValue::from_str(device_id).expect("base64 shouldn't contain invalid char"),
     );
     authorization_headers.insert(
         "Timestamp",

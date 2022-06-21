@@ -2,11 +2,15 @@
 
 mod utils;
 
-use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::{
+    net::{Ipv4Addr, SocketAddr, SocketAddrV4},
+    str::FromStr,
+};
 
 use libparsec_client_connection::{AuthenticatedCmds, CommandError};
 use parsec_api_crypto::SigningKey;
 use parsec_api_protocol::authenticated_cmds;
+use parsec_api_types::DeviceID;
 use tokio::{
     sync::oneshot::{channel, Receiver, Sender},
     task::JoinHandle,
@@ -20,18 +24,19 @@ async fn valid_request() {
     setup_logger();
 
     const PING_MESSAGE: &str = "hello from the client side!";
-    const USER_ID: &str = "foobar";
     const IP: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
     const PORT: u16 = 14689;
     let socket_addr: SocketAddr = SocketAddr::V4(SocketAddrV4::new(IP, PORT));
 
+    let device_id = DeviceID::from_str("michu@michu_org").unwrap();
+
     let kp = SigningKey::generate();
     let vk = kp.verify_key();
     let url = format!("http://{}:{}", IP, PORT);
-    let auth_cmds = generate_client(kp, USER_ID.as_bytes(), &url);
+    let auth_cmds = generate_client(kp, device_id.clone(), &url);
 
     let mut signature_verifier = MakeSignatureVerifier::default();
-    signature_verifier.register_public_key(USER_ID.to_string(), vk);
+    signature_verifier.register_public_key(device_id, vk);
 
     let (server_handle, client_handle) =
         send_ping(socket_addr, signature_verifier, auth_cmds, PING_MESSAGE).await;
@@ -60,18 +65,19 @@ async fn invalid_request() {
     setup_logger();
 
     const PING_MESSAGE: &str = "hello from the client side!";
-    const USER_ID: &str = "foobar_invalid";
     const IP: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
     const PORT: u16 = 14690;
     let socket_addr: SocketAddr = SocketAddr::V4(SocketAddrV4::new(IP, PORT));
 
+    let device_id = DeviceID::from_str("michu@michu_org").unwrap();
+
     let client_kp = SigningKey::generate();
     let other_kp = SigningKey::generate();
     let url = format!("http://{}:{}", IP, PORT);
-    let auth_cmds = generate_client(client_kp, USER_ID.as_bytes(), &url);
+    let auth_cmds = generate_client(client_kp, device_id.clone(), &url);
 
     let mut signature_verifier = MakeSignatureVerifier::default();
-    signature_verifier.register_public_key(USER_ID.to_string(), other_kp.verify_key());
+    signature_verifier.register_public_key(device_id, other_kp.verify_key());
 
     let (server_handle, client_handle) =
         send_ping(socket_addr, signature_verifier, auth_cmds, PING_MESSAGE).await;
@@ -106,11 +112,15 @@ fn setup_logger() {
     }
 }
 
-fn generate_client(signing_key: SigningKey, user_id: &[u8], root_url: &str) -> AuthenticatedCmds {
+fn generate_client(
+    signing_key: SigningKey,
+    device_id: DeviceID,
+    root_url: &str,
+) -> AuthenticatedCmds {
     let client = reqwest::ClientBuilder::new()
         .build()
         .expect("cannot build client");
-    AuthenticatedCmds::new(client, root_url, user_id, signing_key)
+    AuthenticatedCmds::new(client, root_url, device_id, signing_key)
         .expect("failed to build auth cmds client")
 }
 

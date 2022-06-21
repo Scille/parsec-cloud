@@ -10,16 +10,18 @@ use hyper::{
 use libparsec_client_connection::authenticated_cmds::PARSEC_AUTH_METHOD;
 use parsec_api_crypto::VerifyKey;
 use parsec_api_protocol::authenticated_cmds::{self, AnyCmdReq};
+use parsec_api_types::DeviceID;
 use std::{
     collections::HashMap,
     convert::Infallible,
     future::Future,
     ops::Deref,
     pin::Pin,
+    str::FromStr,
     task::{Context, Poll},
 };
 
-pub type ID = String;
+pub type ID = DeviceID;
 
 #[derive(Debug)]
 pub struct AuthRequest {
@@ -61,7 +63,10 @@ impl Service<Request<Body>> for SignatureVerifier {
                         String::from_utf8(bytes)
                             .map_err(anyhow::Error::from)
                             .and_then(|author| {
-                                if let Some(vk) = self.registered_public_keys.get(&author) {
+                                let id = ID::from_str(&author).map_err(|e| {
+                                    anyhow::anyhow!(r#"failed to parse device id "{e}""#)
+                                })?;
+                                if let Some(vk) = self.registered_public_keys.get(&id) {
                                     Ok((author, vk.clone()))
                                 } else {
                                     anyhow::bail!("author {author} not found")
@@ -162,11 +167,11 @@ fn parse_headers(headers: &HeaderMap) -> anyhow::Result<(String, u128, String)> 
 
 #[derive(Default)]
 pub struct MakeSignatureVerifier {
-    registered_public_keys: HashMap<String, VerifyKey>,
+    registered_public_keys: HashMap<ID, VerifyKey>,
 }
 
 impl MakeSignatureVerifier {
-    pub fn register_public_key(&mut self, id: String, key: VerifyKey) {
+    pub fn register_public_key(&mut self, id: ID, key: VerifyKey) {
         self.registered_public_keys.insert(id, key);
     }
 }
