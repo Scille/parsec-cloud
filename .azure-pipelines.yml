@@ -220,7 +220,7 @@ jobs:
 
       - bash: |
         # inspect cargo home
-        ls -l $(HOME)/.cargo/{git,registry} || true
+        ls -l $(HOME)/.cargo/{git,registry} .target || true
       displayName: Inspect Cargo home
 
 
