@@ -218,6 +218,11 @@ jobs:
       - bash: pre-commit run --all-files --show-diff-on-failure
         displayName: Pre-commit hooks check
 
+      - bash: |
+        # inspect cargo home
+        ls -l $(HOME)/.cargo/{git,registry} || true
+      displayName: Inspect Cargo home
+
 
   - job: s1_oxidation
     displayName: Rust Oxidation
