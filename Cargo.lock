@@ -1205,24 +1205,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libparsec-client-connection"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64",
- "env_logger 0.9.0",
- "http-body",
- "hyper",
- "libparsec_crypto",
- "libparsec_protocol",
- "libparsec_types",
- "log",
- "reqwest",
- "tokio",
- "url",
-]
-
-[[package]]
 name = "libparsec_bindings_common"
 version = "0.1.0"
 dependencies = [
@@ -1263,6 +1245,24 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-test",
  "wee_alloc",
+]
+
+[[package]]
+name = "libparsec_client_connection"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64",
+ "env_logger 0.9.0",
+ "http-body",
+ "hyper",
+ "libparsec_crypto",
+ "libparsec_protocol",
+ "libparsec_types",
+ "log",
+ "reqwest",
+ "tokio",
+ "url",
 ]
 
 [[package]]
