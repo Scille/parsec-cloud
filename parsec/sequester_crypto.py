@@ -5,7 +5,6 @@ import oscrypto.asymmetric
 
 from oscrypto.asymmetric import PublicKey as _PublicKey
 from oscrypto.asymmetric import PrivateKey as _PrivateKey
-from pathlib import Path
 
 SequesterPublicKey = _PublicKey
 SequesterPrivateKey = _PrivateKey
@@ -25,8 +24,8 @@ def load_sequester_public_key(bytes_key: bytes) -> SequesterPublicKey:
     return oscrypto.asymmetric.load_public_key(bytes_key)
 
 
-def load_sequester_private_key(path: Path) -> SequesterPrivateKey:
-    return oscrypto.asymmetric.load_private_key(path)
+def load_sequester_private_key(bytes_key: bytes) -> SequesterPrivateKey:
+    return oscrypto.asymmetric.load_private_key(bytes_key)
 
 
 def verify_sequester(public_key: SequesterPublicKey, data: bytes, signature: bytes) -> None:
