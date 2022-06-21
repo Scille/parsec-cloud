@@ -8,7 +8,7 @@ pub type Result<T> = core::result::Result<T, CommandError>;
 #[derive(Debug)]
 pub enum CommandError {
     /// We failed to retrieve the reply.
-    Response(reqwest::Error),
+    NoResponse(reqwest::Error),
     /// We receive a response but with an unexpected status code.
     InvalidResponseStatus(reqwest::StatusCode, reqwest::Response),
     /// We failed to deserialize the reply.
@@ -19,7 +19,7 @@ impl Error for CommandError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             CommandError::Deserialization(e) => Some(e),
-            CommandError::Response(e) => Some(e),
+            CommandError::NoResponse(e) => Some(e),
             _ => None,
         }
     }
@@ -28,7 +28,7 @@ impl Error for CommandError {
 impl Display for CommandError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CommandError::Response(reason) => {
+            CommandError::NoResponse(reason) => {
                 write!(f, "failed to retrieving the response: {reason}")
             }
             CommandError::InvalidResponseStatus(code, _response) => {
@@ -49,6 +49,6 @@ impl From<parsec_api_protocol::DecodeError> for CommandError {
 
 impl From<reqwest::Error> for CommandError {
     fn from(e: reqwest::Error) -> Self {
-        Self::Response(e)
+        Self::NoResponse(e)
     }
 }
