@@ -16,7 +16,9 @@ reqwest = "0.11.10"
 url = "2.2.2"
 # Used to encode binary data.
 base64 = "0.13.0"
+# Add primitive type to be used with the proctocol
 parsec_api_types = { path = "../../../crates/parsec_api_types" }
+# Give possible command to send to the server
 parsec_api_protocol = { path = "../../../crates/parsec_api_protocol" }
 # Use abstract crypto primitive, to allow to sign request.
 parsec_api_crypto = { path = "../../../crates/parsec_api_crypto" }
