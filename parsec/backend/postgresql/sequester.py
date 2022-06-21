@@ -66,7 +66,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 
-    async def register_service(
+    async def _register_service(
         self,
         organization_id: OrganizationID,
         service_id: UUID,

@@ -4,7 +4,7 @@ import attr
 from parsec.api.protocol.sequester import SequesterServiceType
 from parsec.api.protocol.types import OrganizationID
 from parsec.backend.memory.organization import MemoryOrganizationComponent
-from parsec.backend.sequester import BaseSequesterComponent, verify_sequester_der_signature
+from parsec.backend.sequester import BaseSequesterComponent
 
 from uuid import UUID
 from typing import Dict
@@ -14,8 +14,8 @@ from typing import Dict
 class SequesterService:
     service_id: UUID
     service_type: SequesterServiceType
-    sequester_encryption_key_payload: bytes
-    sequester_encryption_key_payload_signature: bytes
+    sequester_encryption_key: bytes
+    sequester_encryption_key_signature: bytes
 
 
 class MemorySequesterComponent(BaseSequesterComponent):
@@ -24,10 +24,10 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self._organization_component: MemoryOrganizationComponent = None
         self._services: Dict[OrganizationID, Dict[UUID, SequesterService]] = {}
 
-    def register_components(self, **other_components):
+    def _register_components(self, **other_components):
         self._organization_component = other_components["organization"]
 
-    async def register_service(
+    async def _register_service(
         self,
         organization_id: OrganizationID,
         service_id: UUID,
@@ -36,7 +36,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         sequester_encryption_key_payload_signature: bytes,
     ):
         organization = await self._organization_component.get(organization_id)
-        verify_sequester_der_signature(
+        self.verify_sequester_signature(
             organization.sequester_verify_key,
             sequester_encryption_key_payload,
             sequester_encryption_key_payload_signature,
@@ -45,6 +45,6 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self._services[organization_id][service_id] = SequesterService(
             service_id=service_id,
             service_type=service_type,
-            sequester_encryption_key_payload=sequester_encryption_key_payload,
-            sequester_encryption_key_payload_signature=sequester_encryption_key_payload_signature,
+            sequester_encryption_key=sequester_encryption_key_payload,
+            sequester_encryption_key_signature=sequester_encryption_key_payload_signature,
         )

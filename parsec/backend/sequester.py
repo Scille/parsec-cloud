@@ -1,19 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from uuid import UUID
-from parsec.api.data.base import DataError
-from parsec.api.data.sequester import SequesterDerServiceEncryptionKey
+from uuid import UUID, uuid4
+from parsec.api.data.sequester import EncryptionKeyFormat, SequesterServiceEncryptionKey
 
 from parsec.api.protocol.types import OrganizationID
-from parsec.backend.client_context import AuthenticatedClientContext
-from parsec.backend.utils import ClientType, api, catch_protocol_errors
 from parsec.event_bus import EventBus
-from parsec.api.protocol.sequester import (
-    SequesterServiceType,
-    sequester_register_service_serializer,
-)
+from parsec.api.protocol.sequester import SequesterServiceSchema, SequesterServiceType
 
-from parsec.sequester_crypto import DerPublicKey, SequesterCryptoSignatureError, verify_sequester
+from parsec.sequester_crypto import (
+    SequesterPublicKey,
+    SequesterCryptoSignatureError,
+    load_sequester_public_key,
+    verify_sequester,
+)
 
 
 class SequesterError(Exception):
@@ -24,48 +23,46 @@ class SequesterSignatureError(SequesterError):
     pass
 
 
+class SequesterKeyFormatError(SequesterError):
+    pass
+
+
 class BaseSequesterComponent:
     def __init__(self, event_bus: EventBus):
         self._event_bus = event_bus
 
-    @api("sequester_register_service", client_types=[ClientType.ANONYMOUS])
-    @catch_protocol_errors
-    async def api_sequester_register_service(
-        self, client_ctx: AuthenticatedClientContext, msg: dict
-    ) -> dict:
-
-        msg = sequester_register_service_serializer.req_load(msg)
-        sequester_encryption_key_payload = msg["sequester_der_payload"]
-        try:
-            # Ensure sequester_encrypotion_payload is loadable
-            SequesterDerServiceEncryptionKey.load(sequester_encryption_key_payload)
-        except DataError as exc:
-            return {"status": "invalid_der_payload", "reason": str(exc)}
-
-        try:
-            await self.register_service(
-                client_ctx.organization_id,
-                msg["service_id"],
-                msg["service_type"],
-                sequester_encryption_key_payload,
-                msg["sequester_der_payload_signature"],
-            )
-        except SequesterSignatureError:
-            return {"status": "signature_error", "reason": "Bad sequester signature"}
-        return sequester_register_service_serializer.rep_dump({"status": "ok"})
-
-    # @api("sequester_list_services", client_types=[ClientType.AUTHENTICATED])
-    # @catch_protocol_errors
-    # async def api_sequester_list_services(
-    #     self, client_ctx: AuthenticatedClientContext, msg: dict
-    # ) -> dict:
-    #     if client_ctx.profile != UserProfile.ADMIN:
-    #         return {
-    #             "status": "not_allowed",
-    #             "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
-    #         }
-
     async def register_service(
+        self,
+        organization_id: OrganizationID,
+        sequester_register_service_schema: SequesterServiceSchema,
+    ):
+        """
+        Raises:
+            SequesterKeyForamatError
+            SequesterSignatureError
+        """
+        sequester_encryption_key = SequesterServiceEncryptionKey.load(
+            sequester_register_service_schema.sequester_encryption_key
+        )
+        # Assert encryption key is rsa and loadable
+        if not sequester_encryption_key.encryption_key_format != EncryptionKeyFormat.RSA:
+            raise SequesterKeyFormatError(
+                f"Key format {sequester_encryption_key.encryption_key_format} is not supported"
+            )
+
+        load_sequester_public_key(sequester_encryption_key.encryption_key)
+        self._register_service(
+            organization_id=organization_id,
+            service_id=uuid4(),
+            service_type=sequester_register_service_schema.service_type,
+            sequester_encryption_key=sequester_register_service_schema.sequester_encryption_key,
+            sequester_encryption_key_signature=sequester_register_service_schema.sequester_encryption_key_signature,
+        )
+
+    async def get(self, organization_id: OrganizationID) -> SequesterServiceSchema:
+        pass
+
+    async def _register_service(
         self,
         organization_id: OrganizationID,
         service_id: UUID,
@@ -79,15 +76,14 @@ class BaseSequesterComponent:
         """
         raise NotImplementedError()
 
-
-def verify_sequester_der_signature(
-    sequester_verify_key: DerPublicKey, signed_data: bytes, data: bytes
-):
-    """
-    Raises:
-        SequesterSignatureError
-    """
-    try:
-        verify_sequester(sequester_verify_key, data, signed_data)
-    except SequesterCryptoSignatureError:
-        raise SequesterSignatureError()
+    def verify_sequester_signature(
+        self, sequester_verify_key: SequesterPublicKey, signed_data: bytes, data: bytes
+    ):
+        """
+        Raises:
+            SequesterSignatureError
+        """
+        try:
+            verify_sequester(sequester_verify_key, data, signed_data)
+        except SequesterCryptoSignatureError:
+            raise SequesterSignatureError()

@@ -14,7 +14,7 @@ class SequesterServiceType(Enum):
 SequesterServiceTypeField = fields.enum_field_factory(SequesterServiceType)
 
 
-class SequesterRegisterServiceSchema(BaseSchema):
+class SequesterServiceSchema(BaseSchema):
     service_type = SequesterServiceTypeField(required=True)
     service_id = fields.UUID(required=True)
     sequester_encryption_key = fields.Bytes(required=True)
