@@ -113,6 +113,9 @@ jobs:
         displayName: Bootstrap
 
       - template: ci/cache-rust.yml
+        parameters:
+          cache_git_database: false
+          cache_target_dir: false
 
       - bash: |
           sed -i '/id: mixed-line-ending/a\        args:\n\          - "--fix=lf"' .pre-commit-config.yaml
@@ -219,9 +222,9 @@ jobs:
         displayName: Pre-commit hooks check
 
       - bash: |
-        # inspect cargo home
-        ls -l $(HOME)/.cargo/{git,registry} .target || true
-      displayName: Inspect Cargo home
+          # inspect cargo home
+          ls -l $(HOME)/.cargo/{git,registry} .target || true
+        displayName: Inspect Cargo home
 
 
   - job: s1_oxidation
