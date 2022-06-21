@@ -5,7 +5,7 @@ parameters:
 
   - name: cargo_target_dir
     type: string
-    default: ./target
+    default: $(Build.SourcesDirectory)/target
 
   - name: cache_version
     type: number
