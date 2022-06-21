@@ -115,7 +115,6 @@ jobs:
       - template: ci/cache-rust.yml
         parameters:
           cache_git_database: false
-          cache_target_dir: false
 
       - bash: |
           sed -i '/id: mixed-line-ending/a\        args:\n\          - "--fix=lf"' .pre-commit-config.yaml
@@ -224,6 +223,7 @@ jobs:
       - bash: |
           # inspect cargo home
           ls -l $(HOME)/.cargo/{git,registry} .target || true
+        workingDirectory: $(Build.SourcesDirectory)
         displayName: Inspect Cargo home
 
 
@@ -257,6 +257,8 @@ jobs:
         displayName: Bootstrap
 
       - template: ci/cache-rust.yml
+        parameters:
+          cache_git_database: false
 
       - bash: |
           set -eux
@@ -290,6 +292,11 @@ jobs:
           python -m pytest $(pytest.base_args) tests -n auto --runrust
         displayName: Python Tests
 
+      - bash: |
+          # inspect cargo home
+          ls -l $(HOME)/.cargo/{git,registry} .target oxidation || true
+        workingDirectory: $(Build.SourcesDirectory)
+        displayName: Inspect Cargo home
 
   - job: s1_linux_test
     displayName: Linux tests
