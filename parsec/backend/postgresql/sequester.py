@@ -71,8 +71,8 @@ class PGPSequesterComponent(BaseSequesterComponent):
         organization_id: OrganizationID,
         service_id: UUID,
         service_type: SequesterServiceType,
-        sequester_encryption_key_payload: bytes,
-        sequester_encryption_key_payload_signature: bytes,
+        sequester_encryption_certificate: bytes,
+        sequester_encryption_certificate_signature: bytes,
     ):
         pass
 

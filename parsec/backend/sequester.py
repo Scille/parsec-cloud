@@ -34,8 +34,8 @@ class SequesterKeyFormatError(SequesterError):
 class SequesterServiceRequest:
     service_type: SequesterServiceType
     service_id: UUID
-    sequester_encryption_key: bytes
-    sequester_encryption_key_signature: bytes
+    sequester_encryption_certificate: bytes
+    sequester_encryption_certificate_signature: bytes
 
 
 class BaseSequesterComponent:
@@ -51,21 +51,21 @@ class BaseSequesterComponent:
             SequesterSignatureError
         """
         sequester_encryption_key = SequesterServiceEncryptionKey.load(
-            sequester_register_service.sequester_encryption_key
+            sequester_register_service.sequester_encryption_certificate
         )
         # Assert encryption key is rsa and loadable
-        if not sequester_encryption_key.encryption_key_format != EncryptionKeyFormat.RSA:
+        if sequester_encryption_key.encryption_key_format != EncryptionKeyFormat.RSA:
             raise SequesterKeyFormatError(
                 f"Key format {sequester_encryption_key.encryption_key_format} is not supported"
             )
 
         load_sequester_public_key(sequester_encryption_key.encryption_key)
-        self._register_service(
+        await self._register_service(
             organization_id=organization_id,
             service_id=uuid4(),
             service_type=sequester_register_service.service_type,
-            sequester_encryption_key=sequester_register_service.sequester_encryption_key,
-            sequester_encryption_key_signature=sequester_register_service.sequester_encryption_key_signature,
+            sequester_encryption_certificate=sequester_register_service.sequester_encryption_certificate,
+            sequester_encryption_certificate_signature=sequester_register_service.sequester_encryption_certificate_signature,
         )
 
     async def get(self, organization_id: OrganizationID) -> SequesterServiceSchema:
@@ -76,8 +76,8 @@ class BaseSequesterComponent:
         organization_id: OrganizationID,
         service_id: UUID,
         service_type: SequesterServiceType,
-        sequester_encryption_key: bytes,
-        sequester_encryption_key_signature: bytes,
+        sequester_encryption_certificate: bytes,
+        sequester_encryption_certificate_signature: bytes,
     ):
         """
         Raises:

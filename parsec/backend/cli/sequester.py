@@ -5,6 +5,7 @@ import pendulum
 from parsec.api.data.sequester import EncryptionKeyFormat, SequesterServiceEncryptionKey
 
 from parsec.api.protocol.sequester import SequesterServiceType
+from parsec.api.protocol.types import OrganizationID
 from parsec.backend.app import backend_app_factory
 from parsec.backend.cli.run import DEFAULT_EMAIL_SENDER, basic_backend_options
 from parsec.backend.config import BackendConfig, BaseBlockStoreConfig, MockedEmailConfig
@@ -61,8 +62,8 @@ def _generate_service_request_schema(
     return SequesterServiceRequest(
         service_type=service_type,
         service_id=uuid4(),
-        sequester_encryption_key=encryption_key_certificate,
-        sequester_encryption_key_signature=encryption_key_certificate_signature,
+        sequester_encryption_certificate=encryption_key_certificate,
+        sequester_encryption_certificate_signature=encryption_key_certificate_signature,
     )
 
 
@@ -131,7 +132,6 @@ def register_service(
 
     async def run(app_config):
         async with backend_app_factory(config=app_config) as backend:
-            print(backend)
-            print(schema)
+            await backend.sequester.register_service(OrganizationID(organization), schema)
 
     trio_run(run, app_config, use_asyncio=True)

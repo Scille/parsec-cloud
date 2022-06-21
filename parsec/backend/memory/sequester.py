@@ -32,21 +32,21 @@ class MemorySequesterComponent(BaseSequesterComponent):
         organization_id: OrganizationID,
         service_id: UUID,
         service_type: SequesterServiceType,
-        sequester_encryption_key_payload: bytes,
-        sequester_encryption_key_payload_signature: bytes,
+        sequester_encryption_certificate: bytes,
+        sequester_encryption_certificate_signature: bytes,
     ):
 
         organization = await self._organization_component.get(organization_id)
 
         self.verify_sequester_signature(
             organization.sequester_verify_key,
-            sequester_encryption_key_payload,
-            sequester_encryption_key_payload_signature,
+            sequester_encryption_certificate,
+            sequester_encryption_certificate_signature,
         )
 
         self._services[organization_id][service_id] = SequesterService(
             service_id=service_id,
             service_type=service_type,
-            sequester_encryption_key=sequester_encryption_key_payload,
-            sequester_encryption_key_signature=sequester_encryption_key_payload_signature,
+            sequester_encryption_key=sequester_encryption_certificate,
+            sequester_encryption_key_signature=sequester_encryption_certificate_signature,
         )
