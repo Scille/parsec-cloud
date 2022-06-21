@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use serde::{Deserialize, Serialize};
+use serde_bytes::Bytes;
 use sodiumoxide::crypto::box_::{
     curve25519xsalsa20poly1305, gen_keypair, PUBLICKEYBYTES, SECRETKEYBYTES,
 };
@@ -13,8 +14,8 @@ use crate::{CryptoError, SecretKey};
  * PrivateKey
  */
 
-#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(transparent)]
+#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct PrivateKey(curve25519xsalsa20poly1305::SecretKey);
 
 crate::macros::impl_key_debug!(PrivateKey);
@@ -54,12 +55,28 @@ impl AsRef<[u8]> for PrivateKey {
     }
 }
 
+impl TryFrom<&Bytes> for PrivateKey {
+    type Error = CryptoError;
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
+    }
+}
+
+impl Serialize for PrivateKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
+    }
+}
+
 /*
  * PublicKey
  */
 
-#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(transparent)]
+#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct PublicKey(curve25519xsalsa20poly1305::PublicKey);
 
 crate::macros::impl_key_debug!(PublicKey);
@@ -79,5 +96,21 @@ impl AsRef<[u8]> for PublicKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.0 .0
+    }
+}
+
+impl TryFrom<&Bytes> for PublicKey {
+    type Error = CryptoError;
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
+    }
+}
+
+impl Serialize for PublicKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
     }
 }

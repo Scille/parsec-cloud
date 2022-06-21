@@ -17,33 +17,18 @@ pub(crate) enum Vis {
 
 #[derive(Deserialize)]
 pub(crate) struct Field {
-    name: String,
+    pub(crate) name: String,
     #[serde(rename = "type")]
-    ty: String,
+    pub(crate) ty: String,
     introduced_in_revision: Option<u32>,
     default: Option<String>,
 }
 
 impl Field {
     pub(crate) fn quote(&self, vis: Vis, types: &HashMap<String, String>) -> TokenStream {
-        let rename = match self.name.as_str() {
-            "type" => Some("ty"),
-            _ => None,
-        };
-        let name: Ident =
-            syn::parse_str(rename.unwrap_or(&self.name)).expect("Expected a valid name (Field)");
-        let ty = inspect_type(&self.ty, types);
-        let (inspected_ty, serde_skip) = if self.introduced_in_revision.is_some() {
-            (
-                "parsec_api_types::Maybe".to_string() + "<" + &ty + ">",
-                quote! {
-                    #[serde(default, skip_serializing_if = "parsec_api_types::Maybe::is_absent")]
-                },
-            )
-        } else {
-            (ty, quote! {})
-        };
-        let ty: Type = syn::parse_str(&inspected_ty).expect("Expected a valid type (Field)");
+        let (rename, name) = self.quote_name();
+
+        let (ty, serde_skip) = self.quote_type(types);
         let rename = SerdeAttr::Rename.quote(rename.map(|_| &self.name));
         let serde_as = quote_serde_as(&ty);
         let serde_default = if let Some(default) = &self.default {
@@ -68,6 +53,33 @@ impl Field {
                 #name: #ty
             },
         }
+    }
+
+    pub(crate) fn quote_name(&self) -> (Option<&'static str>, Ident) {
+        let rename = match self.name.as_str() {
+            "type" => Some("ty"),
+            _ => None,
+        };
+        let name: Ident =
+            syn::parse_str(rename.unwrap_or(&self.name)).expect("Expected a valid name (Field)");
+
+        (rename, name)
+    }
+
+    pub(crate) fn quote_type(&self, types: &HashMap<String, String>) -> (Type, TokenStream) {
+        let ty = inspect_type(&self.ty, types);
+        let (inspected_ty, serde_skip) = if self.introduced_in_revision.is_some() {
+            (
+                "parsec_api_types::Maybe".to_string() + "<" + &ty + ">",
+                quote! {
+                    #[serde(default, skip_serializing_if = "parsec_api_types::Maybe::is_absent")]
+                },
+            )
+        } else {
+            (ty, quote! {})
+        };
+        let ty = syn::parse_str::<Type>(&inspected_ty).expect("Expected a valid type (Field)");
+        (ty, serde_skip)
     }
 }
 

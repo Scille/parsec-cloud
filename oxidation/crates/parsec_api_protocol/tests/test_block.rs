@@ -109,14 +109,14 @@ fn serde_block_create_req() {
 fn serde_block_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::block_create::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::block_create::Rep::load(raw);
+    let data = authenticated_cmds::block_create::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::block_create::Rep::load(&raw2);
+    let data2 = authenticated_cmds::block_create::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -212,14 +212,14 @@ fn serde_block_read_req() {
 fn serde_block_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::block_read::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::block_read::Rep::load(raw);
+    let data = authenticated_cmds::block_read::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::block_read::Rep::load(&raw2);
+    let data2 = authenticated_cmds::block_read::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }

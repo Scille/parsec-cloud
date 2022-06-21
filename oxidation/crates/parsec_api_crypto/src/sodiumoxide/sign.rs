@@ -1,10 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
-use sodiumoxide::crypto::sign::{
-    ed25519, gen_keypair, sign, verify, PUBLICKEYBYTES, SEEDBYTES, SIGNATUREBYTES,
-};
+use serde_bytes::Bytes;
+use sodiumoxide::crypto::sign::{ed25519, gen_keypair, sign, verify};
 
 use crate::CryptoError;
 
@@ -12,16 +10,18 @@ use crate::CryptoError;
  * SigningKey
  */
 
-#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(into = "ByteBuf", try_from = "ByteBuf")]
+#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct SigningKey(ed25519::SecretKey);
 
 crate::macros::impl_key_debug!(SigningKey);
 
 impl SigningKey {
     pub const ALGORITHM: &'static str = "ed25519";
-    // SEEDBYTES is the size of the private key alone where SECRETKEYBYTES also contains the public part
-    pub const SIZE: usize = SEEDBYTES;
+    /// Size of the secret key.
+    /// `SEEDBYTES` is the size of the private key alone where `SECRETKEYBYTES` also contains the public part
+    pub const SIZE: usize = ed25519::SEEDBYTES;
+    pub const SIGNATURE_SIZE: usize = ed25519::SIGNATUREBYTES;
 
     pub fn verify_key(&self) -> VerifyKey {
         VerifyKey::try_from(self.0.public_key().0).unwrap()
@@ -31,8 +31,16 @@ impl SigningKey {
         Self(gen_keypair().1)
     }
 
+    /// Sign the message and prefix it with the signature.
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
         sign(data, &self.0)
+    }
+
+    /// Sign the message and return only the signature.
+    pub fn sign_only_signature(&self, data: &[u8]) -> [u8; Self::SIGNATURE_SIZE] {
+        use sodiumoxide::crypto::sign::Signer;
+
+        self.0.sign(data).to_bytes()
     }
 }
 
@@ -61,17 +69,19 @@ impl AsRef<[u8]> for SigningKey {
     }
 }
 
-impl TryFrom<ByteBuf> for SigningKey {
+impl TryFrom<&Bytes> for SigningKey {
     type Error = CryptoError;
-    fn try_from(data: ByteBuf) -> Result<Self, Self::Error> {
-        // TODO: zerocopy
-        Self::try_from(data.into_vec().as_ref())
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
     }
 }
 
-impl From<SigningKey> for ByteBuf {
-    fn from(data: SigningKey) -> Self {
-        Self::from(data.as_ref())
+impl Serialize for SigningKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
     }
 }
 
@@ -79,8 +89,8 @@ impl From<SigningKey> for ByteBuf {
  * VerifyKey
  */
 
-#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(transparent)]
+#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct VerifyKey(ed25519::PublicKey);
 
 crate::macros::impl_key_debug!(VerifyKey);
@@ -89,10 +99,11 @@ super::utils::impl_try_from!(VerifyKey, ed25519::PublicKey);
 
 impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
-    pub const SIZE: usize = PUBLICKEYBYTES;
+    /// Size of the public key.
+    pub const SIZE: usize = ed25519::PUBLICKEYBYTES;
 
     pub fn unsecure_unwrap(signed: &[u8]) -> Option<&[u8]> {
-        signed.get(SIGNATUREBYTES..)
+        signed.get(SigningKey::SIGNATURE_SIZE..)
     }
 
     pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {
@@ -104,5 +115,21 @@ impl AsRef<[u8]> for VerifyKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.0 .0
+    }
+}
+
+impl TryFrom<&Bytes> for VerifyKey {
+    type Error = CryptoError;
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
+    }
+}
+
+impl Serialize for VerifyKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
     }
 }

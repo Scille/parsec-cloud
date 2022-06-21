@@ -628,7 +628,7 @@ impl DeviceID {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct ChunkID(pub parsec_api_types::ChunkID);
 
 #[pymethods]

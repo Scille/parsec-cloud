@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use pyo3::exceptions::PyValueError;
 use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyType};
@@ -93,7 +94,9 @@ impl RealmCreateRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_create::Rep::load(&buf)))
+        realm_create::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -192,7 +195,9 @@ impl RealmStatusRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_status::Rep::load(&buf)))
+        realm_status::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -265,7 +270,9 @@ impl RealmStatsRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_stats::Rep::load(&buf)))
+        realm_stats::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -335,7 +342,9 @@ impl RealmGetRoleCertificateRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_get_role_certificates::Rep::load(&buf)))
+        realm_get_role_certificates::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -446,7 +455,9 @@ impl RealmUpdateRolesRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_update_roles::Rep::load(&buf)))
+        realm_update_roles::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -590,7 +601,9 @@ impl RealmStartReencryptionMaintenanceRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_start_reencryption_maintenance::Rep::load(&buf)))
+        realm_start_reencryption_maintenance::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
@@ -698,6 +711,8 @@ impl RealmFinishReencryptionMaintenanceRep {
 
     #[classmethod]
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(realm_finish_reencryption_maintenance::Rep::load(&buf)))
+        realm_finish_reencryption_maintenance::Rep::load(&buf)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }

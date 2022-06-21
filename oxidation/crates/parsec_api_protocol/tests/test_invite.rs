@@ -115,14 +115,14 @@ fn serde_invite_new_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmd
 fn serde_invite_new_rep(#[case] raw_expected: (&[u8], authenticated_cmds::invite_new::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_new::Rep::load(raw);
+    let data = authenticated_cmds::invite_new::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_new::Rep::load(&raw2);
+    let data2 = authenticated_cmds::invite_new::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -195,14 +195,14 @@ fn serde_invite_delete_req() {
 fn serde_invite_delete_rep(#[case] raw_expected: (&[u8], authenticated_cmds::invite_delete::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_delete::Rep::load(raw);
+    let data = authenticated_cmds::invite_delete::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_delete::Rep::load(&raw2);
+    let data2 = authenticated_cmds::invite_delete::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -275,14 +275,14 @@ fn serde_invite_list_rep() {
         ],
     };
 
-    let data = authenticated_cmds::invite_list::Rep::load(&raw);
+    let data = authenticated_cmds::invite_list::Rep::load(&raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_list::Rep::load(&raw2);
+    let data2 = authenticated_cmds::invite_list::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -359,14 +359,14 @@ fn serde_invite_info_req() {
 fn serde_invite_info_rep(#[case] raw_expected: (&[u8], invited_cmds::invite_info::Rep)) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_info::Rep::load(raw);
+    let data = invited_cmds::invite_info::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_info::Rep::load(&raw2);
+    let data2 = invited_cmds::invite_info::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -448,14 +448,14 @@ fn serde_invite_1_claimer_wait_peer_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_1_claimer_wait_peer::Rep::load(raw);
+    let data = invited_cmds::invite_1_claimer_wait_peer::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_1_claimer_wait_peer::Rep::load(&raw2);
+    let data2 = invited_cmds::invite_1_claimer_wait_peer::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -550,14 +550,14 @@ fn serde_invite_1_greeter_wait_peer_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_1_greeter_wait_peer::Rep::load(raw);
+    let data = authenticated_cmds::invite_1_greeter_wait_peer::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_1_greeter_wait_peer::Rep::load(&raw2);
+    let data2 = authenticated_cmds::invite_1_greeter_wait_peer::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -650,14 +650,16 @@ fn serde_invite_2a_claimer_send_hashed_nonce_hash_nonce_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::load(raw);
+    let data =
+        invited_cmds::invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::load(&raw2);
+    let data2 =
+        invited_cmds::invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -750,14 +752,14 @@ fn serde_invite_2a_greeter_get_hashed_nonce_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::load(raw);
+    let data = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::load(&raw2);
+    let data2 = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -847,14 +849,14 @@ fn serde_invite_2b_greeter_send_nonce_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::load(raw);
+    let data = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::load(&raw2);
+    let data2 = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -927,14 +929,14 @@ fn serde_invite_2b_claimer_send_nonce_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(raw);
+    let data = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(&raw2);
+    let data2 = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -1021,14 +1023,14 @@ fn serde_invite_3a_greeter_wait_peer_trust_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Rep::load(raw);
+    let data = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Rep::load(&raw2);
+    let data2 = authenticated_cmds::invite_3a_greeter_wait_peer_trust::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -1098,14 +1100,14 @@ fn serde_invite_3b_claimer_wait_peer_trust_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::load(raw);
+    let data = invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::load(&raw2);
+    let data2 = invited_cmds::invite_3b_claimer_wait_peer_trust::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -1192,14 +1194,14 @@ fn serde_invite_3b_greeter_signify_trust_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_3b_greeter_signify_trust::Rep::load(raw);
+    let data = authenticated_cmds::invite_3b_greeter_signify_trust::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::invite_3b_greeter_signify_trust::Rep::load(&raw2);
+    let data2 = authenticated_cmds::invite_3b_greeter_signify_trust::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -1266,14 +1268,14 @@ fn serde_invite_3a_claimer_signify_trust_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_3a_claimer_signify_trust::Rep::load(raw);
+    let data = invited_cmds::invite_3a_claimer_signify_trust::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_3a_claimer_signify_trust::Rep::load(&raw2);
+    let data2 = invited_cmds::invite_3a_claimer_signify_trust::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -1362,13 +1364,13 @@ fn serde_invite_4_greeter_communicate_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = authenticated_cmds::invite_4_greeter_communicate::Rep::load(raw);
+    let data = authenticated_cmds::invite_4_greeter_communicate::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
-    let data2 = authenticated_cmds::invite_4_greeter_communicate::Rep::load(&raw2);
+    let data2 = authenticated_cmds::invite_4_greeter_communicate::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }
@@ -1444,14 +1446,14 @@ fn serde_invite_4_claimer_communicate_rep(
 ) {
     let (raw, expected) = raw_expected;
 
-    let data = invited_cmds::invite_4_claimer_communicate::Rep::load(raw);
+    let data = invited_cmds::invite_4_claimer_communicate::Rep::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_4_claimer_communicate::Rep::load(&raw2);
+    let data2 = invited_cmds::invite_4_claimer_communicate::Rep::load(&raw2).unwrap();
 
     assert_eq!(data2, expected);
 }

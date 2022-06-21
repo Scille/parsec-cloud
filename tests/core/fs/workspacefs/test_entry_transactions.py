@@ -12,6 +12,7 @@ from pendulum import datetime
 from hypothesis_trio.stateful import initialize, invariant, rule, run_state_machine_as_test, Bundle
 from hypothesis import strategies as st
 
+from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
 from parsec.core.fs.storage import WorkspaceStorage
@@ -243,6 +244,7 @@ class PathElement:
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
+@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
 def test_entry_transactions(
     tmpdir,
     hypothesis_settings,
@@ -250,6 +252,7 @@ def test_entry_transactions(
     entry_transactions_factory,
     file_transactions_factory,
     alice,
+    tmp_path,
 ):
     tentative = 0
 
@@ -263,7 +266,7 @@ def test_entry_transactions(
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
                 async with WorkspaceStorage.run(
-                    Path("/dummy"), alice, EntryID.new()
+                    tmp_path / f"entry_transactions-{tentative}", alice, EntryID.new()
                 ) as local_storage:
                     async with entry_transactions_factory(
                         self.device, local_storage=local_storage

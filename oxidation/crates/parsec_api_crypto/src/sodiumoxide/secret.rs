@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use serde::{Deserialize, Serialize};
-// use sodiumoxide::crypto::kdf::blake2b;
+use serde_bytes::Bytes;
 use sodiumoxide::crypto::secretbox::xsalsa20poly1305::{
     gen_key, Key, KEYBYTES, MACBYTES, NONCEBYTES,
 };
@@ -9,8 +9,8 @@ use sodiumoxide::crypto::secretbox::{gen_nonce, open, seal, Nonce};
 
 use crate::CryptoError;
 
-#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(transparent)]
+#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[serde(try_from = "&Bytes")]
 pub struct SecretKey(Key);
 
 crate::macros::impl_key_debug!(SecretKey);
@@ -76,5 +76,21 @@ impl AsRef<[u8]> for SecretKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         self.0.as_ref()
+    }
+}
+
+impl TryFrom<&Bytes> for SecretKey {
+    type Error = CryptoError;
+    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
+        Self::try_from(data.as_ref())
+    }
+}
+
+impl Serialize for SecretKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_ref())
     }
 }

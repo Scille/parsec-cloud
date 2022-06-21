@@ -623,6 +623,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ee2393c4a91429dffb4bedf19f4d6abf27d8a732c8ce4980305d782e5426d57"
 
 [[package]]
+name = "diesel"
+version = "2.0.0-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e531d0abf8147036383c88ce3785d9cda6fe1b8b1183021ffa01cf49c5819d24"
+dependencies = [
+ "diesel_derives",
+ "libsqlite3-sys",
+ "r2d2",
+]
+
+[[package]]
+name = "diesel_derives"
+version = "2.0.0-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "212ba0cdc611523c37f26c7b3b4aedb4af7cbfe9239c4e7736a8a7c82284d77b"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "diff"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1137,6 +1160,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_core_fs"
+version = "0.0.0"
+dependencies = [
+ "diesel",
+ "fancy-regex",
+ "parsec_api_crypto",
+ "parsec_api_types",
+ "parsec_client_types",
+ "rstest 0.12.0",
+ "tests_fixtures",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
 name = "libparsec_platform_native"
 version = "0.0.0"
 dependencies = [
@@ -1147,7 +1185,7 @@ dependencies = [
  "http",
  "parsec_api_protocol",
  "parsec_api_types",
- "rstest",
+ "rstest 0.13.0",
  "smol",
  "tests_fixtures",
 ]
@@ -1163,6 +1201,7 @@ dependencies = [
  "chrono",
  "fancy-regex",
  "libparsec",
+ "libparsec_core_fs",
  "parsec_api_crypto",
  "parsec_api_protocol",
  "parsec_api_types",
@@ -1182,6 +1221,16 @@ dependencies = [
  "libc",
  "pkg-config",
  "walkdir",
+]
+
+[[package]]
+name = "libsqlite3-sys"
+version = "0.24.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "898745e570c7d0453cc1fbc4a701eb6c662ed54e8fec8b7d14be137ebeeb9d14"
+dependencies = [
+ "pkg-config",
+ "vcpkg",
 ]
 
 [[package]]
@@ -1388,12 +1437,37 @@ checksum = "427c3892f9e783d91cc128285287e70a59e206ca452770ece88a76f7a3eddd72"
 
 [[package]]
 name = "parking_lot"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d17b78036a60663b797adeaee46f5c9dfebb86948d1255007a1d6be0271ff99"
+dependencies = [
+ "instant",
+ "lock_api",
+ "parking_lot_core 0.8.5",
+]
+
+[[package]]
+name = "parking_lot"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87f5ec2493a61ac0506c0f4199f99070cbe83857b0337006a30f3e6719b8ef58"
 dependencies = [
  "lock_api",
- "parking_lot_core",
+ "parking_lot_core 0.9.3",
+]
+
+[[package]]
+name = "parking_lot_core"
+version = "0.8.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d76e8e1493bcac0d2766c42737f34458f1c8c50c0d23bcb24ea953affb273216"
+dependencies = [
+ "cfg-if 1.0.0",
+ "instant",
+ "libc",
+ "redox_syscall",
+ "smallvec",
+ "winapi",
 ]
 
 [[package]]
@@ -1454,7 +1528,7 @@ dependencies = [
  "paste",
  "rand 0.8.5",
  "rmp-serde",
- "rstest",
+ "rstest 0.13.0",
  "serde",
  "serde_json",
  "serde_with",
@@ -1480,7 +1554,7 @@ dependencies = [
  "pretty_assertions",
  "rand 0.8.5",
  "rmp-serde",
- "rstest",
+ "rstest 0.13.0",
  "rstest_reuse",
  "serde",
  "serde_bytes",
@@ -1517,7 +1591,7 @@ dependencies = [
  "paste",
  "pretty_assertions",
  "rmp-serde",
- "rstest",
+ "rstest 0.13.0",
  "rstest_reuse",
  "serde",
  "serde_bytes",
@@ -1536,7 +1610,7 @@ dependencies = [
  "parsec_api_crypto",
  "parsec_api_protocol",
  "parsec_api_types",
- "rstest",
+ "rstest 0.13.0",
  "tests_fixtures",
  "thiserror",
 ]
@@ -1685,7 +1759,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "indoc",
  "libc",
- "parking_lot",
+ "parking_lot 0.12.0",
  "pyo3-build-config",
  "pyo3-ffi",
  "pyo3-macros",
@@ -1742,6 +1816,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1feb54ed693b93a84e14094943b84b7c4eae204c512b7ccb95ab0c66d278ad1"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "r2d2"
+version = "0.8.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "545c5bc2b880973c9c10e4067418407a0ccaa3091781d1671d46eb35107cb26f"
+dependencies = [
+ "log",
+ "parking_lot 0.11.2",
+ "scheduled-thread-pool",
 ]
 
 [[package]]
@@ -1865,6 +1950,19 @@ dependencies = [
 
 [[package]]
 name = "rstest"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d912f35156a3f99a66ee3e11ac2e0b3f34ac85a07e05263d05a7e2c8810d616f"
+dependencies = [
+ "cfg-if 1.0.0",
+ "proc-macro2",
+ "quote",
+ "rustc_version",
+ "syn",
+]
+
+[[package]]
+name = "rstest"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b939295f93cb1d12bc1a83cf9ee963199b133fb8a79832dd51b68bb9f59a04dc"
@@ -1932,6 +2030,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "scheduled-thread-pool"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "977a7519bff143a44f842fd07e80ad1329295bd71686457f18e496736f4bf9bf"
+dependencies = [
+ "parking_lot 0.12.0",
 ]
 
 [[package]]
@@ -2264,7 +2371,8 @@ dependencies = [
  "parsec_api_protocol",
  "parsec_api_types",
  "parsec_client_types",
- "rstest",
+ "rstest 0.13.0",
+ "uuid",
 ]
 
 [[package]]
@@ -2349,7 +2457,7 @@ dependencies = [
  "mio",
  "num_cpus",
  "once_cell",
- "parking_lot",
+ "parking_lot 0.12.0",
  "pin-project-lite",
  "signal-hook-registry",
  "socket2",
@@ -2474,6 +2582,12 @@ dependencies = [
  "ctor",
  "version_check",
 ]
+
+[[package]]
+name = "vcpkg"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "version_check"

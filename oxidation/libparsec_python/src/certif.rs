@@ -99,7 +99,7 @@ impl UserCertificate {
     #[classmethod]
     fn verify_and_load(
         _cls: &PyType,
-        signed: Vec<u8>,
+        signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: Option<&DeviceID>,
         expected_user: Option<&UserID>,
@@ -107,7 +107,7 @@ impl UserCertificate {
     ) -> PyResult<Self> {
         let r = Self(
             parsec_api_types::UserCertificate::verify_and_load(
-                &signed,
+                signed,
                 &author_verify_key.0,
                 match expected_author {
                     Some(device_id) => CertificateSignerRef::User(&device_id.0),
@@ -143,10 +143,9 @@ impl UserCertificate {
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: Vec<u8>) -> PyResult<Self> {
+    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
         Ok(Self(
-            parsec_api_types::UserCertificate::unsecure_load(&signed)
-                .map_err(DataError::new_err)?,
+            parsec_api_types::UserCertificate::unsecure_load(signed).map_err(DataError::new_err)?,
         ))
     }
 
@@ -268,14 +267,14 @@ impl DeviceCertificate {
     #[classmethod]
     fn verify_and_load(
         _cls: &PyType,
-        signed: Vec<u8>,
+        signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: Option<&DeviceID>,
         expected_device: Option<&DeviceID>,
     ) -> PyResult<Self> {
         let r = Self(
             parsec_api_types::DeviceCertificate::verify_and_load(
-                &signed,
+                signed,
                 &author_verify_key.0,
                 match &expected_author {
                     Some(device_id) => CertificateSignerRef::User(&device_id.0),
@@ -306,9 +305,9 @@ impl DeviceCertificate {
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: Vec<u8>) -> PyResult<Self> {
+    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
         Ok(Self(
-            parsec_api_types::DeviceCertificate::unsecure_load(&signed)
+            parsec_api_types::DeviceCertificate::unsecure_load(signed)
                 .map_err(DataError::new_err)?,
         ))
     }
@@ -403,14 +402,14 @@ impl RevokedUserCertificate {
     #[classmethod]
     fn verify_and_load(
         _cls: &PyType,
-        signed: Vec<u8>,
+        signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_user: Option<&UserID>,
     ) -> PyResult<Self> {
         let r = Self(
             parsec_api_types::RevokedUserCertificate::verify_and_load(
-                &signed,
+                signed,
                 &author_verify_key.0,
                 &expected_author.0,
             )
@@ -438,9 +437,9 @@ impl RevokedUserCertificate {
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: Vec<u8>) -> PyResult<Self> {
+    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
         Ok(Self(
-            parsec_api_types::RevokedUserCertificate::unsecure_load(&signed)
+            parsec_api_types::RevokedUserCertificate::unsecure_load(signed)
                 .map_err(DataError::new_err)?,
         ))
     }

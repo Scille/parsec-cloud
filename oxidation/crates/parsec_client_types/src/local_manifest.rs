@@ -81,8 +81,7 @@ impl Chunk {
             stop,
             raw_offset: start,
             // TODO: what to do with overflow
-            raw_size: NonZeroU64::try_from(u64::from(stop) - start)
-                .unwrap_or_else(|_| unreachable!()),
+            raw_size: NonZeroU64::try_from(stop.get() - start).unwrap_or_else(|_| unreachable!()),
             access: None,
         }
     }
@@ -93,7 +92,7 @@ impl Chunk {
             raw_size: block_access.size,
             start: block_access.offset,
             // TODO: what to do with overflow
-            stop: (block_access.offset + u64::from(block_access.size))
+            stop: (block_access.offset + block_access.size.get())
                 .try_into()
                 .unwrap_or_else(|_| unreachable!()),
             access: Some(block_access),
@@ -116,7 +115,7 @@ impl Chunk {
             id: BlockID::from(*self.id),
             key: SecretKey::generate(),
             offset: self.start,
-            size: (u64::from(self.stop) - self.start)
+            size: (self.stop.get() - self.start)
                 .try_into()
                 .map_err(|_| "Stop - Start must be > 0")?,
             digest: HashDigest::from_data(data),
@@ -145,7 +144,7 @@ impl Chunk {
             return false;
         }
         // Not right aligned
-        if u64::from(self.stop) != self.raw_offset + u64::from(self.raw_size) {
+        if self.stop.get() != self.raw_offset + self.raw_size.get() {
             return false;
         }
         true
@@ -256,7 +255,7 @@ impl LocalFileManifest {
                 assert_eq!(chunk.start, current);
                 assert!(chunk.start < chunk.stop.into());
                 assert!(chunk.raw_offset <= chunk.start);
-                assert!(u64::from(chunk.stop) <= chunk.raw_offset + u64::from(chunk.raw_size));
+                assert!(chunk.stop.get() <= chunk.raw_offset + chunk.raw_size.get());
                 current = chunk.stop.into()
             }
         }
@@ -1011,5 +1010,57 @@ impl LocalUserManifest {
             self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
         reference.version = remote_manifest.version;
         reference == *remote_manifest
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum LocalManifest {
+    File(LocalFileManifest),
+    Folder(LocalFolderManifest),
+    Workspace(LocalWorkspaceManifest),
+    User(LocalUserManifest),
+}
+
+impl LocalManifest {
+    pub fn id(&self) -> EntryID {
+        match self {
+            Self::File(manifest) => manifest.base.id,
+            Self::Folder(manifest) => manifest.base.id,
+            Self::Workspace(manifest) => manifest.base.id,
+            Self::User(manifest) => manifest.base.id,
+        }
+    }
+
+    pub fn need_sync(&self) -> bool {
+        match self {
+            Self::File(manifest) => manifest.need_sync,
+            Self::Folder(manifest) => manifest.need_sync,
+            Self::Workspace(manifest) => manifest.need_sync,
+            Self::User(manifest) => manifest.need_sync,
+        }
+    }
+
+    pub fn base_version(&self) -> u32 {
+        match self {
+            Self::File(manifest) => manifest.base.version,
+            Self::Folder(manifest) => manifest.base.version,
+            Self::Workspace(manifest) => manifest.base.version,
+            Self::User(manifest) => manifest.base.version,
+        }
+    }
+
+    pub fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
+        match self {
+            Self::File(manifest) => manifest.dump_and_encrypt(key),
+            Self::Folder(manifest) => manifest.dump_and_encrypt(key),
+            Self::Workspace(manifest) => manifest.dump_and_encrypt(key),
+            Self::User(manifest) => manifest.dump_and_encrypt(key),
+        }
+    }
+
+    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &'static str> {
+        let serialized = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+        rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")
     }
 }

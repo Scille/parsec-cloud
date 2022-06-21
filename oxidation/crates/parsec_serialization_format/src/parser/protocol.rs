@@ -21,23 +21,75 @@ struct Req {
 impl Req {
     fn quote(&self, types: &HashMap<String, String>) -> TokenStream {
         if let Some(unit) = &self.unit {
-            let unit: Ident = syn::parse_str(unit).expect("Expected a valid name (Req)");
-            quote! {
-                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
-                pub struct Req(pub #unit);
-            }
+            Req::quote_unit(unit)
         } else if self.other_fields.is_empty() {
-            quote! {
-                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
-                pub struct Req;
-            }
+            Req::quote_empty()
         } else {
-            let fields = quote_fields(&self.other_fields, Vis::Public, types);
+            self.quote_many_fields(types)
+        }
+    }
+
+    fn quote_unit(unit: &str) -> TokenStream {
+        let unit: Ident = syn::parse_str(unit).expect("Expected a valid name (Req)");
+        quote! {
+            #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+            pub struct Req(pub #unit);
+
+            impl Req {
+                pub fn new(value: #unit) -> Self {
+                    Self(value)
+                }
+            }
+        }
+    }
+
+    fn quote_empty() -> TokenStream {
+        quote! {
+            #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+            pub struct Req;
+
+            impl Req {
+                pub fn new() -> Self { Self }
+            }
+        }
+    }
+
+    fn quote_many_fields(&self, types: &HashMap<String, String>) -> TokenStream {
+        let fields = quote_fields(&self.other_fields, Vis::Public, types);
+        let args = self
+            .other_fields
+            .iter()
+            .fold(TokenStream::new(), |args, field| {
+                let name = field.quote_name().1;
+                let ty = field.quote_type(types).0;
+
+                let arg = quote! { #name: #ty };
+
+                quote! {
+                    #args
+                    #arg,
+                }
+            });
+        let params = self.other_fields.iter().fold(quote! {}, |params, field| {
+            let name: Ident = field.quote_name().1;
             quote! {
-                #[::serde_with::serde_as]
-                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
-                pub struct Req {
-                    #fields
+                #params
+                #name,
+            }
+        });
+
+        quote! {
+            #[::serde_with::serde_as]
+            #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+            pub struct Req {
+                #fields
+            }
+
+            impl Req {
+                pub fn new(#args) -> Self {
+                    Self {
+                        #params
+                    }
                 }
             }
         }
@@ -233,9 +285,6 @@ impl Cmds {
                     #[serde(tag = "status")]
                     pub enum Rep {
                         #variants_rep
-                        UnknownError {
-                            error: String,
-                        },
                     }
 
                     impl Rep {
@@ -243,13 +292,8 @@ impl Cmds {
                             ::rmp_serde::to_vec_named(self).map_err(|_| "Serialization failed")
                         }
 
-                        pub fn load(buf: &[u8]) -> Self {
-                            match ::rmp_serde::from_slice(buf) {
-                                Ok(res) => res,
-                                Err(e) => Self::UnknownError {
-                                    error: e.to_string(),
-                                },
-                            }
+                        pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
+                            ::rmp_serde::from_slice(buf)
                         }
                     }
                 }
