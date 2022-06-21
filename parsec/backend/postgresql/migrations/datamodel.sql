@@ -32,16 +32,18 @@ CREATE TABLE organization (
 --  Sequester
 -------------------------------------------------------
 
-CREATE TYPE sequester_service AS ENUM ('SEQUESTRE', 'WEBHOOK');
+CREATE TYPE sequester_service_type AS ENUM ('SEQUESTRE', 'WEBHOOK');
 
-CREATE TABLE sequester(
+CREATE TABLE sequester_service(
     _id SERIAL PRIMARY KEY,
-    service_type sequester_service NOT NULL,
-    service_id TEXT NOT NULL,
+    service_type sequester_service_type NOT NULL,
+    service_id UUID NOT NULL,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
-    encryption_key_payload BYTEA,
-    encryption_key_payload_signature BYTEA,
-    webhook_url TEXT,
+    encryption_key_certificate BYTEA NOT NULL,
+    encryption_key_certificate_signature BYTEA NOT NULLS,
+    webhook_url TEXT, -- NULL if service_type != WEBHOOK
+    created_on TIMESTAMPTZ NOT NULL,
+    deleted_on TIMESTAMPTZ, -- NULL if not deleted
 
     UNIQUE(organization, service_id)
 );
