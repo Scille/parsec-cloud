@@ -27,18 +27,18 @@ steps:
 
   - task: Cache@2
     inputs:
-      key: '"cargo-registry" | "$(Agent.OS)" | Cargo.lock'
+      key: '"cargo-registry-index" | "$(Agent.OS)" | Cargo.lock'
       restoreKeys: |
-        cargo-registry | "$(Agent.OS)"
-        cargo-registry
+        cargo-registry-index | "$(Agent.OS)"
+        cargo-registry-index
       path: $(cargo_home_dir)/registry/index
     displayName: Cache cargo index registry
 
   - task: Cache@2
     inputs:
-      key: '"cargo-registry" | "$(Agent.OS)" | Cargo.lock'
+      key: '"cargo-registry-cache" | "$(Agent.OS)" | Cargo.lock'
       restoreKeys: |
-        cargo-registry | "$(Agent.OS)"
-        cargo-registry
+        cargo-registry-cache | "$(Agent.OS)"
+        cargo-registry-cache
       path: $(cargo_home_dir)/registry/cache
     displayName: Cache cargo cache registry
