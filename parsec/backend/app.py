@@ -74,6 +74,7 @@ async def backend_app_factory(config: BackendConfig, event_bus: Optional[EventBu
             blockstore=components["blockstore"],
             block=components["block"],
             pki=components["pki"],
+            sequester=components["sequester"],
             events=components["events"],
         )
 
@@ -95,6 +96,7 @@ class BackendApp:
         blockstore,
         block,
         pki,
+        sequester,
         events,
     ):
         self.config = config
@@ -112,6 +114,7 @@ class BackendApp:
         self.blockstore = blockstore
         self.block = block
         self.pki = pki
+        self.sequester = sequester
         self.events = events
 
         self.apis = collect_apis(

@@ -3,6 +3,7 @@
 import triopg
 from async_generator import asynccontextmanager
 from typing import AsyncGenerator, Optional
+from parsec.backend.postgresql.sequester import PGPSequesterComponent
 
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
@@ -51,6 +52,7 @@ async def components_factory(
     blockstore = blockstore_factory(config.blockstore_config, postgresql_dbh=dbh)
     block = PGBlockComponent(dbh, blockstore, vlob)
     pki = PGPkiEnrollmentComponent(dbh)
+    sequester = PGPSequesterComponent(dbh)
     events = EventsComponent(realm, send_event=_send_event)
 
     components = {
@@ -67,6 +69,7 @@ async def components_factory(
         "block": block,
         "blockstore": blockstore,
         "pki": pki,
+        "sequester": sequester,
     }
     for component in components.values():
         method = getattr(component, "register_components", None)
