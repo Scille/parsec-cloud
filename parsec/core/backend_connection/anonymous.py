@@ -1,10 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import Optional
 from uuid import UUID
 from structlog import get_logger
-from parsec.api.protocol.sequester import SequesterServiceType
-from parsec.core.types.backend_address import BackendSequesterServiceAddr
 
 from parsec.crypto import VerifyKey
 from parsec.utils import URLError
@@ -13,7 +10,6 @@ from parsec.api.protocol import (
     ProtocolError,
     pki_enrollment_submit_serializer,
     pki_enrollment_info_serializer,
-    sequester_register_service_serializer,
     organization_bootstrap_serializer,
 )
 from parsec.core.types import (
@@ -112,7 +108,6 @@ async def organization_bootstrap(
     device_certificate: bytes,
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
-    signed_sequester_certificate: Optional[bytes],
 ) -> dict:
     return await _anonymous_cmd(
         organization_bootstrap_serializer,
@@ -125,24 +120,4 @@ async def organization_bootstrap(
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
-        sequester_verify_key_certificate=signed_sequester_certificate,
-    )
-
-
-async def sequester_register_service(
-    addr: BackendSequesterServiceAddr,
-    service_type: SequesterServiceType,
-    service_id: UUID,
-    sequester_der_payload: bytes,
-    sequester_der_payload_signature: bytes,
-) -> dict:
-    return await _anonymous_cmd(
-        sequester_register_service_serializer,
-        cmd="sequester_register_service",
-        addr=addr,
-        organization_id=addr.organization_id,
-        service_type=service_type,
-        service_id=service_id,
-        sequester_der_payload=sequester_der_payload,
-        sequester_der_payload_signature=sequester_der_payload_signature,
     )

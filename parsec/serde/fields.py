@@ -28,6 +28,8 @@ from parsec.crypto import (
     PrivateKey as _PrivateKey,
     PublicKey as _PublicKey,
 )
+from parsec.sequester_crypto import DerPublicKey as _DerPublicKey
+from parsec.sequester_crypto import load_der_public_key
 
 
 __all__ = (
@@ -411,3 +413,23 @@ class SecretKeyField(Field):
 
 
 SecretKey = SecretKeyField
+
+
+class DerPublicKeyField(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+        return value.unwrap().dump()
+
+    def _deserialize(self, value, attr, data) -> _DerPublicKey:
+        if not isinstance(value, bytes):
+            raise ValidationError("Not bytes")
+
+        try:
+            return load_der_public_key(value)
+
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+DerPublicKey = DerPublicKeyField
