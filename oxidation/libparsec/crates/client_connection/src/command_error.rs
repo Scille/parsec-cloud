@@ -12,13 +12,13 @@ pub enum CommandError {
     /// We receive a response but with an unexpected status code.
     InvalidResponseStatus(reqwest::StatusCode, reqwest::Response),
     /// We failed to deserialize the reply.
-    Deserialization(parsec_api_protocol::DecodeError),
+    InvalidResponseContent(parsec_api_protocol::DecodeError),
 }
 
 impl Error for CommandError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            CommandError::Deserialization(e) => Some(e),
+            CommandError::InvalidResponseContent(e) => Some(e),
             CommandError::NoResponse(e) => Some(e),
             _ => None,
         }
@@ -34,7 +34,7 @@ impl Display for CommandError {
             CommandError::InvalidResponseStatus(code, _response) => {
                 write!(f, "unexpected response status {code}")
             }
-            CommandError::Deserialization(reason) => {
+            CommandError::InvalidResponseContent(reason) => {
                 write!(f, "failed to deserialize the response: {reason}")
             }
         }
@@ -43,7 +43,7 @@ impl Display for CommandError {
 
 impl From<parsec_api_protocol::DecodeError> for CommandError {
     fn from(e: parsec_api_protocol::DecodeError) -> Self {
-        Self::Deserialization(e)
+        Self::InvalidResponseContent(e)
     }
 }
 
