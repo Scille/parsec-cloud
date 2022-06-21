@@ -27,7 +27,7 @@ from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 from parsec.backend.postgresql.handler import send_signal
 
 
-from parsec.sequester_crypto import DerPublicKey
+from parsec.sequester_crypto import SequesterPublicKey
 
 _q_insert_organization = Q(
     """
@@ -224,7 +224,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        sequester_verify_key: DerPublicKey,
+        sequester_verify_key: SequesterPublicKey,
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the

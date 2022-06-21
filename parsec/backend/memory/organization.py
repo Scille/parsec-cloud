@@ -25,7 +25,7 @@ from parsec.backend.memory.block import MemoryBlockComponent
 from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.events import BackendEvent
 
-from parsec.sequester_crypto import DerPublicKey
+from parsec.sequester_crypto import SequesterPublicKey
 
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):
@@ -92,7 +92,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        sequester_verify_key: DerPublicKey,
+        sequester_verify_key: SequesterPublicKey,
     ) -> None:
         # Organization bootstrap involves multiple modifications (in user,
         # device and organization) and is not atomic (given await is used),

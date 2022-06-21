@@ -20,7 +20,7 @@ from parsec.core.invite.exceptions import (
     InvitePeerResetError,
 )
 
-from parsec.sequester_crypto import DerPublicKey
+from parsec.sequester_crypto import SequesterPublicKey
 
 
 def _check_rep(rep, step_name):
@@ -38,7 +38,7 @@ async def bootstrap_organization(
     addr: BackendOrganizationBootstrapAddr,
     human_handle: Optional[HumanHandle],
     device_label: Optional[DeviceLabel],
-    sequester_der_public_key: Optional[DerPublicKey],
+    sequester_der_public_key: Optional[SequesterPublicKey],
 ) -> LocalDevice:
     root_signing_key = SigningKey.generate()
     root_verify_key = root_signing_key.verify_key

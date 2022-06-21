@@ -6,7 +6,7 @@ from typing import Optional, Union, List
 from secrets import token_hex
 from parsec.api.data.certif import SequesterDerVerifyKeyCertificateContent
 
-from parsec.sequester_crypto import DerPublicKey
+from parsec.sequester_crypto import SequesterPublicKey
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import (
@@ -61,7 +61,7 @@ class Organization:
     root_verify_key: Optional[VerifyKey]
     user_profile_outsider_allowed: bool
     active_users_limit: Optional[int]
-    sequester_verify_key: Optional[DerPublicKey]
+    sequester_verify_key: Optional[SequesterPublicKey]
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
@@ -336,7 +336,7 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        sequester_verify_key: DerPublicKey,
+        sequester_verify_key: SequesterPublicKey,
     ) -> None:
         """
         Raises:
