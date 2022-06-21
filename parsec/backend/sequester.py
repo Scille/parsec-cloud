@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from uuid import UUID, uuid4
+
+import attr
 from parsec.api.data.sequester import EncryptionKeyFormat, SequesterServiceEncryptionKey
 
 from parsec.api.protocol.types import OrganizationID
@@ -13,6 +15,7 @@ from parsec.sequester_crypto import (
     load_sequester_public_key,
     verify_sequester,
 )
+from parsec.types import UUID4
 
 
 class SequesterError(Exception):
@@ -27,14 +30,20 @@ class SequesterKeyFormatError(SequesterError):
     pass
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class SequesterServiceRequest:
+    service_type: SequesterServiceType
+    service_id: UUID4
+    sequester_encryption_key: bytes
+    sequester_encryption_key_signature: bytes
+
+
 class BaseSequesterComponent:
     def __init__(self, event_bus: EventBus):
         self._event_bus = event_bus
 
     async def register_service(
-        self,
-        organization_id: OrganizationID,
-        sequester_register_service_schema: SequesterServiceSchema,
+        self, organization_id: OrganizationID, sequester_register_service: SequesterServiceRequest
     ):
         """
         Raises:
@@ -42,7 +51,7 @@ class BaseSequesterComponent:
             SequesterSignatureError
         """
         sequester_encryption_key = SequesterServiceEncryptionKey.load(
-            sequester_register_service_schema.sequester_encryption_key
+            sequester_register_service.sequester_encryption_key
         )
         # Assert encryption key is rsa and loadable
         if not sequester_encryption_key.encryption_key_format != EncryptionKeyFormat.RSA:
@@ -54,9 +63,9 @@ class BaseSequesterComponent:
         self._register_service(
             organization_id=organization_id,
             service_id=uuid4(),
-            service_type=sequester_register_service_schema.service_type,
-            sequester_encryption_key=sequester_register_service_schema.sequester_encryption_key,
-            sequester_encryption_key_signature=sequester_register_service_schema.sequester_encryption_key_signature,
+            service_type=sequester_register_service.service_type,
+            sequester_encryption_key=sequester_register_service.sequester_encryption_key,
+            sequester_encryption_key_signature=sequester_register_service.sequester_encryption_key_signature,
         )
 
     async def get(self, organization_id: OrganizationID) -> SequesterServiceSchema:
