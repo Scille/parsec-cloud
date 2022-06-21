@@ -7,8 +7,8 @@ from oscrypto.asymmetric import PublicKey as _PublicKey
 from oscrypto.asymmetric import PrivateKey as _PrivateKey
 from pathlib import Path
 
-DerPublicKey = _PublicKey
-DerPrivateKey = _PrivateKey
+SequesterPublicKey = _PublicKey
+SequesterPrivateKey = _PrivateKey
 
 hash_algorithm = "sha256"
 
@@ -21,15 +21,15 @@ class SequesterCryptoSignatureError(SequesterCryptoError):
     pass
 
 
-def load_der_public_key(bytes_key: bytes) -> DerPublicKey:
+def load_sequester_public_key(bytes_key: bytes) -> SequesterPublicKey:
     return oscrypto.asymmetric.load_public_key(bytes_key)
 
 
-def load_der_private_key(path: Path) -> DerPrivateKey:
+def load_sequester_private_key(path: Path) -> SequesterPrivateKey:
     return oscrypto.asymmetric.load_private_key(path)
 
 
-def verify_sequester(public_key: DerPublicKey, data: bytes, signature: bytes) -> None:
+def verify_sequester(public_key: SequesterPublicKey, data: bytes, signature: bytes) -> None:
     """
     Raises:
         SequesterCryptoSignatureError
@@ -43,5 +43,5 @@ def verify_sequester(public_key: DerPublicKey, data: bytes, signature: bytes) ->
         raise SequesterCryptoError()
 
 
-def sign_sequester(private_key: DerPrivateKey, data: bytes) -> bytes:
+def sign_sequester(private_key: SequesterPrivateKey, data: bytes) -> bytes:
     return oscrypto.asymmetric.rsa_pss_sign(private_key, data, hash_algorithm)
