@@ -49,6 +49,7 @@ rules:
 
   empty-values:
     forbid-in-flow-mappings: true
+    forbid-in-block-mappings: false
 
   hyphens:
     max-spaces-after: 1
