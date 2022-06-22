@@ -1,65 +1,65 @@
 version: 2
 updates:
   - package-ecosystem: github-actions
-    directory: "/"
+    directory: /
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: "monthly"
-      time: "00:30"
-      timezone: "Europe/Paris"
+      interval: monthly
+      time: 00:30
+      timezone: Europe/Paris
     open-pull-requests-limit: 2
 
   - package-ecosystem: cargo
-    directory: "/"
+    directory: /
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: "monthly"
-      time: "00:30"
-      timezone: "Europe/Paris"
+      interval: monthly
+      time: 00:30
+      timezone: Europe/Paris
     open-pull-requests-limit: 2
 
   - package-ecosystem: pip
-    directory: "/oxidation/libparsec_python"
+    directory: /oxidation/libparsec_python
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: "monthly"
-      time: "00:30"
-      timezone: "Europe/Paris"
+      interval: monthly
+      time: 00:30
+      timezone: Europe/Paris
     open-pull-requests-limit: 2
 
   - package-ecosystem: pip
-    directory: "/"
+    directory: /
     ignore:
-      - dependency-name: "toastedmarshmallow"
-      - dependency-name: "trio_typing"
-      - dependency-name: "typing-extensions"
+      - dependency-name: toastedmarshmallow
+      - dependency-name: trio_typing
+      - dependency-name: typing-extensions
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: "monthly"
-      time: "23:30"
-      timezone: "Europe/Paris"
+      interval: monthly
+      time: 23:30
+      timezone: Europe/Paris
     open-pull-requests-limit: 2
 
-  - package-ecosystem: "npm"
-    directory: "/oxidation/client"
+  - package-ecosystem: npm
+    directory: /oxidation/client
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: "monthly"
-      time: "23:30"
-      timezone: "Europe/Paris"
+      interval: monthly
+      time: 23:30
+      timezone: Europe/Paris
     open-pull-requests-limit: 2
 
-  - package-ecosystem: "npm"
-    directory: "/oxidation/client/android"
+  - package-ecosystem: npm
+    directory: /oxidation/client/android
     pull-request-branch-name:
       separator: "-"
     schedule:
-      interval: "monthly"
-      time: "23:30"
-      timezone: "Europe/Paris"
+      interval: monthly
+      time: 23:30
+      timezone: Europe/Paris
     open-pull-requests-limit: 2
