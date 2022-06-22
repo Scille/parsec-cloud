@@ -431,7 +431,7 @@ mod tests {
             self.0.remove(&chunk_id);
         }
 
-        fn read_chunk<'a>(&'a self, chunk: &Chunk) -> &'a [u8] {
+        fn read_chunk(&self, chunk: &Chunk) -> &[u8] {
             let data = self.read_chunk_data(chunk.id);
             let start = (chunk.start - chunk.raw_offset) as usize;
             let stop = (chunk.stop.get() - chunk.raw_offset) as usize;
