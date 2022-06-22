@@ -5,6 +5,35 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.10.0-rc1 (2022-06-22)
+-------------------------------
+
+Features
+~~~~~~~~
+
+* Display the number of files in the current folder  (`#2416
+  <https://github.com/Scille/parsec-cloud/issues/2416>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix GUI sometime not detecting invitation deletion or peer has left during
+  invitation greet Fix GUI workspace history date picker from being clickable
+  too soon  (`#2337 <https://github.com/Scille/parsec-cloud/issues/2337>`__)
+* Prevent closing the dialog while creating an organization  (`#2360
+  <https://github.com/Scille/parsec-cloud/issues/2360>`__)
+* Fixed performance issues when loading a folder  (`#2411
+  <https://github.com/Scille/parsec-cloud/issues/2411>`__)
+* Do not display old files when entering a new workspace  (`#2426
+  <https://github.com/Scille/parsec-cloud/issues/2426>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added some feedback when entering a file name to avoid invalid names  (`#2331
+  <https://github.com/Scille/parsec-cloud/issues/2331>`__)
+
+
 Parsec v2.9.2 (2022-05-23)
 --------------------------
 

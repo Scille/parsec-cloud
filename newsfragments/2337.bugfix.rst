@@ -1,2 +1,0 @@
-Fix GUI sometime not detecting invitation deletion or peer has left during invitation greet
-Fix GUI workspace history date picker from being clickable too soon

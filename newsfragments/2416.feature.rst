@@ -1,1 +1,0 @@
-Display the number of files in the current folder
