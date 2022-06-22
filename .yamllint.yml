@@ -3,6 +3,9 @@ yaml-files:
   - "*.yml"
   - .yamllint
 
+ignore: |
+  venv
+
 extends: default
 
 rules:
