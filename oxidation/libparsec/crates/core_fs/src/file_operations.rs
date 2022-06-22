@@ -15,15 +15,15 @@ fn block_read(chunks: &[Chunk], size: u64, start: u64) -> impl Iterator<Item = C
     let stop = start + size;
 
     // Bisect
-    let start_index = match chunks.binary_search_by_key(&start, |x| x.start) {
-        Ok(x) => x,
-        Err(x) => x
+    let start_index = match chunks.binary_search_by_key(&start, |chunk| chunk.start) {
+        Ok(found_index) => found_index,
+        Err(insert_index) => insert_index
             .checked_sub(1)
-            .expect("First chunk should always start at 0"),
+            .expect("First chunk always exists and start at 0"),
     };
-    let stop_index = match chunks.binary_search_by_key(&stop, |x| x.start) {
-        Ok(x) => x,
-        Err(x) => x,
+    let stop_index = match chunks.binary_search_by_key(&stop, |chunk| chunk.start) {
+        Ok(found_index) => found_index,
+        Err(insert_index) => insert_index,
     };
 
     // Loop over chunks
@@ -98,15 +98,15 @@ fn block_write(
     }
 
     // Bisect
-    let start_index = match chunks.binary_search_by_key(&start, |x| x.start) {
-        Ok(x) => x,
-        Err(x) => x
+    let start_index = match chunks.binary_search_by_key(&start, |chunk| chunk.start) {
+        Ok(found_index) => found_index,
+        Err(insert_index) => insert_index
             .checked_sub(1)
-            .expect("First chunk should always start at 0"),
+            .expect("First chunk always exists and start at 0"),
     };
-    let stop_index = match chunks.binary_search_by_key(&stop, |x| x.start) {
-        Ok(x) => x,
-        Err(x) => x,
+    let stop_index = match chunks.binary_search_by_key(&stop, |chunk| chunk.start) {
+        Ok(found_index) => found_index,
+        Err(insert_index) => insert_index,
     };
 
     // Removed ids
@@ -293,9 +293,9 @@ fn prepare_truncate(
             .expect("Block is expected to be part of the manifest");
 
         // Find the index of the last chunk to include
-        let chunk_index = match chunks.binary_search_by_key(&size, |x| x.start) {
-            Ok(x) => x - 1,
-            Err(x) => x - 1,
+        let chunk_index = match chunks.binary_search_by_key(&size, |chunk| chunk.start) {
+            Ok(found_index) => found_index - 1,
+            Err(insert_index) => insert_index - 1,
         };
 
         // Create the new last chunk
