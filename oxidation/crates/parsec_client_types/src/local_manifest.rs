@@ -325,9 +325,9 @@ impl LocalFileManifest {
         reference == *remote_manifest
     }
 
-    pub fn set_single_block(&mut self, block: u64, new_chunk: Chunk) -> Option<Vec<Chunk>> {
-        let slice = self.blocks.get_mut(block as usize)?;
-        Some(std::mem::replace(slice, vec![new_chunk]))
+    pub fn set_single_block(&mut self, block: u64, new_chunk: Chunk) -> Result<Vec<Chunk>, u64> {
+        let slice = self.blocks.get_mut(block as usize).ok_or(block)?;
+        Ok(std::mem::replace(slice, vec![new_chunk]))
     }
 }
 

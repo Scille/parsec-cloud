@@ -515,8 +515,9 @@ mod tests {
                 if write_back {
                     self.write_chunk(&new_chunk, &data, 0);
                 }
-                let old_block = manifest.set_single_block(block, new_chunk);
-                assert!(old_block.is_some());
+                manifest
+                    .set_single_block(block, new_chunk)
+                    .expect("block should be valid");
                 for removed_id in removed_ids {
                     self.clear_chunk_data(removed_id);
                 }
