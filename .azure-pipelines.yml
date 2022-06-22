@@ -129,16 +129,24 @@ jobs:
       scriptSource: inline
       script: |
         # PRs must contain a newsfragment that reference an opened issue
+        import os
+        import re
+        import sys
+        import json
         from pathlib import Path
         from subprocess import run
         from urllib.request import urlopen, Request, HTTPError
         from concurrent.futures import ThreadPoolExecutor
-        import json
         # If file never existed in master, consider as a new newsfragment
         # Cannot just git diff against master branch here given newsfragments
         # removed in master will be considered as new items in our branch
         # --exit-code makes the command exit with 0 if there are changes
         basecmd = 'git log origin/master --exit-code --'.split()
+
+        branch_name = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "")
+        if re.match(r"[0-9]+.[0-9]+", branch_name):
+            print("Release branch detected, ignoring newsfragment checks")
+            sys.exit(0)
 
         def check_newsfragment(fragment):
             ret = run([*basecmd, fragment], capture_output=True)
