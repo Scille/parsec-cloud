@@ -465,6 +465,11 @@ class LocalFileManifest(BaseLocalManifest):
                 current = chunk.stop
         assert current == self.size
 
+    def evolve_single_block(self, block: int, new_chunk: Chunk) -> "LocalFileManifest":
+        blocks = list(self.blocks)
+        blocks[block] = (new_chunk,)
+        return self.evolve(blocks=tuple(blocks))
+
     # Remote methods
 
     @classmethod

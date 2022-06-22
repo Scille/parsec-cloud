@@ -3,8 +3,7 @@
 # Imports
 
 import bisect
-from functools import partial
-from typing import Tuple, List, Set, Iterator, Callable, Union, Sequence
+from typing import Tuple, List, Set, Iterator, Union, Sequence, TYPE_CHECKING
 from pendulum import DateTime
 
 from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
@@ -13,7 +12,7 @@ from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
 Chunks = Tuple[Chunk, ...]
 ChunkIDSet = Set[Union[ChunkID, BlockID]]
 WriteOperationList = List[Tuple[Chunk, int]]
-UpdateLocalFileManifestCallable = Callable[[LocalFileManifest, Chunk], LocalFileManifest]
+
 
 # Helpers
 
@@ -225,15 +224,7 @@ def prepare_resize(
 
 def prepare_reshape(
     manifest: LocalFileManifest
-) -> Iterator[Tuple[Chunks, Chunk, UpdateLocalFileManifestCallable, ChunkIDSet]]:
-
-    # Update manifest
-    def update_manifest(
-        block: int, manifest: LocalFileManifest, new_chunk: Chunk
-    ) -> LocalFileManifest:
-        blocks = list(manifest.blocks)
-        blocks[block] = (new_chunk,)
-        return manifest.evolve(blocks=tuple(blocks))
+) -> Iterator[Tuple[int, Chunks, Chunk, bool, ChunkIDSet]]:
 
     # Loop over blocks
     for block, chunks in enumerate(manifest.blocks):
@@ -242,12 +233,9 @@ def prepare_reshape(
         if len(chunks) == 1 and chunks[0].is_block():
             continue
 
-        # Update callback
-        block_update = partial(update_manifest, block)
-
         # Already a pseudo-block
         if len(chunks) == 1 and chunks[0].is_pseudo_block():
-            yield (chunks, chunks[0], block_update, set())
+            yield (block, chunks, chunks[0], False, set())
             continue
 
         # Prepare new block
@@ -258,4 +246,38 @@ def prepare_reshape(
         removed_ids = chunk_id_set(chunks)
 
         # Yield operations
-        yield (chunks, new_chunk, block_update, removed_ids)
+        yield (block, chunks, new_chunk, True, removed_ids)
+
+
+_py_prepare_read = prepare_read
+_py_prepare_write = prepare_write
+_py_prepare_resize = prepare_resize
+_py_prepare_reshape = prepare_reshape
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import prepare_read as _rs_prepare_read
+    except:
+        pass
+    else:
+        prepare_read = _rs_prepare_read
+
+    try:
+        from libparsec.types import prepare_write as _rs_prepare_write
+    except:
+        pass
+    else:
+        prepare_write = _rs_prepare_write
+
+    try:
+        from libparsec.types import prepare_resize as _rs_prepare_resize
+    except:
+        pass
+    else:
+        prepare_resize = _rs_prepare_resize
+
+    try:
+        from libparsec.types import prepare_reshape as _rs_prepare_reshape
+    except:
+        pass
+    else:
+        prepare_reshape = _rs_prepare_reshape

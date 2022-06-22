@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use pyo3::basic::CompareOp;
-use pyo3::exceptions::{PyAssertionError, PyTypeError, PyValueError};
+use pyo3::exceptions::{PyAssertionError, PyIndexError, PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyByteArray, PyBytes, PyDict, PyTuple, PyType};
 use std::collections::{HashMap, HashSet};
@@ -268,6 +268,14 @@ impl LocalFileManifest {
         }
 
         Ok(Self(r))
+    }
+
+    fn evolve_single_block(&self, block: u64, new_chunk: Chunk) -> PyResult<Self> {
+        let mut new_manifest = self.0.clone();
+        new_manifest
+            .set_single_block(block, new_chunk.0)
+            .map_err(PyIndexError::new_err)?;
+        Ok(Self(new_manifest))
     }
 
     fn __repr__(&self) -> PyResult<String> {

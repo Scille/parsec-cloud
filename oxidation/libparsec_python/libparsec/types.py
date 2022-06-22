@@ -163,6 +163,11 @@ try:
         LocalDevice,
         # Storage
         WorkspaceStorage as _SyncWorkspaceStorage,
+        # File operations
+        prepare_read,
+        prepare_write,
+        prepare_resize,
+        prepare_reshape,
     )
 except ImportError as exc:
     print(f"Import error in libparsec/types: {exc}")
@@ -412,4 +417,9 @@ __all__ = (
     "LocalDevice",
     # Storage
     "WorkspaceStorage",
+    # File operations
+    "prepare_read",
+    "prepare_write",
+    "prepare_resize",
+    "prepare_reshape",
 )

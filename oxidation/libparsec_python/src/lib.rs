@@ -10,6 +10,7 @@ mod addrs;
 mod binding_utils;
 mod certif;
 mod crypto;
+mod file_operations;
 mod ids;
 mod invite;
 mod local_device;
@@ -186,5 +187,10 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<local_device::LocalDevice>()?;
     // Storage
     m.add_class::<storage::WorkspaceStorage>()?;
+    // File operations
+    m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_resize, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_reshape, m)?)?;
     Ok(())
 }

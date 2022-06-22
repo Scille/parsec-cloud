@@ -4,6 +4,7 @@
 mod conftest;
 mod error;
 mod extensions;
+pub mod file_operations;
 mod storage;
 
 pub use error::*;
