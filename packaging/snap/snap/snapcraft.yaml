@@ -8,7 +8,7 @@ base: core20
 type: app
 
 confinement: classic # classic is needed to have fuse working
-icon: "./bin/parsec.png"
+icon: ./bin/parsec.png
 grade: stable # must be 'stable' to release into candidate/stable channels
 
 apps:
@@ -29,7 +29,7 @@ apps:
 parts:
   bootstrap:
     plugin: dump
-    source: "./bin"
+    source: ./bin
     override-build: |
       # Make sure executables *are* executable
       chmod 755 parsec
@@ -39,20 +39,20 @@ parts:
 
   parsec-core:
     plugin: nil
-    source: "./src"
+    source: ./src
     source-type: local
     override-build: |
       snapcraftctl build
 
       # Snapcraft's python plugin doesn't work well with classic mode,
       # hence we have to roll our own packaging trick:
-      # - we manually copy Parsec & depedencies into a directory
+      # - we manually copy Parsec & dependencies into a directory
       # - we ask snapcraft to bundle the python version we want
       # - we overload PYTHONPATH at runtime so that python finds our modules
 
       VENV=${SNAPCRAFT_PART_BUILD}/venv
 
-      # Install Parsec & depedencies in a virtual env...
+      # Install Parsec & dependencies in a virtual env...
       /usr/bin/python3.9 --version
       /usr/bin/python3.9 -m venv ${VENV}  # must use absolute path here
       ${VENV}/bin/python -m pip --version
@@ -80,7 +80,7 @@ parts:
       # And now for the grand PyQt5 cooking !
       # This aggressive remove of all possible .so has two objectives:
       # - Saving size
-      # - more importantly, reducting the number of dependencies that must be
+      # - more importantly, reducing the number of dependencies that must be
       #   shipped with the snap given they are a real headache to figure out :/
 
       PYQT_DIR=${SNAPCRAFT_PART_INSTALL}/site-packages/PyQt5/
@@ -91,7 +91,7 @@ parts:
       rm -rf ${PYQT_DIR}/uic
       # Type hints
       rm ${PYQT_DIR}/*.pyi
-      # Resouces compiler
+      # Resources compiler
       rm ${PYQT_DIR}/pyrcc.*.so
       rm ${PYQT_DIR}/pyrcc_main.py
       # Translation compiler
