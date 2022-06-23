@@ -32,11 +32,11 @@ def locate_range(start: int, stop: int, blocksize: int) -> Iterator[Tuple[int, i
 
 
 def index_of_chunk_before_start(chunks: Chunks, start: int) -> int:
-    return bisect.bisect_right(chunks, start) - 1
+    return bisect.bisect_right(chunks, start) - 1  # type: ignore[type-var]
 
 
 def index_of_chunk_after_stop(chunks: Chunks, stop: int) -> int:
-    return bisect.bisect_left(chunks, stop)
+    return bisect.bisect_left(chunks, stop)  # type: ignore[type-var]
 
 
 def chunk_id_set(chunks: Sequence[Chunk]) -> ChunkIDSet:
