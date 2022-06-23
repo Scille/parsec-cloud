@@ -1,19 +1,20 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use async_std::sync::Mutex;
 use std::cmp::{max, min};
 use std::collections::HashMap;
-use std::sync::Mutex;
 
-use parsec_api_types::{
-    BlockAccess, DeviceID, EntryID, FileDescriptor, FileManifest, FolderManifest,
-};
-use parsec_client_types::{
+use libparsec_client_types::{
     Chunk, LocalDevice, LocalFileManifest, LocalFolderManifest, LocalManifest,
     LocalWorkspaceManifest,
 };
+use libparsec_types::{
+    BlockAccess, DeviceID, EntryID, FileDescriptor, FileManifest, FolderManifest,
+};
 
+use crate::file_operations::{prepare_read, prepare_reshape, prepare_resize, prepare_write};
 use crate::storage::WorkspaceStorage;
-use crate::{FSError, FSResult, Language};
+use crate::{ChunkOrBlockID, FSError, FSResult, Language};
 
 /// A stateless class to centralize all file transactions.
 ///
@@ -62,7 +63,7 @@ impl FileTransactions {
         &self.device.device_id
     }
 
-    fn normalize_argument(arg: i64, manifest: LocalFileManifest) -> u64 {
+    fn normalize_argument(arg: i64, manifest: &LocalFileManifest) -> u64 {
         if arg < 0 {
             manifest.size
         } else {
@@ -97,14 +98,14 @@ impl FileTransactions {
         }
     }
 
-    async fn write_chunk(&self, chunk: &Chunk, content: &[u8], offset: i64) -> FSResult<usize> {
+    async fn write_chunk(&self, chunk: &Chunk, content: &[u8], offset: i64) -> FSResult<u64> {
         let data = Self::padded_data(
             content,
             offset,
             offset + chunk.stop.get() as i64 - chunk.start as i64,
         );
         self.local_storage.set_chunk(chunk.id, &data)?;
-        Ok(data.len())
+        Ok(data.len() as u64)
     }
 
     async fn build_data(&self, chunks: &[Chunk]) -> FSResult<(Vec<u8>, Vec<BlockAccess>)> {
@@ -194,21 +195,21 @@ impl FileTransactions {
         let manifest = self.local_storage.load_file_descriptor(fd)?;
 
         let entry_id = manifest.base.id;
-        let mutex = self.local_storage.lock_entry_id(entry_id);
-        let guard = mutex.lock().expect("Mutex is poisoned");
+        let mutex = self.local_storage.lock_entry_id(entry_id).await;
+        let guard = mutex.lock().await;
 
         // Force writing to disk
         self.local_storage
-            .ensure_manifest_persistent(entry_id, true)?;
+            .ensure_manifest_persistent(entry_id, true)
+            .await?;
         // Atomic change
         self.local_storage.remove_file_descriptor(fd);
-        // Clear write count
-        self.write_count
-            .lock()
-            .expect("Mutex is poisoned")
-            .remove(&fd);
 
-        self.local_storage.release_entry_id(entry_id, guard);
+        // Clear write count
+        self.write_count.lock().await.remove(&fd);
+
+        self.local_storage.release_entry_id(entry_id, guard).await;
+
         Ok(())
     }
 
@@ -219,11 +220,11 @@ impl FileTransactions {
         offset: i64,
         constrained: bool,
     ) -> FSResult<usize> {
-        let manifest = self.local_storage.load_file_descriptor(fd)?;
+        let mut manifest = self.local_storage.load_file_descriptor(fd)?;
 
         let entry_id = manifest.base.id;
-        let mutex = self.local_storage.lock_entry_id(entry_id);
-        let guard = mutex.lock().expect("Mutex is poisoned");
+        let mutex = self.local_storage.lock_entry_id(entry_id).await;
+        let guard = mutex.lock().await;
 
         // Constrained - truncate content to the right length
         if constrained {
@@ -238,16 +239,40 @@ impl FileTransactions {
         }
 
         // Prepare
-        let _updated = self.device.timestamp();
-        // TODO
+        let updated = self.device.timestamp();
+        let offset = Self::normalize_argument(offset, &manifest);
+        let (write_operations, removed_ids) =
+            prepare_write(&mut manifest, content.len() as u64, offset, updated);
 
         // Writing
+        let mut write_count = self.write_count.lock().await;
+        let write_count_fd = write_count.entry(fd).or_default();
+        for (chunk, offset) in write_operations {
+            *write_count_fd += self.write_chunk(&chunk, content, offset).await?;
+        }
 
         // Atomic change
+        let removed_ids = removed_ids
+            .into_iter()
+            .map(ChunkOrBlockID::ChunkID)
+            .collect();
+        self.local_storage
+            .set_manifest(
+                manifest.base.id,
+                LocalManifest::File(manifest.clone()),
+                true,
+                true,
+                Some(removed_ids),
+            )
+            .await?;
 
         // Reshaping
+        if *write_count_fd >= u64::from(manifest.blocksize) {
+            self.manifest_reshape(&manifest, true).await?;
+            write_count.remove(&fd);
+        }
 
-        self.local_storage.release_entry_id(entry_id, guard);
+        self.local_storage.release_entry_id(entry_id, guard).await;
 
         Ok(0)
     }
@@ -265,55 +290,176 @@ impl FileTransactions {
         }
 
         let entry_id = manifest.base.id;
-        let mutex = self.local_storage.lock_entry_id(entry_id);
-        let guard = mutex.lock().expect("Mutex is poisoned");
+        let mutex = self.local_storage.lock_entry_id(entry_id).await;
+        let guard = mutex.lock().await;
 
-        self.manifest_resize(manifest, length, true)?;
+        self.manifest_resize(manifest, length, true).await?;
 
-        self.local_storage.release_entry_id(entry_id, guard);
+        self.local_storage.release_entry_id(entry_id, guard).await;
         Ok(())
     }
 
     pub async fn fd_read(
         &self,
-        _fd: FileDescriptor,
-        _size: i64,
-        _offset: i64,
-        _raise_eof: bool,
+        fd: FileDescriptor,
+        size: i64,
+        offset: i64,
+        raise_eof: bool,
     ) -> FSResult<Vec<u8>> {
-        todo!();
+        // Loop over attempts
+        loop {
+            // Load missing blocks
+            // TODO
+            // self.remote_loader.load_blocks(missing);
+
+            // Fetch and lock
+            let manifest = self.local_storage.load_file_descriptor(fd)?;
+
+            let entry_id = manifest.base.id;
+            let mutex = self.local_storage.lock_entry_id(entry_id).await;
+            let guard = mutex.lock().await;
+
+            // End of fle
+            if raise_eof && offset >= manifest.size as i64 {
+                return Err(FSError::EndOfFile);
+            }
+
+            // Normalize
+            let offset = Self::normalize_argument(offset, &manifest);
+            let size = Self::normalize_argument(size, &manifest);
+
+            // No-op
+            if offset > manifest.size {
+                return Ok(vec![]);
+            }
+
+            // Prepare
+            let chunks = prepare_read(&manifest, size, offset);
+            let (data, missing) = self.build_data(&chunks).await?;
+
+            // Return the data
+            if missing.is_empty() {
+                return Ok(data);
+            }
+
+            self.local_storage.release_entry_id(entry_id, guard).await;
+        }
     }
 
     pub async fn fd_flush(&self, fd: FileDescriptor) -> FSResult<()> {
         let manifest = self.local_storage.load_file_descriptor(fd)?;
 
         let entry_id = manifest.base.id;
-        let mutex = self.local_storage.lock_entry_id(entry_id);
-        let guard = mutex.lock().expect("Mutex is poisoned");
+        let mutex = self.local_storage.lock_entry_id(entry_id).await;
+        let guard = mutex.lock().await;
 
-        self.manifest_reshape(manifest, false);
+        self.manifest_reshape(&manifest, false).await?;
         self.local_storage
-            .ensure_manifest_persistent(entry_id, true)?;
+            .ensure_manifest_persistent(entry_id, true)
+            .await?;
 
-        self.local_storage.release_entry_id(entry_id, guard);
+        self.local_storage.release_entry_id(entry_id, guard).await;
 
         Ok(())
     }
 
-    fn manifest_resize(
+    /// This internal helper does not perform any locking
+    async fn manifest_resize(
         &self,
-        _manifest: LocalFileManifest,
-        _length: u64,
-        _cache_only: bool,
+        mut manifest: LocalFileManifest,
+        length: u64,
+        cache_only: bool,
     ) -> FSResult<()> {
-        todo!();
+        // No-op
+        if manifest.size == length {
+            return Ok(());
+        }
+
+        // Prepare
+        let updated = self.device.timestamp();
+        let (write_operations, removed_ids) = prepare_resize(&mut manifest, length, updated);
+
+        // Writting
+        for (chunk, offset) in write_operations {
+            self.write_chunk(&chunk, &[], offset).await?;
+        }
+
+        // Atomic change
+        let removed_ids = removed_ids
+            .into_iter()
+            .map(ChunkOrBlockID::ChunkID)
+            .collect();
+
+        self.local_storage
+            .set_manifest(
+                manifest.base.id,
+                LocalManifest::File(manifest),
+                cache_only,
+                true,
+                Some(removed_ids),
+            )
+            .await?;
+
+        Ok(())
     }
 
-    fn manifest_reshape(
+    /// This internal helper does not perform any locking
+    async fn manifest_reshape(
         &self,
-        _manifest: LocalFileManifest,
-        _cache_only: bool,
-    ) -> Vec<BlockAccess> {
-        todo!();
+        manifest: &LocalFileManifest,
+        cache_only: bool,
+    ) -> FSResult<Vec<BlockAccess>> {
+        // Prepare data structures
+        let mut missing = vec![];
+
+        for (block, source, destination, write_back, removed_ids) in prepare_reshape(manifest) {
+            // Build data block
+            let (data, mut extra_missing) = self.build_data(&source).await?;
+
+            // Missing data
+            if !extra_missing.is_empty() {
+                missing.append(&mut extra_missing);
+                continue;
+            }
+
+            // Write data if necessary
+            let new_chunk = destination
+                .evolve_as_block(&data)
+                .expect("data should be valid");
+            if write_back {
+                self.write_chunk(&new_chunk, &data, 0).await?;
+            }
+
+            // Craft the new manifest
+            let mut manifest = manifest.clone();
+            manifest
+                .set_single_block(block, new_chunk)
+                .expect("block index should be set");
+
+            // Set the new manifest, acting as a checkpoint
+            let removed_ids = removed_ids
+                .into_iter()
+                .map(ChunkOrBlockID::ChunkID)
+                .collect();
+            self.local_storage
+                .set_manifest(
+                    manifest.base.id,
+                    LocalManifest::File(manifest),
+                    true,
+                    true,
+                    Some(removed_ids),
+                )
+                .await?;
+        }
+
+        // Flush if necessary
+        if !cache_only {
+            self.local_storage
+                .ensure_manifest_persistent(manifest.base.id, true)
+                .await?;
+        }
+
+        // Return missing block ids
+        Ok(missing)
     }
 }

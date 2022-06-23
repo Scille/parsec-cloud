@@ -29,6 +29,9 @@ pub enum FSError {
     #[error("DropTableError: {0}")]
     DropTable(String),
 
+    #[error("EndofFileError")]
+    EndOfFile,
+
     #[error("InsertTableError: {0}")]
     InsertTable(String),
 

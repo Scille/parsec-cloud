@@ -1,10 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use async_std::sync::{Mutex, MutexGuard};
 use fancy_regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::path::Path;
-use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
+use std::sync::Arc;
 
 use libparsec_client_types::{
     LocalDevice, LocalFileManifest, LocalManifest, LocalWorkspaceManifest,
@@ -31,18 +32,18 @@ enum Status {
 }
 
 impl<T: Eq + Hash + Copy> Locker<T> {
-    fn acquire(&self, id: T) -> Arc<Mutex<()>> {
-        let mut map = self.0.lock().expect("Mutex is poisoned");
+    async fn acquire(&self, id: T) -> Arc<Mutex<()>> {
+        let mut map = self.0.lock().await;
         map.entry(id).or_insert_with(|| Arc::new(Mutex::new(())));
         map.get(&id).unwrap_or_else(|| unreachable!()).clone()
     }
-    fn release(&self, id: T, guard: MutexGuard<()>) {
+    async fn release<'a>(&'a self, id: T, guard: MutexGuard<'a, ()>) {
         drop(guard);
-        self.0.lock().expect("Mutex is poisoned").remove(&id);
+        self.0.lock().await.remove(&id);
     }
-    fn check(&self, id: T) -> Status {
-        if let Some(mutex) = self.0.lock().expect("Mutex is poisoned").get(&id) {
-            if let Err(TryLockError::WouldBlock) = mutex.try_lock() {
+    async fn check(&self, id: T) -> Status {
+        if let Some(mutex) = self.0.lock().await.get(&id) {
+            if mutex.try_lock().is_none() {
                 return Status::Locked;
             }
         }
@@ -56,13 +57,13 @@ impl<T: Eq + Hash + Copy> Locker<T> {
 pub struct WorkspaceStorage {
     pub device: LocalDevice,
     pub workspace_id: EntryID,
-    open_fds: Mutex<HashMap<FileDescriptor, EntryID>>,
-    fd_counter: Mutex<u32>,
+    open_fds: std::sync::Mutex<HashMap<FileDescriptor, EntryID>>,
+    fd_counter: std::sync::Mutex<u32>,
     block_storage: BlockStorage,
     chunk_storage: ChunkStorage,
     manifest_storage: ManifestStorage,
-    prevent_sync_pattern: Mutex<Regex>,
-    prevent_sync_pattern_fully_applied: Mutex<bool>,
+    prevent_sync_pattern: std::sync::Mutex<Regex>,
+    prevent_sync_pattern_fully_applied: std::sync::Mutex<bool>,
     entry_locks: Locker<EntryID>,
 }
 
@@ -92,18 +93,20 @@ impl WorkspaceStorage {
 
         let block_storage = BlockStorage::new(
             device.local_symkey.clone(),
-            Mutex::new(cache_pool.conn()?),
+            std::sync::Mutex::new(cache_pool.conn()?),
             cache_size,
         )?;
 
         let manifest_storage = ManifestStorage::new(
             device.local_symkey.clone(),
-            Mutex::new(data_pool.conn()?),
+            std::sync::Mutex::new(data_pool.conn()?),
             workspace_id,
         )?;
 
-        let chunk_storage =
-            ChunkStorage::new(device.local_symkey.clone(), Mutex::new(data_pool.conn()?))?;
+        let chunk_storage = ChunkStorage::new(
+            device.local_symkey.clone(),
+            std::sync::Mutex::new(data_pool.conn()?),
+        )?;
 
         let (prevent_sync_pattern, prevent_sync_pattern_fully_applied) =
             manifest_storage.get_prevent_sync_pattern()?;
@@ -113,15 +116,17 @@ impl WorkspaceStorage {
             device,
             workspace_id,
             // File descriptors
-            open_fds: Mutex::new(HashMap::new()),
-            fd_counter: Mutex::new(0),
+            open_fds: std::sync::Mutex::new(HashMap::new()),
+            fd_counter: std::sync::Mutex::new(0),
             // Manifest and block storage
             block_storage,
             chunk_storage,
             manifest_storage,
             // Pattern attributes
-            prevent_sync_pattern: Mutex::new(prevent_sync_pattern),
-            prevent_sync_pattern_fully_applied: Mutex::new(prevent_sync_pattern_fully_applied),
+            prevent_sync_pattern: std::sync::Mutex::new(prevent_sync_pattern),
+            prevent_sync_pattern_fully_applied: std::sync::Mutex::new(
+                prevent_sync_pattern_fully_applied,
+            ),
             // Locking structure
             entry_locks: Locker::default(),
         };
@@ -135,16 +140,16 @@ impl WorkspaceStorage {
         Ok(instance)
     }
 
-    pub fn lock_entry_id(&self, entry_id: EntryID) -> Arc<Mutex<()>> {
-        self.entry_locks.acquire(entry_id)
+    pub async fn lock_entry_id(&self, entry_id: EntryID) -> Arc<Mutex<()>> {
+        self.entry_locks.acquire(entry_id).await
     }
 
-    pub fn release_entry_id(&self, entry_id: EntryID, guard: MutexGuard<()>) {
-        self.entry_locks.release(entry_id, guard)
+    pub async fn release_entry_id<'a>(&'a self, entry_id: EntryID, guard: MutexGuard<'a, ()>) {
+        self.entry_locks.release(entry_id, guard).await
     }
 
-    fn check_lock_status(&self, entry_id: EntryID) -> FSResult<()> {
-        if let Status::Released = self.entry_locks.check(entry_id) {
+    async fn check_lock_status(&self, entry_id: EntryID) -> FSResult<()> {
+        if let Status::Released = self.entry_locks.check(entry_id).await {
             return Err(FSError::Runtime(entry_id));
         }
         Ok(())
@@ -301,7 +306,7 @@ impl WorkspaceStorage {
         self.manifest_storage.get_manifest(entry_id)
     }
 
-    pub fn set_manifest(
+    pub async fn set_manifest(
         &self,
         entry_id: EntryID,
         manifest: LocalManifest,
@@ -310,27 +315,27 @@ impl WorkspaceStorage {
         removed_ids: Option<HashSet<ChunkOrBlockID>>,
     ) -> FSResult<()> {
         if check_lock_status {
-            self.check_lock_status(entry_id)?;
+            self.check_lock_status(entry_id).await?;
         }
         self.manifest_storage
             .set_manifest(entry_id, manifest, cache_only, removed_ids)
     }
 
-    pub fn ensure_manifest_persistent(
+    pub async fn ensure_manifest_persistent(
         &self,
         entry_id: EntryID,
         check_lock_status: bool,
     ) -> FSResult<()> {
         if check_lock_status {
-            self.check_lock_status(entry_id)?;
+            self.check_lock_status(entry_id).await?;
         }
         self.manifest_storage.ensure_manifest_persistent(entry_id)
     }
 
     #[allow(deprecated)]
-    pub fn clear_manifest(&self, entry_id: EntryID, check_lock_status: bool) -> FSResult<()> {
+    pub async fn clear_manifest(&self, entry_id: EntryID, check_lock_status: bool) -> FSResult<()> {
         if check_lock_status {
-            self.check_lock_status(entry_id)?;
+            self.check_lock_status(entry_id).await?;
         }
         self.manifest_storage.clear_manifest(entry_id)
     }
@@ -401,7 +406,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_lock_required(alice_workspace_storage: WorkspaceStorage) {
+    async fn test_lock_required(alice_workspace_storage: WorkspaceStorage) {
         let aws = alice_workspace_storage;
         let manifest = create_workspace_manifest(&aws.device);
         let manifest = LocalManifest::Workspace(manifest);
@@ -409,31 +414,33 @@ mod tests {
 
         assert_eq!(
             aws.set_manifest(manifest_id, manifest, false, true, None)
+                .await
                 .unwrap_err(),
             FSError::Runtime(manifest_id)
         );
 
         assert_eq!(
             aws.ensure_manifest_persistent(manifest_id, true)
+                .await
                 .unwrap_err(),
             FSError::Runtime(manifest_id)
         );
 
         assert_eq!(
-            aws.clear_manifest(manifest_id, true).unwrap_err(),
+            aws.clear_manifest(manifest_id, true).await.unwrap_err(),
             FSError::Runtime(manifest_id)
         );
     }
 
     #[rstest]
-    fn test_basic_set_get_clear(alice_workspace_storage: WorkspaceStorage) {
+    async fn test_basic_set_get_clear(alice_workspace_storage: WorkspaceStorage) {
         let aws = alice_workspace_storage;
         let manifest = create_workspace_manifest(&aws.device);
         let manifest = LocalManifest::Workspace(manifest);
         let manifest_id = manifest.id();
 
-        let mutex = aws.lock_entry_id(manifest_id);
-        let guard = mutex.lock().unwrap();
+        let mutex = aws.lock_entry_id(manifest_id).await;
+        let guard = mutex.lock().await;
 
         // 1) No data
         assert_eq!(
@@ -443,6 +450,7 @@ mod tests {
 
         // 2) Set data
         aws.set_manifest(manifest_id, manifest.clone(), false, true, None)
+            .await
             .unwrap();
         assert_eq!(aws.get_manifest(manifest_id).unwrap(), manifest);
 
@@ -451,7 +459,7 @@ mod tests {
         assert_eq!(aws.get_manifest(manifest_id).unwrap(), manifest);
 
         // 3) Clear data
-        aws.clear_manifest(manifest_id, true).unwrap();
+        aws.clear_manifest(manifest_id, true).await.unwrap();
 
         assert_eq!(
             aws.get_manifest(manifest_id).unwrap_err(),
@@ -459,25 +467,26 @@ mod tests {
         );
 
         assert_eq!(
-            aws.clear_manifest(manifest_id, true).unwrap_err(),
+            aws.clear_manifest(manifest_id, true).await.unwrap_err(),
             FSError::LocalMiss(*manifest_id)
         );
 
-        aws.release_entry_id(manifest_id, guard);
+        aws.release_entry_id(manifest_id, guard).await;
     }
 
     #[rstest]
-    fn test_cache_set_get(alice_workspace_storage: WorkspaceStorage) {
+    async fn test_cache_set_get(alice_workspace_storage: WorkspaceStorage) {
         let aws = alice_workspace_storage;
         let manifest = create_workspace_manifest(&aws.device);
         let manifest = LocalManifest::Workspace(manifest);
         let manifest_id = manifest.id();
 
-        let mutex = aws.lock_entry_id(manifest_id);
-        let guard = mutex.lock().unwrap();
+        let mutex = aws.lock_entry_id(manifest_id).await;
+        let guard = mutex.lock().await;
 
         // 1) Set data
         aws.set_manifest(manifest_id, manifest.clone(), true, true, None)
+            .await
             .unwrap();
         assert_eq!(aws.get_manifest(manifest_id).unwrap(), manifest);
 
@@ -490,10 +499,11 @@ mod tests {
 
         // Re-set data
         aws.set_manifest(manifest_id, manifest.clone(), true, true, None)
+            .await
             .unwrap();
 
         // 2) Clear should work as expected
-        aws.clear_manifest(manifest_id, true).unwrap();
+        aws.clear_manifest(manifest_id, true).await.unwrap();
         assert_eq!(
             aws.get_manifest(manifest_id).unwrap_err(),
             FSError::LocalMiss(*manifest_id)
@@ -501,10 +511,13 @@ mod tests {
 
         // Re-set data
         aws.set_manifest(manifest_id, manifest.clone(), true, true, None)
+            .await
             .unwrap();
 
         // 3) Flush data
-        aws.ensure_manifest_persistent(manifest_id, true).unwrap();
+        aws.ensure_manifest_persistent(manifest_id, true)
+            .await
+            .unwrap();
         assert_eq!(aws.get_manifest(manifest_id).unwrap(), manifest);
 
         // Data should be persistent in real database
@@ -512,9 +525,11 @@ mod tests {
         assert_eq!(aws.get_manifest(manifest_id).unwrap(), manifest);
 
         // 4) Idempotency
-        aws.ensure_manifest_persistent(manifest_id, true).unwrap();
+        aws.ensure_manifest_persistent(manifest_id, true)
+            .await
+            .unwrap();
 
-        aws.release_entry_id(manifest_id, guard);
+        aws.release_entry_id(manifest_id, guard).await;
     }
 
     #[rstest]
@@ -522,7 +537,7 @@ mod tests {
     #[case(false, true)]
     #[case(true, false)]
     #[case(true, true)]
-    fn test_chunk_clearing(
+    async fn test_chunk_clearing(
         alice_workspace_storage: WorkspaceStorage,
         #[case] cache_only: bool,
         #[case] clear_manifest: bool,
@@ -538,13 +553,14 @@ mod tests {
         let manifest = LocalManifest::File(_manifest.clone());
         let manifest_id = manifest.id();
 
-        let mutex = aws.lock_entry_id(manifest_id);
-        let guard = mutex.lock().unwrap();
+        let mutex = aws.lock_entry_id(manifest_id).await;
+        let guard = mutex.lock().await;
 
         // Set chunks and manifest
         aws.set_chunk(chunk1.id, data1).unwrap();
         aws.set_chunk(chunk2.id, data2).unwrap();
         aws.set_manifest(manifest_id, manifest, false, true, None)
+            .await
             .unwrap();
 
         // Set a new version of the manifest without the chunks
@@ -562,6 +578,7 @@ mod tests {
             true,
             Some(removed_ids),
         )
+        .await
         .unwrap();
 
         if cache_only {
@@ -582,9 +599,11 @@ mod tests {
 
         // Now flush the manifest
         if clear_manifest {
-            aws.clear_manifest(manifest_id, true).unwrap();
+            aws.clear_manifest(manifest_id, true).await.unwrap();
         } else {
-            aws.ensure_manifest_persistent(manifest_id, true).unwrap();
+            aws.ensure_manifest_persistent(manifest_id, true)
+                .await
+                .unwrap();
         }
 
         // The chunks are gone
@@ -598,13 +617,15 @@ mod tests {
         );
 
         // Idempotency
-        aws.ensure_manifest_persistent(manifest_id, true).unwrap();
+        aws.ensure_manifest_persistent(manifest_id, true)
+            .await
+            .unwrap();
 
-        aws.release_entry_id(manifest_id, guard);
+        aws.release_entry_id(manifest_id, guard).await;
     }
 
     #[rstest]
-    fn test_cache_flushed_on_exit(alice: &Device, tmp_path: TmpPath) {
+    async fn test_cache_flushed_on_exit(alice: &Device, tmp_path: TmpPath) {
         let db_path = tmp_path.join("workspace_storage.sqlite");
         let manifest = create_workspace_manifest(&alice.local_device());
         let manifest = LocalManifest::Workspace(manifest);
@@ -619,13 +640,14 @@ mod tests {
         )
         .unwrap();
 
-        let mutex = aws.lock_entry_id(manifest_id);
-        let guard = mutex.lock().unwrap();
+        let mutex = aws.lock_entry_id(manifest_id).await;
+        let guard = mutex.lock().await;
 
         aws.set_manifest(manifest_id, manifest.clone(), true, true, None)
+            .await
             .unwrap();
 
-        aws.release_entry_id(manifest_id, guard);
+        aws.release_entry_id(manifest_id, guard).await;
 
         drop(aws);
 
@@ -641,7 +663,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_clear_cache(alice_workspace_storage: WorkspaceStorage) {
+    async fn test_clear_cache(alice_workspace_storage: WorkspaceStorage) {
         let aws = alice_workspace_storage;
         let manifest1 = create_workspace_manifest(&aws.device);
         let manifest1 = LocalManifest::Workspace(manifest1);
@@ -650,15 +672,17 @@ mod tests {
         let manifest1_id = manifest1.id();
         let manifest2_id = manifest2.id();
 
-        let mutex1 = aws.lock_entry_id(manifest1_id);
-        let mutex2 = aws.lock_entry_id(manifest2_id);
-        let guard1 = mutex1.lock().unwrap();
-        let guard2 = mutex2.lock().unwrap();
+        let mutex1 = aws.lock_entry_id(manifest1_id).await;
+        let mutex2 = aws.lock_entry_id(manifest2_id).await;
+        let guard1 = mutex1.lock().await;
+        let guard2 = mutex2.lock().await;
 
         // Set manifest 1 and manifest 2, cache only
         aws.set_manifest(manifest1_id, manifest1.clone(), false, true, None)
+            .await
             .unwrap();
         aws.set_manifest(manifest2_id, manifest2.clone(), true, true, None)
+            .await
             .unwrap();
 
         // Clear withtout flushing
@@ -673,18 +697,21 @@ mod tests {
 
         // Set Manifest 2, cache only
         aws.set_manifest(manifest2_id, manifest2.clone(), true, true, None)
+            .await
             .unwrap();
 
         // Clear with flushing
         aws.clear_memory_cache(true).unwrap();
         assert_eq!(aws.get_manifest(manifest2_id).unwrap(), manifest2);
 
-        aws.release_entry_id(manifest1_id, guard1);
-        aws.release_entry_id(manifest2_id, guard2);
+        aws.release_entry_id(manifest1_id, guard1).await;
+        aws.release_entry_id(manifest2_id, guard2).await;
     }
 
     #[rstest]
-    fn test_serialize_non_empty_local_file_manifest(alice_workspace_storage: WorkspaceStorage) {
+    async fn test_serialize_non_empty_local_file_manifest(
+        alice_workspace_storage: WorkspaceStorage,
+    ) {
         let aws = alice_workspace_storage;
         let mut manifest = create_file_manifest(&aws.device);
         let chunk1 = Chunk::new(0, NonZeroU64::try_from(7).unwrap())
@@ -700,18 +727,19 @@ mod tests {
         let manifest = LocalManifest::File(manifest);
         let manifest_id = manifest.id();
 
-        let mutex = aws.lock_entry_id(manifest_id);
-        let guard = mutex.lock().unwrap();
+        let mutex = aws.lock_entry_id(manifest_id).await;
+        let guard = mutex.lock().await;
 
         aws.set_manifest(manifest_id, manifest.clone(), false, true, None)
+            .await
             .unwrap();
         assert_eq!(aws.get_manifest(manifest_id).unwrap(), manifest);
 
-        aws.release_entry_id(manifest_id, guard);
+        aws.release_entry_id(manifest_id, guard).await;
     }
 
     #[rstest]
-    fn test_realm_checkpoint(alice_workspace_storage: WorkspaceStorage) {
+    async fn test_realm_checkpoint(alice_workspace_storage: WorkspaceStorage) {
         let aws = alice_workspace_storage;
         let mut manifest = create_file_manifest(&aws.device);
         let manifest_id = manifest.base.id;
@@ -730,6 +758,7 @@ mod tests {
         workspace_manifest.need_sync = false;
         let workspace_manifest = LocalManifest::Workspace(workspace_manifest);
         aws.set_manifest(aws.workspace_id, workspace_manifest, false, false, None)
+            .await
             .unwrap();
 
         assert_eq!(aws.get_realm_checkpoint(), 0);
@@ -754,6 +783,7 @@ mod tests {
             false,
             None,
         )
+        .await
         .unwrap();
 
         assert_eq!(aws.get_realm_checkpoint(), 11);
@@ -770,6 +800,7 @@ mod tests {
             false,
             None,
         )
+        .await
         .unwrap();
 
         assert_eq!(aws.get_realm_checkpoint(), 11);
@@ -881,7 +912,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_file_descriptor(alice_workspace_storage: WorkspaceStorage) {
+    async fn test_file_descriptor(alice_workspace_storage: WorkspaceStorage) {
         let aws = alice_workspace_storage;
         let manifest = create_file_manifest(&aws.device);
         let manifest_id = manifest.base.id;
@@ -893,6 +924,7 @@ mod tests {
             false,
             None,
         )
+        .await
         .unwrap();
         let fd = aws.create_file_descriptor(manifest.clone());
         assert_eq!(fd, FileDescriptor(1));

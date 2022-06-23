@@ -5,6 +5,7 @@ use pyo3::types::PyBytes;
 use pyo3::{import_exception, prelude::*};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use crate::binding_utils::{py_to_rs_regex, rs_to_py_regex};
 use crate::ids::{BlockID, ChunkID, EntryID};
@@ -20,7 +21,7 @@ import_exception!(parsec.core.fs.exceptions, FSInvalidFileDescriptor);
 /// methods are called in trio.to_thread to connect the sync and async world
 #[pyclass]
 pub(crate) struct WorkspaceStorage(
-    pub libparsec::core_fs::WorkspaceStorage,
+    pub Arc<libparsec::core_fs::WorkspaceStorage>,
     pub Option<PyObject>,
 );
 
@@ -39,13 +40,15 @@ impl WorkspaceStorage {
         let data_base_dir =
             PathBuf::from(data_base_dir.call_method0("__str__")?.extract::<String>()?);
         Ok(Self(
-            libparsec::core_fs::WorkspaceStorage::new(
-                &data_base_dir,
-                device.0,
-                workspace_id.0,
-                cache_size,
-            )
-            .map_err(|e| PyValueError::new_err(e.to_string()))?,
+            Arc::new(
+                libparsec::core_fs::WorkspaceStorage::new(
+                    &data_base_dir,
+                    device.0,
+                    workspace_id.0,
+                    cache_size,
+                )
+                .map_err(|e| PyValueError::new_err(e.to_string()))?,
+            ),
             None,
         ))
     }
@@ -135,27 +138,30 @@ impl WorkspaceStorage {
                 manifest.extract::<LocalUserManifest>(py)?.0,
             )
         };
-        py.allow_threads(|| {
-            self.0
-                .set_manifest(
-                    entry_id.0,
-                    manifest,
-                    cache_only,
-                    false,
-                    removed_ids.map(|x| {
-                        x.into_iter()
-                            .map(|id| libparsec::core_fs::ChunkOrBlockID::ChunkID(id.0))
-                            .collect()
-                    }),
-                )
-                .map_err(|e| PyValueError::new_err(e.to_string()))
+
+        let v = self.0.clone();
+        pyo3_asyncio::async_std::run(py, async move {
+            v.set_manifest(
+                entry_id.0,
+                manifest,
+                cache_only,
+                false,
+                removed_ids.map(|x| {
+                    x.into_iter()
+                        .map(|id| libparsec::core_fs::ChunkOrBlockID::ChunkID(id.0))
+                        .collect()
+                }),
+            )
+            .await
+            .map_err(|e| PyValueError::new_err(e.to_string()))
         })
     }
 
     fn clear_manifest(&self, py: Python, entry_id: EntryID) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0
-                .clear_manifest(entry_id.0, false)
+        let v = self.0.clone();
+        pyo3_asyncio::async_std::run(py, async move {
+            v.clear_manifest(entry_id.0, false)
+                .await
                 .map_err(|_| FSLocalMissError::new_err(entry_id))
         })
     }
@@ -269,9 +275,10 @@ impl WorkspaceStorage {
     }
 
     fn ensure_manifest_persistent(&self, py: Python, entry_id: EntryID) -> PyResult<()> {
-        py.allow_threads(|| {
-            self.0
-                .ensure_manifest_persistent(entry_id.0, false)
+        let v = self.0.clone();
+        pyo3_asyncio::async_std::run(py, async move {
+            v.ensure_manifest_persistent(entry_id.0, false)
+                .await
                 .map_err(|e| PyValueError::new_err(e.to_string()))
         })
     }
