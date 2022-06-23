@@ -401,34 +401,22 @@ class AsgiOfflineMiddleware:
 
         port = scope["server"][1]
 
-        pretend_to_be_offline = False
-
         if port in self._offline_ports:
-            pretend_to_be_offline = True
+            return
 
         else:
 
             async def _offline_watchdog(cancel_scope):
-                nonlocal pretend_to_be_offline
                 while True:
                     await self._offline_watchdogs_parking.park()
                     if port in self._offline_ports:
                         break
-                pretend_to_be_offline = True
                 cancel_scope.cancel()
 
             async with trio.open_nursery() as nursery:
                 nursery.start_soon(_offline_watchdog, nursery.cancel_scope)
                 await self.asgi_app(scope, receive, send)
                 nursery.cancel_scope.cancel()
-
-        if pretend_to_be_offline:
-            if scope["type"] == "http":
-                await send({"type": "http.disconnect"})
-            elif scope["type"] == "websocket":
-                await send({"type": "websocket.close"})
-            else:
-                assert False, scope
 
     @contextmanager
     def offline(self, port: int):
