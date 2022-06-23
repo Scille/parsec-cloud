@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from typing import Dict, NoReturn, Callable
+from typing import Dict, NoReturn, Callable, Union
 import trio
 from structlog import get_logger
 from functools import partial
@@ -160,13 +160,16 @@ async def _handle_client_websocket_loop(
     api_cmds: Dict[str, Callable], websocket: Websocket, client_ctx
 ) -> NoReturn:
 
-    raw_req = None
+    raw_req: Union[None, bytes, str] = None
     while True:
         # raw_req can be already defined if we received a new request
         # while processing a command
         raw_req = raw_req or await websocket.receive()
         rep: dict
         try:
+            # Wesocket can return both bytes or utf8-string messages, we only accept the former
+            if not isinstance(raw_req, bytes):
+                raise MessageSerializationError
             req = unpackb(raw_req)
 
         except MessageSerializationError:
@@ -187,7 +190,9 @@ async def _handle_client_websocket_loop(
 
             else:
                 try:
-                    if cmd_func._api_info["cancel_on_client_sending_new_cmd"]:  # type: ignore
+                    if cmd_func._api_info[  # type: ignore[attr-defined]
+                        "cancel_on_client_sending_new_cmd"
+                    ]:
                         rep = await run_with_cancel_on_client_sending_new_cmd(
                             websocket, cmd_func, client_ctx, req
                         )

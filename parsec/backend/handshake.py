@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from pendulum import now as pendulum_now
-from typing import Tuple, Dict, Optional, cast, Type
+from typing import Tuple, Dict, Optional, cast, Type, Union
 from quart import Websocket
 
 from parsec.api.protocol import (
@@ -39,7 +39,10 @@ async def do_handshake(
         handshake = ServerHandshake()
         challenge_req = handshake.build_challenge_req()
         await websocket.send(challenge_req)
-        answer_req = await websocket.receive()
+        # Wesocket can return both bytes or utf8-string messages, we only accept the former
+        answer_req: Union[bytes, str] = await websocket.receive()
+        if not isinstance(answer_req, bytes):
+            raise ProtocolError("Expected bytes message in websocket")
 
         handshake.process_answer_req(answer_req)
         if handshake.answer_type == HandshakeType.AUTHENTICATED:

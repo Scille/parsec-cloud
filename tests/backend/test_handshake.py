@@ -264,3 +264,19 @@ async def test_authenticated_handshake_unknown_device(backend_asgi_app, mallory)
         result_req = await ws.receive()
         with pytest.raises(HandshakeBadIdentity):
             ch.process_result_req(result_req)
+
+
+@pytest.mark.trio
+async def test_handshake_string_websocket_message(backend_asgi_app, mallory):
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
+
+        await ws.receive()  # Get the challenge
+        await ws.send("hello")
+
+        result_req = await ws.receive()
+        assert unpackb(result_req) == {
+            "result": "bad_protocol",
+            "handshake": "result",
+            "help": "Expected bytes message in websocket",
+        }
