@@ -82,7 +82,7 @@ impl FileTransactions {
         }
 
         let mut res = vec![0; (stop - start) as usize];
-        (&mut res[start.abs() as usize..]).copy_from_slice(&data[..stop as usize]);
+        (&mut res[start.unsigned_abs() as usize..]).copy_from_slice(&data[..stop as usize]);
 
         res
     }
@@ -461,5 +461,211 @@ impl FileTransactions {
 
         // Return missing block ids
         Ok(missing)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::num::NonZeroU64;
+
+    use libparsec_types::{DateTime, DEFAULT_BLOCK_SIZE};
+    use rstest::rstest;
+
+    use super::*;
+    use crate::conftest::alice_file_transactions;
+
+    impl FileTransactions {
+        fn get_manifest(&self, file: &File) -> LocalFileManifest {
+            if let LocalManifest::File(file) =
+                self.local_storage.get_manifest(file.entry_id).unwrap()
+            {
+                file
+            } else {
+                panic!()
+            }
+        }
+
+        async fn set_manifest(&self, file: &File, manifest: LocalManifest) {
+            let mutex = self.local_storage.lock_entry_id(file.entry_id).await;
+            let guard = mutex.lock().await;
+            self.local_storage
+                .set_manifest(file.entry_id, manifest, false, true, None)
+                .await
+                .unwrap();
+            self.local_storage
+                .release_entry_id(file.entry_id, guard)
+                .await;
+        }
+
+        fn open(&self, file: &File) -> FileDescriptor {
+            self.local_storage
+                .create_file_descriptor(file.fresh_manifest.clone())
+        }
+    }
+
+    struct File {
+        fresh_manifest: LocalFileManifest,
+        entry_id: EntryID,
+    }
+
+    async fn foo_txt_factory(aft: &FileTransactions) -> File {
+        let device_id = &aft.local_storage.device.device_id;
+        let now = DateTime::from_ymd(2000, 1, 2);
+        let placeholder = LocalFileManifest::new(
+            device_id.clone(),
+            EntryID::default(),
+            now,
+            DEFAULT_BLOCK_SIZE,
+        );
+        let remote_v1 = placeholder.to_remote(device_id.clone(), now).unwrap();
+        let manifest = LocalFileManifest::from_remote(remote_v1).unwrap();
+        let file = File {
+            fresh_manifest: manifest.clone(),
+            entry_id: manifest.base.id,
+        };
+
+        aft.set_manifest(&file, LocalManifest::File(manifest)).await;
+
+        file
+    }
+
+    #[rstest]
+    async fn test_close_unknown_fd(#[future] alice_file_transactions: FileTransactions) {
+        let fd = FileDescriptor(42);
+        assert_eq!(
+            alice_file_transactions
+                .await
+                .fd_close(fd)
+                .await
+                .unwrap_err(),
+            FSError::InvalidFileDescriptor(fd)
+        );
+    }
+
+    #[rstest]
+    async fn test_operations_on_file(#[future] alice_file_transactions: FileTransactions) {
+        let aft = alice_file_transactions.await;
+        let foo_txt = foo_txt_factory(&aft).await;
+        let fd = aft.open(&foo_txt);
+
+        DateTime::freeze_time(Some(DateTime::from_ymd(2000, 1, 3)));
+        {
+            aft.fd_write(fd, b"hello ", 0, false).await.unwrap();
+            aft.fd_write(fd, b"world !", -1, false).await.unwrap();
+            aft.fd_write(fd, b"H", 0, false).await.unwrap();
+            aft.fd_write(fd, b"", 0, false).await.unwrap();
+
+            let fd2 = aft.open(&foo_txt);
+
+            aft.fd_write(fd2, b"!!!", -1, false).await.unwrap();
+            let data = aft.fd_read(fd2, 1, 0, false).await.unwrap();
+            assert_eq!(data, b"H");
+
+            aft.fd_close(fd2).await.unwrap();
+        }
+        DateTime::freeze_time(None);
+
+        let data = aft.fd_read(fd, 5, 6, false).await.unwrap();
+        assert_eq!(data, b"world");
+
+        aft.fd_close(fd).await.unwrap();
+
+        let fd2 = aft.open(&foo_txt);
+
+        let data = aft.fd_read(fd2, -1, 0, false).await.unwrap();
+        assert_eq!(data, b"Hello world !!!!");
+
+        aft.fd_close(fd2).await.unwrap();
+    }
+
+    #[rstest]
+    async fn test_flush_file(#[future] alice_file_transactions: FileTransactions) {
+        let aft = alice_file_transactions.await;
+        let foo_txt = foo_txt_factory(&aft).await;
+
+        let fd = aft.open(&foo_txt);
+
+        DateTime::freeze_time(Some(DateTime::from_ymd(2000, 1, 3)));
+        {
+            aft.fd_write(fd, b"hello ", 0, false).await.unwrap();
+            aft.fd_write(fd, b"world !", -1, false).await.unwrap();
+        }
+        DateTime::freeze_time(None);
+
+        aft.fd_flush(fd).await.unwrap();
+
+        aft.fd_close(fd).await.unwrap();
+    }
+
+    #[rstest]
+    async fn test_block_not_loaded_entry(#[future] alice_file_transactions: FileTransactions) {
+        let aft = alice_file_transactions.await;
+        let foo_txt = foo_txt_factory(&aft).await;
+
+        let mut foo_manifest = aft.get_manifest(&foo_txt);
+        let chunk1_data = [b'a'; 10];
+        let chunk2_data = [b'b'; 5];
+        let chunk1 = Chunk::new(0, NonZeroU64::try_from(10).unwrap())
+            .evolve_as_block(&chunk1_data)
+            .unwrap();
+        let chunk2 = Chunk::new(10, NonZeroU64::try_from(15).unwrap())
+            .evolve_as_block(&chunk2_data)
+            .unwrap();
+        let chunk1_id = chunk1.id;
+        let chunk2_id = chunk2.id;
+        foo_manifest.blocks = vec![vec![chunk1, chunk2]];
+        foo_manifest.size = 15;
+
+        aft.set_manifest(&foo_txt, LocalManifest::File(foo_manifest))
+            .await;
+
+        let fd = aft.open(&foo_txt);
+
+        // TODO: Handle FSRemoveBlockNotFound error
+
+        aft.local_storage
+            .set_chunk(chunk1_id, &chunk1_data)
+            .unwrap();
+        aft.local_storage
+            .set_chunk(chunk2_id, &chunk2_data)
+            .unwrap();
+
+        let data = aft.fd_read(fd, 14, 0, false).await.unwrap();
+        assert_eq!(data, [&chunk1_data[..], &chunk2_data[..4]].concat())
+    }
+
+    #[ignore]
+    #[rstest]
+    async fn test_load_block_from_remote(#[future] alice_file_transactions: FileTransactions) {
+        let aft = alice_file_transactions.await;
+        let foo_txt = foo_txt_factory(&aft).await;
+
+        // Prepare the backend
+        // TODO
+
+        let mut foo_manifest = aft.get_manifest(&foo_txt);
+        let chunk1_data = [b'a'; 10];
+        let chunk2_data = [b'b'; 5];
+        let chunk1 = Chunk::new(0, NonZeroU64::try_from(10).unwrap())
+            .evolve_as_block(&chunk1_data)
+            .unwrap();
+        let chunk2 = Chunk::new(10, NonZeroU64::try_from(15).unwrap())
+            .evolve_as_block(&chunk2_data)
+            .unwrap();
+        foo_manifest.blocks = vec![vec![chunk1.clone(), chunk2.clone()]];
+        foo_manifest.size = 15;
+
+        aft.set_manifest(&foo_txt, LocalManifest::File(foo_manifest))
+            .await;
+
+        let fd = aft.open(&foo_txt);
+        let chunk1_id = chunk1.access.unwrap().id;
+        let chunk2_id = chunk2.access.unwrap().id;
+        // TODO: remote
+        aft.local_storage.clear_clean_block(chunk1_id);
+        aft.local_storage.clear_clean_block(chunk2_id);
+
+        let data = aft.fd_read(fd, 14, 0, false).await.unwrap();
+        assert_eq!(data, [&chunk1_data[..], &chunk2_data[..4]].concat())
     }
 }

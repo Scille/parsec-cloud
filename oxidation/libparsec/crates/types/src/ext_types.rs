@@ -73,6 +73,7 @@ impl DateTime {
 #[cfg(feature = "mock-time")]
 mod mock_time {
     use super::DateTime;
+    use chrono::{TimeZone, Utc};
     use std::cell::RefCell;
 
     thread_local! {
@@ -82,6 +83,10 @@ mod mock_time {
     impl DateTime {
         pub fn now() -> Self {
             MOCK_TIME.with(|cell| cell.borrow().unwrap_or(chrono::Utc::now().into()))
+        }
+
+        pub fn from_ymd(y: u64, m: u64, d: u64) -> Self {
+            Self(Utc.ymd(y as i32, m as u32, d as u32).and_hms(0, 0, 0))
         }
 
         pub fn freeze_time(time: Option<Self>) {
