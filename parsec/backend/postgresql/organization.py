@@ -3,6 +3,7 @@
 from typing import Optional, Union
 from functools import lru_cache
 from triopg import UniqueViolationError
+from parsec.api.data.certif import SequesterVerifyKeyCertificate
 
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.crypto import VerifyKey
@@ -210,6 +211,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             is_expired=data[2],
             active_users_limit=data[3],
             user_profile_outsider_allowed=data[4],
+            sequester_verify_key_certificate=None,  # TODO: implement it in postgresql version
         )
 
     async def bootstrap(
@@ -219,6 +221,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        sequester_verify_key_certificate: Optional[SequesterVerifyKeyCertificate] = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the
