@@ -36,7 +36,12 @@ from parsec.core.cli.share_workspace import WORKSPACE_ROLE_CHOICES
 
 from tests.common import AsyncMock, real_clock_timeout, asgi_app_handle_client_factory
 
+
 CWD = Path(__file__).parent.parent
+# Starting parsec cli as a new subprocess can be very slow (typically a couple
+# of seconds on my beafy machine !), so we use an unusaly large value here to
+# avoid issues in the CI.
+SUBPROCESS_TIMEOUT = 30
 
 
 @pytest.fixture(params=WORKSPACE_ROLE_CHOICES.keys())
@@ -120,7 +125,7 @@ def _short_cmd(cmd):
         return f"{cmd[:40]}…"
 
 
-def _run(cmd, env={}, timeout=30.0, capture=True):
+def _run(cmd, env={}, timeout=SUBPROCESS_TIMEOUT, capture=True):
     print(f"========= RUN {cmd} ==============")
     env = {**os.environ.copy(), "DEBUG": "true", **env}
     cooked_cmd = ("python -m parsec.cli " + cmd).split()
@@ -142,9 +147,9 @@ class LivingStream:
         self._already_read_data = ""
 
     def read(self):
-        new_data_size = len(self.stream.peek())
-        new_data = self.stream.read1(new_data_size).decode()
-        self._already_read_data += new_data
+        new_data = self.stream.read()
+        if new_data is not None:
+            self._already_read_data += new_data.decode()
         return self._already_read_data
 
 
@@ -164,13 +169,14 @@ def _running(cmd, wait_for=None, env={}):
     p.wait_for_regex = partial(_wait_for_regex, p)
     p.live_stdout = LivingStream(p.stdout)
     p.live_stderr = LivingStream(p.stderr)
-    # Turn stdin non-blocking
-    fl = fcntl.fcntl(p.stdin, fcntl.F_GETFL)
-    fcntl.fcntl(p.stdin, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+    # Turn stdin/stdout/stderr non-blocking
+    for stream in [p.stdin, p.stdout, p.stderr]:
+        fl = fcntl.fcntl(stream, fcntl.F_GETFL)
+        fcntl.fcntl(stream, fcntl.F_SETFL, fl | os.O_NONBLOCK)
     try:
         if wait_for:
             out = ""
-            for _ in range(10):
+            for _ in range(SUBPROCESS_TIMEOUT * 10):  # 10ms sleep steps
                 out = p.live_stdout.read()[len(out) :]
                 if out:
                     print(out, end="")
@@ -191,7 +197,7 @@ def _running(cmd, wait_for=None, env={}):
 
 
 def _wait_for(p, wait_txt):
-    for _ in range(10):
+    for _ in range(SUBPROCESS_TIMEOUT * 10):  # 10ms sleep steps
         sleep(0.1)
         stdout = p.live_stdout.read()
         if wait_txt in stdout:
@@ -200,11 +206,14 @@ def _wait_for(p, wait_txt):
         raise AssertionError("Too slow")
 
 
-def _wait_for_regex(p, regex):
-    for _ in range(10):
+def _wait_for_regex(p, regex, stderr=False):
+    for _ in range(SUBPROCESS_TIMEOUT * 10):  # 10ms sleep steps
         sleep(0.1)
-        stdout = p.live_stdout.read()
-        match = re.search(regex, stdout, re.MULTILINE)
+        if stderr:
+            output = p.live_stderr.read()
+        else:
+            output = p.live_stdout.read()
+        match = re.search(regex, output, re.MULTILINE)
         if match:
             return match
     else:
@@ -305,22 +314,31 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
     password = "P@ssw0rd."
     administration_token = "9e57754ddfe62f7f8780edc0"
 
-    backend_url = f"parsec://127.0.0.1:{unused_tcp_port}"
-    if not ssl_conf.use_ssl:
-        backend_url += "?no_ssl=true"
+    # Cannot use `click.CliRunner` in this test given it doesn't support
+    # concurrent run of commands :'(
 
     print("######## START BACKEND #########")
     with _running(
         (
             f"backend run --db=MOCKED --blockstore=MOCKED"
             f" --administration-token={administration_token}"
-            f" --port={unused_tcp_port}"
-            f" --backend-addr={backend_url}"
+            f" --port=0"
+            f" --backend-addr=parsec://127.0.0.1:{unused_tcp_port}"
             f" --email-host=MOCKED"
+            f" --log-level=INFO"
             f" {ssl_conf.backend_opts}"
         ),
         wait_for="Starting Parsec Backend",
-    ):
+    ) as bp:
+        # Given we set port to 0, it is going to be picked random by hypercorn
+        # and printed in the logs
+        backend_port = bp.wait_for_regex(
+            r"Running on http://127.0.0.1:([0-9]+)", stderr=True
+        ).group(1)
+
+        backend_url = f"parsec://127.0.0.1:{backend_port}"
+        if not ssl_conf.use_ssl:
+            backend_url += "?no_ssl=true"
 
         print("####### Create organization #######")
 
