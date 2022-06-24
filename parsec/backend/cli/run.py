@@ -215,7 +215,7 @@ class DevOption(click.Option):
         return value, args
 
 
-def basic_backend_options(fn):
+def basic_admin_backend_options(fn):
     decorators = [
         click.option(
             "--administration-token",
@@ -253,37 +253,6 @@ Allowed values:
             envvar="PARSEC_DB_MAX_CONNECTIONS",
             help="Maximum number of connections to the database if using PostgreSQL",
         ),
-        click.option(
-            "--blockstore",
-            "-b",
-            required=True,
-            multiple=True,
-            callback=lambda ctx, param, value: _parse_blockstore_params(value),
-            envvar="PARSEC_BLOCKSTORE",
-            metavar="CONFIG",
-            help="""Blockstore configuration.
-Allowed values:
-
-\b
--`MOCKED`: Mocked in memory
--`POSTGRESQL`: Use the database specified in the `--db` param
--`s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>`: Use S3 storage
--`swift:<auth_url>:<tenant>:<container>:<user>:<password>`: Use SWIFT storage
-
-Note endpoint_url/auth_url are considered as https by default (e.g.
-`s3:foo.com:[...]` -> https://foo.com).
-Escaping must be used to provide a custom scheme (e.g. `s3:http\\://foo.com:[...]`).
-
-On top of that, multiple blockstore configurations can be provided to form a
-RAID0/1/5 cluster.
-
-Each configuration must be provided with the form
-`<raid_type>:<node>:<config>` with `<raid_type>` RAID0/RAID1/RAID5, `<node>` a
-integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
-
-\b
-""",
-        ),
     ]
     for decorator in decorators:
         fn = decorator(fn)
@@ -304,7 +273,7 @@ For instance:
     $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
 """,
 )
-@basic_backend_options
+@basic_admin_backend_options
 @click.option(
     "--host",
     "-H",
@@ -348,6 +317,37 @@ With this flag, the server allows anybody to bootstrap an organanization
 by providing an empty bootstrap token given 1) the organization is not boostrapped yet
 and 2) the organization hasn't been created by administration (which would act as a
 reservation and change the bootstrap token)
+""",
+)
+@click.option(
+    "--blockstore",
+    "-b",
+    required=True,
+    multiple=True,
+    callback=lambda ctx, param, value: _parse_blockstore_params(value),
+    envvar="PARSEC_BLOCKSTORE",
+    metavar="CONFIG",
+    help="""Blockstore configuration.
+Allowed values:
+
+\b
+-`MOCKED`: Mocked in memory
+-`POSTGRESQL`: Use the database specified in the `--db` param
+-`s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>`: Use S3 storage
+-`swift:<auth_url>:<tenant>:<container>:<user>:<password>`: Use SWIFT storage
+
+Note endpoint_url/auth_url are considered as https by default (e.g.
+`s3:foo.com:[...]` -> https://foo.com).
+Escaping must be used to provide a custom scheme (e.g. `s3:http\\://foo.com:[...]`).
+
+On top of that, multiple blockstore configurations can be provided to form a
+RAID0/1/5 cluster.
+
+Each configuration must be provided with the form
+`<raid_type>:<node>:<config>` with `<raid_type>` RAID0/RAID1/RAID5, `<node>` a
+integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
+
+\b
 """,
 )
 @click.option(
