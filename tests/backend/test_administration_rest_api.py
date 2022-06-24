@@ -74,6 +74,7 @@ async def test_organization_create(backend_asgi_app):
         root_verify_key=None,
         user_profile_outsider_allowed=True,
         active_users_limit=None,
+        sequester_verify_key_certificate=None,
     )
 
 
@@ -139,6 +140,7 @@ async def test_organization_create_already_exists_not_bootstrapped(backend_asgi_
         root_verify_key=None,
         user_profile_outsider_allowed=True,
         active_users_limit=None,
+        sequester_verify_key_certificate=None,
     )
 
 
@@ -185,6 +187,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         root_verify_key=None,
         user_profile_outsider_allowed=False,
         active_users_limit=None,
+        sequester_verify_key_certificate=None,
     )
 
     # New custom initial config should be taken into account each time the org is recreated
@@ -209,6 +212,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         root_verify_key=None,
         user_profile_outsider_allowed=True,
         active_users_limit=10,
+        sequester_verify_key_certificate=None,
     )
 
     # Default initial config should also be used if org is recreated without custom config
@@ -229,6 +233,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         root_verify_key=None,
         user_profile_outsider_allowed=True,
         active_users_limit=None,
+        sequester_verify_key_certificate=None,
     )
 
 
