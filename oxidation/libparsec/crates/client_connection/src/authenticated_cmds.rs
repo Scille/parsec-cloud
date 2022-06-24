@@ -57,7 +57,9 @@ impl AuthenticatedCmds {
         signing_key: SigningKey,
     ) -> Result<Self, url::ParseError> {
         let root_url = Url::parse(root_url.as_ref())?;
-        let url = root_url.join(AUTHENTICATED_API_URI)?;
+        let url = root_url
+            .join(AUTHENTICATED_API_URI)
+            .expect("the add path to the authenticated url must be valid");
         let device_id = base64::encode(device_id.to_string().as_bytes());
 
         Ok(Self {
