@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use chrono::{DateTime, Local};
 use http_body::Full;
 use hyper::{
     body::{self, Bytes},
@@ -27,7 +28,7 @@ pub type ID = DeviceID;
 pub struct AuthRequest {
     author_b64: String,
     verify_key: VerifyKey,
-    timestamp: u128,
+    timestamp: DateTime<Local>,
     signature_b64: String,
 }
 
@@ -92,7 +93,7 @@ impl Service<Request<Body>> for SignatureVerifier {
                 (&signature)
                     .iter()
                     .chain(auth_req.author_b64.as_bytes())
-                    .chain(&auth_req.timestamp.to_be_bytes())
+                    .chain(auth_req.timestamp.to_string().as_bytes())
                     .chain(body.deref())
                     .copied(),
             );
@@ -132,7 +133,7 @@ impl Service<Request<Body>> for SignatureVerifier {
     }
 }
 
-fn parse_headers(headers: &HeaderMap) -> anyhow::Result<(String, u128, String)> {
+fn parse_headers(headers: &HeaderMap) -> anyhow::Result<(String, DateTime<Local>, String)> {
     match headers.get(AUTHORIZATION) {
         Some(value) => {
             if Some(PARSEC_AUTH_METHOD) != value.to_str().ok() {

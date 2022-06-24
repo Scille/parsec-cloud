@@ -44,10 +44,10 @@ async fn valid_request() {
     let client_response = client_handle.await.expect("client handle failed");
     let server_response = server_handle.await.expect("server handle failed");
 
-    log::debug!("[test] server response: {server_response:?}");
+    log::debug!("[test] server result: {server_response:?}");
     server_response.expect("server failed with error");
 
-    log::debug!("[test] client response: {client_response:?}");
+    log::debug!("[test] client result: {client_response:?}");
     let client_response = client_response.expect("unexpected error for client response");
     assert_eq!(
         authenticated_cmds::ping::Rep::Ok {
