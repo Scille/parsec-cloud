@@ -5,6 +5,8 @@ use std::{error::Error, fmt::Display};
 pub type Result<T> = core::result::Result<T, CommandError>;
 
 /// Sending a command isn't risk-free, we have multiple possible way to fail.
+/// Also note we only deal with *transport* related errors here (i.e. *deserialization* / *http* / *tcp* related stuff),
+/// hence dealing with the `status` field of the response message is left to the caller
 #[derive(Debug)]
 pub enum CommandError {
     /// We failed to retrieve the reply.
