@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from dataclasses import dataclass
+import sys
 import pytest
 import json
 import trio
@@ -8,7 +9,7 @@ import ssl
 import trustme
 import socket
 from inspect import iscoroutine
-from contextlib import contextmanager, asynccontextmanager, closing as contextlib_closing
+from contextlib import contextmanager, asynccontextmanager
 import tempfile
 from functools import partial
 from typing import Optional, Callable, Union
@@ -32,9 +33,14 @@ from tests.common.binder import OrganizationFullData
 @pytest.fixture(scope="session")
 def unused_tcp_port():
     """Find an unused localhost TCP port from 1024-65535 and return it."""
-    with contextlib_closing(socket.socket()) as sock:
-        sock.bind(("127.0.0.1", 0))
-        yield sock.getsockname()[1]
+    sock = socket.socket()
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    # On macOS connecting to a bind-to-no-listening socket hangs, so we have to
+    # close the socket and risk port recycling (which hopefully is not that common)
+    if sys.platform == "darwin":
+        sock.close()
+    yield port
 
 
 def correct_addr(
