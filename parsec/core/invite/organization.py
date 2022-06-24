@@ -3,7 +3,7 @@
 from typing import Optional
 
 import pendulum
-from parsec.api.data.certif import SequesterVerifyKeyCertificate
+from parsec.api.data.certif import SequesterVerifyKeyCertificate, SigningKeyFormat
 
 from parsec.crypto import SigningKey, VerifyKey
 from parsec.api.protocol import HumanHandle, DeviceLabel
@@ -86,10 +86,10 @@ async def bootstrap_organization(
             author=None,
             timestamp=pendulum.now(),
             verify_key=dump_sequester_public_key(sequester_public_verify_key),
-            verify_key_format=sequester_public_verify_key.algorithm.upper(),
+            verify_key_format=SigningKeyFormat(sequester_public_verify_key.algorithm.upper()),
         )
         sequester_verify_key_certificate = sequester_verify_key_certificate.dump_and_sign(
-            root_verify_key
+            root_signing_key
         )
     else:
         sequester_verify_key_certificate = None
