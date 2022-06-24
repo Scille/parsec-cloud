@@ -12,7 +12,7 @@ import re
 python = shutil.which("python")
 poetry = shutil.which("poetry")
 if not python or not poetry:
-    raise SystemExit("Cannot find python or poetry commands :(")
+    raise SystemExit("Cannot find python and/or poetry commands :(")
 else:
     print(f"Using python: {python}")
     print(f"Using poetry: {poetry}")
