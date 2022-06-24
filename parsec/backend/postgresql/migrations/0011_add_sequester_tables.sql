@@ -14,7 +14,7 @@ CREATE TABLE sequester_service(
     service_id UUID NOT NULL,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     encryption_key_certificate BYTEA NOT NULL,
-    encryption_key_certificate_signature BYTEA NOT NULLS,
+    encryption_key_certificate_signature BYTEA NOT NULL,
     webhook_url TEXT, -- NULL if service_type != WEBHOOK
     created_on TIMESTAMPTZ NOT NULL,
     deleted_on TIMESTAMPTZ, -- NULL if not deleted
