@@ -7,6 +7,20 @@ from parsec.api.protocol import UserID, OrganizationID, HumanHandle
 from parsec.backend.user import HumanFindResultItem
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id, query
 
+
+LIKE_TRANSLATION = {ord("%"): "\\%", ord("_"): "\\_", ord("\\"): "\\\\"}
+
+
+def _escape_sql_like_arg(arg: str) -> str:
+    # 1) Split`arg` by newlines and spaces
+    # 2) For each word, escapes special `%`, `_` and `\` characters that are
+    #    interpreted by ILIKE operator
+    # 3) Combine all words together with `%` (i.e. mach zero or multiple characters)
+    # So `foo  bar\tspam` becomes `%foo%bar%spam%` wich is interpreted by SQL LIKE
+    # as regex `^.*foo.*bar.*spam.*$`
+    return "%" + "%".join(x.translate(LIKE_TRANSLATION) for x in arg.split()) + "%"
+
+
 _q_retrieve_active_human_by_email = Q(
     f"""
 SELECT
@@ -30,7 +44,7 @@ def _q_human_factory(with_query: bool, omit_revoked: bool, omit_non_human: bool)
     if omit_non_human or with_query:
         conditions.append("AND user_.human IS NOT NULL")
     if with_query:
-        conditions.append("AND CONCAT(human.label,human.email) ~* $query")
+        conditions.append("AND ((human.label ILIKE $query) OR (human.email ILIKE $query))")
 
     # Query with pagination & total result not trivial in SQL:
     # - We do the query with order but without pagination to get all results
@@ -120,7 +134,7 @@ async def query_find_humans(
         args = q(
             organization_id=organization_id.str,
             now=pendulum_now(),
-            query=query,
+            query=_escape_sql_like_arg(query),
             offset=offset,
             limit=per_page,
         )

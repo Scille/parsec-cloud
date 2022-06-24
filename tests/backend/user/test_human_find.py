@@ -140,6 +140,11 @@ async def test_search_multiple_matches(access_testbed, local_device_factory):
     rep = await human_find(sock, query="bruce.l")
     assert rep == expected_rep
 
+    # Search with spaces
+    for space in [" ", "  ", "\n", "\t"]:
+        rep = await human_find(sock, query=f"Bruce{space}L")
+        assert rep == expected_rep
+
 
 @pytest.mark.trio
 async def test_search_multiple_user_same_human_handle(access_testbed, local_device_factory):
@@ -284,6 +289,26 @@ async def test_bad_args(access_testbed, local_device_factory):
     for bad in [{"page": 0}, {"per_page": 0}, {"per_page": 101}]:
         rep = await human_find(sock, **bad)
         assert rep["status"] == "bad_message"
+
+
+@pytest.mark.trio
+async def test_bad_query(access_testbed):
+    *_, sock = access_testbed
+
+    for bad_query in [
+        # Parenthesis not balanced should cause issue with a regex based system
+        "(",
+        # %, _ and \ should be escaped for SQL LIKE
+        "%god",
+        "god_",
+        "god\\",
+    ]:
+        rep = await human_find(sock, query=bad_query)
+        assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
+
+    # Cheap test to make sure we can match anyway
+    rep = await human_find(sock, query="god")
+    assert rep["total"] == 1
 
 
 @pytest.mark.trio
