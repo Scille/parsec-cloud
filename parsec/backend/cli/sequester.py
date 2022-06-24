@@ -17,7 +17,7 @@ from parsec.backend.config import (
 )
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.sequester import PGPSequesterComponent
-from parsec.backend.sequester import SequesterServiceRequest
+from parsec.backend.sequester import SequesterService
 from parsec.sequester_crypto import (
     load_sequester_private_key,
     load_sequester_public_key,
@@ -66,8 +66,8 @@ def _sign_encryption_key_certificate(certificate: bytes, raw_signing_key: bytes)
 
 def _generate_service_request_schema(
     service_type, encryption_key_certificate, encryption_key_certificate_signature
-) -> SequesterServiceRequest:
-    return SequesterServiceRequest(
+) -> SequesterService:
+    return SequesterService(
         service_type=service_type,
         service_id=uuid4(),
         sequester_encryption_certificate=encryption_key_certificate,
@@ -75,6 +75,7 @@ def _generate_service_request_schema(
     )
 
 
+# TODO HELPERS + Update with option service_id
 @click.command()
 @click.option(
     "--encryption_public_key",
@@ -162,21 +163,21 @@ def register_service(
 
 
 async def run_memomry_sequest_component(
-    config: BackendConfig,
-    organization: OrganizationID,
-    register_service_req: SequesterServiceRequest,
+    config: BackendConfig, organization_str: str, register_service_req: SequesterService
 ):
     async with backend_app_factory(config=config) as backend:
-        await backend.sequester.register_service(OrganizationID(organization), register_service_req)
+        await backend.sequester.register_service(
+            OrganizationID(organization_str), register_service_req
+        )
 
 
 async def run_pg_sequester_component(
-    config: BackendConfig,
-    organization: OrganizationID,
-    register_service_req: SequesterServiceRequest,
+    config: BackendConfig, organization_str: OrganizationID, register_service_req: SequesterService
 ):
     event_bus = EventBus()
     dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
-    sequester = PGPSequesterComponent(dbh)
+    sequester_component = PGPSequesterComponent(dbh)
 
-    await sequester.register_service(OrganizationID(organization), register_service_req)
+    await sequester_component.register_service(
+        OrganizationID(organization_str), register_service_req
+    )

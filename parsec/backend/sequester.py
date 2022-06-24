@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+from typing import List
 from uuid import uuid4
 
 import attr
@@ -7,7 +8,7 @@ from parsec.api.data.sequester import EncryptionKeyFormat, SequesterServiceEncry
 
 from parsec.api.protocol.types import OrganizationID
 from parsec.event_bus import EventBus
-from parsec.api.protocol.sequester import SequesterServiceSchema, SequesterServiceType
+from parsec.api.protocol.sequester import SequesterServiceType
 
 from parsec.sequester_crypto import (
     SequesterPublicKey,
@@ -31,7 +32,7 @@ class SequesterKeyFormatError(SequesterError):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class SequesterServiceRequest:
+class SequesterService:
     service_type: SequesterServiceType
     service_id: UUID
     sequester_encryption_certificate: bytes
@@ -43,7 +44,7 @@ class BaseSequesterComponent:
         self._event_bus = event_bus
 
     async def register_service(
-        self, organization_id: OrganizationID, sequester_register_service: SequesterServiceRequest
+        self, organization_id: OrganizationID, sequester_register_service: SequesterService
     ):
         """
         Raises:
@@ -68,9 +69,9 @@ class BaseSequesterComponent:
             sequester_encryption_certificate_signature=sequester_register_service.sequester_encryption_certificate_signature,
         )
 
-    async def get_organization_service_keys(
+    async def get_organization_services(
         self, organization_id: OrganizationID
-    ) -> SequesterServiceSchema:
+    ) -> List[SequesterService]:
         pass
 
     async def _register_service(

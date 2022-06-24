@@ -28,7 +28,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self._organization_component: MemoryOrganizationComponent = None
         self._services: Dict[OrganizationID, Dict[UUID, SequesterService]] = {}
 
-    def _register_components(self, **other_components):
+    def register_components(self, **other_components):
         self._organization_component = other_components["organization"]
 
     async def _register_service(
