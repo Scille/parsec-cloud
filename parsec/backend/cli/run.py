@@ -658,3 +658,6 @@ async def _serve_backend_with_asgi(
         }
     )
     await serve(app, hyper_config)
+    # `hypercorn.serve` catches KeyboardInterrupt and returns, so re-raise
+    # the keyboard interrupt to continue shutdown
+    raise KeyboardInterrupt
