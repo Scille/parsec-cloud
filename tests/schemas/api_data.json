@@ -556,6 +556,42 @@
         },
         "serializing": "zip+msgpack"
     },
+    "SequesterVerifyKeyCertificate": {
+        "fields": {
+            "author": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": null
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "sequester_verify_key_certificate"
+            },
+            "verify_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "bytesField"
+            },
+            "verify_key_format": {
+                "allow_none": false,
+                "enum_allowed_values": [
+                    "RSA"
+                ],
+                "enum_type": "SigningKeyFormat",
+                "required": false,
+                "type": "SigningKeyFormatField"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
     "SharingGrantedMessageContent": {
         "fields": {
             "author": {
