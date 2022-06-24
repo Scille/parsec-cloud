@@ -38,7 +38,7 @@ async def bootstrap_organization(
     addr: BackendOrganizationBootstrapAddr,
     human_handle: Optional[HumanHandle],
     device_label: Optional[DeviceLabel],
-    sequester_der_public_key: Optional[SequesterPublicKey],
+    sequester_signing_public_key: Optional[SequesterPublicKey] = None,
 ) -> LocalDevice:
     root_signing_key = SigningKey.generate()
     root_verify_key = root_signing_key.verify_key
@@ -82,9 +82,9 @@ async def bootstrap_organization(
     device_certificate = device_certificate.dump_and_sign(root_signing_key)
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(root_signing_key)
 
-    if sequester_der_public_key:
+    if sequester_signing_public_key:
         sequester_certificate = SequesterDerVerifyKeyCertificateContent(
-            author=None, verify_key=sequester_der_public_key
+            author=None, verify_key=sequester_signing_public_key
         )
 
         sequester_certificate = sequester_certificate.dump_and_sign(root_verify_key)
@@ -98,7 +98,7 @@ async def bootstrap_organization(
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
-        signed_sequester_cerificate=sequester_certificate,
+        signed_sequester_certificate=sequester_certificate,
     )
     _check_rep(rep, step_name="organization bootstrap")
 
@@ -123,7 +123,7 @@ async def failsafe_organization_bootstrap(
             device_certificate=device_certificate,
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
-            signed_sequester_signing_cert=signed_sequester_certificate,
+            sequester_verify_key_certificate=signed_sequester_certificate,
         )
     # If we get a 404 error, maybe the backend is too old to know about the anonymous route (API version < 2.6)
     except BackendNotAvailable as exc:

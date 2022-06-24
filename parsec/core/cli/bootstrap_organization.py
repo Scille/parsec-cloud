@@ -23,7 +23,7 @@ async def _bootstrap_organization(
     device_label: Optional[DeviceLabel],
     human_label: Optional[str],
     human_email: Optional[str],
-    sequester_der_public_key: Optional[bytes],
+    sequester_signing_public_key: Optional[bytes],
     save_device_with_selected_auth: Callable,
 ) -> None:
     if not human_label:
@@ -40,7 +40,7 @@ async def _bootstrap_organization(
             addr,
             human_handle=human_handle,
             device_label=device_label,
-            sequester_der_public_key=sequester_der_public_key,
+            sequester_signing_public_key=sequester_signing_public_key,
         )
 
     # We don't have to worry about overwritting an existing keyfile
