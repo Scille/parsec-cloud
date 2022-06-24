@@ -68,7 +68,9 @@ class BaseSequesterComponent:
             sequester_encryption_certificate_signature=sequester_register_service.sequester_encryption_certificate_signature,
         )
 
-    async def get(self, organization_id: OrganizationID) -> SequesterServiceSchema:
+    async def get_organization_service_keys(
+        self, organization_id: OrganizationID
+    ) -> SequesterServiceSchema:
         pass
 
     async def _register_service(

@@ -2,13 +2,21 @@
 from uuid import uuid4
 import click
 import pendulum
+from parsec.event_bus import EventBus
 from parsec.api.data.sequester import EncryptionKeyFormat, SequesterServiceEncryptionKey
 
 from parsec.api.protocol.sequester import SequesterServiceType
 from parsec.api.protocol.types import OrganizationID
 from parsec.backend.app import backend_app_factory
-from parsec.backend.cli.run import DEFAULT_EMAIL_SENDER, basic_backend_options
-from parsec.backend.config import BackendConfig, BaseBlockStoreConfig, MockedEmailConfig
+from parsec.backend.cli.run import DEFAULT_EMAIL_SENDER, basic_admin_backend_options
+from parsec.backend.config import (
+    BackendConfig,
+    BaseBlockStoreConfig,
+    MockedBlockStoreConfig,
+    MockedEmailConfig,
+)
+from parsec.backend.postgresql.handler import PGHandler
+from parsec.backend.postgresql.sequester import PGPSequesterComponent
 from parsec.backend.sequester import SequesterServiceRequest
 from parsec.sequester_crypto import (
     load_sequester_private_key,
@@ -88,7 +96,7 @@ def _generate_service_request_schema(
 )
 @click.option("--service_name", type=str, required=True, help="New service name")
 @click.option("--organization", type=str)
-@basic_backend_options
+@basic_admin_backend_options
 def register_service(
     encryption_public_key: Path,
     signing_private_key: Path,
@@ -96,7 +104,6 @@ def register_service(
     service_name: str,
     organization: str,
     db: str,
-    blockstore: BaseBlockStoreConfig,
     db_max_connections: int,
     db_min_connections: int,
     administration_token: str,
@@ -112,17 +119,22 @@ def register_service(
     encryption_key_certificate_signature = _sign_encryption_key_certificate(
         encryption_key_certificate, raw_signing_key
     )
-    schema = _generate_service_request_schema(
+    # Generate register service request
+    register_service_req = _generate_service_request_schema(
         service_type=service_type,
         encryption_key_certificate=encryption_key_certificate,
         encryption_key_certificate_signature=encryption_key_certificate_signature,
     )
+
+    # Create backend basic config
+    run_in_memory = db.upper() == "MOCKED"
+
     app_config = BackendConfig(
         administration_token=administration_token,
         db_url=db,
         db_min_connections=db_min_connections,
         db_max_connections=db_max_connections,
-        blockstore_config=blockstore,
+        blockstore_config=MockedBlockStoreConfig() if run_in_memory else BaseBlockStoreConfig(),
         ssl_context=False,
         debug=False,
         backend_addr=None,
@@ -130,8 +142,41 @@ def register_service(
         forward_proto_enforce_https=None,
     )
 
-    async def run(app_config):
-        async with backend_app_factory(config=app_config) as backend:
-            await backend.sequester.register_service(OrganizationID(organization), schema)
+    if run_in_memory:
+        trio_run(
+            run_memomry_sequest_component,
+            app_config,
+            organization,
+            register_service_req,
+            use_asyncio=True,
+        )
 
-    trio_run(run, app_config, use_asyncio=True)
+    else:
+        trio_run(
+            run_pg_sequester_component,
+            app_config,
+            organization,
+            register_service_req,
+            use_asyncio=True,
+        )
+
+
+async def run_memomry_sequest_component(
+    config: BackendConfig,
+    organization: OrganizationID,
+    register_service_req: SequesterServiceRequest,
+):
+    async with backend_app_factory(config=config) as backend:
+        await backend.sequester.register_service(OrganizationID(organization), register_service_req)
+
+
+async def run_pg_sequester_component(
+    config: BackendConfig,
+    organization: OrganizationID,
+    register_service_req: SequesterServiceRequest,
+):
+    event_bus = EventBus()
+    dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
+    sequester = PGPSequesterComponent(dbh)
+
+    await sequester.register_service(OrganizationID(organization), register_service_req)
