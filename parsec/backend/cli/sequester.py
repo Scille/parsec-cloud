@@ -25,7 +25,7 @@ from parsec.sequester_crypto import (
 )
 from pathlib import Path
 
-from parsec.utils import trio_run
+from parsec.utils import open_service_nursery, trio_run
 
 SERVICE_TYPE_CHOICES = {service.value: service for service in SequesterServiceType}
 
@@ -75,6 +75,32 @@ def _generate_service_request_schema(
     )
 
 
+async def run_memomry_sequest_component(
+    config: BackendConfig, organization_str: str, register_service_req: SequesterService
+):
+    async with backend_app_factory(config=config) as backend:
+        await backend.sequester.register_service(
+            OrganizationID(organization_str), register_service_req
+        )
+
+
+async def run_pg_sequester_component(
+    config: BackendConfig, organization_str: OrganizationID, register_service_req: SequesterService
+):
+    event_bus = EventBus()
+    dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
+    sequester_component = PGPSequesterComponent(dbh)
+
+    async with open_service_nursery() as nursery:
+        await dbh.init(nursery)
+        try:
+            await sequester_component.register_service(
+                OrganizationID(organization_str), register_service_req
+            )
+        finally:
+            await dbh.teardown()
+
+
 # TODO HELPERS + Update with option service_id
 @click.command()
 @click.option(
@@ -98,7 +124,7 @@ def _generate_service_request_schema(
 @click.option("--service_name", type=str, required=True, help="New service name")
 @click.option("--organization", type=str)
 @basic_admin_backend_options
-def register_service(
+def new_service(
     encryption_public_key: Path,
     signing_private_key: Path,
     service_type: SequesterServiceType,
@@ -162,22 +188,34 @@ def register_service(
         )
 
 
-async def run_memomry_sequest_component(
-    config: BackendConfig, organization_str: str, register_service_req: SequesterService
-):
-    async with backend_app_factory(config=config) as backend:
-        await backend.sequester.register_service(
-            OrganizationID(organization_str), register_service_req
-        )
+# TODO HELPERS + Update with option service_id
+@click.command()
+@click.option(
+    "--encryption_public_key",
+    type=click.Path(
+        exists=True, file_okay=True, dir_okay=False, path_type=Path  # type: ignore[type-var]
+    ),
+)
+@click.option(
+    "--signing_private_key",
+    type=click.Path(
+        exists=True, file_okay=True, dir_okay=False, path_type=Path  # type: ignore[type-var]
+    ),
+)
+@click.option(
+    "--service_type",
+    type=click.Choice(SERVICE_TYPE_CHOICES),
+    required=True,
+    help="New service type",
+)
+@click.option("--service_name", type=str, required=True, help="New service name")
+@click.option("--organization", type=str)
+@basic_admin_backend_options
+def update_service():
+    # TODO
+    pass
 
 
-async def run_pg_sequester_component(
-    config: BackendConfig, organization_str: OrganizationID, register_service_req: SequesterService
-):
-    event_bus = EventBus()
-    dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
-    sequester_component = PGPSequesterComponent(dbh)
-
-    await sequester_component.register_service(
-        OrganizationID(organization_str), register_service_req
-    )
+@click.command()
+def delete_service():
+    pass

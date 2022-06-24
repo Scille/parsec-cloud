@@ -163,12 +163,14 @@ class BaseOrganizationComponent:
         root_verify_key = msg["root_verify_key"]
 
         try:
-            sequester_der_public_key = SequesterDerVerifyKeyCertificateContent.verify_and_load(
-                msg["sequester_verify_key"], author_verify_key=root_verify_key, expected_author=None
+            sequester_verify_key_certificate = SequesterDerVerifyKeyCertificateContent.verify_and_load(
+                msg["sequester_verify_key_certificate"],
+                author_verify_key=root_verify_key,
+                expected_author=None,
             )
         except DataError:
             return {
-                "status": "invalid sequester_verify_key",
+                "status": "invalid sequester_verify_key_certificate",
                 "reason": "Invalid signature for tpel verify key",
             }
 
@@ -283,7 +285,7 @@ class BaseOrganizationComponent:
                 first_device,
                 bootstrap_token,
                 root_verify_key,
-                sequester_der_public_key.verify_key,
+                sequester_verify_key_certificate.verify_key,
             )
 
         except OrganizationAlreadyBootstrappedError:
