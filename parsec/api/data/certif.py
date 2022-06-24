@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from typing import TYPE_CHECKING, Optional, Any, Dict, Type, TypeVar
+from enum import Enum
+from typing import TYPE_CHECKING, Optional, Any, Dict, Type, TypeVar, Literal
 from marshmallow import ValidationError
 from pendulum import DateTime
 
@@ -244,3 +245,33 @@ class RealmRoleCertificateContent(BaseAPISignedData):
                 f"Invalid role: expected `{expected_role}`, got `{data.role}`"
             )
         return data
+
+
+class SigningKeyFormat(Enum):
+    RSA = "RSA"
+
+
+SigningKeyFormatFields = fields.enum_field_factory(SigningKeyFormat)
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class SequesterVerifyKeyCertificate(BaseAPISignedData):
+    class SCHEMA_CLS(BaseSignedDataSchema):
+        # Override author field to always uses None given this certificate can only be signed by the root key
+        author = fields.CheckedConstant(
+            None, required=True, allow_none=True
+        )  # Constant None fields required to be allowed to be None !
+
+        type = fields.CheckedConstant("sequester_verify_key_certificate", required=True)
+        verify_key = fields.Bytes(required=True)
+        verify_key_format = SigningKeyFormatFields(requied=True)
+
+        @post_load
+        def make_obj(self, data: Dict[str, Any]) -> "SequesterVerifyKeyCertificate":
+            data.pop("type")
+            return SequesterVerifyKeyCertificate(**data)
+
+    # Override author field to always uses None given this certificate can only be signed by the root key
+    author: Literal[None]  # type: ignore[assignment]
+    verify_key: bytes
+    verify_key_format: SigningKeyFormat
