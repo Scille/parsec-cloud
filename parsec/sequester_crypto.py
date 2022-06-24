@@ -21,7 +21,14 @@ class SequesterCryptoSignatureError(SequesterCryptoError):
 
 
 def load_sequester_public_key(bytes_key: bytes) -> SequesterPublicKey:
-    return oscrypto.asymmetric.load_public_key(bytes_key)
+    """
+    Raises:
+        SequesterCryptoError
+    """
+    try:
+        return oscrypto.asymmetric.load_public_key(bytes_key)
+    except ValueError:
+        raise SequesterCryptoError()
 
 
 def dump_sequester_public_key(public_key: SequesterPublicKey) -> bytes:
@@ -29,7 +36,14 @@ def dump_sequester_public_key(public_key: SequesterPublicKey) -> bytes:
 
 
 def load_sequester_private_key(bytes_key: bytes) -> SequesterPrivateKey:
-    return oscrypto.asymmetric.load_private_key(bytes_key)
+    """
+    Raises:
+        SequesterCryptoError
+    """
+    try:
+        return oscrypto.asymmetric.load_private_key(bytes_key)
+    except ValueError:
+        raise SequesterCryptoError()
 
 
 def verify_sequester(public_key: SequesterPublicKey, data: bytes, signature: bytes) -> None:
