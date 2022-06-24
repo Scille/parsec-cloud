@@ -1,13 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import attr
+from pendulum import DateTime
+import pendulum
 from parsec.api.protocol.sequester import SequesterServiceType
 from parsec.api.protocol.types import OrganizationID
 from parsec.backend.memory.organization import MemoryOrganizationComponent
 from parsec.backend.sequester import BaseSequesterComponent
 
 from uuid import UUID
-from typing import Dict
+from typing import Dict, Optional
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -16,6 +18,8 @@ class SequesterService:
     service_type: SequesterServiceType
     sequester_encryption_key: bytes
     sequester_encryption_key_signature: bytes
+    created_on: DateTime
+    deleted_on: Optional[DateTime]
 
 
 class MemorySequesterComponent(BaseSequesterComponent):
@@ -49,4 +53,6 @@ class MemorySequesterComponent(BaseSequesterComponent):
             service_type=service_type,
             sequester_encryption_key=sequester_encryption_certificate,
             sequester_encryption_key_signature=sequester_encryption_certificate_signature,
+            created_on=pendulum.now(),
+            deleted_on=None,
         )
