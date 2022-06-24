@@ -24,6 +24,10 @@ def load_sequester_public_key(bytes_key: bytes) -> SequesterPublicKey:
     return oscrypto.asymmetric.load_public_key(bytes_key)
 
 
+def dump_sequester_public_key(public_key: SequesterPublicKey) -> bytes:
+    return oscrypto.asymmetric.dump_public_key(public_key)  # Dump in pem format
+
+
 def load_sequester_private_key(bytes_key: bytes) -> SequesterPrivateKey:
     return oscrypto.asymmetric.load_private_key(bytes_key)
 
