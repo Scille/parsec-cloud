@@ -14,7 +14,7 @@ from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
 from parsec.core.invite import bootstrap_organization as do_bootstrap_organization
 from parsec.core.cli.utils import cli_command_base_options, core_config_options, save_device_options
-from parsec.sequester_crypto import load_sequester_private_key
+from parsec.sequester_crypto import load_sequester_public_key
 
 
 async def _bootstrap_organization(
@@ -59,7 +59,7 @@ async def _bootstrap_organization(
 @click.option("--human-label")
 @click.option("--human-email")
 @click.argument(
-    "--third-party-encryption-key-signing-certificate",
+    "--service-public-signing-key",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
     # TODO: help
 )
@@ -72,7 +72,7 @@ def bootstrap_organization(
     device_label: Optional[DeviceLabel],
     human_label: Optional[str],
     human_email: Optional[str],
-    third_party_encryption_key_signing_certificate: Optional[Path],
+    service_public_signing_key: Optional[Path],
     save_device_with_selected_auth: Callable,
     **kwargs
 ) -> None:
@@ -82,16 +82,14 @@ def bootstrap_organization(
     with cli_exception_handler(config.debug):
         # Disable task monitoring given user prompt will block the coroutine
 
-        if third_party_encryption_key_signing_certificate is not None:
+        if service_public_signing_key is not None:
             # TODO: print a dialogue with confirmation to make sure user understand
             # what this option imply
-            sequester_der_private_key = load_sequester_private_key(
-                third_party_encryption_key_signing_certificate
+            service_signing_public_key = load_sequester_public_key(
+                service_public_signing_key.read_bytes()
             )
-            # Load the key to check key format
-            sequester_der_public_key = sequester_der_private_key.public_key.unwrap().dump()
         else:
-            sequester_der_public_key = None
+            service_signing_public_key = None
 
         trio_run(
             _bootstrap_organization,
@@ -100,6 +98,6 @@ def bootstrap_organization(
             device_label,
             human_label,
             human_email,
-            sequester_der_public_key,
+            service_signing_public_key,
             save_device_with_selected_auth,
         )
