@@ -5,7 +5,7 @@ import trio
 from collections import defaultdict
 
 from parsec.api.protocol import OrganizationID
-from parsec.api.data.certif import UserProfile
+from parsec.api.data.certif import SequesterVerifyKeyCertificate, UserProfile
 from parsec.crypto import VerifyKey
 from parsec.backend.user import BaseUserComponent, UserError, User, Device
 from parsec.backend.organization import (
@@ -75,6 +75,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             root_verify_key=None,
             active_users_limit=active_users_limit,
             user_profile_outsider_allowed=user_profile_outsider_allowed,
+            sequester_verify_key_certificate=None,
         )
 
     async def get(self, id: OrganizationID) -> Organization:
@@ -89,6 +90,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        sequester_verify_key_certificate: Optional[SequesterVerifyKeyCertificate] = None,
     ) -> None:
         # Organization bootstrap involves multiple modifications (in user,
         # device and organization) and is not atomic (given await is used),
@@ -110,7 +112,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 raise OrganizationFirstUserCreationError(exc) from exc
 
             self._organizations[organization.organization_id] = organization.evolve(
-                root_verify_key=root_verify_key
+                root_verify_key=root_verify_key,
+                sequester_verify_key_certificate=sequester_verify_key_certificate,
             )
 
     async def stats(self, id: OrganizationID) -> OrganizationStats:

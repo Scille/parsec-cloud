@@ -4,6 +4,7 @@ import attr
 import pendulum
 from typing import Optional, Union, List
 from secrets import token_hex
+from parsec.api.data.certif import SequesterVerifyKeyCertificate
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
@@ -59,6 +60,7 @@ class Organization:
     root_verify_key: Optional[VerifyKey]
     user_profile_outsider_allowed: bool
     active_users_limit: Optional[int]
+    sequester_verify_key_certificate: Optional[SequesterVerifyKeyCertificate]
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
@@ -242,6 +244,25 @@ class BaseOrganizationComponent:
                 "reason": "Redacted user&device certificate muste be provided together",
             }
 
+        # Sequester can not be set with APIV1
+        if isinstance(client_ctx, APIV1_AnonymousClientContext):
+            sequester_verify_key_certificate = None
+        else:
+            sequester_verify_key_certificate = msg["sequester_verify_key_certificate"]
+            if sequester_verify_key_certificate is not None:
+                try:
+                    sequester_verify_key_certificate = SequesterVerifyKeyCertificate.verify_and_load(
+                        sequester_verify_key_certificate,
+                        author_verify_key=root_verify_key,
+                        expected_author=None,
+                    )
+
+                except DataError:
+                    return {
+                        "status": "invalid sequester_verify_key_certificate",
+                        "reason": "Invalid signature for sequester verify key",
+                    }
+
         user = User(
             user_id=u_data.user_id,
             human_handle=u_data.human_handle,
@@ -265,7 +286,12 @@ class BaseOrganizationComponent:
         )
         try:
             await self.bootstrap(
-                client_ctx.organization_id, user, first_device, bootstrap_token, root_verify_key
+                client_ctx.organization_id,
+                user,
+                first_device,
+                bootstrap_token,
+                root_verify_key,
+                sequester_verify_key_certificate,
             )
 
         except OrganizationAlreadyBootstrappedError:
@@ -318,6 +344,7 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        sequester_verify_key_certificate: Optional[SequesterVerifyKeyCertificate] = None,
     ) -> None:
         """
         Raises:
