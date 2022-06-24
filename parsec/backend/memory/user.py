@@ -227,12 +227,16 @@ class MemoryUserComponent(BaseUserComponent):
         # Query is run against human handle field, hence non-human are automatically ignored
         users: Iterable[User]
         if query:
+            # Handle a case insensitive find search to be conform with postgresql query
             users = []
+            query_parts = query.lower().split()
             for user in org.users.values():
-                # Handle a case insensitive find search to be conform with postgresql query
-                if user.human_handle and (
-                    str(user.human_handle.email).lower().find(query.lower()) != -1
-                    or str(user.human_handle.label).lower().find(query.lower()) != -1
+                if not user.human_handle:
+                    continue
+                lemail = str(user.human_handle.email).lower()
+                llabel = str(user.human_handle.label).lower()
+                if all([part in lemail for part in query_parts]) or all(
+                    [part in llabel for part in query_parts]
                 ):
                     users.append(user)
         else:
