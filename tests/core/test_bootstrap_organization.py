@@ -4,11 +4,12 @@ import pytest
 from quart import Response
 
 from parsec.serde import packb
-from parsec.api.data import UserProfile, EntryName
+from parsec.api.data import UserProfile, EntryName, SigningKeyFormat
 from parsec.api.protocol import OrganizationID, DeviceLabel, HumanHandle
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.invite import bootstrap_organization, InviteNotFoundError, InviteAlreadyUsedError
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec.sequester_crypto import load_sequester_public_key
 
 
 @pytest.mark.trio
@@ -98,6 +99,47 @@ async def test_good(
         assert backend_device.device_certificate != backend_device.redacted_device_certificate
     else:
         assert backend_device.device_certificate == backend_device.redacted_device_certificate
+
+
+@pytest.mark.trio
+async def test_bootsrap_sequester_verify_key(running_backend, backend):
+    org_id = OrganizationID("NewOrg")
+    org_token = "123456"
+    await backend.organization.create(org_id, org_token)
+
+    organization_addr = BackendOrganizationBootstrapAddr.build(
+        running_backend.addr, org_id, org_token
+    )
+    human_handle = HumanHandle(email="zack@example.com", label="Zack")
+    device_label = DeviceLabel("PC1")
+
+    public_key = b"\
+-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAg\
+EAt8R3vnVbu/b/vprWx0fw\nJeeklX+M6WHHpWErDIey+E/F/EtNNRMa2NPf/kd3svkeO0\
+VmUEmYrM8fbDik64YC\nKEGNRqeydLwRnglb+sTu9JSaal52mz/dI9HtfeSDVNxb1g8sQq\
+q0BX8RvdBj6lZc\nzjkbZjpF3Oin6gc/elE8KHTN3TqDP67AXwBG+0BXxM6fa8A4mRA7Xv\
+IR6BRGBtDQ\nkbszZqD0bwrz92GaF5oiQokFpn/eVqk1VgqjND97wtZlEs557PocCQ+Ccx\
+xlDtUr\nHKK/PvHyPxrREFfrvJg/Mm4diEumb4rNQAgxjaQ7BopNg9lWjvydKU0wFBpMis\
+4e\n9BLEJE+LoylednQ6tTKmQ6NgRVMfp7vGWT2aVIwC0D8QBmZomgyY4igHLocCrjSq\n\
+y1W5mRvxbOE5MVodfJA4YuLVcCPQ5wEb+HYyymfqrGDxXRNcvvasH9yhjtjSnTM4\nYS2l\
+FmkReVTrB9ZTV5IgFefCiNYT5o8tWrO93iwC/CKYyFYMPMvITYq5B14AkSOG\n/FWCm+SD\
+VHjrp2sa+7A1CawFNCVQvVbBv6ngdlctb6EiUDxU/9w0m4dfFt4If3Pd\ntyAH/jyZ6kFH\
+95E+PGuoW5n6ni5aq2+4g099vf6r4RMqSVYjwsZkDjxoeVOtnPmZ\n92yhWSydidVR/4Wt\
+UrQfXM0CAwEAAQ==\n-----END PUBLIC KEY-----\n"
+
+    sequester_public_key = load_sequester_public_key(public_key)
+
+    await bootstrap_organization(
+        organization_addr,
+        human_handle=human_handle,
+        device_label=device_label,
+        sequester_public_verify_key=sequester_public_key,
+    )
+
+    organization = await backend.organization.get(org_id)
+    assert organization.sequester_verify_key_certificate
+    assert organization.sequester_verify_key_certificate.verify_key_format == SigningKeyFormat.RSA
+    load_sequester_public_key(organization.sequester_verify_key_certificate.verify_key)
 
 
 @pytest.mark.trio
