@@ -241,7 +241,7 @@ class BaseOrganizationComponent:
         if (rd_data and not ru_data) or (ru_data and not rd_data):
             return {
                 "status": "invalid_data",
-                "reason": "Redacted user&device certificate muste be provided together",
+                "reason": "Redacted user&device certificate must be provided together",
             }
 
         # Sequester can not be set with APIV1
