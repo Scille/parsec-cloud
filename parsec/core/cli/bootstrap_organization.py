@@ -17,6 +17,23 @@ from parsec.core.invite import bootstrap_organization as do_bootstrap_organizati
 from parsec.core.cli.utils import cli_command_base_options, core_config_options, save_device_options
 
 
+SEQUESTER_BRIEF = """A sequestered organization is able to ask it users to encrypt
+their data with third party asymetric keys (called "sequester service").
+
+Those "sequester services" must themselve be signed by the "sequester authority" key
+that is configured during organization bootstrap.
+This have the following implications:
+- All data remain encrypted (with the Parsec server incapable of reading them)
+- The sequester services are in position to bypass end-to-end user encryption
+- The Parsec Server has no way of modifying the sequester services keys
+- Sequester services can be added and removed to handle key rotation
+- A regular organization cannot be turned in a sequestered one (and vice-versa)
+
+A typicall usecase for sequestered organization is data recovery or legal requirement for
+company to have access to all data produced by former employees.
+"""
+
+
 async def _bootstrap_organization(
     config: CoreConfig,
     addr: BackendOrganizationBootstrapAddr,
@@ -28,10 +45,13 @@ async def _bootstrap_organization(
 ) -> None:
     if sequester_verify_key is not None:
         answer = await aprompt(
-            f"You are about to bootstrap a sequestered organization. \
-                File {sequester_verify_key} is going to be use has sequester public verify key. \
-                You need to keep the private key, it will be used to sign new sequester services encryption file. This key can not be modified\n\
-                Do you want to continue ? [y/N]"
+            f"""You are about to bootstrap a sequestered organization.
+
+{SEQUESTER_BRIEF}
+
+File {sequester_verify_key} is going to be use has sequester authority private key.
+Do you want to continue ? [y/N]"
+"""
         )
         if answer.lower() != "y":
             raise SystemExit("Bootstrap aborted")
@@ -76,9 +96,7 @@ async def _bootstrap_organization(
 @click.option(
     "--sequester-verify-key",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
-    help="Enable parsec extra sequester services. \
-        Path to the public key file used as service verify key to add extra excryption key. \
-        Do not loose the private key file, because this key can not be modified",
+    help=f"Enable sequestered organization feature.\n{SEQUESTER_BRIEF}",
 )
 @save_device_options
 @core_config_options
