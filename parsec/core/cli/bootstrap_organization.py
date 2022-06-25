@@ -4,7 +4,7 @@ from pathlib import Path
 import click
 import platform
 from typing import Optional, Callable
-from parsec.api.data.certif import SigningKeyFormat
+from parsec.api.data.certif import SequesterAuthorityKeyFormat
 from parsec.sequester_crypto import load_sequester_public_key
 
 from parsec.utils import trio_run
@@ -37,7 +37,7 @@ async def _bootstrap_organization(
             raise SystemExit("Bootstrap aborted")
         sequester_verify_key = load_sequester_public_key(sequester_verify_key.read_bytes())
         try:
-            SigningKeyFormat(sequester_verify_key.algorithm.upper())
+            SequesterAuthorityKeyFormat(sequester_verify_key.algorithm.upper())
         except ValueError:
             raise SystemExit(f"Wrong key format, {sequester_verify_key.algorithm} is not supported")
 

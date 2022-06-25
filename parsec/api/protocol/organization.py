@@ -45,7 +45,9 @@ class OrganizationBootstrapReqSchema(BaseReqSchema):
     device_certificate = fields.Bytes(required=True)
     redacted_user_certificate = fields.Bytes(required=True)
     redacted_device_certificate = fields.Bytes(required=True)
-    sequester_verify_key_certificate = fields.Bytes(required=False, allow_none=True, missing=None)
+    sequester_authority_key_certificate = fields.Bytes(
+        required=False, allow_none=True, missing=None
+    )
 
 
 class OrganizationBootstrapRepSchema(BaseRepSchema):

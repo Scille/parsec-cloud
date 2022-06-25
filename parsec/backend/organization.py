@@ -4,7 +4,7 @@ import attr
 import pendulum
 from typing import Optional, Union, List
 from secrets import token_hex
-from parsec.api.data.certif import SequesterVerifyKeyCertificate
+from parsec.api.data.certif import SequesterAuthorityKeyCertificate
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
@@ -60,7 +60,7 @@ class Organization:
     root_verify_key: Optional[VerifyKey]
     user_profile_outsider_allowed: bool
     active_users_limit: Optional[int]
-    sequester_verify_key_certificate: Optional[SequesterVerifyKeyCertificate]
+    sequester_authority_key_certificate: Optional[SequesterAuthorityKeyCertificate]
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
@@ -246,20 +246,20 @@ class BaseOrganizationComponent:
 
         # Sequester can not be set with APIV1
         if isinstance(client_ctx, APIV1_AnonymousClientContext):
-            sequester_verify_key_certificate = None
+            sequester_authority_key_certificate = None
         else:
-            sequester_verify_key_certificate = msg["sequester_verify_key_certificate"]
-            if sequester_verify_key_certificate is not None:
+            sequester_authority_key_certificate = msg["sequester_authority_key_certificate"]
+            if sequester_authority_key_certificate is not None:
                 try:
-                    sequester_verify_key_certificate = SequesterVerifyKeyCertificate.verify_and_load(
-                        sequester_verify_key_certificate,
+                    sequester_authority_key_certificate = SequesterAuthorityKeyCertificate.verify_and_load(
+                        sequester_authority_key_certificate,
                         author_verify_key=root_verify_key,
                         expected_author=None,
                     )
 
                 except DataError:
                     return {
-                        "status": "invalid sequester_verify_key_certificate",
+                        "status": "invalid sequester_authority_key_certificate",
                         "reason": "Invalid signature for sequester verify key",
                     }
 
@@ -291,7 +291,7 @@ class BaseOrganizationComponent:
                 first_device,
                 bootstrap_token,
                 root_verify_key,
-                sequester_verify_key_certificate,
+                sequester_authority_key_certificate,
             )
 
         except OrganizationAlreadyBootstrappedError:
@@ -344,7 +344,7 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        sequester_verify_key_certificate: Optional[SequesterVerifyKeyCertificate] = None,
+        sequester_authority_key_certificate: Optional[SequesterAuthorityKeyCertificate] = None,
     ) -> None:
         """
         Raises:

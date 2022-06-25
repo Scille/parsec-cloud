@@ -4,7 +4,7 @@ import pytest
 from quart import Response
 
 from parsec.serde import packb
-from parsec.api.data import UserProfile, EntryName, SigningKeyFormat
+from parsec.api.data import UserProfile, EntryName, SequesterAuthorityKeyFormat
 from parsec.api.protocol import OrganizationID, DeviceLabel, HumanHandle
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.invite import bootstrap_organization, InviteNotFoundError, InviteAlreadyUsedError
@@ -137,9 +137,12 @@ UrQfXM0CAwEAAQ==\n-----END PUBLIC KEY-----\n"
     )
 
     organization = await backend.organization.get(org_id)
-    assert organization.sequester_verify_key_certificate
-    assert organization.sequester_verify_key_certificate.verify_key_format == SigningKeyFormat.RSA
-    load_sequester_public_key(organization.sequester_verify_key_certificate.verify_key)
+    assert organization.sequester_authority_key_certificate
+    assert (
+        organization.sequester_authority_key_certificate.verify_key_format
+        == SequesterAuthorityKeyFormat.RSA
+    )
+    load_sequester_public_key(organization.sequester_authority_key_certificate.verify_key)
 
 
 @pytest.mark.trio

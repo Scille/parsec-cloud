@@ -3,7 +3,7 @@
 from typing import Optional
 
 import pendulum
-from parsec.api.data.certif import SequesterVerifyKeyCertificate, SigningKeyFormat
+from parsec.api.data.certif import SequesterAuthorityKeyCertificate, SequesterAuthorityKeyFormat
 
 from parsec.crypto import SigningKey, VerifyKey
 from parsec.api.protocol import HumanHandle, DeviceLabel
@@ -82,17 +82,19 @@ async def bootstrap_organization(
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(root_signing_key)
 
     if sequester_public_verify_key:
-        sequester_verify_key_certificate = SequesterVerifyKeyCertificate(
+        sequester_authority_key_certificate = SequesterAuthorityKeyCertificate(
             author=None,
             timestamp=pendulum.now(),
             verify_key=dump_sequester_public_key(sequester_public_verify_key),
-            verify_key_format=SigningKeyFormat(sequester_public_verify_key.algorithm.upper()),
+            verify_key_format=SequesterAuthorityKeyFormat(
+                sequester_public_verify_key.algorithm.upper()
+            ),
         )
-        sequester_verify_key_certificate = sequester_verify_key_certificate.dump_and_sign(
+        sequester_authority_key_certificate = sequester_authority_key_certificate.dump_and_sign(
             root_signing_key
         )
     else:
-        sequester_verify_key_certificate = None
+        sequester_authority_key_certificate = None
 
     rep = await failsafe_organization_bootstrap(
         addr=addr,
@@ -101,7 +103,7 @@ async def bootstrap_organization(
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
-        sequester_verify_key_certificate=sequester_verify_key_certificate,
+        sequester_authority_key_certificate=sequester_authority_key_certificate,
     )
     _check_rep(rep, step_name="organization bootstrap")
 
@@ -115,7 +117,7 @@ async def failsafe_organization_bootstrap(
     device_certificate: bytes,
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
-    sequester_verify_key_certificate: Optional[bytes] = None,
+    sequester_authority_key_certificate: Optional[bytes] = None,
 ) -> dict:
     # Try the new anonymous API
     try:
@@ -126,7 +128,7 @@ async def failsafe_organization_bootstrap(
             device_certificate=device_certificate,
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
-            sequester_verify_key_certificate=sequester_verify_key_certificate,
+            sequester_authority_key_certificate=sequester_authority_key_certificate,
         )
     # If we get a 404 error, maybe the backend is too old to know about the anonymous route (API version < 2.6)
     except BackendNotAvailable as exc:
