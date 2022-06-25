@@ -20,3 +20,4 @@ colorama==0.4.4  # structlog colored output
 async_exit_stack==1.0.1
 outcome==1.1.0
 packaging==21.3
+oscrypto==1.2.1
