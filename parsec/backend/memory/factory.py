@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Tuple, Dict
 import trio
 from contextlib import asynccontextmanager
+from parsec.backend.memory.sequester import MemorySequesterComponent
 
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
@@ -46,6 +47,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
     vlob = MemoryVlobComponent(_send_event)
     ping = MemoryPingComponent(_send_event)
     pki = MemoryPkiEnrollmentComponent(_send_event)
+    sequester = MemorySequesterComponent(_send_event)
     block = MemoryBlockComponent()
     blockstore = blockstore_factory(config.blockstore_config)
     events = EventsComponent(realm, send_event=_send_event)
@@ -61,6 +63,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
         "vlob": vlob,
         "ping": ping,
         "pki": pki,
+        "sequester": sequester,
         "block": block,
         "blockstore": blockstore,
     }
