@@ -4,7 +4,7 @@ from typing import List
 from uuid import uuid4
 
 import attr
-from parsec.api.data.sequester import EncryptionKeyFormat, SequesterServiceEncryptionKey
+from parsec.api.data.certif import SequesterServiceKeyFormat, SequesterServiceCertificate
 
 from parsec.api.protocol.types import OrganizationID
 from parsec.event_bus import EventBus
@@ -49,11 +49,11 @@ class BaseSequesterComponent:
             SequesterKeyForamatError
             SequesterSignatureError
         """
-        sequester_encryption_key = SequesterServiceEncryptionKey.load(
+        sequester_encryption_key = SequesterServiceCertificate.load(
             service.sequester_encryption_certificate
         )
         # Assert encryption key is rsa and loadable
-        if sequester_encryption_key.encryption_key_format != EncryptionKeyFormat.RSA:
+        if sequester_encryption_key.encryption_key_format != SequesterServiceKeyFormat.RSA:
             raise SequesterKeyFormatError(
                 f"Key format {sequester_encryption_key.encryption_key_format} is not supported"
             )

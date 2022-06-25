@@ -556,41 +556,6 @@
         },
         "serializing": "zip+msgpack"
     },
-    "SequesterServiceEncryptionKey": {
-        "fields": {
-            "encryption_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "bytesField"
-            },
-            "encryption_key_format": {
-                "allow_none": false,
-                "enum_allowed_values": [
-                    "RSA"
-                ],
-                "enum_type": "EncryptionKeyFormat",
-                "required": true,
-                "type": "EncryptionKeyFormatField"
-            },
-            "service_name": {
-                "allow_none": false,
-                "required": true,
-                "type": "String"
-            },
-            "timestamp": {
-                "allow_none": false,
-                "required": true,
-                "type": "DateTime"
-            },
-            "type": {
-                "allow_none": false,
-                "required": true,
-                "type": "CheckedConstant",
-                "value": "sequester_service_encryption_key"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
     "SequesterAuthorityKeyCertificate": {
         "fields": {
             "author": {
@@ -623,6 +588,41 @@
                 "enum_type": "SequesterAuthorityKeyFormat",
                 "required": false,
                 "type": "SequesterAuthorityKeyFormatField"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "SequesterServiceCertificate": {
+        "fields": {
+            "encryption_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "bytesField"
+            },
+            "encryption_key_format": {
+                "allow_none": false,
+                "enum_allowed_values": [
+                    "RSA"
+                ],
+                "enum_type": "SequesterServiceKeyFormat",
+                "required": true,
+                "type": "SequesterServiceKeyFormatField"
+            },
+            "service_name": {
+                "allow_none": false,
+                "required": true,
+                "type": "String"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "sequester_service_certificate"
             }
         },
         "serializing": "zip+msgpack"
