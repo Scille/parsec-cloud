@@ -12,7 +12,7 @@ from parsec.event_bus import EventBus
 from parsec.api.protocol.sequester import SequesterServiceType
 
 from parsec.sequester_crypto import (
-    SequesterPublicKey,
+    SequesterCryptoError,
     SequesterCryptoSignatureError,
     load_sequester_public_key,
     verify_sequester,
@@ -36,12 +36,12 @@ class SequesterServiceNotFound(SequesterError):
     pass
 
 
-@attr.s(slots=True, frozen=True, auto_attribs=True)
+@attr.s(slots=True, frozen=False, auto_attribs=True)
 class SequesterService:
     service_type: SequesterServiceType
     service_id: UUID
-    sequester_service_certificate: bytes
-    sequester_service_certificate_signature: bytes
+    service_certificate: bytes
+    service_certificate_signature: bytes
     created_on: Optional[DateTime] = None
     deleted_on: Optional[DateTime] = None
 
@@ -50,15 +50,19 @@ class BaseSequesterComponent:
     def __init__(self, event_bus: EventBus):
         self._event_bus = event_bus
 
-    async def create(self, organization_id: OrganizationID, service: SequesterService):
+    async def create(
+        self,
+        organization_id: OrganizationID,
+        service_type: SequesterServiceType,
+        service_certificate: bytes,
+        service_certificate_signature: bytes,
+    ) -> UUID:
         """
         Raises:
             SequesterKeyForamatError
             SequesterSignatureError
         """
-        sequester_encryption_key = SequesterServiceCertificate.load(
-            service.sequester_service_certificate
-        )
+        sequester_encryption_key = SequesterServiceCertificate.load(service_certificate)
         # Assert encryption key is rsa and loadable
         if sequester_encryption_key.encryption_key_format != SequesterServiceKeyFormat.RSA:
             raise SequesterKeyFormatError(
@@ -66,16 +70,19 @@ class BaseSequesterComponent:
             )
         # TODO Handle errors
         load_sequester_public_key(sequester_encryption_key.encryption_key)
+        service_id = uuid4()
+
         await self._register_service(
             organization_id=organization_id,
-            service_id=uuid4(),
-            service_type=service.service_type,
-            sequester_service_certificate=service.sequester_service_certificate,
-            sequester_service_certificate_signature=service.sequester_service_certificate_signature,
+            service_id=service_id,
+            service_type=service_type,
+            sequester_service_certificate=service_certificate,
+            sequester_service_certificate_signature=service_certificate_signature,
         )
+        return service_id
 
     async def update(self, organization_id: OrganizationID, service: SequesterService):
-        await self.create(organization_id, service)
+        raise NotImplementedError()
 
     async def get(self, organization_id: OrganizationID, service_id: UUID) -> SequesterService:
         """
@@ -115,13 +122,17 @@ class BaseSequesterComponent:
         raise NotImplementedError()
 
     def verify_sequester_signature(
-        self, sequester_verify_key: SequesterPublicKey, signed_data: bytes, data: bytes
+        self, sequester_verify_key: bytes, data: bytes, signed_data: bytes
     ):
         """
         Raises:
+            SequesterError
             SequesterSignatureError
         """
         try:
+            sequester_verify_key = load_sequester_public_key(sequester_verify_key)
             verify_sequester(sequester_verify_key, data, signed_data)
-        except SequesterCryptoSignatureError:
-            raise SequesterSignatureError()
+        except SequesterCryptoSignatureError as exc:
+            raise SequesterSignatureError() from exc
+        except SequesterCryptoError as exc:
+            raise SequesterError() from exc
