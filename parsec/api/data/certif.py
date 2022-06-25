@@ -23,8 +23,15 @@ from parsec.api.protocol import (
     DeviceLabel,
     DeviceLabelField,
 )
-from parsec.api.data.base import DataValidationError, BaseAPISignedData, BaseSignedDataSchema
+from parsec.api.data.base import (
+    BaseAPIData,
+    DataValidationError,
+    BaseAPISignedData,
+    BaseSignedDataSchema,
+)
 import attr
+
+from parsec.serde.schema import BaseSchema
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
@@ -275,3 +282,31 @@ class SequesterAuthorityKeyCertificate(BaseAPISignedData):
     author: Literal[None]  # type: ignore[assignment]
     verify_key: bytes
     verify_key_format: SequesterAuthorityKeyFormat
+
+
+class SequesterServiceKeyFormat(Enum):
+    RSA = "RSA"
+
+
+SequesterServiceKeyFormatFields = fields.enum_field_factory(SequesterServiceKeyFormat)
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class SequesterServiceCertificate(BaseAPIData):
+    class SCHEMA_CLS(BaseSchema):
+
+        type = fields.CheckedConstant("sequester_service_certificate", required=True)
+        encryption_key = fields.Bytes(required=True)
+        encryption_key_format = SequesterServiceKeyFormatFields(required=True)
+        timestamp = fields.DateTime(required=True)
+        service_name = fields.String(required=True)
+
+        @post_load
+        def make_obj(self, data: Dict[str, Any]) -> "SequesterServiceCertificate":
+            data.pop("type")
+            return SequesterServiceCertificate(**data)
+
+    encryption_key: bytes
+    encryption_key_format: SequesterServiceKeyFormat
+    timestamp: DateTime
+    service_name: str
