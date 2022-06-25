@@ -135,7 +135,7 @@
                             "required": true,
                             "type": "VerifyKey"
                         },
-                        "sequester_verify_key_certificate": {
+                        "sequester_authority_key_certificate": {
                             "allow_none": true,
                             "required": false,
                             "type": "bytesField"

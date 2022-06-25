@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import AsyncMock
-from parsec.api.data.certif import SigningKeyFormat
+from parsec.api.data.certif import SequesterAuthorityKeyFormat
 
 from parsec.backend.http import HTTPResponse
 from parsec.api.data import UserProfile, EntryName
@@ -141,9 +141,12 @@ UrQfXM0CAwEAAQ==\n-----END PUBLIC KEY-----\n"
     )
 
     organization = await backend.organization.get(org_id)
-    assert organization.sequester_verify_key_certificate
-    assert organization.sequester_verify_key_certificate.verify_key_format == SigningKeyFormat.RSA
-    load_sequester_public_key(organization.sequester_verify_key_certificate.verify_key)
+    assert organization.sequester_authority_key_certificate
+    assert (
+        organization.sequester_authority_key_certificate.verify_key_format
+        == SequesterAuthorityKeyFormat.RSA
+    )
+    load_sequester_public_key(organization.sequester_authority_key_certificate.verify_key)
 
 
 @pytest.mark.trio

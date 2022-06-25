@@ -247,31 +247,31 @@ class RealmRoleCertificateContent(BaseAPISignedData):
         return data
 
 
-class SigningKeyFormat(Enum):
+class SequesterAuthorityKeyFormat(Enum):
     RSA = "RSA"
 
 
-SigningKeyFormatFields = fields.enum_field_factory(SigningKeyFormat)
+SequesterAuthorityKeyFormatFields = fields.enum_field_factory(SequesterAuthorityKeyFormat)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class SequesterVerifyKeyCertificate(BaseAPISignedData):
+class SequesterAuthorityKeyCertificate(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         # Override author field to always uses None given this certificate can only be signed by the root key
         author = fields.CheckedConstant(
             None, required=True, allow_none=True
         )  # Constant None fields required to be allowed to be None !
 
-        type = fields.CheckedConstant("sequester_verify_key_certificate", required=True)
+        type = fields.CheckedConstant("sequester_authority_key_certificate", required=True)
         verify_key = fields.Bytes(required=True)
-        verify_key_format = SigningKeyFormatFields(requied=True)
+        verify_key_format = SequesterAuthorityKeyFormatFields(requied=True)
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "SequesterVerifyKeyCertificate":
+        def make_obj(self, data: Dict[str, Any]) -> "SequesterAuthorityKeyCertificate":
             data.pop("type")
-            return SequesterVerifyKeyCertificate(**data)
+            return SequesterAuthorityKeyCertificate(**data)
 
     # Override author field to always uses None given this certificate can only be signed by the root key
     author: Literal[None]  # type: ignore[assignment]
     verify_key: bytes
-    verify_key_format: SigningKeyFormat
+    verify_key_format: SequesterAuthorityKeyFormat

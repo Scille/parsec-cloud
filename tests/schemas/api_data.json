@@ -591,7 +591,7 @@
         },
         "serializing": "zip+msgpack"
     },
-    "SequesterVerifyKeyCertificate": {
+    "SequesterAuthorityKeyCertificate": {
         "fields": {
             "author": {
                 "allow_none": true,
@@ -608,7 +608,7 @@
                 "allow_none": false,
                 "required": true,
                 "type": "CheckedConstant",
-                "value": "sequester_verify_key_certificate"
+                "value": "sequester_authority_key_certificate"
             },
             "verify_key": {
                 "allow_none": false,
@@ -620,9 +620,9 @@
                 "enum_allowed_values": [
                     "RSA"
                 ],
-                "enum_type": "SigningKeyFormat",
+                "enum_type": "SequesterAuthorityKeyFormat",
                 "required": false,
-                "type": "SigningKeyFormatField"
+                "type": "SequesterAuthorityKeyFormatField"
             }
         },
         "serializing": "zip+msgpack"

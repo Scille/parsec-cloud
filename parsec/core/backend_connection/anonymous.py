@@ -107,7 +107,7 @@ async def organization_bootstrap(
     device_certificate: bytes,
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
-    sequester_verify_key_certificate: bytes,
+    sequester_authority_key_certificate: bytes,
 ) -> dict:
     return await _anonymous_cmd(
         organization_bootstrap_serializer,
@@ -120,5 +120,5 @@ async def organization_bootstrap(
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
-        sequester_verify_key_certificate=sequester_verify_key_certificate,
+        sequester_authority_key_certificate=sequester_authority_key_certificate,
     )
