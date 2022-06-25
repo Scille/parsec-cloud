@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from typing import List
+from typing import List, Optional
 from uuid import uuid4
 
 import attr
+from pendulum import DateTime
 from parsec.api.data.certif import SequesterServiceKeyFormat, SequesterServiceCertificate
 
 from parsec.api.protocol.types import OrganizationID
@@ -31,12 +32,18 @@ class SequesterKeyFormatError(SequesterError):
     pass
 
 
+class SequesterServiceNotFound(SequesterError):
+    pass
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class SequesterService:
     service_type: SequesterServiceType
     service_id: UUID
-    sequester_encryption_certificate: bytes
-    sequester_encryption_certificate_signature: bytes
+    sequester_service_certificate: bytes
+    sequester_service_certificate_signature: bytes
+    created_on: Optional[DateTime] = None
+    deleted_on: Optional[DateTime] = None
 
 
 class BaseSequesterComponent:
@@ -50,7 +57,7 @@ class BaseSequesterComponent:
             SequesterSignatureError
         """
         sequester_encryption_key = SequesterServiceCertificate.load(
-            service.sequester_encryption_certificate
+            service.sequester_service_certificate
         )
         # Assert encryption key is rsa and loadable
         if sequester_encryption_key.encryption_key_format != SequesterServiceKeyFormat.RSA:
@@ -63,31 +70,43 @@ class BaseSequesterComponent:
             organization_id=organization_id,
             service_id=uuid4(),
             service_type=service.service_type,
-            sequester_encryption_certificate=service.sequester_encryption_certificate,
-            sequester_encryption_certificate_signature=service.sequester_encryption_certificate_signature,
+            sequester_service_certificate=service.sequester_service_certificate,
+            sequester_service_certificate_signature=service.sequester_service_certificate_signature,
         )
 
     async def update(self, organization_id: OrganizationID, service: SequesterService):
-        pass
+        await self.create(organization_id, service)
 
     async def get(self, organization_id: OrganizationID, service_id: UUID) -> SequesterService:
+        """
+        Raises:
+            SequesterServiceNotFound
+        """
         raise NotImplementedError()
 
     async def delete(self, organization_id: str, service_id: UUID):
+        """
+        Raises:
+            SequesterServiceNotFound
+        """
         raise NotImplementedError()
 
     async def get_organization_services(
         self, organization_id: OrganizationID
     ) -> List[SequesterService]:
-        pass
+        """
+        Raises:
+            SequesterServiceNotFound
+        """
+        raise NotImplementedError()
 
     async def _register_service(
         self,
         organization_id: OrganizationID,
         service_id: UUID,
         service_type: SequesterServiceType,
-        sequester_encryption_certificate: bytes,
-        sequester_encryption_certificate_signature: bytes,
+        sequester_service_certificate: bytes,
+        sequester_service_certificate_signature: bytes,
     ):
         """
         Raises:
