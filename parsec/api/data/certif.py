@@ -294,7 +294,7 @@ SequesterServiceKeyFormatFields = fields.enum_field_factory(SequesterServiceKeyF
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class SequesterServiceCertificate(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
-
+        # No author field here given we are signed by the sequester authority
         type = fields.CheckedConstant("sequester_service_certificate", required=True)
         encryption_key = fields.Bytes(required=True)
         encryption_key_format = SequesterServiceKeyFormatFields(required=True)
