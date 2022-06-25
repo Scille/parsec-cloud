@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+from collections import defaultdict
 import pendulum
 from parsec.api.protocol.sequester import SequesterServiceType
 from parsec.api.protocol.types import OrganizationID
@@ -13,12 +14,14 @@ from parsec.backend.sequester import (
 from uuid import UUID
 from typing import Dict, List
 
+from parsec.sequester_crypto import SequesterCryptoError
+
 
 class MemorySequesterComponent(BaseSequesterComponent):
     def __init__(self, send_event):
         self._send_event = send_event
         self._organization_component: MemoryOrganizationComponent = None
-        self._services: Dict[OrganizationID, Dict[UUID, SequesterService]] = {}
+        self._services: Dict[OrganizationID, Dict[UUID, SequesterService]] = defaultdict(dict)
 
     def register_components(self, **other_components):
         self._organization_component = other_components["organization"]
@@ -33,18 +36,18 @@ class MemorySequesterComponent(BaseSequesterComponent):
     ):
 
         organization = await self._organization_component.get(organization_id)
-
+        if organization.sequester_authority_key_certificate is None:
+            raise SequesterCryptoError("Organization does not accept extra services")
+        authority_key = organization.sequester_authority_key_certificate.verify_key
         self.verify_sequester_signature(
-            organization.sequester_authority_key_certificate,
-            sequester_service_certificate,
-            sequester_service_certificate_signature,
+            authority_key, sequester_service_certificate, sequester_service_certificate_signature
         )
 
         self._services[organization_id][service_id] = SequesterService(
             service_id=service_id,
             service_type=service_type,
-            sequester_service_certificate=sequester_service_certificate,
-            sequester_service_certificate_signature=sequester_service_certificate_signature,
+            service_certificate=sequester_service_certificate,
+            service_certificate_signature=sequester_service_certificate_signature,
             created_on=pendulum.now(),
             deleted_on=None,
         )
@@ -57,7 +60,8 @@ class MemorySequesterComponent(BaseSequesterComponent):
 
     async def delete(self, organization_id, service_id) -> None:
         try:
-            del self._services[organization_id][service_id]
+            service = self._services[organization_id][service_id]
+            service.deleted_on = pendulum.now()
         except KeyError:
             raise SequesterServiceNotFound()
 
@@ -65,6 +69,10 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self, organization_id: OrganizationID
     ) -> List[SequesterService]:
         try:
-            return list(self._services[organization_id].values())
+            return [
+                service
+                for service in self._services[organization_id].values()
+                if service.deleted_on is None
+            ]
         except KeyError:
             raise SequesterServiceNotFound()
