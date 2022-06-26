@@ -19,7 +19,7 @@ from pathlib import Path
 sign_private_row_key = Path("tests/backend/sequester/ressources/sign_private_key.pem")
 sign_public_row_key = Path("tests/backend/sequester/ressources/sign_public_key.pem")
 encrypt_private_row_key = Path("tests/backend/sequester/ressources/encrypt_private_key.pem")
-encrypt_public_row_key = Path("tests/backend/sequester/ressources/encrypt_puiblic_key.pem")
+encrypt_public_row_key = Path("tests/backend/sequester/ressources/encrypt_public_key.pem")
 
 
 org_id = OrganizationID("NewOrg")
