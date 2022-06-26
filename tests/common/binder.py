@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-import attr
 from typing import Union, Optional, Tuple
+from dataclasses import dataclass
 from parsec.api.data import (
     UserCertificateContent,
     UserManifest,
@@ -10,21 +10,29 @@ from parsec.api.data import (
     DeviceCertificateContent,
     RealmRoleCertificateContent,
 )
+from parsec.crypto import SigningKey
 from parsec.api.protocol import UserID, RealmRole, RealmID, VlobID
-from parsec.core.types import LocalDevice, LocalUserManifest
+from parsec.core.types import (
+    LocalDevice,
+    LocalUserManifest,
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationAddr,
+)
 from parsec.core.fs.storage import UserStorage
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import User as BackendUser, Device as BackendDevice
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common.freeze_time import freeze_time
+from tests.common.sequester import SequesterAuthorityFullData
 
 
-@attr.s
+@dataclass
 class OrganizationFullData:
-    bootstrap_addr = attr.ib()
-    addr = attr.ib()
-    root_signing_key = attr.ib()
+    bootstrap_addr: BackendOrganizationBootstrapAddr
+    addr: BackendOrganizationAddr
+    root_signing_key: SigningKey
+    sequester_authority: Optional[SequesterAuthorityFullData]
 
     @property
     def bootstrap_token(self):
@@ -342,12 +350,17 @@ def backend_data_binder_factory(initial_user_manifest_state):
             await self.backend.organization.create(org.organization_id, org.bootstrap_token)
             assert org.organization_id == first_device.organization_id
             backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
+            if org.sequester_authority:
+                sequester_authority_key_certificate = org.sequester_authority.certif
+            else:
+                sequester_authority_key_certificate = None
             await self.backend.organization.bootstrap(
-                org.organization_id,
-                backend_user,
-                backend_first_device,
-                org.bootstrap_token,
-                org.root_verify_key,
+                id=org.organization_id,
+                user=backend_user,
+                first_device=backend_first_device,
+                bootstrap_token=org.bootstrap_token,
+                root_verify_key=org.root_verify_key,
+                sequester_authority_key_certificate=sequester_authority_key_certificate,
             )
             self.certificates_store.store_user(
                 org.organization_id,

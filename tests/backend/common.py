@@ -295,12 +295,13 @@ realm_finish_reencryption_maintenance = CmdSock(
 vlob_create = CmdSock(
     "vlob_create",
     vlob_create_serializer,
-    parse_args=lambda self, realm_id, vlob_id, blob, timestamp=None, encryption_revision=1: {
+    parse_args=lambda self, realm_id, vlob_id, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
         "realm_id": realm_id,
         "vlob_id": vlob_id,
         "blob": blob,
         "timestamp": timestamp or pendulum_now(),
         "encryption_revision": encryption_revision,
+        "sequester_blob": sequester_blob,
     },
     check_rep_by_default=True,
 )
@@ -317,12 +318,13 @@ vlob_read = CmdSock(
 vlob_update = CmdSock(
     "vlob_update",
     vlob_update_serializer,
-    parse_args=lambda self, vlob_id, version, blob, timestamp=None, encryption_revision=1: {
+    parse_args=lambda self, vlob_id, version, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
         "vlob_id": vlob_id,
         "version": version,
         "blob": blob,
         "encryption_revision": encryption_revision,
         "timestamp": timestamp or pendulum_now(),
+        "sequester_blob": sequester_blob,
     },
     check_rep_by_default=True,
 )
