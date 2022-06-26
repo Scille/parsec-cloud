@@ -24,6 +24,8 @@ from parsec.api.data.certif import (
     DeviceCertificateContent,
     RevokedUserCertificateContent,
     RealmRoleCertificateContent,
+    SequesterAuthorityCertificate,
+    SequesterServiceCertificate,
 )
 from parsec.api.data.invite import (
     SASCode,
@@ -77,6 +79,8 @@ __all__ = (
     "DeviceCertificateContent",
     "RevokedUserCertificateContent",
     "RealmRoleCertificateContent",
+    "SequesterAuthorityCertificate",
+    "SequesterServiceCertificate",
     # Invite
     "SASCode",
     "generate_sas_codes",

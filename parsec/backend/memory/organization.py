@@ -1,16 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional, Union, Dict
 import trio
 from collections import defaultdict
 
 from parsec.api.protocol import OrganizationID
-from parsec.api.data.certif import SequesterAuthorityKeyCertificate, UserProfile
+from parsec.api.data.certif import UserProfile
 from parsec.crypto import VerifyKey
-from parsec.backend.user import BaseUserComponent, UserError, User, Device
+from parsec.backend.user import UserError, User, Device
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     Organization,
+    Sequester,
     OrganizationStats,
     OrganizationAlreadyExistsError,
     OrganizationInvalidBootstrapTokenError,
@@ -20,29 +21,32 @@ from parsec.backend.organization import (
     UsersPerProfileDetailItem,
 )
 from parsec.backend.utils import Unset, UnsetType
-from parsec.backend.memory.vlob import MemoryVlobComponent
-from parsec.backend.memory.block import MemoryBlockComponent
-from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.events import BackendEvent
+
+if TYPE_CHECKING:
+    from parsec.backend.memory.user import MemoryUserComponent
+    from parsec.backend.memory.vlob import MemoryVlobComponent
+    from parsec.backend.memory.block import MemoryBlockComponent
+    from parsec.backend.memory.realm import MemoryRealmComponent
 
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):
     def __init__(self, send_event, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._user_component = None
-        self._vlob_component = None
-        self._block_component = None
-        self._realm_component = None
-        self._organizations = {}
+        self._user_component: "MemoryUserComponent" = None
+        self._vlob_component: "MemoryVlobComponent" = None
+        self._block_component: "MemoryBlockComponent" = None
+        self._realm_component: "MemoryRealmComponent" = None
+        self._organizations: Dict[OrganizationID, Organization] = {}
         self._send_event = send_event
         self._organization_bootstrap_lock = defaultdict(trio.Lock)
 
     def register_components(
         self,
-        user: BaseUserComponent,
-        vlob: MemoryVlobComponent,
-        block: MemoryBlockComponent,
-        realm: MemoryRealmComponent,
+        user: "MemoryUserComponent",
+        vlob: "MemoryVlobComponent",
+        block: "MemoryBlockComponent",
+        realm: "MemoryRealmComponent",
         **other_components
     ):
         self._user_component = user
@@ -75,7 +79,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             root_verify_key=None,
             active_users_limit=active_users_limit,
             user_profile_outsider_allowed=user_profile_outsider_allowed,
-            sequester_authority_key_certificate=None,
+            sequester=None,
         )
 
     async def get(self, id: OrganizationID) -> Organization:
@@ -90,7 +94,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        sequester_authority_key_certificate: Optional[SequesterAuthorityKeyCertificate] = None,
+        sequester: Optional[Sequester] = None,
     ) -> None:
         # Organization bootstrap involves multiple modifications (in user,
         # device and organization) and is not atomic (given await is used),
@@ -112,9 +116,12 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 raise OrganizationFirstUserCreationError(exc) from exc
 
             self._organizations[organization.organization_id] = organization.evolve(
-                root_verify_key=root_verify_key,
-                sequester_authority_key_certificate=sequester_authority_key_certificate,
+                root_verify_key=root_verify_key
             )
+            if sequester:
+                self._organizations[organization.organization_id] = self._organizations[
+                    organization.organization_id
+                ].evolve(sequester=sequester)
 
     async def stats(self, id: OrganizationID) -> OrganizationStats:
         await self.get(id)

@@ -50,8 +50,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         self._user_component: MemoryUserComponent = None
         self._enrollments: Dict[OrganizationID, List[PkiEnrollment]] = defaultdict(list)
 
-    def register_components(self, **other_components):
-        self._user_component = other_components["user"]
+    def register_components(self, user: MemoryUserComponent, **other_components):
+        self._user_component = user
 
     async def submit(
         self,

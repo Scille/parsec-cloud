@@ -4,11 +4,11 @@ from pathlib import Path
 import click
 import platform
 from typing import Optional, Callable
-from parsec.api.data.certif import SequesterAuthorityKeyFormat
-from parsec.sequester_crypto import load_sequester_public_key
 
+from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.utils import trio_run
-from parsec.cli_utils import spinner, cli_exception_handler, aprompt
+from parsec.cli_utils import spinner, cli_exception_handler, aprompt, aconfirm
+from parsec.api.data.certif import SequesterAuthorityKeyFormat
 from parsec.api.protocol import HumanHandle, DeviceLabel
 from parsec.core.config import CoreConfig
 from parsec.core.types import BackendOrganizationBootstrapAddr
@@ -44,18 +44,18 @@ async def _bootstrap_organization(
     sequester_verify_key: Optional[Path],
 ) -> None:
     if sequester_verify_key is not None:
-        answer = await aprompt(
+        answer = await aconfirm(
             f"""You are about to bootstrap a sequestered organization.
 
 {SEQUESTER_BRIEF}
 
 File {sequester_verify_key} is going to be use has sequester authority private key.
-Do you want to continue ? [y/N]"
-"""
+Do you want to continue ?""",
+            default=False,
         )
-        if answer.lower() != "y":
+        if not answer:
             raise SystemExit("Bootstrap aborted")
-        sequester_verify_key = load_sequester_public_key(sequester_verify_key.read_bytes())
+        sequester_verify_key = SequesterVerifyKeyDer(sequester_verify_key.read_bytes())
         try:
             SequesterAuthorityKeyFormat(sequester_verify_key.algorithm.upper())
         except ValueError:

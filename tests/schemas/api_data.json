@@ -556,7 +556,7 @@
         },
         "serializing": "zip+msgpack"
     },
-    "SequesterAuthorityKeyCertificate": {
+    "SequesterAuthorityCertificate": {
         "fields": {
             "author": {
                 "allow_none": true,
@@ -573,42 +573,29 @@
                 "allow_none": false,
                 "required": true,
                 "type": "CheckedConstant",
-                "value": "sequester_authority_key_certificate"
+                "value": "sequester_authority_certificate"
             },
-            "verify_key": {
+            "verify_key_der": {
                 "allow_none": false,
                 "required": true,
-                "type": "bytesField"
-            },
-            "verify_key_format": {
-                "allow_none": false,
-                "enum_allowed_values": [
-                    "RSA"
-                ],
-                "enum_type": "SequesterAuthorityKeyFormat",
-                "required": false,
-                "type": "SequesterAuthorityKeyFormatField"
+                "type": "SequesterVerifyKeyDerField"
             }
         },
         "serializing": "zip+msgpack"
     },
     "SequesterServiceCertificate": {
         "fields": {
-            "encryption_key": {
+            "encryption_key_der": {
                 "allow_none": false,
                 "required": true,
-                "type": "bytesField"
+                "type": "SequesterEncryptionKeyDerField"
             },
-            "encryption_key_format": {
+            "service_id": {
                 "allow_none": false,
-                "enum_allowed_values": [
-                    "RSA"
-                ],
-                "enum_type": "SequesterServiceKeyFormat",
                 "required": true,
-                "type": "SequesterServiceKeyFormatField"
+                "type": "SequesterServiceIDField"
             },
-            "service_name": {
+            "service_label": {
                 "allow_none": false,
                 "required": true,
                 "type": "String"

@@ -2,7 +2,7 @@
 
 from parsec.backend.backend_events import BackendEvent
 import attr
-from typing import List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple
 from collections import defaultdict
 from pendulum import DateTime, now as pendulum_now
 
@@ -27,6 +27,9 @@ from parsec.backend.invite import (
     InvitationAlreadyMemberError,
 )
 
+if TYPE_CHECKING:
+    from parsec.backend.memory.user import MemoryUserComponent
+
 
 @attr.s(slots=True, auto_attribs=True)
 class Conduit:
@@ -47,10 +50,10 @@ class MemoryInviteComponent(BaseInviteComponent):
         super().__init__(*args, **kwargs)
         self._send_event = send_event
         self._organizations = defaultdict(OrganizationStore)
-        self._user_component = None
+        self._user_component: "MemoryUserComponent" = None
 
-    def register_components(self, **other_components):
-        self._user_component = other_components["user"]
+    def register_components(self, user: "MemoryUserComponent", **other_components):
+        self._user_component = user
 
     def _get_invitation_and_conduit(
         self,

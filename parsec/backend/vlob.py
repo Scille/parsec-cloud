@@ -9,6 +9,7 @@ from parsec.api.protocol import (
     VlobID,
     DeviceID,
     OrganizationID,
+    SequesterServiceID,
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
@@ -66,6 +67,18 @@ class VlobRequireGreaterTimestampError(VlobError):
         return self.args[0]
 
 
+class VlobSequesterDisabledError(VlobError):
+    pass
+
+
+class VlobSequesterServiceInconsistencyError(VlobError):
+    def __init__(
+        self, sequester_authority_certificate: bytes, sequester_services_certificates: List[bytes]
+    ):
+        self.sequester_authority_certificate = sequester_authority_certificate
+        self.sequester_services_certificates = sequester_services_certificates
+
+
 class BaseVlobComponent:
     @api("vlob_create")
     @catch_protocol_errors
@@ -105,6 +118,18 @@ class BaseVlobComponent:
 
         except VlobInMaintenanceError:
             return vlob_create_serializer.rep_dump({"status": "in_maintenance"})
+
+        except VlobSequesterDisabledError:
+            return vlob_create_serializer.rep_dump({"status": "not_a_sequestered_organization"})
+
+        except VlobSequesterServiceInconsistencyError as exc:
+            return vlob_create_serializer.rep_dump(
+                {
+                    "status": "sequester_inconsistency",
+                    "sequester_authority_certificate": exc.sequester_authority_certificate,
+                    "sequester_services_certificates": exc.sequester_services_certificates,
+                }
+            )
 
         return vlob_create_serializer.rep_dump({"status": "ok"})
 
@@ -194,6 +219,18 @@ class BaseVlobComponent:
 
         except VlobInMaintenanceError:
             return vlob_update_serializer.rep_dump({"status": "in_maintenance"})
+
+        except VlobSequesterDisabledError:
+            return vlob_create_serializer.rep_dump({"status": "not_a_sequestered_organization"})
+
+        except VlobSequesterServiceInconsistencyError as exc:
+            return vlob_create_serializer.rep_dump(
+                {
+                    "status": "sequester_inconsistency",
+                    "sequester_authority_certificate": exc.sequester_authority_certificate,
+                    "sequester_services_certificates": exc.sequester_services_certificates,
+                }
+            )
 
         return vlob_update_serializer.rep_dump({"status": "ok"})
 
@@ -343,12 +380,16 @@ class BaseVlobComponent:
         vlob_id: VlobID,
         timestamp: DateTime,
         blob: bytes,
+        # Sequester is a special case, so give it a default version to simplify tests
+        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
     ) -> None:
         """
         Raises:
             VlobAlreadyExistsError
             VlobEncryptionRevisionError: if encryption_revision mismatch
             VlobInMaintenanceError
+            VlobSequesterDisabledError
+            VlobSequesterServiceInconsistencyError
         """
         raise NotImplementedError()
 
@@ -380,6 +421,8 @@ class BaseVlobComponent:
         version: int,
         timestamp: DateTime,
         blob: bytes,
+        # Sequester is a special case, so give it a default version to simplify tests
+        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
     ) -> None:
         """
         Raises:
@@ -388,6 +431,8 @@ class BaseVlobComponent:
             VlobNotFoundError
             VlobEncryptionRevisionError: if encryption_revision mismatch
             VlobInMaintenanceError
+            VlobSequesterDisabledError
+            VlobSequesterServiceInconsistencyError
         """
         raise NotImplementedError()
 
