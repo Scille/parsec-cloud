@@ -28,6 +28,10 @@ from parsec.crypto import (
     PrivateKey as _PrivateKey,
     PublicKey as _PublicKey,
 )
+from parsec.sequester_crypto import (
+    SequesterVerifyKeyDer as _SequesterVerifyKeyDer,
+    SequesterEncryptionKeyDer as _SequesterEncryptionKeyDer,
+)
 
 
 __all__ = (
@@ -411,3 +415,45 @@ class SecretKeyField(Field):
 
 
 SecretKey = SecretKeyField
+
+
+class SequesterVerifyKeyDerField(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return value.dump()
+
+    def _deserialize(self, value, attr, data):
+        if not isinstance(value, bytes):
+            raise ValidationError("Not bytes")
+
+        try:
+            return _SequesterVerifyKeyDer(value)
+
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+SequesterVerifyKeyDer = SequesterVerifyKeyDerField
+
+
+class SequesterEncryptionKeyDerField(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return value.dump()
+
+    def _deserialize(self, value, attr, data):
+        if not isinstance(value, bytes):
+            raise ValidationError("Not bytes")
+
+        try:
+            return _SequesterEncryptionKeyDer(value)
+
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+SequesterEncryptionKeyDer = SequesterEncryptionKeyDerField

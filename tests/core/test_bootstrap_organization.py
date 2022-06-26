@@ -137,12 +137,12 @@ UrQfXM0CAwEAAQ==\n-----END PUBLIC KEY-----\n"
     )
 
     organization = await backend.organization.get(org_id)
-    assert organization.sequester_authority_key_certificate
+    assert organization.sequester_authority_certificate
     assert (
-        organization.sequester_authority_key_certificate.verify_key_format
+        organization.sequester_authority_certificate.verify_key_format
         == SequesterAuthorityKeyFormat.RSA
     )
-    load_sequester_public_key(organization.sequester_authority_key_certificate.verify_key)
+    load_sequester_public_key(organization.sequester_authority_certificate.verify_key)
 
 
 @pytest.mark.trio

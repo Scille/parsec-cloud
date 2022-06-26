@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import Iterable, Tuple, List, Dict, Optional
+from typing import TYPE_CHECKING, Iterable, Tuple, List, Dict, Optional
 from collections import defaultdict
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
@@ -20,6 +20,9 @@ from parsec.backend.user import (
     UserActiveUsersLimitReached,
 )
 
+if TYPE_CHECKING:
+    from parsec.backend.memory.organization import MemoryOrganizationComponent
+
 
 @attr.s
 class OrganizationStore:
@@ -36,8 +39,10 @@ class MemoryUserComponent(BaseUserComponent):
             OrganizationStore
         )
 
-    def register_components(self, **other_components) -> None:
-        self._organization_component = other_components["organization"]
+    def register_components(
+        self, organization: "MemoryOrganizationComponent", **other_components
+    ) -> None:
+        self._organization_component = organization
 
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device

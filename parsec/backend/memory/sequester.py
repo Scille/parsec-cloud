@@ -1,78 +1,144 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+from typing import TYPE_CHECKING, Optional, Dict, List, Tuple
 from collections import defaultdict
-import pendulum
-from parsec.api.protocol.sequester import SequesterServiceType
-from parsec.api.protocol.types import OrganizationID
-from parsec.backend.memory.organization import MemoryOrganizationComponent
+from pendulum import DateTime, now as pendulum_now
+
+from parsec.utils import timestamps_in_the_ballpark
+from parsec.crypto import CryptoError
+from parsec.api.data import SequesterServiceCertificate, DataError
+from parsec.api.protocol import OrganizationID, SequesterServiceID, RealmID, VlobID
 from parsec.backend.sequester import (
     BaseSequesterComponent,
     SequesterService,
-    SequesterServiceNotFound,
+    SequesterServiceNotFoundError,
+    SequesterOrganizationNotFoundError,
+    SequesterDisabledError,
+    SequesterServiceAlreadyExists,
+    SequesterServiceAlreadyDeletedError,
+    SequesterCertificateValidationError,
+    SequesterCertificateOutOfBallparkError,
 )
 
-from uuid import UUID
-from typing import Dict, List
-
-from parsec.sequester_crypto import SequesterCryptoError
+if TYPE_CHECKING:
+    from parsec.backend.memory.organization import MemoryOrganizationComponent
+    from parsec.backend.memory.vlob import MemoryVlobComponent
 
 
 class MemorySequesterComponent(BaseSequesterComponent):
-    def __init__(self, send_event):
-        self._send_event = send_event
-        self._organization_component: MemoryOrganizationComponent = None
-        self._services: Dict[OrganizationID, Dict[UUID, SequesterService]] = defaultdict(dict)
+    def __init__(self):
+        self._organization_component: "MemoryOrganizationComponent" = None
+        self._vlob_component: "MemoryVlobComponent" = None
+        self._services: Dict[
+            OrganizationID, Dict[SequesterServiceID, SequesterService]
+        ] = defaultdict(dict)
 
-    def register_components(self, **other_components):
-        self._organization_component = other_components["organization"]
+    def register_components(
+        self,
+        organization: "MemoryOrganizationComponent",
+        vlob: "MemoryVlobComponent",
+        **other_components,
+    ):
+        self._organization_component = organization
+        self._vlob_component = vlob
 
-    async def _register_service(
+    def _active_services(self, organization_id: OrganizationID) -> List[SequesterService]:
+        return [s for s in self._services[organization_id].values() if not s.is_deleted]
+
+    async def create_service(
+        self, organization_id: OrganizationID, service: SequesterService
+    ) -> None:
+        try:
+            organization = self._organization_component._organizations[organization_id]
+        except KeyError as exc:
+            raise SequesterOrganizationNotFoundError from exc
+        if organization.sequester is None:
+            raise SequesterDisabledError
+
+        try:
+            certif_dumped = organization.sequester.authority_verify_key_der.verify(
+                service.service_certificate
+            )
+        except CryptoError as exc:
+            raise SequesterCertificateValidationError(
+                f"Invalid certification data ({exc})."
+            ) from exc
+
+        try:
+            certif_data = SequesterServiceCertificate.load(certif_dumped)
+
+        except DataError as exc:
+            raise SequesterCertificateValidationError(
+                f"Invalid certification data ({exc})."
+            ) from exc
+
+        now = pendulum_now()
+        if not timestamps_in_the_ballpark(certif_data.timestamp, now):
+            raise SequesterCertificateOutOfBallparkError(
+                f"Invalid certification data (timestamp out of ballpark)."
+            )
+
+        org_services = self._services[organization_id]
+        if service.service_id in org_services:
+            raise SequesterServiceAlreadyExists
+        org_services[service.service_id] = service
+
+    async def delete_service(
         self,
         organization_id: OrganizationID,
-        service_id: UUID,
-        service_type: SequesterServiceType,
-        sequester_service_certificate: bytes,
-        sequester_service_certificate_signature: bytes,
-    ):
+        service_id: SequesterServiceID,
+        deleted_on: Optional[DateTime] = None,
+    ) -> None:
+        deleted_on = deleted_on or pendulum_now()
+        service = self._get_service(organization_id=organization_id, service_id=service_id)
+        if service.is_deleted:
+            raise SequesterServiceAlreadyDeletedError
+        self._services[organization_id][service_id] = service.evolve(deleted_on=deleted_on)
 
-        organization = await self._organization_component.get(organization_id)
-        if organization.sequester_authority_key_certificate is None:
-            raise SequesterCryptoError("Organization does not accept extra services")
-        authority_key = organization.sequester_authority_key_certificate.verify_key
-        self.verify_sequester_signature(
-            authority_key, sequester_service_certificate, sequester_service_certificate_signature
-        )
-
-        self._services[organization_id][service_id] = SequesterService(
-            service_id=service_id,
-            service_type=service_type,
-            service_certificate=sequester_service_certificate,
-            service_certificate_signature=sequester_service_certificate_signature,
-            created_on=pendulum.now(),
-            deleted_on=None,
-        )
-
-    async def get(self, organization_id, service_id) -> SequesterService:
+    def _get_service(
+        self, organization_id: OrganizationID, service_id: SequesterServiceID
+    ) -> SequesterService:
+        try:
+            organization = self._organization_component._organizations[organization_id]
+        except KeyError as exc:
+            raise SequesterOrganizationNotFoundError from exc
+        if organization.sequester is None:
+            raise SequesterDisabledError
         try:
             return self._services[organization_id][service_id]
-        except KeyError:
-            raise SequesterServiceNotFound()
+        except KeyError as exc:
+            raise SequesterServiceNotFoundError from exc
 
-    async def delete(self, organization_id, service_id) -> None:
-        try:
-            service = self._services[organization_id][service_id]
-            service.deleted_on = pendulum.now()
-        except KeyError:
-            raise SequesterServiceNotFound()
+    async def get_service(
+        self, organization_id: OrganizationID, service_id: SequesterServiceID
+    ) -> SequesterService:
+        return self._get_service(organization_id=organization_id, service_id=service_id)
 
     async def get_organization_services(
         self, organization_id: OrganizationID
     ) -> List[SequesterService]:
         try:
-            return [
-                service
-                for service in self._services[organization_id].values()
-                if service.deleted_on is None
-            ]
-        except KeyError:
-            raise SequesterServiceNotFound()
+            organization = self._organization_component._organizations[organization_id]
+        except KeyError as exc:
+            raise SequesterOrganizationNotFoundError from exc
+        if organization.sequester is None:
+            raise SequesterDisabledError
+        return list(self._services[organization_id].values())
+
+    async def dump_realm(
+        self, organization_id: OrganizationID, service_id: SequesterServiceID, realm_id: RealmID
+    ) -> List[Tuple[VlobID, int, bytes]]:
+        dump: List[Tuple[VlobID, int, bytes]] = []
+        # Check orga and service exists
+        self._get_service(organization_id=organization_id, service_id=service_id)
+        # Do the actual dump
+        for (vorg, vid), vlob in self._vlob_component._vlobs.items():
+            if vorg != organization_id or vlob.realm_id != realm_id:
+                continue
+            assert vlob.sequestered_data is not None
+            for version, sequestered_version in enumerate(vlob.sequestered_data, start=1):
+                try:
+                    dump.append((vid, version, sequestered_version[service_id]))
+                except KeyError:
+                    pass
+        return dump

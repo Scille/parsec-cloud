@@ -1,122 +1,126 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from functools import wraps
-import oscrypto
+from typing import Union
+from enum import Enum
 import oscrypto.asymmetric
+import oscrypto.errors
 
-from oscrypto.asymmetric import PublicKey as _PublicKey
-from oscrypto.asymmetric import PrivateKey as _PrivateKey
-import pendulum
-
-from parsec.api.data.certif import SequesterServiceCertificate, SequesterServiceKeyFormat
-
-SequesterPublicKey = _PublicKey
-SequesterPrivateKey = _PrivateKey
-
-hash_algorithm = "sha256"
+from parsec.crypto import CryptoError, SecretKey
 
 
-class SequesterCryptoError(Exception):
-    pass
+class SequesterKeyAlgorithm(Enum):
+    RSA = "RSA"
 
 
-class SequesterCryptoInvalidKeyError(SequesterCryptoError):
-    pass
+class _SequesterPublicKeyDer:
+    __slots__ = ("_key",)
+
+    def __init__(self, der_key: Union[bytes, oscrypto.asymmetric.PublicKey]):
+        if isinstance(der_key, bytes):
+            try:
+                self._key = oscrypto.asymmetric.load_public_key(der_key)
+            except (oscrypto.errors.AsymmetricKeyError, OSError) as exc:
+                raise ValueError(str(exc)) from exc
+        else:
+            assert isinstance(der_key, oscrypto.asymmetric.PublicKey)
+            self._key = der_key
+
+        if self._key.algorithm != "rsa":
+            raise ValueError("Unsupported key format")
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self._key == other._key
+
+    @property
+    def algorithm(self) -> SequesterKeyAlgorithm:
+        return SequesterKeyAlgorithm.RSA
+
+    def dump(self) -> bytes:
+        return oscrypto.asymmetric.dump_public_key(self._key, encoding="der")
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self._key})"
+
+    @property
+    def secret(self) -> bytes:
+        return self._key
 
 
-class SequesterCryptoWrongTypeError(SequesterCryptoError):
-    pass
+class SequesterVerifyKeyDer(_SequesterPublicKeyDer):
+    # Signature format:
+    #   <algorithm name>:<signature><data>
+    SIGNING_ALGORITHM = b"RSASSA-PSS-SHA256"
 
-
-class SequesterCryptoOsNotCompatibleError(SequesterCryptoError):
-    pass
-
-
-class SequesterCryptoSignatureError(SequesterCryptoError):
-    pass
-
-
-def handle_loading_error(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
+    def verify(self, data: bytes) -> bytes:
+        """
+        Raises:
+            CryptoError: if key or signature are invalid.
+        """
+        # In RSASSA-PSS, signature is as big as the key size
         try:
-            return func(*args, **kwargs)
+            algo, signature_and_content = data.split(b":", 1)
+            if algo != self.SIGNING_ALGORITHM:
+                raise ValueError
         except ValueError as exc:
-            raise SequesterCryptoInvalidKeyError() from exc
-        except TypeError as exc:
-            raise SequesterCryptoWrongTypeError() from exc
-        except oscrypto.errors.AsymmetricKeyError as exc:
-            raise SequesterCryptoOsNotCompatibleError() from exc
+            raise CryptoError("Unsupported algorithm") from exc
+        signature = signature_and_content[: self._key.byte_size]
+        content = signature_and_content[self._key.byte_size :]
+        try:
+            oscrypto.asymmetric.rsa_pss_verify(self._key, signature, content, "sha256")
+        except (oscrypto.errors.SignatureError, OSError) as exc:
+            raise CryptoError(str(exc)) from exc
+        return content
+
+
+def sequester_authority_sign(signing_key: oscrypto.asymmetric.PrivateKey, data: bytes) -> bytes:
+    try:
+        signature = oscrypto.asymmetric.rsa_pss_sign(signing_key, data, "sha256")
+    except OSError as exc:
+        raise CryptoError(str(exc)) from exc
+
+    # In RSASSA-PSS, signature is as big as the key size
+    assert len(signature) == signing_key.byte_size
+
+    return SequesterVerifyKeyDer.SIGNING_ALGORITHM + b":" + signature + data
+
+
+class SequesterEncryptionKeyDer(_SequesterPublicKeyDer):
+    # Encryption format:
+    #   <algorithm name>:<encrypted secret key with RSA key><encrypted data with secret key>
+    ENCRYPTION_ALGORITHM = b"RSAES-OAEP-XSALSA20-POLY1305"
+
+    def encrypt(self, data: bytes) -> bytes:
+        """
+        Raises:
+            CryptoError: if key is invalid.
+        """
+        secret_key = SecretKey.generate()
+        try:
+            # RSAES-OAEP uses 42 bytes for padding, hence even with an unsecure
+            # 1024 bits RSA key we can 86 bytes which is plenty to store of
+            # 32 bytes XSalsa 20 key
+            secret_key_encrypted = oscrypto.asymmetric.rsa_oaep_encrypt(
+                self._key, secret_key.secret
+            )
         except OSError as exc:
-            raise SequesterCryptoError from exc
-
-    return wrapper
-
-
-@handle_loading_error
-def load_sequester_public_key(bytes_key: bytes) -> SequesterPublicKey:
-    """
-    Raises:
-        SequesterCryptoError
-    """
-    return oscrypto.asymmetric.load_public_key(bytes_key)
+            raise CryptoError(str(exc)) from exc
+        return self.ENCRYPTION_ALGORITHM + b":" + secret_key_encrypted + secret_key.encrypt(data)
 
 
-def dump_sequester_public_key(public_key: SequesterPublicKey) -> bytes:
-    return oscrypto.asymmetric.dump_public_key(public_key)  # Dump in pem format
-
-
-@handle_loading_error
-def load_sequester_private_key(bytes_key: bytes) -> SequesterPrivateKey:
-    """
-    Raises:
-        SequesterCryptoError
-    """
-    return oscrypto.asymmetric.load_private_key(bytes_key)
-
-
-def verify_sequester(public_key: SequesterPublicKey, data: bytes, signature: bytes) -> None:
-    """
-    Raises:
-        SequesterCryptoSignatureError
-        SequesterCryptoError
-    """
+def sequester_service_decrypt(decryption_key: oscrypto.asymmetric.PrivateKey, data: bytes) -> bytes:
     try:
-        oscrypto.asymmetric.rsa_pss_verify(public_key, signature, data, hash_algorithm)
-    except oscrypto.errors.SignatureError:
-        raise SequesterCryptoSignatureError()
-    except OSError:
-        raise SequesterCryptoError()
-
-
-def sign_sequester(private_key: SequesterPrivateKey, data: bytes) -> bytes:
-    return oscrypto.asymmetric.rsa_pss_sign(private_key, data, hash_algorithm)
-
-
-def create_service_certificate(raw_encryption_public_key: bytes, service_name: str) -> bytes:
-    """
-    Raises:
-        SequesterCryptoError
-        SequesterCryptoInvalidKeyError
-    """
-    now = pendulum.now()
-    encryption_public_key = load_sequester_public_key(raw_encryption_public_key)
+        algo, cipherkey_and_ciphertext = data.split(b":", 1)
+        if algo != SequesterEncryptionKeyDer.ENCRYPTION_ALGORITHM:
+            raise ValueError
+    except ValueError as exc:
+        raise CryptoError("Unsupported algorithm") from exc
+    cipherkey = cipherkey_and_ciphertext[: decryption_key.byte_size]
+    ciphertext = cipherkey_and_ciphertext[decryption_key.byte_size :]
     try:
-        key_format = SequesterServiceKeyFormat(
-            encryption_public_key.algorithm.upper()  # type: ignore[attr-defined]
-        )
-    except ValueError:
-        raise SequesterCryptoInvalidKeyError(
-            f"Unsupported Key Format {encryption_public_key.algorithm}"  # type: ignore[attr-defined]
-        )
-    return SequesterServiceCertificate(
-        encryption_key=raw_encryption_public_key,
-        encryption_key_format=key_format,
-        timestamp=now,
-        service_name=service_name,
-    ).dump()
-
-
-def sign_service_certificate(certificate: bytes, raw_signing_key: bytes) -> bytes:
-    signing_key = load_sequester_private_key(raw_signing_key)
-    return sign_sequester(signing_key, certificate)
+        clearkey = SecretKey(oscrypto.asymmetric.rsa_oaep_decrypt(decryption_key, cipherkey))
+    except OSError as exc:
+        raise CryptoError(str(exc)) from exc
+    cleartext = clearkey.decrypt(ciphertext)
+    return cleartext

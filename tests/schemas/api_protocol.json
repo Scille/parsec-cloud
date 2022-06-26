@@ -135,7 +135,7 @@
                             "required": true,
                             "type": "VerifyKey"
                         },
-                        "sequester_authority_key_certificate": {
+                        "sequester_authority_certificate": {
                             "allow_none": true,
                             "required": false,
                             "type": "bytesField"
@@ -2058,6 +2058,21 @@
                             "required": true,
                             "type": "RealmIDField"
                         },
+                        "sequester_blob": {
+                            "allow_none": true,
+                            "key_type": {
+                                "allow_none": false,
+                                "required": false,
+                                "type": "SequesterServiceIDField"
+                            },
+                            "nested_type": {
+                                "allow_none": false,
+                                "required": false,
+                                "type": "bytesField"
+                            },
+                            "required": false,
+                            "type": "Map"
+                        },
                         "timestamp": {
                             "allow_none": false,
                             "required": true,
@@ -2415,6 +2430,21 @@
                             "allow_none": false,
                             "required": true,
                             "type": "Integer"
+                        },
+                        "sequester_blob": {
+                            "allow_none": true,
+                            "key_type": {
+                                "allow_none": false,
+                                "required": false,
+                                "type": "SequesterServiceIDField"
+                            },
+                            "nested_type": {
+                                "allow_none": false,
+                                "required": false,
+                                "type": "bytesField"
+                            },
+                            "required": false,
+                            "type": "Map"
                         },
                         "timestamp": {
                             "allow_none": false,

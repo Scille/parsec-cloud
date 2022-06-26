@@ -2,7 +2,10 @@
 
 import pytest
 from typing import Union, Optional, Tuple
+from pendulum import DateTime
+from functools import partial
 from dataclasses import dataclass
+
 from parsec.api.data import (
     UserCertificateContent,
     UserManifest,
@@ -21,7 +24,9 @@ from parsec.core.types import (
 from parsec.core.fs.storage import UserStorage
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import User as BackendUser, Device as BackendDevice
+from parsec.backend.organization import Sequester
 from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.vlob import VlobSequesterServiceInconsistencyError
 
 from tests.common.freeze_time import freeze_time
 from tests.common.sequester import SequesterAuthorityFullData
@@ -136,7 +141,9 @@ def initialize_local_user_manifest(initial_user_manifest_state):
 
 
 def local_device_to_backend_user(
-    device: LocalDevice, certifier: Union[LocalDevice, OrganizationFullData]
+    device: LocalDevice,
+    certifier: Union[LocalDevice, OrganizationFullData],
+    timestamp: Optional[DateTime] = None,
 ) -> Tuple[BackendUser, BackendDevice]:
     if isinstance(certifier, OrganizationFullData):
         certifier_id = None
@@ -145,7 +152,7 @@ def local_device_to_backend_user(
         certifier_id = certifier.device_id
         certifier_signing_key = certifier.signing_key
 
-    timestamp = device.timestamp()
+    timestamp = timestamp or device.timestamp()
 
     user_certificate = UserCertificateContent(
         author=certifier_id,
@@ -299,8 +306,8 @@ def backend_data_binder_factory(initial_user_manifest_state):
                         granted_on=realm_create_timestamp,
                     ),
                 )
-
-                await self.backend.vlob.create(
+                vlob_create_fn = partial(
+                    self.backend.vlob.create,
                     organization_id=author.organization_id,
                     author=author.device_id,
                     realm_id=realm_id,
@@ -311,6 +318,12 @@ def backend_data_binder_factory(initial_user_manifest_state):
                         author_signkey=author.signing_key, key=author.user_manifest_key
                     ),
                 )
+                try:
+                    await vlob_create_fn(sequester_blob=None)
+                except VlobSequesterServiceInconsistencyError:
+                    # This won't work if some sequester services are defined,
+                    # but it works fine enough for the moment :)
+                    await vlob_create_fn(sequester_blob={})
 
                 # Avoid possible race condition in tests listening for events
                 await spy.wait_multiple(
@@ -351,16 +364,19 @@ def backend_data_binder_factory(initial_user_manifest_state):
             assert org.organization_id == first_device.organization_id
             backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
             if org.sequester_authority:
-                sequester_authority_key_certificate = org.sequester_authority.certif
+                sequester = Sequester(
+                    authority_certificate=org.sequester_authority.certif,
+                    authority_verify_key_der=org.sequester_authority.certif_data.verify_key_der,
+                )
             else:
-                sequester_authority_key_certificate = None
+                sequester = None
             await self.backend.organization.bootstrap(
                 id=org.organization_id,
                 user=backend_user,
                 first_device=backend_first_device,
                 bootstrap_token=org.bootstrap_token,
                 root_verify_key=org.root_verify_key,
-                sequester_authority_key_certificate=sequester_authority_key_certificate,
+                sequester=sequester,
             )
             self.certificates_store.store_user(
                 org.organization_id,

@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import List, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, List, Dict, Optional, Tuple
 
 from parsec.api.data import UserProfile
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID
@@ -26,9 +26,13 @@ from parsec.backend.realm import (
     RealmInMaintenanceError,
     RealmNotInMaintenanceError,
 )
-from parsec.backend.user import BaseUserComponent, UserAlreadyRevokedError, UserNotFoundError
-from parsec.backend.message import BaseMessageComponent
-from parsec.backend import memory
+from parsec.backend.user import UserAlreadyRevokedError, UserNotFoundError
+
+if TYPE_CHECKING:
+    from parsec.backend.memory.user import MemoryUserComponent
+    from parsec.backend.memory.message import MemoryMessageComponent
+    from parsec.backend.memory.vlob import MemoryVlobComponent
+    from parsec.backend.memory.block import MemoryBlockComponent
 
 
 @attr.s
@@ -59,19 +63,19 @@ class Realm:
 class MemoryRealmComponent(BaseRealmComponent):
     def __init__(self, send_event):
         self._send_event = send_event
-        self._user_component = None
-        self._message_component = None
-        self._vlob_component = None
-        self._block_component = None
+        self._user_component: "MemoryUserComponent" = None
+        self._message_component: "MemoryMessageComponent" = None
+        self._vlob_component: "MemoryVlobComponent" = None
+        self._block_component: "MemoryBlockComponent" = None
         self._realms: Dict[Tuple[OrganizationID, RealmID], Realm] = {}
         self._maintenance_reencryption_is_finished_hook = None
 
     def register_components(
         self,
-        user: BaseUserComponent,
-        message: BaseMessageComponent,
-        vlob: "memory.vlob.MemoryVlobComponent",
-        block: "memory.block.MemoryBlockComponent",
+        user: "MemoryUserComponent",
+        message: "MemoryMessageComponent",
+        vlob: "MemoryVlobComponent",
+        block: "MemoryBlockComponent",
         **other_components,
     ):
         self._user_component = user

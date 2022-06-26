@@ -3,7 +3,6 @@
 from typing import Optional, Union
 from functools import lru_cache
 from triopg import UniqueViolationError
-from parsec.api.data.certif import SequesterAuthorityKeyCertificate
 
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.crypto import VerifyKey
@@ -12,6 +11,7 @@ from parsec.backend.user import UserError, User, Device
 from parsec.backend.utils import UnsetType, Unset
 from parsec.backend.organization import (
     BaseOrganizationComponent,
+    Sequester,
     OrganizationStats,
     Organization,
     OrganizationError,
@@ -211,7 +211,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             is_expired=data[2],
             active_users_limit=data[3],
             user_profile_outsider_allowed=data[4],
-            sequester_authority_key_certificate=None,  # TODO: implement it in postgresql version
+            sequester=None,  # TODO: implement it in postgresql version
         )
 
     async def bootstrap(
@@ -221,8 +221,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        sequester_authority_key_certificate: Optional[SequesterAuthorityKeyCertificate] = None,
+        sequester: Optional[Sequester] = None,
     ) -> None:
+        # TODO
+        if sequester is not None:
+            raise NotImplementedError
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the
             # organization table until the end of the transaction. Hence

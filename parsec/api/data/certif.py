@@ -1,13 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from enum import Enum
 from typing import TYPE_CHECKING, Optional, Any, Dict, Type, TypeVar, Literal
 from marshmallow import ValidationError
 from pendulum import DateTime
 
 from parsec.crypto import VerifyKey, PublicKey
+from parsec.sequester_crypto import SequesterVerifyKeyDer, SequesterEncryptionKeyDer
 from parsec.serde import fields, post_load
 from parsec.api.protocol import (
+    SequesterServiceID,
+    SequesterServiceIDField,
     RealmID,
     RealmIDField,
     DeviceID,
@@ -254,41 +256,24 @@ class RealmRoleCertificateContent(BaseAPISignedData):
         return data
 
 
-class SequesterAuthorityKeyFormat(Enum):
-    RSA = "RSA"
-
-
-SequesterAuthorityKeyFormatFields = fields.enum_field_factory(SequesterAuthorityKeyFormat)
-
-
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class SequesterAuthorityKeyCertificate(BaseAPISignedData):
+class SequesterAuthorityCertificate(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
+        type = fields.CheckedConstant("sequester_authority_certificate", required=True)
         # Override author field to always uses None given this certificate can only be signed by the root key
         author = fields.CheckedConstant(
             None, required=True, allow_none=True
         )  # Constant None fields required to be allowed to be None !
-
-        type = fields.CheckedConstant("sequester_authority_key_certificate", required=True)
-        verify_key = fields.Bytes(required=True)
-        verify_key_format = SequesterAuthorityKeyFormatFields(requied=True)
+        verify_key_der = fields.SequesterVerifyKeyDerField(required=True)
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "SequesterAuthorityKeyCertificate":
+        def make_obj(self, data: Dict[str, Any]) -> "SequesterAuthorityCertificate":
             data.pop("type")
-            return SequesterAuthorityKeyCertificate(**data)
+            return SequesterAuthorityCertificate(**data)
 
     # Override author field to always uses None given this certificate can only be signed by the root key
     author: Literal[None]  # type: ignore[assignment]
-    verify_key: bytes
-    verify_key_format: SequesterAuthorityKeyFormat
-
-
-class SequesterServiceKeyFormat(Enum):
-    RSA = "RSA"
-
-
-SequesterServiceKeyFormatFields = fields.enum_field_factory(SequesterServiceKeyFormat)
+    verify_key_der: SequesterVerifyKeyDer
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
@@ -296,17 +281,17 @@ class SequesterServiceCertificate(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         # No author field here given we are signed by the sequester authority
         type = fields.CheckedConstant("sequester_service_certificate", required=True)
-        encryption_key = fields.Bytes(required=True)
-        encryption_key_format = SequesterServiceKeyFormatFields(required=True)
         timestamp = fields.DateTime(required=True)
-        service_name = fields.String(required=True)
+        service_id = SequesterServiceIDField(required=True)
+        service_label = fields.String(required=True)
+        encryption_key_der = fields.SequesterEncryptionKeyDerField(required=True)
 
         @post_load
         def make_obj(self, data: Dict[str, Any]) -> "SequesterServiceCertificate":
             data.pop("type")
             return SequesterServiceCertificate(**data)
 
-    encryption_key: bytes
-    encryption_key_format: SequesterServiceKeyFormat
     timestamp: DateTime
-    service_name: str
+    service_id: SequesterServiceID
+    service_label: str
+    encryption_key_der: SequesterEncryptionKeyDer

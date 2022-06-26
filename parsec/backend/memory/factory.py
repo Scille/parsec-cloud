@@ -47,7 +47,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
     vlob = MemoryVlobComponent(_send_event)
     ping = MemoryPingComponent(_send_event)
     pki = MemoryPkiEnrollmentComponent(_send_event)
-    sequester = MemorySequesterComponent(_send_event)
+    sequester = MemorySequesterComponent()
     block = MemoryBlockComponent()
     blockstore = blockstore_factory(config.blockstore_config)
     events = EventsComponent(realm, send_event=_send_event)

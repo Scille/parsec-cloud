@@ -4,10 +4,17 @@ import attr
 import pendulum
 from typing import Optional, Union, List
 from secrets import token_hex
-from parsec.api.data.certif import SequesterAuthorityKeyCertificate
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
+from parsec.sequester_crypto import SequesterVerifyKeyDer
+from parsec.api.data import (
+    UserCertificateContent,
+    DeviceCertificateContent,
+    DataError,
+    UserProfile,
+    SequesterAuthorityCertificate,
+)
 from parsec.api.protocol import (
     OrganizationID,
     organization_stats_serializer,
@@ -15,11 +22,9 @@ from parsec.api.protocol import (
     apiv1_organization_bootstrap_serializer,
     organization_config_serializer,
 )
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
-from parsec.backend.utils import ClientType
+from parsec.backend.utils import ClientType, catch_protocol_errors, api, Unset, UnsetType
 from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent
-from parsec.backend.utils import catch_protocol_errors, api, Unset, UnsetType
 from parsec.backend.config import BackendConfig
 from parsec.backend.client_context import AnonymousClientContext, APIV1_AnonymousClientContext
 
@@ -53,6 +58,12 @@ class OrganizationExpiredError(OrganizationError):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class Sequester:
+    authority_certificate: bytes
+    authority_verify_key_der: SequesterVerifyKeyDer
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class Organization:
     organization_id: OrganizationID
     bootstrap_token: str
@@ -60,7 +71,7 @@ class Organization:
     root_verify_key: Optional[VerifyKey]
     user_profile_outsider_allowed: bool
     active_users_limit: Optional[int]
-    sequester_authority_key_certificate: Optional[SequesterAuthorityKeyCertificate]
+    sequester: Optional[Sequester]
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
@@ -246,13 +257,17 @@ class BaseOrganizationComponent:
 
         # Sequester can not be set with APIV1
         if isinstance(client_ctx, APIV1_AnonymousClientContext):
-            sequester_authority_key_certificate = None
+            sequester = None
+
         else:
-            sequester_authority_key_certificate = msg["sequester_authority_key_certificate"]
-            if sequester_authority_key_certificate is not None:
+            sequester_authority_certificate = msg["sequester_authority_certificate"]
+            if sequester_authority_certificate is None:
+                sequester = None
+
+            else:
                 try:
-                    sequester_authority_key_certificate = SequesterAuthorityKeyCertificate.verify_and_load(
-                        sequester_authority_key_certificate,
+                    sequester_authority_certif_data = SequesterAuthorityCertificate.verify_and_load(
+                        sequester_authority_certificate,
                         author_verify_key=root_verify_key,
                         expected_author=None,
                     )
@@ -260,8 +275,25 @@ class BaseOrganizationComponent:
                 except DataError:
                     return {
                         "status": "invalid_data",
-                        "reason": "Invalid signature for sequester verify key",
+                        "reason": "Invalid signature for sequester authority certificate",
                     }
+
+                if not timestamps_in_the_ballpark(sequester_authority_certif_data.timestamp, now):
+                    return serializer.timestamp_out_of_ballpark_rep_dump(
+                        backend_timestamp=now,
+                        client_timestamp=sequester_authority_certif_data.timestamp,
+                    )
+
+                if sequester_authority_certif_data.timestamp != u_data.timestamp:
+                    return {
+                        "status": "invalid_data",
+                        "reason": "Device, user and sequester authority certificates must have the same timestamp.",
+                    }
+
+                sequester = Sequester(
+                    authority_certificate=sequester_authority_certificate,
+                    authority_verify_key_der=sequester_authority_certif_data.verify_key_der,
+                )
 
         user = User(
             user_id=u_data.user_id,
@@ -286,12 +318,12 @@ class BaseOrganizationComponent:
         )
         try:
             await self.bootstrap(
-                client_ctx.organization_id,
-                user,
-                first_device,
-                bootstrap_token,
-                root_verify_key,
-                sequester_authority_key_certificate,
+                id=client_ctx.organization_id,
+                user=user,
+                first_device=first_device,
+                bootstrap_token=bootstrap_token,
+                root_verify_key=root_verify_key,
+                sequester=sequester,
             )
 
         except OrganizationAlreadyBootstrappedError:
@@ -344,7 +376,7 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        sequester_authority_key_certificate: Optional[SequesterAuthorityKeyCertificate] = None,
+        sequester: Optional[Sequester] = None,
     ) -> None:
         """
         Raises:
