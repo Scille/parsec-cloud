@@ -45,6 +45,7 @@ class OrganizationBootstrapReqSchema(BaseReqSchema):
     device_certificate = fields.Bytes(required=True)
     redacted_user_certificate = fields.Bytes(required=True)
     redacted_device_certificate = fields.Bytes(required=True)
+    # Added in API version 1.4 (Parsec 2.11.0)
     # Set to `None` for sequester disabled
     # Note there is absolutely no way to turn it on later as this certif must be
     # signed by the root key which has been destroyed after bootstrap
