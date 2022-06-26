@@ -4,6 +4,7 @@ import pytest
 
 
 _FIXTURES_CUSTOMIZATIONS = {
+    "coolorg_is_sequestered_organization",
     "alice_profile",
     "alice_initial_local_user_manifest",
     "alice2_initial_local_user_manifest",
