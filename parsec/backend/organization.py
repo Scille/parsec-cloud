@@ -259,7 +259,7 @@ class BaseOrganizationComponent:
 
                 except DataError:
                     return {
-                        "status": "invalid sequester_authority_key_certificate",
+                        "status": "invalid_data",
                         "reason": "Invalid signature for sequester verify key",
                     }
 
