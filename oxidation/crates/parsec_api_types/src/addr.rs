@@ -250,11 +250,9 @@ macro_rules! expose_BaseBackendAddr_fields {
             }
         }
 
+        /// `true` when the default port is overloaded.
         pub fn is_default_port(&self) -> bool {
-            match self.base.port {
-                Some(_) => false,
-                None => true,
-            }
+            self.base.port.is_none()
         }
 
         pub fn use_ssl(&self) -> bool {
