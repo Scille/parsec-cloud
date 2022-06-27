@@ -37,7 +37,7 @@ macro_rules! impl_common_stuff {
             }
 
             pub fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
-                // For wathever reason, Url considers illegal changing scheme
+                // For whatever reason, Url considers illegal changing scheme
                 // from http/https to a custom one, so we cannot just use
                 // `Url::set_scheme` and instead have to do this hack :(
                 let url_with_forced_custom_scheme = format!("x{}", url);
@@ -506,7 +506,7 @@ impl BackendOrganizationBootstrapAddr {
         let token = token_queries.next().map(|(_, v)| (*v).to_owned());
         // Note invalid percent-encoding is not considered a failure here:
         // the replacement character EF BF BD is used instead. This should be
-        // ok for our usecase (but it differs from Python implementation).
+        // ok for our use case (but it differs from Python implementation).
         if token_queries.next().is_some() {
             return Err("Multiple values for param `token`");
         }
