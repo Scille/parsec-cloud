@@ -60,6 +60,7 @@ jobs:
           }}
         run: |
           whereis git
+          git fetch origin master
           python ci_utils/check_news_fragment.py
 
       - name: Run cargo build to prepare rust's cache
