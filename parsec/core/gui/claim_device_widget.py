@@ -397,7 +397,7 @@ class ClaimDeviceProvideInfoWidget(QWidget, Ui_ClaimDeviceProvideInfoWidget):
     def _on_claim_clicked(self):
         if not self.new_device:
             # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
-            device_label = DeviceLabel(validators.trim_user_name(self.line_edit_device.text()))
+            device_label = DeviceLabel(self.line_edit_device.clean_text)
             self.button_ok.setDisabled(True)
             self.widget_info.setDisabled(True)
             self.label_wait.show()

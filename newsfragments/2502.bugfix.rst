@@ -1,0 +1,1 @@
+Fixed invalid email error with some weird user names
