@@ -328,7 +328,7 @@ impl BackendAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn _to_url(&self, url: Url) -> Url {
+    fn _to_url(&self, url: Url) -> Url {
         url
     }
 }
@@ -385,7 +385,7 @@ impl BackendOrganizationAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn _to_url(&self, mut url: Url) -> Url {
+    fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
             .unwrap_or_else(|()| unreachable!())
             .push(self.organization_id.as_ref());
@@ -528,7 +528,7 @@ impl BackendOrganizationBootstrapAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn _to_url(&self, mut url: Url) -> Url {
+    fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
             .unwrap_or_else(|()| unreachable!())
             .push(self.organization_id.as_ref());
@@ -626,7 +626,7 @@ impl BackendOrganizationFileLinkAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn _to_url(&self, mut url: Url) -> Url {
+    fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
             .unwrap_or_else(|()| unreachable!())
             .push(self.organization_id.as_ref());
@@ -711,7 +711,7 @@ impl BackendInvitationAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn _to_url(&self, mut url: Url) -> Url {
+    fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
             .unwrap_or_else(|()| unreachable!())
             .push(self.organization_id.as_ref());
@@ -778,7 +778,7 @@ impl BackendPkiEnrollmentAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn _to_url(&self, mut url: Url) -> Url {
+    fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
             .unwrap_or_else(|()| unreachable!())
             .push(self.organization_id.as_ref());
