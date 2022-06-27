@@ -28,7 +28,7 @@ jobs:
           cache-version: 1
         uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-rust-${{ env.cache-version }}.${{ env.rust-version }}-${{ hashFile('Cargo.lock') }}
+          key: ${{ runner.os }}-rust-${{ env.cache-version }}.${{ env.rust-version }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-rust-${{ env.cache-version }}.${{ env.rust-version }}
             ${{ runner.os }}-rust-${{ env.cache-version }}
