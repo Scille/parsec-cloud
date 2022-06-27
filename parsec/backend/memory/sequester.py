@@ -45,6 +45,20 @@ class MemorySequesterComponent(BaseSequesterComponent):
     def _active_services(self, organization_id: OrganizationID) -> List[SequesterService]:
         return [s for s in self._services[organization_id].values() if not s.is_deleted]
 
+    def _refresh_services_in_organization_component(self, organization_id: OrganizationID) -> None:
+        # Organization objects in the organization component contains the list of active services
+        # (typically returned in `organization_config` API command), so it must be refreshed
+        # every time we create or delete a service !
+        organization = self._organization_component._organizations[organization_id]
+        sequester_services_certificates = tuple(
+            s.service_certificate
+            for s in self._services[organization_id].values()
+            if not s.is_deleted
+        )
+        self._organization_component._organizations[organization_id] = organization.evolve(
+            sequester_services_certificates=sequester_services_certificates
+        )
+
     async def create_service(
         self, organization_id: OrganizationID, service: SequesterService
     ) -> None:
@@ -52,11 +66,11 @@ class MemorySequesterComponent(BaseSequesterComponent):
             organization = self._organization_component._organizations[organization_id]
         except KeyError as exc:
             raise SequesterOrganizationNotFoundError from exc
-        if organization.sequester is None:
+        if organization.sequester_authority is None:
             raise SequesterDisabledError
 
         try:
-            certif_dumped = organization.sequester.authority_verify_key_der.verify(
+            certif_dumped = organization.sequester_authority.verify_key_der.verify(
                 service.service_certificate
             )
         except CryptoError as exc:
@@ -82,6 +96,8 @@ class MemorySequesterComponent(BaseSequesterComponent):
         if service.service_id in org_services:
             raise SequesterServiceAlreadyExists
         org_services[service.service_id] = service
+        # Also don't forget to update Organization structure in organization component
+        self._refresh_services_in_organization_component(organization_id)
 
     async def delete_service(
         self,
@@ -94,6 +110,8 @@ class MemorySequesterComponent(BaseSequesterComponent):
         if service.is_deleted:
             raise SequesterServiceAlreadyDeletedError
         self._services[organization_id][service_id] = service.evolve(deleted_on=deleted_on)
+        # Also don't forget to update Organization structure in organization component
+        self._refresh_services_in_organization_component(organization_id)
 
     def _get_service(
         self, organization_id: OrganizationID, service_id: SequesterServiceID
@@ -102,7 +120,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
             organization = self._organization_component._organizations[organization_id]
         except KeyError as exc:
             raise SequesterOrganizationNotFoundError from exc
-        if organization.sequester is None:
+        if organization.sequester_authority is None:
             raise SequesterDisabledError
         try:
             return self._services[organization_id][service_id]
@@ -121,7 +139,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
             organization = self._organization_component._organizations[organization_id]
         except KeyError as exc:
             raise SequesterOrganizationNotFoundError from exc
-        if organization.sequester is None:
+        if organization.sequester_authority is None:
             raise SequesterDisabledError
         return list(self._services[organization_id].values())
 

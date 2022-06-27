@@ -6,6 +6,7 @@ from pendulum import DateTime
 from functools import partial
 from dataclasses import dataclass
 
+from parsec.crypto import SigningKey
 from parsec.api.data import (
     UserCertificateContent,
     UserManifest,
@@ -13,7 +14,6 @@ from parsec.api.data import (
     DeviceCertificateContent,
     RealmRoleCertificateContent,
 )
-from parsec.crypto import SigningKey
 from parsec.api.protocol import UserID, RealmRole, RealmID, VlobID
 from parsec.core.types import (
     LocalDevice,
@@ -24,7 +24,7 @@ from parsec.core.types import (
 from parsec.core.fs.storage import UserStorage
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import User as BackendUser, Device as BackendDevice
-from parsec.backend.organization import Sequester
+from parsec.backend.organization import SequesterAuthority
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.vlob import VlobSequesterServiceInconsistencyError
 
@@ -364,19 +364,19 @@ def backend_data_binder_factory(initial_user_manifest_state):
             assert org.organization_id == first_device.organization_id
             backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
             if org.sequester_authority:
-                sequester = Sequester(
-                    authority_certificate=org.sequester_authority.certif,
-                    authority_verify_key_der=org.sequester_authority.certif_data.verify_key_der,
+                sequester_authority = SequesterAuthority(
+                    certificate=org.sequester_authority.certif,
+                    verify_key_der=org.sequester_authority.certif_data.verify_key_der,
                 )
             else:
-                sequester = None
+                sequester_authority = None
             await self.backend.organization.bootstrap(
                 id=org.organization_id,
                 user=backend_user,
                 first_device=backend_first_device,
                 bootstrap_token=org.bootstrap_token,
                 root_verify_key=org.root_verify_key,
-                sequester=sequester,
+                sequester_authority=sequester_authority,
             )
             self.certificates_store.store_user(
                 org.organization_id,
