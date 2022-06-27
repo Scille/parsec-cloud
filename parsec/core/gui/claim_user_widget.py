@@ -465,9 +465,9 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
 
     def _on_claim_clicked(self):
         # No try/except given inputs are validated with validators
-        device_label = DeviceLabel(self.line_edit_device.clean_text)
+        device_label = DeviceLabel(self.line_edit_device.clean_text())
         human_handle = HumanHandle(
-            email=self.line_edit_user_email.text(), label=self.line_edit_user_full_name.clean_text
+            email=self.line_edit_user_email.text(), label=self.line_edit_user_full_name.clean_text()
         )
 
         self.button_ok.setDisabled(True)

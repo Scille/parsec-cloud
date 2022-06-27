@@ -293,9 +293,9 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
     def _on_create_user_clicked(self):
         assert not self.create_user_job
         # No try/except given inputs are validated with validators
-        device_label = DeviceLabel(self.line_edit_device.clean_text)
+        device_label = DeviceLabel(self.line_edit_device.clean_text())
         handle = HumanHandle(
-            label=self.line_edit_user_full_name.clean_text, email=self.line_edit_user_email.text()
+            label=self.line_edit_user_full_name.clean_text(), email=self.line_edit_user_email.text()
         )
 
         self.button_create_user.setDisabled(True)

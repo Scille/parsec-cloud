@@ -305,4 +305,4 @@ def test_user_name_validator(qtbot, core_config, name_and_expected):
         )
 
     if user_name.startswith(" "):
-        assert le.clean_text == validators.trim_string(user_name)
+        assert le.clean_text() == validators.trim_string(user_name)

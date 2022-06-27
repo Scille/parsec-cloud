@@ -212,9 +212,9 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             # Inputs have been validated with validators
             human_handle = HumanHandle(
                 email=self.current_widget.line_edit_user_email.text(),
-                label=self.current_widget.line_edit_user_full_name.clean_text,
+                label=self.current_widget.line_edit_user_full_name.clean_text(),
             )
-            device_label = DeviceLabel(self.current_widget.line_edit_device.text())
+            device_label = DeviceLabel(self.current_widget.line_edit_device.clean_text())
 
             # TODO: call `await _do_create_org` directly since the context is now async
             self.create_job = self.jobs_ctx.submit_job(
