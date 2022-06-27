@@ -4,11 +4,18 @@ mkdir -p ~/.config/parsec
 PYTHON=${SNAP}/usr/bin/python3.9
 export PYTHONPATH=${SNAP}/site-packages
 
+# Expose /sbin and /bin as they are not set in snap classic mode
+# Those are useful to access `/bin/fusermount` which is used by libfuse
+# and `sbin/ldconfig` which is used by `ctypes.util.find_library`
+export PATH=${SNAP}/sbin:${SNAP}/bin:${PATH}
+
 # This was a hot fix from 2019 for a segfault with ubuntu 18
 # See https://github.com/Scille/parsec-cloud/issues/162 for more information.
 # This is likely why we don't have native dialogs on linux with snap.
-# TODO: Investigate whether this is still necessary or not
-export XDG_CURRENT_DESKTOP=unknown
+# Update 2022: we're removing this hot fix and hope for the best.
+# Good news is we should be able to have native dialogs with snap builds.
+# If any segfaults happen on some linux distro, we should try to restore it and see if it helps.
+# export XDG_CURRENT_DESKTOP=unknown
 
 # SNAP env variable is used by Qt to determine we are within a sandbox
 # and hence should use xdg-desktop-portal. However this is broken
