@@ -23,7 +23,7 @@ macro_rules! impl_common_stuff {
             }
 
             pub fn to_http_redirection_url(&self) -> Url {
-                let mut url = self.base.to_http_redirection_url();
+                let mut url = self.base.to_http_url();
                 url.path_segments_mut()
                     .unwrap_or_else(|()| unreachable!())
                     .push("redirect");
@@ -201,6 +201,7 @@ impl BaseBackendAddr {
         })
     }
 
+    /// create a url in parsec format (i.e.: `parsec://foo.bar[...]`)
     pub fn to_url(&self) -> Url {
         let mut url = Url::parse(&format!("{}://{}", PARSEC_SCHEME, &self.hostname))
             .unwrap_or_else(|_| unreachable!());
@@ -211,7 +212,8 @@ impl BaseBackendAddr {
         url
     }
 
-    pub fn to_http_redirection_url(&self) -> Url {
+    /// Create a url for http request.
+    pub fn to_http_url(&self) -> Url {
         let scheme = if self.use_ssl { "https" } else { "http" };
         let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname))
             .unwrap_or_else(|_| unreachable!());
@@ -219,16 +221,13 @@ impl BaseBackendAddr {
         url
     }
 
+    /// Create a url for http request with the given path.
     pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
+        let mut base_url = self.to_http_url();
         let path = path.unwrap_or("");
-        let scheme = if self.use_ssl { "https" } else { "http" };
+        base_url.set_path(path);
 
-        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname))
-            .unwrap_or_else(|_| unreachable!());
-        url.set_port(self.port).unwrap_or_else(|_| unreachable!());
-        url.set_path(path);
-
-        url
+        base_url
     }
 }
 
