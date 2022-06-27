@@ -100,7 +100,7 @@ class AcceptCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
     @property
     def human_handle(self):
         return HumanHandle(
-            label=self.line_edit_user_full_name.clean_text, email=self.line_edit_user_email.text()
+            label=self.line_edit_user_full_name.clean_text(), email=self.line_edit_user_email.text()
         )
 
     def _on_create_user_clicked(self):

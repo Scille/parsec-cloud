@@ -28,7 +28,6 @@ class ValidatedLineEdit(QLineEdit):
     def set_validator(self, validator):
         self._validator = validator
 
-    @property
     def clean_text(self):
         return trim_string(self.text())
 
