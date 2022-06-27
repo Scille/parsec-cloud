@@ -241,7 +241,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.label_waiting.show()
 
         self.line_edit_user_full_name.validity_changed.connect(self.check_infos)
-        self.line_edit_user_full_name.set_validator(validators.NotEmptyValidator())
+        self.line_edit_user_full_name.set_validator(validators.UserNameValidator())
         self.line_edit_user_email.validity_changed.connect(self.check_infos)
         self.line_edit_user_email.set_validator(validators.EmailValidator())
         self.line_edit_device.validity_changed.connect(self.check_infos)
@@ -292,15 +292,12 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
 
     def _on_create_user_clicked(self):
         assert not self.create_user_job
-        handle = None
-        # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
-        device_label = DeviceLabel(validators.trim_user_name(self.line_edit_device.text()))
-        try:
-            user_name = validators.trim_user_name(self.line_edit_user_full_name.text())
-            handle = HumanHandle(label=user_name, email=self.line_edit_user_email.text())
-        except ValueError as exc:
-            show_error(self, _("TEXT_GREET_USER_INVALID_HUMAN_HANDLE"), exception=exc)
-            return
+        # No try/except given inputs are validated with validators
+        device_label = DeviceLabel(self.line_edit_device.clean_text)
+        handle = HumanHandle(
+            label=self.line_edit_user_full_name.clean_text, email=self.line_edit_user_email.text()
+        )
+
         self.button_create_user.setDisabled(True)
         self.button_create_user.setText(_("TEXT_GREET_USER_WAITING"))
         self.create_user_job = self.jobs_ctx.submit_job(
