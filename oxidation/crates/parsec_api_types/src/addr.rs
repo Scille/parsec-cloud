@@ -68,7 +68,7 @@ macro_rules! impl_common_stuff {
                 let mut path_segments = parsed
                     .path_segments()
                     .ok_or_else(|| "Not a redirection URL")?;
-                if path_segments.next() == Some("") && path_segments.next() == Some("redirection") {
+                if path_segments.next() != Some("redirect") {
                     return Err("Redirection URL must have a `/redirect/...` path");
                 }
                 let path = &path_segments.collect::<Vec<&str>>().join("/");
