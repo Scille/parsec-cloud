@@ -36,6 +36,7 @@ macro_rules! impl_common_stuff {
                 Self::from_http_redirection(url).or_else(|_| url.parse())
             }
 
+            /// Create a new Addr from a raw http url that must have `/redirect` as prefix of its path.
             pub fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
                 // For wathever reason, Url considers illegal changing scheme
                 // from http/https to a custom one, so we cannot just use
