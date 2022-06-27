@@ -72,7 +72,7 @@ impl BackendAddr {
 
     #[args(path = "\"\"")]
     fn to_http_domain_url(&self, path: &str) -> PyResult<String> {
-        Ok(self.0.to_http_domain_url(Some(path)).to_string())
+        Ok(self.0.to_http_url_with_path(Some(path)).to_string())
     }
 
     fn to_http_redirection_url(&self) -> PyResult<String> {
@@ -451,7 +451,7 @@ impl BackendOrganizationBootstrapAddr {
 
     #[args(path = "\"\"")]
     fn to_http_domain_url(&self, path: &str) -> PyResult<String> {
-        Ok(self.0.to_http_domain_url(Some(path)).to_string())
+        Ok(self.0.to_http_url_with_path(Some(path)).to_string())
     }
 
     #[classmethod]
@@ -986,7 +986,7 @@ impl BackendPkiEnrollmentAddr {
 
     #[args(path = "\"\"")]
     fn to_http_domain_url(&self, path: &str) -> PyResult<String> {
-        Ok(self.0.to_http_domain_url(Some(path)).to_string())
+        Ok(self.0.to_http_url_with_path(Some(path)).to_string())
     }
 
     #[classmethod]

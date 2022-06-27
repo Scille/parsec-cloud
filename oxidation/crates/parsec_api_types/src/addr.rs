@@ -222,7 +222,7 @@ impl BaseBackendAddr {
     }
 
     /// Create a url for http request with the given path.
-    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
+    pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
         let mut base_url = self.to_http_url();
         let path = path.unwrap_or("");
         base_url.set_path(path);
@@ -312,8 +312,8 @@ impl BackendAddr {
         }
     }
 
-    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
-        self.base.to_http_domain_url(path)
+    pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
+        self.base.to_http_url_with_path(path)
     }
 
     fn _from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
@@ -550,8 +550,8 @@ impl BackendOrganizationBootstrapAddr {
         self.token.as_deref()
     }
 
-    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
-        self.base.to_http_domain_url(path)
+    pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
+        self.base.to_http_url_with_path(path)
     }
 }
 
@@ -787,8 +787,8 @@ impl BackendPkiEnrollmentAddr {
         url
     }
 
-    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
-        self.base.to_http_domain_url(path)
+    pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
+        self.base.to_http_url_with_path(path)
     }
 
     pub fn organization_id(&self) -> &OrganizationID {
