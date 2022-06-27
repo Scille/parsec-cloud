@@ -3,6 +3,7 @@
 from typing import Dict, List, Optional
 import pendulum
 import attr
+from parsec.backend.user import UserAlreadyRevokedError
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.api.data import DataError, RealmRoleCertificateContent, UserProfile
@@ -308,6 +309,9 @@ class BaseRealmComponent:
             await self.update_roles(
                 client_ctx.organization_id, granted_role, msg["recipient_message"]
             )
+
+        except UserAlreadyRevokedError:
+            return realm_update_roles_serializer.rep_dump({"status": "user_revoked"})
 
         except RealmRoleAlreadyGranted:
             return realm_update_roles_serializer.rep_dump({"status": "already_granted"})

@@ -774,6 +774,8 @@ class UserFS:
             raise FSSharingNotAllowedError(
                 f"Must be Owner or Manager on the workspace is mandatory to share it: {rep}"
             )
+        elif rep["status"] == "user_revoked":
+            raise FSSharingNotAllowedError(f"The user `{recipient}` is revoked: {rep}")
         elif rep["status"] == "require_greater_timestamp":
             return await self.workspace_share(
                 workspace_id, recipient, role, rep["strictly_greater_than"]
