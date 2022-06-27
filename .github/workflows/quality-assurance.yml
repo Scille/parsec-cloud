@@ -58,7 +58,9 @@ jobs:
               || startsWith(github.ref_name, 'yolo')
               || startsWith(github.ref_name, 'release'))
           }}
-        run: python ci_utils/check_news_fragment.py
+        run: |
+          whereis git
+          python ci_utils/check_news_fragment.py
 
       - name: Run cargo build to prepare rust's cache
         run: cargo build
