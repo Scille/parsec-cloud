@@ -173,7 +173,7 @@ async def restart_local_backend(administration_token, backend_port, email_host, 
     else:
 
         await trio.run_process(["pkill", "-f", pattern], check=False)
-        backend_process = await trio.open_process(command.split(), stdout=subprocess.PIPE)
+        backend_process = await trio.lowlevel.open_process(command.split(), stdout=subprocess.PIPE)
         async with backend_process.stdout:
             async for data in backend_process.stdout:
                 print(data.decode(), end="")
