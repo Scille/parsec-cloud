@@ -184,7 +184,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             raise VlobNotFoundError()
 
-        if not org.sequester:
+        if not org.sequester_authority:
             # Regular organization
             if expect_sequestered_organization:
                 raise VlobSequesterDisabledError()
@@ -197,7 +197,7 @@ class MemoryVlobComponent(BaseVlobComponent):
                 or {s.service_id for s in services} != expect_active_sequester_services
             ):
                 raise VlobSequesterServiceInconsistencyError(
-                    sequester_authority_certificate=org.sequester.authority_certificate,
+                    sequester_authority_certificate=org.sequester_authority.certificate,
                     sequester_services_certificates=[s.service_certificate for s in services],
                 )
 

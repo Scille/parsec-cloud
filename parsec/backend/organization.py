@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import Optional, Union, List
+from typing import Optional, Union, Tuple
 from secrets import token_hex
 
 from parsec.utils import timestamps_in_the_ballpark
@@ -58,9 +58,9 @@ class OrganizationExpiredError(OrganizationError):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class Sequester:
-    authority_certificate: bytes
-    authority_verify_key_der: SequesterVerifyKeyDer
+class SequesterAuthority:
+    certificate: bytes
+    verify_key_der: SequesterVerifyKeyDer
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -71,7 +71,8 @@ class Organization:
     root_verify_key: Optional[VerifyKey]
     user_profile_outsider_allowed: bool
     active_users_limit: Optional[int]
-    sequester: Optional[Sequester]
+    sequester_authority: Optional[SequesterAuthority]
+    sequester_services_certificates: Optional[Tuple[bytes, ...]]
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
@@ -94,7 +95,7 @@ class OrganizationStats:
     users: int
     active_users: int
     realms: int
-    users_per_profile_detail: List[UsersPerProfileDetailItem]
+    users_per_profile_detail: Tuple[UsersPerProfileDetailItem, ...]
 
 
 def generate_bootstrap_token() -> str:
@@ -117,10 +118,19 @@ class BaseOrganizationComponent:
         except OrganizationNotFoundError:
             return {"status": "not_found"}
 
+        if organization.sequester_authority:
+            sequester_authority_certificate = organization.sequester_authority.certificate
+            sequester_services_certificates = organization.sequester_services_certificates
+        else:
+            sequester_authority_certificate = None
+            sequester_services_certificates = None
+
         rep = {
+            "status": "ok",
             "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
             "active_users_limit": organization.active_users_limit,
-            "status": "ok",
+            "sequester_authority_certificate": sequester_authority_certificate,
+            "sequester_services_certificates": sequester_services_certificates,
         }
 
         return organization_config_serializer.rep_dump(rep)
@@ -257,12 +267,12 @@ class BaseOrganizationComponent:
 
         # Sequester can not be set with APIV1
         if isinstance(client_ctx, APIV1_AnonymousClientContext):
-            sequester = None
+            sequester_authority = None
 
         else:
             sequester_authority_certificate = msg["sequester_authority_certificate"]
             if sequester_authority_certificate is None:
-                sequester = None
+                sequester_authority = None
 
             else:
                 try:
@@ -290,9 +300,9 @@ class BaseOrganizationComponent:
                         "reason": "Device, user and sequester authority certificates must have the same timestamp.",
                     }
 
-                sequester = Sequester(
-                    authority_certificate=sequester_authority_certificate,
-                    authority_verify_key_der=sequester_authority_certif_data.verify_key_der,
+                sequester_authority = SequesterAuthority(
+                    certificate=sequester_authority_certificate,
+                    verify_key_der=sequester_authority_certif_data.verify_key_der,
                 )
 
         user = User(
@@ -323,7 +333,7 @@ class BaseOrganizationComponent:
                 first_device=first_device,
                 bootstrap_token=bootstrap_token,
                 root_verify_key=root_verify_key,
-                sequester=sequester,
+                sequester_authority=sequester_authority,
             )
 
         except OrganizationAlreadyBootstrappedError:
@@ -376,7 +386,7 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        sequester: Optional[Sequester] = None,
+        sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
         """
         Raises:

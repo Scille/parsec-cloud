@@ -11,7 +11,7 @@ from parsec.backend.user import UserError, User, Device
 from parsec.backend.utils import UnsetType, Unset
 from parsec.backend.organization import (
     BaseOrganizationComponent,
-    Sequester,
+    SequesterAuthority,
     OrganizationStats,
     Organization,
     OrganizationError,
@@ -211,7 +211,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             is_expired=data[2],
             active_users_limit=data[3],
             user_profile_outsider_allowed=data[4],
-            sequester=None,  # TODO: implement it in postgresql version
+            sequester_authority=None,  # TODO: implement it in postgresql version
+            sequester_services_certificates=None,  # TODO: implement it in postgresql version
         )
 
     async def bootstrap(
@@ -221,10 +222,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
-        sequester: Optional[Sequester] = None,
+        sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
         # TODO
-        if sequester is not None:
+        if sequester_authority is not None:
             raise NotImplementedError
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the
@@ -272,10 +273,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     active_users += 1
                     users_per_profile_detail[UserProfile[profile]]["active"] += 1
 
-            users_per_profile_detail = [
+            users_per_profile_detail = tuple(
                 UsersPerProfileDetailItem(profile=profile, **data)
                 for profile, data in users_per_profile_detail.items()
-            ]
+            )
 
         return OrganizationStats(
             data_size=result["data_size"],
