@@ -22,6 +22,8 @@ def check_newsfragment(fragment):
     ret = run(cmd_args, capture_output=True)
     log.info('checking fragment {}'.format(fragment.name))
 
+    log.info('stdout: {}'.format(ret.stdout))
+    log.info('stderr: {}'.format(ret.stderr))
     if ret.returncode == 0:
         log.info(f'Found new newsfragment {fragment.name}')
 
