@@ -298,7 +298,9 @@ fn extract_organization_id(parsed: &Url) -> Result<OrganizationID, AddrError> {
 pub struct BackendAddr {
     base: BaseBackendAddr,
 }
+
 impl_common_stuff!(BackendAddr);
+
 impl BackendAddr {
     pub fn new(hostname: String, port: Option<u16>, use_ssl: bool) -> Self {
         if hostname.is_empty() {
@@ -346,7 +348,9 @@ pub struct BackendOrganizationAddr {
     organization_id: OrganizationID,
     root_verify_key: VerifyKey,
 }
+
 impl_common_stuff!(BackendOrganizationAddr);
+
 impl BackendOrganizationAddr {
     pub fn new(
         backend_addr: BackendAddr,
@@ -567,7 +571,9 @@ pub struct BackendOrganizationFileLinkAddr {
     workspace_id: EntryID,
     encrypted_path: Vec<u8>,
 }
+
 impl_common_stuff!(BackendOrganizationFileLinkAddr);
+
 impl BackendOrganizationFileLinkAddr {
     pub fn new(
         backend_addr: BackendAddr,
@@ -660,7 +666,9 @@ pub struct BackendInvitationAddr {
     invitation_type: InvitationType,
     token: InvitationToken,
 }
+
 impl_common_stuff!(BackendInvitationAddr);
+
 impl BackendInvitationAddr {
     pub fn new(
         backend_addr: BackendAddr,
@@ -746,7 +754,9 @@ pub struct BackendPkiEnrollmentAddr {
     base: BaseBackendAddr,
     organization_id: OrganizationID,
 }
+
 impl_common_stuff!(BackendPkiEnrollmentAddr);
+
 impl BackendPkiEnrollmentAddr {
     pub fn new(backend_addr: BackendAddr, organization_id: OrganizationID) -> Self {
         Self {
