@@ -54,7 +54,7 @@ class User:
         return attr.evolve(self, **kwargs)
 
     def is_revoked(self):
-        return self.revoked_on and self.revoked_on <= pendulum.now()
+        return self.revoked_on
 
     @property
     def public_key(self) -> PublicKey:
