@@ -4,6 +4,11 @@ from subprocess import run
 from urllib.request import urlopen, Request, HTTPError
 from concurrent.futures import ThreadPoolExecutor
 import json
+import logging
+
+logging.basicConfig(level=logging.INFO)
+root_logger = logging.getLogger()
+
 # If file never existed in master, consider as a new newsfragment
 # Cannot just git diff against master branch here given newsfragments
 # removed in master will be considered as new items in our branch
@@ -11,9 +16,15 @@ import json
 basecmd = 'git log origin/master --exit-code --'.split()
 
 def check_newsfragment(fragment):
-    ret = run([*basecmd, fragment], capture_output=True)
+    log = root_logger.getChild(str(fragment.name))
+
+    cmd_args = [*basecmd, fragment]
+    ret = run(cmd_args, capture_output=True)
+    log.info('checking fragment {}'.format(fragment.name))
+
     if ret.returncode == 0:
-        print(f'Found new newsfragment {fragment.name}')
+        log.info(f'Found new newsfragment {fragment.name}')
+
         id, *_ = fragment.name.split('.')
         req = Request(
             method='GET',
