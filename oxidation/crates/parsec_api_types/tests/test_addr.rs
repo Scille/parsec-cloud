@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-mod test_from_http_redirect;
-
 use pretty_assertions::assert_eq;
 use rstest::rstest;
 use rstest_reuse::*;
@@ -605,4 +603,14 @@ fn backend_addr_redirection() {
         "parsec://parsec.example.com/my_org?no_ssl=true&action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
         "http://parsec.example.com/redirect/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
     );
+}
+
+#[rstest]
+#[case("https://foo.bar")]
+#[case("https://foo.bar/redirection")]
+#[case("https://foo.bar/not_valid")]
+fn test_faulty_addr_redirection(#[case] raw_url: &str) {
+    let res = dbg!(BackendAddr::from_http_redirection(raw_url));
+
+    assert!(res.is_err());
 }
