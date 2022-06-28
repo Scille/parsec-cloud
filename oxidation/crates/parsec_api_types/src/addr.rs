@@ -23,7 +23,7 @@ macro_rules! impl_common_stuff {
             }
 
             pub fn to_http_redirection_url(&self) -> Url {
-                let mut url = self.base.to_http_url();
+                let mut url = self.base.to_http_url(None);
                 url.path_segments_mut()
                     .unwrap_or_else(|()| unreachable!())
                     .push("redirect");
@@ -212,22 +212,18 @@ impl BaseBackendAddr {
         url
     }
 
-    /// Create a url for http request.
-    pub fn to_http_url(&self) -> Url {
+    /// Create a url for http request with an optional path.
+    pub fn to_http_url(&self, path: Option<&str>) -> Url {
         let scheme = if self.use_ssl { "https" } else { "http" };
+
         let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname))
             .unwrap_or_else(|_| unreachable!());
         url.set_port(self.port).unwrap_or_else(|_| unreachable!());
-        url
-    }
 
-    /// Create a url for http request with the given path.
-    pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
-        let mut base_url = self.to_http_url();
         let path = path.unwrap_or("");
-        base_url.set_path(path);
+        url.set_path(path);
 
-        base_url
+        url
     }
 }
 
@@ -313,7 +309,7 @@ impl BackendAddr {
     }
 
     pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
-        self.base.to_http_url_with_path(path)
+        self.base.to_http_url(path)
     }
 
     fn _from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
@@ -551,7 +547,7 @@ impl BackendOrganizationBootstrapAddr {
     }
 
     pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
-        self.base.to_http_url_with_path(path)
+        self.base.to_http_url(path)
     }
 }
 
@@ -788,7 +784,7 @@ impl BackendPkiEnrollmentAddr {
     }
 
     pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
-        self.base.to_http_url_with_path(path)
+        self.base.to_http_url(path)
     }
 
     pub fn organization_id(&self) -> &OrganizationID {
