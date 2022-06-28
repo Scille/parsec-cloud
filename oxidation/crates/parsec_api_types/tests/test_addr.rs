@@ -604,3 +604,13 @@ fn backend_addr_redirection() {
         "http://parsec.example.com/redirect/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
     );
 }
+
+#[rstest]
+#[case("https://foo.bar")]
+#[case("https://foo.bar/redirection")]
+#[case("https://foo.bar/not_valid")]
+fn test_faulty_addr_redirection(#[case] raw_url: &str) {
+    let res = dbg!(BackendAddr::from_http_redirection(raw_url));
+
+    assert!(res.is_err());
+}
