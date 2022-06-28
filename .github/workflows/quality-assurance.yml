@@ -47,6 +47,13 @@ jobs:
           components: rustfmt, clippy
           default: true
 
+      - name: Debug installed tools
+        run: |
+          python --version
+          rustc --version
+          cargo --version
+          node --version
+
       - name: Check Commit Signature
         run: python ci_utils/check_commit_signature.py
 
