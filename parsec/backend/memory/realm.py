@@ -26,7 +26,7 @@ from parsec.backend.realm import (
     RealmInMaintenanceError,
     RealmNotInMaintenanceError,
 )
-from parsec.backend.user import BaseUserComponent, UserNotFoundError
+from parsec.backend.user import BaseUserComponent, UserAlreadyRevokedError, UserNotFoundError
 from parsec.backend.message import BaseMessageComponent
 from parsec.backend import memory
 
@@ -169,6 +169,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             user = self._user_component._get_user(organization_id, new_role.user_id)
         except UserNotFoundError:
             raise RealmNotFoundError(f"User `{new_role.user_id}` doesn't exist")
+
+        if user.is_revoked():
+            raise UserAlreadyRevokedError(f"User `{new_role.user_id}` is revoked")
 
         if user.profile == UserProfile.OUTSIDER and new_role.role in (
             RealmRole.MANAGER,
