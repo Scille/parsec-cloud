@@ -1,27 +1,50 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 # PRs must contain a newsfragment that reference an opened issue
+import re
+import sys
+import json
 from pathlib import Path
 from subprocess import run
 from urllib.request import urlopen, Request, HTTPError
 from concurrent.futures import ThreadPoolExecutor
-import json
 import logging
 
 logging.basicConfig(level=logging.INFO)
-root_logger = logging.getLogger()
+ROOT_LOGGER = logging.getLogger()
 
 # If file never existed in master, consider as a new newsfragment
 # Cannot just git diff against master branch here given newsfragments
 # removed in master will be considered as new items in our branch
 # --exit-code makes the command exit with 0 if there are changes
-basecmd = "git log origin/master --exit-code --".split()
+BASE_CMD = "git log origin/master --exit-code --".split()
+
+
+def parse_args():
+    import argparse
+
+    parser = argparse.ArgumentParser("check_news_fragment")
+    parser.add_argument("branch_name", help="current branch name", type=str)
+    return parser.parse_args()
+
+
+args = parse_args()
+BRANCH_NAME = args.branch_name
+
+# Regex pattern to match for release branch.
+# Release branch don't have to create a news fragment
+RELEASE_BRANCH_NAME_PATTERN = r"[0-9]+.[0-9]+"
+
+ROOT_LOGGER.info(f"current branch {BRANCH_NAME}")
+if re.match(RELEASE_BRANCH_NAME_PATTERN, BRANCH_NAME) is not None:
+    print("Release branch detected, ignoring newsfragment checks")
+    sys.exit(0)
 
 
 def check_newsfragment(fragment):
-    log = root_logger.getChild(str(fragment.name))
+    log = ROOT_LOGGER.getChild(str(fragment.name))
 
-    cmd_args = [*basecmd, fragment]
+    cmd_args = [*BASE_CMD, fragment]
     ret = run(cmd_args, capture_output=True)
     log.info("checking fragment {}".format(fragment.name))
 
