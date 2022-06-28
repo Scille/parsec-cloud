@@ -65,7 +65,7 @@ ON CONFLICT (organization_id) DO
 
 _q_get_organization = Q(
     """
-SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed
+SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed, sequester_authority_certificate
 FROM organization
 WHERE organization_id = $organization_id
 """
@@ -74,7 +74,7 @@ WHERE organization_id = $organization_id
 
 _q_get_organization_for_update = Q(
     """
-SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed
+SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed, sequester_authority_certificate
 FROM organization
 WHERE organization_id = $organization_id
 FOR UPDATE
@@ -87,6 +87,7 @@ _q_bootstrap_organization = Q(
 UPDATE organization
 SET
     root_verify_key = $root_verify_key,
+    sequester_authority_certificate= $sequester_authority_certificate
     _bootstrapped_on = NOW()
 WHERE
     organization_id = $organization_id
@@ -211,7 +212,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             is_expired=data[2],
             active_users_limit=data[3],
             user_profile_outsider_allowed=data[4],
-            sequester_authority=None,  # TODO: implement it in postgresql version
+            sequester_authority=data[5],
             sequester_services_certificates=None,  # TODO: implement it in postgresql version
         )
 
@@ -225,8 +226,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
         # TODO
-        if sequester_authority is not None:
-            raise NotImplementedError
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the
             # organization table until the end of the transaction. Hence
@@ -249,6 +248,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     organization_id=id.str,
                     bootstrap_token=bootstrap_token,
                     root_verify_key=root_verify_key.encode(),
+                    sequester_authority_certificate=sequester_authority,
                 )
             )
 
