@@ -23,7 +23,7 @@ macro_rules! impl_common_stuff {
             }
 
             pub fn to_http_redirection_url(&self) -> Url {
-                let mut url = self.base.to_http_redirection_url();
+                let mut url = self.base.to_http_url(None);
                 url.path_segments_mut()
                     .unwrap_or_else(|()| unreachable!())
                     .push("redirect");
@@ -38,7 +38,7 @@ macro_rules! impl_common_stuff {
 
             /// Create a new Addr from a raw http url that must have `/redirect` as prefix of its path.
             pub fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
-                // For wathever reason, Url considers illegal changing scheme
+                // For whatever reason, Url considers illegal changing scheme
                 // from http/https to a custom one, so we cannot just use
                 // `Url::set_scheme` and instead have to do this hack :(
                 let url_with_forced_custom_scheme = format!("x{}", url);
@@ -202,6 +202,7 @@ impl BaseBackendAddr {
         })
     }
 
+    /// create a url in parsec format (i.e.: `parsec://foo.bar[...]`)
     pub fn to_url(&self) -> Url {
         let mut url = Url::parse(&format!("{}://{}", PARSEC_SCHEME, &self.hostname))
             .unwrap_or_else(|_| unreachable!());
@@ -212,21 +213,15 @@ impl BaseBackendAddr {
         url
     }
 
-    pub fn to_http_redirection_url(&self) -> Url {
+    /// Create a url for http request with an optional path.
+    pub fn to_http_url(&self, path: Option<&str>) -> Url {
         let scheme = if self.use_ssl { "https" } else { "http" };
+
         let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname))
             .unwrap_or_else(|_| unreachable!());
         url.set_port(self.port).unwrap_or_else(|_| unreachable!());
-        url
-    }
 
-    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
         let path = path.unwrap_or("");
-        let scheme = if self.use_ssl { "https" } else { "http" };
-
-        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname))
-            .unwrap_or_else(|_| unreachable!());
-        url.set_port(self.port).unwrap_or_else(|_| unreachable!());
         url.set_path(path);
 
         url
@@ -252,11 +247,9 @@ macro_rules! expose_BaseBackendAddr_fields {
             }
         }
 
+        /// `true` when the default port is overloaded.
         pub fn is_default_port(&self) -> bool {
-            match self.base.port {
-                Some(_) => false,
-                None => true,
-            }
+            self.base.port.is_none()
         }
 
         pub fn use_ssl(&self) -> bool {
@@ -299,7 +292,9 @@ fn extract_organization_id(parsed: &Url) -> Result<OrganizationID, AddrError> {
 pub struct BackendAddr {
     base: BaseBackendAddr,
 }
+
 impl_common_stuff!(BackendAddr);
+
 impl BackendAddr {
     pub fn new(hostname: String, port: Option<u16>, use_ssl: bool) -> Self {
         if hostname.is_empty() {
@@ -314,8 +309,8 @@ impl BackendAddr {
         }
     }
 
-    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
-        self.base.to_http_domain_url(path)
+    pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
+        self.base.to_http_url(path)
     }
 
     fn _from_url(parsed: &Url, pairs: &url::form_urlencoded::Parse) -> Result<Self, AddrError> {
@@ -330,7 +325,7 @@ impl BackendAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn _to_url(&self, url: Url) -> Url {
+    fn _to_url(&self, url: Url) -> Url {
         url
     }
 }
@@ -347,7 +342,9 @@ pub struct BackendOrganizationAddr {
     organization_id: OrganizationID,
     root_verify_key: VerifyKey,
 }
+
 impl_common_stuff!(BackendOrganizationAddr);
+
 impl BackendOrganizationAddr {
     pub fn new(
         backend_addr: BackendAddr,
@@ -385,7 +382,7 @@ impl BackendOrganizationAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn _to_url(&self, mut url: Url) -> Url {
+    fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
             .unwrap_or_else(|()| unreachable!())
             .push(self.organization_id.as_ref());
@@ -507,7 +504,7 @@ impl BackendOrganizationBootstrapAddr {
         let token = token_queries.next().map(|(_, v)| (*v).to_owned());
         // Note invalid percent-encoding is not considered a failure here:
         // the replacement character EF BF BD is used instead. This should be
-        // ok for our usecase (but it differs from Python implementation).
+        // ok for our use case (but it differs from Python implementation).
         if token_queries.next().is_some() {
             return Err("Multiple values for param `token`");
         }
@@ -528,7 +525,7 @@ impl BackendOrganizationBootstrapAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn _to_url(&self, mut url: Url) -> Url {
+    fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
             .unwrap_or_else(|()| unreachable!())
             .push(self.organization_id.as_ref());
@@ -550,8 +547,8 @@ impl BackendOrganizationBootstrapAddr {
         self.token.as_deref()
     }
 
-    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
-        self.base.to_http_domain_url(path)
+    pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
+        self.base.to_http_url(path)
     }
 }
 
@@ -568,7 +565,9 @@ pub struct BackendOrganizationFileLinkAddr {
     workspace_id: EntryID,
     encrypted_path: Vec<u8>,
 }
+
 impl_common_stuff!(BackendOrganizationFileLinkAddr);
+
 impl BackendOrganizationFileLinkAddr {
     pub fn new(
         backend_addr: BackendAddr,
@@ -624,7 +623,7 @@ impl BackendOrganizationFileLinkAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn _to_url(&self, mut url: Url) -> Url {
+    fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
             .unwrap_or_else(|()| unreachable!())
             .push(self.organization_id.as_ref());
@@ -661,7 +660,9 @@ pub struct BackendInvitationAddr {
     invitation_type: InvitationType,
     token: InvitationToken,
 }
+
 impl_common_stuff!(BackendInvitationAddr);
+
 impl BackendInvitationAddr {
     pub fn new(
         backend_addr: BackendAddr,
@@ -707,7 +708,7 @@ impl BackendInvitationAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn _to_url(&self, mut url: Url) -> Url {
+    fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
             .unwrap_or_else(|()| unreachable!())
             .push(self.organization_id.as_ref());
@@ -747,7 +748,9 @@ pub struct BackendPkiEnrollmentAddr {
     base: BaseBackendAddr,
     organization_id: OrganizationID,
 }
+
 impl_common_stuff!(BackendPkiEnrollmentAddr);
+
 impl BackendPkiEnrollmentAddr {
     pub fn new(backend_addr: BackendAddr, organization_id: OrganizationID) -> Self {
         Self {
@@ -772,7 +775,7 @@ impl BackendPkiEnrollmentAddr {
 
     expose_BaseBackendAddr_fields!();
 
-    pub fn _to_url(&self, mut url: Url) -> Url {
+    fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
             .unwrap_or_else(|()| unreachable!())
             .push(self.organization_id.as_ref());
@@ -781,8 +784,8 @@ impl BackendPkiEnrollmentAddr {
         url
     }
 
-    pub fn to_http_domain_url(&self, path: Option<&str>) -> Url {
-        self.base.to_http_domain_url(path)
+    pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
+        self.base.to_http_url(path)
     }
 
     pub fn organization_id(&self) -> &OrganizationID {

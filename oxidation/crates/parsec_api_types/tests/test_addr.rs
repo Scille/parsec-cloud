@@ -208,7 +208,7 @@ fn test_good_addr(testbed: &dyn Testbed) {
 )]
 fn test_backend_addr_to_http_domain_url(value: &str, path: Option<&str>, expected: &str) {
     let addr: BackendAddr = value.parse().unwrap();
-    let result = addr.to_http_domain_url(path);
+    let result = addr.to_http_url_with_path(path);
     assert_eq!(result.as_str(), expected);
 }
 
