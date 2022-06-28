@@ -42,6 +42,7 @@ The `signtool` command is part of the Windows SDK : https://developer.microsoft.
 
 #### Add signtool to path
 Can be done for example doing ```@set PATH=C:\Program Files (x86)\Windows Kits\10\bin\$VERSION\x64;%PATH%```
+PowerShell: ```$Env:PATH += ";C:\Program Files (x86)\Windows Kits\10\bin\$VERSION\x64"```
 
 #### Sign an executable
 ```signtool sign /n Scille /t http://time.certum.pl /fd sha256 /d "Parsec by Scille" /v $EXECUTABLE```
