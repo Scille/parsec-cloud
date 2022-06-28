@@ -38,7 +38,7 @@ def check_newsfragment(fragment):
         )
         try:
             ret = urlopen(req)
-        except HTTPError as exc:
+        except HTTPError:
             raise SystemExit("New newsfragment ID doesn't correspond to an issue !")
         data = json.loads(ret.read())
         if "pull_request" in data:
