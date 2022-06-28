@@ -12,7 +12,7 @@ jobs:
   check-quality-assurance:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
       - uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb
         with:
@@ -26,7 +26,7 @@ jobs:
         id: cache-rust
         env:
           cache-version: 1
-        uses: actions/cache@c3f1317a9e7b1ef106c153ac8c0f00fed3ddbc0d
+        uses: actions/cache@c3f1317a9e7b1ef106c153ac8c0f00fed3ddbc0d # pin v3.0.4
         with:
           key: ${{ runner.os }}-rust-${{ env.cache-version }}.${{ env.rust-version }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
@@ -41,7 +41,7 @@ jobs:
             ~/.cargo/git/db
 
       - if: ${{ steps.cache-rust.outputs.cache-hit == 'false' }}
-        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af
+        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # pin v1.0.6
         with:
           toolchain: ${{ env.rust-version }}
           components: rustfmt, clippy
@@ -81,6 +81,6 @@ jobs:
         run: |
           sed -i '/id: mixed-line-ending/a\      args:\n\        - "--fix=lf"' .pre-commit-config.yaml
 
-      - uses: pre-commit/action@646c83fcd040023954eafda54b4db0192ce70507
+      - uses: pre-commit/action@646c83fcd040023954eafda54b4db0192ce70507 # pin v3.0.0
         with:
           extra_args: --show-diff-on-failure --all-files
