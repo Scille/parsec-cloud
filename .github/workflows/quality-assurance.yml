@@ -54,6 +54,10 @@ jobs:
           cargo --version
           node --version
 
+      - name: Debug rust cache
+        run: |
+          ls -la ~/.cargo/{.,bin,git,registry} target || true
+
       - name: Check Commit Signature
         run: python ci_utils/check_commit_signature.py
 
