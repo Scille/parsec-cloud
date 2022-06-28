@@ -1,1 +1,0 @@
-Ignore entries that are not files (i.e socket) when importing a directory

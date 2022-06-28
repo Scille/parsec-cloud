@@ -1,1 +1,0 @@
-Prevent change of role for a user after their revocation

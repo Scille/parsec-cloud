@@ -5,6 +5,24 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.10.0-rc2 (2022-06-28)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix duplicated files appearing in workspace sneak peek  (`#2503
+  <https://github.com/Scille/parsec-cloud/issues/2503>`__)
+* Prevent change of role for a user after their revocation  (`#2505
+  <https://github.com/Scille/parsec-cloud/issues/2505>`__)
+* Don't overwrite files when importing a new file with the same name  (`#2504
+  <https://github.com/Scille/parsec-cloud/issues/2504>`__)
+* Fixed invalid email error with some weird user names  (`#2502
+  <https://github.com/Scille/parsec-cloud/issues/2502>`__)
+* Ignore entries that are not files (i.e socket) when importing a directory
+  (`#2512 <https://github.com/Scille/parsec-cloud/issues/2512>`__)
+
+
 Parsec v2.10.0-rc1 (2022-06-22)
 -------------------------------
 
