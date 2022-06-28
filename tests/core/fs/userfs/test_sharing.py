@@ -82,9 +82,9 @@ async def test_share_revoked_recipient(running_backend, alice_user_fs, alice, ma
     assert str(exc.value) == "The user `bob` is revoked: {'status': 'user_revoked'}"
 
     # Share with Bob, this should fail before the backend request as the cache has been invalidated
-    with pytest.raises(FSError) as exc:
+    with pytest.raises(FSSharingNotAllowedError) as exc:
         await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
-    assert str(exc.value) == "User bob revoked"
+    assert str(exc.value) == "The user `bob` is revoked"
 
 
 @pytest.mark.trio

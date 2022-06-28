@@ -711,7 +711,7 @@ class UserFS:
         recipient_user, revoked_recipient_user = await self.remote_loader.get_user(recipient)
 
         if revoked_recipient_user:
-            raise FSError(f"User {recipient} revoked")
+            raise FSSharingNotAllowedError(f"The user `{recipient}` is revoked")
 
         # Note we don't bother to check workspace's access roles given they
         # could be outdated (and backend will do the check anyway)
