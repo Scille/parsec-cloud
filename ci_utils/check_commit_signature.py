@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+
 # Commit signature is not mandatory for the repo (yet ?), however we
 # want to make sure the signed commits are actually valid.
 # Indeed, it seems the signature process breaks from time to time,
@@ -9,12 +11,14 @@ from urllib.request import urlopen
 import json
 import re
 
-match = re.match(r'refs/pull/([0-9]+)/merge', '$(Build.SourceBranch)')
+match = re.match(r"refs/pull/([0-9]+)/merge", "$(Build.SourceBranch)")
 
 if match:
     pr_id = match.group(1)
-    r = urlopen(f'https://api.github.com/repos/Scille/parsec-cloud/pulls/{pr_id}/commits')
-    bad_commits = [c['sha'] for c in json.load(r) if c['commit']['verification']['reason'] == 'invalid']
+    r = urlopen(f"https://api.github.com/repos/Scille/parsec-cloud/pulls/{pr_id}/commits")
+    bad_commits = [
+        c["sha"] for c in json.load(r) if c["commit"]["verification"]["reason"] == "invalid"
+    ]
 
     if bad_commits:
-        raise SystemExit(f'''Invalid signatures in commits: {', '.join(bad_commits)}''')
+        raise SystemExit(f"""Invalid signatures in commits: {', '.join(bad_commits)}""")
