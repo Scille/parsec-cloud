@@ -59,7 +59,7 @@ jobs:
           ls -la ~/.cargo/{.,bin,git,registry} target || true
 
       - name: Check Commit Signature
-        run: python ci_utils/check_commit_signature.py
+        run: python .github/scripts/check_commit_signature.py
 
       - name: Check Newsfragment
         if: |
@@ -72,7 +72,7 @@ jobs:
         run: |
           whereis git
           git fetch origin master
-          python ci_utils/check_news_fragment.py ${{ github.ref_name }}
+          python .github/scripts/check_news_fragment.py ${{ github.ref_name }}
 
       - name: Run cargo build to prepare rust's cache
         run: cargo build --workspace
