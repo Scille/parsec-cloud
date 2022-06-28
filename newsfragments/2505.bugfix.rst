@@ -1,1 +1,1 @@
-Fix the propagation of the revoked status to other users
+Prevent change of role for a user after their revocation
