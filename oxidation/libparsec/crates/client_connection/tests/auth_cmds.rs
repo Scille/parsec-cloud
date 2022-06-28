@@ -10,7 +10,7 @@ use std::{
 use libparsec_client_connection::{AuthenticatedCmds, CommandError};
 use parsec_api_crypto::SigningKey;
 use parsec_api_protocol::authenticated_cmds;
-use parsec_api_types::DeviceID;
+use parsec_api_types::{BackendOrganizationAddr, DeviceID};
 use tokio::{
     sync::oneshot::{channel, Receiver, Sender},
     task::JoinHandle,
@@ -18,6 +18,8 @@ use tokio::{
 use utils::server::MakeSignatureVerifier;
 
 use hyper::server::Server;
+
+const RVK: &str = "7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
 
 #[tokio::test]
 async fn valid_request() {
@@ -32,8 +34,8 @@ async fn valid_request() {
 
     let kp = SigningKey::generate();
     let vk = kp.verify_key();
-    let url = format!("http://{}:{}", IP, PORT);
-    let auth_cmds = generate_client(kp, device_id.clone(), &url);
+    let url = generate_backend_organization(IP, PORT, RVK);
+    let auth_cmds = generate_client(kp, device_id.clone(), url);
 
     let mut signature_verifier = MakeSignatureVerifier::default();
     signature_verifier.register_public_key(device_id, vk);
@@ -73,8 +75,8 @@ async fn invalid_request() {
 
     let client_kp = SigningKey::generate();
     let other_kp = SigningKey::generate();
-    let url = format!("http://{}:{}", IP, PORT);
-    let auth_cmds = generate_client(client_kp, device_id.clone(), &url);
+    let url = generate_backend_organization(IP, PORT, RVK);
+    let auth_cmds = generate_client(client_kp, device_id.clone(), url);
 
     let mut signature_verifier = MakeSignatureVerifier::default();
     signature_verifier.register_public_key(device_id, other_kp.verify_key());
@@ -101,6 +103,17 @@ async fn invalid_request() {
     );
 }
 
+fn generate_backend_organization(ip: Ipv4Addr, port: u16, rvk: &str) -> BackendOrganizationAddr {
+    let raw_url = format!("parsec://{ip}:{port}/MyOrg?rvk={rvk}&no_ssl=true");
+    let server_url = BackendOrganizationAddr::from_str(&raw_url).unwrap();
+    log::debug!(
+        "generated backend organization url: {}",
+        server_url.to_http_url(None)
+    );
+
+    server_url
+}
+
 fn setup_logger() {
     if let Err(e) = env_logger::builder()
         .filter_level(log::LevelFilter::Debug)
@@ -115,7 +128,7 @@ fn setup_logger() {
 fn generate_client(
     signing_key: SigningKey,
     device_id: DeviceID,
-    root_url: &str,
+    root_url: BackendOrganizationAddr,
 ) -> AuthenticatedCmds {
     let client = reqwest::ClientBuilder::new()
         .build()

@@ -23,7 +23,8 @@ use libparsec_protocol::authenticated_cmds::{
     self, invite_delete::InvitationDeletedReason, invite_new::UserOrDevice,
 };
 use libparsec_types::{
-    BlockID, DateTime, DeviceID, InvitationToken, RealmID, ReencryptionBatchEntry, UserID, VlobID,
+    BackendOrganizationAddr, BlockID, DateTime, DeviceID, InvitationToken, RealmID,
+    ReencryptionBatchEntry, UserID, VlobID,
 };
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
@@ -33,7 +34,7 @@ use reqwest::{
 use crate::command_error::{self, CommandError};
 
 /// Endpoint path were will be sending authenticated cmds.
-pub const AUTHENTICATED_API_URI: &str = "/authenticated";
+pub const AUTHENTICATED_API_URI: &str = "authenticated";
 /// Method name that will be used for the header `Authorization` to indicate that will be using this method.
 pub const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
 /// How we serialize the data before sending a request.
@@ -50,17 +51,20 @@ pub struct AuthenticatedCmds {
 
 impl AuthenticatedCmds {
     /// Create a new `AuthenticatedCmds`
-    pub fn new<U: AsRef<str>>(
+    pub fn new(
         client: Client,
-        root_url: U,
+        server_url: BackendOrganizationAddr,
         device_id: DeviceID,
         signing_key: SigningKey,
     ) -> Result<Self, url::ParseError> {
-        let root_url = Url::parse(root_url.as_ref())?;
-        let url = root_url
-            .join(AUTHENTICATED_API_URI)
-            .expect("the add path to the authenticated url must be valid");
+        let url = server_url.to_http_url(Some(&format!(
+            "/{}/{}",
+            AUTHENTICATED_API_URI,
+            server_url.organization_id()
+        )));
+
         let device_id = base64::encode(device_id.to_string().as_bytes());
+        eprintln!("url => {}", url);
 
         Ok(Self {
             client,
@@ -87,7 +91,7 @@ macro_rules! impl_auth_cmds {
                     .expect(concat!("failed to serialize the command ", stringify!($name)));
 
                 let req = prepare_request(request_builder, &self.signing_key, &self.device_id, data).send();
-                let resp = req.await?;
+                let resp = dbg!(req.await)?;
                 if resp.status() != reqwest::StatusCode::OK {
                     return Err(CommandError::InvalidResponseStatus(resp.status(), resp));
                 }
