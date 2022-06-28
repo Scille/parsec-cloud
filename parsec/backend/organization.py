@@ -62,6 +62,13 @@ class SequesterAuthority:
     certificate: bytes
     verify_key_der: SequesterVerifyKeyDer
 
+    @classmethod
+    def build_from_certificate(cls, certificate):
+        return cls(
+            certificate=certificate,
+            verify_key_der=SequesterAuthorityCertificate.unsecure_load(certificate).verify_key_der,
+        )
+
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class Organization:

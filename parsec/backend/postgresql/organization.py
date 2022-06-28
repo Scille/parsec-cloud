@@ -65,7 +65,7 @@ ON CONFLICT (organization_id) DO
 
 _q_get_organization = Q(
     """
-SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed, sequester_authority_certificate
+SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed, sequester_authority
 FROM organization
 WHERE organization_id = $organization_id
 """
@@ -74,7 +74,7 @@ WHERE organization_id = $organization_id
 
 _q_get_organization_for_update = Q(
     """
-SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed, sequester_authority_certificate
+SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed, sequester_authority
 FROM organization
 WHERE organization_id = $organization_id
 FOR UPDATE
@@ -87,7 +87,7 @@ _q_bootstrap_organization = Q(
 UPDATE organization
 SET
     root_verify_key = $root_verify_key,
-    sequester_authority_certificate= $sequester_authority_certificate
+    sequester_authority= $sequester_authority,
     _bootstrapped_on = NOW()
 WHERE
     organization_id = $organization_id
@@ -205,6 +205,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             raise OrganizationNotFoundError()
 
         rvk = VerifyKey(data[1]) if data[1] else None
+
+        sequester_authority = None
+        if data[5]:
+            # TODO: Handle Error
+            # Load certificate and key
+            sequester_authority = SequesterAuthority.build_from_certificate(data[5])
         return Organization(
             organization_id=id,
             bootstrap_token=data[0],
@@ -212,7 +218,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             is_expired=data[2],
             active_users_limit=data[3],
             user_profile_outsider_allowed=data[4],
-            sequester_authority=data[5],
+            sequester_authority=sequester_authority,
             sequester_services_certificates=None,  # TODO: implement it in postgresql version
         )
 
@@ -243,15 +249,17 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             except UserError as exc:
                 raise OrganizationFirstUserCreationError(exc) from exc
 
+            service_certificate = None
+            if sequester_authority:
+                service_certificate = sequester_authority.certificate
             result = await conn.execute(
                 *_q_bootstrap_organization(
                     organization_id=id.str,
                     bootstrap_token=bootstrap_token,
                     root_verify_key=root_verify_key.encode(),
-                    sequester_authority_certificate=sequester_authority,
+                    sequester_authority=service_certificate,
                 )
             )
-
             if result != "UPDATE 1":
                 raise OrganizationError(f"Update error: {result}")
 
