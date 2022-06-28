@@ -521,10 +521,8 @@ async def test_update_roles_for_revoked_user(
     realm,
     realm_generate_certif_and_update_roles_or_fail,
     next_timestamp,
-    backend_data_binder_factory,
+    backend_data_binder,
 ):
-    binder = backend_data_binder_factory(backend)
-
     # Grant a role to bob
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_backend_sock, alice, realm, bob.user_id, RealmRole.MANAGER, next_timestamp()
@@ -532,7 +530,7 @@ async def test_update_roles_for_revoked_user(
     assert rep == {"status": "ok"}
 
     # Revoke Bob
-    await binder.bind_revocation(bob.user_id, certifier=alice)
+    await backend_data_binder.bind_revocation(bob.user_id, certifier=alice)
 
     # Now try to change bob's role, this should fail
     rep = await realm_generate_certif_and_update_roles_or_fail(
