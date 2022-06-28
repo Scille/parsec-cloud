@@ -775,6 +775,8 @@ class UserFS:
                 f"Must be Owner or Manager on the workspace is mandatory to share it: {rep}"
             )
         elif rep["status"] == "user_revoked":
+            # That cache is probably not up-to-date if we get this error code
+            self.remote_devices_manager.invalidate_user_cache(recipient)
             raise FSSharingNotAllowedError(f"The user `{recipient}` is revoked: {rep}")
         elif rep["status"] == "require_greater_timestamp":
             return await self.workspace_share(
