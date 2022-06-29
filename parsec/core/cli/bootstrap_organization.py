@@ -8,7 +8,6 @@ from typing import Optional, Callable
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.utils import trio_run
 from parsec.cli_utils import spinner, cli_exception_handler, aprompt, aconfirm
-from parsec.api.data.certif import SequesterAuthorityKeyFormat
 from parsec.api.protocol import HumanHandle, DeviceLabel
 from parsec.core.config import CoreConfig
 from parsec.core.types import BackendOrganizationBootstrapAddr
@@ -56,10 +55,6 @@ Do you want to continue ?""",
         if not answer:
             raise SystemExit("Bootstrap aborted")
         sequester_verify_key = SequesterVerifyKeyDer(sequester_verify_key.read_bytes())
-        try:
-            SequesterAuthorityKeyFormat(sequester_verify_key.algorithm.upper())
-        except ValueError:
-            raise SystemExit(f"Wrong key format, {sequester_verify_key.algorithm} is not supported")
 
     if not human_label:
         human_label = await aprompt("User fullname")
