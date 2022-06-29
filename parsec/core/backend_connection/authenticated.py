@@ -325,6 +325,9 @@ class BackendAuthenticatedConn:
                     )
 
             else:
+                # `organization_config` also provide sequester configuration, however
+                # we just ignore it (the remote_loader will lazily load the config
+                # the first time it tries a manifest upload with the wrong config)
                 self._organization_config = OrganizationConfig(
                     user_profile_outsider_allowed=rep["user_profile_outsider_allowed"],
                     active_users_limit=rep["active_users_limit"],

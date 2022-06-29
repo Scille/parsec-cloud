@@ -12,6 +12,7 @@ from parsec.api.protocol import (
     RealmID,
     VlobID,
     BlockID,
+    SequesterServiceID,
     InvitationToken,
     ProtocolError,
     InvitationType,
@@ -164,6 +165,7 @@ async def vlob_create(
     vlob_id: VlobID,
     timestamp: pendulum.DateTime,
     blob: bytes,
+    sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
 ) -> dict:
     return await _send_cmd(
         transport,
@@ -174,6 +176,7 @@ async def vlob_create(
         vlob_id=vlob_id,
         timestamp=timestamp,
         blob=blob,
+        sequester_blob=sequester_blob,
     )
 
 
@@ -202,6 +205,7 @@ async def vlob_update(
     version: int,
     timestamp: pendulum.DateTime,
     blob: bytes,
+    sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
 ) -> dict:
     return await _send_cmd(
         transport,
@@ -212,6 +216,7 @@ async def vlob_update(
         version=version,
         timestamp=timestamp,
         blob=blob,
+        sequester_blob=sequester_blob,
     )
 
 
