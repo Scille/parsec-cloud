@@ -46,7 +46,7 @@ _q_get_organisation_sequester_authority = Q(
     f"""
     SELECT sequester_authority
     FROM organization
-    WHERE organization.organization_id={q_organization_internal_id("$organization_id")}
+    WHERE organization_id = $organization_id
     """
 )
 
@@ -71,20 +71,20 @@ _q_create_sequester_service = Q(
 
 _q_delete_sequester_service = Q(
     f"""
-    UPDATE sequester_service(deleted_on)
-    VALUES ($deleted_on)
+    UPDATE sequester_service
+    SET deleted_on=$deleted_on
     WHERE
-        service_id=$service_id,
+        service_id=$service_id
         AND organization={ q_organization_internal_id("$organization_id") }
     """
 )
 
 _q_get_sequester_service_exist = Q(
     f"""
-    SELECT COUNT(service_id)
+    SELECT service_id
     FROM sequester_service
     WHERE
-        service_id=$service_id,
+        service_id=$service_id
         AND organization={ q_organization_internal_id("$organization_id") }
     LIMIT 1"""
 )
@@ -94,7 +94,7 @@ _q_get_sequester_service_deleted_for_update = Q(
     SELECT service_id, deleted_on
     FROM sequester_service
     WHERE
-        service_id=$service_id,
+        service_id=$service_id
         AND organization={ q_organization_internal_id("$organization_id") }
     FOR UPDATE
     LIMIT 1
@@ -106,7 +106,7 @@ _q_get_sequester_service = Q(
     SELECT service_label, service_certificate, created_on, deleted_on
     FROM sequester_service
     WHERE
-        service_id=$service_id,
+        service_id=$service_id
         AND organization={ q_organization_internal_id("$organization_id") }
     FOR UPDATE
     LIMIT 1"""
@@ -179,7 +179,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     service_id=service.service_id,
                     service_label=service.service_label,
                     service_certificate=service.service_certificate,
-                    created_on=now,
+                    created_on=service.created_on,
                 )
             )
             if result != "INSERT 0 1":
@@ -228,7 +228,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                 *_q_delete_sequester_service(
                     organization_id=organization_id.str,
                     service_id=service_id,
-                    deleted_on=pendulum_now(),
+                    deleted_on=deleted_on,
                 )
             )
             if result != "UPDATE 1":
@@ -242,7 +242,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
     ) -> SequesterService:
         await self._assert_service_enabled(conn, organization_id)
 
-        row = conn.fetchrow(
+        row = await conn.fetchrow(
             *_q_get_sequester_service(organization_id=organization_id.str, service_id=service_id)
         )
 
@@ -274,7 +274,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
 
             return [
                 SequesterService(
-                    service_id=entry["service_id"],
+                    service_id=SequesterServiceID(entry["service_id"]),
                     service_label=entry["service_label"],
                     service_certificate=entry["service_certificate"],
                     created_on=entry["created_on"],

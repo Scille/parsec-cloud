@@ -4,6 +4,7 @@ from pendulum import DateTime
 from typing import List, Tuple, Dict, Optional
 
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
+from parsec.api.protocol.sequester import SequesterServiceID
 from parsec.backend.vlob import BaseVlobComponent
 from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
 from parsec.backend.postgresql.vlob_queries import (
@@ -31,6 +32,7 @@ class PGVlobComponent(BaseVlobComponent):
         vlob_id: VlobID,
         timestamp: DateTime,
         blob: bytes,
+        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await query_create(

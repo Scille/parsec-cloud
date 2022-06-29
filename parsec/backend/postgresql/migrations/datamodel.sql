@@ -25,7 +25,7 @@ CREATE TABLE organization (
     is_expired BOOLEAN NOT NULL,
     _bootstrapped_on TIMESTAMPTZ,
     _created_on TIMESTAMPTZ NOT NULL
-    sequester_authority_certificate BYTEA; -- NULL To disable sequester services
+    sequester_authority BYTEA; -- NULL To disable sequester services
 );
 
 -------------------------------------------------------
