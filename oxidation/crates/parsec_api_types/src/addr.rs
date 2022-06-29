@@ -398,6 +398,18 @@ impl BackendOrganizationAddr {
     pub fn root_verify_key(&self) -> &VerifyKey {
         &self.root_verify_key
     }
+
+    /// Return an [Url] that point to the server endpoint for authenticated commands.
+    pub fn to_authenticated_http_url(&self) -> Url {
+        self.base
+            .to_http_url(Some(&format!("/authenticated/{}", self.organization_id)))
+    }
+
+    /// Return an [Url] that point to the server endpoint for anonymous commands.
+    pub fn to_anonymous_http_url(&self) -> Url {
+        self.base
+            .to_http_url(Some(&format!("/anonymous/{}", self.organization_id)))
+    }
 }
 
 /*
