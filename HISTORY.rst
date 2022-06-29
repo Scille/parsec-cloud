@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.10.0-rc3 (2022-06-29)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix the snackbars not being hidden when the window loses the focus (`#2530
+  <https://github.com/Scille/parsec-cloud/issues/2530>`__)
+
+
 Parsec v2.10.0-rc2 (2022-06-28)
 -------------------------------
 
