@@ -33,8 +33,6 @@ use reqwest::{
 
 use crate::command_error::{self, CommandError};
 
-/// Endpoint path were will be sending authenticated cmds.
-pub const AUTHENTICATED_API_URI: &str = "authenticated";
 /// Method name that will be used for the header `Authorization` to indicate that will be using this method.
 pub const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
 /// How we serialize the data before sending a request.
@@ -57,14 +55,9 @@ impl AuthenticatedCmds {
         device_id: DeviceID,
         signing_key: SigningKey,
     ) -> Result<Self, url::ParseError> {
-        let url = server_url.to_http_url(Some(&format!(
-            "/{}/{}",
-            AUTHENTICATED_API_URI,
-            server_url.organization_id()
-        )));
+        let url = server_url.to_authenticated_http_url();
 
         let device_id = base64::encode(device_id.to_string().as_bytes());
-        eprintln!("url => {}", url);
 
         Ok(Self {
             client,
