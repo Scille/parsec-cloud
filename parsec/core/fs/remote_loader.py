@@ -49,7 +49,7 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNoWriteAccess,
     FSUserNotFoundError,
     FSDeviceNotFoundError,
-    FSInvalidTrustchainEror,
+    FSInvalidTrustchainError,
     FSLocalMissError,
 )
 from parsec.core.fs.storage import BaseWorkspaceStorage
@@ -85,7 +85,7 @@ def translate_remote_devices_manager_errors() -> Iterator[None]:
     except RemoteDevicesManagerDeviceNotFoundError as exc:
         raise FSDeviceNotFoundError(str(exc)) from exc
     except RemoteDevicesManagerInvalidTrustchainError as exc:
-        raise FSInvalidTrustchainEror(str(exc)) from exc
+        raise FSInvalidTrustchainError(str(exc)) from exc
     except RemoteDevicesManagerError as exc:
         raise FSRemoteOperationError(str(exc)) from exc
 

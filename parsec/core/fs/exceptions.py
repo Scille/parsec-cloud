@@ -297,5 +297,5 @@ class FSDeviceNotFoundError(FSRemoteOperationError):
     pass
 
 
-class FSInvalidTrustchainEror(FSRemoteOperationError):
+class FSInvalidTrustchainError(FSRemoteOperationError):
     pass
