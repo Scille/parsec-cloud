@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Tuple
 
-import triopg
+from triopg._triopg import TrioConnectionProxy
 from parsec.api.data import DataError, SequesterServiceCertificate
 from parsec.api.protocol import OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.organization import SequesterAuthority
@@ -186,7 +186,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                 raise SequesterError(f"Insertion Error: {result}")
 
     async def _assert_service_enabled(
-        self, conn: triopg.TrioConnectionProxy, organization_id: OrganizationID
+        self, conn: TrioConnectionProxy, organization_id: OrganizationID
     ):
         row = await conn.fetchrow(
             *_q_get_organisation_sequester_authority(organization_id=organization_id.str)
@@ -236,7 +236,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
 
     async def _get_service(
         self,
-        conn: triopg.TrioConnectionProxy,
+        conn: TrioConnectionProxy,
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
     ) -> SequesterService:
