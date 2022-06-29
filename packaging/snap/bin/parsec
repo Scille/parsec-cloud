@@ -11,8 +11,9 @@ cd ${SNAP}
 # Expose /sbin and /bin as they are not set in snap classic mode
 # In particular, this is useful to access `/bin/fusermount` which is used by libfuse
 # We also override the original path as we should not rely on tools installed on the system
-# From this point on, we can no longer use utils like `mkdir`.
-export PATH=${SNAP}/sbin:${SNAP}/bin:${SNAP}/usr/bin
+# From this point on, we should avoid using tools from the system.
+# One notable exception is `xdg-open` which is necessary to open the files from the GUI.
+export PATH=${SNAP}/sbin:${SNAP}/bin:${SNAP}/usr/bin:${PATH}
 
 # Select the python provided by snap and set the right python path
 PYTHON=${SNAP}/usr/bin/python3.9
