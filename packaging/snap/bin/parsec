@@ -1,13 +1,26 @@
 #! /bin/sh
 
+# TODO: This should managed by parsec directly
 mkdir -p ~/.config/parsec
+
+# Move to the snap directory as we don't want the current directory to be part of `sys.path`
+# We could use the isolated `-I` python option but this would also disable `PYTHONPATH`
+# Note that this would be an issue if the GUI CLI used file arguments, which is luckily not the case.
+cd ${SNAP}
+
+# Expose /sbin and /bin as they are not set in snap classic mode
+# In particular, this is useful to access `/bin/fusermount` which is used by libfuse
+# We also override the original path as we should not rely on tools installed on the system
+# From this point on, we can no longer use utils like `mkdir`.
+export PATH=${SNAP}/sbin:${SNAP}/bin:${SNAP}/usr/bin
+
+# Select the python provided by snap and set the right python path
 PYTHON=${SNAP}/usr/bin/python3.9
 export PYTHONPATH=${SNAP}/site-packages
 
-# Expose /sbin and /bin as they are not set in snap classic mode
-# Those are useful to access `/bin/fusermount` which is used by libfuse
-# and `sbin/ldconfig` which is used by `ctypes.util.find_library`
-export PATH=${SNAP}/sbin:${SNAP}/bin:${PATH}
+# We can't rely on `ctypes.util.find_library` in classic snap environement,
+# so we use the `FUSE_LIBRARY_PATH` enviroment variable.
+export FUSE_LIBRARY_PATH=${SNAP}/lib/x86_64-linux-gnu/libfuse.so.2
 
 # This was a hot fix from 2019 for a segfault with ubuntu 18
 # See https://github.com/Scille/parsec-cloud/issues/162 for more information.
@@ -24,4 +37,5 @@ export PATH=${SNAP}/sbin:${SNAP}/bin:${PATH}
 # (i.e. without sandbox).
 unset SNAP
 
+# Execute the parsec.cli module with arguments forwarding
 exec $PYTHON -m parsec.cli core gui $@

@@ -191,12 +191,6 @@ parts:
       - python3.9-minimal
       # Yes, we even package libc (otherwise it may cause issue when runnig on non-ubunut OS)
       - libc6
-      # It turns out that:
-      # - fusepy uses `ctypes.utils.find_library` to find `libfuse.so.2`
-      # - `find_library` uses `/sbin/ldconfig`, `gcc`, `objdump` and `ld` if available
-      # - None of those are available in our snap environment
-      # - `/sbin/ldconfig` is provided by the `libc-bin` package so let's include it
-      - libc-bin
       - libcrypt1
       - libpython3.9-minimal
       - libssl1.1
