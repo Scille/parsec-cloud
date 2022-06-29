@@ -1,0 +1,1 @@
+Fix the snackbars not being hidden when the window loses the focus
