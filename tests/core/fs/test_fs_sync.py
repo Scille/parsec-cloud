@@ -38,7 +38,7 @@ async def assert_same_workspace(workspace, workspace2):
 
 
 @pytest.mark.trio
-async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_fs):
+async def test_new_workspace(running_backend, alice_user_fs):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w"))
         workspace = alice_user_fs.get_workspace(wid)
