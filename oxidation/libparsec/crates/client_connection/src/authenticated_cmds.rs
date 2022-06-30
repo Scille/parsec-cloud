@@ -15,6 +15,17 @@
 //! 1. `author` (in base64, contains in header `Author`)
 //! 2. `timestamp` (date time UTC RFC3339 with millisecond, contains in header `Timestamp`)
 //! 3. `body` (the http body in bytes)
+//!
+//! # Why using rfc 3339 instead of rfc 2822 ?
+//!
+//! > Because I can, that's why
+//! > @me
+//!
+//! The reasons are listed [here](https://datatracker.ietf.org/doc/html/rfc3339#section-5)
+//!
+//! 1. Ordering
+//! 2. Tradeoff between human readability and interoperability
+//! 3. Redundant information (i.e.: we don't need the day of week)
 
 use std::{collections::HashMap, num::NonZeroU64};
 
