@@ -16,7 +16,7 @@ from PyQt5.QtCore import (
     QSize,
 )
 from PyQt5.QtGui import QPainter, QBrush, QColor, QCursor
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QApplication
 
 from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.parsec_application import ParsecApp
@@ -113,8 +113,7 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
         y = main_window.size().height() - ((height + offset) * (self.index + 1))
         # Hide the snackbar if the main window does not have enough space to show it
         self.set_visible(y > 30 and main_window.isVisible())
-        pos = main_window.mapToGlobal(QPoint(x, y))
-        self.setGeometry(pos.x(), pos.y(), width, height)
+        self.setGeometry(x, y, width, height)
 
     def _on_timeout(self):
         if self.animate:
@@ -178,6 +177,8 @@ class SnackbarManager(QObject):
         return False
 
     def add_snackbar(self, snackbar):
+        main_window = ParsecApp.get_main_window()        
+        snackbar.setParent(main_window)
         snackbar._dismissed.connect(self._on_dismissed)
         self.snackbars.insert(0, snackbar)
         for i, sb in enumerate(self.snackbars):
