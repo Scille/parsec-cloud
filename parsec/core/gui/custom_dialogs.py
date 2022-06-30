@@ -314,6 +314,7 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         button_text=None,
         validator=None,
         hidden=False,
+        selection=None,
     ):
         super().__init__()
         self.setupUi(self)
@@ -326,6 +327,8 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         self.line_edit_text.set_validator(validator)
         if hidden:
             self.line_edit_text.setEchoMode(QLineEdit.Password)
+        if selection:
+            self.line_edit_text.setSelection(selection[0], selection[1])
         self.line_edit_text.validity_changed.connect(self._on_validity_changed)
         self.button_ok.setEnabled(self.line_edit_text.is_input_valid())
         if completion:
@@ -334,7 +337,6 @@ class TextInputWidget(QWidget, Ui_InputWidget):
             completer.popup().setStyleSheet("border: 1px solid rgb(30, 78, 162);")
             self.line_edit_text.setCompleter(completer)
         self.button_ok.clicked.connect(self._on_button_clicked)
-        self.setFocus()
         self.line_edit_text.setFocus()
 
     @property
@@ -368,6 +370,7 @@ def get_text_input(
     button_text=None,
     validator=None,
     hidden=False,
+    selection=None,
 ):
     w = TextInputWidget(
         message=message,
@@ -377,6 +380,7 @@ def get_text_input(
         button_text=button_text,
         validator=validator,
         hidden=hidden,
+        selection=selection,
     )
     d = GreyedDialog(w, title=title, parent=parent)
     w.dialog = d
