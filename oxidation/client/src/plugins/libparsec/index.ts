@@ -34,6 +34,11 @@ class LibParsec {
 
   // Actual api
 
+  public async version(): Promise<string> {
+    const ret = await libparsecPlugin.submitJob({cmd: 'version', payload: ''});
+    return ret.value;
+  }
+
   public async encrypt(key: string, cleartext: string): Promise<string> {
     const ret = await libparsecPlugin.submitJob({cmd: 'encrypt', payload: `${key}:${cleartext}`});
     return ret.value;
