@@ -11,7 +11,6 @@ from PyQt5.QtWidgets import QWidget, QMainWindow, QMenu, QShortcut, QMenuBar
 
 from parsec import __version__ as PARSEC_VERSION
 from parsec.core.gui.enrollment_query_widget import EnrollmentQueryWidget
-from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import InvitationType
@@ -40,6 +39,7 @@ from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.license_widget import LicenseWidget
 from parsec.core.gui.about_widget import AboutWidget
 from parsec.core.gui.settings_widget import SettingsWidget
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui.custom_dialogs import (
     ask_question,
     show_error,
@@ -129,6 +129,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.tab_center.setCornerWidget(self.add_tab_button, Qt.Corner.TopLeftCorner)
 
         self.tab_center.currentChanged.connect(self.on_current_tab_changed)
+        self.snackbar_manager = SnackbarManager(self)
         self._define_shortcuts()
         self.ensurePolished()
 
