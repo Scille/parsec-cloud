@@ -99,7 +99,7 @@ Bugfixes
 Miscellaneous internal changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Add support for PKI based enrollement  (`#2113
+* Add support for PKI based enrollment  (`#2113
   <https://github.com/Scille/parsec-cloud/issues/2113>`__)
 
 
@@ -117,14 +117,14 @@ Features
   <https://github.com/Scille/parsec-cloud/issues/1864>`__)
 * Added option to copy the server address (`#1882
   <https://github.com/Scille/parsec-cloud/issues/1882>`__)
-* Added snackbars for quick messages (`#1885 <https://github.com/Scille/parsec-
+* Added snackbar for quick messages (`#1885 <https://github.com/Scille/parsec-
   cloud/issues/1885>`__)
 * Improve the detection and management of clients that have out-of-sync clocks
   compare to the backend.  (`#1894 <https://github.com/Scille/parsec-
   cloud/issues/1894>`__)
 * Added a navigation bar to help navigate through a workspace  (`#1916
   <https://github.com/Scille/parsec-cloud/issues/1916>`__)
-* Added --recipiant option to share_workspace command and the human_find command
+* Added --recipient option to share_workspace command and the human_find command
   in the CLI  (`#1940 <https://github.com/Scille/parsec-cloud/issues/1940>`__)
 * Added new right click option for a file in a workspace, that shows the status
   of a file (created and updated when and by whom, type, location, number of
@@ -134,7 +134,7 @@ Features
   `workspace_storage_cache_size` in the configuration file. The default value is
   524288000, i.e. 512 MB.  (`#1983 <https://github.com/Scille/parsec-
   cloud/issues/1983>`__)
-* Display some messages using snackbars instead of dialogs (`#2014
+* Display some messages using snackbar instead of dialogs (`#2014
   <https://github.com/Scille/parsec-cloud/issues/2014>`__)
 * Force the choice of a role when greeting a new user (`#2057
   <https://github.com/Scille/parsec-cloud/issues/2057>`__)
@@ -156,7 +156,7 @@ Miscellaneous internal changes
 
 * Changed user icons depending on their role (`#1889
   <https://github.com/Scille/parsec-cloud/issues/1889>`__)
-* Fixed some graphical gliches on MacOS when using dark mode.  (`#2037
+* Fixed some graphical glitches on MacOS when using dark mode.  (`#2037
   <https://github.com/Scille/parsec-cloud/issues/2037>`__)
 * Show a dedicated message when getting a local storage error during file import
   indicating that the disk might be full  (`#2083
@@ -190,13 +190,13 @@ Bugfixes
   clocks perform actions sur as reading/writing to workspaces and changing roles
   concurrently.  (`#1811 <https://github.com/Scille/parsec-
   cloud/issues/1811>`__)
-* Fix rare error when offline while accessing a workspace mounpoint for the
+* Fix rare error when offline while accessing a workspace mountpoint for the
   first time.  (`#1812 <https://github.com/Scille/parsec-cloud/issues/1812>`__)
 * Fix the logic to solve the conflict in the core  (`#1820
   <https://github.com/Scille/parsec-cloud/issues/1820>`__)
 * Do not refresh workspace list when mounting/unmounting a workspace (`#1858
   <https://github.com/Scille/parsec-cloud/issues/1858>`__)
-* Fixed app behaviour on MacOS when closing with command-Q and red X.  (`#1860
+* Fixed app behavior on MacOS when closing with command-Q and red X.  (`#1860
   <https://github.com/Scille/parsec-cloud/issues/1860>`__)
 
 Miscellaneous internal changes
@@ -294,10 +294,10 @@ Client/Backend API evolutions
   --organization-initial-user-profile-outsider-allowed and --organization-
   initial-active-users-limit options in `backend run` command.  (`#1766
   <https://github.com/Scille/parsec-cloud/issues/1766>`__)
-* Remove most parts of APIv1 (only `organization_bootsrap` command is kept from
+* Remove most parts of APIv1 (only `organization_bootstrap` command is kept from
   APIv1 for backward compatibility). Remove `expiration_date` from
   `organization_config` command. Introduce the administration REST api to create
-  & get informations on organizations.  (`#1810
+  & get information on organizations.  (`#1810
   <https://github.com/Scille/parsec-cloud/issues/1810>`__)
 
 Miscellaneous internal changes
@@ -398,7 +398,7 @@ Bugfixes
 Miscellaneous internal changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Update recommanded macFUSE version to 4.1.0 for mountpoint on macOS.  (`#1718
+* Update recommended macFUSE version to 4.1.0 for mountpoint on macOS.  (`#1718
   <https://github.com/Scille/parsec-cloud/issues/1718>`__)
 
 
@@ -414,9 +414,9 @@ Features
 Bugfixes
 ~~~~~~~~
 
-* Fixed Dock icon behaviour on MacOS when app was closed with red X.  (`#1519
+* Fixed Dock icon behavior on MacOS when app was closed with red X.  (`#1519
   <https://github.com/Scille/parsec-cloud/issues/1519>`__)
-* Fix the server's stucking while it waits for a peer.  (`#1625
+* Fix the server blockage while it waits for a peer.  (`#1625
   <https://github.com/Scille/parsec-cloud/issues/1625>`__)
 * Added filename normalization to fix conflicts on special characters on MacOS.
   (`#1645 <https://github.com/Scille/parsec-cloud/issues/1645>`__)
@@ -428,7 +428,7 @@ Bugfixes
 * Enforce NFC string normalization for organization/device/user/entry id and
   human handle.  (`#1708 <https://github.com/Scille/parsec-
   cloud/issues/1708>`__)
-* Fix an issue with fuse mounpoints on linux where the shutdown procedure might
+* Fix an issue with fuse mountpoint on linux where the shutdown procedure might
   block forever  (`#1716 <https://github.com/Scille/parsec-
   cloud/issues/1716>`__)
 
@@ -463,7 +463,7 @@ Bugfixes
   unexpectedly.  (`#1634 <https://github.com/Scille/parsec-
   cloud/issues/1634>`__)
 * Fix unhandled exception in GUI when offline and workspace author UserInfo is
-  not in cache. Fix view on inconstent files in GUI. (`#1641
+  not in cache. Fix view on inconsistent files in GUI. (`#1641
   <https://github.com/Scille/parsec-cloud/issues/1641>`__)
 * Fixed a mountpoint issue in MacOS that could cause errors during login or
   unmounting a workspace.  (`#1644 <https://github.com/Scille/parsec-
@@ -529,7 +529,7 @@ Features
 Bugfixes
 ~~~~~~~~
 
-* Fix unhandled error on linux/macOS when logout occures during mountpoint
+* Fix unhandled error on linux/macOS when logout occurs during mountpoint
   processing. (`#1607 <https://github.com/Scille/parsec-cloud/issues/1607>`__)
 
 
@@ -609,7 +609,7 @@ Client/Backend API evolutions
 Miscellaneous internal changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Log exceptions occuring in Qt slots  (`#1520
+* Log exceptions occurring in Qt slots  (`#1520
   <https://github.com/Scille/parsec-cloud/issues/1520>`__)
 * Moved password change location in the same menu as the logout button (`#621
   <https://github.com/Scille/parsec-cloud/issues/621>`__)
@@ -643,7 +643,7 @@ Features
   (`#1405 <https://github.com/Scille/parsec-cloud/issues/1405>`__)
 * Display the volume of an organization to admins  (`#1487
   <https://github.com/Scille/parsec-cloud/issues/1487>`__)
-* Better indictation of the role of a user on a workspace  (`#1478
+* Better indication of the role of a user on a workspace  (`#1478
   <https://github.com/Scille/parsec-cloud/issues/1478>`__)
 * Remember the previous position and size of the window  (`#1486
   <https://github.com/Scille/parsec-cloud/issues/1486>`__)
@@ -662,17 +662,17 @@ Bugfixes
   (`#1431 <https://github.com/Scille/parsec-cloud/issues/1431>`__)
 * Fix a possible deadlock when cancelling the mounting of a workspace on linux.
   (`#1500 <https://github.com/Scille/parsec-cloud/issues/1500>`__)
-* Avoid uncessary scrolling when displaying users and devices  (`#1449
+* Avoid unnecessary scrolling when displaying users and devices  (`#1449
   <https://github.com/Scille/parsec-cloud/issues/1449>`__)
 * Improved workspaces loading  (`#1436 <https://github.com/Scille/parsec-
   cloud/issues/1436>`__)
-* Fixed error message when the choosen org name already exists  (`#1345
+* Fixed error message when the chosen org name already exists  (`#1345
   <https://github.com/Scille/parsec-cloud/issues/1345>`__)
 * Fix an issue causing workspace files to not be closed properly.  (`#1391
   <https://github.com/Scille/parsec-cloud/issues/1391>`__)
 * Refresh device list when logging out  (`#1453
   <https://github.com/Scille/parsec-cloud/issues/1453>`__)
-* Validate button is disabled by default when chosing a password  (`#1459
+* Validate button is disabled by default when choosing a password  (`#1459
   <https://github.com/Scille/parsec-cloud/issues/1459>`__)
 * Refresh workspace list when closing the sharing dialog  (`#1495
   <https://github.com/Scille/parsec-cloud/issues/1495>`__)
@@ -734,7 +734,7 @@ Features
 
 * Updated the logos  (`#1316 <https://github.com/Scille/parsec-
   cloud/issues/1316>`__)
-* Add a warning when chosing user role during the greet process  (`#1352
+* Add a warning when choosing user role during the greet process  (`#1352
   <https://github.com/Scille/parsec-cloud/issues/1352>`__)
 * Add support for confined (i.e temporary) files and directories. In this
   context, confined means files that are not meant to be synchronized with other
@@ -778,7 +778,7 @@ Bugfixes
   (`#1363 <https://github.com/Scille/parsec-cloud/issues/1363>`__)
 * Fix email user invite generation  (`#1400 <https://github.com/Scille/parsec-
   cloud/issues/1400>`__)
-* Fix inconsistence backend replies from an cancelled invite command  (`#1365
+* Fix inconsistent backend replies from an cancelled invite command  (`#1365
   <https://github.com/Scille/parsec-cloud/issues/1365>`__)
 * Added workspace name in error message when removed from a workspace  (`#1385
   <https://github.com/Scille/parsec-cloud/issues/1385>`__)
@@ -799,7 +799,7 @@ Miscellaneous internal changes
   (`#1346 <https://github.com/Scille/parsec-cloud/issues/1346>`__)
 * Invited users is now displayed before the organization users  (`#1351
   <https://github.com/Scille/parsec-cloud/issues/1351>`__)
-* The winfsp and fuse mountpoints now always report 0 MB used over a 1 TB
+* The winfsp and fuse mountpoint now always report 0 MB used over a 1 TB
   capacity. Those values are arbitrary but useful to the operating system,
   especially OSX.  (`#1401 <https://github.com/Scille/parsec-
   cloud/issues/1401>`__)
@@ -848,7 +848,7 @@ Bugfixes
   <https://github.com/Scille/parsec-cloud/issues/1205>`__)
 * Bootstrap organization widget made more responsive on low resolutions  (`#1169
   <https://github.com/Scille/parsec-cloud/issues/1169>`__)
-* Fixed menu icons alignement and colors  (`#1149
+* Fixed menu icons alignment and colors  (`#1149
   <https://github.com/Scille/parsec-cloud/issues/1149>`__)
 * Fixed missing reject method on file history  (`#1239
   <https://github.com/Scille/parsec-cloud/issues/1239>`__)
@@ -880,7 +880,7 @@ Bugfixes
   (`#1081 <https://github.com/Scille/parsec-cloud/issues/1081>`__)
 * Fixed deadlock when importing a file from a parsec workspace  (`#1188
   <https://github.com/Scille/parsec-cloud/issues/1188>`__)
-* Fix GUI main windows not showing when use close button from the systray. Notif
+* Fix GUI main windows not showing when use close button from the systray. Notification
   explaining Parsec is still running on GUI windows close only triggered once.
   (`#1295 <https://github.com/Scille/parsec-cloud/issues/1295>`__)
 * Fix backend side connection auto-close on user revocation when the connection
@@ -896,7 +896,7 @@ Client/Backend API evolutions
 
 * Add --spontaneous-organization-bootstrap option to backend to allow
   bootstrapping an organization that haven't been created by administration
-  beforehand. Add --oganization-bootstrap-webhook option to backend to notify a
+  beforehand. Add --organization-bootstrap-webhook option to backend to notify a
   webhook URL on organization bootstrap.  (`#1281
   <https://github.com/Scille/parsec-cloud/issues/1281>`__)
 * Update API to version 2.0 which improve handshake system and rework enrollment
@@ -904,12 +904,12 @@ Client/Backend API evolutions
   (`#1119 <https://github.com/Scille/parsec-cloud/issues/1119>`__)
 * API can now return stats about workspace such as metadata size and data size.
   (`#1176 <https://github.com/Scille/parsec-cloud/issues/1176>`__)
-* Introduce outsider profil for user. Outsider users can read/write on
+* Introduce outsider profile for user. Outsider users can read/write on
   workspaces they are invited to, but are not allowed to create workspaces. On
-  top of that outsider users cannot see personnal informations (email &
+  top of that outsider users cannot see personal information (email &
   user/device name) of other users.  (`#1163 <https://github.com/Scille/parsec-
   cloud/issues/1163>`__)
-* Adding some http request managment.  (`#1171
+* Adding some http request management.  (`#1171
   <https://github.com/Scille/parsec-cloud/issues/1171>`__)
 
 Miscellaneous internal changes
@@ -922,14 +922,14 @@ Miscellaneous internal changes
 * Consider https as default endpoint scheme for blockstore config in backend run
   cli (`#1143 <https://github.com/Scille/parsec-cloud/issues/1143>`__)
 * Turn user_id and device_name fields into UUID to anonymize them. Personal
-  informations are instead stored in human_handle and device_label fields which
+  information are instead stored in human_handle and device_label fields which
   are not available to users with OUTSIDER profile.  (`#1174
   <https://github.com/Scille/parsec-cloud/issues/1174>`__)
 * Change bytes symbol in English  (`#1221 <https://github.com/Scille/parsec-
   cloud/issues/1221>`__)
 * Update WinFSP embedded package  (`#1223 <https://github.com/Scille/parsec-
   cloud/issues/1223>`__)
-* Use 4 symbols from a 32-symbol alphabet as SAS code. The alphatbet is:
+* Use 4 symbols from a 32-symbol alphabet as SAS code. The alphabet is:
   ``ABCDEFGHJKLMNPQRSTUVWXYZ23456789``.  (`#1165
   <https://github.com/Scille/parsec-cloud/issues/1165>`__)
 * Backend now able to retry first db connection  (`#1258
@@ -949,7 +949,7 @@ Miscellaneous internal changes
   <https://github.com/Scille/parsec-cloud/issues/940>`__)
 * Fix mount error when using Snap package on Debian when fuse is not installed.
   (`#1296 <https://github.com/Scille/parsec-cloud/issues/1296>`__)
-* Run Parsec with regular user priviledges when the "Run Parsec" checkbox is
+* Run Parsec with regular user privileges when the "Run Parsec" checkbox is
   ticked at the end of the windows installation.  (`#1303
   <https://github.com/Scille/parsec-cloud/issues/1303>`__)
 * Updated instructions texts for the device invitation process  (`#1304
@@ -1304,7 +1304,7 @@ Bugfixes
 ~~~~~~~~
 
 * Now handles inconsistent directories accessed from the GUI, tested mountpoint
-  behaviour (`#782 <https://github.com/Scille/parsec-cloud/issues/782>`__)
+  behavior (`#782 <https://github.com/Scille/parsec-cloud/issues/782>`__)
 * Fix infinite loop in IPC server (`#813 <https://github.com/Scille/parsec-
   cloud/issues/813>`__)
 * Fix config not saved when updating from the settings tab when logged in.
@@ -1333,7 +1333,7 @@ Parsec 1.2.0 (2019-11-15)
 Features
 ~~~~~~~~
 
-* Backend now checks if timestamp is not inferior of existant on vlob update, if
+* Backend now checks if timestamp is not inferior of existent on vlob update, if
   it is, sends an error to client which temporarily goes offline to avoid the
   handling of this event in a retry loop.  (`#758
   <https://github.com/Scille/parsec-cloud/issues/758>`__)
@@ -1350,7 +1350,7 @@ Features
 Bugfixes
 ~~~~~~~~
 
-* Fix crash on Linux when the ipc server lock file is located in a non existant
+* Fix crash on Linux when the ipc server lock file is located in a non existent
   directory (`#760 <https://github.com/Scille/parsec-cloud/issues/760>`__)
 * Fix crash in ipc server when socket file path contains missing folder (only on
   windows).  (`#765 <https://github.com/Scille/parsec-cloud/issues/765>`__)
@@ -1358,7 +1358,7 @@ Bugfixes
   crash on windows when some operations were performed on the file system.
   (`#770 <https://github.com/Scille/parsec-cloud/issues/770>`__)
 * Fix len check in ``OrganizationID``/``UserID``/``DeviceName``/``DeviceID``
-  when containing multibytes unicode characters. (`#794
+  when containing multi-bytes unicode characters. (`#794
   <https://github.com/Scille/parsec-cloud/issues/794>`__)
 * Improve support of unicode in the mountpoint on Windows. (`#799
   <https://github.com/Scille/parsec-cloud/issues/799>`__)
