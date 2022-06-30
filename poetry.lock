@@ -70,14 +70,14 @@ pytz = ">=2015.7"
 
 [[package]]
 name = "boto3"
-version = "1.24.14"
+version = "1.24.20"
 description = "The AWS SDK for Python"
 category = "main"
 optional = true
 python-versions = ">= 3.7"
 
 [package.dependencies]
-botocore = ">=1.27.14,<1.28.0"
+botocore = ">=1.27.20,<1.28.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -86,7 +86,7 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.27.14"
+version = "1.27.20"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = true
@@ -121,11 +121,11 @@ pycparser = "*"
 
 [[package]]
 name = "charset-normalizer"
-version = "2.0.12"
+version = "2.1.0"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 category = "main"
 optional = true
-python-versions = ">=3.5.0"
+python-versions = ">=3.6.0"
 
 [package.extras]
 unicode_backport = ["unicodedata2"]
@@ -270,7 +270,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "hypothesis"
-version = "6.47.3"
+version = "6.48.2"
 description = "A library for property-based testing"
 category = "dev"
 optional = false
@@ -666,11 +666,11 @@ pytest = ">=3.10"
 
 [[package]]
 name = "pytest-qt"
-version = "4.0.2"
+version = "4.1.0"
 description = "pytest support for PyQt and PySide applications"
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 pytest = ">=3.0.0"
@@ -857,7 +857,7 @@ s_towncrier = ["towncrier (>=21.3,<22.0)"]
 
 [[package]]
 name = "requests"
-version = "2.28.0"
+version = "2.28.1"
 description = "Python HTTP for Humans."
 category = "main"
 optional = true
@@ -865,13 +865,13 @@ python-versions = ">=3.7, <4"
 
 [package.dependencies]
 certifi = ">=2017.4.17"
-charset-normalizer = ">=2.0.0,<2.1.0"
+charset-normalizer = ">=2,<3"
 idna = ">=2.5,<4"
 urllib3 = ">=1.21.1,<1.27"
 
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
-use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
+use_chardet_on_py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "requests-file"
@@ -1025,11 +1025,11 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "trio"
-version = "0.19.0"
+version = "0.20.0"
 description = "A friendly Python library for async concurrency and I/O"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 async-generator = ">=1.9"
@@ -1159,7 +1159,7 @@ core = ["packaging", "PyQt5", "pyqt5-sip", "qtrio", "qrcode", "fusepy", "winfspy
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9.0"
-content-hash = "581266f9af16263586cb650708103b95f9b0bd23931eb495b6080fa1f40cf777"
+content-hash = "fa0332b8312a5e68f441571b6b455ae8b0a2acd570892a9b015d910414fa2b92"
 
 [metadata.files]
 altgraph = [
@@ -1215,12 +1215,12 @@ babel = [
     {file = "Babel-2.10.3.tar.gz", hash = "sha256:7614553711ee97490f732126dc077f8d0ae084ebc6a96e23db1482afabdb2c51"},
 ]
 boto3 = [
-    {file = "boto3-1.24.14-py3-none-any.whl", hash = "sha256:490f5e88f5551b33ae3019a37412158b76426d63d1fb910968ade9b6a024e5fe"},
-    {file = "boto3-1.24.14.tar.gz", hash = "sha256:e284705da36faa668c715ae1f74ebbff4320dbfbe3a733df3a8ab076d1ed1226"},
+    {file = "boto3-1.24.20-py3-none-any.whl", hash = "sha256:7033d3a351171b85647405eb70c4c9ae0d75c085dd987d7674557607acbcd459"},
+    {file = "boto3-1.24.20.tar.gz", hash = "sha256:e87dbc67475b0ea7564b17b6686995fd3a120312a95a625e6db61490fa0a3fed"},
 ]
 botocore = [
-    {file = "botocore-1.27.14-py3-none-any.whl", hash = "sha256:df1e9b208ff93daac7c645b0b04fb6dccd7f20262eae24d87941727025cbeece"},
-    {file = "botocore-1.27.14.tar.gz", hash = "sha256:bb56fa77b8fa1ec367c2e16dee62d60000451aac5140dcce3ebddc167fd5c593"},
+    {file = "botocore-1.27.20-py3-none-any.whl", hash = "sha256:bb80a2204ccd51c1611e562d3d0511dc2a156257f87edeb59e99d7cef24b75d6"},
+    {file = "botocore-1.27.20.tar.gz", hash = "sha256:d3445a382711b58b4ec29e42267f074aa743ac7a5ddc50a08e0aae2b8309e3a5"},
 ]
 certifi = [
     {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},
@@ -1279,8 +1279,8 @@ cffi = [
     {file = "cffi-1.15.0.tar.gz", hash = "sha256:920f0d66a896c2d99f0adbb391f990a84091179542c205fa53ce5787aff87954"},
 ]
 charset-normalizer = [
-    {file = "charset-normalizer-2.0.12.tar.gz", hash = "sha256:2857e29ff0d34db842cd7ca3230549d1a697f96ee6d3fb071cfa6c7393832597"},
-    {file = "charset_normalizer-2.0.12-py3-none-any.whl", hash = "sha256:6881edbebdb17b39b4eaaa821b438bf6eddffb4468cf344f09f89def34a8b1df"},
+    {file = "charset-normalizer-2.1.0.tar.gz", hash = "sha256:575e708016ff3a5e3681541cb9d79312c416835686d054a23accb873b254f413"},
+    {file = "charset_normalizer-2.1.0-py3-none-any.whl", hash = "sha256:5189b6f22b01957427f35b6a08d9a0bc45b46d3788ef5a92e978433c7a35f8a5"},
 ]
 click = [
     {file = "click-8.1.3-py3-none-any.whl", hash = "sha256:bb4d8133cb15a609f44e8213d9b391b0809795062913b383c62be0ee95b1db48"},
@@ -1413,8 +1413,8 @@ h11 = [
     {file = "h11-0.13.0.tar.gz", hash = "sha256:70813c1135087a248a4d38cc0e1a0181ffab2188141a93eaf567940c3957ff06"},
 ]
 hypothesis = [
-    {file = "hypothesis-6.47.3-py3-none-any.whl", hash = "sha256:148198eacaa52aabd5b598e989d6906311a0580af6f99e76e3ace8d60762779a"},
-    {file = "hypothesis-6.47.3.tar.gz", hash = "sha256:3c6d99cd7540a64c37d88f86a7509c0ca29cda37a82a957340fba11388dfb9ce"},
+    {file = "hypothesis-6.48.2-py3-none-any.whl", hash = "sha256:6223e31cc35c786a179a3caa6032238286937a6943de7ad0adb9e0f1382edcc3"},
+    {file = "hypothesis-6.48.2.tar.gz", hash = "sha256:ef548f10438095678af7fcfa369b882390355a6329db73174a65749b677677ec"},
 ]
 hypothesis-trio = [
     {file = "hypothesis-trio-0.6.0.tar.gz", hash = "sha256:d7ab108ac99758011b20f2448f1b1269375c68c1ffda9e4468600a4975ff955c"},
@@ -1733,8 +1733,8 @@ pytest-forked = [
     {file = "pytest_forked-1.4.0-py3-none-any.whl", hash = "sha256:bbbb6717efc886b9d64537b41fb1497cfaf3c9601276be8da2cccfea5a3c8ad8"},
 ]
 pytest-qt = [
-    {file = "pytest-qt-4.0.2.tar.gz", hash = "sha256:dfc5240dec7eb43b76bcb5f9a87eecae6ef83592af49f3af5f1d5d093acaa93e"},
-    {file = "pytest_qt-4.0.2-py2.py3-none-any.whl", hash = "sha256:e03847ac02a890ccaac0fde1748855b9dce425aceba62005c6cfced6cf7d5456"},
+    {file = "pytest-qt-4.1.0.tar.gz", hash = "sha256:027f3d3f5dd04af0530d846cf50fb858f719f7e87c2e4a1c686abd4e0f72172a"},
+    {file = "pytest_qt-4.1.0-py2.py3-none-any.whl", hash = "sha256:edd08dae3b207405edddfc482d4dda4b848e85a8e6a0e7c36f20bac11ab328de"},
 ]
 pytest-rerunfailures = [
     {file = "pytest-rerunfailures-10.2.tar.gz", hash = "sha256:9e1e1bad51e07642c5bbab809fc1d4ec8eebcb7de86f90f1a26e6ef9de446697"},
@@ -1794,8 +1794,8 @@ qts = [
     {file = "qts-0.2-py3-none-any.whl", hash = "sha256:8de6a4d2be0ad3e8d2c5893f42d789f53a1c5e31917deddb9e3a9492572dda60"},
 ]
 requests = [
-    {file = "requests-2.28.0-py3-none-any.whl", hash = "sha256:bc7861137fbce630f17b03d3ad02ad0bf978c844f3536d0edda6499dafce2b6f"},
-    {file = "requests-2.28.0.tar.gz", hash = "sha256:d568723a7ebd25875d8d1eaf5dfa068cd2fc8194b2e483d7b1f7c81918dbec6b"},
+    {file = "requests-2.28.1-py3-none-any.whl", hash = "sha256:8fefa2a1a1365bf5520aac41836fbee479da67864514bdb821f31ce07ce65349"},
+    {file = "requests-2.28.1.tar.gz", hash = "sha256:7c5599b102feddaa661c826c56ab4fee28bfd17f5abca1ebbe3e7f19d7c97983"},
 ]
 requests-file = [
     {file = "requests-file-1.5.1.tar.gz", hash = "sha256:07d74208d3389d01c38ab89ef403af0cfec63957d53a0081d8eca738d0247d8e"},
@@ -1846,8 +1846,8 @@ tomli = [
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
 trio = [
-    {file = "trio-0.19.0-py3-none-any.whl", hash = "sha256:c27c231e66336183c484fbfe080fa6cc954149366c15dc21db8b7290081ec7b8"},
-    {file = "trio-0.19.0.tar.gz", hash = "sha256:895e318e5ec5e8cea9f60b473b6edb95b215e82d99556a03eb2d20c5e027efe1"},
+    {file = "trio-0.20.0-py3-none-any.whl", hash = "sha256:fb2d48e4eab0dfb786a472cd514aaadc71e3445b203bc300bad93daa75d77c1a"},
+    {file = "trio-0.20.0.tar.gz", hash = "sha256:670a52d3115d0e879e1ac838a4eb999af32f858163e3a704fe4839de2a676070"},
 ]
 trio-asyncio = [
     {file = "trio_asyncio-0.12.0-py3-none-any.whl", hash = "sha256:9bf678f83204ba33c395783681c69af563a84145fad2110a152a81a4a18ae7e4"},
