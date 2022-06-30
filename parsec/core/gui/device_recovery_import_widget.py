@@ -138,9 +138,7 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
     async def _on_validate_clicked(self):
         if isinstance(self.current_page, DeviceRecoveryImportPage1Widget):
             # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
-            device_label = DeviceLabel(
-                validators.trim_user_name(self.current_page.line_edit_device.text())
-            )
+            device_label = DeviceLabel(self.current_page.line_edit_device.clean_text())
             self.jobs_ctx.submit_job(
                 self.create_new_device_success,
                 self.create_new_device_failure,

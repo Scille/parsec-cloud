@@ -1,1 +1,0 @@
-Do not display old files when entering a new workspace

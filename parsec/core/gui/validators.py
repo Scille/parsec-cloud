@@ -4,7 +4,7 @@ from PyQt5.QtCore import QRegularExpression
 from PyQt5.QtGui import QValidator, QIntValidator, QRegularExpressionValidator
 
 from parsec.api.data import EntryName
-from parsec.api.protocol import OrganizationID, UserID, DeviceLabel
+from parsec.api.protocol import OrganizationID, UserID, DeviceLabel, HumanHandle
 from parsec.core.types import (
     BackendAddr,
     BackendActionAddr,
@@ -13,9 +13,9 @@ from parsec.core.types import (
 )
 
 
-def trim_user_name(name):
-    name = name.strip()
-    return " ".join(name.split())
+def trim_string(s):
+    s = s.strip()
+    return " ".join(s.split())
 
 
 class NetworkPortValidator(QIntValidator):
@@ -100,7 +100,26 @@ class DeviceLabelValidator(QValidator):
             return QValidator.Invalid, string, pos
 
 
+class UserNameValidator(QValidator):
+    def validate(self, string, pos):
+        # HumanHandle does not like spaces. To be a bit nicer to the user, we remove
+        # them.
+        string = trim_string(string)
+
+        if len(string) == 0:
+            return QValidator.Intermediate, string, pos
+        try:
+            # HumanHandle raises the same ValueError if either email or label are incorrect.
+            # We trick it by using an email we know will be valid, so that the only ValueError
+            # that can be raised will be because of an incorrect label.
+            HumanHandle(email="a@b.c", label=string)
+            return QValidator.Acceptable, string, pos
+        except ValueError:
+            return QValidator.Invalid, string, pos
+
+
 class EmailValidator(QRegularExpressionValidator):
+    # We don't use the HumanHandle to validate the email because it's way too permissive.
     def __init__(self):
         super().__init__(QRegularExpression(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"))
 

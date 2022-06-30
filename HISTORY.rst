@@ -5,6 +5,47 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.10.0 (2022-06-30)
+---------------------------
+
+Features
+~~~~~~~~
+
+* Display the number of files in the current folder  (`#2416
+  <https://github.com/Scille/parsec-cloud/issues/2416>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix the snackbars not being hidden when the window loses the focus (`#2530
+  <https://github.com/Scille/parsec-cloud/issues/2530>`__)
+* Fix duplicated files appearing in workspace sneak peek  (`#2503
+  <https://github.com/Scille/parsec-cloud/issues/2503>`__)
+* Prevent change of role for a user after their revocation  (`#2505
+  <https://github.com/Scille/parsec-cloud/issues/2505>`__)
+* Don't overwrite files when importing a new file with the same name  (`#2504
+  <https://github.com/Scille/parsec-cloud/issues/2504>`__)
+* Fixed invalid email error with some weird user names  (`#2502
+  <https://github.com/Scille/parsec-cloud/issues/2502>`__)
+* Ignore entries that are not files (i.e socket) when importing a directory
+  (`#2512 <https://github.com/Scille/parsec-cloud/issues/2512>`__)
+* Fix GUI sometime not detecting invitation deletion or peer has left during
+  invitation greet Fix GUI workspace history date picker from being clickable
+  too soon  (`#2337 <https://github.com/Scille/parsec-cloud/issues/2337>`__)
+* Prevent closing the dialog while creating an organization  (`#2360
+  <https://github.com/Scille/parsec-cloud/issues/2360>`__)
+* Fixed performance issues when loading a folder  (`#2411
+  <https://github.com/Scille/parsec-cloud/issues/2411>`__)
+* Do not display old files when entering a new workspace  (`#2426
+  <https://github.com/Scille/parsec-cloud/issues/2426>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added some feedback when entering a file name to avoid invalid names  (`#2331
+  <https://github.com/Scille/parsec-cloud/issues/2331>`__)
+
+
 Parsec v2.9.2 (2022-05-23)
 --------------------------
 

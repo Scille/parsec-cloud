@@ -510,3 +510,36 @@ async def test_update_roles_causality_checks(
             alice_backend_sock, alice, realm, bob.user_id, RealmRole.READER, timestamp
         )
         assert rep == {"status": "require_greater_timestamp", "strictly_greater_than": ref}
+
+
+@pytest.mark.trio
+async def test_update_roles_for_revoked_user(
+    backend,
+    alice,
+    bob,
+    alice_backend_sock,
+    realm,
+    realm_generate_certif_and_update_roles_or_fail,
+    next_timestamp,
+    backend_data_binder,
+):
+    # Grant a role to bob
+    rep = await realm_generate_certif_and_update_roles_or_fail(
+        alice_backend_sock, alice, realm, bob.user_id, RealmRole.MANAGER, next_timestamp()
+    )
+    assert rep == {"status": "ok"}
+
+    # Revoke Bob
+    await backend_data_binder.bind_revocation(bob.user_id, certifier=alice)
+
+    # Now try to change bob's role, this should fail
+    rep = await realm_generate_certif_and_update_roles_or_fail(
+        alice_backend_sock, alice, realm, bob.user_id, RealmRole.CONTRIBUTOR, next_timestamp()
+    )
+    assert rep == {"status": "user_revoked"}
+
+    # Even removing access should fail
+    rep = await realm_generate_certif_and_update_roles_or_fail(
+        alice_backend_sock, alice, realm, bob.user_id, None, next_timestamp()
+    )
+    assert rep == {"status": "user_revoked"}
