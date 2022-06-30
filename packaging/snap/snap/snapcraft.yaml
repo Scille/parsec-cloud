@@ -53,9 +53,15 @@ parts:
       VENV=${SNAPCRAFT_PART_BUILD}/venv
 
       # Install Parsec & depedencies in a virtual env...
+      /usr/bin/python3.9 --version
       /usr/bin/python3.9 -m venv ${VENV}  # must use absolute path here
-      ${VENV}/bin/python -m pip install -Ur pre-requirements.txt
-      ${VENV}/bin/python -m pip install -U .[core]
+      ${VENV}/bin/python -m pip --version
+      # Update pip given the one on the system is most likely too old...
+      ${VENV}/bin/python -m pip install --upgrade pip wheel
+      ${VENV}/bin/python -m pip --version
+      WHEEL=$(ls ./parsec_cloud-*.whl)
+      ${VENV}/bin/python -m pip install --requirement ./core-requirements.txt
+      ${VENV}/bin/python -m pip install $WHEEL[core] --no-deps
 
       # Bundled libssl doesn't know where host OS stores it CA certificates,
       # hence we bundle them instead.
@@ -189,7 +195,7 @@ parts:
       # apt-cache depends --recurse  --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances python3.9
       - python3.9
       - python3.9-minimal
-      # Yes, we even package libc (otherwise it may cause issue when runnig on non-ubunut OS)
+      # Yes, we even package libc (otherwise it may cause issue when runnig on non-ubuntu OS)
       - libc6
       - libcrypt1
       - libpython3.9-minimal

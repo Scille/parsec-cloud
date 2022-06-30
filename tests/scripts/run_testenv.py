@@ -10,8 +10,8 @@ Run `tests/scripts/run_testenv.sh --help` for more information.
 
 import pkg_resources
 
-# Make sure parsec is fully installed (core, backend, dev)
-pkg_resources.require("parsec-cloud[all]")
+# Make sure parsec is fully installed (core, backend)
+pkg_resources.require("parsec-cloud[core,backend]")
 
 import os
 import sys

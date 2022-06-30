@@ -7,14 +7,14 @@ to run the file selection dialog in a subprocess.
 
 import sys
 import contextlib
-import importlib_resources
+import importlib.resources
 import functools
 
 
 @functools.lru_cache()
 def get_parsec_icon_data():
     filename = "parsec.icns" if sys.platform == "darwin" else "parsec.ico"
-    return importlib_resources.files("parsec.core.resources").joinpath(filename).read_bytes()
+    return importlib.resources.files("parsec.core.resources").joinpath(filename).read_bytes()
 
 
 def set_parsec_icon(app):

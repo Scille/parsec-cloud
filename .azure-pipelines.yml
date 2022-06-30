@@ -45,17 +45,41 @@ jobs:
       set -eux
       sudo apt-get update
       python --version
-      # pip 20.3 introduces the new dependency resolver
-      python -m pip install pip>=20.3 --user --upgrade
-      pip install -r pre-requirements.txt
+      # pip 21.3 introduces in-tree-build by default
+      python -m pip install 'pip>=21.3' --user --upgrade
+      python -m pip --version
+      # Must use poetry>=1.2.0b2 given otherwise `poetry export` produce buggy output
+      python -m pip install --user --upgrade 'poetry>=1.2.0b2' wheel
+      poetry --version
     displayName: 'Bootstrap'
   - bash: |
       set -eux
-      python -m build --wheel
-    env:
-      # oxidation extra_requirements referes to a local path which is forbidden by pypi
-      IGNORE_OXIDATION: "true"
-    displayName: 'Build Wheel'
+      mkdir dist/
+
+      # Retrieve Parsec version and customize it if we are not building on a tag
+      # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
+      if ([[ $(Build.SourceBranch) = "refs/tags/"* ]])
+      then
+        # Use tag name as version
+        VERSION=`git -C $(Build.SourcesDirectory) describe --tag`
+      else
+        # Use `<tag_name>+dev<commit_hash>` as version
+        VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' $(Build.SourcesDirectory)/parsec/_version.py`
+        COMMIT=`git -C $(Build.SourcesDirectory) rev-parse --verify --short HEAD`
+        VERSION="$VERSION.$COMMIT"
+        # Customize version with tag
+        sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" parsec/_version.py
+        test $(grep -E 'version = ' -o pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
+        sed -i "s#^\\(version = \\).*\$#\\1'$VERSION'#" pyproject.toml
+      fi
+
+      echo "Version label: $VERSION"
+      echo $VERSION > dist/version
+
+      python packaging/wheel/wheel_it.py . --output dist/
+
+      ls dist
+    displayName: 'Build Wheel, requirements & constraints'
   - publish: dist/
     artifact: wheel
 
@@ -194,12 +218,15 @@ jobs:
 
 - job: 's1_oxidation'
   displayName: 'Rust Oxidation'
+  dependsOn: s0_build_wheel
   timeoutInMinutes: 60
   pool:
     vmImage: 'ubuntu-latest'
   steps:
   - checkout: self
     submodules: true
+  - download: current
+    artifact: wheel
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
@@ -210,9 +237,9 @@ jobs:
       # Rust stuff
       curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $(rust.version) -y
       echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
-      # pip 20.3 introduces the new dependency resolver
-      python -m pip install pip>=20.3 --user --upgrade
-      pip install -r pre-requirements.txt
+      # pip 21.3 introduces in-tree-build by default
+      python -m pip install 'pip>=21.3' --user --upgrade
+      python -m pip --version
     displayName: 'Bootstrap'
   - bash: |
       set -eux
@@ -226,13 +253,22 @@ jobs:
     displayName: 'Rust Tests'
   - bash: |
       set -eux
-      pip install .[all,oxidation]
       # Remove the parsec folder from the source to force use of the wheel
       rm -rf parsec
+      # Install the parsec wheel with all dependencies
+      WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
+      # Install Parsec with restricted dependencies and also dev dependencies
+      python -m pip install --requirement $(Pipeline.Workspace)/wheel/all-requirements.txt
+      python -m pip install $WHEEL[core,backend] --no-deps
+      # Now install oxidation extensions
+      pip install oxidation/libparsec_python
+      # Check dependency compatibility
+      python -m pip check parsec[core,backend]
+      python -m pip check libparsec_python
     displayName: 'Install'
   - bash: |
       set -eux
-      py.test $(pytest.base_args) tests -n auto --runrust
+      python -m pytest $(pytest.base_args) tests -n auto --runrust
     displayName: 'Python Tests'
 
 
@@ -259,9 +295,9 @@ jobs:
       set -eux
       sudo apt-get update
       python --version
-      # pip 20.3 introduces the new dependency resolver
-      python -m pip install pip>=20.3 --user --upgrade
-      pip install -r pre-requirements.txt
+      # pip 21.3 introduces in-tree-build by default
+      python -m pip install 'pip>=21.3' --user --upgrade
+      python -m pip --version
       sudo apt-get install \
         postgresql-$(postgresql.version) \
         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
@@ -273,10 +309,11 @@ jobs:
       rm -rf parsec
       # Install the parsec wheel with all dependencies
       WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
-      echo $WHEEL
-      pip install $WHEEL[all]
+      # Install Parsec with restricted dependencies and also dev dependencies
+      python -m pip install --requirement $(Pipeline.Workspace)/wheel/all-requirements.txt
+      python -m pip install $WHEEL[core,backend] --no-deps
       # Check dependency compatibility
-      pip check parsec[all]
+      python -m pip check parsec[core,backend]
     displayName: 'Install'
   - bash: |
       set -eux
@@ -352,9 +389,9 @@ jobs:
   - bash: |
       set -eux
       python --version
-      # pip 20.3 introduces the new dependency resolver
-      python -m pip install pip>=20.3 --user --upgrade
-      pip install -r pre-requirements.txt
+      # pip 21.3 introduces in-tree-build by default
+      python -m pip install 'pip>=21.3' --user --upgrade
+      python -m pip --version
       brew install \
         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
       brew install --cask macfuse
@@ -365,10 +402,11 @@ jobs:
       rm -rf parsec
       # Install the parsec wheel with all dependencies
       WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
-      echo $WHEEL
-      pip install $WHEEL[all]
+      # Install Parsec with restricted dependencies and also dev dependencies
+      python -m pip install --requirement $(Pipeline.Workspace)/wheel/all-requirements.txt
+      python -m pip install $WHEEL[core,backend] --no-deps
       # Check dependency compatibility
-      pip check parsec[all]
+      python -m pip check parsec[core,backend]
     displayName: 'Install'
   - bash: |
       set -eux
@@ -419,9 +457,9 @@ jobs:
       set -eux
       python.exe --version
       pip uninstall pipx -y  # dunno why this thing is here...
-      # pip 20.3 introduces the new dependency resolver
-      python -m pip install pip>=20.3 --user --upgrade
-      pip install -r pre-requirements.txt
+      # pip 21.3 introduces in-tree-build by default
+      python -m pip install 'pip>=21.3' --user --upgrade
+      python -m pip --version
       choco install -y --limit-output winfsp --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
       mkdir winfsp-test
@@ -436,10 +474,11 @@ jobs:
       # Install the parsec wheel with all dependencies
       WHEEL_DIRECTORY=`python -c 'print(r"$(Pipeline.Workspace)/wheel".replace("\\\\", "/"))'`
       WHEEL=$(ls $WHEEL_DIRECTORY/parsec_cloud-*.whl)
-      echo $WHEEL
-      pip install $WHEEL[all]
+      # Install Parsec with restricted dependencies and also dev dependencies
+      python -m pip install --requirement $WHEEL_DIRECTORY/all-requirements.txt
+      python -m pip install $WHEEL[core,backend] --no-deps
       # Check dependency compatibility
-      pip check parsec[all]
+      python -m pip check parsec[core,backend]
       # Check winfsp-tests availability
       python.exe -c "import winfspy.tests.winfsp_tests"
     displayName: 'Install'
@@ -495,12 +534,15 @@ jobs:
   displayName: 'Linux snap build'
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
+  dependsOn: s0_build_wheel
   pool:
     # 20.04 requested to build a core20 image with --destructive-mode
     vmImage: 'ubuntu-20.04'
   steps:
   - checkout: self
     submodules: true
+  - download: current
+    artifact: wheel
   - bash: |
       set -eux
       sudo apt-get update
@@ -512,26 +554,10 @@ jobs:
       cp -R $(Build.SourcesDirectory)/packaging/snap snapbuild
       cd snapbuild
       mkdir src
-      cp -R $(Build.SourcesDirectory)/parsec src
-      cp $(Build.SourcesDirectory)/pre-requirements.txt src
-      cp -R $(Build.SourcesDirectory)/requirement src
-      cp $(Build.SourcesDirectory)/setup.py src
-      cp $(Build.SourcesDirectory)/README.rst src
-      cp $(Build.SourcesDirectory)/HISTORY.rst src
-      # Retrieve Parsec version and customize it if we are not building on a tag
-      # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
-      if ([[ $(Build.SourceBranch) = "refs/tags/"* ]])
-      then
-        # Use tag name as version
-        VERSION=`git -C $(Build.SourcesDirectory) describe --tag`
-      else
-        # Use `<tag_name>+dev<commit_hash>` as version
-        VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' $(Build.SourcesDirectory)/parsec/_version.py`
-        COMMIT=`git -C $(Build.SourcesDirectory) rev-parse --verify --short HEAD`
-        VERSION="$VERSION.$COMMIT"
-      fi
-      echo "Version label: $VERSION"
-      sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" src/parsec/_version.py
+      WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
+      cp $WHEEL src/
+      cp $(Pipeline.Workspace)/wheel/core-requirements.txt src/
+      VERSION=$(cat $(Pipeline.Workspace)/wheel/version)
       sed -i "s/__PARSEC_VERSION__/$VERSION/" snap/snapcraft.yaml
       # Now build the snap !
       snapcraft --destructive-mode
@@ -550,22 +576,31 @@ jobs:
   displayName: 'MacOS app build'
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
+  dependsOn: s0_build_wheel
   pool:
     vmImage: 'macOS-12'
   steps:
   - checkout: self
     submodules: true
+  - download: current
+    artifact: wheel
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version_for_macos_packaging)'
   - bash: |
       set -eux
       brew install coreutils
-      sh macos_pyinstaller.sh
-      tar -jcvf parsec-macos-amd64.tar.bz2 dist/Parsec.app
+    displayName: 'Setup'
+  - bash: |
+      set -eux
+      pushd packaging/macOS
+      python freeze_program.py ../.. --wheel-it-dir $(Pipeline.Workspace)/wheel
+      mkdir dist
+      VERSION=$(cat $(Pipeline.Workspace)/wheel/version)
+      pushd build/pyinstaller_dist/
+      tar -jcf ../../dist/parsec-$VERSION-macos-amd64.tar.bz2 Parsec.app
     displayName: 'Build'
-    workingDirectory: $(Build.SourcesDirectory)/packaging/macOS
-  - publish:  $(Build.SourcesDirectory)/packaging/macOS/parsec-macos-amd64.tar.bz2
+  - publish:  $(Build.SourcesDirectory)/packaging/macOS/dist
     artifact: macos_amd64_app
 
 
@@ -576,6 +611,7 @@ jobs:
   displayName: 'Windows installer build'
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
+  dependsOn: s0_build_wheel
   pool:
     vmImage: 'windows-latest'
   strategy:
@@ -589,6 +625,8 @@ jobs:
   steps:
   - checkout: self
     submodules: true
+  - download: current
+    artifact: wheel
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
@@ -600,31 +638,18 @@ jobs:
       modifyEnvironment: true
   - bash: |
       set -eux
-      # pip 20.3 introduces the new dependency resolver
-      python -m pip install pip>=20.3 --user --upgrade
+      # pip 21.3 introduces in-tree-build by default
+      python -m pip install 'pip>=21.3' --user --upgrade
+      python -m pip --version
       # Path with backslash are a pain...
       SOURCES_DIRECTORY=`python -c 'print(r"$(Build.SourcesDirectory)".replace("\\\\", "/"))'`
-      # Retrieve Parsec version and customize it if we are not building on a tag
-      # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
-      if ([[ $(Build.SourceBranch) = "refs/tags/"* ]])
-      then
-        # Use tag name as version
-        VERSION=`git -C $SOURCES_DIRECTORY describe --tag`
-      else
-        # Use `<tag_name>+dev<commit_hash>` as version
-        VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' $SOURCES_DIRECTORY/parsec/_version.py`
-        COMMIT=`git -C $SOURCES_DIRECTORY rev-parse --verify --short HEAD`
-        VERSION="$VERSION.$COMMIT"
-      fi
-      echo "Version label: $VERSION"
-      sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" $SOURCES_DIRECTORY/parsec/_version.py
       cp -R $SOURCES_DIRECTORY/packaging/win32/ winbuild
     displayName: 'Prepare build'
     workingDirectory: $(Agent.TempDirectory)
   # Must use cmd.exe here instead of bash otherwise `C:\Program Files\Git\bin\link.exe`
   # takes priority over visual studio link.exe in PATH
   - script: |
-      python freeze_program.py $(Build.SourcesDirectory)
+      python freeze_program.py $(Build.SourcesDirectory) --wheel-it-dir $(Pipeline.Workspace)/wheel
     displayName: 'Freeze Parsec'
     workingDirectory: $(Agent.TempDirectory)/winbuild
   - bash: |
@@ -660,6 +685,7 @@ jobs:
       # sudo apt-get install -y xvfb xorg
       sudo snap install --classic --dangerous $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
       parsec.cli --version
+      parsec.cli --help
       # Make sure snap contains core but not backend
       NOT_AVAILABLES=$(parsec.cli --help | grep -i "not available")
       test "$(echo $NOT_AVAILABLES | grep -i 'backend')"
@@ -684,6 +710,7 @@ jobs:
   - download: current
     artifact: linux_amd64_snap
   - bash: |
+      set -eux
       sudo apt-get update
       sudo snap install snapcraft --classic
       # Credentials contains `\n` which makes things tricky
@@ -727,7 +754,6 @@ jobs:
       password = $PYPI_CREDENTIALS
       " > ~/.pypirc
       WHEEL=$(ls $(Pipeline.Workspace)/wheel/parsec_cloud-*.whl)
-      echo $WHEEL
       twine upload $WHEEL
     env:
       PYPI_CREDENTIALS: $(PYPI_CREDENTIALS)

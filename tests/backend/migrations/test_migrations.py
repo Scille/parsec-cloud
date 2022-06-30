@@ -7,7 +7,7 @@ import trio_asyncio
 import triopg
 from asyncpg.cluster import TempCluster
 from contextlib import contextmanager
-import importlib_resources
+import importlib.resources
 
 from parsec.backend.postgresql import migrations as migrations_module
 from parsec.backend.postgresql.handler import (
@@ -49,13 +49,13 @@ def collect_data_patches():
     from tests.backend import migrations as migrations_test_module
 
     patches = {}
-    for file in importlib_resources.files(migrations_test_module).iterdir():
+    for file in importlib.resources.files(migrations_test_module).iterdir():
         file_name = file.name
         match = re.search(MIGRATION_FILE_PATTERN, file_name)
         if match:
             idx = int(match.group("id"))
             assert idx not in patches  # Sanity check
-            sql = importlib_resources.files(migrations_test_module).joinpath(file_name).read_text()
+            sql = importlib.resources.files(migrations_test_module).joinpath(file_name).read_text()
             patches[idx] = sql
 
     return patches
@@ -129,7 +129,7 @@ async def _trio_test_migration(postgresql_url, pg_dump, psql):
     await reset_db_schema()
 
     # ...and reinitialize it with the current datamodel script
-    sql = importlib_resources.files(migrations_module).joinpath("datamodel.sql").read_text()
+    sql = importlib.resources.files(migrations_module).joinpath("datamodel.sql").read_text()
     async with triopg.connect(postgresql_url) as conn:
         await conn.execute(sql)
 
