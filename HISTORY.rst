@@ -5,42 +5,8 @@ History
 .. towncrier release notes start
 
 
-Parsec v2.10.0-rc4 (2022-06-29)
--------------------------------
-
-No significant changes.
-
-
-Parsec v2.10.0-rc3 (2022-06-29)
--------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Fix the snackbars not being hidden when the window loses the focus (`#2530
-  <https://github.com/Scille/parsec-cloud/issues/2530>`__)
-
-
-Parsec v2.10.0-rc2 (2022-06-28)
--------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Fix duplicated files appearing in workspace sneak peek  (`#2503
-  <https://github.com/Scille/parsec-cloud/issues/2503>`__)
-* Prevent change of role for a user after their revocation  (`#2505
-  <https://github.com/Scille/parsec-cloud/issues/2505>`__)
-* Don't overwrite files when importing a new file with the same name  (`#2504
-  <https://github.com/Scille/parsec-cloud/issues/2504>`__)
-* Fixed invalid email error with some weird user names  (`#2502
-  <https://github.com/Scille/parsec-cloud/issues/2502>`__)
-* Ignore entries that are not files (i.e socket) when importing a directory
-  (`#2512 <https://github.com/Scille/parsec-cloud/issues/2512>`__)
-
-
-Parsec v2.10.0-rc1 (2022-06-22)
--------------------------------
+Parsec v2.10.0 (2022-06-30)
+---------------------------
 
 Features
 ~~~~~~~~
@@ -51,6 +17,18 @@ Features
 Bugfixes
 ~~~~~~~~
 
+* Fix the snackbars not being hidden when the window loses the focus (`#2530
+  <https://github.com/Scille/parsec-cloud/issues/2530>`__)
+* Fix duplicated files appearing in workspace sneak peek  (`#2503
+  <https://github.com/Scille/parsec-cloud/issues/2503>`__)
+* Prevent change of role for a user after their revocation  (`#2505
+  <https://github.com/Scille/parsec-cloud/issues/2505>`__)
+* Don't overwrite files when importing a new file with the same name  (`#2504
+  <https://github.com/Scille/parsec-cloud/issues/2504>`__)
+* Fixed invalid email error with some weird user names  (`#2502
+  <https://github.com/Scille/parsec-cloud/issues/2502>`__)
+* Ignore entries that are not files (i.e socket) when importing a directory
+  (`#2512 <https://github.com/Scille/parsec-cloud/issues/2512>`__)
 * Fix GUI sometime not detecting invitation deletion or peer has left during
   invitation greet Fix GUI workspace history date picker from being clickable
   too soon  (`#2337 <https://github.com/Scille/parsec-cloud/issues/2337>`__)
