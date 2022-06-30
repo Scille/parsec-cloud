@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, FixedOffset};
 use http_body::Full;
 use hyper::{
     body::{self, Bytes},
@@ -28,7 +28,7 @@ pub type ID = DeviceID;
 pub struct AuthRequest {
     author_b64: String,
     verify_key: VerifyKey,
-    timestamp: DateTime<Utc>,
+    timestamp: DateTime<FixedOffset>,
     signature_b64: String,
 }
 
@@ -93,7 +93,12 @@ impl Service<Request<Body>> for SignatureVerifier {
                 (&signature)
                     .iter()
                     .chain(auth_req.author_b64.as_bytes())
-                    .chain(auth_req.timestamp.to_string().as_bytes())
+                    .chain(
+                        auth_req
+                            .timestamp
+                            .to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
+                            .as_bytes(),
+                    )
                     .chain(body.deref())
                     .copied(),
             );
@@ -133,7 +138,7 @@ impl Service<Request<Body>> for SignatureVerifier {
     }
 }
 
-fn parse_headers(headers: &HeaderMap) -> anyhow::Result<(String, DateTime<Utc>, String)> {
+fn parse_headers(headers: &HeaderMap) -> anyhow::Result<(String, DateTime<FixedOffset>, String)> {
     match headers.get(AUTHORIZATION) {
         Some(value) => {
             if Some(PARSEC_AUTH_METHOD) != value.to_str().ok() {
@@ -154,7 +159,11 @@ fn parse_headers(headers: &HeaderMap) -> anyhow::Result<(String, DateTime<Utc>, 
         .ok_or_else(|| anyhow::anyhow!("missing timestamp header"))?
         .to_str()
         .map_err(anyhow::Error::from)?;
-    let timestamp = raw_timestamp.parse().map_err(anyhow::Error::from)?;
+    let timestamp = DateTime::parse_from_rfc3339(raw_timestamp)?;
+
+    if timestamp.timestamp_subsec_millis() == 0 {
+        log::warn!("timestamp should have defined the millisecond (raw: {raw_timestamp})")
+    }
 
     let raw_signature = headers
         .get("Signature")
