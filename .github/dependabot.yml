@@ -6,7 +6,7 @@ updates:
       separator: "-"
     schedule:
       interval: "monthly"
-      time: "02:00"
+      time: "00:30"
       timezone: "Europe/Paris"
 
   - package-ecosystem: cargo
@@ -15,7 +15,7 @@ updates:
       separator: "-"
     schedule:
       interval: "monthly"
-      time: "02:00"
+      time: "00:30"
       timezone: "Europe/Paris"
 
   - package-ecosystem: pip
@@ -24,7 +24,7 @@ updates:
       separator: "-"
     schedule:
       interval: "monthly"
-      time: "02:00"
+      time: "00:30"
       timezone: "Europe/Paris"
 
   - package-ecosystem: pip
@@ -37,7 +37,7 @@ updates:
       separator: "-"
     schedule:
       interval: "monthly"
-      time: "02:00"
+      time: "23:30"
       timezone: "Europe/Paris"
 
   - package-ecosystem: "npm"
@@ -46,7 +46,7 @@ updates:
       separator: "-"
     schedule:
       interval: "monthly"
-      time: "02:00"
+      time: "23:30"
       timezone: "Europe/Paris"
 
   - package-ecosystem: "npm"
@@ -55,5 +55,5 @@ updates:
       separator: "-"
     schedule:
       interval: "monthly"
-      time: "02:00"
+      time: "23:30"
       timezone: "Europe/Paris"
