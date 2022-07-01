@@ -111,6 +111,20 @@ jobs:
           echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
           rustup component add rustfmt clippy
         displayName: Bootstrap
+
+      - bash: |
+          sed -i '/id: mixed-line-ending/a\        args:\n\          - "--fix=lf"' .pre-commit-config.yaml
+          cat .pre-commit-config.yaml
+        displayName: Patch pre-commit config file to force line-ending to LF
+
+      - task: Cache@2
+        displayName: Cache pre-commit cache folder
+        inputs:
+          key: '"pre-commit" | .pre-commit-config.yaml'
+          restoreKeys: |
+            pre-commit
+          path: $(HOME)/.cache/pre-commit
+
       - task: PythonScript@0
         displayName: Commits signatures
         inputs:
@@ -199,13 +213,7 @@ jobs:
       #     git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
       #     python ./misc/releaser.py check --verbose
       #   displayName: 'Version check'
-      - bash: |
-          set -eux
-          # Patch .pre-commit-config.yaml to force mixed-line-ending checks to LF
-          sed -i '/id: mixed-line-ending/a\      args:\n\        - "--fix=lf"' .pre-commit-config.yaml
-          cat .pre-commit-config.yaml
-          # Run all pre-commit hooks on all files
-          pre-commit run --all-files --show-diff-on-failure
+      - bash: pre-commit run --all-files --show-diff-on-failure
         displayName: Pre-commit hooks check
 
 
