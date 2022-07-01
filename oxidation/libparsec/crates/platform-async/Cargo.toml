@@ -28,8 +28,8 @@ futures-lite = "1.12.0"
 web-sys = { version = "0.3.57", features = ["Window", "Performance"]}
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.18.2", features = ["rt", "time"] }
+tokio = { version = "1.19.2", features = ["rt", "time"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-tokio = { version = "1.18.2", features = ["full"] }
+tokio = { version = "1.19.2", features = ["full"] }
 simple_logger = "2.1.0"
