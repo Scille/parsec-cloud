@@ -88,21 +88,23 @@ def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> Ba
     )
 
 
-@click.command()
+@click.command(short_help="Register a new sequester service")
 @click.option(
     "--service-public-key",
+    help="The service encryption public key used to encrypt data to the sequester service",
     type=click.Path(
         exists=True, file_okay=True, dir_okay=False, path_type=Path  # type: ignore[type-var]
     ),
 )
 @click.option(
     "--authority-private-key",
+    help="The private authority key use. Used to sign the encryption key.",
     type=click.Path(
         exists=True, file_okay=True, dir_okay=False, path_type=Path  # type: ignore[type-var]
     ),
 )
 @click.option("--service-label", type=str, required=True, help="New service name")
-@click.option("--organization", type=str)
+@click.option("--organization", type=str, help="Organization ID where to register the service")
 @db_backend_options
 def create_service(
     service_public_key: Path,
@@ -138,7 +140,7 @@ def create_service(
 
 
 @click.command()
-@click.option("--organization", type=str)
+@click.option("--organization", type=str, help="Organization ID")
 @db_backend_options
 def list_services(organization: str, db: str, db_max_connections: int, db_min_connections: int):
     db_config = _get_config(db, db_min_connections, db_max_connections)
