@@ -1,8 +1,5 @@
 #! /bin/sh
 
-# TODO: This should managed by parsec directly
-mkdir -p ~/.config/parsec
-
 # Move to the snap directory as we don't want the current directory to be part of `sys.path`
 # We could use the isolated `-I` python option but this would also disable `PYTHONPATH`
 # Note that this would be an issue if the GUI CLI used file arguments, which is luckily not the case.
