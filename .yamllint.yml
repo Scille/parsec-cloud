@@ -74,7 +74,7 @@ rules:
     forbid-explicit-octal: false
 
   quoted-strings:
-    quote-type: double
+    quote-type: any # I would prefer "double" style
     required: only-when-needed
 
   trailing-spaces: enable
