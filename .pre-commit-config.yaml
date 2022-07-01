@@ -52,7 +52,7 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies:
-          - trio_typing==0.5.1
+          - trio_typing[mypy]==0.7.0
           - pendulum==2.1.2
         # Mypy will complain if it find two files with the same name which
         # are not part of a package (typically occurs for packaging script helpers)
