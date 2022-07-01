@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from uuid import uuid4
+from async_generator import asynccontextmanager
 import attr
 import click
 import pendulum
@@ -33,11 +34,8 @@ class BackendDbConfig:
     db_max_connections: int
 
 
-async def run_pg_sequester_component(
-    config: BackendDbConfig,
-    organization_str: OrganizationID,
-    register_service_req: SequesterService,
-):
+@asynccontextmanager
+async def run_pg_sequester_component(config: BackendDbConfig):
     event_bus = EventBus()
     dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
     sequester_component = PGPSequesterComponent(dbh)
@@ -45,30 +43,68 @@ async def run_pg_sequester_component(
     async with open_service_nursery() as nursery:
         await dbh.init(nursery)
         try:
-            await sequester_component.create_service(
-                OrganizationID(organization_str), register_service_req
-            )
+            yield sequester_component
         finally:
             await dbh.teardown()
 
 
+async def _create_service(
+    config: BackendDbConfig, organization_str: str, register_service_req: SequesterService
+):
+    async with run_pg_sequester_component(config) as sequester_component:
+        await sequester_component.create_service(
+            OrganizationID(organization_str), register_service_req
+        )
+
+
+def display_service(service: SequesterService):
+    click.echo(f"Service ID :: {service.service_id}")
+    click.echo(f"Service label :: {service.service_label}")
+    click.echo(f"Service creation date :: {service.created_on}")
+    if service.deleted_on:
+        click.echo(f"Service is deleted since {service.deleted_on}")
+    click.echo("")
+
+
+async def _list_services(config, organization_str: str):
+    async with run_pg_sequester_component(config) as sequester_component:
+        services = await sequester_component.get_organization_services(
+            OrganizationID(organization_str)
+        )
+    if services:
+        click.echo("=== Services ===")
+        for service in services:
+            display_service(service)
+    else:
+        click.echo("No service configured")
+
+
+def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> BackendDbConfig:
+    if db.upper() == "MOCKED":
+        raise SequesterBackendCliError("MOCKED DB can not be used with sequester services")
+
+    return BackendDbConfig(
+        db_url=db, db_min_connections=db_min_connections, db_max_connections=db_max_connections
+    )
+
+
 @click.command()
 @click.option(
-    "--service_public_key",
+    "--service-public-key",
     type=click.Path(
         exists=True, file_okay=True, dir_okay=False, path_type=Path  # type: ignore[type-var]
     ),
 )
 @click.option(
-    "--authority_private_key",
+    "--authority-private-key",
     type=click.Path(
         exists=True, file_okay=True, dir_okay=False, path_type=Path  # type: ignore[type-var]
     ),
 )
-@click.option("--service_label", type=str, required=True, help="New service name")
+@click.option("--service-label", type=str, required=True, help="New service name")
 @click.option("--organization", type=str)
 @db_backend_options
-def register_service(
+def create_service(
     service_public_key: Path,
     authority_private_key: Path,
     service_label: str,
@@ -89,26 +125,25 @@ def register_service(
         service_label=service_label,
         encryption_key_der=service_key,
     )
-    print("---")
-    print(certif_data)
-    print(authority_key)
     certificate = sequester_authority_sign(signing_key=authority_key, data=certif_data.dump())
-    print(certificate)
-    print("--")
     sequester_service = SequesterService(
         service_id=service_id,
         service_label=service_label,
         service_certificate=certificate,
         created_on=now,
     )
+    db_config = _get_config(db, db_min_connections, db_max_connections)
 
-    if db.upper() == "MOCKED":
-        raise SequesterBackendCliError("MOCKED DB can not be used with sequester services")
+    trio_run(_create_service, db_config, organization, sequester_service, use_asyncio=True)
 
-    db_config = BackendDbConfig(
-        db_url=db, db_min_connections=db_min_connections, db_max_connections=db_max_connections
-    )
 
-    trio_run(
-        run_pg_sequester_component, db_config, organization, sequester_service, use_asyncio=True
-    )
+@click.command()
+@click.option("--organization", type=str)
+@db_backend_options
+def list_services(organization: str, db: str, db_max_connections: int, db_min_connections: int):
+    db_config = _get_config(db, db_min_connections, db_max_connections)
+
+    async def oops(*args, **kwargs):
+        print("OPPPPS")
+
+    trio_run(_list_services, db_config, organization, use_asyncio=True)
