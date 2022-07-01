@@ -9,12 +9,8 @@ updates:
       time: "02:00"
       timezone: "Europe/Paris"
 
-  - package-ecosystem: pip
-    directory: "/requirement"
-    ignore:
-      - dependency-name: "toastedmarshmallow"
-      - dependency-name: "trio_typing"
-      - dependency-name: "typing-extensions"
+  - package-ecosystem: cargo
+    directory: "/"
     pull-request-branch-name:
       separator: "-"
     schedule:
@@ -31,8 +27,12 @@ updates:
       time: "02:00"
       timezone: "Europe/Paris"
 
-  - package-ecosystem: cargo
-    directory: "/"
+  - package-ecosystem: pip
+    directory: "/requirement"
+    ignore:
+      - dependency-name: "toastedmarshmallow"
+      - dependency-name: "trio_typing"
+      - dependency-name: "typing-extensions"
     pull-request-branch-name:
       separator: "-"
     schedule:
