@@ -1,16 +1,16 @@
 {
-  "name": "parsec-web",
+  "name": "libparsec_bindings_web",
   "collaborators": [
     "Emmanuel Leblond <emmanuel.leblond@gmail.com>"
   ],
   "version": "0.1.0",
   "files": [
-    "parsec_web_bg.wasm",
-    "parsec_web.js",
-    "parsec_web_bg.js",
-    "parsec_web.d.ts"
+    "libparsec_bindings_web_bg.wasm",
+    "libparsec_bindings_web.js",
+    "libparsec_bindings_web_bg.js",
+    "libparsec_bindings_web.d.ts"
   ],
-  "module": "parsec_web.js",
-  "types": "parsec_web.d.ts",
+  "module": "libparsec_bindings_web.js",
+  "types": "libparsec_bindings_web.d.ts",
   "sideEffects": false
 }
