@@ -85,7 +85,7 @@ async def bootstrap_organization(
 
     if sequester_authority_verify_key:
         sequester_authority_certificate = SequesterAuthorityCertificate(
-            author=None, timestamp=timestamp, verify_key_der=sequester_authority_verify_key.dump()
+            author=None, timestamp=timestamp, verify_key_der=sequester_authority_verify_key
         )
         sequester_authority_certificate = sequester_authority_certificate.dump_and_sign(
             root_signing_key
