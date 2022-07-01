@@ -1,15 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import oscrypto
 import pytest
 from quart import Response
 
 from parsec.serde import packb
-from parsec.api.data import UserProfile, EntryName, SequesterAuthorityKeyFormat
+from parsec.api.data import UserProfile, EntryName
 from parsec.api.protocol import OrganizationID, DeviceLabel, HumanHandle
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.invite import bootstrap_organization, InviteNotFoundError, InviteAlreadyUsedError
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.sequester_crypto import load_sequester_public_key
+from parsec.sequester_crypto import SequesterVerifyKeyDer, sequester_authority_sign
 
 
 @pytest.mark.trio
@@ -113,36 +114,22 @@ async def test_bootsrap_sequester_verify_key(running_backend, backend):
     human_handle = HumanHandle(email="zack@example.com", label="Zack")
     device_label = DeviceLabel("PC1")
 
-    public_key = b"\
------BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAg\
-EAt8R3vnVbu/b/vprWx0fw\nJeeklX+M6WHHpWErDIey+E/F/EtNNRMa2NPf/kd3svkeO0\
-VmUEmYrM8fbDik64YC\nKEGNRqeydLwRnglb+sTu9JSaal52mz/dI9HtfeSDVNxb1g8sQq\
-q0BX8RvdBj6lZc\nzjkbZjpF3Oin6gc/elE8KHTN3TqDP67AXwBG+0BXxM6fa8A4mRA7Xv\
-IR6BRGBtDQ\nkbszZqD0bwrz92GaF5oiQokFpn/eVqk1VgqjND97wtZlEs557PocCQ+Ccx\
-xlDtUr\nHKK/PvHyPxrREFfrvJg/Mm4diEumb4rNQAgxjaQ7BopNg9lWjvydKU0wFBpMis\
-4e\n9BLEJE+LoylednQ6tTKmQ6NgRVMfp7vGWT2aVIwC0D8QBmZomgyY4igHLocCrjSq\n\
-y1W5mRvxbOE5MVodfJA4YuLVcCPQ5wEb+HYyymfqrGDxXRNcvvasH9yhjtjSnTM4\nYS2l\
-FmkReVTrB9ZTV5IgFefCiNYT5o8tWrO93iwC/CKYyFYMPMvITYq5B14AkSOG\n/FWCm+SD\
-VHjrp2sa+7A1CawFNCVQvVbBv6ngdlctb6EiUDxU/9w0m4dfFt4If3Pd\ntyAH/jyZ6kFH\
-95E+PGuoW5n6ni5aq2+4g099vf6r4RMqSVYjwsZkDjxoeVOtnPmZ\n92yhWSydidVR/4Wt\
-UrQfXM0CAwEAAQ==\n-----END PUBLIC KEY-----\n"
-
-    sequester_public_key = load_sequester_public_key(public_key)
+    verify_key, signing_key = oscrypto.asymmetric.generate_pair("rsa", bit_size=1024)
+    ref_data = b"SomeData"
+    ref_data_sign = sequester_authority_sign(signing_key, ref_data)
+    der_verify_key = SequesterVerifyKeyDer(verify_key)
 
     await bootstrap_organization(
         organization_addr,
         human_handle=human_handle,
         device_label=device_label,
-        sequester_public_verify_key=sequester_public_key,
+        sequester_authority_verify_key=der_verify_key,
     )
 
     organization = await backend.organization.get(org_id)
-    assert organization.sequester_authority_certificate
-    assert (
-        organization.sequester_authority_certificate.verify_key_format
-        == SequesterAuthorityKeyFormat.RSA
-    )
-    load_sequester_public_key(organization.sequester_authority_certificate.verify_key)
+    assert organization.sequester_authority
+    assert organization.sequester_authority.verify_key_der
+    organization.sequester_authority.verify_key_der.verify(ref_data_sign)
 
 
 @pytest.mark.trio
