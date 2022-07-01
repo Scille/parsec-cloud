@@ -7,6 +7,9 @@ from uuid import UUID
 from pathlib import Path
 from functools import partial
 
+from tests.common.fixtures_customisation import customize_fixtures
+from tests.common.sequester import sequester_service_factory
+
 try:
     import fcntl
 except ModuleNotFoundError:  # Not available on Windows
@@ -921,3 +924,63 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend_asg
 
         # And all the enrollments should have been taken care of
         assert await run_poll() == []
+
+
+def _setup_sequester_key_paths(tmp_path, coolorg):
+    key_path = tmp_path / "keys"
+    key_path.mkdir()
+    service_key_path = key_path / "service.pem"
+    authority_key_path = key_path / "authority.pem"
+
+    import oscrypto.asymmetric
+
+    service = sequester_service_factory("Test Service", coolorg.sequester_authority)
+    service_key = service.encryption_key
+    authority_key = coolorg.sequester_authority.signing_key
+    service_key_path.write_bytes(oscrypto.asymmetric.dump_public_key(service_key))
+    authority_key_path.write_bytes(
+        oscrypto.asymmetric.dump_private_key(authority_key, passphrase=None)
+    )
+    return authority_key_path, service_key_path
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
+@customize_fixtures(coolorg_is_sequestered_organization=True)
+async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
+    async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
+        runner = CliRunner()
+
+        common_args = f"--db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id}"
+
+        async def _cli_invoke_in_thread(cmd: str):
+            # We must run the command from another thread given it will create it own trio loop
+            async with real_clock_timeout():
+                # Pass DEBUG environment variable for better output on crash
+                return await trio.to_thread.run_sync(
+                    lambda: runner.invoke(cli, cmd, env={"DEBUG": "1"})
+                )
+
+        async def run_list_services():
+            result = await _cli_invoke_in_thread(f"backend list_services {common_args}")
+            assert result.exit_code == 0
+            return result
+
+        async def create_service(service_key_path, authority_key_path, service_label):
+            result = await _cli_invoke_in_thread(
+                f"backend create_service {common_args} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --service-label {service_label}"
+            )
+            assert result.exit_code == 0
+            return result
+
+        # Assert no service configured
+        result = await run_list_services()
+        assert result.output == "No service configured\n"
+
+        #
+        authority_key_path, service_key_path = _setup_sequester_key_paths(tmp_path, coolorg)
+        service_label = "TestService"
+        result = await create_service(service_key_path, authority_key_path, service_label)
+
+        result = await run_list_services()
+        assert service_label in result.output
