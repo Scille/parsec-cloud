@@ -188,9 +188,9 @@ jobs:
                     raise SystemExit('New newsfragment ID doesn\'t correspond to an issue !')
                 data = json.loads(ret.read())
                 if 'pull_request' in data:
-                    raise SystemExit('New newsfragement ID correspond to a pull request instead of an issue !')
+                    raise SystemExit('New newsfragment ID correspond to a pull request instead of an issue !')
                 if data['state'] != 'open':
-                    raise SystemExit('New newsfragement ID correspond to a closed issue')
+                    raise SystemExit('New newsfragment ID correspond to a closed issue')
                 return True
             return False
 
@@ -687,9 +687,9 @@ jobs:
       parsec.cli --version
       parsec.cli --help
       # Make sure snap contains core but not backend
-      NOT_AVAILABLES=$(parsec.cli --help | grep -i "not available")
-      test "$(echo $NOT_AVAILABLES | grep -i 'backend')"
-      test -z "$(echo $NOT_AVAILABLES | grep -i 'core')"
+      MODULES_NOT_AVAILABLE=$(parsec.cli --help | grep -i "not available")
+      test "$(echo $MODULES_NOT_AVAILABLE | grep -i 'backend')"
+      test -z "$(echo $MODULES_NOT_AVAILABLE | grep -i 'core')"
       xvfb-run parsec --diagnose
     displayName: 'Test Snap'
 
