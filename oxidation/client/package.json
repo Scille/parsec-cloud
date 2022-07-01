@@ -19,7 +19,7 @@
 
   },
   "dependencies": {
-    "@capacitor-community/electron": "^4.1.0",
+    "@capacitor-community/electron": "^4.1.2",
     "@capacitor/android": "3.4.3",
     "@capacitor/app": "1.1.1",
     "@capacitor/core": "3.4.3",
