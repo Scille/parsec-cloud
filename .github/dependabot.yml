@@ -8,6 +8,7 @@ updates:
       interval: "monthly"
       time: "00:30"
       timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
 
   - package-ecosystem: cargo
     directory: "/"
@@ -17,6 +18,7 @@ updates:
       interval: "monthly"
       time: "00:30"
       timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
 
   - package-ecosystem: pip
     directory: "/oxidation/libparsec_python"
@@ -26,6 +28,7 @@ updates:
       interval: "monthly"
       time: "00:30"
       timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
 
   - package-ecosystem: pip
     directory: "/requirement"
@@ -39,6 +42,7 @@ updates:
       interval: "monthly"
       time: "23:30"
       timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
 
   - package-ecosystem: "npm"
     directory: "/oxidation/client"
@@ -48,6 +52,7 @@ updates:
       interval: "monthly"
       time: "23:30"
       timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
 
   - package-ecosystem: "npm"
     directory: "/oxidation/client/android"
@@ -57,3 +62,4 @@ updates:
       interval: "monthly"
       time: "23:30"
       timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
