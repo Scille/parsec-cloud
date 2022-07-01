@@ -58,7 +58,6 @@ async def new_environment(source_file=None):
             "XDG_CONFIG_HOME": f"{tempdir}/config",
         }
     for key, value in env.items():
-        await trio.Path(value).mkdir(exist_ok=True)
         os.environ[key] = value
         export_lines.append(f"{export} {key}={value}")
 
