@@ -13,7 +13,9 @@ extern "C" {
     fn alert(s: &str);
 }
 
+#[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn greet() {
+pub fn submitJob(_params: JsValue) -> JsValue {
     alert("Hello, parsec-web!");
+    JsValue::null()
 }

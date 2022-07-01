@@ -9,7 +9,7 @@ import type { LibParsecPlugin } from './definitions';
 const libparsecPlugin = registerPlugin<LibParsecPlugin>(
   'LibParsec',
   {
-    // web: () => import("./web").then((m) => new m.LibParsecWeb()),
+    web: () => import('../../../pkg'),
     // electron: () => (window as any).CapacitorCustomPlatform.plugins.LibParsec,
     electron: () => (window as any).libparsec_plugin
   }
