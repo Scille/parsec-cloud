@@ -144,8 +144,4 @@ def create_service(
 @db_backend_options
 def list_services(organization: str, db: str, db_max_connections: int, db_min_connections: int):
     db_config = _get_config(db, db_min_connections, db_max_connections)
-
-    async def oops(*args, **kwargs):
-        print("OPPPPS")
-
     trio_run(_list_services, db_config, organization, use_asyncio=True)
