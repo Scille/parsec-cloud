@@ -57,7 +57,7 @@ rules:
   indentation:
     spaces: 2
     indent-sequences: true
-    check-multi-line-strings: true
+    check-multi-line-strings: false
 
   key-duplicates: enable
   key-ordering: disable
