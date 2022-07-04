@@ -7,7 +7,6 @@
   "files": [
     "libparsec_bindings_web_bg.wasm",
     "libparsec_bindings_web.js",
-    "libparsec_bindings_web_bg.js",
     "libparsec_bindings_web.d.ts"
   ],
   "module": "libparsec_bindings_web.js",

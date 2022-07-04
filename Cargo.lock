@@ -1090,8 +1090,10 @@ name = "libparsec_bindings_web"
 version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
+ "js-sys",
  "libparsec",
  "libparsec_bindings_common",
+ "serde",
  "wasm-bindgen",
  "wasm-bindgen-test",
  "wee_alloc",
@@ -2545,6 +2547,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c53b543413a17a202f4be280a7e5c62a1c69345f5de525ee64f8cfdbc954994"
 dependencies = [
  "cfg-if 1.0.0",
+ "serde",
+ "serde_json",
  "wasm-bindgen-macro",
 ]
 
