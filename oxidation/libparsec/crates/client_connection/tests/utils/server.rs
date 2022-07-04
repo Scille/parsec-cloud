@@ -103,19 +103,8 @@ impl Service<Request<Body>> for SignatureVerifier {
             let body = body::to_bytes(req.into_body()).await?;
 
             let signature = base64::decode(auth_req.signature_b64)?;
-            let signed_message = Vec::from_iter(
-                (&signature)
-                    .iter()
-                    .chain(auth_req.author_b64.as_bytes())
-                    .chain(
-                        auth_req
-                            .timestamp
-                            .to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
-                            .as_bytes(),
-                    )
-                    .chain(body.deref())
-                    .copied(),
-            );
+            let signed_message =
+                rebuild_signed_message(signature, &auth_req.author_b64, &auth_req.timestamp, &body);
             if let Err(e) = auth_req.verify_key.verify(&signed_message) {
                 log::error!("invalid signed request: {e}");
                 return Ok(Response::builder()
@@ -150,6 +139,26 @@ impl Service<Request<Body>> for SignatureVerifier {
         };
         Box::pin(fut)
     }
+}
+
+fn rebuild_signed_message(
+    signature: Vec<u8>,
+    author_b64: &str,
+    timestamp: &DateTime<FixedOffset>,
+    body: &Bytes,
+) -> Vec<u8> {
+    Vec::from_iter(
+        (&signature)
+            .iter()
+            .chain(author_b64.as_bytes())
+            .chain(
+                timestamp
+                    .to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
+                    .as_bytes(),
+            )
+            .chain(body.deref())
+            .copied(),
+    )
 }
 
 fn parse_headers(headers: &HeaderMap) -> anyhow::Result<(String, DateTime<FixedOffset>, String)> {
