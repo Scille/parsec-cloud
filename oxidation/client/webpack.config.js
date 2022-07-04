@@ -14,7 +14,10 @@ module.exports = {
       {
         test: /\.vue$/,
         exclude: /node_modules/,
-        use: ['vue-loader', 'ts-loader']
+        use: [
+          'vue-loader',
+          'ts-loader'
+        ]
       },
       {
         test: /\.css$/,
