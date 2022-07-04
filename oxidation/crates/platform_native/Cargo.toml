@@ -5,7 +5,7 @@ edition = "2021"
 
 [[test]]
 name = "integration"
-path = "tests/tests.rs"
+path = "tests/mod.rs"
 
 [dependencies]
 http = "0.2.8"
