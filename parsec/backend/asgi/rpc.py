@@ -48,7 +48,7 @@ async def anonymous_api(raw_organization_id: str):
         abort(404)
 
     # Get and unpack the body
-    body = await request.get_data(cache=False)
+    body: bytes = await request.get_data(cache=False)
     try:
         msg = unpackb(body)
     except SerdePackingError:

@@ -184,7 +184,7 @@ def _parse_blockstore_params(raw_params: str) -> BaseBlockStoreConfig:
 
 def _parse_forward_proto_enforce_https_check_param(
     raw_param: Optional[str],
-) -> Optional[Tuple[bytes, bytes]]:
+) -> Optional[Tuple[str, str]]:
     if raw_param is None:
         return None
     try:
@@ -192,7 +192,7 @@ def _parse_forward_proto_enforce_https_check_param(
     except ValueError:
         raise click.BadParameter(f"Invalid format, should be `<header-name>:<header-value>`")
     # HTTP header key is case-insensitive unlike the header value
-    return (key.lower().encode("utf8"), value.encode("utf8"))
+    return (key.lower(), value)
 
 
 class DevOption(click.Option):
@@ -500,7 +500,7 @@ def run_cmd(
     email_use_ssl: bool,
     email_use_tls: bool,
     email_sender: str,
-    forward_proto_enforce_https: Optional[Tuple[bytes, bytes]],
+    forward_proto_enforce_https: Optional[Tuple[str, str]],
     ssl_keyfile: Optional[Path],
     ssl_certfile: Optional[Path],
     log_level: str,

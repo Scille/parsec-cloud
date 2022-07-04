@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from typing import NoReturn
+from typing import NoReturn, TYPE_CHECKING
 from functools import wraps
 from quart import current_app, Response, Blueprint, abort, request, jsonify, make_response
 
@@ -18,6 +18,9 @@ from parsec.backend.organization import (
     OrganizationNotFoundError,
     generate_bootstrap_token,
 )
+
+if TYPE_CHECKING:
+    from parsec.backend.app import BackendApp
 
 
 administration_bp = Blueprint("administration_api", __name__)
@@ -39,7 +42,7 @@ async def json_abort(data: dict, status: int) -> NoReturn:  # type: ignore
     abort(response)
 
 
-async def load_req_data(req_serializer) -> dict:  # type: ignore
+async def load_req_data(req_serializer) -> dict:
     raw = await request.get_data()
     try:
         return req_serializer.loads(raw)
@@ -58,12 +61,13 @@ def make_rep_response(rep_serializer, data, **kwargs) -> Response:
 @administration_bp.route("/administration/organizations", methods=["POST"])
 @administration_authenticated
 async def administration_create_organizations():
+    backend: "BackendApp" = current_app.backend
     data = await load_req_data(organization_create_req_serializer)
 
     organization_id = data.pop("organization_id")
     bootstrap_token = generate_bootstrap_token()
     try:
-        await current_app.backend.organization.create(
+        await backend.organization.create(
             id=organization_id, bootstrap_token=bootstrap_token, **data
         )
     except OrganizationAlreadyExistsError:
@@ -79,13 +83,14 @@ async def administration_create_organizations():
 )
 @administration_authenticated
 async def administration_organization_item(raw_organization_id: str):
+    backend: "BackendApp" = current_app.backend
     try:
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
         await json_abort({"error": "not_found"}, 404)
     # Check whether the organization actually exists
     try:
-        organization = await current_app.backend.organization.get(id=organization_id)
+        organization = await backend.organization.get(id=organization_id)
     except OrganizationNotFoundError:
         await json_abort({"error": "not_found"}, 404)
 
@@ -108,7 +113,7 @@ async def administration_organization_item(raw_organization_id: str):
         data = await load_req_data(organization_update_req_serializer)
 
         try:
-            await current_app.backend.organization.update(id=organization_id, **data)
+            await backend.organization.update(id=organization_id, **data)
         except OrganizationNotFoundError:
             await json_abort({"error": "not_found"}, 404)
 
@@ -120,13 +125,14 @@ async def administration_organization_item(raw_organization_id: str):
 )
 @administration_authenticated
 async def administration_organization_stat(raw_organization_id: str):
+    backend: "BackendApp" = current_app.backend
     try:
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
         await json_abort({"error": "not_found"}, 404)
 
     try:
-        stats = await current_app.backend.organization.stats(id=organization_id)
+        stats = await backend.organization.stats(id=organization_id)
     except OrganizationNotFoundError:
         await json_abort({"error": "not_found"}, 404)
 

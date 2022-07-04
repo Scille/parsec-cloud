@@ -499,7 +499,7 @@ async def test_update_roles_for_revoked_user(
     backend,
     alice,
     bob,
-    alice_backend_sock,
+    alice_ws,
     realm,
     realm_generate_certif_and_update_roles_or_fail,
     next_timestamp,
@@ -507,7 +507,7 @@ async def test_update_roles_for_revoked_user(
 ):
     # Grant a role to bob
     rep = await realm_generate_certif_and_update_roles_or_fail(
-        alice_backend_sock, alice, realm, bob.user_id, RealmRole.MANAGER, next_timestamp()
+        alice_ws, alice, realm, bob.user_id, RealmRole.MANAGER, next_timestamp()
     )
     assert rep == {"status": "ok"}
 
@@ -516,12 +516,12 @@ async def test_update_roles_for_revoked_user(
 
     # Now try to change bob's role, this should fail
     rep = await realm_generate_certif_and_update_roles_or_fail(
-        alice_backend_sock, alice, realm, bob.user_id, RealmRole.CONTRIBUTOR, next_timestamp()
+        alice_ws, alice, realm, bob.user_id, RealmRole.CONTRIBUTOR, next_timestamp()
     )
     assert rep == {"status": "user_revoked"}
 
     # Even removing access should fail
     rep = await realm_generate_certif_and_update_roles_or_fail(
-        alice_backend_sock, alice, realm, bob.user_id, None, next_timestamp()
+        alice_ws, alice, realm, bob.user_id, None, next_timestamp()
     )
     assert rep == {"status": "user_revoked"}

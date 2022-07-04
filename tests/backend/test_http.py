@@ -43,14 +43,14 @@ async def _do_test_redirect(client):
     assert rep.status == "200 OK"
 
 
-@customize_fixtures(backend_forward_proto_enforce_https=(b"x-forwarded-proto", b"https"))
+@customize_fixtures(backend_forward_proto_enforce_https=("x-forwarded-proto", "https"))
 @pytest.mark.trio
 async def test_redirect_proxy(backend_asgi_app):
     client = backend_asgi_app.test_client()
     await _do_test_redirect(client)
 
 
-@customize_fixtures(backend_forward_proto_enforce_https=(b"x-forwarded-proto", b"https"))
+@customize_fixtures(backend_forward_proto_enforce_https=("x-forwarded-proto", "https"))
 @customize_fixtures(backend_over_ssl=True)
 @pytest.mark.trio
 async def test_forward_proto_enforce_https(backend_asgi_app):
