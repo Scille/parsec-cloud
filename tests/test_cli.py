@@ -333,7 +333,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         # Given we set port to 0, it is going to be picked random by hypercorn
         # and printed in the logs
         backend_port = bp.wait_for_regex(
-            r"Running on http://127.0.0.1:([0-9]+)", stderr=True
+            r"Running on https?://127.0.0.1:([0-9]+)", stderr=True
         ).group(1)
 
         backend_url = f"parsec://127.0.0.1:{backend_port}"
