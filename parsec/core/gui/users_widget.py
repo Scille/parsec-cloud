@@ -519,7 +519,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                     directlink=invitation_addr
                 ),
                 _("ACTION_COPY_ADDR"),
-                str(invitation_addr),
+                invitation_addr.to_url(),
             )
         else:
             show_info_copy_link(
@@ -529,7 +529,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                     directlink=invitation_addr
                 ),
                 _("ACTION_COPY_ADDR"),
-                str(invitation_addr),
+                invitation_addr.to_url(),
             )
 
         self.reset()

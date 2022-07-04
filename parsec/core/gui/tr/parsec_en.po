@@ -2471,9 +2471,9 @@ msgstr "Perfect! Now please provide the following code to the person:"
 msgid "TEXT_CLAIM_USER_CODE_EXCHANGE_WAIT"
 msgstr "We're waiting for the other person to enter the code..."
 
-msgid "TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS"
+msgid "TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS-name_email_device"
 msgstr ""
-"The user was successfully created. To start using Parsec, you will now "
+"The user <b>{name}</b> (<b>{email}</b>) along with your device <b>{device}</b> were successfully created. To start using Parsec, you will now "
 "have to choose a password."
 
 msgid "TEXT_CLAIM_USER_RETRIEVING_INFO"
