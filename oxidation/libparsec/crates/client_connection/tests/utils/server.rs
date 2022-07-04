@@ -9,9 +9,9 @@ use hyper::{
     Body, HeaderMap, Request, Response, StatusCode,
 };
 use libparsec_client_connection::authenticated_cmds::PARSEC_AUTH_METHOD;
-use parsec_api_crypto::VerifyKey;
-use parsec_api_protocol::authenticated_cmds::{self, AnyCmdReq};
-use parsec_api_types::DeviceID;
+use libparsec_crypto::VerifyKey;
+use libparsec_protocol::authenticated_cmds::{self, AnyCmdReq};
+use libparsec_types::DeviceID;
 use std::{
     collections::HashMap,
     convert::Infallible,
@@ -42,6 +42,34 @@ impl SignatureVerifier {
             registered_public_keys,
         }
     }
+
+    fn get_auth_request(&self, headers: &HeaderMap) -> Result<AuthRequest, anyhow::Error> {
+        parse_headers(headers).and_then(|(raw_author, timestamp, raw_signature)| {
+            let (_author, verify_key) = base64::decode(&raw_author)
+                .map_err(anyhow::Error::from)
+                .and_then(|bytes| {
+                    String::from_utf8(bytes)
+                        .map_err(anyhow::Error::from)
+                        .and_then(|author| {
+                            let id = ID::from_str(&author).map_err(|e| {
+                                anyhow::anyhow!(r#"failed to parse device id "{e}""#)
+                            })?;
+                            if let Some(vk) = self.registered_public_keys.get(&id) {
+                                Ok((author, vk.clone()))
+                            } else {
+                                anyhow::bail!("author {author} not found")
+                            }
+                        })
+                })?;
+            Ok(AuthRequest {
+                author_b64: raw_author,
+
+                verify_key,
+                timestamp,
+                signature_b64: raw_signature,
+            })
+        })
+    }
 }
 
 impl Service<Request<Body>> for SignatureVerifier {
@@ -56,35 +84,21 @@ impl Service<Request<Body>> for SignatureVerifier {
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
         log::debug!("server recv request");
-        let res =
-            parse_headers(req.headers()).and_then(|(raw_author, timestamp, raw_signature)| {
-                let (_author, verify_key) = base64::decode(&raw_author)
-                    .map_err(anyhow::Error::from)
-                    .and_then(|bytes| {
-                        String::from_utf8(bytes)
-                            .map_err(anyhow::Error::from)
-                            .and_then(|author| {
-                                let id = ID::from_str(&author).map_err(|e| {
-                                    anyhow::anyhow!(r#"failed to parse device id "{e}""#)
-                                })?;
-                                if let Some(vk) = self.registered_public_keys.get(&id) {
-                                    Ok((author, vk.clone()))
-                                } else {
-                                    anyhow::bail!("author {author} not found")
-                                }
-                            })
-                    })?;
-                Ok(AuthRequest {
-                    author_b64: raw_author,
-
-                    verify_key,
-                    timestamp,
-                    signature_b64: raw_signature,
-                })
-            });
+        let headers = req.headers();
+        let api_version = headers.get("API_VERSION").map(|v| {
+            v.to_str()
+                .expect("cannot decode api_version header")
+                .to_string()
+        });
+        log::debug!("api_version: {api_version:?}");
+        let res = self.get_auth_request(headers);
         log::debug!("parsed header: {res:?}");
 
         let fut = async move {
+            anyhow::ensure!(
+                api_version == Some(libparsec_protocol::API_VERSION.to_string()),
+                "Missing or Invalid API_VERSION header"
+            );
             let auth_req = res?;
             let body = body::to_bytes(req.into_body()).await?;
 

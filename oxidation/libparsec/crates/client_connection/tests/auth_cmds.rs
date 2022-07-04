@@ -8,9 +8,9 @@ use std::{
 };
 
 use libparsec_client_connection::{AuthenticatedCmds, CommandError};
-use parsec_api_crypto::SigningKey;
-use parsec_api_protocol::authenticated_cmds;
-use parsec_api_types::{BackendOrganizationAddr, DeviceID};
+use libparsec_crypto::SigningKey;
+use libparsec_protocol::authenticated_cmds;
+use libparsec_types::{BackendOrganizationAddr, DeviceID};
 use tokio::{
     sync::oneshot::{channel, Receiver, Sender},
     task::JoinHandle,

@@ -118,6 +118,11 @@ fn prepare_request(
     let request_builder = sign_request(request_builder, signing_key, device_id, &body);
 
     let mut content_headers = HeaderMap::with_capacity(2);
+    content_headers.insert(
+        "API_VERSION",
+        HeaderValue::from_str(&libparsec_protocol::API_VERSION.to_string())
+            .expect("api version must contains valid char"),
+    );
     content_headers.insert(CONTENT_TYPE, HeaderValue::from_static(PARSEC_CONTENT_TYPE));
     content_headers.insert(
         CONTENT_LENGTH,

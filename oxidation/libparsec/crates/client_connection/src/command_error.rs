@@ -14,7 +14,7 @@ pub enum CommandError {
     /// We receive a response but with an unexpected status code.
     InvalidResponseStatus(reqwest::StatusCode, reqwest::Response),
     /// We failed to deserialize the reply.
-    Deserialization(libparsec_protocol::DecodeError),
+    InvalidResponseContent(libparsec_protocol::DecodeError),
 }
 
 impl Error for CommandError {
