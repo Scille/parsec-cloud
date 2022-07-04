@@ -52,6 +52,8 @@ pub const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
 /// How we serialize the data before sending a request.
 pub const PARSEC_CONTENT_TYPE: &str = "application/msgpack";
 
+pub const API_VERSION_HEADER_NAME: &str = "Api-Version";
+
 /// Factory that send commands in a authenticated context.
 pub struct AuthenticatedCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
@@ -122,7 +124,7 @@ fn prepare_request(
 
     let mut content_headers = HeaderMap::with_capacity(2);
     content_headers.insert(
-        "API_VERSION",
+        API_VERSION_HEADER_NAME,
         HeaderValue::from_str(&libparsec_protocol::API_VERSION.to_string())
             .expect("api version must contains valid char"),
     );

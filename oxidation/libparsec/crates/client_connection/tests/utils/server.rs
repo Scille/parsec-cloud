@@ -8,7 +8,9 @@ use hyper::{
     service::Service,
     Body, HeaderMap, Request, Response, StatusCode,
 };
-use libparsec_client_connection::authenticated_cmds::PARSEC_AUTH_METHOD;
+use libparsec_client_connection::authenticated_cmds::{
+    API_VERSION_HEADER_NAME, PARSEC_AUTH_METHOD,
+};
 use libparsec_crypto::VerifyKey;
 use libparsec_protocol::authenticated_cmds::{self, AnyCmdReq};
 use libparsec_types::DeviceID;
@@ -85,7 +87,7 @@ impl Service<Request<Body>> for SignatureVerifier {
     fn call(&mut self, req: Request<Body>) -> Self::Future {
         log::debug!("server recv request");
         let headers = req.headers();
-        let api_version = headers.get("API_VERSION").map(|v| {
+        let api_version = headers.get(API_VERSION_HEADER_NAME).map(|v| {
             v.to_str()
                 .expect("cannot decode api_version header")
                 .to_string()
