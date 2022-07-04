@@ -2,7 +2,7 @@
 
 //! Send Authenticated commands to the server.
 //!
-//! The HTTP-request will contain the following headers:
+//! The HTTP-request will contain the following headers for authentication:
 //!
 //! ```text
 //! Authorization: PARSEC-SIGN-ED25519
@@ -26,6 +26,9 @@
 //! 1. Ordering
 //! 2. Tradeoff between human readability and interoperability
 //! 3. Redundant information (i.e.: we don't need the day of week)
+//!
+//! Beside the headers for authentication, we also add the header `API_VERSION` that contain the [parsec_api_protocol::ApiVersion]
+//!
 
 use std::{collections::HashMap, num::NonZeroU64};
 
