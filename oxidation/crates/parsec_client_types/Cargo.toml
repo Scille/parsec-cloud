@@ -7,7 +7,7 @@ autotests = false
 
 [[test]]
 name = "integration"
-path = "tests/tests.rs"
+path = "tests/mod.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
