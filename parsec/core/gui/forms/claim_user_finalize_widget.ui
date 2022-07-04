@@ -32,7 +32,7 @@
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS</string>
+      <string/>
      </property>
      <property name="wordWrap">
       <bool>true</bool>

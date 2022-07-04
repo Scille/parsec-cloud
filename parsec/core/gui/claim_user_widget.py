@@ -195,6 +195,14 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
         self.jobs_ctx = jobs_ctx
         self.new_device = new_device
 
+        self.label.setText(
+            _("TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS-name_email_device").format(
+                name=new_device.human_handle.label,
+                email=new_device.human_handle.email,
+                device=new_device.device_label.str,
+            )
+        )
+
         self.widget_auth.exclude_strings(
             [
                 new_device.organization_addr.organization_id.str,

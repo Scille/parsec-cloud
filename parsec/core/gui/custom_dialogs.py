@@ -570,6 +570,7 @@ def show_info_link(parent, title, message, button_text, url):
 class InfoCopyLinkWidget(InfoLinkWidget):
     def _on_button_clicked(self, button):
         desktop.copy_to_clipboard(self.url)
+        SnackbarManager.inform("TEXT_ENROLLMENT_ADDR_COPIED_TO_CLIPBOARD")
 
 
 def show_info_copy_link(parent, title, message, button_text, url):
