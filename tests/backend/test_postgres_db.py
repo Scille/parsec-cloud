@@ -77,7 +77,6 @@ async def test_retry_policy_no_retry(postgresql_url, unused_tcp_port, asyncio_lo
         email_config=None,
         backend_addr=None,
         forward_proto_enforce_https=None,
-        ssl_context=False,
         organization_spontaneous_bootstrap=False,
         organization_bootstrap_webhook_url=None,
         db_url=postgresql_url,
