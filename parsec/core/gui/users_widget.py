@@ -117,6 +117,12 @@ class UserButton(QWidget, Ui_UserButton):
     def user_info(self):
         return self._user_info
 
+    @property
+    def user_email(self):
+        if self.user_info.human_handle:
+            return self.user_info.human_handle.email
+        return ""
+
     @user_info.setter
     def user_info(self, val):
         profiles_txt = {
@@ -154,18 +160,26 @@ class UserButton(QWidget, Ui_UserButton):
         self.label_icon.setPixmap(pix)
 
     def show_context_menu(self, pos):
-        if self.is_current_user:
-            return
         global_pos = self.mapToGlobal(pos)
         menu = QMenu(self)
-        action = menu.addAction(_("ACTION_USER_MENU_FILTER"))
-        action.triggered.connect(self.filter_user_workspaces)
-        if self.user_info.is_revoked or not self.current_user_is_admin:
+
+        if self.user_email:
+            action = menu.addAction(_("ACTION_USER_INVITE_COPY_EMAIL"))
+            action.triggered.connect(self.copy_email)
+
+        if not self.is_current_user:
+            action = menu.addAction(_("ACTION_USER_MENU_FILTER"))
+            action.triggered.connect(self.filter_user_workspaces)
+            if not self.user_info.is_revoked and self.current_user_is_admin:
+                action = menu.addAction(_("ACTION_USER_MENU_REVOKE"))
+                action.triggered.connect(self.revoke)
+
+        if not menu.isEmpty():
             menu.exec_(global_pos)
-            return
-        action = menu.addAction(_("ACTION_USER_MENU_REVOKE"))
-        action.triggered.connect(self.revoke)
-        menu.exec_(global_pos)
+
+    def copy_email(self):
+        desktop.copy_to_clipboard(self.user_email)
+        SnackbarManager.inform(_("TEXT_GREET_USER_EMAIL_COPIED_TO_CLIPBOARD"))
 
     def revoke(self):
         self.revoke_clicked.emit(self.user_info)
