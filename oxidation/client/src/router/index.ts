@@ -8,7 +8,7 @@ import TestPage from '../views/TestPage.vue';
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/test'
+    redirect: '/home'
   },
   {
     path: '/home',
