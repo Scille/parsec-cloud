@@ -520,6 +520,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def rename_files(self):
         files = self.table_files.selected_files()
         if len(files) == 1:
+            selection_end = files[0].name.find(".")
+            # If no "." or starts with a ".", we want to select the whole file name
+            if selection_end in [-1, 0]:
+                selection_end = len(files[0].name)
             new_name = get_text_input(
                 self,
                 _("TEXT_FILE_RENAME_TITLE"),
@@ -528,6 +532,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 default_text=files[0].name,
                 validator=validators.FileNameValidator(),
                 button_text=_("ACTION_FILE_RENAME"),
+                selection=(0, selection_end),
             )
             if not new_name:
                 return
