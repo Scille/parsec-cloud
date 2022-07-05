@@ -1912,9 +1912,9 @@ dependencies = [
 
 [[package]]
 name = "rstest_reuse"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b29d3117bce27ea307d1fb7ce12c64ba11b3fd04311a42d32bc5f0072e6e3d4d"
+checksum = "f9b5aed35457441e7e0db509695ba3932d4c47e046777141c167efe584d0ec17"
 dependencies = [
  "quote",
  "rustc_version",
@@ -2151,9 +2151,9 @@ checksum = "f054c6c1a6e95179d6f23ed974060dcefb2d9388bb7256900badad682c499de4"
 
 [[package]]
 name = "simple_logger"
-version = "2.1.0"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c75a9723083573ace81ad0cdfc50b858aa3c366c48636edb4109d73122a0c0ea"
+checksum = "166fea527c36d9b8a0a88c0c6d4c5077c699d9ffb5cf890b231a3f08c35f3d40"
 dependencies = [
  "atty",
  "colored",
