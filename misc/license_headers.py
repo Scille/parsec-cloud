@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-2021 Scille SAS
 
 
 import sys
@@ -72,71 +72,71 @@ class Licenser:
         return False
 
 
-class PythonAGPLLicenser(Licenser):
-    NAME = "AGPLv3"
+class PythonAgplLicenser(Licenser):
+    NAME = "AGPL-3.0"
     HEADER = (
-        f"# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-{THIS_YEAR} Scille SAS"
+        f"# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-{THIS_YEAR} Scille SAS"
     )
     HEADER_RE = re.compile(
-        r"^# Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPLv3 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^# Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPL-3.0 2016-(?P<year>[0-9]{4}) Scille SAS$"
     )
 
 
-class PythonBSLLicenser(Licenser):
-    NAME = "BSL"
-    HEADER = f"# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS"
+class PythonBuslLicenser(Licenser):
+    NAME = "BUSL-1.1"
+    HEADER = f"# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-{THIS_YEAR} Scille SAS"
     HEADER_RE = re.compile(
-        r"^# Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^# Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
     )
 
 
-class SqlBSLLicenser(Licenser):
-    NAME = "BSL"
-    HEADER = f"-- Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS"
+class SqlBuslLicenser(Licenser):
+    NAME = "BUSL-1.1"
+    HEADER = f"-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-{THIS_YEAR} Scille SAS"
     HEADER_RE = re.compile(
-        r"^-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
     )
 
 
-class SqlAGPLLicenser(Licenser):
-    NAME = "AGPLv3"
+class SqlAgplLicenser(Licenser):
+    NAME = "AGPL-3.0"
     HEADER = (
-        f"-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-{THIS_YEAR} Scille SAS"
+        f"-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-{THIS_YEAR} Scille SAS"
     )
     HEADER_RE = re.compile(
-        r"^-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPLv3 2016-(?P<year>[0-9]{4}) Scille SAS$"
-    )
-
-
-class RustBSLLicenser(Licenser):
-    NAME = "BSL"
-    HEADER = f"// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS"
-    HEADER_RE = re.compile(
-        r"^// Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPL-3.0 2016-(?P<year>[0-9]{4}) Scille SAS$"
     )
 
 
-class JavascriptBSLLicenser(Licenser):
-    NAME = "BSL"
-    HEADER = f"// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS"
+class RustBuslLicenser(Licenser):
+    NAME = "BUSL-1.1"
+    HEADER = f"// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-{THIS_YEAR} Scille SAS"
     HEADER_RE = re.compile(
-        r"^// Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^// Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
     )
 
 
-class VueBSLLicenser(Licenser):
-    NAME = "BSL"
-    HEADER = f"<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS -->"
+class JavascriptBuslLicenser(Licenser):
+    NAME = "BUSL-1.1"
+    HEADER = f"// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-{THIS_YEAR} Scille SAS"
     HEADER_RE = re.compile(
-        r"^<!-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS -->$"
+        r"^// Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
     )
 
 
-class RstBSLLicenser(Licenser):
-    NAME = "BSL"
-    HEADER = f".. Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS"
+class VueBuslLicenser(Licenser):
+    NAME = "BUSL-1.1"
+    HEADER = f"<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-{THIS_YEAR} Scille SAS -->"
     HEADER_RE = re.compile(
-        r"^\.\. Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^<!-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-(?P<year>[0-9]{4}) Scille SAS -->$"
+    )
+
+
+class RstBuslLicenser(Licenser):
+    NAME = "BUSL-1.1"
+    HEADER = f".. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-{THIS_YEAR} Scille SAS"
+    HEADER_RE = re.compile(
+        r"^\.\. Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
     )
 
 
@@ -152,22 +152,22 @@ class SkipLicenser(Licenser):
 
 LICENSERS_MAP = {
     # First match is used
-    re.compile(r"^parsec/backend/.*\.sql$"): SqlBSLLicenser,
-    re.compile(r"^parsec/backend/.*\.py"): PythonBSLLicenser,
+    re.compile(r"^parsec/backend/.*\.sql$"): SqlBuslLicenser,
+    re.compile(r"^parsec/backend/.*\.py"): PythonBuslLicenser,
     re.compile(r"^parsec/core/gui/_resources_rc.py$"): SkipLicenser,
     re.compile(r"^parsec/core/gui/ui/"): SkipLicenser,
     re.compile(r"^oxidation/(.*/)?(target|node_modules|build|dist)/"): SkipLicenser,
-    re.compile(r"^oxidation/.*\.rs$"): RustBSLLicenser,
-    re.compile(r"^oxidation/.*\.py$"): PythonBSLLicenser,
-    re.compile(r"^oxidation/.*\.sql$"): SqlBSLLicenser,
-    re.compile(r"^docs/.*\.py$"): PythonBSLLicenser,
-    re.compile(r"^docs/.*\.rst$"): RstBSLLicenser,
+    re.compile(r"^oxidation/.*\.rs$"): RustBuslLicenser,
+    re.compile(r"^oxidation/.*\.py$"): PythonBuslLicenser,
+    re.compile(r"^oxidation/.*\.sql$"): SqlBuslLicenser,
+    re.compile(r"^docs/.*\.py$"): PythonBuslLicenser,
+    re.compile(r"^docs/.*\.rst$"): RstBuslLicenser,
     # Js project is a minefield full of node_modules/build/dist/assets etc.
     # so we just cut simple and add copyright only to the important stuff
-    re.compile(r"^oxidation/client/src/.*\.(ts|js)$"): JavascriptBSLLicenser,
-    re.compile(r"^oxidation/client/src/.*\.vue$"): VueBSLLicenser,
-    re.compile(r"^.*\.py$"): PythonAGPLLicenser,
-    re.compile(r"^.*\.sql$"): SqlAGPLLicenser,
+    re.compile(r"^oxidation/client/src/.*\.(ts|js)$"): JavascriptBuslLicenser,
+    re.compile(r"^oxidation/client/src/.*\.vue$"): VueBuslLicenser,
+    re.compile(r"^.*\.py$"): PythonAgplLicenser,
+    re.compile(r"^.*\.sql$"): SqlAgplLicenser,
 }
 
 

@@ -1,5 +1,5 @@
 Source code in this repository is licensed under two licenses:
-- Business Source License 1.1 (BSL) for the parsec/backend directory
+- Business Source License 1.1 (BUSL-1.1) for the parsec/backend directory
 - AGPLv3 for the rest of the repository
 
 Each file indicates in a section at the beginning of the file the name of
@@ -11,4 +11,4 @@ licenses directory.
 tl;dr:
 No limitation for non-production use.
 No limitations if you are an individual or a non-governmental organization (NGO).
-If you are a company or a Governmental entity, check the licenses/BSL-Scille.txt file.
+If you are a company or a Governmental entity, check the licenses/BUSL-Scille.txt file.
