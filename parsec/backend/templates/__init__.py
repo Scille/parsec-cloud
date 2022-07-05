@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from jinja2 import Environment, BaseLoader, TemplateNotFound, StrictUndefined
-import importlib.resources
+import importlib_resources
 
 
 class PackageLoader(BaseLoader):
@@ -12,7 +12,7 @@ class PackageLoader(BaseLoader):
         from parsec.backend import templates  # Self import \o/
 
         try:
-            source = importlib.resources.files(templates).joinpath(template).read_text()
+            source = importlib_resources.files(templates).joinpath(template).read_text()
         except FileNotFoundError as exc:
             raise TemplateNotFound(template) from exc
         return source, self.path, lambda: True

@@ -44,7 +44,6 @@ PROJECT_DIR = pathlib.Path(__file__).resolve().parent.parent
 HISTORY_FILE = PROJECT_DIR / "HISTORY.rst"
 BSL_LICENSE_FILE = PROJECT_DIR / "licenses/BSL-Scille.txt"
 VERSION_FILE = PROJECT_DIR / "parsec/_version.py"
-PYPROJECT_FILE = PROJECT_DIR / "pyproject.toml"
 FRAGMENTS_DIR = PROJECT_DIR / "newsfragments"
 FRAGMENT_TYPES = {
     "feature": "Features",
@@ -216,42 +215,21 @@ def get_version_from_repo_describe_tag(verbose=False):
 
 def get_version_from_code():
     global_dict = {}
-    exec(VERSION_FILE.read_text(encoding="utf8"), global_dict)
+    exec((VERSION_FILE).read_text(encoding="utf8"), global_dict)
     __version__ = global_dict.get("__version__")
     if not __version__:
         raise ReleaseError(f"Cannot find __version__ in {VERSION_FILE!s}")
-
-    # Also extract from pyproject.toml to be sure it is consistent
-    # We are far too lazy to do a proper TOML parsing, so back to good old regex
-    pyproject_txt = PYPROJECT_FILE.read_text(encoding="utf8")
-    assert pyproject_txt.startswith(
-        '[tool.poetry]\nname = "parsec-cloud"\nversion = "'
-    )  # Sanity check
-    match = re.match(r'^version\s*=\s*".*"$', pyproject_txt.splitlines()[2].strip())
-    if __version__ != match.group(1):
-        raise ReleaseError(f"Version mismatch between `parsec/_version.py` and `pyproject.toml` !")
-
     return Version(__version__)
 
 
 def update_version_file(new_version: Version) -> None:
     version_txt = VERSION_FILE.read_text(encoding="utf8")
     updated_version_txt = re.sub(
-        r'__version__\W=\W".*"', f'__version__ = "{new_version}"', version_txt, count=1
+        r'__version__\W=\W".*"', f'__version__ = "{new_version}"', version_txt
     )
     assert updated_version_txt != version_txt
     VERSION_FILE.write_bytes(
         updated_version_txt.encode("utf8")
-    )  # Use write_bytes to keep \n on Windows
-
-    pyproject_txt = PYPROJECT_FILE.read_text(encoding="utf8")
-    pyproject_txt.startswith('[tool.poetry]\nname = "parsec-cloud"\nversion = "')  # Sanity check
-    updated_pyproject_txt = re.sub(
-        r'version\W=\W".*"', f'version = "{new_version}"', pyproject_txt, count=1
-    )
-    assert updated_pyproject_txt != pyproject_txt
-    PYPROJECT_FILE.write_bytes(
-        updated_pyproject_txt.encode("utf8")
     )  # Use write_bytes to keep \n on Windows
 
 

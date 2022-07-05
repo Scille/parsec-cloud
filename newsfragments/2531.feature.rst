@@ -1,1 +1,0 @@
-Select the file name by default when renaming a file

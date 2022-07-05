@@ -627,11 +627,8 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         )
 
 
-# This test has been detected as flaky.
-# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.slow
-@pytest.mark.flaky(reruns=1)
 @pytest.mark.parametrize(
     "env",
     [
@@ -719,11 +716,8 @@ async def cli_with_running_backend_testbed(backend, *devices):
         nursery.cancel_scope.cancel()
 
 
-# This test has been detected as flaky.
-# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
 @pytest.mark.real_tcp
-@pytest.mark.flaky(reruns=1)
 async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend, alice):
     async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
         # First, save the local device needed for pki_enrollment_review_pendings command

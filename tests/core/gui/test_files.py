@@ -262,23 +262,6 @@ async def test_file_browsing_and_edit(
         path="/", expected_entries=["dir0/", "dir1/", "zdir2/", "file1.txt", "file2.txt"]
     )
 
-    # Import a new file with a similar name
-    monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
-        classmethod(lambda *args, **kwargs: ([out_of_parsec_data / "file1.txt"], True)),
-    )
-    async with aqtbot.wait_signal(f_w.import_success):
-        aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
-    await tb.check_files_view(
-        path="/",
-        expected_entries=["dir0/", "dir1/", "zdir2/", "file1 (2).txt", "file1.txt", "file2.txt"],
-    )
-
-    await tb.delete(selection=["file1 (2).txt"])
-    await tb.check_files_view(
-        path="/", expected_entries=["dir0/", "dir1/", "zdir2/", "file1.txt", "file2.txt"]
-    )
-
     # Import folder
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.QDialogInProcess.getExistingDirectory",

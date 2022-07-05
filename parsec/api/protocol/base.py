@@ -74,7 +74,9 @@ class BaseTypedReqSchema(BaseReqSchema):
     def make_obj(  # type: ignore[misc]
         self, data: Dict[str, Any]
     ) -> "BaseReq":
-        return self.TYPE(**data)
+        return self.TYPE(  # type: ignore[call-arg]
+            **data
+        )
 
 
 class BaseRepSchema(BaseSchema):
@@ -92,7 +94,9 @@ class BaseTypedRepSchema(BaseRepSchema):
         self, data: Dict[str, Any]
     ) -> "BaseRep":
         data.pop("status")
-        return self.TYPE(**data)
+        return self.TYPE(  # type: ignore[call-arg]
+            **data
+        )
 
 
 class ErrorRepSchema(BaseRepSchema):

@@ -57,7 +57,7 @@ class AsyncQtBot:
             return getattr(self.qtbot, camel_name)
         raise AttributeError(name)
 
-    async def key_clicks(self, widget, text):
+    async def key_clicks(self, widget, text, *args, **kwargs):
         """Write the provided text to the given widget.
 
         On some systems, the writing is not guaranteed to be actually performed by
@@ -70,10 +70,7 @@ class AsyncQtBot:
         else:
             raise TypeError(widget)
         expected = method() + text
-        # Relax the clicks with a 10 ms delay
-        self.qtbot.keyClicks(widget, text, delay=10)
-        # This is mandatory on some systems, otherwise the last character might be missing
-        self.qtbot.wait(10)
+        self.qtbot.keyClicks(widget, text, *args, **kwargs)
         await self.wait_until(lambda: method() in (text, expected))
 
     async def wait_until(self, callback):

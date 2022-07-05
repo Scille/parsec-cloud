@@ -195,14 +195,6 @@ class ClaimUserFinalizeWidget(QWidget, Ui_ClaimUserFinalizeWidget):
         self.jobs_ctx = jobs_ctx
         self.new_device = new_device
 
-        self.label.setText(
-            _("TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS-name_email_device").format(
-                name=new_device.human_handle.label,
-                email=new_device.human_handle.email,
-                device=new_device.device_label.str,
-            )
-        )
-
         self.widget_auth.exclude_strings(
             [
                 new_device.organization_addr.organization_id.str,
@@ -444,7 +436,7 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
         self.claim_job = None
         self.new_device = None
         self.line_edit_user_full_name.setFocus()
-        self.line_edit_user_full_name.set_validator(validators.UserNameValidator())
+        self.line_edit_user_full_name.set_validator(validators.NotEmptyValidator())
         self.line_edit_user_full_name.validity_changed.connect(self.check_infos)
 
         self.line_edit_user_email.setText(user_email)
@@ -472,12 +464,15 @@ class ClaimUserProvideInfoWidget(QWidget, Ui_ClaimUserProvideInfoWidget):
             self.button_ok.setDisabled(True)
 
     def _on_claim_clicked(self):
-        # No try/except given inputs are validated with validators
-        device_label = DeviceLabel(self.line_edit_device.clean_text())
-        human_handle = HumanHandle(
-            email=self.line_edit_user_email.text(), label=self.line_edit_user_full_name.clean_text()
-        )
-
+        # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
+        device_label = DeviceLabel(validators.trim_user_name(self.line_edit_device.text()))
+        try:
+            user_name = validators.trim_user_name(self.line_edit_user_full_name.text())
+            human_handle = HumanHandle(email=self.line_edit_user_email.text(), label=user_name)
+            device_label = DeviceLabel(self.line_edit_device.text())
+        except ValueError as exc:
+            show_error(self, _("TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"), exception=exc)
+            return
         self.button_ok.setDisabled(True)
         self.widget_info.setDisabled(True)
         self.label_wait.show()

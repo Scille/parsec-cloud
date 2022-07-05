@@ -7,7 +7,7 @@ autotests = false
 
 [[test]]
 name = "integration"
-path = "tests/mod.rs"
+path = "tests/tests.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -26,12 +26,12 @@ chrono = { version = "0.4.19", features = ["serde"] }
 # the latter is much faster (see. https://github.com/uuid-rs/uuid/pull/545,
 # tl;dr: `rand` uses `getrandom` as seed then applies a fast chacha algo on it)
 # Hence `fast-rng` feature which enables the use of `rand`.
-uuid = { version = "1.1.2", features = ["serde", "v4", "fast-rng"] }
+uuid = { version = "1.0.0-alpha.1", features = ["serde", "v4", "fast-rng"] }
 data-encoding = "2.3.2"
 url = "2.2.2"
 percent-encoding = "2.1.0"
 fancy-regex = "0.10.0"
-unicode-normalization = "0.1.20"
+unicode-normalization = "0.1.19"
 paste = "1.0.5"
 flate2 = "1.0.24"
 rand = "0.8.4"

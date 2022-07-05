@@ -34,24 +34,3 @@ pub fn decode_and_execute(cmd: &str, payload: &str) -> Result<String, String> {
         )),
     }
 }
-
-#[test]
-fn test_version() {
-    let version = decode_and_execute("version", "").unwrap();
-    assert_eq!(version, "v0.0.1")
-}
-
-#[test]
-fn test_encrypt_decrypt() {
-    let secret = SecretKey::generate();
-    let data = b"secret data";
-
-    let payload = base64::encode(&secret) + ":" + &base64::encode(data);
-    let encrypted = decode_and_execute("encrypt", &payload).unwrap();
-
-    let payload = base64::encode(&secret) + ":" + &encrypted;
-    let decrypted = decode_and_execute("decrypt", &payload).unwrap();
-
-    let cleartext = base64::decode(decrypted).unwrap();
-    assert_eq!(cleartext, b"secret data");
-}

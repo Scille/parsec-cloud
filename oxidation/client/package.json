@@ -16,8 +16,9 @@
     "ios:open": "npm run ios:copy && npx cap open ios",
     "electron:open": "npm run electron:copy && npx cap open @capacitor-community/electron",
     "electron:dist": "npx ionic build && npx cap copy @capacitor-community/electron && cd electron && npm run electron:dist",
-    "wasm:build": "cd ../bindings/web && wasm-pack build --target web",
+    "wasm:build": "cd ../bindings/web && wasm-pack build",
     "wasm:copy": "cp -r ../bindings/web/pkg ."
+
   },
   "dependencies": {
     "@capacitor-community/electron": "^4.1.0",
@@ -36,7 +37,6 @@
     "ionicons": "^6.0.1",
     "vue": "^3.2.36",
     "vue-i18n": "^9.2.0-beta.35",
-    "vue-loader": "^17.0.0",
     "vue-router": "^4.0.15"
   },
   "devDependencies": {

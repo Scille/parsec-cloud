@@ -6,7 +6,7 @@ import json
 from typing import Awaitable, Callable, List, Dict, Set, Optional, Pattern, Tuple, Union
 import mimetypes
 from urllib.parse import quote_plus, parse_qs, urlsplit, urlunsplit, urlencode, unquote_plus
-import importlib.resources
+import importlib_resources
 import h11
 
 from parsec.serde import SerdeValidationError, SerdePackingError, packb, unpackb
@@ -212,7 +212,7 @@ class HTTPComponent:
             # Note we don't support nested resources, this is fine for the moment
             # and it prevent us from malicious path containing `..`
             data = (
-                importlib.resources.files(http_static_module)
+                importlib_resources.files(http_static_module)
                 .joinpath(normalize_path(path))
                 .read_bytes()
             )

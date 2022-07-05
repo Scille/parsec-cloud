@@ -79,8 +79,7 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
         self.setupUi(self)
         self.line_edit_user_email.validity_changed.connect(self.check_infos)
         self.line_edit_user_email.set_validator(validators.EmailValidator())
-        self.line_edit_user_full_name.validity_changed.connect(self.check_infos)
-        self.line_edit_user_full_name.set_validator(validators.UserNameValidator())
+        self.line_edit_user_full_name.textChanged.connect(self.check_infos)
         self.line_edit_org_name.validity_changed.connect(self.check_infos)
         self.line_edit_device.setText(get_default_device())
         self.line_edit_device.validity_changed.connect(self.check_infos)
@@ -96,7 +95,7 @@ class CreateOrgUserInfoWidget(QWidget, Ui_CreateOrgUserInfoWidget):
     def _are_inputs_valid(self):
         return bool(
             self.line_edit_user_email.is_input_valid()
-            and self.line_edit_user_full_name.is_input_valid()
+            and self.line_edit_user_full_name.text()
             and self.line_edit_org_name.is_input_valid()
             and self.line_edit_device.is_input_valid()
             and (
@@ -194,11 +193,18 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
     async def _on_next_clicked(self):
         if isinstance(self.current_widget, CreateOrgUserInfoWidget):
             backend_addr = None
+            org_id = None
+            device_label = None
+            human_handle = None
 
             if self.start_addr:
                 backend_addr = self.start_addr
             else:
-                org_id = OrganizationID(self.current_widget.line_edit_org_name.text())
+                try:
+                    org_id = OrganizationID(self.current_widget.line_edit_org_name.text())
+                except ValueError as exc:
+                    show_error(self, _("TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"), exception=exc)
+                    return
                 try:
                     backend_addr = BackendOrganizationBootstrapAddr.build(
                         backend_addr=self.current_widget.backend_addr
@@ -209,12 +215,23 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 except ValueError as exc:
                     show_error(self, _("TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"), exception=exc)
                     return
-            # Inputs have been validated with validators
-            human_handle = HumanHandle(
-                email=self.current_widget.line_edit_user_email.text(),
-                label=self.current_widget.line_edit_user_full_name.clean_text(),
-            )
-            device_label = DeviceLabel(self.current_widget.line_edit_device.clean_text())
+            try:
+                user_name = validators.trim_user_name(
+                    self.current_widget.line_edit_user_full_name.text()
+                )
+
+                human_handle = HumanHandle(
+                    self.current_widget.line_edit_user_email.text(), user_name
+                )
+            except ValueError as exc:
+                show_error(self, _("TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"), exception=exc)
+                return
+            # No try/except given `self.current_widget.line_edit_device` has already been validated against `DeviceLabel`
+            try:
+                device_label = DeviceLabel(self.current_widget.line_edit_device.text())
+            except ValueError as exc:
+                show_error(self, _("TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"), exception=exc)
+                return
 
             # TODO: call `await _do_create_org` directly since the context is now async
             self.create_job = self.jobs_ctx.submit_job(

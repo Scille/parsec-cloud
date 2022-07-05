@@ -4,10 +4,6 @@ import { registerPlugin } from '@capacitor/core';
 
 import type { LibParsecPlugin } from './definitions';
 
-// TODO: Initialize only for web
-import init from '../../../pkg';
-init();
-
 // Low-level API
 
 const libparsecPlugin = registerPlugin<LibParsecPlugin>(

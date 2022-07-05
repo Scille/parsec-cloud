@@ -2543,7 +2543,7 @@ msgstr "En attente de l'autre personne"
 
 msgid "TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS"
 msgstr ""
-"L'utilisateur <b>{name}</b> (<b>{email}</b>) ainsi que l'appareil <b>{device}</b> ont été créés avec succès ! Pour commencer à utiliser PARSEC, "
+"L'utilisateur a été créé avec succès ! Pour commencer à utiliser PARSEC, "
 "vous devez maintenant choisir un mot de passe."
 
 msgid "TEXT_CLAIM_USER_RETRIEVING_INFO"

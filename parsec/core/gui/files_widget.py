@@ -46,7 +46,6 @@ logger = get_logger()
 # Type alias for files to import
 # Files are copied from a trio path to an FS path.
 ImportFiles = List[Tuple[trio.Path, FsPath]]
-ImportErrors = List[Tuple[trio.Path, OSError]]
 
 
 class CancelException(Exception):
@@ -520,10 +519,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def rename_files(self):
         files = self.table_files.selected_files()
         if len(files) == 1:
-            selection_end = files[0].name.find(".")
-            # If no "." or starts with a ".", we want to select the whole file name
-            if selection_end in [-1, 0]:
-                selection_end = len(files[0].name)
             new_name = get_text_input(
                 self,
                 _("TEXT_FILE_RENAME_TITLE"),
@@ -532,7 +527,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 default_text=files[0].name,
                 validator=validators.FileNameValidator(),
                 button_text=_("ACTION_FILE_RENAME"),
-                selection=(0, selection_end),
             )
             if not new_name:
                 return
@@ -727,20 +721,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         files = []
         try:
             # Get the list of files to import with the corresponding size
-            files, total_size, errors = await self._get_files_from_sources(sources, dest)
-
-            # Nothing to do
-            if not files and not errors:
-                return
-
-            # Log errors
-            for source, exc in errors:
-                logger.exception(f"Could not load {source}", exc_info=exc)
-
-            # No file to import, raise the first error
-            if not files and errors:
-                (_source, exc), *_more_errors = errors
-                raise exc
+            files, total_size = await self._get_files_from_sources(sources, dest)
 
             # Make the job cancellable
             with trio.CancelScope() as cancel_scope:
@@ -796,52 +777,34 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     # Import async helpers
 
-    async def _get_files(
-        self, source: trio.Path, dest: FsPath
-    ) -> Tuple[ImportFiles, int, ImportErrors]:
-        try:
-            # Source is a file
-            if await source.is_file():
-                stat = await source.stat()
-                return [(source, dest / source.name)], stat.st_size, []
-
-            # Neither a file or a directory, simply ignore
-            if not await source.is_dir():
-                return [], 0, []
-
-            # Source is a directory
-            files = []
-            errors = []
-            total_size = 0
-            # Loop over children and aggregate
-            for child in await source.iterdir():
-                child_files, child_size, child_errors = await self._get_files(
-                    child, dest / source.name
-                )
-                files.extend(child_files)
-                errors.extend(child_errors)
-                total_size += child_size
-            return files, total_size, errors
-
-        # Source is not available (e.g `PermissionDenied`)
-        except OSError as exc:
-            return [], 0, [(source, exc)]
+    async def _get_files(self, source: trio.Path, dest: FsPath) -> Tuple[ImportFiles, int]:
+        # Source is a file
+        if await source.is_file():
+            stat = await source.stat()
+            return [(source, dest / source.name)], stat.st_size
+        # Source is a directory
+        files = []
+        total_size = 0
+        # Loop over children and aggregate
+        for child in await source.iterdir():
+            child_files, child_size = await self._get_files(child, dest / source.name)
+            files.extend(child_files)
+            total_size += child_size
+        return files, total_size
 
     async def _get_files_from_sources(
         self, sources: Iterable[str], dest: FsPath
-    ) -> Tuple[ImportFiles, int, ImportErrors]:
+    ) -> Tuple[ImportFiles, int]:
         files = []
-        errors = []
         total_size = 0
         # Loop over sources and make sure to work with trio paths
         for source in sources:
             source = trio.Path(source)
             # Aggregate the results
-            source_files, source_size, source_errors = await self._get_files(source, dest)
+            source_files, source_size = await self._get_files(source, dest)
             files.extend(source_files)
-            errors.extend(source_errors)
             total_size += source_size
-        return files, total_size, errors
+        return files, total_size
 
     async def _import_all(
         self, files: ImportFiles, loading_dialog: LoadingWidget
@@ -886,16 +849,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         # Open the file to import
         async with await trio.open_file(source, "rb") as f:
-
-            # Getting the file name without extension (anything after the first dot is considered to be the extension)
-            name_we, suffixes = dest.name.str.split(".", 1)
-            # Count starts at 2 (1 would be the file without a number)
-            count = 2
-            while await self.workspace_fs.exists(dest):
-                # Create the new file name by adding the count ("myfile.txt" becomes "myfile (2).txt")
-                new_file_name = EntryName("{} ({}).{}".format(name_we, count, suffixes))
-                dest = dest.parent / new_file_name
-                count += 1
 
             # Open the file to create
             async with await self.workspace_fs.open_file(dest, "wb") as dest_file:
