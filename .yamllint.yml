@@ -76,6 +76,8 @@ rules:
   quoted-strings:
     quote-type: any # I would prefer "double" style
     required: only-when-needed
+    extra-allowed:
+      - \d{2,2}:\d{2,2}
 
   trailing-spaces: enable
 
