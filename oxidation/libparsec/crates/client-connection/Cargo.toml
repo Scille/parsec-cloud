@@ -1,0 +1,13 @@
+[package]
+name = "libparsec-client-connection"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = "0.11.10"
+url = "2.2.2"
+types = { path = "../types" }
+protocol = { path = "../protocol" }
+base64 = "0.13.0"
