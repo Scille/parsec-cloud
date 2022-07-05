@@ -127,11 +127,12 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             else:
                 self.widget_files.show()
                 self.widget_empty.hide()
-                for i, f in enumerate(files, 1):
-                    if i > 4:
-                        break
+                for i in range(1, 5):
                     label = getattr(self, "file{}_name".format(i))
-                    label.setText(f.str)
+                    if len(files) >= i:
+                        label.setText(files[i - 1].str)
+                    else:
+                        label.setText("")
         else:
             widget_temp = self.widget_empty.layout().itemAt(0).widget()
             widget_temp.label_timestamp.setText(format_datetime(self.timestamp))

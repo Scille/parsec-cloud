@@ -12,7 +12,7 @@ from triopg import UniqueViolationError, UndefinedTableError, PostgresError
 from functools import wraps
 from structlog import get_logger
 from base64 import b64decode, b64encode
-import importlib_resources
+import importlib.resources
 
 from parsec.event_bus import EventBus
 from parsec.serde import SerdeValidationError, SerdePackingError
@@ -38,7 +38,7 @@ class MigrationItem:
 def retrieve_migrations() -> List[MigrationItem]:
     migrations = []
     ids = []
-    for file in importlib_resources.files(migrations_module).iterdir():
+    for file in importlib.resources.files(migrations_module).iterdir():
         file_name = file.name
         match = re.search(MIGRATION_FILE_PATTERN, file_name)
         if match:
@@ -49,7 +49,7 @@ def retrieve_migrations() -> List[MigrationItem]:
                     f"Inconsistent package (multiples migrations with {idx} as id)"
                 )
             ids.append(idx)
-            sql = importlib_resources.files(migrations_module).joinpath(file_name).read_text()
+            sql = importlib.resources.files(migrations_module).joinpath(file_name).read_text()
             if not sql:
                 raise AssertionError(f"Empty migration file {file_name}")
             migrations.append(

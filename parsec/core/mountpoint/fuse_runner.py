@@ -6,7 +6,7 @@ import trio
 import errno
 import signal
 import threading
-import importlib_resources
+import importlib.resources
 from pathlib import PurePath
 from fuse import FUSE
 from structlog import get_logger
@@ -156,7 +156,7 @@ async def fuse_mountpoint_runner(
             encoding = sys.getfilesystemencoding()
 
             def _run_fuse_thread():
-                with importlib_resources.files(resources_module).joinpath(
+                with importlib.resources.files(resources_module).joinpath(
                     "parsec.icns"
                 ) as parsec_icns_path:
 
@@ -273,7 +273,7 @@ async def _stop_fuse_thread(
         # 120 seconds before a timeout occurs. The solution used is to call this function (macOS
         # equivalent to fusermount) in a subprocess to unmount.
         process_args = ["diskutil", "unmount", "force", str(mountpoint_path)]
-        process = await trio.open_process(process_args)
+        process = await trio.lowlevel.open_process(process_args)
 
         # Perform 300 attempts of 10 ms, i.e a 3 second timeout
         # A while loop wouldn't be ideal here, especially since this code is protected against cancellation
@@ -288,7 +288,7 @@ async def _stop_fuse_thread(
             # an unrelated mountpoint that tooks our path, but it's a really
             # unlikely event.
             if process.poll() is not None:
-                process = await trio.open_process(process_args)
+                process = await trio.lowlevel.open_process(process_args)
         else:
             logger.error("Fuse thread stop timeout", mountpoint=mountpoint_path)
 

@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-flume = "0.10.12"
+flume = "0.10.13"
 # futures is used for its macros `select_all` and `join_all`
 futures = "0.3.21"
 
@@ -13,10 +13,10 @@ log = "0.4.17"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.80"
-wasm-bindgen-futures = "0.4.30"
+wasm-bindgen-futures = "0.4.31"
 # Window feature is require for `Timer`.
-web-sys = { version = "0.3.57", features = ["Window"] }
-js-sys = "0.3.57"
+web-sys = { version = "0.3.58", features = ["Window"] }
+js-sys = "0.3.58"
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 wasm-bindgen-test = "0.3.30"
@@ -25,11 +25,11 @@ console_log = "0.2.0"
 # Used for `futures_lite::future::or` and don't require `Unpin`
 futures-lite = "1.12.0"
 # Need to add the feature `Performance` to be able to estimate the time tasken during the tests.
-web-sys = { version = "0.3.57", features = ["Window", "Performance"]}
+web-sys = { version = "0.3.58", features = ["Window", "Performance"]}
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.18.2", features = ["rt", "time"] }
+tokio = { version = "1.19.2", features = ["rt", "time"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-tokio = { version = "1.18.2", features = ["full"] }
+tokio = { version = "1.19.2", features = ["full"] }
 simple_logger = "2.1.0"

@@ -651,6 +651,4 @@ async def _serve_backend(
 
     # Provide a service nursery so multi-errors errors are handled
     async with trio.open_service_nursery() as nursery:  # type: ignore[attr-defined]
-        await trio.serve_tcp(  # type: ignore[call-arg]
-            _serve_client, port, handler_nursery=nursery, host=host
-        )
+        await trio.serve_tcp(_serve_client, port, handler_nursery=nursery, host=host)

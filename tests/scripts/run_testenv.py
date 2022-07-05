@@ -10,8 +10,8 @@ Run `tests/scripts/run_testenv.sh --help` for more information.
 
 import pkg_resources
 
-# Make sure parsec is fully installed (core, backend, dev)
-pkg_resources.require("parsec-cloud[all]")
+# Make sure parsec is fully installed (core, backend)
+pkg_resources.require("parsec-cloud[core,backend]")
 
 import os
 import sys
@@ -58,7 +58,6 @@ async def new_environment(source_file=None):
             "XDG_CONFIG_HOME": f"{tempdir}/config",
         }
     for key, value in env.items():
-        await trio.Path(value).mkdir(exist_ok=True)
         os.environ[key] = value
         export_lines.append(f"{export} {key}={value}")
 
@@ -173,7 +172,7 @@ async def restart_local_backend(administration_token, backend_port, email_host, 
     else:
 
         await trio.run_process(["pkill", "-f", pattern], check=False)
-        backend_process = await trio.open_process(command.split(), stdout=subprocess.PIPE)
+        backend_process = await trio.lowlevel.open_process(command.split(), stdout=subprocess.PIPE)
         async with backend_process.stdout:
             async for data in backend_process.stdout:
                 print(data.decode(), end="")

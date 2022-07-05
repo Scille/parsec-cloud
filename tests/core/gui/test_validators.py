@@ -275,3 +275,34 @@ def test_file_name_validator(qtbot, core_config):
     qtbot.wait_until(lambda: le.text() == "a/b")
     assert not le.is_input_valid()
     assert le.property("validity") == QtGui.QValidator.Invalid
+
+
+@pytest.mark.gui
+@pytest.mark.parametrize(
+    "name_and_expected",
+    [("    ", False), ("[Test]", False), ("Maurice Moss", True), ("    Maurice    Moss   ", True)],
+)
+def test_user_name_validator(qtbot, core_config, name_and_expected):
+    switch_language(core_config, "en")
+
+    user_name, expected = name_and_expected
+
+    le = ValidatedLineEdit()
+    le.set_validator(validators.UserNameValidator())
+    qtbot.add_widget(le)
+    le.show()
+
+    qtbot.keyClicks(le, user_name)
+    qtbot.wait_until(lambda: le.text() == user_name)
+    if expected:
+        assert le.is_input_valid()
+        assert le.property("validity") == QtGui.QValidator.Acceptable
+    else:
+        assert not le.is_input_valid()
+        assert (
+            le.property("validity") == QtGui.QValidator.Invalid
+            or le.property("validity") == QtGui.QValidator.Intermediate
+        )
+
+    if user_name.startswith(" "):
+        assert le.clean_text() == validators.trim_string(user_name)

@@ -5,6 +5,7 @@ from unittest.mock import ANY
 from pendulum import datetime
 
 from parsec.api.data import UserManifest, WorkspaceEntry, EntryName
+from parsec.api.data.certif import RevokedUserCertificateContent
 from parsec.api.protocol import RealmID
 from parsec.crypto import SecretKey
 from parsec.core.core_events import CoreEvent
@@ -55,6 +56,35 @@ async def test_share_bad_recipient(running_backend, alice_user_fs, alice, mallor
     with pytest.raises(FSError) as exc:
         await alice_user_fs.workspace_share(wid, mallory.user_id, WorkspaceRole.MANAGER)
     assert str(exc.value) == "User `mallory` doesn't exist in backend"
+
+
+@pytest.mark.trio
+async def test_share_revoked_recipient(running_backend, alice_user_fs, alice, mallory, bob):
+    # Create workspace
+    wid = await alice_user_fs.workspace_create(EntryName("w1"))
+
+    # Populate cache
+    await alice_user_fs.remote_loader.get_user(bob.user_id)
+
+    # Revoke Bob
+    timestamp = alice.timestamp()
+    revoked_user_certificate = RevokedUserCertificateContent(
+        author=alice.device_id, timestamp=timestamp, user_id=bob.user_id
+    ).dump_and_sign(alice.signing_key)
+    rep = await alice_user_fs.backend_cmds.user_revoke(
+        revoked_user_certificate=revoked_user_certificate
+    )
+    assert rep == {"status": "ok"}
+
+    # Share with Bob, this perform a backend request and fail
+    with pytest.raises(FSSharingNotAllowedError) as exc:
+        await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
+    assert str(exc.value) == "The user `bob` is revoked: {'status': 'user_revoked'}"
+
+    # Share with Bob, this should fail before the backend request as the cache has been invalidated
+    with pytest.raises(FSSharingNotAllowedError) as exc:
+        await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
+    assert str(exc.value) == "The user `bob` is revoked"
 
 
 @pytest.mark.trio

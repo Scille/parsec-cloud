@@ -8,7 +8,7 @@ lazy_static::lazy_static! {
         Mutex::new(libparsec_bindings_common::create_context());
 }
 
-/// Interface between NodeJs, Rust and Native
+/// Interface between Web, Rust and Native
 /// Cordova bridge API for Android requests the inputs and output to be passed as a JS Object
 /// hence we have to comply with this ourself to provide the same API accross plateforms
 ///

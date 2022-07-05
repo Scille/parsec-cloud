@@ -112,7 +112,7 @@ class SnackbarWidget(QWidget, Ui_SnackbarWidget):
         x = main_window.size().width() - width - 20
         y = main_window.size().height() - ((height + offset) * (self.index + 1))
         # Hide the snackbar if the main window does not have enough space to show it
-        self.set_visible(y > 30)
+        self.set_visible(y > 30 and main_window.isVisible())
         pos = main_window.mapToGlobal(QPoint(x, y))
         self.setGeometry(pos.x(), pos.y(), width, height)
 
@@ -159,13 +159,17 @@ class SnackbarManager(QObject):
         self.destroyed.connect(self._on_destroyed)
 
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.Move or event.type() == QEvent.Resize:
+        if (
+            event.type() == QEvent.Move
+            or event.type() == QEvent.Resize
+            or event.type() == QEvent.MacSizeChange
+        ):
             for sb in self.snackbars:
                 sb.move_popup()
-        elif event.type() == QEvent.Hide:
+        elif event.type() == QEvent.Hide or event.type() == QEvent.WindowDeactivate:
             for sb in self.snackbars:
                 sb.set_visible(False)
-        elif event.type() == QEvent.Show:
+        elif event.type() == QEvent.Show or event.type() == QEvent.WindowActivate:
             for sb in self.snackbars:
                 sb.set_visible(True)
         elif event.type() == QEvent.Close:

@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
+from parsec.core.gui.users_widget import UserButton
 
 from tests.common import customize_fixtures
 from PyQt5.QtWidgets import QLabel
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtGui
 
 from parsec.core.gui.lang import translate
 
@@ -47,7 +48,7 @@ async def test_list_users(aqtbot, running_backend, logged_gui, autoclose_dialog,
 @pytest.mark.trio
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_list_users_and_invitations(
-    aqtbot, running_backend, logged_gui, autoclose_dialog, alice, str_len_limiter
+    aqtbot, running_backend, logged_gui, autoclose_dialog, alice, str_len_limiter, snackbar_catcher
 ):
     # Also populate some invitations
     await running_backend.backend.invite.new_for_user(
@@ -72,6 +73,16 @@ async def test_list_users_and_invitations(
     assert item.widget().label_email.text() == "fry@pe.com..."
 
     _assert_all_users_visible(u_w, index=2)
+
+    # Check if the option to copy the email is working properly
+    clipboard = QtGui.QGuiApplication.clipboard()
+    user_button = u_w.layout_users.itemAt(2).widget()
+    assert isinstance(user_button, UserButton)
+    user_button.copy_email()
+    assert snackbar_catcher.snackbars == [
+        ("INFO", translate("TEXT_GREET_USER_EMAIL_COPIED_TO_CLIPBOARD"))
+    ]
+    assert clipboard.text() == user_button.user_email
 
 
 @pytest.mark.gui
