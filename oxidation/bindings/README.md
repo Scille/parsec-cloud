@@ -40,4 +40,12 @@ However the AAR doesn't have to be built when using `../client/android` project 
 
 ## 4. Web
 
-`<WIP>`
+Install wasm dependencies and build:
+
+Requirements:
+- wasm-pack: `curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh`
+
+Build:
+
+    # In /bindings/web
+    wasm-pack build
