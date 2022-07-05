@@ -43,7 +43,7 @@ jobs:
       - name: Debug rust cache hit
         run: echo ${{ steps.cache-rust.outputs.cache-hit }}
 
-      - if: ${{ steps.cache-rust.outputs.cache-hit == 'false' }}
+      - if: steps.cache-rust.outputs.cache-hit != 'true'
         uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # pin v1.0.6
         with:
           toolchain: ${{ env.rust-version }}
