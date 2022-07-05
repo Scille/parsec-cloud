@@ -5,7 +5,7 @@ import { RouteRecordRaw } from 'vue-router';
 import HomePage from '../views/HomePage.vue';
 import TestPage from '../views/TestPage.vue';
 
-const routes: Array<RouteRecordRaw> = [
+let routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     redirect: '/home'
@@ -14,13 +14,18 @@ const routes: Array<RouteRecordRaw> = [
     path: '/home',
     name: 'Home',
     component: HomePage
-  },
-  {
-    path: '/test',
-    name: 'Test',
-    component: TestPage
   }
 ];
+
+if (process.env.VUE_APP_TEST_MODE === 'True') {
+  routes = [
+    {
+      path: '/',
+      name: 'Test',
+      component: TestPage
+    }
+  ];
+}
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
