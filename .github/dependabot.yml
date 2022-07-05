@@ -6,11 +6,32 @@ updates:
       separator: "-"
     schedule:
       interval: "monthly"
-      time: "02:00"
+      time: "00:30"
       timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: cargo
+    directory: "/"
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: "monthly"
+      time: "00:30"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
 
   - package-ecosystem: pip
-    directory: "/requirement"
+    directory: "/oxidation/libparsec_python"
+    pull-request-branch-name:
+      separator: "-"
+    schedule:
+      interval: "monthly"
+      time: "00:30"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: pip
+    directory: "/"
     ignore:
       - dependency-name: "toastedmarshmallow"
       - dependency-name: "trio_typing"
@@ -19,26 +40,9 @@ updates:
       separator: "-"
     schedule:
       interval: "monthly"
-      time: "02:00"
+      time: "23:30"
       timezone: "Europe/Paris"
-
-  - package-ecosystem: pip
-    directory: "/oxidation/libparsec_python"
-    pull-request-branch-name:
-      separator: "-"
-    schedule:
-      interval: "monthly"
-      time: "02:00"
-      timezone: "Europe/Paris"
-
-  - package-ecosystem: cargo
-    directory: "/"
-    pull-request-branch-name:
-      separator: "-"
-    schedule:
-      interval: "monthly"
-      time: "02:00"
-      timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
 
   - package-ecosystem: "npm"
     directory: "/oxidation/client"
@@ -46,8 +50,9 @@ updates:
       separator: "-"
     schedule:
       interval: "monthly"
-      time: "02:00"
+      time: "23:30"
       timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
 
   - package-ecosystem: "npm"
     directory: "/oxidation/client/android"
@@ -55,5 +60,6 @@ updates:
       separator: "-"
     schedule:
       interval: "monthly"
-      time: "02:00"
+      time: "23:30"
       timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
