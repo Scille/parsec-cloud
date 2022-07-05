@@ -10,7 +10,6 @@ from itertools import chain
 from typing import Iterable, Iterator
 
 
-THIS_YEAR = "2021"  # Change me when new year comes ;-)
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -39,12 +38,6 @@ class Licenser:
                 print(f"Missing {cls.NAME} header", file)
                 return False
 
-            elif match["year"] != THIS_YEAR:
-                print(
-                    f"Wrong year in the header (got {match['year']}, should be {THIS_YEAR})", file
-                )
-                return False
-
             for line, line_txt in enumerate(fd.read().split("\n"), 3 if shabang_line else 2):
                 if cls.HEADER_RE.match(line_txt.strip()):
                     print("Header wrongly present at line", line, file)
@@ -63,80 +56,74 @@ class Licenser:
                 file.write_text(updated_data)
                 return True
 
-            elif match["year"] != THIS_YEAR:
-                print("Correct copyright year", file)
-                updated_data = f"{shabang_line}{cls.HEADER}\n{fd.read()}"
-                file.write_text(updated_data)
-                return True
-
         return False
 
 
 class PythonAgplLicenser(Licenser):
     NAME = "AGPL-3.0"
     HEADER = (
-        f"# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-{THIS_YEAR} Scille SAS"
+        f"# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS"
     )
     HEADER_RE = re.compile(
-        r"^# Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPL-3.0 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^# Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPL-3.0 2016-present Scille SAS$"
     )
 
 
 class PythonBuslLicenser(Licenser):
     NAME = "BUSL-1.1"
-    HEADER = f"# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-{THIS_YEAR} Scille SAS"
+    HEADER = f"# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS"
     HEADER_RE = re.compile(
-        r"^# Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^# Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-present Scille SAS$"
     )
 
 
 class SqlBuslLicenser(Licenser):
     NAME = "BUSL-1.1"
-    HEADER = f"-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-{THIS_YEAR} Scille SAS"
+    HEADER = f"-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS"
     HEADER_RE = re.compile(
-        r"^-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-present Scille SAS$"
     )
 
 
 class SqlAgplLicenser(Licenser):
     NAME = "AGPL-3.0"
     HEADER = (
-        f"-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-{THIS_YEAR} Scille SAS"
+        f"-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS"
     )
     HEADER_RE = re.compile(
-        r"^-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPL-3.0 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPL-3.0 2016-present Scille SAS$"
     )
 
 
 class RustBuslLicenser(Licenser):
     NAME = "BUSL-1.1"
-    HEADER = f"// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-{THIS_YEAR} Scille SAS"
+    HEADER = f"// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS"
     HEADER_RE = re.compile(
-        r"^// Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^// Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-present Scille SAS$"
     )
 
 
 class JavascriptBuslLicenser(Licenser):
     NAME = "BUSL-1.1"
-    HEADER = f"// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-{THIS_YEAR} Scille SAS"
+    HEADER = f"// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS"
     HEADER_RE = re.compile(
-        r"^// Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^// Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-present Scille SAS$"
     )
 
 
 class VueBuslLicenser(Licenser):
     NAME = "BUSL-1.1"
-    HEADER = f"<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-{THIS_YEAR} Scille SAS -->"
+    HEADER = f"<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->"
     HEADER_RE = re.compile(
-        r"^<!-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-(?P<year>[0-9]{4}) Scille SAS -->$"
+        r"^<!-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-present Scille SAS -->$"
     )
 
 
 class RstBuslLicenser(Licenser):
     NAME = "BUSL-1.1"
-    HEADER = f".. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-{THIS_YEAR} Scille SAS"
+    HEADER = f".. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS"
     HEADER_RE = re.compile(
-        r"^\.\. Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
+        r"^\.\. Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BUSL-1.1 \(eventually AGPL-3.0\) 2016-present Scille SAS$"
     )
 
 
