@@ -10,7 +10,7 @@ extends: default
 
 rules:
   braces:
-    forbid: false
+    forbid: non-empty
     min-spaces-inside: 1
     max-spaces-inside: 1
     min-spaces-inside-empty: 0
@@ -82,4 +82,4 @@ rules:
   truthy:
     level: error
     allowed-values: [ "true", "false" ]
-    check-keys: true
+    check-keys: false

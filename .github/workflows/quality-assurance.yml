@@ -5,7 +5,7 @@ on:
 
 env:
   python-version: "3.9"
-  rust-version: "1.62.0"
+  rust-version: 1.62.0
   node-version: "16"
 
 jobs:
