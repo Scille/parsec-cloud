@@ -17,7 +17,7 @@
     "electron:open": "npm run electron:copy && npx cap open @capacitor-community/electron",
     "electron:dist": "npx ionic build && npx cap copy @capacitor-community/electron && cd electron && npm run electron:dist",
     "wasm:build": "cd ../bindings/web && wasm-pack build --target web",
-    "wasm:copy": "cp -r ../bindings/web/pkg ."
+    "wasm:copy": "cp -r ../bindings/web/pkg . || xcopy ..\\bindings\\web\\pkg pkg /e /s /y /i"
   },
   "dependencies": {
     "@capacitor-community/electron": "^4.1.0",
