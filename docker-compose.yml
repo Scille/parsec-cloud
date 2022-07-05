@@ -1,4 +1,4 @@
-version: '2'
+version: "2"
 services:
   parsec:
     build:
@@ -18,14 +18,14 @@ services:
     ports:
       - 6777:6777
     depends_on:
-      - "postgres"
+      - postgres
     entrypoint: []
-    command: ["/bin/sh", "-c", "parsec backend migrate && parsec backend run"]
+    command: [ /bin/sh, -c, parsec backend migrate && parsec backend run ]
     volumes:
       - /tmp:/tmp
 
   postgres:
-    image: "postgres"
+    image: postgres
     volumes:
       - postgres-data:/var/lib/postgresql/data/
     environment:
