@@ -18,3 +18,11 @@ CREATE TABLE sequester_service(
 
     UNIQUE(organization, service_id)
 );
+
+
+CREATE TABLE sequester_service_vlob(
+    _id SERIAL PRIMARY KEY,
+    vlob INTEGER REFERENCES vlob_atom (_id) NOT NULL,
+    service INTEGER REFERENCES sequester_service (_id) NOT NULL,
+    blob BYTEA NOT NULL
+);

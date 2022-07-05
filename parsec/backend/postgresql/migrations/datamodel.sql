@@ -301,6 +301,13 @@ CREATE TABLE realm_vlob_update (
 );
 
 
+CREATE TABLE sequester_service_vlob(
+    _id SERIAL PRIMARY KEY,
+    vlob INTEGER REFERENCES vlob_atom (_id) NOT NULL,
+    service INTEGER REFERENCES sequester_service (_id) NOT NULL,
+    blob BYTEA NOT NULL
+);
+
 -------------------------------------------------------
 --  Block
 -------------------------------------------------------
