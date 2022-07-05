@@ -35,7 +35,7 @@
     "ionicons": "^6.0.1",
     "vue": "^3.2.36",
     "vue-i18n": "^9.2.0-beta.35",
-    "vue-router": "^4.0.15"
+    "vue-router": "^4.1.0"
   },
   "devDependencies": {
     "@capacitor/cli": "3.4.3",
