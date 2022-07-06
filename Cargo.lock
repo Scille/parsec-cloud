@@ -502,6 +502,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "client_types"
+version = "0.0.0"
+dependencies = [
+ "api_crypto",
+ "api_types",
+ "fancy-regex",
+ "flate2",
+ "hex-literal",
+ "paste",
+ "pretty_assertions",
+ "rmp-serde",
+ "rstest 0.13.0",
+ "rstest_reuse",
+ "serde",
+ "serde_bytes",
+ "serde_repr",
+ "serde_test",
+ "serde_with",
+ "serialization_format",
+ "sha2 0.10.2",
+ "tests_fixtures",
+]
+
+[[package]]
 name = "colored"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1122,6 +1146,7 @@ dependencies = [
  "api_crypto",
  "api_protocol",
  "api_types",
+ "client_types",
  "libparsec_platform_native",
  "libparsec_platform_web",
 ]
@@ -1192,9 +1217,9 @@ version = "0.0.0"
 dependencies = [
  "api_crypto",
  "api_types",
+ "client_types",
  "diesel",
  "fancy-regex",
- "parsec_client_types",
  "rstest 0.12.0",
  "tests_fixtures",
  "thiserror",
@@ -1229,7 +1254,6 @@ dependencies = [
  "fancy-regex",
  "libparsec",
  "libparsec_core_fs",
- "parsec_client_types",
  "parsec_core",
  "pyo3",
  "uuid",
@@ -1499,30 +1523,6 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-sys",
-]
-
-[[package]]
-name = "parsec_client_types"
-version = "0.0.0"
-dependencies = [
- "api_crypto",
- "api_types",
- "fancy-regex",
- "flate2",
- "hex-literal",
- "paste",
- "pretty_assertions",
- "rmp-serde",
- "rstest 0.13.0",
- "rstest_reuse",
- "serde",
- "serde_bytes",
- "serde_repr",
- "serde_test",
- "serde_with",
- "serialization_format",
- "sha2 0.10.2",
- "tests_fixtures",
 ]
 
 [[package]]
@@ -2283,8 +2283,8 @@ dependencies = [
  "api_protocol",
  "api_types",
  "chrono",
+ "client_types",
  "hex-literal",
- "parsec_client_types",
  "rstest 0.13.0",
  "uuid",
 ]

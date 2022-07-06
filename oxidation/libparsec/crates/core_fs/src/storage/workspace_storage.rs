@@ -7,7 +7,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
 
 use api_types::{BlockID, ChunkID, EntryID, FileDescriptor};
-use parsec_client_types::{LocalDevice, LocalFileManifest, LocalManifest, LocalWorkspaceManifest};
+use client_types::{LocalDevice, LocalFileManifest, LocalManifest, LocalWorkspaceManifest};
 
 use super::chunk_storage::ChunkStorage;
 use super::manifest_storage::{ChunkOrBlockID, ManifestStorage};
@@ -375,7 +375,7 @@ impl WorkspaceStorage {
 mod tests {
     use crate::conftest::alice_workspace_storage;
     use api_types::{Blocksize, DEFAULT_BLOCK_SIZE};
-    use parsec_client_types::Chunk;
+    use client_types::Chunk;
     use rstest::rstest;
     use std::num::NonZeroU64;
     use tests_fixtures::{alice, tmp_path, Device, TmpPath};

@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use api_crypto::*;
 use api_types::*;
-use parsec_client_types::*;
+use client_types::*;
 
 pub struct Device {
     pub organization_addr: BackendOrganizationAddr,

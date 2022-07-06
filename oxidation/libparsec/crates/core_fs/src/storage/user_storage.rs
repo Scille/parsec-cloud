@@ -3,7 +3,7 @@
 use std::collections::HashSet;
 
 use api_types::EntryID;
-use parsec_client_types::{LocalDevice, LocalManifest, LocalUserManifest};
+use client_types::{LocalDevice, LocalManifest, LocalUserManifest};
 
 use super::manifest_storage::ManifestStorage;
 use crate::error::{FSError, FSResult};

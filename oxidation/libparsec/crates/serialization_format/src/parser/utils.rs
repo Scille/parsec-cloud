@@ -73,7 +73,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "FolderManifest" => "api_types::FolderManifest",
                 "WorkspaceManifest" => "api_types::WorkspaceManifest",
                 "UserManifest" => "api_types::UserManifest",
-                "Chunk" => "parsec_client_types::Chunk",
+                "Chunk" => "client_types::Chunk",
                 ident if types.get(ident).is_some() => {
                     types.get(ident).unwrap_or_else(|| unreachable!())
                 }

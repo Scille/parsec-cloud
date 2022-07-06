@@ -11,7 +11,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 
 use api_types::{BlockID, ChunkID, EntryID};
-use parsec_client_types::LocalManifest;
+use client_types::LocalManifest;
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
 use crate::error::{FSError, FSResult};
@@ -569,7 +569,7 @@ impl ManifestStorage {
 mod tests {
     use api_crypto::HashDigest;
     use api_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
-    use parsec_client_types::{Chunk, LocalFileManifest};
+    use client_types::{Chunk, LocalFileManifest};
 
     use rstest::rstest;
     use tests_fixtures::{tmp_path, TmpPath};

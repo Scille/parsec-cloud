@@ -12,7 +12,7 @@ use api_crypto::{HashDigest, SecretKey};
 use api_types::*;
 use serialization_format::parsec_data;
 
-use crate as parsec_client_types;
+use crate as client_types;
 
 macro_rules! impl_local_manifest_dump_load {
     ($name:ident) => {

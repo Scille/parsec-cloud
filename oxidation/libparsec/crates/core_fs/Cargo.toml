@@ -10,7 +10,7 @@ autotests = false
 [dependencies]
 api_crypto = { path = "../api_crypto" }
 api_types = { path = "../api_types" }
-parsec_client_types = { path = "../../../crates/parsec_client_types" }
+client_types = { path = "../client_types" }
 
 diesel = { version = "2.0.0-rc.0", features = ["sqlite", "r2d2"] }
 fancy-regex = "0.10.0"

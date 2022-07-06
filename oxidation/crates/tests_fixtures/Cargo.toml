@@ -7,7 +7,7 @@ edition = "2021"
 api_crypto = { path = "../../libparsec/crates/api_crypto" }
 api_protocol = { path = "../../libparsec/crates/api_protocol" }
 api_types = { path = "../../libparsec/crates/api_types" }
-parsec_client_types = { path = "../parsec_client_types" }
+client_types = { path = "../../libparsec/crates/client_types" }
 
 rstest = "0.13.0"
 hex-literal = "0.3.3"

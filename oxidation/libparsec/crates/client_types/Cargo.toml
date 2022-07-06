@@ -1,5 +1,5 @@
 [package]
-name = "parsec_client_types"
+name = "client_types"
 version = "0.0.0"
 edition = "2021"
 license = " BUSL-1.1"
@@ -12,9 +12,9 @@ path = "tests/mod.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-api_crypto = { path = "../../libparsec/crates/api_crypto" }
-api_types = { path = "../../libparsec/crates/api_types" }
-serialization_format = { path = "../../libparsec/crates/serialization_format" }
+api_crypto = { path = "../api_crypto" }
+api_types = { path = "../api_types" }
+serialization_format = { path = "../serialization_format" }
 
 flate2 = "1.0.24"
 serde = { version = "1.0.138", features = ["derive"] }
@@ -27,7 +27,7 @@ paste = "1.0.5"
 fancy-regex = "0.10.0"
 
 [dev-dependencies]
-tests_fixtures = { path = "../tests_fixtures" }
+tests_fixtures = { path = "../../../crates/tests_fixtures" }
 pretty_assertions = "1.0.0"
 serde_test = "1.0.138"
 hex-literal = "0.3.3"

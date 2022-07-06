@@ -100,16 +100,16 @@ impl WorkspaceStorage {
             .allow_threads(|| self.0.get_manifest(entry_id.0))
             .map_err(|_| FSLocalMissError::new_err(entry_id))?;
         Ok(match manifest {
-            parsec_client_types::LocalManifest::File(manifest) => {
+            libparsec::client_types::LocalManifest::File(manifest) => {
                 LocalFileManifest(manifest).into_py(py)
             }
-            parsec_client_types::LocalManifest::Folder(manifest) => {
+            libparsec::client_types::LocalManifest::Folder(manifest) => {
                 LocalFolderManifest(manifest).into_py(py)
             }
-            parsec_client_types::LocalManifest::Workspace(manifest) => {
+            libparsec::client_types::LocalManifest::Workspace(manifest) => {
                 LocalWorkspaceManifest(manifest).into_py(py)
             }
-            parsec_client_types::LocalManifest::User(manifest) => {
+            libparsec::client_types::LocalManifest::User(manifest) => {
                 LocalUserManifest(manifest).into_py(py)
             }
         })
@@ -125,13 +125,15 @@ impl WorkspaceStorage {
         removed_ids: Option<HashSet<ChunkID>>,
     ) -> PyResult<()> {
         let manifest = if let Ok(manifest) = manifest.extract::<LocalFileManifest>(py) {
-            parsec_client_types::LocalManifest::File(manifest.0)
+            libparsec::client_types::LocalManifest::File(manifest.0)
         } else if let Ok(manifest) = manifest.extract::<LocalFolderManifest>(py) {
-            parsec_client_types::LocalManifest::Folder(manifest.0)
+            libparsec::client_types::LocalManifest::Folder(manifest.0)
         } else if let Ok(manifest) = manifest.extract::<LocalWorkspaceManifest>(py) {
-            parsec_client_types::LocalManifest::Workspace(manifest.0)
+            libparsec::client_types::LocalManifest::Workspace(manifest.0)
         } else {
-            parsec_client_types::LocalManifest::User(manifest.extract::<LocalUserManifest>(py)?.0)
+            libparsec::client_types::LocalManifest::User(
+                manifest.extract::<LocalUserManifest>(py)?.0,
+            )
         };
         py.allow_threads(|| {
             self.0

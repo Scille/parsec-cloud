@@ -12,6 +12,7 @@ libparsec_platform_web = { path = "../crates/platform_web", optional = true }
 api_crypto = { path = "crates/api_crypto" }
 api_protocol = { path = "crates/api_protocol" }
 api_types = { path = "crates/api_types" }
+client_types = { path = "crates/client_types" }
 
 [features]
 mock-time = ["api_types/mock-time"]

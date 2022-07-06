@@ -8,7 +8,7 @@ use std::num::NonZeroU64;
 
 use api_crypto::*;
 use api_types::*;
-use parsec_client_types::*;
+use client_types::*;
 
 use tests_fixtures::{alice, Device};
 
