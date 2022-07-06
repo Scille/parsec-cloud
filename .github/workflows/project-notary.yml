@@ -13,8 +13,10 @@ jobs:
     steps:
       - name: Debug tool version
         run: |
+          set -x
           gh --version
           jq --version
+          base64 --version
 
       - name: List issue with the wrong/missing project
         run: gh issue list --json id,title,number --search project:"${{ env.project-id }}" > issue_wrong_project.json
