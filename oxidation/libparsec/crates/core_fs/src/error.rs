@@ -4,7 +4,7 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use api_crypto::CryptoError;
-use parsec_api_types::{EntryID, FileDescriptor};
+use api_types::{EntryID, FileDescriptor};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum FSError {

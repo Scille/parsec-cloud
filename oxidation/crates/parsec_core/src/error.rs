@@ -2,8 +2,8 @@
 
 use thiserror::Error;
 
-use parsec_api_types::DateTime;
-use parsec_api_types::{DeviceID, UserID};
+use api_types::DateTime;
+use api_types::{DeviceID, UserID};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum TrustchainError {

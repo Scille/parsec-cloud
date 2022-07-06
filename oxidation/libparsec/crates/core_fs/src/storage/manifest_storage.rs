@@ -10,7 +10,7 @@ use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 
-use parsec_api_types::{BlockID, ChunkID, EntryID};
+use api_types::{BlockID, ChunkID, EntryID};
 use parsec_client_types::LocalManifest;
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
@@ -568,7 +568,7 @@ impl ManifestStorage {
 #[cfg(test)]
 mod tests {
     use api_crypto::HashDigest;
-    use parsec_api_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
+    use api_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
     use parsec_client_types::{Chunk, LocalFileManifest};
 
     use rstest::rstest;

@@ -219,9 +219,9 @@ impl VlobReadRep {
             .transpose()
         {
             Ok(author_last_role_granted_on) => {
-                parsec_api_types::Maybe::Present(author_last_role_granted_on)
+                libparsec::api_types::Maybe::Present(author_last_role_granted_on)
             }
-            _ => parsec_api_types::Maybe::Absent,
+            _ => libparsec::api_types::Maybe::Absent,
         };
         Ok(Self(vlob_read::Rep::Ok {
             version,
@@ -701,14 +701,14 @@ impl VlobMaintenanceGetReencryptionBatchRep {
 
 #[pyclass]
 #[derive(PartialEq, Clone)]
-pub(crate) struct ReencryptionBatchEntry(pub parsec_api_types::ReencryptionBatchEntry);
+pub(crate) struct ReencryptionBatchEntry(pub libparsec::api_types::ReencryptionBatchEntry);
 
 #[pymethods]
 impl ReencryptionBatchEntry {
     #[new]
     fn new(vlob_id: VlobID, version: u64, blob: Vec<u8>) -> PyResult<Self> {
         let vlob_id = vlob_id.0;
-        Ok(Self(parsec_api_types::ReencryptionBatchEntry {
+        Ok(Self(libparsec::api_types::ReencryptionBatchEntry {
             vlob_id,
             version,
             blob,

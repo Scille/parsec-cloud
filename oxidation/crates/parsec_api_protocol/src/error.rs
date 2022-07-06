@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use parsec_api_types::DateTime;
+use api_types::DateTime;
 use thiserror::Error;
 
 use crate::{ApiVersion, HANDSHAKE_CHALLENGE_SIZE};

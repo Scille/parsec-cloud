@@ -13,13 +13,13 @@ use crate::invite::InvitationToken;
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct BackendAddr(parsec_api_types::BackendAddr);
+pub(crate) struct BackendAddr(libparsec::api_types::BackendAddr);
 
 #[pymethods]
 impl BackendAddr {
     #[new]
     fn new(hostname: String, port: Option<u16>, use_ssl: bool) -> PyResult<Self> {
-        Ok(Self(parsec_api_types::BackendAddr::new(
+        Ok(Self(libparsec::api_types::BackendAddr::new(
             hostname, port, use_ssl,
         )))
     }
@@ -83,11 +83,11 @@ impl BackendAddr {
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match parsec_api_types::BackendAddr::from_any(url) {
+            true => match libparsec::api_types::BackendAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err)),
             },
-            false => match parsec_api_types::BackendAddr::from_str(url) {
+            false => match libparsec::api_types::BackendAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err)),
             },
@@ -97,7 +97,7 @@ impl BackendAddr {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct BackendOrganizationAddr(pub parsec_api_types::BackendOrganizationAddr);
+pub(crate) struct BackendOrganizationAddr(pub libparsec::api_types::BackendOrganizationAddr);
 
 #[pymethods]
 impl BackendOrganizationAddr {
@@ -125,7 +125,7 @@ impl BackendOrganizationAddr {
             ),
             None => Err(PyValueError::new_err("Missing parameters")),
         };
-        Ok(Self(parsec_api_types::BackendOrganizationAddr::new(
+        Ok(Self(libparsec::api_types::BackendOrganizationAddr::new(
             addr.unwrap().0,
             organization_id.0,
             root_verify_key.0,
@@ -218,11 +218,11 @@ impl BackendOrganizationAddr {
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match parsec_api_types::BackendOrganizationAddr::from_any(url) {
+            true => match libparsec::api_types::BackendOrganizationAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err)),
             },
-            false => match parsec_api_types::BackendOrganizationAddr::from_str(url) {
+            false => match libparsec::api_types::BackendOrganizationAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err)),
             },
@@ -236,7 +236,7 @@ impl BackendOrganizationAddr {
         organization_id: OrganizationID,
         root_verify_key: VerifyKey,
     ) -> PyResult<Self> {
-        Ok(Self(parsec_api_types::BackendOrganizationAddr::new(
+        Ok(Self(libparsec::api_types::BackendOrganizationAddr::new(
             backend_addr.0,
             organization_id.0,
             root_verify_key.0,
@@ -259,39 +259,39 @@ impl BackendActionAddr {
         allow_http_redirection: bool,
     ) -> PyResult<PyObject> {
         match allow_http_redirection {
-            true => match parsec_api_types::BackendActionAddr::from_any(url) {
+            true => match libparsec::api_types::BackendActionAddr::from_any(url) {
                 Ok(ba) => match ba {
-                    parsec_api_types::BackendActionAddr::OrganizationBootstrap(v) => {
+                    libparsec::api_types::BackendActionAddr::OrganizationBootstrap(v) => {
                         Ok(BackendOrganizationBootstrapAddr(v)
                             .into_py(py)
                             .to_object(py))
                     }
-                    parsec_api_types::BackendActionAddr::OrganizationFileLink(v) => {
+                    libparsec::api_types::BackendActionAddr::OrganizationFileLink(v) => {
                         Ok(BackendOrganizationFileLinkAddr(v).into_py(py).to_object(py))
                     }
-                    parsec_api_types::BackendActionAddr::Invitation(v) => {
+                    libparsec::api_types::BackendActionAddr::Invitation(v) => {
                         Ok(BackendInvitationAddr(v).into_py(py).to_object(py))
                     }
-                    parsec_api_types::BackendActionAddr::PkiEnrollment(v) => {
+                    libparsec::api_types::BackendActionAddr::PkiEnrollment(v) => {
                         Ok(BackendPkiEnrollmentAddr(v).into_py(py).to_object(py))
                     }
                 },
                 Err(err) => Err(PyValueError::new_err(err)),
             },
-            false => match url.parse::<parsec_api_types::BackendActionAddr>() {
+            false => match url.parse::<libparsec::api_types::BackendActionAddr>() {
                 Ok(ba) => match ba {
-                    parsec_api_types::BackendActionAddr::OrganizationBootstrap(v) => {
+                    libparsec::api_types::BackendActionAddr::OrganizationBootstrap(v) => {
                         Ok(BackendOrganizationBootstrapAddr(v)
                             .into_py(py)
                             .to_object(py))
                     }
-                    parsec_api_types::BackendActionAddr::OrganizationFileLink(v) => {
+                    libparsec::api_types::BackendActionAddr::OrganizationFileLink(v) => {
                         Ok(BackendOrganizationFileLinkAddr(v).into_py(py).to_object(py))
                     }
-                    parsec_api_types::BackendActionAddr::Invitation(v) => {
+                    libparsec::api_types::BackendActionAddr::Invitation(v) => {
                         Ok(BackendInvitationAddr(v).into_py(py).to_object(py))
                     }
-                    parsec_api_types::BackendActionAddr::PkiEnrollment(v) => {
+                    libparsec::api_types::BackendActionAddr::PkiEnrollment(v) => {
                         Ok(BackendPkiEnrollmentAddr(v).into_py(py).to_object(py))
                     }
                 },
@@ -303,7 +303,7 @@ impl BackendActionAddr {
 
 #[pyclass]
 #[derive(PartialEq, Eq)]
-pub struct BackendOrganizationBootstrapAddr(parsec_api_types::BackendOrganizationBootstrapAddr);
+pub struct BackendOrganizationBootstrapAddr(libparsec::api_types::BackendOrganizationBootstrapAddr);
 
 #[pymethods]
 impl BackendOrganizationBootstrapAddr {
@@ -332,7 +332,7 @@ impl BackendOrganizationBootstrapAddr {
             None => Err(PyValueError::new_err("Missing parameters")),
         };
         Ok(Self(
-            parsec_api_types::BackendOrganizationBootstrapAddr::new(
+            libparsec::api_types::BackendOrganizationBootstrapAddr::new(
                 addr.unwrap().0,
                 organization_id.0,
                 token,
@@ -458,11 +458,11 @@ impl BackendOrganizationBootstrapAddr {
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match parsec_api_types::BackendOrganizationBootstrapAddr::from_any(url) {
+            true => match libparsec::api_types::BackendOrganizationBootstrapAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err)),
             },
-            false => match parsec_api_types::BackendOrganizationBootstrapAddr::from_str(url) {
+            false => match libparsec::api_types::BackendOrganizationBootstrapAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err)),
             },
@@ -477,7 +477,7 @@ impl BackendOrganizationBootstrapAddr {
         token: Option<String>,
     ) -> PyResult<Self> {
         Ok(Self(
-            parsec_api_types::BackendOrganizationBootstrapAddr::new(
+            libparsec::api_types::BackendOrganizationBootstrapAddr::new(
                 backend_addr.0,
                 organization_id.0,
                 token,
@@ -488,7 +488,7 @@ impl BackendOrganizationBootstrapAddr {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub struct BackendOrganizationFileLinkAddr(parsec_api_types::BackendOrganizationFileLinkAddr);
+pub struct BackendOrganizationFileLinkAddr(libparsec::api_types::BackendOrganizationFileLinkAddr);
 
 #[pymethods]
 impl BackendOrganizationFileLinkAddr {
@@ -518,7 +518,7 @@ impl BackendOrganizationFileLinkAddr {
             None => Err(PyValueError::new_err("Missing parameters")),
         };
         Ok(Self(
-            parsec_api_types::BackendOrganizationFileLinkAddr::new(
+            libparsec::api_types::BackendOrganizationFileLinkAddr::new(
                 addr.unwrap().0,
                 organization_id.0,
                 workspace_id.0,
@@ -620,11 +620,11 @@ impl BackendOrganizationFileLinkAddr {
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match parsec_api_types::BackendOrganizationFileLinkAddr::from_any(url) {
+            true => match libparsec::api_types::BackendOrganizationFileLinkAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err)),
             },
-            false => match parsec_api_types::BackendOrganizationFileLinkAddr::from_str(url) {
+            false => match libparsec::api_types::BackendOrganizationFileLinkAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err)),
             },
@@ -639,7 +639,7 @@ impl BackendOrganizationFileLinkAddr {
         encrypted_path: Vec<u8>,
     ) -> PyResult<Self> {
         Ok(Self(
-            parsec_api_types::BackendOrganizationFileLinkAddr::new(
+            libparsec::api_types::BackendOrganizationFileLinkAddr::new(
                 organization_addr.get_backend_addr().0,
                 organization_addr.organization_id().unwrap().0,
                 workspace_id.0,
@@ -651,7 +651,7 @@ impl BackendOrganizationFileLinkAddr {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub struct BackendInvitationAddr(parsec_api_types::BackendInvitationAddr);
+pub struct BackendInvitationAddr(libparsec::api_types::BackendInvitationAddr);
 
 #[pymethods]
 impl BackendInvitationAddr {
@@ -663,7 +663,7 @@ impl BackendInvitationAddr {
         token: InvitationToken,
         py_kwargs: Option<&PyDict>,
     ) -> PyResult<Self> {
-        let inv_type = match parsec_api_types::InvitationType::from_str(
+        let inv_type = match libparsec::api_types::InvitationType::from_str(
             invitation_type.getattr("name")?.extract::<&str>()?,
         ) {
             Ok(iv) => iv,
@@ -686,7 +686,7 @@ impl BackendInvitationAddr {
             ),
             None => Err(PyValueError::new_err("Missing parameters")),
         };
-        Ok(Self(parsec_api_types::BackendInvitationAddr::new(
+        Ok(Self(libparsec::api_types::BackendInvitationAddr::new(
             addr.unwrap().0,
             organization_id.0,
             inv_type,
@@ -816,11 +816,11 @@ impl BackendInvitationAddr {
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match parsec_api_types::BackendInvitationAddr::from_any(url) {
+            true => match libparsec::api_types::BackendInvitationAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err)),
             },
-            false => match parsec_api_types::BackendInvitationAddr::from_str(url) {
+            false => match libparsec::api_types::BackendInvitationAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err)),
             },
@@ -835,14 +835,14 @@ impl BackendInvitationAddr {
         invitation_type: &PyAny,
         token: InvitationToken,
     ) -> PyResult<Self> {
-        let inv_type = match parsec_api_types::InvitationType::from_str(
+        let inv_type = match libparsec::api_types::InvitationType::from_str(
             invitation_type.getattr("name")?.extract::<&str>()?,
         ) {
             Ok(iv) => iv,
             Err(err) => return Err(PyValueError::new_err(err)),
         };
 
-        Ok(Self(parsec_api_types::BackendInvitationAddr::new(
+        Ok(Self(libparsec::api_types::BackendInvitationAddr::new(
             backend_addr.0,
             organization_id.0,
             inv_type,
@@ -853,7 +853,7 @@ impl BackendInvitationAddr {
 
 #[pyclass]
 #[derive(PartialEq, Eq)]
-pub struct BackendPkiEnrollmentAddr(parsec_api_types::BackendPkiEnrollmentAddr);
+pub struct BackendPkiEnrollmentAddr(libparsec::api_types::BackendPkiEnrollmentAddr);
 
 #[pymethods]
 impl BackendPkiEnrollmentAddr {
@@ -877,7 +877,7 @@ impl BackendPkiEnrollmentAddr {
             ),
             None => Err(PyValueError::new_err("Missing parameters")),
         };
-        Ok(Self(parsec_api_types::BackendPkiEnrollmentAddr::new(
+        Ok(Self(libparsec::api_types::BackendPkiEnrollmentAddr::new(
             addr.unwrap().0,
             organization_id.0,
         )))
@@ -993,11 +993,11 @@ impl BackendPkiEnrollmentAddr {
     #[args(allow_http_redirection = "false")]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match parsec_api_types::BackendPkiEnrollmentAddr::from_any(url) {
+            true => match libparsec::api_types::BackendPkiEnrollmentAddr::from_any(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err)),
             },
-            false => match parsec_api_types::BackendPkiEnrollmentAddr::from_str(url) {
+            false => match libparsec::api_types::BackendPkiEnrollmentAddr::from_str(url) {
                 Ok(backend_addr) => Ok(Self(backend_addr)),
                 Err(err) => Err(PyValueError::new_err(err)),
             },
@@ -1010,7 +1010,7 @@ impl BackendPkiEnrollmentAddr {
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
     ) -> PyResult<Self> {
-        Ok(Self(parsec_api_types::BackendPkiEnrollmentAddr::new(
+        Ok(Self(libparsec::api_types::BackendPkiEnrollmentAddr::new(
             backend_addr.0,
             organization_id.0,
         )))

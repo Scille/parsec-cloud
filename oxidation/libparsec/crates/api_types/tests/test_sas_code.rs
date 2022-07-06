@@ -4,7 +4,7 @@ use hex_literal::hex;
 use rstest::rstest;
 
 use api_crypto::*;
-use parsec_api_types::*;
+use api_types::*;
 
 #[test]
 fn generate_sas_codes() {

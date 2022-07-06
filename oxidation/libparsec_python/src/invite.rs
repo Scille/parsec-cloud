@@ -12,14 +12,14 @@ use crate::ids::{DeviceID, DeviceLabel, EntryID, HumanHandle};
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct InvitationToken(pub parsec_api_types::InvitationToken);
+pub(crate) struct InvitationToken(pub libparsec::api_types::InvitationToken);
 
 #[pymethods]
 impl InvitationToken {
     #[new]
     pub fn new(uuid: &PyAny) -> PyResult<Self> {
         match Uuid::parse_str(uuid.getattr("hex")?.extract::<&str>()?) {
-            Ok(u) => Ok(Self(parsec_api_types::InvitationToken::from(u))),
+            Ok(u) => Ok(Self(libparsec::api_types::InvitationToken::from(u))),
             Err(_) => Err(PyValueError::new_err("Invalid UUID")),
         }
     }
@@ -37,7 +37,7 @@ impl InvitationToken {
     #[classmethod]
     #[pyo3(name = "new")]
     fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(parsec_api_types::InvitationToken::default()))
+        Ok(Self(libparsec::api_types::InvitationToken::default()))
     }
 
     #[getter]
@@ -72,14 +72,17 @@ impl InvitationToken {
     fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
         let b = bytes.as_bytes();
         match uuid::Uuid::from_slice(b) {
-            Ok(uuid) => Ok(Self(parsec_api_types::InvitationToken::from(uuid))),
+            Ok(uuid) => Ok(Self(libparsec::api_types::InvitationToken::from(uuid))),
             Err(_) => Err(PyValueError::new_err("Invalid UUID")),
         }
     }
 
     #[classmethod]
     fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
-        match hex.to_string().parse::<parsec_api_types::InvitationToken>() {
+        match hex
+            .to_string()
+            .parse::<libparsec::api_types::InvitationToken>()
+        {
             Ok(entry_id) => Ok(Self(entry_id)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -92,13 +95,13 @@ impl InvitationToken {
 
 #[pyclass]
 #[derive(PartialEq, Eq)]
-pub struct SASCode(pub parsec_api_types::SASCode);
+pub struct SASCode(pub libparsec::api_types::SASCode);
 
 #[pymethods]
 impl SASCode {
     #[new]
     pub fn new(code: &str) -> PyResult<Self> {
-        match code.parse::<parsec_api_types::SASCode>() {
+        match code.parse::<libparsec::api_types::SASCode>() {
             Ok(sas) => Ok(Self(sas)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -106,7 +109,7 @@ impl SASCode {
 
     #[classmethod]
     pub fn from_int(_cls: &PyType, num: u32) -> PyResult<Self> {
-        match parsec_api_types::SASCode::try_from(num) {
+        match libparsec::api_types::SASCode::try_from(num) {
             Ok(sas) => Ok(Self(sas)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -146,7 +149,7 @@ pub fn generate_sas_codes<'p>(
     greeter_nonce: &PyBytes,
     shared_secret_key: &SecretKey,
 ) -> PyResult<&'p PyTuple> {
-    let (claimer_sas, greeter_sas) = parsec_api_types::SASCode::generate_sas_codes(
+    let (claimer_sas, greeter_sas) = libparsec::api_types::SASCode::generate_sas_codes(
         claimer_nonce.as_bytes(),
         greeter_nonce.as_bytes(),
         &shared_secret_key.0,
@@ -166,7 +169,8 @@ pub fn generate_sas_code_candidates<'p>(
     valid_sas: &SASCode,
     size: usize,
 ) -> PyResult<&'p PyList> {
-    let candidates: Vec<parsec_api_types::SASCode> = valid_sas.0.generate_sas_code_candidates(size);
+    let candidates: Vec<libparsec::api_types::SASCode> =
+        valid_sas.0.generate_sas_code_candidates(size);
     let py_candidates: Vec<PyObject> = candidates
         .iter()
         .map(|v| SASCode::new(v.as_ref()).unwrap().into_py(py))
@@ -181,7 +185,7 @@ pub fn generate_sas_code_candidates<'p>(
 
 #[pyclass]
 #[derive(PartialEq, Eq)]
-pub struct InviteUserData(pub parsec_api_types::InviteUserData);
+pub struct InviteUserData(pub libparsec::api_types::InviteUserData);
 
 #[pymethods]
 impl InviteUserData {
@@ -202,7 +206,7 @@ impl InviteUserData {
             [verify_key: VerifyKey, "verify_key"],
         );
 
-        Ok(Self(parsec_api_types::InviteUserData {
+        Ok(Self(libparsec::api_types::InviteUserData {
             requested_device_label: requested_device_label.map(|d| d.0),
             requested_human_handle: requested_human_handle.map(|h| h.0),
             public_key: public_key.0,
@@ -242,7 +246,7 @@ impl InviteUserData {
 
     #[classmethod]
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
-        match parsec_api_types::InviteUserData::decrypt_and_load(encrypted, &key.0) {
+        match libparsec::api_types::InviteUserData::decrypt_and_load(encrypted, &key.0) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -255,7 +259,7 @@ impl InviteUserData {
 
 #[pyclass]
 #[derive(PartialEq, Eq)]
-pub struct InviteUserConfirmation(pub parsec_api_types::InviteUserConfirmation);
+pub struct InviteUserConfirmation(pub libparsec::api_types::InviteUserConfirmation);
 
 #[pymethods]
 impl InviteUserConfirmation {
@@ -271,7 +275,7 @@ impl InviteUserConfirmation {
             [root_verify_key: VerifyKey, "root_verify_key"],
         );
 
-        Ok(Self(parsec_api_types::InviteUserConfirmation {
+        Ok(Self(libparsec::api_types::InviteUserConfirmation {
             device_id: device_id.0,
             device_label: device_label.map(|d| d.0),
             human_handle: human_handle.map(|h| h.0),
@@ -322,7 +326,7 @@ impl InviteUserConfirmation {
 
     #[classmethod]
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
-        match parsec_api_types::InviteUserConfirmation::decrypt_and_load(encrypted, &key.0) {
+        match libparsec::api_types::InviteUserConfirmation::decrypt_and_load(encrypted, &key.0) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -335,7 +339,7 @@ impl InviteUserConfirmation {
 
 #[pyclass]
 #[derive(PartialEq, Eq)]
-pub struct InviteDeviceData(pub parsec_api_types::InviteDeviceData);
+pub struct InviteDeviceData(pub libparsec::api_types::InviteDeviceData);
 
 #[pymethods]
 impl InviteDeviceData {
@@ -351,7 +355,7 @@ impl InviteDeviceData {
             [verify_key: VerifyKey, "verify_key"],
         );
 
-        Ok(Self(parsec_api_types::InviteDeviceData {
+        Ok(Self(libparsec::api_types::InviteDeviceData {
             requested_device_label: requested_device_label.map(|d| d.0),
             verify_key: verify_key.0,
         }))
@@ -376,7 +380,7 @@ impl InviteDeviceData {
 
     #[classmethod]
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
-        match parsec_api_types::InviteDeviceData::decrypt_and_load(encrypted, &key.0) {
+        match libparsec::api_types::InviteDeviceData::decrypt_and_load(encrypted, &key.0) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -389,7 +393,7 @@ impl InviteDeviceData {
 
 #[pyclass]
 #[derive(PartialEq, Eq)]
-pub struct InviteDeviceConfirmation(pub parsec_api_types::InviteDeviceConfirmation);
+pub struct InviteDeviceConfirmation(pub libparsec::api_types::InviteDeviceConfirmation);
 
 #[pymethods]
 impl InviteDeviceConfirmation {
@@ -408,7 +412,7 @@ impl InviteDeviceConfirmation {
             [user_manifest_key: SecretKey, "user_manifest_key"],
         );
 
-        Ok(Self(parsec_api_types::InviteDeviceConfirmation {
+        Ok(Self(libparsec::api_types::InviteDeviceConfirmation {
             device_id: device_id.0,
             device_label: device_label.map(|d| d.0),
             human_handle: human_handle.map(|h| h.0),
@@ -477,7 +481,7 @@ impl InviteDeviceConfirmation {
 
     #[classmethod]
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
-        match parsec_api_types::InviteDeviceConfirmation::decrypt_and_load(encrypted, &key.0) {
+        match libparsec::api_types::InviteDeviceConfirmation::decrypt_and_load(encrypted, &key.0) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err)),
         }

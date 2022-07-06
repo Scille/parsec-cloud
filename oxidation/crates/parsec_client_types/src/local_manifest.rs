@@ -9,7 +9,7 @@ use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
 use api_crypto::{HashDigest, SecretKey};
-use parsec_api_types::*;
+use api_types::*;
 use serialization_format::parsec_data;
 
 use crate as parsec_client_types;

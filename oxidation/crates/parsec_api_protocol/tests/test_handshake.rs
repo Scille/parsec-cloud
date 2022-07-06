@@ -5,11 +5,11 @@ use hex_literal::hex;
 use serde_json::{json, Value};
 use std::str::FromStr;
 
-use parsec_api_types::{DateTime, InvitationToken, OrganizationID};
+use api_types::{DateTime, InvitationToken, OrganizationID};
 use rstest::rstest;
 
+use api_types::InvitationType;
 use parsec_api_protocol::*;
-use parsec_api_types::InvitationType;
 
 use tests_fixtures::{alice, bob, Device};
 

@@ -19,7 +19,7 @@ fn to_py_chunks(py: Python, chunks: Vec<parsec_client_types::Chunk>) -> &PyTuple
 
 fn to_py_removed_ids(
     py: Python,
-    to_remove: HashSet<parsec_api_types::ChunkID>,
+    to_remove: HashSet<libparsec::api_types::ChunkID>,
 ) -> PyResult<&PySet> {
     PySet::new(
         py,

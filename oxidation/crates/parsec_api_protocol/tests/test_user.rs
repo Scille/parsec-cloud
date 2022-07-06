@@ -2,8 +2,8 @@
 
 use std::num::NonZeroU64;
 
+use api_types::HumanHandle;
 use hex_literal::hex;
-use parsec_api_types::HumanHandle;
 use rstest::rstest;
 
 use parsec_api_protocol::*;

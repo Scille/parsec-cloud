@@ -221,7 +221,7 @@ impl LocalFileManifest {
             need_sync,
             updated,
             size,
-            blocksize: parsec_api_types::Blocksize::try_from(blocksize)
+            blocksize: libparsec::api_types::Blocksize::try_from(blocksize)
                 .map_err(|_| PyValueError::new_err("Invalid blocksize field"))?,
             blocks: blocks
                 .into_iter()
@@ -257,7 +257,7 @@ impl LocalFileManifest {
             r.size = v;
         }
         if let Some(v) = blocksize {
-            r.blocksize = parsec_api_types::Blocksize::try_from(v)
+            r.blocksize = libparsec::api_types::Blocksize::try_from(v)
                 .map_err(|_| PyValueError::new_err("Invalid blocksize field"))?;
         }
         if let Some(v) = blocks {
@@ -394,7 +394,7 @@ impl LocalFileManifest {
     ) -> PyResult<Self> {
         let timestamp = py_to_rs_datetime(timestamp)?;
         let blocksize =
-            parsec_api_types::Blocksize::try_from(blocksize).map_err(PyValueError::new_err)?;
+            libparsec::api_types::Blocksize::try_from(blocksize).map_err(PyValueError::new_err)?;
 
         Ok(Self(parsec_client_types::LocalFileManifest::new(
             author.0, parent.0, timestamp, blocksize,

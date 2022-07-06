@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use api_types::UserCertificate;
 use hex_literal::hex;
-use parsec_api_types::UserCertificate;
 use pretty_assertions::assert_eq;
 use rstest::rstest;
 
-use parsec_api_types::*;
+use api_types::*;
 
 use tests_fixtures::{alice, bob, Device};
 

@@ -10,7 +10,7 @@ use std::str::FromStr;
 use api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 use serialization_format::parsec_data;
 
-use crate as parsec_api_types;
+use crate as api_types;
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::ext_types::new_uuid_type;
 use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};

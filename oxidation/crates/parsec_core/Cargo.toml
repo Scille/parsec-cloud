@@ -12,14 +12,14 @@ path = "tests/mod.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-api_crypto = { version = "0.0.0", path = "../../libparsec/crates/api_crypto" }
-parsec_api_protocol = { version = "0.0.0", path = "../parsec_api_protocol" }
-parsec_api_types = { version = "0.0.0", path = "../parsec_api_types" }
+api_crypto = { path = "../../libparsec/crates/api_crypto" }
+parsec_api_protocol = { path = "../parsec_api_protocol" }
+api_types = { path = "../../libparsec/crates/api_types" }
 
 thiserror = "1.0.30"
 
 [dev-dependencies]
-tests_fixtures = { version = "0.0.0", path = "../tests_fixtures" }
+tests_fixtures = { path = "../tests_fixtures" }
 
 rstest = "0.13.0"
 chrono = "0.4.19"

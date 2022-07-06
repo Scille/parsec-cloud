@@ -166,7 +166,7 @@ impl WorkspaceStorage {
         py.allow_threads(|| {
             Ok(LocalFileManifest(
                 self.0
-                    .load_file_descriptor(parsec_api_types::FileDescriptor(fd))
+                    .load_file_descriptor(libparsec::api_types::FileDescriptor(fd))
                     .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))?,
             ))
         })
@@ -175,7 +175,7 @@ impl WorkspaceStorage {
     fn remove_file_descriptor(&self, py: Python, fd: u32) -> PyResult<()> {
         py.allow_threads(|| {
             self.0
-                .remove_file_descriptor(parsec_api_types::FileDescriptor(fd))
+                .remove_file_descriptor(libparsec::api_types::FileDescriptor(fd))
                 .map(|_| ())
                 .ok_or_else(|| FSInvalidFileDescriptor::new_err(""))
         })

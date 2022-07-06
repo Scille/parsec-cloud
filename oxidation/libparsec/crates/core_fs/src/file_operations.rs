@@ -4,7 +4,7 @@ use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::num::NonZeroU64;
 
-use parsec_api_types::{ChunkID, DateTime};
+use api_types::{ChunkID, DateTime};
 use parsec_client_types::{Chunk, LocalFileManifest};
 
 type WriteOperation = (Chunk, i64);
@@ -397,7 +397,7 @@ pub fn prepare_reshape(
 #[cfg(test)]
 mod tests {
     use crate::file_operations::{prepare_read, prepare_reshape, prepare_resize, prepare_write};
-    use parsec_api_types::{Blocksize, ChunkID, DateTime, DeviceID, EntryID};
+    use api_types::{Blocksize, ChunkID, DateTime, DeviceID, EntryID};
     use parsec_client_types::{Chunk, LocalFileManifest};
     use std::{collections::HashMap, str::FromStr};
 

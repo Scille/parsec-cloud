@@ -70,9 +70,9 @@ impl Field {
         let ty = inspect_type(&self.ty, types);
         let (inspected_ty, serde_skip) = if self.introduced_in_revision.is_some() {
             (
-                "parsec_api_types::Maybe".to_string() + "<" + &ty + ">",
+                "api_types::Maybe".to_string() + "<" + &ty + ">",
                 quote! {
-                    #[serde(default, skip_serializing_if = "parsec_api_types::Maybe::is_absent")]
+                    #[serde(default, skip_serializing_if = "api_types::Maybe::is_absent")]
                 },
             )
         } else {

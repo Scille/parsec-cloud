@@ -13,7 +13,7 @@ path = "tests/mod.rs"
 
 [dependencies]
 api_crypto = { path = "../../libparsec/crates/api_crypto" }
-parsec_api_types = { path = "../parsec_api_types" }
+api_types = { path = "../../libparsec/crates/api_types" }
 serialization_format = { path = "../../libparsec/crates/serialization_format" }
 
 flate2 = "1.0.24"

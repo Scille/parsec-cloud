@@ -29,13 +29,13 @@ where
     }
 }
 
-impl From<parsec_api_types::DateTime> for DateTime {
-    fn from(dt: parsec_api_types::DateTime) -> Self {
+impl From<api_types::DateTime> for DateTime {
+    fn from(dt: api_types::DateTime) -> Self {
         Self(dt.get_f64_with_us_precision())
     }
 }
 
-impl From<DateTime> for parsec_api_types::DateTime {
+impl From<DateTime> for api_types::DateTime {
     fn from(dt: DateTime) -> Self {
         Self::from_f64_with_us_precision(dt.0)
     }

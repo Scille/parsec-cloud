@@ -21,16 +21,16 @@ import_exception!(parsec.api.data, DataValidationError);
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct EntryName(pub parsec_api_types::EntryName);
+pub(crate) struct EntryName(pub libparsec::api_types::EntryName);
 
 #[pymethods]
 impl EntryName {
     #[new]
     pub fn new(name: String) -> PyResult<Self> {
-        match name.parse::<parsec_api_types::EntryName>() {
+        match name.parse::<libparsec::api_types::EntryName>() {
             Ok(en) => Ok(Self(en)),
             Err(err) => match err {
-                parsec_api_types::EntryNameError::NameTooLong => {
+                libparsec::api_types::EntryNameError::NameTooLong => {
                     Err(EntryNameTooLongError::new_err("Invalid data"))
                 }
                 _ => Err(PyValueError::new_err("Invalid data")),
@@ -67,7 +67,7 @@ impl EntryName {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct WorkspaceEntry(pub parsec_api_types::WorkspaceEntry);
+pub(crate) struct WorkspaceEntry(pub libparsec::api_types::WorkspaceEntry);
 
 impl WorkspaceEntry {
     fn eq(&self, other: &Self) -> bool {
@@ -94,7 +94,7 @@ impl WorkspaceEntry {
             [role, "role", py_to_rs_realm_role],
         );
 
-        Ok(Self(parsec_api_types::WorkspaceEntry {
+        Ok(Self(libparsec::api_types::WorkspaceEntry {
             id: id.0,
             name: name.0,
             key: key.0,
@@ -153,7 +153,7 @@ impl WorkspaceEntry {
     #[pyo3(name = "new")]
     fn _class_new(_cls: &PyType, name: &EntryName, timestamp: &PyAny) -> PyResult<Self> {
         let dt = py_to_rs_datetime(timestamp)?;
-        Ok(Self(parsec_api_types::WorkspaceEntry::generate(
+        Ok(Self(libparsec::api_types::WorkspaceEntry::generate(
             name.0.to_owned(),
             dt,
         )))
@@ -212,7 +212,7 @@ impl WorkspaceEntry {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct BlockAccess(pub parsec_api_types::BlockAccess);
+pub(crate) struct BlockAccess(pub libparsec::api_types::BlockAccess);
 
 impl BlockAccess {
     fn eq(&self, other: &Self) -> bool {
@@ -234,7 +234,7 @@ impl BlockAccess {
             [digest: HashDigest, "digest"],
         );
 
-        Ok(Self(parsec_api_types::BlockAccess {
+        Ok(Self(libparsec::api_types::BlockAccess {
             id: id.0,
             key: key.0,
             offset,
@@ -316,7 +316,7 @@ impl BlockAccess {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct FileManifest(pub parsec_api_types::FileManifest);
+pub(crate) struct FileManifest(pub libparsec::api_types::FileManifest);
 
 impl FileManifest {
     fn eq(&self, other: &Self) -> bool {
@@ -350,7 +350,7 @@ impl FileManifest {
             [blocks: Vec<BlockAccess>, "blocks"],
         );
 
-        Ok(Self(parsec_api_types::FileManifest {
+        Ok(Self(libparsec::api_types::FileManifest {
             author: author.0,
             timestamp,
             id: id.0,
@@ -359,7 +359,7 @@ impl FileManifest {
             created,
             updated,
             size,
-            blocksize: parsec_api_types::Blocksize::try_from(blocksize)
+            blocksize: libparsec::api_types::Blocksize::try_from(blocksize)
                 .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?,
             blocks: blocks.into_iter().map(|b| b.0).collect(),
         }))
@@ -391,7 +391,7 @@ impl FileManifest {
         expected_timestamp: &PyAny,
     ) -> PyResult<Self> {
         let expected_timestamp = py_to_rs_datetime(expected_timestamp)?;
-        match parsec_api_types::FileManifest::decrypt_verify_and_load(
+        match libparsec::api_types::FileManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
@@ -446,7 +446,7 @@ impl FileManifest {
             r.size = v;
         }
         if let Some(v) = blocksize {
-            r.blocksize = parsec_api_types::Blocksize::try_from(v)
+            r.blocksize = libparsec::api_types::Blocksize::try_from(v)
                 .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?;
         }
         if let Some(v) = blocks {
@@ -523,7 +523,7 @@ impl FileManifest {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct FolderManifest(pub parsec_api_types::FolderManifest);
+pub(crate) struct FolderManifest(pub libparsec::api_types::FolderManifest);
 
 impl FolderManifest {
     fn eq(&self, other: &Self) -> bool {
@@ -555,7 +555,7 @@ impl FolderManifest {
             [children: HashMap<EntryName, EntryID>, "children"],
         );
 
-        Ok(Self(parsec_api_types::FolderManifest {
+        Ok(Self(libparsec::api_types::FolderManifest {
             author: author.0,
             timestamp,
             version,
@@ -596,7 +596,7 @@ impl FolderManifest {
         expected_timestamp: &PyAny,
     ) -> PyResult<Self> {
         let expected_timestamp = py_to_rs_datetime(expected_timestamp)?;
-        match parsec_api_types::FolderManifest::decrypt_verify_and_load(
+        match libparsec::api_types::FolderManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
@@ -710,7 +710,7 @@ impl FolderManifest {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct WorkspaceManifest(pub parsec_api_types::WorkspaceManifest);
+pub(crate) struct WorkspaceManifest(pub libparsec::api_types::WorkspaceManifest);
 
 impl WorkspaceManifest {
     fn eq(&self, other: &Self) -> bool {
@@ -740,7 +740,7 @@ impl WorkspaceManifest {
             [children: HashMap<EntryName, EntryID>, "children"],
         );
 
-        Ok(Self(parsec_api_types::WorkspaceManifest {
+        Ok(Self(libparsec::api_types::WorkspaceManifest {
             author: author.0,
             timestamp,
             id: id.0,
@@ -780,7 +780,7 @@ impl WorkspaceManifest {
         expected_timestamp: &PyAny,
     ) -> PyResult<Self> {
         let expected_timestamp = py_to_rs_datetime(expected_timestamp)?;
-        match parsec_api_types::WorkspaceManifest::decrypt_verify_and_load(
+        match libparsec::api_types::WorkspaceManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
@@ -885,7 +885,7 @@ impl WorkspaceManifest {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct UserManifest(pub parsec_api_types::UserManifest);
+pub(crate) struct UserManifest(pub libparsec::api_types::UserManifest);
 
 impl UserManifest {
     fn eq(&self, other: &Self) -> bool {
@@ -917,7 +917,7 @@ impl UserManifest {
             [workspaces: Vec<WorkspaceEntry>, "workspaces"],
         );
 
-        Ok(Self(parsec_api_types::UserManifest {
+        Ok(Self(libparsec::api_types::UserManifest {
             author: author.0,
             timestamp,
             id: id.0,
@@ -958,7 +958,7 @@ impl UserManifest {
         expected_version: Option<u32>,
     ) -> PyResult<Self> {
         let expected_timestamp = py_to_rs_datetime(expected_timestamp)?;
-        let data = parsec_api_types::UserManifest::decrypt_verify_and_load(
+        let data = libparsec::api_types::UserManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,

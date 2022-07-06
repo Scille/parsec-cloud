@@ -7,3 +7,4 @@ pub use libparsec_platform_native::{create_context, RuntimeContext};
 pub use libparsec_platform_web::{create_context, RuntimeContext};
 
 pub use api_crypto;
+pub use api_types;

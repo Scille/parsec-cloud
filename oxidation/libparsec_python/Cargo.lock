@@ -844,7 +844,7 @@ dependencies = [
  "libparsec_platform_native",
  "libparsec_platform_web",
  "api_crypto",
- "parsec_api_types",
+ "api_types",
 ]
 
 [[package]]
@@ -872,7 +872,7 @@ dependencies = [
  "libparsec",
  "api_crypto",
  "parsec_api_protocol",
- "parsec_api_types",
+ "api_types",
  "parsec_client_types",
  "parsec_core",
  "pyo3",
@@ -1046,7 +1046,7 @@ dependencies = [
  "futures",
  "http",
  "api_crypto",
- "parsec_api_types",
+ "api_types",
  "parsec_serialization_format",
  "paste",
  "rand 0.8.5",
@@ -1059,7 +1059,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "parsec_api_types"
+name = "api_types"
 version = "0.0.0"
 dependencies = [
  "chrono",
@@ -1090,7 +1090,7 @@ dependencies = [
  "fancy-regex",
  "flate2",
  "api_crypto",
- "parsec_api_types",
+ "api_types",
  "parsec_serialization_format",
  "paste",
  "rmp-serde",
@@ -1107,7 +1107,7 @@ version = "0.0.0"
 dependencies = [
  "api_crypto",
  "parsec_api_protocol",
- "parsec_api_types",
+ "api_types",
  "thiserror",
 ]
 

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use parsec_api_types::DateTime;
+use libparsec::api_types::DateTime;
 use pyo3::prelude::*;
 use pyo3::{PyAny, PyResult};
 

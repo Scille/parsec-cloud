@@ -9,7 +9,7 @@ use std::io::{Read, Write};
 use api_crypto::{PublicKey, SigningKey, VerifyKey};
 use serialization_format::parsec_data;
 
-use crate as parsec_api_types;
+use crate as api_types;
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::{DataError, DataResult};
 use crate::{

@@ -4,7 +4,7 @@ use rstest::fixture;
 use std::path::Path;
 
 use crate::{WorkspaceStorage, DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE};
-use parsec_api_types::EntryID;
+use api_types::EntryID;
 use tests_fixtures::{alice, tmp_path, Device, TmpPath};
 
 #[fixture]

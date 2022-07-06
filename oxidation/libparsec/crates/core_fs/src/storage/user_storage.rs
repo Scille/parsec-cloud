@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use parsec_api_types::EntryID;
+use api_types::EntryID;
 use parsec_client_types::{LocalDevice, LocalManifest, LocalUserManifest};
 
 use super::manifest_storage::ManifestStorage;
@@ -98,7 +98,7 @@ mod tests {
     use std::sync::Mutex;
 
     use api_crypto::SecretKey;
-    use parsec_api_types::{DateTime, UserManifest};
+    use api_types::{DateTime, UserManifest};
 
     use rstest::rstest;
     use tests_fixtures::{alice, tmp_path, Device, TmpPath};

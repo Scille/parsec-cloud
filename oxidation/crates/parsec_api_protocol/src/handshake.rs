@@ -8,9 +8,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};
 
 use crate::{impl_dump_load, ChallengeDataReport, HandshakeError};
-use parsec_api_types::{
-    maybe_field, DateTime, DeviceID, InvitationToken, InvitationType, OrganizationID,
-};
+use api_types::{maybe_field, DateTime, DeviceID, InvitationToken, InvitationType, OrganizationID};
 
 pub const HANDSHAKE_CHALLENGE_SIZE: usize = 48;
 

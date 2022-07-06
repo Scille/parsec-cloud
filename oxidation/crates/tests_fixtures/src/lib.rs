@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use uuid::Uuid;
 
 use api_crypto::*;
-use parsec_api_types::*;
+use api_types::*;
 use parsec_client_types::*;
 
 pub struct Device {

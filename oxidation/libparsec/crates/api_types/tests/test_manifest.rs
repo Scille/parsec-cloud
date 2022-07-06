@@ -5,7 +5,7 @@ use rstest::rstest;
 use std::{collections::HashMap, num::NonZeroU64};
 
 use api_crypto::*;
-use parsec_api_types::*;
+use api_types::*;
 
 use tests_fixtures::{alice, Device};
 

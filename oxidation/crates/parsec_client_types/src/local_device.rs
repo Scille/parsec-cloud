@@ -5,7 +5,7 @@ use serde_with::*;
 use sha2::Digest;
 
 use api_crypto::*;
-use parsec_api_types::*;
+use api_types::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]

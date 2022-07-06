@@ -119,12 +119,12 @@ impl LocalDevice {
 
     #[getter]
     fn is_admin(&self) -> PyResult<bool> {
-        Ok(self.0.profile == parsec_api_types::UserProfile::Admin)
+        Ok(self.0.profile == libparsec::api_types::UserProfile::Admin)
     }
 
     #[getter]
     fn is_outsider(&self) -> PyResult<bool> {
-        Ok(self.0.profile == parsec_api_types::UserProfile::Outsider)
+        Ok(self.0.profile == libparsec::api_types::UserProfile::Outsider)
     }
 
     #[getter]

@@ -4,8 +4,8 @@ use hex_literal::hex;
 use rstest::rstest;
 
 use api_crypto::{HashDigest, PublicKey};
+use api_types::{HumanHandle, InvitationStatus, Maybe};
 use parsec_api_protocol::*;
-use parsec_api_types::{HumanHandle, InvitationStatus, Maybe};
 
 #[rstest]
 #[case::user(

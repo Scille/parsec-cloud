@@ -10,7 +10,10 @@ rust-version = "1.62.0"
 libparsec_platform_native = { path = "../crates/platform_native", optional = true }
 libparsec_platform_web = { path = "../crates/platform_web", optional = true }
 api_crypto = { path = "crates/api_crypto" }
-parsec_api_types = { path = "../crates/parsec_api_types" }
+api_types = { path = "crates/api_types" }
+
+[features]
+mock-time = ["api_types/mock-time"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libparsec_platform_native = { path = "../crates/platform_native" }
