@@ -80,7 +80,7 @@ jobs:
         run: |
           whereis git
           git fetch origin master
-          python .github/scripts/check_news_fragment.py ${{ github.head_ref }}
+          python .github/scripts/check_newsfragments.py ${{ github.head_ref }}
 
       - name: Run cargo build to prepare rust's cache
         run: cargo build --workspace
