@@ -2,10 +2,10 @@
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sodiumoxide::libparsec_crypto::secretbox::xsalsa20poly1305::{
+use sodiumoxide::crypto::secretbox::xsalsa20poly1305::{
     gen_key, Key, KEYBYTES, MACBYTES, NONCEBYTES,
 };
-use sodiumoxide::libparsec_crypto::secretbox::{gen_nonce, open, seal, Nonce};
+use sodiumoxide::crypto::secretbox::{gen_nonce, open, seal, Nonce};
 
 use crate::CryptoError;
 

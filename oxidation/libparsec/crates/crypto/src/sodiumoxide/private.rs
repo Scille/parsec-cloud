@@ -2,11 +2,11 @@
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sodiumoxide::libparsec_crypto::box_::{
+use sodiumoxide::crypto::box_::{
     curve25519xsalsa20poly1305, gen_keypair, PUBLICKEYBYTES, SECRETKEYBYTES,
 };
-use sodiumoxide::libparsec_crypto::scalarmult::{scalarmult, GroupElement, Scalar};
-use sodiumoxide::libparsec_crypto::sealedbox::{open, seal};
+use sodiumoxide::crypto::scalarmult::{scalarmult, GroupElement, Scalar};
+use sodiumoxide::crypto::sealedbox::{open, seal};
 
 use crate::{CryptoError, SecretKey};
 
