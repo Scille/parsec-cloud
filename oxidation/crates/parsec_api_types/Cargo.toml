@@ -16,7 +16,7 @@ parsec_serialization_format = { path = "../parsec_serialization_format" }
 parsec_api_crypto = { path = "../parsec_api_crypto" }
 
 lazy_static = "1.4.0"
-serde = { version = "1.0.127", features = ["derive"] }
+serde = { version = "1.0.138", features = ["derive"] }
 serde_with = "1.14.0"
 serde_repr = "0.1.7"
 rmp-serde = "1.0.0"
@@ -31,7 +31,7 @@ data-encoding = "2.3.2"
 url = "2.2.2"
 percent-encoding = "2.1.0"
 fancy-regex = "0.10.0"
-unicode-normalization = "0.1.20"
+unicode-normalization = "0.1.21"
 paste = "1.0.5"
 flate2 = "1.0.24"
 rand = "0.8.4"
