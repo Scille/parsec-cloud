@@ -4,7 +4,7 @@
 pub use platform_native::{create_context, RuntimeContext};
 
 #[cfg(target_arch = "wasm32")]
-pub use libparsec_platform_web::{create_context, RuntimeContext};
+pub use platform_web::{create_context, RuntimeContext};
 
 pub use api_crypto;
 pub use api_protocol;

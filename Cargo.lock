@@ -1177,8 +1177,8 @@ dependencies = [
  "client_types",
  "core",
  "core_fs",
- "libparsec_platform_web",
  "platform_native",
+ "platform_web",
 ]
 
 [[package]]
@@ -1240,10 +1240,6 @@ dependencies = [
  "wasm-bindgen-test",
  "wee_alloc",
 ]
-
-[[package]]
-name = "libparsec_platform_web"
-version = "0.0.0"
 
 [[package]]
 name = "libparsec_python"
@@ -1587,6 +1583,10 @@ dependencies = [
  "smol",
  "tests_fixtures",
 ]
+
+[[package]]
+name = "platform_web"
+version = "0.0.0"
 
 [[package]]
 name = "polling"
