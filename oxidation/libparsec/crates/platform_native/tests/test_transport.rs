@@ -6,7 +6,7 @@ use api_protocol::{
 use api_types::DateTime;
 use async_std::net::TcpListener;
 use async_std::task;
-use libparsec_platform_native::Transport;
+use platform_native::Transport;
 use rstest::rstest;
 use tests_fixtures::{alice, Device};
 

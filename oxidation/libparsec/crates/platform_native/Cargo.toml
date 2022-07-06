@@ -1,5 +1,5 @@
 [package]
-name = "libparsec_platform_native"
+name = "platform_native"
 version = "0.0.0"
 edition = "2021"
 
@@ -16,8 +16,8 @@ async-std = "1.12.0"
 async-tungstenite = { version = "0.17.1", features = ["async-std-runtime"] }
 
 [dev-dependencies]
-tests_fixtures = { path = "../../libparsec/crates/tests_fixtures" }
-api_protocol = { path = "../../libparsec/crates/api_protocol" }
-api_types = { path = "../../libparsec/crates/api_types" }
+tests_fixtures = { path = "../tests_fixtures" }
+api_protocol = { path = "../api_protocol" }
+api_types = { path = "../api_types" }
 
 rstest = "0.13.0"

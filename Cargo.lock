@@ -1177,8 +1177,8 @@ dependencies = [
  "client_types",
  "core",
  "core_fs",
- "libparsec_platform_native",
  "libparsec_platform_web",
+ "platform_native",
 ]
 
 [[package]]
@@ -1239,22 +1239,6 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-test",
  "wee_alloc",
-]
-
-[[package]]
-name = "libparsec_platform_native"
-version = "0.0.0"
-dependencies = [
- "api_protocol",
- "api_types",
- "async-std",
- "async-tungstenite",
- "dotenv",
- "futures",
- "http",
- "rstest 0.13.0",
- "smol",
- "tests_fixtures",
 ]
 
 [[package]]
@@ -1587,6 +1571,22 @@ name = "pkg-config"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
+
+[[package]]
+name = "platform_native"
+version = "0.0.0"
+dependencies = [
+ "api_protocol",
+ "api_types",
+ "async-std",
+ "async-tungstenite",
+ "dotenv",
+ "futures",
+ "http",
+ "rstest 0.13.0",
+ "smol",
+ "tests_fixtures",
+]
 
 [[package]]
 name = "polling"
