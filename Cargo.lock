@@ -1118,7 +1118,10 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_protocol",
  "libparsec_types",
+ "rmp-serde",
  "rstest 0.13.0",
+ "serde",
+ "serde_with",
  "tests_fixtures",
  "thiserror",
 ]
