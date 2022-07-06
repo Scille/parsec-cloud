@@ -4,21 +4,21 @@ use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyTuple};
 
+use crate::api_crypto::VerifyKey;
 use crate::binding_utils::py_to_rs_datetime;
 use crate::certif::{DeviceCertificate, RevokedUserCertificate, UserCertificate};
-use crate::crypto::VerifyKey;
 use crate::ids::{DeviceID, UserID};
 
 import_exception!(parsec.core.trustchain, TrustchainError);
 
 #[pyclass]
-pub(crate) struct TrustchainContext(pub parsec_core::TrustchainContext);
+pub(crate) struct TrustchainContext(pub libparsec::core::TrustchainContext);
 
 #[pymethods]
 impl TrustchainContext {
     #[new]
     fn new(root_verify_key: &VerifyKey, cache_validity: i64) -> PyResult<Self> {
-        Ok(Self(parsec_core::TrustchainContext::new(
+        Ok(Self(libparsec::core::TrustchainContext::new(
             root_verify_key.0.clone(),
             cache_validity,
         )))
@@ -118,7 +118,7 @@ impl TrustchainContext {
             [revoked_users: Vec<Vec<u8>>, "revoked_users"]
         );
 
-        let trustchain = parsec_api_protocol::authenticated_cmds::user_get::Trustchain {
+        let trustchain = libparsec::protocol::authenticated_cmds::user_get::Trustchain {
             users,
             devices,
             revoked_users,

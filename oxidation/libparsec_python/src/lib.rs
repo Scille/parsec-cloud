@@ -7,9 +7,9 @@
 use pyo3::prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 
 mod addrs;
+mod api_crypto;
 mod binding_utils;
 mod certif;
-mod crypto;
 mod file_operations;
 mod ids;
 mod invite;
@@ -26,12 +26,12 @@ mod trustchain;
 /// import the module.
 #[pymodule]
 fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<crypto::HashDigest>()?;
-    m.add_class::<crypto::SigningKey>()?;
-    m.add_class::<crypto::VerifyKey>()?;
-    m.add_class::<crypto::SecretKey>()?;
-    m.add_class::<crypto::PrivateKey>()?;
-    m.add_class::<crypto::PublicKey>()?;
+    m.add_class::<api_crypto::HashDigest>()?;
+    m.add_class::<api_crypto::SigningKey>()?;
+    m.add_class::<api_crypto::VerifyKey>()?;
+    m.add_class::<api_crypto::SecretKey>()?;
+    m.add_class::<api_crypto::PrivateKey>()?;
+    m.add_class::<api_crypto::PublicKey>()?;
     m.add_class::<addrs::BackendAddr>()?;
     m.add_class::<addrs::BackendOrganizationAddr>()?;
     m.add_class::<addrs::BackendActionAddr>()?;

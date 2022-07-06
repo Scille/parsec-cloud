@@ -843,8 +843,8 @@ version = "0.1.0"
 dependencies = [
  "libparsec_platform_native",
  "libparsec_platform_web",
- "parsec_api_crypto",
- "parsec_api_types",
+ "api_crypto",
+ "api_types",
 ]
 
 [[package]]
@@ -870,10 +870,10 @@ dependencies = [
  "chrono",
  "fancy-regex",
  "libparsec",
- "parsec_api_crypto",
- "parsec_api_protocol",
- "parsec_api_types",
- "parsec_client_types",
+ "api_crypto",
+ "api_protocol",
+ "api_types",
+ "client_types",
  "parsec_core",
  "pyo3",
  "uuid",
@@ -1014,7 +1014,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "parsec_api_crypto"
+name = "api_crypto"
 version = "0.0.0"
 dependencies = [
  "blake2",
@@ -1037,7 +1037,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "parsec_api_protocol"
+name = "api_protocol"
 version = "0.0.0"
 dependencies = [
  "async-std",
@@ -1045,8 +1045,8 @@ dependencies = [
  "dotenv",
  "futures",
  "http",
- "parsec_api_crypto",
- "parsec_api_types",
+ "api_crypto",
+ "api_types",
  "parsec_serialization_format",
  "paste",
  "rand 0.8.5",
@@ -1059,7 +1059,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "parsec_api_types"
+name = "api_types"
 version = "0.0.0"
 dependencies = [
  "chrono",
@@ -1067,7 +1067,7 @@ dependencies = [
  "fancy-regex",
  "flate2",
  "lazy_static",
- "parsec_api_crypto",
+ "api_crypto",
  "parsec_serialization_format",
  "paste",
  "percent-encoding",
@@ -1084,13 +1084,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "parsec_client_types"
+name = "client_types"
 version = "0.0.0"
 dependencies = [
  "fancy-regex",
  "flate2",
- "parsec_api_crypto",
- "parsec_api_types",
+ "api_crypto",
+ "api_types",
  "parsec_serialization_format",
  "paste",
  "rmp-serde",
@@ -1105,9 +1105,9 @@ dependencies = [
 name = "parsec_core"
 version = "0.0.0"
 dependencies = [
- "parsec_api_crypto",
- "parsec_api_protocol",
- "parsec_api_types",
+ "api_crypto",
+ "api_protocol",
+ "api_types",
  "thiserror",
 ]
 

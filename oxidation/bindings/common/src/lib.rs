@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use base64::DecodeError;
-use libparsec::SecretKey;
+use libparsec::crypto::SecretKey;
 pub use libparsec::{create_context, RuntimeContext};
 
 pub fn decode_and_execute(cmd: &str, payload: &str) -> Result<String, String> {

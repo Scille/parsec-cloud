@@ -3,7 +3,7 @@
 mod chunk_storage;
 mod local_database;
 mod manifest_storage;
-mod types;
+mod sql_types;
 // Not used for the moment
 #[allow(dead_code)]
 mod user_storage;

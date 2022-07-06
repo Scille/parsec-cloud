@@ -5,13 +5,13 @@ use diesel::{
     RunQueryDsl,
 };
 use fancy_regex::Regex;
-use parsec_api_crypto::{CryptoError, SecretKey};
+use libparsec_crypto::{CryptoError, SecretKey};
 use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 
-use parsec_api_types::{BlockID, ChunkID, EntryID};
-use parsec_client_types::LocalManifest;
+use libparsec_client_types::LocalManifest;
+use libparsec_types::{BlockID, ChunkID, EntryID};
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
 use crate::error::{FSError, FSResult};
@@ -567,9 +567,9 @@ impl ManifestStorage {
 
 #[cfg(test)]
 mod tests {
-    use parsec_api_crypto::HashDigest;
-    use parsec_api_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
-    use parsec_client_types::{Chunk, LocalFileManifest};
+    use libparsec_client_types::{Chunk, LocalFileManifest};
+    use libparsec_crypto::HashDigest;
+    use libparsec_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
 
     use rstest::rstest;
     use tests_fixtures::{tmp_path, TmpPath};

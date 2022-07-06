@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use pyo3::prelude::*;
 use pyo3::types::{PyList, PySet, PyTuple};
 
-use libparsec_core_fs::file_operations;
+use libparsec::core_fs::file_operations;
 
 use crate::binding_utils::py_to_rs_datetime;
 use crate::ids::ChunkID;
@@ -13,13 +13,13 @@ use crate::local_manifest::{Chunk, LocalFileManifest};
 
 // Conversion helpers
 
-fn to_py_chunks(py: Python, chunks: Vec<parsec_client_types::Chunk>) -> &PyTuple {
+fn to_py_chunks(py: Python, chunks: Vec<libparsec::client_types::Chunk>) -> &PyTuple {
     PyTuple::new(py, chunks.into_iter().map(|x| Chunk(x).into_py(py)))
 }
 
 fn to_py_removed_ids(
     py: Python,
-    to_remove: HashSet<parsec_api_types::ChunkID>,
+    to_remove: HashSet<libparsec::types::ChunkID>,
 ) -> PyResult<&PySet> {
     PySet::new(
         py,
@@ -32,7 +32,7 @@ fn to_py_removed_ids(
 
 fn to_py_write_operations(
     py: Python,
-    write_operations: Vec<(parsec_client_types::Chunk, i64)>,
+    write_operations: Vec<(libparsec::client_types::Chunk, i64)>,
 ) -> &PyList {
     PyList::new(
         py,

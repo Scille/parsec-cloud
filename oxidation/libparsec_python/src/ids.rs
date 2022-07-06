@@ -10,7 +10,7 @@ use crate::binding_utils::{comp_op, hash_generic};
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct OrganizationID(pub parsec_api_types::OrganizationID);
+pub(crate) struct OrganizationID(pub libparsec::types::OrganizationID);
 
 #[pymethods]
 impl OrganizationID {
@@ -19,7 +19,7 @@ impl OrganizationID {
         if let Ok(organization_id) = organization_id.extract::<Self>() {
             Ok(organization_id)
         } else if let Ok(organization_id) = organization_id.extract::<&str>() {
-            match organization_id.parse::<parsec_api_types::OrganizationID>() {
+            match organization_id.parse::<libparsec::types::OrganizationID>() {
                 Ok(organization_id) => Ok(Self(organization_id)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -59,7 +59,7 @@ impl OrganizationID {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct EntryID(pub parsec_api_types::EntryID);
+pub(crate) struct EntryID(pub libparsec::types::EntryID);
 
 #[pymethods]
 impl EntryID {
@@ -72,7 +72,7 @@ impl EntryID {
                 let u = as_hex.extract::<&str>()?;
                 // Parse it as a Rust Uuid
                 match Uuid::parse_str(u) {
-                    Ok(as_uuid) => Ok(Self(parsec_api_types::EntryID::from(as_uuid))),
+                    Ok(as_uuid) => Ok(Self(libparsec::types::EntryID::from(as_uuid))),
                     Err(_) => Err(PyValueError::new_err("Not a UUID")),
                 }
             }
@@ -98,14 +98,14 @@ impl EntryID {
     fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
         let b = bytes.as_bytes();
         match uuid::Uuid::from_slice(b) {
-            Ok(uuid) => Ok(Self(parsec_api_types::EntryID::from(uuid))),
+            Ok(uuid) => Ok(Self(libparsec::types::EntryID::from(uuid))),
             Err(_) => Err(PyValueError::new_err("Invalid UUID")),
         }
     }
 
     #[classmethod]
     pub fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
-        match hex.to_string().parse::<parsec_api_types::EntryID>() {
+        match hex.to_string().parse::<libparsec::types::EntryID>() {
             Ok(entry_id) => Ok(Self(entry_id)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -114,7 +114,7 @@ impl EntryID {
     #[classmethod]
     #[pyo3(name = "new")]
     fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(parsec_api_types::EntryID::default()))
+        Ok(Self(libparsec::types::EntryID::default()))
     }
 
     #[getter]
@@ -144,7 +144,7 @@ impl EntryID {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct BlockID(pub parsec_api_types::BlockID);
+pub(crate) struct BlockID(pub libparsec::types::BlockID);
 
 #[pymethods]
 impl BlockID {
@@ -157,7 +157,7 @@ impl BlockID {
                 let u = as_hex.extract::<&str>()?;
                 // Parse it as a Rust Uuid
                 match Uuid::parse_str(u) {
-                    Ok(as_uuid) => Ok(Self(parsec_api_types::BlockID::from(as_uuid))),
+                    Ok(as_uuid) => Ok(Self(libparsec::types::BlockID::from(as_uuid))),
                     Err(_) => Err(PyValueError::new_err("Not a UUID")),
                 }
             }
@@ -179,14 +179,14 @@ impl BlockID {
     fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
         let b = bytes.as_bytes();
         match uuid::Uuid::from_slice(b) {
-            Ok(uuid) => Ok(Self(parsec_api_types::BlockID::from(uuid))),
+            Ok(uuid) => Ok(Self(libparsec::types::BlockID::from(uuid))),
             Err(_) => Err(PyValueError::new_err("Invalid UUID")),
         }
     }
 
     #[classmethod]
     fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
-        match hex.to_string().parse::<parsec_api_types::BlockID>() {
+        match hex.to_string().parse::<libparsec::types::BlockID>() {
             Ok(entry_id) => Ok(Self(entry_id)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -195,7 +195,7 @@ impl BlockID {
     #[classmethod]
     #[pyo3(name = "new")]
     fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(parsec_api_types::BlockID::default()))
+        Ok(Self(libparsec::types::BlockID::default()))
     }
 
     #[getter]
@@ -229,7 +229,7 @@ impl BlockID {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct RealmID(pub parsec_api_types::RealmID);
+pub(crate) struct RealmID(pub libparsec::types::RealmID);
 
 #[pymethods]
 impl RealmID {
@@ -242,7 +242,7 @@ impl RealmID {
                 let u = as_hex.extract::<&str>()?;
                 // Parse it as a Rust Uuid
                 match Uuid::parse_str(u) {
-                    Ok(as_uuid) => Ok(Self(parsec_api_types::RealmID::from(as_uuid))),
+                    Ok(as_uuid) => Ok(Self(libparsec::types::RealmID::from(as_uuid))),
                     Err(_) => Err(PyValueError::new_err("Not a UUID")),
                 }
             }
@@ -264,14 +264,14 @@ impl RealmID {
     fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
         let b = bytes.as_bytes();
         match uuid::Uuid::from_slice(b) {
-            Ok(uuid) => Ok(Self(parsec_api_types::RealmID::from(uuid))),
+            Ok(uuid) => Ok(Self(libparsec::types::RealmID::from(uuid))),
             Err(_) => Err(PyValueError::new_err("Invalid UUID")),
         }
     }
 
     #[classmethod]
     fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
-        match hex.to_string().parse::<parsec_api_types::RealmID>() {
+        match hex.to_string().parse::<libparsec::types::RealmID>() {
             Ok(entry_id) => Ok(Self(entry_id)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -280,7 +280,7 @@ impl RealmID {
     #[classmethod]
     #[pyo3(name = "new")]
     fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(parsec_api_types::RealmID::default()))
+        Ok(Self(libparsec::types::RealmID::default()))
     }
 
     #[getter]
@@ -314,7 +314,7 @@ impl RealmID {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct VlobID(pub parsec_api_types::VlobID);
+pub(crate) struct VlobID(pub libparsec::types::VlobID);
 
 #[pymethods]
 impl VlobID {
@@ -327,7 +327,7 @@ impl VlobID {
                 let u = as_hex.extract::<&str>()?;
                 // Parse it as a Rust Uuid
                 match Uuid::parse_str(u) {
-                    Ok(as_uuid) => Ok(Self(parsec_api_types::VlobID::from(as_uuid))),
+                    Ok(as_uuid) => Ok(Self(libparsec::types::VlobID::from(as_uuid))),
                     Err(_) => Err(PyValueError::new_err("Not a UUID")),
                 }
             }
@@ -349,14 +349,14 @@ impl VlobID {
     fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
         let b = bytes.as_bytes();
         match uuid::Uuid::from_slice(b) {
-            Ok(uuid) => Ok(Self(parsec_api_types::VlobID::from(uuid))),
+            Ok(uuid) => Ok(Self(libparsec::types::VlobID::from(uuid))),
             Err(_) => Err(PyValueError::new_err("Invalid UUID")),
         }
     }
 
     #[classmethod]
     fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
-        match hex.to_string().parse::<parsec_api_types::VlobID>() {
+        match hex.to_string().parse::<libparsec::types::VlobID>() {
             Ok(entry_id) => Ok(Self(entry_id)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -365,7 +365,7 @@ impl VlobID {
     #[classmethod]
     #[pyo3(name = "new")]
     fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(parsec_api_types::VlobID::default()))
+        Ok(Self(libparsec::types::VlobID::default()))
     }
 
     #[getter]
@@ -399,7 +399,7 @@ impl VlobID {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct UserID(pub parsec_api_types::UserID);
+pub(crate) struct UserID(pub libparsec::types::UserID);
 
 #[pymethods]
 impl UserID {
@@ -408,7 +408,7 @@ impl UserID {
         if let Ok(user_id) = user_id.extract::<Self>() {
             Ok(user_id)
         } else if let Ok(user_id) = user_id.extract::<&str>() {
-            match user_id.parse::<parsec_api_types::UserID>() {
+            match user_id.parse::<libparsec::types::UserID>() {
                 Ok(user_id) => Ok(Self(user_id)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -461,7 +461,7 @@ impl UserID {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct DeviceName(pub parsec_api_types::DeviceName);
+pub(crate) struct DeviceName(pub libparsec::types::DeviceName);
 
 #[pymethods]
 impl DeviceName {
@@ -470,7 +470,7 @@ impl DeviceName {
         if let Ok(device_name) = device_name.extract::<Self>() {
             Ok(device_name)
         } else if let Ok(device_name) = device_name.extract::<&str>() {
-            match device_name.parse::<parsec_api_types::DeviceName>() {
+            match device_name.parse::<libparsec::types::DeviceName>() {
                 Ok(device_name) => Ok(Self(device_name)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -509,13 +509,13 @@ impl DeviceName {
     #[classmethod]
     #[pyo3(name = "new")]
     fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(parsec_api_types::DeviceName::default()))
+        Ok(Self(libparsec::types::DeviceName::default()))
     }
 }
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct DeviceLabel(pub parsec_api_types::DeviceLabel);
+pub(crate) struct DeviceLabel(pub libparsec::types::DeviceLabel);
 
 #[pymethods]
 impl DeviceLabel {
@@ -524,7 +524,7 @@ impl DeviceLabel {
         if let Ok(device_label) = device_label.extract::<Self>() {
             Ok(device_label)
         } else if let Ok(device_label) = device_label.extract::<&str>() {
-            match device_label.parse::<parsec_api_types::DeviceLabel>() {
+            match device_label.parse::<libparsec::types::DeviceLabel>() {
                 Ok(device_label) => Ok(Self(device_label)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -564,7 +564,7 @@ impl DeviceLabel {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct DeviceID(pub parsec_api_types::DeviceID);
+pub(crate) struct DeviceID(pub libparsec::types::DeviceID);
 
 #[pymethods]
 impl DeviceID {
@@ -573,7 +573,7 @@ impl DeviceID {
         if let Ok(device_id) = device_id.extract::<Self>() {
             Ok(device_id)
         } else if let Ok(device_id) = device_id.extract::<&str>() {
-            match device_id.parse::<parsec_api_types::DeviceID>() {
+            match device_id.parse::<libparsec::types::DeviceID>() {
                 Ok(device_id) => Ok(Self(device_id)),
                 Err(err) => Err(PyValueError::new_err(err)),
             }
@@ -623,13 +623,13 @@ impl DeviceID {
     #[classmethod]
     #[pyo3(name = "new")]
     fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(parsec_api_types::DeviceID::default()))
+        Ok(Self(libparsec::types::DeviceID::default()))
     }
 }
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
-pub(crate) struct ChunkID(pub parsec_api_types::ChunkID);
+pub(crate) struct ChunkID(pub libparsec::types::ChunkID);
 
 #[pymethods]
 impl ChunkID {
@@ -642,7 +642,7 @@ impl ChunkID {
                 let u = as_hex.extract::<&str>()?;
                 // Parse it as a Rust Uuid
                 match Uuid::parse_str(u) {
-                    Ok(as_uuid) => Ok(Self(parsec_api_types::ChunkID::from(as_uuid))),
+                    Ok(as_uuid) => Ok(Self(libparsec::types::ChunkID::from(as_uuid))),
                     Err(_) => Err(PyValueError::new_err("Not a UUID")),
                 }
             }
@@ -664,14 +664,14 @@ impl ChunkID {
     fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
         let b = bytes.as_bytes();
         match uuid::Uuid::from_slice(b) {
-            Ok(uuid) => Ok(Self(parsec_api_types::ChunkID::from(uuid))),
+            Ok(uuid) => Ok(Self(libparsec::types::ChunkID::from(uuid))),
             Err(_) => Err(PyValueError::new_err("Invalid UUID")),
         }
     }
 
     #[classmethod]
     fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
-        match hex.to_string().parse::<parsec_api_types::ChunkID>() {
+        match hex.to_string().parse::<libparsec::types::ChunkID>() {
             Ok(entry_id) => Ok(Self(entry_id)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -701,7 +701,7 @@ impl ChunkID {
     #[classmethod]
     #[pyo3(name = "new")]
     fn _class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(parsec_api_types::ChunkID::default()))
+        Ok(Self(libparsec::types::ChunkID::default()))
     }
 
     #[getter]
@@ -722,13 +722,13 @@ impl ChunkID {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct HumanHandle(pub parsec_api_types::HumanHandle);
+pub(crate) struct HumanHandle(pub libparsec::types::HumanHandle);
 
 #[pymethods]
 impl HumanHandle {
     #[new]
     pub fn new(email: &str, label: &str) -> PyResult<Self> {
-        match parsec_api_types::HumanHandle::new(email, label) {
+        match libparsec::types::HumanHandle::new(email, label) {
             Ok(human_handle) => Ok(Self(human_handle)),
             Err(err) => Err(PyValueError::new_err(err)),
         }

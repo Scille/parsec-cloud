@@ -261,9 +261,9 @@ jobs:
       - bash: |
           set -eux
 
-          # Test parsec-api-crypto with both features
-          cargo test -p parsec_api_crypto --features use-sodiumoxide
-          cargo test -p parsec_api_crypto --features use-rustcrypto
+          # Test libparsec_crypto with both features
+          cargo test --package libparsec_crypto --features use-sodiumoxide
+          cargo test --package libparsec_crypto --features use-rustcrypto
 
           cargo test --workspace --features mock-time
         workingDirectory: $(Build.SourcesDirectory)/oxidation

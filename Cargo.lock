@@ -1033,28 +1033,15 @@ dependencies = [
 name = "libparsec"
 version = "0.1.0"
 dependencies = [
+ "libparsec_client_types",
+ "libparsec_core",
+ "libparsec_core_fs",
+ "libparsec_crypto",
+ "libparsec_platform_async",
  "libparsec_platform_native",
  "libparsec_platform_web",
- "parsec_api_crypto",
- "parsec_api_types",
-]
-
-[[package]]
-name = "libparsec-platform-async"
-version = "0.1.0"
-dependencies = [
- "console_log",
- "flume",
- "futures",
- "futures-lite",
- "js-sys",
- "log",
- "simple_logger",
- "tokio",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wasm-bindgen-test",
- "web-sys",
+ "libparsec_protocol",
+ "libparsec_types",
 ]
 
 [[package]]
@@ -1100,18 +1087,102 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_client_types"
+version = "0.0.0"
+dependencies = [
+ "fancy-regex",
+ "flate2",
+ "hex-literal",
+ "libparsec_crypto",
+ "libparsec_types",
+ "paste",
+ "pretty_assertions",
+ "rmp-serde",
+ "rstest 0.13.0",
+ "rstest_reuse",
+ "serde",
+ "serde_bytes",
+ "serde_repr",
+ "serde_test",
+ "serde_with",
+ "serialization_format",
+ "sha2 0.10.2",
+ "tests_fixtures",
+]
+
+[[package]]
+name = "libparsec_core"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "libparsec_crypto",
+ "libparsec_protocol",
+ "libparsec_types",
+ "rstest 0.13.0",
+ "tests_fixtures",
+ "thiserror",
+]
+
+[[package]]
 name = "libparsec_core_fs"
 version = "0.0.0"
 dependencies = [
  "diesel",
  "fancy-regex",
- "parsec_api_crypto",
- "parsec_api_types",
- "parsec_client_types",
+ "libparsec_client_types",
+ "libparsec_crypto",
+ "libparsec_types",
  "rstest 0.12.0",
  "tests_fixtures",
  "thiserror",
  "uuid",
+]
+
+[[package]]
+name = "libparsec_crypto"
+version = "0.0.0"
+dependencies = [
+ "blake2",
+ "crypto_box",
+ "digest 0.10.3",
+ "ed25519-dalek",
+ "generic-array",
+ "getrandom 0.1.16",
+ "getrandom 0.2.6",
+ "hex",
+ "hex-literal",
+ "libsodium-sys",
+ "paste",
+ "pretty_assertions",
+ "rand 0.7.3",
+ "rand 0.8.5",
+ "rmp-serde",
+ "serde",
+ "serde_bytes",
+ "serde_test",
+ "sha2 0.10.2",
+ "sodiumoxide",
+ "thiserror",
+ "x25519-dalek",
+ "xsalsa20poly1305",
+]
+
+[[package]]
+name = "libparsec_platform_async"
+version = "0.1.0"
+dependencies = [
+ "console_log",
+ "flume",
+ "futures",
+ "futures-lite",
+ "js-sys",
+ "log",
+ "simple_logger",
+ "tokio",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-bindgen-test",
+ "web-sys",
 ]
 
 [[package]]
@@ -1123,8 +1194,8 @@ dependencies = [
  "dotenv",
  "futures",
  "http",
- "parsec_api_protocol",
- "parsec_api_types",
+ "libparsec_protocol",
+ "libparsec_types",
  "rstest 0.13.0",
  "smol",
  "tests_fixtures",
@@ -1135,19 +1206,70 @@ name = "libparsec_platform_web"
 version = "0.0.0"
 
 [[package]]
+name = "libparsec_protocol"
+version = "0.0.0"
+dependencies = [
+ "async-std",
+ "async-tungstenite",
+ "dotenv",
+ "futures",
+ "hex-literal",
+ "http",
+ "libparsec_crypto",
+ "libparsec_types",
+ "paste",
+ "rand 0.8.5",
+ "rmp-serde",
+ "rstest 0.13.0",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serialization_format",
+ "smol",
+ "tests_fixtures",
+ "thiserror",
+]
+
+[[package]]
 name = "libparsec_python"
 version = "0.1.0"
 dependencies = [
  "chrono",
  "fancy-regex",
  "libparsec",
- "libparsec_core_fs",
- "parsec_api_crypto",
- "parsec_api_protocol",
- "parsec_api_types",
- "parsec_client_types",
- "parsec_core",
  "pyo3",
+ "uuid",
+]
+
+[[package]]
+name = "libparsec_types"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "data-encoding",
+ "fancy-regex",
+ "flate2",
+ "hex-literal",
+ "lazy_static",
+ "libparsec_crypto",
+ "paste",
+ "percent-encoding",
+ "pretty_assertions",
+ "rand 0.8.5",
+ "rmp-serde",
+ "rstest 0.13.0",
+ "rstest_reuse",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "serde_repr",
+ "serde_test",
+ "serde_with",
+ "serialization_format",
+ "tests_fixtures",
+ "thiserror",
+ "unicode-normalization",
+ "url",
  "uuid",
 ]
 
@@ -1415,139 +1537,6 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-sys",
-]
-
-[[package]]
-name = "parsec_api_crypto"
-version = "0.0.0"
-dependencies = [
- "blake2",
- "crypto_box",
- "digest 0.10.3",
- "ed25519-dalek",
- "generic-array",
- "getrandom 0.1.16",
- "getrandom 0.2.6",
- "hex",
- "hex-literal",
- "libsodium-sys",
- "paste",
- "pretty_assertions",
- "rand 0.7.3",
- "rand 0.8.5",
- "rmp-serde",
- "serde",
- "serde_bytes",
- "serde_test",
- "sha2 0.10.2",
- "sodiumoxide",
- "thiserror",
- "x25519-dalek",
- "xsalsa20poly1305",
-]
-
-[[package]]
-name = "parsec_api_protocol"
-version = "0.0.0"
-dependencies = [
- "async-std",
- "async-tungstenite",
- "dotenv",
- "futures",
- "hex-literal",
- "http",
- "parsec_api_crypto",
- "parsec_api_types",
- "parsec_serialization_format",
- "paste",
- "rand 0.8.5",
- "rmp-serde",
- "rstest 0.13.0",
- "serde",
- "serde_json",
- "serde_with",
- "smol",
- "tests_fixtures",
- "thiserror",
-]
-
-[[package]]
-name = "parsec_api_types"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "data-encoding",
- "fancy-regex",
- "flate2",
- "hex-literal",
- "lazy_static",
- "parsec_api_crypto",
- "parsec_serialization_format",
- "paste",
- "percent-encoding",
- "pretty_assertions",
- "rand 0.8.5",
- "rmp-serde",
- "rstest 0.13.0",
- "rstest_reuse",
- "serde",
- "serde_bytes",
- "serde_json",
- "serde_repr",
- "serde_test",
- "serde_with",
- "tests_fixtures",
- "thiserror",
- "unicode-normalization",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "parsec_client_types"
-version = "0.0.0"
-dependencies = [
- "fancy-regex",
- "flate2",
- "hex-literal",
- "parsec_api_crypto",
- "parsec_api_types",
- "parsec_serialization_format",
- "paste",
- "pretty_assertions",
- "rmp-serde",
- "rstest 0.13.0",
- "rstest_reuse",
- "serde",
- "serde_bytes",
- "serde_repr",
- "serde_test",
- "serde_with",
- "sha2 0.10.2",
- "tests_fixtures",
-]
-
-[[package]]
-name = "parsec_core"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "parsec_api_crypto",
- "parsec_api_protocol",
- "parsec_api_types",
- "rstest 0.13.0",
- "tests_fixtures",
- "thiserror",
-]
-
-[[package]]
-name = "parsec_serialization_format"
-version = "0.0.0"
-dependencies = [
- "miniserde",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -2082,6 +2071,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "serialization_format"
+version = "0.0.0"
+dependencies = [
+ "miniserde",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "sha-1"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2283,10 +2282,10 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "hex-literal",
- "parsec_api_crypto",
- "parsec_api_protocol",
- "parsec_api_types",
- "parsec_client_types",
+ "libparsec_client_types",
+ "libparsec_crypto",
+ "libparsec_protocol",
+ "libparsec_types",
  "rstest 0.13.0",
  "uuid",
 ]

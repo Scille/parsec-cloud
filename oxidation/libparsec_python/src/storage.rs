@@ -20,7 +20,7 @@ import_exception!(parsec.core.fs.exceptions, FSInvalidFileDescriptor);
 /// methods are called in trio.to_thread to connect the sync and async world
 #[pyclass]
 pub(crate) struct WorkspaceStorage(
-    pub libparsec_core_fs::WorkspaceStorage,
+    pub libparsec::core_fs::WorkspaceStorage,
     pub Option<PyObject>,
 );
 
@@ -39,7 +39,7 @@ impl WorkspaceStorage {
         let data_base_dir =
             PathBuf::from(data_base_dir.call_method0("__str__")?.extract::<String>()?);
         Ok(Self(
-            libparsec_core_fs::WorkspaceStorage::new(
+            libparsec::core_fs::WorkspaceStorage::new(
                 &data_base_dir,
                 device.0,
                 workspace_id.0,
@@ -100,16 +100,16 @@ impl WorkspaceStorage {
             .allow_threads(|| self.0.get_manifest(entry_id.0))
             .map_err(|_| FSLocalMissError::new_err(entry_id))?;
         Ok(match manifest {
-            parsec_client_types::LocalManifest::File(manifest) => {
+            libparsec::client_types::LocalManifest::File(manifest) => {
                 LocalFileManifest(manifest).into_py(py)
             }
-            parsec_client_types::LocalManifest::Folder(manifest) => {
+            libparsec::client_types::LocalManifest::Folder(manifest) => {
                 LocalFolderManifest(manifest).into_py(py)
             }
-            parsec_client_types::LocalManifest::Workspace(manifest) => {
+            libparsec::client_types::LocalManifest::Workspace(manifest) => {
                 LocalWorkspaceManifest(manifest).into_py(py)
             }
-            parsec_client_types::LocalManifest::User(manifest) => {
+            libparsec::client_types::LocalManifest::User(manifest) => {
                 LocalUserManifest(manifest).into_py(py)
             }
         })
@@ -125,13 +125,15 @@ impl WorkspaceStorage {
         removed_ids: Option<HashSet<ChunkID>>,
     ) -> PyResult<()> {
         let manifest = if let Ok(manifest) = manifest.extract::<LocalFileManifest>(py) {
-            parsec_client_types::LocalManifest::File(manifest.0)
+            libparsec::client_types::LocalManifest::File(manifest.0)
         } else if let Ok(manifest) = manifest.extract::<LocalFolderManifest>(py) {
-            parsec_client_types::LocalManifest::Folder(manifest.0)
+            libparsec::client_types::LocalManifest::Folder(manifest.0)
         } else if let Ok(manifest) = manifest.extract::<LocalWorkspaceManifest>(py) {
-            parsec_client_types::LocalManifest::Workspace(manifest.0)
+            libparsec::client_types::LocalManifest::Workspace(manifest.0)
         } else {
-            parsec_client_types::LocalManifest::User(manifest.extract::<LocalUserManifest>(py)?.0)
+            libparsec::client_types::LocalManifest::User(
+                manifest.extract::<LocalUserManifest>(py)?.0,
+            )
         };
         py.allow_threads(|| {
             self.0
@@ -142,7 +144,7 @@ impl WorkspaceStorage {
                     false,
                     removed_ids.map(|x| {
                         x.into_iter()
-                            .map(|id| libparsec_core_fs::ChunkOrBlockID::ChunkID(id.0))
+                            .map(|id| libparsec::core_fs::ChunkOrBlockID::ChunkID(id.0))
                             .collect()
                     }),
                 )
@@ -166,7 +168,7 @@ impl WorkspaceStorage {
         py.allow_threads(|| {
             Ok(LocalFileManifest(
                 self.0
-                    .load_file_descriptor(parsec_api_types::FileDescriptor(fd))
+                    .load_file_descriptor(libparsec::types::FileDescriptor(fd))
                     .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))?,
             ))
         })
@@ -175,7 +177,7 @@ impl WorkspaceStorage {
     fn remove_file_descriptor(&self, py: Python, fd: u32) -> PyResult<()> {
         py.allow_threads(|| {
             self.0
-                .remove_file_descriptor(parsec_api_types::FileDescriptor(fd))
+                .remove_file_descriptor(libparsec::types::FileDescriptor(fd))
                 .map(|_| ())
                 .ok_or_else(|| FSInvalidFileDescriptor::new_err(""))
         })

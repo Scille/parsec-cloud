@@ -8,8 +8,8 @@ use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 use std::panic;
 
+use crate::api_crypto::SecretKey;
 use crate::binding_utils::{py_to_rs_datetime, py_to_rs_regex, py_to_rs_set, rs_to_py_datetime};
-use crate::crypto::SecretKey;
 use crate::ids::{ChunkID, DeviceID, EntryID};
 use crate::manifest::{
     BlockAccess, EntryName, FileManifest, FolderManifest, UserManifest, WorkspaceEntry,
@@ -18,7 +18,7 @@ use crate::manifest::{
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct Chunk(pub parsec_client_types::Chunk);
+pub(crate) struct Chunk(pub libparsec::client_types::Chunk);
 
 #[pymethods]
 impl Chunk {
@@ -35,7 +35,7 @@ impl Chunk {
             [access: Option<BlockAccess>, "access"],
         );
 
-        Ok(Self(parsec_client_types::Chunk {
+        Ok(Self(libparsec::client_types::Chunk {
             id: id.0,
             start,
             stop: NonZeroU64::try_from(stop)
@@ -114,7 +114,7 @@ impl Chunk {
     #[classmethod]
     fn from_block_access(_cls: &PyType, block_access: BlockAccess) -> PyResult<Self> {
         Ok(Self(
-            parsec_client_types::Chunk::from_block_access(block_access.0)
+            libparsec::client_types::Chunk::from_block_access(block_access.0)
                 .map_err(PyValueError::new_err)?,
         ))
     }
@@ -160,7 +160,7 @@ impl Chunk {
     #[classmethod]
     #[pyo3(name = "new")]
     fn _class_new(_cls: &PyType, start: u64, stop: u64) -> PyResult<Self> {
-        Ok(Self(parsec_client_types::Chunk::new(
+        Ok(Self(libparsec::client_types::Chunk::new(
             start,
             NonZeroU64::try_from(stop).map_err(PyValueError::new_err)?,
         )))
@@ -199,7 +199,7 @@ impl Chunk {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct LocalFileManifest(pub parsec_client_types::LocalFileManifest);
+pub(crate) struct LocalFileManifest(pub libparsec::client_types::LocalFileManifest);
 
 #[pymethods]
 impl LocalFileManifest {
@@ -216,12 +216,12 @@ impl LocalFileManifest {
             [blocks: Vec<Vec<Chunk>>, "blocks"],
         );
 
-        Ok(Self(parsec_client_types::LocalFileManifest {
+        Ok(Self(libparsec::client_types::LocalFileManifest {
             base: base.0,
             need_sync,
             updated,
             size,
-            blocksize: parsec_api_types::Blocksize::try_from(blocksize)
+            blocksize: libparsec::types::Blocksize::try_from(blocksize)
                 .map_err(|_| PyValueError::new_err("Invalid blocksize field"))?,
             blocks: blocks
                 .into_iter()
@@ -257,7 +257,7 @@ impl LocalFileManifest {
             r.size = v;
         }
         if let Some(v) = blocksize {
-            r.blocksize = parsec_api_types::Blocksize::try_from(v)
+            r.blocksize = libparsec::types::Blocksize::try_from(v)
                 .map_err(|_| PyValueError::new_err("Invalid blocksize field"))?;
         }
         if let Some(v) = blocks {
@@ -316,7 +316,7 @@ impl LocalFileManifest {
     #[classmethod]
     fn from_remote(_cls: &PyType, remote: FileManifest) -> PyResult<Self> {
         Ok(Self(
-            parsec_client_types::LocalFileManifest::from_remote(remote.0)
+            libparsec::client_types::LocalFileManifest::from_remote(remote.0)
                 .map_err(PyValueError::new_err)?,
         ))
     }
@@ -377,7 +377,7 @@ impl LocalFileManifest {
 
     #[classmethod]
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
-        match parsec_client_types::LocalFileManifest::decrypt_and_load(encrypted, &key.0) {
+        match libparsec::client_types::LocalFileManifest::decrypt_and_load(encrypted, &key.0) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -394,9 +394,9 @@ impl LocalFileManifest {
     ) -> PyResult<Self> {
         let timestamp = py_to_rs_datetime(timestamp)?;
         let blocksize =
-            parsec_api_types::Blocksize::try_from(blocksize).map_err(PyValueError::new_err)?;
+            libparsec::types::Blocksize::try_from(blocksize).map_err(PyValueError::new_err)?;
 
-        Ok(Self(parsec_client_types::LocalFileManifest::new(
+        Ok(Self(libparsec::client_types::LocalFileManifest::new(
             author.0, parent.0, timestamp, blocksize,
         )))
     }
@@ -505,7 +505,7 @@ impl LocalFileManifest {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct LocalFolderManifest(pub parsec_client_types::LocalFolderManifest);
+pub(crate) struct LocalFolderManifest(pub libparsec::client_types::LocalFolderManifest);
 
 #[pymethods]
 impl LocalFolderManifest {
@@ -522,7 +522,7 @@ impl LocalFolderManifest {
             [remote, "remote_confinement_points", py_to_rs_set],
         );
 
-        Ok(Self(parsec_client_types::LocalFolderManifest {
+        Ok(Self(libparsec::client_types::LocalFolderManifest {
             base: base.0,
             need_sync,
             updated,
@@ -661,7 +661,7 @@ impl LocalFolderManifest {
 
     #[classmethod]
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
-        match parsec_client_types::LocalFolderManifest::decrypt_and_load(encrypted, &key.0) {
+        match libparsec::client_types::LocalFolderManifest::decrypt_and_load(encrypted, &key.0) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -675,7 +675,7 @@ impl LocalFolderManifest {
         timestamp: &PyAny,
     ) -> PyResult<Self> {
         let timestamp = py_to_rs_datetime(timestamp)?;
-        Ok(Self(parsec_client_types::LocalFolderManifest::new(
+        Ok(Self(libparsec::client_types::LocalFolderManifest::new(
             author.0, parent.0, timestamp,
         )))
     }
@@ -705,10 +705,12 @@ impl LocalFolderManifest {
         prevent_sync_pattern: &PyAny,
     ) -> PyResult<Self> {
         let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
-        Ok(Self(parsec_client_types::LocalFolderManifest::from_remote(
-            remote.0,
-            &prevent_sync_pattern,
-        )))
+        Ok(Self(
+            libparsec::client_types::LocalFolderManifest::from_remote(
+                remote.0,
+                &prevent_sync_pattern,
+            ),
+        ))
     }
 
     #[classmethod]
@@ -722,7 +724,7 @@ impl LocalFolderManifest {
         let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
         let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(Self(
-            parsec_client_types::LocalFolderManifest::from_remote_with_local_context(
+            libparsec::client_types::LocalFolderManifest::from_remote_with_local_context(
                 remote.0,
                 &prevent_sync_pattern,
                 &local_manifest.0,
@@ -872,7 +874,7 @@ impl LocalFolderManifest {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct LocalWorkspaceManifest(pub parsec_client_types::LocalWorkspaceManifest);
+pub(crate) struct LocalWorkspaceManifest(pub libparsec::client_types::LocalWorkspaceManifest);
 
 #[pymethods]
 impl LocalWorkspaceManifest {
@@ -890,7 +892,7 @@ impl LocalWorkspaceManifest {
             [speculative: bool, "speculative"],
         );
 
-        Ok(Self(parsec_client_types::LocalWorkspaceManifest {
+        Ok(Self(libparsec::client_types::LocalWorkspaceManifest {
             base: base.0,
             need_sync,
             updated,
@@ -1026,7 +1028,7 @@ impl LocalWorkspaceManifest {
 
     #[classmethod]
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
-        match parsec_client_types::LocalWorkspaceManifest::decrypt_and_load(encrypted, &key.0) {
+        match libparsec::client_types::LocalWorkspaceManifest::decrypt_and_load(encrypted, &key.0) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -1042,7 +1044,7 @@ impl LocalWorkspaceManifest {
         speculative: bool,
     ) -> PyResult<Self> {
         let timestamp = py_to_rs_datetime(timestamp)?;
-        Ok(Self(parsec_client_types::LocalWorkspaceManifest::new(
+        Ok(Self(libparsec::client_types::LocalWorkspaceManifest::new(
             author.0,
             timestamp,
             id.map(|id| id.0),
@@ -1076,7 +1078,7 @@ impl LocalWorkspaceManifest {
     ) -> PyResult<Self> {
         let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
         Ok(Self(
-            parsec_client_types::LocalWorkspaceManifest::from_remote(
+            libparsec::client_types::LocalWorkspaceManifest::from_remote(
                 remote.0,
                 &prevent_sync_pattern,
             ),
@@ -1094,7 +1096,7 @@ impl LocalWorkspaceManifest {
         let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
         let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(Self(
-            parsec_client_types::LocalWorkspaceManifest::from_remote_with_local_context(
+            libparsec::client_types::LocalWorkspaceManifest::from_remote_with_local_context(
                 remote.0,
                 &prevent_sync_pattern,
                 &local_manifest.0,
@@ -1248,7 +1250,7 @@ impl LocalWorkspaceManifest {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct LocalUserManifest(pub parsec_client_types::LocalUserManifest);
+pub(crate) struct LocalUserManifest(pub libparsec::client_types::LocalUserManifest);
 
 #[pymethods]
 impl LocalUserManifest {
@@ -1265,7 +1267,7 @@ impl LocalUserManifest {
             [speculative: bool, "speculative"],
         );
 
-        Ok(Self(parsec_client_types::LocalUserManifest {
+        Ok(Self(libparsec::client_types::LocalUserManifest {
             base: base.0,
             need_sync,
             updated,
@@ -1384,7 +1386,7 @@ impl LocalUserManifest {
 
     #[classmethod]
     fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
-        match parsec_client_types::LocalUserManifest::decrypt_and_load(encrypted, &key.0) {
+        match libparsec::client_types::LocalUserManifest::decrypt_and_load(encrypted, &key.0) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -1400,7 +1402,7 @@ impl LocalUserManifest {
         speculative: bool,
     ) -> PyResult<Self> {
         let timestamp = py_to_rs_datetime(timestamp)?;
-        Ok(Self(parsec_client_types::LocalUserManifest::new(
+        Ok(Self(libparsec::client_types::LocalUserManifest::new(
             author.0,
             timestamp,
             id.map(|id| id.0),
@@ -1418,9 +1420,9 @@ impl LocalUserManifest {
 
     #[classmethod]
     fn from_remote(_cls: &PyType, remote: UserManifest) -> PyResult<Self> {
-        Ok(Self(parsec_client_types::LocalUserManifest::from_remote(
-            remote.0,
-        )))
+        Ok(Self(
+            libparsec::client_types::LocalUserManifest::from_remote(remote.0),
+        ))
     }
 
     #[classmethod]

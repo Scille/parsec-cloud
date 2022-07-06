@@ -6,13 +6,13 @@ use pyo3::pyclass::CompareOp;
 use pyo3::types::{PyBytes, PyDict, PyType};
 
 use crate::addrs::BackendOrganizationAddr;
+use crate::api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 use crate::binding_utils::{py_to_rs_user_profile, rs_to_py_datetime, rs_to_py_user_profile};
-use crate::crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 use crate::ids::{DeviceID, DeviceLabel, DeviceName, EntryID, HumanHandle, OrganizationID, UserID};
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct LocalDevice(pub parsec_client_types::LocalDevice);
+pub(crate) struct LocalDevice(pub libparsec::client_types::LocalDevice);
 
 #[pymethods]
 impl LocalDevice {
@@ -36,7 +36,7 @@ impl LocalDevice {
             [local_symkey: SecretKey, "local_symkey"],
         );
 
-        Ok(Self(parsec_client_types::LocalDevice {
+        Ok(Self(libparsec::client_types::LocalDevice {
             organization_addr: organization_addr.0,
             device_id: device_id.0,
             device_label: device_label.map(|x| x.0),
@@ -119,12 +119,12 @@ impl LocalDevice {
 
     #[getter]
     fn is_admin(&self) -> PyResult<bool> {
-        Ok(self.0.profile == parsec_api_types::UserProfile::Admin)
+        Ok(self.0.profile == libparsec::types::UserProfile::Admin)
     }
 
     #[getter]
     fn is_outsider(&self) -> PyResult<bool> {
-        Ok(self.0.profile == parsec_api_types::UserProfile::Outsider)
+        Ok(self.0.profile == libparsec::types::UserProfile::Outsider)
     }
 
     #[getter]
@@ -139,7 +139,7 @@ impl LocalDevice {
 
     #[classmethod]
     fn load_slug(_cls: &PyType, slug: &str) -> PyResult<(OrganizationID, DeviceID)> {
-        parsec_client_types::LocalDevice::load_slug(slug)
+        libparsec::client_types::LocalDevice::load_slug(slug)
             .map(|(org_id, device_id)| (OrganizationID(org_id), DeviceID(device_id)))
             .map_err(|e| PyValueError::new_err(e.to_string()))
     }
@@ -264,7 +264,7 @@ impl LocalDevice {
 
     #[classmethod]
     fn load(_cls: &PyType, encrypted: &[u8]) -> PyResult<Self> {
-        match parsec_client_types::LocalDevice::load(encrypted) {
+        match libparsec::client_types::LocalDevice::load(encrypted) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
