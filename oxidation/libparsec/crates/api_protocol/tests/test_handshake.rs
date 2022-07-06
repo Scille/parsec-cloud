@@ -8,8 +8,8 @@ use std::str::FromStr;
 use api_types::{DateTime, InvitationToken, OrganizationID};
 use rstest::rstest;
 
+use api_protocol::*;
 use api_types::InvitationType;
-use parsec_api_protocol::*;
 
 use tests_fixtures::{alice, bob, Device};
 

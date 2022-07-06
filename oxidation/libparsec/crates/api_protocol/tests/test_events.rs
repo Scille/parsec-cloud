@@ -3,8 +3,8 @@
 use hex_literal::hex;
 use rstest::rstest;
 
+use api_protocol::*;
 use api_types::{InvitationStatus, RealmRole};
-use parsec_api_protocol::*;
 
 #[rstest]
 fn serde_events_listen_req() {

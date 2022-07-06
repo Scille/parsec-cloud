@@ -6,7 +6,7 @@ use api_types::HumanHandle;
 use hex_literal::hex;
 use rstest::rstest;
 
-use parsec_api_protocol::*;
+use api_protocol::*;
 
 #[rstest]
 fn serde_user_get_req() {

@@ -5,7 +5,7 @@ use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyType};
 
-use parsec_api_protocol::{authenticated_cmds, invited_cmds};
+use libparsec::api_protocol::{authenticated_cmds, invited_cmds};
 
 import_exception!(parsec.api.protocol, ProtocolError);
 

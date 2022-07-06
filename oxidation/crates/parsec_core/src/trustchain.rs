@@ -5,11 +5,11 @@ use std::collections::HashMap;
 
 use crate::{build_signature_path, TrustchainError, TrustchainResult};
 use api_crypto::VerifyKey;
+use api_protocol::authenticated_cmds::user_get::Trustchain;
 use api_types::{
     CertificateSignerOwned, CertificateSignerRef, DateTime, DeviceCertificate, DeviceID,
     RevokedUserCertificate, UserCertificate, UserID, UserProfile,
 };
-use parsec_api_protocol::authenticated_cmds::user_get::Trustchain;
 
 #[derive(Debug)]
 struct CertifState<'a, T> {

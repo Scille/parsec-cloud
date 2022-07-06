@@ -4,7 +4,7 @@ use hex_literal::hex;
 use rstest::rstest;
 use std::collections::HashMap;
 
-use parsec_api_protocol::*;
+use api_protocol::*;
 
 #[rstest]
 fn serde_realm_create_req() {

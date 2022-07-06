@@ -871,7 +871,7 @@ dependencies = [
  "fancy-regex",
  "libparsec",
  "api_crypto",
- "parsec_api_protocol",
+ "api_protocol",
  "api_types",
  "parsec_client_types",
  "parsec_core",
@@ -1037,7 +1037,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "parsec_api_protocol"
+name = "api_protocol"
 version = "0.0.0"
 dependencies = [
  "async-std",
@@ -1106,7 +1106,7 @@ name = "parsec_core"
 version = "0.0.0"
 dependencies = [
  "api_crypto",
- "parsec_api_protocol",
+ "api_protocol",
  "api_types",
  "thiserror",
 ]

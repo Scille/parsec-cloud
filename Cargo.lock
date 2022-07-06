@@ -84,6 +84,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "api_protocol"
+version = "0.0.0"
+dependencies = [
+ "api_crypto",
+ "api_types",
+ "async-std",
+ "async-tungstenite",
+ "dotenv",
+ "futures",
+ "hex-literal",
+ "http",
+ "paste",
+ "rand 0.8.5",
+ "rmp-serde",
+ "rstest 0.13.0",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serialization_format",
+ "smol",
+ "tests_fixtures",
+ "thiserror",
+]
+
+[[package]]
 name = "api_types"
 version = "0.0.0"
 dependencies = [
@@ -1095,6 +1120,7 @@ name = "libparsec"
 version = "0.1.0"
 dependencies = [
  "api_crypto",
+ "api_protocol",
  "api_types",
  "libparsec_platform_native",
  "libparsec_platform_web",
@@ -1179,13 +1205,13 @@ dependencies = [
 name = "libparsec_platform_native"
 version = "0.0.0"
 dependencies = [
+ "api_protocol",
  "api_types",
  "async-std",
  "async-tungstenite",
  "dotenv",
  "futures",
  "http",
- "parsec_api_protocol",
  "rstest 0.13.0",
  "smol",
  "tests_fixtures",
@@ -1203,7 +1229,6 @@ dependencies = [
  "fancy-regex",
  "libparsec",
  "libparsec_core_fs",
- "parsec_api_protocol",
  "parsec_client_types",
  "parsec_core",
  "pyo3",
@@ -1477,31 +1502,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "parsec_api_protocol"
-version = "0.0.0"
-dependencies = [
- "api_crypto",
- "api_types",
- "async-std",
- "async-tungstenite",
- "dotenv",
- "futures",
- "hex-literal",
- "http",
- "paste",
- "rand 0.8.5",
- "rmp-serde",
- "rstest 0.13.0",
- "serde",
- "serde_json",
- "serde_with",
- "serialization_format",
- "smol",
- "tests_fixtures",
- "thiserror",
-]
-
-[[package]]
 name = "parsec_client_types"
 version = "0.0.0"
 dependencies = [
@@ -1530,9 +1530,9 @@ name = "parsec_core"
 version = "0.0.0"
 dependencies = [
  "api_crypto",
+ "api_protocol",
  "api_types",
  "chrono",
- "parsec_api_protocol",
  "rstest 0.13.0",
  "tests_fixtures",
  "thiserror",
@@ -2280,10 +2280,10 @@ name = "tests_fixtures"
 version = "0.0.0"
 dependencies = [
  "api_crypto",
+ "api_protocol",
  "api_types",
  "chrono",
  "hex-literal",
- "parsec_api_protocol",
  "parsec_client_types",
  "rstest 0.13.0",
  "uuid",

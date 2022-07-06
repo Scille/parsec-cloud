@@ -1,12 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use api_protocol::{
+    AuthenticatedClientHandshakeStalled, Handshake, HandshakeResult, ServerHandshakeStalled,
+};
 use api_types::DateTime;
 use async_std::net::TcpListener;
 use async_std::task;
 use libparsec_platform_native::Transport;
-use parsec_api_protocol::{
-    AuthenticatedClientHandshakeStalled, Handshake, HandshakeResult, ServerHandshakeStalled,
-};
 use rstest::rstest;
 use tests_fixtures::{alice, Device};
 

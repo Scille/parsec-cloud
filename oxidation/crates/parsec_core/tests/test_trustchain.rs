@@ -3,11 +3,11 @@
 use chrono::{TimeZone, Utc};
 use rstest::rstest;
 
+use api_protocol::authenticated_cmds::user_get::Trustchain;
 use api_types::{
     CertificateSignerOwned, DateTime, DeviceCertificate, DeviceID, RevokedUserCertificate,
     UserCertificate, UserProfile,
 };
-use parsec_api_protocol::authenticated_cmds::user_get::Trustchain;
 use parsec_core::{TrustchainContext, TrustchainError};
 
 use tests_fixtures::{

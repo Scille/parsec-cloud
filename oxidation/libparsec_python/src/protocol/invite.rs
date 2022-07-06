@@ -5,12 +5,12 @@ use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyType};
 
-use parsec_api_protocol::authenticated_cmds::{
+use libparsec::api_protocol::authenticated_cmds::{
     invite_1_greeter_wait_peer, invite_2a_greeter_get_hashed_nonce, invite_2b_greeter_send_nonce,
     invite_3a_greeter_wait_peer_trust, invite_3b_greeter_signify_trust,
     invite_4_greeter_communicate, invite_delete, invite_list, invite_new,
 };
-use parsec_api_protocol::invited_cmds::{
+use libparsec::api_protocol::invited_cmds::{
     invite_1_claimer_wait_peer, invite_2a_claimer_send_hashed_nonce_hash_nonce,
     invite_2b_claimer_send_nonce, invite_3a_claimer_signify_trust,
     invite_3b_claimer_wait_peer_trust, invite_4_claimer_communicate, invite_info,

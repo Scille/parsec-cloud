@@ -4,7 +4,7 @@ use api_types::UserProfile;
 use hex_literal::hex;
 use rstest::rstest;
 
-use parsec_api_protocol::*;
+use api_protocol::*;
 
 #[rstest]
 fn serde_organization_stats_req() {

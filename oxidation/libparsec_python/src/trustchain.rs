@@ -118,7 +118,7 @@ impl TrustchainContext {
             [revoked_users: Vec<Vec<u8>>, "revoked_users"]
         );
 
-        let trustchain = parsec_api_protocol::authenticated_cmds::user_get::Trustchain {
+        let trustchain = libparsec::api_protocol::authenticated_cmds::user_get::Trustchain {
             users,
             devices,
             revoked_users,

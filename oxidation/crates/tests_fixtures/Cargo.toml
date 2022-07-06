@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 api_crypto = { path = "../../libparsec/crates/api_crypto" }
-parsec_api_protocol = { path = "../parsec_api_protocol" }
+api_protocol = { path = "../../libparsec/crates/api_protocol" }
 api_types = { path = "../../libparsec/crates/api_types" }
 parsec_client_types = { path = "../parsec_client_types" }
 

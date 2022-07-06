@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 use pyo3::types::{PyBytes, PyType};
 
-use parsec_api_protocol::authenticated_cmds::{
+use libparsec::api_protocol::authenticated_cmds::{
     vlob_create, vlob_list_versions, vlob_maintenance_get_reencryption_batch,
     vlob_maintenance_save_reencryption_batch, vlob_poll_changes, vlob_read, vlob_update,
 };
