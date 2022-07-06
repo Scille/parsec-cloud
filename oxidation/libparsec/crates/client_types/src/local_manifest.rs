@@ -8,11 +8,11 @@ use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
-use crypto::{HashDigest, SecretKey};
+use libparsec_crypto::{HashDigest, SecretKey};
+use libparsec_types::*;
 use serialization_format::parsec_data;
-use types::*;
 
-use crate as client_types;
+use crate as libparsec_client_types;
 
 macro_rules! impl_local_manifest_dump_load {
     ($name:ident) => {

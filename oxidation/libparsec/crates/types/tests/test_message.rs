@@ -3,8 +3,8 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use crypto::*;
-use types::*;
+use libparsec_crypto::*;
+use libparsec_types::*;
 
 use tests_fixtures::{alice, bob, Device};
 

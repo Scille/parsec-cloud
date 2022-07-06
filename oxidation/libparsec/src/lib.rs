@@ -6,9 +6,9 @@ pub use platform_native::{create_context, RuntimeContext};
 #[cfg(target_arch = "wasm32")]
 pub use platform_web::{create_context, RuntimeContext};
 
-pub use client_types;
-pub use core;
-pub use core_fs;
-pub use crypto;
-pub use protocol;
-pub use types;
+pub use libparsec_client_types as client_types;
+pub use libparsec_core as core;
+pub use libparsec_core_fs as core_fs;
+pub use libparsec_crypto as crypto;
+pub use libparsec_protocol as protocol;
+pub use libparsec_types as types;

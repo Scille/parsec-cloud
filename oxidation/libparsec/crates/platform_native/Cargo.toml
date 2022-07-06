@@ -17,7 +17,7 @@ async-tungstenite = { version = "0.17.1", features = ["async-std-runtime"] }
 
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
-protocol = { path = "../protocol" }
-types = { path = "../types" }
+libparsec_protocol = { path = "../protocol" }
+libparsec_types = { path = "../types" }
 
 rstest = "0.13.0"

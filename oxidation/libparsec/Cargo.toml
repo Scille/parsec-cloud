@@ -7,16 +7,16 @@ rust-version = "1.62.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-crypto = { path = "crates/crypto" }
-protocol = { path = "crates/protocol" }
-types = { path = "crates/types" }
-client_types = { path = "crates/client_types" }
-core = { path = "crates/core" }
-core_fs = { path = "crates/core_fs" }
+libparsec_crypto = { path = "crates/crypto" }
+libparsec_protocol = { path = "crates/protocol" }
+libparsec_types = { path = "crates/types" }
+libparsec_client_types = { path = "crates/client_types" }
+libparsec_core = { path = "crates/core" }
+libparsec_core_fs = { path = "crates/core_fs" }
 platform_async = { path = "crates/platform_async" }
 
 [features]
-mock-time = ["types/mock-time"]
+mock-time = ["libparsec_types/mock-time"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 platform_native = { path = "crates/platform_native" }

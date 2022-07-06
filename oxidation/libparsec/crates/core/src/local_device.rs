@@ -9,7 +9,7 @@ use std::{
 };
 
 use crate::{LocalDeviceError, LocalDeviceResult};
-use types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
+use libparsec_types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

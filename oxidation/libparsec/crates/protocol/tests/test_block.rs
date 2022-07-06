@@ -3,7 +3,7 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use protocol::*;
+use libparsec_protocol::*;
 
 #[rstest]
 fn serde_block_create_req() {

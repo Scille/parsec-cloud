@@ -7,7 +7,7 @@ use serde_with::*;
 use std::io::{Read, Write};
 
 use crate::{DateTime, DeviceID, EntryID, EntryName};
-use crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
+use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]

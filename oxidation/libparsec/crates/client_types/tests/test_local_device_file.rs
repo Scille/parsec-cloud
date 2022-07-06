@@ -4,7 +4,7 @@ use hex_literal::hex;
 use rstest::rstest;
 use serde_bytes::ByteBuf;
 
-use client_types::*;
+use libparsec_client_types::*;
 
 use tests_fixtures::{alice, Device};
 

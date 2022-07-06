@@ -416,30 +416,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "client_types"
-version = "0.0.0"
-dependencies = [
- "crypto",
- "fancy-regex",
- "flate2",
- "hex-literal",
- "paste",
- "pretty_assertions",
- "rmp-serde",
- "rstest 0.13.0",
- "rstest_reuse",
- "serde",
- "serde_bytes",
- "serde_repr",
- "serde_test",
- "serde_with",
- "serialization_format",
- "sha2 0.10.2",
- "tests_fixtures",
- "types",
-]
-
-[[package]]
 name = "colored"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -490,34 +466,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "core"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "crypto",
- "protocol",
- "rstest 0.13.0",
- "tests_fixtures",
- "thiserror",
- "types",
-]
-
-[[package]]
-name = "core_fs"
-version = "0.0.0"
-dependencies = [
- "client_types",
- "crypto",
- "diesel",
- "fancy-regex",
- "rstest 0.12.0",
- "tests_fixtures",
- "thiserror",
- "types",
- "uuid",
-]
-
-[[package]]
 name = "cpufeatures"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -543,35 +491,6 @@ checksum = "0bf124c720b7686e3c2663cf54062ab0f68a88af2fb6a030e87e30bf721fcb38"
 dependencies = [
  "cfg-if 1.0.0",
  "lazy_static",
-]
-
-[[package]]
-name = "crypto"
-version = "0.0.0"
-dependencies = [
- "blake2",
- "crypto_box",
- "digest 0.10.3",
- "ed25519-dalek",
- "generic-array",
- "getrandom 0.1.16",
- "getrandom 0.2.6",
- "hex",
- "hex-literal",
- "libsodium-sys",
- "paste",
- "pretty_assertions",
- "rand 0.7.3",
- "rand 0.8.5",
- "rmp-serde",
- "serde",
- "serde_bytes",
- "serde_test",
- "sha2 0.10.2",
- "sodiumoxide",
- "thiserror",
- "x25519-dalek",
- "xsalsa20poly1305",
 ]
 
 [[package]]
@@ -1114,15 +1033,15 @@ dependencies = [
 name = "libparsec"
 version = "0.1.0"
 dependencies = [
- "client_types",
- "core",
- "core_fs",
- "crypto",
+ "libparsec_client_types",
+ "libparsec_core",
+ "libparsec_core_fs",
+ "libparsec_crypto",
+ "libparsec_protocol",
+ "libparsec_types",
  "platform_async",
  "platform_native",
  "platform_web",
- "protocol",
- "types",
 ]
 
 [[package]]
@@ -1168,6 +1087,112 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_client_types"
+version = "0.0.0"
+dependencies = [
+ "fancy-regex",
+ "flate2",
+ "hex-literal",
+ "libparsec_crypto",
+ "libparsec_types",
+ "paste",
+ "pretty_assertions",
+ "rmp-serde",
+ "rstest 0.13.0",
+ "rstest_reuse",
+ "serde",
+ "serde_bytes",
+ "serde_repr",
+ "serde_test",
+ "serde_with",
+ "serialization_format",
+ "sha2 0.10.2",
+ "tests_fixtures",
+]
+
+[[package]]
+name = "libparsec_core"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "libparsec_crypto",
+ "libparsec_protocol",
+ "libparsec_types",
+ "rstest 0.13.0",
+ "tests_fixtures",
+ "thiserror",
+]
+
+[[package]]
+name = "libparsec_core_fs"
+version = "0.0.0"
+dependencies = [
+ "diesel",
+ "fancy-regex",
+ "libparsec_client_types",
+ "libparsec_crypto",
+ "libparsec_types",
+ "rstest 0.12.0",
+ "tests_fixtures",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
+name = "libparsec_crypto"
+version = "0.0.0"
+dependencies = [
+ "blake2",
+ "crypto_box",
+ "digest 0.10.3",
+ "ed25519-dalek",
+ "generic-array",
+ "getrandom 0.1.16",
+ "getrandom 0.2.6",
+ "hex",
+ "hex-literal",
+ "libsodium-sys",
+ "paste",
+ "pretty_assertions",
+ "rand 0.7.3",
+ "rand 0.8.5",
+ "rmp-serde",
+ "serde",
+ "serde_bytes",
+ "serde_test",
+ "sha2 0.10.2",
+ "sodiumoxide",
+ "thiserror",
+ "x25519-dalek",
+ "xsalsa20poly1305",
+]
+
+[[package]]
+name = "libparsec_protocol"
+version = "0.0.0"
+dependencies = [
+ "async-std",
+ "async-tungstenite",
+ "dotenv",
+ "futures",
+ "hex-literal",
+ "http",
+ "libparsec_crypto",
+ "libparsec_types",
+ "paste",
+ "rand 0.8.5",
+ "rmp-serde",
+ "rstest 0.13.0",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serialization_format",
+ "smol",
+ "tests_fixtures",
+ "thiserror",
+]
+
+[[package]]
 name = "libparsec_python"
 version = "0.1.0"
 dependencies = [
@@ -1175,6 +1200,38 @@ dependencies = [
  "fancy-regex",
  "libparsec",
  "pyo3",
+ "uuid",
+]
+
+[[package]]
+name = "libparsec_types"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "data-encoding",
+ "fancy-regex",
+ "flate2",
+ "hex-literal",
+ "lazy_static",
+ "libparsec_crypto",
+ "paste",
+ "percent-encoding",
+ "pretty_assertions",
+ "rand 0.8.5",
+ "rmp-serde",
+ "rstest 0.13.0",
+ "rstest_reuse",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "serde_repr",
+ "serde_test",
+ "serde_with",
+ "serialization_format",
+ "tests_fixtures",
+ "thiserror",
+ "unicode-normalization",
+ "url",
  "uuid",
 ]
 
@@ -1521,11 +1578,11 @@ dependencies = [
  "dotenv",
  "futures",
  "http",
- "protocol",
+ "libparsec_protocol",
+ "libparsec_types",
  "rstest 0.13.0",
  "smol",
  "tests_fixtures",
- "types",
 ]
 
 [[package]]
@@ -1605,31 +1662,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd96a1e8ed2596c337f8eae5f24924ec83f5ad5ab21ea8e455d3566c69fbcaf7"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "protocol"
-version = "0.0.0"
-dependencies = [
- "async-std",
- "async-tungstenite",
- "crypto",
- "dotenv",
- "futures",
- "hex-literal",
- "http",
- "paste",
- "rand 0.8.5",
- "rmp-serde",
- "rstest 0.13.0",
- "serde",
- "serde_json",
- "serde_with",
- "serialization_format",
- "smol",
- "tests_fixtures",
- "thiserror",
- "types",
 ]
 
 [[package]]
@@ -2249,12 +2281,12 @@ name = "tests_fixtures"
 version = "0.0.0"
 dependencies = [
  "chrono",
- "client_types",
- "crypto",
  "hex-literal",
- "protocol",
+ "libparsec_client_types",
+ "libparsec_crypto",
+ "libparsec_protocol",
+ "libparsec_types",
  "rstest 0.13.0",
- "types",
  "uuid",
 ]
 
@@ -2377,38 +2409,6 @@ name = "typenum"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
-
-[[package]]
-name = "types"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "crypto",
- "data-encoding",
- "fancy-regex",
- "flate2",
- "hex-literal",
- "lazy_static",
- "paste",
- "percent-encoding",
- "pretty_assertions",
- "rand 0.8.5",
- "rmp-serde",
- "rstest 0.13.0",
- "rstest_reuse",
- "serde",
- "serde_bytes",
- "serde_json",
- "serde_repr",
- "serde_test",
- "serde_with",
- "serialization_format",
- "tests_fixtures",
- "thiserror",
- "unicode-normalization",
- "url",
- "uuid",
-]
 
 [[package]]
 name = "unicode-bidi"

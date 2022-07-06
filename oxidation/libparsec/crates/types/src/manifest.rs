@@ -9,12 +9,12 @@ use std::num::NonZeroU64;
 use std::ops::Deref;
 use unicode_normalization::UnicodeNormalization;
 
-use crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
+use libparsec_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 use serialization_format::parsec_data;
 
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::ext_types::new_uuid_type;
-use crate::{self as types, impl_from_maybe};
+use crate::{self as libparsec_types, impl_from_maybe};
 use crate::{DataError, DateTime, DeviceID, EntryNameError};
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB

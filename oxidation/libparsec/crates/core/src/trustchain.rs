@@ -4,9 +4,9 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use crate::{build_signature_path, TrustchainError, TrustchainResult};
-use crypto::VerifyKey;
-use protocol::authenticated_cmds::user_get::Trustchain;
-use types::{
+use libparsec_crypto::VerifyKey;
+use libparsec_protocol::authenticated_cmds::user_get::Trustchain;
+use libparsec_types::{
     CertificateSignerOwned, CertificateSignerRef, DateTime, DeviceCertificate, DeviceID,
     RevokedUserCertificate, UserCertificate, UserID, UserProfile,
 };

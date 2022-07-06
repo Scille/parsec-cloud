@@ -5,7 +5,7 @@ use rstest::rstest;
 use rstest_reuse::*;
 use serde_test::{assert_tokens, Token};
 
-use types::*;
+use libparsec_types::*;
 
 const ORG: &str = "MyOrg";
 const RVK: &str = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss";

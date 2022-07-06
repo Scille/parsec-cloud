@@ -4,8 +4,8 @@ use hex_literal::hex;
 use rstest::rstest;
 use std::num::NonZeroU64;
 
-use protocol::*;
-use types::HumanHandle;
+use libparsec_protocol::*;
+use libparsec_types::HumanHandle;
 
 #[rstest]
 fn serde_user_get_req() {

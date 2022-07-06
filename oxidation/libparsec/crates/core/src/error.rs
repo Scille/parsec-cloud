@@ -2,8 +2,8 @@
 
 use thiserror::Error;
 
-use types::DateTime;
-use types::{DeviceID, UserID};
+use libparsec_types::DateTime;
+use libparsec_types::{DeviceID, UserID};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum TrustchainError {

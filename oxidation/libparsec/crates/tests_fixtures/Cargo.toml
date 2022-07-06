@@ -4,10 +4,10 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
-crypto = { path = "../crypto" }
-protocol = { path = "../protocol" }
-types = { path = "../types" }
-client_types = { path = "../client_types" }
+libparsec_crypto = { path = "../crypto" }
+libparsec_protocol = { path = "../protocol" }
+libparsec_types = { path = "../types" }
+libparsec_client_types = { path = "../client_types" }
 
 rstest = "0.13.0"
 hex-literal = "0.3.3"

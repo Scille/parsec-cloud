@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use hex_literal::hex;
+use libparsec_types::UserProfile;
 use rstest::rstest;
-use types::UserProfile;
 
-use protocol::*;
+use libparsec_protocol::*;
 
 #[rstest]
 fn serde_organization_stats_req() {

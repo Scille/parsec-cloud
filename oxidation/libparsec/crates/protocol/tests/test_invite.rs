@@ -3,9 +3,9 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use crypto::{HashDigest, PublicKey};
-use protocol::*;
-use types::{HumanHandle, InvitationStatus, Maybe};
+use libparsec_crypto::{HashDigest, PublicKey};
+use libparsec_protocol::*;
+use libparsec_types::{HumanHandle, InvitationStatus, Maybe};
 
 #[rstest]
 #[case::user(

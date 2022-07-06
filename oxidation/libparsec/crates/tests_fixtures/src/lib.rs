@@ -9,9 +9,9 @@ use rstest::fixture;
 use std::path::PathBuf;
 use uuid::Uuid;
 
-use client_types::*;
-use crypto::*;
-use types::*;
+use libparsec_client_types::*;
+use libparsec_crypto::*;
+use libparsec_types::*;
 
 pub struct Device {
     pub organization_addr: BackendOrganizationAddr,

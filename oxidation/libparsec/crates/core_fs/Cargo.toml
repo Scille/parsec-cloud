@@ -1,5 +1,5 @@
 [package]
-name = "core_fs"
+name = "libparsec_core_fs"
 version = "0.0.0"
 edition = "2021"
 license = " BUSL-1.1"
@@ -8,9 +8,9 @@ autotests = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-crypto = { path = "../crypto" }
-types = { path = "../types" }
-client_types = { path = "../client_types" }
+libparsec_crypto = { path = "../crypto" }
+libparsec_types = { path = "../types" }
+libparsec_client_types = { path = "../client_types" }
 
 diesel = { version = "2.0.0-rc.0", features = ["sqlite", "r2d2"] }
 fancy-regex = "0.10.0"

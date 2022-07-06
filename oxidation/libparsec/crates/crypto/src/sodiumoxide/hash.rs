@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sodiumoxide::crypto::hash::sha256;
+use sodiumoxide::libparsec_crypto::hash::sha256;
 
 use crate::CryptoError;
 

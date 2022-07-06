@@ -4,8 +4,8 @@ use diesel::dsl::count_star;
 use diesel::{sql_query, table, AsChangeset, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
 use std::sync::Mutex;
 
-use crypto::SecretKey;
-use types::{ChunkID, DateTime, DEFAULT_BLOCK_SIZE};
+use libparsec_crypto::SecretKey;
+use libparsec_types::{ChunkID, DateTime, DEFAULT_BLOCK_SIZE};
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
 use crate::error::{FSError, FSResult};

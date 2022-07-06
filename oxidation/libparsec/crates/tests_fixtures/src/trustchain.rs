@@ -3,7 +3,7 @@
 use chrono::{TimeZone, Utc};
 use rstest::fixture;
 
-use types::{
+use libparsec_types::{
     CertificateSignerOwned, DateTime, DeviceCertificate, RevokedUserCertificate, UserCertificate,
 };
 

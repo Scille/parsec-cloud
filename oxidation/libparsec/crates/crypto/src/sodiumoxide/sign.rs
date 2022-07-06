@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sodiumoxide::crypto::sign::{ed25519, gen_keypair, sign, verify};
+use sodiumoxide::libparsec_crypto::sign::{ed25519, gen_keypair, sign, verify};
 
 use crate::CryptoError;
 
@@ -38,7 +38,7 @@ impl SigningKey {
 
     /// Sign the message and return only the signature.
     pub fn sign_only_signature(&self, data: &[u8]) -> [u8; Self::SIGNATURE_SIZE] {
-        use sodiumoxide::crypto::sign::Signer;
+        use sodiumoxide::libparsec_crypto::sign::Signer;
 
         self.0.sign(data).to_bytes()
     }

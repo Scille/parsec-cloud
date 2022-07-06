@@ -2,8 +2,8 @@
 
 use std::path::{Path, PathBuf};
 
-use client_types::LocalDevice;
-use types::EntryID;
+use libparsec_client_types::LocalDevice;
+use libparsec_types::EntryID;
 
 const STORAGE_REVISION: u32 = 1;
 

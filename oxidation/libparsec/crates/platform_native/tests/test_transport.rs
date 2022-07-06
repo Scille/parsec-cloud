@@ -2,13 +2,13 @@
 
 use async_std::net::TcpListener;
 use async_std::task;
-use platform_native::Transport;
-use protocol::{
+use libparsec_protocol::{
     AuthenticatedClientHandshakeStalled, Handshake, HandshakeResult, ServerHandshakeStalled,
 };
+use libparsec_types::DateTime;
+use platform_native::Transport;
 use rstest::rstest;
 use tests_fixtures::{alice, Device};
-use types::DateTime;
 
 #[rstest]
 fn test_transport(alice: &Device) {

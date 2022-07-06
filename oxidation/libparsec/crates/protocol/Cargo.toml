@@ -1,5 +1,5 @@
 [package]
-name = "protocol"
+name = "libparsec_protocol"
 version = "0.0.0"
 edition = "2021"
 license = " BUSL-1.1"
@@ -12,8 +12,8 @@ path = "tests/mod.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-crypto = { path = "../crypto" }
-types = { path = "../types" }
+libparsec_crypto = { path = "../crypto" }
+libparsec_types = { path = "../types" }
 serialization_format = { path = "../serialization_format" }
 
 paste = "1.0.5"

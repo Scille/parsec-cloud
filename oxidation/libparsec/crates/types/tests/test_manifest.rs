@@ -4,8 +4,8 @@ use hex_literal::hex;
 use rstest::rstest;
 use std::{collections::HashMap, num::NonZeroU64};
 
-use crypto::*;
-use types::*;
+use libparsec_crypto::*;
+use libparsec_types::*;
 
 use tests_fixtures::{alice, Device};
 

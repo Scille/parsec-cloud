@@ -5,8 +5,8 @@ use std::collections::HashMap;
 use hex_literal::hex;
 use rstest::rstest;
 
-use protocol::*;
-use types::{Maybe, ReencryptionBatchEntry};
+use libparsec_protocol::*;
+use libparsec_types::{Maybe, ReencryptionBatchEntry};
 
 #[rstest]
 fn serde_vlob_create_req() {

@@ -7,7 +7,7 @@ use std::convert::TryFrom;
 use std::str::FromStr;
 use url::Url;
 
-use crypto::VerifyKey;
+use libparsec_crypto::VerifyKey;
 
 use super::{EntryID, InvitationToken, InvitationType, OrganizationID};
 

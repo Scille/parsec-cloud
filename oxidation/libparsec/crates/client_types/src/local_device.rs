@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use sha2::Digest;
 
-use crypto::*;
-use types::*;
+use libparsec_crypto::*;
+use libparsec_types::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]

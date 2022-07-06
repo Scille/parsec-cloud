@@ -4,7 +4,7 @@ use hex_literal::hex;
 use pretty_assertions::assert_eq;
 use serde_test::{assert_tokens, Token};
 
-use crypto::HashDigest;
+use libparsec_crypto::HashDigest;
 
 #[macro_use]
 mod common;

@@ -6,10 +6,9 @@ use serde_json::{json, Value};
 use std::str::FromStr;
 
 use rstest::rstest;
-use types::{DateTime, InvitationToken, OrganizationID};
 
-use protocol::*;
-use types::InvitationType;
+use libparsec_protocol::*;
+use libparsec_types::{DateTime, InvitationToken, InvitationType, OrganizationID};
 
 use tests_fixtures::{alice, bob, Device};
 

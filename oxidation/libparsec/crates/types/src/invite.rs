@@ -7,10 +7,10 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::str::FromStr;
 
-use crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
+use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 use serialization_format::parsec_data;
 
-use crate as types;
+use crate as libparsec_types;
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::ext_types::new_uuid_type;
 use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
@@ -196,7 +196,7 @@ impl SASCode {
 macro_rules! impl_dump_and_encrypt {
     ($name:ident) => {
         impl $name {
-            pub fn dump_and_encrypt(&self, key: &::crypto::SecretKey) -> Vec<u8> {
+            pub fn dump_and_encrypt(&self, key: &::libparsec_crypto::SecretKey) -> Vec<u8> {
                 let serialized =
                     ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e =
@@ -215,7 +215,7 @@ macro_rules! impl_decrypt_and_load {
         impl $name {
             pub fn decrypt_and_load(
                 encrypted: &[u8],
-                key: &::crypto::SecretKey,
+                key: &::libparsec_crypto::SecretKey,
             ) -> Result<$name, &'static str> {
                 let compressed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
                 let mut serialized = vec![];
