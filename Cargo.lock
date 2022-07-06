@@ -1177,26 +1177,9 @@ dependencies = [
  "client_types",
  "core",
  "core_fs",
+ "platform_async",
  "platform_native",
  "platform_web",
-]
-
-[[package]]
-name = "libparsec-platform-async"
-version = "0.1.0"
-dependencies = [
- "console_log",
- "flume",
- "futures",
- "futures-lite",
- "js-sys",
- "log",
- "simple_logger",
- "tokio",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wasm-bindgen-test",
- "web-sys",
 ]
 
 [[package]]
@@ -1567,6 +1550,24 @@ name = "pkg-config"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
+
+[[package]]
+name = "platform_async"
+version = "0.1.0"
+dependencies = [
+ "console_log",
+ "flume",
+ "futures",
+ "futures-lite",
+ "js-sys",
+ "log",
+ "simple_logger",
+ "tokio",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-bindgen-test",
+ "web-sys",
+]
 
 [[package]]
 name = "platform_native"
