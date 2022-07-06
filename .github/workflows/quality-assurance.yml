@@ -28,6 +28,7 @@ jobs:
       - name: Cache Rust
         id: cache-rust
         env:
+          # Change this value to use a new cache
           cache-version: 3
         uses: actions/cache@c3f1317a9e7b1ef106c153ac8c0f00fed3ddbc0d # pin v3.0.4
         with:
