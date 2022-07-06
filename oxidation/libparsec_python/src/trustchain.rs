@@ -12,13 +12,13 @@ use crate::ids::{DeviceID, UserID};
 import_exception!(parsec.core.trustchain, TrustchainError);
 
 #[pyclass]
-pub(crate) struct TrustchainContext(pub parsec_core::TrustchainContext);
+pub(crate) struct TrustchainContext(pub libparsec::core::TrustchainContext);
 
 #[pymethods]
 impl TrustchainContext {
     #[new]
     fn new(root_verify_key: &VerifyKey, cache_validity: i64) -> PyResult<Self> {
-        Ok(Self(parsec_core::TrustchainContext::new(
+        Ok(Self(libparsec::core::TrustchainContext::new(
             root_verify_key.0.clone(),
             cache_validity,
         )))

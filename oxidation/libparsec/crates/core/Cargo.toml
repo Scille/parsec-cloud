@@ -1,5 +1,5 @@
 [package]
-name = "parsec_core"
+name = "core"
 version = "0.0.0"
 edition = "2021"
 license = " BUSL-1.1"
@@ -12,14 +12,14 @@ path = "tests/mod.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-api_crypto = { path = "../../libparsec/crates/api_crypto" }
-api_protocol = { path = "../../libparsec/crates/api_protocol" }
-api_types = { path = "../../libparsec/crates/api_types" }
+api_crypto = { path = "../api_crypto" }
+api_protocol = { path = "../api_protocol" }
+api_types = { path = "../api_types" }
 
 thiserror = "1.0.30"
 
 [dev-dependencies]
-tests_fixtures = { path = "../tests_fixtures" }
+tests_fixtures = { path = "../../../crates/tests_fixtures" }
 
 rstest = "0.13.0"
 chrono = "0.4.19"

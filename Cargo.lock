@@ -576,6 +576,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "core"
+version = "0.0.0"
+dependencies = [
+ "api_crypto",
+ "api_protocol",
+ "api_types",
+ "chrono",
+ "rstest 0.13.0",
+ "tests_fixtures",
+ "thiserror",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1147,6 +1160,7 @@ dependencies = [
  "api_protocol",
  "api_types",
  "client_types",
+ "core",
  "libparsec_platform_native",
  "libparsec_platform_web",
 ]
@@ -1254,7 +1268,6 @@ dependencies = [
  "fancy-regex",
  "libparsec",
  "libparsec_core_fs",
- "parsec_core",
  "pyo3",
  "uuid",
 ]
@@ -1523,19 +1536,6 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-sys",
-]
-
-[[package]]
-name = "parsec_core"
-version = "0.0.0"
-dependencies = [
- "api_crypto",
- "api_protocol",
- "api_types",
- "chrono",
- "rstest 0.13.0",
- "tests_fixtures",
- "thiserror",
 ]
 
 [[package]]

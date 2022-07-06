@@ -8,7 +8,7 @@ use api_types::{
     CertificateSignerOwned, DateTime, DeviceCertificate, DeviceID, RevokedUserCertificate,
     UserCertificate, UserProfile,
 };
-use parsec_core::{TrustchainContext, TrustchainError};
+use core::{TrustchainContext, TrustchainError};
 
 use tests_fixtures::{
     alice, alice_device_certif, alice_revoked_user_certif, alice_user_certif, bob,
