@@ -11,8 +11,10 @@ jobs:
   add-issue-to-project:
     runs-on: ubuntu-22.04
     steps:
-      - name: Debug Github Cli version
-        run: gh --version
+      - name: Debug tool version
+        run: |
+          gh --version
+          jq --version
 
       - name: List issue with the wrong/missing project
         run: gh issue list --json id,title,number --search project:"${{ env.project-id }}" > issue_wrong_project.json
