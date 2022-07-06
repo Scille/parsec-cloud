@@ -8,9 +8,9 @@ use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
-use api_crypto::{HashDigest, SecretKey};
-use api_types::*;
+use crypto::{HashDigest, SecretKey};
 use serialization_format::parsec_data;
+use types::*;
 
 use crate as client_types;
 

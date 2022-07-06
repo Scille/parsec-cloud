@@ -3,9 +3,9 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use api_crypto::*;
-use api_types::*;
 use client_types::*;
+use crypto::*;
+use types::*;
 
 use tests_fixtures::{alice, Device};
 

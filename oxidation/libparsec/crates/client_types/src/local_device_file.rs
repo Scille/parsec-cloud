@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use serde_with::*;
 
-use api_types::data_macros::new_data_struct_type;
-use api_types::*;
+use types::data_macros::new_data_struct_type;
+use types::*;
 
 /*
  *  for legacy device files where the filename contains complementary information.

@@ -4,9 +4,9 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
-api_crypto = { path = "../api_crypto" }
-api_protocol = { path = "../api_protocol" }
-api_types = { path = "../api_types" }
+crypto = { path = "../crypto" }
+protocol = { path = "../protocol" }
+types = { path = "../types" }
 client_types = { path = "../client_types" }
 
 rstest = "0.13.0"

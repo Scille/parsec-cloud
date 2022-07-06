@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 use pyo3::types::{PyBytes, PyType};
 
-use libparsec::api_protocol::authenticated_cmds::{
+use libparsec::protocol::authenticated_cmds::{
     vlob_create, vlob_list_versions, vlob_maintenance_get_reencryption_batch,
     vlob_maintenance_save_reencryption_batch, vlob_poll_changes, vlob_read, vlob_update,
 };
@@ -219,9 +219,9 @@ impl VlobReadRep {
             .transpose()
         {
             Ok(author_last_role_granted_on) => {
-                libparsec::api_types::Maybe::Present(author_last_role_granted_on)
+                libparsec::types::Maybe::Present(author_last_role_granted_on)
             }
-            _ => libparsec::api_types::Maybe::Absent,
+            _ => libparsec::types::Maybe::Absent,
         };
         Ok(Self(vlob_read::Rep::Ok {
             version,
@@ -701,14 +701,14 @@ impl VlobMaintenanceGetReencryptionBatchRep {
 
 #[pyclass]
 #[derive(PartialEq, Clone)]
-pub(crate) struct ReencryptionBatchEntry(pub libparsec::api_types::ReencryptionBatchEntry);
+pub(crate) struct ReencryptionBatchEntry(pub libparsec::types::ReencryptionBatchEntry);
 
 #[pymethods]
 impl ReencryptionBatchEntry {
     #[new]
     fn new(vlob_id: VlobID, version: u64, blob: Vec<u8>) -> PyResult<Self> {
         let vlob_id = vlob_id.0;
-        Ok(Self(libparsec::api_types::ReencryptionBatchEntry {
+        Ok(Self(libparsec::types::ReencryptionBatchEntry {
             vlob_id,
             version,
             blob,

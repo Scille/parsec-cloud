@@ -6,8 +6,8 @@ use pyo3::pyclass::CompareOp;
 use pyo3::types::{PyBytes, PyDict, PyType};
 
 use crate::addrs::BackendOrganizationAddr;
+use crate::api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 use crate::binding_utils::{py_to_rs_user_profile, rs_to_py_datetime, rs_to_py_user_profile};
-use crate::crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 use crate::ids::{DeviceID, DeviceLabel, DeviceName, EntryID, HumanHandle, OrganizationID, UserID};
 
 #[pyclass]
@@ -119,12 +119,12 @@ impl LocalDevice {
 
     #[getter]
     fn is_admin(&self) -> PyResult<bool> {
-        Ok(self.0.profile == libparsec::api_types::UserProfile::Admin)
+        Ok(self.0.profile == libparsec::types::UserProfile::Admin)
     }
 
     #[getter]
     fn is_outsider(&self) -> PyResult<bool> {
-        Ok(self.0.profile == libparsec::api_types::UserProfile::Outsider)
+        Ok(self.0.profile == libparsec::types::UserProfile::Outsider)
     }
 
     #[getter]

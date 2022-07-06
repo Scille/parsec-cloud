@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use api_crypto::{CryptoError, SecretKey};
+use crypto::{CryptoError, SecretKey};
 use diesel::{
     sql_query, table, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl,
     RunQueryDsl,
@@ -10,8 +10,8 @@ use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 
-use api_types::{BlockID, ChunkID, EntryID};
 use client_types::LocalManifest;
+use types::{BlockID, ChunkID, EntryID};
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
 use crate::error::{FSError, FSResult};
@@ -567,9 +567,9 @@ impl ManifestStorage {
 
 #[cfg(test)]
 mod tests {
-    use api_crypto::HashDigest;
-    use api_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
     use client_types::{Chunk, LocalFileManifest};
+    use crypto::HashDigest;
+    use types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
 
     use rstest::rstest;
     use tests_fixtures::{tmp_path, TmpPath};

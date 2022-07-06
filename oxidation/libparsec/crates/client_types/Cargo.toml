@@ -12,8 +12,8 @@ path = "tests/mod.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-api_crypto = { path = "../api_crypto" }
-api_types = { path = "../api_types" }
+crypto = { path = "../crypto" }
+types = { path = "../types" }
 serialization_format = { path = "../serialization_format" }
 
 flate2 = "1.0.24"

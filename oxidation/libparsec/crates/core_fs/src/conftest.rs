@@ -4,8 +4,8 @@ use rstest::fixture;
 use std::path::Path;
 
 use crate::{WorkspaceStorage, DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE};
-use api_types::EntryID;
 use tests_fixtures::{alice, tmp_path, Device, TmpPath};
+use types::EntryID;
 
 #[fixture]
 pub fn alice_workspace_storage(alice: &Device, tmp_path: TmpPath) -> WorkspaceStorage {

@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use sha2::Digest;
 
-use api_crypto::*;
-use api_types::*;
+use crypto::*;
+use types::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]

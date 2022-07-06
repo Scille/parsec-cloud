@@ -4,8 +4,8 @@ use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::num::NonZeroU64;
 
-use api_types::{ChunkID, DateTime};
 use client_types::{Chunk, LocalFileManifest};
+use types::{ChunkID, DateTime};
 
 type WriteOperation = (Chunk, i64);
 
@@ -397,9 +397,9 @@ pub fn prepare_reshape(
 #[cfg(test)]
 mod tests {
     use crate::file_operations::{prepare_read, prepare_reshape, prepare_resize, prepare_write};
-    use api_types::{Blocksize, ChunkID, DateTime, DeviceID, EntryID};
     use client_types::{Chunk, LocalFileManifest};
     use std::{collections::HashMap, str::FromStr};
+    use types::{Blocksize, ChunkID, DateTime, DeviceID, EntryID};
 
     fn padded_data(data: &[u8], start: i64, stop: i64) -> Vec<u8> {
         assert!(start <= stop);

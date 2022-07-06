@@ -9,7 +9,7 @@ use std::{
 };
 
 use crate::{LocalDeviceError, LocalDeviceResult};
-use api_types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
+use types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

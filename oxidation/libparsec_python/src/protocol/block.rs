@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyType};
 
 use crate::ids::{BlockID, RealmID};
-use libparsec::api_protocol::authenticated_cmds::{block_create, block_read};
+use libparsec::protocol::authenticated_cmds::{block_create, block_read};
 
 import_exception!(parsec.api.protocol, ProtocolError);
 

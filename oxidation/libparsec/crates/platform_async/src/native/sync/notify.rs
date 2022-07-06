@@ -22,7 +22,7 @@ impl Notify {
     /// Notifies a waiting task.
     ///
     /// ```
-    /// use libparsec_platform_async::{Notify, spawn};
+    /// use platform_async::{Notify, spawn};
     /// use std::sync::{Arc, atomic::{Ordering, AtomicBool}};
     ///
     /// # #[tokio::main]

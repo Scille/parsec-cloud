@@ -7,16 +7,16 @@ rust-version = "1.62.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-api_crypto = { path = "crates/api_crypto" }
-api_protocol = { path = "crates/api_protocol" }
-api_types = { path = "crates/api_types" }
+crypto = { path = "crates/crypto" }
+protocol = { path = "crates/protocol" }
+types = { path = "crates/types" }
 client_types = { path = "crates/client_types" }
 core = { path = "crates/core" }
 core_fs = { path = "crates/core_fs" }
 platform_async = { path = "crates/platform_async" }
 
 [features]
-mock-time = ["api_types/mock-time"]
+mock-time = ["types/mock-time"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 platform_native = { path = "crates/platform_native" }

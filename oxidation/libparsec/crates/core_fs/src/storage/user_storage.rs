@@ -2,8 +2,8 @@
 
 use std::collections::HashSet;
 
-use api_types::EntryID;
 use client_types::{LocalDevice, LocalManifest, LocalUserManifest};
+use types::EntryID;
 
 use super::manifest_storage::ManifestStorage;
 use crate::error::{FSError, FSResult};
@@ -97,8 +97,8 @@ impl UserStorage {
 mod tests {
     use std::sync::Mutex;
 
-    use api_crypto::SecretKey;
-    use api_types::{DateTime, UserManifest};
+    use crypto::SecretKey;
+    use types::{DateTime, UserManifest};
 
     use rstest::rstest;
     use tests_fixtures::{alice, tmp_path, Device, TmpPath};

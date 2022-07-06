@@ -3,7 +3,7 @@
 use chrono::{TimeZone, Utc};
 use rstest::fixture;
 
-use api_types::{
+use types::{
     CertificateSignerOwned, DateTime, DeviceCertificate, RevokedUserCertificate, UserCertificate,
 };
 

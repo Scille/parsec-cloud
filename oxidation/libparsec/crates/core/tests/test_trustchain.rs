@@ -3,12 +3,12 @@
 use chrono::{TimeZone, Utc};
 use rstest::rstest;
 
-use api_protocol::authenticated_cmds::user_get::Trustchain;
-use api_types::{
+use core::{TrustchainContext, TrustchainError};
+use protocol::authenticated_cmds::user_get::Trustchain;
+use types::{
     CertificateSignerOwned, DateTime, DeviceCertificate, DeviceID, RevokedUserCertificate,
     UserCertificate, UserProfile,
 };
-use core::{TrustchainContext, TrustchainError};
 
 use tests_fixtures::{
     alice, alice_device_certif, alice_revoked_user_certif, alice_user_certif, bob,

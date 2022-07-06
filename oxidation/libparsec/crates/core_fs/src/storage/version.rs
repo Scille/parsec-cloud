@@ -2,8 +2,8 @@
 
 use std::path::{Path, PathBuf};
 
-use api_types::EntryID;
 use client_types::LocalDevice;
+use types::EntryID;
 
 const STORAGE_REVISION: u32 = 1;
 

@@ -5,7 +5,7 @@ use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyType};
 
-use libparsec::api_protocol::authenticated_cmds::message_get;
+use libparsec::protocol::authenticated_cmds::message_get;
 
 use crate::binding_utils::py_to_rs_datetime;
 use crate::ids::DeviceID;

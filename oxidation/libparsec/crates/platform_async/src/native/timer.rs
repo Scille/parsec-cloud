@@ -18,7 +18,7 @@ impl Timer {
     ///
     /// ```
     /// use std::time::{Duration, Instant};
-    /// use libparsec_platform_async::Timer;
+    /// use platform_async::Timer;
     ///
     /// # #[tokio::main]
     /// # async fn main() {

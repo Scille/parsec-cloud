@@ -5,7 +5,7 @@ use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyType};
 
-use libparsec::api_protocol::authenticated_cmds::{events_listen, events_subscribe};
+use libparsec::protocol::authenticated_cmds::{events_listen, events_subscribe};
 
 use crate::binding_utils::{py_to_rs_invitation_status, py_to_rs_realm_role};
 use crate::ids::{RealmID, VlobID};

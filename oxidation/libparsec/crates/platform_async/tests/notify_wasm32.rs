@@ -2,7 +2,7 @@
 
 #![cfg(target_arch = "wasm32")]
 
-use libparsec_platform_async::wasm32::{spawn, Notify};
+use platform_async::wasm32::{spawn, Notify};
 use std::sync::Arc;
 use wasm_bindgen_test::*;
 

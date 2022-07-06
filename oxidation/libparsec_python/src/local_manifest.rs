@@ -8,8 +8,8 @@ use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 use std::panic;
 
+use crate::api_crypto::SecretKey;
 use crate::binding_utils::{py_to_rs_datetime, py_to_rs_regex, py_to_rs_set, rs_to_py_datetime};
-use crate::crypto::SecretKey;
 use crate::ids::{ChunkID, DeviceID, EntryID};
 use crate::manifest::{
     BlockAccess, EntryName, FileManifest, FolderManifest, UserManifest, WorkspaceEntry,
@@ -221,7 +221,7 @@ impl LocalFileManifest {
             need_sync,
             updated,
             size,
-            blocksize: libparsec::api_types::Blocksize::try_from(blocksize)
+            blocksize: libparsec::types::Blocksize::try_from(blocksize)
                 .map_err(|_| PyValueError::new_err("Invalid blocksize field"))?,
             blocks: blocks
                 .into_iter()
@@ -257,7 +257,7 @@ impl LocalFileManifest {
             r.size = v;
         }
         if let Some(v) = blocksize {
-            r.blocksize = libparsec::api_types::Blocksize::try_from(v)
+            r.blocksize = libparsec::types::Blocksize::try_from(v)
                 .map_err(|_| PyValueError::new_err("Invalid blocksize field"))?;
         }
         if let Some(v) = blocks {
@@ -394,7 +394,7 @@ impl LocalFileManifest {
     ) -> PyResult<Self> {
         let timestamp = py_to_rs_datetime(timestamp)?;
         let blocksize =
-            libparsec::api_types::Blocksize::try_from(blocksize).map_err(PyValueError::new_err)?;
+            libparsec::types::Blocksize::try_from(blocksize).map_err(PyValueError::new_err)?;
 
         Ok(Self(libparsec::client_types::LocalFileManifest::new(
             author.0, parent.0, timestamp, blocksize,

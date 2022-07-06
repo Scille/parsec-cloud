@@ -3,8 +3,8 @@
 use thiserror::Error;
 use uuid::Uuid;
 
-use api_crypto::CryptoError;
-use api_types::{EntryID, FileDescriptor};
+use crypto::CryptoError;
+use types::{EntryID, FileDescriptor};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum FSError {

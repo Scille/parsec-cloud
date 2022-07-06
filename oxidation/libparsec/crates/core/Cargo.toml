@@ -12,9 +12,9 @@ path = "tests/mod.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-api_crypto = { path = "../api_crypto" }
-api_protocol = { path = "../api_protocol" }
-api_types = { path = "../api_types" }
+crypto = { path = "../crypto" }
+protocol = { path = "../protocol" }
+types = { path = "../types" }
 
 thiserror = "1.0.30"
 

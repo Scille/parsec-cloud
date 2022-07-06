@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyType};
 use std::num::NonZeroU64;
 
-use libparsec::api_protocol::authenticated_cmds::{
+use libparsec::protocol::authenticated_cmds::{
     device_create, human_find, user_create, user_get, user_revoke,
 };
 

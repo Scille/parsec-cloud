@@ -4,9 +4,9 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use crate::{build_signature_path, TrustchainError, TrustchainResult};
-use api_crypto::VerifyKey;
-use api_protocol::authenticated_cmds::user_get::Trustchain;
-use api_types::{
+use crypto::VerifyKey;
+use protocol::authenticated_cmds::user_get::Trustchain;
+use types::{
     CertificateSignerOwned, CertificateSignerRef, DateTime, DeviceCertificate, DeviceID,
     RevokedUserCertificate, UserCertificate, UserID, UserProfile,
 };
