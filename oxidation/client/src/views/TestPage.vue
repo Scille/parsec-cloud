@@ -58,6 +58,9 @@ async function onSubmit(): Promise<any> {
   let encrypted = '';
 
   try {
+    const version = await libparsec.version();
+    console.log(version);
+
     console.log('calling encrypt...');
     encrypted = await libparsec.encrypt(keyValue, messageValue);
 
@@ -68,7 +71,7 @@ async function onSubmit(): Promise<any> {
       throw `Decrypted data differs from original data !\nDecrypted: ${decrypted}\nEncrypted: ${encrypted}`;
     }
   } catch (error) {
-    const errmsg = `Error: ${error}`;
+    const errmsg = `Error: ${error.value}`;
     status.value = errmsg;
     console.log(errmsg);
     const errtoast = await toastController.create({

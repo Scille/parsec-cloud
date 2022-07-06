@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "serve": "npm run wasm:build && npm run wasm:copy && vue-cli-service serve",
     "build": "vue-cli-service build",
     "test:unit": "vue-cli-service test:unit",
     "test:e2e": "vue-cli-service test:e2e",
@@ -15,8 +15,9 @@
     "android:open": "npm run android:copy && npx cap open android",
     "ios:open": "npm run ios:copy && npx cap open ios",
     "electron:open": "npm run electron:copy && npx cap open @capacitor-community/electron",
-    "electron:dist": "npx ionic build && npx cap copy @capacitor-community/electron && cd electron && npm run electron:dist"
-
+    "electron:dist": "npx ionic build && npx cap copy @capacitor-community/electron && cd electron && npm run electron:dist",
+    "wasm:build": "cd ../bindings/web && wasm-pack build --target web",
+    "wasm:copy": "cp -r ../bindings/web/pkg . || xcopy ..\\bindings\\web\\pkg pkg /e /s /y /i"
   },
   "dependencies": {
     "@capacitor-community/electron": "^4.1.0",
@@ -42,6 +43,7 @@
     "@intlify/eslint-plugin-vue-i18n": "^2.0.0",
     "@ionic/cli": "^6.19.1",
     "@types/jest": "^27.0.2",
+    "@types/node": "^18.0.1",
     "@typescript-eslint/eslint-plugin": "^5.6.0",
     "@typescript-eslint/parser": "^5.27.0",
     "@vue/cli-plugin-babel": "~5.0.4",

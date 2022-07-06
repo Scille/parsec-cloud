@@ -1,15 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-#[macro_use]
-extern crate lazy_static;
-extern crate android_logger;
-extern crate jni;
-
 use android_logger::Config;
 use jni::objects::{JClass, JObject, JString, JValue};
 use jni::JNIEnv;
 use log::Level;
 use std::sync::Mutex;
+
+lazy_static::lazy_static! {
+    static ref LIBPARSEC_CTX: Mutex<libparsec_bindings_common::RuntimeContext> =
+        Mutex::new(libparsec_bindings_common::create_context());
+}
 
 #[no_mangle]
 #[allow(non_snake_case)]
@@ -23,14 +23,24 @@ pub extern "C" fn Java_com_scille_libparsec_Runtime_startRuntime(
     true
 }
 
+/// Interface between Web, Rust and Android
+/// Cordova bridge API for Android requests the inputs and output to be passed as a JS Object
+/// hence we have to comply with this ourself to provide the same API accross plateforms
+///
+/// Input:
+///   - cmd: String
+///   - payload: Base64 String separated by ':'
+///
+/// Output:
+///   - value: Base64 String
 #[no_mangle]
 #[allow(non_snake_case)]
 pub extern "C" fn Java_com_scille_libparsec_Runtime_submitJob(
     env: JNIEnv,
     _class: JClass,
     callback: JObject,
-    cmd: JString,     // TODO: use JByteBuffer instead
-    payload: JString, // TODO: use JByteBuffer instead
+    cmd: JString,
+    payload: JString,
 ) -> bool {
     log::info!("LibParsec .submitJob ????");
     let cmd: String = env
@@ -47,12 +57,6 @@ pub extern "C" fn Java_com_scille_libparsec_Runtime_submitJob(
         &cmd,
         &payload
     );
-    lazy_static! {
-        static ref LIBPARSEC_CTX: Mutex<libparsec_bindings_common::RuntimeContext> =
-            Mutex::new(libparsec_bindings_common::create_context());
-    }
-
-    let mut runtime = LIBPARSEC_CTX.lock().unwrap();
 
     log::info!("LibParsec .submitJob java stuff");
     // Java stuff cannot be passed as-is between threads
@@ -60,7 +64,7 @@ pub extern "C" fn Java_com_scille_libparsec_Runtime_submitJob(
     let jvm = env.get_java_vm().unwrap();
 
     log::info!("LibParsec about to submit_job...");
-    let submitted = runtime.submit_job(Box::new(move || {
+    let submitted = LIBPARSEC_CTX.lock().unwrap().submit_job(Box::new(move || {
         log::info!("LibParsec within submit_job !");
         // The callback is being called from the libparsec thread, so
         // we send closure as a task to be executed by the JavaScript event
@@ -101,71 +105,3 @@ pub extern "C" fn Java_com_scille_libparsec_Runtime_submitJob(
         }
     }
 }
-
-// #[macro_use]
-// extern crate lazy_static;
-// extern crate jni;
-
-// use std::sync::Mutex;
-// use std::ffi::CString;
-// use std::os::raw::c_char;
-
-// use jni::JNIEnv;
-// use jni::objects::{JClass, JObject, JValue, JString, JNull};
-
-// pub type Callback = unsafe extern "C" fn(*const c_char) -> ();
-
-// #[no_mangle]
-// #[allow(non_snake_case)]
-// pub extern "C" fn invokeCallbackViaJNA(callback: Callback) {
-//     let s = CString::new("Hello from Rust").unwrap();
-//     unsafe { callback(s.as_ptr()); }
-// }
-
-// #[no_mangle]
-// #[allow(non_snake_case)]
-// pub extern "C" fn Java_com_scille_parsec_LibParsec_SubmitJob(
-//     env: JNIEnv,
-//     _class: JClass,
-//     cmd: JString,
-//     payload: JString,
-//     callback: JObject,
-// ) {
-//     lazy_static! {
-//         static ref LIBPARSEC_CTX: Mutex<libparsec_bindings_common::RuntimeContext> = Mutex::new(libparsec_bindings_common::create_context());
-//     }
-
-//     let submitted = LIBPARSEC_CTX.lock().unwrap().submit_job(Box::new(move || {
-//         // The callback is being called from the libparsec thread, so
-//         // we send closure as a task to be executed by the JavaScript event
-//         // loop. This _will_ block the event loop while executing.
-//         let res = libparsec_bindings_common::decode_and_execute(&cmd, &payload);
-
-//         let args = match res {
-//             Ok(data) => [
-//                 JNull(),
-//                 JValue::from(JObject::from(data)),
-//             ],
-//             Err(err) => [
-//                 JValue::from(JObject::from(err)),
-//                 JNull(),
-//             ],
-//         };
-//         env.call_method(
-//             callback,
-//             "callback", "(Ljava/lang/String;Ljava/lang/String;)V",
-//             &args,
-//         ).unwrap();
-//     }));
-
-//     match submitted {
-//         Ok(_) => Ok(cx.undefined()),
-//         Err(err) => cx.throw_error(err)
-//     }
-
-//     // let s = String::from("Hello from Rust");
-//     // let response = env.new_string(&s)
-//     //     .expect("Couldn't create java string!");
-//     // env.call_method(callback, "callback", "(Ljava/lang/String;)V",
-//     //                 &[JValue::from(JObject::from(response))]).unwrap();
-// }

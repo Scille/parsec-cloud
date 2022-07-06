@@ -1,27 +1,34 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-#[macro_use]
-extern crate lazy_static;
-
 use neon::prelude::*;
 use std::sync::Mutex;
 
+lazy_static::lazy_static! {
+    static ref LIBPARSEC_CTX: Mutex<libparsec_bindings_common::RuntimeContext> =
+        Mutex::new(libparsec_bindings_common::create_context());
+}
+
+/// Interface between Web, Rust and Native
+/// Cordova bridge API for Android requests the inputs and output to be passed as a JS Object
+/// hence we have to comply with this ourself to provide the same API accross plateforms
+///
+/// Input:
+///   - cmd: String
+///   - payload: Base64 String separated by ':'
+///
+/// Output:
+///   - value: Base64 String
 fn submit_job(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    // Cordova bridge API for Android requests the params to be passed as a JS Object,
-    // hence we have to comply with this ourself to provide the same API accross plateforms.
     let options = cx.argument::<JsObject>(0)?;
-    let cmd: Handle<JsString> = options.get(&mut cx, "cmd")?;
-    let cmd = cmd.value(&mut cx);
-    let payload: Handle<JsString> = options.get(&mut cx, "payload")?;
-    let payload = payload.value(&mut cx);
+    let cmd = options
+        .get::<JsString, _, _>(&mut cx, "cmd")?
+        .value(&mut cx);
+    let payload = options
+        .get::<JsString, _, _>(&mut cx, "payload")?
+        .value(&mut cx);
 
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
-
-    lazy_static! {
-        static ref LIBPARSEC_CTX: Mutex<libparsec_bindings_common::RuntimeContext> =
-            Mutex::new(libparsec_bindings_common::create_context());
-    }
 
     let submitted = LIBPARSEC_CTX.lock().unwrap().submit_job(Box::new(move || {
         // The callback is being called from the libparsec thread, so
@@ -30,23 +37,17 @@ fn submit_job(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let res = libparsec_bindings_common::decode_and_execute(&cmd, &payload);
 
         channel.send(move |mut cx| {
-            // Cordova bridge API for Android requests the return value to
-            // be a JS Object, hence we have to comply with this ourself to
-            // provide the same API accross plateforms.
-            fn _build_arg<'a>(cx: &mut TaskContext<'a>, value: &str) -> JsResult<'a, JsObject> {
-                let arg = cx.empty_object();
-                let arg_value = cx.string(value);
-                arg.set(cx, "value", arg_value)?;
-                Ok(arg)
-            }
-
             match res {
                 Ok(data) => {
-                    let arg = _build_arg(&mut cx, &data)?;
+                    let arg = cx.empty_object();
+                    let arg_value = cx.string(data);
+                    arg.set(&mut cx, "value", arg_value)?;
                     deferred.resolve(&mut cx, arg);
                 }
                 Err(err) => {
-                    let arg = _build_arg(&mut cx, &err)?;
+                    let arg = cx.empty_object();
+                    let arg_value = cx.string(err);
+                    arg.set(&mut cx, "value", arg_value)?;
                     deferred.reject(&mut cx, arg);
                 }
             };
