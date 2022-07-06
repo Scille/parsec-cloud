@@ -15,6 +15,7 @@ from hypothesis_trio.stateful import (
 from unittest.mock import ANY
 
 from parsec import IS_OXIDIZED
+from parsec.backend.asgi import app_factory
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import RealmRole
 
@@ -28,9 +29,8 @@ def test_shuffle_roles(
     hypothesis_settings,
     reset_testbed,
     backend_factory,
-    server_factory,
     backend_data_binder_factory,
-    backend_sock_factory,
+    backend_authenticated_ws_factory,
     local_device_factory,
     realm_factory,
     coolorg,
@@ -43,48 +43,48 @@ def test_shuffle_roles(
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory(populated=False) as backend:
-                    async with server_factory(backend.handle_client) as server:
-                        await started_cb(backend=backend, server=server)
+                    await started_cb(backend=backend)
 
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)
 
         @property
-        def backend(self):
-            return self.backend_controller.backend
+        def backend_asgi_app(self):
+            return self._backend_asgi_app
 
         @initialize(target=User)
         async def init(self):
             await reset_testbed()
             self.backend_controller = await self.start_backend()
-            self.org = self.backend_controller.server.correct_addr(coolorg)
+            self._backend_asgi_app = app_factory(self.backend_controller.backend)
+            self.org = coolorg
             device = local_device_factory(org=self.org)
 
             # Create organization and first user
-            self.backend_data_binder = backend_data_binder_factory(self.backend)
+            self.backend_data_binder = backend_data_binder_factory(self.backend_asgi_app.backend)
             await self.backend_data_binder.bind_organization(self.org, device)
 
             # Create realm
-            self.realm_id = await realm_factory(self.backend, device)
+            self.realm_id = await realm_factory(self.backend_asgi_app.backend, device)
             self.current_roles = {device.user_id: RealmRole.OWNER}
             self.certifs = [ANY]
 
-            self.socks = {}
+            self.wss = {}
             return device
 
-        async def get_sock(self, device):
+        async def get_ws(self, device):
             try:
-                return self.socks[device.user_id]
+                return self.wss[device.user_id]
             except KeyError:
                 pass
 
-            async def _start_sock(device, *, task_status=trio.TASK_STATUS_IGNORED):
-                async with backend_sock_factory(self.backend, device) as sock:
-                    task_status.started(sock)
+            async def _start_ws(device, *, task_status=trio.TASK_STATUS_IGNORED):
+                async with backend_authenticated_ws_factory(self.backend_asgi_app, device) as ws:
+                    task_status.started(ws)
                     await trio.sleep_forever()
 
-            sock = await self.get_root_nursery().start(_start_sock, device)
-            self.socks[device.user_id] = sock
-            return sock
+            ws = await self.get_root_nursery().start(_start_ws, device)
+            self.wss[device.user_id] = ws
+            return ws
 
         @rule(target=User, author=User, role=realm_role_strategy)
         async def give_role_to_new_user(self, author, role):
@@ -93,19 +93,19 @@ def test_shuffle_roles(
             await self.backend_data_binder.bind_device(new_device)
             self.current_roles[new_device.user_id] = None
             # Assign role
-            author_sock = await self.get_sock(author)
-            if await self._give_role(author_sock, author, new_device, role):
+            author_ws = await self.get_ws(author)
+            if await self._give_role(author_ws, author, new_device, role):
                 return new_device
             else:
                 return multiple()
 
         @rule(author=User, recipient=User, role=realm_role_strategy)
         async def change_role_for_existing_user(self, author, recipient, role):
-            author_sock = await self.get_sock(author)
-            await self._give_role(author_sock, author, recipient, role)
+            author_ws = await self.get_ws(author)
+            await self._give_role(author_ws, author, recipient, role)
 
-        async def _give_role(self, author_sock, author, recipient, role):
-            author_sock = await self.get_sock(author)
+        async def _give_role(self, author_ws, author, recipient, role):
+            author_ws = await self.get_ws(author)
 
             certif = RealmRoleCertificateContent(
                 author=author.device_id,
@@ -114,7 +114,7 @@ def test_shuffle_roles(
                 user_id=recipient.user_id,
                 role=role,
             ).dump_and_sign(author.signing_key)
-            rep = await realm_update_roles(author_sock, certif, check_rep=False)
+            rep = await realm_update_roles(author_ws, certif, check_rep=False)
             if author.user_id == recipient.user_id:
                 assert rep == {
                     "status": "invalid_data",
@@ -146,8 +146,8 @@ def test_shuffle_roles(
 
         @rule(author=User)
         async def get_role_certificates(self, author):
-            sock = await self.get_sock(author)
-            rep = await realm_get_role_certificates(sock, self.realm_id)
+            ws = await self.get_ws(author)
+            rep = await realm_get_role_certificates(ws, self.realm_id)
             if self.current_roles.get(author.user_id) is not None:
                 assert rep["status"] == "ok"
                 assert rep["certificates"] == self.certifs
@@ -157,7 +157,7 @@ def test_shuffle_roles(
         @invariant()
         async def check_current_roles(self):
             try:
-                backend = self.backend
+                backend = self.backend_agi_app.backend
             except AttributeError:
                 return
             roles = await backend.realm.get_current_roles(self.org.organization_id, self.realm_id)

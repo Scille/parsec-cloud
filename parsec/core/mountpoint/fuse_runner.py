@@ -57,6 +57,11 @@ def _patch_signals():
     has a custom SIGINT handler, only the other 3 signals should be patched.
 
     This function is idempotent.
+
+    Note: python won't let us patched the signals outside of the main thread.
+    In practice, this should never be the case. One counter example are the tests
+    using the `mountpoint_service` fixture, which starts by calling `_patch_signals`
+    directly before delegating to subthreads.
     """
     # The default value for SIGPIPE in python is IGN
     if signal.getsignal(signal.SIGPIPE) == signal.SIG_IGN:

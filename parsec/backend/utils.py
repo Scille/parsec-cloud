@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-import trio
 from enum import Enum
 from functools import wraps
 from typing_extensions import Final, Literal
 from typing import Sequence, Dict, Callable
+from quart import Websocket
 
+from parsec.utils import open_service_nursery
 from parsec.api.protocol import ProtocolError, InvalidMessageError
 from parsec.api.version import API_V1_VERSION, API_V2_VERSION
 
@@ -24,24 +25,17 @@ ClientType = Enum(
 def api(
     cmd: str,
     *,
-    long_request: bool = False,
+    cancel_on_client_sending_new_cmd: bool = False,
     client_types: Sequence[ClientType] = (ClientType.AUTHENTICATED,),
 ):
     def wrapper(fn):
-        if long_request:
-
-            @wraps(fn)
-            async def wrapped(self, client_ctx, *args, **kwargs):
-                return await run_with_breathing_transport(
-                    client_ctx.transport, fn, self, client_ctx, *args, **kwargs
-                )
-
-        else:
-            wrapped = fn
-
-        assert not hasattr(wrapped, "_api_info")
-        wrapped._api_info = {"cmd": cmd, "client_types": client_types}
-        return wrapped
+        assert not hasattr(fn, "_api_info")
+        fn._api_info = {
+            "cmd": cmd,
+            "client_types": client_types,
+            "cancel_on_client_sending_new_cmd": cancel_on_client_sending_new_cmd,
+        }
+        return fn
 
     return wrapper
 
@@ -64,14 +58,6 @@ def collect_apis(*components) -> Dict[ClientType, Dict[str, Callable]]:
     return apis
 
 
-def check_anonymous_api_allowed(fn):
-    if not getattr(fn, "_anonymous_api_allowed", False):
-        raise RuntimeError(
-            f"Trying to add {fn!r} to the anonymous api "
-            "(need to use @anonymous_api decorator for this)."
-        )
-
-
 def catch_protocol_errors(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs):
@@ -87,12 +73,14 @@ def catch_protocol_errors(fn):
     return wrapper
 
 
-class CancelledByNewRequest(Exception):
+class CancelledByNewCmd(Exception):
     def __init__(self, new_raw_req):
         self.new_raw_req = new_raw_req
 
 
-async def run_with_breathing_transport(transport, fn, *args, **kwargs):
+async def run_with_cancel_on_client_sending_new_cmd(
+    websocket: Websocket, fn: Callable, *args, **kwargs
+) -> dict:
     """
     This is kind of a special case here:
     unlike other requests this one is going to (potentially) take
@@ -103,22 +91,23 @@ async def run_with_breathing_transport(transport, fn, *args, **kwargs):
 
     rep = None
 
-    async def _keep_transport_breathing():
+    async def _keep_websocket_breathing():
         # If a command is received, the client is violating the
         # request/reply pattern. We consider this as an order to stop
         # listening events.
-        raw_req = await transport.recv()
-        raise CancelledByNewRequest(raw_req)
+        raw_req = await websocket.receive()
+        raise CancelledByNewCmd(raw_req)
 
     async def _do_fn(cancel_scope):
         nonlocal rep
         rep = await fn(*args, **kwargs)
         cancel_scope.cancel()
 
-    async with trio.open_service_nursery() as nursery:
+    async with open_service_nursery() as nursery:
         nursery.start_soon(_do_fn, nursery.cancel_scope)
-        nursery.start_soon(_keep_transport_breathing)
+        nursery.start_soon(_keep_websocket_breathing)
 
+    assert isinstance(rep, dict)
     return rep
 
 

@@ -12,40 +12,40 @@ REALM_ID_FAKE = RealmID.from_hex("00000000-0000-0000-0000-000000000001")
 
 
 @pytest.mark.trio
-async def test_realm_stats_ok(alice_backend_sock, realm):
+async def test_realm_stats_ok(alice_ws, realm):
 
     # Create new data
-    await block_create(alice_backend_sock, realm_id=realm, block_id=BlockID.new(), block=b"1234")
-    rep = await realm_stats(alice_backend_sock, realm_id=realm)
+    await block_create(alice_ws, realm_id=realm, block_id=BlockID.new(), block=b"1234")
+    rep = await realm_stats(alice_ws, realm_id=realm)
     assert rep == {"status": "ok", "blocks_size": 4, "vlobs_size": 0}
 
     # Create new metadata
-    await vlob_create(alice_backend_sock, realm_id=realm, vlob_id=VlobID.new(), blob=b"1234")
-    rep = await realm_stats(alice_backend_sock, realm_id=realm)
+    await vlob_create(alice_ws, realm_id=realm, vlob_id=VlobID.new(), blob=b"1234")
+    rep = await realm_stats(alice_ws, realm_id=realm)
     assert rep == {"status": "ok", "blocks_size": 4, "vlobs_size": 4}
 
 
 @pytest.mark.trio
 async def test_realm_stats_ko(
-    backend, alice_backend_sock, bob_backend_sock, sock_from_other_organization_factory, realm
+    backend_asgi_app, alice_ws, bob_ws, ws_from_other_organization_factory, realm
 ):
     # test with no access to the realm
-    rep = await realm_stats(bob_backend_sock, realm_id=realm)
+    rep = await realm_stats(bob_ws, realm_id=realm)
     assert rep == {"status": "not_allowed"}
 
     # test with non existant realm
-    rep = await realm_stats(alice_backend_sock, realm_id=REALM_ID_FAKE)
+    rep = await realm_stats(alice_ws, realm_id=REALM_ID_FAKE)
     assert rep == {
         "status": "not_found",
         "reason": "Realm `00000000000000000000000000000001` doesn't exist",
     }
 
     # test with no access to the realm
-    rep = await realm_stats(bob_backend_sock, realm_id=realm)
+    rep = await realm_stats(bob_ws, realm_id=realm)
     assert rep == {"status": "not_allowed"}
 
     # test with device_id but wrong organization
-    async with sock_from_other_organization_factory(backend) as sock:
+    async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await realm_stats(sock, realm_id=realm)
     assert rep == {
         "status": "not_found",

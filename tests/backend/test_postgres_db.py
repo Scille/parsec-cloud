@@ -65,9 +65,7 @@ async def test_postgresql_connection_not_ok(postgresql_url, backend_factory, unu
 
 @pytest.mark.trio
 @pytest.mark.postgresql
-async def test_retry_policy_no_retry(postgresql_url, unused_tcp_port, asyncio_loop):
-    host = "127.0.0.1"
-    port = unused_tcp_port
+async def test_retry_policy_no_retry(postgresql_url, asyncio_loop):
     app_config = BackendConfig(
         administration_token="s3cr3t",
         db_min_connections=1,
@@ -77,7 +75,6 @@ async def test_retry_policy_no_retry(postgresql_url, unused_tcp_port, asyncio_lo
         email_config=None,
         backend_addr=None,
         forward_proto_enforce_https=None,
-        ssl_context=False,
         organization_spontaneous_bootstrap=False,
         organization_bootstrap_webhook_url=None,
         db_url=postgresql_url,
@@ -92,7 +89,12 @@ async def test_retry_policy_no_retry(postgresql_url, unused_tcp_port, asyncio_lo
             # Run backend in the background
             nursery.start_soon(
                 lambda: _run_backend(
-                    host, port, ssl_context=False, retry_policy=retry_policy, app_config=app_config
+                    host="127.0.0.1",
+                    port=0,
+                    ssl_certfile=None,
+                    ssl_keyfile=None,
+                    retry_policy=retry_policy,
+                    app_config=app_config,
                 )
             )
             # Connect to PostgreSQL database
@@ -109,9 +111,7 @@ async def test_retry_policy_no_retry(postgresql_url, unused_tcp_port, asyncio_lo
 
 @pytest.mark.trio
 @pytest.mark.postgresql
-async def test_retry_policy_allow_retry(postgresql_url, unused_tcp_port, asyncio_loop):
-    host = "127.0.0.1"
-    port = unused_tcp_port
+async def test_retry_policy_allow_retry(postgresql_url, asyncio_loop):
     app_config = BackendConfig(
         administration_token="s3cr3t",
         db_min_connections=1,
@@ -121,7 +121,6 @@ async def test_retry_policy_allow_retry(postgresql_url, unused_tcp_port, asyncio
         email_config=None,
         backend_addr=None,
         forward_proto_enforce_https=None,
-        ssl_context=False,
         organization_spontaneous_bootstrap=False,
         organization_bootstrap_webhook_url=None,
         db_url=postgresql_url,
@@ -132,7 +131,12 @@ async def test_retry_policy_allow_retry(postgresql_url, unused_tcp_port, asyncio
         # Run backend in the background
         nursery.start_soon(
             lambda: _run_backend(
-                host, port, ssl_context=False, retry_policy=retry_policy, app_config=app_config
+                host="127.0.0.1",
+                port=0,
+                ssl_certfile=None,
+                ssl_keyfile=None,
+                retry_policy=retry_policy,
+                app_config=app_config,
             )
         )
         # Connect to PostgreSQL database

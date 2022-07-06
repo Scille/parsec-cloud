@@ -280,7 +280,7 @@ async def test_autosync_on_remote_modifications(
 
 @pytest.mark.trio
 async def test_reconnect_with_remote_changes(
-    frozen_clock, alice2, running_backend, server_factory, alice_core, user_fs_factory
+    frozen_clock, alice2, running_backend, running_backend_factory, alice_core, user_fs_factory
 ):
     wid = await alice_core.user_fs.workspace_create(EntryName("w"))
     alice_w = alice_core.user_fs.get_workspace(wid)
@@ -293,8 +293,8 @@ async def test_reconnect_with_remote_changes(
 
     # Alice2 connect to the backend through a different server so that we can
     # switch alice offline while keeping alice2 connected
-    async with server_factory(running_backend.backend.handle_client) as server:
-        alice2 = server.correct_addr(alice2)
+    async with running_backend_factory(running_backend.backend) as running_backend2:
+        alice2 = running_backend2.correct_addr(alice2)
         async with user_fs_factory(alice2) as alice2_user_fs:
 
             # Switch backend offline for alice (but not alice2 !)

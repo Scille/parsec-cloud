@@ -15,7 +15,7 @@ from parsec.api.protocol import (
     APIEvent,
 )
 from parsec.api.protocol.types import UserProfile
-from parsec.backend.utils import catch_protocol_errors, run_with_breathing_transport, api
+from parsec.backend.utils import catch_protocol_errors, api
 from parsec.backend.realm import BaseRealmComponent
 from parsec.backend.backend_events import BackendEvent
 from functools import partial
@@ -192,18 +192,13 @@ class EventsComponent:
 
         return events_subscribe_serializer.rep_dump({"status": "ok"})
 
-    @api("events_listen")
+    @api("events_listen", cancel_on_client_sending_new_cmd=True)
     @catch_protocol_errors
     async def api_events_listen(self, client_ctx, msg):
         msg = events_listen_serializer.req_load(msg)
 
         if msg["wait"]:
-            event_data = await run_with_breathing_transport(
-                client_ctx.transport, client_ctx.receive_events_channel.receive
-            )
-
-            if not event_data:
-                return {"status": "cancelled", "reason": "Client cancelled the listening"}
+            event_data = await client_ctx.receive_events_channel.receive()
 
         else:
             try:

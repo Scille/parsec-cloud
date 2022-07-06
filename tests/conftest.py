@@ -249,14 +249,36 @@ def mock_timezone_utc(request):
 @pytest.fixture(autouse=True)
 def no_logs_gte_error(caplog):
     yield
+
+    # TODO: Concurrency bug in Hypercorn when the server is torndown while a
+    # client websocket is currently disconnecting
+    def skip_hypercorn_buggy_log(record):
+        if record.name != "hypercorn.error":
+            return True
+
+        if record.exc_text.endswith(
+            "wsproto.utilities.LocalProtocolError: Connection cannot be closed in state ConnectionState.CLOSED"
+        ):
+            return False
+
+        if record.exc_text.endswith(
+            "trio.BusyResourceError: another task is currently sending data on this SocketStream"
+        ):
+            return False
+
+        return True
+
     # The test should use `caplog.assert_occured_once` to indicate a log was expected,
     # otherwise we consider error logs as *actual* errors.
     asserted_records = getattr(caplog, "asserted_records", set())
     errors = [
         record
         for record in caplog.get_records("call")
-        if record.levelno >= logging.ERROR and record not in asserted_records
+        if record.levelno >= logging.ERROR
+        and record not in asserted_records
+        and skip_hypercorn_buggy_log(record)
     ]
+
     assert not errors
 
 

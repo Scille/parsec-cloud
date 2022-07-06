@@ -462,7 +462,11 @@ class BaseInviteComponent:
             }
         return invite_info_serializer.rep_dump(rep)
 
-    @api("invite_1_claimer_wait_peer", long_request=True, client_types=[ClientType.INVITED])
+    @api(
+        "invite_1_claimer_wait_peer",
+        cancel_on_client_sending_new_cmd=True,
+        client_types=[ClientType.INVITED],
+    )
     @catch_protocol_errors
     async def api_invite_1_claimer_wait_peer(self, client_ctx, msg):
         """

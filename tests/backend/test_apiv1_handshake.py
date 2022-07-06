@@ -3,7 +3,6 @@
 import pytest
 
 from parsec.api.version import ApiVersion
-from parsec.api.transport import Transport
 from parsec.api.protocol import (
     packb,
     unpackb,
@@ -39,20 +38,19 @@ def mock_api_versions(monkeypatch):
 
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
-async def test_anonymous_handshake_invalid_format(backend, server_factory):
-    async with server_factory(backend.handle_client) as server:
-        stream = await server.connection_factory()
-        transport = await Transport.init_for_client(stream, "127.0.0.1")
+async def test_anonymous_handshake_invalid_format(backend_asgi_app):
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        await transport.recv()  # Get challenge
+        await ws.receive()  # Get challenge
         req = {
             "handshake": "foo",
             "type": "anonymous",
             "client_api_version": ApiVersion(1, 1),
             "organization_id": "zob",
         }
-        await transport.send(packb(req))
-        result_req = await transport.recv()
+        await ws.send(packb(req))
+        result_req = await ws.receive()
         assert unpackb(result_req) == {
             "handshake": "result",
             "result": "bad_protocol",
@@ -61,12 +59,11 @@ async def test_anonymous_handshake_invalid_format(backend, server_factory):
 
 
 @pytest.mark.trio
-async def test_authenticated_handshake_no_longer_supported(backend, server_factory, alice):
-    async with server_factory(backend.handle_client) as server:
-        stream = await server.connection_factory()
-        transport = await Transport.init_for_client(stream, "127.0.0.1")
+async def test_authenticated_handshake_no_longer_supported(backend_asgi_app, alice):
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        challenge_req = await transport.recv()
+        challenge_req = await ws.receive()
         challenge = unpackb(challenge_req)["challenge"]
         answer = alice.signing_key.sign(challenge)
         answer_req = {
@@ -79,8 +76,8 @@ async def test_authenticated_handshake_no_longer_supported(backend, server_facto
             "answer": answer,
         }
 
-        await transport.send(packb(answer_req))
-        result_req = await transport.recv()
+        await ws.send(packb(answer_req))
+        result_req = await ws.receive()
         assert unpackb(result_req) == {
             "handshake": "result",
             "result": "bad_protocol",
@@ -90,12 +87,11 @@ async def test_authenticated_handshake_no_longer_supported(backend, server_facto
 
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
-async def test_administration_handshake_no_longer_supported(backend, server_factory):
-    async with server_factory(backend.handle_client) as server:
-        stream = await server.connection_factory()
-        transport = await Transport.init_for_client(stream, "127.0.0.1")
+async def test_administration_handshake_no_longer_supported(backend_asgi_app, backend):
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        await transport.recv()
+        await ws.receive()
         answer_req = {
             "handshake": "answer",
             "client_api_version": ApiVersion(1, 3),
@@ -103,8 +99,8 @@ async def test_administration_handshake_no_longer_supported(backend, server_fact
             "token": backend.config.administration_token,
         }
 
-        await transport.send(packb(answer_req))
-        result_req = await transport.recv()
+        await ws.send(packb(answer_req))
+        result_req = await ws.receive()
         assert unpackb(result_req) == {
             "handshake": "result",
             "result": "bad_protocol",
@@ -114,20 +110,17 @@ async def test_administration_handshake_no_longer_supported(backend, server_fact
 
 @pytest.mark.trio
 @pytest.mark.parametrize("check_rvk", [True, False])
-async def test_anonymous_handshake_good(
-    backend, server_factory, coolorg, check_rvk, mock_api_versions
-):
+async def test_anonymous_handshake_good(backend_asgi_app, coolorg, check_rvk, mock_api_versions):
     to_check_rvk = coolorg.root_verify_key if check_rvk else None
     ch = APIV1_AnonymousClientHandshake(coolorg.organization_id, to_check_rvk)
-    async with server_factory(backend.handle_client) as server:
-        stream = await server.connection_factory()
-        transport = await Transport.init_for_client(stream, "127.0.0.1")
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        challenge_req = await transport.recv()
+        challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
-        await transport.send(answer_req)
-        result_req = await transport.recv()
+        await ws.send(answer_req)
+        result_req = await ws.receive()
         ch.process_result_req(result_req)
 
         assert ch.client_api_version == mock_api_versions.default_client_version
@@ -135,33 +128,31 @@ async def test_anonymous_handshake_good(
 
 
 @pytest.mark.trio
-async def test_anonymous_handshake_bad_rvk(backend, server_factory, coolorg, otherorg):
+async def test_anonymous_handshake_bad_rvk(backend_asgi_app, coolorg, otherorg):
     ch = APIV1_AnonymousClientHandshake(coolorg.organization_id, otherorg.root_verify_key)
-    async with server_factory(backend.handle_client) as server:
-        stream = await server.connection_factory()
-        transport = await Transport.init_for_client(stream, "127.0.0.1")
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        challenge_req = await transport.recv()
+        challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
-        await transport.send(answer_req)
-        result_req = await transport.recv()
+        await ws.send(answer_req)
+        result_req = await ws.receive()
         with pytest.raises(HandshakeRVKMismatch):
             ch.process_result_req(result_req)
 
 
 @pytest.mark.trio
-async def test_handshake_unknown_organization(backend, server_factory, organization_factory, alice):
+async def test_handshake_unknown_organization(backend_asgi_app, organization_factory):
     bad_org = organization_factory()
     ch = APIV1_AnonymousClientHandshake(bad_org.organization_id, bad_org.root_verify_key)
-    async with server_factory(backend.handle_client) as server:
-        stream = await server.connection_factory()
-        transport = await Transport.init_for_client(stream, "127.0.0.1")
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        challenge_req = await transport.recv()
+        challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
-        await transport.send(answer_req)
-        result_req = await transport.recv()
+        await ws.send(answer_req)
+        result_req = await ws.receive()
         with pytest.raises(HandshakeBadIdentity):
             ch.process_result_req(result_req)

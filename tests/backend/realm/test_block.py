@@ -41,10 +41,10 @@ async def block(backend, alice, realm):
 
 @pytest.mark.trio
 async def test_block_read_check_access_rights(
-    backend, alice, bob, bob_backend_sock, realm, block, next_timestamp
+    backend, alice, bob, bob_ws, realm, block, next_timestamp
 ):
     # User not part of the realm
-    rep = await block_read(bob_backend_sock, block)
+    rep = await block_read(bob_ws, block)
     assert rep == {"status": "not_allowed"}
 
     # User part of the realm with various role
@@ -60,7 +60,7 @@ async def test_block_read_check_access_rights(
                 granted_on=next_timestamp(),
             ),
         )
-        rep = await block_read(bob_backend_sock, block)
+        rep = await block_read(bob_ws, block)
         assert rep == {"status": "ok", "block": b"Hodi ho !"}
 
     # Ensure user that used to be part of the realm have no longer access
@@ -75,18 +75,16 @@ async def test_block_read_check_access_rights(
             granted_on=next_timestamp(),
         ),
     )
-    rep = await block_read(bob_backend_sock, block)
+    rep = await block_read(bob_ws, block)
     assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio
-async def test_block_create_check_access_rights(
-    backend, alice, bob, bob_backend_sock, realm, next_timestamp
-):
+async def test_block_create_check_access_rights(backend, alice, bob, bob_ws, realm, next_timestamp):
     block_id = BlockID.new()
 
     # User not part of the realm
-    rep = await block_create(bob_backend_sock, block_id, realm, BLOCK_DATA, check_rep=False)
+    rep = await block_create(bob_ws, block_id, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "not_allowed"}
 
     # User part of the realm with various role
@@ -108,7 +106,7 @@ async def test_block_create_check_access_rights(
             ),
         )
         block_id = BlockID.new()
-        rep = await block_create(bob_backend_sock, block_id, realm, BLOCK_DATA, check_rep=False)
+        rep = await block_create(bob_ws, block_id, realm, BLOCK_DATA, check_rep=False)
         if access_granted:
             assert rep == {"status": "ok"}
 
@@ -127,40 +125,40 @@ async def test_block_create_check_access_rights(
             granted_on=next_timestamp(),
         ),
     )
-    rep = await block_create(bob_backend_sock, block_id, realm, BLOCK_DATA, check_rep=False)
+    rep = await block_create(bob_ws, block_id, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio
-async def test_block_create_and_read(alice_backend_sock, realm):
-    await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
+async def test_block_create_and_read(alice_ws, realm):
+    await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA)
 
-    rep = await block_read(alice_backend_sock, BLOCK_ID)
+    rep = await block_read(alice_ws, BLOCK_ID)
     assert rep == {"status": "ok", "block": BLOCK_DATA}
 
     # Test not found as well
 
     dummy_id = BlockID.from_hex("00000000000000000000000000000002")
-    rep = await block_read(alice_backend_sock, dummy_id)
+    rep = await block_read(alice_ws, dummy_id)
     assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
 @customize_fixtures(blockstore_mode="RAID1")
-async def test_raid1_block_create_and_read(alice_backend_sock, realm):
-    await test_block_create_and_read(alice_backend_sock, realm)
+async def test_raid1_block_create_and_read(alice_ws, realm):
+    await test_block_create_and_read(alice_ws, realm)
 
 
 @pytest.mark.trio
 @customize_fixtures(blockstore_mode="RAID1")
-async def test_raid1_block_create_partial_failure(caplog, alice_backend_sock, backend, realm):
+async def test_raid1_block_create_partial_failure(caplog, alice_ws, backend, realm):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
         raise BlockStoreError()
 
     backend.blockstore.blockstores[1].create = mock_create
 
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
+    rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "timeout"}
 
     log = caplog.assert_occured_once("[warning  ] Block create error: A node have failed")
@@ -170,60 +168,58 @@ async def test_raid1_block_create_partial_failure(caplog, alice_backend_sock, ba
 
 @pytest.mark.trio
 @customize_fixtures(blockstore_mode="RAID1_PARTIAL_CREATE_OK")
-async def test_raid1_partial_create_ok_block_create_partial_failure(
-    alice_backend_sock, backend, realm
-):
+async def test_raid1_partial_create_ok_block_create_partial_failure(alice_ws, backend, realm):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
         raise BlockStoreError()
 
     backend.blockstore.blockstores[1].create = mock_create
 
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
+    rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA)
     assert rep == {"status": "ok"}
 
-    rep = await block_read(alice_backend_sock, BLOCK_ID)
+    rep = await block_read(alice_ws, BLOCK_ID)
     assert rep == {"status": "ok", "block": BLOCK_DATA}
 
 
 @pytest.mark.trio
 @customize_fixtures(blockstore_mode="RAID1")
-async def test_raid1_block_create_partial_exists(alice_backend_sock, alice, backend, realm):
+async def test_raid1_block_create_partial_exists(alice_ws, alice, backend, realm):
     await backend.blockstore.blockstores[1].create(alice.organization_id, BLOCK_ID, BLOCK_DATA)
     # Blockstore overwrite existing block without questions
-    await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
+    await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA)
 
 
 @pytest.mark.trio
 @customize_fixtures(blockstore_mode="RAID1")
-async def test_raid1_block_read_partial_failure(alice_backend_sock, backend, block):
+async def test_raid1_block_read_partial_failure(alice_ws, backend, block):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
         raise BlockStoreError()
 
     backend.blockstore.blockstores[1].read = mock_read
 
-    rep = await block_read(alice_backend_sock, block)
+    rep = await block_read(alice_ws, block)
     assert rep == {"status": "ok", "block": BLOCK_DATA}
 
 
 @pytest.mark.trio
 @customize_fixtures(blockstore_mode="RAID0")
-async def test_raid0_block_create_and_read(alice_backend_sock, realm):
-    await test_block_create_and_read(alice_backend_sock, realm)
+async def test_raid0_block_create_and_read(alice_ws, realm):
+    await test_block_create_and_read(alice_ws, realm)
 
 
 @pytest.mark.trio
 @customize_fixtures(blockstore_mode="RAID5")
-async def test_raid5_block_create_and_read(alice_backend_sock, realm):
-    await test_block_create_and_read(alice_backend_sock, realm)
+async def test_raid5_block_create_and_read(alice_ws, realm):
+    await test_block_create_and_read(alice_ws, realm)
 
 
 @pytest.mark.trio
 @customize_fixtures(blockstore_mode="RAID5")
 @pytest.mark.parametrize("failing_blockstore", (0, 1, 2))
 async def test_raid5_block_create_single_failure(
-    caplog, alice_backend_sock, backend, realm, failing_blockstore
+    caplog, alice_ws, backend, realm, failing_blockstore
 ):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
@@ -231,7 +227,7 @@ async def test_raid5_block_create_single_failure(
 
     backend.blockstore.blockstores[failing_blockstore].create = mock_create
 
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
+    rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "timeout"}
 
     log = caplog.assert_occured_once("[warning  ] Block create error: A node have failed")
@@ -243,7 +239,7 @@ async def test_raid5_block_create_single_failure(
 @customize_fixtures(blockstore_mode="RAID5_PARTIAL_CREATE_OK")
 @pytest.mark.parametrize("failing_blockstore", (0, 1, 2))
 async def test_raid5_partial_create_ok_block_create_single_failure(
-    caplog, alice_backend_sock, backend, realm, failing_blockstore
+    caplog, alice_ws, backend, realm, failing_blockstore
 ):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
@@ -251,9 +247,9 @@ async def test_raid5_partial_create_ok_block_create_single_failure(
 
     backend.blockstore.blockstores[failing_blockstore].create = mock_create
 
-    await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
+    await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA)
 
-    rep = await block_read(alice_backend_sock, BLOCK_ID)
+    rep = await block_read(alice_ws, BLOCK_ID)
     assert rep == {"status": "ok", "block": BLOCK_DATA}
 
 
@@ -261,7 +257,7 @@ async def test_raid5_partial_create_ok_block_create_single_failure(
 @customize_fixtures(blockstore_mode="RAID5_PARTIAL_CREATE_OK")
 @pytest.mark.parametrize("failing_blockstores", [(0, 1), (0, 2)])
 async def test_raid5_partial_create_ok_block_create_too_many_failures(
-    caplog, alice_backend_sock, backend, realm, failing_blockstores
+    caplog, alice_ws, backend, realm, failing_blockstores
 ):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
@@ -272,7 +268,7 @@ async def test_raid5_partial_create_ok_block_create_too_many_failures(
     backend.blockstore.blockstores[fb1].create = mock_create
     backend.blockstore.blockstores[fb2].create = mock_create
 
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
+    rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "timeout"}
 
     log = caplog.assert_occured_once(
@@ -284,25 +280,23 @@ async def test_raid5_partial_create_ok_block_create_too_many_failures(
 
 @pytest.mark.trio
 @customize_fixtures(blockstore_mode="RAID5")
-async def test_raid5_block_create_partial_exists(alice_backend_sock, alice, backend, realm):
+async def test_raid5_block_create_partial_exists(alice_ws, alice, backend, realm):
     await backend.blockstore.blockstores[1].create(alice.organization_id, BLOCK_ID, BLOCK_DATA)
 
-    await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
+    await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA)
 
 
 @pytest.mark.trio
 @customize_fixtures(blockstore_mode="RAID5")
 @pytest.mark.parametrize("failing_blockstore", (0, 1))  # Ignore checksum blockstore
-async def test_raid5_block_read_single_failure(
-    alice_backend_sock, backend, block, failing_blockstore
-):
+async def test_raid5_block_read_single_failure(alice_ws, backend, block, failing_blockstore):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
         raise BlockStoreError()
 
     backend.blockstore.blockstores[failing_blockstore].read = mock_read
 
-    rep = await block_read(alice_backend_sock, block)
+    rep = await block_read(alice_ws, block)
     assert rep == {"status": "ok", "block": BLOCK_DATA}
 
 
@@ -310,14 +304,14 @@ async def test_raid5_block_read_single_failure(
 @customize_fixtures(blockstore_mode="RAID5")
 @pytest.mark.parametrize("bad_chunk", (b"", b"too big"))
 async def test_raid5_block_read_single_invalid_chunk_size(
-    alice_backend_sock, alice, backend, block, bad_chunk
+    alice_ws, alice, backend, block, bad_chunk
 ):
     async def mock_read(organization_id, id):
         return bad_chunk
 
     backend.blockstore.blockstores[1].read = mock_read
 
-    rep = await block_read(alice_backend_sock, block)
+    rep = await block_read(alice_ws, block)
     # A bad chunk result in a bad block, which should be detected by the client
     assert rep == {"status": "ok", "block": ANY}
 
@@ -326,7 +320,7 @@ async def test_raid5_block_read_single_invalid_chunk_size(
 @customize_fixtures(blockstore_mode="RAID5")
 @pytest.mark.parametrize("failing_blockstores", [(0, 1), (0, 2)])
 async def test_raid5_block_read_multiple_failure(
-    caplog, alice_backend_sock, backend, block, failing_blockstores
+    caplog, alice_ws, backend, block, failing_blockstores
 ):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
@@ -336,7 +330,7 @@ async def test_raid5_block_read_multiple_failure(
     backend.blockstore.blockstores[fb1].read = mock_read
     backend.blockstore.blockstores[fb2].read = mock_read
 
-    rep = await block_read(alice_backend_sock, block)
+    rep = await block_read(alice_ws, block)
     assert rep == {"status": "timeout"}
 
     log = caplog.assert_occured_once("[warning  ] Block read error: More than 1 nodes have failed")
@@ -358,16 +352,16 @@ async def test_raid5_block_read_multiple_failure(
     ],
 )
 @pytest.mark.trio
-async def test_block_create_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send(packb({"cmd": "block_create", **bad_msg}))
-    raw_rep = await alice_backend_sock.recv()
+async def test_block_create_bad_msg(alice_ws, bad_msg):
+    await alice_ws.send(packb({"cmd": "block_create", **bad_msg}))
+    raw_rep = await alice_ws.receive()
     rep = block_create_serializer.rep_loads(raw_rep)
     assert rep["status"] == "bad_message"
 
 
 @pytest.mark.trio
-async def test_block_read_not_found(alice_backend_sock):
-    rep = await block_read(alice_backend_sock, BLOCK_ID)
+async def test_block_read_not_found(alice_ws):
+    rep = await block_read(alice_ws, BLOCK_ID)
     assert rep == {"status": "not_found"}
 
 
@@ -382,9 +376,9 @@ async def test_block_read_not_found(alice_backend_sock):
     ],
 )
 @pytest.mark.trio
-async def test_block_read_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send(packb({"cmd": "block_read", **bad_msg}))
-    raw_rep = await alice_backend_sock.recv()
+async def test_block_read_bad_msg(alice_ws, bad_msg):
+    await alice_ws.send(packb({"cmd": "block_read", **bad_msg}))
+    raw_rep = await alice_ws.receive()
     rep = block_read_serializer.rep_loads(raw_rep)
     # Valid ID doesn't exists in database but this is ok given here we test
     # another layer so it's not important as long as we get our
@@ -393,27 +387,27 @@ async def test_block_read_bad_msg(alice_backend_sock, bad_msg):
 
 
 @pytest.mark.trio
-async def test_block_conflicting_id(alice_backend_sock, realm):
+async def test_block_conflicting_id(alice_ws, realm):
     block_v1 = b"v1"
-    await block_create(alice_backend_sock, BLOCK_ID, realm, block_v1)
+    await block_create(alice_ws, BLOCK_ID, realm, block_v1)
 
     block_v2 = b"v2"
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, block_v2, check_rep=False)
+    rep = await block_create(alice_ws, BLOCK_ID, realm, block_v2, check_rep=False)
     assert rep == {"status": "already_exists"}
 
-    rep = await block_read(alice_backend_sock, BLOCK_ID)
+    rep = await block_read(alice_ws, BLOCK_ID)
     assert rep == {"status": "ok", "block": block_v1}
 
 
 @pytest.mark.trio
 async def test_block_check_other_organization(
-    backend, sock_from_other_organization_factory, realm, block
+    backend_asgi_app, ws_from_other_organization_factory, realm, block
 ):
-    async with sock_from_other_organization_factory(backend) as sock:
+    async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await block_read(sock, block)
         assert rep == {"status": "not_found"}
 
-        await backend.realm.create(
+        await backend_asgi_app.backend.realm.create(
             sock.device.organization_id,
             RealmGrantedRole(
                 certificate=b"<dummy>",
@@ -431,7 +425,7 @@ async def test_block_check_other_organization(
 
 
 @pytest.mark.trio
-async def test_access_during_maintenance(backend, alice, alice_backend_sock, realm, block):
+async def test_access_during_maintenance(backend, alice, alice_ws, realm, block):
     await backend.realm.start_reencryption_maintenance(
         alice.organization_id,
         alice.device_id,
@@ -440,11 +434,11 @@ async def test_access_during_maintenance(backend, alice, alice_backend_sock, rea
         {alice.user_id: b"whatever"},
         pendulum.now(),
     )
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
+    rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "in_maintenance"}
 
     # Reading while in reencryption is OK
-    rep = await block_read(alice_backend_sock, block)
+    rep = await block_read(alice_ws, block)
     assert rep["status"] == "ok"
 
 

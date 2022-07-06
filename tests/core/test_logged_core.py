@@ -16,21 +16,21 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.core_events import CoreEvent
 
-from tests.common import real_clock_timeout
+from tests.common import real_clock_timeout, correct_addr, server_factory
 
 
 @pytest.mark.trio
 async def test_init_online_backend_late_reply(
-    server_factory, core_config, alice, event_bus, backend
+    core_config, alice, event_bus, backend_asgi_app_handle_client
 ):
     can_serve_client = trio.Event()
 
     async def _handle_client(stream):
         await can_serve_client.wait()
-        return await backend.handle_client(stream)
+        return await backend_asgi_app_handle_client(stream)
 
-    async with server_factory(_handle_client) as server:
-        alice = server.correct_addr(alice)
+    async with server_factory(_handle_client) as port:
+        alice = correct_addr(alice, port)
         async with real_clock_timeout():
             async with logged_core_factory(
                 config=core_config, device=alice, event_bus=event_bus
@@ -46,15 +46,16 @@ async def test_init_online_backend_late_reply(
 
 
 @pytest.mark.trio
-async def test_init_offline_backend_late_reply(server_factory, core_config, alice, event_bus):
+async def test_init_offline_backend_late_reply(core_config, alice, event_bus):
     can_serve_client = trio.Event()
 
     async def _handle_client(stream):
         await can_serve_client.wait()
         await stream.aclose()
 
-    async with server_factory(_handle_client) as server:
-        alice = server.correct_addr(alice)
+    async with server_factory(_handle_client) as port:
+        alice = correct_addr(alice, port)
+
         async with real_clock_timeout():
             async with logged_core_factory(
                 config=core_config, device=alice, event_bus=event_bus

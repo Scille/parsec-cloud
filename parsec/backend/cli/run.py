@@ -1,14 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-import ssl
 import trio
 import click
 from structlog import get_logger
 from typing import Optional, Tuple, List
 from itertools import count
 from collections import defaultdict
+from functools import partial
 import tempfile
 from pathlib import Path
+from hypercorn.config import Config as HyperConfig
+from hypercorn.trio import serve
+import logging
 
 from parsec.utils import trio_run
 from parsec.cli_utils import (
@@ -18,6 +21,7 @@ from parsec.cli_utils import (
     debug_config_options,
 )
 from parsec.backend import backend_app_factory, BackendApp
+from parsec.backend.asgi import app_factory
 from parsec.backend.config import (
     BackendConfig,
     EmailConfig,
@@ -180,7 +184,7 @@ def _parse_blockstore_params(raw_params: str) -> BaseBlockStoreConfig:
 
 def _parse_forward_proto_enforce_https_check_param(
     raw_param: Optional[str],
-) -> Optional[Tuple[bytes, bytes]]:
+) -> Optional[Tuple[str, str]]:
     if raw_param is None:
         return None
     try:
@@ -188,7 +192,7 @@ def _parse_forward_proto_enforce_https_check_param(
     except ValueError:
         raise click.BadParameter(f"Invalid format, should be `<header-name>:<header-value>`")
     # HTTP header key is case-insensitive unlike the header value
-    return (key.lower().encode("utf8"), value.encode("utf8"))
+    return (key.lower(), value)
 
 
 class DevOption(click.Option):
@@ -496,7 +500,7 @@ def run_cmd(
     email_use_ssl: bool,
     email_use_tls: bool,
     email_sender: str,
-    forward_proto_enforce_https: Optional[Tuple[bytes, bytes]],
+    forward_proto_enforce_https: Optional[Tuple[str, str]],
     ssl_keyfile: Optional[Path],
     ssl_certfile: Optional[Path],
     log_level: str,
@@ -510,16 +514,6 @@ def run_cmd(
     # Start a local backend
 
     with cli_exception_handler(debug):
-        ssl_context: Optional[ssl.SSLContext]
-        if ssl_certfile or ssl_keyfile:
-            ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            if ssl_certfile:
-                ssl_context.load_cert_chain(ssl_certfile, ssl_keyfile)
-            else:
-                ssl_context.load_default_certs()
-        else:
-            ssl_context = None
-
         email_config: EmailConfig
         if email_host == "MOCKED":
             tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
@@ -547,7 +541,6 @@ def run_cmd(
             db_max_connections=db_max_connections,
             blockstore_config=blockstore,
             email_config=email_config,
-            ssl_context=True if ssl_context else False,
             forward_proto_enforce_https=forward_proto_enforce_https,
             backend_addr=backend_addr,
             debug=debug,
@@ -571,7 +564,16 @@ def run_cmd(
                 maximum_database_connection_attempts, pause_before_retry_database_connection
             )
             trio_run(
-                _run_backend, host, port, ssl_context, retry_policy, app_config, use_asyncio=True
+                partial(
+                    _run_backend,
+                    host=host,
+                    port=port,
+                    ssl_certfile=ssl_certfile,
+                    ssl_keyfile=ssl_keyfile,
+                    retry_policy=retry_policy,
+                    app_config=app_config,
+                ),
+                use_asyncio=True,
             )
         except KeyboardInterrupt:
             click.echo("bye ;-)")
@@ -599,7 +601,8 @@ class RetryPolicy:
 async def _run_backend(
     host: str,
     port: int,
-    ssl_context: Optional[ssl.SSLContext],
+    ssl_certfile: Optional[Path],
+    ssl_keyfile: Optional[Path],
     retry_policy: RetryPolicy,
     app_config: BackendConfig,
 ) -> None:
@@ -616,7 +619,13 @@ async def _run_backend(
                 retry_policy.success()
 
                 # Serve backend through TCP
-                await _serve_backend(backend, host, port, ssl_context)
+                await _serve_backend_with_asgi(
+                    backend=backend,
+                    host=host,
+                    port=port,
+                    ssl_certfile=ssl_certfile,
+                    ssl_keyfile=ssl_keyfile,
+                )
 
         except ConnectionError as exc:
             # The maximum number of attempt is reached
@@ -629,26 +638,26 @@ async def _run_backend(
             await retry_policy.pause()
 
 
-async def _serve_backend(
-    backend: BackendApp, host: str, port: int, ssl_context: Optional[ssl.SSLContext]
+async def _serve_backend_with_asgi(
+    backend: BackendApp,
+    host: str,
+    port: int,
+    ssl_certfile: Optional[Path],
+    ssl_keyfile: Optional[Path],
 ) -> None:
-    # Client handler
-    async def _serve_client(stream: trio.abc.Stream) -> None:
-        if ssl_context:
-            stream = trio.SSLStream(stream, ssl_context, server_side=True)
-
-        try:
-            await backend.handle_client(stream)
-
-        except ConnectionError:
-            # Should be handled by the reconnection logic (see `_run_and_retry_back`)
-            raise
-
-        except Exception:
-            # If we are here, something unexpected happened...
-            logger.exception("Unexpected crash")
-            await stream.aclose()
-
-    # Provide a service nursery so multi-errors errors are handled
-    async with trio.open_service_nursery() as nursery:  # type: ignore[attr-defined]
-        await trio.serve_tcp(_serve_client, port, handler_nursery=nursery, host=host)
+    app = app_factory(backend)
+    # Note: Hypercorn comes with default values for incoming data size to
+    # avoid DoS abuse, so just trust them on that ;-)
+    hyper_config = HyperConfig.from_mapping(
+        {
+            "bind": [f"{host}:{port}"],
+            "accesslog": logging.getLogger("hypercorn.access"),
+            "errorlog": logging.getLogger("hypercorn.error"),
+            "certfile": str(ssl_certfile) if ssl_certfile else None,
+            "keyfile": str(ssl_keyfile) if ssl_certfile else None,
+        }
+    )
+    await serve(app, hyper_config)
+    # `hypercorn.serve` catches KeyboardInterrupt and returns, so re-raise
+    # the keyboard interrupt to continue shutdown
+    raise KeyboardInterrupt

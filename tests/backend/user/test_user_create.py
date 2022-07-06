@@ -16,7 +16,13 @@ from tests.backend.common import user_get, user_create
     "profile,with_labels", [(profile, profile != UserProfile.STANDARD) for profile in UserProfile]
 )
 async def test_user_create_ok(
-    backend, backend_sock_factory, alice_backend_sock, alice, mallory, profile, with_labels
+    backend_asgi_app,
+    backend_authenticated_ws_factory,
+    alice_ws,
+    alice,
+    mallory,
+    profile,
+    with_labels,
 ):
     now = pendulum.now()
     user_certificate = UserCertificateContent(
@@ -46,7 +52,7 @@ async def test_user_create_ok(
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
 
     rep = await user_create(
-        alice_backend_sock,
+        alice_ws,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
@@ -55,12 +61,12 @@ async def test_user_create_ok(
     assert rep == {"status": "ok"}
 
     # Make sure mallory can connect now
-    async with backend_sock_factory(backend, mallory) as sock:
+    async with backend_authenticated_ws_factory(backend_asgi_app, mallory) as sock:
         rep = await user_get(sock, user_id=mallory.user_id)
         assert rep["status"] == "ok"
 
     # Check the resulting data in the backend
-    backend_user, backend_device = await backend.user.get_user_with_device(
+    backend_user, backend_device = await backend_asgi_app.backend.user.get_user_with_device(
         mallory.organization_id, mallory.device_id
     )
 
@@ -86,13 +92,18 @@ async def test_user_create_ok(
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
 async def test_user_create_nok_active_users_limit_reached(
-    backend, backend_data_binder_factory, backend_sock_factory, coolorg, alice, mallory
+    backend_asgi_app,
+    backend_data_binder_factory,
+    backend_authenticated_ws_factory,
+    coolorg,
+    alice,
+    mallory,
 ):
     # Ensure there is only one user in the organization...
-    binder = backend_data_binder_factory(backend)
+    binder = backend_data_binder_factory(backend_asgi_app.backend)
     await binder.bind_organization(coolorg, alice)
     # ...so our active user limit has just been reached
-    await backend.organization.update(alice.organization_id, active_users_limit=1)
+    await backend_asgi_app.backend.organization.update(alice.organization_id, active_users_limit=1)
 
     now = pendulum.now()
     user_certificate = UserCertificateContent(
@@ -118,7 +129,7 @@ async def test_user_create_nok_active_users_limit_reached(
     redacted_user_certificate = redacted_user_certificate.dump_and_sign(alice.signing_key)
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
 
-    async with backend_sock_factory(backend, alice) as sock:
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice) as sock:
         rep = await user_create(
             sock,
             user_certificate=user_certificate,
@@ -130,7 +141,9 @@ async def test_user_create_nok_active_users_limit_reached(
 
         # Now correct the limit, and ensure the user can be created
 
-        await backend.organization.update(alice.organization_id, active_users_limit=2)
+        await backend_asgi_app.backend.organization.update(
+            alice.organization_id, active_users_limit=2
+        )
 
         rep = await user_create(
             sock,
@@ -143,7 +156,7 @@ async def test_user_create_nok_active_users_limit_reached(
 
 
 @pytest.mark.trio
-async def test_user_create_invalid_certificate(alice_backend_sock, alice, bob, mallory):
+async def test_user_create_invalid_certificate(alice_ws, alice, bob, mallory):
     now = pendulum.now()
     good_user_certificate = UserCertificateContent(
         author=alice.device_id,
@@ -182,7 +195,7 @@ async def test_user_create_invalid_certificate(alice_backend_sock, alice, bob, m
         (bad_user_certificate, bad_device_certificate),
     ]:
         rep = await user_create(
-            alice_backend_sock,
+            alice_ws,
             user_certificate=cu,
             device_certificate=cd,
             redacted_user_certificate=good_user_certificate,
@@ -200,7 +213,7 @@ async def test_user_create_invalid_certificate(alice_backend_sock, alice, bob, m
         (bad_user_certificate, bad_device_certificate),
     ]:
         rep = await user_create(
-            alice_backend_sock,
+            alice_ws,
             user_certificate=good_user_certificate,
             device_certificate=good_device_certificate,
             redacted_user_certificate=cu,
@@ -213,7 +226,7 @@ async def test_user_create_invalid_certificate(alice_backend_sock, alice, bob, m
 
 
 @pytest.mark.trio
-async def test_user_create_not_matching_user_device(alice_backend_sock, alice, bob, mallory):
+async def test_user_create_not_matching_user_device(alice_ws, alice, bob, mallory):
     now = pendulum.now()
     user_certificate = UserCertificateContent(
         author=alice.device_id,
@@ -232,7 +245,7 @@ async def test_user_create_not_matching_user_device(alice_backend_sock, alice, b
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_create(
-        alice_backend_sock,
+        alice_ws,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=user_certificate,
@@ -245,7 +258,7 @@ async def test_user_create_not_matching_user_device(alice_backend_sock, alice, b
 
 
 @pytest.mark.trio
-async def test_user_create_bad_redacted_device_certificate(alice_backend_sock, alice, mallory):
+async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mallory):
     now = pendulum.now()
     user_certificate = UserCertificateContent(
         author=alice.device_id,
@@ -270,7 +283,7 @@ async def test_user_create_bad_redacted_device_certificate(alice_backend_sock, a
         good_redacted_device_certificate.evolve(verify_key=alice.verify_key),
     ):
         rep = await user_create(
-            alice_backend_sock,
+            alice_ws,
             user_certificate=user_certificate,
             device_certificate=device_certificate,
             redacted_user_certificate=user_certificate,
@@ -285,7 +298,7 @@ async def test_user_create_bad_redacted_device_certificate(alice_backend_sock, a
 
     # Missing redacted certificate is not allowed as well
     rep = await user_create(
-        alice_backend_sock,
+        alice_ws,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=user_certificate,
@@ -299,7 +312,7 @@ async def test_user_create_bad_redacted_device_certificate(alice_backend_sock, a
 
     # Finally just make sure good was really good
     rep = await user_create(
-        alice_backend_sock,
+        alice_ws,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=user_certificate,
@@ -311,7 +324,7 @@ async def test_user_create_bad_redacted_device_certificate(alice_backend_sock, a
 
 
 @pytest.mark.trio
-async def test_user_create_bad_redacted_user_certificate(alice_backend_sock, alice, mallory):
+async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallory):
     now = pendulum.now()
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
@@ -337,7 +350,7 @@ async def test_user_create_bad_redacted_user_certificate(alice_backend_sock, ali
         good_redacted_user_certificate.evolve(profile=UserProfile.OUTSIDER),
     ):
         rep = await user_create(
-            alice_backend_sock,
+            alice_ws,
             user_certificate=user_certificate,
             device_certificate=device_certificate,
             redacted_user_certificate=bad_redacted_user_certificate.dump_and_sign(
@@ -352,7 +365,7 @@ async def test_user_create_bad_redacted_user_certificate(alice_backend_sock, ali
 
     # Missing redacted certificate is not allowed as well
     rep = await user_create(
-        alice_backend_sock,
+        alice_ws,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=None,
@@ -366,7 +379,7 @@ async def test_user_create_bad_redacted_user_certificate(alice_backend_sock, ali
 
     # Finally just make sure good was really good
     rep = await user_create(
-        alice_backend_sock,
+        alice_ws,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=good_redacted_user_certificate.dump_and_sign(alice.signing_key),
@@ -376,7 +389,7 @@ async def test_user_create_bad_redacted_user_certificate(alice_backend_sock, ali
 
 
 @pytest.mark.trio
-async def test_user_create_already_exists(alice_backend_sock, alice, bob):
+async def test_user_create_already_exists(alice_ws, alice, bob):
     now = pendulum.now()
     user_certificate = UserCertificateContent(
         author=alice.device_id,
@@ -395,7 +408,7 @@ async def test_user_create_already_exists(alice_backend_sock, alice, bob):
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_create(
-        alice_backend_sock,
+        alice_ws,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=user_certificate,
@@ -405,7 +418,7 @@ async def test_user_create_already_exists(alice_backend_sock, alice, bob):
 
 
 @pytest.mark.trio
-async def test_user_create_human_handle_already_exists(alice_backend_sock, alice, bob):
+async def test_user_create_human_handle_already_exists(alice_ws, alice, bob):
     now = pendulum.now()
     bob2_device_id = DeviceID("bob2@dev1")
     user_certificate = UserCertificateContent(
@@ -432,7 +445,7 @@ async def test_user_create_human_handle_already_exists(alice_backend_sock, alice
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
 
     rep = await user_create(
-        alice_backend_sock,
+        alice_ws,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
@@ -446,7 +459,7 @@ async def test_user_create_human_handle_already_exists(alice_backend_sock, alice
 
 @pytest.mark.trio
 async def test_user_create_human_handle_with_revoked_previous_one(
-    alice_backend_sock, alice, bob, backend_data_binder
+    alice_ws, alice, bob, backend_data_binder
 ):
     # First revoke bob
     await backend_data_binder.bind_revocation(user_id=bob.user_id, certifier=alice)
@@ -478,7 +491,7 @@ async def test_user_create_human_handle_with_revoked_previous_one(
     redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
 
     rep = await user_create(
-        alice_backend_sock,
+        alice_ws,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
@@ -488,7 +501,7 @@ async def test_user_create_human_handle_with_revoked_previous_one(
 
 
 @pytest.mark.trio
-async def test_user_create_not_matching_certified_on(alice_backend_sock, alice, mallory):
+async def test_user_create_not_matching_certified_on(alice_ws, alice, mallory):
     date1 = pendulum.datetime(2000, 1, 1)
     date2 = date1.add(seconds=1)
     user_certificate = UserCertificateContent(
@@ -508,7 +521,7 @@ async def test_user_create_not_matching_certified_on(alice_backend_sock, alice, 
     ).dump_and_sign(alice.signing_key)
     with freeze_time(date1):
         rep = await user_create(
-            alice_backend_sock,
+            alice_ws,
             user_certificate=user_certificate,
             device_certificate=device_certificate,
             redacted_user_certificate=user_certificate,
@@ -521,7 +534,7 @@ async def test_user_create_not_matching_certified_on(alice_backend_sock, alice, 
 
 
 @pytest.mark.trio
-async def test_user_create_certificate_too_old(alice_backend_sock, alice, mallory):
+async def test_user_create_certificate_too_old(alice_ws, alice, mallory):
     too_old = pendulum.datetime(2000, 1, 1)
     now = too_old.add(seconds=INVITATION_VALIDITY + 1)
     user_certificate = UserCertificateContent(
@@ -542,7 +555,7 @@ async def test_user_create_certificate_too_old(alice_backend_sock, alice, mallor
 
     with freeze_time(now):
         rep = await user_create(
-            alice_backend_sock,
+            alice_ws,
             user_certificate=user_certificate,
             device_certificate=device_certificate,
             redacted_user_certificate=user_certificate,
@@ -555,11 +568,11 @@ async def test_user_create_certificate_too_old(alice_backend_sock, alice, mallor
 
 
 @pytest.mark.trio
-async def test_user_create_author_not_admin(backend, bob_backend_sock):
+async def test_user_create_author_not_admin(backend_asgi_app, bob_ws):
     # No need for valid certificate given given access right should be
     # checked before payload deserialization
     rep = await user_create(
-        bob_backend_sock,
+        bob_ws,
         user_certificate=b"<user_certificate>",
         device_certificate=b"<device_certificate>",
         redacted_user_certificate=b"<redacted_user_certificate>",
@@ -569,9 +582,7 @@ async def test_user_create_author_not_admin(backend, bob_backend_sock):
 
 
 @pytest.mark.trio
-async def test_redacted_certificates_cannot_contain_sensitive_data(
-    alice_backend_sock, alice, mallory
-):
+async def test_redacted_certificates_cannot_contain_sensitive_data(alice_ws, alice, mallory):
     now = pendulum.now()
     user_certificate = UserCertificateContent(
         author=alice.device_id,
@@ -598,7 +609,7 @@ async def test_redacted_certificates_cannot_contain_sensitive_data(
 
     with freeze_time(now):
         rep = await user_create(
-            alice_backend_sock,
+            alice_ws,
             user_certificate=user_certificate,
             device_certificate=device_certificate,
             redacted_user_certificate=user_certificate,
@@ -610,7 +621,7 @@ async def test_redacted_certificates_cannot_contain_sensitive_data(
         }
 
         rep = await user_create(
-            alice_backend_sock,
+            alice_ws,
             user_certificate=user_certificate,
             device_certificate=device_certificate,
             redacted_user_certificate=redacted_user_certificate,

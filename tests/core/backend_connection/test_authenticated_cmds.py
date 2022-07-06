@@ -204,6 +204,8 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, frozen_clock, runnin
         backend_received_cmd.set()
         return await vanilla_api_events_listen(client_ctx, msg)
 
+    _mocked_api_events_listen._api_info = vanilla_api_events_listen._api_info
+
     running_backend.backend.apis[ClientType.AUTHENTICATED][
         "events_listen"
     ] = _mocked_api_events_listen
@@ -227,18 +229,12 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, frozen_clock, runnin
             # Now advance time until ping is requested
             await frozen_clock.sleep_with_autojump(KEEPALIVE_TIME + 1)
             async with frozen_clock.real_clock_timeout():
-                backend_transport, event = await next_ping_related_event()
-                assert isinstance(event, Ping)
                 client_transport, event = await next_ping_related_event()
                 assert isinstance(event, Pong)
-                assert client_transport is not backend_transport
 
             # Wait for another ping, just to be sure...
             await frozen_clock.sleep_with_autojump(KEEPALIVE_TIME + 1)
             async with frozen_clock.real_clock_timeout():
-                backend_transport2, event = await next_ping_related_event()
-                assert isinstance(event, Ping)
-                assert backend_transport is backend_transport2
                 client_transport2, event = await next_ping_related_event()
                 assert isinstance(event, Pong)
                 assert client_transport is client_transport2

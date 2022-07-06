@@ -55,6 +55,10 @@ async def test_init_with_backend_online(
             # Backend with API support <2.2, the client should be able to fallback
             return {"status": "unknown_command"}
 
+    _mocked_organization_config._api_info = running_backend.backend.apis[ClientType.AUTHENTICATED][
+        "organization_config"
+    ]._api_info
+
     running_backend.backend.apis[ClientType.AUTHENTICATED][
         "organization_config"
     ] = _mocked_organization_config

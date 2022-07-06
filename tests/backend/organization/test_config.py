@@ -6,8 +6,8 @@ from tests.backend.common import organization_config
 
 
 @pytest.mark.trio
-async def test_organization_config_ok(coolorg, alice_backend_sock, backend):
-    rep = await organization_config(alice_backend_sock)
+async def test_organization_config_ok(coolorg, alice_ws, backend):
+    rep = await organization_config(alice_ws)
     assert rep == {
         "status": "ok",
         "user_profile_outsider_allowed": True,
@@ -17,5 +17,5 @@ async def test_organization_config_ok(coolorg, alice_backend_sock, backend):
     await backend.organization.update(
         id=coolorg.organization_id, user_profile_outsider_allowed=False, active_users_limit=42
     )
-    rep = await organization_config(alice_backend_sock)
+    rep = await organization_config(alice_ws)
     assert rep == {"status": "ok", "user_profile_outsider_allowed": False, "active_users_limit": 42}

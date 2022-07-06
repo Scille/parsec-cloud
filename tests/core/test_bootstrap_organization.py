@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from unittest.mock import AsyncMock
+from quart import Response
 
-from parsec.backend.http import HTTPResponse
+from parsec.serde import packb
 from parsec.api.data import UserProfile, EntryName
 from parsec.api.protocol import OrganizationID, DeviceLabel, HumanHandle
 from parsec.core.types import BackendOrganizationBootstrapAddr
@@ -15,14 +15,9 @@ from parsec.core.fs.storage.user_storage import user_storage_non_speculative_ini
 @pytest.mark.parametrize("with_labels", [False, True])
 @pytest.mark.parametrize("backend_version", ["2.5", "2.6", "latest"])
 async def test_good(
-    running_backend,
-    backend,
-    user_fs_factory,
-    with_labels,
-    data_base_dir,
-    backend_version,
-    monkeypatch,
+    running_backend, backend, user_fs_factory, with_labels, data_base_dir, backend_version
 ):
+
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
     await backend.organization.create(org_id, org_token)
@@ -39,24 +34,26 @@ async def test_good(
         device_label = None
 
     if backend_version == "2.5":
-        _handle_request = AsyncMock(return_value=HTTPResponse.build_msgpack(404, {}))
-        monkeypatch.setattr("parsec.backend.http.HTTPComponent.handle_request", _handle_request)
+
+        def _mock_anonymous_api(*args, **kwargs):
+            return Response(response=packb({}), status=404, content_type="application/msgpack")
+
+        running_backend.asgi_app.view_functions["anonymous_api.anonymous_api"] = _mock_anonymous_api
 
     if backend_version == "2.6":
-        _handle_request = AsyncMock(
-            return_value=HTTPResponse.build_msgpack(200, {"status": "unknown_command"})
-        )
-        monkeypatch.setattr("parsec.backend.http.HTTPComponent.handle_request", _handle_request)
 
-    if backend_version == "latest":
-        _handle_request = None
+        def _mock_anonymous_api(*args, **kwargs):
+            return Response(
+                response=packb({"status": "unknown_command"}),
+                status=200,
+                content_type="application/msgpack",
+            )
+
+        running_backend.asgi_app.view_functions["anonymous_api.anonymous_api"] = _mock_anonymous_api
 
     new_device = await bootstrap_organization(
         organization_addr, human_handle=human_handle, device_label=device_label
     )
-
-    if _handle_request is not None:
-        _handle_request.assert_awaited_once()
 
     assert new_device is not None
     assert new_device.organization_id == org_id

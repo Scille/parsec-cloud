@@ -6,6 +6,8 @@ from pendulum import datetime
 from parsec.api.data import UserProfile
 from parsec.api.protocol import packb, user_get_serializer, UserID
 
+from parsec.backend.asgi import app_factory
+
 from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import user_get
 
@@ -14,7 +16,7 @@ from tests.backend.common import user_get
 async def access_testbed(
     backend_factory,
     backend_data_binder_factory,
-    backend_sock_factory,
+    backend_authenticated_ws_factory,
     organization_factory,
     local_device_factory,
 ):
@@ -25,7 +27,9 @@ async def access_testbed(
         with freeze_time("2000-01-01"):
             await binder.bind_organization(org, device)
 
-        async with backend_sock_factory(backend, device) as sock:
+        backend_asgi_app = app_factory(backend)
+
+        async with backend_authenticated_ws_factory(backend_asgi_app, device) as sock:
             yield binder, org, device, sock
 
 
@@ -46,11 +50,11 @@ async def test_api_user_get_ok(access_testbed):
 @pytest.mark.trio
 @customize_fixtures(bob_profile=UserProfile.OUTSIDER)
 async def test_api_user_get_outsider_get_redacted_certifs(
-    certificates_store, bob_backend_sock, alice, alice2, adam, bob
+    certificates_store, bob_ws, alice, alice2, adam, bob
 ):
     # Backend populates CoolOrg trustchain this way:
     # <root> --> alice@dev1 --> alice@dev2 --> adam@dev1 --> bob@dev1
-    rep = await user_get(bob_backend_sock, bob.user_id)
+    rep = await user_get(bob_ws, bob.user_id)
     cooked_rep = {
         **rep,
         "user_certificate": certificates_store.translate_certif(rep["user_certificate"]),
@@ -150,24 +154,24 @@ async def test_api_user_get_ok_deep_trustchain(
 
 @pytest.mark.parametrize("bad_msg", [{"user_id": 42}, {"user_id": None}, {}])
 @pytest.mark.trio
-async def test_api_user_get_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send(packb({"cmd": "user_get", **bad_msg}))
-    raw_rep = await alice_backend_sock.recv()
+async def test_api_user_get_bad_msg(alice_ws, bad_msg):
+    await alice_ws.send(packb({"cmd": "user_get", **bad_msg}))
+    raw_rep = await alice_ws.receive()
     rep = user_get_serializer.rep_loads(raw_rep)
     assert rep["status"] == "bad_message"
 
 
 @pytest.mark.trio
-async def test_api_user_get_not_found(alice_backend_sock, coolorg):
-    rep = await user_get(alice_backend_sock, UserID("dummy"))
+async def test_api_user_get_not_found(alice_ws, coolorg):
+    rep = await user_get(alice_ws, UserID("dummy"))
     assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
 async def test_api_user_get_other_organization(
-    backend, alice, sock_from_other_organization_factory
+    backend_asgi_app, alice, ws_from_other_organization_factory
 ):
     # Organizations should be isolated
-    async with sock_from_other_organization_factory(backend) as sock:
+    async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await user_get(sock, alice.user_id)
         assert rep == {"status": "not_found"}
