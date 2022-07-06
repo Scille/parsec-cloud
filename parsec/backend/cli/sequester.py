@@ -5,22 +5,23 @@ from async_generator import asynccontextmanager
 import attr
 import click
 import pendulum
-from parsec.api.data.certif import SequesterServiceCertificate
-from parsec.event_bus import EventBus
+from pathlib import Path
+import oscrypto.asymmetric
+from parsec import event_bus
+from parsec.core.cli.utils import F
 
+from parsec.event_bus import EventBus
+from parsec.utils import open_service_nursery, trio_run
+from parsec.sequester_crypto import sequester_authority_sign
+from parsec.sequester_crypto import SequesterEncryptionKeyDer
+from parsec.api.data.certif import SequesterServiceCertificate
 from parsec.api.protocol.sequester import SequesterServiceID
-from parsec.api.protocol.types import OrganizationID
+from parsec.api.protocol.types import OrganizationID, UserID
 from parsec.backend.postgresql.handler import PGHandler
+from parsec.backend.postgresql.factory import components_factory
 from parsec.backend.postgresql.sequester import PGPSequesterComponent
 from parsec.backend.sequester import SequesterService
-from parsec.sequester_crypto import sequester_authority_sign
-from pathlib import Path
-from parsec.sequester_crypto import SequesterEncryptionKeyDer
-
-from parsec.utils import open_service_nursery, trio_run
 from parsec.backend.cli.utils import db_backend_options
-
-import oscrypto.asymmetric
 
 
 class SequesterBackendCliError(Exception):
@@ -145,3 +146,94 @@ def create_service(
 def list_services(organization: str, db: str, db_max_connections: int, db_min_connections: int):
     db_config = _get_config(db, db_min_connections, db_max_connections)
     trio_run(_list_services, db_config, organization, use_asyncio=True)
+
+
+async def _human_accesses(config: BackendDbConfig, organization: OrganizationID, query: str):
+    user_component: PGUserComponent
+    realm_component: PGRealmComponent
+    sequester_component: PGPSequesterComponent
+
+    humans_per_user = await user_component.find_humans(
+        organization_id=organization,
+        query=query,
+        per_page=-1,
+    )
+
+    user_cache = {}
+    async def _get_user(user_id: UserID) -> User:
+        try:
+            return user_cache[user_id]
+        except KeyError:
+            pass
+        user = await user_component.get_user(organization=organization, user_id=user_id)
+        user_cache[user_id] = user
+        return user
+
+    humans = {}
+    for human in humans_per_user:
+        human_str = str(human.human_handle or human.user_id)
+        users = humans.setdefault(human_str, [])
+        users.append(human.user_id)
+
+    # Typicall output to dislay:
+    # 
+    # Found 2 results:
+    # Human John Doe <john.doe@example.com>
+    # 
+    #   User 9e082a43b51e44ab9858628bac4a61d9 (created on: 2000-01-02T00:00:00Z)
+    # 
+    #     Realm 8006a491f0704040ae9a197ca7501f71
+    #       2000-01-04T00:00:00Z: Got MANAGER access
+    #       2000-01-03T00:00:00Z: Access removed
+    #       2000-01-02T00:00:00Z: Got READER access
+    # 
+    #     Realm 109c48b7c931435c913945f08d23432d
+    #       2000-01-01T00:00:00Z: Got OWNER access
+    # 
+    #   User 02e0486752d34d6ab3bf8e0befef1935 (created on: 2000-01-01T00:00:00Z, revoked on: 2000-01-02T00:00:00Z)
+    # 
+    # Human Jane Doe <jane.doe@example.com>
+    # 
+    #   User baf59386baf740bba93151cdde1beac8 (created on: 2000-01-01T00:00:00Z):
+    # 
+    #     Realm 8006a491f0704040ae9a197ca7501f71
+    #       2000-01-01T00:00:00Z: Got OWNER access
+
+
+    print(f"Found {len(humans)} result(s)")
+    for human_str, user_ids in humans.items():
+        display_human = click.style(human_str, fg="green")
+        print(f"Human {display_human}")
+
+        users = []
+        for user_id in user_ids:
+            user = await _get_user(user_id)
+            users.append(user)
+        user = sorted(user, key=lambda u: u.created_on, reverse=True)
+
+        per_realm = {}
+        for (granted_on, realm_id, granted_by, role) in await realm_component.get_realms_history_for_user(organization_id=organization, user_id=human.user_id):
+            realm_items = per_realm.setdefault(realm_id, [])
+            realm_items.append((granted_on, granted_by, role))
+
+        for realm_id, realm_items in per_realm.items():
+            display_realm = click.style(str(realm_id), fg="yellow")
+            print(f"\tRealm {display_realm}")
+            for (granted_on, granted_by, role) in sorted(realm_items):
+                if role is None:
+                    display_role = "Access removed"
+                else:
+                    display_role = f"Got {role} access"
+                print(f"\t\t{granted_on}: {display_role}")
+
+
+    res = await sequester_component.human_accesses(organization, query)
+
+
+@click.command()
+@click.argument("query", type=str)
+@click.option("--organization", type=OrganizationID, help="Organization ID")
+@db_backend_options
+def human_accesses(organization: str, db: str, db_max_connections: int, db_min_connections: int):
+    db_config = _get_config(db, db_min_connections, db_max_connections)
+    trio_run(_human_accesses, db_config, organization, query, use_asyncio=True)

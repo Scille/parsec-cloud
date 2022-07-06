@@ -126,4 +126,23 @@ class BackendConfig:
             return "MOCKED"
         else:
             return "POSTGRESQL"
-        return self._db_type
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class BackendConfigForInteractiveUse(BackendConfig):
+    @property
+    def administration_token(self) -> str:
+        raise RuntimeError("Not available for interactive use")
+
+    email_config: Union[SmtpEmailConfig, MockedEmailConfig]
+    ssl_context: bool
+    forward_proto_enforce_https: Optional[Tuple[bytes, bytes]]
+    backend_addr: Optional[BackendAddr]
+
+    debug: bool
+
+    organization_bootstrap_webhook_url: Optional[str] = None
+    organization_spontaneous_bootstrap: bool = False
+    organization_initial_active_users_limit: Optional[int] = None
+    organization_initial_user_profile_outsider_allowed: bool = True
+
