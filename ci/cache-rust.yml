@@ -1,0 +1,63 @@
+parameters:
+  - name: cargo_home_dir
+    type: string
+    default: $(HOME)/.cargo
+
+  - name: cargo_target_dir
+    type: string
+    default: $(Build.SourcesDirectory)/target
+
+  - name: cache_version
+    type: number
+    default: 1
+
+  - name: cache_target_dir
+    type: boolean
+    default: true
+
+  - name: cache_git_database
+    type: boolean
+    default: true
+
+steps:
+  - task: Cache@2
+    condition: eq('${{ parameters.cache_target_dir }}', 'true')
+    inputs:
+      key: '"cargo-target" | "${{ parameters.cache_version }}" | "$(Agent.OS)" | Cargo.lock'
+      restoreKeys: |
+        cargo-target | "${{ parameters.cache_version }}" | "$(Agent.OS)"
+        cargo-target | "${{ parameters.cache_version }}"
+        cargo-target
+      path: ${{ parameters.cargo_target_dir }}
+    displayName: Cache cargo target
+
+  - task: Cache@2
+    condition: eq('${{ parameters.cache_git_database }}', 'true')
+    inputs:
+      key: '"cargo-git" | "${{ parameters.cache_version }}" | "$(Agent.OS)" | Cargo.lock'
+      restoreKeys: |
+        cargo-git | "${{ parameters.cache_version }}" | "$(Agent.OS)"
+        cargo-git | "${{ parameters.cache_version }}"
+        cargo-git
+      path: ${{ parameters.cargo_home_dir }}/git/db
+    displayName: Cache cargo git database
+
+  - task: Cache@2
+    inputs:
+      key: '"cargo-registry-index" | "${{ parameters.cache_version }}" | "$(Agent.OS)" | Cargo.lock'
+      restoreKeys: |
+        cargo-registry-index | "${{ parameters.cache_version }}" | "$(Agent.OS)"
+        cargo-registry-index | "${{ parameters.cache_version }}"
+        cargo-registry-index
+      path: ${{ parameters.cargo_home_dir }}/registry/index
+    displayName: Cache cargo index registry
+
+  - task: Cache@2
+    inputs:
+      key: '"cargo-registry-cache" | "${{ parameters.cache_version }}" | "$(Agent.OS)" | Cargo.lock'
+      restoreKeys: |
+        cargo-registry-cache | "${{ parameters.cache_version }}" | "$(Agent.OS)"
+        cargo-registry-cache | "${{ parameters.cache_version }}"
+        cargo-registry-cache
+      path: ${{ parameters.cargo_home_dir }}/registry/cache
+    displayName: Cache cargo cache registry

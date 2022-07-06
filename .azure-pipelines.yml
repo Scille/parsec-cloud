@@ -112,6 +112,10 @@ jobs:
           rustup component add rustfmt clippy
         displayName: Bootstrap
 
+      - template: ci/cache-rust.yml
+        parameters:
+          cache_git_database: false
+
       - bash: |
           sed -i '/id: mixed-line-ending/a\        args:\n\          - "--fix=lf"' .pre-commit-config.yaml
           cat .pre-commit-config.yaml
@@ -216,6 +220,10 @@ jobs:
       - bash: pre-commit run --all-files --show-diff-on-failure
         displayName: Pre-commit hooks check
 
+      - bash: ls -la ./{.target,oxidation} $(HOME)/.cargo/{git,registry} || true
+        workingDirectory: $(Build.SourcesDirectory)
+        displayName: Inspect Cargo directory
+
 
   - job: s1_oxidation
     displayName: Rust Oxidation
@@ -226,11 +234,14 @@ jobs:
     steps:
       - checkout: self
         submodules: true
+
       - download: current
         artifact: wheel
+
       - task: UsePythonVersion@0
         inputs:
           versionSpec: $(python.version)
+
       - bash: |
           set -eux
           sudo apt-get update
@@ -242,6 +253,11 @@ jobs:
           python -m pip install 'pip>=21.3' --user --upgrade
           python -m pip --version
         displayName: Bootstrap
+
+      - template: ci/cache-rust.yml
+        parameters:
+          cache_git_database: false
+
       - bash: |
           set -eux
 
@@ -252,6 +268,7 @@ jobs:
           cargo test --workspace --features mock-time
         workingDirectory: $(Build.SourcesDirectory)/oxidation
         displayName: Rust Tests
+
       - bash: |
           set -eux
           # Remove the parsec folder from the source to force use of the wheel
@@ -267,11 +284,15 @@ jobs:
           python -m pip check parsec[core,backend]
           python -m pip check libparsec_python
         displayName: Install
+
       - bash: |
           set -eux
           python -m pytest $(pytest.base_args) tests -n auto --runrust
         displayName: Python Tests
 
+      - bash: ls -la ./{.target,oxidation} $(HOME)/.cargo/{git,registry} || true
+        workingDirectory: $(Build.SourcesDirectory)
+        displayName: Inspect Cargo directory
 
   - job: s1_linux_test
     displayName: Linux tests
@@ -301,6 +322,7 @@ jobs:
             desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
           psql --version
         displayName: Bootstrap
+
       - bash: |
           set -eux
           # Remove the parsec folder from the source to force use of the wheel
