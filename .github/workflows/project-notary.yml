@@ -1,0 +1,18 @@
+# Add new issue & pull request to a project.
+name: project-notary
+
+on:
+  workflow_dispatch:
+
+env:
+  project-id: scille/2
+
+jobs:
+  add-issue-to-project:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Debug Github Cli version
+        run: gh --version
+
+      - name: List issue with the wrong/missing project
+        run: gh issue list --json id,title,number --search project:"${{ env.project-id }}" > issue_wrong_project.json
