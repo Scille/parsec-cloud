@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use pyo3::prelude::*;
 use pyo3::types::{PyList, PySet, PyTuple};
 
-use libparsec_core_fs::file_operations;
+use libparsec::core_fs::file_operations;
 
 use crate::binding_utils::py_to_rs_datetime;
 use crate::ids::ChunkID;

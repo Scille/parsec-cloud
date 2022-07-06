@@ -11,3 +11,4 @@ pub use api_protocol;
 pub use api_types;
 pub use client_types;
 pub use core;
+pub use core_fs;

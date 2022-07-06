@@ -1,5 +1,5 @@
 [package]
-name = "libparsec_core_fs"
+name = "core_fs"
 version = "0.0.0"
 edition = "2021"
 license = " BUSL-1.1"

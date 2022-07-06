@@ -14,6 +14,7 @@ api_protocol = { path = "crates/api_protocol" }
 api_types = { path = "crates/api_types" }
 client_types = { path = "crates/client_types" }
 core = { path = "crates/core" }
+core_fs = { path = "crates/core_fs" }
 
 [features]
 mock-time = ["api_types/mock-time"]
