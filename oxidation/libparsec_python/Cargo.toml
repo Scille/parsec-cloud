@@ -14,7 +14,6 @@ crate-type = ["cdylib"]
 [dependencies]
 libparsec = { version = "0.1.0", path = "../libparsec" }
 # Temporary dependencies
-parsec_api_crypto = { path = "../crates/parsec_api_crypto" }
 parsec_api_protocol = { path = "../crates/parsec_api_protocol" }
 parsec_api_types = { path = "../crates/parsec_api_types", features = ["mock-time"] }
 parsec_client_types = { path = "../crates/parsec_client_types" }

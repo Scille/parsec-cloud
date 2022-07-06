@@ -843,7 +843,7 @@ version = "0.1.0"
 dependencies = [
  "libparsec_platform_native",
  "libparsec_platform_web",
- "parsec_api_crypto",
+ "api_crypto",
  "parsec_api_types",
 ]
 
@@ -870,7 +870,7 @@ dependencies = [
  "chrono",
  "fancy-regex",
  "libparsec",
- "parsec_api_crypto",
+ "api_crypto",
  "parsec_api_protocol",
  "parsec_api_types",
  "parsec_client_types",
@@ -1014,7 +1014,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "parsec_api_crypto"
+name = "api_crypto"
 version = "0.0.0"
 dependencies = [
  "blake2",
@@ -1045,7 +1045,7 @@ dependencies = [
  "dotenv",
  "futures",
  "http",
- "parsec_api_crypto",
+ "api_crypto",
  "parsec_api_types",
  "parsec_serialization_format",
  "paste",
@@ -1067,7 +1067,7 @@ dependencies = [
  "fancy-regex",
  "flate2",
  "lazy_static",
- "parsec_api_crypto",
+ "api_crypto",
  "parsec_serialization_format",
  "paste",
  "percent-encoding",
@@ -1089,7 +1089,7 @@ version = "0.0.0"
 dependencies = [
  "fancy-regex",
  "flate2",
- "parsec_api_crypto",
+ "api_crypto",
  "parsec_api_types",
  "parsec_serialization_format",
  "paste",
@@ -1105,7 +1105,7 @@ dependencies = [
 name = "parsec_core"
 version = "0.0.0"
 dependencies = [
- "parsec_api_crypto",
+ "api_crypto",
  "parsec_api_protocol",
  "parsec_api_types",
  "thiserror",

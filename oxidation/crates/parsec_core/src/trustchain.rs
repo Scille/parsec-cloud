@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use crate::{build_signature_path, TrustchainError, TrustchainResult};
-use parsec_api_crypto::VerifyKey;
+use api_crypto::VerifyKey;
 use parsec_api_protocol::authenticated_cmds::user_get::Trustchain;
 use parsec_api_types::{
     CertificateSignerOwned, CertificateSignerRef, DateTime, DeviceCertificate, DeviceID,

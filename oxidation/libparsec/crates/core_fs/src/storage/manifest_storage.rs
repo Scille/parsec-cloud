@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use api_crypto::{CryptoError, SecretKey};
 use diesel::{
     sql_query, table, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl,
     RunQueryDsl,
 };
 use fancy_regex::Regex;
-use parsec_api_crypto::{CryptoError, SecretKey};
 use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
@@ -567,7 +567,7 @@ impl ManifestStorage {
 
 #[cfg(test)]
 mod tests {
-    use parsec_api_crypto::HashDigest;
+    use api_crypto::HashDigest;
     use parsec_api_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
     use parsec_client_types::{Chunk, LocalFileManifest};
 

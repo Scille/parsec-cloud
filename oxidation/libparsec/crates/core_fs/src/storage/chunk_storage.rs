@@ -4,7 +4,7 @@ use diesel::dsl::count_star;
 use diesel::{sql_query, table, AsChangeset, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
 use std::sync::Mutex;
 
-use parsec_api_crypto::SecretKey;
+use api_crypto::SecretKey;
 use parsec_api_types::{ChunkID, DateTime, DEFAULT_BLOCK_SIZE};
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};

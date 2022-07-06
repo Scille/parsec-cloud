@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::io::{Read, Write};
 
-use parsec_api_crypto::{PublicKey, SigningKey, VerifyKey};
+use api_crypto::{PublicKey, SigningKey, VerifyKey};
 
 use crate as parsec_api_types;
 use crate::data_macros::impl_transparent_data_format_conversion;

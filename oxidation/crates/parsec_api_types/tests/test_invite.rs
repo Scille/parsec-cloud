@@ -3,7 +3,7 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use parsec_api_crypto::*;
+use api_crypto::*;
 use parsec_api_types::*;
 
 use tests_fixtures::{bob, Device};

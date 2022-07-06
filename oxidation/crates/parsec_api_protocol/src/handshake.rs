@@ -2,7 +2,7 @@
 
 use std::cmp::Ordering;
 
-use parsec_api_crypto::{SigningKey, VerifyKey};
+use api_crypto::{SigningKey, VerifyKey};
 use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, Bytes};

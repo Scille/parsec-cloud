@@ -6,7 +6,7 @@ use rstest::rstest;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
-use parsec_api_crypto::*;
+use api_crypto::*;
 use parsec_api_types::*;
 use parsec_client_types::*;
 

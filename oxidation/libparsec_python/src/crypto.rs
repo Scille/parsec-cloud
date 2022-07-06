@@ -10,13 +10,13 @@ import_exception!(nacl.exceptions, CryptoError);
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct HashDigest(pub parsec_api_crypto::HashDigest);
+pub(crate) struct HashDigest(pub libparsec::api_crypto::HashDigest);
 
 #[pymethods]
 impl HashDigest {
     #[new]
     fn new(hash: &[u8]) -> PyResult<Self> {
-        match parsec_api_crypto::HashDigest::try_from(hash) {
+        match libparsec::api_crypto::HashDigest::try_from(hash) {
             Ok(h) => Ok(Self(h)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
@@ -31,7 +31,7 @@ impl HashDigest {
             Ok(x) => unsafe { x.as_bytes() },
             Err(_) => data.extract::<&PyBytes>(py)?.as_bytes(),
         };
-        Ok(Self(parsec_api_crypto::HashDigest::from_data(bytes)))
+        Ok(Self(libparsec::api_crypto::HashDigest::from_data(bytes)))
     }
 
     #[getter]
@@ -58,13 +58,13 @@ impl HashDigest {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct SigningKey(pub parsec_api_crypto::SigningKey);
+pub(crate) struct SigningKey(pub libparsec::api_crypto::SigningKey);
 
 #[pymethods]
 impl SigningKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        match parsec_api_crypto::SigningKey::try_from(data) {
+        match libparsec::api_crypto::SigningKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
@@ -77,7 +77,7 @@ impl SigningKey {
 
     #[classmethod]
     fn generate(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(parsec_api_crypto::SigningKey::generate()))
+        Ok(Self(libparsec::api_crypto::SigningKey::generate()))
     }
 
     fn sign<'p>(&self, py: Python<'p>, data: &[u8]) -> PyResult<&'p PyBytes> {
@@ -103,13 +103,13 @@ impl SigningKey {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct VerifyKey(pub parsec_api_crypto::VerifyKey);
+pub(crate) struct VerifyKey(pub libparsec::api_crypto::VerifyKey);
 
 #[pymethods]
 impl VerifyKey {
     #[new]
     pub fn new(data: &[u8]) -> PyResult<Self> {
-        match parsec_api_crypto::VerifyKey::try_from(data) {
+        match libparsec::api_crypto::VerifyKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
@@ -128,7 +128,7 @@ impl VerifyKey {
         py: Python<'p>,
         signed: &[u8],
     ) -> PyResult<Option<&'p PyBytes>> {
-        match parsec_api_crypto::VerifyKey::unsecure_unwrap(signed) {
+        match libparsec::api_crypto::VerifyKey::unsecure_unwrap(signed) {
             Some(v) => Ok(Some(PyBytes::new(py, v))),
             None => Ok(Some(PyBytes::new(py, &[]))),
         }
@@ -157,13 +157,13 @@ impl VerifyKey {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub struct SecretKey(pub parsec_api_crypto::SecretKey);
+pub struct SecretKey(pub libparsec::api_crypto::SecretKey);
 
 #[pymethods]
 impl SecretKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        match parsec_api_crypto::SecretKey::try_from(data) {
+        match libparsec::api_crypto::SecretKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
@@ -171,7 +171,7 @@ impl SecretKey {
 
     #[classmethod]
     fn generate(_cls: &PyType) -> PyResult<SecretKey> {
-        Ok(SecretKey(parsec_api_crypto::SecretKey::generate()))
+        Ok(SecretKey(libparsec::api_crypto::SecretKey::generate()))
     }
 
     #[getter]
@@ -221,13 +221,13 @@ impl SecretKey {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct PrivateKey(pub parsec_api_crypto::PrivateKey);
+pub(crate) struct PrivateKey(pub libparsec::api_crypto::PrivateKey);
 
 #[pymethods]
 impl PrivateKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        match parsec_api_crypto::PrivateKey::try_from(data) {
+        match libparsec::api_crypto::PrivateKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
@@ -235,12 +235,12 @@ impl PrivateKey {
 
     #[classmethod]
     fn generate(_cls: &PyType) -> PyResult<PrivateKey> {
-        Ok(PrivateKey(parsec_api_crypto::PrivateKey::generate()))
+        Ok(PrivateKey(libparsec::api_crypto::PrivateKey::generate()))
     }
 
     #[getter]
     fn public_key(&self) -> PublicKey {
-        PublicKey(parsec_api_crypto::PrivateKey::public_key(&self.0))
+        PublicKey(libparsec::api_crypto::PrivateKey::public_key(&self.0))
     }
 
     fn decrypt_from_self<'p>(&self, py: Python<'p>, ciphered: &[u8]) -> PyResult<&'p PyBytes> {
@@ -269,13 +269,13 @@ impl PrivateKey {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct PublicKey(pub parsec_api_crypto::PublicKey);
+pub(crate) struct PublicKey(pub libparsec::api_crypto::PublicKey);
 
 #[pymethods]
 impl PublicKey {
     #[new]
     fn new(data: &[u8]) -> PyResult<Self> {
-        match parsec_api_crypto::PublicKey::try_from(data) {
+        match libparsec::api_crypto::PublicKey::try_from(data) {
             Ok(h) => Ok(Self(h)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
         }

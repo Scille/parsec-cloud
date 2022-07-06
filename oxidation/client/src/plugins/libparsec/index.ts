@@ -52,7 +52,6 @@ class LibParsec {
     const ret = await libparsecPlugin.submitJob({cmd: 'decrypt', payload: `${key}:${cyphertext}`});
     return ret.value;
   }
-
 }
 
 const libparsec = LibParsec.getInstance();

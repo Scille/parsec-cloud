@@ -10,7 +10,7 @@ use std::num::NonZeroU64;
 use std::ops::Deref;
 use unicode_normalization::UnicodeNormalization;
 
-use parsec_api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
+use api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::ext_types::new_uuid_type;
