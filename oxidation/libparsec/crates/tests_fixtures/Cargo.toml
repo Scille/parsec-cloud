@@ -1,0 +1,15 @@
+[package]
+name = "tests_fixtures"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+api_crypto = { path = "../api_crypto" }
+api_protocol = { path = "../api_protocol" }
+api_types = { path = "../api_types" }
+client_types = { path = "../client_types" }
+
+rstest = "0.13.0"
+hex-literal = "0.3.3"
+chrono = "0.4.19"
+uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }

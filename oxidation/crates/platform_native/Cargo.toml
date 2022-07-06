@@ -16,7 +16,7 @@ async-std = "1.12.0"
 async-tungstenite = { version = "0.17.1", features = ["async-std-runtime"] }
 
 [dev-dependencies]
-tests_fixtures = { path = "../tests_fixtures" }
+tests_fixtures = { path = "../../libparsec/crates/tests_fixtures" }
 api_protocol = { path = "../../libparsec/crates/api_protocol" }
 api_types = { path = "../../libparsec/crates/api_types" }
 

@@ -38,7 +38,7 @@ rand = "0.8.4"
 thiserror = "1.0.30"
 
 [dev-dependencies]
-tests_fixtures = { path = "../../../crates/tests_fixtures" }
+tests_fixtures = { path = "../tests_fixtures" }
 pretty_assertions = "1.0.0"
 serde_test = "1.0.138"
 hex-literal = "0.3.3"
