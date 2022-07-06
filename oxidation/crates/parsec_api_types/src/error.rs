@@ -3,7 +3,7 @@
 use thiserror::Error;
 
 use crate::{DateTime, DeviceID};
-use parsec_api_crypto::CryptoError;
+use api_crypto::CryptoError;
 
 #[derive(Error, Debug)]
 pub enum EntryNameError {

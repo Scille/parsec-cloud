@@ -4,7 +4,7 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
-parsec_api_crypto = { path = "../parsec_api_crypto" }
+api_crypto = { path = "../../libparsec/crates/api_crypto" }
 parsec_api_protocol = { path = "../parsec_api_protocol" }
 parsec_api_types = { path = "../parsec_api_types" }
 parsec_client_types = { path = "../parsec_client_types" }

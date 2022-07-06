@@ -9,7 +9,7 @@ use rstest::fixture;
 use std::path::PathBuf;
 use uuid::Uuid;
 
-use parsec_api_crypto::*;
+use api_crypto::*;
 use parsec_api_types::*;
 use parsec_client_types::*;
 

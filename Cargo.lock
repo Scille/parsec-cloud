@@ -55,6 +55,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "api_crypto"
+version = "0.0.0"
+dependencies = [
+ "blake2",
+ "crypto_box",
+ "digest 0.10.3",
+ "ed25519-dalek",
+ "generic-array",
+ "getrandom 0.1.16",
+ "getrandom 0.2.6",
+ "hex",
+ "hex-literal",
+ "libsodium-sys",
+ "paste",
+ "pretty_assertions",
+ "rand 0.7.3",
+ "rand 0.8.5",
+ "rmp-serde",
+ "serde",
+ "serde_bytes",
+ "serde_test",
+ "sha2 0.10.2",
+ "sodiumoxide",
+ "thiserror",
+ "x25519-dalek",
+ "xsalsa20poly1305",
+]
+
+[[package]]
 name = "async-attributes"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1033,9 +1062,9 @@ dependencies = [
 name = "libparsec"
 version = "0.1.0"
 dependencies = [
+ "api_crypto",
  "libparsec_platform_native",
  "libparsec_platform_web",
- "parsec_api_crypto",
  "parsec_api_types",
 ]
 
@@ -1103,9 +1132,9 @@ dependencies = [
 name = "libparsec_core_fs"
 version = "0.0.0"
 dependencies = [
+ "api_crypto",
  "diesel",
  "fancy-regex",
- "parsec_api_crypto",
  "parsec_api_types",
  "parsec_client_types",
  "rstest 0.12.0",
@@ -1142,7 +1171,6 @@ dependencies = [
  "fancy-regex",
  "libparsec",
  "libparsec_core_fs",
- "parsec_api_crypto",
  "parsec_api_protocol",
  "parsec_api_types",
  "parsec_client_types",
@@ -1418,45 +1446,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "parsec_api_crypto"
-version = "0.0.0"
-dependencies = [
- "blake2",
- "crypto_box",
- "digest 0.10.3",
- "ed25519-dalek",
- "generic-array",
- "getrandom 0.1.16",
- "getrandom 0.2.6",
- "hex",
- "hex-literal",
- "libsodium-sys",
- "paste",
- "pretty_assertions",
- "rand 0.7.3",
- "rand 0.8.5",
- "rmp-serde",
- "serde",
- "serde_bytes",
- "serde_test",
- "sha2 0.10.2",
- "sodiumoxide",
- "thiserror",
- "x25519-dalek",
- "xsalsa20poly1305",
-]
-
-[[package]]
 name = "parsec_api_protocol"
 version = "0.0.0"
 dependencies = [
+ "api_crypto",
  "async-std",
  "async-tungstenite",
  "dotenv",
  "futures",
  "hex-literal",
  "http",
- "parsec_api_crypto",
  "parsec_api_types",
  "parsec_serialization_format",
  "paste",
@@ -1475,13 +1474,13 @@ dependencies = [
 name = "parsec_api_types"
 version = "0.0.0"
 dependencies = [
+ "api_crypto",
  "chrono",
  "data-encoding",
  "fancy-regex",
  "flate2",
  "hex-literal",
  "lazy_static",
- "parsec_api_crypto",
  "parsec_serialization_format",
  "paste",
  "percent-encoding",
@@ -1507,10 +1506,10 @@ dependencies = [
 name = "parsec_client_types"
 version = "0.0.0"
 dependencies = [
+ "api_crypto",
  "fancy-regex",
  "flate2",
  "hex-literal",
- "parsec_api_crypto",
  "parsec_api_types",
  "parsec_serialization_format",
  "paste",
@@ -1531,8 +1530,8 @@ dependencies = [
 name = "parsec_core"
 version = "0.0.0"
 dependencies = [
+ "api_crypto",
  "chrono",
- "parsec_api_crypto",
  "parsec_api_protocol",
  "parsec_api_types",
  "rstest 0.13.0",
@@ -2281,9 +2280,9 @@ checksum = "d7fa7e55043acb85fca6b3c01485a2eeb6b69c5d21002e273c79e465f43b7ac1"
 name = "tests_fixtures"
 version = "0.0.0"
 dependencies = [
+ "api_crypto",
  "chrono",
  "hex-literal",
- "parsec_api_crypto",
  "parsec_api_protocol",
  "parsec_api_types",
  "parsec_client_types",

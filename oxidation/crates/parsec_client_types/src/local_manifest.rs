@@ -9,7 +9,7 @@ use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
-use parsec_api_crypto::{HashDigest, SecretKey};
+use api_crypto::{HashDigest, SecretKey};
 use parsec_api_types::*;
 
 use crate as parsec_client_types;

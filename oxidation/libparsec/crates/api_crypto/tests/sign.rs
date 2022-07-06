@@ -5,7 +5,7 @@ use pretty_assertions::assert_eq;
 use serde_test::{assert_tokens, Token};
 use std::convert::TryFrom;
 
-use parsec_api_crypto::{SigningKey, VerifyKey};
+use api_crypto::{SigningKey, VerifyKey};
 
 #[macro_use]
 mod common;

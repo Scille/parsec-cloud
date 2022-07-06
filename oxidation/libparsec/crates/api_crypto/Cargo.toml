@@ -1,5 +1,5 @@
 [package]
-name = "parsec_api_crypto"
+name = "api_crypto"
 version = "0.0.0"
 edition = "2021"
 license = " BUSL-1.1"

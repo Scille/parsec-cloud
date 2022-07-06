@@ -3,7 +3,7 @@
 use hex_literal::hex;
 use rstest::rstest;
 
-use parsec_api_crypto::{HashDigest, PublicKey};
+use api_crypto::{HashDigest, PublicKey};
 use parsec_api_protocol::*;
 use parsec_api_types::{HumanHandle, InvitationStatus, Maybe};
 

@@ -3,7 +3,7 @@
 use thiserror::Error;
 use uuid::Uuid;
 
-use parsec_api_crypto::CryptoError;
+use api_crypto::CryptoError;
 use parsec_api_types::{EntryID, FileDescriptor};
 
 #[derive(Error, Debug, PartialEq)]
