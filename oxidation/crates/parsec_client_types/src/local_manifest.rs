@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use fancy_regex::Regex;
-use parsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::cmp::Ordering;
@@ -11,6 +10,7 @@ use std::num::NonZeroU64;
 
 use api_crypto::{HashDigest, SecretKey};
 use parsec_api_types::*;
+use serialization_format::parsec_data;
 
 use crate as parsec_client_types;
 

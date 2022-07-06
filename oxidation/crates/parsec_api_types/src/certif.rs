@@ -2,12 +2,12 @@
 
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
-use parsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::io::{Read, Write};
 
 use api_crypto::{PublicKey, SigningKey, VerifyKey};
+use serialization_format::parsec_data;
 
 use crate as parsec_api_types;
 use crate::data_macros::impl_transparent_data_format_conversion;

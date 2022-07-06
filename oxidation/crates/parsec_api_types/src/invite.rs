@@ -8,7 +8,7 @@ use serde_with::*;
 use std::str::FromStr;
 
 use api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
-use parsec_serialization_format::parsec_data;
+use serialization_format::parsec_data;
 
 use crate as parsec_api_types;
 use crate::data_macros::impl_transparent_data_format_conversion;

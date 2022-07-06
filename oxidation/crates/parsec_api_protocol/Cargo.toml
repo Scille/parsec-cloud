@@ -14,7 +14,7 @@ path = "tests/mod.rs"
 [dependencies]
 api_crypto = { path = "../../libparsec/crates/api_crypto" }
 parsec_api_types = { path = "../parsec_api_types" }
-parsec_serialization_format = { path = "../parsec_serialization_format" }
+serialization_format = { path = "../../libparsec/crates/serialization_format" }
 
 paste = "1.0.5"
 rand = "0.8.5"

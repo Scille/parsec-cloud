@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
-use parsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use std::collections::HashMap;
@@ -11,6 +10,7 @@ use std::ops::Deref;
 use unicode_normalization::UnicodeNormalization;
 
 use api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
+use serialization_format::parsec_data;
 
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::ext_types::new_uuid_type;

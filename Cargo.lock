@@ -1457,7 +1457,6 @@ dependencies = [
  "hex-literal",
  "http",
  "parsec_api_types",
- "parsec_serialization_format",
  "paste",
  "rand 0.8.5",
  "rmp-serde",
@@ -1465,6 +1464,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
+ "serialization_format",
  "smol",
  "tests_fixtures",
  "thiserror",
@@ -1481,7 +1481,6 @@ dependencies = [
  "flate2",
  "hex-literal",
  "lazy_static",
- "parsec_serialization_format",
  "paste",
  "percent-encoding",
  "pretty_assertions",
@@ -1495,6 +1494,7 @@ dependencies = [
  "serde_repr",
  "serde_test",
  "serde_with",
+ "serialization_format",
  "tests_fixtures",
  "thiserror",
  "unicode-normalization",
@@ -1511,7 +1511,6 @@ dependencies = [
  "flate2",
  "hex-literal",
  "parsec_api_types",
- "parsec_serialization_format",
  "paste",
  "pretty_assertions",
  "rmp-serde",
@@ -1522,6 +1521,7 @@ dependencies = [
  "serde_repr",
  "serde_test",
  "serde_with",
+ "serialization_format",
  "sha2 0.10.2",
  "tests_fixtures",
 ]
@@ -1537,16 +1537,6 @@ dependencies = [
  "rstest 0.13.0",
  "tests_fixtures",
  "thiserror",
-]
-
-[[package]]
-name = "parsec_serialization_format"
-version = "0.0.0"
-dependencies = [
- "miniserde",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -2075,6 +2065,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e182d6ec6f05393cc0e5ed1bf81ad6db3a8feedf8ee515ecdd369809bcce8082"
 dependencies = [
  "darling",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "serialization_format"
+version = "0.0.0"
+dependencies = [
+ "miniserde",
  "proc-macro2",
  "quote",
  "syn",

@@ -3,7 +3,7 @@
 mod error;
 mod handshake;
 
-use parsec_serialization_format::parsec_cmds;
+use serialization_format::parsec_cmds;
 
 pub use error::*;
 pub use handshake::*;
