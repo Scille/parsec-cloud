@@ -17,7 +17,7 @@ parsec_api_types = { path = "../parsec_api_types" }
 parsec_serialization_format = { path = "../parsec_serialization_format" }
 
 flate2 = "1.0.24"
-serde = { version = "1.0.127", features = ["derive"] }
+serde = { version = "1.0.138", features = ["derive"] }
 serde_with = "1.14.0"
 serde_repr = "0.1.7"
 rmp-serde = "1.0.0"
