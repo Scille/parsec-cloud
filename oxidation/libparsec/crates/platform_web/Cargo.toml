@@ -1,5 +1,5 @@
 [package]
-name = "platform_web"
+name = "libparsec_platform_web"
 version = "0.0.0"
 edition = "2021"
 

@@ -16,7 +16,7 @@ use std::future::Future;
 /// # Examples
 ///
 /// ```
-/// use platform_async::JoinSet;
+/// use libparsec_platform_async::JoinSet;
 ///
 /// # #[tokio::main]
 /// # async fn main() {

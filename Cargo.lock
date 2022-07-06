@@ -1037,11 +1037,11 @@ dependencies = [
  "libparsec_core",
  "libparsec_core_fs",
  "libparsec_crypto",
+ "libparsec_platform_async",
+ "libparsec_platform_native",
+ "libparsec_platform_web",
  "libparsec_protocol",
  "libparsec_types",
- "platform_async",
- "platform_native",
- "platform_web",
 ]
 
 [[package]]
@@ -1166,6 +1166,44 @@ dependencies = [
  "x25519-dalek",
  "xsalsa20poly1305",
 ]
+
+[[package]]
+name = "libparsec_platform_async"
+version = "0.1.0"
+dependencies = [
+ "console_log",
+ "flume",
+ "futures",
+ "futures-lite",
+ "js-sys",
+ "log",
+ "simple_logger",
+ "tokio",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-bindgen-test",
+ "web-sys",
+]
+
+[[package]]
+name = "libparsec_platform_native"
+version = "0.0.0"
+dependencies = [
+ "async-std",
+ "async-tungstenite",
+ "dotenv",
+ "futures",
+ "http",
+ "libparsec_protocol",
+ "libparsec_types",
+ "rstest 0.13.0",
+ "smol",
+ "tests_fixtures",
+]
+
+[[package]]
+name = "libparsec_platform_web"
+version = "0.0.0"
 
 [[package]]
 name = "libparsec_protocol"
@@ -1550,44 +1588,6 @@ name = "pkg-config"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
-
-[[package]]
-name = "platform_async"
-version = "0.1.0"
-dependencies = [
- "console_log",
- "flume",
- "futures",
- "futures-lite",
- "js-sys",
- "log",
- "simple_logger",
- "tokio",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wasm-bindgen-test",
- "web-sys",
-]
-
-[[package]]
-name = "platform_native"
-version = "0.0.0"
-dependencies = [
- "async-std",
- "async-tungstenite",
- "dotenv",
- "futures",
- "http",
- "libparsec_protocol",
- "libparsec_types",
- "rstest 0.13.0",
- "smol",
- "tests_fixtures",
-]
-
-[[package]]
-name = "platform_web"
-version = "0.0.0"
 
 [[package]]
 name = "polling"

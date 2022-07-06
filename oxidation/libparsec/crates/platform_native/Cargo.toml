@@ -1,5 +1,5 @@
 [package]
-name = "platform_native"
+name = "libparsec_platform_native"
 version = "0.0.0"
 edition = "2021"
 

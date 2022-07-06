@@ -2,7 +2,7 @@
 
 #![cfg(target_arch = "wasm32")]
 
-use platform_async::{
+use libparsec_platform_async::{
     channel::{bounded, RecvError, Sender},
     JoinSet, Notify, Timer,
 };

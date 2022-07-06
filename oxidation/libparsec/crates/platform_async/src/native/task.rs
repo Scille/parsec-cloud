@@ -10,7 +10,7 @@ use std::{
 /// Spawns a new asynchronous task, returning a [Task] for it.
 ///
 /// ```
-/// use platform_async::{spawn, Timer};
+/// use libparsec_platform_async::{spawn, Timer};
 /// use std::time::Duration;
 ///
 /// # #[tokio::main]
@@ -83,7 +83,7 @@ impl<T> Task<T> {
     /// It may return the value returned by the future if it as finished before aborting it.
     ///
     /// ```
-    /// use platform_async::{spawn, Notify};
+    /// use libparsec_platform_async::{spawn, Notify};
     /// use std::{
     ///     time::Duration,
     ///     sync::{Arc, atomic::{AtomicBool, Ordering}}
@@ -114,7 +114,7 @@ impl<T> Task<T> {
     /// Awaiting a canceled task result in a panic
     ///
     /// ```should_panic
-    /// use platform_async::spawn;
+    /// use libparsec_platform_async::spawn;
     ///
     /// # #[tokio::main]
     /// # async fn main() {
@@ -137,7 +137,7 @@ impl<T> Task<T> {
     /// Detaches the task to let it keep running in the background
     ///
     /// ```
-    /// use platform_async::{spawn, Notify};
+    /// use libparsec_platform_async::{spawn, Notify};
     /// use std::{
     ///     time::Duration,
     ///     sync::{Arc, atomic::{AtomicBool, Ordering}},
@@ -171,7 +171,7 @@ impl<T> Task<T> {
     /// Return `true` if the current task is finished
     ///
     /// ```
-    /// use platform_async::spawn;
+    /// use libparsec_platform_async::spawn;
     /// use std::time::Duration;
     /// # use tokio::time::sleep;
     ///
@@ -193,7 +193,7 @@ impl<T> Task<T> {
     /// Return `true` if the current task is canceled
     ///
     /// ```
-    /// use platform_async::spawn;
+    /// use libparsec_platform_async::spawn;
     ///
     /// # #[tokio::main]
     /// # async fn main() {

@@ -2,11 +2,11 @@
 
 use async_std::net::TcpListener;
 use async_std::task;
+use libparsec_platform_native::Transport;
 use libparsec_protocol::{
     AuthenticatedClientHandshakeStalled, Handshake, HandshakeResult, ServerHandshakeStalled,
 };
 use libparsec_types::DateTime;
-use platform_native::Transport;
 use rstest::rstest;
 use tests_fixtures::{alice, Device};
 
