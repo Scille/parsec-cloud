@@ -12,12 +12,12 @@ Get the sources
 
 Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
 
-1. You MUST have the following tools available:
+1. You need to have the following tools available:
     - `git <https://git-scm.com/>`
     - `python3.9 <https://www.python.org/>`
     - `poetry <https://python-poetry.org/>`
 
-2. You MUST first clone it with ``git`` and move to the project dir
+2. You must first clone it with ``git`` and move to the project dir
 
 .. code-block:: shell
 
