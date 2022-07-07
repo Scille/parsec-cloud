@@ -54,8 +54,11 @@ jobs:
 
       - name: Debug installed tools
         run: |
+          set -x
           python --version
+          whereis rustc
           rustc --version
+          whereis cargo
           cargo --version
           node --version
 
