@@ -113,28 +113,32 @@ def format_available_devices(devices: List[AvailableDevice]) -> str:
     return "\n".join(out)
 
 
-def core_config_and_device_options(fn: F) -> F:
+def core_config_and_available_device_options(fn: F) -> F:
     @click.option(
         "--device",
         "-D",
-        required=True,
         envvar="PARSEC_DEVICE",
         help="Device to use designed by it ID, see `list_devices` command to get the available IDs",
-    )
-    @click.option(
-        "--password",
-        "-P",
-        envvar="PARSEC_DEVICE_PASSWORD",
-        help="Password to decrypt Device, if not set a prompt will ask for it",
     )
     @core_config_options
     @wraps(fn)
     def wrapper(**kwargs):
         config = kwargs["config"]
-        password = kwargs["password"]
         device_slughash = kwargs.pop("device")
 
         all_available_devices = list_available_devices(config.config_dir)
+
+        if device_slughash is None:
+            ctx = click.get_current_context()
+            click.echo(ctx.get_usage())
+            click.echo(f"Try 'parsec core {ctx.command.name} --help' for help.")
+            click.echo()
+            raise SystemExit(
+                f"Error: Missing option '--device' / '-D'.\n\n"
+                f"Available devices are:\n"
+                f"{format_available_devices(all_available_devices)}"
+            )
+
         devices = []
         for device in all_available_devices:
             if device.slughash.startswith(device_slughash):
@@ -151,20 +155,38 @@ def core_config_and_device_options(fn: F) -> F:
                 f"{format_available_devices(devices)}"
             )
 
-        available_device = devices[0]
+        kwargs["device"] = devices[0]
+        return fn(**kwargs)
+
+    return wrapper
+
+
+def core_config_and_device_options(fn: F) -> F:
+    @click.option(
+        "--password",
+        "-P",
+        envvar="PARSEC_DEVICE_PASSWORD",
+        help="Password to decrypt Device, if not set a prompt will ask for it",
+    )
+    @core_config_and_available_device_options
+    @wraps(fn)
+    def wrapper(**kwargs):
+        password = kwargs["password"]
+        available_device = kwargs.pop("device")
+
         try:
             if available_device.type == DeviceFileType.PASSWORD:
                 if password is None:
                     password = click.prompt("password", hide_input=True)
-                device = load_device_with_password(devices[0].key_file_path, password)
+                device = load_device_with_password(available_device.key_file_path, password)
             elif available_device.type == DeviceFileType.SMARTCARD:
                 # It's ok to be blocking here, we're not in async land yet
-                device = load_device_with_smartcard_sync(devices[0].key_file_path)
+                device = load_device_with_smartcard_sync(available_device.key_file_path)
             else:
                 raise SystemExit(f"Unsuported device file authentication `{available_device.type}`")
 
         except LocalDeviceError as exc:
-            raise SystemExit(f"Cannot load device {device_slughash}: {exc}")
+            raise SystemExit(f"Cannot load device {available_device.slughash}: {exc}")
 
         kwargs["device"] = device
         return fn(**kwargs)
