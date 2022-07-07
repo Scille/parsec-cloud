@@ -153,6 +153,9 @@ async def _human_accesses(config: BackendDbConfig, organization: OrganizationID,
     realm_component: PGRealmComponent
     sequester_component: PGPSequesterComponent
 
+    accesses = user_component.dump_accesses(organization=organization)
+    no_human_accesses = accesses.pop(None)
+
     humans_per_user = await user_component.find_humans(
         organization_id=organization,
         query=query,
@@ -210,6 +213,10 @@ async def _human_accesses(config: BackendDbConfig, organization: OrganizationID,
             user = await _get_user(user_id)
             users.append(user)
         user = sorted(user, key=lambda u: u.created_on, reverse=True)
+
+        for user in users:
+            print(f"User {display_user}")
+
 
         per_realm = {}
         for (granted_on, realm_id, granted_by, role) in await realm_component.get_realms_history_for_user(organization_id=organization, user_id=human.user_id):

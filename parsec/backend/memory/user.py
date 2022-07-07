@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import attr
-import pendulum
+from pendulum import now as pendulum_now, DateTime
 from typing import TYPE_CHECKING, Iterable, Tuple, List, Dict, Optional
 from collections import defaultdict
 
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
+from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle, RealmID, RealmRole
+from parsec.api.protocol.types import UserProfile
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import (
     BaseUserComponent,
@@ -22,6 +23,7 @@ from parsec.backend.user import (
 
 if TYPE_CHECKING:
     from parsec.backend.memory.organization import MemoryOrganizationComponent
+    from parsec.backend.memory.realm import MemoryRealmComponent
 
 
 @attr.s
@@ -40,9 +42,10 @@ class MemoryUserComponent(BaseUserComponent):
         )
 
     def register_components(
-        self, organization: "MemoryOrganizationComponent", **other_components
+        self, organization: "MemoryOrganizationComponent", realm: "MemoryRealmComponent", **other_components
     ) -> None:
         self._organization_component = organization
+        self._realm_component = realm
 
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device
@@ -252,7 +255,7 @@ class MemoryUserComponent(BaseUserComponent):
             ),
             *[res for res in users if res.human_handle is None],
         ]
-        now = pendulum.now()
+        now = pendulum_now()
         results = [
             HumanFindResultItem(
                 user_id=user.user_id,
@@ -296,7 +299,7 @@ class MemoryUserComponent(BaseUserComponent):
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: Optional[pendulum.DateTime] = None,
+        revoked_on: Optional[DateTime] = None,
     ) -> None:
         org = self._organizations[organization_id]
 
@@ -310,7 +313,7 @@ class MemoryUserComponent(BaseUserComponent):
             raise UserAlreadyRevokedError()
 
         org.users[user_id] = user.evolve(
-            revoked_on=revoked_on or pendulum.now(),
+            revoked_on=revoked_on or pendulum_now(),
             revoked_user_certificate=revoked_user_certificate,
             revoked_user_certifier=revoked_user_certifier,
         )
@@ -320,3 +323,40 @@ class MemoryUserComponent(BaseUserComponent):
         await self._send_event(
             BackendEvent.USER_REVOKED, organization_id=organization_id, user_id=user_id
         )
+
+    async def dump_accesses(
+        self,
+        organization_id: OrganizationID,
+        filter: Optional[str] = None,
+    ) -> Dict[
+        Optional[HumanHandle],
+        List[Tuple[
+            UserID,
+            DateTime,
+            Optional[DateTime],
+            UserProfile,
+            List[DateTime, RealmID, RealmRole, DeviceID]
+        ]]
+    ]:
+        org = self._organizations[organization_id]
+        per_human_accesses: Dict[Optional[HumanHandle], Dict[UserID, List[DateTime, RealmID, RealmRole, DeviceID]]] = {}
+        per_user_accesses: Dict[UserID, List[DateTime, RealmID, RealmRole, DeviceID]] = {}
+        for user in org.users.values():
+            accesses = per_human_accesses.setdefault(user.human_handle, {})
+            user_accesses = []
+            per_user_accesses[user.user_id] = user_accesses
+            accesses[user.user_id] = user_accesses
+
+        for (realm_org_id, realm_id), realm in self._realm_component._realms.items():
+            if realm_org_id != organization_id:
+                continue
+
+            for granted_role in realm.granted_roles:
+                user_accesses = per_user_accesses[granted_role.user_id]
+                user_accesses.append((granted_role.granted_on, realm_id, granted_role.granted_by, granted_role.role))
+
+        for accesses in per_user_accesses:
+            accesses.sort()
+
+        per_human_accesses.setdefault(None, {})  # In case there is no non-human users
+        return per_human_accesses

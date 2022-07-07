@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import attr
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Union
 from pendulum import now as pendulum_now, DateTime
 
 from parsec.utils import timestamps_in_the_ballpark
@@ -11,6 +11,8 @@ from parsec.api.protocol import (
     OrganizationID,
     UserID,
     DeviceID,
+    RealmID,
+    RealmRole,
     HumanHandle,
     user_get_serializer,
     human_find_serializer,
@@ -344,4 +346,14 @@ class BaseUserComponent:
         omit_revoked: bool = False,
         omit_non_human: bool = False,
     ) -> Tuple[List[HumanFindResultItem], int]:
+        raise NotImplementedError()
+
+    async def dump_accesses(
+        self,
+        organization_id: OrganizationID,
+        filter: Optional[str] = None,
+    ) -> Tuple[
+        Dict[HumanHandle, List[DateTime, RealmID, RealmRole, DeviceID]],
+        Dict[UserID, List[DateTime, RealmID, RealmRole, DeviceID]]
+    ]:
         raise NotImplementedError()
