@@ -4,6 +4,7 @@ use fancy_regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 use std::convert::TryFrom;
+use std::hash::Hash;
 use std::str::FromStr;
 use unicode_normalization::UnicodeNormalization;
 
@@ -170,6 +171,13 @@ impl PartialEq for HumanHandle {
     fn eq(&self, other: &Self) -> bool {
         // Ignore label given it is purely informative
         self.email == other.email
+    }
+}
+
+impl Hash for HumanHandle {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.email.hash(state);
+        self.label.hash(state);
     }
 }
 

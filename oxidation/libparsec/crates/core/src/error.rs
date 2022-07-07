@@ -83,6 +83,9 @@ pub enum LocalDeviceError {
 
     #[error("Deserialization error: {0}")]
     Deserialization(PathBuf),
+
+    #[error("Serialization error: {0}")]
+    Serialization(PathBuf),
 }
 
 pub type LocalDeviceResult<T> = Result<T, LocalDeviceError>;

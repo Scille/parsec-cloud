@@ -9,7 +9,8 @@ use std::{
 };
 
 use crate::{LocalDeviceError, LocalDeviceResult};
-use parsec_api_types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
+use libparsec_client_types::LocalDevice;
+use libparsec_types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -62,12 +63,37 @@ pub enum DeviceFile {
     },
 }
 
+impl DeviceFile {
+    pub fn save(&self, key_file_path: &Path) -> LocalDeviceResult<()> {
+        if let Some(parent) = key_file_path.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|_| LocalDeviceError::Access(key_file_path.to_path_buf()))?;
+        }
+
+        let data = rmp_serde::to_vec_named(self)
+            .map_err(|_| LocalDeviceError::Serialization(key_file_path.to_path_buf()))?;
+
+        std::fs::write(key_file_path, data)
+            .map_err(|_| LocalDeviceError::Access(key_file_path.to_path_buf()))
+    }
+
+    fn load(key_file_path: &Path) -> LocalDeviceResult<Self> {
+        let data = std::fs::read(&key_file_path)
+            .map_err(|_| LocalDeviceError::Access(key_file_path.to_path_buf()))?;
+
+        rmp_serde::from_slice::<DeviceFile>(&data)
+            .map_err(|_| LocalDeviceError::Deserialization(key_file_path.to_path_buf()))
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DeviceFileType {
     Password,
     Recovery,
     Smartcard,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct AvailableDevice {
     pub key_file_path: PathBuf,
     pub organization_id: OrganizationID,
@@ -79,19 +105,38 @@ pub struct AvailableDevice {
 }
 
 impl AvailableDevice {
-    pub fn load(key_file_path: PathBuf) -> LocalDeviceResult<Self> {
-        let data = std::fs::read(&key_file_path)
-            .map_err(|_| LocalDeviceError::Access(key_file_path.clone()))?;
+    pub fn user_display(&self) -> String {
+        self.human_handle
+            .as_ref()
+            .map(HumanHandle::to_string)
+            .unwrap_or_else(|| self.device_id.user_id.to_string())
+    }
+
+    pub fn short_user_display(&self) -> String {
+        self.human_handle
+            .as_ref()
+            .map(|hh| hh.label.clone())
+            .unwrap_or_else(|| self.device_id.user_id.to_string())
+    }
+
+    pub fn device_display(&self) -> String {
+        self.device_label
+            .as_ref()
+            .map(DeviceLabel::to_string)
+            .unwrap_or_else(|| self.device_id.device_name.to_string())
+    }
+
+    fn load(key_file_path: PathBuf) -> LocalDeviceResult<Self> {
         let (ty, organization_id, device_id, human_handle, device_label, slug) =
-            match rmp_serde::from_slice::<DeviceFile>(&data) {
-                Ok(DeviceFile::Password {
+            match DeviceFile::load(&key_file_path)? {
+                DeviceFile::Password {
                     human_handle,
                     device_label,
                     device_id,
                     organization_id,
                     slug,
                     ..
-                }) => (
+                } => (
                     DeviceFileType::Password,
                     organization_id,
                     device_id,
@@ -99,14 +144,14 @@ impl AvailableDevice {
                     device_label,
                     slug,
                 ),
-                Ok(DeviceFile::Recovery {
+                DeviceFile::Recovery {
                     human_handle,
                     device_label,
                     device_id,
                     organization_id,
                     slug,
                     ..
-                }) => (
+                } => (
                     DeviceFileType::Recovery,
                     organization_id,
                     device_id,
@@ -114,14 +159,14 @@ impl AvailableDevice {
                     device_label,
                     slug,
                 ),
-                Ok(DeviceFile::Smartcard {
+                DeviceFile::Smartcard {
                     human_handle,
                     device_label,
                     device_id,
                     organization_id,
                     slug,
                     ..
-                }) => (
+                } => (
                     DeviceFileType::Smartcard,
                     organization_id,
                     device_id,
@@ -129,7 +174,6 @@ impl AvailableDevice {
                     device_label,
                     slug,
                 ),
-                Err(_) => return Err(LocalDeviceError::Deserialization(key_file_path)),
             };
 
         Ok(Self {
@@ -142,6 +186,16 @@ impl AvailableDevice {
             ty,
         })
     }
+}
+
+/// Return the default keyfile path for a given device.
+///
+/// Note that the filename does not carry any intrinsic meaning.
+/// Here, we simply use the slughash to avoid name collision.
+pub fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf {
+    let devices_dir = config_dir.join("devices");
+    let _ = std::fs::create_dir_all(&devices_dir);
+    devices_dir.join(device.slughash() + ".keys")
 }
 
 pub fn list_available_devices(config_dir: &Path) -> LocalDeviceResult<Vec<AvailableDevice>> {
