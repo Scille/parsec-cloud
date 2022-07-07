@@ -32,9 +32,9 @@ jobs:
           cache-version: 4
         uses: actions/cache@c3f1317a9e7b1ef106c153ac8c0f00fed3ddbc0d # pin v3.0.4
         with:
-          key: ${{ runner.os }}-rust-${{ env.rust-version }}-cache-${{env.cache-version }}-${{ hashFiles('Cargo.lock') }}
+          key: ${{ runner.os }}-rust-${{ env.rust-version }}-cache-${{ env.cache-version }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-rust-${{ env.rust-version }}-cache-${{env.cache-version }}
+            ${{ runner.os }}-rust-${{ env.rust-version }}-cache-${{ env.cache-version }}
           path: |
             target
             ~/.cargo/bin
