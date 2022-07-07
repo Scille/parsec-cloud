@@ -28,7 +28,7 @@ Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
 
 .. code-block:: shell
 
-    poetry install -E core,backend
+    poetry install -E core -E backend
 
 .. note::
 
