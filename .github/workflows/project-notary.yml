@@ -32,3 +32,26 @@ jobs:
           done
 
           jq '. | @base64' issues_wrong_project.json > issues_wrong_project.json.b64
+
+      - name: Edit issues & pr to set them to correct project
+        run: |
+          source .github/scripts/notary/lib.sh
+
+          PROJECT_DATA=$(get_project_v2 ${{ env.project-orga}} ${{ env.project-number }})
+          PROJECT_ID=$(jq -r .id <<<"$PROJECT_DATA")
+          PROJECT_TITLE=$(jq -r .title <<<"$PROJECT_DATA")
+
+          for raw_row in issues_wrong_project.json.b64; do
+            row=$(echo $raw_row | base64 --decode | jq . -c)
+            ID=$(jq -r .id <<<"$row")
+            TITLE=$(jq -r .title <<<"$row")
+            TYPE=$(jq -r .type <<<"$row")
+
+            echo "Adding $TYPE \"$TITLE\" to project $PROJECT_TITLE"
+            add_item_to_project $PROJECT_ID $ID
+            RC=$?
+            if [ $RC -ne 0 ]; then
+              echo "Failed to add $TYPE \"$TITLE\" to project $PROJECT_TITLE" >&2
+              exit $RC
+            fi
+          done
