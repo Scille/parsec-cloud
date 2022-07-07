@@ -4,7 +4,7 @@ import click
 
 from parsec.backend.cli.run import run_cmd
 from parsec.backend.cli.migration import migrate
-from parsec.backend.cli.sequester import create_service, list_services
+from parsec.backend.cli.sequester import create_service, list_services, human_accesses
 
 
 __all__ = ("backend_cmd",)
@@ -19,3 +19,4 @@ backend_cmd.add_command(run_cmd, "run")
 backend_cmd.add_command(migrate, "migrate")
 backend_cmd.add_command(create_service, "create_service")
 backend_cmd.add_command(list_services, "list_services")
+backend_cmd.add_command(human_accesses, "human_accesses")

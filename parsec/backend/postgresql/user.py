@@ -23,6 +23,7 @@ from parsec.backend.postgresql.user_queries import (
     query_get_user_with_devices_and_trustchain,
     query_get_user_with_device,
     query_revoke_user,
+    query_dump_users,
 )
 
 
@@ -110,3 +111,7 @@ class PGUserComponent(BaseUserComponent):
                 revoked_user_certifier,
                 revoked_on,
             )
+
+    async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:
+        async with self.dbh.pool.acquire() as conn:
+            return await query_dump_users(conn, organization_id)

@@ -125,4 +125,3 @@ class BackendConfig:
             return "MOCKED"
         else:
             return "POSTGRESQL"
-        return self._db_type

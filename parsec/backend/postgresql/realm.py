@@ -16,6 +16,7 @@ from parsec.backend.postgresql.realm_queries import (
     query_update_roles,
     query_start_reencryption_maintenance,
     query_finish_reencryption_maintenance,
+    query_dump_realms_granted_roles,
 )
 
 
@@ -99,3 +100,9 @@ class PGRealmComponent(BaseRealmComponent):
             await query_finish_reencryption_maintenance(
                 conn, organization_id, author, realm_id, encryption_revision
             )
+
+    async def dump_realms_granted_roles(
+        self, organization_id: OrganizationID
+    ) -> List[RealmGrantedRole]:
+        async with self.dbh.pool.acquire() as conn:
+            return await query_dump_realms_granted_roles(conn, organization_id)
