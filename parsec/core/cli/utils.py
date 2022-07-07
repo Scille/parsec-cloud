@@ -117,7 +117,6 @@ def core_config_and_available_device_options(fn: F) -> F:
     @click.option(
         "--device",
         "-D",
-        required=True,
         envvar="PARSEC_DEVICE",
         help="Device to use designed by it ID, see `list_devices` command to get the available IDs",
     )
@@ -128,6 +127,18 @@ def core_config_and_available_device_options(fn: F) -> F:
         device_slughash = kwargs.pop("device")
 
         all_available_devices = list_available_devices(config.config_dir)
+
+        if device_slughash is None:
+            ctx = click.get_current_context()
+            click.echo(ctx.get_usage())
+            click.echo(f"Try 'parsec core {ctx.command.name} --help' for help.")
+            click.echo()
+            raise SystemExit(
+                f"Error: Missing option '--device' / '-D'.\n\n"
+                f"Available devices are:\n"
+                f"{format_available_devices(all_available_devices)}"
+            )
+
         devices = []
         for device in all_available_devices:
             if device.slughash.startswith(device_slughash):
