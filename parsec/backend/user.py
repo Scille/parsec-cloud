@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import attr
-from typing import List, Optional, Tuple
-import pendulum
+from typing import List, Optional, Tuple, TYPE_CHECKING
+from pendulum import now as pendulum_now, DateTime
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.event_bus import EventBus
@@ -26,6 +26,9 @@ from parsec.backend.user_type import (
     validate_new_device_certificate,
     CertificateValidationError,
 )
+
+if TYPE_CHECKING:
+    from parsec.backend.realm import RealmGrantedRole
 
 
 class UserError(Exception):
@@ -86,6 +89,20 @@ class HumanFindResultItem:
     user_id: UserID
     revoked: bool
     human_handle: Optional[HumanHandle] = None
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class UserAccesses:
+    user_id: UserID
+    human_handle: Optional[HumanHandle]
+    profile: UserProfile
+    created_on: DateTime
+    revoked_on: Optional[DateTime]
+    realm_granted_roles: List["RealmGrantedRole"]
+
+    @property
+    def is_revoked(self) -> bool:
+        return self.revoked_on is not None
 
 
 class BaseUserComponent:
@@ -201,7 +218,7 @@ class BaseUserComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
+        if not timestamps_in_the_ballpark(data.timestamp, pendulum_now()):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",
@@ -276,7 +293,7 @@ class BaseUserComponent:
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: Optional[pendulum.DateTime] = None,
+        revoked_on: Optional[DateTime] = None,
     ) -> None:
         """
         Raises:
@@ -337,4 +354,13 @@ class BaseUserComponent:
         omit_revoked: bool = False,
         omit_non_human: bool = False,
     ) -> Tuple[List[HumanFindResultItem], int]:
+        """
+        Raises: Nothing !
+        """
+        raise NotImplementedError()
+
+    async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:
+        """
+        Raises: Nothing !
+        """
         raise NotImplementedError()

@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from typing import Tuple, Optional
+from typing import Tuple, List, Optional
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceLabel, HumanHandle
 from parsec.api.data import UserProfile
@@ -12,6 +12,26 @@ from parsec.backend.postgresql.utils import (
     q_device,
     q_user_internal_id,
     q_human,
+)
+
+_q_get_organization_users = Q(
+    f"""
+SELECT
+    user_id,
+    { q_human(_id="user_.human", select="email") } as human_email,
+    { q_human(_id="user_.human", select="label") } as human_label,
+    profile,
+    user_certificate,
+    redacted_user_certificate,
+    { q_device(select="device_id", _id="user_.user_certifier") } as user_certifier,
+    created_on,
+    revoked_on,
+    revoked_user_certificate,
+    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier
+FROM user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+"""
 )
 
 
@@ -32,6 +52,22 @@ FROM user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND user_id = $user_id
+"""
+)
+
+
+_q_get_organization_devices = Q(
+    f"""
+SELECT
+    device_id,
+    device_label,
+    device_certificate,
+    redacted_device_certificate,
+    { q_device(table_alias="d", select="d.device_id", _id="device.device_certifier") } as device_certifier,
+    created_on
+FROM device
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
 """
 )
 
@@ -358,3 +394,47 @@ async def query_get_user_with_device(
         else None,
     )
     return user, device
+
+
+@query()
+async def query_dump_users(
+    conn, organization_id: OrganizationID
+) -> Tuple[List[User], List[Device]]:
+    users = []
+    devices = []
+
+    rows = await conn.fetch(*_q_get_organization_users(organization_id=organization_id.str))
+    for row in rows:
+        users.append(
+            User(
+                user_id=UserID(row["user_id"]),
+                human_handle=HumanHandle(email=row["human_email"], label=row["human_label"]),
+                profile=UserProfile(row["profile"]),
+                user_certificate=row["user_certificate"],
+                redacted_user_certificate=row["redacted_user_certificate"],
+                user_certifier=DeviceID(row["user_certifier"]) if row["user_certifier"] else None,
+                created_on=row["created_on"],
+                revoked_on=row["revoked_on"],
+                revoked_user_certificate=row["revoked_user_certificate"],
+                revoked_user_certifier=DeviceID(row["revoked_user_certifier"])
+                if row["revoked_user_certifier"]
+                else None,
+            )
+        )
+
+    rows = await conn.fetch(*_q_get_organization_devices(organization_id=organization_id.str))
+    for row in rows:
+        devices.append(
+            Device(
+                device_id=DeviceID(row["device_id"]),
+                device_label=DeviceLabel(row["device_label"]),
+                device_certificate=row["device_certificate"],
+                redacted_device_certificate=row["redacted_device_certificate"],
+                device_certifier=DeviceID(row["device_certifier"])
+                if row["device_certifier"]
+                else None,
+                created_on=row["created_on"],
+            )
+        )
+
+    return users, devices
