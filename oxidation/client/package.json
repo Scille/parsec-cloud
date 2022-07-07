@@ -36,7 +36,7 @@
     "ionicons": "^6.0.1",
     "vue": "^3.2.36",
     "vue-i18n": "^9.2.0-beta.35",
-    "vue-router": "^4.0.15"
+    "vue-router": "^4.1.1"
   },
   "devDependencies": {
     "@capacitor/cli": "3.4.3",
@@ -51,7 +51,7 @@
     "@vue/cli-plugin-eslint": "~5.0.1",
     "@vue/cli-plugin-router": "~5.0.1",
     "@vue/cli-plugin-typescript": "~5.0.1",
-    "@vue/cli-plugin-unit-jest": "~5.0.4",
+    "@vue/cli-plugin-unit-jest": "~5.0.8",
     "@vue/cli-service": "5.0.4",
     "@vue/eslint-config-typescript": "^10.0.0",
     "@vue/test-utils": "^2.0.0",
