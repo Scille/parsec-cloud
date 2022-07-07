@@ -51,16 +51,20 @@ jobs:
           toolchain: ${{ env.rust-version }}
           components: rustfmt, clippy
           default: true
+          override: true
 
       - name: Debug installed tools
         run: |
           set -x
           python --version
+          node --version
+          # Rust tools
+          whereis rustup
+          rustup --version
           whereis rustc
           rustc --version
           whereis cargo
           cargo --version
-          node --version
 
       - name: Debug rust cache
         run: |
