@@ -12,42 +12,39 @@ Get the sources
 
 Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
 
-1. You should fist clone it with ``git`` and move to the project dir
+1. You MUST have the following tools available:
+    - `git <https://git-scm.com/>`
+    - `python3.9 <https://www.python.org/>`
+    - `poetry <https://python-poetry.org/>`
+
+2. You MUST first clone it with ``git`` and move to the project dir
 
 .. code-block:: shell
 
     git clone git@github.com:Scille/parsec-cloud.git
     cd parsec-cloud
 
-2. Create a Python virtual environment for the project
+3. Initialize a poetry env
 
 .. code-block:: shell
 
-    python -m venv venv
-    . ./venv/bin/activate
-
-or on Windows
-
-.. code-block:: shell
-
-    python -m venv venv
-    .\\venv\\Scripts\\activate.bat
+    poetry install -E core,backend
 
 .. note::
 
     Parsec requires Python 3.9
 
-3. Install Parsec within the virtualenv
+4. Start a shell with the initialized virtual env
 
 .. code-block:: shell
 
-    pip install --editable .[all]
+    poetry shell
 
-Note the ``--editable`` option, this tell the virtualenv to directly rely on the
-source code within the parsec-cloud directory instead of copying it into it install
-directory. This way you don't need to reinstall the project each time you modify
-something in the project source code.
+5. To run parsec do
 
+.. code-block:: shell
+
+    poetry run parsec
 
 Run the tests
 -------------
@@ -56,7 +53,7 @@ Run the tests with pytest
 
 .. code-block:: shell
 
-    py.test tests
+    poetry run py.test tests
 
 On top of that, multiple options are available:
 
