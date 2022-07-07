@@ -1115,10 +1115,14 @@ name = "libparsec_core"
 version = "0.0.0"
 dependencies = [
  "chrono",
+ "libparsec_client_types",
  "libparsec_crypto",
  "libparsec_protocol",
  "libparsec_types",
+ "rmp-serde",
  "rstest 0.13.0",
+ "serde",
+ "serde_with",
  "tests_fixtures",
  "thiserror",
 ]

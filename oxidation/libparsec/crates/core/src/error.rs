@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use std::path::PathBuf;
 use thiserror::Error;
 
-use libparsec_types::DateTime;
-use libparsec_types::{DeviceID, UserID};
+use libparsec_types::{DateTime, DeviceID, UserID};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum TrustchainError {
@@ -75,3 +75,17 @@ impl From<TrustchainError> for RemoteDevicesManagerError {
         Self::InvalidTrustchain { exc }
     }
 }
+
+#[derive(Error, Debug, PartialEq)]
+pub enum LocalDeviceError {
+    #[error("Could not acces to the file: {0}")]
+    Access(PathBuf),
+
+    #[error("Deserialization error: {0}")]
+    Deserialization(PathBuf),
+
+    #[error("Serialization error: {0}")]
+    Serialization(PathBuf),
+}
+
+pub type LocalDeviceResult<T> = Result<T, LocalDeviceError>;
