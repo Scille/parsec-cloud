@@ -14,53 +14,65 @@ use libparsec_types::{DeviceID, DeviceLabel, HumanHandle, OrganizationID};
 
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DeviceFilePassword {
+    #[serde_as(as = "Bytes")]
+    pub salt: Vec<u8>,
+
+    #[serde_as(as = "Bytes")]
+    pub ciphertext: Vec<u8>,
+
+    pub human_handle: Option<HumanHandle>,
+    pub device_label: Option<DeviceLabel>,
+
+    pub device_id: DeviceID,
+    pub organization_id: OrganizationID,
+    pub slug: String,
+}
+
+#[serde_as]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DeviceFileRecovery {
+    #[serde_as(as = "Bytes")]
+    pub ciphertext: Vec<u8>,
+
+    pub human_handle: Option<HumanHandle>,
+    pub device_label: Option<DeviceLabel>,
+
+    pub device_id: DeviceID,
+    pub organization_id: OrganizationID,
+    pub slug: String,
+}
+
+#[serde_as]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DeviceFileSmartcard {
+    #[serde_as(as = "Bytes")]
+    pub encrypted_key: Vec<u8>,
+
+    pub certificate_id: String,
+
+    #[serde_as(as = "Option<Bytes>")]
+    pub certificate_sha1: Option<Vec<u8>>,
+
+    #[serde_as(as = "Bytes")]
+    pub ciphertext: Vec<u8>,
+
+    pub human_handle: Option<HumanHandle>,
+    pub device_label: Option<DeviceLabel>,
+
+    pub device_id: DeviceID,
+    pub organization_id: OrganizationID,
+    pub slug: String,
+}
+
+#[serde_as]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]
 pub enum DeviceFile {
-    Password {
-        #[serde_as(as = "Bytes")]
-        salt: Vec<u8>,
-
-        #[serde_as(as = "Bytes")]
-        ciphertext: Vec<u8>,
-
-        human_handle: Option<HumanHandle>,
-        device_label: Option<DeviceLabel>,
-
-        device_id: DeviceID,
-        organization_id: OrganizationID,
-        slug: String,
-    },
-    Recovery {
-        #[serde_as(as = "Bytes")]
-        ciphertext: Vec<u8>,
-
-        human_handle: Option<HumanHandle>,
-        device_label: Option<DeviceLabel>,
-
-        device_id: DeviceID,
-        organization_id: OrganizationID,
-        slug: String,
-    },
-    Smartcard {
-        #[serde_as(as = "Bytes")]
-        encrypted_key: Vec<u8>,
-
-        certificate_id: String,
-
-        #[serde_as(as = "Option<Bytes>")]
-        certificate_sha1: Option<Vec<u8>>,
-
-        #[serde_as(as = "Bytes")]
-        ciphertext: Vec<u8>,
-
-        human_handle: Option<HumanHandle>,
-        device_label: Option<DeviceLabel>,
-
-        device_id: DeviceID,
-        organization_id: OrganizationID,
-        slug: String,
-    },
+    Password(DeviceFilePassword),
+    Recovery(DeviceFileRecovery),
+    Smartcard(DeviceFileSmartcard),
 }
 
 impl DeviceFile {
@@ -129,50 +141,29 @@ impl AvailableDevice {
     fn load(key_file_path: PathBuf) -> LocalDeviceResult<Self> {
         let (ty, organization_id, device_id, human_handle, device_label, slug) =
             match DeviceFile::load(&key_file_path)? {
-                DeviceFile::Password {
-                    human_handle,
-                    device_label,
-                    device_id,
-                    organization_id,
-                    slug,
-                    ..
-                } => (
+                DeviceFile::Password(device) => (
                     DeviceFileType::Password,
-                    organization_id,
-                    device_id,
-                    human_handle,
-                    device_label,
-                    slug,
+                    device.organization_id,
+                    device.device_id,
+                    device.human_handle,
+                    device.device_label,
+                    device.slug,
                 ),
-                DeviceFile::Recovery {
-                    human_handle,
-                    device_label,
-                    device_id,
-                    organization_id,
-                    slug,
-                    ..
-                } => (
+                DeviceFile::Recovery(device) => (
                     DeviceFileType::Recovery,
-                    organization_id,
-                    device_id,
-                    human_handle,
-                    device_label,
-                    slug,
+                    device.organization_id,
+                    device.device_id,
+                    device.human_handle,
+                    device.device_label,
+                    device.slug,
                 ),
-                DeviceFile::Smartcard {
-                    human_handle,
-                    device_label,
-                    device_id,
-                    organization_id,
-                    slug,
-                    ..
-                } => (
+                DeviceFile::Smartcard(device) => (
                     DeviceFileType::Smartcard,
-                    organization_id,
-                    device_id,
-                    human_handle,
-                    device_label,
-                    slug,
+                    device.organization_id,
+                    device.device_id,
+                    device.human_handle,
+                    device.device_label,
+                    device.slug,
                 ),
             };
 

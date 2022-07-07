@@ -6,13 +6,13 @@ use libparsec_client_types::LocalDevice;
 use rstest::rstest;
 
 use libparsec_core::{
-    get_default_key_file, list_available_devices, AvailableDevice, DeviceFile, DeviceFileType,
-    LocalDeviceError,
+    get_default_key_file, list_available_devices, AvailableDevice, DeviceFile, DeviceFilePassword,
+    DeviceFileType, LocalDeviceError,
 };
 use tests_fixtures::{alice, bob, mallory, tmp_path, Device, TmpPath};
 
 fn device_file_factory(device: LocalDevice) -> DeviceFile {
-    DeviceFile::Password {
+    DeviceFile::Password(DeviceFilePassword {
         salt: b"salt".to_vec(),
         ciphertext: b"ciphertext".to_vec(),
 
@@ -22,7 +22,7 @@ fn device_file_factory(device: LocalDevice) -> DeviceFile {
 
         human_handle: device.human_handle,
         device_label: device.device_label,
-    }
+    })
 }
 
 #[rstest]
