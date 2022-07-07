@@ -19,10 +19,16 @@ jobs:
           jq --version
           base64 --version
 
-      - name: List issues with the wrong/missing project
-        run: >
-          gh issue list
-          --json id,title,number
-          --search '-project:"${{ env.project-orga }}/${{ env.project-number }}"'
-          --jq '.[] | base64'
-          > issues_wrong_project.json.b64
+      - name: List issues & PR with the wrong/missing project
+        run: |
+          echo -n '' > issues_wrong_project.json
+
+          for type in issue pr; do
+            gh $type list \
+              --json id,title,number \
+              --search '-project:"${{ env.project-orga }}/${{ env.project-number }}"' \
+              --jq ".[] += {\"type\": \"$type\"} | .[]" \
+              | tee -a issues_wrong_project.json
+          done
+
+          jq '. | @base64' issues_wrong_project.json > issues_wrong_project.json.b64
