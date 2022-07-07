@@ -48,5 +48,6 @@ runs:
 
     - name: Run pre-commit
       run: |
+        source ~/.pre-commit-venv/bin/activate
         pre-commit run --show-diff-on-failure --color=always ${{ inputs.extra-args }}
       shell: bash
