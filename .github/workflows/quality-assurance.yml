@@ -69,26 +69,18 @@ jobs:
       - name: Check Commit Signature
         run: python .github/scripts/check_commit_signature.py
 
-      - name: Debug github ref
-        run: |
-          echo ${{ github.ref }}
-          echo ${{ github.ref_name }}
-          echo ${{ github.base_ref }}
-          echo ${{ github.head_ref }}
-          echo $GITHUB_REF
-
       - name: Check Newsfragment
         if: |
           startsWith(github.ref, 'refs/pull/')
           && !(
-            startsWith(github.ref_name, 'dependabot')
-            || startsWith(github.ref_name, 'yolo')
-            || startsWith(github.ref_name, 'release')
+            startsWith(github.head_ref, 'dependabot')
+            || startsWith(github.head_ref, 'yolo')
+            || startsWith(github.head_ref, 'release')
             )
         run: |
           whereis git
           git fetch origin master
-          python .github/scripts/check_news_fragment.py ${{ github.ref_name }}
+          python .github/scripts/check_news_fragment.py ${{ github.head_ref }}
 
       - name: Run cargo build to prepare rust's cache
         run: cargo build --workspace
