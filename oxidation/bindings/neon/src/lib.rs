@@ -3,6 +3,8 @@
 use neon::prelude::*;
 use std::sync::Mutex;
 
+use libparsec_bindings_common::Cmd;
+
 lazy_static::lazy_static! {
     static ref LIBPARSEC_CTX: Mutex<libparsec_bindings_common::RuntimeContext> =
         Mutex::new(libparsec_bindings_common::create_context());
@@ -34,17 +36,17 @@ fn submit_job(mut cx: FunctionContext) -> JsResult<JsPromise> {
         // The callback is being called from the libparsec thread, so
         // we send closure as a task to be executed by the JavaScript event
         // loop. This _will_ block the event loop while executing.
-        let res = libparsec_bindings_common::decode_and_execute(&cmd, &payload);
+        let res = Cmd::decode(&cmd, &payload).map(Cmd::execute);
 
         channel.send(move |mut cx| {
             match res {
-                Ok(data) => {
+                Ok(Ok(data)) => {
                     let arg = cx.empty_object();
                     let arg_value = cx.string(data);
                     arg.set(&mut cx, "value", arg_value)?;
                     deferred.resolve(&mut cx, arg);
                 }
-                Err(err) => {
+                Ok(Err(err)) | Err(err) => {
                     let arg = cx.empty_object();
                     let arg_value = cx.string(err);
                     arg.set(&mut cx, "value", arg_value)?;

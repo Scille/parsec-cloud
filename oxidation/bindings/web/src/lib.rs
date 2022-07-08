@@ -4,6 +4,8 @@ use js_sys::Promise;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
+use libparsec_bindings_common::Cmd;
+
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
 #[cfg(feature = "wee_alloc")]
@@ -33,10 +35,12 @@ pub fn submitJob(input: JsValue) -> Promise {
     let cmd = options.cmd;
     let payload = options.payload;
 
-    let res = libparsec_bindings_common::decode_and_execute(&cmd, &payload);
+    let res = Cmd::decode(&cmd, &payload).map(Cmd::execute);
 
     match res {
-        Ok(data) => Promise::resolve(&JsValue::from_serde(&Output { value: data }).unwrap()),
-        Err(err) => Promise::reject(&JsValue::from_serde(&Output { value: err }).unwrap()),
+        Ok(Ok(data)) => Promise::resolve(&JsValue::from_serde(&Output { value: data }).unwrap()),
+        Ok(Err(err)) | Err(err) => {
+            Promise::reject(&JsValue::from_serde(&Output { value: err }).unwrap())
+        }
     }
 }

@@ -1,53 +1,72 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use base64::DecodeError;
-use std::path::Path;
+use std::path::PathBuf;
 
 use libparsec::{core::list_available_devices, crypto::SecretKey};
 pub use libparsec::{create_context, RuntimeContext};
 
-pub fn decode_and_execute(cmd: &str, payload: &str) -> Result<String, String> {
-    let version = "v0.0.1".into();
-    let payload = payload
-        .split(':')
-        .map(base64::decode)
-        .collect::<Result<Vec<_>, DecodeError>>()
-        .map_err(|err| format!("bad_params_encoding: {err:?}"))?;
+#[derive(Debug, Clone, PartialEq)]
+pub enum Cmd {
+    Version,
+    Encrypt(SecretKey, Vec<u8>),
+    Decrypt(SecretKey, Vec<u8>),
+    ListAvailableDevices(PathBuf),
+}
 
-    match (cmd, &payload[..]) {
-        ("version", _) => Ok(version),
-        ("encrypt", [raw_key, data]) => match SecretKey::try_from(&raw_key[..]) {
-            Ok(key) => {
-                let encrypted = key.encrypt(data);
-                Ok(base64::encode(encrypted))
-            }
-            Err(err) => Err(format!("bad_params_value: {err:?}")),
-        },
-        ("decrypt", [raw_key, data]) => match SecretKey::try_from(&raw_key[..]) {
-            Ok(key) => match key.decrypt(data) {
-                Ok(cleartext) => Ok(base64::encode(cleartext)),
-                Err(err) => Err(format!("decryption_error: {err:?}")),
+impl Cmd {
+    pub fn decode(cmd: &str, payload: &str) -> Result<Self, String> {
+        let payload = payload
+            .split(':')
+            .map(base64::decode)
+            .collect::<Result<Vec<_>, DecodeError>>()
+            .map_err(|err| format!("bad_params_encoding: {err:?}"))?;
+
+        Ok(match (cmd, &payload[..]) {
+            ("version", _) => Self::Version,
+            ("encrypt", [raw_key, data]) => match SecretKey::try_from(&raw_key[..]) {
+                Ok(key) => Self::Encrypt(key, data.to_vec()),
+                Err(err) => return Err(format!("bad_params_value: {err:?}")),
             },
-            Err(err) => Err(format!("bad_params_value: {err:?}")),
-        },
-        ("list_available_devices", [config_dir]) => {
-            let config_dir = std::str::from_utf8(config_dir).unwrap();
-            let config_dir = Path::new(config_dir);
+            ("decrypt", [raw_key, data]) => match SecretKey::try_from(&raw_key[..]) {
+                Ok(key) => Self::Decrypt(key, data.to_vec()),
+                Err(err) => return Err(format!("bad_params_value: {err:?}")),
+            },
+            ("list_available_devices", [config_dir]) => {
+                let config_dir = std::str::from_utf8(config_dir).unwrap();
+                Self::ListAvailableDevices(PathBuf::from(config_dir))
+            }
+            (unknown_cmd, payload) => {
+                return Err(format!(
+                    "unknown_command or invalid_payload_length: {unknown_cmd} {}",
+                    payload.len()
+                ))
+            }
+        })
+    }
 
-            let devices = list_available_devices(config_dir).unwrap_or_default();
-
-            Ok(serde_json::to_string(&devices).unwrap())
-        }
-        (unknown_cmd, payload) => Err(format!(
-            "unknown_command or invalid_payload_length: {unknown_cmd} {}",
-            payload.len()
-        )),
+    pub fn execute(self) -> Result<String, String> {
+        Ok(match self {
+            Self::Version => "v0.0.1".into(),
+            Self::Encrypt(key, data) => {
+                let encrypted = key.encrypt(&data);
+                base64::encode(encrypted)
+            }
+            Self::Decrypt(key, data) => match key.decrypt(&data) {
+                Ok(cleartext) => base64::encode(cleartext),
+                Err(err) => return Err(format!("decryption_error: {err:?}")),
+            },
+            Self::ListAvailableDevices(config_dir) => {
+                let devices = list_available_devices(&config_dir).unwrap_or_default();
+                serde_json::to_string(&devices).unwrap()
+            }
+        })
     }
 }
 
 #[test]
 fn test_version() {
-    let version = decode_and_execute("version", "").unwrap();
+    let version = Cmd::decode("version", "").unwrap().execute().unwrap();
     assert_eq!(version, "v0.0.1")
 }
 
@@ -57,10 +76,10 @@ fn test_encrypt_decrypt() {
     let data = b"secret data";
 
     let payload = base64::encode(&secret) + ":" + &base64::encode(data);
-    let encrypted = decode_and_execute("encrypt", &payload).unwrap();
+    let encrypted = Cmd::decode("encrypt", &payload).unwrap().execute().unwrap();
 
     let payload = base64::encode(&secret) + ":" + &encrypted;
-    let decrypted = decode_and_execute("decrypt", &payload).unwrap();
+    let decrypted = Cmd::decode("decrypt", &payload).unwrap().execute().unwrap();
 
     let cleartext = base64::decode(decrypted).unwrap();
     assert_eq!(cleartext, b"secret data");
