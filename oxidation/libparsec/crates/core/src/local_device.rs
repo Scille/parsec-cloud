@@ -170,7 +170,6 @@ impl AvailableDevice {
                         }
                     },
                 ),
-
                 DeviceFile::Recovery(device) => (
                     DeviceFileType::Recovery,
                     device.organization_id,
