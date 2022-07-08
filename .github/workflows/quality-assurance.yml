@@ -32,9 +32,9 @@ jobs:
           cache-version: 4
         uses: actions/cache@c3f1317a9e7b1ef106c153ac8c0f00fed3ddbc0d # pin v3.0.4
         with:
-          key: ${{ runner.os }}-rust-${{ env.rust-version }}-cache-${{env.cache-version }}-${{ hashFiles('Cargo.lock') }}
+          key: ${{ runner.os }}-rust-${{ env.rust-version }}-cache-${{ env.cache-version }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-rust-${{ env.rust-version }}-cache-${{env.cache-version }}
+            ${{ runner.os }}-rust-${{ env.rust-version }}-cache-${{ env.cache-version }}
           path: |
             target
             ~/.cargo/bin
@@ -42,22 +42,25 @@ jobs:
             ~/.cargo/registry/cache
             ~/.cargo/git/db
 
-      - name: Debug rust cache hit
-        run: echo ${{ steps.cache-rust.outputs.cache-hit }}
-
-      - if: steps.cache-rust.outputs.cache-hit != 'true'
-        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # pin v1.0.6
+      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # pin v1.0.6
         with:
           toolchain: ${{ env.rust-version }}
           components: rustfmt, clippy
           default: true
+          override: true
 
       - name: Debug installed tools
         run: |
+          set -x
           python --version
-          rustc --version
-          cargo --version
           node --version
+          # Rust tools
+          whereis rustup
+          rustup --version
+          whereis rustc
+          rustc --version
+          whereis cargo
+          cargo --version
 
       - name: Debug rust cache
         run: |
@@ -87,6 +90,4 @@ jobs:
           sed -i '/id: mixed-line-ending/a\        args:\n\          - "--fix=lf"' .pre-commit-config.yaml
           cat .pre-commit-config.yaml
 
-      - uses: pre-commit/action@646c83fcd040023954eafda54b4db0192ce70507 # pin v3.0.0
-        with:
-          extra_args: --show-diff-on-failure --all-files
+      - uses: ./.github/actions/use-pre-commit
