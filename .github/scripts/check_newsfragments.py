@@ -20,7 +20,7 @@ BASE_CMD = "git log origin/master --exit-code --".split()
 
 # Ignore master given we compare against it !
 # Also ignore release branch (e.g. `2.11`) that don't have to create newsfragments
-IGNORED_BRANCHES_PATTERN = r"(master|[0-9]+.[0-9]+)"
+IGNORED_BRANCHES_PATTERN = r"(master|[0-9]+\.[0-9]+)"
 
 
 def check_newsfragment(fragment):
