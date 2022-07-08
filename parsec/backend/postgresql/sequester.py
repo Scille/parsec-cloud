@@ -102,6 +102,7 @@ _q_get_organization_services = Q(
     FROM sequester_service
     WHERE
         organization={ q_organization_internal_id("$organization_id") }
+    ORDER BY _id
     """
 )
 
