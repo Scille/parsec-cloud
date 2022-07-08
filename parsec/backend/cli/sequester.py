@@ -62,7 +62,7 @@ def display_service(service: SequesterService):
     click.echo(f"Service label :: {service.service_label}")
     click.echo(f"Service creation date :: {service.created_on}")
     if service.deleted_on:
-        click.echo(f"Service is deleted since {service.deleted_on}")
+        click.echo(f"Service is disabled since {service.deleted_on}")
     click.echo("")
 
 
@@ -72,11 +72,24 @@ async def _list_services(config, organization_str: str):
             OrganizationID(organization_str)
         )
     if services:
-        click.echo("=== Services ===")
+        click.echo("=== Avaliable Services ===")
         for service in services:
-            display_service(service)
+            if not service.deleted_on:
+                display_service(service)
+
+        click.echo("=== Disabled Services ===")
+        for service in services:
+            if service.deleted_on:
+                display_service(service)
     else:
         click.echo("No service configured")
+
+
+async def _delete_service(config, organizaton_str: str, service_id: str):
+    async with run_pg_sequester_component(config) as sequester_component:
+        await sequester_component.delete_service(
+            OrganizationID(organizaton_str), SequesterServiceID(service_id)
+        )
 
 
 def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> BackendDbConfig:
@@ -139,9 +152,36 @@ def create_service(
     trio_run(_create_service, db_config, organization, sequester_service, use_asyncio=True)
 
 
-@click.command()
+@click.command("List availlable sequester services")
 @click.option("--organization", type=str, help="Organization ID")
 @db_backend_options
 def list_services(organization: str, db: str, db_max_connections: int, db_min_connections: int):
     db_config = _get_config(db, db_min_connections, db_max_connections)
     trio_run(_list_services, db_config, organization, use_asyncio=True)
+
+
+@click.command("Enable/disable service")
+@click.option("--organization", type=str, help="Organization ID")
+@click.option("--service-id", type=str, help="Service ID")
+@click.option("--enable", is_flag=True, help="Enable service")
+@click.option("--disable", is_flag=True, help="Disable service")
+@db_backend_options
+def update_services(
+    organization: str,
+    db: str,
+    db_max_connections: int,
+    db_min_connections: int,
+    enable: bool,
+    disable: bool,
+):
+    if enable and disable:
+        raise click.BadParameter("Enable and disable flags are both set")
+    if not enable and not disable:
+        raise click.BadParameter("Required: enable or disable flag")
+
+    db_config = _get_config(db, db_min_connections, db_max_connections)
+    if disable:
+        trio_run(_delete_service, db_config, organization, use_asyncio=True)
+
+    if enable:
+        trio_run(_enable_service, db_config, organization, use_asyncio=True)
