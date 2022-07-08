@@ -73,6 +73,9 @@ jobs:
         run: |
           echo ${{ github.ref }}
           echo ${{ github.ref_name }}
+          echo ${{ github.base_ref }}
+          echo ${{ github.head_ref }}
+          echo $GITHUB_REF
 
       - name: Check Newsfragment
         if: |
