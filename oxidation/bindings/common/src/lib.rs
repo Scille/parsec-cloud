@@ -1,7 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 use base64::DecodeError;
-use libparsec::crypto::SecretKey;
+use std::path::Path;
+
+use libparsec::{core::list_available_devices, crypto::SecretKey};
 pub use libparsec::{create_context, RuntimeContext};
 
 pub fn decode_and_execute(cmd: &str, payload: &str) -> Result<String, String> {
@@ -28,6 +30,14 @@ pub fn decode_and_execute(cmd: &str, payload: &str) -> Result<String, String> {
             },
             Err(err) => Err(format!("bad_params_value: {err:?}")),
         },
+        ("list_available_devices", [config_dir]) => {
+            let config_dir = std::str::from_utf8(config_dir).unwrap();
+            let config_dir = Path::new(config_dir);
+
+            let devices = list_available_devices(config_dir).unwrap_or_default();
+
+            Ok(serde_json::to_string(&devices).unwrap())
+        }
         (unknown_cmd, payload) => Err(format!(
             "unknown_command or invalid_payload_length: {unknown_cmd} {}",
             payload.len()

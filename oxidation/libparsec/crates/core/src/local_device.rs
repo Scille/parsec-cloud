@@ -98,14 +98,15 @@ impl DeviceFile {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum DeviceFileType {
     Password,
     Recovery,
     Smartcard,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct AvailableDevice {
     pub key_file_path: PathBuf,
     pub organization_id: OrganizationID,
@@ -113,6 +114,7 @@ pub struct AvailableDevice {
     pub human_handle: Option<HumanHandle>,
     pub device_label: Option<DeviceLabel>,
     pub slug: String,
+    #[serde(rename = "type")]
     pub ty: DeviceFileType,
 }
 
