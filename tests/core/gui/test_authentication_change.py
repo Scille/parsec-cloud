@@ -31,8 +31,8 @@ async def test_change_password_invalid_old_password(
             "parsec.core.gui.authentication_change_widget.get_text_input",
             lambda *args, **kwargs: "INVALID_PASSWORD",
         )
-        # 0 is "Copy backend addr", 1 is a separator
-        c_w.button_user.menu().actions()[2].trigger()
+        # 0 is "Org info"
+        c_w.button_user.menu().actions()[1].trigger()
 
         await aqtbot.wait_until(
             lambda: autoclose_dialog.dialogs
@@ -60,7 +60,7 @@ async def test_change_password_invalid_password_check(
             "parsec.core.gui.authentication_change_widget.get_text_input",
             lambda *args, **kwargs: "P@ssw0rd",
         )
-        c_w.button_user.menu().actions()[2].trigger()
+        c_w.button_user.menu().actions()[1].trigger()
 
         pc_w = await catch_auth_change_widget()
 
@@ -94,7 +94,7 @@ async def test_change_password_success(
             "parsec.core.gui.authentication_change_widget.get_text_input",
             lambda *args, **kwargs: "P@ssw0rd",
         )
-        c_w.button_user.menu().actions()[2].trigger()
+        c_w.button_user.menu().actions()[1].trigger()
 
         pc_w = await catch_auth_change_widget()
 

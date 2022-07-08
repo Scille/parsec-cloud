@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-06-21 11:01+0200\n"
+"POT-Creation-Date: 2022-07-08 10:45+0200\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.10.1\n"
+"Generated-By: Babel 2.10.3\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
@@ -56,8 +56,8 @@ msgstr ""
 msgid "ACTION_UPDATE_SUBSCRIPTION"
 msgstr "Update subscription"
 
-msgid "ACTION_COPY_BACKEND_ADDR"
-msgstr "Copy server address"
+msgid "ACTION_DEVICE_MENU_THIS_ORGANIZATION"
+msgstr "This organization"
 
 msgid "ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"
 msgstr "Change authentication"
@@ -80,9 +80,6 @@ msgstr ""
 
 msgid "TEXT_SAAS_UPDATE_SUBSCRIPTION_URL"
 msgstr "https://parsec.cloud/comment-changer-dabonnement-parsec/"
-
-msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
-msgstr "Server address has been copied to the clipboard."
 
 msgid "TEXT_NOTIF_INFO_WORKSPACE_READ_ONLY"
 msgstr "This workspace is read-only"
@@ -222,6 +219,12 @@ msgstr "Error while registering the new device."
 msgid "TEXT_CLAIM_DEVICE_TITLE"
 msgstr "Register a device"
 
+msgid "TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS-name_email_device"
+msgstr ""
+"The user <b>{name}</b> (<b>{email}</b>) along with your device "
+"<b>{device}</b> were successfully created. To start using Parsec, you "
+"will now have to choose a password."
+
 msgid "TEXT_CLAIM_USER_INVALID_CODE_CLICKED"
 msgstr ""
 "You did not provide the right code. You will have to restart the process."
@@ -248,9 +251,6 @@ msgid "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"
 msgstr ""
 "Error while waiting for peer SAS code acknowledgement. Please restart the"
 " process."
-
-msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
-msgstr "The email is invalid."
 
 msgid "TEXT_CLAIM_USER_CLAIM_ERROR"
 msgstr "Error while validating invite information. Please restart the process."
@@ -297,17 +297,8 @@ msgstr ""
 "Please fill out the following information to bootstrap the organization "
 "<b>{organization}</b>."
 
-msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
-msgstr "The organization name is invalid."
-
 msgid "TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"
 msgstr "The server address is invalid."
-
-msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
-msgstr "The email address is invalid."
-
-msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"
-msgstr "The device name is invalid."
 
 msgid "ACTION_CREATE_DEVICE"
 msgstr "Create the device"
@@ -317,6 +308,9 @@ msgstr "This organization name is already used."
 
 msgid "TEXT_ORG_WIZARD_INVALID_EMAIL"
 msgstr "The email is invalid."
+
+msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
+msgstr "The organization name is invalid."
 
 msgid "TEXT_ORG_WIZARD_OFFLINE"
 msgstr "The server is offline or you have no access to the internet."
@@ -893,9 +887,6 @@ msgstr ""
 
 msgid "TEXT_GREET_USER_PEER_RESET"
 msgstr "The invitee has reset the process. We will restart from the beginning."
-
-msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
-msgstr "The email is invalid."
 
 msgid "TEXT_GREET_USER_CREATE_USER_ERROR"
 msgstr "An error occurred while creating the user. Please restart the process."
@@ -2023,17 +2014,47 @@ msgstr "Are you sure you want to close PARSEC?"
 msgid "ACTION_PARSEC_QUIT_CONFIRM"
 msgstr "Quit"
 
-msgid "TEXT_ORGANIZATION_SIZE_organizationsize"
-msgstr "<b>{organizationsize}</b> used"
-
-msgid "TEXT_ORGANIZATION_SIZE_TOOLTIP_datasize-metadatasize"
-msgstr ""
-"Data: <b>{datasize}</b>\n"
-"<br />\n"
-"Meta-data: <b>{metadatasize}</b>"
-
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "The version <b>{version}</b> of PARSEC is available!"
+
+msgid "TEXT_ORG_INFO_DATA_SIZE-size"
+msgstr "Data size: <b>{size}</b>"
+
+msgid "TEXT_ORG_INFO_METADATA_SIZE-size"
+msgstr "Metadata size: <b>{size}</b>"
+
+msgid "TEXT_ORG_INFO_DATA_TOTAL_SIZE-size"
+msgstr "Total size: <b>{size}</b>"
+
+msgid "TEXT_ORG_INFO_ACTIVE_USERS_COUNT-count"
+msgstr "{count} active user(s)"
+
+msgid "TEXT_ORG_INFO_REVOKED_USERS_COUNT-count"
+msgstr "{count} revoked user(s)"
+
+msgid "TEXT_ORG_INFO_ADMIN_COUNT-count"
+msgstr "{count} administrator(s)"
+
+msgid "TEXT_ORG_INFO_STANDARD_COUNT-count"
+msgstr "{count} standard user(s)"
+
+msgid "TEXT_ORG_INFO_OUTSIDER_COUNT-count"
+msgstr "{count} outsider(s)"
+
+msgid "TEXT_ORG_INFO_OUTSIDER_ALLOWED"
+msgstr "Outsider profile is <b>allowed</b>"
+
+msgid "TEXT_ORG_INFO_OUTSIDER_NOT_ALLOWED"
+msgstr "Outsider profile is <b>not allowed</b>"
+
+msgid "TEXT_ORG_INFO_USER_LIMIT_UNLIMITED"
+msgstr "No limit to the number of users"
+
+msgid "TEXT_ORG_INFO_USER_LIMIT-limit"
+msgstr "Limited to {limit} active users"
+
+msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "Server address has been copied to the clipboard."
 
 msgid "TEXT_PASSWORD_CHECK_MATCH"
 msgstr "The password and the confirmation match."
@@ -2471,11 +2492,6 @@ msgstr "Perfect! Now please provide the following code to the person:"
 msgid "TEXT_CLAIM_USER_CODE_EXCHANGE_WAIT"
 msgstr "We're waiting for the other person to enter the code..."
 
-msgid "TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS-name_email_device"
-msgstr ""
-"The user <b>{name}</b> (<b>{email}</b>) along with your device <b>{device}</b> were successfully created. To start using Parsec, you will now "
-"have to choose a password."
-
 msgid "TEXT_CLAIM_USER_RETRIEVING_INFO"
 msgstr "Retrieving information from the server..."
 
@@ -2830,6 +2846,21 @@ msgstr "Your PARSEC is up-to-date!"
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
 
+msgid "ACTION_COPY_BACKEND_ADDR"
+msgstr "Copy server address"
+
+msgid "TEXT_ORG_INFO_CONFIG_TITLE"
+msgstr "Organization's configuration"
+
+msgid "TEXT_ORG_INFO_SIZE_TITLE"
+msgstr "Organization's size"
+
+msgid "TEXT_ORG_INFO_USERS_TITLE"
+msgstr "Organization's users"
+
+msgid "TEXT_ORG_INFO_SERVER_ADDR_TITLE"
+msgstr "Server address"
+
 msgid "TEXT_PASSWORD_WARNING"
 msgstr ""
 "Your password is extremely important. Be sure to chose a secure password "
@@ -2962,3 +2993,5 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
+
