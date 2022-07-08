@@ -117,7 +117,7 @@ jobs:
           cache_git_database: false
 
       - bash: |
-          sed -i '/id: mixed-line-ending/a\        args:\n\          - "--fix=lf"' .pre-commit-config.yaml
+          sed -i '/id: mixed-line-ending/a\        args: [ --fix=lf ]' .pre-commit-config.yaml
           cat .pre-commit-config.yaml
         displayName: Patch pre-commit config file to force line-ending to LF
 
