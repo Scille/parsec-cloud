@@ -51,6 +51,7 @@ repos:
     rev: v0.910  # Latest version compatible with `trio_typing==0.5.0`
     hooks:
       - id: mypy
+        language_version: python3.9
         additional_dependencies:
           - trio_typing[mypy]==0.5.0  # `qtrio` requires `trio_typing~=0.5` for the moment
           - pendulum==2.1.2
