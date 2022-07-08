@@ -6,6 +6,9 @@
 Parsec
 ======
 
+.. image:: https://github.com/Scille/parsec-cloud/actions/workflows/quality-assurance.yml/badge.svg
+   :target: https://github.com/Scille/parsec-cloud/actions/workflows/quality-assurance.yml
+   :alt: Quality Assurance
 
 .. image:: https://img.shields.io/azure-devops/tests/Scille/parsec/1/master.svg
     :target: https://dev.azure.com/Scille/parsec/_build?definitionId=1&_a=summary
