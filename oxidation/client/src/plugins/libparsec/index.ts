@@ -3,6 +3,7 @@
 import { registerPlugin } from '@capacitor/core';
 
 import type { LibParsecPlugin } from './definitions';
+import { Buffer } from 'buffer';
 
 // TODO: Initialize only for web
 import init from '../../../pkg';
@@ -43,15 +44,36 @@ class LibParsec {
     return ret.value;
   }
 
-  public async encrypt(key: string, cleartext: string): Promise<string> {
-    const ret = await libparsecPlugin.submitJob({cmd: 'encrypt', payload: `${key}:${cleartext}`});
-    return ret.value;
+  public async encrypt(key: Uint8Array, cleartext: string): Promise<Uint8Array> {
+    const b64key = Buffer.from(key).toString('base64');
+    const b64clearText = Buffer.from(cleartext).toString('base64');
+    const ret = await libparsecPlugin.submitJob({cmd: 'encrypt', payload: `${b64key}:${b64clearText}`});
+    return Buffer.from(ret.value, 'base64');
   }
 
-  public async decrypt(key: string, cyphertext: string): Promise<string> {
-    const ret = await libparsecPlugin.submitJob({cmd: 'decrypt', payload: `${key}:${cyphertext}`});
-    return ret.value;
+  public async decrypt(key: Uint8Array, cyphertext: Uint8Array): Promise<string> {
+    const b64key = Buffer.from(key).toString('base64');
+    const b64cyphertext = Buffer.from(cyphertext).toString('base64');
+    const ret = await libparsecPlugin.submitJob({cmd: 'decrypt', payload: `${b64key}:${b64cyphertext}`});
+    return Buffer.from(ret.value, 'base64').toString();
   }
+
+  public async listAvailableDevices(configDir: string): Promise<Array<AvailableDevice>> {
+    const payload = Buffer.from(configDir).toString('base64');
+    const ret = await libparsecPlugin.submitJob({cmd: 'list_available_devices', payload });
+    return JSON.parse(ret.value);
+  }
+}
+
+type AvailableDevice = {
+  key_file_path: string,
+  organization_id: string,
+  device_id: string,
+  // Email and Label
+  human_handle?: Array<string>,
+  device_label?: string,
+  slug: string,
+  type: string,
 }
 
 const libparsec = LibParsec.getInstance();

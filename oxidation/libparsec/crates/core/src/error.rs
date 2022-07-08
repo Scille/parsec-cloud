@@ -78,7 +78,7 @@ impl From<TrustchainError> for RemoteDevicesManagerError {
 
 #[derive(Error, Debug, PartialEq)]
 pub enum LocalDeviceError {
-    #[error("Could not acces to the file: {0}")]
+    #[error("Could not access to the dir/file: {0}")]
     Access(PathBuf),
 
     #[error("Deserialization error: {0}")]
