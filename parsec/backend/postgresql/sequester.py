@@ -7,7 +7,7 @@ from parsec.api.data import DataError, SequesterServiceCertificate
 from parsec.api.protocol import OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.organization import SequesterAuthority
 from parsec.backend.postgresql.handler import PGHandler
-from parsec.backend.postgresql.utils import Q, q_organization_internal_id
+from parsec.backend.postgresql.utils import Q, q_organization_internal_id, q_realm_internal_id
 from parsec.backend.sequester import (
     BaseSequesterComponent,
     SequesterCertificateOutOfBallparkError,
@@ -25,24 +25,8 @@ from parsec.utils import timestamps_in_the_ballpark
 from pendulum import DateTime
 from pendulum import now as pendulum_now
 
-"""
 
-
-CREATE TABLE sequester_service(
-    _id SERIAL PRIMARY KEY,
-    service_id UUID NOT NULL,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
-    service_certificate BYTEA NOT NULL,
-    created_on TIMESTAMPTZ NOT NULL,
-    deleted_on TIMESTAMPTZ, -- NULL if not deleted
-    webhook_url TEXT, -- NULL if service is not a WEBHOOK
-
-    UNIQUE(organization, service_id)
-);
-"""
-
-
-_q_get_organisation_sequester_authority = Q(
+q_get_organisation_sequester_authority = Q(
     f"""
     SELECT sequester_authority
     FROM organization
@@ -121,6 +105,31 @@ _q_get_organization_services = Q(
     """
 )
 
+_get_sequester_blob = Q(
+    f"""
+    SELECT sequester_service_vlob.blob, vlob_atom.vlob_id
+    FROM sequester_service_vlob
+    INNER JOIN vlob_atom ON vlob_atom._id = sequester_service_vlob.vlob
+    INNER JOIN realm_vlob_update ON vlob_atom._id = realm_vlob_update.vlob_atom
+
+    WHERE sequester_service_vlob.service = (SELECT _id from sequester_service WHERE service_id=$service_id
+    AND organization={ q_organization_internal_id("$organization_id") })
+    AND realm_vlob_update.realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+    ORDER BY sequester_service_vlob._id
+    """
+)
+
+
+async def get_sequester_authority(conn, organization_id: OrganizationID) -> bytes:
+    row = await conn.fetchrow(
+        *q_get_organisation_sequester_authority(organization_id=organization_id.str)
+    )
+    if not row:
+        raise SequesterOrganizationNotFoundError
+    elif row[0] is None:
+        raise SequesterDisabledError
+    return row[0]
+
 
 class PGPSequesterComponent(BaseSequesterComponent):
     def __init__(self, dbh: PGHandler):
@@ -131,16 +140,9 @@ class PGPSequesterComponent(BaseSequesterComponent):
     ) -> None:
 
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            row = await conn.fetchrow(
-                *_q_get_organisation_sequester_authority(organization_id=organization_id.str)
-            )
-            if not row:
-                raise SequesterOrganizationNotFoundError
-            elif row[0] is None:
-                raise SequesterDisabledError
-            else:
-                # TODO: Handle Error
-                sequester_authority = SequesterAuthority.build_from_certificate(row[0])
+            authority_certificate = await get_sequester_authority(conn, organization_id)
+            # TODO: Handle Error
+            sequester_authority = SequesterAuthority.build_from_certificate(authority_certificate)
 
             try:
                 certif_dumped = sequester_authority.verify_key_der.verify(
@@ -189,7 +191,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
         self, conn: TrioConnectionProxy, organization_id: OrganizationID
     ):
         row = await conn.fetchrow(
-            *_q_get_organisation_sequester_authority(organization_id=organization_id.str)
+            *q_get_organisation_sequester_authority(organization_id=organization_id.str)
         )
         if not row:
             raise SequesterOrganizationNotFoundError
@@ -202,11 +204,13 @@ class PGPSequesterComponent(BaseSequesterComponent):
         service_id: SequesterServiceID,
         deleted_on: Optional[DateTime] = None,
     ) -> None:
+
+        deleted_on = deleted_on or pendulum_now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             await self._assert_service_enabled(conn, organization_id)
 
             row = await conn.fetchrow(
-                *_q_get_organisation_sequester_authority(organization_id=organization_id.str)
+                *q_get_organisation_sequester_authority(organization_id=organization_id.str)
             )
             if not row:
                 raise SequesterOrganizationNotFoundError
@@ -286,8 +290,15 @@ class PGPSequesterComponent(BaseSequesterComponent):
     async def dump_realm(
         self, organization_id: OrganizationID, service_id: SequesterServiceID, realm_id: RealmID
     ) -> List[Tuple[VlobID, int, bytes]]:
-        async with self.dbh.pool.acquire() as conn, conn.transacggtion():
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
             # Check organization and service exists
             await self._get_service(conn, organization_id, service_id)
-            # TODO Dump !
-        return []
+        data = await conn.fetch(
+            *_get_sequester_blob(
+                organization_id=organization_id.str, service_id=service_id, realm_id=realm_id
+            )
+        )
+        dump = []
+        for version, entry in enumerate(data, start=1):
+            dump.append((VlobID(entry["vlob_id"]), version, entry["blob"]))
+        return dump
