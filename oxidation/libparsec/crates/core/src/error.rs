@@ -86,6 +86,9 @@ pub enum LocalDeviceError {
 
     #[error("Serialization error: {0}")]
     Serialization(PathBuf),
+
+    #[error("Invalid slug")]
+    InvalidSlug,
 }
 
 pub type LocalDeviceResult<T> = Result<T, LocalDeviceError>;

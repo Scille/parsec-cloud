@@ -16,7 +16,7 @@ fn device_file_factory(device: LocalDevice) -> DeviceFile {
         salt: b"salt".to_vec(),
         ciphertext: b"ciphertext".to_vec(),
 
-        slug: device.slug(),
+        slug: Some(device.slug()),
         organization_id: device.organization_id().clone(),
         device_id: device.device_id,
 
