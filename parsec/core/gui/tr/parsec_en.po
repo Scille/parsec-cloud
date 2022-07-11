@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-07-08 10:45+0200\n"
+"POT-Creation-Date: 2022-07-11 11:11+0200\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -2053,6 +2053,17 @@ msgstr "No limit to the number of users"
 msgid "TEXT_ORG_INFO_USER_LIMIT-limit"
 msgstr "Limited to {limit} active users"
 
+msgid "TEXT_ORG_INFO_SEQUESTRATION_TOOLTIP"
+msgstr ""
+"The sequestration allows an administrator to gain access to every data "
+"in<br />the organization"
+
+msgid "TEXT_ORG_INFO_SEQUESTRATION_ACTIVATED"
+msgstr "<u>Sequestration is not activated</u>"
+
+msgid "TEXT_ORG_INFO_SEQUESTRATION_NOT_ACTIVATED"
+msgstr "<u>Sequestration</u> is not activated"
+
 msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
 msgstr "Server address has been copied to the clipboard."
 
@@ -2993,5 +3004,4 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
-
 

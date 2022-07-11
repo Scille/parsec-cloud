@@ -56,9 +56,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-4</y>
+        <y>0</y>
         <width>438</width>
-        <height>526</height>
+        <height>533</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -152,6 +152,13 @@
               </property>
               <property name="wordWrap">
                <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_sequestration_state">
+              <property name="text">
+               <string/>
               </property>
              </widget>
             </item>

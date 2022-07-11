@@ -88,6 +88,17 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
                         limit=config.active_users_limit
                     )
                 )
+            self.label_sequestration_state.setToolTip(
+                translate("TEXT_ORG_INFO_SEQUESTRATION_TOOLTIP")
+            )
+            if getattr(config, "sequester_authority", None):
+                self.label_sequestration_state.setText(
+                    translate("TEXT_ORG_INFO_SEQUESTRATION_ACTIVATED")
+                )
+            else:
+                self.label_sequestration_state.setText(
+                    translate("TEXT_ORG_INFO_SEQUESTRATION_NOT_ACTIVATED")
+                )
 
     def _on_copy_addr_clicked(self, org_addr: str):
         desktop.copy_to_clipboard(org_addr)
