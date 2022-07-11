@@ -7,7 +7,6 @@ from PyQt5.QtCore import QFile, QEvent
 from PyQt5.QtGui import QFont, QFontDatabase, QPalette, QColor
 from structlog import get_logger
 
-
 logger = get_logger()
 
 
