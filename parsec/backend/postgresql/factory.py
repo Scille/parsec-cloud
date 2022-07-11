@@ -40,18 +40,18 @@ async def components_factory(
             await send_signal(conn, event, **kwargs)
 
     webhooks = WebhooksComponent(config)
-    organization = PGOrganizationComponent(dbh, webhooks, config)
-    user = PGUserComponent(dbh, event_bus)
-    invite = PGInviteComponent(dbh, event_bus, config)
+    organization = PGOrganizationComponent(dbh=dbh, webhooks=webhooks, config=config)
+    user = PGUserComponent(dbh=dbh, event_bus=event_bus)
+    invite = PGInviteComponent(dbh=dbh, event_bus=event_bus, config=config)
     message = PGMessageComponent(dbh)
     realm = PGRealmComponent(dbh)
     vlob = PGVlobComponent(dbh)
     ping = PGPingComponent(dbh)
-    blockstore = blockstore_factory(config.blockstore_config, postgresql_dbh=dbh)
-    block = PGBlockComponent(dbh, blockstore, vlob)
+    blockstore = blockstore_factory(config=config.blockstore_config, postgresql_dbh=dbh)
+    block = PGBlockComponent(dbh=dbh, blockstore_component=blockstore)
     pki = PGPkiEnrollmentComponent(dbh)
     sequester = PGPSequesterComponent(dbh)
-    events = EventsComponent(realm, send_event=_send_event)
+    events = EventsComponent(realm_component=realm, send_event=_send_event)
 
     components = {
         "events": events,
