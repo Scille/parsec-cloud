@@ -2929,7 +2929,7 @@ msgid "ACTION_COPY_BACKEND_ADDR"
 msgstr "Copier l'adresse du serveur"
 
 msgid "TEXT_ORG_INFO_CONFIG_TITLE"
-msgstr "Configuration de l'organization"
+msgstr "Configuration de l'organisation"
 
 msgid "TEXT_ORG_INFO_SIZE_TITLE"
 msgstr "Taille de l'organisation"
