@@ -6,6 +6,7 @@ TRANSLATIONS += tr/parsec_fr.ts \
 
 FORMS += forms/main_window.ui \
          forms/files_widget.ui \
+         forms/organization_info_widget.ui \
          forms/users_widget.ui \
          forms/settings_widget.ui \
          forms/login_widget.ui \

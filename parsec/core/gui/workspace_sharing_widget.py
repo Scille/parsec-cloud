@@ -294,6 +294,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             )
 
     def _on_share_error(self, job):
+        if job.status == "cancelled":
+            return
         reset = True
         user_info = job.exc.params.get("user_info")
         role = job.exc.params.get("role")

@@ -32,6 +32,11 @@ def catch_create_org_widget(widget_catcher_factory):
 
 
 @pytest.fixture
+def catch_org_info_widget(widget_catcher_factory):
+    return widget_catcher_factory("parsec.core.gui.organization_info_widget.OrganizationInfoWidget")
+
+
+@pytest.fixture
 def catch_claim_device_widget(widget_catcher_factory):
     return widget_catcher_factory("parsec.core.gui.claim_device_widget.ClaimDeviceWidget")
 
@@ -545,10 +550,34 @@ async def test_tab_login_logout(gui_factory, core_config, alice, monkeypatch):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_copy_backend_addr(aqtbot, logged_gui, snackbar_catcher):
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_show_org_info(
+    aqtbot, logged_gui, running_backend, snackbar_catcher, catch_org_info_widget
+):
     c_w = logged_gui.test_get_central_widget()
     assert c_w is not None
     c_w.button_user.menu().actions()[0].trigger()
+    oi_w = await catch_org_info_widget()
+    assert oi_w
+
+    assert (
+        oi_w.label_backend_addr.text()
+        == logged_gui.test_get_core().device.organization_addr.to_url()
+    )
+    assert oi_w.label_data_size.text() == "Data size: <b>0 B</b>"
+    # Metadata size vary slightly between runs
+    assert oi_w.label_metadata_size.text().startswith("Metadata size: <b>")
+    assert oi_w.label_total_size.text().startswith("Total size: <b>")
+    assert oi_w.label_user_active.text() == "3 active user(s)"
+    assert oi_w.label_user_revoked.text() == "0 revoked user(s)"
+    assert oi_w.label_user_admin.text() == "2 administrator(s)"
+    assert oi_w.label_user_standard.text() == "1 standard user(s)"
+    assert oi_w.label_user_outsider.text() == "0 outsider(s)"
+
+    assert oi_w.label_outsider_allowed.text() == translate("TEXT_ORG_INFO_OUTSIDER_ALLOWED")
+    assert oi_w.label_user_limit.text() == translate("TEXT_ORG_INFO_USER_LIMIT_UNLIMITED")
+
+    aqtbot.mouse_click(oi_w.button_copy_to_clipboard, QtCore.Qt.LeftButton)
     assert snackbar_catcher.snackbars == [
         ("INFO", translate("TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"))
     ]
@@ -721,7 +750,7 @@ async def test_commercial_open_switch_offer(aqtbot, gui_factory, alice, monkeypa
     assert c_w is not None
 
     actions = c_w.button_user.menu().actions()
-    assert len(actions) == 5
+    assert len(actions) == 4
     assert "Update subscription" not in [a.text() for a in actions]
 
     await gui.test_logout_and_switch_to_login_widget()

@@ -393,7 +393,8 @@ def testing_main_window_cls(aqtbot):
             central_widget = self.test_get_central_widget()
             tabw = self.test_get_tab()
             async with aqtbot.wait_signal(tabw.logged_out):
-                central_widget.button_user.menu().actions()[4].trigger()
+                # 0 is org info, 1 is auth change, 2 is separator
+                central_widget.button_user.menu().actions()[3].trigger()
 
             def _wait_logged_out():
                 assert not central_widget.isVisible()

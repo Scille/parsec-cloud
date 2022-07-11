@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-06-21 11:01+0200\n"
+"POT-Creation-Date: 2022-07-08 10:45+0200\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.10.1\n"
+"Generated-By: Babel 2.10.3\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
@@ -56,8 +56,8 @@ msgstr ""
 msgid "ACTION_UPDATE_SUBSCRIPTION"
 msgstr "Changer d'abonnement"
 
-msgid "ACTION_COPY_BACKEND_ADDR"
-msgstr "Copier l'adresse du serveur"
+msgid "ACTION_DEVICE_MENU_THIS_ORGANIZATION"
+msgstr "Cette organisation"
 
 msgid "ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"
 msgstr "Changer l'authentification"
@@ -80,9 +80,6 @@ msgstr ""
 
 msgid "TEXT_SAAS_UPDATE_SUBSCRIPTION_URL"
 msgstr "https://parsec.cloud/comment-changer-dabonnement-parsec/"
-
-msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
-msgstr "L'adresse du serveur a été copiée dans le presse-papier."
 
 msgid "TEXT_NOTIF_INFO_WORKSPACE_READ_ONLY"
 msgstr "Cet espace de travail est en lecture seule."
@@ -228,6 +225,12 @@ msgstr "Erreur interne. Veuillez redémarrer le processus."
 msgid "TEXT_CLAIM_DEVICE_TITLE"
 msgstr "Enregistrer un appareil"
 
+msgid "TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS-name_email_device"
+msgstr ""
+"L'utilisateur <b>{name}</b> (<b>{email}</b>) ainsi que votre appareil "
+"<b>{device}</b> ont été créés. Pour commencer à utiliser Parsec, il vous "
+"faut à présent choisir un mot de passe."
+
 msgid "TEXT_CLAIM_USER_INVALID_CODE_CLICKED"
 msgstr ""
 "Vous n'avez pas cliqué sur le bon code. Vous devez redémarrer le "
@@ -260,9 +263,6 @@ msgid "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"
 msgstr ""
 "Erreur pendant l'attente de confirmation du code SAS. Veuillez redémarrer"
 " le processus."
-
-msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
-msgstr "L'email est invalide."
 
 msgid "TEXT_CLAIM_USER_CLAIM_ERROR"
 msgstr ""
@@ -311,17 +311,8 @@ msgstr ""
 "Veuillez fournir les informations suivantes pour démarrer l'organisation "
 "<b>{organization}</b>."
 
-msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
-msgstr "Le nom d'organisation n'est pas valide."
-
 msgid "TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"
 msgstr "L'adresse du serveur n'est pas valide."
-
-msgid "TEXT_ORG_WIZARD_INVALID_HUMAN_HANDLE"
-msgstr "L'adresse email n'est pas valide."
-
-msgid "TEXT_ORG_WIZARD_INVALID_DEVICE_LABEL"
-msgstr "Le nom de d'appareil n'est pas valide."
 
 msgid "ACTION_CREATE_DEVICE"
 msgstr "Créer l'appareil"
@@ -331,6 +322,9 @@ msgstr "Une organisation du même nom existe déjà."
 
 msgid "TEXT_ORG_WIZARD_INVALID_EMAIL"
 msgstr "L'email n'est pas valide."
+
+msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
+msgstr "Le nom d'organisation n'est pas valide."
 
 msgid "TEXT_ORG_WIZARD_OFFLINE"
 msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
@@ -929,9 +923,6 @@ msgstr "Suite à une annulation de l'invité, il faut redémarrer le precessus"
 
 msgid "TEXT_GREET_USER_PEER_RESET"
 msgstr "Suite à une annulation de l'invité, il faut redémarrer le processus."
-
-msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
-msgstr "L'email n'est pas valide."
 
 msgid "TEXT_GREET_USER_CREATE_USER_ERROR"
 msgstr ""
@@ -2079,17 +2070,47 @@ msgstr "Êtes-vous sûr de vouloir fermer PARSEC ?"
 msgid "ACTION_PARSEC_QUIT_CONFIRM"
 msgstr "Quitter"
 
-msgid "TEXT_ORGANIZATION_SIZE_organizationsize"
-msgstr "<b>{organizationsize}</b> utilisés"
-
-msgid "TEXT_ORGANIZATION_SIZE_TOOLTIP_datasize-metadatasize"
-msgstr ""
-"Données : <b>{datasize}</b>\n"
-"<br />\n"
-"Méta-données : <b>{metadatasize}</b>"
-
 msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
 msgstr "La version <b>{version}</b> de PARSEC est disponible !"
+
+msgid "TEXT_ORG_INFO_DATA_SIZE-size"
+msgstr "Taille des données : {size}"
+
+msgid "TEXT_ORG_INFO_METADATA_SIZE-size"
+msgstr "Taille des métadonnées : {size}"
+
+msgid "TEXT_ORG_INFO_DATA_TOTAL_SIZE-size"
+msgstr "Taille totale : {size}"
+
+msgid "TEXT_ORG_INFO_ACTIVE_USERS_COUNT-count"
+msgstr "{count} utilisateur(s) actif(s)"
+
+msgid "TEXT_ORG_INFO_REVOKED_USERS_COUNT-count"
+msgstr "{count} utilisateur(s) révoqué(s)"
+
+msgid "TEXT_ORG_INFO_ADMIN_COUNT-count"
+msgstr "{count} administrateur(s)"
+
+msgid "TEXT_ORG_INFO_STANDARD_COUNT-count"
+msgstr "{count} utilisateur(s) standard(s)"
+
+msgid "TEXT_ORG_INFO_OUTSIDER_COUNT-count"
+msgstr "{count} utilisateur(s) externe(s)"
+
+msgid "TEXT_ORG_INFO_OUTSIDER_ALLOWED"
+msgstr "Les utilisateurs externes sont autorisés"
+
+msgid "TEXT_ORG_INFO_OUTSIDER_NOT_ALLOWED"
+msgstr "Les utilisateurs externes ne sont pas autorisés"
+
+msgid "TEXT_ORG_INFO_USER_LIMIT_UNLIMITED"
+msgstr "Aucune limite du nombre d'utilisateurs"
+
+msgid "TEXT_ORG_INFO_USER_LIMIT-limit"
+msgstr "<b>{limit}</b> utilisateurs maximum"
+
+msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
+msgstr "L'adresse du serveur a été copiée dans le presse-papier."
 
 msgid "TEXT_PASSWORD_CHECK_MATCH"
 msgstr "Le mot de passe et la confirmation sont les mêmes."
@@ -2541,11 +2562,6 @@ msgstr "Parfait ! Veuillez maintenant fournir le code suivant à la personne :"
 msgid "TEXT_CLAIM_USER_CODE_EXCHANGE_WAIT"
 msgstr "En attente de l'autre personne"
 
-msgid "TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS"
-msgstr ""
-"L'utilisateur <b>{name}</b> (<b>{email}</b>) ainsi que l'appareil <b>{device}</b> ont été créés avec succès ! Pour commencer à utiliser PARSEC, "
-"vous devez maintenant choisir un mot de passe."
-
 msgid "TEXT_CLAIM_USER_RETRIEVING_INFO"
 msgstr "Récupération des informations depuis le serveur..."
 
@@ -2908,6 +2924,21 @@ msgstr "Votre application est à jour."
 
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
+
+msgid "ACTION_COPY_BACKEND_ADDR"
+msgstr "Copier l'adresse du serveur"
+
+msgid "TEXT_ORG_INFO_CONFIG_TITLE"
+msgstr "Configuration de l'organisation"
+
+msgid "TEXT_ORG_INFO_SIZE_TITLE"
+msgstr "Taille de l'organisation"
+
+msgid "TEXT_ORG_INFO_USERS_TITLE"
+msgstr "Utilisateurs dans l'organisations"
+
+msgid "TEXT_ORG_INFO_SERVER_ADDR_TITLE"
+msgstr "Adresse du serveur"
 
 msgid "TEXT_PASSWORD_WARNING"
 msgstr ""

@@ -15,7 +15,7 @@ from parsec.api.protocol import (
 from parsec.api.data import EntryName
 from parsec.api.data.manifest import WorkspaceEntry
 from parsec.core.core_events import CoreEvent
-from parsec.core.logged_core import LoggedCore, OrganizationStats
+from parsec.core.logged_core import LoggedCore
 from parsec.core.types import UserInfo, BackendOrganizationFileLinkAddr
 from parsec.core.fs import FsPath
 from parsec.core.backend_connection import (
@@ -44,17 +44,8 @@ from parsec.core.gui.custom_widgets import Pixmap
 from parsec.core.gui.commercial import is_saas_addr
 from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
-from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
+from parsec.core.gui.organization_info_widget import OrganizationInfoWidget
 import time
-
-
-async def _do_get_organization_stats(core: LoggedCore) -> OrganizationStats:
-    try:
-        return await core.get_organization_stats()
-    except BackendNotAvailable as exc:
-        raise JobResultError("offline") from exc
-    except BackendConnectionError as exc:
-        raise JobResultError("error") from exc
 
 
 class GoToFileLinkError(Exception):
@@ -84,14 +75,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         CoreEvent.SHARING_UPDATED,
     ]
 
-    organization_stats_success = pyqtSignal(QtToTrioJob)
-    organization_stats_error = pyqtSignal(QtToTrioJob)
-
     connection_state_changed = pyqtSignal(object, object)
     logout_requested = pyqtSignal()
     new_notification = pyqtSignal(str, str)
-
-    REFRESH_ORGANIZATION_STATS_DELAY = 5  # 5s
 
     def __init__(
         self,
@@ -118,17 +104,14 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         for e in self.NOTIFICATION_EVENTS:
             self.event_bus.connect(e, cast(EventCallback, self.handle_event))
 
-        self.event_bus.connect(CoreEvent.FS_ENTRY_SYNCED, self._on_vlobs_updated)
-        self.event_bus.connect(CoreEvent.BACKEND_REALM_VLOBS_UPDATED, self._on_vlobs_updated)
-
         self.set_user_info()
         menu = QMenu()
         if self.core.device.is_admin and is_saas_addr(self.core.device.organization_addr):
             update_sub_act = menu.addAction(_("ACTION_UPDATE_SUBSCRIPTION"))
             update_sub_act.triggered.connect(self._on_update_subscription_clicked)
-        copy_backend_addr_act = menu.addAction(_("ACTION_COPY_BACKEND_ADDR"))
-        copy_backend_addr_act.triggered.connect(self._on_copy_backend_addr)
-        menu.addSeparator()
+            menu.addSeparator()
+        org_info_act = menu.addAction(_("ACTION_DEVICE_MENU_THIS_ORGANIZATION"))
+        org_info_act.triggered.connect(self._on_organization_clicked)
         change_auth_act = menu.addAction(_("ACTION_DEVICE_MENU_CHANGE_AUTHENTICATION"))
         change_auth_act.triggered.connect(self.change_authentication)
         menu.addSeparator()
@@ -165,9 +148,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         self.mount_widget = MountWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.mount_widget)
         self.mount_widget.folder_changed.connect(self._on_folder_changed)
-
-        self.organization_stats_success.connect(self._on_organization_stats_success)
-        self.organization_stats_error.connect(self._on_organization_stats_error)
 
         self.users_widget = UsersWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.users_widget.filter_shared_workspaces_request.connect(self.show_mount_widget)
@@ -215,9 +195,26 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
     def _on_update_subscription_clicked(self) -> None:
         desktop.open_url(_("TEXT_SAAS_UPDATE_SUBSCRIPTION_URL"))
 
-    def _on_copy_backend_addr(self) -> None:
-        desktop.copy_to_clipboard(self.core.device.organization_addr.to_url())
-        SnackbarManager.inform(_("TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"))
+    async def _on_organization_clicked(self) -> None:
+        stats = None
+        config = None
+        try:
+            stats = await self.core.get_organization_stats()
+        except (BackendNotAvailable, BackendConnectionError):
+            pass
+        try:
+            config = self.core.get_organization_config()
+        except (BackendNotAvailable, BackendConnectionError):
+            pass
+
+        await OrganizationInfoWidget.show_modal(
+            profile=self.core.device.profile,
+            org_id=self.core.device.organization_id,
+            org_addr=self.core.device.organization_addr.to_url(),
+            stats=stats,
+            config=config,
+            parent=self,
+        )
 
     def set_user_info(self) -> None:
         org = self.core.device.organization_id
@@ -326,19 +323,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
                     "INFO", _("TEXT_NOTIF_INFO_WORKSPACE_UNSHARED_workspace").format(workspace=name)
                 )
 
-    def _load_organization_stats(self, delay: float = 0) -> None:
-        self.jobs_ctx.submit_throttled_job(
-            "central_widget.load_organization_stats",
-            delay,
-            self.organization_stats_success,
-            self.organization_stats_error,
-            _do_get_organization_stats,
-            core=self.core,
-        )
-
-    def _on_vlobs_updated(self, *args: object, **kwargs: object) -> None:
-        self._load_organization_stats(delay=self.REFRESH_ORGANIZATION_STATS_DELAY)
-
     def _on_connection_state_changed(
         self, status: BackendConnStatus, status_exc: Optional[Exception], allow_systray: bool = True
     ) -> None:
@@ -348,11 +332,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
         notif = None
         disconnected = None
 
-        self.menu.label_organization_name.hide()
-        self.menu.label_organization_size.clear()
         if status in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING):
-            if status == BackendConnStatus.READY and self.core.device.is_admin:
-                self._load_organization_stats()
             tooltip = text = _("TEXT_BACKEND_STATE_CONNECTED")
             icon = QPixmap(":/icons/images/material/cloud_queue.svg")
 
@@ -418,21 +398,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
                 ),
                 5000,
             )
-
-    def _on_organization_stats_success(self, job: QtToTrioJob) -> None:
-        assert job.is_finished()
-        assert job.status == "ok"
-
-        organization_stats = job.ret
-        self.menu.show_organization_stats(
-            organization_id=self.core.device.organization_id, organization_stats=organization_stats
-        )
-
-    def _on_organization_stats_error(self, job: QtToTrioJob) -> None:
-        assert job.is_finished()
-        assert job.status != "ok"
-        self.menu.label_organization_name.hide()
-        self.menu.label_organization_size.clear()
 
     def on_new_notification(self, notif_type: str, msg: str) -> None:
         if notif_type == "CONGRATULATE":
