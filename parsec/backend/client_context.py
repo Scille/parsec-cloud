@@ -67,7 +67,7 @@ class AuthenticatedClientContext(BaseClientContext):
         super().__init__(api_version)
 
         self.logger = logger.bind(
-            conn_id=self.conn_id, organization_id=organization_id, device_id=device_id
+            conn_id=self.conn_id, organization_id=organization_id.str, device_id=device_id.str
         )
 
         self.organization_id = organization_id
@@ -84,7 +84,7 @@ class AuthenticatedClientContext(BaseClientContext):
         self.events_subscribed = False
 
     def __repr__(self):
-        return f"AuthenticatedClientContext(org={self.organization_id}, device={self.device_id})"
+        return f"AuthenticatedClientContext(org={self.organization_id.str}, device={self.device_id.str})"
 
     @property
     def user_id(self) -> UserID:
@@ -123,7 +123,9 @@ class InvitedClientContext(BaseClientContext):
         super().__init__(api_version)
 
         self.logger = logger.bind(
-            conn_id=self.conn_id, organization_id=organization_id, invitation_token=invitation.token
+            conn_id=self.conn_id,
+            organization_id=organization_id.str,
+            invitation_token=invitation.token,
         )
 
         self.organization_id = organization_id
@@ -142,7 +144,7 @@ class AnonymousClientContext(BaseClientContext):
         # Websocket, hence there is no api version negotiation for the moment
         super().__init__(API_V2_VERSION)
 
-        self.logger = logger.bind(conn_id=self.conn_id, organization_id=organization_id)
+        self.logger = logger.bind(conn_id=self.conn_id, organization_id=organization_id.str)
 
         self.organization_id = organization_id
 
@@ -157,7 +159,7 @@ class APIV1_AnonymousClientContext(BaseClientContext):
     def __init__(self, api_version: ApiVersion, organization_id: OrganizationID):
         super().__init__(api_version)
 
-        self.logger = logger.bind(conn_id=self.conn_id, organization_id=organization_id)
+        self.logger = logger.bind(conn_id=self.conn_id, organization_id=organization_id.str)
 
         self.organization_id = organization_id
 
