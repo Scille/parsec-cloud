@@ -16,7 +16,7 @@ fn device_file_factory(device: LocalDevice) -> DeviceFile {
         salt: b"salt".to_vec(),
         ciphertext: b"ciphertext".to_vec(),
 
-        slug: device.slug(),
+        slug: Some(device.slug()),
         organization_id: device.organization_id().clone(),
         device_id: device.device_id,
 
@@ -105,6 +105,39 @@ fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mallory: &
     ]);
 
     assert_eq!(HashSet::from_iter(devices), expected_devices);
+}
+
+#[rstest]
+fn test_list_devices_support_legacy_file_without_labels(tmp_path: TmpPath, alice: &Device) {
+    let device = alice.local_device();
+
+    let device = DeviceFile::Password(DeviceFilePassword {
+        salt: b"salt".to_vec(),
+        ciphertext: b"ciphertext".to_vec(),
+
+        slug: None,
+        organization_id: device.organization_id().clone(),
+        device_id: device.device_id,
+
+        human_handle: None,
+        device_label: None,
+    });
+    let slug = "9d84fbd57a#Org#Zack@PC1".to_string();
+    let key_file_path = tmp_path.join("devices").join(slug.clone() + ".keys");
+    device.save(&key_file_path).unwrap();
+
+    let devices = list_available_devices(&tmp_path).unwrap();
+    let expected_device = AvailableDevice {
+        key_file_path,
+        organization_id: alice.organization_id().clone(),
+        device_id: alice.device_id.clone(),
+        human_handle: None,
+        device_label: None,
+        slug,
+        ty: DeviceFileType::Password,
+    };
+
+    assert_eq!(devices, [expected_device]);
 }
 
 #[rstest]

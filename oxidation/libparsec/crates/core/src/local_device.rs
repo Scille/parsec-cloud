@@ -26,7 +26,8 @@ pub struct DeviceFilePassword {
 
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
-    pub slug: String,
+    // Handle legacy device with option
+    pub slug: Option<String>,
 }
 
 #[serde_as]
@@ -140,6 +141,7 @@ impl AvailableDevice {
             .unwrap_or_else(|| self.device_id.device_name.to_string())
     }
 
+    /// For the legacy device files, the slug is contained in the device filename
     fn load(key_file_path: PathBuf) -> LocalDeviceResult<Self> {
         let (ty, organization_id, device_id, human_handle, device_label, slug) =
             match DeviceFile::load(&key_file_path)? {
@@ -149,7 +151,24 @@ impl AvailableDevice {
                     device.device_id,
                     device.human_handle,
                     device.device_label,
-                    device.slug,
+                    // Handle legacy device
+                    match device.slug {
+                        Some(slug) => slug,
+                        None => {
+                            let slug = key_file_path
+                                .file_stem()
+                                .expect("Unreachable because deserialization succeed")
+                                .to_str()
+                                .expect("It may be unreachable")
+                                .to_string();
+
+                            if LocalDevice::load_slug(&slug).is_err() {
+                                return Err(LocalDeviceError::InvalidSlug);
+                            }
+
+                            slug
+                        }
+                    },
                 ),
                 DeviceFile::Recovery(device) => (
                     DeviceFileType::Recovery,
