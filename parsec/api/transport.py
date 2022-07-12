@@ -124,13 +124,17 @@ class Transport:
         return transport
 
     @classmethod
-    async def init_for_server(  # type: ignore[misc]
+    async def init_for_server(
         cls: Type["Transport"], stream: Stream, upgrade_request: Optional[H11Request] = None
     ) -> "Transport":
         ws = WSConnection(ConnectionType.SERVER)
         if upgrade_request:
+            # TODO: remove type ignore comments once those issues have been treated
+            # https://github.com/python-hyper/wsproto/issues/173
+            # https://github.com/python-hyper/wsproto/issues/174
             ws.initiate_upgrade_connection(
-                headers=upgrade_request.headers, path=upgrade_request.target
+                headers=upgrade_request.headers,  # type: ignore[arg-type]
+                path=upgrade_request.target,  # type: ignore[arg-type]
             )
         transport = cls(stream, ws)
 

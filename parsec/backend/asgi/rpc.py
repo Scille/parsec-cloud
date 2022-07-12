@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from quart import current_app, Response, Blueprint, abort, request
+from quart import Response, Blueprint, abort, request, g
 
 from parsec.serde import SerdePackingError, packb, unpackb
 from parsec.api.protocol import OrganizationID
@@ -23,7 +23,7 @@ rpc_bp = Blueprint("anonymous_api", __name__)
 
 @rpc_bp.route("/anonymous/<raw_organization_id>", methods=["GET", "POST"])
 async def anonymous_api(raw_organization_id: str):
-    backend: BackendApp = current_app.backend
+    backend: BackendApp = g.backend
     # Check whether the organization exists
     try:
         organization_id = OrganizationID(raw_organization_id)

@@ -7,6 +7,7 @@ from quart import (
     ResponseReturnValue,
     request,
     redirect as quart_redirect,
+    ctx,
 )
 from quart_trio import QuartTrio
 
@@ -24,7 +25,20 @@ from parsec.backend.templates import JINJA_ENV_CONFIG
 MAX_CONTENT_LENGTH = 1 * 1024 ** 2
 
 
-def app_factory(backend: BackendApp, app_cls: Type[QuartTrio] = QuartTrio) -> QuartTrio:
+class BackendQuartTrio(QuartTrio):
+    """A QuartTrio app that ensures that the backend is available in `g` global object."""
+
+    backend: BackendApp
+
+    def app_context(self) -> ctx.AppContext:
+        app_context = super().app_context()
+        app_context.g.backend = self.backend
+        return app_context
+
+
+def app_factory(
+    backend: BackendApp, app_cls: Type[BackendQuartTrio] = BackendQuartTrio
+) -> BackendQuartTrio:
     app = app_cls(
         __name__, static_folder="../static", static_url_path="/static", template_folder="templates"
     )

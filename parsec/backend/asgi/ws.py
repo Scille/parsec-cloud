@@ -4,7 +4,7 @@ from typing import Dict, NoReturn, Callable, Union
 import trio
 from structlog import get_logger
 from functools import partial
-from quart import current_app, websocket, Websocket, Blueprint
+from quart import g, websocket, Websocket, Blueprint
 
 from parsec.api.protocol.base import MessageSerializationError
 from parsec.api.protocol import (
@@ -17,6 +17,7 @@ from parsec.api.protocol import (
     UserID,
     InvitationToken,
 )
+from parsec.backend.app import BackendApp
 from parsec.backend.utils import run_with_cancel_on_client_sending_new_cmd, CancelledByNewCmd
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.client_context import (
@@ -36,7 +37,7 @@ ws_bp = Blueprint("ws_api", __name__)
 
 @ws_bp.websocket("/ws")
 async def handle_ws():
-    backend = current_app.backend
+    backend: BackendApp = g.backend
     selected_logger = logger
 
     # TODO: try/except on TransportError & MessageSerializationError ?

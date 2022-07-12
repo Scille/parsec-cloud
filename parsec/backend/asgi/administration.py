@@ -2,7 +2,7 @@
 
 from typing import NoReturn, TYPE_CHECKING
 from functools import wraps
-from quart import current_app, Response, Blueprint, abort, request, jsonify, make_response
+from quart import current_app, Response, Blueprint, abort, request, jsonify, make_response, g
 
 from parsec.serde import SerdeValidationError, SerdePackingError
 from parsec.api.protocol import OrganizationID
@@ -30,14 +30,14 @@ def administration_authenticated(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs):
         authorization = request.headers.get("Authorization")
-        if authorization != f"Bearer {current_app.backend.config.administration_token}":
+        if authorization != f"Bearer {g.backend.config.administration_token}":
             await json_abort({"error": "not_allowed"}, 403)
         return await fn(*args, **kwargs)
 
     return wrapper
 
 
-async def json_abort(data: dict, status: int) -> NoReturn:  # type: ignore
+async def json_abort(data: dict, status: int) -> NoReturn:
     response = await make_response(jsonify(data), status)
     abort(response)
 
@@ -83,7 +83,7 @@ async def administration_create_organizations():
 )
 @administration_authenticated
 async def administration_organization_item(raw_organization_id: str):
-    backend: "BackendApp" = current_app.backend
+    backend: "BackendApp" = g.backend
     try:
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
@@ -125,7 +125,7 @@ async def administration_organization_item(raw_organization_id: str):
 )
 @administration_authenticated
 async def administration_organization_stat(raw_organization_id: str):
-    backend: "BackendApp" = current_app.backend
+    backend: "BackendApp" = g.backend
     try:
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
