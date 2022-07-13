@@ -7,7 +7,7 @@ edition = "2021"
 name = "libparsec._libparsec"
 
 [lib]
-# "cdylib" is necessary to produce a shared library for Python to import from.
+# "cdylib" is necessary to produce a shared library for `maturin` to be used to generate the python module.
 crate-type = ["cdylib"]
 
 [dependencies]
