@@ -23,7 +23,7 @@ JINJA_ENV_CONFIG = {
     "loader": PackageLoader("parsec.backend.http.templates"),
     "undefined": StrictUndefined,
 }
-JINJA_ENV = Environment(**JINJA_ENV_CONFIG)
+JINJA_ENV = Environment(**JINJA_ENV_CONFIG)  # type: ignore[arg-type]
 
 
 def get_template(name):

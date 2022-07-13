@@ -64,7 +64,7 @@ class GoToFileLinkPathDecryptionError(GoToFileLinkError):
     pass
 
 
-class CentralWidget(QWidget, Ui_CentralWidget):  # type: ignore[misc]
+class CentralWidget(QWidget, Ui_CentralWidget):
     NOTIFICATION_EVENTS = [
         CoreEvent.BACKEND_CONNECTION_CHANGED,
         CoreEvent.MOUNTPOINT_STOPPED,
