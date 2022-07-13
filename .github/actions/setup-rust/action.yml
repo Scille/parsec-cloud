@@ -1,5 +1,5 @@
-name: pre-commit
-description: install & run-precommit
+name: setup-rust
+description: install rust toolchain
 
 inputs:
   version:
