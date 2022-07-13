@@ -64,9 +64,6 @@ jobs:
           git fetch origin master
           python .github/scripts/check_newsfragments.py ${{ github.head_ref }}
 
-      - name: Run cargo build to prepare rust's cache
-        run: cargo build --workspace
-
       - name: Patch pre-commit for line-ending
         run: |
           sed -i '/id: mixed-line-ending/a\        args:\n\          - "--fix=lf"' .pre-commit-config.yaml
