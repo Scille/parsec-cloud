@@ -7,7 +7,7 @@ edition = "2021"
 name = "libparsec._libparsec"
 
 [lib]
-name = "libparsec"
+name = "libparsec_py"
 # "cdylib" is necessary to produce a shared library for Python to import from.
 crate-type = ["cdylib"]
 
