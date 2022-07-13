@@ -54,7 +54,7 @@ jobs:
         run: poetry install -E core -E backend
 
       - name: Install libparsec_python
-        run: poetry run pip install libparsec_python
+        run: poetry run pip install oxidation/libparsec_python
 
       - name: Test python codebase
         run: poetry run pytest tests --runrust
