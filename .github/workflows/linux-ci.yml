@@ -8,6 +8,7 @@ on:
 
 env:
   rust-version: 1.62.0
+  python-version: "3.9"
 
 jobs:
   rust:
@@ -18,7 +19,6 @@ jobs:
         with:
           version: ${{ env.rust-version }}
           cache-key: test&build
-
 
       - name: Build rust codebase
         run: |
@@ -31,3 +31,30 @@ jobs:
           cargo test --package libparsec_crypto --features use-rustcrypto
 
           cargo test --workspace --features mock-time --exclude libparsec_crypto
+
+  python:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          version: ${{ env.rust-version }}
+          cache-key: python
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb  # pin v4.0.0
+        with:
+          python-version: ${{ env.python-version }}
+          cache: poetry
+
+      - name: Install python deps
+        run: poetry install -E core -E backend
+
+      - name: Install libparsec_python
+        run: poetry run pip install libparsec_python
+
+      - name: Test python codebase
+        run: poetry run pytest tests --runrust
