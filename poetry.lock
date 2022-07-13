@@ -905,15 +905,14 @@ six = ">=1.5"
 
 [[package]]
 name = "python-swiftclient"
-version = "3.13.1"
+version = "4.0.0"
 description = "OpenStack Object Storage API Client Library"
 category = "main"
 optional = true
-python-versions = "*"
+python-versions = ">=3.6"
 
 [package.dependencies]
-requests = ">=1.1.0"
-six = ">=1.9.0"
+requests = ">=2.4.0"
 
 [package.extras]
 keystone = ["python-keystoneclient (>=0.7.0)"]
@@ -1361,7 +1360,7 @@ core = ["packaging", "PyQt5", "pyqt5-sip", "qtrio", "qrcode", "fusepy", "winfspy
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9.0"
-content-hash = "4c2a1d90bedf4588513d5c5a89686319d67b4f8ab02df38f3dede17ff93fd606"
+content-hash = "6f362451f4992242d0fcb8799da463cf110a892b7a83d5291cbf3260d5172a70"
 
 [metadata.files]
 aiofiles = [
@@ -2051,8 +2050,8 @@ python-dateutil = [
     {file = "python_dateutil-2.8.2-py2.py3-none-any.whl", hash = "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"},
 ]
 python-swiftclient = [
-    {file = "python-swiftclient-3.13.1.tar.gz", hash = "sha256:2d26c90b6392f6befa7fbb16fcda7be44aa26e2ae8a5bee2705d1d1c813833f0"},
-    {file = "python_swiftclient-3.13.1-py2.py3-none-any.whl", hash = "sha256:984805daa56148eba4e7fc8c4d76e0b044572f9ccdee0390bf8027bc3c2e43a8"},
+    {file = "python-swiftclient-4.0.0.tar.gz", hash = "sha256:57b6f1ff23b466843802a6816f4b6bbc6896b6ad05d6577afee7622be3a29538"},
+    {file = "python_swiftclient-4.0.0-py3-none-any.whl", hash = "sha256:7cd1c746fbdfa1f34ea6ede80783e934374561f83e06900e1a7f33f9c14d1bf7"},
 ]
 pytz = [
     {file = "pytz-2022.1-py2.py3-none-any.whl", hash = "sha256:e68985985296d9a66a881eb3193b0906246245294a881e7c8afe623866ac6a5c"},
