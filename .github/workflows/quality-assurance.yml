@@ -25,29 +25,11 @@ jobs:
         with:
           node-version: ${{ env.node-version }}
 
-      - name: Cache Rust
-        id: cache-rust
-        env:
-          # Change this value to use a new cache
-          cache-version: 4
-        uses: actions/cache@c3f1317a9e7b1ef106c153ac8c0f00fed3ddbc0d # pin v3.0.4
+      - uses: ./.github/actions/setup-rust
         with:
-          key: ${{ runner.os }}-rust-${{ env.rust-version }}-cache-${{ env.cache-version }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-${{ env.rust-version }}-cache-${{ env.cache-version }}
-          path: |
-            target
-            ~/.cargo/bin
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-
-      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # pin v1.0.6
-        with:
-          toolchain: ${{ env.rust-version }}
+          version: ${{ env.rust-version }}
           components: rustfmt, clippy
-          default: true
-          override: true
+          cache-key: qa
 
       - name: Debug installed tools
         run: |

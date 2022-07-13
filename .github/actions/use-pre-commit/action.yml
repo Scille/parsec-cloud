@@ -15,6 +15,11 @@ inputs:
     required: false
     default: 2.19.0
 
+outputs:
+  cache-hit:
+    description: A boolean value to indicate an exact match was found for the key.
+    value: ${{ steps.cache-pre-commit.outputs.cache-hit }}
+
 runs:
   using: composite
   steps:
