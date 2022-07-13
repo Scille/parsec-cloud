@@ -30,4 +30,4 @@ jobs:
           cargo test --package libparsec_crypto --features use-sodiumoxide
           cargo test --package libparsec_crypto --features use-rustcrypto
 
-          cargo test --workspace --features mock-time
+          cargo test --workspace --features mock-time --exclude libparsec_crypto
