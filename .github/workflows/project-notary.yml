@@ -20,6 +20,8 @@ jobs:
           base64 --version
 
       - name: List issues & PR with the wrong/missing project
+        env:
+          GITHUB_TOKEN: ${{ secrets.PARSEC_READ_GITHUB_TOKEN }}
         run: |
           echo -n '' > issues_wrong_project.json
 
@@ -34,6 +36,8 @@ jobs:
           jq '. | @base64' issues_wrong_project.json > issues_wrong_project.json.b64
 
       - name: Edit issues & pr to set them to correct project
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCILLE_READ_WRITE_GITHUB_TOKEN }}
         run: |
           source .github/scripts/notary/lib.sh
 
