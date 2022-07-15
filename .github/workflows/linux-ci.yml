@@ -60,6 +60,12 @@ jobs:
       - name: Install python deps
         run: poetry install -E core -E backend
 
+      - name: Configure libfuse path
+        run: |
+          LIBFUSE_PATH=$(find /usr/lib -name '*fuse*.so*' 2>/dev/null | head -n 1)
+          echo "::warning title=Libfuse path::use lib found at $LIBFUSE_PATH"
+          echo "FUSE_LIBRARY_PATH=$LIBFUSE_PATH" >> "$GITHUB_ENV"
+
       - name: Generate PyQT GUI data
         run: poetry run python misc/generate_pyqt.py
 
