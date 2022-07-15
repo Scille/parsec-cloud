@@ -9,6 +9,7 @@ on:
 env:
   rust-version: 1.62.0
   python-version: "3.9"
+  poetry-version: 1.1.13
 
 jobs:
   rust:
@@ -43,7 +44,13 @@ jobs:
           cache-key: python
 
       - name: Install poetry
-        run: pipx install poetry
+        env:
+          POETRY_VERSION: ${{ env.poetry-version }}
+        run: |
+          export POETRY_HOME="$HOME/.poetry"
+          mkdir -p "$POETRY_HOME"
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+          echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
 
       - uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb  # pin v4.0.0
         with:
