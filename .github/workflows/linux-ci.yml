@@ -53,6 +53,9 @@ jobs:
       - name: Install python deps
         run: poetry install -E core -E backend
 
+      - name: Generate PyQT GUI data
+        run: poetry run python misc/generate_pyqt.py
+
       - name: Install libparsec_python
         run: poetry run pip install oxidation/libparsec_python
 
