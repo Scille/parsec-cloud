@@ -66,7 +66,7 @@ jobs:
 
       - name: Patch pre-commit for line-ending
         run: |
-          sed -i '/id: mixed-line-ending/a\        args:\n\          - "--fix=lf"' .pre-commit-config.yaml
+          sed -i '/id: mixed-line-ending/a\        args: [ --fix=lf ]' .pre-commit-config.yaml
           cat .pre-commit-config.yaml
 
       - uses: ./.github/actions/use-pre-commit
