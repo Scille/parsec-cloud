@@ -3,7 +3,7 @@
 from typing import Optional
 import attr
 from functools import wraps
-from pendulum import DateTime
+from libparsec.types import DateTime
 from typing import Dict, Type, cast, TypeVar, Mapping, Any, Tuple, Sequence
 
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET

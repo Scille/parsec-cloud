@@ -1,5 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
-from pendulum import now as pendulum_now
+from libparsec.types import DateTime
 from functools import lru_cache
 from typing import Tuple, List, Optional
 
@@ -104,7 +104,7 @@ async def query_retrieve_active_human_by_email(
 ) -> Optional[UserID]:
     result = await conn.fetchrow(
         *_q_retrieve_active_human_by_email(
-            organization_id=organization_id.str, now=pendulum_now(), email=email
+            organization_id=organization_id.str, now=DateTime.now(), email=email
         )
     )
     if result:
@@ -133,14 +133,14 @@ async def query_find_humans(
     if query:
         args = q(
             organization_id=organization_id.str,
-            now=pendulum_now(),
+            now=DateTime.now(),
             query=_escape_sql_like_arg(query),
             offset=offset,
             limit=per_page,
         )
     else:
         args = q(
-            organization_id=organization_id.str, now=pendulum_now(), offset=offset, limit=per_page
+            organization_id=organization_id.str, now=DateTime.now(), offset=offset, limit=per_page
         )
 
     raw_results = await conn.fetch(*args)

@@ -158,7 +158,10 @@ try:
         DeviceCertificate,
         RevokedUserCertificate,
         TrustchainContext,
+        # Time
         freeze_time,
+        DateTime,
+        LocalDateTime,
         # LocalDevice
         LocalDevice,
         # Storage
@@ -412,7 +415,10 @@ __all__ = (
     "DeviceCertificate",
     "RevokedUserCertificate",
     "TrustchainContext",
+    # Time
     "freeze_time",
+    "DateTime",
+    "LocalDateTime",
     # LocalDevice
     "LocalDevice",
     # Storage

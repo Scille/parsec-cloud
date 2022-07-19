@@ -3,7 +3,7 @@
 import sys
 import subprocess
 import pytest
-import pendulum
+from libparsec.types import DateTime
 from collections import defaultdict
 from typing import Optional, Tuple, Iterable
 from hashlib import sha1
@@ -138,7 +138,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             x509_certificate: X509Certificate,
             addr: BackendPkiEnrollmentAddr,
             enrollment_id: UUID,
-            submitted_on: pendulum.DateTime,
+            submitted_on: DateTime,
             submit_payload: PkiEnrollmentSubmitPayload,
             signing_key: SigningKey,
             private_key: PrivateKey,

@@ -3,7 +3,7 @@
 import trio
 import pytest
 from unittest.mock import ANY
-import pendulum
+from libparsec.types import DateTime
 from hypothesis import given, strategies as st
 
 from parsec.backend.realm import RealmGrantedRole
@@ -415,7 +415,7 @@ async def test_block_check_other_organization(
                 user_id=sock.device.user_id,
                 role=RealmRole.OWNER,
                 granted_by=sock.device.device_id,
-                granted_on=pendulum.now(),
+                granted_on=DateTime.now(),
             ),
         )
         await block_create(sock, block, realm, b"other org data")
@@ -432,7 +432,7 @@ async def test_access_during_maintenance(backend, alice, alice_ws, realm, block)
         realm,
         2,
         {alice.user_id: b"whatever"},
-        pendulum.now(),
+        DateTime.now(),
     )
     rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "in_maintenance"}

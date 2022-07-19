@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from typing import Tuple, List, Dict, Optional
-import pendulum
+from libparsec.types import DateTime
 from uuid import UUID
 
 from parsec.crypto import VerifyKey, PublicKey
@@ -162,7 +162,7 @@ async def vlob_create(
     realm_id: RealmID,
     encryption_revision: int,
     vlob_id: VlobID,
-    timestamp: pendulum.DateTime,
+    timestamp: DateTime,
     blob: bytes,
 ) -> dict:
     return await _send_cmd(
@@ -182,7 +182,7 @@ async def vlob_read(
     encryption_revision: int,
     vlob_id: VlobID,
     version: int = None,
-    timestamp: pendulum.DateTime = None,
+    timestamp: DateTime = None,
 ) -> dict:
     return await _send_cmd(
         transport,
@@ -200,7 +200,7 @@ async def vlob_update(
     encryption_revision: int,
     vlob_id: VlobID,
     version: int,
-    timestamp: pendulum.DateTime,
+    timestamp: DateTime,
     blob: bytes,
 ) -> dict:
     return await _send_cmd(
@@ -300,7 +300,7 @@ async def realm_start_reencryption_maintenance(
     transport: Transport,
     realm_id: RealmID,
     encryption_revision: int,
-    timestamp: pendulum.DateTime,
+    timestamp: DateTime,
     per_participant_message: Dict[UserID, bytes],
 ) -> dict:
     return await _send_cmd(

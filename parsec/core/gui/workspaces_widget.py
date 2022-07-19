@@ -5,7 +5,7 @@ from parsec.core.core_events import CoreEvent
 from PyQt5.QtCore import pyqtSignal, Qt, QTimer
 from PyQt5.QtWidgets import QWidget, QLabel
 
-import pendulum
+from libparsec.types import DateTime, LocalDateTime
 
 from contextlib import contextmanager
 from structlog import get_logger
@@ -107,7 +107,7 @@ async def _do_workspace_list(core):
                 # so we have to set it with a dummy value :'(
                 # However it's more a hack than an issue given this field is
                 # not used here.
-                created_on=pendulum.from_timestamp(0),
+                created_on=DateTime.from_timestamp(0),
             )
             users_roles[user_info.user_id] = (ws_entry.role, user_info)
 
@@ -146,14 +146,14 @@ async def _do_workspace_list(core):
     return workspaces
 
 
-async def _do_workspace_mount(core, workspace_id, timestamp: pendulum.DateTime = None):
+async def _do_workspace_mount(core, workspace_id, timestamp: DateTime = None):
     try:
         await core.mountpoint_manager.mount_workspace(workspace_id, timestamp)
     except MountpointAlreadyMounted:
         pass
 
 
-async def _do_workspace_unmount(core, workspace_id, timestamp: pendulum.DateTime = None):
+async def _do_workspace_unmount(core, workspace_id, timestamp: DateTime = None):
     try:
         await core.mountpoint_manager.unmount_workspace(workspace_id, timestamp)
     except MountpointNotMounted:
@@ -546,7 +546,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             if not date or not time:
                 return
 
-            datetime = pendulum.local(
+            datetime = LocalDateTime(
                 date.year(), date.month(), date.day(), time.hour(), time.minute(), time.second()
             )
             self.mount_workspace(workspace_fs.workspace_id, datetime)

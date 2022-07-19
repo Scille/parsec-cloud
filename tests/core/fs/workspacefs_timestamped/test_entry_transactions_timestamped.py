@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from pendulum import datetime
+from libparsec.types import DateTime
 
 from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
@@ -19,8 +19,8 @@ async def test_root_entry_info(alice_workspace_t2, alice_workspace_t4):
         "base_version": 1,
         "is_placeholder": False,
         "need_sync": False,
-        "created": datetime(1999, 12, 31),
-        "updated": datetime(1999, 12, 31),
+        "created": DateTime(1999, 12, 31),
+        "updated": DateTime(1999, 12, 31),
         "children": [EntryName("foo")],
         "confinement_point": None,
     }
@@ -32,8 +32,8 @@ async def test_root_entry_info(alice_workspace_t2, alice_workspace_t4):
         "base_version": 2,
         "is_placeholder": False,
         "need_sync": False,
-        "created": datetime(1999, 12, 31),
-        "updated": datetime(2000, 1, 4),
+        "created": DateTime(1999, 12, 31),
+        "updated": DateTime(2000, 1, 4),
         "children": [EntryName("files"), EntryName("foo")],
         "confinement_point": None,
     }

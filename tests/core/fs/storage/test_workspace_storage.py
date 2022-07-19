@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 import pytest
-from pendulum import now
+from libparsec.types import DateTime
 
 from parsec import IS_OXIDIZED
 from parsec.api.data.manifest import LOCAL_AUTHOR_LEGACY_PLACEHOLDER
@@ -464,7 +464,7 @@ async def test_run_vacuum(alice_workspace_storage):
 @pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
 @customize_fixtures(real_data_storage=True)
 async def test_timestamped_storage(alice_workspace_storage):
-    timestamp = now()
+    timestamp = DateTime.now()
     aws = alice_workspace_storage
     taws = aws.to_timestamped(timestamp)
     assert taws.timestamp == timestamp

@@ -2,7 +2,7 @@
 
 import pytest
 
-import pendulum
+from libparsec.types import DateTime
 from PyQt5 import QtCore
 
 from parsec import IS_OXIDIZED
@@ -272,9 +272,10 @@ async def test_workspace_button_delete_clicked(qtbot, workspace_fs, core_config,
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
 async def test_workspace_button_timestamped(qtbot, workspace_fs, core_config, alice_user_info):
     switch_language(core_config, "en")
-    timestamp = pendulum.now().add(seconds=10)
+    timestamp = DateTime.now().add(seconds=10)
     roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
     ts_workspace_fs = WorkspaceFSTimestamped(workspace_fs, timestamp)
     w = WorkspaceButton.create(

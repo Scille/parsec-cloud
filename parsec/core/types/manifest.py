@@ -3,7 +3,7 @@
 import attr
 import functools
 from typing import Optional, Tuple, TypeVar, Type, Union, FrozenSet, Pattern, Dict, TYPE_CHECKING
-from pendulum import DateTime
+from libparsec.types import DateTime
 
 from parsec.types import UUID4, FrozenDict
 from parsec.crypto import SecretKey, HashDigest

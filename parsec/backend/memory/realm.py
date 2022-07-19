@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import attr
-import pendulum
+from libparsec.types import DateTime
 from typing import List, Dict, Optional, Tuple
 
 from parsec.api.data import UserProfile
@@ -36,7 +36,7 @@ class Realm:
     status: RealmStatus = attr.ib(factory=lambda: RealmStatus(None, None, None, 1))
     checkpoint: int = attr.ib(default=0)
     granted_roles: List[RealmGrantedRole] = attr.ib(factory=list)
-    last_role_change_per_user: Dict[UserID, pendulum.DateTime] = attr.ib(factory=dict)
+    last_role_change_per_user: Dict[UserID, DateTime] = attr.ib(factory=dict)
 
     @property
     def roles(self) -> Dict[UserID, RealmRole]:
@@ -260,7 +260,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_id: RealmID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
-        timestamp: pendulum.DateTime,
+        timestamp: DateTime,
     ) -> None:
         realm = self._get_realm(organization_id, realm_id)
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
@@ -269,7 +269,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmInMaintenanceError(f"Realm `{realm_id}` alrealy in maintenance")
         if encryption_revision != realm.status.encryption_revision + 1:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
-        now = pendulum.now()
+        now = DateTime.now()
         not_revoked_roles = set()
         for user_id in realm.roles.keys():
             user = await self._user_component.get_user(organization_id, user_id)

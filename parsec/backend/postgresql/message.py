@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from pendulum import DateTime
+from libparsec.types import DateTime
 from typing import List, Tuple
 
 from parsec.backend.backend_events import BackendEvent

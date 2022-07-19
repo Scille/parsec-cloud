@@ -5,7 +5,7 @@ inputs:
   extra-args:
     description: options to pass to pre-commit run-precommit
     required: false
-    default: '--all-files'
+    default: --all-files
   config-file:
     description: where is located the pre-commit config file
     required: false

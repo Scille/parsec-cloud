@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-from pendulum import now as pendulum_now
+from libparsec.types import DateTime
 from typing import Tuple, Dict, Optional, cast, Type, Union
 from quart import Websocket
 
@@ -107,7 +107,7 @@ async def _do_process_authenticated_answer(
         result_req = handshake.build_organization_expired_result_req()
         return None, result_req, _make_error_infos("Expired organization")
 
-    if user.revoked_on and user.revoked_on <= pendulum_now():
+    if user.revoked_on and user.revoked_on <= DateTime.now():
         result_req = handshake.build_revoked_device_result_req()
         return None, result_req, _make_error_infos("Revoked device")
 

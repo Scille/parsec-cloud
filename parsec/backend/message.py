@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from typing import List, Tuple
-from pendulum import DateTime
+from libparsec.types import DateTime
 
 from parsec.api.protocol import DeviceID, UserID, OrganizationID
 from parsec.api.protocol import message_get_serializer

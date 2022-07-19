@@ -7,8 +7,8 @@ use pyo3::types::{PyBytes, PyType};
 
 use libparsec::protocol::authenticated_cmds::message_get;
 
-use crate::binding_utils::py_to_rs_datetime;
 use crate::ids::DeviceID;
+use crate::time::DateTime;
 
 import_exception!(parsec.api.protocol, ProtocolError);
 
@@ -47,9 +47,9 @@ pub(crate) struct Message(pub message_get::Message);
 #[pymethods]
 impl Message {
     #[new]
-    fn new(count: u64, sender: DeviceID, timestamp: &PyAny, body: Vec<u8>) -> PyResult<Self> {
+    fn new(count: u64, sender: DeviceID, timestamp: DateTime, body: Vec<u8>) -> PyResult<Self> {
         let sender = sender.0;
-        let timestamp = py_to_rs_datetime(timestamp)?;
+        let timestamp = timestamp.0;
         Ok(Self(message_get::Message {
             count,
             sender,

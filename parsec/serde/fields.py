@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from pendulum import DateTime as PendulumDateTime
+from libparsec.types import DateTime as RsDateTime
 from uuid import UUID as _UUID
 from enum import Enum
 from collections import Mapping
@@ -200,7 +200,7 @@ class DateTime(Field):
     """DateTime already handled by pack/unpack"""
 
     def _deserialize(self, value, attr, data):
-        if not isinstance(value, PendulumDateTime):
+        if not isinstance(value, RsDateTime):
             raise ValidationError("Not a datetime")
 
         return value

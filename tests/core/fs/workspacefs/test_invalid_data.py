@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from pendulum import datetime
+from libparsec.types import DateTime
 
 from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
@@ -30,8 +30,8 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
                 "blob": None,
                 "signed_author": alice.device_id,
                 "backend_author": alice.device_id,
-                "signed_timestamp": datetime(2000, 1, 2),
-                "backend_timestamp": datetime(2000, 1, 2),
+                "signed_timestamp": DateTime(2000, 1, 2),
+                "backend_timestamp": DateTime(2000, 1, 2),
                 "author_signkey": alice.signing_key,
                 "key": workspace.get_workspace_entry().key,
             }
@@ -98,7 +98,7 @@ async def test_invalid_author(testbed, alice2):
 
 @pytest.mark.trio
 async def test_invalid_timestamp(testbed, alice, alice2):
-    bad_timestamp = datetime(2000, 1, 3)
+    bad_timestamp = DateTime(2000, 1, 3)
 
     # Invalid timestamp field in manifest
     exc_msg = "Cannot decrypt vlob: Invalid timestamp: expected `2000-01-02T00:00:00+00:00`, got `2000-01-03T00:00:00+00:00`"

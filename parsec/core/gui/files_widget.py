@@ -3,7 +3,7 @@
 import trio
 import pathlib
 from typing import Optional, Iterable, Tuple, List
-from pendulum import DateTime
+from libparsec.types import DateTime
 from enum import IntEnum
 from structlog import get_logger
 from PyQt5.QtCore import Qt, pyqtSignal

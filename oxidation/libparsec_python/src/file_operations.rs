@@ -7,9 +7,9 @@ use pyo3::types::{PyList, PySet, PyTuple};
 
 use libparsec::core_fs::file_operations;
 
-use crate::binding_utils::py_to_rs_datetime;
 use crate::ids::ChunkID;
 use crate::local_manifest::{Chunk, LocalFileManifest};
+use crate::time::DateTime;
 
 // Conversion helpers
 
@@ -56,19 +56,15 @@ pub(crate) fn prepare_read(
 }
 
 #[pyfunction]
-pub(crate) fn prepare_write<'a>(
-    py: Python<'a>,
+pub(crate) fn prepare_write(
+    py: Python<'_>,
     mut manifest: LocalFileManifest,
     size: u64,
     offset: u64,
-    timestamp: &PyAny,
-) -> PyResult<&'a PyTuple> {
-    let (write_operations, to_remove) = file_operations::prepare_write(
-        &mut manifest.0,
-        size,
-        offset,
-        py_to_rs_datetime(timestamp)?,
-    );
+    timestamp: DateTime,
+) -> PyResult<&PyTuple> {
+    let (write_operations, to_remove) =
+        file_operations::prepare_write(&mut manifest.0, size, offset, timestamp.0);
     Ok(PyTuple::new(
         py,
         vec![
@@ -80,14 +76,14 @@ pub(crate) fn prepare_write<'a>(
 }
 
 #[pyfunction]
-pub(crate) fn prepare_resize<'a>(
-    py: Python<'a>,
+pub(crate) fn prepare_resize(
+    py: Python<'_>,
     mut manifest: LocalFileManifest,
     size: u64,
-    timestamp: &PyAny,
-) -> PyResult<&'a PyTuple> {
+    timestamp: DateTime,
+) -> PyResult<&PyTuple> {
     let (write_operations, to_remove) =
-        file_operations::prepare_resize(&mut manifest.0, size, py_to_rs_datetime(timestamp)?);
+        file_operations::prepare_resize(&mut manifest.0, size, timestamp.0);
     Ok(PyTuple::new(
         py,
         vec![

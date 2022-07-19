@@ -4,7 +4,7 @@ import pytest
 from PyQt5 import QtCore
 from unittest.mock import Mock
 from pathlib import Path
-from pendulum import datetime
+from libparsec.types import DateTime
 
 from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName, EntryID
@@ -380,11 +380,11 @@ async def test_display_timestamped_workspace_in_workspaces_list(
     #   2010: file1.txt creation
     #   2020: file2.txt creation
     #   2022: present day, we want to see the workspace history as it was in 2015
-    year_n = datetime(2000, 1, 1)
-    year_n10 = datetime(2010, 1, 1)
-    year_n15 = datetime(2015, 1, 1)
-    year_n20 = datetime(2020, 1, 1)
-    now = datetime(2022, 1, 1)
+    year_n = DateTime(2000, 1, 1)
+    year_n10 = DateTime(2010, 1, 1)
+    year_n15 = DateTime(2015, 1, 1)
+    year_n20 = DateTime(2020, 1, 1)
+    now = DateTime(2022, 1, 1)
 
     # 2000: Create the workspace
     with freeze_time(year_n):

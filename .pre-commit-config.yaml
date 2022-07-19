@@ -26,6 +26,11 @@ repos:
         # see: https://github.com/pre-commit/identify/blob/master/identify/extensions.py
         types_or: [ python, sql, rust, vue, ts, tsx, javascript, jsx ]
 
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.26.3
+    hooks:
+      - id: yamllint
+
   ########
   # Python
 
@@ -62,7 +67,7 @@ repos:
           - PyQt5_stubs~=5.15
         # Mypy will complain if it find two files with the same name which
         # are not part of a package (typically occurs for packaging script helpers)
-        files: ^(parsec|tests)/
+        files: .*\.py[i]?
 
   ######
   # Rust

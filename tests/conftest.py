@@ -5,7 +5,6 @@ import os
 import re
 import sys
 import attr
-import pendulum
 from unittest.mock import patch
 import logging
 import structlog
@@ -237,13 +236,6 @@ def pytest_collection_modifyitems(config, items):
 
 
 # Autouse fixtures
-
-
-@pytest.fixture(scope="session", autouse=True)
-def mock_timezone_utc(request):
-    # Mock and non-UTC timezones are a really bad mix, so keep things simple
-    with pendulum.test_local_timezone(pendulum.timezone("utc")):
-        yield
 
 
 @pytest.fixture(autouse=True)

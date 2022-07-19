@@ -4,7 +4,6 @@ import struct
 import math
 import zlib
 import msgpack
-import pendulum
 from binascii import unhexlify
 
 from parsec._version import __version__
@@ -66,7 +65,6 @@ def generate_BOB_local_device():
 
 ALICE = generate_ALICE_local_device()
 BOB = generate_BOB_local_device()
-NOW = pendulum.from_timestamp(1638618643.208821)
 KEY = SecretKey(unhexlify("b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"))
 
 

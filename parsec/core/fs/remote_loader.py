@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable, Awaitable
 
 import trio
-from pendulum import DateTime
+from libparsec.types import DateTime
 from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
 
 from parsec.crypto import HashDigest, CryptoError

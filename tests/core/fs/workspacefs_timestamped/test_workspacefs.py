@@ -1,14 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-from pendulum import datetime, now
+from libparsec.types import DateTime
 
 from parsec.core.fs import FsPath
 from parsec.core.fs import FSError
 
 
 def _day(d):
-    return datetime(2000, 1, d)
+    return DateTime(2000, 1, d)
 
 
 @pytest.mark.trio
@@ -76,7 +76,7 @@ async def test_versions_existing_file_no_remove_minimal_synced(alice_workspace, 
     )
     # Used "touch" method again, but on a created file. Wrote on it. Didn't delete since then
     assert versions[5][1:3] == (2, _day(14))
-    assert now().add(hours=-1) < versions[5][3] < now()
+    assert DateTime.now().add(hours=-1) < versions[5][3] < DateTime.now()
     assert versions[5][4:] == (alice.device_id, _day(14), False, 5, None, None)
 
 
@@ -140,7 +140,7 @@ async def test_versions_existing_file_remove_minimal_synced(alice_workspace, ali
     )
     # Used "touch" method again, but on a created file. Wrote on it. Didn't delete since then
     assert versions[4][1:3] == (2, _day(14))
-    assert now().add(hours=-1) < versions[4][3] < now()
+    assert DateTime.now().add(hours=-1) < versions[4][3] < DateTime.now()
     assert versions[4][4:] == (alice.device_id, _day(14), False, 5, None, None)
 
 
@@ -257,7 +257,7 @@ async def test_versions_existing_directory(alice_workspace, alice, skip_minimal_
         None,
     )
     assert versions[7][1:3] == (8, _day(13))
-    assert now().add(hours=-1) < versions[7][3] < now()
+    assert DateTime.now().add(hours=-1) < versions[7][3] < DateTime.now()
     assert versions[7][4:] == (alice.device_id, _day(13), True, None, None, None)
 
 

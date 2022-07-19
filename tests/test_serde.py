@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-import pendulum
+from libparsec.types import DateTime
 import uuid
 from collections import namedtuple
 
@@ -21,11 +21,11 @@ from enum import Enum
 
 
 def test_pack_datetime():
-    data = {"date": pendulum.now()}
+    data = {"date": DateTime.now()}
     packed = packb(data)
     unpacked = unpackb(packed)
     assert unpacked == data
-    assert isinstance(unpacked["date"], pendulum.DateTime)
+    assert isinstance(unpacked["date"], DateTime)
 
 
 def test_pack_uuid():

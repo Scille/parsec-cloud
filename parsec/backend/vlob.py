@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from typing import List, Tuple, Dict, Optional
-from pendulum import DateTime, now as pendulum_now
+from libparsec.types import DateTime
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.api.protocol import (
@@ -80,7 +80,7 @@ class BaseVlobComponent:
         """
         msg = vlob_create_serializer.req_load(msg)
 
-        now = pendulum_now()
+        now = DateTime.now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
             return vlob_create_serializer.timestamp_out_of_ballpark_rep_dump(
                 backend_timestamp=now, client_timestamp=msg["timestamp"]
@@ -166,7 +166,7 @@ class BaseVlobComponent:
         """
         msg = vlob_update_serializer.req_load(msg)
 
-        now = pendulum_now()
+        now = DateTime.now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
             return vlob_update_serializer.timestamp_out_of_ballpark_rep_dump(
                 backend_timestamp=now, client_timestamp=msg["timestamp"]

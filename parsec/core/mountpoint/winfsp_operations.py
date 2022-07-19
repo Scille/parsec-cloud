@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 from pathlib import PurePath
-from pendulum import DateTime
+from libparsec.types import DateTime
 from functools import partial, wraps
 from contextlib import contextmanager
 from typing import Optional, Union, Iterator

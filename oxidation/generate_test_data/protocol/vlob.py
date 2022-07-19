@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 # flake8: noqa
 
-from pendulum import datetime
+from libparsec.types import DateTime
 from utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
@@ -17,7 +17,7 @@ serialized = serializer.req_dumps(
         "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
         "encryption_revision": 8,
         "vlob_id": VlobID.from_hex("2b5f314728134a12863da1ce49c112f6"),
-        "timestamp": datetime(2000, 1, 2, 1),
+        "timestamp": DateTime(2000, 1, 2, 1),
         "blob": b"foobar",
     }
 )
@@ -54,7 +54,7 @@ serialized = serializer.req_dumps(
         "encryption_revision": 8,
         "vlob_id": VlobID.from_hex("2b5f314728134a12863da1ce49c112f6"),
         "version": 8,
-        "timestamp": datetime(2000, 1, 2, 1),
+        "timestamp": DateTime(2000, 1, 2, 1),
     }
 )
 serializer.req_loads(serialized)
@@ -65,8 +65,8 @@ serialized = serializer.rep_dumps(
         "version": 8,
         "blob": b"foobar",
         "author": DeviceID("alice@dev1"),
-        "timestamp": datetime(2000, 1, 2, 1),
-        "author_last_role_granted_on": datetime(2000, 1, 2, 1),
+        "timestamp": DateTime(2000, 1, 2, 1),
+        "author_last_role_granted_on": DateTime(2000, 1, 2, 1),
     }
 )
 serializer.rep_loads(serialized)
@@ -101,7 +101,7 @@ serialized = serializer.req_dumps(
         "cmd": "vlob_update",
         "encryption_revision": 8,
         "vlob_id": VlobID.from_hex("2b5f314728134a12863da1ce49c112f6"),
-        "timestamp": datetime(2000, 1, 2, 1),
+        "timestamp": DateTime(2000, 1, 2, 1),
         "version": 8,
         "blob": b"foobar",
     }
@@ -176,7 +176,7 @@ serializer.req_loads(serialized)
 display("vlob_list_versions_req", serialized, [])
 
 serialized = serializer.rep_dumps(
-    {"versions": {8: (datetime(2000, 1, 2, 1), DeviceID("alice@dev1"))}}
+    {"versions": {8: (DateTime(2000, 1, 2, 1), DeviceID("alice@dev1"))}}
 )
 serializer.rep_loads(serialized)
 display("vlob_list_versions_rep", serialized, [])

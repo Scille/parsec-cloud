@@ -2,7 +2,7 @@
 
 import pytest
 
-import pendulum
+from libparsec.types import DateTime
 
 from parsec.api.protocol import UserID, DeviceID, UserProfile, HumanHandle, DeviceLabel
 from parsec.crypto import PrivateKey, SigningKey
@@ -29,7 +29,7 @@ def test_user_certificate():
 
     kwargs = {
         "author": DeviceID.new(),
-        "timestamp": pendulum.now(),
+        "timestamp": DateTime.now(),
         "user_id": UserID("bob"),
         "human_handle": HumanHandle("bob@example.com", "Boby McBobFace"),
         "public_key": PrivateKey.generate().public_key,
@@ -42,7 +42,7 @@ def test_user_certificate():
 
     kwargs = {
         "author": DeviceID.new(),
-        "timestamp": pendulum.now(),
+        "timestamp": DateTime.now(),
         "user_id": UserID("alice"),
         "human_handle": None,
         "public_key": PrivateKey.generate().public_key,
@@ -93,13 +93,13 @@ def test_revoked_user_certificate():
         assert py.timestamp == rs.timestamp
         assert py.user_id == rs.user_id
 
-    kwargs = {"author": DeviceID.new(), "timestamp": pendulum.now(), "user_id": UserID("bob")}
+    kwargs = {"author": DeviceID.new(), "timestamp": DateTime.now(), "user_id": UserID("bob")}
 
     py_ruc = _PyRevokedUserCertificateContent(**kwargs)
     rs_ruc = RevokedUserCertificateContent(**kwargs)
     _assert_revoked_user_certificate_eq(py_ruc, rs_ruc)
 
-    kwargs = {"author": DeviceID.new(), "timestamp": pendulum.now(), "user_id": UserID("alice")}
+    kwargs = {"author": DeviceID.new(), "timestamp": DateTime.now(), "user_id": UserID("alice")}
 
     py_ruc = py_ruc.evolve(**kwargs)
     rs_ruc = rs_ruc.evolve(**kwargs)
@@ -141,7 +141,7 @@ def test_device_certificate():
 
     kwargs = {
         "author": DeviceID.new(),
-        "timestamp": pendulum.now(),
+        "timestamp": DateTime.now(),
         "device_id": DeviceID("bob@dev1"),
         "device_label": DeviceLabel("dev machine"),
         "verify_key": SigningKey.generate().verify_key,
@@ -153,7 +153,7 @@ def test_device_certificate():
 
     kwargs = {
         "author": DeviceID.new(),
-        "timestamp": pendulum.now(),
+        "timestamp": DateTime.now(),
         "device_id": DeviceID("alice@dev1"),
         "device_label": None,
         "verify_key": SigningKey.generate().verify_key,

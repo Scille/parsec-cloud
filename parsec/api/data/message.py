@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
-from pendulum import DateTime
+from libparsec.types import DateTime
 from typing import Dict, Type, TypeVar, Any
 
 from enum import Enum

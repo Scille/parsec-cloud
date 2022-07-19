@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import pytest
-import pendulum
+from libparsec.types import DateTime
 from unittest.mock import ANY
 from uuid import uuid4
 
@@ -154,7 +154,7 @@ def test_process_challenge_req_good_api_version(
         "handshake": "challenge",
         "challenge": b"1234567890",
         "supported_api_versions": [backend_version],
-        "backend_timestamp": pendulum.now(),
+        "backend_timestamp": DateTime.now(),
         "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
         "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
     }
@@ -218,7 +218,7 @@ def test_process_challenge_req_good_multiple_api_version(
         "handshake": "challenge",
         "challenge": b"1234567890",
         "supported_api_versions": list(backend_versions),
-        "backend_timestamp": pendulum.now(),
+        "backend_timestamp": DateTime.now(),
         "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
         "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
     }
