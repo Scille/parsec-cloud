@@ -35,8 +35,16 @@ jobs:
 
   python:
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        binding: [ no-binding, rust-binding ]
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - name: Install package
+        run: |
+          sudo apt-get -y install libfuse2 fuse desktop-file-utils
 
       - uses: ./.github/actions/setup-rust
         with:
@@ -57,19 +65,29 @@ jobs:
           cache: poetry
 
       - name: Install python deps
-        run: poetry install -E core -E backend
-
-      - name: Configure libfuse path
-        run: |
-          LIBFUSE_PATH=$(find /usr/lib -name '*fuse*.so*' 2>/dev/null | head -n 1)
-          echo "::warning title=Libfuse path::use lib found at $LIBFUSE_PATH"
-          echo "FUSE_LIBRARY_PATH=$LIBFUSE_PATH" >> "$GITHUB_ENV"
+        run: poetry install -E core -E backend --remove-untracked
 
       - name: Generate PyQT GUI data
         run: poetry run python misc/generate_pyqt.py
 
       - name: Install libparsec_python
         run: poetry run pip install oxidation/libparsec_python
+        if: matrix.binding == 'rust-binding'
 
-      - name: Test python codebase
-        run: poetry run pytest tests --runrust
+      - name: Basic tests
+        run: poetry run pytest tests
+
+      - name: Rust binding tests
+        run: poetry run pytest tests --runrust -m rust
+        if: matrix.binding == 'rust-binding'
+
+      - name: Mountpoint tests
+        run: poetry run pytest tests --runmountpoint --runslow -m mountpoint
+
+      - name: GUI tests
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: poetry run pytest tests --runmountpoint --runslow --rungui -m gui
+
+      - name: Slow tests
+        run: poetry run pytest tests --runslow -m slow
