@@ -48,13 +48,13 @@ jobs:
         run: poetry run python misc/generate_pyqt.py
 
       - name: Test fast
-        run: poetry run pytest tests
+        run: poetry run pytest tests -n auto
 
       - name: Test Mountpoint
-        run: poetry run pytest tests --runmountpoint --runslow -m mountpoint -x
+        run: poetry run pytest tests -n auto --runmountpoint --runslow -m mountpoint -x
 
       - name: Test Gui
-        run: poetry run pytest tests --runmountpoint --runslow -m gui -x
+        run: poetry run pytest tests -n auto --runmountpoint --runslow -m gui -x
 
       - name: Test Slow
-        run: poetry run pytest tests --runslow -m slow -x
+        run: poetry run pytest tests -n auto --runslow -m slow -x
