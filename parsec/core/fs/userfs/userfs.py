@@ -616,15 +616,21 @@ class UserFS:
             # the user manifest's realm
             if to_sync_um.version == 1:
                 rep = await self.backend_cmds.vlob_create(
-                    RealmID(self.user_manifest_id.uuid),
-                    1,
-                    VlobID(self.user_manifest_id.uuid),
-                    timestamp,
-                    ciphered,
+                    realm_id=RealmID(self.user_manifest_id.uuid),
+                    encryption_revision=1,
+                    vlob_id=VlobID(self.user_manifest_id.uuid),
+                    timestamp=timestamp,
+                    blob=ciphered,
+                    sequester_blob=None,
                 )
             else:
                 rep = await self.backend_cmds.vlob_update(
-                    1, VlobID(self.user_manifest_id.uuid), to_sync_um.version, timestamp, ciphered
+                    encryption_revision=1,
+                    vlob_id=VlobID(self.user_manifest_id.uuid),
+                    version=to_sync_um.version,
+                    timestamp=timestamp,
+                    blob=ciphered,
+                    sequester_blob=None,
                 )
 
         except BackendNotAvailable as exc:
