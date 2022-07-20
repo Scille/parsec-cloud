@@ -1329,6 +1329,21 @@
                             "required": true,
                             "type": "Integer"
                         },
+                        "sequester_authority_certificate": {
+                            "allow_none": true,
+                            "required": false,
+                            "type": "bytesField"
+                        },
+                        "sequester_services_certificates": {
+                            "allow_none": true,
+                            "container_type": {
+                                "allow_none": false,
+                                "required": false,
+                                "type": "bytesField"
+                            },
+                            "required": false,
+                            "type": "List"
+                        },
                         "status": {
                             "allow_none": false,
                             "required": true,
