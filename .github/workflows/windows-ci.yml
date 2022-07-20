@@ -11,12 +11,23 @@ env:
   python-version: "3.9"
   poetry-version: 1.1.13
   sqlite-version: 3390100
+  winfsp-version: 1.8.20304
 
 jobs:
   python-only:
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - name: Install WinFSP
+        shell: bash
+        run: |
+          choco install -y --limit-output winfsp --version=${{ env.winfsp-version }}
+          mkdir winfsp-test
+          curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-tests-1.8.20304.zip -o winfsp-test/winfsp-tests.zip
+          unzip winfsp-test/winfsp-tests.zip -d winfsp-test
+          pwd
+          echo "$(pwd)\winfsp-test" >> "$GITHUB_PATH"
 
       - name: Install poetry
         shell: bash
@@ -40,10 +51,10 @@ jobs:
         run: poetry run pytest tests
 
       - name: Test Mountpoint
-        run: poetry run pytests tests --runmountpoint --runslow -m mountpoint -x
+        run: poetry run pytest tests --runmountpoint --runslow -m mountpoint -x
 
       - name: Test Gui
-        run: poetry run pytests tests --runmountpoint --runslow -m gui -x
+        run: poetry run pytest tests --runmountpoint --runslow -m gui -x
 
       - name: Test Slow
-        run: poetry run pytests tests --runslow -m slow -x
+        run: poetry run pytest tests --runslow -m slow -x
