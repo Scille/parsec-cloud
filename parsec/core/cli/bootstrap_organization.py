@@ -36,7 +36,7 @@ company to have access to all data produced by former employees.
 async def _bootstrap_organization(
     config: CoreConfig,
     addr: BackendOrganizationBootstrapAddr,
-    device_label: Optional[DeviceLabel],
+    device_label: Optional[str],
     human_label: Optional[str],
     human_email: Optional[str],
     save_device_with_selected_auth: Callable,
@@ -64,13 +64,14 @@ Do you want to continue ?""",
     if not device_label:
         device_label_raw = await aprompt("Device label", default=platform.node())
         device_label = DeviceLabel(device_label_raw)
-
+    else:
+        device_label = DeviceLabel(device_label)
     async with spinner("Bootstrapping organization in the backend"):
         new_device = await do_bootstrap_organization(
             addr,
             human_handle=human_handle,
             device_label=device_label,
-            sequester_public_verify_key=sequester_verify_key,
+            sequester_authority_verify_key=sequester_verify_key,
         )
 
     # We don't have to worry about overwritting an existing keyfile
@@ -99,7 +100,7 @@ Do you want to continue ?""",
 def bootstrap_organization(
     config: CoreConfig,
     addr: BackendOrganizationBootstrapAddr,
-    device_label: Optional[DeviceLabel],
+    device_label: Optional[str],
     human_label: Optional[str],
     human_email: Optional[str],
     save_device_with_selected_auth: Callable,
@@ -110,7 +111,6 @@ def bootstrap_organization(
     Configure the organization and register it first user&device.
     """
     with cli_exception_handler(config.debug):
-
         # Disable task monitoring given user prompt will block the coroutine
         trio_run(
             _bootstrap_organization,
