@@ -12,6 +12,10 @@ env:
   poetry-version: 1.1.13
   sqlite-version: 3390100
   winfsp-version: 1.8.20304
+  pytest-args: >-
+    --log-level=DEBUG
+    --durations=10
+    --side-effects-timeout=10
 
 jobs:
   python-only:
@@ -48,13 +52,13 @@ jobs:
         run: poetry run python misc/generate_pyqt.py
 
       - name: Test fast
-        run: poetry run pytest tests -n auto
+        run: poetry run pytest tests ${{ env.pytest-args }} -n auto
 
       - name: Test Mountpoint
-        run: poetry run pytest tests --runmountpoint --runslow -m mountpoint -x
+        run: poetry run pytest tests ${{ env.pytest-args }} --runmountpoint --runslow -m mountpoint -x
 
       - name: Test Gui
-        run: poetry run pytest tests -n auto --runmountpoint --runslow -m gui -x
+        run: poetry run pytest tests ${{ env.pytest-args }} -n auto --runmountpoint --runslow -m gui -x
 
       - name: Test Slow
-        run: poetry run pytest tests -n auto --runslow -m slow -x
+        run: poetry run pytest tests ${{ env.pytest-args }} -n auto --runslow -m slow -x
