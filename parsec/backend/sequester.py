@@ -47,6 +47,10 @@ class SequesterServiceAlreadyDeletedError(SequesterError):
     pass
 
 
+class SequesterServiceAlreadyEnabledError(SequesterError):
+    pass
+
+
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class SequesterService:
     service_id: SequesterServiceID
@@ -88,6 +92,18 @@ class BaseSequesterComponent:
             SequesterOrganizationNotFoundError
             SequesterServiceNotFoundError
             SequesterServiceAlreadyDeletedError
+        """
+        raise NotImplementedError()
+
+    async def enable_service(
+        self, organization_id: OrganizationID, service_id: SequesterServiceID
+    ) -> None:
+        """
+        Raises:
+            SequesterDisabledError
+            SequesterOrganizationNotFoundError
+            SequesterServiceNotFoundError
+            SequesterServiceAlreadyEnableddError
         """
         raise NotImplementedError()
 

@@ -11,6 +11,7 @@ from parsec.api.protocol import OrganizationID, SequesterServiceID, RealmID, Vlo
 from parsec.backend.sequester import (
     BaseSequesterComponent,
     SequesterService,
+    SequesterServiceAlreadyEnabledError,
     SequesterServiceNotFoundError,
     SequesterOrganizationNotFoundError,
     SequesterDisabledError,
@@ -112,6 +113,24 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self._services[organization_id][service_id] = service.evolve(deleted_on=deleted_on)
         # Also don't forget to update Organization structure in organization component
         self._refresh_services_in_organization_component(organization_id)
+
+    async def enable_service(
+        self, organization_id: OrganizationID, service_id: SequesterServiceID
+    ) -> None:
+        service = self._get_service(organization_id=organization_id, service_id=service_id)
+        if not service.is_deleted:
+            raise SequesterServiceAlreadyEnabledError
+        self._services[organization_id][service_id] = service.evolve(deleted_on=None)
+        # Also don't forget to update Organization structure in organization component
+        self._refresh_services_in_organization_component(organization_id)
+
+    async def enable_service(
+        self, organization_id: OrganizationID, service_id: SequesterServiceID
+    ) -> None:
+        service = self._get_service(organization_id=organization_id, service_id=service_id)
+        if not service.is_deleted:
+            raise SequesterServiceAlreadyEnabledError
+        self._services[organization_id][service_id] = service.evolve(deleted_on=None)
 
     def _get_service(
         self, organization_id: OrganizationID, service_id: SequesterServiceID

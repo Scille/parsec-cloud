@@ -17,6 +17,7 @@ from parsec.backend.sequester import (
     SequesterOrganizationNotFoundError,
     SequesterService,
     SequesterServiceAlreadyDeletedError,
+    SequesterServiceAlreadyEnabledError,
     SequesterServiceAlreadyExists,
     SequesterServiceNotFoundError,
 )
@@ -57,6 +58,16 @@ _q_delete_sequester_service = Q(
     f"""
     UPDATE sequester_service
     SET deleted_on=$deleted_on
+    WHERE
+        service_id=$service_id
+        AND organization={ q_organization_internal_id("$organization_id") }
+    """
+)
+
+_q_enable_sequester_service = Q(
+    f"""
+    UPDATE sequester_service
+    SET deleted_on=NULL
     WHERE
         service_id=$service_id
         AND organization={ q_organization_internal_id("$organization_id") }
@@ -211,12 +222,32 @@ class PGPSequesterComponent(BaseSequesterComponent):
             await self._assert_service_enabled(conn, organization_id)
 
             row = await conn.fetchrow(
-                *q_get_organisation_sequester_authority(organization_id=organization_id.str)
+                *_q_get_sequester_service_deleted_for_update(
+                    organization_id=organization_id.str, service_id=service_id
+                )
             )
+
             if not row:
-                raise SequesterOrganizationNotFoundError
-            if row[0] is None:
-                raise SequesterDisabledError
+                raise SequesterServiceNotFoundError
+
+            if row[1] is not None:
+                raise SequesterServiceAlreadyDeletedError
+
+            result = await conn.execute(
+                *_q_delete_sequester_service(
+                    organization_id=organization_id.str,
+                    service_id=service_id,
+                    deleted_on=deleted_on,
+                )
+            )
+            if result != "UPDATE 1":
+                raise SequesterError(f"Insertion Error: {result}")
+
+    async def enable_service(
+        self, organization_id: OrganizationID, service_id: SequesterServiceID
+    ) -> None:
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            await self._assert_service_enabled(conn, organization_id)
 
             row = await conn.fetchrow(
                 *_q_get_sequester_service_deleted_for_update(
@@ -226,14 +257,13 @@ class PGPSequesterComponent(BaseSequesterComponent):
 
             if not row:
                 raise SequesterServiceNotFoundError
-            if row[1] is not None:
-                raise SequesterServiceAlreadyDeletedError
+
+            if row[1] is None:
+                raise SequesterServiceAlreadyEnabledError
 
             result = await conn.execute(
-                *_q_delete_sequester_service(
-                    organization_id=organization_id.str,
-                    service_id=service_id,
-                    deleted_on=deleted_on,
+                *_q_enable_sequester_service(
+                    organization_id=organization_id.str, service_id=service_id
                 )
             )
             if result != "UPDATE 1":
