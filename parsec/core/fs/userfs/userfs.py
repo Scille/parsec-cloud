@@ -33,6 +33,7 @@ from parsec.api.data import (
     SharingRevokedMessageContent,
     PingMessageContent,
     UserManifest,
+    SequesterServiceCertificate,
 )
 from parsec.api.protocol import UserID, DeviceID, MaintenanceType, RealmID, VlobID
 from parsec.core.types import (
@@ -53,8 +54,12 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.fs.workspacefs import WorkspaceFS
-from parsec.core.fs.remote_loader import UserRemoteLoader
-from parsec.core.fs.remote_loader import ROLE_CERTIFICATE_STAMP_AHEAD_US, MANIFEST_STAMP_AHEAD_US
+from parsec.core.fs.remote_loader import (
+    UserRemoteLoader,
+    _validate_sequester_config,
+    ROLE_CERTIFICATE_STAMP_AHEAD_US,
+    MANIFEST_STAMP_AHEAD_US,
+)
 from parsec.core.fs.storage import (
     UserStorage,
     WorkspaceStorage,
@@ -197,6 +202,8 @@ class UserFS:
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
         self._workspaces: Dict[EntryID, WorkspaceFS] = {}
+
+        self._sequester_services_cache: Optional[List[SequesterServiceCertificate]] = None
 
         timestamp = self.device.timestamp()
         wentry = WorkspaceEntry(
@@ -599,6 +606,27 @@ class UserFS:
         for w in base_um.workspaces:
             await self._workspace_minimal_sync(w)
 
+        synced_um = await self._upload_manifest(
+            base_um=base_um, timestamp_greater_than=timestamp_greater_than
+        )
+        if synced_um is None:
+            # Concurrency error (handled by the caller)
+            return False
+
+        # Merge back the manifest in local
+        async with self._update_user_manifest_lock:
+            diverged_um = self.get_user_manifest()
+            # Final merge could have been achieved by a concurrent operation
+            if synced_um.version > diverged_um.base_version:
+                merged_um = merge_local_user_manifests(diverged_um, synced_um)
+                await self.set_user_manifest(merged_um)
+            self.event_bus.send(CoreEvent.FS_ENTRY_SYNCED, id=self.user_manifest_id)
+
+        return True
+
+    async def _upload_manifest(
+        self, base_um: LocalUserManifest, timestamp_greater_than: Optional[DateTime]
+    ) -> Optional[UserManifest]:
         # Build vlob
         timestamp = self.device.timestamp()
         if timestamp_greater_than is not None:
@@ -606,9 +634,29 @@ class UserFS:
                 timestamp, timestamp_greater_than.add(microseconds=MANIFEST_STAMP_AHEAD_US)
             )
         to_sync_um = base_um.to_remote(author=self.device.device_id, timestamp=timestamp)
-        ciphered = to_sync_um.dump_sign_and_encrypt(
-            author_signkey=self.device.signing_key, key=self.device.user_manifest_key
-        )
+
+        if self._sequester_services_cache is None:
+            # Regular mode: we only encrypt the blob with the workspace symetric key
+            sequester_blob = None
+            try:
+                ciphered = to_sync_um.dump_sign_and_encrypt(
+                    key=self.device.user_manifest_key, author_signkey=self.device.signing_key
+                )
+            except DataError as exc:
+                raise FSError(f"Cannot encrypt vlob: {exc}") from exc
+
+        else:
+            # Sequestered organization mode: we also encrypt the blob with each
+            # sequester services' asymetric encryption key
+            try:
+                signed = to_sync_um.dump_and_sign(author_signkey=self.device.signing_key)
+            except DataError as exc:
+                raise FSError(f"Cannot encrypt vlob: {exc}") from exc
+
+            ciphered = self.device.user_manifest_key.encrypt(signed)
+            sequester_blob = {}
+            for service in self._sequester_services_cache:
+                sequester_blob[service.service_id] = service.encryption_key_der.encrypt(signed)
 
         # Sync the vlob with backend
         try:
@@ -621,7 +669,7 @@ class UserFS:
                     vlob_id=VlobID(self.user_manifest_id.uuid),
                     timestamp=timestamp,
                     blob=ciphered,
-                    sequester_blob=None,
+                    sequester_blob=sequester_blob,
                 )
             else:
                 rep = await self.backend_cmds.vlob_update(
@@ -630,7 +678,7 @@ class UserFS:
                     version=to_sync_um.version,
                     timestamp=timestamp,
                     blob=ciphered,
-                    sequester_blob=None,
+                    sequester_blob=sequester_blob,
                 )
 
         except BackendNotAvailable as exc:
@@ -641,26 +689,35 @@ class UserFS:
 
         if rep["status"] in ("already_exists", "bad_version"):
             # Concurrency error (handled by the caller)
-            return False
+            return None
         elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
                 f"Cannot modify workspace data while it is in maintenance: {rep}"
             )
         elif rep["status"] == "require_greater_timestamp":
-            return await self._outbound_sync_inner(rep["strictly_greater_than"])
+            return await self._upload_manifest(
+                base_um=base_um, timestamp_greater_than=rep["strictly_greater_than"]
+            )
+        elif rep["status"] == "sequester_inconsistency":
+            # The backend notified us that we didn't encrypt the blob for the right sequester
+            # services. This typically occurs for the first vlob update/create (since we lazily
+            # fetch sequester config) or if a sequester service has been created/deleted.
+            # Ensure the config send by the backend is valid
+            _, sequester_services = _validate_sequester_config(
+                root_verify_key=self.device.root_verify_key,
+                sequester_authority_certificate=rep["sequester_authority_certificate"],
+                sequester_services_certificates=rep["sequester_services_certificates"],
+            )
+            # Update our cache and retry the request
+            self._sequester_services_cache = sequester_services
+            return await self._upload_manifest(
+                base_um=base_um, timestamp_greater_than=timestamp_greater_than
+            )
+
         elif rep["status"] != "ok":
             raise FSError(f"Cannot sync user manifest: {rep}")
 
-        # Merge back the manifest in local
-        async with self._update_user_manifest_lock:
-            diverged_um = self.get_user_manifest()
-            # Final merge could have been achieved by a concurrent operation
-            if to_sync_um.version > diverged_um.base_version:
-                merged_um = merge_local_user_manifests(diverged_um, to_sync_um)
-                await self.set_user_manifest(merged_um)
-            self.event_bus.send(CoreEvent.FS_ENTRY_SYNCED, id=self.user_manifest_id)
-
-        return True
+        return to_sync_um
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry) -> None:
         """
