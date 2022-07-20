@@ -33,18 +33,17 @@ jobs:
       - name: Install python deps
         run: poetry install -E core -E backend
 
+      - name: Generate PyQT GUI data
+        run: poetry run python misc/generate_pyqt.py
+
       - name: Test fast
-        shell: bash
         run: poetry run pytest tests
 
       - name: Test Mountpoint
-        shell: bash
         run: poetry run pytests tests --runmountpoint --runslow -m mountpoint -x
 
       - name: Test Gui
-        shell: bash
         run: poetry run pytests tests --runmountpoint --runslow -m gui -x
 
       - name: Test Slow
-        shell: bash
         run: poetry run pytests tests --runslow -m slow -x
