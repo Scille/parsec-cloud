@@ -51,7 +51,7 @@ jobs:
         run: poetry run pytest tests -n auto
 
       - name: Test Mountpoint
-        run: poetry run pytest tests -n auto --runmountpoint --runslow -m mountpoint -x
+        run: poetry run pytest tests --runmountpoint --runslow -m mountpoint -x
 
       - name: Test Gui
         run: poetry run pytest tests -n auto --runmountpoint --runslow -m gui -x
