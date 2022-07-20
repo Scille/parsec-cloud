@@ -40,4 +40,9 @@ jobs:
         run: poetry run python misc/generate_pyqt.py
 
       - name: Test python
-        run: poetry run pytest -n auto
+        run: >
+          poetry run pytest
+          -n auto
+          --log-level=DEBUG
+          --durations=10
+          --side-effects-timeout=10
