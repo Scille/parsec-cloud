@@ -186,7 +186,7 @@ async def backend(unused_tcp_port, backend_factory, fixtures_customization, back
     tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
     config["email_config"] = MockedEmailConfig(sender="Parsec <no-reply@parsec.com>", tmpdir=tmpdir)
     config["backend_addr"] = backend_addr
-    if fixtures_customization.get("backend_spontaneous_organization_boostrap", False):
+    if fixtures_customization.get("backend_spontaneous_organization_bootstrap", False):
         config["organization_spontaneous_bootstrap"] = True
     if fixtures_customization.get("backend_has_webhook", False):
         # Invalid port, hence we should crash if by mistake we try to reach this url

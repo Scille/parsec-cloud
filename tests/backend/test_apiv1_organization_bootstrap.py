@@ -382,7 +382,7 @@ async def test_organization_bootstrap_bad_data(
 
 @pytest.mark.trio
 @pytest.mark.parametrize("flavour", ["no_create", "create_different_token", "create_same_token"])
-@customize_fixtures(backend_spontaneous_organization_boostrap=True, backend_not_populated=True)
+@customize_fixtures(backend_spontaneous_organization_bootstrap=True, backend_not_populated=True)
 async def test_organization_spontaneous_bootstrap(
     backend_asgi_app, organization_factory, local_device_factory, apiv1_backend_ws_factory, flavour
 ):
@@ -434,7 +434,7 @@ async def test_organization_spontaneous_bootstrap(
 
 
 @pytest.mark.trio
-@customize_fixtures(backend_spontaneous_organization_boostrap=True, backend_not_populated=True)
+@customize_fixtures(backend_spontaneous_organization_bootstrap=True, backend_not_populated=True)
 async def test_concurrent_organization_bootstrap(
     backend_asgi_app, organization_factory, local_device_factory, apiv1_backend_ws_factory
 ):

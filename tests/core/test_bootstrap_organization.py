@@ -103,7 +103,7 @@ async def test_good(
 
 
 @pytest.mark.trio
-async def test_bootsrap_sequester_verify_key(running_backend, backend):
+async def test_bootstrap_sequester_verify_key(running_backend, backend):
     org_id = OrganizationID("NewOrg")
     org_token = "123456"
     await backend.organization.create(org_id, org_token)

@@ -30,7 +30,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "backend_force_mocked",
     "backend_over_ssl",
     "backend_forward_proto_enforce_https",
-    "backend_spontaneous_organization_boostrap",
+    "backend_spontaneous_organization_bootstrap",
     "logged_gui_as_admin",
     "fake_preferred_org_creation_backend_addr",
     "blockstore_mode",
