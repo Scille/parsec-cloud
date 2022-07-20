@@ -90,14 +90,16 @@ async def _list_services(config, organization_str: str):
 
 
 async def _delete_service(config, organizaton_str: str, service_id: str):
-    async with run_pg_db_handler(config) as sequester_component:
+    async with run_pg_db_handler(config) as dbh:
+        sequester_component = PGPSequesterComponent(dbh)
         await sequester_component.delete_service(
             OrganizationID(organizaton_str), SequesterServiceID.from_hex(service_id)
         )
 
 
 async def _enable_service(config, organizaton_str: str, service_id: str):
-    async with run_pg_db_handler(config) as sequester_component:
+    async with run_pg_db_handler(config) as dbh:
+        sequester_component = PGPSequesterComponent(dbh)
         await sequester_component.enable_service(
             OrganizationID(organizaton_str), SequesterServiceID.from_hex(service_id)
         )
@@ -175,6 +177,7 @@ def list_services(organization: str, db: str, db_max_connections: int, db_min_co
 @db_backend_options
 def update_service(
     organization: str,
+    service_id: str,
     db: str,
     db_max_connections: int,
     db_min_connections: int,
@@ -187,9 +190,9 @@ def update_service(
         raise click.BadParameter("Required: enable or disable flag")
     db_config = _get_config(db, db_min_connections, db_max_connections)
     if disable:
-        trio_run(_delete_service, db_config, organization, use_asyncio=True)
+        trio_run(_delete_service, db_config, organization, service_id, use_asyncio=True)
     if enable:
-        trio_run(_enable_service, db_config, organization, use_asyncio=True)
+        trio_run(_enable_service, db_config, organization, service_id, use_asyncio=True)
 
 
 async def _human_accesses(config: BackendDbConfig, organization: OrganizationID, user_filter: str):
