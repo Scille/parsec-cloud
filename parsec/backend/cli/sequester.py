@@ -5,22 +5,25 @@ from async_generator import asynccontextmanager
 import attr
 import click
 import pendulum
+from typing import Optional, Dict, List, Tuple
 from pathlib import Path
 import oscrypto.asymmetric
+from parsec.api.protocol.types import HumanHandle
 
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery, trio_run
 from parsec.sequester_crypto import sequester_authority_sign
 from parsec.sequester_crypto import SequesterEncryptionKeyDer
 from parsec.api.data.certif import SequesterServiceCertificate
-from parsec.api.protocol.sequester import SequesterServiceID
-from parsec.api.protocol.types import OrganizationID
+from parsec.api.protocol import OrganizationID, UserID, RealmID, SequesterServiceID
+from parsec.backend.cli.utils import db_backend_options
+from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.user import User
+from parsec.backend.sequester import SequesterService
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.sequester import PGPSequesterComponent
 from parsec.backend.postgresql.user import PGUserComponent
 from parsec.backend.postgresql.realm import PGRealmComponent
-from parsec.backend.sequester import SequesterService
-from parsec.backend.cli.utils import db_backend_options
 
 
 class SequesterBackendCliError(Exception):
@@ -89,14 +92,14 @@ async def _list_services(config, organization_str: str):
 async def _delete_service(config, organizaton_str: str, service_id: str):
     async with run_pg_db_handler(config) as sequester_component:
         await sequester_component.delete_service(
-            OrganizationID(organizaton_str), SequesterServiceID(service_id)
+            OrganizationID(organizaton_str), SequesterServiceID.from_hex(service_id)
         )
 
 
 async def _enable_service(config, organizaton_str: str, service_id: str):
     async with run_pg_db_handler(config) as sequester_component:
         await sequester_component.enable_service(
-            OrganizationID(organizaton_str), SequesterServiceID(service_id)
+            OrganizationID(organizaton_str), SequesterServiceID.from_hex(service_id)
         )
 
 
@@ -113,16 +116,12 @@ def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> Ba
 @click.option(
     "--service-public-key",
     help="The service encryption public key used to encrypt data to the sequester service",
-    type=click.Path(
-        exists=True, file_okay=True, dir_okay=False, path_type=Path  # type: ignore[type-var]
-    ),
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
 )
 @click.option(
     "--authority-private-key",
     help="The private authority key use. Used to sign the encryption key.",
-    type=click.Path(
-        exists=True, file_okay=True, dir_okay=False, path_type=Path  # type: ignore[type-var]
-    ),
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
 )
 @click.option("--service-label", type=str, required=True, help="New service name")
 @click.option("--organization", type=str, help="Organization ID where to register the service")
@@ -212,15 +211,19 @@ async def _human_accesses(config: BackendDbConfig, organization: OrganizationID,
         realms_granted_roles = await realm_component.dump_realms_granted_roles(
             organization_id=organization
         )
-        per_user_granted_roles = {}
+        per_user_granted_roles: Dict[UserID, List[RealmGrantedRole]] = {}
         for granted_role in realms_granted_roles:
             user_granted_roles = per_user_granted_roles.setdefault(granted_role.user_id, [])
             user_granted_roles.append(granted_role)
 
-        humans = {None: []}  # Non-human are all stored in `None` key
+        humans: Dict[
+            Optional[HumanHandle], List[Tuple[User, Dict[RealmID, List[RealmGrantedRole]]]]
+        ] = {
+            None: []
+        }  # Non-human are all stored in `None` key
         for user in users:
             human_users = humans.setdefault(user.human_handle, [])
-            per_user_per_realm_granted_role = {}
+            per_user_per_realm_granted_role: Dict[RealmID, List[RealmGrantedRole]] = {}
             for granted_role in per_user_granted_roles.get(user.user_id, []):
                 realm_granted_roles = per_user_per_realm_granted_role.setdefault(
                     granted_role.realm_id, []
