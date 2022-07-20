@@ -2,6 +2,10 @@
 
 import re
 import os
+from parsec.backend.sequester import (
+    SequesterServiceAlreadyDeletedError,
+    SequesterServiceAlreadyEnabledError,
+)
 import trio
 from uuid import UUID
 from pathlib import Path
@@ -973,14 +977,56 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
             assert result.exit_code == 0
             return result
 
+        async def delete_service(service_id: str):
+            return await _cli_invoke_in_thread(
+                f"backend update_service {common_args} --disable --service-id {service_id}"
+            )
+
+        async def enable_service(service_id: str):
+            return await _cli_invoke_in_thread(
+                f"backend update_service {common_args} --enable --service-id {service_id}"
+            )
+
         # Assert no service configured
         result = await run_list_services()
         assert result.output == "No service configured\n"
 
-        #
+        # Create service
         authority_key_path, service_key_path = _setup_sequester_key_paths(tmp_path, coolorg)
         service_label = "TestService"
         result = await create_service(service_key_path, authority_key_path, service_label)
 
+        # List services
         result = await run_list_services()
-        assert service_label in result.output
+        enabled_services, disabled_services = result.output.split("=== Disabled Services ===")
+        assert service_label in enabled_services
+        assert disabled_services == "\n"
+
+        # Delete service
+        for line in result.output.split("\n"):
+            if "Service ID" in line:
+                service_id = line.split(":: ")[1]
+        result = await delete_service(service_id)
+        assert result.exit_code == 0
+        result = await run_list_services()
+        enabled_services, disabled_services = result.output.split("=== Disabled Services ===")
+        assert enabled_services == "=== Avaliable Services ===\n"
+        assert service_label in disabled_services
+
+        # Service already deleted
+        result = await delete_service(service_id)
+        assert result.exit_code == 1
+        assert isinstance(result.exception, SequesterServiceAlreadyDeletedError)
+
+        # Re enable service
+        result = await enable_service(service_id)
+        assert result.exit_code == 0
+        result = await run_list_services()
+        enabled_services, disabled_services = result.output.split("=== Disabled Services ===")
+        assert disabled_services == "\n"
+        assert service_label in enabled_services
+
+        # Service already enabled
+        result = await enable_service(service_id)
+        assert result.exit_code == 1
+        assert isinstance(result.exception, SequesterServiceAlreadyEnabledError)
