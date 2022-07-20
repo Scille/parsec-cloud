@@ -60,10 +60,13 @@ async def _create_service(
         )
 
 
-def display_service(service: SequesterService):
-    click.echo(f"Service ID :: {service.service_id}")
-    click.echo(f"Service label :: {service.service_label}")
-    click.echo(f"Service creation date :: {service.created_on}")
+def _display_service(service: SequesterService):
+    service_id = click.style(service.service_id, fg="yellow")
+    service_label = click.style({service.service_label}, fg="green")
+    tab = "  - "
+    click.echo(f"{tab}Service ID :: {service_id}")
+    click.echo(f"{tab}Service label :: {service_label}")
+    click.echo(f"{tab}Service creation date :: {service.created_on}")
     if service.deleted_on:
         click.echo(f"Service is disabled since {service.deleted_on}")
     click.echo("")
@@ -79,12 +82,12 @@ async def _list_services(config, organization_str: str):
         click.echo("=== Avaliable Services ===")
         for service in services:
             if not service.deleted_on:
-                display_service(service)
+                _display_service(service)
 
         click.echo("=== Disabled Services ===")
         for service in services:
             if service.deleted_on:
-                display_service(service)
+                _display_service(service)
     else:
         click.echo("No service configured")
 
@@ -159,6 +162,7 @@ def create_service(
     db_config = _get_config(db, db_min_connections, db_max_connections)
 
     trio_run(_create_service, db_config, organization, sequester_service, use_asyncio=True)
+    click.echo(click.style("Service created", fg="green"))
 
 
 @click.command(short_help="List availlable sequester services")
@@ -193,6 +197,7 @@ def update_service(
         trio_run(_delete_service, db_config, organization, service_id, use_asyncio=True)
     if enable:
         trio_run(_enable_service, db_config, organization, service_id, use_asyncio=True)
+    click.echo(click.style("Service updated", fg="green"))
 
 
 async def _human_accesses(config: BackendDbConfig, organization: OrganizationID, user_filter: str):
