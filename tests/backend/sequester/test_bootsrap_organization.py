@@ -24,7 +24,7 @@ async def test_sequestered_organization_bootstrap(
     coolorg: OrganizationFullData,
     otherorg: OrganizationFullData,
     alice: LocalDevice,
-    anonymous_backend_sock,
+    anonymous_backend_ws,
     backend,
     running_backend,
 ):
@@ -48,7 +48,7 @@ async def test_sequestered_organization_bootstrap(
 
     # Bad authority certificate
     rep = await organization_bootstrap(
-        anonymous_backend_sock,
+        anonymous_backend_ws,
         check_rep=False,
         **{**organization_bootstrap_args, "sequester_authority_certificate": b"dummy"}
     )
@@ -62,7 +62,7 @@ async def test_sequestered_organization_bootstrap(
         otherorg.root_signing_key
     )
     rep = await organization_bootstrap(
-        anonymous_backend_sock,
+        anonymous_backend_ws,
         check_rep=False,
         **{
             **organization_bootstrap_args,
@@ -80,7 +80,7 @@ async def test_sequestered_organization_bootstrap(
         coolorg.root_signing_key, timestamp=timestamp_out_of_ballpark
     ).certif
     rep = await organization_bootstrap(
-        anonymous_backend_sock,
+        anonymous_backend_ws,
         check_rep=False,
         **{
             **organization_bootstrap_args,
@@ -101,7 +101,7 @@ async def test_sequestered_organization_bootstrap(
         coolorg.root_signing_key, timestamp=different_timestamp
     ).certif
     rep = await organization_bootstrap(
-        anonymous_backend_sock,
+        anonymous_backend_ws,
         check_rep=False,
         **{
             **organization_bootstrap_args,
@@ -115,6 +115,6 @@ async def test_sequestered_organization_bootstrap(
 
     # Finally valid bootstrap
     rep = await organization_bootstrap(
-        anonymous_backend_sock, check_rep=False, **organization_bootstrap_args
+        anonymous_backend_ws, check_rep=False, **organization_bootstrap_args
     )
     assert rep == {"status": "ok"}

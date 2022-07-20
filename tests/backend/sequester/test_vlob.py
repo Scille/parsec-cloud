@@ -15,7 +15,7 @@ from tests.backend.common import vlob_create, vlob_update
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 @pytest.mark.trio
 async def test_vlob_create_update_and_sequester_access(
-    coolorg: OrganizationFullData, alice_backend_sock, realm, backend
+    coolorg: OrganizationFullData, alice_ws, realm, backend
 ):
     # s1&s2 are valid sequester services, s3 is a deleted sequester service
     s1 = sequester_service_factory(
@@ -53,7 +53,7 @@ async def test_vlob_create_update_and_sequester_access(
         b3 = f"<blob v{vlob_version} for s3>".encode()
 
         # 1) Try without sequester blob
-        rep = await vlob_cmd(alice_backend_sock, **cmd_kwargs, check_rep=False)
+        rep = await vlob_cmd(alice_ws, **cmd_kwargs, check_rep=False)
         assert rep == {
             "status": "sequester_inconsistency",
             "sequester_authority_certificate": coolorg.sequester_authority.certif,
@@ -62,7 +62,7 @@ async def test_vlob_create_update_and_sequester_access(
 
         # 2) Try with sequester blob missing for one service
         rep = await vlob_cmd(
-            alice_backend_sock, **cmd_kwargs, sequester_blob={s1.service_id: b1}, check_rep=False
+            alice_ws, **cmd_kwargs, sequester_blob={s1.service_id: b1}, check_rep=False
         )
         assert rep == {
             "status": "sequester_inconsistency",
@@ -72,7 +72,7 @@ async def test_vlob_create_update_and_sequester_access(
 
         # 3) Try with unknown additional sequester blob
         rep = await vlob_cmd(
-            alice_backend_sock,
+            alice_ws,
             **cmd_kwargs,
             sequester_blob={s1.service_id: b1, s2.service_id: b2, dummy_service_id: b"<whatever>"},
             check_rep=False,
@@ -85,7 +85,7 @@ async def test_vlob_create_update_and_sequester_access(
 
         # 4) Try with blob for a removed sequester service
         rep = await vlob_cmd(
-            alice_backend_sock,
+            alice_ws,
             **cmd_kwargs,
             sequester_blob={s1.service_id: b1, s2.service_id: b2, s3.service_id: b3},
             check_rep=False,
@@ -98,7 +98,7 @@ async def test_vlob_create_update_and_sequester_access(
 
         # 5) Finally the valid operation
         rep = await vlob_cmd(
-            alice_backend_sock,
+            alice_ws,
             **cmd_kwargs,
             sequester_blob={s1.service_id: b1, s2.service_id: b2},
             check_rep=False,
