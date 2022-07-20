@@ -40,4 +40,4 @@ jobs:
         run: poetry run python misc/generate_pyqt.py
 
       - name: Test python
-        run: poetry run pytest
+        run: poetry run pytest -n auto
