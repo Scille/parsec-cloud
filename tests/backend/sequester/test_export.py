@@ -15,8 +15,8 @@ from tests.common import OrganizationFullData, customize_fixtures, sequester_ser
 @customize_fixtures(real_data_storage=True, coolorg_is_sequestered_organization=True)
 @pytest.mark.postgresql
 @pytest.mark.trio
-async def test_vlob_create_update_and_sequester_access(
-    tmp_path, coolorg: OrganizationFullData, realm, backend, alice
+async def test_sequester_export_full_run(
+    tmp_path, coolorg: OrganizationFullData, realm, backend, alice, bob
 ):
     output_db_path = tmp_path / "export.sqlite"
 
@@ -33,10 +33,22 @@ async def test_vlob_create_update_and_sequester_access(
     await backend.realm.create(
         organization_id=coolorg.organization_id,
         self_granted_role=RealmGrantedRole(
-            certificate=b"cert1",
+            certificate=b"rolecert1",
             realm_id=realm1,
             user_id=alice.user_id,
             role=RealmRole.OWNER,
+            granted_by=alice.device_id,
+            granted_on=pendulum_now(),
+        ),
+    )
+
+    await backend.realm.update_roles(
+        organization_id=coolorg.organization_id,
+        new_role=RealmGrantedRole(
+            certificate=b"rolecert2",
+            realm_id=realm1,
+            user_id=bob.user_id,
+            role=RealmRole.MANAGER,
             granted_by=alice.device_id,
             granted_on=pendulum_now(),
         ),
@@ -146,16 +158,17 @@ async def test_vlob_create_update_and_sequester_access(
     assert rows == [(block1.bytes, b"block1"), (block2.bytes, b"block2")]
     rows = con.execute("SELECT _id, vlob_id, version, blob from vlob_atom").fetchall()
     assert rows == [
-        (1, vlob1.bytes, 1, b"s1:vlob1v1")(2, vlob1.bytes, 2, b"s1:vlob1v2")(
-            3, vlob2.bytes, 1, b"s1:vlob2v1"
-        )
+        (1, vlob1.bytes, 1, b"s1:vlob1v1"),
+        (2, vlob1.bytes, 2, b"s1:vlob1v2"),
+        (3, vlob2.bytes, 1, b"s1:vlob2v1"),
     ]
+
     row = con.execute("SELECT count(*) from realm_role").fetchone()
-    assert row[0] == 3
+    assert row[0] == 2  # Contains alice's OWNER role and bob MANAGER roles on realm1
     row = con.execute("SELECT count(*) from user_").fetchone()
-    assert row[0] == 3
+    assert row[0] == 3  # Contains alice, bob and adam
     row = con.execute("SELECT count(*) from device").fetchone()
-    assert row[0] == 3
+    assert row[0] == 4  # Contains alice@dev1, alice@dev2, bob@dev1 and adam@dev1
 
     # Also check for idempotency with a different realm exporter
     async with RealmExporter.run(
@@ -194,6 +207,17 @@ async def test_vlob_create_update_and_sequester_access(
             pass
 
     # The export script can detect missing items and update the export
+    await backend.realm.update_roles(
+        organization_id=coolorg.organization_id,
+        new_role=RealmGrantedRole(
+            certificate=b"rolecert3",
+            realm_id=realm1,
+            user_id=bob.user_id,
+            role=None,
+            granted_by=alice.device_id,
+            granted_on=pendulum_now(),
+        ),
+    )
     await backend.vlob.update(
         organization_id=coolorg.organization_id,
         author=alice.device_id,
@@ -234,12 +258,12 @@ async def test_vlob_create_update_and_sequester_access(
 
         # Export vlobs
         to_export_count, vlob_batch_offset_marker0 = await exporter.compute_vlobs_export_status()
-        assert to_export_count == 1
+        assert to_export_count == 5
         assert vlob_batch_offset_marker0 == 3
         vlob_batch_offset_marker1 = await exporter.export_vlobs(
             batch_offset_marker=vlob_batch_offset_marker0
         )
-        assert vlob_batch_offset_marker1 == 4
+        assert vlob_batch_offset_marker1 == 5
 
         # Export blocks
         to_export_count, block_batch_offset_marker0 = await exporter.compute_blocks_export_status()
@@ -258,13 +282,15 @@ async def test_vlob_create_update_and_sequester_access(
     assert rows == [(block1.bytes, b"block1"), (block2.bytes, b"block2"), (block3.bytes, b"block3")]
     rows = con.execute("SELECT _id, vlob_id, version, blob from vlob_atom").fetchall()
     assert rows == [
-        (1, vlob1.bytes, 1, b"s1:vlob1v1")(2, vlob1.bytes, 2, b"s1:vlob1v2")(
-            3, vlob2.bytes, 1, b"s1:vlob2v1"
-        )(4, vlob1.bytes, 3, b"s1:vlob1v3")(5, vlob3.bytes, 1, b"s1:vlob3v1")
+        (1, vlob1.bytes, 1, b"s1:vlob1v1"),
+        (2, vlob1.bytes, 2, b"s1:vlob1v2"),
+        (3, vlob2.bytes, 1, b"s1:vlob2v1"),
+        (4, vlob1.bytes, 3, b"s1:vlob1v3"),
+        (5, vlob3.bytes, 1, b"s1:vlob3v1"),
     ]
     row = con.execute("SELECT count(*) from realm_role").fetchone()
-    assert row[0] == 3
+    assert row[0] == 3  # Contains alice's OWNER role and bob MANAGER&None roles on realm1
     row = con.execute("SELECT count(*) from user_").fetchone()
-    assert row[0] == 3
+    assert row[0] == 3  # Contains alice, bob and adam
     row = con.execute("SELECT count(*) from device").fetchone()
-    assert row[0] == 3
+    assert row[0] == 4  # Contains alice@dev1, alice@dev2, bob@dev1 and adam@dev1

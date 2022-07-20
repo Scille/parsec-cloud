@@ -151,6 +151,7 @@ class RealmExporter:
                     # ...and initialize it
                     con.executescript(OUTPUT_DB_INIT_QUERY)
                     con.execute("INSERT INTO info (realm_id) VALUES (?)", (self.realm_id.bytes,))
+                    con.commit()
                 except sqlite3.Error as exc:
                     raise RealmExporterOutputDbError(
                         f"Cannot create export database: {exc}"
@@ -176,11 +177,11 @@ class RealmExporter:
                 db_version, db_realm_id = row
                 if db_version != OUTPUT_DB_VERSION:
                     raise RealmExporterOutputDbError(
-                        f"Existing output export database version format is not supported: got version `{row['version']}` but only version `1` is accepted"
+                        f"Existing output export database version format is not supported: got version `{db_version}` but only version `1` is accepted"
                     )
                 if db_realm_id != self.realm_id.bytes:
                     raise RealmExporterOutputDbError(
-                        f"Existing output export database is for a different realm: got `{row['realm_id']}` instead of expected `{self.realm_id.bytes}`"
+                        f"Existing output export database is for a different realm: got `{db_realm_id}` instead of expected `{self.realm_id.bytes}`"
                     )
             finally:
                 con.close()
@@ -212,6 +213,7 @@ ON CONFLICT DO NOTHING
 """,
                         rows,
                     )
+                    output_con.commit()
                 finally:
                     output_con.close()
 
@@ -235,6 +237,7 @@ WHERE organization = (
                         "INSERT INTO device (_id, device_certificate) VALUES (?, ?) ON CONFLICT DO NOTHING",
                         rows,
                     )
+                    output_con.commit()
                 finally:
                     output_con.close()
 
@@ -264,6 +267,7 @@ WHERE realm = (
                         "INSERT INTO realm_role (_id, role_certificate) VALUES (?, ?) ON CONFLICT DO NOTHING",
                         rows,
                     )
+                    output_con.commit()
                 finally:
                     output_con.close()
 
@@ -368,6 +372,7 @@ ON CONFLICT DO NOTHING
 """,
                         cooked_rows,
                     )
+                    con.commit()
                 finally:
                     con.close()
 
@@ -479,6 +484,7 @@ ON CONFLICT DO NOTHING
 """,
                         cooked_rows,
                     )
+                    con.commit()
                 finally:
                     con.close()
 
