@@ -32,3 +32,6 @@ jobs:
 
       - name: Install python deps
         run: poetry install -E core -E backend
+
+      - name: Test python
+        run: poetry run pytest
