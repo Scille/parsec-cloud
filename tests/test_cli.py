@@ -1030,3 +1030,46 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         result = await enable_service(service_id)
         assert result.exit_code == 1
         assert isinstance(result.exception, SequesterServiceAlreadyEnabledError)
+
+
+@pytest.mark.trio
+@customize_fixtures(coolorg_is_sequestered_organization=True)
+async def test_bootstrap_sequester(coolorg, tmp_path, backend, running_backend):
+    org = "TheOne"
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    device_label = "device_label"
+    human_label = "human_label"
+    human_email = "human@email.com"
+    password = "P@ssw0rd."
+    runner = CliRunner()
+
+    async def _cli_invoke_in_thread(cmd: str, input=None):
+        # We must run the command from another thread given it will create it own trio loop
+        async with real_clock_timeout():
+            # Pass DEBUG environment variable for better output on crash
+            return await trio.to_thread.run_sync(
+                lambda: runner.invoke(cli, cmd, input=input, env={"DEBUG": "1"})
+            )
+
+    _, public_key = _setup_sequester_key_paths(tmp_path=tmp_path, coolorg=coolorg)
+
+    async def create_organization():
+        result = await _cli_invoke_in_thread(
+            f"core create_organization {org} --addr={running_backend.addr}  --administration-token={backend.config.administration_token}"
+        )
+        assert result.exit_code == 0
+        url = re.search(r"^Bootstrap organization url: (.*)$", result.output, re.MULTILINE).group(1)
+        return url
+
+    async def bootstrap_organization(url):
+        result = await _cli_invoke_in_thread(
+            f"core bootstrap_organization  {url} --password={password} --device-label={device_label} --human-label={human_label} --human-email={human_email} --config-dir={config_dir.as_posix()} --sequester-verify-key={public_key}",
+            input="y",
+        )
+        assert result.exit_code == 0
+        return result
+
+    url = await create_organization()
+    result = await bootstrap_organization(url)
+    assert "Saving device" in result.output
