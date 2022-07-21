@@ -1,0 +1,69 @@
+# Add new issue & pull request to a project.
+name: project-notary
+
+on:
+  workflow_dispatch:
+
+env:
+  project-number: 2
+  project-orga: scille
+
+permissions:
+  issues: read
+  pull-requests: read
+
+jobs:
+  add-issue-to-project:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Debug tool version
+        run: |
+          set -x
+          gh --version
+          jq --version
+          base64 --version
+
+      - name: List issues & PR with the wrong/missing project
+        run: |
+          echo -n '' > issues_wrong_project.json
+
+          for type in issue pr; do
+            gh $type list \
+              --json id,title,number \
+              --search '-project:"${{ env.project-orga }}/${{ env.project-number }}"' \
+              --jq ".[] += {\"type\": \"$type\"} | .[]" \
+              | tee -a issues_wrong_project.json
+          done
+
+          jq '. | @base64' issues_wrong_project.json > issues_wrong_project.json.b64
+
+      - name: Upload list of issues that aren't affected to the correct project
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
+        with:
+          name: issues
+          path: issues_wrong_project.json
+
+      - name: Edit issues & pr to set them to correct project
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCILLE_READ_WRITE_GITHUB_TOKEN }}
+        run: |
+          source .github/scripts/notary/lib.sh
+
+          PROJECT_DATA=$(get_project_v2 ${{ env.project-orga}} ${{ env.project-number }})
+          PROJECT_ID=$(jq -r .id <<<"$PROJECT_DATA")
+          PROJECT_TITLE=$(jq -r .title <<<"$PROJECT_DATA")
+
+          for raw_row in issues_wrong_project.json.b64; do
+            row=$(echo $raw_row | base64 --decode | jq . -c)
+            ID=$(jq -r .id <<<"$row")
+            TITLE=$(jq -r .title <<<"$row")
+            TYPE=$(jq -r .type <<<"$row")
+
+            echo "Adding $TYPE \"$TITLE\" to project $PROJECT_TITLE"
+            add_item_to_project $PROJECT_ID $ID
+            RC=$?
+            if [ $RC -ne 0 ]; then
+              echo "Failed to add $TYPE \"$TITLE\" to project $PROJECT_TITLE" >&2
+              exit $RC
+            fi
+          done

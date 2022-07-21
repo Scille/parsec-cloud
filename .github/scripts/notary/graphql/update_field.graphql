@@ -1,0 +1,16 @@
+mutation ($project: ID!, $item: ID!, $field: ID!, $field_value: ID!) {
+  updateProjectV2ItemFieldValue(
+    input: {
+      projectId: $project
+      itemId: $item
+      fieldId: $field
+      value: {
+        singleSelectOptionId: $field_value
+      }
+    }
+  ) {
+    projectV2Item {
+      id
+    }
+  }
+}
