@@ -3,7 +3,7 @@
 from parsec._version import __version__
 
 # The parsec.utils module includes a bit of patching, let's make sure it is imported
-import parsec.utils  # noqa
+__import__("parsec.utils")
 
 try:
     import libparsec  # noqa
