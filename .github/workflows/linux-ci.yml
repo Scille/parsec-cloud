@@ -87,7 +87,9 @@ jobs:
       - name: GUI tests
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: poetry run pytest tests --runmountpoint --runslow --rungui -m gui
+          run: |
+            poetry run pip install pytest-xvfb
+            poetry run pytest tests --runmountpoint --runslow --rungui -m gui
 
       - name: Slow tests
         run: poetry run pytest tests --runslow -m slow
