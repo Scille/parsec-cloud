@@ -16,6 +16,9 @@ jobs:
   package-linux:
     runs-on: ubuntu-22.04
     steps:
+      - name: Install snapcraft
+        run: sudo snap install snapcraft --classic
+
       - name: Debug snapcraft version
         run: |
           set -e
