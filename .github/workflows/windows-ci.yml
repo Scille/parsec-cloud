@@ -17,6 +17,7 @@ env:
     --durations=10
     --side-effects-timeout=10
     -x
+    -vv
 
 jobs:
   python-only:
