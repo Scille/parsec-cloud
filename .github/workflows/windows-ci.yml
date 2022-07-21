@@ -16,6 +16,7 @@ env:
     --log-level=DEBUG
     --durations=10
     --side-effects-timeout=10
+    -x
 
 jobs:
   python-only:
@@ -55,10 +56,10 @@ jobs:
         run: poetry run pytest tests ${{ env.pytest-args }} -n auto
 
       - name: Test Mountpoint
-        run: poetry run pytest tests ${{ env.pytest-args }} --runmountpoint --runslow -m mountpoint -x
+        run: poetry run pytest tests ${{ env.pytest-args }} --runmountpoint --runslow -m mountpoint
 
       - name: Test Gui
-        run: poetry run pytest tests ${{ env.pytest-args }} -n auto --runmountpoint --runslow -m gui -x
+        run: poetry run pytest tests ${{ env.pytest-args }} -n auto --runmountpoint --runslow -m gui
 
       - name: Test Slow
-        run: poetry run pytest tests ${{ env.pytest-args }} -n auto --runslow -m slow -x
+        run: poetry run pytest tests ${{ env.pytest-args }} -n auto --runslow -m slow
