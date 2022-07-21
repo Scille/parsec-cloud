@@ -255,6 +255,11 @@ macro_rules! expose_BaseBackendAddr_fields {
         pub fn use_ssl(&self) -> bool {
             self.base.use_ssl
         }
+
+        /// Create a url for http request with an optional path
+        pub fn to_http_url(&self, path: Option<&str>) -> Url {
+            self.base.to_http_url(path)
+        }
     };
 }
 

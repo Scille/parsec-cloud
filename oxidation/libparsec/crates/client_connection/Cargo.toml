@@ -1,0 +1,33 @@
+[package]
+name = "libparsec_client_connection"
+version = "0.1.0"
+edition = "2021"
+autotests = false
+
+[[test]]
+name = "auth_cmds"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Used to send HTTP request to the server.
+reqwest = "0.11.10"
+# Used to perform operation on URL.
+url = "2.2.2"
+# Add primitive type to be used with the proctocol
+libparsec_types = { path = "../types" }
+# Provide possible command to send to the server
+libparsec_protocol = { path = "../protocol" }
+# Use abstract crypto primitive, to allow to sign request.
+libparsec_crypto = { path = "../crypto" }
+# Used to encoded binary data.
+base64 = "0.13.0"
+chrono = "0.4.19"
+
+[dev-dependencies]
+anyhow = "1.0.57"
+env_logger = "0.9.0"
+http-body = "0.4.5"
+hyper = { version = "0.14.19", features = ["server"] }
+log = "0.4.17"
+tokio = { version = "1.19", features = ["rt", "macros", "sync"] }

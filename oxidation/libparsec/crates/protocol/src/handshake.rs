@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, fmt::Display};
 
 use libparsec_crypto::{SigningKey, VerifyKey};
 use rand::{thread_rng, Rng};
@@ -57,6 +57,12 @@ impl Ord for ApiVersion {
             Ordering::Equal => self.revision.cmp(&other.revision),
             order => order,
         }
+    }
+}
+
+impl Display for ApiVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}.{}", self.version, self.revision)
     }
 }
 
