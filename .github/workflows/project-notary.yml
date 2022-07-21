@@ -35,7 +35,7 @@ jobs:
 
           jq '. | @base64' issues_wrong_project.json > issues_wrong_project.json.b64
 
-      - name: Upload issues's list that aren't affected to the correct project
+      - name: Upload list of issues that aren't affected to the correct project
         uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
         with:
           name: issues
