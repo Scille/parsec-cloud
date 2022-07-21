@@ -217,16 +217,18 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         rvk = VerifyKey(data[1]) if data[1] else None
 
         sequester_authority = None
-        sequester_services_certificates = []
+        # Sequester services certificates is None if sequester is not enabled
+        sequester_services_certificates = None
+
         if data[5]:
             sequester_authority = SequesterAuthority.build_from_certificate(data[5])
             services = await conn.fetch(
                 *_q_get_organization_services_certificates(organization_id=id.str)
             )
-            if services:
-                sequester_services_certificates = [
-                    service["service_certificate"] for service in services
-                ]
+            sequester_services_certificates = tuple(
+                service["service_certificate"] for service in services
+            )
+            sequester_services_certificates = sequester_services_certificates
 
         return Organization(
             organization_id=id,
@@ -236,7 +238,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             active_users_limit=data[3],
             user_profile_outsider_allowed=data[4],
             sequester_authority=sequester_authority,
-            sequester_services_certificates=tuple(sequester_services_certificates),
+            sequester_services_certificates=sequester_services_certificates,
         )
 
     async def bootstrap(
