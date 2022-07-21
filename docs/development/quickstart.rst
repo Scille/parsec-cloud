@@ -29,6 +29,8 @@ Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
 .. code-block:: shell
 
     poetry install -E core -E backend
+    poetry run python misc/generate_pyqt.py
+    poetry run maturin develop
 
 .. note::
 
