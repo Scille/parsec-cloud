@@ -1902,6 +1902,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "parsec"
+version = "0.1.0"
+dependencies = [
+ "pyo3",
+]
+
+[[package]]
 name = "paste"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
