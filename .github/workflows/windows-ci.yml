@@ -9,7 +9,7 @@ on:
 env:
   rust-version: 1.62.0
   python-version: "3.9"
-  poetry-version: 1.1.13
+  poetry-version: 1.1.14
   sqlite-version: 3390100
   winfsp-version: 1.8.20304
   pytest-args: >-
