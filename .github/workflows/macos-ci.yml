@@ -43,6 +43,7 @@ jobs:
         run: >
           poetry run pytest
           -n auto
+          -x
           --log-level=DEBUG
           --durations=10
           --side-effects-timeout=10
