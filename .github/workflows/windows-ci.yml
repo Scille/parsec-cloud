@@ -36,8 +36,8 @@ jobs:
       - name: Install poetry
         shell: bash
         run: |
-          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py \
-            | python - --version=${{ env.poetry-version }}
+          curl -sSL https://install.python-poetry.org \
+            | python3 - --version=${{ env.poetry-version }}
           echo "$USERPROFILE\.poetry\bin" >> "$GITHUB_PATH"
 
       - uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb  # pin v4.0.0
