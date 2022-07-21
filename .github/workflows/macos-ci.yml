@@ -43,6 +43,7 @@ jobs:
         run: >
           poetry run pytest
           -n auto
+          -vv
           -x
           --log-level=DEBUG
           --durations=10
