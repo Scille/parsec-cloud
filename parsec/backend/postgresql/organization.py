@@ -71,6 +71,16 @@ WHERE organization_id = $organization_id
 """
 )
 
+_q_get_organization_services_certificates = Q(
+    f"""
+    SELECT service_certificate
+    FROM sequester_service
+    WHERE
+        organization={ q_organization_internal_id("$organization_id") }
+        AND deleted_on is NULL
+    ORDER BY _id
+    """
+)
 
 _q_get_organization_for_update = Q(
     """
@@ -207,10 +217,17 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         rvk = VerifyKey(data[1]) if data[1] else None
 
         sequester_authority = None
+        sequester_services_certificates = []
         if data[5]:
-            # TODO: Handle Error
-            # Load certificate and key
             sequester_authority = SequesterAuthority.build_from_certificate(data[5])
+            services = await conn.fetch(
+                *_q_get_organization_services_certificates(organization_id=id.str)
+            )
+            if services:
+                sequester_services_certificates = [
+                    service["service_certificate"] for service in services
+                ]
+
         return Organization(
             organization_id=id,
             bootstrap_token=data[0],
@@ -219,7 +236,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             active_users_limit=data[3],
             user_profile_outsider_allowed=data[4],
             sequester_authority=sequester_authority,
-            sequester_services_certificates=None,  # TODO: implement it in postgresql version
+            sequester_services_certificates=tuple(sequester_services_certificates),
         )
 
     async def bootstrap(
