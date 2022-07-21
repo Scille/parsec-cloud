@@ -203,12 +203,10 @@ impl HumanHandle {
             return Err("Invalid label");
         }
 
-        if let Ok((nameaddr, _)) = NameAddr::parse(format!("{} <{}>", label, email).as_bytes()) {
+        if let Ok((nameaddr, _)) = NameAddr::parse(format!("{}<{}>", label, email).as_bytes()) {
             if let Some(name) = nameaddr.display_name {
-                let name = format!("{}", name);
-                // Name includes an extra space at the end, so we remove it before the comparison
-                let name = &name[..name.len() - 1];
-                let addr = format!("{}", nameaddr.angle_addr.addr_spec);
+                let name = name.to_string();
+                let addr = nameaddr.angle_addr.addr_spec.to_string();
                 if name == label && addr == email {
                     return Ok(Self { email, label });
                 }
