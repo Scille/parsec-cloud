@@ -60,7 +60,7 @@ jobs:
         run: poetry run pytest tests ${{ env.pytest-args }} --runmountpoint --runslow -m mountpoint
 
       - name: Test Gui
-        run: poetry run pytest tests ${{ env.pytest-args }} -n auto --runmountpoint --runslow -m gui
+        run: poetry run pytest tests ${{ env.pytest-args }} -n auto --rungui --runmountpoint --runslow -m gui
 
       - name: Test Slow
         run: poetry run pytest tests ${{ env.pytest-args }} -n auto --runslow -m slow
