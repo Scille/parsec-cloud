@@ -13,7 +13,50 @@ env:
   poetry-version: 1.1.13
 
 jobs:
+  build-wheel:
+    runs-on: ubuntu-22.04
+    env:
+      # Need feature from poetry 1.2.x that aren't present in 1.1.x
+      poetry-version: 1.2.0
+    steps:
+      - name: Install poetry
+        run: |
+          export POETRY_HOME="$HOME/.poetry"
+          mkdir -p "$POETRY_HOME"
+          curl -sSL https://install.python-poetry.org | python3 - --version=${{ env.poetry-version }}
+          echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
+
+      - uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb  # pin v4.0.0
+        with:
+          python-version: ${{ env.python-version }}
+          cache: poetry
+
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - name: Create output dir
+        run: mkdir dist
+
+      - name: Get wheel version
+        run: |
+          # Retrieve Parsec version and customize it if we are not building on a tag
+          # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
+          if ([[ $(Build.SourceBranch) = "refs/tags/"* ]])
+          then
+            # Use tag name as version
+            VERSION=`git -C $(Build.SourcesDirectory) describe --tag`
+          else
+            # Use `<tag_name>+dev<commit_hash>` as version
+            VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' $(Build.SourcesDirectory)/parsec/_version.py`
+            COMMIT=`git -C $(Build.SourcesDirectory) rev-parse --verify --short HEAD`
+            VERSION="$VERSION.$COMMIT"
+            # Customize version with tag
+            sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" parsec/_version.py
+            test $(grep -E 'version = ' -o pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
+            sed -i "s#^\\(version = \\).*\$#\\1'$VERSION'#" pyproject.toml
+          fi
+
   package-linux:
+    needs: build-wheel
     runs-on: ubuntu-22.04
     steps:
       - name: Install snapcraft
