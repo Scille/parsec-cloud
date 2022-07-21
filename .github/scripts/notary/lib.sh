@@ -19,15 +19,11 @@ function list_project_fields() {
 function update_project_item_field() {
     local QUERY_FILE=$QUERY_FOLDER/update_field.graphql
 
-    local project_id="$1"
-    local item_id="$2"
-    local field_id="$3"
-    local field_value="$4"
-
     gh api graphql \
         -f project="$1" \
         -f item="$2" \
         -f field="$3" \
+        -f field_value="$4"
         -f query="$(<$QUERY_FILE)" | cat
 }
 
