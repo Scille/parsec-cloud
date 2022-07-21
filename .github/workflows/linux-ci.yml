@@ -35,6 +35,12 @@ jobs:
 
   python:
     runs-on: ubuntu-22.04
+    env:
+      PYTEST_BASE_ARGS: |
+        --durations=10
+        --side-effects-timeout=10
+        -vv
+        -x
     strategy:
       fail-fast: false
       matrix:
@@ -76,14 +82,14 @@ jobs:
         run: poetry run pip install oxidation/libparsec_python
 
       - name: Basic tests
-        run: poetry run pytest tests
+        run: timeout 200 poetry run pytest $PYTEST_BASE_ARGS tests
 
       - name: Rust binding tests
         if: matrix.binding == 'rust-binding'
-        run: poetry run pytest tests --runrust -m rust -vv
+        run: timeout 200 poetry run pytest $PYTEST_BASE_ARGS tests --runrust -m rust
 
       - name: Mountpoint tests
-        run: poetry run pytest tests --runmountpoint --runslow -m mountpoint -vv
+        run: timeout 200 poetry run pytest $PYTEST_BASE_ARGS tests --runmountpoint --runslow -m mountpoint
 
       - name: GUI tests
         run: |
@@ -93,7 +99,10 @@ jobs:
           # Use pytest-xvfb to nicely wrap it up
           poetry run pip install pytest-xvfb
           # Run GUI tests
-          poetry run pytest tests --runmountpoint --runslow --rungui -m gui -vv
+          timeout 500 poetry run pytest $PYTEST_BASE_ARGS tests --runmountpoint --runslow --rungui -m gui
 
-      - name: Slow tests
-        run: poetry run pytest tests --runslow -m slow -vv
+      - name: PostgreSQL tests
+        run: timeout 3000 poetry run pytest $PYTEST_BASE_ARGS tests/backend tests/test_cli.py --postgresql --runslow
+
+      - name: Hypothesis tests
+        run: timeout 1000 poetry run pytest $PYTEST_BASE_ARGS tests --runslow -m slow
