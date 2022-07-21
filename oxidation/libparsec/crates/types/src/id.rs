@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use email_format::rfc5322::types::NameAddr;
+use email_format::rfc5322::Parsable;
 use fancy_regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
@@ -201,12 +203,19 @@ impl HumanHandle {
             return Err("Invalid label");
         }
 
-        // TODO: replace python's email.utils.parseaddr
-        // parsed_label, parsed_email = parseaddr(f"{label} <{email}>")
-        // if parsed_email != email or parsed_label != label:
-        //     raise ValueError("Invalid email/label couple")
+        if let Ok((nameaddr, _)) = NameAddr::parse(format!("{} <{}>", label, email).as_bytes()) {
+            if let Some(name) = nameaddr.display_name {
+                let name = format!("{}", name);
+                // Name includes an extra space at the end, so we remove it before the comparison
+                let name = &name[..name.len() - 1];
+                let addr = format!("{}", nameaddr.angle_addr.addr_spec);
+                if name == label && addr == email {
+                    return Ok(Self { email, label });
+                }
+            }
+        }
 
-        Ok(Self { email, label })
+        Err("Invalid email/label couple")
     }
 }
 

@@ -326,6 +326,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "buf-read-ext"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd2b3bef6c7a0f62d42a25a3cce9a40d558f3f4e15b70a7eef4aaea5c2a419ab"
+
+[[package]]
 name = "bumpalo"
 version = "3.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -680,6 +686,15 @@ dependencies = [
  "serde",
  "sha2 0.9.9",
  "zeroize",
+]
+
+[[package]]
+name = "email-format"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd8eb503420bb8f3576592fed3c40baa2cca5f41420baa9ceef8e1d2c09327bb"
+dependencies = [
+ "buf-read-ext",
 ]
 
 [[package]]
@@ -1431,6 +1446,7 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "data-encoding",
+ "email-format",
  "fancy-regex",
  "flate2",
  "hex-literal",
