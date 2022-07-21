@@ -18,4 +18,5 @@ jobs:
     steps:
       - name: Debug snapcraft version
         run: |
+          set -e
           echo "::warning title=Snapcraft Version::using $(snapcraft --version)"
