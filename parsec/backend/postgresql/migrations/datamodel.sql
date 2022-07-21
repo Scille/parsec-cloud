@@ -24,8 +24,8 @@ CREATE TABLE organization (
     active_users_limit INTEGER,
     is_expired BOOLEAN NOT NULL,
     _bootstrapped_on TIMESTAMPTZ,
-    _created_on TIMESTAMPTZ NOT NULL
-    sequester_authority BYTEA; -- NULL To disable sequester services
+    _created_on TIMESTAMPTZ NOT NULL,
+    sequester_authority BYTEA -- NULL To disable sequester services
 );
 
 -------------------------------------------------------
