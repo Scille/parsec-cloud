@@ -8,6 +8,10 @@ env:
   project-number: 2
   project-orga: scille
 
+permissions:
+  issues: read
+  pull-requests: read
+
 jobs:
   add-issue-to-project:
     runs-on: ubuntu-22.04
@@ -20,8 +24,6 @@ jobs:
           base64 --version
 
       - name: List issues & PR with the wrong/missing project
-        env:
-          GITHUB_TOKEN: ${{ secrets.PARSEC_READ_GITHUB_TOKEN }}
         run: |
           echo -n '' > issues_wrong_project.json
 
