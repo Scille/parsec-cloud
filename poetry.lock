@@ -483,6 +483,21 @@ optional = true
 python-versions = ">=3.7"
 
 [[package]]
+name = "maturin"
+version = "0.13.0"
+description = "Build and publish crates with pyo3, rust-cpython and cffi bindings as well as rust binaries as python packages"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
+
+[package.extras]
+zig = ["ziglang (>=0.9.0,<0.10.0)"]
+patchelf = ["patchelf"]
+
+[[package]]
 name = "mccabe"
 version = "0.6.1"
 description = "McCabe checker, plugin for flake8"
@@ -1141,7 +1156,7 @@ crt = ["botocore[crt] (>=1.20.29,<2.0a.0)"]
 
 [[package]]
 name = "sentry-sdk"
-version = "1.7.2"
+version = "1.8.0"
 description = "Python client for Sentry (https://sentry.io)"
 category = "main"
 optional = false
@@ -1159,6 +1174,7 @@ celery = ["celery (>=3)"]
 chalice = ["chalice (>=1.16.0)"]
 django = ["django (>=1.8)"]
 falcon = ["falcon (>=1.4)"]
+fastapi = ["fastapi (>=0.79.0)"]
 flask = ["flask (>=0.11)", "blinker (>=1.1)"]
 httpx = ["httpx (>=0.16.0)"]
 pure_eval = ["pure-eval", "executing", "asttokens"]
@@ -1167,6 +1183,7 @@ quart = ["quart (>=0.16.1)", "blinker (>=1.1)"]
 rq = ["rq (>=0.6)"]
 sanic = ["sanic (>=0.8)"]
 sqlalchemy = ["sqlalchemy (>=1.2)"]
+starlette = ["starlette (>=0.19.1)"]
 tornado = ["tornado (>=5)"]
 
 [[package]]
@@ -1794,6 +1811,20 @@ markupsafe = [
     {file = "MarkupSafe-2.1.1-cp39-cp39-win_amd64.whl", hash = "sha256:46d00d6cfecdde84d40e572d63735ef81423ad31184100411e6e3388d405e247"},
     {file = "MarkupSafe-2.1.1.tar.gz", hash = "sha256:7f91197cc9e48f989d12e4e6fbc46495c446636dfc81b9ccf50bb0ec74b91d4b"},
 ]
+maturin = [
+    {file = "maturin-0.13.0-py3-none-macosx_10_7_x86_64.whl", hash = "sha256:e2046d9dc174071cda0412bd864191803a35e97d0bbd1da998c7f83597611485"},
+    {file = "maturin-0.13.0-py3-none-macosx_10_9_x86_64.macosx_11_0_arm64.macosx_10_9_universal2.whl", hash = "sha256:35b5397ba10e79253d0fbe6065df041950bf4fc446e0fe96d8091e840d509f01"},
+    {file = "maturin-0.13.0-py3-none-manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686.whl", hash = "sha256:8dbe97ec3adb96d3539556550b88c6754091fd543c0a3f089c749f201d7f90c7"},
+    {file = "maturin-0.13.0-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.musllinux_1_1_x86_64.whl", hash = "sha256:8310a5013fee00c6c2775f12549cab539e9cc504b68d930872cf304bb42fec94"},
+    {file = "maturin-0.13.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:e9384fedb5296dc294c8328f1e0a25485fc70b6eb26daa11ab54367e3a86be8a"},
+    {file = "maturin-0.13.0-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l.whl", hash = "sha256:16551e934af8d1380e06ad8467a691d56bbde025bc06eb8d484efb2258bf5a46"},
+    {file = "maturin-0.13.0-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.musllinux_1_1_ppc64le.whl", hash = "sha256:23953c36714b656a8e747184c2a455bdd56924e60afcacd0056daa0520e9fbcd"},
+    {file = "maturin-0.13.0-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:c812fd61ed13082912d929bdf107742109a885d0ba2a16a72808c8986297f4e3"},
+    {file = "maturin-0.13.0-py3-none-win32.whl", hash = "sha256:2e651b14733b4cc4066975bd648d7bb64d88d91cf0be416c15ae929f774ab1a0"},
+    {file = "maturin-0.13.0-py3-none-win_amd64.whl", hash = "sha256:c387c37de2786c7106b770ccae55cc55368743643fac6960743efed5e7bac129"},
+    {file = "maturin-0.13.0-py3-none-win_arm64.whl", hash = "sha256:23712d753e0d3f8fa82a0e7e5c60891cca458241b5395989b65302424195e43c"},
+    {file = "maturin-0.13.0.tar.gz", hash = "sha256:b9dd0d4d5da97985533eb682cab4134e04369c6db3d7a2e2a819a02e9f1d962c"},
+]
 mccabe = [
     {file = "mccabe-0.6.1-py2.py3-none-any.whl", hash = "sha256:ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42"},
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
@@ -2183,8 +2214,8 @@ s3transfer = [
     {file = "s3transfer-0.6.0.tar.gz", hash = "sha256:2ed07d3866f523cc561bf4a00fc5535827981b117dd7876f036b0c1aca42c947"},
 ]
 sentry-sdk = [
-    {file = "sentry-sdk-1.7.2.tar.gz", hash = "sha256:95fd321f583dfcfaf279a0b2cdc83d8d28c8b7cca4d2959fc4539bb4fecb56a0"},
-    {file = "sentry_sdk-1.7.2-py2.py3-none-any.whl", hash = "sha256:6f460da98b730d671510af18f119f96d01e3ba027ac0e985871abb3aede1c514"},
+    {file = "sentry-sdk-1.8.0.tar.gz", hash = "sha256:9c68e82f7b1ad78aee6cdef57c2c0f6781ddd9ffa8848f4503c5a8e02b360eea"},
+    {file = "sentry_sdk-1.8.0-py2.py3-none-any.whl", hash = "sha256:5daae00f91dd72d9bb1a65307221fe291417a7b9c30527de3a6f0d9be4ddf08d"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},

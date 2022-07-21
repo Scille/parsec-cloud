@@ -141,7 +141,9 @@ black = "^22.6.0"
 # Latest version compatible with `trio_typing~=0.5`, required by qtrio
 mypy = "v0.910"
 setuptools = "^63.1.0"
+maturin = "~0.13"
 
 [build-system]
-requires = ["poetry-core>=1.0.0", "setuptools"]
-build-backend = "poetry.core.masonry.api"
+requires = ["maturin>=0.13,<0.14"]
+# build-backend = "poetry.core.masonry.api"
+build-backend = "maturin"
