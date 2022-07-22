@@ -128,7 +128,7 @@ def _short_cmd(cmd):
 def _run(cmd, env={}, timeout=SUBPROCESS_TIMEOUT, capture=True):
     print(f"========= RUN {cmd} ==============")
     env = {**os.environ.copy(), "DEBUG": "true", **env}
-    cooked_cmd = ("python -m parsec.cli " + cmd).split()
+    cooked_cmd = ("poetry run python -m parsec.cli " + cmd).split()
     kwargs = {}
     if capture:
         kwargs["stdout"] = kwargs["stderr"] = subprocess.PIPE
