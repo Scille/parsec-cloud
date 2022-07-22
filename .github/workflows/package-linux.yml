@@ -41,9 +41,10 @@ jobs:
       - name: Get wheel version
         id: wheel-version
         run: |
+          set -e
           # Retrieve Parsec version and customize it if we are not building on a tag
           # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
-          if ([[ $(Build.SourceBranch) = "refs/tags/"* ]])
+          if ([ "${{ github.ref_type }}" == "tag" ])
           then
             # Use tag name as version
             VERSION=`git describe --tag`
@@ -58,6 +59,7 @@ jobs:
             sed -i "s#^\\(version = \\).*\$#\\1'$VERSION'#" pyproject.toml
           fi
 
+          echo "::warning title=Wheel version::$VERSION"
           echo "::set-output name=version::$VERSION"
 
   package-linux:
