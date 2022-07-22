@@ -279,6 +279,7 @@ def test_file_name_validator(qtbot, core_config):
 
 
 @pytest.mark.gui
+@pytest.mark.xfail(IS_OXIDIZED, reason="TODO: remove when #2667 is merged")
 @pytest.mark.parametrize(
     "name_and_expected",
     [("    ", False), ("[Test]", False), ("Maurice Moss", True), ("    Maurice    Moss   ", True)],
@@ -286,9 +287,6 @@ def test_file_name_validator(qtbot, core_config):
 def test_user_name_validator(qtbot, core_config, name_and_expected):
     switch_language(core_config, "en")
     user_name, expected = name_and_expected
-
-    if IS_OXIDIZED and not expected:
-        pytest.xfail("TODO: Add validation for user name in rust")
 
     le = ValidatedLineEdit()
     le.set_validator(validators.UserNameValidator())

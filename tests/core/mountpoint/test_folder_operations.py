@@ -89,12 +89,10 @@ class PathElement:
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
+@pytest.mark.xfail(IS_OXIDIZED, reason="TODO: investigate `database is locked` error")
 @pytest.mark.flaky(reruns=0)
 def test_folder_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service_factory):
     tentative = 0
-
-    if IS_OXIDIZED:
-        pytest.xfail("TODO: investigate `database is locked` error")
 
     class FolderOperationsStateMachine(RuleBasedStateMachine):
         Files = Bundle("file")
