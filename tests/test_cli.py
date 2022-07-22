@@ -1033,6 +1033,9 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
 
 
 @pytest.mark.trio
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Key files paths are expected to be in linux posix format"
+)
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 async def test_bootstrap_sequester(coolorg, tmp_path, backend, running_backend):
     org = "TheOne"
@@ -1067,6 +1070,9 @@ async def test_bootstrap_sequester(coolorg, tmp_path, backend, running_backend):
             f"core bootstrap_organization  {url} --password={password} --device-label={device_label} --human-label={human_label} --human-email={human_email} --config-dir={config_dir.as_posix()} --sequester-verify-key={public_key}",
             input="y",
         )
+        print(result)
+        print(result.output)
+        print(result.excepetion)
         assert result.exit_code == 0
         return result
 
