@@ -981,12 +981,12 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
 
         async def delete_service(service_id: str):
             return await _cli_invoke_in_thread(
-                runner, f"backend update_service {common_args} --disable --service-id {service_id}"
+                runner, f"backend update_service {common_args} --disable --service {service_id}"
             )
 
         async def enable_service(service_id: str):
             return await _cli_invoke_in_thread(
-                runner, f"backend update_service {common_args} --enable --service-id {service_id}"
+                runner, f"backend update_service {common_args} --enable --service {service_id}"
             )
 
         # Assert no service configured
