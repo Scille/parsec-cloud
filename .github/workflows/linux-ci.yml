@@ -10,10 +10,12 @@ env:
   rust-version: 1.62.0
   python-version: "3.9"
   poetry-version: 1.1.13
+  postgre-version: 12
 
 jobs:
   rust:
-    runs-on: ubuntu-22.04
+    # Using ubuntu 20 for consistency with the python job
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
       - uses: ./.github/actions/setup-rust
@@ -30,15 +32,32 @@ jobs:
         run: |
           cargo test --package libparsec_crypto --features use-sodiumoxide
           cargo test --package libparsec_crypto --features use-rustcrypto
-
           cargo test --workspace --features mock-time --exclude libparsec_crypto
 
   python:
-    runs-on: ubuntu-22.04
+    # Using ubuntu 20 in order to have postgresql-12 available as an APT package
+    runs-on: ubuntu-20.04
+    env:
+      PYTEST_BASE_ARGS: >-
+        --durations=10
+        --side-effects-timeout=10
+        -vv
+        -x
+    strategy:
+      fail-fast: false
+      matrix:
+        binding: [ no-binding, rust-binding ]
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
+      - name: Install APT packages
+        # Only libfuse3 is available on ubuntu-20.04,
+        # and `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
+        # and a specific version of postgresql is used
+        run: sudo apt-get -y install libfuse2 fuse desktop-file-utils postgresql-${{ env.postgre-version }}
+
       - uses: ./.github/actions/setup-rust
+        if: matrix.binding == 'rust-binding'
         with:
           version: ${{ env.rust-version }}
           cache-key: python
@@ -57,19 +76,45 @@ jobs:
           cache: poetry
 
       - name: Install python deps
-        run: poetry install -E core -E backend
-
-      - name: Configure libfuse path
-        run: |
-          LIBFUSE_PATH=$(find /usr/lib -name '*fuse*.so*' 2>/dev/null | head -n 1)
-          echo "::warning title=Libfuse path::use lib found at $LIBFUSE_PATH"
-          echo "FUSE_LIBRARY_PATH=$LIBFUSE_PATH" >> "$GITHUB_ENV"
+        run: poetry install -E core -E backend --remove-untracked
 
       - name: Generate PyQT GUI data
         run: poetry run python misc/generate_pyqt.py
 
       - name: Install libparsec_python
+        if: matrix.binding == 'rust-binding'
         run: poetry run pip install oxidation/libparsec_python
 
-      - name: Test python codebase
-        run: poetry run pytest tests --runrust
+      - name: Basic tests
+        run: poetry run pytest $PYTEST_BASE_ARGS tests
+        timeout-minutes: 3
+
+      - name: Rust binding tests
+        if: matrix.binding == 'rust-binding'
+        run: poetry run pytest $PYTEST_BASE_ARGS tests --runrust -m rust
+        timeout-minutes: 3
+
+      - name: Mountpoint tests
+        run: poetry run pytest $PYTEST_BASE_ARGS tests --runmountpoint --runslow -m mountpoint
+        timeout-minutes: 3
+
+      - name: GUI tests
+        run: |
+          # Required dependencies for Qt testing. See:
+          # https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions
+          sudo apt-get install libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 x11-utils
+          # Use pytest-xvfb to nicely wrap it up
+          poetry run pip install pytest-xvfb
+          # Run GUI tests
+          poetry run pytest $PYTEST_BASE_ARGS tests --runmountpoint --runslow --rungui -m gui
+        timeout-minutes: 10
+
+      - name: PostgreSQL tests
+        env:
+          PGINSTALLATION: /usr/lib/postgresql/${{ env.postgre-version }}/bin
+        run: poetry run pytest $PYTEST_BASE_ARGS tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
+        timeout-minutes: 10
+
+      - name: Hypothesis tests
+        run: poetry run pytest $PYTEST_BASE_ARGS tests --runslow -m slow --numprocesses auto
+        timeout-minutes: 20

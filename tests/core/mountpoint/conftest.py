@@ -26,6 +26,12 @@ def mountpoint_service_factory(tmpdir, local_device_factory, user_fs_factory, re
     allow blocking operations on the mountpoint in the test
     """
 
+    # Signals have to be patched in the main thread when using fuse
+    if sys.platform != "win32":
+        from parsec.core.mountpoint.fuse_runner import _patch_signals
+
+        _patch_signals()
+
     async def _run_mountpoint(
         base_mountpoint, bootstrap_cb, *, task_status=trio.TASK_STATUS_IGNORED
     ):
@@ -107,12 +113,6 @@ def mountpoint_service_factory(tmpdir, local_device_factory, user_fs_factory, re
 def mountpoint_service(mountpoint_service_factory):
     wid = None
     wpath = None
-
-    # Signals have to be patched in the main thread when using fuse
-    if sys.platform != "win32":
-        from parsec.core.mountpoint.fuse_runner import _patch_signals
-
-        _patch_signals()
 
     async def _bootstrap(user_fs, mountpoint_manager):
         nonlocal wid, wpath

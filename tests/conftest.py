@@ -486,7 +486,8 @@ def reset_testbed(request, caplog, persistent_mockup):
     async def _reset_testbed(keep_logs=False):
         if request.config.getoption("--postgresql"):
             await trio_asyncio.aio_as_trio(asyncio_reset_postgresql_testbed)
-        persistent_mockup.clear()
+        if persistent_mockup is not None:
+            persistent_mockup.clear()
         if not keep_logs:
             caplog.clear()
 

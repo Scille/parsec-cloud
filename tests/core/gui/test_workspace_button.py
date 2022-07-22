@@ -272,6 +272,7 @@ async def test_workspace_button_delete_clicked(qtbot, workspace_fs, core_config,
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.xfail(IS_OXIDIZED, reason="TODO: implement `.to_timestamped` method in rust")
 async def test_workspace_button_timestamped(qtbot, workspace_fs, core_config, alice_user_info):
     switch_language(core_config, "en")
     timestamp = pendulum.now().add(seconds=10)

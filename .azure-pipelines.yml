@@ -87,6 +87,7 @@ jobs:
   - job: s1_oxidation
     displayName: Rust Oxidation
     dependsOn: s0_build_wheel
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
     timeoutInMinutes: 60
     pool:
       vmImage: ubuntu-latest
@@ -156,6 +157,7 @@ jobs:
   - job: s1_linux_test
     displayName: Linux tests
     dependsOn: s0_build_wheel
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
     timeoutInMinutes: 60
     pool:
       vmImage: ubuntu-latest
