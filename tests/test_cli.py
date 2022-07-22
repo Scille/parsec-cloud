@@ -650,6 +650,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 @pytest.mark.gui
 @pytest.mark.slow
 @pytest.mark.flaky(reruns=1)
+@pytest.mark.xfail(sys.platform == "win32", reason="Virtual env don't seems to be propagated to child process")
 @pytest.mark.parametrize(
     "env",
     [
