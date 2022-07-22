@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
-use email_format::rfc5322::types::NameAddr;
-use email_format::rfc5322::Parsable;
+use email_address_parser::EmailAddress;
 use fancy_regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
@@ -190,6 +189,7 @@ impl std::fmt::Display for HumanHandle {
         write!(f, "{} <{}>", self.label, self.email)
     }
 }
+
 impl HumanHandle {
     pub fn new(email: &str, label: &str) -> Result<Self, &'static str> {
         let email = email.nfc().collect::<String>();
@@ -203,14 +203,10 @@ impl HumanHandle {
             return Err("Invalid label");
         }
 
-        if let Ok((nameaddr, _)) = NameAddr::parse(format!("{}<{}>", label, email).as_bytes()) {
-            if let Some(name) = nameaddr.display_name {
-                let name = name.to_string();
-                let addr = nameaddr.angle_addr.addr_spec.to_string();
-                if name == label && addr == email {
-                    return Ok(Self { email, label });
-                }
-            }
+        let email_address = label.replace(' ', "") + &email;
+
+        if EmailAddress::is_valid(&email_address, None) {
+            return Ok(Self { email, label });
         }
 
         Err("Invalid email/label couple")
