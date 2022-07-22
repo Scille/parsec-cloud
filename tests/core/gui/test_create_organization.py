@@ -3,6 +3,7 @@
 import pytest
 import trio
 import pendulum
+import sys
 from PyQt5 import QtCore
 
 from parsec.api.protocol import OrganizationID, HumanHandle, DeviceLabel
@@ -492,6 +493,7 @@ async def test_create_organization_already_bootstrapped(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.xfail(sys.platform == "win32", reason="test is slow in Window32")
 @customize_fixtures(backend_spontaneous_organization_boostrap=True)
 @customize_fixtures(fake_preferred_org_creation_backend_addr=True)
 async def test_create_organization_custom_backend(
