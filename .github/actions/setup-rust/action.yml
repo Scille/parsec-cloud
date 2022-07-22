@@ -41,12 +41,18 @@ outputs:
 runs:
   using: composite
   steps:
+    # Set steps.os.outputs.image to the specific OS (e.g. 'ubuntu20')
+    # see https://github.com/actions/cache/issues/543
+    - name: Get operating system name and version.
+      id: os
+      run: echo "::set-output name=image::$ImageOS"
+      shell: bash
     - name: Cache Rust
       id: cache-rust
       uses: actions/cache@c3f1317a9e7b1ef106c153ac8c0f00fed3ddbc0d # pin v3.0.4
       with:
-        key: ${{ runner.os }}-rust-${{ inputs.version }}-${{ inputs.cache-key }}-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: ${{ runner.os }}-rust-${{ inputs.version }}-${{ inputs.cache-key }}
+        key: ${{ runner.os }}-${{ steps.os.outputs.image }}-rust-${{ inputs.version }}-${{ inputs.cache-key }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: ${{ runner.os }}-${{ steps.os.outputs.image }}-rust-${{ inputs.version }}-${{ inputs.cache-key }}
         path: |
           target
           ~/.cargo/bin
