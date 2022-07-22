@@ -654,7 +654,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 @pytest.mark.parametrize(
     "env",
     [
-        pytest.param({}, id="Standard environement"),
+        pytest.param({}, id="Standard environment"),
         pytest.param(
             {"WINFSP_LIBRARY_PATH": "nope"},
             id="Wrong winfsp library path",
