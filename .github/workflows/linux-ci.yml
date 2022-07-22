@@ -116,5 +116,5 @@ jobs:
         timeout-minutes: 10
 
       - name: Hypothesis tests
-        run: poetry run pytest $PYTEST_BASE_ARGS tests --runslow -m slow
+        run: poetry run pytest $PYTEST_BASE_ARGS tests --runslow -m slow --numprocesses auto
         timeout-minutes: 20
