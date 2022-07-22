@@ -12,16 +12,20 @@ from parsec.api.protocol.types import HumanHandle
 
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery, trio_run
+from parsec.cli_utils import operation
 from parsec.sequester_crypto import sequester_authority_sign
 from parsec.sequester_crypto import SequesterEncryptionKeyDer
 from parsec.api.data.certif import SequesterServiceCertificate
 from parsec.api.protocol import OrganizationID, UserID, RealmID, SequesterServiceID
-from parsec.backend.cli.utils import db_backend_options
+from parsec.backend.cli.utils import db_backend_options, blockstore_backend_options
+from parsec.backend.config import BaseBlockStoreConfig
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.user import User
 from parsec.backend.sequester import SequesterService
+from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.sequester import PGPSequesterComponent
+from parsec.backend.postgresql.sequester_export import RealmExporter
 from parsec.backend.postgresql.user import PGUserComponent
 from parsec.backend.postgresql.realm import PGRealmComponent
 
@@ -51,16 +55,14 @@ async def run_pg_db_handler(config: BackendDbConfig):
 
 
 async def _create_service(
-    config: BackendDbConfig, organization_str: str, register_service_req: SequesterService
-):
+    config: BackendDbConfig, organization_id: OrganizationID, register_service_req: SequesterService
+) -> None:
     async with run_pg_db_handler(config) as dbh:
         sequester_component = PGPSequesterComponent(dbh)
-        await sequester_component.create_service(
-            OrganizationID(organization_str), register_service_req
-        )
+        await sequester_component.create_service(organization_id, register_service_req)
 
 
-def _display_service(service: SequesterService):
+def _display_service(service: SequesterService) -> None:
     service_id = click.style(service.service_id, fg="yellow")
     service_label = click.style({service.service_label}, fg="green")
     tab = "  - "
@@ -72,12 +74,10 @@ def _display_service(service: SequesterService):
     click.echo("")
 
 
-async def _list_services(config, organization_str: str):
+async def _list_services(config, organization_id: OrganizationID) -> None:
     async with run_pg_db_handler(config) as dbh:
         sequester_component = PGPSequesterComponent(dbh)
-        services = await sequester_component.get_organization_services(
-            OrganizationID(organization_str)
-        )
+        services = await sequester_component.get_organization_services(organization_id)
     if services:
         click.echo("=== Avaliable Services ===")
         for service in services:
@@ -92,20 +92,20 @@ async def _list_services(config, organization_str: str):
         click.echo("No service configured")
 
 
-async def _delete_service(config, organizaton_str: str, service_id: str):
+async def _delete_service(
+    config, organizaton_id: OrganizationID, service_id: SequesterServiceID
+) -> None:
     async with run_pg_db_handler(config) as dbh:
         sequester_component = PGPSequesterComponent(dbh)
-        await sequester_component.delete_service(
-            OrganizationID(organizaton_str), SequesterServiceID.from_hex(service_id)
-        )
+        await sequester_component.delete_service(organizaton_id, service_id)
 
 
-async def _enable_service(config, organizaton_str: str, service_id: str):
+async def _enable_service(
+    config, organizaton_id: OrganizationID, service_id: SequesterServiceID
+) -> None:
     async with run_pg_db_handler(config) as dbh:
         sequester_component = PGPSequesterComponent(dbh)
-        await sequester_component.enable_service(
-            OrganizationID(organizaton_str), SequesterServiceID.from_hex(service_id)
-        )
+        await sequester_component.enable_service(organizaton_id, service_id)
 
 
 def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> BackendDbConfig:
@@ -122,20 +122,27 @@ def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> Ba
     "--service-public-key",
     help="The service encryption public key used to encrypt data to the sequester service",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+    required=True,
 )
 @click.option(
     "--authority-private-key",
     help="The private authority key use. Used to sign the encryption key.",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+    required=True,
 )
-@click.option("--service-label", type=str, required=True, help="New service name")
-@click.option("--organization", type=str, help="Organization ID where to register the service")
+@click.option("--service-label", type=str, help="New service name", required=True)
+@click.option(
+    "--organization",
+    type=OrganizationID,
+    help="Organization ID where to register the service",
+    required=True,
+)
 @db_backend_options
 def create_service(
     service_public_key: Path,
     authority_private_key: Path,
     service_label: str,
-    organization: str,
+    organization: OrganizationID,
     db: str,
     db_max_connections: int,
     db_min_connections: int,
@@ -166,22 +173,29 @@ def create_service(
 
 
 @click.command(short_help="List availlable sequester services")
-@click.option("--organization", type=str, help="Organization ID")
+@click.option("--organization", type=OrganizationID, help="Organization ID", required=True)
 @db_backend_options
-def list_services(organization: str, db: str, db_max_connections: int, db_min_connections: int):
+def list_services(
+    organization: OrganizationID, db: str, db_max_connections: int, db_min_connections: int
+):
     db_config = _get_config(db, db_min_connections, db_max_connections)
     trio_run(_list_services, db_config, organization, use_asyncio=True)
 
 
 @click.command(short_help="Enable/disable service")
-@click.option("--organization", type=str, help="Organization ID")
-@click.option("--service-id", type=str, help="Service ID")
+@click.option("--organization", type=OrganizationID, help="Organization ID", required=True)
+@click.option(
+    "--service",
+    type=SequesterServiceID.from_hex,
+    help="ID of the sequester service to update",
+    required=True,
+)
 @click.option("--enable", is_flag=True, help="Enable service")
 @click.option("--disable", is_flag=True, help="Disable service")
 @db_backend_options
 def update_service(
-    organization: str,
-    service_id: str,
+    organization: OrganizationID,
+    service: SequesterServiceID,
     db: str,
     db_max_connections: int,
     db_min_connections: int,
@@ -194,13 +208,15 @@ def update_service(
         raise click.BadParameter("Required: enable or disable flag")
     db_config = _get_config(db, db_min_connections, db_max_connections)
     if disable:
-        trio_run(_delete_service, db_config, organization, service_id, use_asyncio=True)
+        trio_run(_delete_service, db_config, organization, service, use_asyncio=True)
     if enable:
-        trio_run(_enable_service, db_config, organization, service_id, use_asyncio=True)
+        trio_run(_enable_service, db_config, organization, service, use_asyncio=True)
     click.echo(click.style("Service updated", fg="green"))
 
 
-async def _human_accesses(config: BackendDbConfig, organization: OrganizationID, user_filter: str):
+async def _human_accesses(
+    config: BackendDbConfig, organization: OrganizationID, user_filter: str
+) -> None:
     async with run_pg_db_handler(config) as dbh:
         user_component = PGUserComponent(event_bus=dbh.event_bus, dbh=dbh)
         realm_component = PGRealmComponent(dbh)
@@ -299,11 +315,130 @@ async def _human_accesses(config: BackendDbConfig, organization: OrganizationID,
 
 
 @click.command()
-@click.argument("organization", type=OrganizationID)
+@click.option("--organization", type=OrganizationID, required=True)
 @click.option("--filter", type=str, default="")
 @db_backend_options
 def human_accesses(
-    filter: str, organization: str, db: str, db_max_connections: int, db_min_connections: int
+    filter: str,
+    organization: OrganizationID,
+    db: str,
+    db_max_connections: int,
+    db_min_connections: int,
 ):
     db_config = _get_config(db, db_min_connections, db_max_connections)
     trio_run(_human_accesses, db_config, organization, filter, use_asyncio=True)
+
+
+async def _export_realm(
+    db_config: BackendDbConfig,
+    blockstore_config: BaseBlockStoreConfig,
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    service_id: SequesterServiceID,
+    output: Path,
+) -> None:
+    if output.is_dir():
+        # Output is pointing to a directory, use a default name for the database extract
+        output_db_path = output / f"parsec-sequester-export-realm-{realm_id}.sqlite"
+    else:
+        output_db_path = output
+
+    output_db_display = click.style(str(output_db_path), fg="green")
+    if output.exists():
+        print(
+            f"File {output_db_display} already exists, continue the extract from where it was left"
+        )
+    else:
+        print(f"Creating {output_db_display}")
+
+    async with run_pg_db_handler(db_config) as dbh:
+        blockstore_component = blockstore_factory(config=blockstore_config, postgresql_dbh=dbh)
+
+        async with RealmExporter.run(
+            organization_id=organization_id,
+            realm_id=realm_id,
+            service_id=service_id,
+            output_db_path=output_db_path,
+            input_dbh=dbh,
+            input_blockstore=blockstore_component,
+        ) as exporter:
+
+            # 1) Export vlobs
+
+            with operation("Computing vlobs (i.e. file/folder metadata) to export"):
+                vlob_total_count, vlob_batch_offset_marker = (
+                    await exporter.compute_vlobs_export_status()
+                )
+
+            if vlob_total_count:
+                vlob_total_count_display = click.style(str(vlob_total_count), fg="green")
+                click.echo(f"About {vlob_total_count_display} vlobs need to be exported")
+                with click.progressbar(length=vlob_total_count, label="Exporting vlobs") as bar:
+                    vlobs_exported_count = 0
+                    vlob_batch_size = 1000
+                    while True:
+                        new_vlob_batch_offset_marker = await exporter.export_vlobs(
+                            batch_size=vlob_batch_size, batch_offset_marker=vlob_batch_offset_marker
+                        )
+                        if new_vlob_batch_offset_marker <= vlob_batch_offset_marker:
+                            break
+                        vlob_batch_offset_marker = new_vlob_batch_offset_marker
+                        # Note we might end up with vlobs_exported_count > vlob_total_count
+                        # in case additional vlobs are created during the export, this is no
+                        # big deal though (progress bar will stay at 100%)
+                        bar.update(vlobs_exported_count)
+
+            # Export blocks
+
+            with operation("Computing blocks (i.e. files data) to export"):
+                block_total_count, block_batch_offset_marker = (
+                    await exporter.compute_blocks_export_status()
+                )
+
+            if block_total_count:
+                block_total_count_display = click.style(str(block_total_count), fg="green")
+
+                click.echo(f"About {block_total_count_display} blocks need to be exported")
+                with click.progressbar(length=block_total_count, label="Exporting blocks") as bar:
+                    blocks_exported_count = 0
+                    block_batch_size = 100
+                    while True:
+                        new_block_batch_offset_marker = await exporter.export_blocks(
+                            batch_size=block_batch_size,
+                            batch_offset_marker=block_batch_offset_marker,
+                        )
+                        if new_block_batch_offset_marker <= block_batch_offset_marker:
+                            break
+                        block_batch_offset_marker = new_block_batch_offset_marker
+                        # Note we might end up with blocks_exported_count > block_total_count
+                        # in case additional blocks are created during the export, this is no
+                        # big deal though (progress bar will stay at 100%)
+                        bar.update(blocks_exported_count)
+
+
+@click.command()
+@click.option("--organization", type=OrganizationID, required=True)
+@click.option("--realm", type=RealmID, required=True)
+@click.option(
+    "--service",
+    type=SequesterServiceID.from_hex,
+    help="ID of the sequester service to retreive data from",
+    required=True,
+)
+@click.option("--output", type=Path, required=True)
+@db_backend_options
+@blockstore_backend_options
+def export_realm(
+    organization: OrganizationID,
+    realm: RealmID,
+    service: SequesterServiceID,
+    output: Path,
+    db: str,
+    db_max_connections: int,
+    db_min_connections: int,
+    blockstore: BaseBlockStoreConfig,
+):
+    db_config = _get_config(db, db_min_connections, db_max_connections)
+    trio_run(
+        _export_realm, db_config, blockstore, organization, service, realm, output, use_asyncio=True
+    )
