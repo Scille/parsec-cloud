@@ -108,7 +108,7 @@ jobs:
         timeout-minutes: 10
 
       - name: PostgreSQL tests
-        run: poetry run pytest $PYTEST_BASE_ARGS tests/backend tests/test_cli.py --postgresql --runslow
+        run: poetry run pytest $PYTEST_BASE_ARGS tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
         timeout-minutes: 30
 
       - name: Hypothesis tests
