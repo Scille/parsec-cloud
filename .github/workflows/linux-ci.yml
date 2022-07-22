@@ -10,10 +10,12 @@ env:
   rust-version: 1.62.0
   python-version: "3.9"
   poetry-version: 1.1.13
+  postgre-version: 12
 
 jobs:
   rust:
-    runs-on: ubuntu-22.04
+    # Using ubuntu 20 for consistency with the python job
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
       - uses: ./.github/actions/setup-rust
@@ -34,9 +36,9 @@ jobs:
           cargo test --workspace --features mock-time --exclude libparsec_crypto
 
   python:
+    # Using ubuntu 20 in order to have postgresql-12 available as an APT package
     runs-on: ubuntu-20.04
     env:
-      PGVERSION: 12
       PYTEST_BASE_ARGS: >-
         --durations=10
         --side-effects-timeout=10
@@ -50,11 +52,10 @@ jobs:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
       - name: Install APT packages
-        run: |
-          # Only libfuse3 is available on ubuntu-22.04,
-          # and `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
-          # and a specific version of postgresql is used
-          sudo apt-get -y install libfuse2 fuse desktop-file-utils postgresql-${{ env.PGVERSION }}
+        # Only libfuse3 is available on ubuntu-20.04,
+        # and `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
+        # and a specific version of postgresql is used
+        run: sudo apt-get -y install libfuse2 fuse desktop-file-utils postgresql-${{ env.postgre-version }}
 
       - uses: ./.github/actions/setup-rust
         if: matrix.binding == 'rust-binding'
@@ -110,14 +111,10 @@ jobs:
         timeout-minutes: 10
 
       - name: PostgreSQL tests
-        run: |
-          # Configure the right PG version
-          export PGINSTALLATION=/usr/lib/postgresql/${{ env.PGVERSION }}/bin
-          # Check postgresql version
-          psql --version
-          # Run postgresql tests
-          poetry run pytest $PYTEST_BASE_ARGS tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
-        timeout-minutes: 30
+        env:
+          PGINSTALLATION: /usr/lib/postgresql/${{ env.postgre-version }}/bin
+        run: poetry run pytest $PYTEST_BASE_ARGS tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
+        timeout-minutes: 10
 
       - name: Hypothesis tests
         run: poetry run pytest $PYTEST_BASE_ARGS tests --runslow -m slow
