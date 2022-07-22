@@ -948,6 +948,15 @@ def _setup_sequester_key_paths(tmp_path, coolorg):
     return authority_key_path, service_key_path
 
 
+async def _cli_invoke_in_thread(runner: CliRunner, cmd: str, input: str = None):
+    # We must run the command from another thread given it will create it own trio loop
+    async with real_clock_timeout():
+        # Pass DEBUG environment variable for better output on crash
+        return await trio.to_thread.run_sync(
+            lambda: runner.invoke(cli, cmd, input=input, env={"DEBUG": "1"})
+        )
+
+
 @pytest.mark.trio
 @pytest.mark.postgresql
 @customize_fixtures(coolorg_is_sequestered_organization=True)
@@ -957,34 +966,27 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
 
         common_args = f"--db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id}"
 
-        async def _cli_invoke_in_thread(cmd: str):
-            # We must run the command from another thread given it will create it own trio loop
-            async with real_clock_timeout():
-                # Pass DEBUG environment variable for better output on crash
-                return await trio.to_thread.run_sync(
-                    lambda: runner.invoke(cli, cmd, env={"DEBUG": "1"})
-                )
-
         async def run_list_services():
-            result = await _cli_invoke_in_thread(f"backend list_services {common_args}")
+            result = await _cli_invoke_in_thread(runner, f"backend list_services {common_args}")
             assert result.exit_code == 0
             return result
 
         async def create_service(service_key_path, authority_key_path, service_label):
             result = await _cli_invoke_in_thread(
-                f"backend create_service {common_args} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --service-label {service_label}"
+                runner,
+                f"backend create_service {common_args} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --service-label {service_label}",
             )
             assert result.exit_code == 0
             return result
 
         async def delete_service(service_id: str):
             return await _cli_invoke_in_thread(
-                f"backend update_service {common_args} --disable --service-id {service_id}"
+                runner, f"backend update_service {common_args} --disable --service-id {service_id}"
             )
 
         async def enable_service(service_id: str):
             return await _cli_invoke_in_thread(
-                f"backend update_service {common_args} --enable --service-id {service_id}"
+                runner, f"backend update_service {common_args} --enable --service-id {service_id}"
             )
 
         # Assert no service configured
@@ -1047,19 +1049,12 @@ async def test_bootstrap_sequester(coolorg, tmp_path, backend, running_backend):
     password = "P@ssw0rd."
     runner = CliRunner()
 
-    async def _cli_invoke_in_thread(cmd: str, input=None):
-        # We must run the command from another thread given it will create it own trio loop
-        async with real_clock_timeout():
-            # Pass DEBUG environment variable for better output on crash
-            return await trio.to_thread.run_sync(
-                lambda: runner.invoke(cli, cmd, input=input, env={"DEBUG": "1"})
-            )
-
     _, public_key = _setup_sequester_key_paths(tmp_path=tmp_path, coolorg=coolorg)
 
     async def create_organization():
         result = await _cli_invoke_in_thread(
-            f"core create_organization {org} --addr={running_backend.addr}  --administration-token={backend.config.administration_token}"
+            runner,
+            f"core create_organization {org} --addr={running_backend.addr}  --administration-token={backend.config.administration_token}",
         )
         assert result.exit_code == 0
         url = re.search(r"^Bootstrap organization url: (.*)$", result.output, re.MULTILINE).group(1)
@@ -1067,6 +1062,7 @@ async def test_bootstrap_sequester(coolorg, tmp_path, backend, running_backend):
 
     async def bootstrap_organization(url):
         result = await _cli_invoke_in_thread(
+            runner,
             f"core bootstrap_organization  {url} --password={password} --device-label={device_label} --human-label={human_label} --human-email={human_email} --config-dir={config_dir.as_posix()} --sequester-verify-key={public_key}",
             input="y",
         )
