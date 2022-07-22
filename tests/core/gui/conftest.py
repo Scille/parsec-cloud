@@ -70,8 +70,8 @@ class AsyncQtBot:
         else:
             raise TypeError(widget)
         expected = method() + text
-        # Relax the clicks with a 10 ms delay
-        self.qtbot.keyClicks(widget, text, delay=10)
+        # Relax the clicks with a 1 ms delay
+        self.qtbot.keyClicks(widget, text, delay=1)
         # This is mandatory on some systems, otherwise the last character might be missing
         self.qtbot.wait(10)
         await self.wait_until(lambda: method() in (text, expected))
