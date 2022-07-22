@@ -54,11 +54,11 @@ jobs:
       - name: Generate PyQT GUI data
         run: poetry run python misc/generate_pyqt.py
 
-      - name: Test fast
-        run: poetry run pytest tests ${{ env.pytest-args }} -n auto
+      # - name: Test fast
+      #   run: poetry run pytest tests ${{ env.pytest-args }} -n auto
 
-      - name: Test Mountpoint
-        run: poetry run pytest tests ${{ env.pytest-args }} --runmountpoint --runslow -m mountpoint
+      # - name: Test Mountpoint
+      #   run: poetry run pytest tests ${{ env.pytest-args }} --runmountpoint --runslow -m mountpoint
 
       - name: Test Gui
         run: poetry run pytest tests ${{ env.pytest-args }} --rungui --runmountpoint --runslow -m gui
