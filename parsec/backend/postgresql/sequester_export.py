@@ -4,6 +4,7 @@ from typing import Optional, NewType, Tuple
 import trio
 import sqlite3
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from parsec.api.protocol import OrganizationID, RealmID, BlockID, SequesterServiceID
 from parsec.backend.postgresql import PGHandler
@@ -104,7 +105,7 @@ class RealmExporter:
         organization_id: OrganizationID,
         realm_id: RealmID,
         service_id: SequesterServiceID,
-        output_db_path: sqlite3.Connection,
+        output_db_path: Path,
         input_dbh: PGHandler,
         input_blockstore: BaseBlockStoreComponent,
     ):
@@ -122,7 +123,7 @@ class RealmExporter:
         organization_id: OrganizationID,
         realm_id: RealmID,
         service_id: SequesterServiceID,
-        output_db_path: sqlite3.Connection,
+        output_db_path: Path,
         input_dbh: PGHandler,
         input_blockstore: BaseBlockStoreComponent,
     ):
