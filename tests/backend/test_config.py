@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec.backend.cli.run import _split_with_escaping
+from parsec.backend.cli.utils import _split_with_escaping
 
 
 @pytest.mark.parametrize(

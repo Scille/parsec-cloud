@@ -3,7 +3,7 @@
 import pytest
 from click import BadParameter
 
-from parsec.backend.cli.run import _parse_blockstore_params
+from parsec.backend.cli.utils import _parse_blockstore_params
 from parsec.backend.config import (
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
