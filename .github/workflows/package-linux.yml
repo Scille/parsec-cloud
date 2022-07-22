@@ -18,6 +18,8 @@ jobs:
     env:
       # Need feature from poetry 1.2.x that aren't present in 1.1.x
       poetry-version: 1.2.0
+    outputs:
+      wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
       - name: Install poetry
         run: |
@@ -37,6 +39,7 @@ jobs:
         run: mkdir dist
 
       - name: Get wheel version
+        id: wheel-version
         run: |
           # Retrieve Parsec version and customize it if we are not building on a tag
           # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
@@ -54,6 +57,8 @@ jobs:
             test $(grep -E 'version = ' -o pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
             sed -i "s#^\\(version = \\).*\$#\\1'$VERSION'#" pyproject.toml
           fi
+
+          echo "::set-output name=version::$VERSION"
 
   package-linux:
     needs: build-wheel
