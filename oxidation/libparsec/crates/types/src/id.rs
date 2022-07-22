@@ -195,9 +195,10 @@ impl HumanHandle {
         let email = email.nfc().collect::<String>();
         let label = label.nfc().collect::<String>();
 
-        if !EmailAddress::is_valid(&email, None) {
+        if !EmailAddress::is_valid(&email, None) || email.len() >= 255 {
             return Err("Invalid email address");
         }
+        // According to https://www.rfc-editor.org/rfc/rfc5322#section-3.2.3, these special characters are not allowed
         if label.is_empty()
             || label.len() >= 255
             || label.chars().any(|c| match c {

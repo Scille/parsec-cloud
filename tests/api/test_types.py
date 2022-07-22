@@ -114,6 +114,7 @@ def test_valid_human_handle(email, label):
         ("", "Alice"),  # Empty email
         ("", "Alice <alice@example.com>"),  # Empty email and misleading label
         ("Alice <alice@example.com>", ""),  # Empty label and misleading label
+        ("Alice <@example.com>", "Alice"),  # Missing local part
     ),
 )
 def test_invalid_human_handle(email, label):
