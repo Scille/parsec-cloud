@@ -195,21 +195,22 @@ impl HumanHandle {
         let email = email.nfc().collect::<String>();
         let label = label.nfc().collect::<String>();
 
-        // TODO: how to check the email  easily ?
-        if email.is_empty() || email.len() >= 255 {
+        if !EmailAddress::is_valid(&email, None) {
             return Err("Invalid email address");
         }
-        if label.is_empty() || label.len() >= 255 {
+        if label.is_empty()
+            || label.len() >= 255
+            || label.chars().any(|c| match c {
+                '(' | ')' | '<' | '>' | '@' | ',' | ':' | ';' | '.' | '\\' | '"' | '[' | ']' => {
+                    true
+                }
+                _ => false,
+            })
+        {
             return Err("Invalid label");
         }
 
-        let email_address = label.replace(' ', "") + &email;
-
-        if EmailAddress::is_valid(&email_address, None) {
-            return Ok(Self { email, label });
-        }
-
-        Err("Invalid email/label couple")
+        Ok(Self { email, label })
     }
 }
 
