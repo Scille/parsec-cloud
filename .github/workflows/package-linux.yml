@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       # Need feature from poetry 1.2.x that aren't present in 1.1.x
-      poetry-version: 1.2.0
+      poetry-version: 1.2.0b3
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
