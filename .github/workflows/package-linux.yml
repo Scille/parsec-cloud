@@ -46,11 +46,11 @@ jobs:
           if ([[ $(Build.SourceBranch) = "refs/tags/"* ]])
           then
             # Use tag name as version
-            VERSION=`git -C $(Build.SourcesDirectory) describe --tag`
+            VERSION=`git describe --tag`
           else
             # Use `<tag_name>+dev<commit_hash>` as version
-            VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' $(Build.SourcesDirectory)/parsec/_version.py`
-            COMMIT=`git -C $(Build.SourcesDirectory) rev-parse --verify --short HEAD`
+            VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' parsec/_version.py`
+            COMMIT=`git rev-parse --verify --short HEAD`
             VERSION="$VERSION.$COMMIT"
             # Customize version with tag
             sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" parsec/_version.py
