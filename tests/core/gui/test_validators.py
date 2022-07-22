@@ -3,6 +3,7 @@
 import pytest
 
 from PyQt5 import QtGui
+from parsec import IS_OXIDIZED
 
 from parsec.core.gui import validators
 from parsec.core.gui.input_widgets import ValidatedLineEdit
@@ -284,8 +285,10 @@ def test_file_name_validator(qtbot, core_config):
 )
 def test_user_name_validator(qtbot, core_config, name_and_expected):
     switch_language(core_config, "en")
-
     user_name, expected = name_and_expected
+
+    if IS_OXIDIZED and not expected:
+        pytest.xfail("TODO: Add validation for user name in rust")
 
     le = ValidatedLineEdit()
     le.set_validator(validators.UserNameValidator())
