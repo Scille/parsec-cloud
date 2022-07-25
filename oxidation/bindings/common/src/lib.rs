@@ -3,8 +3,15 @@
 use base64::DecodeError;
 use std::path::PathBuf;
 
-use libparsec::{core::list_available_devices, crypto::SecretKey};
+use libparsec::crypto::SecretKey;
 pub use libparsec::{create_context, RuntimeContext};
+
+#[cfg(not(target_arch = "wasm32"))]
+use libparsec::core::list_available_devices;
+#[cfg(target_arch = "wasm32")]
+fn list_available_devices(_config_dir: &std::path::Path) -> Result<(), ()> {
+    Err(())
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Cmd {
