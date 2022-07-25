@@ -724,7 +724,6 @@ async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed, sn
     f_w.table_files.file_path_clicked.emit()
 
     def _file_link_copied_snackbar():
-        print(snackbar_catcher.snackbars)
         assert snackbar_catcher.snackbars == [("INFO", _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))]
         url = QGuiApplication.clipboard().text()
         assert url.startswith("parsec://")
@@ -954,16 +953,7 @@ async def test_sort_menu(aqtbot, files_widget_testbed, monkeypatch):
 async def test_current_folder_status_menu(
     running_backend, aqtbot, files_widget_testbed, catch_file_status_widget
 ):
-    tb = files_widget_testbed
     f_w = files_widget_testbed.files_widget
-
-    # Populate the workspace
-    await tb.workspace_fs.mkdir("/foo")
-    await tb.workspace_fs.mkdir("/foo/innerfoo")
-    await tb.workspace_fs.touch("/foo/bar.txt")
-    await tb.check_files_view(path="/", expected_entries=["foo/"])
-
-    await f_w.workspace_fs.sync()
 
     f_w.table_files.show_current_folder_status_clicked.emit()
 
@@ -971,7 +961,10 @@ async def test_current_folder_status_menu(
     assert file_status_w
 
     def _wait_status_shown():
-        assert file_status_w.label_location.text().endswith("/wksp1")
+        path = file_status_w.core.mountpoint_manager.get_path_in_mountpoint(
+            file_status_w.workspace_fs.workspace_id, FsPath("/"), None
+        )
+        assert file_status_w.label_location.text() == str(path)
         assert file_status_w.label_workspace.text() == "wksp1"
         assert file_status_w.label_filetype.text() == "folder"
         assert file_status_w.label_size.text() == "N/A"
