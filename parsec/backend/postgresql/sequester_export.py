@@ -25,11 +25,11 @@ OUTPUT_DB_INIT_QUERY = f"""
 
 
 -- This magic number has two roles:
--- - it makes unlikely we mistakenly consider an unrelated database as a legit
--- - it acts as a constant ID to easily retrieve the single row in the table
+-- 1) it makes unlikely we mistakenly consider an unrelated database as legit
+-- 2) it acts as a constant ID to easily retrieve the single row in the table
 CREATE TABLE IF NOT EXISTS info(
     magic INTEGER UNIQUE NOT NULL DEFAULT {OUTPUT_DB_MAGIC_NUMBER},
-    version INTEGER NOT NULL DEFAULT {OUTPUT_DB_VERSION},  -- should be 1 for now
+    version INTEGER NOT NULL DEFAULT {OUTPUT_DB_VERSION},
     realm_id UUID NOT NULL
 );
 
@@ -42,10 +42,10 @@ CREATE TABLE block (
     _id PRIMARY KEY,
     block_id UUID NOT NULL,
     data BYTEA NOT NULL,
-    -- TODO: are author/size/created_on useful ?
     author INTEGER REFERENCES device (_id) NOT NULL,
     size INTEGER NOT NULL,
-    -- this field is created by the backend when inserting (unlike vlob's timestamp, see below)
+    -- This field's value is set by the Parsec server on block insert (unlike
+    -- `vlob_atom.timestamp`, see below)
     created_on TIMESTAMPTZ NOT NULL,
 
     UNIQUE(block_id)
@@ -62,12 +62,11 @@ CREATE TABLE vlob_atom (
     blob BYTEA NOT NULL,
     size INTEGER NOT NULL,
     -- author/timestamp are required to validate the consistency of blob
-    -- Care must be taken when exporting this field (and the device_ table) to
+    -- Care must be taken when exporting this field (and the `device` table) to
     -- keep this relationship valid !
-    -- this field is called created_on in Parsec datamodel, but it correspond to the timestamp field in the API
     author INTEGER REFERENCES device (_id) NOT NULL,
-    -- (the value is provided by the client when sending request and not created on backend side) so better
-    -- give it the better understandable name
+    -- Note this field is called `created_on` in Parsec datamodel, but it correspond
+    -- in fact to the timestamp field in the API ! So we stick with the latter.
     timestamp TIMESTAMPTZ NOT NULL,
 
     UNIQUE(vlob_id, version)
