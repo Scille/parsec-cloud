@@ -49,6 +49,8 @@ class _SequesterPublicKeyDer:
 
 
 class SequesterVerifyKeyDer(_SequesterPublicKeyDer):
+    __slots__ = ()
+
     # Signature format:
     #   <algorithm name>:<signature><data>
     SIGNING_ALGORITHM = b"RSASSA-PSS-SHA256"
@@ -58,19 +60,22 @@ class SequesterVerifyKeyDer(_SequesterPublicKeyDer):
         Raises:
             CryptoError: if key or signature are invalid.
         """
-        # In RSASSA-PSS, signature is as big as the key size
         try:
             algo, signature_and_content = data.split(b":", 1)
             if algo != self.SIGNING_ALGORITHM:
                 raise ValueError
         except ValueError as exc:
             raise CryptoError("Unsupported algorithm") from exc
+
+        # In RSASSA-PSS, signature is as big as the key size
         signature = signature_and_content[: self._key.byte_size]
         content = signature_and_content[self._key.byte_size :]
+
         try:
             oscrypto.asymmetric.rsa_pss_verify(self._key, signature, content, "sha256")
         except (oscrypto.errors.SignatureError, OSError) as exc:
             raise CryptoError(str(exc)) from exc
+
         return content
 
 
@@ -87,6 +92,8 @@ def sequester_authority_sign(signing_key: oscrypto.asymmetric.PrivateKey, data: 
 
 
 class SequesterEncryptionKeyDer(_SequesterPublicKeyDer):
+    __slots__ = ()
+
     # Encryption format:
     #   <algorithm name>:<encrypted secret key with RSA key><encrypted data with secret key>
     ENCRYPTION_ALGORITHM = b"RSAES-OAEP-XSALSA20-POLY1305"
@@ -99,13 +106,14 @@ class SequesterEncryptionKeyDer(_SequesterPublicKeyDer):
         secret_key = SecretKey.generate()
         try:
             # RSAES-OAEP uses 42 bytes for padding, hence even with an unsecure
-            # 1024 bits RSA key we can 86 bytes which is plenty to store of
-            # 32 bytes XSalsa 20 key
+            # 1024 bits RSA key there is still 86 bytes available for payload
+            # which is plenty to store the 32 bytes XSalsa20 key
             secret_key_encrypted = oscrypto.asymmetric.rsa_oaep_encrypt(
                 self._key, secret_key.secret
             )
         except OSError as exc:
             raise CryptoError(str(exc)) from exc
+
         return self.ENCRYPTION_ALGORITHM + b":" + secret_key_encrypted + secret_key.encrypt(data)
 
 
@@ -116,11 +124,14 @@ def sequester_service_decrypt(decryption_key: oscrypto.asymmetric.PrivateKey, da
             raise ValueError
     except ValueError as exc:
         raise CryptoError("Unsupported algorithm") from exc
+
     cipherkey = cipherkey_and_ciphertext[: decryption_key.byte_size]
     ciphertext = cipherkey_and_ciphertext[decryption_key.byte_size :]
+
     try:
         clearkey = SecretKey(oscrypto.asymmetric.rsa_oaep_decrypt(decryption_key, cipherkey))
     except OSError as exc:
         raise CryptoError(str(exc)) from exc
+
     cleartext = clearkey.decrypt(ciphertext)
     return cleartext
