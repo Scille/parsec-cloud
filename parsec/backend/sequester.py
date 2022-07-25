@@ -137,6 +137,9 @@ class BaseSequesterComponent:
         self, organization_id: OrganizationID, service_id: SequesterServiceID, realm_id: RealmID
     ) -> List[Tuple[VlobID, int, bytes]]:
         """
+        Dump all vlobs in a given realm.
+        This should only be used in tests given it doesn't scale at all !
+
         Raises:
             SequesterDisabledError
             SequesterOrganizationNotFoundError

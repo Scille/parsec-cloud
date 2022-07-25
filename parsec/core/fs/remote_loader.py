@@ -749,7 +749,7 @@ class RemoteLoader(UserRemoteLoader):
             return await self.upload_manifest(entry_id, manifest, exc.strictly_greater_than)
         # The backend notified us that we didn't encrypt the blob for the right sequester
         # services. This typically occurs for the first vlob update/create (since we lazily
-        # fetch sequester config) or if a sequester service has been created/deleted.
+        # fetch sequester config) or if a sequester service has been created/disabled.
         except VlobSequesterInconsistencyError as exc:
             # Ensure the config send by the backend is valid
             _, sequester_services = _validate_sequester_config(

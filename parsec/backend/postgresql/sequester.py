@@ -28,108 +28,110 @@ from pendulum import DateTime
 from pendulum import now as pendulum_now
 
 
+# Sequester authority never gets modified past organization bootstrap, hence no need
+# to lock the row with a `FOR UPDATE` even if other queries depend of this result
 _q_get_organisation_sequester_authority = Q(
     f"""
-    SELECT sequester_authority_certificate, sequester_authority_verify_key_der
-    FROM organization
-    WHERE organization_id = $organization_id
-    """
+SELECT sequester_authority_certificate, sequester_authority_verify_key_der
+FROM organization
+WHERE organization_id = $organization_id
+"""
 )
 
 _q_create_sequester_service = Q(
     f"""
-    INSERT INTO sequester_service(
-        service_id,
-        organization,
-        service_certificate,
-        service_label,
-        created_on
-    )
-    VALUES(
-        $service_id,
-        { q_organization_internal_id("$organization_id") },
-        $service_certificate,
-        $service_label,
-        $created_on
-    )
-    """
+INSERT INTO sequester_service(
+    service_id,
+    organization,
+    service_certificate,
+    service_label,
+    created_on
+)
+VALUES(
+    $service_id,
+    { q_organization_internal_id("$organization_id") },
+    $service_certificate,
+    $service_label,
+    $created_on
+)
+"""
 )
 
 _q_disable_sequester_service = Q(
     f"""
-    UPDATE sequester_service
-    SET disabled_on=$disabled_on
-    WHERE
-        service_id=$service_id
-        AND organization={ q_organization_internal_id("$organization_id") }
-    """
+UPDATE sequester_service
+SET disabled_on=$disabled_on
+WHERE
+    service_id=$service_id
+    AND organization={ q_organization_internal_id("$organization_id") }
+"""
 )
 
 _q_enable_sequester_service = Q(
     f"""
-    UPDATE sequester_service
-    SET disabled_on=NULL
-    WHERE
-        service_id=$service_id
-        AND organization={ q_organization_internal_id("$organization_id") }
-    """
+UPDATE sequester_service
+SET disabled_on=NULL
+WHERE
+    service_id=$service_id
+    AND organization={ q_organization_internal_id("$organization_id") }
+"""
 )
 
 _q_get_sequester_service_exist = Q(
     f"""
-    SELECT service_id
-    FROM sequester_service
-    WHERE
-        service_id=$service_id
-        AND organization={ q_organization_internal_id("$organization_id") }
-    LIMIT 1"""
+SELECT service_id
+FROM sequester_service
+WHERE
+    service_id=$service_id
+    AND organization={ q_organization_internal_id("$organization_id") }
+LIMIT 1"""
 )
 
-_q_get_sequester_service_disabled_for_update = Q(
+_q_get_sequester_service_disabled_on_for_update = Q(
     f"""
-    SELECT service_id, disabled_on
-    FROM sequester_service
-    WHERE
-        service_id=$service_id
-        AND organization={ q_organization_internal_id("$organization_id") }
-    FOR UPDATE
-    LIMIT 1
-    """
+SELECT disabled_on
+FROM sequester_service
+WHERE
+    service_id=$service_id
+    AND organization={ q_organization_internal_id("$organization_id") }
+FOR UPDATE
+LIMIT 1
+"""
 )
 
 _q_get_sequester_service = Q(
     f"""
-    SELECT service_label, service_certificate, created_on, disabled_on
-    FROM sequester_service
-    WHERE
-        service_id=$service_id
-        AND organization={ q_organization_internal_id("$organization_id") }
-    FOR UPDATE
-    LIMIT 1"""
+SELECT service_label, service_certificate, created_on, disabled_on
+FROM sequester_service
+WHERE
+    service_id=$service_id
+    AND organization={ q_organization_internal_id("$organization_id") }
+LIMIT 1
+"""
 )
 
 _q_get_organization_services = Q(
     f"""
-    SELECT service_id, service_label, service_certificate, created_on, disabled_on
-    FROM sequester_service
-    WHERE
-        organization={ q_organization_internal_id("$organization_id") }
-    ORDER BY _id
-    """
+SELECT service_id, service_label, service_certificate, created_on, disabled_on
+FROM sequester_service
+WHERE
+    organization={ q_organization_internal_id("$organization_id") }
+ORDER BY _id
+"""
 )
 
 _get_sequester_blob = Q(
     f"""
-    SELECT sequester_service_vlob_atom.blob, vlob_atom.vlob_id
-    FROM sequester_service_vlob_atom
-    INNER JOIN vlob_atom ON vlob_atom._id = sequester_service_vlob_atom.vlob_atom
-    INNER JOIN realm_vlob_update ON vlob_atom._id = realm_vlob_update.vlob_atom
+SELECT sequester_service_vlob_atom.blob, vlob_atom.vlob_id
+FROM sequester_service_vlob_atom
+INNER JOIN vlob_atom ON vlob_atom._id = sequester_service_vlob_atom.vlob_atom
+INNER JOIN realm_vlob_update ON vlob_atom._id = realm_vlob_update.vlob_atom
 
-    WHERE sequester_service_vlob_atom.service = (SELECT _id from sequester_service WHERE service_id=$service_id
-    AND organization={ q_organization_internal_id("$organization_id") })
-    AND realm_vlob_update.realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
-    ORDER BY sequester_service_vlob_atom._id
-    """
+WHERE sequester_service_vlob_atom.service = (SELECT _id from sequester_service WHERE service_id=$service_id
+AND organization={ q_organization_internal_id("$organization_id") })
+AND realm_vlob_update.realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+ORDER BY sequester_service_vlob_atom._id
+"""
 )
 
 
@@ -221,7 +223,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
             await self._assert_service_enabled(conn, organization_id)
 
             row = await conn.fetchrow(
-                *_q_get_sequester_service_disabled_for_update(
+                *_q_get_sequester_service_disabled_on_for_update(
                     organization_id=organization_id.str, service_id=service_id
                 )
             )
@@ -229,7 +231,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
             if not row:
                 raise SequesterServiceNotFoundError
 
-            if row[1] is not None:
+            if row["disabled_on"] is not None:
                 raise SequesterServiceAlreadyDisabledError
 
             result = await conn.execute(
@@ -249,7 +251,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
             await self._assert_service_enabled(conn, organization_id)
 
             row = await conn.fetchrow(
-                *_q_get_sequester_service_disabled_for_update(
+                *_q_get_sequester_service_disabled_on_for_update(
                     organization_id=organization_id.str, service_id=service_id
                 )
             )
@@ -257,7 +259,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
             if not row:
                 raise SequesterServiceNotFoundError
 
-            if row[1] is None:
+            if row["disabled_on"] is None:
                 raise SequesterServiceAlreadyEnabledError
 
             result = await conn.execute(
@@ -294,13 +296,13 @@ class PGPSequesterComponent(BaseSequesterComponent):
     async def get_service(
         self, organization_id: OrganizationID, service_id: SequesterServiceID
     ) -> SequesterService:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
+        async with self.dbh.pool.acquire() as conn:
             return await self._get_service(conn, organization_id, service_id)
 
     async def get_organization_services(
         self, organization_id: OrganizationID
     ) -> List[SequesterService]:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
+        async with self.dbh.pool.acquire() as conn:
             await self._assert_service_enabled(conn, organization_id)
             entries = await conn.fetch(
                 *_q_get_organization_services(organization_id=organization_id.str)
@@ -320,15 +322,15 @@ class PGPSequesterComponent(BaseSequesterComponent):
     async def dump_realm(
         self, organization_id: OrganizationID, service_id: SequesterServiceID, realm_id: RealmID
     ) -> List[Tuple[VlobID, int, bytes]]:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
+        async with self.dbh.pool.acquire() as conn:
             # Check organization and service exists
             await self._get_service(conn, organization_id, service_id)
-        data = await conn.fetch(
-            *_get_sequester_blob(
-                organization_id=organization_id.str, service_id=service_id, realm_id=realm_id
+            data = await conn.fetch(
+                *_get_sequester_blob(
+                    organization_id=organization_id.str, service_id=service_id, realm_id=realm_id
+                )
             )
-        )
-        dump = []
-        for version, entry in enumerate(data, start=1):
-            dump.append((VlobID(entry["vlob_id"]), version, entry["blob"]))
-        return dump
+            dump = []
+            for version, entry in enumerate(data, start=1):
+                dump.append((VlobID(entry["vlob_id"]), version, entry["blob"]))
+            return dump
