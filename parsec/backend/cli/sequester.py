@@ -8,15 +8,14 @@ import pendulum
 from typing import Optional, Dict, List, Tuple
 from pathlib import Path
 import oscrypto.asymmetric
-from parsec.api.protocol.types import HumanHandle
 
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery, trio_run
 from parsec.cli_utils import operation
 from parsec.sequester_crypto import sequester_authority_sign
 from parsec.sequester_crypto import SequesterEncryptionKeyDer
-from parsec.api.data.certif import SequesterServiceCertificate
-from parsec.api.protocol import OrganizationID, UserID, RealmID, SequesterServiceID
+from parsec.api.data import SequesterServiceCertificate
+from parsec.api.protocol import OrganizationID, UserID, RealmID, SequesterServiceID, HumanHandle
 from parsec.backend.cli.utils import db_backend_options, blockstore_backend_options
 from parsec.backend.config import BaseBlockStoreConfig
 from parsec.backend.realm import RealmGrantedRole
@@ -68,7 +67,7 @@ def _display_service(service: SequesterService) -> None:
     click.echo(f"Service {display_service_label} (id: {display_service_id})")
     click.echo(f"\tCreated on: {service.created_on}")
     if not service.is_enabled:
-        click.echo(f"\tDisabled on: {service.created_on}")
+        click.echo(f"\tDisabled on: {service.disabled_on}")
 
 
 async def _list_services(config, organization_id: OrganizationID) -> None:

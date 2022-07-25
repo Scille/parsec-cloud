@@ -1027,7 +1027,7 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         assert service_label in result.output
         assert "Disabled on" not in result.output
 
-        # Delete service
+        # Disable service
         match = re.search(r"Service TestService \(id: ([0-9a-f]+)\)", result.output, re.MULTILINE)
         assert match
         service_id = match.group(1)
@@ -1038,7 +1038,7 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         assert service_label in result.output
         assert "Disabled on" in result.output
 
-        # Service already deleted
+        # Service already disabled
         result = await disable_service(service_id)
         assert result.exit_code == 1
         assert isinstance(result.exception, SequesterServiceAlreadyDisabledError)
