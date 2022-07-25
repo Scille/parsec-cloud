@@ -16,7 +16,6 @@ from tests.backend.common import organization_bootstrap
 
 
 # Sequester service modification is exposed as server API, so we only test the internals
-# TODO: improve tests once asgi backend is available
 @pytest.mark.trio
 @customize_fixtures(backend_not_populated=True)
 @customize_fixtures(coolorg_is_sequestered_organization=True)
@@ -26,7 +25,6 @@ async def test_sequestered_organization_bootstrap(
     alice: LocalDevice,
     anonymous_backend_ws,
     backend,
-    running_backend,
 ):
     # Create organization
     org_token = "123456"

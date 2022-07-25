@@ -157,8 +157,7 @@ class CmdSock:
         await ws.send(raw_req)
 
     async def _do_recv(self, ws, check_rep):
-        receive = ws.receive
-        raw_rep = await receive()
+        raw_rep = await ws.receive()
         rep = self.serializer.rep_loads(raw_rep)
 
         if check_rep:
