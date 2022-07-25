@@ -3,6 +3,8 @@ name: package-windows
 on:
   pull_request:
 
+env:
+  python-version: "3.9"
 
 jobs:
   build-wheel:
