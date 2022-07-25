@@ -10,7 +10,7 @@ from parsec.api.protocol import (
     RealmRole,
     MaintenanceType,
 )
-from parsec.backend.realm import RealmStatus, RealmAccessError, RealmNotFoundError
+from parsec.backend.realm import RealmStatus, RealmAccessError, RealmNotFoundError, RealmGrantedRole
 from parsec.backend.postgresql.utils import (
     Q,
     query,
@@ -97,6 +97,24 @@ SELECT DISTINCT ON(realm) { q_realm(_id="realm_user_role.realm", select="realm_i
 FROM  realm_user_role
 WHERE user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
 ORDER BY realm, certified_on DESC
+"""
+)
+
+
+_q_get_organization_realms_granted_roles = Q(
+    f"""
+SELECT
+    realm.realm_id,
+    { q_user(_id="realm_user_role.user_", select="user_id") } as user_id,
+    role,
+    certificate,
+    { q_device(_id="realm_user_role.certified_by", select="device_id") } as granted_by,
+    certified_on as granted_on
+FROM realm_user_role
+INNER JOIN realm
+ON realm_user_role.realm = realm._id
+WHERE
+    realm.organization = { q_organization_internal_id("$organization_id") }
 """
 )
 
@@ -206,3 +224,27 @@ async def query_get_realms_for_user(
     return {
         RealmID(row["realm_id"]): RealmRole(row["role"]) for row in rep if row["role"] is not None
     }
+
+
+@query()
+async def query_dump_realms_granted_roles(
+    conn, organization_id: OrganizationID
+) -> List[RealmGrantedRole]:
+    granted_roles = []
+    rows = await conn.fetch(
+        *_q_get_organization_realms_granted_roles(organization_id=organization_id.str)
+    )
+
+    for row in rows:
+        granted_roles.append(
+            RealmGrantedRole(
+                certificate=row["certificate"],
+                realm_id=RealmID(row["realm_id"]),
+                user_id=UserID(row["user_id"]),
+                role=RealmRole(row["role"]),
+                granted_by=DeviceID(row["granted_by"]),
+                granted_on=row["granted_on"],
+            )
+        )
+
+    return granted_roles

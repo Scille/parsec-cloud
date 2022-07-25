@@ -129,7 +129,6 @@ from parsec.api.protocol.vlob import (
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
 )
-from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS, APIV1_ANONYMOUS_CMDS
 from parsec.api.protocol.pki import (
     PkiEnrollmentStatus,
     PkiEnrollmentStatusField,
@@ -139,6 +138,8 @@ from parsec.api.protocol.pki import (
     pki_enrollment_reject_serializer,
     pki_enrollment_accept_serializer,
 )
+from parsec.api.protocol.sequester import SequesterServiceID, SequesterServiceIDField
+from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS, APIV1_ANONYMOUS_CMDS
 
 
 AuthenticatedAnyCmdReq = any_cmd_req_factory("AuthenticatedAnyCmdReq", _PyBlockReadReq)
@@ -176,14 +177,6 @@ __all__ = (
     "InvitedClientHandshake",
     "APIV1_HandshakeType",
     "APIV1_AnonymousClientHandshake",
-    # PKI enrollment
-    "PkiEnrollmentStatus",
-    "PkiEnrollmentStatusField",
-    "pki_enrollment_submit_serializer",
-    "pki_enrollment_info_serializer",
-    "pki_enrollment_list_serializer",
-    "pki_enrollment_reject_serializer",
-    "pki_enrollment_accept_serializer",
     # Types
     "UserID",
     "DeviceID",
@@ -278,6 +271,17 @@ __all__ = (
     "BlockReadReq",
     "BlockReadRep",
     "BlockReadRepType",
+    # PKI enrollment
+    "PkiEnrollmentStatus",
+    "PkiEnrollmentStatusField",
+    "pki_enrollment_submit_serializer",
+    "pki_enrollment_info_serializer",
+    "pki_enrollment_list_serializer",
+    "pki_enrollment_reject_serializer",
+    "pki_enrollment_accept_serializer",
+    # Sequester
+    "SequesterServiceID",
+    "SequesterServiceIDField",
     # List of cmds
     "AUTHENTICATED_CMDS",
     "INVITED_CMDS",

@@ -2,7 +2,7 @@
 
 import attr
 from typing import List, Optional, Tuple
-import pendulum
+from pendulum import now as pendulum_now, DateTime
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.event_bus import EventBus
@@ -201,7 +201,7 @@ class BaseUserComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
+        if not timestamps_in_the_ballpark(data.timestamp, pendulum_now()):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",
@@ -276,7 +276,7 @@ class BaseUserComponent:
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: Optional[pendulum.DateTime] = None,
+        revoked_on: Optional[DateTime] = None,
     ) -> None:
         """
         Raises:
@@ -337,4 +337,13 @@ class BaseUserComponent:
         omit_revoked: bool = False,
         omit_non_human: bool = False,
     ) -> Tuple[List[HumanFindResultItem], int]:
+        """
+        Raises: Nothing !
+        """
+        raise NotImplementedError()
+
+    async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:
+        """
+        Raises: Nothing !
+        """
         raise NotImplementedError()

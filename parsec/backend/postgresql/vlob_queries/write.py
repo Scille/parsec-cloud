@@ -1,9 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+from typing import Dict, Optional
 from pendulum import DateTime
 from triopg import UniqueViolationError
 
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
+from parsec.api.protocol.sequester import SequesterServiceID
 from parsec.backend.postgresql.utils import (
     Q,
     query,
@@ -161,6 +163,7 @@ async def query_update(
     version: int,
     timestamp: DateTime,
     blob: bytes,
+    sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
 ) -> None:
     realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
     await _check_realm_and_write_access(
@@ -198,6 +201,16 @@ async def query_update(
         # Should not occur in theory given we are in a transaction
         raise VlobVersionError()
 
+    if sequester_blob:
+        for service_id, blob in sequester_blob.items():
+            await conn.fetchval(
+                *_q_create_sequester_blob(
+                    organization_id=organization_id.str,
+                    service_id=service_id,
+                    vlob_atom_internal_id=vlob_atom_internal_id,
+                    blob=blob,
+                )
+            )
     await _set_vlob_updated(
         conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, timestamp, version
     )
@@ -235,6 +248,22 @@ RETURNING _id
 )
 
 
+_q_create_sequester_blob = Q(
+    f"""
+    INSERT INTO sequester_service_vlob_atom(service, vlob_atom, blob)
+    SELECT
+        (SELECT _id
+            FROM sequester_service
+            WHERE
+                sequester_service.service_id=$service_id
+                AND sequester_service.organization={ q_organization_internal_id("$organization_id") }),
+        $vlob_atom_internal_id,
+        $blob
+    RETURNING _id
+    """
+)
+
+
 @query(in_transaction=True)
 async def query_create(
     conn,
@@ -245,6 +274,7 @@ async def query_create(
     vlob_id: VlobID,
     timestamp: DateTime,
     blob: bytes,
+    sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
 ) -> None:
     await _check_realm_and_write_access(
         conn, organization_id, author, realm_id, encryption_revision, timestamp
@@ -268,6 +298,16 @@ async def query_create(
     except UniqueViolationError:
         raise VlobAlreadyExistsError()
 
+    if sequester_blob:
+        for service_id, blob in sequester_blob.items():
+            await conn.fetchval(
+                *_q_create_sequester_blob(
+                    organization_id=organization_id.str,
+                    service_id=service_id,
+                    vlob_atom_internal_id=vlob_atom_internal_id,
+                    blob=blob,
+                )
+            )
     await _set_vlob_updated(
         conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, timestamp
     )

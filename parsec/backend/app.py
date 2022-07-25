@@ -21,6 +21,7 @@ from parsec.backend.vlob import BaseVlobComponent
 from parsec.backend.ping import BasePingComponent
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import BaseBlockComponent
+from parsec.backend.sequester import BaseSequesterComponent
 from parsec.backend.pki import BasePkiEnrollmentComponent
 
 
@@ -51,6 +52,7 @@ async def backend_app_factory(config: BackendConfig, event_bus: Optional[EventBu
             blockstore=components["blockstore"],
             block=components["block"],
             pki=components["pki"],
+            sequester=components["sequester"],
             events=components["events"],
         )
 
@@ -70,6 +72,7 @@ class BackendApp:
     blockstore: BaseBlockStoreComponent
     block: BaseBlockComponent
     pki: BasePkiEnrollmentComponent
+    sequester: BaseSequesterComponent
     events: EventsComponent
 
     apis: Dict[ClientType, Dict[str, Callable]] = attr.field(init=False)

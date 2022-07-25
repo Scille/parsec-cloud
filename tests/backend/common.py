@@ -1,15 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
 import trio
-from typing import Optional
+from typing import Optional, Callable
 from functools import partial
 from pendulum import now as pendulum_now
 from contextlib import asynccontextmanager
 
+from parsec.serde import packb
 from parsec.api.protocol import (
     ping_serializer,
     organization_stats_serializer,
     organization_config_serializer,
+    organization_bootstrap_serializer,
     block_create_serializer,
     block_read_serializer,
     realm_create_serializer,
@@ -146,14 +148,16 @@ class CmdSock:
         self.parse_args = parse_args
         self.check_rep_by_default = check_rep_by_default
 
-    async def _do_send(self, ws, args, kwargs):
+    async def _do_send(self, ws, req_post_processing, args, kwargs):
         req = {"cmd": self.cmd, **self.parse_args(self, *args, **kwargs)}
-        raw_req = self.serializer.req_dumps(req)
+        if req_post_processing:
+            raw_req = packb(req_post_processing(self.serializer.req_dump(req)))
+        else:
+            raw_req = self.serializer.req_dumps(req)
         await ws.send(raw_req)
 
     async def _do_recv(self, ws, check_rep):
-        receive = ws.receive
-        raw_rep = await receive()
+        raw_rep = await ws.receive()
         rep = self.serializer.rep_loads(raw_rep)
 
         if check_rep:
@@ -161,9 +165,9 @@ class CmdSock:
 
         return rep
 
-    async def __call__(self, ws, *args, **kwargs):
+    async def __call__(self, ws, *args, req_post_processing: Callable = None, **kwargs):
         check_rep = kwargs.pop("check_rep", self.check_rep_by_default)
-        await self._do_send(ws, args, kwargs)
+        await self._do_send(ws, req_post_processing, args, kwargs)
         return await self._do_recv(ws, check_rep)
 
     class AsyncCallRepBox:
@@ -183,9 +187,9 @@ class CmdSock:
             self._rep = await self._do_recv()
 
     @asynccontextmanager
-    async def async_call(self, sock, *args, **kwargs):
+    async def async_call(self, sock, *args, req_post_processing: Callable = None, **kwargs):
         check_rep = kwargs.pop("check_rep", self.check_rep_by_default)
-        await self._do_send(sock, args, kwargs)
+        await self._do_send(sock, req_post_processing, args, kwargs)
 
         box = self.AsyncCallRepBox(do_recv=partial(self._do_recv, sock, check_rep))
         yield box
@@ -216,6 +220,22 @@ organization_config = CmdSock(
 
 organization_stats = CmdSock(
     "organization_stats", organization_stats_serializer, check_rep_by_default=True
+)
+
+
+organization_bootstrap = CmdSock(
+    "organization_bootstrap",
+    organization_bootstrap_serializer,
+    parse_args=lambda self, bootstrap_token, root_verify_key, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate, sequester_authority_certificate=None: {
+        "bootstrap_token": bootstrap_token,
+        "root_verify_key": root_verify_key,
+        "user_certificate": user_certificate,
+        "device_certificate": device_certificate,
+        "redacted_user_certificate": redacted_user_certificate,
+        "redacted_device_certificate": redacted_device_certificate,
+        "sequester_authority_certificate": sequester_authority_certificate,
+    },
+    check_rep_by_default=True,
 )
 
 
@@ -295,12 +315,13 @@ realm_finish_reencryption_maintenance = CmdSock(
 vlob_create = CmdSock(
     "vlob_create",
     vlob_create_serializer,
-    parse_args=lambda self, realm_id, vlob_id, blob, timestamp=None, encryption_revision=1: {
+    parse_args=lambda self, realm_id, vlob_id, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
         "realm_id": realm_id,
         "vlob_id": vlob_id,
         "blob": blob,
         "timestamp": timestamp or pendulum_now(),
         "encryption_revision": encryption_revision,
+        "sequester_blob": sequester_blob,
     },
     check_rep_by_default=True,
 )
@@ -317,12 +338,13 @@ vlob_read = CmdSock(
 vlob_update = CmdSock(
     "vlob_update",
     vlob_update_serializer,
-    parse_args=lambda self, vlob_id, version, blob, timestamp=None, encryption_revision=1: {
+    parse_args=lambda self, vlob_id, version, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
         "vlob_id": vlob_id,
         "version": version,
         "blob": blob,
         "encryption_revision": encryption_revision,
         "timestamp": timestamp or pendulum_now(),
+        "sequester_blob": sequester_blob,
     },
     check_rep_by_default=True,
 )

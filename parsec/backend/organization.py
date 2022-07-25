@@ -2,11 +2,19 @@
 
 import attr
 import pendulum
-from typing import Optional, Union, List
+from typing import Optional, Union, Tuple
 from secrets import token_hex
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
+from parsec.sequester_crypto import SequesterVerifyKeyDer
+from parsec.api.data import (
+    UserCertificateContent,
+    DeviceCertificateContent,
+    DataError,
+    UserProfile,
+    SequesterAuthorityCertificate,
+)
 from parsec.api.protocol import (
     OrganizationID,
     organization_stats_serializer,
@@ -14,11 +22,9 @@ from parsec.api.protocol import (
     apiv1_organization_bootstrap_serializer,
     organization_config_serializer,
 )
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
-from parsec.backend.utils import ClientType
+from parsec.backend.utils import ClientType, catch_protocol_errors, api, Unset, UnsetType
 from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent
-from parsec.backend.utils import catch_protocol_errors, api, Unset, UnsetType
 from parsec.backend.config import BackendConfig
 from parsec.backend.client_context import AnonymousClientContext, APIV1_AnonymousClientContext
 
@@ -52,6 +58,12 @@ class OrganizationExpiredError(OrganizationError):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class SequesterAuthority:
+    certificate: bytes
+    verify_key_der: SequesterVerifyKeyDer
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class Organization:
     organization_id: OrganizationID
     bootstrap_token: str
@@ -59,6 +71,8 @@ class Organization:
     root_verify_key: Optional[VerifyKey]
     user_profile_outsider_allowed: bool
     active_users_limit: Optional[int]
+    sequester_authority: Optional[SequesterAuthority]
+    sequester_services_certificates: Optional[Tuple[bytes, ...]]
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
@@ -81,7 +95,7 @@ class OrganizationStats:
     users: int
     active_users: int
     realms: int
-    users_per_profile_detail: List[UsersPerProfileDetailItem]
+    users_per_profile_detail: Tuple[UsersPerProfileDetailItem, ...]
 
 
 def generate_bootstrap_token() -> str:
@@ -104,10 +118,19 @@ class BaseOrganizationComponent:
         except OrganizationNotFoundError:
             return {"status": "not_found"}
 
+        if organization.sequester_authority:
+            sequester_authority_certificate = organization.sequester_authority.certificate
+            sequester_services_certificates = organization.sequester_services_certificates
+        else:
+            sequester_authority_certificate = None
+            sequester_services_certificates = None
+
         rep = {
+            "status": "ok",
             "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
             "active_users_limit": organization.active_users_limit,
-            "status": "ok",
+            "sequester_authority_certificate": sequester_authority_certificate,
+            "sequester_services_certificates": sequester_services_certificates,
         }
 
         return organization_config_serializer.rep_dump(rep)
@@ -239,8 +262,48 @@ class BaseOrganizationComponent:
         if (rd_data and not ru_data) or (ru_data and not rd_data):
             return {
                 "status": "invalid_data",
-                "reason": "Redacted user&device certificate muste be provided together",
+                "reason": "Redacted user&device certificate must be provided together",
             }
+
+        # Sequester can not be set with APIV1
+        if isinstance(client_ctx, APIV1_AnonymousClientContext):
+            sequester_authority = None
+
+        else:
+            sequester_authority_certificate = msg["sequester_authority_certificate"]
+            if sequester_authority_certificate is None:
+                sequester_authority = None
+
+            else:
+                try:
+                    sequester_authority_certif_data = SequesterAuthorityCertificate.verify_and_load(
+                        sequester_authority_certificate,
+                        author_verify_key=root_verify_key,
+                        expected_author=None,
+                    )
+
+                except DataError:
+                    return {
+                        "status": "invalid_data",
+                        "reason": "Invalid signature for sequester authority certificate",
+                    }
+
+                if not timestamps_in_the_ballpark(sequester_authority_certif_data.timestamp, now):
+                    return serializer.timestamp_out_of_ballpark_rep_dump(
+                        backend_timestamp=now,
+                        client_timestamp=sequester_authority_certif_data.timestamp,
+                    )
+
+                if sequester_authority_certif_data.timestamp != u_data.timestamp:
+                    return {
+                        "status": "invalid_data",
+                        "reason": "Device, user and sequester authority certificates must have the same timestamp.",
+                    }
+
+                sequester_authority = SequesterAuthority(
+                    certificate=sequester_authority_certificate,
+                    verify_key_der=sequester_authority_certif_data.verify_key_der,
+                )
 
         user = User(
             user_id=u_data.user_id,
@@ -265,7 +328,12 @@ class BaseOrganizationComponent:
         )
         try:
             await self.bootstrap(
-                client_ctx.organization_id, user, first_device, bootstrap_token, root_verify_key
+                id=client_ctx.organization_id,
+                user=user,
+                first_device=first_device,
+                bootstrap_token=bootstrap_token,
+                root_verify_key=root_verify_key,
+                sequester_authority=sequester_authority,
             )
 
         except OrganizationAlreadyBootstrappedError:
@@ -318,6 +386,7 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
         """
         Raises:

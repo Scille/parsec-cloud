@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 import attr
-import pendulum
-from typing import Iterable, Tuple, List, Dict, Optional
+from pendulum import now as pendulum_now, DateTime
+from typing import TYPE_CHECKING, Iterable, Tuple, List, Dict, Optional
 from collections import defaultdict
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
@@ -20,6 +20,10 @@ from parsec.backend.user import (
     UserActiveUsersLimitReached,
 )
 
+if TYPE_CHECKING:
+    from parsec.backend.memory.organization import MemoryOrganizationComponent
+    from parsec.backend.memory.realm import MemoryRealmComponent
+
 
 @attr.s
 class OrganizationStore:
@@ -36,8 +40,14 @@ class MemoryUserComponent(BaseUserComponent):
             OrganizationStore
         )
 
-    def register_components(self, **other_components) -> None:
-        self._organization_component = other_components["organization"]
+    def register_components(
+        self,
+        organization: "MemoryOrganizationComponent",
+        realm: "MemoryRealmComponent",
+        **other_components,
+    ) -> None:
+        self._organization_component = organization
+        self._realm_component = realm
 
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device
@@ -251,7 +261,7 @@ class MemoryUserComponent(BaseUserComponent):
             ),
             *[res for res in users if res.human_handle is None],
         ]
-        now = pendulum.now()
+        now = pendulum_now()
         results = [
             HumanFindResultItem(
                 user_id=user.user_id,
@@ -295,7 +305,7 @@ class MemoryUserComponent(BaseUserComponent):
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: Optional[pendulum.DateTime] = None,
+        revoked_on: Optional[DateTime] = None,
     ) -> None:
         org = self._organizations[organization_id]
 
@@ -309,7 +319,7 @@ class MemoryUserComponent(BaseUserComponent):
             raise UserAlreadyRevokedError()
 
         org.users[user_id] = user.evolve(
-            revoked_on=revoked_on or pendulum.now(),
+            revoked_on=revoked_on or pendulum_now(),
             revoked_user_certificate=revoked_user_certificate,
             revoked_user_certifier=revoked_user_certifier,
         )
@@ -319,3 +329,10 @@ class MemoryUserComponent(BaseUserComponent):
         await self._send_event(
             BackendEvent.USER_REVOKED, organization_id=organization_id, user_id=user_id
         )
+
+    async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:
+        org = self._organizations[organization_id]
+        devices: List[Device] = []
+        for user_devices in org.devices.values():
+            devices += user_devices.values()
+        return list(org.users.values()), devices

@@ -1,23 +1,24 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
 
+import pytest
+import pendulum
 from uuid import uuid4
 
-import pytest
-
-import pendulum
 from parsec.api.data import PkiEnrollmentSubmitPayload
 from parsec.api.data.certif import RevokedUserCertificateContent
 from parsec.api.data.pki import PkiEnrollmentAcceptPayload
-from parsec.api.protocol.pki import PkiEnrollmentStatus, pki_enrollment_submit_serializer
+from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.api.protocol.types import UserProfile
-from tests.backend.common import pki_enrollment_submit, pki_enrollment_info, CmdSock
 from parsec.core.invite.greeter import _create_new_user_certificates
+
+from tests.backend.common import pki_enrollment_submit, pki_enrollment_info
 from tests.backend.common import (
     pki_enrollment_accept,
     pki_enrollment_list,
     pki_enrollment_reject,
     user_revoke,
 )
+
 
 # Helpers
 
@@ -212,23 +213,17 @@ async def test_pki_submit_no_email_provided(anonymous_backend_ws, bob):
     ).dump()
     enrollment_id = uuid4()
 
-    _pki_enrollment_submit_no_email_field = CmdSock(
-        "pki_enrollment_submit",
-        pki_enrollment_submit_serializer,
-        parse_args=lambda self, enrollment_id, force, submitter_der_x509_certificate, submit_payload_signature, submit_payload: {
-            "enrollment_id": enrollment_id,
-            "force": force,
-            "submitter_der_x509_certificate": submitter_der_x509_certificate,
-            "submit_payload_signature": submit_payload_signature,
-            "submit_payload": submit_payload,
-        },
-    )
+    def _req_without_email_field(req):
+        req.pop("submitter_der_x509_certificate_email")
+        return req
 
-    rep = await _pki_enrollment_submit_no_email_field(
+    rep = await pki_enrollment_submit(
         anonymous_backend_ws,
+        req_post_processing=_req_without_email_field,
         enrollment_id=enrollment_id,
         force=False,
         submitter_der_x509_certificate=b"<x509 certif>",
+        submitter_der_x509_certificate_email="removed.in@post.processing",
         submit_payload_signature=b"<signature>",
         submit_payload=payload,
     )

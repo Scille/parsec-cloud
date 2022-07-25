@@ -6,11 +6,13 @@ from triopg import UniqueViolationError
 
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.crypto import VerifyKey
+from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.backend.events import BackendEvent
 from parsec.backend.user import UserError, User, Device
 from parsec.backend.utils import UnsetType, Unset
 from parsec.backend.organization import (
     BaseOrganizationComponent,
+    SequesterAuthority,
     OrganizationStats,
     Organization,
     OrganizationError,
@@ -64,16 +66,40 @@ ON CONFLICT (organization_id) DO
 
 _q_get_organization = Q(
     """
-SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed
+SELECT
+    bootstrap_token,
+    root_verify_key,
+    is_expired,
+    active_users_limit,
+    user_profile_outsider_allowed,
+    sequester_authority_certificate,
+    sequester_authority_verify_key_der
 FROM organization
 WHERE organization_id = $organization_id
 """
 )
 
+_q_get_organization_enabled_services_certificates = Q(
+    f"""
+    SELECT service_certificate
+    FROM sequester_service
+    WHERE
+        organization={ q_organization_internal_id("$organization_id") }
+        AND disabled_on is NULL
+    ORDER BY _id
+    """
+)
 
 _q_get_organization_for_update = Q(
     """
-SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed
+SELECT
+    bootstrap_token,
+    root_verify_key,
+    is_expired,
+    active_users_limit,
+    user_profile_outsider_allowed,
+    sequester_authority_certificate,
+    sequester_authority_verify_key_der
 FROM organization
 WHERE organization_id = $organization_id
 FOR UPDATE
@@ -86,6 +112,8 @@ _q_bootstrap_organization = Q(
 UPDATE organization
 SET
     root_verify_key = $root_verify_key,
+    sequester_authority_certificate=$sequester_authority_certificate,
+    sequester_authority_verify_key_der=$sequester_authority_verify_key_der,
     _bootstrapped_on = NOW()
 WHERE
     organization_id = $organization_id
@@ -196,20 +224,40 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @staticmethod
     async def _get(conn, id: OrganizationID, for_update: bool = False) -> Organization:
         if for_update:
-            data = await conn.fetchrow(*_q_get_organization_for_update(organization_id=id.str))
+            row = await conn.fetchrow(*_q_get_organization_for_update(organization_id=id.str))
         else:
-            data = await conn.fetchrow(*_q_get_organization(organization_id=id.str))
-        if not data:
+            row = await conn.fetchrow(*_q_get_organization(organization_id=id.str))
+        if not row:
             raise OrganizationNotFoundError()
 
-        rvk = VerifyKey(data[1]) if data[1] else None
+        rvk = VerifyKey(row["root_verify_key"]) if row["root_verify_key"] else None
+
+        sequester_authority = None
+        # Sequester services certificates is None if sequester is not enabled
+        sequester_services_certificates = None
+
+        if row["sequester_authority_certificate"]:
+            verify_key_der = SequesterVerifyKeyDer(row["sequester_authority_verify_key_der"])
+            sequester_authority = SequesterAuthority(
+                certificate=row["sequester_authority_certificate"], verify_key_der=verify_key_der
+            )
+            services = await conn.fetch(
+                *_q_get_organization_enabled_services_certificates(organization_id=id.str)
+            )
+            sequester_services_certificates = tuple(
+                service["service_certificate"] for service in services
+            )
+            sequester_services_certificates = sequester_services_certificates
+
         return Organization(
             organization_id=id,
-            bootstrap_token=data[0],
+            bootstrap_token=row["bootstrap_token"],
             root_verify_key=rvk,
-            is_expired=data[2],
-            active_users_limit=data[3],
-            user_profile_outsider_allowed=data[4],
+            is_expired=row["is_expired"],
+            active_users_limit=row["active_users_limit"],
+            user_profile_outsider_allowed=row["user_profile_outsider_allowed"],
+            sequester_authority=sequester_authority,
+            sequester_services_certificates=sequester_services_certificates,
         )
 
     async def bootstrap(
@@ -219,6 +267,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the
@@ -237,14 +286,20 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             except UserError as exc:
                 raise OrganizationFirstUserCreationError(exc) from exc
 
+            sequester_authority_certificate = None
+            sequester_authority_verify_key_der = None
+            if sequester_authority:
+                sequester_authority_certificate = sequester_authority.certificate
+                sequester_authority_verify_key_der = sequester_authority.verify_key_der.dump()
             result = await conn.execute(
                 *_q_bootstrap_organization(
                     organization_id=id.str,
                     bootstrap_token=bootstrap_token,
                     root_verify_key=root_verify_key.encode(),
+                    sequester_authority_certificate=sequester_authority_certificate,
+                    sequester_authority_verify_key_der=sequester_authority_verify_key_der,
                 )
             )
-
             if result != "UPDATE 1":
                 raise OrganizationError(f"Update error: {result}")
 
@@ -266,10 +321,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     active_users += 1
                     users_per_profile_detail[UserProfile[profile]]["active"] += 1
 
-            users_per_profile_detail = [
+            users_per_profile_detail = tuple(
                 UsersPerProfileDetailItem(profile=profile, **data)
                 for profile, data in users_per_profile_detail.items()
-            ]
+            )
 
         return OrganizationStats(
             data_size=result["data_size"],

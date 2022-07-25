@@ -178,10 +178,10 @@ class CmdSerializer:
             fallback_type_schema = ErrorRepSchema
             type_schemas = {
                 "ok": self.rep_noerror_schema,
-                "require_greater_timestamp": RequireGreaterTimestampRepSchema,
-                "bad_timestamp": TimestampOutOfBallparkRepSchema,
+                "require_greater_timestamp": RequireGreaterTimestampRepSchema(),
+                "bad_timestamp": TimestampOutOfBallparkRepSchema(),
+                **{k: v() for k, v in extra_error_schemas.items()},
             }
-            type_schemas.update(extra_error_schemas)
 
             def get_obj_type(self, obj: Dict[str, object]) -> str:
                 try:
