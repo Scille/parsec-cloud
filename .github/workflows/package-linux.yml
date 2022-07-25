@@ -1,0 +1,125 @@
+name: package-linux
+
+on:
+  push:
+    branches:
+      - master
+      - "[0-9]+.[0-9]+"
+    tags:
+      - "[0-9]+.[0-9]+"
+
+env:
+  rust-version: 1.62.0
+  python-version: "3.9"
+  poetry-version: 1.1.13
+
+jobs:
+  build-wheel:
+    runs-on: ubuntu-22.04
+    env:
+      # Need feature from poetry 1.2.x that aren't present in 1.1.x
+      poetry-version: 1.2.0b3
+    outputs:
+      wheel-version: ${{ steps.wheel-version.outputs.version }}
+    steps:
+      - name: Install poetry
+        run: |
+          export POETRY_HOME="$HOME/.poetry"
+          mkdir -p "$POETRY_HOME"
+          curl -sSL https://install.python-poetry.org | python3 - --version=${{ env.poetry-version }}
+          echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
+
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb  # pin v4.0.0
+        with:
+          python-version: ${{ env.python-version }}
+          cache: poetry
+
+      - name: Get wheel version
+        id: wheel-version
+        run: |
+          set -e
+          # Retrieve Parsec version and customize it if we are not building on a tag
+          # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
+          if ([ "${{ github.ref_type }}" == "tag" ])
+          then
+            # Use tag name as version
+            VERSION=`git describe --tag`
+          else
+            # Use `<tag_name>+dev<commit_hash>` as version
+            VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' parsec/_version.py`
+            COMMIT=`git rev-parse --verify --short HEAD`
+            VERSION="$VERSION.$COMMIT"
+            # Customize version with tag
+            sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" parsec/_version.py
+            test $(grep -E 'version = ' -o pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
+            sed -i "s#^\\(version = \\).*\$#\\1'$VERSION'#" pyproject.toml
+          fi
+
+          echo "::warning title=Wheel version::$VERSION"
+          echo "::set-output name=version::$VERSION"
+
+      - name: Create output dir
+        run: mkdir dist
+
+      - name: Set file for wheel version
+        run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
+
+      - name: Build wheel
+        run: python packaging/wheel/wheel_it.py . --output dist
+
+      - name: Debug dist dir
+        run: ls dist
+
+      - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
+        with:
+          name: ${{ runner.os }}-wheel
+          path: dist/
+
+  package-linux:
+    needs: build-wheel
+    runs-on: ubuntu-20.04
+    env:
+      WHEEL_VERSION: ${{ needs.build-wheel.outputs.wheel-version }}
+    steps:
+      - name: Install snapcraft
+        run: sudo snap install snapcraft --classic
+
+      - name: Debug snapcraft version
+        run: |
+          set -e
+          echo "::warning title=Snapcraft Version::using $(snapcraft --version)"
+
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+        with:
+          name: ${{ runner.os }}-wheel
+          path: dist
+
+      - name: Copy snap build configuration
+        working-directory: ${{ runner.temp }}
+        run: |
+          cp -Rv ${{ github.workspace }}/packaging/snap/{bin,snap} .
+
+
+      - name: Copy wheel configuration + python requirement
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir src
+          WHEEL=$(ls -1 ${{ github.workspace }}/dist/parsec_cloud-*.whl)
+          cp -Rv $WHEEL src/
+          cp -v ${{ github.workspace }}/dist/core-requirements.txt src/
+
+      - name: Set snap build version
+        run: sed -i "s/__PARSEC_VERSION__/$WHEEL_VERSION/" ${{ runner.temp }}/snap/snapcraft.yaml
+
+      - name: Run snapcraft
+        working-directory: ${{ runner.temp }}
+        run: snapcraft --destructive-mode
+
+      - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
+        with:
+          name: ${{ runner.os }}-snap
+          path: ${{ runner.temp }}/parsec*.snap
