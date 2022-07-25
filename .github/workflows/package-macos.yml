@@ -102,7 +102,7 @@ jobs:
         run: ls -lR ${{ runner.temp }}
 
       - name: Generate Parsec.app
-        run: tar -jcf parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2 Parsec.app
+        run: tar -jcf parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2 --directory build/pyinstaller_dist parsec.app
         working-directory: ${{ runner.temp }}
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
