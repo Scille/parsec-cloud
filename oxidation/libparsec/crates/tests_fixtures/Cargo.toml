@@ -13,3 +13,4 @@ rstest = "0.13.0"
 hex-literal = "0.3.3"
 chrono = "0.4.19"
 uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }
+remove_dir_all = "0.7.0"
