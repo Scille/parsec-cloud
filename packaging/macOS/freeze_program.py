@@ -9,7 +9,10 @@ import argparse
 import subprocess
 from hashlib import sha256
 from pathlib import Path
+import logging
 
+logger = logging.getLogger()
+logging.basicConfig(level=logging.DEBUG)
 
 # Fully-qualified path for the executable should be used with subprocess to
 # avoid unreliability (especially when running from within a virtualenv)
@@ -27,9 +30,11 @@ PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.versio
 
 
 def run(cmd, **kwargs):
+    log = logger.getChild(run.__name__)
+
     if isinstance(cmd, str):
         cmd = cmd.split()
-    print(f">>> {' '.join(map(str, cmd))}")
+    log.debug(f">>> {' '.join(map(str, cmd))}")
     ret = subprocess.run(cmd, check=True, **kwargs)
     return ret
 
@@ -39,6 +44,9 @@ def main(
     include_parsec_ext: Optional[Path] = None,
     wheel_it_dir: Optional[Path] = None,
 ):
+    log = logger.getChild(main.__name__)
+
+    log.info(f"program_source={program_source}, include_parsec_ext={include_parsec_ext}, wheel_it_dir={wheel_it_dir}")
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
 
     # Retrieve program version
@@ -55,19 +63,19 @@ def main(
             raise SystemError(
                 f"Found Parsec wheel {program_wheel} but could not determine it version"
             )
-        print(f"Parsec wheel is: {program_wheel}")
+        log.info(f"Parsec wheel is: {program_wheel}")
         program_version = f"v{match.group(1)}"
     else:
         exec((program_source / "parsec/_version.py").read_text(), global_dict)
         program_version = global_dict.get("__version__")
     assert program_version.startswith("v")
     program_version_without_v_prefix = program_version[1:]
-    print(f"### Detected Parsec version {program_version} ###")
+    log.info(f"Detected Parsec version {program_version}")
 
     # Bootstrap tools virtualenv
     tools_python = TOOLS_VENV_DIR / "bin/python"
     if not TOOLS_VENV_DIR.is_dir():
-        print("### Create tool virtualenv ###")
+        log.info("Create tool virtualenv")
         run(f"{ python } -m venv {TOOLS_VENV_DIR}")
         # Must use poetry>=1.2.0b2 given otherwise `poetry export` produce buggy output
         run(f"{ tools_python } -m pip install pip wheel setuptools poetry>=1.2.0b2 --upgrade")
@@ -90,7 +98,7 @@ def main(
         )
         program_constraints = DEFAULT_WHEEL_IT_DIR / "constraints.txt"
         if not program_wheel or not program_constraints.exists():
-            print("### Generate program wheel and constraints on dependencies ###")
+            log.info("Generate program wheel and constraints on dependencies")
             run(
                 f"{ tools_python } { program_source / 'packaging/wheel/wheel_it.py' } { program_source } --output-dir { DEFAULT_WHEEL_IT_DIR }"
             )
@@ -102,7 +110,7 @@ def main(
     pyinstaller_venv_dir = BUILD_DIR / "pyinstaller_venv"
     pyinstaller_python = pyinstaller_venv_dir / "bin/python"
     if not pyinstaller_venv_dir.is_dir() or True:
-        print("### Installing program & PyInstaller in temporary virtualenv ###")
+        log.info("Installing program & PyInstaller in temporary virtualenv")
         run(f"{ python } -m venv {pyinstaller_venv_dir}")
         run(f"{ pyinstaller_python } -m pip install pip wheel --upgrade")
         # First install PyInstaller, note it version & dependencies are pinned in the constraints file
@@ -134,7 +142,7 @@ def main(
     pyinstaller_build = BUILD_DIR / "pyinstaller_build"
     pyinstaller_dist = BUILD_DIR / "pyinstaller_dist"
     if not pyinstaller_dist.is_dir():
-        print("### Use Pyinstaller to generate distribution ###")
+        log.info("Use Pyinstaller to generate distribution")
         spec_file = Path(__file__).joinpath("..", "pyinstaller.spec").resolve()
         env = dict(os.environ)
         if include_parsec_ext is not None:
