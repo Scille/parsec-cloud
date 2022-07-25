@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
+use email_address_parser::EmailAddress;
 use fancy_regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
@@ -188,23 +189,27 @@ impl std::fmt::Display for HumanHandle {
         write!(f, "{} <{}>", self.label, self.email)
     }
 }
+
 impl HumanHandle {
     pub fn new(email: &str, label: &str) -> Result<Self, &'static str> {
         let email = email.nfc().collect::<String>();
         let label = label.nfc().collect::<String>();
 
-        // TODO: how to check the email  easily ?
-        if email.is_empty() || email.len() >= 255 {
+        if !EmailAddress::is_valid(&email, None) || email.len() >= 255 {
             return Err("Invalid email address");
         }
-        if label.is_empty() || label.len() >= 255 {
+        // According to https://www.rfc-editor.org/rfc/rfc5322#section-3.2.3, these special characters are not allowed
+        if label.is_empty()
+            || label.len() >= 255
+            || label.chars().any(|c| match c {
+                '(' | ')' | '<' | '>' | '@' | ',' | ':' | ';' | '.' | '\\' | '"' | '[' | ']' => {
+                    true
+                }
+                _ => false,
+            })
+        {
             return Err("Invalid label");
         }
-
-        // TODO: replace python's email.utils.parseaddr
-        // parsed_label, parsed_email = parseaddr(f"{label} <{email}>")
-        // if parsed_email != email or parsed_label != label:
-        //     raise ValueError("Invalid email/label couple")
 
         Ok(Self { email, label })
     }
