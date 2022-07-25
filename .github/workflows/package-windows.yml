@@ -12,7 +12,7 @@ env:
   python-version: "3.9"
 
 jobs:
-  build-wheel:
+  package-windows-build-wheel:
     runs-on: windows-2022
     env:
       # Need feature from poetry 1.2.x that aren't present in 1.1.x
@@ -77,8 +77,8 @@ jobs:
           name: ${{ runner.os }}-wheel
           path: dist/
 
-  package-windows:
-    needs: build-wheel
+  package-windows-build-installer:
+    needs: package-windows-build-wheel
     runs-on: windows-2022
     steps:
       - uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb  # pin v4.0.0
