@@ -168,7 +168,8 @@ impl std::ops::Deref for TmpPath {
 
 impl Drop for TmpPath {
     fn drop(&mut self) {
-        std::fs::remove_dir_all(&self.0).unwrap();
+        // Currently std::fs::remove_dir_all encounters issue on Windows platform
+        remove_dir_all::remove_dir_all(&self.0).unwrap();
     }
 }
 
