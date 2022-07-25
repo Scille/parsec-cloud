@@ -5,12 +5,14 @@ from typing import List, Tuple, Dict, Optional
 
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
 from parsec.api.protocol.sequester import SequesterServiceID
-from parsec.backend.postgresql.utils import Q, q_organization_internal_id
+from parsec.backend.organization import SequesterAuthority
+from parsec.backend.sequester import SequesterDisabledError
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobSequesterDisabledError,
     VlobSequesterServiceInconsistencyError,
 )
+from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
 from parsec.backend.postgresql.vlob_queries import (
     query_update,
@@ -21,7 +23,8 @@ from parsec.backend.postgresql.vlob_queries import (
     query_list_versions,
     query_create,
 )
-from parsec.backend.postgresql.sequester import q_get_organisation_sequester_authority
+from parsec.backend.postgresql.sequester import get_sequester_authority
+
 
 _q_get_sequester_enabled_services = Q(
     f"""
@@ -37,7 +40,7 @@ _q_get_sequester_enabled_services = Q(
 async def _check_sequestered_organization(
     conn,
     organization_id: OrganizationID,
-    sequester_authority: Optional[bytes],
+    sequester_authority: Optional[SequesterAuthority],
     sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
 ):
     if sequester_blob is None and sequester_authority is None:
@@ -53,7 +56,7 @@ async def _check_sequestered_organization(
 
     if configured_services != requested_sequester_services:
         raise VlobSequesterServiceInconsistencyError(
-            sequester_authority_certificate=sequester_authority,
+            sequester_authority_certificate=sequester_authority.certificate,
             sequester_services_certificates=[row["service_certificate"] for row in rows],
         )
 
@@ -61,18 +64,21 @@ async def _check_sequestered_organization(
 class PGVlobComponent(BaseVlobComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
-        self._sequester_organization_authority_cache: Dict[OrganizationID, Optional[bytes]] = {}
+        self._sequester_organization_authority_cache: Dict[
+            OrganizationID, Optional[SequesterAuthority]
+        ] = {}
 
     async def _fetch_organization_sequester_authority(self, conn, organization_id: OrganizationID):
-        row = await conn.fetchrow(
-            *q_get_organisation_sequester_authority(organization_id=organization_id.str)
-        )
-
-        self._sequester_organization_authority_cache[organization_id] = row[0] if row else None
+        sequester_authority: Optional[SequesterAuthority]
+        try:
+            sequester_authority = await get_sequester_authority(conn, organization_id)
+        except SequesterDisabledError:
+            sequester_authority = None
+        self._sequester_organization_authority_cache[organization_id] = sequester_authority
 
     async def _get_sequester_organization_authority(
         self, conn, organization_id: OrganizationID
-    ) -> Optional[bytes]:
+    ) -> Optional[SequesterAuthority]:
         if organization_id not in self._sequester_organization_authority_cache:
             await self._fetch_organization_sequester_authority(conn, organization_id)
         return self._sequester_organization_authority_cache[organization_id]

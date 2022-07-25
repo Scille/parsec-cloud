@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
 
 from typing import List, Optional, Tuple
-
 from triopg._triopg import TrioConnectionProxy
+
+from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.api.data import DataError, SequesterServiceCertificate
 from parsec.api.protocol import OrganizationID, RealmID, SequesterServiceID, VlobID
 from parsec.backend.organization import SequesterAuthority
@@ -27,9 +28,9 @@ from pendulum import DateTime
 from pendulum import now as pendulum_now
 
 
-q_get_organisation_sequester_authority = Q(
+_q_get_organisation_sequester_authority = Q(
     f"""
-    SELECT sequester_authority
+    SELECT sequester_authority_certificate, sequester_authority_verify_key_der
     FROM organization
     WHERE organization_id = $organization_id
     """
@@ -132,15 +133,15 @@ _get_sequester_blob = Q(
 )
 
 
-async def get_sequester_authority(conn, organization_id: OrganizationID) -> bytes:
+async def get_sequester_authority(conn, organization_id: OrganizationID) -> SequesterAuthority:
     row = await conn.fetchrow(
-        *q_get_organisation_sequester_authority(organization_id=organization_id.str)
+        *_q_get_organisation_sequester_authority(organization_id=organization_id.str)
     )
     if not row:
         raise SequesterOrganizationNotFoundError
     elif row[0] is None:
         raise SequesterDisabledError
-    return row[0]
+    return SequesterAuthority(certificate=row[0], verify_key_der=SequesterVerifyKeyDer(row[1]))
 
 
 class PGPSequesterComponent(BaseSequesterComponent):
@@ -152,8 +153,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
     ) -> None:
 
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            authority_certificate = await get_sequester_authority(conn, organization_id)
-            sequester_authority = SequesterAuthority.build_from_certificate(authority_certificate)
+            sequester_authority = await get_sequester_authority(conn, organization_id)
 
             try:
                 certif_dumped = sequester_authority.verify_key_der.verify(
@@ -200,9 +200,9 @@ class PGPSequesterComponent(BaseSequesterComponent):
 
     async def _assert_service_enabled(
         self, conn: TrioConnectionProxy, organization_id: OrganizationID
-    ):
+    ) -> None:
         row = await conn.fetchrow(
-            *q_get_organisation_sequester_authority(organization_id=organization_id.str)
+            *_q_get_organisation_sequester_authority(organization_id=organization_id.str)
         )
         if not row:
             raise SequesterOrganizationNotFoundError

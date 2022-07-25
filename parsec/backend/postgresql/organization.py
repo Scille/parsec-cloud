@@ -6,6 +6,7 @@ from triopg import UniqueViolationError
 
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.crypto import VerifyKey
+from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.backend.events import BackendEvent
 from parsec.backend.user import UserError, User, Device
 from parsec.backend.utils import UnsetType, Unset
@@ -65,7 +66,14 @@ ON CONFLICT (organization_id) DO
 
 _q_get_organization = Q(
     """
-SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed, sequester_authority
+SELECT
+    bootstrap_token,
+    root_verify_key,
+    is_expired,
+    active_users_limit,
+    user_profile_outsider_allowed,
+    sequester_authority_certificate,
+    sequester_authority_verify_key_der
 FROM organization
 WHERE organization_id = $organization_id
 """
@@ -84,7 +92,14 @@ _q_get_organization_enabled_services_certificates = Q(
 
 _q_get_organization_for_update = Q(
     """
-SELECT bootstrap_token, root_verify_key, is_expired, active_users_limit, user_profile_outsider_allowed, sequester_authority
+SELECT
+    bootstrap_token,
+    root_verify_key,
+    is_expired,
+    active_users_limit,
+    user_profile_outsider_allowed,
+    sequester_authority_certificate,
+    sequester_authority_verify_key_der
 FROM organization
 WHERE organization_id = $organization_id
 FOR UPDATE
@@ -97,7 +112,8 @@ _q_bootstrap_organization = Q(
 UPDATE organization
 SET
     root_verify_key = $root_verify_key,
-    sequester_authority= $sequester_authority,
+    sequester_authority_certificate=$sequester_authority_certificate,
+    sequester_authority_verify_key_der=$sequester_authority_verify_key_der,
     _bootstrapped_on = NOW()
 WHERE
     organization_id = $organization_id
@@ -208,20 +224,23 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @staticmethod
     async def _get(conn, id: OrganizationID, for_update: bool = False) -> Organization:
         if for_update:
-            data = await conn.fetchrow(*_q_get_organization_for_update(organization_id=id.str))
+            row = await conn.fetchrow(*_q_get_organization_for_update(organization_id=id.str))
         else:
-            data = await conn.fetchrow(*_q_get_organization(organization_id=id.str))
-        if not data:
+            row = await conn.fetchrow(*_q_get_organization(organization_id=id.str))
+        if not row:
             raise OrganizationNotFoundError()
 
-        rvk = VerifyKey(data[1]) if data[1] else None
+        rvk = VerifyKey(row["root_verify_key"]) if row["root_verify_key"] else None
 
         sequester_authority = None
         # Sequester services certificates is None if sequester is not enabled
         sequester_services_certificates = None
 
-        if data[5]:
-            sequester_authority = SequesterAuthority.build_from_certificate(data[5])
+        if row["sequester_authority_certificate"]:
+            verify_key_der = SequesterVerifyKeyDer(row["sequester_authority_verify_key_der"])
+            sequester_authority = SequesterAuthority(
+                certificate=row["sequester_authority_certificate"], verify_key_der=verify_key_der
+            )
             services = await conn.fetch(
                 *_q_get_organization_enabled_services_certificates(organization_id=id.str)
             )
@@ -232,11 +251,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
         return Organization(
             organization_id=id,
-            bootstrap_token=data[0],
+            bootstrap_token=row["bootstrap_token"],
             root_verify_key=rvk,
-            is_expired=data[2],
-            active_users_limit=data[3],
-            user_profile_outsider_allowed=data[4],
+            is_expired=row["is_expired"],
+            active_users_limit=row["active_users_limit"],
+            user_profile_outsider_allowed=row["user_profile_outsider_allowed"],
             sequester_authority=sequester_authority,
             sequester_services_certificates=sequester_services_certificates,
         )
@@ -267,15 +286,18 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             except UserError as exc:
                 raise OrganizationFirstUserCreationError(exc) from exc
 
-            service_certificate = None
+            sequester_authority_certificate = None
+            sequester_authority_verify_key_der = None
             if sequester_authority:
-                service_certificate = sequester_authority.certificate
+                sequester_authority_certificate = sequester_authority.certificate
+                sequester_authority_verify_key_der = sequester_authority.verify_key_der.dump()
             result = await conn.execute(
                 *_q_bootstrap_organization(
                     organization_id=id.str,
                     bootstrap_token=bootstrap_token,
                     root_verify_key=root_verify_key.encode(),
-                    sequester_authority=service_certificate,
+                    sequester_authority_certificate=sequester_authority_certificate,
+                    sequester_authority_verify_key_der=sequester_authority_verify_key_der,
                 )
             )
             if result != "UPDATE 1":

@@ -25,7 +25,8 @@ CREATE TABLE organization (
     is_expired BOOLEAN NOT NULL,
     _bootstrapped_on TIMESTAMPTZ,
     _created_on TIMESTAMPTZ NOT NULL,
-    sequester_authority BYTEA -- NULL To disable sequester services
+    sequester_authority_certificate BYTEA, -- NULL for non-sequestered organization
+    sequester_authority_verify_key_der BYTEA -- NULL for non-sequestered organization
 );
 
 -------------------------------------------------------
@@ -40,7 +41,6 @@ CREATE TABLE sequester_service(
     service_label VARCHAR(254) NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
     disabled_on TIMESTAMPTZ, -- NULL if currently enabled
-    webhook_url TEXT, -- NULL if service is not a WEBHOOK
 
     UNIQUE(organization, service_id)
 );

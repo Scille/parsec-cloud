@@ -3,7 +3,8 @@
 -------------------------------------------------------
 --  Migration
 -------------------------------------------------------
-ALTER TABLE organization ADD sequester_authority BYTEA;
+ALTER TABLE organization ADD sequester_authority_certificate BYTEA;
+ALTER TABLE organization ADD sequester_authority_verify_key_der BYTEA;
 
 
 CREATE TABLE sequester_service(
@@ -14,7 +15,6 @@ CREATE TABLE sequester_service(
     service_label VARCHAR(254) NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
     disabled_on TIMESTAMPTZ, -- NULL if not disabled
-    webhook_url TEXT, -- NULL if service is not a WEBHOOK
 
     UNIQUE(organization, service_id)
 );
