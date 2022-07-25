@@ -167,7 +167,7 @@ def create_service(
     click.echo(click.style("Service created", fg="green"))
 
 
-@click.command(short_help="List availlable sequester services")
+@click.command(short_help="List available sequester services")
 @click.option("--organization", type=OrganizationID, help="Organization ID", required=True)
 @db_backend_options
 def list_services(
@@ -177,7 +177,7 @@ def list_services(
     trio_run(_list_services, db_config, organization, use_asyncio=True)
 
 
-@click.command(short_help="Enable/disable service")
+@click.command(short_help="Disable/re-enable a sequester service")
 @click.option("--organization", type=OrganizationID, help="Organization ID", required=True)
 @click.option(
     "--service",
@@ -292,7 +292,7 @@ async def _human_accesses(
                     if granted_role.role is None:
                         display_role = "Access removed"
                     else:
-                        display_role = f"Access {granted_role.role} granted"
+                        display_role = f"Access {granted_role.role.value} granted"
                     print(base_indent + f"\t\t{granted_role.granted_on}: {display_role}")
 
         non_human_users = humans.pop(None)
@@ -340,11 +340,16 @@ async def _export_realm(
 
     output_db_display = click.style(str(output_db_path), fg="green")
     if output.exists():
-        print(
+        click.echo(
             f"File {output_db_display} already exists, continue the extract from where it was left"
         )
     else:
-        print(f"Creating {output_db_display}")
+        click.echo(f"Creating {output_db_display}")
+
+    click.echo(
+        f"Use { click.style('^C', fg='yellow') } to stop the export,"
+        " progress won't be lost when restarting the command"
+    )
 
     async with run_pg_db_handler(db_config) as dbh:
         blockstore_component = blockstore_factory(config=blockstore_config, postgresql_dbh=dbh)
@@ -365,7 +370,9 @@ async def _export_realm(
                     await exporter.compute_vlobs_export_status()
                 )
 
-            if vlob_total_count:
+            if not vlob_total_count:
+                click.echo("No more vlobs to export !")
+            else:
                 vlob_total_count_display = click.style(str(vlob_total_count), fg="green")
                 click.echo(f"About {vlob_total_count_display} vlobs need to be exported")
                 with click.progressbar(length=vlob_total_count, label="Exporting vlobs") as bar:
@@ -390,7 +397,9 @@ async def _export_realm(
                     await exporter.compute_blocks_export_status()
                 )
 
-            if block_total_count:
+            if not block_total_count:
+                click.echo("No more blocks to export !")
+            else:
                 block_total_count_display = click.style(str(block_total_count), fg="green")
 
                 click.echo(f"About {block_total_count_display} blocks need to be exported")
@@ -413,7 +422,7 @@ async def _export_realm(
 
 @click.command(short_help="Export a realm to consult it with a sequester service key")
 @click.option("--organization", type=OrganizationID, required=True)
-@click.option("--realm", type=RealmID, required=True)
+@click.option("--realm", type=RealmID.from_hex, required=True)
 @click.option(
     "--service",
     type=SequesterServiceID.from_hex,
