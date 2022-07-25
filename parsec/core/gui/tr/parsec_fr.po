@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-07-08 10:45+0200\n"
+"POT-Creation-Date: 2022-07-25 08:31+0200\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -2109,6 +2109,16 @@ msgstr "Aucune limite du nombre d'utilisateurs"
 msgid "TEXT_ORG_INFO_USER_LIMIT-limit"
 msgstr "<b>{limit}</b> utilisateurs maximum"
 
+msgid "TEXT_ORG_INFO_SEQUESTRATION_TOOLTIP"
+msgstr ""
+"Dans une organisation où le séquestre est activé, les données sont "
+"toujours <br />chiffrées de bout en bout, mais le créateur de "
+"l'organisation peut y avoir accès.<br />Celà peut servir à recouvrer des "
+"données ou pour des raisons légales."
+
+msgid "TEXT_ORG_INFO_SEQUESTRATION_ACTIVATED"
+msgstr "Le <u>séquestre</u> est activé"
+
 msgid "TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"
 msgstr "L'adresse du serveur a été copiée dans le presse-papier."
 
@@ -3073,3 +3083,4 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+

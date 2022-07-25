@@ -576,6 +576,7 @@ async def test_show_org_info(
 
     assert oi_w.label_outsider_allowed.text() == translate("TEXT_ORG_INFO_OUTSIDER_ALLOWED")
     assert oi_w.label_user_limit.text() == translate("TEXT_ORG_INFO_USER_LIMIT_UNLIMITED")
+    assert not oi_w.label_sequestration_state.isVisible()
 
     aqtbot.mouse_click(oi_w.button_copy_to_clipboard, QtCore.Qt.LeftButton)
     assert snackbar_catcher.snackbars == [
