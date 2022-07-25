@@ -92,8 +92,7 @@ jobs:
         working-directory: ${{ runner.temp }}
 
       - name: Debug ${{ runner.temp }} dir
-        shell: bash
-        run: ls -l ${{ runner.temp }}
+        run: Get-ChildItem -Recurse -Path ${{ runner.temp }}
 
       - name: Freeze Parsec
         run: python3 freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
@@ -104,9 +103,7 @@ jobs:
         working-directory: ${{ runner.temp }}
 
       - name: Debug build directory
-        shell: bash
-        run: ls -l build
-        working-directory: ${{ runner.temp }}
+        run: Get-ChildItem -Recurse -Path ${{ runner.temp }}\build
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
