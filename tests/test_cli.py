@@ -959,6 +959,25 @@ async def _cli_invoke_in_thread(runner: CliRunner, cmd: str, input: str = None):
 
 @pytest.mark.trio
 @pytest.mark.postgresql
+async def test_human_accesses(backend, alice, postgresql_url):
+    async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
+        runner = CliRunner()
+
+        cmd = f"backend human_accesses --db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id}"
+
+        result = await _cli_invoke_in_thread(runner, cmd)
+        assert result.exit_code == 0
+        assert result.output.startswith("Found 3 result(s)")
+
+        # Also test with filter
+
+        result = await _cli_invoke_in_thread(runner, f"{cmd} --filter alice")
+        assert result.exit_code == 0
+        assert result.output.startswith("Found 1 result(s)")
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
     async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
@@ -967,26 +986,30 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         common_args = f"--db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id}"
 
         async def run_list_services():
-            result = await _cli_invoke_in_thread(runner, f"backend list_services {common_args}")
+            result = await _cli_invoke_in_thread(
+                runner, f"backend sequester list_services {common_args}"
+            )
             assert result.exit_code == 0
             return result
 
         async def create_service(service_key_path, authority_key_path, service_label):
             result = await _cli_invoke_in_thread(
                 runner,
-                f"backend create_service {common_args} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --service-label {service_label}",
+                f"backend sequester create_service {common_args} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --service-label {service_label}",
             )
             assert result.exit_code == 0
             return result
 
         async def delete_service(service_id: str):
             return await _cli_invoke_in_thread(
-                runner, f"backend update_service {common_args} --disable --service {service_id}"
+                runner,
+                f"backend sequester update_service {common_args} --disable --service {service_id}",
             )
 
         async def enable_service(service_id: str):
             return await _cli_invoke_in_thread(
-                runner, f"backend update_service {common_args} --enable --service {service_id}"
+                runner,
+                f"backend sequester update_service {common_args} --enable --service {service_id}",
             )
 
         # Assert no service configured
