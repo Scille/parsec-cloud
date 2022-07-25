@@ -2,7 +2,7 @@
 
 import trio
 import pytest
-import pendulum
+from libparsec.types import DateTime
 from collections import defaultdict
 
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
@@ -170,7 +170,7 @@ async def test_organization_bootstrap_bad_data(
     public_key = newalice.public_key
     verify_key = newalice.verify_key
 
-    now = pendulum.now()
+    now = DateTime.now()
     bad_now = now.subtract(seconds=1)
 
     good_cu = UserCertificateContent(

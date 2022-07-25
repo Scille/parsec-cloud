@@ -152,7 +152,10 @@ try:
         RealmRoleCertificate,
         # Trustchain
         TrustchainContext,
+        # Time
         freeze_time,
+        DateTime,
+        LocalDateTime,
         # LocalDevice
         LocalDevice,
         # Storage
@@ -397,7 +400,10 @@ __all__ = (
     "RealmRoleCertificate",
     # Trustchain
     "TrustchainContext",
+    # Time
     "freeze_time",
+    "DateTime",
+    "LocalDateTime",
     # LocalDevice
     "LocalDevice",
     # Storage

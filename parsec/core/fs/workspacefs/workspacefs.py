@@ -4,7 +4,7 @@ import attr
 import trio
 from collections import defaultdict
 from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
-from pendulum import DateTime
+from libparsec.types import DateTime
 
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError

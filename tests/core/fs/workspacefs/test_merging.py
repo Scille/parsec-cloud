@@ -3,7 +3,7 @@
 from parsec.types import FrozenDict
 import pytest
 import re
-from pendulum import datetime
+from libparsec.types import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.api.data import EntryName
@@ -15,7 +15,7 @@ empty_pattern = re.compile(r"^\b$")
 
 
 def gen_date():
-    curr = datetime(2000, 1, 1)
+    curr = DateTime(2000, 1, 1)
     while True:
         yield curr
         curr = curr.add(days=1)
@@ -24,11 +24,11 @@ def gen_date():
 # Guessing by it name, this test is directed by M. Night Shyamalan ;-)
 @pytest.mark.parametrize("local_changes", (False, True))
 def test_merge_speculative_with_it_unsuspected_former_self(local_changes, core_config):
-    d1 = datetime(2000, 1, 1)
-    d2 = datetime(2000, 1, 2)
-    d3 = datetime(2000, 1, 3)
-    d4 = datetime(2000, 1, 4)
-    d5 = datetime(2000, 1, 5)
+    d1 = DateTime(2000, 1, 1)
+    d2 = DateTime(2000, 1, 2)
+    d3 = DateTime(2000, 1, 3)
+    d4 = DateTime(2000, 1, 4)
+    d5 = DateTime(2000, 1, 5)
     my_device = DeviceID("a@a")
 
     # 1) Workspace manifest is originally created by our device

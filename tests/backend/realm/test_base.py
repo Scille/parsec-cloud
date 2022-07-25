@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import now as pendulum_now
+from libparsec.types import DateTime
 
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import RealmRole
@@ -28,7 +28,7 @@ async def test_status(bob_ws, alice_ws, alice, bob, realm):
         alice_ws,
         RealmRoleCertificateContent(
             author=alice.device_id,
-            timestamp=pendulum_now(),
+            timestamp=DateTime.now(),
             realm_id=realm,
             user_id=bob.user_id,
             role=RealmRole.READER,

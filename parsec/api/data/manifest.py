@@ -2,7 +2,7 @@
 
 import attr
 from typing import Optional, Tuple, Dict, Any, Type, TypeVar, TYPE_CHECKING
-from pendulum import DateTime
+from libparsec.types import DateTime
 
 from parsec.types import FrozenDict
 from parsec.crypto import SecretKey, HashDigest

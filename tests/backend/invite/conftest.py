@@ -2,7 +2,7 @@
 
 import pytest
 import trio
-from pendulum import datetime
+from libparsec.types import DateTime
 
 from parsec.crypto import PrivateKey, HashDigest
 
@@ -215,7 +215,7 @@ async def exchange_testbed(backend_asgi_app, alice, alice_ws, backend_invited_ws
     invitation = await backend_asgi_app.backend.invite.new_for_device(
         organization_id=alice.organization_id,
         greeter_user_id=alice.user_id,
-        created_on=datetime(2000, 1, 2),
+        created_on=DateTime(2000, 1, 2),
     )
     async with backend_invited_ws_factory(
         backend_asgi_app,

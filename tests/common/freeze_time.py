@@ -2,6 +2,7 @@
 
 import trio
 import pendulum
+from libparsec.types import DateTime
 from contextlib import contextmanager
 
 from parsec.api.protocol import DeviceID
@@ -13,7 +14,7 @@ __freeze_time_dict = {}
 
 def _timestamp_mockup(device):
     _, time = __freeze_time_dict.get(device.device_id, (None, None))
-    return time if time is not None else pendulum.now()
+    return time if time is not None else DateTime.now()
 
 
 @contextmanager
@@ -21,6 +22,7 @@ def freeze_device_time(device, current_time):
     # Parse time
     if isinstance(current_time, str):
         current_time = pendulum.parse(current_time)
+        current_time = DateTime.from_timestamp(current_time.timestamp())
 
     # Get device id
     if isinstance(device, LocalDevice):
@@ -61,7 +63,7 @@ __freeze_time_task = None
 def freeze_time(time=None, device=None):
     # Get current time if not provided
     if time is None:
-        time = pendulum.now()
+        time = DateTime.now()
 
     # Freeze a single device
     if device is not None:
@@ -73,6 +75,7 @@ def freeze_time(time=None, device=None):
     global __freeze_time_task
     if isinstance(time, str):
         time = pendulum.parse(time)
+        time = DateTime.from_timestamp(time.timestamp())
 
     # Save previous context
     previous_task = __freeze_time_task

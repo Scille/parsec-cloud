@@ -2,7 +2,7 @@
 
 import attr
 import trio
-from pendulum import DateTime
+from libparsec.types import DateTime
 from structlog import get_logger
 from contextlib import asynccontextmanager
 
@@ -61,22 +61,22 @@ logger = get_logger()
 # 80% in order to make sure that a clock shift is caught during the
 # handshake instead of being caught by another API call later on.
 
-BALLPARK_CLIENT_EARLY_OFFSET = 50.0  # seconds
-BALLPARK_CLIENT_LATE_OFFSET = 70.0  # seconds
+BALLPARK_CLIENT_EARLY_OFFSET = 50  # seconds
+BALLPARK_CLIENT_LATE_OFFSET = 70  # seconds
 BALLPARK_CLIENT_TOLERANCE = 0.8  # 80%
 
 
 def timestamps_in_the_ballpark(
     client: DateTime,
     backend: DateTime,
-    ballpark_client_early_offset: float = BALLPARK_CLIENT_EARLY_OFFSET,
-    ballpark_client_late_offset: float = BALLPARK_CLIENT_LATE_OFFSET,
+    ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+    ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
 ) -> bool:
     """
     Useful to compare signed message timestamp with the one stored by the
     backend.
     """
-    seconds = (backend - client).total_seconds()
+    seconds = backend - client
     return -ballpark_client_early_offset < seconds < ballpark_client_late_offset
 
 

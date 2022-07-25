@@ -2,7 +2,7 @@
 
 import trio
 import pytest
-import pendulum
+from libparsec.types import DateTime
 from functools import partial
 
 from parsec.backend.utils import ClientType
@@ -103,7 +103,7 @@ async def test_handshake_rvk_mismatch(running_backend, alice, otherorg):
 @pytest.mark.trio
 async def test_handshake_revoked_device(running_backend, alice, bob):
     revoked_user_certificate = RevokedUserCertificateContent(
-        author=alice.device_id, timestamp=pendulum.now(), user_id=bob.user_id
+        author=alice.device_id, timestamp=DateTime.now(), user_id=bob.user_id
     ).dump_and_sign(alice.signing_key)
     await running_backend.backend.user.revoke_user(
         organization_id=alice.organization_id,

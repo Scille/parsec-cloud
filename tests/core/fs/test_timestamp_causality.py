@@ -3,7 +3,7 @@
 import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
-from pendulum import now
+from libparsec.types import DateTime
 
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmRole, UserProfile
@@ -19,7 +19,7 @@ def shift_now(monkeypatch):
         nonlocal testing
         try:
             testing = False
-            return now()
+            return DateTime.now()
         finally:
             testing = True
 
@@ -47,7 +47,7 @@ def set_device_time_offset(monkeypatch):
         # We're using `now()` plus an offset to control each device time.
         # Using `now()` allows for a realistic progress of time, only shifted for each device.
         # Then the `shift_now` fixture can be used to flash-forward.
-        lambda local_device: now().add(
+        lambda local_device: DateTime.now().add(
             microseconds=per_device_time_offsets_us[local_device.device_id]
         ),
     )

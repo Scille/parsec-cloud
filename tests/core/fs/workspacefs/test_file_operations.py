@@ -2,7 +2,7 @@
 
 import pytest
 from typing import Tuple
-from pendulum import DateTime
+from libparsec.types import DateTime
 
 from hypothesis import strategies
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, run_state_machine_as_test

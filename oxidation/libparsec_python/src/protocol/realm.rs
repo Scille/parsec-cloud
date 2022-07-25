@@ -11,9 +11,8 @@ use libparsec::protocol::authenticated_cmds::{
     realm_start_reencryption_maintenance, realm_stats, realm_status, realm_update_roles,
 };
 
-use crate::binding_utils::py_to_rs_datetime;
-use crate::binding_utils::rs_to_py_datetime;
 use crate::ids::{DeviceID, RealmID, UserID};
+use crate::time::DateTime;
 
 import_exception!(parsec.api.protocol, ProtocolError);
 
@@ -152,14 +151,14 @@ impl RealmStatusRep {
         _cls: &PyType,
         in_maintenance: bool,
         maintenance_type: Option<&PyAny>,
-        maintenance_started_on: Option<&PyAny>,
+        maintenance_started_on: Option<DateTime>,
         maintenance_started_by: Option<DeviceID>,
         encryption_revision: u64,
     ) -> PyResult<Self> {
         let maintenance_type = maintenance_type
             .map(py_to_rs_maintenance_type)
             .transpose()?;
-        let maintenance_started_on = maintenance_started_on.map(py_to_rs_datetime).transpose()?;
+        let maintenance_started_on = maintenance_started_on.map(|x| x.0);
         let maintenance_started_by = maintenance_started_by.map(|id| id.0);
         Ok(Self(realm_status::Rep::Ok {
             in_maintenance,
@@ -473,11 +472,11 @@ impl RealmStartReencryptionMaintenanceReq {
     fn new(
         realm_id: RealmID,
         encryption_revision: u64,
-        timestamp: &PyAny,
+        timestamp: DateTime,
         per_participant_message: HashMap<UserID, Vec<u8>>,
     ) -> PyResult<Self> {
         let realm_id = realm_id.0;
-        let timestamp = py_to_rs_datetime(timestamp)?;
+        let timestamp = timestamp.0;
         let per_participant_message = per_participant_message
             .into_iter()
             .map(|(k, v)| (k.0, v))
@@ -512,8 +511,8 @@ impl RealmStartReencryptionMaintenanceReq {
     }
 
     #[getter]
-    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_datetime(py, self.0.timestamp)
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.timestamp))
     }
 
     #[getter]

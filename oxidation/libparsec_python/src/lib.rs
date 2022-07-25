@@ -152,7 +152,10 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<certif::RealmRoleCertificate>()?;
     // Trustchain
     m.add_class::<trustchain::TrustchainContext>()?;
+    // Time
     m.add_function(wrap_pyfunction!(time::freeze_time, m)?)?;
+    m.add_class::<time::DateTime>()?;
+    m.add_class::<time::LocalDateTime>()?;
     // LocalDevice
     m.add_class::<local_device::LocalDevice>()?;
     // Storage

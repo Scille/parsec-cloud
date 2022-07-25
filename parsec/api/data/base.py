@@ -2,7 +2,7 @@
 
 import attr
 from typing import Optional, Tuple, Dict, Any, TypeVar, Type
-from pendulum import DateTime
+from libparsec.types import DateTime
 
 from parsec.serde import (
     BaseSchema,

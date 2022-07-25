@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from dataclasses import dataclass, field as dataclass_field
-from pendulum import DateTime
-from typing import TYPE_CHECKING, List, AbstractSet, Tuple, Dict, Optional
+import attr
+from libparsec.types import DateTime
+from typing import List, Tuple, Dict, Optional
 from collections import defaultdict
 
 from parsec.api.protocol import (

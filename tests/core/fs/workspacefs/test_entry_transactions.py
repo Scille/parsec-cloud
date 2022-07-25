@@ -8,7 +8,7 @@ from string import ascii_lowercase
 from contextlib import contextmanager
 import attr
 import pytest
-from pendulum import datetime
+from libparsec.types import DateTime
 from hypothesis_trio.stateful import initialize, invariant, rule, run_state_machine_as_test, Bundle
 from hypothesis import strategies as st
 
@@ -30,8 +30,8 @@ async def test_root_entry_info(alice_entry_transactions):
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
-        "created": datetime(2000, 1, 1),
-        "updated": datetime(2000, 1, 1),
+        "created": DateTime(2000, 1, 1),
+        "updated": DateTime(2000, 1, 1),
         "children": [],
         "confinement_point": None,
     }
@@ -54,8 +54,8 @@ async def test_file_create(alice_entry_transactions, alice_file_transactions):
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
-        "created": datetime(2000, 1, 1),
-        "updated": datetime(2000, 1, 2),
+        "created": DateTime(2000, 1, 1),
+        "updated": DateTime(2000, 1, 2),
         "children": [EntryName("foo.txt")],
         "confinement_point": None,
     }
@@ -67,8 +67,8 @@ async def test_file_create(alice_entry_transactions, alice_file_transactions):
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
-        "created": datetime(2000, 1, 2),
-        "updated": datetime(2000, 1, 2),
+        "created": DateTime(2000, 1, 2),
+        "updated": DateTime(2000, 1, 2),
         "size": 0,
         "confinement_point": None,
     }
@@ -188,8 +188,8 @@ async def test_access_not_loaded_entry(running_backend, alice_entry_transactions
     assert entry_info == {
         "type": "folder",
         "id": entry_id,
-        "created": datetime(2000, 1, 1),
-        "updated": datetime(2000, 1, 1),
+        "created": DateTime(2000, 1, 1),
+        "updated": DateTime(2000, 1, 1),
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,

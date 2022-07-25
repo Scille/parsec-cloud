@@ -3,7 +3,7 @@
 from itertools import count
 from typing import Optional, Dict, AsyncIterator, Union, Pattern, Iterable
 
-from pendulum import DateTime
+from libparsec.types import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent

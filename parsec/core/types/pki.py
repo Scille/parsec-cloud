@@ -3,7 +3,7 @@
 from typing import Iterable, List, Optional, Dict
 from pathlib import Path
 from uuid import UUID
-from pendulum import DateTime
+from libparsec.types import DateTime
 import attr
 from parsec.core.types.backend_address import (
     BackendPkiEnrollmentAddr,

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import datetime
+from libparsec.types import DateTime
 
 from parsec.crypto import PrivateKey
 from parsec.api.protocol import InvitationDeletedReason, InvitationToken
@@ -28,7 +28,7 @@ async def test_greeter_exchange_bad_access(alice, backend, alice_ws, reason):
             organization_id=alice.organization_id,
             greeter=alice.user_id,
             token=invitation.token,
-            on=datetime(2000, 1, 2),
+            on=DateTime(2000, 1, 2),
             reason=InvitationDeletedReason.ROTTEN,
         )
         token = invitation.token

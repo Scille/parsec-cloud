@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import attr
-from pendulum import now as pendulum_now, DateTime
-from typing import TYPE_CHECKING, List, Dict, Optional, Tuple
+from libparsec.types import DateTime
+from typing import List, Dict, Optional, Tuple
 
 from parsec.api.data import UserProfile
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID
@@ -273,7 +273,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmInMaintenanceError(f"Realm `{realm_id}` alrealy in maintenance")
         if encryption_revision != realm.status.encryption_revision + 1:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
-        now = pendulum_now()
+        now = DateTime.now()
         not_revoked_roles = set()
         for user_id in realm.roles.keys():
             user = await self._user_component.get_user(organization_id, user_id)

@@ -17,7 +17,7 @@ from typing import (
 )
 import trio
 from trio import lowlevel
-from pendulum import DateTime
+from libparsec.types import DateTime
 from structlog import get_logger
 from contextlib import asynccontextmanager
 

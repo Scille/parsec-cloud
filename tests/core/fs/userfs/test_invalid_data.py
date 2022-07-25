@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import datetime
+from libparsec.types import DateTime
 
 from parsec.api.data import EntryName
 from parsec.api.protocol import VlobID
@@ -18,8 +18,8 @@ def testbed(running_backend, alice_user_fs, alice):
                 "blob": None,
                 "signed_author": alice.device_id,
                 "backend_author": alice.device_id,
-                "signed_timestamp": datetime(2000, 1, 2),
-                "backend_timestamp": datetime(2000, 1, 2),
+                "signed_timestamp": DateTime(2000, 1, 2),
+                "backend_timestamp": DateTime(2000, 1, 2),
                 "author_signkey": alice.signing_key,
                 "user_manifest_key": alice.user_manifest_key,
             }
@@ -91,7 +91,7 @@ async def test_invalid_author(testbed, alice2):
 
 @pytest.mark.trio
 async def test_invalid_timestamp(testbed, alice, alice2):
-    bad_timestamp = datetime(2000, 1, 3)
+    bad_timestamp = DateTime(2000, 1, 3)
     # Invalid timestamp field in manifest
     with pytest.raises(FSError) as exc:
         await testbed.run(signed_timestamp=bad_timestamp)

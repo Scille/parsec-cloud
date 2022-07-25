@@ -6,6 +6,7 @@ import sys
 import subprocess
 import pytest
 import pendulum
+from libparsec.types import DateTime
 from collections import defaultdict
 from typing import Union, Optional, Tuple, Iterable
 from hashlib import sha1
@@ -68,18 +69,18 @@ def fixtures_customization(request):
 
 @pytest.fixture
 def next_timestamp():
-    """On windows, 2 calls to `pendulum.now()` can yield the same value.
+    """On windows, 2 calls to `DateTime.now()` can yield the same value.
     For some tests, this creates edges cases we want to avoid.
     """
     last_timestamp = None
 
     def _next_timestamp():
         if pendulum.has_test_now():
-            return pendulum.now()
+            return DateTime.now()
         nonlocal last_timestamp
-        while last_timestamp == pendulum.now():
+        while last_timestamp == DateTime.now():
             pass
-        last_timestamp = pendulum.now()
+        last_timestamp = DateTime.now()
         return last_timestamp
 
     return _next_timestamp
@@ -858,7 +859,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             x509_certificate: X509Certificate,
             addr: BackendPkiEnrollmentAddr,
             enrollment_id: UUID,
-            submitted_on: pendulum.DateTime,
+            submitted_on: DateTime,
             submit_payload: PkiEnrollmentSubmitPayload,
             signing_key: SigningKey,
             private_key: PrivateKey,

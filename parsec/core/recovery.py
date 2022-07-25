@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import secrets
-import pendulum
 
 from parsec.api.data import DeviceCertificateContent
 from parsec.api.protocol import DeviceID, DeviceName, DeviceLabel
@@ -11,7 +10,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.types import LocalDevice
 from parsec.crypto import SigningKey, SecretKey
-from pendulum import now as pendulum_now
+from libparsec.types import DateTime
 
 
 async def _create_new_device_for_self(
@@ -33,7 +32,7 @@ async def _create_new_device_for_self(
         user_manifest_key=original_device.user_manifest_key,
         local_symkey=SecretKey.generate(),
     )
-    now = pendulum_now()
+    now = DateTime.now()
 
     device_certificate = DeviceCertificateContent(
         author=original_device.device_id,
@@ -72,7 +71,7 @@ async def generate_recovery_device(
     Raises:
         BackendConnectionError
     """
-    now = pendulum.now()
+    now = DateTime.now()
     # Unique enough label is expected, but unicity is not strongly enforced
     new_device_label = DeviceLabel(
         f"recovery-{now.year}-{now.month}-{now.day}-{secrets.token_hex(2)}"

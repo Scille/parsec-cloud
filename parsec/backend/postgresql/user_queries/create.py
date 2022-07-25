@@ -3,7 +3,7 @@
 from parsec.backend.backend_events import BackendEvent
 import itertools
 from triopg import UniqueViolationError
-from pendulum import now as pendulum_now
+from libparsec.types import DateTime
 
 from parsec.api.protocol import OrganizationID
 from parsec.backend.user import (
@@ -220,7 +220,7 @@ async def _do_create_user_with_human_handle(
         raise UserError(f"Insertion error: {result}")
 
     # Finally make sure there is only one non-revoked user with this human handle
-    now = pendulum_now()
+    now = DateTime.now()
     not_revoked_users = await conn.fetch(
         *_q_get_not_revoked_users_for_human(
             organization_id=organization_id.str, email=user.human_handle.email, now=now

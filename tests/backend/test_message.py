@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import datetime
+from libparsec.types import DateTime
 
 from parsec.api.protocol import message_get_serializer, APIEvent
 from parsec.backend.asgi import app_factory
@@ -20,7 +20,7 @@ async def message_get(sock, offset=0):
 @pytest.mark.trio
 async def test_message_from_bob_to_alice(backend, alice, bob, alice_ws):
     await events_subscribe(alice_ws)
-    d1 = datetime(2000, 1, 1)
+    d1 = DateTime(2000, 1, 1)
     async with events_listen(alice_ws) as listen:
         await backend.message.send(
             bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from Bob !"
@@ -39,8 +39,8 @@ async def test_message_from_bob_to_alice(backend, alice, bob, alice_ws):
 
 @pytest.mark.trio
 async def test_message_get_with_offset(backend, alice, bob, alice_ws):
-    d1 = datetime(2000, 1, 1)
-    d2 = datetime(2000, 1, 2)
+    d1 = DateTime(2000, 1, 1)
+    d2 = DateTime(2000, 1, 2)
     await backend.message.send(bob.organization_id, bob.device_id, alice.user_id, d1, b"1")
     await backend.message.send(bob.organization_id, bob.device_id, alice.user_id, d1, b"2")
     await backend.message.send(bob.organization_id, bob.device_id, alice.user_id, d2, b"3")
@@ -60,7 +60,7 @@ async def test_message_get_with_offset(backend, alice, bob, alice_ws):
 async def test_message_from_bob_to_alice_multi_backends(
     postgresql_url, alice, bob, backend_factory, backend_authenticated_ws_factory
 ):
-    d1 = datetime(2000, 1, 1)
+    d1 = DateTime(2000, 1, 1)
     async with backend_factory(
         config={"blockstore_config": PostgreSQLBlockStoreConfig(), "db_url": postgresql_url}
     ) as backend_1, backend_factory(
@@ -95,7 +95,7 @@ async def test_message_from_bob_to_alice_multi_backends(
 
 @pytest.mark.trio
 async def test_message_received_event(backend, alice_ws, alice, bob):
-    d1 = datetime(2000, 1, 1)
+    d1 = DateTime(2000, 1, 1)
     await events_subscribe(alice_ws)
 
     # Good message

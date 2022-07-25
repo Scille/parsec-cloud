@@ -1,7 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import Optional, Tuple
-from pendulum import DateTime, instance as pendulum_instance
+from libparsec.types import DateTime
+from pendulum import instance as pendulum_instance
 
 from parsec.api.protocol import OrganizationID, RealmID, DeviceID, VlobID
 from parsec.backend.utils import OperationKind
@@ -190,4 +191,4 @@ async def _get_last_role_granted_on(
             organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
         )
     )
-    return None if rep is None else pendulum_instance(rep[1])
+    return None if rep is None else DateTime.from_timestamp(pendulum_instance(rep[1]).timestamp())

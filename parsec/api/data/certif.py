@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional, Any, Dict, Type, TypeVar, Literal
 from marshmallow import ValidationError
-from pendulum import DateTime
+from libparsec.types import DateTime
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer, SequesterEncryptionKeyDer

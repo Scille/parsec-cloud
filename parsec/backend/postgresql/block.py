@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from triopg.exceptions import UniqueViolationError
-import pendulum
+from libparsec.types import DateTime
 
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, BlockID
 from parsec.backend.utils import OperationKind
@@ -202,7 +202,7 @@ class PGBlockComponent(BaseBlockComponent):
                         realm_id=realm_id.uuid,
                         author=author.str,
                         size=len(block),
-                        created_on=pendulum.now(),
+                        created_on=DateTime.now(),
                     )
                 )
             except UniqueViolationError as exc:
