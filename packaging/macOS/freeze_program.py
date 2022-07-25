@@ -46,6 +46,7 @@ def main(
 ):
     log = logger.getChild(main.__name__)
 
+    log.info(f"BUILD_DIR={BUILD_DIR}")
     log.info(f"program_source={program_source}, include_parsec_ext={include_parsec_ext}, wheel_it_dir={wheel_it_dir}")
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
 
