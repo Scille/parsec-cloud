@@ -1,7 +1,12 @@
 name: package-windows
 
 on:
-  pull_request:
+  push:
+    branches:
+      - master
+      - "[0-9]+.[0-9]+"
+    tags:
+      - "[0-9]+.[0-9]+"
 
 env:
   python-version: "3.9"
