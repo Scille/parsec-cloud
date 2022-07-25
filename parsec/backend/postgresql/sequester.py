@@ -153,7 +153,6 @@ class PGPSequesterComponent(BaseSequesterComponent):
 
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             authority_certificate = await get_sequester_authority(conn, organization_id)
-            # TODO: Handle Error
             sequester_authority = SequesterAuthority.build_from_certificate(authority_certificate)
 
             try:

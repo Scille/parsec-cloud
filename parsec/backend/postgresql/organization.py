@@ -250,7 +250,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         root_verify_key: VerifyKey,
         sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
-        # TODO
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # The FOR UPDATE in the query ensure the line is locked in the
             # organization table until the end of the transaction. Hence
