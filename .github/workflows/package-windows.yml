@@ -107,5 +107,5 @@ jobs:
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
-          name: ${{ runner.os }}-${{ runner.arch }}-wheel
+          name: ${{ runner.os }}-${{ runner.arch }}-installer
           path: ${{ runner.temp }}/build/parsec*-setup.exe
