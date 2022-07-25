@@ -1014,7 +1014,7 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
 
         # Assert no service configured
         result = await run_list_services()
-        assert result.output == "No service configured\n"
+        assert result.output == "Found 0 sequester service(s)\n"
 
         # Create service
         authority_key_path, service_key_path = _setup_sequester_key_paths(tmp_path, coolorg)
@@ -1023,20 +1023,20 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
 
         # List services
         result = await run_list_services()
-        enabled_services, disabled_services = result.output.split("=== Disabled Services ===")
-        assert service_label in enabled_services
-        assert disabled_services == "\n"
+        assert result.output.startswith("Found 1 sequester service(s)\n")
+        assert service_label in result.output
+        assert "Disabled on" not in result.output
 
         # Delete service
-        for line in result.output.split("\n"):
-            if "Service ID" in line:
-                service_id = line.split(":: ")[1]
+        match = re.search(r"Service TestService \(id: ([0-9a-f]+)\)", result.output, re.MULTILINE)
+        assert match
+        service_id = match.group(1)
         result = await delete_service(service_id)
         assert result.exit_code == 0
         result = await run_list_services()
-        enabled_services, disabled_services = result.output.split("=== Disabled Services ===")
-        assert enabled_services == "=== Avaliable Services ===\n"
-        assert service_label in disabled_services
+        assert result.output.startswith("Found 1 sequester service(s)\n")
+        assert service_label in result.output
+        assert "Disabled on" in result.output
 
         # Service already deleted
         result = await delete_service(service_id)
@@ -1047,9 +1047,9 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         result = await enable_service(service_id)
         assert result.exit_code == 0
         result = await run_list_services()
-        enabled_services, disabled_services = result.output.split("=== Disabled Services ===")
-        assert disabled_services == "\n"
-        assert service_label in enabled_services
+        assert result.output.startswith("Found 1 sequester service(s)\n")
+        assert service_label in result.output
+        assert "Disabled on" not in result.output
 
         # Service already enabled
         result = await enable_service(service_id)

@@ -63,33 +63,29 @@ async def _create_service(
 
 
 def _display_service(service: SequesterService) -> None:
-    service_id = click.style(service.service_id, fg="yellow")
-    service_label = click.style({service.service_label}, fg="green")
-    tab = "  - "
-    click.echo(f"{tab}Service ID :: {service_id}")
-    click.echo(f"{tab}Service label :: {service_label}")
-    click.echo(f"{tab}Service creation date :: {service.created_on}")
+    display_service_id = click.style(service.service_id, fg="yellow")
+    display_service_label = click.style(service.service_label, fg="green")
+    click.echo(f"Service {display_service_label} (id: {display_service_id})")
+    click.echo(f"\tCreated on: {service.created_on}")
     if service.deleted_on:
-        click.echo(f"Service is disabled since {service.deleted_on}")
-    click.echo("")
+        click.echo(f"\tDisabled on: {service.created_on}")
 
 
 async def _list_services(config, organization_id: OrganizationID) -> None:
     async with run_pg_db_handler(config) as dbh:
         sequester_component = PGPSequesterComponent(dbh)
         services = await sequester_component.get_organization_services(organization_id)
-    if services:
-        click.echo("=== Avaliable Services ===")
-        for service in services:
-            if not service.deleted_on:
-                _display_service(service)
 
-        click.echo("=== Disabled Services ===")
-        for service in services:
-            if service.deleted_on:
-                _display_service(service)
-    else:
-        click.echo("No service configured")
+    display_services_count = click.style(len(services), fg="green")
+    click.echo(f"Found {display_services_count} sequester service(s)")
+
+    # Display enabled services first
+    for service in services:
+        if not service.deleted_on:
+            _display_service(service)
+    for service in services:
+        if service.deleted_on:
+            _display_service(service)
 
 
 async def _delete_service(
