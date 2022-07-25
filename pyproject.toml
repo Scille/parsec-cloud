@@ -50,7 +50,7 @@ h11 = "^0.13"
 toastedmarshmallow = "0.2.6" # updating causes consitency problem in test
 pendulum = "^2.1"
 PyNaCl = "^1.5"
-trio = "^0.20"
+trio = ">=0.20,<0.22"
 trio_typing = "^0.5" # updating causes conflict with qtrio dependency
 sentry-sdk = "^1.5"
 structlog = "^21.5"
