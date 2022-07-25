@@ -20,9 +20,9 @@ CREATE TABLE sequester_service(
 );
 
 
-CREATE TABLE sequester_service_vlob(
+CREATE TABLE sequester_service_vlob_atom(
     _id SERIAL PRIMARY KEY,
-    vlob INTEGER REFERENCES vlob_atom (_id) NOT NULL,
+    vlob_atom INTEGER REFERENCES vlob_atom (_id) NOT NULL,
     service INTEGER REFERENCES sequester_service (_id) NOT NULL,
     blob BYTEA NOT NULL
 );

@@ -323,7 +323,7 @@ SELECT
     realm_vlob_update.index AS _id,
     vlob_atom.vlob_id,
     vlob_atom.version,
-    sequester_service_vlob.blob,
+    sequester_service_vlob_atom.blob,
     vlob_atom.size,
     vlob_atom.author,
     vlob_atom.created_on AS timestamp
@@ -331,8 +331,8 @@ FROM
     realm_vlob_update
     LEFT JOIN vlob_atom
         ON realm_vlob_update.vlob_atom = vlob_atom._id
-    LEFT JOIN sequester_service_vlob
-        ON sequester_service_vlob.vlob = vlob_atom._id
+    LEFT JOIN sequester_service_vlob_atom
+        ON sequester_service_vlob_atom.vlob_atom = vlob_atom._id
 WHERE
     realm_vlob_update.realm = (
         SELECT _id
@@ -342,7 +342,7 @@ WHERE
             AND organization = (SELECT _id FROM organization WHERE organization_id = $2)
     )
     AND realm_vlob_update.index >= $3
-    AND sequester_service_vlob.service = (SELECT _id FROM sequester_service WHERE service_id = $4)
+    AND sequester_service_vlob_atom.service = (SELECT _id FROM sequester_service WHERE service_id = $4)
 LIMIT $5
 """,
                 self.realm_id,

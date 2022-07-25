@@ -207,7 +207,7 @@ async def query_update(
                 *_q_create_sequester_blob(
                     organization_id=organization_id.str,
                     service_id=service_id,
-                    vlob_id=vlob_atom_internal_id,
+                    vlob_atom_internal_id=vlob_atom_internal_id,
                     blob=blob,
                 )
             )
@@ -250,14 +250,14 @@ RETURNING _id
 
 _q_create_sequester_blob = Q(
     f"""
-    INSERT INTO sequester_service_vlob(service, vlob, blob)
+    INSERT INTO sequester_service_vlob_atom(service, vlob_atom, blob)
     SELECT
         (SELECT _id
             FROM sequester_service
             WHERE
                 sequester_service.service_id=$service_id
                 AND sequester_service.organization={ q_organization_internal_id("$organization_id") }),
-        $vlob_id,
+        $vlob_atom_internal_id,
         $blob
     RETURNING _id
     """
@@ -304,7 +304,7 @@ async def query_create(
                 *_q_create_sequester_blob(
                     organization_id=organization_id.str,
                     service_id=service_id,
-                    vlob_id=vlob_atom_internal_id,
+                    vlob_atom_internal_id=vlob_atom_internal_id,
                     blob=blob,
                 )
             )

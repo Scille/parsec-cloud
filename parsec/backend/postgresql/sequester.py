@@ -120,15 +120,15 @@ _q_get_organization_services = Q(
 
 _get_sequester_blob = Q(
     f"""
-    SELECT sequester_service_vlob.blob, vlob_atom.vlob_id
-    FROM sequester_service_vlob
-    INNER JOIN vlob_atom ON vlob_atom._id = sequester_service_vlob.vlob
+    SELECT sequester_service_vlob_atom.blob, vlob_atom.vlob_id
+    FROM sequester_service_vlob_atom
+    INNER JOIN vlob_atom ON vlob_atom._id = sequester_service_vlob_atom.vlob_atom
     INNER JOIN realm_vlob_update ON vlob_atom._id = realm_vlob_update.vlob_atom
 
-    WHERE sequester_service_vlob.service = (SELECT _id from sequester_service WHERE service_id=$service_id
+    WHERE sequester_service_vlob_atom.service = (SELECT _id from sequester_service WHERE service_id=$service_id
     AND organization={ q_organization_internal_id("$organization_id") })
     AND realm_vlob_update.realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
-    ORDER BY sequester_service_vlob._id
+    ORDER BY sequester_service_vlob_atom._id
     """
 )
 
