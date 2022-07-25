@@ -48,7 +48,7 @@ async def _bootstrap_organization(
 
 {SEQUESTER_BRIEF}
 
-File {sequester_verify_key} is going to be use has sequester authority private key.
+File {sequester_verify_key} is going to be use as sequester authority key.
 Do you want to continue ?""",
             default=False,
         )
