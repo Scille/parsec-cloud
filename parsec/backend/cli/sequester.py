@@ -314,7 +314,7 @@ async def _human_accesses(
             _display_user(user.user_id, per_realm_granted_roles, indent=0)
 
 
-@click.command()
+@click.command(short_help="Get information about user&realm accesses")
 @click.option("--organization", type=OrganizationID, required=True)
 @click.option("--filter", type=str, default="")
 @db_backend_options
@@ -416,7 +416,7 @@ async def _export_realm(
                         bar.update(blocks_exported_count)
 
 
-@click.command()
+@click.command(short_help="Export a realm to consult it with a sequester service key")
 @click.option("--organization", type=OrganizationID, required=True)
 @click.option("--realm", type=RealmID, required=True)
 @click.option(
