@@ -14,11 +14,12 @@ jobs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
       - name: Install poetry
+        shell: bash
         run: |
-          export POETRY_HOME="$HOME/.poetry"
-          mkdir -p "$POETRY_HOME"
-          curl -sSL https://install.python-poetry.org | python3 - --version=${{ env.poetry-version }}
-          echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
+          export POETRY_HOME=${APPDATA}/.poetry
+          curl -sSL https://install.python-poetry.org \
+            | python3 - --version=${{ env.poetry-version }}
+          echo "${APPDATA}\.poetry\bin" >> "$GITHUB_PATH"
 
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
