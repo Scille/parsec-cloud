@@ -13,7 +13,7 @@ env:
   postgre-version: 12
 
 jobs:
-  rust:
+  linux-ci-rust:
     # Using ubuntu 20 for consistency with the python job
     runs-on: ubuntu-20.04
     steps:
@@ -34,7 +34,7 @@ jobs:
           cargo test --package libparsec_crypto --features use-rustcrypto
           cargo test --workspace --features mock-time --exclude libparsec_crypto
 
-  python:
+  linux-ci-python:
     # Using ubuntu 20 in order to have postgresql-12 available as an APT package
     runs-on: ubuntu-20.04
     env:

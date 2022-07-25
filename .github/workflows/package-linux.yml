@@ -14,7 +14,7 @@ env:
   poetry-version: 1.1.13
 
 jobs:
-  build-wheel:
+  package-linux-build-wheel:
     runs-on: ubuntu-22.04
     env:
       # Need feature from poetry 1.2.x that aren't present in 1.1.x
@@ -77,7 +77,7 @@ jobs:
           name: ${{ runner.os }}-wheel
           path: dist/
 
-  package-linux:
+  package-linux-build-snap:
     needs: build-wheel
     runs-on: ubuntu-20.04
     env:
