@@ -12,7 +12,7 @@ env:
   python-version: "3.9"
 
 jobs:
-  build-wheel:
+  package-macos-build-wheel:
     runs-on: macos-12
     env:
       # Need feature from poetry 1.2.x that aren't present in 1.1.x
@@ -77,9 +77,9 @@ jobs:
           path: dist/
 
 
-  package-macos:
+  package-macos-build-app:
     runs-on: macos-12
-    needs: build-wheel
+    needs: package-macos-build-wheel
     env:
       WHEEL_VERSION: ${{ needs.build-wheel.outputs.wheel-version }}
     steps:
