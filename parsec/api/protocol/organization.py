@@ -45,7 +45,7 @@ class OrganizationBootstrapReqSchema(BaseReqSchema):
     device_certificate = fields.Bytes(required=True)
     redacted_user_certificate = fields.Bytes(required=True)
     redacted_device_certificate = fields.Bytes(required=True)
-    # Added in API version 1.4 (Parsec 2.11.0)
+    # Added in API version 2.8/3.2 (Parsec 2.11.0)
     # Set to `None` for sequester disabled
     # Note there is absolutely no way to change this later as this certif must
     # be signed by the root key which has been destroyed after bootstrap
@@ -107,10 +107,10 @@ class OrganizationConfigRepSchema(BaseRepSchema):
     # `None` stands for "no limit" here
     active_users_limit = fields.Integer(allow_none=True, required=True)
     # Field set to `None` if sequester is disabled for the organization
-    # New in API version 3.1 (Parsec 2.11.0)
+    # New in API version 2.8/3.2 (Parsec 2.11.0)
     sequester_authority_certificate = fields.Bytes(allow_none=True, required=False, missing=None)
     # Field set to `None` if sequester is disabled for the organization
-    # New in API version 3.1 (Parsec 2.11.0)
+    # New in API version 2.8/3.2 (Parsec 2.11.0)
     sequester_services_certificates = fields.List(
         fields.Bytes(), allow_none=True, required=False, missing=None
     )

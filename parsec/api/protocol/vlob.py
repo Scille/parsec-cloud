@@ -45,7 +45,7 @@ _validate_version = validate.Range(min=1)
 
 class SequesterInconsistencyRepSchema(BaseRepSchema):
     """
-    This schema has been added to API version 3.1 (Parsec v2.11.0).
+    This schema has been added to API version 2.8/3.2 (Parsec v2.11.0).
     """
 
     status = fields.CheckedConstant("sequester_inconsistency", required=True)
@@ -67,7 +67,7 @@ class VlobCreateReqSchema(BaseReqSchema):
     blob = fields.Bytes(required=True)
     # Field set to `None` if sequester is disabled for the organization
     # Key is sequester service ID, value is blob encrypted with the service key
-    # New in API version 3.1 (Parsec 2.11.0)
+    # New in API version 2.8/3.2 (Parsec 2.11.0)
     sequester_blob = fields.Map(
         SequesterServiceIDField(), fields.Bytes(), required=False, allow_none=True
     )
@@ -116,7 +116,7 @@ class VlobUpdateReqSchema(BaseReqSchema):
     blob = fields.Bytes(required=True)
     # Field set to `None` if sequester is disabled for the organization
     # Key is sequester service ID, value is blob encrypted with the service key
-    # New in API version 3.1 (Parsec 2.11.0)
+    # New in API version 2.8/3.2 (Parsec 2.11.0)
     sequester_blob = fields.Map(
         SequesterServiceIDField(), fields.Bytes(), required=False, allow_none=True
     )

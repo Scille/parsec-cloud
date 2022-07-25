@@ -334,7 +334,7 @@ class BackendAuthenticatedConn:
                 self._organization_config = OrganizationConfig(
                     user_profile_outsider_allowed=rep["user_profile_outsider_allowed"],
                     active_users_limit=rep["active_users_limit"],
-                    # Sequester introduced in APIv3.1
+                    # Sequester introduced in APIv2.8/3.2
                     sequester_authority=rep.get("sequester_authority"),
                     sequester_services=rep.get("sequester_services"),
                 )
