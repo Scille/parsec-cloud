@@ -92,14 +92,14 @@ jobs:
       - name: Copy packaging script
         run: cp -Rv ${{ github.workspace }}/packaging/macOS/* ${{ runner.temp }}
 
-      - name: Debug ${{ runner.temp }} dir
-        run: ls -lR ${{ runner.temp }}
-
       - name: Freeze Parsec
         env:
           WORKSPACE_DIR: ${{ github.workspace }}
         run: python3 freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
         working-directory: ${{ runner.temp }}
+
+      - name: Debug ${{ runner.temp }} dir
+        run: ls -lR ${{ runner.temp }}
 
       - name: Generate Parsec.app
         run: tar -jcf parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2 Parsec.app
