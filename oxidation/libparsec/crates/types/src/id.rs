@@ -201,11 +201,11 @@ impl HumanHandle {
         // According to https://www.rfc-editor.org/rfc/rfc5322#section-3.2.3, these special characters are not allowed
         if label.is_empty()
             || label.len() >= 255
-            || label.chars().any(|c| match c {
-                '(' | ')' | '<' | '>' | '@' | ',' | ':' | ';' | '.' | '\\' | '"' | '[' | ']' => {
-                    true
-                }
-                _ => false,
+            || label.chars().any(|c| {
+                matches!(
+                    c,
+                    '(' | ')' | '<' | '>' | '@' | ',' | ':' | ';' | '\\' | '"' | '[' | ']'
+                )
             })
         {
             return Err("Invalid label");
