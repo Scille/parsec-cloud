@@ -96,9 +96,7 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
                     translate("TEXT_ORG_INFO_SEQUESTRATION_ACTIVATED")
                 )
             else:
-                self.label_sequestration_state.setText(
-                    translate("TEXT_ORG_INFO_SEQUESTRATION_NOT_ACTIVATED")
-                )
+                self.label_sequestration_state.setVisible(False)
 
     def _on_copy_addr_clicked(self, org_addr: str):
         desktop.copy_to_clipboard(org_addr)

@@ -1,1 +1,1 @@
-Display the state of sequestration among the org information
+Display in the GUI in a dialog if the organization logged into is a sequestered organization.
