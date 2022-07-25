@@ -13,7 +13,7 @@ CREATE TABLE sequester_service(
     service_certificate BYTEA NOT NULL,
     service_label VARCHAR(254) NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
-    deleted_on TIMESTAMPTZ, -- NULL if not deleted
+    disabled_on TIMESTAMPTZ, -- NULL if not disabled
     webhook_url TEXT, -- NULL if service is not a WEBHOOK
 
     UNIQUE(organization, service_id)

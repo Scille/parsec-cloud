@@ -11,7 +11,7 @@ from parsec.backend.sequester import (
     SequesterCertificateValidationError,
     SequesterServiceAlreadyExists,
     SequesterCertificateOutOfBallparkError,
-    SequesterServiceAlreadyDeletedError,
+    SequesterServiceAlreadyDisabledError,
 )
 
 from tests.common import (
@@ -28,7 +28,7 @@ from tests.common import (
 
 @pytest.mark.trio
 @customize_fixtures(coolorg_is_sequestered_organization=True)
-async def test_create_delete_services(
+async def test_create_disable_services(
     coolorg: OrganizationFullData, otherorg: OrganizationFullData, backend
 ):
     service = sequester_service_factory("Test Service", coolorg.sequester_authority)
@@ -95,57 +95,57 @@ async def test_create_delete_services(
             organization_id=otherorg.organization_id
         )
 
-    # 2) Service deletion
-    deleted_on = pendulum_now()
+    # 2) Disable service
+    disabled_on = pendulum_now()
 
     # Unknown organization ID
     with pytest.raises(SequesterOrganizationNotFoundError):
-        await backend.sequester.delete_service(
+        await backend.sequester.disable_service(
             organization_id=OrganizationID("DummyOrg"),
             service_id=service.service_id,
-            deleted_on=deleted_on,
+            disabled_on=disabled_on,
         )
 
     # Unknown sequestre service
     with pytest.raises(SequesterServiceNotFoundError):
-        await backend.sequester.delete_service(
+        await backend.sequester.disable_service(
             organization_id=coolorg.organization_id,
             service_id=SequesterServiceID.new(),
-            deleted_on=deleted_on,
+            disabled_on=disabled_on,
         )
 
-    # Try deletion in a non sequestered organization
+    # Try disable in a non sequestered organization
     with pytest.raises(SequesterDisabledError):
-        await backend.sequester.delete_service(
+        await backend.sequester.disable_service(
             organization_id=otherorg.organization_id,
             service_id=service.service_id,
-            deleted_on=deleted_on,
+            disabled_on=disabled_on,
         )
 
-    # Successful deletion
-    await backend.sequester.delete_service(
+    # Successful disable
+    await backend.sequester.disable_service(
         organization_id=coolorg.organization_id,
         service_id=service.service_id,
-        deleted_on=deleted_on,
+        disabled_on=disabled_on,
     )
 
-    # Already deleted
-    with pytest.raises(SequesterServiceAlreadyDeletedError):
-        await backend.sequester.delete_service(
+    # Already disabled
+    with pytest.raises(SequesterServiceAlreadyDisabledError):
+        await backend.sequester.disable_service(
             organization_id=coolorg.organization_id,
             service_id=service.service_id,
-            deleted_on=deleted_on,
+            disabled_on=disabled_on,
         )
 
     # Retreive service list
     services = await backend.sequester.get_organization_services(
         organization_id=coolorg.organization_id
     )
-    assert services == [service.backend_service.evolve(deleted_on=deleted_on)]
+    assert services == [service.backend_service.evolve(disabled_on=disabled_on)]
 
-    # 3) Bonus: Create after deletion
+    # 3) Bonus: Create after disabled
 
-    # Cannot recreate deleted service
+    # Cannot recreate a disabled service
     with pytest.raises(SequesterServiceAlreadyExists):
         await backend.sequester.create_service(
             organization_id=coolorg.organization_id, service=service.backend_service
@@ -163,7 +163,7 @@ async def test_create_delete_services(
     services = await backend.sequester.get_organization_services(
         organization_id=coolorg.organization_id
     )
-    expected_backend_service1 = service.backend_service.evolve(deleted_on=deleted_on)
+    expected_backend_service1 = service.backend_service.evolve(disabled_on=disabled_on)
     assert services == [expected_backend_service1, backend_service2]
 
     # Retreive single service

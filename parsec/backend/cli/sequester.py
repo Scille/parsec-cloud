@@ -67,7 +67,7 @@ def _display_service(service: SequesterService) -> None:
     display_service_label = click.style(service.service_label, fg="green")
     click.echo(f"Service {display_service_label} (id: {display_service_id})")
     click.echo(f"\tCreated on: {service.created_on}")
-    if service.deleted_on:
+    if not service.is_enabled:
         click.echo(f"\tDisabled on: {service.created_on}")
 
 
@@ -81,19 +81,19 @@ async def _list_services(config, organization_id: OrganizationID) -> None:
 
     # Display enabled services first
     for service in services:
-        if not service.deleted_on:
+        if service.is_enabled:
             _display_service(service)
     for service in services:
-        if service.deleted_on:
+        if not service.is_enabled:
             _display_service(service)
 
 
-async def _delete_service(
+async def _disable_service(
     config, organizaton_id: OrganizationID, service_id: SequesterServiceID
 ) -> None:
     async with run_pg_db_handler(config) as dbh:
         sequester_component = PGPSequesterComponent(dbh)
-        await sequester_component.delete_service(organizaton_id, service_id)
+        await sequester_component.disable_service(organizaton_id, service_id)
 
 
 async def _enable_service(
@@ -204,7 +204,7 @@ def update_service(
         raise click.BadParameter("Required: enable or disable flag")
     db_config = _get_config(db, db_min_connections, db_max_connections)
     if disable:
-        trio_run(_delete_service, db_config, organization, service, use_asyncio=True)
+        trio_run(_disable_service, db_config, organization, service, use_asyncio=True)
     if enable:
         trio_run(_enable_service, db_config, organization, service, use_asyncio=True)
     click.echo(click.style("Service updated", fg="green"))

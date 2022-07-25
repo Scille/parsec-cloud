@@ -17,7 +17,7 @@ from tests.backend.common import vlob_create, vlob_update
 async def test_vlob_create_update_and_sequester_access(
     coolorg: OrganizationFullData, alice_ws, realm, backend
 ):
-    # s1&s2 are valid sequester services, s3 is a deleted sequester service
+    # s1&s2 are valid sequester services, s3 is a disabled sequester service
     s1 = sequester_service_factory(
         authority=coolorg.sequester_authority, label="Sequester service 1"
     )
@@ -36,7 +36,7 @@ async def test_vlob_create_update_and_sequester_access(
     await backend.sequester.create_service(
         organization_id=coolorg.organization_id, service=s3.backend_service
     )
-    await backend.sequester.delete_service(
+    await backend.sequester.disable_service(
         organization_id=coolorg.organization_id, service_id=s3.service_id
     )
 

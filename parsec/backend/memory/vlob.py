@@ -191,7 +191,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         else:
             # Sequestered organization
-            services = self._sequester_component._active_services(organization_id)
+            services = self._sequester_component._enabled_services(organization_id)
             if (
                 not expect_sequestered_organization
                 or {s.service_id for s in services} != expect_active_sequester_services

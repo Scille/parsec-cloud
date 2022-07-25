@@ -68,7 +68,7 @@ async def test_organization_config_ok_sequestered_organization(
     }
 
     # Delete a service, should no longer appear in config
-    await backend.sequester.delete_service(
+    await backend.sequester.disable_service(
         organization_id=coolorg.organization_id, service_id=s1.service_id
     )
 

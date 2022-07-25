@@ -23,12 +23,12 @@ from parsec.backend.postgresql.vlob_queries import (
 )
 from parsec.backend.postgresql.sequester import q_get_organisation_sequester_authority
 
-_q_get_sequester_service = Q(
+_q_get_sequester_enabled_services = Q(
     f"""
     SELECT service_id, service_certificate
     FROM sequester_service
     WHERE organization={ q_organization_internal_id("$organization_id") }
-    AND deleted_on IS NULL
+    AND disabled_on IS NULL
     ORDER BY _id
 """
 )
@@ -47,14 +47,14 @@ async def _check_sequestered_organization(
     if sequester_authority is None:
         raise VlobSequesterDisabledError()
 
-    row = await conn.fetch(*_q_get_sequester_service(organization_id=organization_id.str))
-    configured_services = {SequesterServiceID(data["service_id"]) for data in row}
+    rows = await conn.fetch(*_q_get_sequester_enabled_services(organization_id=organization_id.str))
+    configured_services = {SequesterServiceID(row["service_id"]) for row in rows}
     requested_sequester_services = sequester_blob.keys() if sequester_blob is not None else set()
 
     if configured_services != requested_sequester_services:
         raise VlobSequesterServiceInconsistencyError(
             sequester_authority_certificate=sequester_authority,
-            sequester_services_certificates=[data["service_certificate"] for data in row],
+            sequester_services_certificates=[row["service_certificate"] for row in rows],
         )
 
 

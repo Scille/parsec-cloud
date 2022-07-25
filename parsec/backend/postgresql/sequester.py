@@ -16,7 +16,7 @@ from parsec.backend.sequester import (
     SequesterError,
     SequesterOrganizationNotFoundError,
     SequesterService,
-    SequesterServiceAlreadyDeletedError,
+    SequesterServiceAlreadyDisabledError,
     SequesterServiceAlreadyEnabledError,
     SequesterServiceAlreadyExists,
     SequesterServiceNotFoundError,
@@ -54,10 +54,10 @@ _q_create_sequester_service = Q(
     """
 )
 
-_q_delete_sequester_service = Q(
+_q_disable_sequester_service = Q(
     f"""
     UPDATE sequester_service
-    SET deleted_on=$deleted_on
+    SET disabled_on=$disabled_on
     WHERE
         service_id=$service_id
         AND organization={ q_organization_internal_id("$organization_id") }
@@ -67,7 +67,7 @@ _q_delete_sequester_service = Q(
 _q_enable_sequester_service = Q(
     f"""
     UPDATE sequester_service
-    SET deleted_on=NULL
+    SET disabled_on=NULL
     WHERE
         service_id=$service_id
         AND organization={ q_organization_internal_id("$organization_id") }
@@ -84,9 +84,9 @@ _q_get_sequester_service_exist = Q(
     LIMIT 1"""
 )
 
-_q_get_sequester_service_deleted_for_update = Q(
+_q_get_sequester_service_disabled_for_update = Q(
     f"""
-    SELECT service_id, deleted_on
+    SELECT service_id, disabled_on
     FROM sequester_service
     WHERE
         service_id=$service_id
@@ -98,7 +98,7 @@ _q_get_sequester_service_deleted_for_update = Q(
 
 _q_get_sequester_service = Q(
     f"""
-    SELECT service_label, service_certificate, created_on, deleted_on
+    SELECT service_label, service_certificate, created_on, disabled_on
     FROM sequester_service
     WHERE
         service_id=$service_id
@@ -109,7 +109,7 @@ _q_get_sequester_service = Q(
 
 _q_get_organization_services = Q(
     f"""
-    SELECT service_id, service_label, service_certificate, created_on, deleted_on
+    SELECT service_id, service_label, service_certificate, created_on, disabled_on
     FROM sequester_service
     WHERE
         organization={ q_organization_internal_id("$organization_id") }
@@ -209,19 +209,19 @@ class PGPSequesterComponent(BaseSequesterComponent):
         if row[0] is None:
             raise SequesterDisabledError
 
-    async def delete_service(
+    async def disable_service(
         self,
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
-        deleted_on: Optional[DateTime] = None,
+        disabled_on: Optional[DateTime] = None,
     ) -> None:
 
-        deleted_on = deleted_on or pendulum_now()
+        disabled_on = disabled_on or pendulum_now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             await self._assert_service_enabled(conn, organization_id)
 
             row = await conn.fetchrow(
-                *_q_get_sequester_service_deleted_for_update(
+                *_q_get_sequester_service_disabled_for_update(
                     organization_id=organization_id.str, service_id=service_id
                 )
             )
@@ -230,13 +230,13 @@ class PGPSequesterComponent(BaseSequesterComponent):
                 raise SequesterServiceNotFoundError
 
             if row[1] is not None:
-                raise SequesterServiceAlreadyDeletedError
+                raise SequesterServiceAlreadyDisabledError
 
             result = await conn.execute(
-                *_q_delete_sequester_service(
+                *_q_disable_sequester_service(
                     organization_id=organization_id.str,
                     service_id=service_id,
-                    deleted_on=deleted_on,
+                    disabled_on=disabled_on,
                 )
             )
             if result != "UPDATE 1":
@@ -249,7 +249,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
             await self._assert_service_enabled(conn, organization_id)
 
             row = await conn.fetchrow(
-                *_q_get_sequester_service_deleted_for_update(
+                *_q_get_sequester_service_disabled_for_update(
                     organization_id=organization_id.str, service_id=service_id
                 )
             )
@@ -288,7 +288,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
             service_label=row[0],
             service_certificate=row[1],
             created_on=row[2],
-            deleted_on=row[3],
+            disabled_on=row[3],
         )
 
     async def get_service(
@@ -312,7 +312,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     service_label=entry["service_label"],
                     service_certificate=entry["service_certificate"],
                     created_on=entry["created_on"],
-                    deleted_on=entry["deleted_on"],
+                    disabled_on=entry["disabled_on"],
                 )
                 for entry in entries
             ]

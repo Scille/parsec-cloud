@@ -71,13 +71,13 @@ WHERE organization_id = $organization_id
 """
 )
 
-_q_get_organization_services_certificates = Q(
+_q_get_organization_enabled_services_certificates = Q(
     f"""
     SELECT service_certificate
     FROM sequester_service
     WHERE
         organization={ q_organization_internal_id("$organization_id") }
-        AND deleted_on is NULL
+        AND disabled_on is NULL
     ORDER BY _id
     """
 )
@@ -223,7 +223,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         if data[5]:
             sequester_authority = SequesterAuthority.build_from_certificate(data[5])
             services = await conn.fetch(
-                *_q_get_organization_services_certificates(organization_id=id.str)
+                *_q_get_organization_enabled_services_certificates(organization_id=id.str)
             )
             sequester_services_certificates = tuple(
                 service["service_certificate"] for service in services

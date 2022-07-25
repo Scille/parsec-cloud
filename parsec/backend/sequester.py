@@ -43,7 +43,7 @@ class SequesterServiceNotFoundError(SequesterError):
     pass
 
 
-class SequesterServiceAlreadyDeletedError(SequesterError):
+class SequesterServiceAlreadyDisabledError(SequesterError):
     pass
 
 
@@ -57,7 +57,7 @@ class SequesterService:
     service_label: str
     service_certificate: bytes
     created_on: DateTime = attr.ib(factory=pendulum_now)
-    deleted_on: Optional[DateTime] = None
+    disabled_on: Optional[DateTime] = None
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.service_id})"
@@ -66,8 +66,8 @@ class SequesterService:
         return attr.evolve(self, **kwargs)
 
     @property
-    def is_deleted(self) -> bool:
-        return self.deleted_on is not None
+    def is_enabled(self) -> bool:
+        return self.disabled_on is None
 
 
 class BaseSequesterComponent:
@@ -83,15 +83,18 @@ class BaseSequesterComponent:
         """
         raise NotImplementedError()
 
-    async def delete_service(
-        self, organization_id: OrganizationID, service_id: SequesterServiceID
+    async def disable_service(
+        self,
+        organization_id: OrganizationID,
+        service_id: SequesterServiceID,
+        disabled_on: Optional[DateTime] = None,
     ) -> None:
         """
         Raises:
             SequesterDisabledError
             SequesterOrganizationNotFoundError
             SequesterServiceNotFoundError
-            SequesterServiceAlreadyDeletedError
+            SequesterServiceAlreadyDisabledError
         """
         raise NotImplementedError()
 
@@ -99,6 +102,8 @@ class BaseSequesterComponent:
         self, organization_id: OrganizationID, service_id: SequesterServiceID
     ) -> None:
         """
+        Re-enable a service that has been previously disabled.
+
         Raises:
             SequesterDisabledError
             SequesterOrganizationNotFoundError

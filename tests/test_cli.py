@@ -3,7 +3,7 @@
 import re
 import os
 from parsec.backend.sequester import (
-    SequesterServiceAlreadyDeletedError,
+    SequesterServiceAlreadyDisabledError,
     SequesterServiceAlreadyEnabledError,
 )
 import trio
@@ -1000,7 +1000,7 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
             assert result.exit_code == 0
             return result
 
-        async def delete_service(service_id: str):
+        async def disable_service(service_id: str):
             return await _cli_invoke_in_thread(
                 runner,
                 f"backend sequester update_service {common_args} --disable --service {service_id}",
@@ -1031,7 +1031,7 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         match = re.search(r"Service TestService \(id: ([0-9a-f]+)\)", result.output, re.MULTILINE)
         assert match
         service_id = match.group(1)
-        result = await delete_service(service_id)
+        result = await disable_service(service_id)
         assert result.exit_code == 0
         result = await run_list_services()
         assert result.output.startswith("Found 1 sequester service(s)\n")
@@ -1039,9 +1039,9 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         assert "Disabled on" in result.output
 
         # Service already deleted
-        result = await delete_service(service_id)
+        result = await disable_service(service_id)
         assert result.exit_code == 1
-        assert isinstance(result.exception, SequesterServiceAlreadyDeletedError)
+        assert isinstance(result.exception, SequesterServiceAlreadyDisabledError)
 
         # Re enable service
         result = await enable_service(service_id)

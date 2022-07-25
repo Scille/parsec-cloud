@@ -16,7 +16,7 @@ from parsec.backend.sequester import (
     SequesterOrganizationNotFoundError,
     SequesterDisabledError,
     SequesterServiceAlreadyExists,
-    SequesterServiceAlreadyDeletedError,
+    SequesterServiceAlreadyDisabledError,
     SequesterCertificateValidationError,
     SequesterCertificateOutOfBallparkError,
 )
@@ -43,18 +43,16 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self._organization_component = organization
         self._vlob_component = vlob
 
-    def _active_services(self, organization_id: OrganizationID) -> List[SequesterService]:
-        return [s for s in self._services[organization_id].values() if not s.is_deleted]
+    def _enabled_services(self, organization_id: OrganizationID) -> List[SequesterService]:
+        return [s for s in self._services[organization_id].values() if s.is_enabled]
 
     def _refresh_services_in_organization_component(self, organization_id: OrganizationID) -> None:
         # Organization objects in the organization component contains the list of active services
         # (typically returned in `organization_config` API command), so it must be refreshed
-        # every time we create or delete a service !
+        # every time we create/disable/re-enable a service !
         organization = self._organization_component._organizations[organization_id]
         sequester_services_certificates = tuple(
-            s.service_certificate
-            for s in self._services[organization_id].values()
-            if not s.is_deleted
+            s.service_certificate for s in self._services[organization_id].values() if s.is_enabled
         )
         self._organization_component._organizations[organization_id] = organization.evolve(
             sequester_services_certificates=sequester_services_certificates
@@ -100,17 +98,17 @@ class MemorySequesterComponent(BaseSequesterComponent):
         # Also don't forget to update Organization structure in organization component
         self._refresh_services_in_organization_component(organization_id)
 
-    async def delete_service(
+    async def disable_service(
         self,
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
-        deleted_on: Optional[DateTime] = None,
+        disabled_on: Optional[DateTime] = None,
     ) -> None:
-        deleted_on = deleted_on or pendulum_now()
+        disabled_on = disabled_on or pendulum_now()
         service = self._get_service(organization_id=organization_id, service_id=service_id)
-        if service.is_deleted:
-            raise SequesterServiceAlreadyDeletedError
-        self._services[organization_id][service_id] = service.evolve(deleted_on=deleted_on)
+        if not service.is_enabled:
+            raise SequesterServiceAlreadyDisabledError
+        self._services[organization_id][service_id] = service.evolve(disabled_on=disabled_on)
         # Also don't forget to update Organization structure in organization component
         self._refresh_services_in_organization_component(organization_id)
 
@@ -118,9 +116,9 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self, organization_id: OrganizationID, service_id: SequesterServiceID
     ) -> None:
         service = self._get_service(organization_id=organization_id, service_id=service_id)
-        if not service.is_deleted:
+        if service.is_enabled:
             raise SequesterServiceAlreadyEnabledError
-        self._services[organization_id][service_id] = service.evolve(deleted_on=None)
+        self._services[organization_id][service_id] = service.evolve(disabled_on=None)
         # Also don't forget to update Organization structure in organization component
         self._refresh_services_in_organization_component(organization_id)
 
