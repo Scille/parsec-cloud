@@ -1,5 +1,9 @@
 name: package-linux
 
+# This workflow will be triggered on:
+# - push on the main branch
+# - push on the releases branches
+# - tag push matching the version pattern
 on:
   pull_request:
     paths:
