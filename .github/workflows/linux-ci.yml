@@ -86,16 +86,16 @@ jobs:
         run: poetry run pip install oxidation/libparsec_python
 
       - name: Basic tests
-        run: poetry run pytest $PYTEST_BASE_ARGS tests
+        run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests
         timeout-minutes: 3
 
       - name: Rust binding tests
         if: matrix.binding == 'rust-binding'
-        run: poetry run pytest $PYTEST_BASE_ARGS tests --runrust -m rust
+        run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests --runrust -m rust
         timeout-minutes: 3
 
       - name: Mountpoint tests
-        run: poetry run pytest $PYTEST_BASE_ARGS tests --runmountpoint --runslow -m mountpoint
+        run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests --runmountpoint --runslow -m mountpoint
         timeout-minutes: 3
 
       - name: GUI tests
@@ -106,15 +106,15 @@ jobs:
           # Use pytest-xvfb to nicely wrap it up
           poetry run pip install pytest-xvfb
           # Run GUI tests
-          poetry run pytest $PYTEST_BASE_ARGS tests --runmountpoint --runslow --rungui -m gui
+          poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests --runmountpoint --runslow --rungui -m gui
         timeout-minutes: 10
 
       - name: PostgreSQL tests
         env:
           PGINSTALLATION: /usr/lib/postgresql/${{ env.postgre-version }}/bin
-        run: poetry run pytest $PYTEST_BASE_ARGS tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
+        run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
         timeout-minutes: 10
 
       - name: Hypothesis tests
-        run: poetry run pytest $PYTEST_BASE_ARGS tests --runslow -m slow --numprocesses auto
+        run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests --runslow -m slow --numprocesses auto
         timeout-minutes: 20
