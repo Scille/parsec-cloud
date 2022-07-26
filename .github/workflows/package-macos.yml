@@ -1,6 +1,9 @@
 name: package-macos
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/package-macos.yml
   push:
     branches:
       - master
