@@ -888,7 +888,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         async with await trio.open_file(source, "rb") as f:
 
             # Getting the file name without extension (anything after the first dot is considered to be the extension)
-            name_we, suffixes = dest.name.str.split(".", 1)
+            name_splitted = dest.name.str.split(".", 1)
+            if len(name_splitted) == 1:
+                name_splitted.append("")
+            name_we, suffixes = name_splitted
             # Count starts at 2 (1 would be the file without a number)
             count = 2
             while await self.workspace_fs.exists(dest):
