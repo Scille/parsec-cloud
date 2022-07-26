@@ -1,6 +1,9 @@
 name: package-linux
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/package-linux.yml
   push:
     branches:
       - master
