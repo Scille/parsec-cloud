@@ -29,6 +29,7 @@ jobs:
     steps:
       - name: Install poetry
         run: |
+          set -eux
           export POETRY_HOME="$HOME/.poetry"
           mkdir -p "$POETRY_HOME"
           curl -sSL https://install.python-poetry.org | python3 - --version=${{ env.poetry-version }}
@@ -44,7 +45,7 @@ jobs:
       - name: Get wheel version
         id: wheel-version
         run: |
-          set -e
+          set -eux
           # Retrieve Parsec version and customize it if we are not building on a tag
           # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
           if ([ "${{ github.ref_type }}" == "tag" ])
