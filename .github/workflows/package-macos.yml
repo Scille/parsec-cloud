@@ -81,7 +81,7 @@ jobs:
     runs-on: macos-12
     needs: package-macos-build-wheel
     env:
-      WHEEL_VERSION: ${{ needs.build-wheel.outputs.wheel-version }}
+      WHEEL_VERSION: ${{ needs.package-macos-build-wheel.outputs.wheel-version }}
     steps:
       - uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb  # pin v4.0.0
         with:
