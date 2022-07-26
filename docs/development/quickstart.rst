@@ -13,9 +13,9 @@ Get the sources
 Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
 
 1. You need to have the following tools available:
-    - `git <https://git-scm.com/>`
-    - `python3.9 <https://www.python.org/>`
-    - `poetry <https://python-poetry.org/>`
+    - `git <https://git-scm.com/>`_
+    - `python3.9 <https://www.python.org/>`_
+    - `poetry <https://python-poetry.org/>`_
 
 2. You must first clone it with ``git`` and move to the project dir
 
@@ -89,9 +89,9 @@ On linux:
 
 On Windows:
 
-.. code-block:: shell
+.. code-block:: cmd
 
-    tests\\scripts\\run_testenv.bat
+    .\tests\scripts\run_testenv.bat
 
 This script will:
 
