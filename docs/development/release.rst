@@ -110,7 +110,7 @@ On top of that the Python wheel of the project is going to be uploaded to Pypi.
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once the tag pushed, it can be converted as a release on github using the
-["Draft a new release"](https://github.com/Scille/parsec-cloud/releases) button.
+`"Draft a new release" <https://github.com/Scille/parsec-cloud/releases>`_ button.
 
 The release should contain the Mac and Windows installers that have been signed during step 4.
 
