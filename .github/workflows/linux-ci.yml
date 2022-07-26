@@ -90,15 +90,28 @@ jobs:
         run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests --runmountpoint --runslow -m mountpoint
         timeout-minutes: 10
 
+      # Install the require package for testing Qt
+      # https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions
+      - name: Install APT deps for GUI testing
+        run: >
+          sudo apt-get install
+          libxkbcommon-x11-0
+          libxcb-icccm4
+          libxcb-image0
+          libxcb-keysyms1
+          libxcb-randr0
+          libxcb-render-util0
+          libxcb-xinerama0
+          libxcb-xfixes0
+          x11-utils
+
+      # Install Xvfb plugin to be started by pytest
+      # https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#id1
+      - name: Install Xvfb pytest plugin
+        run: poetry run pip install pytest-xvfb
+
       - name: GUI tests
-        run: |
-          # Required dependencies for Qt testing. See:
-          # https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions
-          sudo apt-get install libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 x11-utils
-          # Use pytest-xvfb to nicely wrap it up
-          poetry run pip install pytest-xvfb
-          # Run GUI tests
-          poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests --runmountpoint --runslow --rungui -m gui
+        run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests --runmountpoint --runslow --rungui -m gui
         timeout-minutes: 10
 
       - name: PostgreSQL tests
