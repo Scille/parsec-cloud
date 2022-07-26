@@ -1,6 +1,9 @@
 name: package-linux
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/package-linux.yml
   push:
     branches:
       - master
@@ -81,7 +84,7 @@ jobs:
     needs: package-linux-build-wheel
     runs-on: ubuntu-20.04
     env:
-      WHEEL_VERSION: ${{ needs.build-wheel.outputs.wheel-version }}
+      WHEEL_VERSION: ${{ needs.package-linux-build-wheel.outputs.wheel-version }}
     steps:
       - name: Install snapcraft
         run: sudo snap install snapcraft --classic
@@ -113,7 +116,9 @@ jobs:
           cp -v ${{ github.workspace }}/dist/core-requirements.txt src/
 
       - name: Set snap build version
-        run: sed -i "s/__PARSEC_VERSION__/$WHEEL_VERSION/" ${{ runner.temp }}/snap/snapcraft.yaml
+        run: |
+          sed -i.back 's/__PARSEC_VERSION__/"${{ env.WHEEL_VERSION }}"/' ${{ runner.temp }}/snap/snapcraft.yaml
+          diff -u ${{ runner.temp }}/snap/snapcraft.yaml{.back,} || true
 
       - name: Run snapcraft
         working-directory: ${{ runner.temp }}
