@@ -6,6 +6,7 @@ from typing import Optional
 
 from parsec.utils import trio_run
 from parsec.api.protocol import UserID, RealmRole
+from parsec.api.data import EntryName
 from parsec.cli_utils import cli_exception_handler
 from parsec.core import logged_core_factory
 from parsec.core.types import WorkspaceRole, LocalDevice
@@ -19,7 +20,7 @@ WORKSPACE_ROLE_CHOICES = {"NONE": None, **{role.value: role for role in Workspac
 async def _share_workspace(
     config: CoreConfig,
     device: LocalDevice,
-    name: str,
+    name: EntryName,
     user_id: Optional[UserID],
     recipiant: Optional[str],
     user_role: RealmRole,
@@ -43,7 +44,7 @@ async def _share_workspace(
 
 
 @click.command(short_help="share workspace")
-@click.option("--workspace-name", required=True)
+@click.option("--workspace-name", required=True, type=EntryName)
 @click.option("--user-id", type=UserID)
 @click.option("--recipiant", help="Name or email to whom the workspace is shared with")
 @click.option(
@@ -54,7 +55,7 @@ async def _share_workspace(
 def share_workspace(
     config: CoreConfig,
     device: LocalDevice,
-    workspace_name: str,
+    workspace_name: EntryName,
     user_id: Optional[UserID],
     recipiant: Optional[str],
     role: RealmRole,

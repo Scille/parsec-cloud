@@ -18,7 +18,7 @@ from parsec.api.protocol import (
     InvitationDeletedReason,
     InvitationEmailSentStatus,
 )
-from parsec.api.data import RevokedUserCertificateContent
+from parsec.api.data import RevokedUserCertificateContent, EntryName
 from parsec.core.pki import accepter_list_submitted_from_backend
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
@@ -130,7 +130,7 @@ class LoggedCore:
     def backend_status_exc(self) -> Optional[Exception]:
         return self._backend_conn.status_exc
 
-    def find_workspace_from_name(self, workspace_name: str):
+    def find_workspace_from_name(self, workspace_name: EntryName):
         for workspace in self.user_fs.get_user_manifest().workspaces:
             if workspace_name == workspace.name:
                 return workspace
