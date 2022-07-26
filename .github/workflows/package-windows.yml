@@ -1,6 +1,9 @@
 name: package-windows
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/package-windows.yml
   push:
     branches:
       - master
