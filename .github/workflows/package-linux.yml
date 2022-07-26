@@ -113,7 +113,9 @@ jobs:
           cp -v ${{ github.workspace }}/dist/core-requirements.txt src/
 
       - name: Set snap build version
-        run: sed -i "s/__PARSEC_VERSION__/$WHEEL_VERSION/" ${{ runner.temp }}/snap/snapcraft.yaml
+        run: |
+          sed -i.back 's/__PARSEC_VERSION__/"${{ env.WHEEL_VERSION }}"/' ${{ runner.temp }}/snap/snapcraft.yaml
+          diff -u ${{ runner.temp }}/snap/snapcraft.yaml{.back,} || true
 
       - name: Run snapcraft
         working-directory: ${{ runner.temp }}
