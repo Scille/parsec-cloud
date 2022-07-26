@@ -89,9 +89,9 @@ On linux:
 
 On Windows:
 
-.. code-block:: shell
+.. code-block:: cmd
 
-    tests\\scripts\\run_testenv.bat
+    .\tests\scripts\run_testenv.bat
 
 This script will:
 
