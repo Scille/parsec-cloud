@@ -227,7 +227,7 @@ def get_version_from_code():
     assert pyproject_txt.startswith(
         '[tool.poetry]\nname = "parsec-cloud"\nversion = "'
     )  # Sanity check
-    match = re.match(r'^version\s*=\s*".*"$', pyproject_txt.splitlines()[2].strip())
+    match = re.match(r'^version\s*=\s*"(.*)"$', pyproject_txt.splitlines()[2].strip())
     if __version__ != match.group(1):
         raise ReleaseError(f"Version mismatch between `parsec/_version.py` and `pyproject.toml` !")
 
