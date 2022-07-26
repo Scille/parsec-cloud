@@ -449,6 +449,10 @@ async def _serve_backend_with_asgi(
         {
             "bind": [f"{host}:{port}"],
             "accesslog": logging.getLogger("hypercorn.access"),
+            # Timestamp is added by the log processor configured in `parsec.logging`,
+            # here we configure peer address + req line + rep status + rep body size + time
+            # (e.g. "GET 88.0.12.52:54160 /foo 1.1 404 823o 12343ms")
+            "access_log_format": "%(h)s %(r)s %(s)s %(b)so %(D)sus",
             "errorlog": logging.getLogger("hypercorn.error"),
             "certfile": str(ssl_certfile) if ssl_certfile else None,
             "keyfile": str(ssl_keyfile) if ssl_certfile else None,
