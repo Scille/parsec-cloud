@@ -40,9 +40,7 @@ def run(cmd, **kwargs):
 
 
 def main(
-    program_source: Path,
-    include_parsec_ext: Optional[Path] = None,
-    wheel_it_dir: Optional[Path] = None,
+    src_dir: Path, include_parsec_ext: Optional[Path] = None, wheel_it_dir: Optional[Path] = None
 ):
     log = logger.getChild(main.__name__)
 
@@ -67,7 +65,7 @@ def main(
         log.info(f"Parsec wheel is: {program_wheel}")
         program_version = f"v{match.group(1)}"
     else:
-        exec((program_source / "parsec/_version.py").read_text(), global_dict)
+        exec((src_dir / "parsec/_version.py").read_text(), global_dict)
         program_version = global_dict.get("__version__")
     assert program_version.startswith("v")
     program_version_without_v_prefix = program_version[1:]
@@ -101,7 +99,7 @@ def main(
         if not program_wheel or not program_constraints.exists():
             log.info("Generate program wheel and constraints on dependencies")
             run(
-                f"{ tools_python } { program_source / 'packaging/wheel/wheel_it.py' } { program_source } --output-dir { DEFAULT_WHEEL_IT_DIR }"
+                f"{ tools_python } { src_dir / 'packaging/wheel/wheel_it.py' } { src_dir } --output-dir { DEFAULT_WHEEL_IT_DIR }"
             )
             program_wheel = next(
                 DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{program_version_without_v_prefix}*.whl")
@@ -156,7 +154,7 @@ def main(
 
     # Include LICENSE file
     (pyinstaller_dist / "Parsec.app/Contents/LICENSE.txt").write_text(
-        (program_source / "licenses/AGPL3.txt").read_text()
+        (src_dir / "licenses/AGPL3.txt").read_text()
     )
 
 
@@ -169,7 +167,7 @@ def check_python_version():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Freeze Parsec")
-    parser.add_argument("program_source", type=Path)
+    parser.add_argument("src_dir", type=Path)
     parser.add_argument("--disable-check-python", action="store_true")
     parser.add_argument("--include-parsec-ext", type=Path)
     parser.add_argument("--wheel-it-dir", type=Path)
@@ -178,7 +176,7 @@ if __name__ == "__main__":
     if not args.disable_check_python:
         check_python_version()
     main(
-        program_source=args.program_source,
+        src_dir=args.src_dir,
         include_parsec_ext=args.include_parsec_ext,
         wheel_it_dir=args.wheel_it_dir,
     )
