@@ -12,7 +12,7 @@ from pathlib import Path
 import logging
 
 logger = logging.getLogger()
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format="\x1b[33m[%(name)s] %(message)s\x1b[0m")
 
 # Fully-qualified path for the executable should be used with subprocess to
 # avoid unreliability (especially when running from within a virtualenv)
@@ -46,10 +46,8 @@ def main(
 ):
     log = logger.getChild(main.__name__)
 
-    log.info(f"BUILD_DIR={BUILD_DIR}")
-    log.info(
-        f"program_source={program_source}, include_parsec_ext={include_parsec_ext}, wheel_it_dir={wheel_it_dir}"
-    )
+    log.info(f"Building in {BUILD_DIR}")
+    log.info(f"Using sources at {src_dir}")
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
 
     # Retrieve program version
