@@ -29,12 +29,10 @@ def collect_package_datas(package_name):
             return
         for entry_name in contents(subpackage_name):
             if is_resource(subpackage_name, entry_name):
-                if '.' not in entry_name or entry_name.rsplit('.', 1)[1] not in ignored_extensions:
+                if "." not in entry_name or entry_name.rsplit(".", 1)[1] not in ignored_extensions:
                     datas.append(
                         (
-                            str(
-                                package_path.joinpath(*subpackage_stems[1:], entry_name)
-                            ),
+                            str(package_path.joinpath(*subpackage_stems[1:], entry_name)),
                             "/".join(subpackage_stems),
                         )
                     )
@@ -84,12 +82,5 @@ exe = EXE(
     icon="./icon.ico",
 )
 coll = COLLECT(
-    exe,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    strip=False,
-    upx=False,
-    upx_exclude=[],
-    name="parsec",
+    exe, a.binaries, a.zipfiles, a.datas, strip=False, upx=False, upx_exclude=[], name="parsec"
 )
