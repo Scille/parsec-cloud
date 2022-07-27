@@ -335,8 +335,8 @@ class BackendAuthenticatedConn:
                     user_profile_outsider_allowed=rep["user_profile_outsider_allowed"],
                     active_users_limit=rep["active_users_limit"],
                     # Sequester introduced in APIv2.8/3.2
-                    sequester_authority=rep.get("sequester_authority"),
-                    sequester_services=rep.get("sequester_services"),
+                    sequester_authority=rep.get("sequester_authority_certificate"),
+                    sequester_services=rep.get("sequester_services_certificates"),
                 )
 
             rep = await cmds.events_subscribe(transport)
