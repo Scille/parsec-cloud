@@ -15,7 +15,7 @@ from pathlib import Path
 
 # Fully-qualified path for the executable should be used with subprocess to
 # avoid unreliability (especially when running from within a virtualenv)
-python = shutil.which("python")
+python = sys.executable
 if not python:
     raise SystemExit("Cannot find python command :(")
 
@@ -30,6 +30,14 @@ DEFAULT_WHEEL_IT_DIR = BUILD_DIR / "wheel_it"
 PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
 
 
+def display(line: str):
+    YELLOW_FG = "\x1b[33m"
+    DEFAULT_FG = "\x1b[39m"
+
+    # Flush is required to prevent mixing with the output of sub-command with the output of the script
+    print(f"{YELLOW_FG}{line}{DEFAULT_FG}", flush=True)
+
+
 def get_archslug():
     bits, _ = platform.architecture()
     return "win32" if bits == "32bit" else "win64"
@@ -38,17 +46,18 @@ def get_archslug():
 def run(cmd, **kwargs):
     if isinstance(cmd, str):
         cmd = cmd.split()
-    print(f">>> {' '.join(map(str, cmd))}")
+    display(f">>> {' '.join(map(str, cmd))}")
     ret = subprocess.run(cmd, check=True, **kwargs)
     return ret
 
 
 def main(
-    program_source: Path,
-    include_parsec_ext: Optional[Path] = None,
-    wheel_it_dir: Optional[Path] = None,
+    src_dir: Path, include_parsec_ext: Optional[Path] = None, wheel_it_dir: Optional[Path] = None
 ):
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
+
+    display(f"Building in {BUILD_DIR}")
+    display(f"Using sources at {src_dir}")
 
     # Retrieve program version
     global_dict = {}
@@ -64,18 +73,18 @@ def main(
             raise SystemError(
                 f"Found Parsec wheel {program_wheel} but could not determine it version"
             )
-        print(f"Parsec wheel is: {program_wheel}")
+        display(f"Parsec wheel is: {program_wheel}")
         program_version = f"v{match.group(1)}"
     else:
-        exec((program_source / "parsec/_version.py").read_text(), global_dict)
+        exec((src_dir / "parsec/_version.py").read_text(), global_dict)
         program_version = global_dict.get("__version__")
     assert program_version.startswith("v")
     program_version_without_v_prefix = program_version[1:]
-    print(f"### Detected Parsec version {program_version} ###")
+    display(f"### Detected Parsec version {program_version} ###")
 
     winfsp_installer = BUILD_DIR / WINFSP_URL.rsplit("/", 1)[1]
     if not winfsp_installer.is_file():
-        print("### Fetching WinFSP installer (will be needed by NSIS packager later) ###")
+        display("### Fetching WinFSP installer (will be needed by NSIS packager later) ###")
         req = urlopen(WINFSP_URL)
         data = req.read()
         assert sha256(data).hexdigest() == WINFSP_HASH
@@ -84,7 +93,7 @@ def main(
     # Bootstrap tools virtualenv
     tools_python = TOOLS_VENV_DIR / "Scripts/python.exe"
     if not TOOLS_VENV_DIR.is_dir():
-        print("### Create tool virtualenv ###")
+        display("### Create tool virtualenv ###")
         run(f"{ python } -m venv {TOOLS_VENV_DIR}")
         # Must use poetry>=1.2.0b2 given otherwise `poetry export` produce buggy output
         run(f"{ tools_python } -m pip install pip wheel setuptools poetry>=1.2.0b2 --upgrade")
@@ -107,9 +116,9 @@ def main(
         )
         program_constraints = DEFAULT_WHEEL_IT_DIR / "constraints.txt"
         if not program_wheel or not program_constraints.exists():
-            print("### Generate program wheel and constraints on dependencies ###")
+            display("### Generate program wheel and constraints on dependencies ###")
             run(
-                f"{ tools_python } { program_source / 'packaging/wheel/wheel_it.py' } { program_source } --output-dir { DEFAULT_WHEEL_IT_DIR }"
+                f"{ tools_python } { src_dir / 'packaging/wheel/wheel_it.py' } { src_dir } --output-dir { DEFAULT_WHEEL_IT_DIR }"
             )
             program_wheel = next(
                 DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{program_version_without_v_prefix}*.whl")
@@ -119,7 +128,7 @@ def main(
     pyinstaller_venv_dir = BUILD_DIR / "pyinstaller_venv"
     pyinstaller_python = pyinstaller_venv_dir / "Scripts/python.exe"
     if not pyinstaller_venv_dir.is_dir() or True:
-        print("### Installing program & PyInstaller in temporary virtualenv ###")
+        display("### Installing program & PyInstaller in temporary virtualenv ###")
         run(f"{ python } -m venv {pyinstaller_venv_dir}")
         run(f"{ pyinstaller_python } -m pip install pip wheel --upgrade")
         # First install PyInstaller, note it version & dependencies are pinned in the constraints file
@@ -151,7 +160,7 @@ def main(
     pyinstaller_build = BUILD_DIR / "pyinstaller_build"
     pyinstaller_dist = BUILD_DIR / "pyinstaller_dist"
     if not pyinstaller_dist.is_dir():
-        print("### Use Pyinstaller to generate distribution ###")
+        display("### Use Pyinstaller to generate distribution ###")
         spec_file = Path(__file__).joinpath("..", "pyinstaller.spec").resolve()
         env = dict(os.environ)
         if include_parsec_ext is not None:
@@ -167,7 +176,7 @@ def main(
     shutil.move(pyinstaller_dist / "parsec", target_dir)
 
     # Include LICENSE file
-    (target_dir / "LICENSE.txt").write_text((program_source / "licenses/AGPL3.txt").read_text())
+    (target_dir / "LICENSE.txt").write_text((src_dir / "licenses/AGPL3.txt").read_text())
 
     # Create build info file for NSIS installer
     (BUILD_DIR / "BUILD.tmp").write_text(
@@ -238,7 +247,7 @@ def check_python_version():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Freeze Parsec")
-    parser.add_argument("program_source", type=Path)
+    parser.add_argument("src_dir", type=Path)
     parser.add_argument("--disable-check-python", action="store_true")
     parser.add_argument("--include-parsec-ext", type=Path)
     parser.add_argument("--wheel-it-dir", type=Path)
@@ -246,7 +255,7 @@ if __name__ == "__main__":
     if not args.disable_check_python:
         check_python_version()
     main(
-        program_source=args.program_source,
+        src_dir=args.src_dir,
         include_parsec_ext=args.include_parsec_ext,
         wheel_it_dir=args.wheel_it_dir,
     )
