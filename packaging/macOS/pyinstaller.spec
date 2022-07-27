@@ -2,22 +2,20 @@
 
 import os
 
-WORKSPACE_DIR = os.getenv("WORKSPACE_DIR")
-if WORKSPACE_DIR is None:
-    WORKSPACE_DIR = '../..'
+SRC_DIR = os.getenv("SRC_DIR", default="../..")
 
 # Awesome hack to load `__version__`
 __version__ = None
-exec(open(f"{WORKSPACE_DIR}/parsec/_version.py", encoding="utf-8").read())
+exec(open(f"{SRC_DIR}/parsec/_version.py", encoding="utf-8").read())
 
 a = Analysis(
     ['launch_script.py'],
     pathex=[os.path.dirname(os.path.abspath('parsec.spec'))],
     binaries=[],
     datas=[
-        (f'{WORKSPACE_DIR}/parsec/core/resources/*.ignore', 'parsec/core/resources'),
-        (f'{WORKSPACE_DIR}/parsec/core/resources/*.icns', 'parsec/core/resources'),
-        (f'{WORKSPACE_DIR}/parsec/core/resources/default_pattern.ignore', 'parsec/core/resources'),
+        (f'{SRC_DIR}/parsec/core/resources/*.ignore', 'parsec/core/resources'),
+        (f'{SRC_DIR}/parsec/core/resources/*.icns', 'parsec/core/resources'),
+        (f'{SRC_DIR}/parsec/core/resources/default_pattern.ignore', 'parsec/core/resources'),
     ],
     hiddenimports=[],
     hookspath=['my_hooks'],
@@ -37,7 +35,7 @@ exe = EXE(
     [],
     exclude_binaries=True,
     name="parsec-gui",
-    icon=f"{WORKSPACE_DIR}/parsec/core/resources/parsec.icns",
+    icon=f"{SRC_DIR}/parsec/core/resources/parsec.icns",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -59,7 +57,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='parsec.app',
-    icon=f'{WORKSPACE_DIR}/parsec/core/resources/parsec.icns',
+    icon=f'{SRC_DIR}/parsec/core/resources/parsec.icns',
     bundle_identifier='com.scille.parsec',
     info_plist={
         'NSPrincipalClass': 'NSApplication',

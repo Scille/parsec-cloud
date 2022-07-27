@@ -103,8 +103,6 @@ jobs:
         run: cp -Rv ${{ github.workspace }}/packaging/macOS/* ${{ runner.temp }}
 
       - name: Freeze Parsec
-        env:
-          WORKSPACE_DIR: ${{ github.workspace }}
         run: python3 freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
         working-directory: ${{ runner.temp }}
 

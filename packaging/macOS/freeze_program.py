@@ -150,6 +150,7 @@ def main(
         env = dict(os.environ)
         if include_parsec_ext is not None:
             env["INCLUDE_PARSEC_EXT"] = "1"
+        env["SRC_DIR"] = src_dir
         run(
             f"{ pyinstaller_python } -m PyInstaller {spec_file} --distpath {pyinstaller_dist} --workpath {pyinstaller_build}",
             env=env,
