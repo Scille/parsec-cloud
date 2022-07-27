@@ -63,6 +63,7 @@ jobs:
 
       - name: Install poetry
         run: |
+          set -eux
           export POETRY_HOME="$HOME/.poetry"
           mkdir -p "$POETRY_HOME"
           curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py \
@@ -76,6 +77,7 @@ jobs:
 
       - name: Install python deps
         run: |
+          set -e
           poetry install -E core -E backend
           poetry run maturin develop
 
