@@ -9,10 +9,6 @@ import argparse
 import subprocess
 from hashlib import sha256
 from pathlib import Path
-import logging
-
-logger = logging.getLogger()
-logging.basicConfig(level=logging.DEBUG, format="\x1b[33m[%(name)s] %(message)s\x1b[0m")
 
 # Fully-qualified path for the executable should be used with subprocess to
 # avoid unreliability (especially when running from within a virtualenv)
@@ -29,12 +25,19 @@ DEFAULT_WHEEL_IT_DIR = BUILD_DIR / "wheel_it"
 PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
 
 
+def display(line: str):
+    YELLOW_FG = "\x1b[33m"
+    DEFAULT_FG = "\x1b[39m"
+
+    # Flush is required to prevent mixing with the output of sub-command with the output of the script
+    print(f"{YELLOW_FG}{line}{DEFAULT_FG}", flush=True)
+
+
 def run(cmd, **kwargs):
-    log = logger.getChild(run.__name__)
 
     if isinstance(cmd, str):
         cmd = cmd.split()
-    log.debug(f">>> {' '.join(map(str, cmd))}")
+    display(f">>> {' '.join(map(str, cmd))}")
     ret = subprocess.run(cmd, check=True, **kwargs)
     return ret
 
@@ -42,10 +45,8 @@ def run(cmd, **kwargs):
 def main(
     src_dir: Path, include_parsec_ext: Optional[Path] = None, wheel_it_dir: Optional[Path] = None
 ):
-    log = logger.getChild(main.__name__)
-
-    log.info(f"Building in {BUILD_DIR}")
-    log.info(f"Using sources at {src_dir}")
+    display(f"Building in {BUILD_DIR}")
+    display(f"Using sources at {src_dir}")
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
 
     # Retrieve program version
@@ -62,19 +63,19 @@ def main(
             raise SystemError(
                 f"Found Parsec wheel {program_wheel} but could not determine it version"
             )
-        log.info(f"Parsec wheel is: {program_wheel}")
+        display(f"Parsec wheel is: {program_wheel}")
         program_version = f"v{match.group(1)}"
     else:
         exec((src_dir / "parsec/_version.py").read_text(), global_dict)
         program_version = global_dict.get("__version__")
     assert program_version.startswith("v")
     program_version_without_v_prefix = program_version[1:]
-    log.info(f"Detected Parsec version {program_version}")
+    display(f"Detected Parsec version {program_version}")
 
     # Bootstrap tools virtualenv
     tools_python = TOOLS_VENV_DIR / "bin/python"
     if not TOOLS_VENV_DIR.is_dir():
-        log.info("Create tool virtualenv")
+        display("Create tool virtualenv")
         run(f"{ python } -m venv {TOOLS_VENV_DIR}")
         # Must use poetry>=1.2.0b2 given otherwise `poetry export` produce buggy output
         run(f"{ tools_python } -m pip install pip wheel setuptools poetry>=1.2.0b2 --upgrade")
@@ -97,7 +98,7 @@ def main(
         )
         program_constraints = DEFAULT_WHEEL_IT_DIR / "constraints.txt"
         if not program_wheel or not program_constraints.exists():
-            log.info("Generate program wheel and constraints on dependencies")
+            display("Generate program wheel and constraints on dependencies")
             run(
                 f"{ tools_python } { src_dir / 'packaging/wheel/wheel_it.py' } { src_dir } --output-dir { DEFAULT_WHEEL_IT_DIR }"
             )
@@ -109,7 +110,7 @@ def main(
     pyinstaller_venv_dir = BUILD_DIR / "pyinstaller_venv"
     pyinstaller_python = pyinstaller_venv_dir / "bin/python"
     if not pyinstaller_venv_dir.is_dir() or True:
-        log.info("Installing program & PyInstaller in temporary virtualenv")
+        display("Installing program & PyInstaller in temporary virtualenv")
         run(f"{ python } -m venv {pyinstaller_venv_dir}")
         run(f"{ pyinstaller_python } -m pip install pip wheel --upgrade")
         # First install PyInstaller, note it version & dependencies are pinned in the constraints file
@@ -141,7 +142,7 @@ def main(
     pyinstaller_build = BUILD_DIR / "pyinstaller_build"
     pyinstaller_dist = BUILD_DIR / "pyinstaller_dist"
     if not pyinstaller_dist.is_dir():
-        log.info("Use Pyinstaller to generate distribution")
+        display("Use Pyinstaller to generate distribution")
         spec_file = Path(__file__).joinpath("..", "pyinstaller.spec").resolve()
         env = dict(os.environ)
         if include_parsec_ext is not None:
@@ -186,9 +187,9 @@ if __name__ == "__main__":
         target = Path("/Applications/parsec.app")
         new_app = BUILD_DIR / "pyinstaller_dist/Parsec.app"
         try:
-            print(f"Remove {target}")
+            display(f"Remove {target}")
             shutil.rmtree(target)
         except FileNotFoundError:
             pass
-        print(f"Copy {new_app} -> {target}")
+        display(f"Copy {new_app} -> {target}")
         shutil.copytree(new_app, target)
