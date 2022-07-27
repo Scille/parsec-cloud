@@ -45,7 +45,6 @@ jobs:
   windows-ci-python:
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
       - name: Install WinFSP
         shell: bash
@@ -81,7 +80,9 @@ jobs:
         run: poetry env use ${{ steps.setup-python.outputs.python-path }}
 
       - name: Install python deps
-        run: poetry install -E core -E backend
+        run: |
+          poetry install -E core -E backend
+          poetry run maturin develop
 
       - name: Generate PyQT GUI data
         run: poetry run python misc/generate_pyqt.py
