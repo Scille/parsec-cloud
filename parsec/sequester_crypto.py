@@ -12,6 +12,28 @@ class SequesterKeyAlgorithm(Enum):
     RSA = "RSA"
 
 
+def _enforce_rsa_output_has_key_size(key: oscrypto.asymmetric.PrivateKey, output: bytes) -> bytes:
+    # Using RSA, we should end up with a number as big as the key size and
+    # provided as big endian bytes.
+    # However it is possible the number can be represented with less bytes if
+    # enough of its most significant bits are equal to zero.
+    # In such case, certain implementations (at least oscrypt on macOS 12) trim
+    # the null bytes and hence return a bytes array smaller than the key size.
+    #
+    # For instance, considering a 16bits RSA key size (state-of-the-art security ^^)
+    # and a RSA output `42`, the output can be represented as b"\x42" or b"\x00\x42)
+    #
+    # Long story short, we want to make sure our RSA output are always of the
+    # same size than the key, this simplify splitting messages and protect us
+    # if an RSA implementation on another platform is picky about output size.
+    if len(output) == key.byte_size:
+        return output
+    else:
+        assert len(output) <= key.byte_size  # Sanity check
+        # Add enough null bytes to have output of the same size than the key
+        return (b"\x00" * (key.byte_size - len(output))) + output
+
+
 class _SequesterPublicKeyDer:
     __slots__ = ("_key",)
 
@@ -85,8 +107,9 @@ def sequester_authority_sign(signing_key: oscrypto.asymmetric.PrivateKey, data: 
     except OSError as exc:
         raise CryptoError(str(exc)) from exc
 
-    # In RSASSA-PSS, signature is as big as the key size
-    assert len(signature) == signing_key.byte_size
+    # It is import `signature` has a constant size given this is how it is
+    # retreived during verification
+    signature = _enforce_rsa_output_has_key_size(signing_key, signature)
 
     return SequesterVerifyKeyDer.SIGNING_ALGORITHM + b":" + signature + data
 
@@ -113,6 +136,10 @@ class SequesterEncryptionKeyDer(_SequesterPublicKeyDer):
             )
         except OSError as exc:
             raise CryptoError(str(exc)) from exc
+
+        # It is import `secret_key_encrypted` has a constant size given this
+        # is how it is retreived during decryption
+        secret_key_encrypted = _enforce_rsa_output_has_key_size(self._key, secret_key_encrypted)
 
         return self.ENCRYPTION_ALGORITHM + b":" + secret_key_encrypted + secret_key.encrypt(data)
 
