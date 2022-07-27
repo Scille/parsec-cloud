@@ -366,9 +366,10 @@ async def _export_realm(
             # 1) Export vlobs
 
             with operation("Computing vlobs (i.e. file/folder metadata) to export"):
-                vlob_total_count, vlob_batch_offset_marker = (
-                    await exporter.compute_vlobs_export_status()
-                )
+                (
+                    vlob_total_count,
+                    vlob_batch_offset_marker,
+                ) = await exporter.compute_vlobs_export_status()
 
             if not vlob_total_count:
                 click.echo("No more vlobs to export !")
@@ -393,9 +394,10 @@ async def _export_realm(
             # Export blocks
 
             with operation("Computing blocks (i.e. files data) to export"):
-                block_total_count, block_batch_offset_marker = (
-                    await exporter.compute_blocks_export_status()
-                )
+                (
+                    block_total_count,
+                    block_batch_offset_marker,
+                ) = await exporter.compute_blocks_export_status()
 
             if not block_total_count:
                 click.echo("No more blocks to export !")
@@ -444,5 +446,5 @@ def export_realm(
 ):
     db_config = _get_config(db, db_min_connections, db_max_connections)
     trio_run(
-        _export_realm, db_config, blockstore, organization, service, realm, output, use_asyncio=True
+        _export_realm, db_config, blockstore, organization, realm, service, output, use_asyncio=True
     )
