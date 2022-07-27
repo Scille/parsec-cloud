@@ -2,7 +2,6 @@
 
 import click
 
-
 from parsec.utils import trio_run
 from parsec.api.data import EntryName
 from parsec.cli_utils import cli_exception_handler, spinner
@@ -19,7 +18,8 @@ async def _reencrypt_workspace(config: CoreConfig, device: LocalDevice, name: En
         workspace_fs = core.user_fs.get_workspace(workspace_id)
         reenc_needs = await workspace_fs.get_reencryption_need()
         if not reenc_needs.need_reencryption:
-            raise RuntimeError("The workspace does not need to be reencrypted")
+            click.echo("The workspace does not need to be reencrypted")
+            return
         async with spinner("Reencrypting the workspace"):
             if reenc_needs.reencryption_already_in_progress:
                 job = await core.user_fs.workspace_continue_reencryption(workspace_id)
