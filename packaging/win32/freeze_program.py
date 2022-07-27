@@ -15,7 +15,7 @@ from pathlib import Path
 
 # Fully-qualified path for the executable should be used with subprocess to
 # avoid unreliability (especially when running from within a virtualenv)
-python = shutil.which("python")
+python = sys.executable
 if not python:
     raise SystemExit("Cannot find python command :(")
 
