@@ -35,10 +35,9 @@ repos:
   # Python
 
   - repo: https://github.com/ambv/black
-    rev: 19.3b0
+    rev: 22.6.0
     hooks:
       - id: black
-        additional_dependencies: [ click==8.0.4 ]
         args:
           [
             --line-length=100,

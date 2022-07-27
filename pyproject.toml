@@ -137,7 +137,7 @@ PyQt5_stubs = "^5.15"
 pyinstaller = "^4.7"
 
 flake8 = "3.8.4"
-black = "19.3b0"
+black = "^22.6.0"
 # Latest version compatible with `trio_typing~=0.5`, required by qtrio
 mypy = "v0.910"
 setuptools = "^63.1.0"
