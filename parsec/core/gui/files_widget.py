@@ -888,15 +888,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         async with await trio.open_file(source, "rb") as f:
 
             # Getting the file name without extension (anything after the first dot is considered to be the extension)
-            name_splitted = dest.name.str.split(".", 1)
-            if len(name_splitted) == 1:
-                name_splitted.append("")
-            name_we, suffixes = name_splitted
+            name_we, *suffixes = dest.name.str.split(".")
             # Count starts at 2 (1 would be the file without a number)
             count = 2
             while await self.workspace_fs.exists(dest):
                 # Create the new file name by adding the count ("myfile.txt" becomes "myfile (2).txt")
-                new_file_name = EntryName("{} ({}).{}".format(name_we, count, suffixes))
+                new_file_name = EntryName(".".join([f"{name_we} ({count})", *suffixes]))
                 dest = dest.parent / new_file_name
                 count += 1
 

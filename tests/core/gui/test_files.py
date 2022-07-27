@@ -268,7 +268,28 @@ async def test_file_browsing_and_edit(
         path="/", expected_entries=["dir0/", "dir1/", "zdir2/", "file1.txt", "file2.txt", "file3"]
     )
 
+    # File with the same name without extension
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
+        classmethod(lambda *args, **kwargs: ([out_of_parsec_data / "file3"], True)),
+    )
+    async with aqtbot.wait_signal(f_w.import_success):
+        aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+    await tb.check_files_view(
+        path="/",
+        expected_entries=[
+            "dir0/",
+            "dir1/",
+            "zdir2/",
+            "file1.txt",
+            "file2.txt",
+            "file3",
+            "file3 (2)",
+        ],
+    )
+
     await tb.delete("file3")
+    await tb.delete("file3 (2)")
     await tb.check_files_view(
         path="/", expected_entries=["dir0/", "dir1/", "zdir2/", "file1.txt", "file2.txt"]
     )
