@@ -11,7 +11,15 @@ from parsec.backend.postgresql import PGHandler
 from parsec.backend.blockstore import BaseBlockStoreComponent
 
 
-class RealmExporterOutputDbError(Exception):
+class RealmExporterError(Exception):
+    pass
+
+
+class RealmExporterInputError(Exception):
+    pass
+
+
+class RealmExporterOutputDbError(RealmExporterError):
     pass
 
 
@@ -30,7 +38,8 @@ OUTPUT_DB_INIT_QUERY = f"""
 CREATE TABLE IF NOT EXISTS info(
     magic INTEGER UNIQUE NOT NULL DEFAULT {OUTPUT_DB_MAGIC_NUMBER},
     version INTEGER NOT NULL DEFAULT {OUTPUT_DB_VERSION},
-    realm_id UUID NOT NULL
+    realm_id BLOB NOT NULL,
+    root_verify_key BLOB NOT NULL
 );
 
 
@@ -40,8 +49,8 @@ CREATE TABLE IF NOT EXISTS info(
 CREATE TABLE block (
     -- _id is not SERIAL given we will take the one present in the Parsec database
     _id PRIMARY KEY,
-    block_id UUID NOT NULL,
-    data BYTEA NOT NULL,
+    block_id BLOB NOT NULL,
+    data BLOB NOT NULL,
     author INTEGER REFERENCES device (_id) NOT NULL,
 
     UNIQUE(block_id)
@@ -53,9 +62,9 @@ CREATE TABLE vlob_atom (
     -- We use vlob_update's index as primary key, this is convenient given it makes trivial
     -- keeping track of how far we got when restarting an export
     _id PRIMARY KEY,
-    vlob_id UUID NOT NULL,
+    vlob_id BLOB NOT NULL,
     version INTEGER NOT NULL,
-    blob BYTEA NOT NULL,
+    blob BLOB NOT NULL,
     -- author/timestamp are required to validate the consistency of blob
     -- Care must be taken when exporting this field (and the `device` table) to
     -- keep this relationship valid !
@@ -81,20 +90,205 @@ CREATE TABLE vlob_atom (
 
 CREATE TABLE realm_role (
     _id PRIMARY KEY,
-    role_certificate BYTEA NOT NULL
+    role_certificate BLOB NOT NULL
 );
 
 CREATE TABLE user_ (
     _id PRIMARY KEY,
-    user_certificate BYTEA NOT NULL,
-    revoked_user_certificate BYTEA  -- NULL if user not revoked
+    user_certificate BLOB NOT NULL,
+    revoked_user_certificate BLOB  -- NULL if user not revoked
 );
 
 CREATE TABLE device (
     _id PRIMARY KEY,
-    device_certificate BYTEA NOT NULL
+    device_certificate BLOB NOT NULL
 );
 """
+
+
+async def _init_output_db(
+    organization_id: OrganizationID,
+    realm_id: RealmID,
+    service_id: SequesterServiceID,
+    output_db_path: Path,
+    input_conn,
+) -> None:
+    # 0) Retreive organization/realm/sequester service from input database
+
+    row = await input_conn.fetchrow(
+        "SELECT _id, root_verify_key, sequester_authority_certificate FROM organization WHERE organization_id = $1",
+        organization_id.str,
+    )
+    if not row:
+        raise RealmExporterInputError(f"Organization `{organization_id}` doesn't exists")
+    organization_internal_id = row["_id"]
+    root_verify_key = row["root_verify_key"]
+    if root_verify_key is None:
+        raise RealmExporterInputError(f"Organization `{organization_id}` is not boostrapped")
+    if not row["sequester_authority_certificate"]:
+        raise RealmExporterInputError(
+            f"Organization `{organization_id}` is not a sequestered organization"
+        )
+
+    row = await input_conn.fetchrow(
+        "SELECT 1 FROM realm WHERE organization = $1 AND realm_id = $2",
+        organization_internal_id,
+        realm_id.uuid,
+    )
+    if not row:
+        raise RealmExporterInputError(
+            f"Realm `{realm_id}` doesn't exist in organization `{organization_id}`"
+        )
+
+    row = await input_conn.fetchrow(
+        "SELECT 1 FROM sequester_service WHERE organization = $1 AND service_id = $2",
+        organization_internal_id,
+        service_id.uuid,
+    )
+    if not row:
+        raise RealmExporterInputError(
+            f"Sequester service `{service_id}` doesn't exist in organization `{organization_id}`"
+        )
+
+    # 1) Check the output database and create it if needed
+
+    def _sqlite_init_db():
+        try:
+            con = sqlite3.connect(f"file:{output_db_path}?mode=rw", uri=True)
+        except sqlite3.Error:
+            # Export database doesn't exists
+            try:
+                # Create the database...
+                con = sqlite3.connect(output_db_path)
+                # ...and initialize it
+                con.executescript(OUTPUT_DB_INIT_QUERY)
+                con.execute(
+                    "INSERT INTO info (realm_id, root_verify_key) VALUES (?, ?)",
+                    (realm_id.bytes, root_verify_key),
+                )
+                con.commit()
+            except sqlite3.Error as exc:
+                raise RealmExporterOutputDbError(f"Cannot create export database: {exc}") from exc
+
+        try:
+            # Export database already exists, we should make sure it format is expected
+            try:
+                row = con.execute(
+                    "SELECT version, realm_id, root_verify_key FROM info WHERE magic = ?",
+                    (OUTPUT_DB_MAGIC_NUMBER,),
+                ).fetchone()
+            except sqlite3.Error as exc:
+                # If we endup here this is most likely because `info` table doesn't exists (or miss some columns)
+                raise RealmExporterOutputDbError(
+                    f"Existing output target is not a valid export database: {exc}"
+                ) from exc
+            if not row:
+                # `info` table exists and is valid, but magic number doesn't match
+                raise RealmExporterOutputDbError(
+                    f"Existing output target is not a valid export database"
+                )
+            db_version, db_realm_id, db_root_verify_key = row
+            if db_version != OUTPUT_DB_VERSION:
+                raise RealmExporterOutputDbError(
+                    f"Existing output export database version format is not supported: got version `{db_version}` but only version `1` is accepted"
+                )
+            if db_realm_id != realm_id.bytes:
+                raise RealmExporterOutputDbError(
+                    f"Existing output export database is for a different realm: got `{db_realm_id}` instead of expected `{realm_id.bytes}`"
+                )
+            if db_root_verify_key != root_verify_key:
+                raise RealmExporterOutputDbError(
+                    f"Existing output export database is for a different realm: realm ID `{db_realm_id}` is the same but root verify key differs"
+                )
+        finally:
+            con.close()
+
+    await trio.to_thread.run_sync(_sqlite_init_db)
+
+    # 2) Export the certificates
+    # Note in all those exports we keep the `_id` primary key from the input database,
+    # this is a trick so we don't have to modify the `author` field in block/vlob_atom
+
+    # User certificates
+    rows = await input_conn.fetch(
+        """
+SELECT _id, user_certificate, revoked_user_certificate
+FROM user_
+WHERE organization = (SELECT _id FROM organization WHERE organization_id = $1)
+""",
+        organization_id.str,
+    )
+
+    def _sqlite_save_user_certifs():
+        output_con = sqlite3.connect(output_db_path)
+        try:
+            output_con.executemany(
+                """
+INSERT INTO user_ (_id, user_certificate, revoked_user_certificate)
+VALUES (?, ?, ?)
+ON CONFLICT DO NOTHING
+""",
+                rows,
+            )
+            output_con.commit()
+        finally:
+            output_con.close()
+
+    await trio.to_thread.run_sync(_sqlite_save_user_certifs)
+
+    # Device certificates
+    rows = await input_conn.fetch(
+        """
+SELECT _id, device_certificate
+FROM device
+WHERE organization = (
+SELECT _id FROM organization WHERE organization_id = $1
+)""",
+        organization_id.str,
+    )
+
+    def _sqlite_save_device_certifs():
+        output_con = sqlite3.connect(output_db_path)
+        try:
+            output_con.executemany(
+                "INSERT INTO device (_id, device_certificate) VALUES (?, ?) ON CONFLICT DO NOTHING",
+                rows,
+            )
+            output_con.commit()
+        finally:
+            output_con.close()
+
+    await trio.to_thread.run_sync(_sqlite_save_device_certifs)
+
+    # Realm role certificates
+    rows = await input_conn.fetch(
+        """
+SELECT _id, certificate
+FROM realm_user_role
+WHERE realm = (
+SELECT _id
+FROM realm
+WHERE
+realm_id = $2
+AND organization = (SELECT _id FROM organization WHERE organization_id = $1)
+)
+""",
+        organization_id.str,
+        realm_id,
+    )
+
+    def _sqlite_save_realm_role_certifs():
+        output_con = sqlite3.connect(output_db_path)
+        try:
+            output_con.executemany(
+                "INSERT INTO realm_role (_id, role_certificate) VALUES (?, ?) ON CONFLICT DO NOTHING",
+                rows,
+            )
+            output_con.commit()
+        finally:
+            output_con.close()
+
+    await trio.to_thread.run_sync(_sqlite_save_realm_role_certifs)
 
 
 class RealmExporter:
@@ -125,7 +319,16 @@ class RealmExporter:
         input_dbh: PGHandler,
         input_blockstore: BaseBlockStoreComponent,
     ):
-        exporter = cls(
+        async with input_dbh.pool.acquire() as input_conn:
+            await _init_output_db(
+                organization_id=organization_id,
+                realm_id=realm_id,
+                service_id=service_id,
+                output_db_path=output_db_path,
+                input_conn=input_conn,
+            )
+
+        yield cls(
             organization_id=organization_id,
             realm_id=realm_id,
             service_id=service_id,
@@ -133,144 +336,6 @@ class RealmExporter:
             input_dbh=input_dbh,
             input_blockstore=input_blockstore,
         )
-        await exporter._init_output_db()
-        yield exporter
-
-    async def _init_output_db(self):
-        # 1) Check the output database and create it if needed
-
-        def _init_output_db():
-            try:
-                con = sqlite3.connect(f"file:{self.output_db_path}?mode=rw", uri=True)
-            except sqlite3.Error:
-                # Export database doesn't exists
-                try:
-                    # Create the database...
-                    con = sqlite3.connect(self.output_db_path)
-                    # ...and initialize it
-                    con.executescript(OUTPUT_DB_INIT_QUERY)
-                    con.execute("INSERT INTO info (realm_id) VALUES (?)", (self.realm_id.bytes,))
-                    con.commit()
-                except sqlite3.Error as exc:
-                    raise RealmExporterOutputDbError(
-                        f"Cannot create export database: {exc}"
-                    ) from exc
-
-            try:
-                # Export database already exists, we should make sure it format is expected
-                try:
-                    row = con.execute(
-                        "SELECT version, realm_id FROM info WHERE magic = ?",
-                        (OUTPUT_DB_MAGIC_NUMBER,),
-                    ).fetchone()
-                except sqlite3.Error as exc:
-                    # If we endup here this is most likely because `info` table doesn't exists (or miss some columns)
-                    raise RealmExporterOutputDbError(
-                        f"Existing output target is not a valid export database: {exc}"
-                    ) from exc
-                if not row:
-                    # `info` table exists and is valid, but magic number doesn't match
-                    raise RealmExporterOutputDbError(
-                        f"Existing output target is not a valid export database"
-                    )
-                db_version, db_realm_id = row
-                if db_version != OUTPUT_DB_VERSION:
-                    raise RealmExporterOutputDbError(
-                        f"Existing output export database version format is not supported: got version `{db_version}` but only version `1` is accepted"
-                    )
-                if db_realm_id != self.realm_id.bytes:
-                    raise RealmExporterOutputDbError(
-                        f"Existing output export database is for a different realm: got `{db_realm_id}` instead of expected `{self.realm_id.bytes}`"
-                    )
-            finally:
-                con.close()
-
-        await trio.to_thread.run_sync(_init_output_db)
-
-        # 2) Export the certificates
-        # Note in all those exports we keep the `_id` primary key from the input database,
-        # this is a trick so we don't have to modify the `author` field in block/vlob_atom
-        async with self.input_dbh.pool.acquire() as input_conn:
-            # User certificates
-            rows = await input_conn.fetch(
-                """
-SELECT _id, user_certificate, revoked_user_certificate
-FROM user_
-WHERE organization = (SELECT _id FROM organization WHERE organization_id = $1)
-""",
-                self.organization_id.str,
-            )
-
-            def _save_in_output_db():
-                output_con = sqlite3.connect(self.output_db_path)
-                try:
-                    output_con.executemany(
-                        """
-INSERT INTO user_ (_id, user_certificate, revoked_user_certificate)
-VALUES (?, ?, ?)
-ON CONFLICT DO NOTHING
-""",
-                        rows,
-                    )
-                    output_con.commit()
-                finally:
-                    output_con.close()
-
-            await trio.to_thread.run_sync(_save_in_output_db)
-
-            # Device certificates
-            rows = await input_conn.fetch(
-                """
-SELECT _id, device_certificate
-FROM device
-WHERE organization = (
-    SELECT _id FROM organization WHERE organization_id = $1
-)""",
-                self.organization_id.str,
-            )
-
-            def _save_in_output_db():
-                output_con = sqlite3.connect(self.output_db_path)
-                try:
-                    output_con.executemany(
-                        "INSERT INTO device (_id, device_certificate) VALUES (?, ?) ON CONFLICT DO NOTHING",
-                        rows,
-                    )
-                    output_con.commit()
-                finally:
-                    output_con.close()
-
-            await trio.to_thread.run_sync(_save_in_output_db)
-
-            # Realm role certificates
-            rows = await input_conn.fetch(
-                """
-SELECT _id, certificate
-FROM realm_user_role
-WHERE realm = (
-    SELECT _id
-    FROM realm
-    WHERE
-        realm_id = $2
-        AND organization = (SELECT _id FROM organization WHERE organization_id = $1)
-)
-""",
-                self.organization_id.str,
-                self.realm_id,
-            )
-
-            def _save_in_output_db():
-                output_con = sqlite3.connect(self.output_db_path)
-                try:
-                    output_con.executemany(
-                        "INSERT INTO realm_role (_id, role_certificate) VALUES (?, ?) ON CONFLICT DO NOTHING",
-                        rows,
-                    )
-                    output_con.commit()
-                finally:
-                    output_con.close()
-
-            await trio.to_thread.run_sync(_save_in_output_db)
 
     # Vlobs export
 
