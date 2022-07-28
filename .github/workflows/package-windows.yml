@@ -17,6 +17,7 @@ on:
 
 env:
   python-version: "3.9"
+  rust-version: 1.62.0
 
 jobs:
   package-windows-build-wheel:
@@ -37,6 +38,11 @@ jobs:
           echo "${APPDATA}\.poetry\bin" >> "$GITHUB_PATH"
 
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          version: ${{ env.rust-version }}
+          cache-key: build-wheel
 
       - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
         with:
@@ -79,7 +85,7 @@ jobs:
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
-          name: ${{ runner.os }}-wheel
+          name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist/
 
   package-windows-build-installer-content:
@@ -94,7 +100,7 @@ jobs:
 
       - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
         with:
-          name: ${{ runner.os }}-wheel
+          name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
 
       - name: Prepare build directory
