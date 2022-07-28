@@ -56,6 +56,11 @@ jobs:
       - name: Install macfuse
         run: brew install --cask macfuse
 
+      - uses: ./.github/actions/setup-rust
+        with:
+          version: ${{ env.rust-version }}
+          cache-key: python
+
       - name: Install poetry
         run: |
           export POETRY_HOME="$HOME/.poetry"
@@ -70,7 +75,10 @@ jobs:
           cache: poetry
 
       - name: Install python deps
-        run: poetry install -E core -E backend
+        run: |
+          set -eux
+          poetry install -E core -E backend
+          poetry run maturin develop
 
       - name: Generate PyQT GUI data
         run: poetry run python misc/generate_pyqt.py
