@@ -54,6 +54,51 @@ pub const PARSEC_CONTENT_TYPE: &str = "application/msgpack";
 
 pub const API_VERSION_HEADER_NAME: &str = "Api-Version";
 
+/// A `Factory` that create [AuthenticatedCmds] with the provided configuration.
+pub struct AuthenticatedCmdsFactory {
+    client: Client,
+    server_url: BackendOrganizationAddr,
+    device_id: DeviceID,
+    signing_key: SigningKey,
+}
+
+impl AuthenticatedCmdsFactory {
+    /// Initialize the factory
+    pub fn new(
+        client: Client,
+        server_url: BackendOrganizationAddr,
+        device_id: DeviceID,
+        signing_key: SigningKey,
+    ) -> Self {
+        Self {
+            client,
+            server_url,
+            device_id,
+            signing_key,
+        }
+    }
+
+    /// Get the inner mutable reference on the http client
+    pub fn get_http_client_mut(&mut self) -> &mut Client {
+        &mut self.client
+    }
+
+    /// Get the inner http client
+    pub fn get_http_client(&self) -> &Client {
+        &self.client
+    }
+
+    /// Create an new [AuthenticatedCmds]
+    pub fn create(&self) -> Result<AuthenticatedCmds, url::ParseError> {
+        AuthenticatedCmds::new(
+            self.client.clone(),
+            self.server_url.clone(),
+            self.device_id.clone(),
+            self.signing_key.clone(),
+        )
+    }
+}
+
 /// Factory that send commands in a authenticated context.
 pub struct AuthenticatedCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
