@@ -231,6 +231,7 @@ async def test_file_browsing_and_edit(
     out_of_parsec_data.mkdir(parents=True)
     (out_of_parsec_data / "file1.txt").touch()
     (out_of_parsec_data / "file2.txt").touch()
+    (out_of_parsec_data / "file3").touch()
     (out_of_parsec_data / "dir3/dir31").mkdir(parents=True)
     (out_of_parsec_data / "dir3/dir32").mkdir(parents=True)
     (out_of_parsec_data / "dir3/dir31/file311.txt").touch()
@@ -252,13 +253,43 @@ async def test_file_browsing_and_edit(
         "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
         classmethod(
             lambda *args, **kwargs: (
-                [out_of_parsec_data / "file1.txt", out_of_parsec_data / "file2.txt"],
+                [
+                    out_of_parsec_data / "file1.txt",
+                    out_of_parsec_data / "file2.txt",
+                    out_of_parsec_data / "file3",
+                ],
                 True,
             )
         ),
     )
     async with aqtbot.wait_signal(f_w.import_success):
         aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+    await tb.check_files_view(
+        path="/", expected_entries=["dir0/", "dir1/", "zdir2/", "file1.txt", "file2.txt", "file3"]
+    )
+
+    # File with the same name without extension
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
+        classmethod(lambda *args, **kwargs: ([out_of_parsec_data / "file3"], True)),
+    )
+    async with aqtbot.wait_signal(f_w.import_success):
+        aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+    await tb.check_files_view(
+        path="/",
+        expected_entries=[
+            "dir0/",
+            "dir1/",
+            "zdir2/",
+            "file1.txt",
+            "file2.txt",
+            "file3",
+            "file3 (2)",
+        ],
+    )
+
+    await tb.delete("file3")
+    await tb.delete("file3 (2)")
     await tb.check_files_view(
         path="/", expected_entries=["dir0/", "dir1/", "zdir2/", "file1.txt", "file2.txt"]
     )
