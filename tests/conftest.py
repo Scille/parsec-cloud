@@ -252,7 +252,11 @@ def no_logs_gte_error(caplog):
 
     # TODO: Concurrency bug in Hypercorn when the server is torndown while a
     # client websocket is currently disconnecting
+    # see: https://github.com/Scille/parsec-cloud/issues/2716
     def skip_hypercorn_buggy_log(record):
+        if record.name == "asyncio" and isinstance(record.exc_info, ConnectionError):
+            return True
+
         if record.name != "hypercorn.error":
             return True
 
