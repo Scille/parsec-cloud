@@ -9,7 +9,7 @@ libparsec_protocol = { path = "../protocol" }
 libparsec_types = { path = "../types" }
 libparsec_client_types = { path = "../client_types" }
 
-rstest = "0.13.0"
+rstest = "0.15.0"
 hex-literal = "0.3.3"
 chrono = "0.4.19"
 uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }

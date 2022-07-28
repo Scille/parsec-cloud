@@ -375,7 +375,7 @@ impl WorkspaceStorage {
 
 #[cfg(test)]
 mod tests {
-    use crate::conftest::alice_workspace_storage;
+    use crate::conftest::{alice_workspace_storage, TmpWorkspaceStorage};
     use libparsec_client_types::Chunk;
     use libparsec_types::{Blocksize, DEFAULT_BLOCK_SIZE};
     use rstest::rstest;
@@ -401,7 +401,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_lock_required(alice_workspace_storage: WorkspaceStorage) {
+    fn test_lock_required(alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage;
         let manifest = create_workspace_manifest(&aws.device);
         let manifest = LocalManifest::Workspace(manifest);
@@ -426,7 +426,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_basic_set_get_clear(alice_workspace_storage: WorkspaceStorage) {
+    fn test_basic_set_get_clear(alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage;
         let manifest = create_workspace_manifest(&aws.device);
         let manifest = LocalManifest::Workspace(manifest);
@@ -467,7 +467,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_cache_set_get(alice_workspace_storage: WorkspaceStorage) {
+    fn test_cache_set_get(alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage;
         let manifest = create_workspace_manifest(&aws.device);
         let manifest = LocalManifest::Workspace(manifest);
@@ -523,7 +523,7 @@ mod tests {
     #[case(true, false)]
     #[case(true, true)]
     fn test_chunk_clearing(
-        alice_workspace_storage: WorkspaceStorage,
+        alice_workspace_storage: TmpWorkspaceStorage,
         #[case] cache_only: bool,
         #[case] clear_manifest: bool,
     ) {
@@ -641,7 +641,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_clear_cache(alice_workspace_storage: WorkspaceStorage) {
+    fn test_clear_cache(alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage;
         let manifest1 = create_workspace_manifest(&aws.device);
         let manifest1 = LocalManifest::Workspace(manifest1);
@@ -684,7 +684,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_serialize_non_empty_local_file_manifest(alice_workspace_storage: WorkspaceStorage) {
+    fn test_serialize_non_empty_local_file_manifest(alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage;
         let mut manifest = create_file_manifest(&aws.device);
         let chunk1 = Chunk::new(0, NonZeroU64::try_from(7).unwrap())
@@ -711,7 +711,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_realm_checkpoint(alice_workspace_storage: WorkspaceStorage) {
+    fn test_realm_checkpoint(alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage;
         let mut manifest = create_file_manifest(&aws.device);
         let manifest_id = manifest.base.id;
@@ -789,7 +789,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_block_interface(alice_workspace_storage: WorkspaceStorage) {
+    fn test_block_interface(alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage;
         let data = b"0123456";
         let chunk = Chunk::new(0, NonZeroU64::try_from(7).unwrap())
@@ -824,7 +824,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_chunk_interface(alice_workspace_storage: WorkspaceStorage) {
+    fn test_chunk_interface(alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage;
         let data = b"0123456";
         let chunk = Chunk::new(0, NonZeroU64::try_from(7).unwrap());
@@ -861,7 +861,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_chunk_many(alice_workspace_storage: WorkspaceStorage) {
+    fn test_chunk_many(alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage;
         let data = b"0123456";
 
@@ -881,7 +881,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_file_descriptor(alice_workspace_storage: WorkspaceStorage) {
+    fn test_file_descriptor(alice_workspace_storage: TmpWorkspaceStorage) {
         let aws = alice_workspace_storage;
         let manifest = create_file_manifest(&aws.device);
         let manifest_id = manifest.base.id;
@@ -908,7 +908,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_run_vacuum(alice_workspace_storage: WorkspaceStorage) {
+    fn test_run_vacuum(alice_workspace_storage: TmpWorkspaceStorage) {
         alice_workspace_storage.run_vacuum().unwrap();
     }
 
