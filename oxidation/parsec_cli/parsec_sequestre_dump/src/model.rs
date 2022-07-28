@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use diesel::{
     BoolExpressionMethods, ExpressionMethods, QueryDsl, Queryable, RunQueryDsl, SqliteConnection,
@@ -35,7 +35,7 @@ pub struct VlobAtom {
     pub timestamp: f64,
 }
 
-#[derive(Debug, Queryable, PartialEq)]
+#[derive(Debug, Queryable, PartialEq, Eq)]
 pub struct Info {
     pub magic: i64,
     pub version: i64,
