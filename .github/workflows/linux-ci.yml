@@ -77,7 +77,7 @@ jobs:
 
       - name: Install python deps
         run: |
-          set -e
+          set -eux
           poetry install -E core -E backend
           poetry run maturin develop
 
