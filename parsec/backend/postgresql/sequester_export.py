@@ -43,10 +43,6 @@ CREATE TABLE block (
     block_id UUID NOT NULL,
     data BYTEA NOT NULL,
     author INTEGER REFERENCES device (_id) NOT NULL,
-    size INTEGER NOT NULL,
-    -- This field's value is set by the Parsec server on block insert (unlike
-    -- `vlob_atom.timestamp`, see below)
-    created_on TIMESTAMPTZ NOT NULL,
 
     UNIQUE(block_id)
 );
@@ -60,14 +56,17 @@ CREATE TABLE vlob_atom (
     vlob_id UUID NOT NULL,
     version INTEGER NOT NULL,
     blob BYTEA NOT NULL,
-    size INTEGER NOT NULL,
     -- author/timestamp are required to validate the consistency of blob
     -- Care must be taken when exporting this field (and the `device` table) to
     -- keep this relationship valid !
     author INTEGER REFERENCES device (_id) NOT NULL,
     -- Note this field is called `created_on` in Parsec datamodel, but it correspond
     -- in fact to the timestamp field in the API ! So we stick with the latter.
-    timestamp TIMESTAMPTZ NOT NULL,
+    -- On top of that, unlike PostgreSQL, SQLite doesn't have a TIMESTAMPZ type out
+    -- of the box so we have to roll our own integer-based format, note this is
+    -- different than the 8bytes floating point format used in our msgpack-based
+    -- serialization system (it was a bad idea, see Rust implementation for more info)
+    timestamp INTEGER NOT NULL,  -- ms since UNIX epoch
 
     UNIQUE(vlob_id, version)
 );
@@ -323,7 +322,6 @@ SELECT
     vlob_atom.vlob_id,
     vlob_atom.version,
     sequester_service_vlob_atom.blob,
-    vlob_atom.size,
     vlob_atom.author,
     vlob_atom.created_on AS timestamp
 FROM
@@ -353,7 +351,10 @@ LIMIT $5
 
             def _save_in_output_db():
                 # Must convert `vlob_id`` fields from UUID to bytes given SQLite doesn't handle the former
-                cooked_rows = [(r[0], r[1].bytes, r[2], r[3], r[4], r[5], r[6]) for r in rows]
+                # Must also convert datetime to a number of ms since UNIX epoch
+                cooked_rows = [
+                    (r[0], r[1].bytes, r[2], r[3], r[4], int(r[5].timestamp() * 1000)) for r in rows
+                ]
                 con = sqlite3.connect(self.output_db_path)
                 try:
                     con.executemany(
@@ -363,11 +364,10 @@ INSERT INTO vlob_atom (
     vlob_id,
     version,
     blob,
-    size,
     author,
     timestamp
 )
-VALUES (?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?)
 ON CONFLICT DO NOTHING
 """,
                         cooked_rows,
@@ -427,9 +427,7 @@ WHERE
 SELECT
     _id,
     block_id,
-    author,
-    size,
-    created_on
+    author
 FROM
     block
 WHERE
@@ -460,8 +458,6 @@ LIMIT $4
                         row["block_id"].bytes,
                         block,
                         row["author"],
-                        row["size"],
-                        row["created_on"],
                     )
                 )
 
@@ -475,11 +471,9 @@ INSERT INTO block (
     _id,
     block_id,
     data,
-    author,
-    size,
-    created_on
+    author
 )
-VALUES (?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?)
 ON CONFLICT DO NOTHING
 """,
                         cooked_rows,
