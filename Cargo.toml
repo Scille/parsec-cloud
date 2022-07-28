@@ -1,6 +1,8 @@
 [package]
 name = "parsec"
-version = "0.1.0"
+# We don't use this version to set the version of parsec
+# For that you're looking for `parsec/_version.py`
+version = "0.0.0"
 edition = "2021"
 
 [lib]
