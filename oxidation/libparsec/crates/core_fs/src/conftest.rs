@@ -8,7 +8,7 @@ use tests_fixtures::{alice, tmp_path, Device, TmpPath};
 
 pub struct TmpWorkspaceStorage {
     ws: WorkspaceStorage,
-    // call tmp_path's teardown at the end
+    // Parent fixture must be kept to ensure its teardown-on-drop is done after ours
     _tmp_path: TmpPath,
 }
 
