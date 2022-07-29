@@ -40,12 +40,14 @@ impl EntryName {
         Ok(format!("<EntryName {}>", self.0))
     }
 
-    fn __richcmp__(&self, py: Python, other: &EntryName, op: CompareOp) -> PyObject {
+    fn __richcmp__(&self, other: &EntryName, op: CompareOp) -> bool {
         match op {
-            CompareOp::Eq => (self.0.as_ref() == other.0.as_ref()).into_py(py),
-            CompareOp::Ne => (self.0.as_ref() != other.0.as_ref()).into_py(py),
-            CompareOp::Lt => (self.0.as_ref() < other.0.as_ref()).into_py(py),
-            _ => py.NotImplemented(),
+            CompareOp::Eq => self.0.as_ref() == other.0.as_ref(),
+            CompareOp::Ne => self.0.as_ref() != other.0.as_ref(),
+            CompareOp::Lt => self.0.as_ref() < other.0.as_ref(),
+            CompareOp::Gt => self.0.as_ref() > other.0.as_ref(),
+            CompareOp::Le => self.0.as_ref() <= other.0.as_ref(),
+            CompareOp::Ge => self.0.as_ref() >= other.0.as_ref(),
         }
     }
 
