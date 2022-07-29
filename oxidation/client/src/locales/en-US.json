@@ -1,20 +1,52 @@
 {
-    "HomePage": {
-        "mainMenu": {
-            "changelog": "Changelog",
-            "about": "About",
-            "lang": {
-                "frFR": "Français",
-                "enUS": "English"
-            }
-        },
-        "organizationActionSheet": {
-            "header": "Organization",
-            "create": "Create",
-            "joinByLink": "Join by link",
-            "joinByQRcode": "Join by QR code"
-        },
-        "noDevices": "You have no devices on this phone.",
-        "howToAddDevices": "To add a device, invite it from an existing organization, or create a new organization."
-    }
+	"HomePage": {
+		"mainMenu": {
+			"changelog": "Changelog",
+			"settings": "Settings",
+			"about": "About",
+			"lang": {
+				"frFR": "Français",
+				"enUS": "English"
+			}
+		},
+		"organizationActionSheet": {
+			"header": "Organization",
+			"create": "Create",
+			"joinByLink": "Join by link",
+			"joinByQRcode": "Join by QR code"
+		},
+		"noDevices": "You have no devices on this phone.",
+		"howToAddDevices": "To add a device, invite it from an existing organization, or create a new organization.",
+		"pleaseConnectToAnOrganisation": "Welcome. Please add an organization to start using Parsec.",
+		"createOrganization": "Create an organization",
+		"joinByLink": "Join by link",
+		"joinByQRcode": "Join by QR code"
+	},
+	"CreateOrganization": {
+		"pageTitle": "Create an organization",
+		"fullname": "Full name",
+		"fullnamePlaceholder": "Jean MARTIN",
+		"email": "Email",
+		"emailPlaceholder": "jean.martin{'@'}example.com",
+		"organizationName": "Organisation name",
+		"organizationNamePlaceholder": "MyOrganisation",
+		"useParsecServer": "Use the main PARSEC server",
+		"useMyOwnServer": "I have my own PARSEC server",
+		"acceptTOS": "I accept PARSEC's Privacy Policy and Terms and Conditions",
+		"parsecServerUrl": "URL of your PARSEC server",
+		"parsecServerUrlPlaceholder": "parsec://hote:port",
+		"registeringDevice": "Registering your device",
+		"deviceNameInputLabel": "Name of the device",
+		"deviceNamePlaceholder": "Desktop123",
+		"password": "Password",
+		"confirmPassword": "Confirm password",
+		"next": "Next",
+		"previous": "Previous",
+		"done": "Done"
+	},
+	"JoinByLinkModal": {
+		"pleaseEnterUrl": "Please enter the organization's URL",
+		"urlInputLabel": "URL of the organization",
+		"urlPlaceholder": "parsec://hote:port/organization?action=action&..."
+	}
 }

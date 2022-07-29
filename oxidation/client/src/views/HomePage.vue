@@ -22,7 +22,17 @@
           </ion-item>
           <ion-item
             button
-            @click="presentAbout()"
+            @click="router.push({ name: 'settings' })"
+          >
+            <ion-icon
+              :icon="settingsOutline"
+              slot="start"
+            />
+            <ion-label>{{ $t('HomePage.mainMenu.settings') }}</ion-label>
+          </ion-item>
+          <ion-item
+            button
+            @click="router.push({ name: 'about' })"
           >
             <ion-icon
               :icon="helpCircleOutline"
@@ -105,8 +115,40 @@
         </ion-toolbar>
       </ion-header>
       <div id="container">
-        <p>{{ $t('HomePage.noDevices') }}</p>
-        <p>{{ $t('HomePage.howToAddDevices') }}</p>
+        <p>{{ $t('HomePage.pleaseConnectToAnOrganisation') }}</p>
+        <ion-button
+          @click="openCreateOrganizationModal()"
+          expand="full"
+          size="large"
+        >
+          <ion-icon
+            slot="start"
+            :icon="add"
+          />
+          {{ $t('HomePage.createOrganization') }}
+        </ion-button>
+        <ion-button
+          @click="openJoinByLinkModal()"
+          expand="full"
+          size="large"
+        >
+          <ion-icon
+            slot="start"
+            :icon="link"
+          />
+          {{ $t('HomePage.joinByLink') }}
+        </ion-button>
+        <ion-button
+          v-if="isPlatform('hybrid')"
+          expand="full"
+          size="large"
+        >
+          <ion-icon
+            slot="start"
+            :icon="qrCodeSharp"
+          />
+          {{ $t('HomePage.joinByQRcode') }}
+        </ion-button>
       </div>
     </ion-content>
   </ion-page>
@@ -129,7 +171,9 @@ import {
   IonMenu,
   IonLabel,
   IonButtons,
-  actionSheetController
+  actionSheetController,
+  isPlatform,
+  modalController
 } from '@ionic/vue';
 import {
   ellipsisVertical,
@@ -139,14 +183,19 @@ import {
   qrCodeSharp,
   helpCircleOutline,
   newspaperSharp,
-  language
+  language,
+  settingsOutline
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
 import { ref } from 'vue';
 import { Storage } from '@ionic/storage';
+import { useRouter } from 'vue-router';
+import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
+import CreateOrganisation from '@/components/CreateOrganisationModal.vue';
 
 const { t, locale } = useI18n();
 const langAccordionGroup = ref();
+const router = useRouter();
 
 function closeLangAccordion(): void {
   if (langAccordionGroup.value) {
@@ -160,10 +209,6 @@ async function changeLang(selectedLang: string): Promise<void> {
   await store.create();
   await store.set('userLocale', selectedLang);
   closeLangAccordion();
-}
-
-function presentAbout(): void {
-  console.log('presentAbout');
 }
 
 function presentPatchNote(): void {
@@ -209,26 +254,58 @@ async function presentOrganizationActionSheet(): Promise<void> {
   const { role, data } = await actionSheet.onDidDismiss();
   console.log('onDidDismiss resolved with role and data', role, data);
 }
+
+async function openJoinByLinkModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: JoinByLinkModal,
+    cssClass: 'join-by-link-modal'
+  });
+  modal.present();
+
+  const { data, role } = await modal.onWillDismiss();
+
+  if (role === 'confirm') {
+    console.log(data);
+  }
+}
+
+async function openCreateOrganizationModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: CreateOrganisation
+  });
+  modal.present();
+
+  const { data, role } = await modal.onWillDismiss();
+
+  if (role === 'confirm') {
+    console.log(data);
+  }
+
+}
 </script>
 
 <style lang="scss" scoped>
 #container {
-    text-align: center;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+	text-align: center;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%);
 
-    p {
-        font-weight: bold;
-    }
+	max-width: 680px;
+	margin: 0 auto;
+
+	p {
+		font-weight: bold;
+	}
 }
+
 .lang-list {
-  .item {
-      ion-label {
-        margin-left: 3.5em;
-      }
-  }
+	.item {
+		ion-label {
+			margin-left: 3.5em;
+		}
+	}
 }
 </style>
