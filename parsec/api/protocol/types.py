@@ -1,15 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import re
 from unicodedata import normalize
-from typing import Union, TypeVar, Type, NoReturn, TYPE_CHECKING, Optional, Tuple, Pattern
-from uuid import uuid4
+from typing import Union, TypeVar, Optional, Tuple, Pattern
 from enum import Enum
-from collections import namedtuple
-from email.utils import parseaddr
 
 from parsec.serde import fields
-
+from libparsec.types import OrganizationID, UserID, DeviceName, DeviceID, DeviceLabel, HumanHandle
 
 UserIDTypeVar = TypeVar("UserIDTypeVar", bound="UserID")
 DeviceIDTypeVar = TypeVar("DeviceIDTypeVar", bound="DeviceID")
@@ -59,159 +55,11 @@ class StrBased:
         return self._str
 
 
-class OrganizationID(StrBased):
-    __slots__ = ()
-    REGEX = re.compile(r"^[\w\-]{1,32}$")
-    MAX_BYTE_SIZE = 32
-
-
-_PyOrganizationID = OrganizationID
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import OrganizationID as _RsOrganizationID
-    except:
-        pass
-    else:
-        OrganizationID = _RsOrganizationID
-
-
-class UserID(StrBased):
-    __slots__ = ()
-    REGEX = re.compile(r"^[\w\-]{1,32}$")
-    MAX_BYTE_SIZE = 32
-
-    @classmethod
-    def new(cls: Type[UserIDTypeVar]) -> UserIDTypeVar:
-        return cls(uuid4().hex)
-
-    def to_device_id(self, device_name: Union[str, "DeviceID"]) -> "DeviceID":
-        return DeviceID(f"{self._str}@{device_name}")
-
-
-_PyUserID = UserID
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import UserID as _RsUserID
-    except:
-        pass
-    else:
-        UserID = _RsUserID
-
-
-class DeviceName(StrBased):
-    __slots__ = ()
-    REGEX = re.compile(r"^[\w\-]{1,32}$")
-    MAX_BYTE_SIZE = 32
-
-    @classmethod
-    def new(cls: Type[DeviceNameTypeVar]) -> DeviceNameTypeVar:
-        return cls(uuid4().hex)
-
-
-_PyDeviceName = DeviceName
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import DeviceName as _RsDeviceName
-    except:
-        pass
-    else:
-        DeviceName = _RsDeviceName
-
-
-class DeviceID(StrBased):
-    __slots__ = ()
-    REGEX = re.compile(r"^[\w\-]{1,32}@[\w\-]{1,32}$")
-    MAX_BYTE_SIZE = 65
-
-    @property
-    def user_id(self) -> UserID:
-        return UserID(self._str.split("@")[0])
-
-    @property
-    def device_name(self) -> DeviceName:
-        return DeviceName(self._str.split("@")[1])
-
-    @classmethod
-    def new(cls: Type[DeviceIDTypeVar]) -> DeviceIDTypeVar:
-        return cls(f"{uuid4().hex}@{uuid4().hex}")
-
-
-_PyDeviceID = DeviceID
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import DeviceID as _RsDeviceID
-    except:
-        pass
-    else:
-        DeviceID = _RsDeviceID
-
-
-class DeviceLabel(StrBased):
-    REGEX = re.compile(r"^.+$")  # At least 1 character
-    MAX_BYTE_SIZE = 255
-
-
-_PyDeviceLabel = DeviceLabel
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import DeviceLabel as _RsDeviceLabel
-    except:
-        pass
-    else:
-        DeviceLabel = _RsDeviceLabel
-
 OrganizationIDField = fields.str_based_field_factory(OrganizationID)
 UserIDField = fields.str_based_field_factory(UserID)
 DeviceNameField = fields.str_based_field_factory(DeviceName)
 DeviceIDField = fields.str_based_field_factory(DeviceID)
 DeviceLabelField = fields.str_based_field_factory(DeviceLabel)
-
-
-class HumanHandle(namedtuple("HumanHandle", "email label")):
-    __slots__ = ()
-
-    def __new__(cls, email: str, label: str) -> "HumanHandle":
-        email = normalize("NFC", email)
-        label = normalize("NFC", label)
-
-        # TODO: how to check the email  easily ?
-        if not 0 < _bytes_size(email) < 255:
-            raise ValueError("Invalid email address")
-
-        if not 0 < _bytes_size(label) < 255:
-            raise ValueError("Invalid label")
-
-        parsed_label, parsed_email = parseaddr(f"{label} <{email}>")
-        if parsed_email != email or parsed_label != label:
-            raise ValueError("Invalid email/label couple")
-
-        return super(_PyHumanHandle, cls).__new__(cls, email, label)
-
-    def __repr__(self) -> str:
-        return f"<HumanHandle {str(self)} >"
-
-    def __str__(self) -> str:
-        return f"{self.label} <{self.email}>"
-
-    def __eq__(self, other: object) -> bool:
-        # Ignore label field, as it is only for human redability
-        return isinstance(other, HumanHandle) and self.email == other.email
-
-    def __gt__(self, other: object) -> NoReturn:
-        raise NotImplementedError
-
-    def __hash__(self) -> int:
-        return hash(self.email)
-
-
-_PyHumanHandle = HumanHandle
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import HumanHandle as _RsHumanHandle
-    except ImportError:
-        pass
-    else:
-        HumanHandle = _RsHumanHandle
 
 
 class HumanHandleField(fields.Tuple):
