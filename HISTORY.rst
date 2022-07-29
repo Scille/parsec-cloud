@@ -5,6 +5,22 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.11.0-rc4 (2022-07-29)
+-------------------------------
+
+Features
+~~~~~~~~
+
+* Added reencrypt_workspace CLI  (`#2708 <https://github.com/Scille/parsec-
+  cloud/issues/2708>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fixed share_workspace CLI  (`#2694 <https://github.com/Scille/parsec-
+  cloud/issues/2694>`__)
+
+
 Parsec v2.11.0-rc3 (2022-07-29)
 -------------------------------
 
