@@ -173,6 +173,8 @@ def backend_factory(
                             "bob_initial_remote_user_manifest", "v1"
                         ),
                     )
+                    if fixtures_customization.get("adam_is_revoked", False):
+                        await binder.bind_revocation(adam.user_id, certifier=alice)
 
             yield backend
 
