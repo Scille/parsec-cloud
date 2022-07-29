@@ -5,9 +5,9 @@ from typing import Optional, Tuple, Dict, Any, Type, TypeVar, TYPE_CHECKING
 from parsec._parsec import DateTime
 
 from parsec.types import FrozenDict
-from parsec.crypto import SecretKey, HashDigest
+from parsec.crypto import HashDigest
 from parsec.serde import fields, validate, post_load, OneOfSchema, pre_load
-from parsec.api.protocol import RealmRole, RealmRoleField, DeviceID, BlockID, BlockIDField
+from parsec.api.protocol import RealmRoleField, DeviceID, BlockID, BlockIDField
 from parsec.api.data.base import (
     BaseData,
     BaseSchema,
@@ -17,7 +17,7 @@ from parsec.api.data.base import (
 )
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from enum import Enum
-
+from parsec._parsec import WorkspaceEntry, SecretKey
 
 LOCAL_AUTHOR_LEGACY_PLACEHOLDER = DeviceID(
     "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER"
@@ -65,7 +65,7 @@ WorkspaceEntryTypeVar = TypeVar("WorkspaceEntryTypeVar", bound="WorkspaceEntry")
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class WorkspaceEntry(BaseData):
+class _PyWorkspaceEntry(BaseData):
     class SCHEMA_CLS(BaseSchema):
         name = EntryNameField(required=True)
         id = EntryIDField(required=True)
@@ -78,42 +78,6 @@ class WorkspaceEntry(BaseData):
         @post_load
         def make_obj(self, data: Dict[str, Any]) -> "WorkspaceEntry":
             return WorkspaceEntry(**data)
-
-    name: EntryName
-    id: EntryID
-    key: SecretKey
-    encryption_revision: int
-    encrypted_on: DateTime
-    role_cached_on: DateTime
-    role: Optional[RealmRole]
-
-    @classmethod
-    def new(
-        cls: Type[WorkspaceEntryTypeVar], name: EntryName, timestamp: DateTime
-    ) -> "WorkspaceEntry":
-        assert isinstance(name, EntryName)
-        return _PyWorkspaceEntry(
-            name=name,
-            id=EntryID.new(),
-            key=SecretKey.generate(),
-            encryption_revision=1,
-            encrypted_on=timestamp,
-            role_cached_on=timestamp,
-            role=RealmRole.OWNER,
-        )
-
-    def is_revoked(self) -> bool:
-        return self.role is None
-
-
-_PyWorkspaceEntry = WorkspaceEntry
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import WorkspaceEntry as _RsWorkspaceEntry
-    except:
-        pass
-    else:
-        WorkspaceEntry = _RsWorkspaceEntry
 
 
 T = TypeVar("T")
