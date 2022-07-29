@@ -4,7 +4,6 @@ import attr
 from typing import Optional, Tuple, Dict, Any, Type, TypeVar, TYPE_CHECKING
 from parsec._parsec import DateTime
 
-from parsec.types import FrozenDict
 from parsec.serde import fields, validate, post_load, OneOfSchema, pre_load
 from parsec.api.protocol import RealmRoleField, DeviceID, BlockIDField
 from parsec.api.data.base import (
@@ -14,9 +13,15 @@ from parsec.api.data.base import (
     BaseSignedDataSchema,
     DataValidationError,
 )
-from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
+from parsec.api.data.entry import EntryID, EntryIDField, EntryNameField
 from enum import Enum
-from parsec._parsec import BlockAccess, WorkspaceEntry, FolderManifest, FileManifest
+from parsec._parsec import (
+    BlockAccess,
+    WorkspaceEntry,
+    FolderManifest,
+    FileManifest,
+    WorkspaceManifest,
+)
 
 LOCAL_AUTHOR_LEGACY_PLACEHOLDER = DeviceID(
     "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER"
@@ -166,7 +171,7 @@ class _PyFileManifest(BaseManifest):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class WorkspaceManifest(BaseManifest):
+class _PyWorkspaceManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.WORKSPACE_MANIFEST, required=True)
         id = EntryIDField(required=True)
@@ -187,21 +192,6 @@ class WorkspaceManifest(BaseManifest):
         def make_obj(self, data: Dict[str, Any]) -> "WorkspaceManifest":
             data.pop("type")
             return WorkspaceManifest(**data)
-
-    id: EntryID
-    created: DateTime
-    updated: DateTime
-    children: FrozenDict[EntryName, EntryID]
-
-
-_PyWorkspaceManifest = WorkspaceManifest
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import WorkspaceManifest as _RsWorkspaceManifest
-    except:
-        pass
-    else:
-        WorkspaceManifest = _RsWorkspaceManifest
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)

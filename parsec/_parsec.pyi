@@ -55,6 +55,7 @@ from parsec._parsec_pyi.manifest import (
     BlockAccess,
     FolderManifest,
     FileManifest,
+    WorkspaceManifest,
 )
 
 from parsec._parsec_pyi.time import (
@@ -110,6 +111,7 @@ __all__ = [
     "BlockAccess",
     "FolderManifest",
     "FileManifest",
+    "WorkspaceManifest",
     # time
     "DateTime",
     "LocalDateTime",
