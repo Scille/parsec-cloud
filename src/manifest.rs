@@ -1,3 +1,5 @@
+use std::num::NonZeroU64;
+
 use pyo3::{
     exceptions::PyValueError,
     import_exception, pyclass,
@@ -8,12 +10,12 @@ use pyo3::{
 };
 
 use crate::{
-    api_crypto::SecretKey,
+    api_crypto::{HashDigest, SecretKey},
     binding_utils::{
         hash_generic, py_to_rs_datetime, py_to_rs_realm_role, rs_to_py_datetime,
         rs_to_py_realm_role,
     },
-    ids::EntryID,
+    ids::{BlockID, EntryID},
 };
 
 import_exception!(parsec.api.data, EntryNameTooLongError);
@@ -210,5 +212,109 @@ impl WorkspaceEntry {
             Some(role) => rs_to_py_realm_role(&role).map(Some),
             None => Ok(None),
         }
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct BlockAccess(pub libparsec::types::BlockAccess);
+
+impl BlockAccess {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.id == other.0.id && self.0.offset == other.0.offset && self.0.size == other.0.size
+    }
+}
+
+#[pymethods]
+impl BlockAccess {
+    #[new]
+    #[args(py_kwargs = "**")]
+    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [id: BlockID, "id"],
+            [key: SecretKey, "key"],
+            [offset: u64, "offset"],
+            [size: u64, "size"],
+            [digest: HashDigest, "digest"],
+        );
+
+        Ok(Self(libparsec::types::BlockAccess {
+            id: id.0,
+            key: key.0,
+            offset,
+            size: NonZeroU64::try_from(size)
+                .map_err(|_| PyValueError::new_err("Invalid `size` field"))?,
+            digest: digest.0,
+        }))
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    #[args(py_kwargs = "**")]
+    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [id: BlockID, "id"],
+            [key: SecretKey, "key"],
+            [offset: u64, "offset"],
+            [size: u64, "size"],
+            [digest: HashDigest, "digest"],
+        );
+        let mut r = self.0.clone();
+
+        if let Some(v) = id {
+            r.id = v.0;
+        }
+        if let Some(v) = key {
+            r.key = v.0;
+        }
+        if let Some(v) = offset {
+            r.offset = v;
+        }
+        if let Some(v) = size {
+            r.size = NonZeroU64::try_from(v)
+                .map_err(|_| PyValueError::new_err("Invalid `size` field"))?;
+        }
+        if let Some(v) = digest {
+            r.digest = v.0;
+        }
+
+        Ok(Self(r))
+    }
+
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
+        match op {
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
+            _ => py.NotImplemented(),
+        }
+    }
+
+    #[getter]
+    fn id(&self) -> PyResult<BlockID> {
+        Ok(BlockID(self.0.id))
+    }
+
+    #[getter]
+    fn key(&self) -> PyResult<SecretKey> {
+        Ok(SecretKey(self.0.key.clone()))
+    }
+
+    #[getter]
+    fn offset(&self) -> PyResult<u64> {
+        Ok(self.0.offset)
+    }
+
+    #[getter]
+    fn size(&self) -> PyResult<u64> {
+        Ok(self.0.size.into())
+    }
+
+    #[getter]
+    fn digest(&self) -> PyResult<HashDigest> {
+        Ok(HashDigest(self.0.digest.clone()))
     }
 }

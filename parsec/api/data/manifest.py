@@ -5,9 +5,8 @@ from typing import Optional, Tuple, Dict, Any, Type, TypeVar, TYPE_CHECKING
 from parsec._parsec import DateTime
 
 from parsec.types import FrozenDict
-from parsec.crypto import HashDigest
 from parsec.serde import fields, validate, post_load, OneOfSchema, pre_load
-from parsec.api.protocol import RealmRoleField, DeviceID, BlockID, BlockIDField
+from parsec.api.protocol import RealmRoleField, DeviceID, BlockIDField
 from parsec.api.data.base import (
     BaseData,
     BaseSchema,
@@ -17,7 +16,7 @@ from parsec.api.data.base import (
 )
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from enum import Enum
-from parsec._parsec import WorkspaceEntry, SecretKey
+from parsec._parsec import BlockAccess, WorkspaceEntry
 
 LOCAL_AUTHOR_LEGACY_PLACEHOLDER = DeviceID(
     "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER"
@@ -32,7 +31,7 @@ class ManifestType(Enum):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class BlockAccess(BaseData):
+class _PyBlockAccess(BaseData):
     class SCHEMA_CLS(BaseSchema):
         id = BlockIDField(required=True)
         key = fields.SecretKey(required=True)
@@ -43,22 +42,6 @@ class BlockAccess(BaseData):
         @post_load
         def make_obj(self, data: Dict[str, Any]) -> "BlockAccess":
             return BlockAccess(**data)
-
-    id: BlockID
-    key: SecretKey
-    offset: int
-    size: int
-    digest: HashDigest
-
-
-_PyBlockAccess = BlockAccess
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import BlockAccess as _RsBlockAccess
-    except:
-        pass
-    else:
-        BlockAccess = _RsBlockAccess
 
 
 WorkspaceEntryTypeVar = TypeVar("WorkspaceEntryTypeVar", bound="WorkspaceEntry")

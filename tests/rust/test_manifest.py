@@ -4,8 +4,8 @@ import pytest
 
 from parsec._parsec import DateTime
 
-from parsec.api.data import EntryID, BlockID, EntryName
-from parsec.api.protocol import RealmRole, DeviceID
+from parsec.api.data import EntryID, EntryName
+from parsec.api.protocol import RealmRole, DeviceID, BlockID
 from parsec.crypto import SecretKey, HashDigest, SigningKey
 
 

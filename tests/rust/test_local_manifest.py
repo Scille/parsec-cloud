@@ -4,7 +4,7 @@ import pytest
 
 from parsec._parsec import DateTime
 import re
-from parsec.api.data import EntryID, BlockID, EntryName
+from parsec.api.data import EntryID, EntryName
 from parsec.api.data.manifest import (
     FileManifest,
     FolderManifest,
@@ -12,7 +12,7 @@ from parsec.api.data.manifest import (
     WorkspaceManifest,
     UserManifest,
 )
-from parsec.api.protocol import DeviceID
+from parsec.api.protocol import DeviceID, BlockID
 from parsec.crypto import SecretKey, HashDigest
 from parsec.core.types import ChunkID
 
