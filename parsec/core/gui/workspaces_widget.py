@@ -398,6 +398,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                     )
                 except JobSchedulerNotAvailable:
                     pass
+            else:
+                button.reencryption_needs = None
 
             # Add the button to the new mapping
             # Note that the order of insertion matters as it corresponds to the order in which
