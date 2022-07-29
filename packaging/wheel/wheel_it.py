@@ -11,15 +11,25 @@ import re
 # avoid unreliability (especially when running from within a virtualenv)
 python = shutil.which("python")
 poetry = shutil.which("poetry")
+
+
+def display(line: str):
+    YELLOW_FG = "\x1b[33m"
+    DEFAULT_FG = "\x1b[39m"
+
+    # Flush is required to prevent mixing with the output of sub-command with the output of the script
+    print(f"{YELLOW_FG}{line}{DEFAULT_FG}", flush=True)
+
+
 if not python or not poetry:
     raise SystemExit("Cannot find python and/or poetry commands :(")
 else:
-    print(f"Using python: {python}")
-    print(f"Using poetry: {poetry}")
+    display(f"Using python: {python}")
+    display(f"Using poetry: {poetry}")
 
 
 def run(cmd, **kwargs):
-    print(f">>> {cmd}")
+    display(f">>> {cmd}")
     ret = subprocess.run(cmd.split(), check=True, **kwargs)
     return ret
 
