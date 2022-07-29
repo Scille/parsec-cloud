@@ -16,7 +16,7 @@ from parsec.api.data.base import (
 )
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from enum import Enum
-from parsec._parsec import BlockAccess, WorkspaceEntry
+from parsec._parsec import BlockAccess, WorkspaceEntry, FolderManifest
 
 LOCAL_AUTHOR_LEGACY_PLACEHOLDER = DeviceID(
     "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER"
@@ -114,7 +114,7 @@ FolderManifestTypeVar = TypeVar("FolderManifestTypeVar", bound="FolderManifest")
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class FolderManifest(BaseManifest):
+class _PyFolderManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.FOLDER_MANIFEST, required=True)
         id = EntryIDField(required=True)
@@ -136,36 +136,6 @@ class FolderManifest(BaseManifest):
         def make_obj(self, data: Dict[str, Any]) -> "FolderManifest":
             data.pop("type")
             return FolderManifest(**data)
-
-    @classmethod
-    def verify_and_load(  # type: ignore[override]
-        cls: Type["FolderManifest"],
-        *args: object,
-        expected_parent: Optional[EntryID] = None,
-        **kwargs: object,
-    ) -> "FolderManifest":
-        data = super().verify_and_load(*args, **kwargs)  # type: ignore[arg-type]
-        if expected_parent is not None and data.parent != expected_parent:
-            raise DataValidationError(
-                f"Invalid parent ID: expected `{expected_parent}`, got `{data.parent}`"
-            )
-        return data
-
-    id: EntryID
-    parent: EntryID
-    created: DateTime
-    updated: DateTime
-    children: FrozenDict[EntryName, EntryID]
-
-
-_PyFolderManifest = FolderManifest
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import FolderManifest as _RsFolderManifest
-    except:
-        pass
-    else:
-        FolderManifest = _RsFolderManifest
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)

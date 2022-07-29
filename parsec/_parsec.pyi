@@ -49,7 +49,7 @@ from parsec._parsec_pyi.addrs import (
     BackendPkiEnrollmentAddr,
 )
 
-from parsec._parsec_pyi.manifest import EntryName, WorkspaceEntry, BlockAccess
+from parsec._parsec_pyi.manifest import EntryName, WorkspaceEntry, BlockAccess, FolderManifest
 
 from parsec._parsec_pyi.time import (
     DateTime,
@@ -102,6 +102,7 @@ __all__ = [
     "EntryName",
     "WorkspaceEntry",
     "BlockAccess",
+    "FolderManifest",
     # time
     "DateTime",
     "LocalDateTime",

@@ -1,4 +1,15 @@
-from parsec._parsec import EntryID, SecretKey, RealmRole, BlockID, HashDigest
+from parsec._parsec import (
+    EntryID,
+    SecretKey,
+    RealmRole,
+    BlockID,
+    HashDigest,
+    DeviceID,
+    SigningKey,
+    VerifyKey,
+)
+
+from parsec.types import FrozenDict
 
 from pendulum import DateTime
 
@@ -65,3 +76,44 @@ class BlockAccess:
     def size(self) -> int: ...
     @property
     def digest(self) -> HashDigest: ...
+
+class FolderManifest:
+    def __init__(
+        self,
+        author: DeviceID,
+        timestamp: DateTime,
+        id: EntryID,
+        parent: EntryID,
+        version: int,
+        created: DateTime,
+        updated: DateTime,
+        children: FrozenDict[EntryName, EntryID],
+    ) -> None: ...
+    def __repr__(self) -> str: ...
+    def __eq__(self, other: FolderManifest) -> bool: ...
+    def __ne__(self, other: FolderManifest) -> bool: ...
+    @property
+    def author(self) -> DeviceID: ...
+    @property
+    def id(self) -> EntryID: ...
+    @property
+    def parent(self) -> EntryID: ...
+    @property
+    def version(self) -> int: ...
+    @property
+    def timestamp(self) -> DateTime: ...
+    @property
+    def created(self) -> DateTime: ...
+    @property
+    def updated(self) -> DateTime: ...
+    @property
+    def children(self) -> FrozenDict[EntryName, EntryID]: ...
+    def evolve(self, **kwargs): ...
+    def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: SecretKey) -> bytes: ...
+    def decrypt_verify_and_load(
+        encrypted: bytes,
+        key: SecretKey,
+        author_verify_key: VerifyKey,
+        expected_author: DeviceID,
+        expected_timestamp: DateTime,
+    ) -> FolderManifest: ...

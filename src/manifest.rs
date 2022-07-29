@@ -1,21 +1,21 @@
-use std::num::NonZeroU64;
+use std::{collections::HashMap, num::NonZeroU64};
 
 use pyo3::{
     exceptions::PyValueError,
     import_exception, pyclass,
     pyclass::CompareOp,
     pymethods,
-    types::{PyAny, PyBool, PyDict, PyType},
+    types::{PyAny, PyBool, PyBytes, PyDict, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
 
 use crate::{
-    api_crypto::{HashDigest, SecretKey},
+    api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey},
     binding_utils::{
         hash_generic, py_to_rs_datetime, py_to_rs_realm_role, rs_to_py_datetime,
         rs_to_py_realm_role,
     },
-    ids::{BlockID, EntryID},
+    ids::{BlockID, DeviceID, EntryID},
 };
 
 import_exception!(parsec.api.data, EntryNameTooLongError);
@@ -316,5 +316,192 @@ impl BlockAccess {
     #[getter]
     fn digest(&self) -> PyResult<HashDigest> {
         Ok(HashDigest(self.0.digest.clone()))
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct FolderManifest(pub libparsec::types::FolderManifest);
+
+impl FolderManifest {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.author == other.0.author
+            && self.0.id == other.0.id
+            && self.0.version == other.0.version
+            && self.0.parent == other.0.parent
+            && self.0.timestamp == other.0.timestamp
+            && self.0.created == other.0.created
+            && self.0.updated == other.0.updated
+            && self.0.children == other.0.children
+    }
+}
+
+#[pymethods]
+impl FolderManifest {
+    #[new]
+    #[args(py_kwargs = "**")]
+    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [parent: EntryID, "parent"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [children: HashMap<EntryName, EntryID>, "children"],
+        );
+
+        Ok(Self(libparsec::types::FolderManifest {
+            author: author.0,
+            timestamp,
+            version,
+            id: id.0,
+            parent: parent.0,
+            created,
+            updated,
+            children: children
+                .into_iter()
+                .map(|(name, id)| (name.0, id.0))
+                .collect(),
+        }))
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn dump_sign_and_encrypt<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+        key: &SecretKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
+        ))
+    }
+
+    #[classmethod]
+    fn decrypt_verify_and_load(
+        _cls: &PyType,
+        encrypted: &[u8],
+        key: &SecretKey,
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: &PyAny,
+    ) -> PyResult<Self> {
+        let expected_timestamp = py_to_rs_datetime(expected_timestamp)?;
+        match libparsec::types::FolderManifest::decrypt_verify_and_load(
+            encrypted,
+            &key.0,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_timestamp,
+        ) {
+            Ok(x) => Ok(Self(x)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
+        }
+    }
+
+    #[args(py_kwargs = "**")]
+    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [parent: EntryID, "parent"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [children: HashMap<EntryName, EntryID>, "children"],
+        );
+
+        let mut r = self.0.clone();
+
+        if let Some(v) = author {
+            r.author = v.0;
+        }
+        if let Some(v) = timestamp {
+            r.timestamp = v;
+        }
+        if let Some(v) = id {
+            r.id = v.0;
+        }
+        if let Some(v) = parent {
+            r.parent = v.0;
+        }
+        if let Some(v) = version {
+            r.version = v;
+        }
+        if let Some(v) = created {
+            r.created = v;
+        }
+        if let Some(v) = updated {
+            r.updated = v;
+        }
+        if let Some(v) = children {
+            r.children = v.into_iter().map(|(name, id)| (name.0, id.0)).collect();
+        }
+
+        Ok(Self(r))
+    }
+
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
+        match op {
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
+            _ => py.NotImplemented(),
+        }
+    }
+
+    #[getter]
+    fn author(&self) -> PyResult<DeviceID> {
+        Ok(DeviceID(self.0.author.clone()))
+    }
+
+    #[getter]
+    fn id(&self) -> PyResult<EntryID> {
+        Ok(EntryID(self.0.id))
+    }
+
+    #[getter]
+    fn parent(&self) -> PyResult<EntryID> {
+        Ok(EntryID(self.0.parent))
+    }
+
+    #[getter]
+    fn version(&self) -> PyResult<u32> {
+        Ok(self.0.version)
+    }
+
+    #[getter]
+    fn timestamp<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        rs_to_py_datetime(py, self.0.timestamp)
+    }
+
+    #[getter]
+    fn created<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        rs_to_py_datetime(py, self.0.created)
+    }
+
+    #[getter]
+    fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        rs_to_py_datetime(py, self.0.updated)
+    }
+
+    #[getter]
+    fn children<'p>(&self, py: Python<'p>) -> PyResult<&'p PyDict> {
+        let d = PyDict::new(py);
+
+        for (k, v) in &self.0.children {
+            let en = EntryName(k.clone()).into_py(py);
+            let me = EntryID(*v).into_py(py);
+            let _ = d.set_item(en, me);
+        }
+        Ok(d)
     }
 }

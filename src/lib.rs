@@ -57,6 +57,7 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<manifest::EntryName>()?;
     m.add_class::<manifest::WorkspaceEntry>()?;
     m.add_class::<manifest::BlockAccess>()?;
+    m.add_class::<manifest::FolderManifest>()?;
 
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
     m.add_class::<time::DateTime>()?;
