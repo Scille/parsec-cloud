@@ -5,6 +5,9 @@ name = "parsec"
 version = "0.0.0"
 edition = "2021"
 
+[package.metadata.maturin]
+name = "parsec._parsec"
+
 [lib]
 name = "parsec"
 crate-type = ["cdylib"]
