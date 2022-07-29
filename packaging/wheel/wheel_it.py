@@ -63,12 +63,15 @@ def main(program_source: Path, output_dir: Path):
     # TODO: `--use-deprecated=legacy-resolver` is needed due to a bug in pip
     # see: https://github.com/pypa/pip/issues/9644#issuecomment-813432613
     run(
-        f"{python} -m pip install pyqt5 babel docutils --constraint {constraints} --use-deprecated=legacy-resolver"
+        f"{python} -m pip install pyqt5 babel docutils maturin --constraint {constraints} --use-deprecated=legacy-resolver"
     )
 
     # Make sure PyQT resources are generated otherwise we will end up with
     # a .whl with missing parts !
     run(f"{python} {program_source / 'misc/generate_pyqt.py'}")
+
+    # Make sure we build the rust lib to be included in parsec
+    run(f"maturin develop --release")
 
     # Finally generate the wheel, note we don't use Poetry for the job given:
     # - It is not possible to choose the output directory
