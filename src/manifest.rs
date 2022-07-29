@@ -5,7 +5,7 @@ use pyo3::{
     import_exception, pyclass,
     pyclass::CompareOp,
     pymethods,
-    types::{PyAny, PyBool, PyBytes, PyDict, PyType},
+    types::{PyAny, PyBool, PyBytes, PyDict, PyTuple, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
 
@@ -503,5 +503,212 @@ impl FolderManifest {
             let _ = d.set_item(en, me);
         }
         Ok(d)
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct FileManifest(pub libparsec::types::FileManifest);
+
+impl FileManifest {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.author == other.0.author
+            && self.0.id == other.0.id
+            && self.0.version == other.0.version
+            && self.0.parent == other.0.parent
+            && self.0.timestamp == other.0.timestamp
+            && self.0.created == other.0.created
+            && self.0.updated == other.0.updated
+            && self.0.blocks == other.0.blocks
+    }
+}
+
+#[pymethods]
+impl FileManifest {
+    #[new]
+    #[args(py_kwargs = "**")]
+    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [parent: EntryID, "parent"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [size: u64, "size"],
+            [blocksize: u64, "blocksize"],
+            [blocks: Vec<BlockAccess>, "blocks"],
+        );
+
+        Ok(Self(libparsec::types::FileManifest {
+            author: author.0,
+            timestamp,
+            id: id.0,
+            parent: parent.0,
+            version,
+            created,
+            updated,
+            size,
+            blocksize: libparsec::types::Blocksize::try_from(blocksize)
+                .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?,
+            blocks: blocks.into_iter().map(|b| b.0).collect(),
+        }))
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn dump_sign_and_encrypt<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+        key: &SecretKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
+        ))
+    }
+
+    #[classmethod]
+    fn decrypt_verify_and_load(
+        _cls: &PyType,
+        encrypted: &[u8],
+        key: &SecretKey,
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: &PyAny,
+    ) -> PyResult<Self> {
+        let expected_timestamp = py_to_rs_datetime(expected_timestamp)?;
+        match libparsec::types::FileManifest::decrypt_verify_and_load(
+            encrypted,
+            &key.0,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_timestamp,
+        ) {
+            Ok(x) => Ok(Self(x)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
+        }
+    }
+
+    #[args(py_kwargs = "**")]
+    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [parent: EntryID, "parent"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [size: u64, "size"],
+            [blocksize: u64, "blocksize"],
+            [blocks: Vec<BlockAccess>, "blocks"],
+        );
+
+        let mut r = self.0.clone();
+
+        if let Some(v) = author {
+            r.author = v.0;
+        }
+        if let Some(v) = timestamp {
+            r.timestamp = v;
+        }
+        if let Some(v) = id {
+            r.id = v.0;
+        }
+        if let Some(v) = parent {
+            r.parent = v.0;
+        }
+        if let Some(v) = version {
+            r.version = v;
+        }
+        if let Some(v) = created {
+            r.created = v;
+        }
+        if let Some(v) = updated {
+            r.updated = v;
+        }
+        if let Some(v) = size {
+            r.size = v;
+        }
+        if let Some(v) = blocksize {
+            r.blocksize = libparsec::types::Blocksize::try_from(v)
+                .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?;
+        }
+        if let Some(v) = blocks {
+            r.blocks = v.into_iter().map(|b| b.0).collect();
+        }
+
+        Ok(Self(r))
+    }
+
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
+        match op {
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
+            _ => py.NotImplemented(),
+        }
+    }
+
+    #[getter]
+    fn author(&self) -> PyResult<DeviceID> {
+        Ok(DeviceID(self.0.author.clone()))
+    }
+
+    #[getter]
+    fn id(&self) -> PyResult<EntryID> {
+        Ok(EntryID(self.0.id))
+    }
+
+    #[getter]
+    fn parent(&self) -> PyResult<EntryID> {
+        Ok(EntryID(self.0.parent))
+    }
+
+    #[getter]
+    fn version(&self) -> PyResult<u32> {
+        Ok(self.0.version)
+    }
+
+    #[getter]
+    fn size(&self) -> PyResult<u64> {
+        Ok(self.0.size)
+    }
+
+    #[getter]
+    fn blocksize(&self) -> PyResult<u64> {
+        Ok(self.0.blocksize.into())
+    }
+
+    #[getter]
+    fn timestamp<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        rs_to_py_datetime(py, self.0.timestamp)
+    }
+
+    #[getter]
+    fn created<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        rs_to_py_datetime(py, self.0.created)
+    }
+
+    #[getter]
+    fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        rs_to_py_datetime(py, self.0.updated)
+    }
+
+    #[getter]
+    fn blocks<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
+        let elements: Vec<PyObject> = self
+            .0
+            .blocks
+            .iter()
+            .map(|x| BlockAccess(x.clone()).into_py(py))
+            .collect();
+        Ok(PyTuple::new(py, elements))
     }
 }

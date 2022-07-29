@@ -26,7 +26,6 @@ mod trustchain;
 /// import the module.
 #[pymodule]
 fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<manifest::FileManifest>()?;
     m.add_class::<manifest::WorkspaceManifest>()?;
     m.add_class::<manifest::UserManifest>()?;
     m.add_class::<local_manifest::Chunk>()?;

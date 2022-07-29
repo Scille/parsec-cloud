@@ -16,7 +16,7 @@ from parsec.api.data.base import (
 )
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from enum import Enum
-from parsec._parsec import BlockAccess, WorkspaceEntry, FolderManifest
+from parsec._parsec import BlockAccess, WorkspaceEntry, FolderManifest, FileManifest
 
 LOCAL_AUTHOR_LEGACY_PLACEHOLDER = DeviceID(
     "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER"
@@ -139,7 +139,7 @@ class _PyFolderManifest(BaseManifest):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class FileManifest(BaseManifest):
+class _PyFileManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.FILE_MANIFEST, required=True)
         id = EntryIDField(required=True)
@@ -163,38 +163,6 @@ class FileManifest(BaseManifest):
         def make_obj(self, data: Dict[str, Any]) -> "FileManifest":
             data.pop("type")
             return FileManifest(**data)
-
-    @classmethod
-    def verify_and_load(  # type: ignore[override]
-        cls: Type["FileManifest"],
-        *args: object,
-        expected_parent: Optional[EntryID] = None,
-        **kwargs: object,
-    ) -> "FileManifest":
-        data = super().verify_and_load(*args, **kwargs)  # type: ignore[arg-type]
-        if expected_parent is not None and data.parent != expected_parent:
-            raise DataValidationError(
-                f"Invalid parent ID: expected `{expected_parent}`, got `{data.parent}`"
-            )
-        return data
-
-    id: EntryID
-    parent: EntryID
-    created: DateTime
-    updated: DateTime
-    size: int
-    blocksize: int
-    blocks: Tuple[BlockAccess]
-
-
-_PyFileManifest = FileManifest
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import FileManifest as _RsFileManifest
-    except:
-        pass
-    else:
-        FileManifest = _RsFileManifest
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
