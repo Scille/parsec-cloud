@@ -1,4 +1,4 @@
-name: package-linux
+name: package-windows
 
 # This workflow will be triggered on:
 # - push on the main branch
@@ -7,7 +7,7 @@ name: package-linux
 on:
   pull_request:
     paths:
-      - .github/workflows/package-linux.yml
+      - .github/workflows/package-windows.yml
   push:
     branches:
       - master
@@ -16,13 +16,11 @@ on:
       - v[0-9]+.[0-9]+.[0-9]+*
 
 env:
-  rust-version: 1.62.0
   python-version: "3.9"
-  poetry-version: 1.1.13
 
 jobs:
-  package-linux-build-wheel:
-    runs-on: ubuntu-22.04
+  package-windows-build-wheel:
+    runs-on: windows-2022
     env:
       # Need feature from poetry 1.2.x that aren't present in 1.1.x
       poetry-version: 1.2.0b3
@@ -30,11 +28,13 @@ jobs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
       - name: Install poetry
+        shell: bash
         run: |
-          export POETRY_HOME="$HOME/.poetry"
-          mkdir -p "$POETRY_HOME"
-          curl -sSL https://install.python-poetry.org | python3 - --version=${{ env.poetry-version }}
-          echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
+          set -eux
+          export POETRY_HOME=${APPDATA}/.poetry
+          curl -sSL https://install.python-poetry.org \
+            | python3 - --version=${{ env.poetry-version }}
+          echo "${APPDATA}\.poetry\bin" >> "$GITHUB_PATH"
 
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
@@ -45,8 +45,9 @@ jobs:
 
       - name: Get wheel version
         id: wheel-version
+        shell: bash
         run: |
-          set -e
+          set -eux
           # Retrieve Parsec version and customize it if we are not building on a tag
           # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
           if ([ "${{ github.ref_type }}" == "tag" ])
@@ -76,27 +77,18 @@ jobs:
       - name: Build wheel
         run: python packaging/wheel/wheel_it.py . --output dist
 
-      - name: Debug dist dir
-        run: ls dist
-
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
           name: ${{ runner.os }}-wheel
           path: dist/
 
-  package-linux-build-snap:
-    needs: package-linux-build-wheel
-    runs-on: ubuntu-20.04
-    env:
-      WHEEL_VERSION: ${{ needs.package-linux-build-wheel.outputs.wheel-version }}
+  package-windows-build-installer:
+    needs: package-windows-build-wheel
+    runs-on: windows-2022
     steps:
-      - name: Install snapcraft
-        run: sudo snap install snapcraft --classic
-
-      - name: Debug snapcraft version
-        run: |
-          set -e
-          echo "::warning title=Snapcraft Version::using $(snapcraft --version)"
+      - uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb  # pin v4.0.0
+        with:
+          python-version: ${{ env.python-version }}
 
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
@@ -105,30 +97,25 @@ jobs:
           name: ${{ runner.os }}-wheel
           path: dist
 
-      - name: Copy snap build configuration
+      - name: Prepare build directory
+        run: Copy-Item -Recurse -Path ${{ github.workspace }}\packaging\win32\* -Destination ${{ runner.temp }}
         working-directory: ${{ runner.temp }}
-        run: |
-          cp -Rv ${{ github.workspace }}/packaging/snap/{bin,snap} .
 
+      - name: Debug ${{ runner.temp }} dir
+        run: Get-ChildItem -Recurse -Path ${{ runner.temp }}
 
-      - name: Copy wheel configuration + python requirement
+      - name: Freeze Parsec
+        run: python3 freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
         working-directory: ${{ runner.temp }}
-        run: |
-          mkdir src
-          WHEEL=$(ls -1 ${{ github.workspace }}/dist/parsec_cloud-*.whl)
-          cp -Rv $WHEEL src/
-          cp -v ${{ github.workspace }}/dist/core-requirements.txt src/
 
-      - name: Set snap build version
-        run: |
-          sed -i.back 's/__PARSEC_VERSION__/"${{ env.WHEEL_VERSION }}"/' ${{ runner.temp }}/snap/snapcraft.yaml
-          diff -u ${{ runner.temp }}/snap/snapcraft.yaml{.back,} || true
-
-      - name: Run snapcraft
+      - name: Build NSIS setup
+        run: makensis.exe installer.nsi
         working-directory: ${{ runner.temp }}
-        run: snapcraft --destructive-mode
+
+      - name: Debug build directory
+        run: Get-ChildItem -Recurse -Path ${{ runner.temp }}\build
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
-          name: ${{ runner.os }}-snap
-          path: ${{ runner.temp }}/parsec*.snap
+          name: ${{ runner.os }}-${{ runner.arch }}-installer
+          path: ${{ runner.temp }}/build/parsec*-setup.exe

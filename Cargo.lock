@@ -668,9 +668,9 @@ checksum = "3ee2393c4a91429dffb4bedf19f4d6abf27d8a732c8ce4980305d782e5426d57"
 
 [[package]]
 name = "diesel"
-version = "2.0.0-rc.0"
+version = "2.0.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e531d0abf8147036383c88ce3785d9cda6fe1b8b1183021ffa01cf49c5819d24"
+checksum = "876a12f2d98c35d1dfaf74083664be5bb71606b72f4756f3792cdb1ddb192b46"
 dependencies = [
  "diesel_derives",
  "libsqlite3-sys",
@@ -679,9 +679,9 @@ dependencies = [
 
 [[package]]
 name = "diesel_derives"
-version = "2.0.0-rc.0"
+version = "2.0.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "212ba0cdc611523c37f26c7b3b4aedb4af7cbfe9239c4e7736a8a7c82284d77b"
+checksum = "2497d9cefebedc40492310f3c94493e1d0bd5b11b5e1bfc0a7f4b106012203ea"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -1421,6 +1421,7 @@ dependencies = [
  "libparsec_client_types",
  "libparsec_crypto",
  "libparsec_types",
+ "libsqlite3-sys",
  "rstest 0.12.0",
  "tests_fixtures",
  "thiserror",
@@ -1577,10 +1578,11 @@ dependencies = [
 
 [[package]]
 name = "libsqlite3-sys"
-version = "0.24.2"
+version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "898745e570c7d0453cc1fbc4a701eb6c662ed54e8fec8b7d14be137ebeeb9d14"
+checksum = "9f0455f2c1bc9a7caa792907026e469c1d91761fb0ea37cbb16427c77280cf35"
 dependencies = [
+ "cc",
  "pkg-config",
  "vcpkg",
 ]
@@ -2398,7 +2400,19 @@ dependencies = [
  "async-std",
  "futures",
  "futures-timer",
- "rstest_macros",
+ "rstest_macros 0.13.0",
+ "rustc_version",
+]
+
+[[package]]
+name = "rstest"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9c9dc66cc29792b663ffb5269be669f1613664e69ad56441fdb895c2347b930"
+dependencies = [
+ "futures",
+ "futures-timer",
+ "rstest_macros 0.14.0",
  "rustc_version",
 ]
 
@@ -2407,6 +2421,19 @@ name = "rstest_macros"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f78aba848123782ba59340928ec7d876ebe745aa0365d6af8a630f19a5c16116"
+dependencies = [
+ "cfg-if 1.0.0",
+ "proc-macro2",
+ "quote",
+ "rustc_version",
+ "syn",
+]
+
+[[package]]
+name = "rstest_macros"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5015e68a0685a95ade3eee617ff7101ab6a3fc689203101ca16ebc16f2b89c66"
 dependencies = [
  "cfg-if 1.0.0",
  "proc-macro2",
@@ -2881,7 +2908,7 @@ dependencies = [
  "libparsec_protocol",
  "libparsec_types",
  "remove_dir_all 0.7.0",
- "rstest 0.13.0",
+ "rstest 0.15.0",
  "uuid",
 ]
 

@@ -125,6 +125,74 @@ def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
     _run_cli_share_workspace_test(args, 0, True)
 
 
+def test_reencrypt_workspace(tmp_path, monkeypatch, alice, bob):
+    config_dir = tmp_path / "config"
+    # Mocking
+    factory_mock = AsyncMock()
+
+    @asynccontextmanager
+    async def logged_core_factory(*args, **kwargs):
+        yield factory_mock(*args, **kwargs)
+
+    password = "S3cr3t"
+    save_device_with_password_in_config(config_dir, bob, password)
+
+    def _run_cli_reencrypt_workspace_test(args, expected_error_code, from_beginning):
+        factory_mock.reset_mock()
+
+        reenc_needs_mock = AsyncMock()
+        reenc_needs_mock.need_reencryption = True
+        reenc_needs_mock.reencryption_already_in_progress = not from_beginning
+
+        workspace_fs_mock = AsyncMock()
+        workspace_fs_mock.get_reencryption_need.return_value = reenc_needs_mock
+        workspace_fs_mock.get_reencryption_need.is_async = True
+
+        job_mock = AsyncMock()
+        job_mock.do_one_batch.return_value = (100, 100)
+        job_mock.do_one_batch.is_async = True
+
+        factory_mock.return_value.user_fs.get_workspace.return_value = workspace_fs_mock
+        if from_beginning:
+            factory_mock.return_value.user_fs.workspace_start_reencryption.return_value = job_mock
+            factory_mock.return_value.user_fs.workspace_start_reencryption.is_async = True
+        else:
+            factory_mock.return_value.user_fs.workspace_continue_reencryption.return_value = (
+                job_mock
+            )
+            factory_mock.return_value.user_fs.workspace_continue_reencryption.is_async = True
+        factory_mock.return_value.find_workspace_from_name.return_value.id = "ws1_id"
+
+        monkeypatch.setattr(
+            "parsec.core.cli.reencrypt_workspace.logged_core_factory", logged_core_factory
+        )
+        runner = CliRunner()
+        result = runner.invoke(cli, args)
+
+        assert result.exit_code == expected_error_code
+        factory_mock.assert_called_once_with(ANY, bob)
+        factory_mock.return_value.user_fs.get_workspace.assert_called_once_with("ws1_id")
+        workspace_fs_mock.get_reencryption_need.assert_called_once()
+        if from_beginning:
+            factory_mock.return_value.user_fs.workspace_start_reencryption.assert_called_once_with(
+                "ws1_id"
+            )
+        else:
+            factory_mock.return_value.user_fs.workspace_continue_reencryption.assert_called_once_with(
+                "ws1_id"
+            )
+        job_mock.do_one_batch.assert_called_once()
+
+    args = (
+        f"core reencrypt_workspace --password {password} "
+        f"--device={bob.slughash} --config-dir={config_dir.as_posix()} "
+        f"--workspace-name=ws1 "
+    )
+
+    _run_cli_reencrypt_workspace_test(args, 0, from_beginning=True)
+    _run_cli_reencrypt_workspace_test(args, 0, from_beginning=False)
+
+
 def _short_cmd(cmd):
     if len(cmd) < 40:
         return cmd
