@@ -1,14 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import TYPE_CHECKING
-
-from parsec.types import UUID4
 from parsec.serde import BaseSchema, fields, validate
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import DeviceIDField
 from parsec.api.protocol.realm import RealmIDField
 from parsec.api.protocol.sequester import SequesterServiceIDField
-
+from libparsec.types import VlobID
 
 __all__ = (
     "VlobID",
@@ -21,20 +18,6 @@ __all__ = (
     "vlob_maintenance_get_reencryption_batch_serializer",
     "vlob_maintenance_save_reencryption_batch_serializer",
 )
-
-
-class VlobID(UUID4):
-    __slots__ = ()
-
-
-_PyVlobID = VlobID
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import VlobID as _RsVlobID
-    except:
-        pass
-    else:
-        VlobID = _RsVlobID
 
 
 VlobIDField = fields.uuid_based_field_factory(VlobID)
