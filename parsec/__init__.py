@@ -12,4 +12,7 @@ except ImportError:
 else:
     IS_OXIDIZED = True
 
+import parsec._parsec  # noqa
+
+
 __all__ = ("__version__", "IS_OXIDIZED")
