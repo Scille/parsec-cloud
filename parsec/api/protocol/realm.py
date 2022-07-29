@@ -1,12 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from enum import Enum
-from typing import TYPE_CHECKING
-from parsec.types import UUID4
 from parsec.serde import fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import UserIDField, DeviceIDField
-
+from libparsec.types import RealmID
 
 __all__ = (
     "RealmID",
@@ -23,20 +21,6 @@ __all__ = (
     "realm_start_reencryption_maintenance_serializer",
     "realm_finish_reencryption_maintenance_serializer",
 )
-
-
-class RealmID(UUID4):
-    __slots__ = ()
-
-
-_PyRealmID = RealmID
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import RealmID as _RsRealmID
-    except:
-        pass
-    else:
-        RealmID = _RsRealmID
 
 
 class MaintenanceType(Enum):
