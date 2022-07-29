@@ -5,7 +5,7 @@ import functools
 from typing import Optional, Tuple, TypeVar, Type, Union, FrozenSet, Pattern, Dict, TYPE_CHECKING
 from pendulum import DateTime
 
-from parsec.types import UUID4, FrozenDict
+from parsec.types import FrozenDict
 from parsec.crypto import SecretKey, HashDigest
 from parsec.serde import fields, OneOfSchema, validate, post_load
 from parsec.api.protocol import DeviceID, RealmRole
@@ -35,6 +35,7 @@ from parsec.api.data.manifest import (
 )
 from parsec.core.types.base import BaseLocalData
 from enum import Enum
+from libparsec.types import ChunkID
 
 __all__ = (
     "WorkspaceEntry",  # noqa: Republishing
@@ -50,19 +51,6 @@ DEFAULT_BLOCK_SIZE = 512 * 1024  # 512 KB
 # Cheap rename
 WorkspaceRole = RealmRole
 
-
-class ChunkID(UUID4):
-    __slots__ = ()
-
-
-_PyChunkID = ChunkID
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import ChunkID as _RsChunkID
-    except:
-        pass
-    else:
-        ChunkID = _RsChunkID
 
 ChunkIDField = fields.uuid_based_field_factory(ChunkID)
 
