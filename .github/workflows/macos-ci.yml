@@ -64,7 +64,7 @@ jobs:
             | python3 - --version=${{ env.poetry-version }}
           echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
 
-      - uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb  # pin v4.0.0
+      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.0.0
         with:
           python-version: ${{ env.python-version }}
           cache: poetry
