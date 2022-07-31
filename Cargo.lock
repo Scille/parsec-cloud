@@ -61,16 +61,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
 
 [[package]]
-name = "async-attributes"
-version = "1.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3203e79f4dd9bdda415ed03cf14dae5a2bf775c683a00f94e9cd1faf0f596e5"
-dependencies = [
- "quote",
- "syn",
-]
-
-[[package]]
 name = "async-channel"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -193,7 +183,6 @@ version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62565bb4402e926b29953c785397c6dc0391b7b446e45008b0049eb43cec6f5d"
 dependencies = [
- "async-attributes",
  "async-channel",
  "async-global-executor",
  "async-io",
@@ -1383,7 +1372,7 @@ dependencies = [
  "paste",
  "pretty_assertions",
  "rmp-serde",
- "rstest 0.13.0",
+ "rstest",
  "rstest_reuse",
  "serde",
  "serde_bytes",
@@ -1405,7 +1394,7 @@ dependencies = [
  "libparsec_protocol",
  "libparsec_types",
  "rmp-serde",
- "rstest 0.13.0",
+ "rstest",
  "serde",
  "serde_with",
  "tests_fixtures",
@@ -1422,7 +1411,7 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_types",
  "libsqlite3-sys",
- "rstest 0.12.0",
+ "rstest",
  "tests_fixtures",
  "thiserror",
  "uuid",
@@ -1486,7 +1475,7 @@ dependencies = [
  "http",
  "libparsec_protocol",
  "libparsec_types",
- "rstest 0.13.0",
+ "rstest",
  "smol",
  "tests_fixtures",
 ]
@@ -1510,7 +1499,7 @@ dependencies = [
  "paste",
  "rand 0.8.5",
  "rmp-serde",
- "rstest 0.13.0",
+ "rstest",
  "serde",
  "serde_json",
  "serde_with",
@@ -1548,7 +1537,7 @@ dependencies = [
  "pretty_assertions",
  "rand 0.8.5",
  "rmp-serde",
- "rstest 0.13.0",
+ "rstest",
  "rstest_reuse",
  "serde",
  "serde_bytes",
@@ -2380,53 +2369,14 @@ dependencies = [
 
 [[package]]
 name = "rstest"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d912f35156a3f99a66ee3e11ac2e0b3f34ac85a07e05263d05a7e2c8810d616f"
-dependencies = [
- "cfg-if 1.0.0",
- "proc-macro2",
- "quote",
- "rustc_version",
- "syn",
-]
-
-[[package]]
-name = "rstest"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b939295f93cb1d12bc1a83cf9ee963199b133fb8a79832dd51b68bb9f59a04dc"
-dependencies = [
- "async-std",
- "futures",
- "futures-timer",
- "rstest_macros 0.13.0",
- "rustc_version",
-]
-
-[[package]]
-name = "rstest"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9c9dc66cc29792b663ffb5269be669f1613664e69ad56441fdb895c2347b930"
 dependencies = [
  "futures",
  "futures-timer",
- "rstest_macros 0.14.0",
+ "rstest_macros",
  "rustc_version",
-]
-
-[[package]]
-name = "rstest_macros"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f78aba848123782ba59340928ec7d876ebe745aa0365d6af8a630f19a5c16116"
-dependencies = [
- "cfg-if 1.0.0",
- "proc-macro2",
- "quote",
- "rustc_version",
- "syn",
 ]
 
 [[package]]
@@ -2908,7 +2858,7 @@ dependencies = [
  "libparsec_protocol",
  "libparsec_types",
  "remove_dir_all 0.7.0",
- "rstest 0.15.0",
+ "rstest",
  "uuid",
 ]
 

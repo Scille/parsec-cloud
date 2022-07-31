@@ -33,7 +33,7 @@ async-tungstenite = { version = "0.17.1", features = ["async-std-runtime"] }
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
 hex-literal = "0.3.3"
-rstest = "0.13.0"
+rstest = "0.15.0"
 serde_json = "1.0.82"
 
 [features]
