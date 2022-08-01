@@ -19,7 +19,7 @@ serialization_format = { path = "../serialization_format" }
 paste = "1.0.5"
 rand = "0.8.5"
 rmp-serde = "1.0.0"
-serde = { version = "1.0.138", features = ["derive"] }
+serde = { version = "1.0.140", features = ["derive"] }
 serde_json = "1.0.82"
 serde_with = "1.14.0"
 thiserror = "1.0.30"
