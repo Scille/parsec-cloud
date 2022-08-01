@@ -6,7 +6,7 @@ from unittest.mock import ANY
 
 from trio import open_nursery
 
-from parsec import IS_OXIDIZED
+from parsec import UNSTABLE_OXIDATION
 from parsec.api.protocol import DeviceID, RealmID, RealmRole
 from parsec.api.data import BaseManifest as BaseRemoteManifest, EntryName
 from parsec.core.types import EntryID, DEFAULT_BLOCK_SIZE
@@ -447,7 +447,7 @@ async def test_get_reencryption_need(alice_workspace, running_backend, monkeypat
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: chunk_storage is private")
+@pytest.mark.skipif(UNSTABLE_OXIDATION, reason="WorkspaceStorage: chunk_storage is private")
 async def test_backend_block_data_online(
     alice_user_fs, alice2_user_fs, running_backend, monkeypatch
 ):

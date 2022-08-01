@@ -7,7 +7,7 @@ from pendulum import datetime
 from hypothesis_trio.stateful import initialize, rule, run_state_machine_as_test
 from hypothesis import strategies as st
 
-from parsec import IS_OXIDIZED
+from parsec import UNSTABLE_OXIDATION
 from parsec.core.types import EntryID, LocalFileManifest, Chunk
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
@@ -62,7 +62,7 @@ async def test_close_unknown_fd(alice_file_transactions):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: manifest_storage is private")
+@pytest.mark.skipif(UNSTABLE_OXIDATION, reason="WorkspaceStorage: manifest_storage is private")
 async def test_operations_on_file(alice_file_transactions, foo_txt):
     file_transactions = alice_file_transactions
 
@@ -117,7 +117,7 @@ async def test_operations_on_file(alice_file_transactions, foo_txt):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: manifest_storage is private")
+@pytest.mark.skipif(UNSTABLE_OXIDATION, reason="WorkspaceStorage: manifest_storage is private")
 async def test_flush_file(alice_file_transactions, foo_txt):
     file_transactions = alice_file_transactions
 
@@ -216,7 +216,7 @@ size = st.integers(min_value=0, max_value=4 * 1024**2)  # Between 0 and 4MB
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows file style not compatible with oracle")
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
+@pytest.mark.skipif(UNSTABLE_OXIDATION, reason="No persistent_mockup")
 def test_file_operations(
     tmpdir,
     hypothesis_settings,

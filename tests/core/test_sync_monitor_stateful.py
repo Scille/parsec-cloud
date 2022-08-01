@@ -13,7 +13,7 @@ from hypothesis_trio.stateful import (
     multiple,
 )
 
-from parsec import IS_OXIDIZED
+from parsec import UNSTABLE_OXIDATION
 from parsec.api.data import EntryName
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FSWorkspaceNotFoundError, FSWorkspaceNoAccess
@@ -49,7 +49,7 @@ def recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=False):
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
+@pytest.mark.skipif(UNSTABLE_OXIDATION, reason="No persistent_mockup")
 def test_sync_monitor_stateful(
     hypothesis_settings,
     frozen_clock,

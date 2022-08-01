@@ -8,11 +8,11 @@ __import__("parsec.utils")
 try:
     import libparsec  # noqa
 except ImportError:
-    IS_OXIDIZED = False
+    UNSTABLE_OXIDATION = False
 else:
-    IS_OXIDIZED = True
+    UNSTABLE_OXIDATION = True
 
 import parsec._parsec  # noqa
 
 
-__all__ = ("__version__", "IS_OXIDIZED")
+__all__ = ("__version__", "UNSTABLE_OXIDATION")

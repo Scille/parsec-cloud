@@ -4,7 +4,7 @@ import pytest
 import trio
 from pendulum import datetime
 
-from parsec import IS_OXIDIZED
+from parsec import UNSTABLE_OXIDATION
 from parsec.crypto import SecretKey
 from parsec.api.data import UserManifest, WorkspaceEntry, EntryName
 from parsec.core.types import LocalUserManifest, WorkspaceRole
@@ -34,7 +34,7 @@ async def test_user_manifest_access_while_speculative(user_fs_factory, alice):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: manifest_storage is private")
+@pytest.mark.skipif(UNSTABLE_OXIDATION, reason="WorkspaceStorage: manifest_storage is private")
 async def test_workspace_manifest_access_while_speculative(user_fs_factory, alice):
     # Speculative workspace occurs when workspace is shared to a new user, or
     # when a device gets it local data removed. We use the latter here (even if

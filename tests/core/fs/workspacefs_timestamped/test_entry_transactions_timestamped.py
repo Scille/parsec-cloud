@@ -3,14 +3,16 @@
 import pytest
 from pendulum import datetime
 
-from parsec import IS_OXIDIZED
+from parsec import UNSTABLE_OXIDATION
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
 from parsec.core.fs.exceptions import FSLocalMissError
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
+@pytest.mark.skipif(
+    UNSTABLE_OXIDATION, reason="Oxidation doesn't implement WorkspaceStorageTimestamped"
+)
 async def test_root_entry_info(alice_workspace_t2, alice_workspace_t4):
     stat2 = await alice_workspace_t2.transactions.entry_info(FsPath("/"))
     assert stat2 == {
@@ -40,35 +42,45 @@ async def test_root_entry_info(alice_workspace_t2, alice_workspace_t4):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
+@pytest.mark.skipif(
+    UNSTABLE_OXIDATION, reason="Oxidation doesn't implement WorkspaceStorageTimestamped"
+)
 async def test_file_create(alice_workspace_t4):
     with pytest.raises(PermissionError):
         access_id, fd = await alice_workspace_t4.transactions.file_create(FsPath("/foo.txt"))
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
+@pytest.mark.skipif(
+    UNSTABLE_OXIDATION, reason="Oxidation doesn't implement WorkspaceStorageTimestamped"
+)
 async def test_file_delete(alice_workspace_t4):
     with pytest.raises(PermissionError):
         await alice_workspace_t4.transactions.file_delete(FsPath("/foo/bar"))
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
+@pytest.mark.skipif(
+    UNSTABLE_OXIDATION, reason="Oxidation doesn't implement WorkspaceStorageTimestamped"
+)
 async def test_folder_delete(alice_workspace_t4):
     with pytest.raises(PermissionError):
         await alice_workspace_t4.transactions.folder_delete(FsPath("/foo"))
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
+@pytest.mark.skipif(
+    UNSTABLE_OXIDATION, reason="Oxidation doesn't implement WorkspaceStorageTimestamped"
+)
 async def test_rename(alice_workspace_t4):
     with pytest.raises(PermissionError):
         await alice_workspace_t4.transactions.entry_rename(FsPath("/foo"), FsPath("/foo2"))
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
+@pytest.mark.skipif(
+    UNSTABLE_OXIDATION, reason="Oxidation doesn't implement WorkspaceStorageTimestamped"
+)
 async def test_access_not_loaded_entry(alice_workspace_t4):
     entry_id = alice_workspace_t4.transactions.get_workspace_entry().id
     alice_workspace_t4.transactions.local_storage._cache.clear()
@@ -78,7 +90,9 @@ async def test_access_not_loaded_entry(alice_workspace_t4):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
+@pytest.mark.skipif(
+    UNSTABLE_OXIDATION, reason="Oxidation doesn't implement WorkspaceStorageTimestamped"
+)
 async def test_access_unknown_entry(alice_workspace_t4):
     with pytest.raises(FileNotFoundError):
         await alice_workspace_t4.transactions.entry_info(FsPath("/dummy"))

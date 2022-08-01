@@ -3,7 +3,7 @@
 import pytest
 
 from PyQt5 import QtGui
-from parsec import IS_OXIDIZED
+from parsec import UNSTABLE_OXIDATION
 
 from parsec.core.gui import validators
 from parsec.core.gui.input_widgets import ValidatedLineEdit
@@ -279,7 +279,7 @@ def test_file_name_validator(qtbot, core_config):
 
 
 @pytest.mark.gui
-@pytest.mark.xfail(IS_OXIDIZED, reason="TODO: remove when #2667 is merged")
+@pytest.mark.xfail(UNSTABLE_OXIDATION, reason="TODO: remove when #2667 is merged")
 @pytest.mark.parametrize(
     "name_and_expected",
     [("    ", False), ("[Test]", False), ("Maurice Moss", True), ("    Maurice    Moss   ", True)],
