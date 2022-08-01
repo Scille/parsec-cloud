@@ -256,6 +256,16 @@ class RealmRoleCertificateContent(BaseAPISignedData):
         return data
 
 
+_PyRealmRoleCertificateContent = RealmRoleCertificateContent
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import RealmRoleCertificate as _RsRealmRoleCertificateContent
+    except:
+        pass
+    else:
+        RealmRoleCertificateContent = _RsRealmRoleCertificateContent
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class SequesterAuthorityCertificate(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):

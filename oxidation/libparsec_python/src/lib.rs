@@ -177,10 +177,12 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchReq>()?;
     m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchRep>()?;
     m.add_class::<protocol::ReencryptionBatchEntry>()?;
-    // Trustchain
+    // Certif
     m.add_class::<certif::UserCertificate>()?;
     m.add_class::<certif::RevokedUserCertificate>()?;
     m.add_class::<certif::DeviceCertificate>()?;
+    m.add_class::<certif::RealmRoleCertificate>()?;
+    // Trustchain
     m.add_class::<trustchain::TrustchainContext>()?;
     m.add_function(wrap_pyfunction!(time::freeze_time, m)?)?;
     // LocalDevice
