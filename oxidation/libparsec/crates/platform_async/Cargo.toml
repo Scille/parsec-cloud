@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-flume = "0.10.13"
+flume = "0.10.14"
 # futures is used for its macros `select_all` and `join_all`
 futures = "0.3.21"
 
