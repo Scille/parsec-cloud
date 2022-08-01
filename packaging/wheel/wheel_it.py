@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import shutil
 import re
+
 # import sys
 
 
@@ -73,25 +74,11 @@ def main(src_dir: Path, output_dir: Path):
         constraints_data.append(re.sub(r"\[.*\]", "", line))
     constraints.write_text("\n".join(constraints_data), encoding="utf8")
 
-    # Make sure the dependencies needed to run generate_pyqt.py are in place
-    # TODO: `--use-deprecated=legacy-resolver` is needed due to a bug in pip
-    # see: https://github.com/pypa/pip/issues/9644#issuecomment-813432613
-    run(
-        f"{python} -m pip install pyqt5 babel docutils --constraint {constraints} --use-deprecated=legacy-resolver"
-    )
-
-    # Make sure PyQT resources are generated otherwise we will end up with
-    # a .whl with missing parts !
-    run(f"{poetry} run python {src_dir / 'misc/generate_pyqt.py'}")
-
-    # Make sure we build the rust lib to be included in parsec
-    run(f"{poetry} run maturin develop --release")
-    display(f"{list(src_dir.glob('parsec/_parsec*'))}")
     # Finally generate the wheel, note we don't use Poetry for the job given:
     # - It is not possible to choose the output directory
     # - And more importantly, Poetry is not PEP517 compliant and build wheel
     #   without building binary resources (it basically only zip the source code)
-    run(f"{python} -m pip wheel {src_dir} --wheel-dir {output_dir} --use-pep517 --no-deps")
+    run(f"{poetry} run pip wheel {src_dir} --wheel-dir {output_dir} --use-pep517 --no-deps")
 
 
 if __name__ == "__main__":
