@@ -11,7 +11,7 @@ name = "auth_cmds"
 
 [dependencies]
 # Used to send HTTP request to the server.
-reqwest = "0.11.10"
+reqwest = "0.11.11"
 # Used to perform operation on URL.
 url = "2.2.2"
 # Add primitive type to be used with the proctocol
@@ -30,4 +30,4 @@ env_logger = "0.9.0"
 http-body = "0.4.5"
 hyper = { version = "0.14.20", features = ["server"] }
 log = "0.4.17"
-tokio = { version = "1.19", features = ["rt", "macros", "sync"] }
+tokio = { version = "1.20", features = ["rt", "macros", "sync"] }
