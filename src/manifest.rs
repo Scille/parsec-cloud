@@ -887,3 +887,213 @@ impl WorkspaceManifest {
         Ok(d)
     }
 }
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct UserManifest(pub libparsec::types::UserManifest);
+
+impl UserManifest {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.author == other.0.author
+            && self.0.id == other.0.id
+            && self.0.version == other.0.version
+            && self.0.timestamp == other.0.timestamp
+            && self.0.created == other.0.created
+            && self.0.updated == other.0.updated
+            && self.0.last_processed_message == other.0.last_processed_message
+            && self.0.workspaces == other.0.workspaces
+    }
+}
+
+#[pymethods]
+impl UserManifest {
+    #[new]
+    #[args(py_kwargs = "**")]
+    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [last_processed_message: u64, "last_processed_message"],
+            [workspaces: Vec<WorkspaceEntry>, "workspaces"],
+        );
+
+        Ok(Self(libparsec::types::UserManifest {
+            author: author.0,
+            timestamp,
+            id: id.0,
+            version,
+            created,
+            updated,
+            last_processed_message,
+            workspaces: workspaces.into_iter().map(|w| w.0).collect(),
+        }))
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn dump_sign_and_encrypt<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+        key: &SecretKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
+        ))
+    }
+
+    #[classmethod]
+    #[allow(clippy::too_many_arguments)]
+    fn decrypt_verify_and_load(
+        _cls: &PyType,
+        encrypted: &[u8],
+        key: &SecretKey,
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: &PyAny,
+        expected_id: Option<EntryID>,
+        expected_version: Option<u32>,
+    ) -> PyResult<Self> {
+        let expected_timestamp = py_to_rs_datetime(expected_timestamp)?;
+        let data = libparsec::types::UserManifest::decrypt_verify_and_load(
+            encrypted,
+            &key.0,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_timestamp,
+        )
+        .map_err(|e| DataError::new_err(e.to_string()))?;
+        if let Some(expected_id) = expected_id {
+            if data.id != expected_id.0 {
+                return Err(DataValidationError::new_err(format!(
+                    "Invalid entry ID: expected `{}`, got `{}`",
+                    expected_id.0, data.id
+                )));
+            }
+        }
+        if let Some(expected_version) = expected_version {
+            if data.version != expected_version {
+                return Err(DataValidationError::new_err(format!(
+                    "Invalid version: expected `{}`, got `{}`",
+                    expected_version, data.version
+                )));
+            }
+        }
+        Ok(Self(data))
+    }
+
+    #[args(py_kwargs = "**")]
+    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp, "timestamp", py_to_rs_datetime],
+            [id: EntryID, "id"],
+            [version: u32, "version"],
+            [created, "created", py_to_rs_datetime],
+            [updated, "updated", py_to_rs_datetime],
+            [last_processed_message: u64, "last_processed_message"],
+            [workspaces: Vec<WorkspaceEntry>, "workspaces"],
+        );
+
+        let mut r = self.0.clone();
+
+        if let Some(v) = author {
+            r.author = v.0;
+        }
+        if let Some(v) = timestamp {
+            r.timestamp = v;
+        }
+        if let Some(v) = id {
+            r.id = v.0;
+        }
+        if let Some(v) = version {
+            r.version = v;
+        }
+        if let Some(v) = created {
+            r.created = v;
+        }
+        if let Some(v) = updated {
+            r.updated = v;
+        }
+        if let Some(v) = last_processed_message {
+            r.last_processed_message = v;
+        }
+        if let Some(v) = workspaces {
+            r.workspaces = v.into_iter().map(|w| w.0).collect();
+        }
+
+        Ok(Self(r))
+    }
+
+    fn get_workspace_entry(&self, workspace_id: EntryID) -> PyResult<Option<WorkspaceEntry>> {
+        Ok(self
+            .0
+            .get_workspace_entry(workspace_id.0)
+            .cloned()
+            .map(WorkspaceEntry))
+    }
+
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
+        match op {
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
+            _ => py.NotImplemented(),
+        }
+    }
+
+    #[getter]
+    fn author(&self) -> PyResult<DeviceID> {
+        Ok(DeviceID(self.0.author.clone()))
+    }
+
+    #[getter]
+    fn id(&self) -> PyResult<EntryID> {
+        Ok(EntryID(self.0.id))
+    }
+
+    #[getter]
+    fn version(&self) -> PyResult<u32> {
+        Ok(self.0.version)
+    }
+
+    #[getter]
+    fn timestamp<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        rs_to_py_datetime(py, self.0.timestamp)
+    }
+
+    #[getter]
+    fn created<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        rs_to_py_datetime(py, self.0.created)
+    }
+
+    #[getter]
+    fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        rs_to_py_datetime(py, self.0.updated)
+    }
+
+    #[getter]
+    fn last_processed_message(&self) -> PyResult<u64> {
+        Ok(self.0.last_processed_message)
+    }
+
+    #[getter]
+    fn workspaces<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
+        let elements: Vec<PyObject> = self
+            .0
+            .workspaces
+            .clone()
+            .into_iter()
+            .map(|x| WorkspaceEntry(x).into_py(py))
+            .collect();
+        Ok(PyTuple::new(py, elements))
+    }
+}

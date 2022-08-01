@@ -56,6 +56,7 @@ from parsec._parsec_pyi.manifest import (
     FolderManifest,
     FileManifest,
     WorkspaceManifest,
+    UserManifest,
 )
 
 from parsec._parsec_pyi.time import (
@@ -112,6 +113,7 @@ __all__ = [
     "FolderManifest",
     "FileManifest",
     "WorkspaceManifest",
+    "UserManifest",
     # time
     "DateTime",
     "LocalDateTime",

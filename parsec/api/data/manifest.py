@@ -1,8 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
-from typing import Optional, Tuple, Dict, Any, Type, TypeVar, TYPE_CHECKING
-from parsec._parsec import DateTime
+from typing import Optional, Dict, Any, Type, TypeVar
 
 from parsec.serde import fields, validate, post_load, OneOfSchema, pre_load
 from parsec.api.protocol import RealmRoleField, DeviceID, BlockIDField
@@ -21,6 +20,7 @@ from parsec._parsec import (
     FolderManifest,
     FileManifest,
     WorkspaceManifest,
+    UserManifest,
 )
 
 LOCAL_AUTHOR_LEGACY_PLACEHOLDER = DeviceID(
@@ -195,7 +195,7 @@ class _PyWorkspaceManifest(BaseManifest):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class UserManifest(BaseManifest):
+class _PyUserManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.USER_MANIFEST, required=True)
         id = EntryIDField(required=True)
@@ -217,22 +217,3 @@ class UserManifest(BaseManifest):
         def make_obj(self, data: Dict[str, Any]) -> "UserManifest":
             data.pop("type")
             return UserManifest(**data)
-
-    id: EntryID
-    created: DateTime
-    updated: DateTime
-    last_processed_message: int
-    workspaces: Tuple[WorkspaceEntry, ...] = attr.ib(converter=tuple)
-
-    def get_workspace_entry(self, workspace_id: EntryID) -> Optional[WorkspaceEntry]:
-        return next((w for w in self.workspaces if w.id == workspace_id), None)
-
-
-_PyUserManifest = UserManifest
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import UserManifest as _RsUserManifest
-    except:
-        pass
-    else:
-        UserManifest = _RsUserManifest
