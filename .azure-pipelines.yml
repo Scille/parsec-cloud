@@ -519,8 +519,18 @@ jobs:
           python freeze_program.py $(Build.SourcesDirectory) --wheel-it-dir $(Pipeline.Workspace)/wheel
         displayName: Freeze Parsec
         workingDirectory: $(Agent.TempDirectory)/winbuild
+      - bash: |
+          set -eux
+          mkdir dist
+          cp build/manifest.ini dist/
+          cp build/install_files.nsh dist/
+          cp build/uninstall_files.nsh dist/
+          cp -R build/parsec-* dist/
+          cp build/winfsp-* dist/
+        displayName: Prepare artifact
+        workingDirectory: $(Agent.TempDirectory)/winbuild
       # Cannot do the NSIS installer part in CI given it requires to sign `parsec.exe`
-      - publish: $(Agent.TempDirectory)/winbuild/build/parsec-*
+      - publish: $(Agent.TempDirectory)/winbuild/dist
         artifact: win_$(vs.arch)_installer_content
 
 
