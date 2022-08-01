@@ -6,12 +6,13 @@ from parsec._parsec import DateTime
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.event_bus import EventBus
-from parsec.api.data import UserProfile, RevokedUserCertificateContent, DataError
+from parsec.api.data import RevokedUserCertificate, DataError
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
     DeviceID,
     HumanHandle,
+    UserProfile,
     user_get_serializer,
     human_find_serializer,
     user_create_serializer,
@@ -189,7 +190,7 @@ class BaseUserComponent:
         msg = user_revoke_serializer.req_load(msg)
 
         try:
-            data = RevokedUserCertificateContent.verify_and_load(
+            data = RevokedUserCertificate.verify_and_load(
                 msg["revoked_user_certificate"],
                 author_verify_key=client_ctx.verify_key,
                 expected_author=client_ctx.device_id,

@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING, Optional, Union, Dict
 import trio
 from collections import defaultdict
 
-from parsec.api.protocol import OrganizationID
-from parsec.api.data.certif import UserProfile
+from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.crypto import VerifyKey
 from parsec.backend.user import UserError, User, Device
 from parsec.backend.organization import (

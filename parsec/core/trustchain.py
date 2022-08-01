@@ -7,10 +7,10 @@ from parsec.crypto import VerifyKey
 from parsec.api.protocol import UserID, DeviceID
 from parsec.api.data import (
     DataError,
-    UserCertificateContent,
+    UserCertificate,
     UserProfile,
-    RevokedUserCertificateContent,
-    DeviceCertificateContent,
+    RevokedUserCertificate,
+    DeviceCertificate,
 )
 
 
@@ -42,7 +42,7 @@ class TrustchainContext:
     def invalidate_user_cache(self, user_id: UserID) -> None:
         self._users_cache.pop(user_id, None)
 
-    def get_user(self, user_id: UserID, now: DateTime = None) -> Optional[UserCertificateContent]:
+    def get_user(self, user_id: UserID, now: DateTime = None) -> Optional[UserCertificate]:
         now = now or DateTime.now()
         try:
             cached_on, verified_user = self._users_cache[user_id]
@@ -54,7 +54,7 @@ class TrustchainContext:
 
     def get_revoked_user(
         self, user_id: UserID, now: DateTime = None
-    ) -> Optional[RevokedUserCertificateContent]:
+    ) -> Optional[RevokedUserCertificate]:
         now = now or DateTime.now()
         try:
             cached_on, verified_revoked_user = self._revoked_users_cache[user_id]
@@ -66,7 +66,7 @@ class TrustchainContext:
 
     def get_device(
         self, device_id: DeviceID, now: DateTime = None
-    ) -> Optional[DeviceCertificateContent]:
+    ) -> Optional[DeviceCertificate]:
         now = now or DateTime.now()
         try:
             cached_on, verified_device = self._devices_cache[device_id]
@@ -84,9 +84,9 @@ class TrustchainContext:
         devices_certifs: Sequence[bytes] = (),
         expected_user_id: UserID = None,
     ) -> Tuple[
-        UserCertificateContent,
-        Optional[RevokedUserCertificateContent],
-        List[DeviceCertificateContent],
+        UserCertificate,
+        Optional[RevokedUserCertificate],
+        List[DeviceCertificate],
     ]:
         now = DateTime.now()
         verified_users, verified_revoked_users, verified_devices = self.load_trustchain(
@@ -129,9 +129,9 @@ class TrustchainContext:
         devices: Sequence[bytes] = (),
         now: DateTime = None,
     ) -> Tuple[
-        List[UserCertificateContent],
-        List[RevokedUserCertificateContent],
-        List[DeviceCertificateContent],
+        List[UserCertificate],
+        List[RevokedUserCertificate],
+        List[DeviceCertificate],
     ]:
         now = now or DateTime.now()
 
@@ -142,7 +142,7 @@ class TrustchainContext:
         # Deserialize the certificates and filter the ones we already have in cache
         try:
             for certif in devices:
-                unverified_device = DeviceCertificateContent.unsecure_load(certif)
+                unverified_device = DeviceCertificate.unsecure_load(certif)
                 verified_device = self.get_device(unverified_device.device_id, now)
                 if verified_device:
                     devices_states[verified_device.device_id] = CertifState(
@@ -154,7 +154,7 @@ class TrustchainContext:
                     )
 
             for certif in users:
-                unverified_user = UserCertificateContent.unsecure_load(certif)
+                unverified_user = UserCertificate.unsecure_load(certif)
                 verified_user = self.get_user(unverified_user.user_id, now)
                 if verified_user:
                     users_states[verified_user.user_id] = CertifState(certif, verified_user, True)
@@ -164,7 +164,7 @@ class TrustchainContext:
                     )
 
             for certif in revoked_users:
-                unverified_revoked_user = RevokedUserCertificateContent.unsecure_load(certif)
+                unverified_revoked_user = RevokedUserCertificate.unsecure_load(certif)
                 verified_revoked_user = self.get_revoked_user(unverified_revoked_user.user_id, now)
                 if verified_revoked_user:
                     revoked_users_states[verified_revoked_user.user_id] = CertifState(
@@ -216,7 +216,7 @@ class TrustchainContext:
             # Author is either admin or signing one of it own devices
             verified_user_id = (
                 verified.device_id.user_id
-                if isinstance(verified, DeviceCertificateContent)
+                if isinstance(verified, DeviceCertificate)
                 else verified.user_id
             )
             if author_device.device_id.user_id != verified_user_id:
@@ -256,12 +256,12 @@ class TrustchainContext:
             author = state.content.author
             if author is None:
                 verified_device = _verify_created_by_root(
-                    state.certif, DeviceCertificateContent, sign_chain=(*signed_children, device_id)
+                    state.certif, DeviceCertificate, sign_chain=(*signed_children, device_id)
                 )
             else:
                 verified_device = _verify_created_by_device(
                     state.certif,
-                    DeviceCertificateContent,
+                    DeviceCertificate,
                     author,
                     sign_chain=(*signed_children, device_id),
                 )
@@ -272,13 +272,13 @@ class TrustchainContext:
             user_id = unverified_content.user_id
             if author is None:
                 verified_user = _verify_created_by_root(
-                    certif, UserCertificateContent, sign_chain=(f"{user_id}'s creation",)
+                    certif, UserCertificate, sign_chain=(f"{user_id}'s creation",)
                 )
             elif author.user_id == user_id:
                 raise TrustchainError(f"{user_id}: Invalid self-signed user certificate")
             else:
                 verified_user = _verify_created_by_device(
-                    certif, UserCertificateContent, author, sign_chain=(f"{user_id}'s creation",)
+                    certif, UserCertificate, author, sign_chain=(f"{user_id}'s creation",)
                 )
             return verified_user
 
@@ -287,16 +287,13 @@ class TrustchainContext:
             user_id = unverified_content.user_id
             if author is None:
                 verified_revoked_user = _verify_created_by_root(
-                    certif, RevokedUserCertificateContent, sign_chain=(f"{user_id}'s revocation",)
+                    certif, RevokedUserCertificate, sign_chain=(f"{user_id}'s revocation",)
                 )
             elif author.user_id == user_id:
                 raise TrustchainError(f"{user_id}: Invalid self-signed user revocation certificate")
             else:
                 verified_revoked_user = _verify_created_by_device(
-                    certif,
-                    RevokedUserCertificateContent,
-                    author,
-                    sign_chain=(f"{user_id}'s revocation",),
+                    certif, RevokedUserCertificate, author, sign_chain=(f"{user_id}'s revocation",)
                 )
             return verified_revoked_user
 

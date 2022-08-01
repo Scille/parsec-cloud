@@ -27,7 +27,7 @@ from parsec.api.data import (
     DataError,
     RealmRoleCertificateContent,
     BaseMessageContent,
-    UserCertificateContent,
+    UserCertificate,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
@@ -1066,7 +1066,7 @@ class UserFS:
                 previous_entry=existing_workspace_entry,
             )
 
-    async def _retrieve_participants(self, workspace_id: EntryID) -> List[UserCertificateContent]:
+    async def _retrieve_participants(self, workspace_id: EntryID) -> List[UserCertificate]:
         """
         Raises:
             FSError
@@ -1086,10 +1086,7 @@ class UserFS:
         return users
 
     def _generate_reencryption_messages(
-        self,
-        new_workspace_entry: WorkspaceEntry,
-        users: List[UserCertificateContent],
-        timestamp: DateTime,
+        self, new_workspace_entry: WorkspaceEntry, users: List[UserCertificate], timestamp: DateTime
     ) -> Dict[UserID, bytes]:
         """
         Raises:

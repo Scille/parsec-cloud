@@ -12,9 +12,10 @@ from parsec.api.protocol import (
     HumanHandleField,
     DeviceLabel,
     DeviceLabelField,
+    UserProfile,
+    UserProfileField,
 )
 from parsec.api.data.base import BaseAPIData
-from parsec.api.data.certif import UserProfile, UserProfileField
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)

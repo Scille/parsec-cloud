@@ -5,8 +5,8 @@ from typing import Optional
 from parsec.crypto import SigningKey, VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.api.data import (
-    UserCertificateContent,
-    DeviceCertificateContent,
+    UserCertificate,
+    DeviceCertificate,
     UserProfile,
     SequesterAuthorityCertificate,
 )
@@ -60,7 +60,7 @@ async def bootstrap_organization(
     )
 
     timestamp = device.timestamp()
-    user_certificate = UserCertificateContent(
+    user_certificate = UserCertificate(
         author=None,
         timestamp=timestamp,
         user_id=device.user_id,
@@ -69,7 +69,7 @@ async def bootstrap_organization(
         profile=device.profile,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=None,
         timestamp=timestamp,
         device_id=device.device_id,

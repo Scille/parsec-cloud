@@ -6,7 +6,7 @@ import attr
 from parsec.backend.user import UserAlreadyRevokedError
 
 from parsec.utils import timestamps_in_the_ballpark
-from parsec.api.data import DataError, RealmRoleCertificateContent, UserProfile
+from parsec.api.data import DataError, RealmRoleCertificateContent
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
@@ -14,6 +14,7 @@ from parsec.api.protocol import (
     RealmID,
     RealmRole,
     MaintenanceType,
+    UserProfile,
     realm_status_serializer,
     realm_stats_serializer,
     realm_create_serializer,

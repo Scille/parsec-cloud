@@ -18,11 +18,6 @@ from parsec.api.data.entry import (
 )
 
 from parsec.api.data.certif import (
-    UserProfile,
-    UserProfileField,
-    UserCertificateContent,
-    DeviceCertificateContent,
-    RevokedUserCertificateContent,
     RealmRoleCertificateContent,
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
@@ -56,6 +51,7 @@ from parsec.api.data.manifest import (
 )
 from parsec.api.data.pki import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 
+from libparsec.types import UserCertificate, DeviceCertificate, RevokedUserCertificate
 
 __all__ = (
     # Base
@@ -75,9 +71,9 @@ __all__ = (
     # Certifs
     "UserProfile",
     "UserProfileField",
-    "UserCertificateContent",
-    "DeviceCertificateContent",
-    "RevokedUserCertificateContent",
+    "UserCertificate",
+    "DeviceCertificate",
+    "RevokedUserCertificate",
     "RealmRoleCertificateContent",
     "SequesterAuthorityCertificate",
     "SequesterServiceCertificate",

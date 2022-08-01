@@ -2,7 +2,7 @@
 
 import secrets
 
-from parsec.api.data import DeviceCertificateContent
+from parsec.api.data import DeviceCertificate
 from parsec.api.protocol import DeviceID, DeviceName, DeviceLabel
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
@@ -34,7 +34,7 @@ async def _create_new_device_for_self(
     )
     now = DateTime.now()
 
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=original_device.device_id,
         timestamp=now,
         device_id=new_device.device_id,

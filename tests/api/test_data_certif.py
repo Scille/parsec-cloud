@@ -8,9 +8,9 @@ from parsec.serde import packb, unpackb
 from parsec.api.data import (
     DataError,
     UserProfile,
-    UserCertificateContent,
-    DeviceCertificateContent,
-    RevokedUserCertificateContent,
+    UserCertificate,
+    DeviceCertificate,
+    RevokedUserCertificate,
 )
 
 
@@ -22,22 +22,22 @@ def realcrypto(unmock_crypto):
 
 def test_unsecure_read_device_certificate_bad_data():
     with pytest.raises(DataError):
-        DeviceCertificateContent.unsecure_load(b"dummy")
+        DeviceCertificate.unsecure_load(b"dummy")
 
 
 def test_unsecure_read_revoked_user_certificate_bad_data():
     with pytest.raises(DataError):
-        RevokedUserCertificateContent.unsecure_load(b"dummy")
+        RevokedUserCertificate.unsecure_load(b"dummy")
 
 
 def test_unsecure_read_user_certificate_bad_data():
     with pytest.raises(DataError):
-        UserCertificateContent.unsecure_load(b"dummy")
+        UserCertificate.unsecure_load(b"dummy")
 
 
 def test_build_user_certificate(alice, bob, mallory):
     now = DateTime.now()
-    certif = UserCertificateContent(
+    certif = UserCertificate(
         author=alice.device_id,
         timestamp=now,
         user_id=bob.user_id,
@@ -47,33 +47,33 @@ def test_build_user_certificate(alice, bob, mallory):
     ).dump_and_sign(alice.signing_key)
     assert isinstance(certif, bytes)
 
-    unsecure = UserCertificateContent.unsecure_load(certif)
-    assert isinstance(unsecure, UserCertificateContent)
+    unsecure = UserCertificate.unsecure_load(certif)
+    assert isinstance(unsecure, UserCertificate)
     assert unsecure.user_id == bob.user_id
     assert unsecure.public_key == bob.public_key
     assert unsecure.timestamp == now
     assert unsecure.author == alice.device_id
     assert unsecure.profile == UserProfile.ADMIN
 
-    verified = UserCertificateContent.verify_and_load(
+    verified = UserCertificate.verify_and_load(
         certif, author_verify_key=alice.verify_key, expected_author=alice.device_id
     )
     assert verified == unsecure
 
     with pytest.raises(DataError) as exc:
-        UserCertificateContent.verify_and_load(
+        UserCertificate.verify_and_load(
             certif, author_verify_key=alice.verify_key, expected_author=mallory.device_id
         )
     assert str(exc.value) == "Invalid author: expected `mallory@dev1`, got `alice@dev1`"
 
     with pytest.raises(DataError) as exc:
-        UserCertificateContent.verify_and_load(
+        UserCertificate.verify_and_load(
             certif, author_verify_key=mallory.verify_key, expected_author=alice.device_id
         )
     assert str(exc.value) == "Signature was forged or corrupt"
 
     with pytest.raises(DataError) as exc:
-        UserCertificateContent.verify_and_load(
+        UserCertificate.verify_and_load(
             certif,
             author_verify_key=alice.verify_key,
             expected_author=alice.device_id,
@@ -84,7 +84,7 @@ def test_build_user_certificate(alice, bob, mallory):
 
 def test_user_certificate_supports_legacy_is_admin_field(alice, bob):
     now = DateTime.now()
-    certif = UserCertificateContent(
+    certif = UserCertificate(
         author=bob.device_id,
         timestamp=now,
         user_id=alice.user_id,
@@ -105,7 +105,7 @@ def test_user_certificate_supports_legacy_is_admin_field(alice, bob):
     dumped_legacy_certif = bob.signing_key.sign(zlib.compress(packb(raw_legacy_certif)))
 
     # Make sure the legacy format can be loaded
-    legacy_certif = UserCertificateContent.verify_and_load(
+    legacy_certif = UserCertificate.verify_and_load(
         dumped_legacy_certif,
         author_verify_key=bob.verify_key,
         expected_author=bob.device_id,
@@ -122,7 +122,7 @@ def test_user_certificate_supports_legacy_is_admin_field(alice, bob):
 
 def test_build_device_certificate(alice, bob, mallory):
     now = DateTime.now()
-    certif = DeviceCertificateContent(
+    certif = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=bob.device_id,
@@ -131,32 +131,32 @@ def test_build_device_certificate(alice, bob, mallory):
     ).dump_and_sign(alice.signing_key)
     assert isinstance(certif, bytes)
 
-    unsecure = DeviceCertificateContent.unsecure_load(certif)
-    assert isinstance(unsecure, DeviceCertificateContent)
+    unsecure = DeviceCertificate.unsecure_load(certif)
+    assert isinstance(unsecure, DeviceCertificate)
     assert unsecure.device_id == bob.device_id
     assert unsecure.verify_key == bob.verify_key
     assert unsecure.timestamp == now
     assert unsecure.author == alice.device_id
 
-    verified = DeviceCertificateContent.verify_and_load(
+    verified = DeviceCertificate.verify_and_load(
         certif, author_verify_key=alice.verify_key, expected_author=alice.device_id
     )
     assert verified == unsecure
 
     with pytest.raises(DataError) as exc:
-        DeviceCertificateContent.verify_and_load(
+        DeviceCertificate.verify_and_load(
             certif, author_verify_key=alice.verify_key, expected_author=mallory.device_id
         )
     assert str(exc.value) == "Invalid author: expected `mallory@dev1`, got `alice@dev1`"
 
     with pytest.raises(DataError) as exc:
-        DeviceCertificateContent.verify_and_load(
+        DeviceCertificate.verify_and_load(
             certif, author_verify_key=mallory.verify_key, expected_author=alice.device_id
         )
     assert str(exc.value) == "Signature was forged or corrupt"
 
     with pytest.raises(DataError) as exc:
-        DeviceCertificateContent.verify_and_load(
+        DeviceCertificate.verify_and_load(
             certif,
             author_verify_key=alice.verify_key,
             expected_author=alice.device_id,
@@ -167,36 +167,36 @@ def test_build_device_certificate(alice, bob, mallory):
 
 def test_build_revoked_user_certificate(alice, bob, mallory):
     now = DateTime.now()
-    certif = RevokedUserCertificateContent(
+    certif = RevokedUserCertificate(
         author=alice.device_id, timestamp=now, user_id=bob.user_id
     ).dump_and_sign(alice.signing_key)
     assert isinstance(certif, bytes)
 
-    unsecure = RevokedUserCertificateContent.unsecure_load(certif)
-    assert isinstance(unsecure, RevokedUserCertificateContent)
+    unsecure = RevokedUserCertificate.unsecure_load(certif)
+    assert isinstance(unsecure, RevokedUserCertificate)
     assert unsecure.user_id == bob.user_id
     assert unsecure.timestamp == now
     assert unsecure.author == alice.device_id
 
-    verified = RevokedUserCertificateContent.verify_and_load(
+    verified = RevokedUserCertificate.verify_and_load(
         certif, author_verify_key=alice.verify_key, expected_author=alice.device_id
     )
     assert verified == unsecure
 
     with pytest.raises(DataError) as exc:
-        RevokedUserCertificateContent.verify_and_load(
+        RevokedUserCertificate.verify_and_load(
             certif, author_verify_key=alice.verify_key, expected_author=mallory.device_id
         )
     assert str(exc.value) == "Invalid author: expected `mallory@dev1`, got `alice@dev1`"
 
     with pytest.raises(DataError) as exc:
-        RevokedUserCertificateContent.verify_and_load(
+        RevokedUserCertificate.verify_and_load(
             certif, author_verify_key=mallory.verify_key, expected_author=alice.device_id
         )
     assert str(exc.value) == "Signature was forged or corrupt"
 
     with pytest.raises(DataError) as exc:
-        RevokedUserCertificateContent.verify_and_load(
+        RevokedUserCertificate.verify_and_load(
             certif,
             author_verify_key=alice.verify_key,
             expected_author=alice.device_id,

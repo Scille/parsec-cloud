@@ -16,9 +16,9 @@ from parsec.api.data import (
     BlockAccess,
     RealmRoleCertificateContent,
     BaseManifest as BaseRemoteManifest,
-    UserCertificateContent,
-    DeviceCertificateContent,
-    RevokedUserCertificateContent,
+    UserCertificate,
+    DeviceCertificate,
+    RevokedUserCertificate,
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
 )
@@ -306,7 +306,7 @@ class UserRemoteLoader:
 
     async def get_user(
         self, user_id: UserID, no_cache: bool = False
-    ) -> Tuple[UserCertificateContent, Optional[RevokedUserCertificateContent]]:
+    ) -> Tuple[UserCertificate, Optional[RevokedUserCertificate]]:
         """
         Raises:
             FSRemoteOperationError
@@ -317,9 +317,7 @@ class UserRemoteLoader:
         with translate_remote_devices_manager_errors():
             return await self.remote_devices_manager.get_user(user_id, no_cache=no_cache)
 
-    async def get_device(
-        self, device_id: DeviceID, no_cache: bool = False
-    ) -> DeviceCertificateContent:
+    async def get_device(self, device_id: DeviceID, no_cache: bool = False) -> DeviceCertificate:
         """
         Raises:
             FSRemoteOperationError

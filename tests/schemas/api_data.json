@@ -1,40 +1,4 @@
 {
-    "DeviceCertificateContent": {
-        "fields": {
-            "author": {
-                "allow_none": true,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "device_id": {
-                "allow_none": false,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "device_label": {
-                "allow_none": true,
-                "required": false,
-                "type": "DeviceLabelField"
-            },
-            "timestamp": {
-                "allow_none": false,
-                "required": true,
-                "type": "DateTime"
-            },
-            "type": {
-                "allow_none": false,
-                "required": true,
-                "type": "CheckedConstant",
-                "value": "device_certificate"
-            },
-            "verify_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "VerifyKey"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
     "FileManifest": {
         "fields": {
             "author": {
@@ -343,32 +307,6 @@
         },
         "serializing": "zip+msgpack"
     },
-    "RevokedUserCertificateContent": {
-        "fields": {
-            "author": {
-                "allow_none": false,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "timestamp": {
-                "allow_none": false,
-                "required": true,
-                "type": "DateTime"
-            },
-            "type": {
-                "allow_none": false,
-                "required": true,
-                "type": "CheckedConstant",
-                "value": "revoked_user_certificate"
-            },
-            "user_id": {
-                "allow_none": false,
-                "required": true,
-                "type": "UserIDField"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
     "SequesterAuthorityCertificate": {
         "fields": {
             "author": {
@@ -544,70 +482,6 @@
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "sharing.revoked"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
-    "UserCertificateContent": {
-        "fields": {
-            "author": {
-                "allow_none": true,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "human_handle": {
-                "allow_none": true,
-                "args_types": [
-                    {
-                        "allow_none": false,
-                        "required": true,
-                        "type": "String"
-                    },
-                    {
-                        "allow_none": false,
-                        "required": true,
-                        "type": "String"
-                    }
-                ],
-                "required": false,
-                "type": "HumanHandleField"
-            },
-            "is_admin": {
-                "allow_none": false,
-                "required": true,
-                "type": "Boolean"
-            },
-            "profile": {
-                "allow_none": false,
-                "enum_allowed_values": [
-                    "ADMIN",
-                    "STANDARD",
-                    "OUTSIDER"
-                ],
-                "enum_type": "UserProfile",
-                "required": false,
-                "type": "UserProfileField"
-            },
-            "public_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "PublicKey"
-            },
-            "timestamp": {
-                "allow_none": false,
-                "required": true,
-                "type": "DateTime"
-            },
-            "type": {
-                "allow_none": false,
-                "required": true,
-                "type": "CheckedConstant",
-                "value": "user_certificate"
-            },
-            "user_id": {
-                "allow_none": false,
-                "required": true,
-                "type": "UserIDField"
             }
         },
         "serializing": "zip+msgpack"

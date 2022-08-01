@@ -17,7 +17,6 @@ from structlog import get_logger
 
 from parsec.crypto import PublicKey, HashDigest
 from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
-from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
@@ -27,6 +26,7 @@ from parsec.api.protocol import (
     InvitationDeletedReason,
     InvitationStatus,
     InvitationEmailSentStatus,
+    UserProfile,
     invite_new_serializer,
     invite_delete_serializer,
     invite_list_serializer,
