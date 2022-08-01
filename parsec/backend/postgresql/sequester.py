@@ -151,8 +151,12 @@ class PGPSequesterComponent(BaseSequesterComponent):
         self.dbh = dbh
 
     async def create_service(
-        self, organization_id: OrganizationID, service: SequesterService
+        self,
+        organization_id: OrganizationID,
+        service: SequesterService,
+        now: Optional[DateTime] = None,
     ) -> None:
+        now = now or pendulum_now()
 
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             sequester_authority = await get_sequester_authority(conn, organization_id)
@@ -174,7 +178,6 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     f"Invalid certification data ({exc})."
                 ) from exc
 
-            now = pendulum_now()
             if not timestamps_in_the_ballpark(certif_data.timestamp, now):
                 raise SequesterCertificateOutOfBallparkError(
                     f"Invalid certification data (timestamp out of ballpark)."

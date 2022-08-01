@@ -1080,6 +1080,12 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
                 f"backend sequester update_service {common_args} --enable --service {service_id}",
             )
 
+        async def export_service(service_id: str, realm: str, path: str):
+            return await _cli_invoke_in_thread(
+                runner,
+                f"backend sequester export_realm {common_args} --service {service_id} --realm {realm} --output {path} -b MOCKED",
+            )
+
         # Assert no service configured
         result = await run_list_services()
         assert result.output == "Found 0 sequester service(s)\n"
@@ -1123,6 +1129,16 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         result = await enable_service(service_id)
         assert result.exit_code == 1
         assert isinstance(result.exception, SequesterServiceAlreadyEnabledError)
+
+        # Export realm
+        realms = await backend.realm.get_realms_for_user(alice.organization_id, alice.user_id)
+        realm_id = list(realms.keys())[0]
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        result = await export_service(service_id, realm_id, output_dir)
+        files = list(output_dir.iterdir())
+        assert len(files) == 1
+        assert files[0].name.endswith(f"parsec-sequester-export-realm-{realm_id}.sqlite")
 
 
 @pytest.mark.trio

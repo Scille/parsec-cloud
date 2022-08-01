@@ -12,8 +12,8 @@ import oscrypto.asymmetric
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery, trio_run
 from parsec.cli_utils import operation
-from parsec.sequester_crypto import sequester_authority_sign
-from parsec.sequester_crypto import SequesterEncryptionKeyDer
+from parsec.sequester_crypto import sequester_authority_sign, SequesterEncryptionKeyDer
+from parsec.sequester_export_reader import extract_workspace, RealmExportProgress
 from parsec.api.data import SequesterServiceCertificate
 from parsec.api.protocol import OrganizationID, UserID, RealmID, SequesterServiceID, HumanHandle
 from parsec.backend.cli.utils import db_backend_options, blockstore_backend_options
@@ -366,9 +366,10 @@ async def _export_realm(
             # 1) Export vlobs
 
             with operation("Computing vlobs (i.e. file/folder metadata) to export"):
-                vlob_total_count, vlob_batch_offset_marker = (
-                    await exporter.compute_vlobs_export_status()
-                )
+                (
+                    vlob_total_count,
+                    vlob_batch_offset_marker,
+                ) = await exporter.compute_vlobs_export_status()
 
             if not vlob_total_count:
                 click.echo("No more vlobs to export !")
@@ -393,9 +394,10 @@ async def _export_realm(
             # Export blocks
 
             with operation("Computing blocks (i.e. files data) to export"):
-                block_total_count, block_batch_offset_marker = (
-                    await exporter.compute_blocks_export_status()
-                )
+                (
+                    block_total_count,
+                    block_batch_offset_marker,
+                ) = await exporter.compute_blocks_export_status()
 
             if not block_total_count:
                 click.echo("No more blocks to export !")
@@ -444,5 +446,38 @@ def export_realm(
 ):
     db_config = _get_config(db, db_min_connections, db_max_connections)
     trio_run(
-        _export_realm, db_config, blockstore, organization, service, realm, output, use_asyncio=True
+        _export_realm, db_config, blockstore, organization, realm, service, output, use_asyncio=True
     )
+
+
+@click.command(short_help="Open a realm export using the sequester service key and dump it content")
+@click.option(
+    "--service-decryption-key",
+    help="Decryption key of the sequester service that have been use to create the realm export archive",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+    required=True,
+)
+@click.option("--input", type=Path, required=True, help="Realm export archive")
+@click.option(
+    "--output", type=Path, required=True, help="Directory where to dump the content of the realm"
+)
+def extract_realm_export(service_decryption_key: Path, input: Path, output: Path):
+    # Finally a command that is not async !
+    # This is because here we do only a single thing at a time and sqlite3 provide
+    # a synchronous api anyway
+    decryption_key = oscrypto.asymmetric.load_private_key(service_decryption_key.read_bytes())
+
+    ret = 0
+    for fs_path, event_type, event_msg in extract_workspace(
+        output=output, export_db=input, decryption_key=decryption_key
+    ):
+        if event_type == RealmExportProgress.EXTRACT_IN_PROGRESS:
+            fs_path_display = click.style(str(fs_path), fg="yellow")
+            click.echo(f"{ fs_path_display }: { event_msg }")
+        else:
+            # Error
+            ret = 1
+            fs_path_display = click.style(str(fs_path), fg="red")
+            click.echo(f"{ fs_path_display }: { event_type.value } { event_msg }")
+
+    return ret

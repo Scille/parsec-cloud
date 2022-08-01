@@ -21,6 +21,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "adam_initial_remote_user_manifest",
     "adam_has_human_handle",
     "adam_has_device_label",
+    "adam_is_revoked",
     "mallory_profile",
     "mallory_initial_local_user_manifest",
     "mallory_has_human_handle",

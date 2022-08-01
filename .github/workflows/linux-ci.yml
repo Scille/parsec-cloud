@@ -96,7 +96,7 @@ jobs:
 
       - name: Mountpoint tests
         run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests --runmountpoint --runslow -m mountpoint
-        timeout-minutes: 3
+        timeout-minutes: 10
 
       - name: GUI tests
         run: |

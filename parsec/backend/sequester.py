@@ -72,7 +72,10 @@ class SequesterService:
 
 class BaseSequesterComponent:
     async def create_service(
-        self, organization_id: OrganizationID, service: SequesterService
+        self,
+        organization_id: OrganizationID,
+        service: SequesterService,
+        now: Optional[DateTime] = None,
     ) -> None:
         """
         Raises:

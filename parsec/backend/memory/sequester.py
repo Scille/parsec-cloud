@@ -59,8 +59,13 @@ class MemorySequesterComponent(BaseSequesterComponent):
         )
 
     async def create_service(
-        self, organization_id: OrganizationID, service: SequesterService
+        self,
+        organization_id: OrganizationID,
+        service: SequesterService,
+        now: Optional[DateTime] = None,
     ) -> None:
+        now = now or pendulum_now()
+
         try:
             organization = self._organization_component._organizations[organization_id]
         except KeyError as exc:
@@ -85,7 +90,6 @@ class MemorySequesterComponent(BaseSequesterComponent):
                 f"Invalid certification data ({exc})."
             ) from exc
 
-        now = pendulum_now()
         if not timestamps_in_the_ballpark(certif_data.timestamp, now):
             raise SequesterCertificateOutOfBallparkError(
                 f"Invalid certification data (timestamp out of ballpark)."

@@ -82,7 +82,7 @@ jobs:
           name: ${{ runner.os }}-wheel
           path: dist/
 
-  package-windows-build-installer:
+  package-windows-build-installer-content:
     needs: package-windows-build-wheel
     runs-on: windows-2022
     steps:
@@ -98,7 +98,7 @@ jobs:
           path: dist
 
       - name: Prepare build directory
-        run: Copy-Item -Recurse -Path ${{ github.workspace }}\packaging\win32\* -Destination ${{ runner.temp }}
+        run: Copy-Item -Recurse -Path ${{ github.workspace }}\packaging\windows\* -Destination ${{ runner.temp }}
         working-directory: ${{ runner.temp }}
 
       - name: Debug ${{ runner.temp }} dir
@@ -108,14 +108,22 @@ jobs:
         run: python3 freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
         working-directory: ${{ runner.temp }}
 
-      - name: Build NSIS setup
-        run: makensis.exe installer.nsi
-        working-directory: ${{ runner.temp }}
-
       - name: Debug build directory
-        run: Get-ChildItem -Recurse -Path ${{ runner.temp }}\build
+        run: Get-ChildItem -Path ${{ runner.temp }}\build
+
+      # Cannot do the NSIS installer part in CI given it requires to sign `parsec.exe`
+
+      - name: Prepare artifact
+        run: |
+          md dist
+          Copy-Item -Path build\manifest.ini -Destination dist
+          Copy-Item -Path build\install_files.nsh -Destination dist
+          Copy-Item -Path build\uninstall_files.nsh -Destination dist
+          Copy-Item -Recurse -Path build\parsec-* -Destination dist
+          Copy-Item -Path build\winfsp-* -Destination dist
+        working-directory: ${{ runner.temp }}
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
-          name: ${{ runner.os }}-${{ runner.arch }}-installer
-          path: ${{ runner.temp }}/build/parsec*-setup.exe
+          name: ${{ runner.os }}-${{ runner.arch }}-installer-content
+          path: ${{ runner.temp }}/dist/
