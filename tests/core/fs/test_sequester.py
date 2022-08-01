@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec import IS_OXIDIZED
+from parsec import UNSTABLE_OXIDATION
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID, VlobID
 from parsec.sequester_crypto import sequester_service_decrypt
@@ -11,7 +11,9 @@ from tests.common import customize_fixtures, sequester_service_factory
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Manifest.dump_and_sign is not implemented on Rust yet")
+@pytest.mark.skipif(
+    UNSTABLE_OXIDATION, reason="Manifest.dump_and_sign is not implemented on Rust yet"
+)
 @customize_fixtures(
     coolorg_is_sequestered_organization=True,
     alice_initial_remote_user_manifest="not_synced",
@@ -90,7 +92,9 @@ async def test_userfs_sequester_sync(
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Manifest.dump_and_sign is not implemented on Rust yet")
+@pytest.mark.skipif(
+    UNSTABLE_OXIDATION, reason="Manifest.dump_and_sign is not implemented on Rust yet"
+)
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 async def test_workspacefs_sequester_sync(running_backend, backend, alice_user_fs, coolorg, alice):
     async def _new_sequester_service(label: str):

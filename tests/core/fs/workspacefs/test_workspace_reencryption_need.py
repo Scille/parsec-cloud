@@ -12,7 +12,7 @@ from hypothesis_trio.stateful import (
 )
 from pendulum import now as pendulum_now
 
-from parsec import IS_OXIDIZED
+from parsec import UNSTABLE_OXIDATION
 from parsec.api.protocol import RealmID, RealmRole
 from parsec.api.data import RealmRoleCertificateContent, EntryName
 from parsec.backend.realm import RealmGrantedRole
@@ -21,7 +21,7 @@ from tests.common import call_with_control
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
+@pytest.mark.skipif(UNSTABLE_OXIDATION, reason="No persistent_mockup")
 def test_workspace_reencryption_need(
     hypothesis_settings,
     reset_testbed,

@@ -16,7 +16,7 @@ from hypothesis.stateful import (
     run_state_machine_as_test,
 )
 from hypothesis import strategies as st
-from parsec import IS_OXIDIZED
+from parsec import UNSTABLE_OXIDATION
 from parsec.api.data import EntryName
 
 
@@ -89,7 +89,7 @@ class PathElement:
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
-@pytest.mark.xfail(IS_OXIDIZED, reason="TODO: investigate `database is locked` error")
+@pytest.mark.xfail(UNSTABLE_OXIDATION, reason="TODO: investigate `database is locked` error")
 @pytest.mark.flaky(reruns=0)
 def test_folder_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service_factory):
     tentative = 0

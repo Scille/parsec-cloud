@@ -7,7 +7,7 @@ import pytest
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QGuiApplication
 
-from parsec import IS_OXIDIZED
+from parsec import UNSTABLE_OXIDATION
 from parsec.api.data import EntryName
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 from parsec.core.gui.file_size import get_filesize
@@ -219,7 +219,9 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.xfail(IS_OXIDIZED, reason="TODO: investigate why this test fails with rust bindings")
+@pytest.mark.xfail(
+    UNSTABLE_OXIDATION, reason="TODO: investigate why this test fails with rust bindings"
+)
 async def test_file_browsing_and_edit(
     monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):
@@ -896,7 +898,7 @@ async def test_show_file_status(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Cannot monkeypatch sqlite from oxidized code")
+@pytest.mark.skipif(UNSTABLE_OXIDATION, reason="Cannot monkeypatch sqlite from oxidized code")
 async def test_import_file_disk_full(
     monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):

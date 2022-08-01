@@ -13,7 +13,7 @@ from hypothesis_trio.stateful import (
     multiple,
 )
 
-from parsec import IS_OXIDIZED
+from parsec import UNSTABLE_OXIDATION
 from parsec.api.data import EntryName
 
 from tests.common import call_with_control
@@ -33,7 +33,7 @@ def check_fs_dump(entry):
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
+@pytest.mark.skipif(UNSTABLE_OXIDATION, reason="No persistent_mockup")
 def test_fs_online_idempotent_sync(
     hypothesis_settings,
     reset_testbed,

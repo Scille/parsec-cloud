@@ -6,7 +6,7 @@ from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule, Bundle
 from string import ascii_lowercase
 
-from parsec import IS_OXIDIZED
+from parsec import UNSTABLE_OXIDATION
 from parsec.api.data import EntryName, EntryID
 from parsec.core.fs import FSWorkspaceNotFoundError
 
@@ -17,7 +17,7 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
+@pytest.mark.skipif(UNSTABLE_OXIDATION, reason="No persistent_mockup")
 def test_fs_online_user(user_fs_online_state_machine, oracle_fs_with_sync_factory, alice):
     class FSOfflineUser(user_fs_online_state_machine):
         Workspaces = Bundle("workspace")
