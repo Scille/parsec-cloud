@@ -510,7 +510,7 @@ jobs:
           python -m pip --version
           # Path with backslash are a pain...
           SOURCES_DIRECTORY=`python -c 'print(r"$(Build.SourcesDirectory)".replace("\\\\", "/"))'`
-          cp -R $SOURCES_DIRECTORY/packaging/win32/ winbuild
+          cp -R $SOURCES_DIRECTORY/packaging/windows/ winbuild
         displayName: Prepare build
         workingDirectory: $(Agent.TempDirectory)
       # Must use cmd.exe here instead of bash otherwise `C:\Program Files\Git\bin\link.exe`
