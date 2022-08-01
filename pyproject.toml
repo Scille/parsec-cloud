@@ -150,13 +150,19 @@ mypy = "v0.910"
 setuptools = "^63.1.0"
 maturin = "~0.13"
 
+[tool.cibuildwheel]
+build = "cp39-manylinux*"
+archs = ["auto64"]
+build-verbosity = 2
+
 [build-system]
 requires = [
     "poetry-core>=1.0.0",
-    "maturin>=0.13,<0.14",
+    "maturin==0.13.*",
     "PyQt5>=5.15,<6.0",
     "Babel>=2.10,<3.0",
     "docutils>=0.17,<0.18",
     "pip>=22.0"
 ]
-build-backend = "poetry.core.masonry.api"
+# build-backend = "poetry.core.masonry.api"
+build-backend = "maturin"

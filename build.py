@@ -21,7 +21,7 @@ def build(setup_kargs):
     run("python --version")
     run("pip freeze")
     run("python misc/generate_pyqt.py")
-    run("maturin develop --release")
+    # run("maturin develop --release")
     pass
 
 
