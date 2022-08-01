@@ -474,8 +474,8 @@ jobs:
         artifact: macos_amd64_app
 
 
-  - job: s2_windows_installer_build
-    displayName: Windows installer build
+  - job: s2_windows_installer_content_build
+    displayName: Windows installer content build
     condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
     timeoutInMinutes: 60
     dependsOn: s0_build_wheel
@@ -519,15 +519,9 @@ jobs:
           python freeze_program.py $(Build.SourcesDirectory) --wheel-it-dir $(Pipeline.Workspace)/wheel
         displayName: Freeze Parsec
         workingDirectory: $(Agent.TempDirectory)/winbuild
-      - bash: |
-          set -eux
-          makensis.exe installer.nsi
-          mkdir dist
-          cp build/parsec*-setup.exe dist
-        displayName: Build NSIS setup
-        workingDirectory: $(Agent.TempDirectory)/winbuild
-      - publish: $(Agent.TempDirectory)/winbuild/dist
-        artifact: win_$(vs.arch)_installer
+      # Cannot do the NSIS installer part in CI given it requires to sign `parsec.exe`
+      - publish: $(Agent.TempDirectory)/winbuild/build/parsec-*
+        artifact: win_$(vs.arch)_installer_content
 
 
   #################################################################################
@@ -574,7 +568,7 @@ jobs:
       - s1_windows_test
       - s2_linux_snap_build
       - s2_macos_app_build
-      - s2_windows_installer_build
+      - s2_windows_installer_content_build
       - s3_linux_snap_test
     condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
     timeoutInMinutes: 10
@@ -608,7 +602,7 @@ jobs:
       - s1_windows_test
       - s2_linux_snap_build
       - s2_macos_app_build
-      - s2_windows_installer_build
+      - s2_windows_installer_content_build
       - s3_linux_snap_test
     condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
     timeoutInMinutes: 10

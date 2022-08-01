@@ -82,7 +82,7 @@ jobs:
           name: ${{ runner.os }}-wheel
           path: dist/
 
-  package-windows-build-installer:
+  package-windows-build-installer-content:
     needs: package-windows-build-wheel
     runs-on: windows-2022
     steps:
@@ -108,14 +108,12 @@ jobs:
         run: python3 freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
         working-directory: ${{ runner.temp }}
 
-      - name: Build NSIS setup
-        run: makensis.exe installer.nsi
-        working-directory: ${{ runner.temp }}
-
       - name: Debug build directory
         run: Get-ChildItem -Recurse -Path ${{ runner.temp }}\build
+
+      # Cannot do the NSIS installer part in CI given it requires to sign `parsec.exe`
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer
-          path: ${{ runner.temp }}/build/parsec*-setup.exe
+          path: ${{ runner.temp }}/build/parsec-*
