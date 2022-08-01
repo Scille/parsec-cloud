@@ -4,7 +4,15 @@ import pytest
 
 import pendulum
 
-from parsec.api.protocol import UserID, DeviceID, UserProfile, HumanHandle, DeviceLabel
+from parsec.api.protocol import (
+    UserID,
+    DeviceID,
+    UserProfile,
+    HumanHandle,
+    DeviceLabel,
+    RealmID,
+    RealmRole,
+)
 from parsec.crypto import PrivateKey, SigningKey
 
 
@@ -178,3 +186,71 @@ def test_device_certificate():
     py_dc = _PyDeviceCertificateContent.unsecure_load(rs_data)
     rs_dc = DeviceCertificateContent.unsecure_load(py_data)
     _assert_device_certificate_eq(py_dc, rs_dc)
+
+
+@pytest.mark.rust
+def test_realm_role_certificate():
+    from parsec.api.data.certif import (
+        _RsRealmRoleCertificateContent,
+        RealmRoleCertificateContent,
+        _PyRealmRoleCertificateContent,
+    )
+
+    assert RealmRoleCertificateContent is _RsRealmRoleCertificateContent
+
+    def _assert_realm_role_certificate_eq(py, rs):
+        assert py.author == rs.author
+        assert py.timestamp == rs.timestamp
+        assert py.realm_id == rs.realm_id
+        assert py.user_id == rs.user_id
+        assert py.role == rs.role
+
+    kwargs = {
+        "author": DeviceID.new(),
+        "timestamp": pendulum.now(),
+        "realm_id": RealmID.new(),
+        "user_id": UserID("bob"),
+        "role": RealmRole.OWNER,
+    }
+
+    py_rrc = _PyRealmRoleCertificateContent(**kwargs)
+    rs_rrc = RealmRoleCertificateContent(**kwargs)
+    _assert_realm_role_certificate_eq(py_rrc, rs_rrc)
+
+    kwargs = {
+        "author": DeviceID.new(),
+        "timestamp": pendulum.now(),
+        "realm_id": RealmID.new(),
+        "user_id": UserID("alice"),
+        "role": RealmRole.CONTRIBUTOR,
+    }
+
+    py_rrc = py_rrc.evolve(**kwargs)
+    rs_rrc = rs_rrc.evolve(**kwargs)
+    _assert_realm_role_certificate_eq(py_rrc, rs_rrc)
+
+    sign_key = SigningKey.generate()
+    py_data = py_rrc.dump_and_sign(sign_key)
+    rs_data = rs_rrc.dump_and_sign(sign_key)
+
+    py_rrc = _PyRealmRoleCertificateContent.verify_and_load(
+        rs_data,
+        sign_key.verify_key,
+        expected_author=py_rrc.author,
+        expected_realm=py_rrc.realm_id,
+        expected_user=py_rrc.user_id,
+        expected_role=py_rrc.role,
+    )
+    rs_rrc = RealmRoleCertificateContent.verify_and_load(
+        py_data,
+        sign_key.verify_key,
+        expected_author=rs_rrc.author,
+        expected_realm=rs_rrc.realm_id,
+        expected_user=rs_rrc.user_id,
+        expected_role=rs_rrc.role,
+    )
+    _assert_realm_role_certificate_eq(py_rrc, rs_rrc)
+
+    py_rrc = _PyRealmRoleCertificateContent.unsecure_load(rs_data)
+    rs_rrc = RealmRoleCertificateContent.unsecure_load(py_data)
+    _assert_realm_role_certificate_eq(py_rrc, rs_rrc)
