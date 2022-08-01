@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: actions/setup-node@eeb10cff27034e7acf239c5d29f62154018672fd  # pin v3.3.0
+      - uses: actions/setup-node@2fddd8803e2f5c9604345a0b591c3020ee971a93  # pin v3.4.1
         with:
           node-version: ${{ env.node-version }}
 
