@@ -54,7 +54,7 @@ if __name__ == "__main__":
         print(
             f"{YELLOW_FG}/!\\{DEFAULT_FG} Installer generated with no signature {YELLOW_FG}/!\\{DEFAULT_FG}"
         )
-        (installer,) = build_dir.glob("resana_secure-*-setup.exe")
+        (installer,) = build_dir.glob("parsec-*-setup.exe")
         print(f"{installer} is ready")
 
     else:
@@ -85,6 +85,6 @@ if __name__ == "__main__":
         run(f"makensis { BASE_DIR / 'installer.nsi' }")
         # Sign installer
         print("### Signing installer ###")
-        (installer,) = build_dir.glob("resana_secure-*-setup.exe")
+        (installer,) = build_dir.glob("parsec-*-setup.exe")
         sign(installer)
         print(f"{installer} is ready")
