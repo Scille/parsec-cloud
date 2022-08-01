@@ -14,8 +14,7 @@ from hypothesis.stateful import (
 )
 
 from parsec.api.protocol import UserID, DeviceName, UserProfile
-from parsec.api.data import UserCertificate, RevokedUserCertificate, DeviceCertificate
-from parsec.core.trustchain import TrustchainContext
+from parsec._parsec import TrustchainContext, UserCertificate, RevokedUserCertificate, DeviceCertificate
 
 
 @pytest.mark.slow
