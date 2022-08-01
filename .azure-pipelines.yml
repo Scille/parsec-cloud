@@ -30,6 +30,7 @@ jobs:
   # Step 0: Wheel build
   - job: s0_build_wheel
     displayName: Build wheel
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
     timeoutInMinutes: 10
     pool:
       vmImage: ubuntu-latest
@@ -251,6 +252,7 @@ jobs:
   - job: s1_macos_test
     displayName: MacOS tests
     dependsOn: s0_build_wheel
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
     timeoutInMinutes: 60
     pool:
       vmImage: macOS-12
@@ -314,6 +316,7 @@ jobs:
   - job: s1_windows_test
     displayName: Windows tests
     dependsOn: s0_build_wheel
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
     timeoutInMinutes: 60
     pool:
       vmImage: windows-latest
