@@ -38,7 +38,7 @@ jobs:
 
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
-      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.0.0
+      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
         with:
           python-version: ${{ env.python-version }}
           cache: poetry
@@ -86,7 +86,7 @@ jobs:
     needs: package-windows-build-wheel
     runs-on: windows-2022
     steps:
-      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.0.0
+      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
         with:
           python-version: ${{ env.python-version }}
 
