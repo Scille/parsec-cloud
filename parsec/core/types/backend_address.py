@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Tuple, Optional, TYPE_CHECKING
 from urllib.parse import urlsplit, urlunsplit, parse_qs, quote_plus, unquote_plus, urlencode
