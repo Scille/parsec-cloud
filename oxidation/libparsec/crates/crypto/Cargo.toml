@@ -41,7 +41,7 @@ rand_08 = { package = "rand", version = "0.8", optional = true }
 
 [dev-dependencies]
 pretty_assertions = "1.0.0"
-serde_test = "1.0.138"
+serde_test = "1.0.140"
 hex-literal = "0.3.3"
 rmp-serde = "1.0.0"
 
