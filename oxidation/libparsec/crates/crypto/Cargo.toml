@@ -8,7 +8,7 @@ license = " BUSL-1.1"
 
 [dependencies]
 paste = "1.0.5"
-serde = { version = "1.0.140", features = ["derive"] }
+serde = { version = "1.0.141", features = ["derive"] }
 serde_bytes = { version = "0.11.5" }
 hex = "0.4"
 thiserror = "1.0.30"
