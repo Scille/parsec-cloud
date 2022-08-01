@@ -36,7 +36,7 @@ from parsec.core.gui.central_widget import CentralWidget
 
 logger = get_logger()
 
-MIN_MACFUSE_VERSION = Version("4.2.3")
+MIN_MACFUSE_VERSION = Version("4.4.0")
 
 
 async def _do_run_core(config, device, qt_on_ready):
