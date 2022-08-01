@@ -476,7 +476,7 @@ jobs:
 
   - job: s2_windows_installer_content_build
     displayName: Windows installer content build
-    # condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
     timeoutInMinutes: 60
     dependsOn: s0_build_wheel
     pool:
