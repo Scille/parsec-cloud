@@ -25,5 +25,5 @@ thiserror = "1.0.30"
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
 
-rstest = "0.13.0"
+rstest = "0.15.0"
 chrono = "0.4.19"
