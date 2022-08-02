@@ -97,7 +97,7 @@ jobs:
       - name: Build wheel using cibuildwheel
         run: |
           set -eux
-          python -m cibuildwheel --output-dir dist
+          python -m cibuildwheel --output-dir dist --platform linux
           ls -Rl dist
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
