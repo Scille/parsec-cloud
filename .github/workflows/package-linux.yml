@@ -29,29 +29,29 @@ jobs:
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
-      - name: Install poetry
-        run: |
-          set -eux
-          export POETRY_HOME="$HOME/.poetry"
-          mkdir -p "$POETRY_HOME"
-          curl -sSL https://install.python-poetry.org | python3 - --version=${{ env.poetry-version }}
-          echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
+      # - name: Install poetry
+      #   run: |
+      #     set -eux
+      #     export POETRY_HOME="$HOME/.poetry"
+      #     mkdir -p "$POETRY_HOME"
+      #     curl -sSL https://install.python-poetry.org | python3 - --version=${{ env.poetry-version }}
+      #     echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
 
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
-      - uses: ./.github/actions/setup-rust
-        with:
-          version: ${{ env.rust-version }}
-          cache-key: build-wheel
+      # - uses: ./.github/actions/setup-rust
+      #   with:
+      #     version: ${{ env.rust-version }}
+      #     cache-key: build-wheel
 
-      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
-        id: setup-python
-        with:
-          python-version: ${{ env.python-version }}
-          cache: poetry
+      # - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+      #   id: setup-python
+      #   with:
+      #     python-version: ${{ env.python-version }}
+      #     cache: poetry
 
-      - name: Poetry set python path to use
-        run: poetry env use ${{ steps.setup-python.outputs.python-path }}
+      # - name: Poetry set python path to use
+      #   run: poetry env use ${{ steps.setup-python.outputs.python-path }}
 
       - name: Get wheel version
         id: wheel-version
@@ -71,9 +71,9 @@ jobs:
             COMMIT=`git rev-parse --verify --short HEAD`
             VERSION="$VERSION.$COMMIT"
             # Customize version with tag
-            sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" parsec/_version.py
+            sed -i "s/^__version__ = .*$/__version__ = \"$VERSION\"/" parsec/_version.py
             test $(grep -E 'version = ' -o pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
-            sed -i "s#^\\(version = \\).*\$#\\1'$VERSION'#" pyproject.toml
+            sed -i "s/^version = .*$/version = \"$VERSION\"/" pyproject.toml
           fi
 
           echo "::warning title=Wheel version::$VERSION"
@@ -92,13 +92,13 @@ jobs:
       #   run: python packaging/wheel/wheel_it.py . --output dist
 
       - name: Install cibuildwheel
-        run: poetry run pip install cibuildwheel==2.8.1
+        run: pip install cibuildwheel==2.8.1
 
       - name: Build wheel using cibuildwheel
         run: |
           set -eux
-          poetry run python -m cibuildwheel --output-dir dist
-          ls -Rl dist-ci
+          python -m cibuildwheel --output-dir dist
+          ls -Rl dist
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
