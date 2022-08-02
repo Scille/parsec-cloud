@@ -519,22 +519,12 @@ jobs:
       # Must use cmd.exe here instead of bash otherwise `C:\Program Files\Git\bin\link.exe`
       # takes priority over visual studio link.exe in PATH
       - script: |
-          python freeze_program.py $(Build.SourcesDirectory) --wheel-it-dir $(Pipeline.Workspace)/wheel
+          python freeze_program.py --build-dir ./build --wheel-it-dir $(Pipeline.Workspace)/wheel
         displayName: Freeze Parsec
         workingDirectory: $(Agent.TempDirectory)/winbuild
-      - bash: |
-          set -eux
-          mkdir dist
-          cp build/manifest.ini dist/
-          cp build/install_files.nsh dist/
-          cp build/uninstall_files.nsh dist/
-          cp -R build/parsec-* dist/
-          cp build/winfsp-* dist/
-        displayName: Prepare artifact
-        workingDirectory: $(Agent.TempDirectory)/winbuild
       # Cannot do the NSIS installer part in CI given it requires to sign `parsec.exe`
-      - publish: $(Agent.TempDirectory)/winbuild/dist
-        artifact: win_$(vs.arch)_installer_content
+      - publish: $(Agent.TempDirectory)/winbuild/build/installer_inputs
+        artifact: win_$(vs.arch)_installer_inputs
 
 
   #################################################################################

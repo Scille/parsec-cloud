@@ -3,6 +3,7 @@
 import os
 import sys
 import re
+import json
 from typing import Optional
 import shutil
 import argparse
@@ -20,12 +21,10 @@ if not python:
     raise SystemExit("Cannot find python command :(")
 
 
-BUILD_DIR = Path("build").resolve()
+DEFAULT_BUILD_DIR = Path("build").resolve()
 
 WINFSP_URL = "https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-1.8.20304.msi"
 WINFSP_HASH = "8d6f2c519f3f064881b576452fbbd35fe7ad96445aa15d9adcea1e76878b4f00"
-TOOLS_VENV_DIR = BUILD_DIR / "tools_venv"
-DEFAULT_WHEEL_IT_DIR = BUILD_DIR / "wheel_it"
 
 PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
 
@@ -52,12 +51,25 @@ def run(cmd, **kwargs):
 
 
 def main(
-    src_dir: Path, include_parsec_ext: Optional[Path] = None, wheel_it_dir: Optional[Path] = None
+    build_dir: Path,
+    include_parsec_ext: Optional[Path] = None,
+    src_dir: Optional[Path] = None,
+    wheel_it_dir: Optional[Path] = None,
 ):
-    BUILD_DIR.mkdir(parents=True, exist_ok=True)
+    build_dir.mkdir(parents=True, exist_ok=True)
+    # All the stuff that is needed by `make_installer.py` goes in `installer_inputs`
+    # (so NSIS config, winfsp .msi, pyinstaller output etc.)
+    installer_inputs_dir = build_dir / "installer_inputs"
+    # The stuff that should be packaged by the NSIS script
+    installer_content_dir = installer_inputs_dir / "installer_content"
 
-    display(f"Building in {BUILD_DIR}")
-    display(f"Using sources at {src_dir}")
+    display(f"Building in {build_dir}")
+    if src_dir is None:
+        assert wheel_it_dir is not None
+        display(f"Using wheel_it output at {wheel_it_dir}")
+    else:
+        assert wheel_it_dir is None
+        display(f"Using sources at {src_dir}")
 
     # Retrieve program version
     global_dict = {}
@@ -76,30 +88,33 @@ def main(
         display(f"Parsec wheel is: {program_wheel}")
         program_version = f"v{match.group(1)}"
     else:
+        assert src_dir is not None
         exec((src_dir / "parsec/_version.py").read_text(), global_dict)
         program_version = global_dict.get("__version__")
     assert program_version.startswith("v")
     program_version_without_v_prefix = program_version[1:]
     display(f"### Detected Parsec version {program_version} ###")
 
-    winfsp_installer = BUILD_DIR / WINFSP_URL.rsplit("/", 1)[1]
+    winfsp_installer = installer_inputs_dir / WINFSP_URL.rsplit("/", 1)[1]
     if not winfsp_installer.is_file():
         display("### Fetching WinFSP installer (will be needed by NSIS packager later) ###")
         req = urlopen(WINFSP_URL)
         data = req.read()
         assert sha256(data).hexdigest() == WINFSP_HASH
+        winfsp_installer.parent.mkdir(exist_ok=True, parents=True)
         winfsp_installer.write_bytes(data)
 
     # Bootstrap tools virtualenv
-    tools_python = TOOLS_VENV_DIR / "Scripts/python.exe"
-    if not TOOLS_VENV_DIR.is_dir():
+    tools_venv_dir = build_dir / "tools_venv"
+    tools_python = tools_venv_dir / "Scripts/python.exe"
+    if not tools_venv_dir.is_dir():
         display("### Create tool virtualenv ###")
-        run(f"{ python } -m venv {TOOLS_VENV_DIR}")
+        run(f"{ python } -m venv {tools_venv_dir}")
         # Must use poetry>=1.2.0b2 given otherwise `poetry export` produce buggy output
         run(f"{ tools_python } -m pip install pip wheel setuptools poetry>=1.2.0b2 --upgrade")
 
     # Make poetry commands accessible in sub processes
-    os.environ["PATH"] = f"{(TOOLS_VENV_DIR / 'Scripts').absolute()};{os.environ['PATH']}"
+    os.environ["PATH"] = f"{(tools_venv_dir / 'Scripts').absolute()};{os.environ['PATH']}"
 
     # Generate program wheel and constraints on dependencies
     if wheel_it_dir is not None:
@@ -111,21 +126,30 @@ def main(
             raise SystemExit(f"Cannot retreive wheel file and/or constraints.txt in {wheel_it_dir}")
 
     else:
+        assert src_dir is not None
+        wheel_it_from_src_dir = build_dir / "wheel_it"
         program_wheel = next(
-            DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{program_version_without_v_prefix}*.whl"), None
+            wheel_it_from_src_dir.glob(f"parsec_cloud-{program_version_without_v_prefix}*.whl"),
+            None,
         )
-        program_constraints = DEFAULT_WHEEL_IT_DIR / "constraints.txt"
+        program_constraints = wheel_it_from_src_dir / "constraints.txt"
         if not program_wheel or not program_constraints.exists():
             display("### Generate program wheel and constraints on dependencies ###")
             run(
-                f"{ tools_python } { src_dir / 'packaging/wheel/wheel_it.py' } { src_dir } --output-dir { DEFAULT_WHEEL_IT_DIR }"
+                f"{ tools_python } { src_dir / 'packaging/wheel/wheel_it.py' } { src_dir } --output-dir { wheel_it_from_src_dir }"
             )
             program_wheel = next(
-                DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{program_version_without_v_prefix}*.whl")
+                wheel_it_from_src_dir.glob(f"parsec_cloud-{program_version_without_v_prefix}*.whl")
             )
+        # Now that we have a wheel_it output, we can stop using src_dir altogether
+        wheel_it_dir = wheel_it_from_src_dir
+        src_dir = None
+
+    assert src_dir is None
+    assert wheel_it_dir is not None
 
     # Bootstrap PyInstaller virtualenv containing both pyinstaller, parsec & it dependencies
-    pyinstaller_venv_dir = BUILD_DIR / "pyinstaller_venv"
+    pyinstaller_venv_dir = build_dir / "pyinstaller_venv"
     pyinstaller_python = pyinstaller_venv_dir / "Scripts/python.exe"
     if not pyinstaller_venv_dir.is_dir() or True:
         display("### Installing program & PyInstaller in temporary virtualenv ###")
@@ -141,7 +165,7 @@ def main(
         # all the wheels with hash (so including our program wheel we've just generated).
         # So we have to manually compute the hash and create a custom requirements.txt file
         # with it
-        pyinstaller_venv_requirements = BUILD_DIR / "pyinstaller_venv_requirements.txt"
+        pyinstaller_venv_requirements = build_dir / "pyinstaller_venv_requirements.txt"
         program_wheel_hash = sha256(program_wheel.read_bytes()).hexdigest()
         pyinstaller_venv_requirements_data = (
             f"{ program_wheel.absolute() }[core]; --hash=sha256:{program_wheel_hash}\n"
@@ -157,8 +181,8 @@ def main(
             f"{ pyinstaller_python } -m pip install --requirement { pyinstaller_venv_requirements } --constraint { program_constraints }  --use-deprecated=legacy-resolver"
         )
 
-    pyinstaller_build = BUILD_DIR / "pyinstaller_build"
-    pyinstaller_dist = BUILD_DIR / "pyinstaller_dist"
+    pyinstaller_build = build_dir / "pyinstaller_build"
+    pyinstaller_dist = build_dir / "pyinstaller_dist"
     if not pyinstaller_dist.is_dir():
         display("### Use Pyinstaller to generate distribution ###")
         spec_file = Path(__file__).joinpath("..", "pyinstaller.spec").resolve()
@@ -170,22 +194,23 @@ def main(
             env=env,
         )
 
-    target_dir = BUILD_DIR / f"parsec-{program_version}-{get_archslug()}"
-    if target_dir.exists():
-        raise SystemExit(f"{target_dir} already exists, exiting...")
-    shutil.move(pyinstaller_dist / "parsec", target_dir)
+    if installer_content_dir.exists():
+        raise SystemExit(f"{installer_content_dir} already exists, exiting...")
+    shutil.move(pyinstaller_dist / "parsec", installer_content_dir)
 
     # Include LICENSE file
-    (target_dir / "LICENSE.txt").write_text((src_dir / "licenses/AGPL3.txt").read_text())
+    shutil.copyfile(src=wheel_it_dir / "LICENSE.txt", dst=installer_content_dir / "LICENSE.txt")
 
     # Create build info file for NSIS installer
-    (BUILD_DIR / "manifest.ini").write_text(
-        f'target = "{target_dir}"\n'
-        f'program_version = "{program_version}"\n'
-        f'python_version = "{PYTHON_VERSION}"\n'
-        f'platform = "{get_archslug()}"\n'
-        f'winfsp_installer_name = "{winfsp_installer.name}"\n'
-        f'winfsp_installer_path = "{winfsp_installer}"\n'
+    (installer_inputs_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "program_version": program_version,
+                "python_version": PYTHON_VERSION,
+                "platform": get_archslug(),
+                "winfsp_installer_name": winfsp_installer.name,
+            }
+        )
     )
 
     # Create the install and uninstall file list for NSIS installer
@@ -204,12 +229,12 @@ def main(
             if entry.is_dir():
                 subdirs.append(entry)
             else:
-                target_files.append((False, entry.relative_to(target_dir)))
+                target_files.append((False, entry.relative_to(installer_content_dir)))
         for subdir in subdirs:
-            target_files.append((True, subdir.relative_to(target_dir)))
+            target_files.append((True, subdir.relative_to(installer_content_dir)))
             _recursive_collect_target_files(subdir)
 
-    _recursive_collect_target_files(target_dir)
+    _recursive_collect_target_files(installer_content_dir)
 
     install_files_txt = '; Files to install\nSetOutPath "$INSTDIR\\"\n'
     installed_check = {Path(".")}
@@ -219,12 +244,14 @@ def main(
             install_files_txt += f'SetOutPath "$INSTDIR\\{target_file}"\n'
         else:
             # Copy the file in the current folder
-            install_files_txt += f'File "${{PROGRAM_FREEZE_BUILD_DIR}}\\{target_file}"\n'
+            install_files_txt += (
+                f'File "${{PROGRAM_INSTALLER_INPUTS}}\\installer_content\\{target_file}"\n'
+            )
         # Installation simulation sanity check
         assert target_file not in installed_check
         assert target_file.parent in installed_check
         installed_check.add(target_file)
-    (BUILD_DIR / "install_files.nsh").write_text(install_files_txt)
+    (installer_inputs_dir / "install_files.nsh").write_text(install_files_txt)
 
     uninstall_files_txt = "; Files to uninstall\n"
     for target_is_dir, target_file in reversed(target_files):
@@ -235,7 +262,7 @@ def main(
         # Uninstallation simulation sanity check
         assert target_file.parent in installed_check
         installed_check.remove(target_file)
-    (BUILD_DIR / "uninstall_files.nsh").write_text(uninstall_files_txt)
+    (installer_inputs_dir / "uninstall_files.nsh").write_text(uninstall_files_txt)
 
 
 def check_python_version():
@@ -247,15 +274,21 @@ def check_python_version():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Freeze Parsec")
-    parser.add_argument("src_dir", type=Path)
+    parser.add_argument("--build-dir", type=Path, default=DEFAULT_BUILD_DIR)
     parser.add_argument("--disable-check-python", action="store_true")
     parser.add_argument("--include-parsec-ext", type=Path)
+    parser.add_argument("--src-dir", type=Path)
     parser.add_argument("--wheel-it-dir", type=Path)
     args = parser.parse_args()
     if not args.disable_check_python:
         check_python_version()
+    if not args.wheel_it_dir and not args.src_dir:
+        raise SystemError("Should specify --wheel-it-dir or --src-dir")
+    if args.wheel_it_dir and args.src_dir:
+        raise SystemError("Cannot specify both --wheel-it-dir and --src-dir")
     main(
-        src_dir=args.src_dir,
         include_parsec_ext=args.include_parsec_ext,
+        build_dir=args.build_dir,
+        src_dir=args.src_dir,
         wheel_it_dir=args.wheel_it_dir,
     )

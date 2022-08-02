@@ -105,25 +105,17 @@ jobs:
         run: Get-ChildItem -Recurse -Path ${{ runner.temp }}
 
       - name: Freeze Parsec
-        run: python3 freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
+        run: python freeze_program.py --build-dir ./build --wheel-it-dir ${{ github.workspace }}/dist
         working-directory: ${{ runner.temp }}
 
       - name: Debug build directory
-        run: Get-ChildItem -Path ${{ runner.temp }}\build
+        run: |
+          Get-ChildItem -Path ${{ runner.temp }}\build
+          Get-ChildItem -Path ${{ runner.temp }}\build\\installer_inputs
 
       # Cannot do the NSIS installer part in CI given it requires to sign `parsec.exe`
 
-      - name: Prepare artifact
-        run: |
-          md dist
-          Copy-Item -Path build\manifest.ini -Destination dist
-          Copy-Item -Path build\install_files.nsh -Destination dist
-          Copy-Item -Path build\uninstall_files.nsh -Destination dist
-          Copy-Item -Recurse -Path build\parsec-* -Destination dist
-          Copy-Item -Path build\winfsp-* -Destination dist
-        working-directory: ${{ runner.temp }}
-
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
-          name: ${{ runner.os }}-${{ runner.arch }}-installer-content
-          path: ${{ runner.temp }}/dist/
+          name: ${{ runner.os }}-${{ runner.arch }}-installer-inputs
+          path: ${{ runner.temp }}/build/installer_inputs

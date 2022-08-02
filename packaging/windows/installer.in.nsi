@@ -16,32 +16,33 @@
 !define APPGUID "6C37F945-7EFC-480A-A444-A6D44A3D107F"
 !define OBSOLETE_MOUNTPOINT "$PROFILE\Parsec"
 
-# Detect version from file
-!define BUILD_DIR "build"
-!searchparse /file ${BUILD_DIR}/manifest.ini `target = "` PROGRAM_FREEZE_BUILD_DIR `"`
-!ifndef PROGRAM_FREEZE_BUILD_DIR
-   !error "Cannot find freeze build directory"
+### TEMPLATE STUFF ###
+!define OUTPUT_DIR "{ output_dir_path }"
+!define PROGRAM_INSTALLER_INPUTS  "{ installer_inputs_path }"
+!define PROGRAM_VERSION "{ program_version }"
+!define PROGRAM_PLATFORM "{ platform }"
+!define WINFSP_INSTALLER_NAME "{ winfsp_installer_name }"
+### END OF TEMPLATE STUFF ###
+# Sanity check
+!ifndef OUTPUT_DIR
+   !error "Empty var OUTPUT_DIR !"
 !endif
-!searchparse /file ${BUILD_DIR}/manifest.ini `program_version = "` PROGRAM_VERSION `"`
+!ifndef PROGRAM_INSTALLER_INPUTS
+   !error "Empty var PROGRAM_INSTALLER_INPUTS !"
+!endif
 !ifndef PROGRAM_VERSION
-   !error "Program Version Undefined"
+   !error "Empty var PROGRAM_VERSION !"
 !endif
-!searchparse /file ${BUILD_DIR}/manifest.ini `platform = "` PROGRAM_PLATFORM `"`
 !ifndef PROGRAM_PLATFORM
-   !error "Program Platform Undefined"
+   !error "Empty var PROGRAM_PLATFORM !"
 !endif
-!searchparse /file ${BUILD_DIR}/manifest.ini `winfsp_installer_path = "` WINFSP_INSTALLER_PATH `"`
-!ifndef WINFSP_INSTALLER_PATH
-   !error "WinFSP installer path Undefined"
-!endif
-!searchparse /file ${BUILD_DIR}/manifest.ini `winfsp_installer_name = "` WINFSP_INSTALLER_NAME `"`
 !ifndef WINFSP_INSTALLER_NAME
-   !error "WinFSP installer name Undefined"
+   !error "Empty var WINFSP_INSTALLER_NAME !"
 !endif
 
 # Python files generated
-!define LICENSE_FILEPATH "${PROGRAM_FREEZE_BUILD_DIR}\LICENSE.txt"
-!define INSTALLER_FILENAME "parsec-${PROGRAM_VERSION}-${PROGRAM_PLATFORM}-setup.exe"
+!define LICENSE_FILEPATH "${{PROGRAM_INSTALLER_INPUTS}}\installer_content\LICENSE.txt"
+!define INSTALLER_FILENAME "parsec-${{PROGRAM_VERSION}}-${{PROGRAM_PLATFORM}}-setup.exe"
 
 # Set default compressor
 SetCompressor /FINAL /SOLID lzma
@@ -59,12 +60,12 @@ SetCompressorDictSize 64
 !define MUI_COMPONENTSPAGE_SMALLDESC
 !define MUI_ABORTWARNING
 # Start Menu Folder Page Configuration
-!define MUI_STARTMENUPAGE_DEFAULTFOLDER "${PROGRAM_NAME}"
+!define MUI_STARTMENUPAGE_DEFAULTFOLDER "${{PROGRAM_NAME}}"
 !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCR"
-!define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${PROGRAM_NAME}"
+!define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${{PROGRAM_NAME}}"
 !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
 # Uninstaller
-!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
+!define MUI_UNICON "${{NSISDIR}}\Contrib\Graphics\Icons\modern-uninstall.ico"
 !define MUI_HEADERIMAGE_UNBITMAP "installer-top.bmp"
 !define MUI_WELCOMEFINISHPAGE_UNBITMAP "installer-side.bmp"
 !define MUI_UNFINISHPAGE_NOAUTOCLOSE
@@ -85,7 +86,7 @@ Var StartMenuFolder
 
 # Welcome, License
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_LICENSE ${LICENSE_FILEPATH}
+!insertmacro MUI_PAGE_LICENSE ${{LICENSE_FILEPATH}}
 
 # Skipping the components page
 # !insertmacro MUI_PAGE_COMPONENTS
@@ -166,12 +167,12 @@ Function .onInit
     Call checkProgramAlreadyRunning
 
     ReadRegStr $R0 HKLM \
-    "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}" \
+    "Software\Microsoft\Windows\CurrentVersion\Uninstall\${{PROGRAM_NAME}}" \
     "UninstallString"
     StrCmp $R0 "" done
 
     MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
-    "${PROGRAM_NAME} is already installed. $\n$\nClick `OK` to remove the \
+    "${{PROGRAM_NAME}} is already installed. $\n$\nClick `OK` to remove the \
     previous version or `Cancel` to cancel this upgrade." \
     /SD IDOK IDOK uninst
     Abort
@@ -180,7 +181,7 @@ Function .onInit
     ;https://nsis.sourceforge.io/Docs/Chapter3.html#installerusageuninstaller
     uninst:
       ; Retrieve the previous version's install directory and store it into $R1.
-      ; We cannot use ${INSTDIR} instead, given the previous version might
+      ; We cannot use ${{INSTDIR}} instead, given the previous version might
       ; have been installed in a custom directory.
       Push "$R0"
       Call GetParent
@@ -223,13 +224,13 @@ FunctionEnd
 # Function CheckVCRedist2008
 #     Push $R0
 #     ClearErrors
-#     ReadRegDword $R0 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{FF66E9F6-83E7-3A3E-AF14-8DE9A809A6A4}" "Version"
+#     ReadRegDword $R0 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{FF66E9F6-83E7-3A3E-AF14-8DE9A809A6A4}}" "Version"
 #     IfErrors 0 +2
 #         StrCpy $R0 "-1"
 #
 #     Push $R1
 #     ClearErrors
-#     ReadRegDword $R1 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{9BE518E6-ECC6-35A9-88E4-87755C07200F}" "Version"
+#     ReadRegDword $R1 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{9BE518E6-ECC6-35A9-88E4-87755C07200F}}" "Version"
 #     IfErrors 0 VSRedistInstalled
 #         StrCpy $R1 "-1"
 #
@@ -259,13 +260,13 @@ FunctionEnd
 # FunctionEnd
 
 # --- Installation sections ---
-!define PROGRAM_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}"
+!define PROGRAM_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${{PROGRAM_NAME}}"
 !define PROGRAM_UNINST_ROOT_KEY "HKLM"
 !define PROGRAM_UNINST_FILENAME "$INSTDIR\uninstall.exe"
 
-BrandingText "${PROGRAM_NAME} Windows Installer v${INSTALLER_SCRIPT_VERSION}"
-Name "${PROGRAM_NAME} ${PROGRAM_VERSION}"
-OutFile "${BUILD_DIR}\${INSTALLER_FILENAME}"
+BrandingText "${{PROGRAM_NAME}} Windows Installer v${{INSTALLER_SCRIPT_VERSION}}"
+Name "${{PROGRAM_NAME}} ${{PROGRAM_VERSION}}"
+OutFile "${{OUTPUT_DIR}}\${{INSTALLER_FILENAME}}"
 InstallDir "$PROGRAMFILES\Parsec Cloud"
 
 # No need for such details
@@ -275,48 +276,48 @@ ShowUnInstDetails hide
 # Install main application
 Section "Parsec Cloud Sharing" Section1
     SectionIn RO
-    !include "${BUILD_DIR}\install_files.nsh"
+    !include "${{PROGRAM_INSTALLER_INPUTS}}\install_files.nsh"
 
     SetOverwrite ifnewer
     SetOutPath "$INSTDIR"
-    WriteIniStr "$INSTDIR\homepage.url" "InternetShortcut" "URL" "${PROGRAM_WEB_SITE}"
+    WriteIniStr "$INSTDIR\homepage.url" "InternetShortcut" "URL" "${{PROGRAM_WEB_SITE}}"
 
     !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
         SetShellVarContext all
         CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
         CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Parsec.lnk" "$INSTDIR\parsec.exe"
         CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Website.lnk" "$INSTDIR\homepage.url"
-        CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall Parsec.lnk" ${PROGRAM_UNINST_FILENAME}
+        CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall Parsec.lnk" ${{PROGRAM_UNINST_FILENAME}}
         SetShellVarContext current
     !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
 
 !macro InstallWinFSP
     SetOutPath "$TEMP"
-    File ${WINFSP_INSTALLER_PATH}
+    File ${{PROGRAM_INSTALLER_INPUTS}}\\${{WINFSP_INSTALLER_NAME}}
     ; Use /qn to for silent installation
     ; Use a very high installation level to make sure it runs till the end
-    ExecWait "msiexec /i ${WINFSP_INSTALLER_NAME} /qn INSTALLLEVEL=1000"
-    Delete ${WINFSP_INSTALLER_NAME}
+    ExecWait "msiexec /i ${{WINFSP_INSTALLER_NAME}} /qn INSTALLLEVEL=1000"
+    Delete ${{WINFSP_INSTALLER_NAME}}
 !macroend
 
 # Install winfsp if necessary
 Section "WinFSP" Section2
     ClearErrors
     ReadRegStr $0 HKCR "Installer\Dependencies\WinFsp" "Version"
-    ${If} ${Errors}
+    ${{If}} ${{Errors}}
       # WinFSP is not installed
       !insertmacro InstallWinFSP
-    ${Else}
-        ${VersionCompare} $0 "1.3.0" $R0
-        ${VersionCompare} $0 "2.0.0" $R1
-        ${If} $R0 == 2
-            ${OrIf} $R1 == 1
-                ${OrIf} $R1 == 0
+    ${{Else}}
+        ${{VersionCompare}} $0 "1.3.0" $R0
+        ${{VersionCompare}} $0 "2.0.0" $R1
+        ${{If}} $R0 == 2
+            ${{OrIf}} $R1 == 1
+                ${{OrIf}} $R1 == 0
                   # Incorrect WinSFP version (<1.4.0 or >=2.0.0)
                   !insertmacro InstallWinFSP
-        ${EndIf}
-    ${EndIf}
+        ${{EndIf}}
+    ${{EndIf}}
 SectionEnd
 
 # Create parsec:// uri association.
@@ -330,42 +331,42 @@ SectionEnd
 # Hidden: Remove obsolete entries
 Section "-Remove obsolete entries" Section4
     # Remove obsolete parsec registry configuration
-    DeleteRegKey HKCU "Software\Classes\CLSID\{${APPGUID}}"
-    DeleteRegKey HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}}"
-    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{${APPGUID}}"
-    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{${APPGUID}}"
+    DeleteRegKey HKCU "Software\Classes\CLSID\{${{APPGUID}}}"
+    DeleteRegKey HKCU "Software\Classes\Wow6432Node\CLSID\{${{APPGUID}}}"
+    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{${{APPGUID}}}"
+    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{${{APPGUID}}}"
     ClearErrors
     # Remove obsolete mountpoint folder
-    Delete "${OBSOLETE_MOUNTPOINT}\desktop.ini"
-    RMDir "${OBSOLETE_MOUNTPOINT}"
+    Delete "${{OBSOLETE_MOUNTPOINT}}\desktop.ini"
+    RMDir "${{OBSOLETE_MOUNTPOINT}}"
     ClearErrors
 SectionEnd
 
 # The components screen is skipped - this is no longer necessary
-# LangString DESC_Section1 ${LANG_ENGLISH} "Install Parsec."
-# LangString DESC_Section2 ${LANG_ENGLISH} "Install WinFSP."
-# LangString DESC_Section3 ${LANG_ENGLISH} "Let Parsec handle parsec:// URI links from the web-browser."
-# LangString DESC_Section4 ${LANG_ENGLISH} "Remove obsolete entries from outdated parsec installation."
+# LangString DESC_Section1 ${{LANG_ENGLISH}} "Install Parsec."
+# LangString DESC_Section2 ${{LANG_ENGLISH}} "Install WinFSP."
+# LangString DESC_Section3 ${{LANG_ENGLISH}} "Let Parsec handle parsec:// URI links from the web-browser."
+# LangString DESC_Section4 ${{LANG_ENGLISH}} "Remove obsolete entries from outdated parsec installation."
 # !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-#     !insertmacro MUI_DESCRIPTION_TEXT ${Section1} $(DESC_Section1)
-#     !insertmacro MUI_DESCRIPTION_TEXT ${Section2} $(DESC_Section2)
-#     !insertmacro MUI_DESCRIPTION_TEXT ${Section3} $(DESC_Section3)
-#     !insertmacro MUI_DESCRIPTION_TEXT ${Section4} $(DESC_Section4)
+#     !insertmacro MUI_DESCRIPTION_TEXT ${{Section1}} $(DESC_Section1)
+#     !insertmacro MUI_DESCRIPTION_TEXT ${{Section2}} $(DESC_Section2)
+#     !insertmacro MUI_DESCRIPTION_TEXT ${{Section3}} $(DESC_Section3)
+#     !insertmacro MUI_DESCRIPTION_TEXT ${{Section4}} $(DESC_Section4)
 # !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 # Create uninstaller.
 Section -Uninstaller
-    WriteUninstaller ${PROGRAM_UNINST_FILENAME}
-    WriteRegStr ${PROGRAM_UNINST_ROOT_KEY} "${PROGRAM_UNINST_KEY}" "DisplayName" "$(^Name)"
-    WriteRegStr ${PROGRAM_UNINST_ROOT_KEY} "${PROGRAM_UNINST_KEY}" "UninstallString" ${PROGRAM_UNINST_FILENAME}
+    WriteUninstaller ${{PROGRAM_UNINST_FILENAME}}
+    WriteRegStr ${{PROGRAM_UNINST_ROOT_KEY}} "${{PROGRAM_UNINST_KEY}}" "DisplayName" "$(^Name)"
+    WriteRegStr ${{PROGRAM_UNINST_ROOT_KEY}} "${{PROGRAM_UNINST_KEY}}" "UninstallString" ${{PROGRAM_UNINST_FILENAME}}
 SectionEnd
 
 # --- Uninstallation section ---
 Section Uninstall
     # Delete program files.
     Delete "$INSTDIR\homepage.url"
-    Delete ${PROGRAM_UNINST_FILENAME}
-    !include "${BUILD_DIR}\uninstall_files.nsh"
+    Delete ${{PROGRAM_UNINST_FILENAME}}
+    !include "${{PROGRAM_INSTALLER_INPUTS}}\uninstall_files.nsh"
     RmDir "$INSTDIR"
 
     # Delete Start Menu items.
@@ -380,27 +381,27 @@ Section Uninstall
     Delete "$DESKTOP\Parsec.lnk"
 
     # Delete registry keys.
-    DeleteRegKey ${PROGRAM_UNINST_ROOT_KEY} "${PROGRAM_UNINST_KEY}"
+    DeleteRegKey ${{PROGRAM_UNINST_ROOT_KEY}} "${{PROGRAM_UNINST_KEY}}"
     # This key is only used by Parsec, so we should always delete it
     DeleteRegKey HKCR "Parsec"
 
   # Explorer shortcut keys potentially set by the application's settings
-  DeleteRegKey HKCU "Software\Classes\CLSID\{${APPGUID}}"
-  DeleteRegKey HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}"
-  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{${APPGUID}"
-  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{${APPGUID}"
+  DeleteRegKey HKCU "Software\Classes\CLSID\{{${{APPGUID}}}}"
+  DeleteRegKey HKCU "Software\Classes\Wow6432Node\CLSID\{{${{APPGUID}}}"
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{{${{APPGUID}}}"
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{{${{APPGUID}}}"
 
 SectionEnd
 
 # Add version info to installer properties.
-VIProductVersion "${INSTALLER_SCRIPT_VERSION}.0.0"
-VIAddVersionKey ProductName "${PROGRAM_NAME}"
+VIProductVersion "${{INSTALLER_SCRIPT_VERSION}}.0.0"
+VIAddVersionKey ProductName "${{PROGRAM_NAME}}"
 VIAddVersionKey Comments "Parsec secure cloud sharing"
 VIAddVersionKey CompanyName "Scille SAS"
 VIAddVersionKey LegalCopyright "Scille SAS"
-VIAddVersionKey FileDescription "${PROGRAM_NAME} Application Installer"
-VIAddVersionKey FileVersion "${INSTALLER_SCRIPT_VERSION}.0.0"
-VIAddVersionKey ProductVersion "${PROGRAM_VERSION}.0"
-VIAddVersionKey OriginalFilename ${INSTALLER_FILENAME}
+VIAddVersionKey FileDescription "${{PROGRAM_NAME}} Application Installer"
+VIAddVersionKey FileVersion "${{INSTALLER_SCRIPT_VERSION}}.0.0"
+VIAddVersionKey ProductVersion "${{PROGRAM_VERSION}}.0"
+VIAddVersionKey OriginalFilename ${{INSTALLER_FILENAME}}
 
 ManifestDPIAware true

@@ -32,6 +32,9 @@ def main(program_source: Path, output_dir: Path):
     all_requirements = output_dir / "all-requirements.txt"
     constraints = output_dir / "constraints.txt"
 
+    # LICENSE is needed by `freeze_program.py`
+    shutil.copyfile(src=program_source / "licenses/AGPL3.txt", dst=output_dir / "LICENSE.txt")
+
     # poetry export has a --output option, but it alway consider the file relative to
     # the project directory !
     # On top of that we cannot use stdout because poetry may print random `Creating virtualenv`
