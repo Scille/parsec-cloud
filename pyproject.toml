@@ -39,7 +39,7 @@ python = "~3.9.0"
 
 # Base requirements
 
-certifi = "^2021"
+certifi = ">=2021,<2023"
 attrs = "^21.4"
 click = "^8.0"
 msgpack = "^1.0"
