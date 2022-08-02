@@ -314,7 +314,7 @@ class BaseReq(metaclass=CmdReqMeta):
 
     def __eq__(self, other: Any) -> bool:  # type: ignore[misc]
         if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))
+            return attr.astuple(self).__eq__(attr.astuple(other))  # type: ignore[arg-type]
         return NotImplemented
 
     def evolve(self, **kwargs):  # type: ignore[no-untyped-def]
@@ -337,7 +337,7 @@ class BaseRep(metaclass=CmdRepMeta):
 
     def __eq__(self, other: Any) -> bool:  # type: ignore[misc]
         if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))
+            return attr.astuple(self).__eq__(attr.astuple(other))  # type: ignore[arg-type]
         return NotImplemented
 
     def evolve(self, **kwargs):  # type: ignore[no-untyped-def]
@@ -385,7 +385,7 @@ def cmd_rep_error_type_factory(  # type: ignore[no-any-unimported]
             (BaseRep,),
             {
                 "SCHEMA_CLS": schema_cls,
-                # Note static type check won't be ablet to check such dynamic code,
+                # Note static type check won't be able to check such dynamic code,
                 # hence it's fine to use object as generic type here
                 **{k: object for k in schema_fields.keys()},
             },
