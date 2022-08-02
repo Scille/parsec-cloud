@@ -56,16 +56,18 @@ jobs:
       - name: Get wheel version
         id: wheel-version
         run: |
-          set -e
+          set -eux
           # Retrieve Parsec version and customize it if we are not building on a tag
           # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
           if ([ "${{ github.ref_type }}" == "tag" ])
           then
+            echo "Using provided tag"
             # Use tag name as version
             VERSION=`git describe --tag`
           else
+            echo "Using version in 'parsec/_version.py'"
             # Use `<tag_name>+dev<commit_hash>` as version
-            VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' parsec/_version.py`
+            VERSION=`sed -n 's/^__version__ = "\(.*\)"$/\1/p' parsec/_version.py`
             COMMIT=`git rev-parse --verify --short HEAD`
             VERSION="$VERSION.$COMMIT"
             # Customize version with tag
