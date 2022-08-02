@@ -246,7 +246,7 @@ black = "^22.6.0"
 # Latest version compatible with `trio_typing~=0.5`, required by qtrio
 mypy = "v0.910"
 setuptools = "^63.1.0"
-maturin = "~0.13"
+maturin = "0.13.1"
 cibuildwheel = "2.8.1"
 
 [tool.cibuildwheel]
@@ -261,7 +261,7 @@ PATH = "$PATH:$HOME/.cargo/bin"
 [build-system]
 requires = [
     "poetry-core>=1.0.0",
-    "maturin==0.13.*",
+    "maturin==0.13.1",
     "PyQt5>=5.15,<6.0",
     "Babel>=2.10,<3.0",
     "docutils>=0.17,<0.18",
