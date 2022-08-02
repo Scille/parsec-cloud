@@ -151,9 +151,13 @@ setuptools = "^63.1.0"
 maturin = "~0.13"
 
 [tool.cibuildwheel]
-build = "cp39-manylinux*"
+build = "cp39-{manylinux,macosx,win}*"
 archs = ["auto64"]
 build-verbosity = 2
+before-all = "bash ci/setup_rust.sh"
+
+[tool.cibuildwheel.environment]
+PATH = "$PATH:$HOME/.cargo/bin"
 
 [build-system]
 requires = [
