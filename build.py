@@ -1,22 +1,22 @@
 import subprocess
+import logging
 
+log = logging.getLogger("build")
 
-def display(line: str):
-    YELLOW_FG = "\x1b[33m"
-    DEFAULT_FG = "\x1b[39m"
+YELLOW_FG = "\x1b[33m"
+DEFAULT_FG = "\x1b[39m"
 
-    # Flush is required to prevent mixing with the output of sub-command with the output of the script
-    print(f"{YELLOW_FG}{line}{DEFAULT_FG}", flush=True)
+logging.basicConfig(level=logging.DEBUG, format=f"{YELLOW_FG}[%(levelname)s] %(message)s{DEFAULT_FG}")
 
 
 def run(cmd, **kwargs):
-    display(f">>> {cmd}")
+    log.debug(f">>> {cmd}")
     ret = subprocess.run(cmd.split(), check=True, **kwargs)
     return ret
 
 
 def build(setup_kargs):
-    display(f"setup_kargs: {str(setup_kargs)}")
+    log.debug(f"setup_kargs: {str(setup_kargs)}")
 
     run("python --version")
     run("pip freeze")
@@ -26,5 +26,5 @@ def build(setup_kargs):
 
 
 if __name__ == "__main__":
-    display("manual")
+    log.debug("launching build script in manual")
     build({})
