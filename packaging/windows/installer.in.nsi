@@ -17,11 +17,11 @@
 !define OBSOLETE_MOUNTPOINT "$PROFILE\Parsec"
 
 ### TEMPLATE STUFF ###
-!define OUTPUT_DIR "{ output_dir_path }"
-!define PROGRAM_INSTALLER_INPUTS  "{ installer_inputs_path }"
-!define PROGRAM_VERSION "{ program_version }"
-!define PROGRAM_PLATFORM "{ platform }"
-!define WINFSP_INSTALLER_NAME "{ winfsp_installer_name }"
+!define OUTPUT_DIR "{output_dir_path}"
+!define PROGRAM_INSTALLER_INPUTS  "{installer_inputs_path}"
+!define PROGRAM_VERSION "{program_version}"
+!define PROGRAM_PLATFORM "{platform}"
+!define WINFSP_INSTALLER_NAME "{winfsp_installer_name}"
 ### END OF TEMPLATE STUFF ###
 # Sanity check
 !ifndef OUTPUT_DIR
@@ -331,10 +331,10 @@ SectionEnd
 # Hidden: Remove obsolete entries
 Section "-Remove obsolete entries" Section4
     # Remove obsolete parsec registry configuration
-    DeleteRegKey HKCU "Software\Classes\CLSID\{${{APPGUID}}}"
-    DeleteRegKey HKCU "Software\Classes\Wow6432Node\CLSID\{${{APPGUID}}}"
-    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{${{APPGUID}}}"
-    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{${{APPGUID}}}"
+    DeleteRegKey HKCU "Software\Classes\CLSID\{{${{APPGUID}}}}"
+    DeleteRegKey HKCU "Software\Classes\Wow6432Node\CLSID\{{${{APPGUID}}}}"
+    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{{${{APPGUID}}}}"
+    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{{${{APPGUID}}}}"
     ClearErrors
     # Remove obsolete mountpoint folder
     Delete "${{OBSOLETE_MOUNTPOINT}}\desktop.ini"
@@ -387,9 +387,9 @@ Section Uninstall
 
   # Explorer shortcut keys potentially set by the application's settings
   DeleteRegKey HKCU "Software\Classes\CLSID\{{${{APPGUID}}}}"
-  DeleteRegKey HKCU "Software\Classes\Wow6432Node\CLSID\{{${{APPGUID}}}"
-  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{{${{APPGUID}}}"
-  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{{${{APPGUID}}}"
+  DeleteRegKey HKCU "Software\Classes\Wow6432Node\CLSID\{{${{APPGUID}}}}"
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{{${{APPGUID}}}}"
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{{${{APPGUID}}}}"
 
 SectionEnd
 

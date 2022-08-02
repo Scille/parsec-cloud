@@ -63,7 +63,7 @@ if __name__ == "__main__":
     nsis_config_path = build_dir / "installer.nsi"
     nsis_config = nsis_config_in.format(**build_manifest)
     nsis_config_path.write_text(nsis_config, encoding="utf8")
-    assert nsis_config_path.read_bytes() != nsis_config_in.read_bytes()  # Sanity check
+    assert nsis_config_path.read_bytes() != bytes(nsis_config_in, 'utf-8')  # Sanity check
 
     # Copy NSIS resources
     for res in ("icon.ico", "installer-side.bmp", "installer-top.bmp"):
@@ -99,7 +99,7 @@ if __name__ == "__main__":
                 raise SystemExit("Some file are not signed, aborting")
         # Generate installer
         print("### Building installer ###")
-        run(f"makensis { nsis_config }")
+        run(f"makensis { nsis_config_path }")
         # Sign installer
         print("### Signing installer ###")
         (installer,) = build_dir.glob("parsec-*-setup.exe")
