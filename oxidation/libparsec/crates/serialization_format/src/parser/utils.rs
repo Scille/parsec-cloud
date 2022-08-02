@@ -47,6 +47,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "Index" => "u64",
                 "NonZeroInteger" => "::std::num::NonZeroU64",
                 "PublicKey" => "libparsec_crypto::PublicKey",
+                "SigningKey" => "libparsec_crypto::SigningKey",
                 "VerifyKey" => "libparsec_crypto::VerifyKey",
                 "PrivateKey" => "libparsec_crypto::PrivateKey",
                 "SecretKey" => "libparsec_crypto::SecretKey",
@@ -74,6 +75,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "WorkspaceManifest" => "libparsec_types::WorkspaceManifest",
                 "UserManifest" => "libparsec_types::UserManifest",
                 "Chunk" => "libparsec_client_types::Chunk",
+                "BackendOrganizationAddr" => "libparsec_types::BackendOrganizationAddr",
                 ident if types.get(ident).is_some() => {
                     types.get(ident).unwrap_or_else(|| unreachable!())
                 }
