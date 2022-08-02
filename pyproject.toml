@@ -168,5 +168,4 @@ requires = [
     "docutils>=0.17,<0.18",
     "pip>=22.0"
 ]
-# build-backend = "poetry.core.masonry.api"
-build-backend = "maturin"
+build-backend = "poetry.core.masonry.api"

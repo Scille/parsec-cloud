@@ -39,7 +39,7 @@ else:
     run(f"{poetry} run python --version")
 
 
-def main(src_dir: Path, output_dir: Path):
+def main(src_dir: Path, output_dir: Path, skip_wheel: bool = False):
     output_dir.mkdir(exist_ok=True)
 
     core_requirements = output_dir / "core-requirements.txt"
@@ -78,7 +78,8 @@ def main(src_dir: Path, output_dir: Path):
     # - It is not possible to choose the output directory
     # - And more importantly, Poetry is not PEP517 compliant and build wheel
     #   without building binary resources (it basically only zip the source code)
-    run(f"{poetry} run pip wheel {src_dir} --wheel-dir {output_dir} --use-pep517 --no-deps")
+    if not skip_wheel:
+        run(f"{poetry} run pip wheel {src_dir} --wheel-dir {output_dir} --use-pep517 --no-deps")
 
 
 if __name__ == "__main__":
@@ -87,6 +88,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("src_dir", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--skip-wheel", action="store_true")
 
     args = parser.parse_args()
-    main(src_dir=args.src_dir, output_dir=args.output_dir)
+    main(src_dir=args.src_dir, output_dir=args.output_dir, skip_wheel=args.skip_wheel)
