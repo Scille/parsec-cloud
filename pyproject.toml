@@ -252,7 +252,7 @@ cibuildwheel = "2.8.1"
 [tool.cibuildwheel]
 build = "cp39-{manylinux,macosx,win}*"
 archs = ["auto64"]
-build-verbosity = 2
+build-verbosity = 3
 before-all = "bash ci/setup_rust.sh"
 
 [tool.cibuildwheel.environment]
