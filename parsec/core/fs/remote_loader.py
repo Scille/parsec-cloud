@@ -411,12 +411,12 @@ class RemoteLoader(UserRemoteLoader):
         self, blocks: List[BlockAccess], nursery: trio.Nursery
     ) -> "MemoryReceiveChannel[BlockAccess]":
         """
-           Raises:
-               FSError
-               FSRemoteBlockNotFound
-               FSBackendOfflineError
-               FSWorkspaceInMaintenance
-           """
+        Raises:
+            FSError
+            FSRemoteBlockNotFound
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+        """
         blocks_iter = iter(blocks)
 
         send_channel, receive_channel = open_memory_channel[BlockAccess](math.inf)

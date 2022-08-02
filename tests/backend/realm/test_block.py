@@ -442,7 +442,7 @@ async def test_access_during_maintenance(backend, alice, alice_ws, realm, block)
     assert rep["status"] == "ok"
 
 
-@given(block=st.binary(max_size=2 ** 8), nb_blockstores=st.integers(min_value=3, max_value=16))
+@given(block=st.binary(max_size=2**8), nb_blockstores=st.integers(min_value=3, max_value=16))
 def test_split_block(block, nb_blockstores):
     nb_chunks = nb_blockstores - 1
     chunks = split_block_in_chunks(block, nb_chunks)

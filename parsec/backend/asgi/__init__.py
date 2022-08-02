@@ -22,7 +22,7 @@ from parsec.backend.templates import JINJA_ENV_CONFIG
 
 # Max size for HTTP body, 1Mo seems plenty given our API never upload big chunk of data
 # (biggest request should be the `block_create` command with typically ~512Ko of data)
-MAX_CONTENT_LENGTH = 1 * 1024 ** 2
+MAX_CONTENT_LENGTH = 1 * 1024**2
 
 
 class BackendQuartTrio(QuartTrio):

@@ -346,8 +346,10 @@ class BaseRealmComponent:
 
         now = pendulum_now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return realm_start_reencryption_maintenance_serializer.timestamp_out_of_ballpark_rep_dump(
-                backend_timestamp=now, client_timestamp=msg["timestamp"]
+            return (
+                realm_start_reencryption_maintenance_serializer.timestamp_out_of_ballpark_rep_dump(
+                    backend_timestamp=now, client_timestamp=msg["timestamp"]
+                )
             )
 
         try:

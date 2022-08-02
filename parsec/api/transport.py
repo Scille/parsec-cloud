@@ -45,7 +45,7 @@ class TransportClosedByPeer(TransportError):
 
 
 class Transport:
-    RECEIVE_BYTES = 2 ** 20  # 1Mo
+    RECEIVE_BYTES = 2**20  # 1Mo
 
     def __init__(self, stream: Stream, ws: WSConnection, keepalive: Optional[int] = None):
         self.stream = stream

@@ -211,7 +211,7 @@ async def test_load_block_from_remote(running_backend, alice_file_transactions, 
     assert data == chunk1_data + chunk2_data[:4]
 
 
-size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB
+size = st.integers(min_value=0, max_value=4 * 1024**2)  # Between 0 and 4MB
 
 
 @pytest.mark.slow

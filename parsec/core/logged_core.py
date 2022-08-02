@@ -216,9 +216,11 @@ class LoggedCore:
         """
         user_id = user_id or self.device.user_id
         try:
-            user_certif, revoked_user_certif, device_certifs = await self._remote_devices_manager.get_user_and_devices(
-                user_id, no_cache=True
-            )
+            (
+                user_certif,
+                revoked_user_certif,
+                device_certifs,
+            ) = await self._remote_devices_manager.get_user_and_devices(user_id, no_cache=True)
         except RemoteDevicesManagerBackendOfflineError as exc:
             raise BackendNotAvailable(str(exc)) from exc
         except RemoteDevicesManagerNotFoundError as exc:

@@ -31,7 +31,7 @@ def is_pki_enrollment_available() -> bool:
 
 
 async def pki_enrollment_select_certificate(
-    owner_hint: Optional[LocalDevice] = None
+    owner_hint: Optional[LocalDevice] = None,
 ) -> X509Certificate:
     """
     Raises:
@@ -115,12 +115,14 @@ async def pki_enrollment_load_local_pending_secret_part(
     )
 
 
-def pki_enrollment_load_peer_certificate(der_x509_certificate: bytes,) -> X509Certificate:
+def pki_enrollment_load_peer_certificate(
+    der_x509_certificate: bytes,
+) -> X509Certificate:
     """
     Raises:
         PkiEnrollmentCertificateError
         PkiEnrollmentCertificateCryptoError
-   """
+    """
     return _load_smartcard_extension().pki_enrollment_load_peer_certificate(der_x509_certificate)
 
 

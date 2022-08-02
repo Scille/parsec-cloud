@@ -221,8 +221,8 @@ class WinFSPOperations(BaseFileSystemOperations):
         # Also, the total size of a workspace is not limited
         # For the moment let's settle on 0 MB used for 1 TB available
         self._volume_info = {
-            "total_size": 1 * 1024 ** 4,  # 1 TB
-            "free_size": 1 * 1024 ** 4,  # 1 TB
+            "total_size": 1 * 1024**4,  # 1 TB
+            "free_size": 1 * 1024**4,  # 1 TB
             "volume_label": volume_label,
         }
 

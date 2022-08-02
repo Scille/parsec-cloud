@@ -431,7 +431,7 @@ async def test_update_invalid_timestamp(running_backend, alice_user_fs, alice2_u
             await workspace.sync()
         cause = context.value.__cause__
         assert isinstance(cause, BackendOutOfBallparkError)
-        rep, = cause.args
+        (rep,) = cause.args
         assert rep == {
             "status": "bad_timestamp",
             "client_timestamp": t3.add(microseconds=MANIFEST_STAMP_AHEAD_US),

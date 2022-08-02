@@ -12,7 +12,6 @@ try:
         class Meta:
             jit = toastedmarshmallow.Jit
 
-
 except ImportError:
     BaseSchema = Schema
 

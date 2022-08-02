@@ -45,7 +45,7 @@ def _check_rep(rep, step_name):
 
 
 async def claimer_retrieve_info(
-    cmds: BackendInvitedCmds
+    cmds: BackendInvitedCmds,
 ) -> Union["UserClaimInitialCtx", "DeviceClaimInitialCtx"]:
     rep = await cmds.invite_info()
     _check_rep(rep, step_name="invitation retrieval")

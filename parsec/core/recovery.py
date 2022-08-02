@@ -65,7 +65,9 @@ async def _create_new_device_for_self(
     return new_device
 
 
-async def generate_recovery_device(original_device: LocalDevice,) -> LocalDevice:
+async def generate_recovery_device(
+    original_device: LocalDevice,
+) -> LocalDevice:
     """
     Raises:
         BackendConnectionError

@@ -343,7 +343,7 @@ class ManifestStorage:
             # Remove from local database
             cursor.execute("DELETE FROM vlobs WHERE vlob_id = ?", (entry_id.bytes,))
             cursor.execute("SELECT changes()")
-            deleted, = cursor.fetchone()
+            (deleted,) = cursor.fetchone()
 
             # Clean all the pending chunks
             # TODO: should also add the content of the popped manifest

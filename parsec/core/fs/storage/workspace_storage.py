@@ -66,7 +66,7 @@ async def workspace_storage_non_speculative_init(
 
 
 class BaseWorkspaceStorage:
-    """ Common base class for WorkspaceStorage and WorkspaceStorageTimestamped
+    """Common base class for WorkspaceStorage and WorkspaceStorageTimestamped
     Can not be instanciated
     """
 
@@ -414,9 +414,10 @@ class WorkspaceStorage(BaseWorkspaceStorage):
     # "Prevent sync" pattern interface
 
     async def _load_prevent_sync_pattern(self) -> None:
-        self._prevent_sync_pattern, self._prevent_sync_pattern_fully_applied = (
-            await self.manifest_storage.get_prevent_sync_pattern()
-        )
+        (
+            self._prevent_sync_pattern,
+            self._prevent_sync_pattern_fully_applied,
+        ) = await self.manifest_storage.get_prevent_sync_pattern()
 
     async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
         """Set the "prevent sync" pattern for the corresponding workspace

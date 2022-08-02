@@ -71,9 +71,7 @@ class BaseTypedReqSchema(BaseReqSchema):
     # Children must provide a checked constant `cmd` field
 
     @post_load
-    def make_obj(  # type: ignore[misc]
-        self, data: Dict[str, Any]
-    ) -> "BaseReq":
+    def make_obj(self, data: Dict[str, Any]) -> "BaseReq":  # type: ignore[misc]
         return self.TYPE(**data)  # type: ignore[call-arg]
 
 
@@ -88,9 +86,7 @@ class BaseTypedRepSchema(BaseRepSchema):
     # Children must provide a checked constant `status` field
 
     @post_load
-    def make_obj(  # type: ignore[misc]
-        self, data: Dict[str, Any]
-    ) -> "BaseRep":
+    def make_obj(self, data: Dict[str, Any]) -> "BaseRep":  # type: ignore[misc]
         data.pop("status")
         return self.TYPE(**data)  # type: ignore[call-arg]
 
@@ -205,13 +201,9 @@ class CmdSerializer:
         # dict interface.
         # Of course once all the `api_...` functions migrated, this hack must be removed ;-)
 
-        def _maybe_untype_wrapper(  # type: ignore[no-untyped-def]
-            fn
-        ):
+        def _maybe_untype_wrapper(fn):  # type: ignore[no-untyped-def]
             @wraps(fn)
-            def wrapper(  # type: ignore[no-untyped-def, misc]
-                data
-            ):
+            def wrapper(data):  # type: ignore[no-untyped-def, misc]
                 if isinstance(data, (BaseReq, BaseRep)):
                     data = data.SERIALIZER.dump(data)
 
@@ -320,16 +312,12 @@ class BaseReq(metaclass=CmdReqMeta):
     # Must be overloaded by child classes
     SCHEMA_CLS = BaseTypedReqSchema
 
-    def __eq__(  # type: ignore[misc]
-        self, other: Any
-    ) -> bool:
+    def __eq__(self, other: Any) -> bool:  # type: ignore[misc]
         if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))
+            return attr.astuple(self).__eq__(attr.astuple(other))  # type: ignore[arg-type]
         return NotImplemented
 
-    def evolve(  # type: ignore[no-untyped-def]
-        self, **kwargs
-    ):
+    def evolve(self, **kwargs):  # type: ignore[no-untyped-def]
         return attr.evolve(self, **kwargs)
 
     def dump(self) -> bytes:
@@ -347,16 +335,12 @@ class BaseRep(metaclass=CmdRepMeta):
     # Must be overloaded by child classes
     SCHEMA_CLS = BaseTypedRepSchema
 
-    def __eq__(  # type: ignore[misc]
-        self, other: Any
-    ) -> bool:
+    def __eq__(self, other: Any) -> bool:  # type: ignore[misc]
         if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))
+            return attr.astuple(self).__eq__(attr.astuple(other))  # type: ignore[arg-type]
         return NotImplemented
 
-    def evolve(  # type: ignore[no-untyped-def]
-        self, **kwargs
-    ):
+    def evolve(self, **kwargs):  # type: ignore[no-untyped-def]
         return attr.evolve(self, **kwargs)
 
     def dump(self) -> bytes:
@@ -390,9 +374,7 @@ def cmd_rep_error_type_factory(  # type: ignore[no-any-unimported]
     schema_fields = {**extra_fields, "status": fields.CheckedConstant(status, required=True)}
 
     @post_load
-    def make_obj(  # type: ignore[no-untyped-def, misc]
-        self, data: Dict[str, Any]
-    ) -> Type[BaseRep]:
+    def make_obj(self, data: Dict[str, Any]) -> Type[BaseRep]:  # type: ignore[no-untyped-def, misc]
         data.pop("status")
         return rep_cls(**data)
 
@@ -403,7 +385,7 @@ def cmd_rep_error_type_factory(  # type: ignore[no-any-unimported]
             (BaseRep,),
             {
                 "SCHEMA_CLS": schema_cls,
-                # Note static type check won't be ablet to check such dynamic code,
+                # Note static type check won't be able to check such dynamic code,
                 # hence it's fine to use object as generic type here
                 **{k: object for k in schema_fields.keys()},
             },
@@ -412,9 +394,7 @@ def cmd_rep_error_type_factory(  # type: ignore[no-any-unimported]
     return rep_cls
 
 
-def cmd_rep_factory(  # type: ignore[no-untyped-def]
-    name: str, *rep_types: Type[BaseRep]
-):
+def cmd_rep_factory(name: str, *rep_types: Type[BaseRep]):  # type: ignore[no-untyped-def]
     assert name.endswith("Rep")
 
     class RepSchema(OneOfSchemaLegacy):
