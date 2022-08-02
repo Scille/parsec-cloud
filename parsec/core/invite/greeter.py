@@ -339,7 +339,13 @@ class UserGreetInProgress4Ctx:
         profile: UserProfile,
     ) -> None:
 
-        user_certificate, redacted_user_certificate, device_certificate, redacted_device_certificate, invite_user_confirmation = _create_new_user_certificates(
+        (
+            user_certificate,
+            redacted_user_certificate,
+            device_certificate,
+            redacted_device_certificate,
+            invite_user_confirmation,
+        ) = _create_new_user_certificates(
             author, device_label, human_handle, profile, self._public_key, self._verify_key
         )
 

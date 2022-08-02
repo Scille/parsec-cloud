@@ -329,7 +329,7 @@ class UserFS:
         # Instantiate the local storage
 
         async def workspace_storage_task(
-            task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED
+            task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED,
         ) -> None:
             async with WorkspaceStorage.run(
                 data_base_dir=self.data_base_dir,

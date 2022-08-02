@@ -587,7 +587,7 @@ class LocalFolderishManifestMixin:
     # Filtering and confinement helpers
 
     def _filter_local_confinement_points(
-        self: LocalFolderishManifestTypeVar
+        self: LocalFolderishManifestTypeVar,
     ) -> LocalFolderishManifestTypeVar:
         if not self.local_confinement_points:
             return self
@@ -644,7 +644,7 @@ class LocalFolderishManifestMixin:
         return self.evolve(children=children, remote_confinement_points=remote_confinement_points)
 
     def _restore_remote_confinement_points(
-        self: LocalFolderishManifestTypeVar
+        self: LocalFolderishManifestTypeVar,
     ) -> LocalFolderishManifestTypeVar:
         if not self.remote_confinement_points:
             return self

@@ -53,7 +53,7 @@ def rebuild_block_from_chunks(
     # By now, all chunks are valid
     chunks: List[bytes]
     payload = b"".join(chunks)
-    block_len, = struct.unpack("!I", payload[:4])
+    (block_len,) = struct.unpack("!I", payload[:4])
     return payload[4 : 4 + block_len]
 
 

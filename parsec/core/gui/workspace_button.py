@@ -313,7 +313,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                     user=self.owner.short_user_display
                 )
             elif len(self.others) == 1 and self.others[0]:
-                user, = self.others
+                (user,) = self.others
                 shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(
                     user=user.short_user_display
                 )

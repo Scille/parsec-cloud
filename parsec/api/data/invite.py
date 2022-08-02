@@ -59,9 +59,9 @@ def generate_sas_codes(
 
     hmac_as_int = int.from_bytes(combined_hmac, "big")
     # Big endian number extracted from bits [0, 20[
-    claimer_sas = hmac_as_int % 2 ** 20
+    claimer_sas = hmac_as_int % 2**20
     # Big endian number extracted from bits [20, 40[
-    greeter_sas = (hmac_as_int >> 20) % 2 ** 20
+    greeter_sas = (hmac_as_int >> 20) % 2**20
 
     return SASCode.from_int(claimer_sas), SASCode.from_int(greeter_sas)
 
@@ -79,7 +79,7 @@ if not TYPE_CHECKING:
 def generate_sas_code_candidates(valid_sas: SASCode, size: int) -> List[SASCode]:
     candidates = {valid_sas}
     while len(candidates) < size:
-        candidates.add(SASCode.from_int(randint(0, 2 ** 20 - 1)))
+        candidates.add(SASCode.from_int(randint(0, 2**20 - 1)))
     ordered_candidates = list(candidates)
     shuffle(ordered_candidates)
     return ordered_candidates

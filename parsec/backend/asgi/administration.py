@@ -39,7 +39,7 @@ def administration_authenticated(fn):
 
 async def json_abort(data: dict, status: int) -> NoReturn:
     response = await make_response(jsonify(data), status)
-    abort(response)  # type: ignore[arg-type]
+    abort(response)
 
 
 async def load_req_data(req_serializer) -> dict:

@@ -494,9 +494,14 @@ async def test_backend_block_data_online(
     assert info["is_placeholder"] is False
     assert info["need_sync"] is True
 
-    local_and_remote_blocks, local_blocks, remote_blocks, file_size, proper_blocks_size, pending_chunks_size = await alice_workspace.get_blocks_by_type(
-        fspath
-    )
+    (
+        local_and_remote_blocks,
+        local_blocks,
+        remote_blocks,
+        file_size,
+        proper_blocks_size,
+        pending_chunks_size,
+    ) = await alice_workspace.get_blocks_by_type(fspath)
     assert len(remote_blocks) == 0
     assert len(local_blocks) == TAZ_V2_BLOCKS
     assert len(local_and_remote_blocks) == 0
@@ -508,17 +513,27 @@ async def test_backend_block_data_online(
         data_dict[block.id] = await alice_workspace.local_storage.chunk_storage.get_chunk(block.id)
 
     await alice_workspace.sync()
-    local_and_remote_blocks, local_blocks, remote_blocks, file_size, proper_blocks_size, pending_chunks_size = await alice_workspace.get_blocks_by_type(
-        fspath
-    )
+    (
+        local_and_remote_blocks,
+        local_blocks,
+        remote_blocks,
+        file_size,
+        proper_blocks_size,
+        pending_chunks_size,
+    ) = await alice_workspace.get_blocks_by_type(fspath)
     assert len(remote_blocks) == 0
     assert len(local_blocks) == 0
     assert len(local_and_remote_blocks) == TAZ_V2_BLOCKS
     assert get_blocks_size(local_and_remote_blocks) == TAZ_V2_BLOCKS * DEFAULT_BLOCK_SIZE
 
-    local_and_remote_blocks, local_blocks, remote_blocks, file_size, proper_blocks_size, pending_chunks_size = await alice_workspace.get_blocks_by_type(
-        fspath, DEFAULT_BLOCK_SIZE
-    )
+    (
+        local_and_remote_blocks,
+        local_blocks,
+        remote_blocks,
+        file_size,
+        proper_blocks_size,
+        pending_chunks_size,
+    ) = await alice_workspace.get_blocks_by_type(fspath, DEFAULT_BLOCK_SIZE)
     assert len(remote_blocks) == 0
     assert len(local_blocks) == 0
     assert len(local_and_remote_blocks) == 1
@@ -526,9 +541,14 @@ async def test_backend_block_data_online(
     check_size_integrity(file_size, proper_blocks_size, pending_chunks_size)
 
     # Check the blocks to download and the size of the total manifest
-    local_and_remote_blocks, local_blocks, remote_blocks, file_size, proper_blocks_size, pending_chunks_size = await alice2_workspace.get_blocks_by_type(
-        fspath
-    )
+    (
+        local_and_remote_blocks,
+        local_blocks,
+        remote_blocks,
+        file_size,
+        proper_blocks_size,
+        pending_chunks_size,
+    ) = await alice2_workspace.get_blocks_by_type(fspath)
     assert len(remote_blocks) == TAZ_V2_BLOCKS
     assert len(local_blocks) == 0
     assert len(local_and_remote_blocks) == 0
@@ -542,18 +562,28 @@ async def test_backend_block_data_online(
             continue
         assert False
 
-    local_and_remote_blocks, local_blocks, remote_blocks, file_size, proper_blocks_size, pending_chunks_size = await alice2_workspace.get_blocks_by_type(
-        fspath, DEFAULT_BLOCK_SIZE
-    )
+    (
+        local_and_remote_blocks,
+        local_blocks,
+        remote_blocks,
+        file_size,
+        proper_blocks_size,
+        pending_chunks_size,
+    ) = await alice2_workspace.get_blocks_by_type(fspath, DEFAULT_BLOCK_SIZE)
     assert len(remote_blocks) == 1
     assert len(local_blocks) == 0
     assert len(local_and_remote_blocks) == 0
     assert get_blocks_size(remote_blocks) == DEFAULT_BLOCK_SIZE
     check_size_integrity(file_size, proper_blocks_size, pending_chunks_size)
 
-    local_and_remote_blocks, local_blocks, remote_blocks, file_size, proper_blocks_size, pending_chunks_size = await alice2_workspace.get_blocks_by_type(
-        fspath, DEFAULT_BLOCK_SIZE * TAZ_V2_BLOCKS
-    )
+    (
+        local_and_remote_blocks,
+        local_blocks,
+        remote_blocks,
+        file_size,
+        proper_blocks_size,
+        pending_chunks_size,
+    ) = await alice2_workspace.get_blocks_by_type(fspath, DEFAULT_BLOCK_SIZE * TAZ_V2_BLOCKS)
     # load one block
     block = remote_blocks[3]
     await alice2_workspace.load_block(block)
@@ -562,9 +592,14 @@ async def test_backend_block_data_online(
         == data_dict[block.id]
     )
 
-    local_and_remote_blocks, local_blocks, remote_blocks, file_size, proper_blocks_size, pending_chunks_size = await alice2_workspace.get_blocks_by_type(
-        fspath
-    )
+    (
+        local_and_remote_blocks,
+        local_blocks,
+        remote_blocks,
+        file_size,
+        proper_blocks_size,
+        pending_chunks_size,
+    ) = await alice2_workspace.get_blocks_by_type(fspath)
     assert len(remote_blocks) == TAZ_V2_BLOCKS - 1
     assert len(local_blocks) == 0
     assert len(local_and_remote_blocks) == 1
@@ -580,9 +615,14 @@ async def test_backend_block_data_online(
             async for value in receive_channel:
                 assert value
 
-    local_and_remote_blocks, local_blocks, remote_blocks, file_size, proper_blocks_size, pending_chunks_size = await alice2_workspace.get_blocks_by_type(
-        fspath
-    )
+    (
+        local_and_remote_blocks,
+        local_blocks,
+        remote_blocks,
+        file_size,
+        proper_blocks_size,
+        pending_chunks_size,
+    ) = await alice2_workspace.get_blocks_by_type(fspath)
     assert len(remote_blocks) == 0
     assert len(local_blocks) == 0
     assert len(local_and_remote_blocks) == TAZ_V2_BLOCKS

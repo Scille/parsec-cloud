@@ -796,9 +796,11 @@ def use_actual_parsec_ext_module(monkeypatch, tmp_path):
     monkeypatch.setattr("parsec_ext.smartcard.linux.prompt_password", lambda _: password)
 
     # Create the corresponding instance of `X509Certificate``
-    der_certificate, certificate_id, certificate_sha1 = (
-        parsec_ext.smartcard.get_der_encoded_certificate()
-    )
+    (
+        der_certificate,
+        certificate_id,
+        certificate_sha1,
+    ) = parsec_ext.smartcard.get_der_encoded_certificate()
     issuer, subject, _ = parsec_ext.smartcard.get_certificate_info(der_certificate)
     default_x509_certificate = X509Certificate(
         issuer=issuer,

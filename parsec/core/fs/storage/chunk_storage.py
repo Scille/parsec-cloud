@@ -80,13 +80,13 @@ class ChunkStorage:
     async def get_nb_blocks(self) -> int:
         async with self._open_cursor() as cursor:
             cursor.execute("SELECT COUNT(*) FROM chunks")
-            result, = cursor.fetchone()
+            (result,) = cursor.fetchone()
             return result
 
     async def get_total_size(self) -> int:
         async with self._open_cursor() as cursor:
             cursor.execute("SELECT COALESCE(SUM(size), 0) FROM chunks")
-            result, = cursor.fetchone()
+            (result,) = cursor.fetchone()
             return result
 
     # Generic chunk operations
@@ -143,11 +143,11 @@ class ChunkStorage:
                 (time.time(), chunk_id.bytes),
             )
             cursor.execute("SELECT changes()")
-            changes, = cursor.fetchone()
+            (changes,) = cursor.fetchone()
             if not changes:
                 raise FSLocalMissError(chunk_id)
             cursor.execute("""SELECT data FROM chunks WHERE chunk_id = ?""", (chunk_id.bytes,))
-            ciphered, = cursor.fetchone()
+            (ciphered,) = cursor.fetchone()
 
         return self.local_symkey.decrypt(ciphered)
 
@@ -174,7 +174,7 @@ class ChunkStorage:
                 cursor.execute, "DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,)
             )
             cursor.execute("SELECT changes()")
-            changes, = cursor.fetchone()
+            (changes,) = cursor.fetchone()
 
         if not changes:
             raise FSLocalMissError(chunk_id)
@@ -249,7 +249,7 @@ class BlockStorage(ChunkStorage):
 
             # Count the chunks
             cursor.execute("SELECT COUNT(*) FROM chunks")
-            nb_blocks, = cursor.fetchone()
+            (nb_blocks,) = cursor.fetchone()
             extra_blocks = nb_blocks - self.block_limit
 
             # No clean up is needed

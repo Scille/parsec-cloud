@@ -140,7 +140,9 @@ async def ping(transport: Transport, ping: str = "") -> dict:
     return await _send_cmd(transport, ping_serializer, cmd="ping", ping=ping)
 
 
-async def events_subscribe(transport: Transport,) -> dict:
+async def events_subscribe(
+    transport: Transport,
+) -> dict:
     return await _send_cmd(transport, events_subscribe_serializer, cmd="events_subscribe")
 
 

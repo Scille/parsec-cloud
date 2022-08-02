@@ -223,7 +223,7 @@ def prepare_resize(
 
 
 def prepare_reshape(
-    manifest: LocalFileManifest
+    manifest: LocalFileManifest,
 ) -> Iterator[Tuple[int, Chunks, Chunk, bool, ChunkIDSet]]:
 
     # Loop over blocks

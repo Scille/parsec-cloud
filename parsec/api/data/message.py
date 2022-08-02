@@ -29,7 +29,7 @@ class BaseMessageContent(BaseAPISignedData):
 
         @property
         def type_schemas(  # type: ignore[override]
-            self
+            self,
         ) -> Dict[MessageContentType, Type[OneOfSchema]]:
             return {
                 MessageContentType.SHARING_GRANTED: SharingGrantedMessageContent.SCHEMA_CLS,
