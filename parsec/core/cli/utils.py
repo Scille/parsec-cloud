@@ -26,7 +26,7 @@ from parsec.cli_utils import (
     operation,
     aprompt,
 )
-from parsec.core.types.local_device import LocalDevice
+from parsec.core.types import LocalDevice
 
 
 F = TypeVar("F", bound=Callable)
