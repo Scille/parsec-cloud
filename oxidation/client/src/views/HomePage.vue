@@ -173,7 +173,8 @@ import {
   IonButtons,
   actionSheetController,
   isPlatform,
-  modalController
+  modalController,
+  alertController
 } from '@ionic/vue';
 import {
   ellipsisVertical,
@@ -192,6 +193,7 @@ import { Storage } from '@ionic/storage';
 import { useRouter } from 'vue-router';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
 import CreateOrganisation from '@/components/CreateOrganisationModal.vue';
+import { createAlert } from '@/components/AlertConfirmation';
 
 const { t, locale } = useI18n();
 const langAccordionGroup = ref();
@@ -271,7 +273,8 @@ async function openJoinByLinkModal(): Promise<void> {
 
 async function openCreateOrganizationModal(): Promise<void> {
   const modal = await modalController.create({
-    component: CreateOrganisation
+    component: CreateOrganisation,
+    canDismiss: canDismissModal
   });
   modal.present();
 
@@ -281,6 +284,16 @@ async function openCreateOrganizationModal(): Promise<void> {
     console.log(data);
   }
 
+}
+
+async function canDismissModal(): Promise<boolean> {
+  const alert = await createAlert(t('AlertConfirmation.areYouSure'), t('AlertConfirmation.infoNotSaved'),
+    t('AlertConfirmation.cancel'), t('AlertConfirmation.ok'));
+
+  await alert.present();
+
+  const { role } = await alert.onDidDismiss();
+  return role === 'confirm';
 }
 </script>
 
