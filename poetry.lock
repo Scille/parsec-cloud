@@ -599,8 +599,8 @@ optional = false
 python-versions = ">=3.6"
 
 [package.extras]
-dev = ["pre-commit", "tox"]
-testing = ["pytest", "pytest-benchmark"]
+testing = ["pytest-benchmark", "pytest"]
+dev = ["tox", "pre-commit"]
 
 [[package]]
 name = "poetry-lock-package"
@@ -839,7 +839,7 @@ coverage = {version = ">=5.2.1", extras = ["toml"]}
 pytest = ">=4.6"
 
 [package.extras]
-testing = ["fields", "hunter", "process-tests", "six", "pytest-xdist", "virtualenv"]
+testing = ["virtualenv", "pytest-xdist", "six", "process-tests", "hunter", "fields"]
 
 [[package]]
 name = "pytest-forked"
@@ -1006,18 +1006,18 @@ trio = ">=0.16"
 trio-typing = ">=0.5.0,<0.6.0"
 
 [package.extras]
-cli = ["click (>=7.0,<8.0)"]
-examples = ["click (>=7.0,<8.0)", "httpcore (>=0.13.6,<0.14.0)", "httpx (>=0.18.2,<0.19.0)", "hyperlink (>=21.0.0,<21.1.0)"]
-p_checks = ["black (==20.8b1)", "check-manifest (>=0.46.0,<0.47.0)", "flake8 (>=3.8,<4.0)", "mypy (==0.790)", "pytest (>=6.2,<7.0)", "quart-trio (>=0.7.0,<0.8.0)", "towncrier (>=21.3.0)", "click (>=7.0,<8.0)", "httpcore (>=0.13.6,<0.14.0)", "httpx (>=0.18.2,<0.19.0)", "hyperlink (>=21.0.0,<21.1.0)"]
-p_docs = ["sphinx (>=4.0,<5.0)", "sphinx-autodoc-typehints (>=1.11,<2.0)", "sphinx-qt-documentation (>=0.3.0,<0.4.0)", "sphinx-rtd-theme (>=0.5.0,<0.6.0)", "sphinxcontrib-trio (>=1.1,<2.0)", "towncrier (>=21.3.0)"]
-p_tests = ["click (>=7.0,<8.0)", "httpcore (>=0.13.6,<0.14.0)", "httpx (>=0.18.2,<0.19.0)", "hyperlink (>=21.0.0,<21.1.0)", "coverage (>=5.3,<6.0)", "pytest (>=6.0,<7.0)", "pytest-cov (>=2.10,<3.0)", "pytest-faulthandler (>=2.0,<3.0)", "pytest-qt (>=3.3,<4.0)", "pytest-trio (>=0.7.0)", "pytest-xdist[psutil] (>=2.2,<3.0)", "quart-trio", "pytest-xvfb (>=2.0,<3.0)"]
-pyqt5 = ["pyqt5 (>=5.15.1,<5.16.0)", "pyqt5-stubs (>=5.15.2,<5.16.0)"]
-pyside2 = ["pyside2 (>=5.15,!=5.15.2,<6.0)"]
-s_pytest = ["pytest (>=6.0,<7.0)"]
-s_pytest_trio = ["pytest-trio (>=0.7.0)"]
-s_quart_trio = ["quart-trio"]
-s_towncrier = ["towncrier (>=21.3.0)"]
 testing = ["pytest-trio (>=0.7.0)"]
+s_towncrier = ["towncrier (>=21.3.0)"]
+s_quart_trio = ["quart-trio"]
+s_pytest_trio = ["pytest-trio (>=0.7.0)"]
+s_pytest = ["pytest (>=6.0,<7.0)"]
+pyside2 = ["pyside2 (>=5.15,!=5.15.2,<6.0)"]
+pyqt5 = ["pyqt5-stubs (>=5.15.2,<5.16.0)", "pyqt5 (>=5.15.1,<5.16.0)"]
+p_tests = ["pytest-xvfb (>=2.0,<3.0)", "quart-trio", "pytest-xdist[psutil] (>=2.2,<3.0)", "pytest-trio (>=0.7.0)", "pytest-qt (>=3.3,<4.0)", "pytest-faulthandler (>=2.0,<3.0)", "pytest-cov (>=2.10,<3.0)", "pytest (>=6.0,<7.0)", "coverage (>=5.3,<6.0)", "hyperlink (>=21.0.0,<21.1.0)", "httpx (>=0.18.2,<0.19.0)", "httpcore (>=0.13.6,<0.14.0)", "click (>=7.0,<8.0)"]
+p_docs = ["towncrier (>=21.3.0)", "sphinxcontrib-trio (>=1.1,<2.0)", "sphinx-rtd-theme (>=0.5.0,<0.6.0)", "sphinx-qt-documentation (>=0.3.0,<0.4.0)", "sphinx-autodoc-typehints (>=1.11,<2.0)", "sphinx (>=4.0,<5.0)"]
+p_checks = ["hyperlink (>=21.0.0,<21.1.0)", "httpx (>=0.18.2,<0.19.0)", "httpcore (>=0.13.6,<0.14.0)", "click (>=7.0,<8.0)", "towncrier (>=21.3.0)", "quart-trio (>=0.7.0,<0.8.0)", "pytest (>=6.2,<7.0)", "mypy (==0.790)", "flake8 (>=3.8,<4.0)", "check-manifest (>=0.46.0,<0.47.0)", "black (==20.8b1)"]
+examples = ["hyperlink (>=21.0.0,<21.1.0)", "httpx (>=0.18.2,<0.19.0)", "httpcore (>=0.13.6,<0.14.0)", "click (>=7.0,<8.0)"]
+cli = ["click (>=7.0,<8.0)"]
 
 [[package]]
 name = "qts"
@@ -1032,16 +1032,16 @@ attrs = "*"
 typing-extensions = ">=3.10,<4.0"
 
 [package.extras]
-cli = ["click (>=8.0,<9.0)"]
-p_checks = ["black (==21.5b2)", "check-manifest (>=0.46.0,<0.47.0)", "flake8 (>=3.8,<4.0)", "mypy (==0.901)", "pytest (>=6.2,<7.0)", "towncrier (>=21.3,<22.0)"]
-p_docs = ["importlib-metadata (>=4.5,<5.0)", "pyside2 (>=5.15,<6.0)", "sphinx (>=4.0,<5.0)", "sphinx-autodoc-typehints (>=1.11,<2.0)", "sphinx-click (>=3.0,<4.0)", "sphinx-inline-tabs (>=2020.10.19b4,<2020.11.0)", "sphinx-qt-documentation (>=0.3.0,<0.4.0)", "sphinx-rtd-theme (>=0.5.0,<0.6.0)", "towncrier (>=21.3,<22.0)"]
-p_tests = ["click (>=8.0,<9.0)", "coverage (>=5.5,<6.0)", "pytest (>=6.2,<7.0)", "pytest-cov (>=2.12,<3.0)", "pytest-xvfb (>=2.0,<3.0)"]
-pyqt5 = ["pyqt5 (>=5.15,<6.0)"]
-pyqt6 = ["pyqt6 (>=6.0,<7.0)"]
-pyside2 = ["pyside2 (>=5.15,<6.0)"]
-pyside6 = ["pyside6 (>=6.0,<7.0)"]
-s_pytest = ["pytest (>=6.2,<7.0)"]
 s_towncrier = ["towncrier (>=21.3,<22.0)"]
+s_pytest = ["pytest (>=6.2,<7.0)"]
+pyside6 = ["pyside6 (>=6.0,<7.0)"]
+pyside2 = ["pyside2 (>=5.15,<6.0)"]
+pyqt6 = ["pyqt6 (>=6.0,<7.0)"]
+pyqt5 = ["pyqt5 (>=5.15,<6.0)"]
+p_tests = ["pytest-xvfb (>=2.0,<3.0)", "pytest-cov (>=2.12,<3.0)", "pytest (>=6.2,<7.0)", "coverage (>=5.5,<6.0)", "click (>=8.0,<9.0)"]
+p_docs = ["towncrier (>=21.3,<22.0)", "sphinx-rtd-theme (>=0.5.0,<0.6.0)", "sphinx-qt-documentation (>=0.3.0,<0.4.0)", "sphinx-inline-tabs (>=2020.10.19b4,<2020.11.0)", "sphinx-click (>=3.0,<4.0)", "sphinx-autodoc-typehints (>=1.11,<2.0)", "sphinx (>=4.0,<5.0)", "pyside2 (>=5.15,<6.0)", "importlib-metadata (>=4.5,<5.0)"]
+p_checks = ["towncrier (>=21.3,<22.0)", "pytest (>=6.2,<7.0)", "mypy (==0.901)", "flake8 (>=3.8,<4.0)", "check-manifest (>=0.46.0,<0.47.0)", "black (==21.5b2)"]
+cli = ["click (>=8.0,<9.0)"]
 
 [[package]]
 name = "quart"
@@ -1235,7 +1235,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "trio"
-version = "0.20.0"
+version = "0.21.0"
 description = "A friendly Python library for async concurrency and I/O"
 category = "main"
 optional = false
@@ -1380,7 +1380,7 @@ core = ["packaging", "PyQt5", "pyqt5-sip", "qtrio", "qrcode", "fusepy", "winfspy
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9.0"
-content-hash = "82ec1eb5087ee7a233281854fb098029b2f7cde01c9c72c5a22aedffb89e69ee"
+content-hash = "5e5608bb8bc9046bd714b71b2ff95798f7e8d991631ff5c0e42ecb35069e39fa"
 
 [metadata.files]
 aiofiles = [
@@ -2177,8 +2177,8 @@ tomli = [
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
 trio = [
-    {file = "trio-0.20.0-py3-none-any.whl", hash = "sha256:fb2d48e4eab0dfb786a472cd514aaadc71e3445b203bc300bad93daa75d77c1a"},
-    {file = "trio-0.20.0.tar.gz", hash = "sha256:670a52d3115d0e879e1ac838a4eb999af32f858163e3a704fe4839de2a676070"},
+    {file = "trio-0.21.0-py3-none-any.whl", hash = "sha256:4dc0bf9d5cc78767fc4516325b6d80cc0968705a31d0eec2ecd7cdda466265b0"},
+    {file = "trio-0.21.0.tar.gz", hash = "sha256:523f39b7b69eef73501cebfe1aafd400a9aad5b03543a0eded52952488ff1c13"},
 ]
 trio-asyncio = [
     {file = "trio_asyncio-0.12.0-py3-none-any.whl", hash = "sha256:9bf678f83204ba33c395783681c69af563a84145fad2110a152a81a4a18ae7e4"},
