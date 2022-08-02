@@ -29,13 +29,13 @@ jobs:
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
-      # - name: Install poetry
-      #   run: |
-      #     set -eux
-      #     export POETRY_HOME="$HOME/.poetry"
-      #     mkdir -p "$POETRY_HOME"
-      #     curl -sSL https://install.python-poetry.org | python3 - --version=${{ env.poetry-version }}
-      #     echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
+      - name: Install poetry
+        run: |
+          set -eux
+          export POETRY_HOME="$HOME/.poetry"
+          mkdir -p "$POETRY_HOME"
+          curl -sSL https://install.python-poetry.org | python3 - --version=${{ env.poetry-version }}
+          echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
 
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
@@ -44,14 +44,14 @@ jobs:
       #     version: ${{ env.rust-version }}
       #     cache-key: build-wheel
 
-      # - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
-      #   id: setup-python
-      #   with:
-      #     python-version: ${{ env.python-version }}
-      #     cache: poetry
+      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+        id: setup-python
+        with:
+          python-version: ${{ env.python-version }}
+          cache: poetry
 
-      # - name: Poetry set python path to use
-      #   run: poetry env use ${{ steps.setup-python.outputs.python-path }}
+      - name: Poetry set python path to use
+        run: poetry env use ${{ steps.setup-python.outputs.python-path }}
 
       - name: Get wheel version
         id: wheel-version
@@ -90,8 +90,8 @@ jobs:
       # - name: Install python deps
       #   run: poetry install -E core -E backend
 
-      # - name: Build wheel
-      #   run: python packaging/wheel/wheel_it.py . --output dist
+      - name: Build wheel
+        run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
 
       - name: Install cibuildwheel
         run: pip install cibuildwheel==2.8.1
@@ -153,7 +153,7 @@ jobs:
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
-          name: ${{ runner.os }}-${{ runner.os }}-snap
+          name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: ${{ runner.temp }}/parsec*.snap
 
   package-linux-test-snap:
@@ -162,7 +162,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
         with:
-          name: ${{ runner.os }}-snap
+          name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: dist
 
       - name: Install Snapcraft

@@ -39,7 +39,7 @@ else:
     run(f"{poetry} run python --version")
 
 
-def main(src_dir: Path, output_dir: Path):
+def main(src_dir: Path, output_dir: Path, skip_wheel: bool):
     output_dir.mkdir(exist_ok=True)
 
     core_requirements = output_dir / "core-requirements.txt"
@@ -74,11 +74,23 @@ def main(src_dir: Path, output_dir: Path):
         constraints_data.append(re.sub(r"\[.*\]", "", line))
     constraints.write_text("\n".join(constraints_data), encoding="utf8")
 
-    # Finally generate the wheel, note we don't use Poetry for the job given:
-    # - It is not possible to choose the output directory
-    # - And more importantly, Poetry is not PEP517 compliant and build wheel
-    #   without building binary resources (it basically only zip the source code)
-    run(f"{poetry} run pip wheel {src_dir} --wheel-dir {output_dir} --use-pep517 --no-deps")
+    # Make sure the dependencies needed to run generate_pyqt.py are in place
+    # TODO: `--use-deprecated=legacy-resolver` is needed due to a bug in pip
+    # see: https://github.com/pypa/pip/issues/9644#issuecomment-813432613
+    run(
+        f"{python} -m pip install pyqt5 babel docutils --constraint {constraints} --use-deprecated=legacy-resolver"
+    )
+
+    # Make sure PyQT resources are generated otherwise we will end up with
+    # a .whl with missing parts !
+    run(f"{python} {src_dir / 'misc/generate_pyqt.py'}")
+
+    if not skip_wheel:
+        # Finally generate the wheel, note we don't use Poetry for the job given:
+        # - It is not possible to choose the output directory
+        # - And more importantly, Poetry is not PEP517 compliant and build wheel
+        #   without building binary resources (it basically only zip the source code)
+        run(f"{poetry} run pip wheel {src_dir} --wheel-dir {output_dir} --use-pep517 --no-deps")
 
 
 if __name__ == "__main__":
@@ -87,6 +99,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("src_dir", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--skip-wheel", action="store_true")
 
     args = parser.parse_args()
-    main(src_dir=args.src_dir, output_dir=args.output_dir)
+    main(src_dir=args.src_dir, output_dir=args.output_dir, skip_wheel=args.skip_wheel)
