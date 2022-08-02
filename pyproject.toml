@@ -98,7 +98,7 @@ qa = [
 # See [poetry#3332](https://github.com/python-poetry/poetry/issues/3332)
 [tool.poetry]
 name = "parsec-cloud"
-version = "v2.11.0+dev"
+version = "2.11.0+dev"
 description = "Secure cloud framework"
 authors = ["Scille SAS <contact@scille.fr>"]
 readme = "README.rst"

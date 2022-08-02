@@ -53,28 +53,28 @@ jobs:
       # - name: Poetry set python path to use
       #   run: poetry env use ${{ steps.setup-python.outputs.python-path }}
 
-      # - name: Get wheel version
-      #   id: wheel-version
-      #   run: |
-      #     set -eux
-      #     # Retrieve Parsec version and customize it if we are not building on a tag
-      #     # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
-      #     if ([ "${{ github.ref_type }}" == "tag" ])
-      #     then
-      #       echo "Using provided tag"
-      #       # Use tag name as version
-      #       VERSION=`git describe --tag`
-      #     else
-      #       echo "Using version in 'parsec/_version.py'"
-      #       # Use `<tag_name>+dev<commit_hash>` as version
-      #       VERSION=`sed -n 's/^__version__ = "\(.*\)"$/\1/p' parsec/_version.py`
-      #       COMMIT=`git rev-parse --verify --short HEAD`
-      #       VERSION="$VERSION.$COMMIT"
-      #       # Customize version with tag
-      #       sed -i "s/^__version__ = .*$/__version__ = \"$VERSION\"/" parsec/_version.py
-      #       test $(grep -E 'version = ' -o pyproject.toml | wc -l) -eq 2  # Sanity check for the next sed
-      #       sed -i "s/^version = .*$/version = \"$VERSION\"/" pyproject.toml
-      #     fi
+      - name: Get wheel version
+        id: wheel-version
+        run: |
+          set -eux
+          # Retrieve Parsec version and customize it if we are not building on a tag
+          # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
+          if ([ "${{ github.ref_type }}" == "tag" ])
+          then
+            echo "Using provided tag"
+            # Use tag name as version
+            VERSION=`git describe --tag`
+          else
+            echo "Using version in 'parsec/_version.py'"
+            # Use `<tag_name>+dev<commit_hash>` as version
+            VERSION=`sed -n 's/^__version__ = "\(.*\)"$/\1/p' parsec/_version.py`
+            COMMIT=`git rev-parse --verify --short HEAD`
+            VERSION="$VERSION$COMMIT"
+            # Customize version with tag
+            sed -i "s/^__version__ = .*$/__version__ = \"$VERSION\"/" parsec/_version.py
+            test $(grep -E 'version = ' -o pyproject.toml | wc -l) -eq 2  # Sanity check for the next sed
+            sed -i "s/^version = .*$/version = \"$VERSION\"/" pyproject.toml
+          fi
 
       #     echo "::warning title=Wheel version::$VERSION"
       #     echo "::set-output name=version::$VERSION"
