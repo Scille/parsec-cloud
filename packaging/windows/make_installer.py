@@ -3,6 +3,7 @@
 import json
 import argparse
 import itertools
+import shutil
 import subprocess
 from shutil import which
 from pathlib import Path
@@ -54,13 +55,19 @@ if __name__ == "__main__":
     assert which("makensis"), "makensis command not in PATH !"
 
     # Configure the NSIS script
-    nsis_config_in = (BASE_DIR / "installer.in.nsi").read_text(encoding="utf8")
+    nsis_config_in_path = BASE_DIR / "installer.in.nsi"
+    nsis_config_in = nsis_config_in_path.read_text(encoding="utf8")
     build_manifest = json.loads((installer_inputs / "manifest.json").read_text(encoding="utf8"))
     build_manifest["output_dir_path"] = build_dir
     build_manifest["installer_inputs_path"] = installer_inputs
-    nsis_config = build_dir / "installer.nsi"
-    nsis_config.write_text(nsis_config_in.format(**build_manifest), encoding="utf8")
-    assert nsis_config.read_bytes() != nsis_config_in.read_bytes()  # Sanity check
+    nsis_config_path = build_dir / "installer.nsi"
+    nsis_config = nsis_config_in.format(**build_manifest)
+    nsis_config_path.write_text(nsis_config, encoding="utf8")
+    assert nsis_config_path.read_bytes() != nsis_config_in.read_bytes()  # Sanity check
+
+    # Copy NSIS resources
+    for res in ("icon.ico", "installer-side.bmp", "installer-top.bmp"):
+        shutil.copyfile(src=BASE_DIR / res, dst=build_dir / res)
 
     if args.sign_mode == "none":
         print("### Building installer ###")
