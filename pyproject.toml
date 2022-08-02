@@ -162,7 +162,7 @@ PATH = "$PATH:$HOME/.cargo/bin"
 [build-system]
 requires = [
     "poetry-core>=1.0.0",
-    "maturin==0.13.*",
+    "maturin==0.13.1",
     "PyQt5>=5.15,<6.0",
     "Babel>=2.10,<3.0",
     "docutils>=0.17,<0.18",
