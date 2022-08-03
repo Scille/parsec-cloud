@@ -78,6 +78,9 @@ jobs:
           echo "::warning title=Wheel version::$VERSION"
           echo "::set-output name=version::$VERSION"
 
+      - name: Build wheel
+        run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
+
       - name: Install CIBuildWheel
         run: pip install cibuildwheel==2.8.1
 
@@ -86,9 +89,6 @@ jobs:
 
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
-
-      - name: Build wheel
-        run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:

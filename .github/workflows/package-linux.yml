@@ -72,14 +72,14 @@ jobs:
           echo "::warning title=Wheel version::$VERSION"
           echo "::set-output name=version::$VERSION"
 
+      - name: Build wheel
+        run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
+
       - name: Install cibuildwheel
         run: pip install cibuildwheel==2.8.1
 
       - name: Build wheel using cibuildwheel
         run: python -m cibuildwheel --output-dir dist
-
-      - name: Build wheel
-        run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
 
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
