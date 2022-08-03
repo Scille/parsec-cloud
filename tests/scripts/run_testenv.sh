@@ -37,7 +37,7 @@ fi
 SOURCE_FILE=$(python -c "import tempfile; print(tempfile.mkstemp()[1])")
 
 # Run python script and source
-$SCRIPT_DIR/run_testenv.py --source-file $SOURCE_FILE $@ || return $?
+poetry run $SCRIPT_DIR/run_testenv.py --source-file $SOURCE_FILE $@ || return $?
 source $SOURCE_FILE
 
 # Clean up
