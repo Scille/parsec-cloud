@@ -11,7 +11,7 @@ Path to the app in its dist folder is needed as argument.
 if [ -z "$1" ]; then
     echo "Error: No argument given, path to app needed"
     exit 1
-elif ! [[ $1 == *"/dist/Parsec.app" ]]; then
+elif ! [[ $1 == *"dist/Parsec.app" ]]; then
     echo "Error: Path to dist/Parsec.app needed as argument"
     exit 1
 fi
@@ -36,9 +36,12 @@ fi
 rm $APP_DIR/parsec.zip
 
 
-# Check if folder is empty, a bit overkill
-if [ `ls $APP_DIR | wc -l | xargs` = 0 ]; then
-    echo "Error: Empty dist folder"
+# Check if folder is empty, or too full, and that the .app is there
+if [ `ls -la $APP_DIR | wc -l | xargs` != 4 ]; then
+    echo "Error: dist folder is either empty or contains more than the app"
+    exit 1
+elif [[ `ls -la $APP_DIR | awk 'NR == 4' | cut -f14 -d' '` != "Parsec.app" ]]; then
+    echo "Error: dist folder content isn't Parsec.app"
     exit 1
 fi
 
