@@ -9,7 +9,6 @@ import argparse
 import subprocess
 from hashlib import sha256
 from pathlib import Path
-from packaging.version import parse as version_parser, LegacyVersion, Version
 
 # Fully-qualified path for the executable should be used with subprocess to
 # avoid unreliability (especially when running from within a virtualenv)
@@ -44,7 +43,10 @@ def run(cmd, **kwargs):
 
 
 def main(
-    src_dir: Path, include_parsec_ext: Optional[Path] = None, wheel_it_dir: Optional[Path] = None, wheel_version: Optional[Version | LegacyVersion]
+    src_dir: Path,
+    include_parsec_ext: Optional[Path] = None,
+    wheel_it_dir: Optional[Path] = None,
+    wheel_version: Optional[str] = None,
 ):
     display(f"Building in {BUILD_DIR}")
     display(f"Using sources at {src_dir}")
@@ -66,14 +68,15 @@ def main(
                     f"Found Parsec wheel {program_wheel} but could not determine it version"
                 )
             display(f"Parsec wheel is: {program_wheel}")
-            program_version = version_parser(f"v{match.group(1)}")
+            program_version = f"{match.group(1)}"
         else:
             program_version = wheel_version
     elif wheel_version is None:
         exec((src_dir / "parsec/_version.py").read_text(), global_dict)
-        program_version = version_parser(global_dict.get("__version__"))
+        program_version = global_dict.get("__version__")
     else:
         program_version = wheel_version
+    assert program_version[0] != "v"
     display(f"Detected Parsec version {program_version}")
 
     # Bootstrap tools virtualenv
@@ -103,9 +106,7 @@ def main(
             run(
                 f"{ tools_python } { src_dir / 'packaging/wheel/wheel_it.py' } { src_dir } --output-dir { DEFAULT_WHEEL_IT_DIR }"
             )
-            program_wheel = next(
-                DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{program_version}*.whl")
-            )
+            program_wheel = next(DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{program_version}*.whl"))
 
     # Bootstrap PyInstaller virtualenv containing both pyinstaller, parsec & it dependencies
     pyinstaller_venv_dir = BUILD_DIR / "pyinstaller_venv"
@@ -174,7 +175,7 @@ if __name__ == "__main__":
     parser.add_argument("--include-parsec-ext", type=Path)
     parser.add_argument("--wheel-it-dir", type=Path)
     parser.add_argument("--install", action="store_true")
-    parser.add_argument("--wheel-version", type=version_parser, required=False)
+    parser.add_argument("--wheel-version", type=str, required=False)
 
     args = parser.parse_args()
     if not args.disable_check_python:
