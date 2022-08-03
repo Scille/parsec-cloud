@@ -47,7 +47,7 @@ jobs:
         id: setup-python
         with:
           python-version: ${{ env.python-version }}
-          cache: poetry
+          cache: pip
 
       - name: Poetry set python path to use
         run: poetry env use ${{ steps.setup-python.outputs.python-path }}
@@ -63,31 +63,33 @@ jobs:
             # Use tag name as version
             VERSION=`git describe --tag`
           else
-            set -x
+            echo "Using version in 'parsec/_version.py'"
             # Use `<tag_name>+dev<commit_hash>` as version
-            VERSION=`sed -n 's/^__version__ = "\\(.*\\)"$/\\1/p' parsec/_version.py`
+            VERSION=`sed -n 's/^__version__ = "\(.*\)"$/\1/p' parsec/_version.py`
             COMMIT=`git rev-parse --verify --short HEAD`
-            VERSION="$VERSION.$COMMIT"
+            VERSION="$VERSION$COMMIT"
             # Customize version with tag
-            sed -i .back -e "s/__version__ = .*/__version__ = \"$VERSION\"/" parsec/_version.py
-            test $(grep -E 'version = ' -o pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
-            sed -i .back -e "s#^\\(version = \\).*\$#\\1'$VERSION'#" pyproject.toml
+            sed -i "s/^__version__ = .*$/__version__ = \"$VERSION\"/" parsec/_version.py
+            # Maturin don't support local version identifier, those result in cibuildwheel to failed because of
+            # A bad formatted version in metadata
+            # test $(grep -E 'version = ' -o pyproject.toml | wc -l) -eq 2  # Sanity check for the next sed
+            # sed -i "s/^version = .*$/version = \"$VERSION\"/" pyproject.toml
           fi
 
           echo "::warning title=Wheel version::$VERSION"
           echo "::set-output name=version::$VERSION"
 
-      - name: Create output dir
-        run: mkdir dist
+      - name: Install CIBuildWheel
+        run: pip install cibuildwheel==2.8.1
+
+      - name: Build wheel using CIBuildWheel
+        run: python -m cibuildwheel --output-dir dist
 
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
 
-      - name: Install python deps
-        run: poetry install -E core -E backend
-
       - name: Build wheel
-        run: python packaging/wheel/wheel_it.py . --output dist
+        run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
