@@ -2,8 +2,6 @@
     "HomePage": {
         "mainMenu": {
             "changelog": "Changelog",
-            "settings": "Settings",
-            "about": "About",
             "lang": {
                 "frFR": "Français",
                 "enUS": "English"
@@ -58,5 +56,16 @@
         "cancel": "Cancel",
         "yes": "Yes",
         "no": "No"
+    },
+    "MenuPage": {
+        "documents": "Documents",
+        "myOrganization": "My organization",
+        "settings": "Settings",
+        "about": "About",
+        "support": "Help and feedback"
+    },
+    "HeaderPage": {
+        "about": "About",
+        "support": "Help and feedback"
     }
 }
