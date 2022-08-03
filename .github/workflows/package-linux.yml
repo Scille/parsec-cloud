@@ -43,7 +43,6 @@ jobs:
         id: setup-python
         with:
           python-version: ${{ env.python-version }}
-          cache: pip
 
       - name: Get wheel version
         id: wheel-version

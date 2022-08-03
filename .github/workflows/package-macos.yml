@@ -47,7 +47,6 @@ jobs:
         id: setup-python
         with:
           python-version: ${{ env.python-version }}
-          cache: pip
 
       - name: Poetry set python path to use
         run: poetry env use ${{ steps.setup-python.outputs.python-path }}
