@@ -6,7 +6,9 @@ log = logging.getLogger("build")
 YELLOW_FG = "\x1b[33m"
 DEFAULT_FG = "\x1b[39m"
 
-logging.basicConfig(level=logging.DEBUG, format=f"{YELLOW_FG}[%(levelname)s] %(message)s{DEFAULT_FG}")
+logging.basicConfig(
+    level=logging.DEBUG, format=f"{YELLOW_FG}[%(levelname)s] %(message)s{DEFAULT_FG}"
+)
 
 
 def run(cmd, **kwargs):
