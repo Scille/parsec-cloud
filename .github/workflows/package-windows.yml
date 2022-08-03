@@ -102,6 +102,8 @@ jobs:
   package-windows-build-installer-content:
     needs: package-windows-build-wheel
     runs-on: windows-2022
+    env:
+      WHEEL_VERSION: ${{ needs.package-windows-build-wheel.outputs.wheel-version }}
     steps:
       - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
         with:
@@ -122,7 +124,7 @@ jobs:
         run: Get-ChildItem -Recurse -Path ${{ runner.temp }}
 
       - name: Freeze Parsec
-        run: python3 freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
+        run: python3 freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist --wheel-version ${{ env.WHEEL_VERSION }}
         working-directory: ${{ runner.temp }}
 
       - name: Debug build directory

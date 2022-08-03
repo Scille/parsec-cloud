@@ -52,7 +52,10 @@ def run(cmd, **kwargs):
 
 
 def main(
-    src_dir: Path, include_parsec_ext: Optional[Path] = None, wheel_it_dir: Optional[Path] = None
+    src_dir: Path,
+    include_parsec_ext: Optional[Path] = None,
+    wheel_it_dir: Optional[Path] = None,
+    wheel_version: Optional[str] = None,
 ):
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -68,18 +71,22 @@ def main(
         elif len(candidates) > 1:
             raise SystemExit(f"Multiple possible Parsec wheels: {candidates}")
         program_wheel = candidates[0]
-        match = re.match(r"parsec_cloud-([0-9][0-9\.+a-z]+)-.*.whl", program_wheel.name)
-        if not match:
-            raise SystemError(
-                f"Found Parsec wheel {program_wheel} but could not determine it version"
-            )
-        display(f"Parsec wheel is: {program_wheel}")
-        program_version = f"v{match.group(1)}"
-    else:
+        if wheel_version is None:
+            match = re.match(r"parsec_cloud-([0-9][0-9\.+a-z]+)-.*.whl", program_wheel.name)
+            if not match:
+                raise SystemError(
+                    f"Found Parsec wheel {program_wheel} but could not determine it version"
+                )
+            display(f"Parsec wheel is: {program_wheel}")
+            program_version = f"{match.group(1)}"
+        else:
+            program_version = wheel_version
+    elif wheel_version is None:
         exec((src_dir / "parsec/_version.py").read_text(), global_dict)
         program_version = global_dict.get("__version__")
-    assert program_version.startswith("v")
-    program_version_without_v_prefix = program_version[1:]
+    else:
+        program_version = wheel_version
+    assert not program_version.startswith("v")
     display(f"### Detected Parsec version {program_version} ###")
 
     winfsp_installer = BUILD_DIR / WINFSP_URL.rsplit("/", 1)[1]
@@ -103,16 +110,13 @@ def main(
 
     # Generate program wheel and constraints on dependencies
     if wheel_it_dir is not None:
-        program_wheel = next(
-            wheel_it_dir.glob(f"parsec_cloud-{program_version_without_v_prefix}*.whl"), None
-        )
         program_constraints = wheel_it_dir / "constraints.txt"
         if not program_wheel or not program_constraints.exists():
             raise SystemExit(f"Cannot retreive wheel file and/or constraints.txt in {wheel_it_dir}")
 
     else:
         program_wheel = next(
-            DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{program_version_without_v_prefix}*.whl"), None
+            DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{program_version}*.whl"), None
         )
         program_constraints = DEFAULT_WHEEL_IT_DIR / "constraints.txt"
         if not program_wheel or not program_constraints.exists():
@@ -120,9 +124,7 @@ def main(
             run(
                 f"{ tools_python } { src_dir / 'packaging/wheel/wheel_it.py' } { src_dir } --output-dir { DEFAULT_WHEEL_IT_DIR }"
             )
-            program_wheel = next(
-                DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{program_version_without_v_prefix}*.whl")
-            )
+            program_wheel = next(DEFAULT_WHEEL_IT_DIR.glob(f"parsec_cloud-{program_version}*.whl"))
 
     # Bootstrap PyInstaller virtualenv containing both pyinstaller, parsec & it dependencies
     pyinstaller_venv_dir = BUILD_DIR / "pyinstaller_venv"
@@ -251,6 +253,7 @@ if __name__ == "__main__":
     parser.add_argument("--disable-check-python", action="store_true")
     parser.add_argument("--include-parsec-ext", type=Path)
     parser.add_argument("--wheel-it-dir", type=Path)
+    parser.add_argument("--wheel-version", type=str)
     args = parser.parse_args()
     if not args.disable_check_python:
         check_python_version()
@@ -258,4 +261,5 @@ if __name__ == "__main__":
         src_dir=args.src_dir,
         include_parsec_ext=args.include_parsec_ext,
         wheel_it_dir=args.wheel_it_dir,
+        wheel_version=args.wheel_version,
     )
