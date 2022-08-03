@@ -3,7 +3,7 @@
 import trio
 import attr
 import re
-from libparsec.types import DateTime
+from pendulum import now as pendulum_now
 from uuid import uuid4
 import triopg
 from typing import List, Tuple, Optional, Iterable
@@ -105,7 +105,7 @@ async def _apply_migration(conn, migration: MigrationItem) -> None:
         if migration.idx >= CREATE_MIGRATION_TABLE_ID:
             # The migration table is created in the second migration
             sql = "INSERT INTO migration (_id, name, applied) VALUES ($1, $2, $3)"
-            await conn.execute(sql, migration.idx, migration.name, DateTime.now())
+            await conn.execute(sql, migration.idx, migration.name, pendulum_now())
 
 
 async def _last_migration_row(conn):
