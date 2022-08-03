@@ -82,17 +82,17 @@ jobs:
           echo "::warning title=Wheel version::$VERSION"
           echo "::set-output name=version::$VERSION"
 
-      - name: Create output dir
-        run: mkdir dist
+      - name: Build requirements & constraint files
+        run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
+
+      - name: Install CIBuildWheel
+        run: pip install cibuildwheel==2.8.1
+
+      - name: Build Wheel
+        run: python -m cibuildwheel --output-dir dist
 
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
-
-      - name: Install python deps
-        run: poetry install -E core -E backend
-
-      - name: Build wheel
-        run: python packaging/wheel/wheel_it.py . --output dist
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
