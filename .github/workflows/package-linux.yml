@@ -141,7 +141,7 @@ jobs:
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
-          name: ${{ runner.os }}-snap
+          name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: ${{ runner.temp }}/parsec*.snap
 
   package-linux-test-snap:
@@ -150,7 +150,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
         with:
-          name: ${{ runner.os }}-snap
+          name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: dist
 
       - name: Install Snapcraft
@@ -174,7 +174,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
         with:
-          name: ${{ runner.os }}-snap
+          name: ${{ runner.os }}-${{ runner.arch }}-snap
           path: dist
 
       - name: Install Snapcraft
@@ -192,7 +192,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
         with:
-          name: ${{ runner.os }}-wheel
+          name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
 
       - name: Publish wheel on PyPI
