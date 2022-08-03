@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "certifi ~= 2021",
+    "certifi ~= 2022.6.15",
     "attrs ~= 21.4",
     "click ~= 8.0",
     "msgpack ~= 1.0",
