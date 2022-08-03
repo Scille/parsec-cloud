@@ -8,6 +8,8 @@ For MacOS, please install coreutils from brew to get realpath:
 `brew install coreutils`
 '
 
+set -x
+
 # Make sure this script is sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
@@ -35,6 +37,12 @@ fi
 
 # In Python we trust (aka shell's tempfile&mktemp doesn't work on all platforms)
 SOURCE_FILE=$(python -c "import tempfile; print(tempfile.mkstemp()[1])")
+
+
+poetry run python --version >&2
+poetry run pip --version >&2
+
+poetry run pip freeze | grep typing >&2
 
 # Run python script and source
 poetry run $SCRIPT_DIR/run_testenv.py --source-file $SOURCE_FILE $@ || return $?
