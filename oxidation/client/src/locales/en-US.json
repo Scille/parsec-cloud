@@ -1,11 +1,7 @@
 {
     "HomePage": {
         "mainMenu": {
-            "changelog": "Changelog",
-            "lang": {
-                "frFR": "Français",
-                "enUS": "English"
-            }
+            "changelog": "Changelog"
         },
         "organizationActionSheet": {
             "header": "Organization",
@@ -67,5 +63,20 @@
     "HeaderPage": {
         "about": "About",
         "support": "Help and feedback"
+    },
+    "SettingsPage": {
+        "pageTitle": "Settings",
+        "enableTelemetry": "Enable telemetry",
+        "enableTelemetryDescription": "Automatically send error reports",
+        "minimizeToSystemTray": "Minimize to system tray",
+        "minimizeToSystemTrayDescription": "When the application is closed, Parsec will continue to run in the background",
+        "language": "Language",
+        "lang": {
+            "frFR": "French",
+            "enUS": "English"
+        },
+        "telemetry": "Telemetry",
+        "behavior": "Behavior",
+        "localization": "Localization"
     }
 }

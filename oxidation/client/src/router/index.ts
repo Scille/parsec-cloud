@@ -31,6 +31,11 @@ let routes: Array<RouteRecordRaw> = [
             component: () => import('@/views/HomePage.vue')
           }
         ]
+      },
+      {
+        path: '/settings',
+        name: 'settings',
+        component: () => import('@/views/SettingsPage.vue')
       }
     ]
   }

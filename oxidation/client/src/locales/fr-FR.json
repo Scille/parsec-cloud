@@ -1,11 +1,7 @@
 {
     "HomePage": {
         "mainMenu": {
-            "changelog": "Journal des modifications",
-            "lang": {
-                "frFR": "Français",
-                "enUS": "English"
-            }
+            "changelog": "Journal des modifications"
         },
         "organizationActionSheet": {
             "header": "Organisation",
@@ -67,5 +63,20 @@
     "HeaderPage": {
         "about": "À propos",
         "support": "Aide et commentaires"
+    },
+    "SettingsPage": {
+        "pageTitle": "Paramètres",
+        "enableTelemetry": "Activer la télémétrie",
+        "enableTelemetryDescription": "Envoie automatiquement les rapports d’erreur",
+        "minimizeToSystemTray": "Réduire dans la barre d'état",
+        "minimizeToSystemTrayDescription": "Lorsque l'application est fermée, Parsec continuera à fonctionner en arrière-plan",
+        "language": "Langue",
+        "lang": {
+            "frFR": "Français",
+            "enUS": "English"
+        },
+        "telemetry": "Télémétrie",
+        "behavior": "Comportement",
+        "localization": "Localisation"
     }
 }
