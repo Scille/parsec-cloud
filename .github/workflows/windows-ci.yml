@@ -65,9 +65,13 @@ jobs:
           echo "${APPDATA}\.poetry\bin" >> "$GITHUB_PATH"
 
       - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+        id: setup-python
         with:
           python-version: ${{ env.python-version }}
           cache: poetry
+
+      - name: Configure python path for poetry
+        run: poetry env use ${{ steps.setup-python.outputs.python-path }}
 
       - name: Install python deps
         run: poetry install -E core -E backend
