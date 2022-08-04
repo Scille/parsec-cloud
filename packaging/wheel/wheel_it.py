@@ -59,17 +59,6 @@ def main(program_source: Path, output_dir: Path):
         constraints_data.append(re.sub(r"\[.*\]", "", line))
     constraints.write_text("\n".join(constraints_data), encoding="utf8")
 
-    # Make sure the dependencies needed to run generate_pyqt.py are in place
-    # TODO: `--use-deprecated=legacy-resolver` is needed due to a bug in pip
-    # see: https://github.com/pypa/pip/issues/9644#issuecomment-813432613
-    run(
-        f"{python} -m pip install pyqt5 babel docutils --constraint {constraints} --use-deprecated=legacy-resolver"
-    )
-
-    # Make sure PyQT resources are generated otherwise we will end up with
-    # a .whl with missing parts !
-    run(f"{python} {program_source / 'misc/generate_pyqt.py'}")
-
     # Finally generate the wheel, note we don't use Poetry for the job given:
     # - It is not possible to choose the output directory
     # - And more importantly, Poetry is not PEP517 compliant and build wheel
