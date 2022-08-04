@@ -43,10 +43,6 @@ jobs:
         --side-effects-timeout=10
         -vv
         -x
-    strategy:
-      fail-fast: false
-      matrix:
-        binding: [ no-binding, rust-binding ]
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
@@ -57,7 +53,6 @@ jobs:
         run: sudo apt-get -y install libfuse2 fuse desktop-file-utils postgresql-${{ env.postgre-version }}
 
       - uses: ./.github/actions/setup-rust
-        if: matrix.binding == 'rust-binding'
         with:
           version: ${{ env.rust-version }}
           cache-key: python
@@ -76,22 +71,13 @@ jobs:
           cache: poetry
 
       - name: Install python deps
-        run: poetry install -E core -E backend --remove-untracked
+        run: poetry install -E core -E backend
 
       - name: Generate PyQT GUI data
         run: poetry run python misc/generate_pyqt.py
 
-      - name: Install libparsec_python
-        if: matrix.binding == 'rust-binding'
-        run: poetry run pip install oxidation/libparsec_python
-
       - name: Basic tests
         run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests
-        timeout-minutes: 3
-
-      - name: Rust binding tests
-        if: matrix.binding == 'rust-binding'
-        run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests --runrust -m rust
         timeout-minutes: 3
 
       - name: Mountpoint tests
