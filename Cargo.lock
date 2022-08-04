@@ -1373,6 +1373,7 @@ dependencies = [
  "serialization_format",
  "sha2 0.10.2",
  "tests_fixtures",
+ "thiserror",
 ]
 
 [[package]]
