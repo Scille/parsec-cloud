@@ -85,6 +85,14 @@ python-versions = ">=3.6"
 pytz = ">=2015.7"
 
 [[package]]
+name = "bashlex"
+version = "0.16"
+description = "Python parser for bash"
+category = "dev"
+optional = false
+python-versions = ">=2.7, !=3.0, !=3.1, !=3.2, !=3.3, !=3.4"
+
+[[package]]
 name = "black"
 version = "22.6.0"
 description = "The uncompromising code formatter."
@@ -147,6 +155,14 @@ urllib3 = ">=1.25.4,<1.27"
 crt = ["awscrt (==0.13.8)"]
 
 [[package]]
+name = "bracex"
+version = "2.3.post1"
+description = "Bash style brace expander."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
 name = "certifi"
 version = "2022.6.15"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -175,6 +191,31 @@ python-versions = ">=3.6.0"
 
 [package.extras]
 unicode_backport = ["unicodedata2"]
+
+[[package]]
+name = "cibuildwheel"
+version = "2.8.1"
+description = "Build Python wheels on CI with minimal configuration."
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+bashlex = "!=0.13"
+bracex = "*"
+certifi = "*"
+filelock = "*"
+packaging = ">=20.9"
+platformdirs = "*"
+tomli = {version = "*", markers = "python_version < \"3.11\""}
+
+[package.extras]
+all = ["mkdocs-include-markdown-plugin (==2.8.0)", "mkdocs (==1.0.4)", "jinja2 (==3.0.3)", "pymdown-extensions", "mkdocs-macros-plugin", "markdown (<3.4)", "jinja2", "pytest (>=6)", "pytest-timeout", "pytest-xdist", "build", "tomli-w", "click", "ghapi", "pip-tools", "pygithub", "pyyaml", "requests", "rich (>=9.6)", "packaging (>=21.0)", "mypy (>=0.901)", "types-jinja2", "types-certifi", "types-toml", "types-pyyaml", "types-click", "types-requests"]
+bin = ["click", "ghapi", "pip-tools", "pygithub", "pyyaml", "requests", "rich (>=9.6)", "packaging (>=21.0)"]
+dev = ["mypy (>=0.901)", "types-jinja2", "types-certifi", "types-toml", "types-pyyaml", "types-click", "types-requests", "jinja2", "pytest (>=6)", "pytest-timeout", "pytest-xdist", "build", "tomli-w", "click", "ghapi", "pip-tools", "pygithub", "pyyaml", "requests", "rich (>=9.6)", "packaging (>=21.0)"]
+docs = ["mkdocs-include-markdown-plugin (==2.8.0)", "mkdocs (==1.0.4)", "jinja2 (==3.0.3)", "pymdown-extensions", "mkdocs-macros-plugin", "markdown (<3.4)"]
+mypy = ["mypy (>=0.901)", "types-jinja2", "types-certifi", "types-toml", "types-pyyaml", "types-click", "types-requests"]
+test = ["jinja2", "pytest (>=6)", "pytest-timeout", "pytest-xdist", "build", "tomli-w"]
 
 [[package]]
 name = "click"
@@ -283,7 +324,7 @@ name = "filelock"
 version = "3.7.1"
 description = "A platform independent file lock."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 
 [package.extras]
@@ -1417,7 +1458,7 @@ core = ["packaging", "PyQt5", "pyqt5-sip", "qtrio", "qrcode", "fusepy", "winfspy
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9.0"
-content-hash = "fa12b7f957fb407d3479790b8cd9a0aa80624a82b99cabfc732b1168bb185ae7"
+content-hash = "157787f0e2e39bd767e00aa58e15106c488b9ce7c37296fe66c68d584a23513d"
 
 [metadata.files]
 aiofiles = [
@@ -1479,6 +1520,10 @@ babel = [
     {file = "Babel-2.10.3-py3-none-any.whl", hash = "sha256:ff56f4892c1c4bf0d814575ea23471c230d544203c7748e8c68f0089478d48eb"},
     {file = "Babel-2.10.3.tar.gz", hash = "sha256:7614553711ee97490f732126dc077f8d0ae084ebc6a96e23db1482afabdb2c51"},
 ]
+bashlex = [
+    {file = "bashlex-0.16-py2.py3-none-any.whl", hash = "sha256:ff89fc743ccdef978792784d74d698a9236a862939bb4af471c0c3faf92c21bb"},
+    {file = "bashlex-0.16.tar.gz", hash = "sha256:dc6f017e49ce2d0fe30ad9f5206da9cd13ded073d365688c9fda525354e8c373"},
+]
 black = [
     {file = "black-22.6.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:f586c26118bc6e714ec58c09df0157fe2d9ee195c764f630eb0d8e7ccce72e69"},
     {file = "black-22.6.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:b270a168d69edb8b7ed32c193ef10fd27844e5c60852039599f9184460ce0807"},
@@ -1515,6 +1560,10 @@ boto3 = [
 botocore = [
     {file = "botocore-1.27.45-py3-none-any.whl", hash = "sha256:75f450d373059b057132d72ffcb6f897aaa1985ea0e6ca9dd03c90119bd0b71b"},
     {file = "botocore-1.27.45.tar.gz", hash = "sha256:04bc95fd65a6b557b953bba24c9dc1b314f27a588b50437b2a02796a1c683542"},
+]
+bracex = [
+    {file = "bracex-2.3.post1-py3-none-any.whl", hash = "sha256:351b7f20d56fb9ea91f9b9e9e7664db466eb234188c175fd943f8f755c807e73"},
+    {file = "bracex-2.3.post1.tar.gz", hash = "sha256:e7b23fc8b2cd06d3dec0692baabecb249dda94e06a617901ff03a6c56fd71693"},
 ]
 certifi = [
     {file = "certifi-2022.6.15-py3-none-any.whl", hash = "sha256:fe86415d55e84719d75f8b69414f6438ac3547d2078ab91b67e779ef69378412"},
@@ -1589,6 +1638,10 @@ cffi = [
 charset-normalizer = [
     {file = "charset-normalizer-2.1.0.tar.gz", hash = "sha256:575e708016ff3a5e3681541cb9d79312c416835686d054a23accb873b254f413"},
     {file = "charset_normalizer-2.1.0-py3-none-any.whl", hash = "sha256:5189b6f22b01957427f35b6a08d9a0bc45b46d3788ef5a92e978433c7a35f8a5"},
+]
+cibuildwheel = [
+    {file = "cibuildwheel-2.8.1-py3-none-any.whl", hash = "sha256:d80ca685f55ed65e23fdfb4210b9bf614c59e96e2a716870b3b4c05a2e1ef17a"},
+    {file = "cibuildwheel-2.8.1.tar.gz", hash = "sha256:128e89355eb77385b3583c168e4fa907ecdeb15094fd430383f0a2f70401cf92"},
 ]
 click = [
     {file = "click-8.1.3-py3-none-any.whl", hash = "sha256:bb4d8133cb15a609f44e8213d9b391b0809795062913b383c62be0ee95b1db48"},

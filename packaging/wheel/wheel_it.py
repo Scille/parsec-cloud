@@ -24,7 +24,7 @@ def run(cmd, **kwargs):
     return ret
 
 
-def main(program_source: Path, output_dir: Path):
+def main(program_source: Path, output_dir: Path, skip_wheel: bool = False):
     output_dir.mkdir(exist_ok=True)
 
     core_requirements = output_dir / "core-requirements.txt"
@@ -59,11 +59,14 @@ def main(program_source: Path, output_dir: Path):
         constraints_data.append(re.sub(r"\[.*\]", "", line))
     constraints.write_text("\n".join(constraints_data), encoding="utf8")
 
-    # Finally generate the wheel, note we don't use Poetry for the job given:
-    # - It is not possible to choose the output directory
-    # - And more importantly, Poetry is not PEP517 compliant and build wheel
-    #   without building binary resources (it basically only zip the source code)
-    run(f"{python} -m pip wheel {program_source} --wheel-dir {output_dir} --use-pep517 --no-deps")
+    if not skip_wheel:
+        # Finally generate the wheel, note we don't use Poetry for the job given:
+        # - It is not possible to choose the output directory
+        # - And more importantly, Poetry is not PEP517 compliant and build wheel
+        #   without building binary resources (it basically only zip the source code)
+        run(
+            f"{python} -m pip wheel {program_source} --wheel-dir {output_dir} --use-pep517 --no-deps"
+        )
 
 
 if __name__ == "__main__":
@@ -72,6 +75,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("program_source", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--skip-wheel", action="store_true", help="Skip build wheel")
 
     args = parser.parse_args()
-    main(program_source=args.program_source, output_dir=args.output_dir)
+    main(program_source=args.program_source, output_dir=args.output_dir, skip_wheel=args.skip_wheel)
