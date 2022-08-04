@@ -5,6 +5,7 @@ from typing import List
 from uuid import UUID
 from asyncpg import UniqueViolationError
 from libparsec.types import DateTime
+import pendulum
 
 from parsec.api.protocol import OrganizationID
 from parsec.api.protocol.pki import PkiEnrollmentStatus
@@ -298,7 +299,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                                 organization_id=organization_id.str,
                                 enrollment_id=row["enrollment_id"],
                                 enrollment_state=PkiEnrollmentStatus.CANCELLED.value,
-                                cancelled_on=submitted_on,
+                                cancelled_on=pendulum.from_timestamp(submitted_on.timestamp()),
                             )
                         )
                         await send_signal(
@@ -369,7 +370,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         submit_payload_signature=submit_payload_signature,
                         submit_payload=submit_payload,
                         enrollment_state=PkiEnrollmentStatus.SUBMITTED.value,
-                        submitted_on=submitted_on,
+                        submitted_on=pendulum.from_timestamp(submitted_on.timestamp()),
                     )
                 )
             except UniqueViolationError:
@@ -450,7 +451,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     organization_id=organization_id.str,
                     enrollment_id=enrollment_id,
                     enrollment_state=PkiEnrollmentStatus.REJECTED.value,
-                    rejected_on=rejected_on,
+                    rejected_on=pendulum.from_timestamp(rejected_on.timestamp()),
                 )
             )
             await send_signal(
@@ -512,7 +513,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     enrollment_state=PkiEnrollmentStatus.ACCEPTED.value,
                     organization_id=organization_id.str,
                     enrollment_id=enrollment_id,
-                    accepted_on=accepted_on,
+                    accepted_on=pendulum.from_timestamp(accepted_on.timestamp()),
                     accepter_der_x509_certificate=accepter_der_x509_certificate,
                     accept_payload_signature=accept_payload_signature,
                     accept_payload=accept_payload,

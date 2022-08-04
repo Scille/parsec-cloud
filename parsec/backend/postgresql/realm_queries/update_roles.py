@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import Optional, Tuple
+from libparsec.types import DateTime
+import pendulum
 
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.data import UserProfile
@@ -175,6 +177,7 @@ async def query_update_roles(
     last_role_granted_on = None
     if existing_user_role is not None:
         existing_user_role, last_role_granted_on = existing_user_role
+        last_role_granted_on = DateTime.from_timestamp(last_role_granted_on.timestamp())
         if existing_user_role is not None:
             existing_user_role = RealmRole(existing_user_role)
 
@@ -208,7 +211,9 @@ async def query_update_roles(
                 user_id=new_role.user_id.str,
             )
         )
-        realm_last_vlob_update = None if not rep else rep[0]
+        realm_last_vlob_update = (
+            None if not rep else None if not rep[0] else DateTime.from_timestamp(rep[0].timestamp())
+        )
         if realm_last_vlob_update is not None and realm_last_vlob_update >= new_role.granted_on:
             raise RealmRoleRequireGreaterTimestampError(realm_last_vlob_update)
 
@@ -223,7 +228,9 @@ async def query_update_roles(
                 user_id=new_role.user_id.str,
             )
         )
-        realm_last_role_change = None if not rep else rep[0]
+        realm_last_role_change = (
+            None if not rep else None if not rep[0] else DateTime.from_timestamp(rep[0].timestamp())
+        )
         if realm_last_role_change is not None and realm_last_role_change >= new_role.granted_on:
             raise RealmRoleRequireGreaterTimestampError(realm_last_role_change)
 
@@ -235,7 +242,7 @@ async def query_update_roles(
             role=new_role.role.value if new_role.role else None,
             certificate=new_role.certificate,
             granted_by=new_role.granted_by.str,
-            granted_on=new_role.granted_on,
+            granted_on=pendulum.from_timestamp(new_role.granted_on.timestamp()),
         )
     )
 
@@ -244,7 +251,7 @@ async def query_update_roles(
             organization_id=organization_id.str,
             realm_id=new_role.realm_id.uuid,
             user_id=new_role.granted_by.user_id.str,
-            granted_on=new_role.granted_on,
+            granted_on=pendulum.from_timestamp(new_role.granted_on.timestamp()),
         )
     )
 

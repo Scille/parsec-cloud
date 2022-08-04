@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from pendulum import DateTime, instance as pendulum_instance
+from libparsec.types import DateTime
 from typing import Dict, Tuple, Optional
+
+import pendulum
 
 from parsec.api.protocol import OrganizationID, DeviceID, VlobID, RealmID
 from parsec.backend.vlob import VlobVersionError, VlobNotFoundError
@@ -120,7 +122,7 @@ async def query_read(
                     realm_id=realm_id.uuid,
                     encryption_revision=encryption_revision,
                     vlob_id=vlob_id.uuid,
-                    timestamp=timestamp,
+                    timestamp=pendulum.from_timestamp(timestamp.timestamp()),
                 )
             )
             if not data:
@@ -143,7 +145,7 @@ async def query_read(
     assert isinstance(version, int)
     assert isinstance(blob, bytes)
     vlob_author = DeviceID(vlob_author)
-    created_on = pendulum_instance(created_on)
+    created_on = DateTime.from_timestamp(created_on.timestamp())
 
     author_last_role_granted_on = await _get_last_role_granted_on(
         conn, organization_id, realm_id, vlob_author
@@ -218,6 +220,9 @@ async def query_list_versions(
         raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
 
     return {
-        row["version"]: (pendulum_instance(row["created_on"]), DeviceID(row["author"]))
+        row["version"]: (
+            DateTime.from_timestamp(row["created_on"].timestamp()),
+            DeviceID(row["author"]),
+        )
         for row in rows
     }

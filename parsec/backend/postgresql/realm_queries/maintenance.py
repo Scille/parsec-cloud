@@ -3,6 +3,8 @@
 from libparsec.types import DateTime
 from typing import Dict, List, Optional
 
+import pendulum
+
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import (
     DeviceID,
@@ -102,7 +104,7 @@ async def _get_realm_role_for_not_revoked(
     now = DateTime.now()
 
     def _cook_role(row):
-        if row["revoked_on"] and row["revoked_on"] <= now:
+        if row["revoked_on"] and DateTime.from_timestamp(row["revoked_on"].timestamp()) <= now:
             return None
         if row["role"] is None:
             return None
@@ -191,7 +193,7 @@ async def query_start_reencryption_maintenance(
             organization_id=organization_id.str,
             realm_id=realm_id.uuid,
             maintenance_started_by=author.str,
-            maintenance_started_on=timestamp,
+            maintenance_started_on=pendulum.from_timestamp(timestamp.timestamp()),
             maintenance_type="REENCRYPTION",
             encryption_revision=encryption_revision,
         )

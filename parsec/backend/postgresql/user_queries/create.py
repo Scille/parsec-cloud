@@ -3,6 +3,7 @@
 from parsec.backend.backend_events import BackendEvent
 import itertools
 from triopg import UniqueViolationError
+import pendulum
 from libparsec.types import DateTime
 
 from parsec.api.protocol import OrganizationID
@@ -208,7 +209,7 @@ async def _do_create_user_with_human_handle(
                 user_certificate=user.user_certificate,
                 redacted_user_certificate=user.redacted_user_certificate,
                 user_certifier=user.user_certifier.str if user.user_certifier else None,
-                created_on=user.created_on,
+                created_on=pendulum.from_timestamp(user.created_on.timestamp()),
                 email=user.human_handle.email,
             )
         )
@@ -223,7 +224,9 @@ async def _do_create_user_with_human_handle(
     now = DateTime.now()
     not_revoked_users = await conn.fetch(
         *_q_get_not_revoked_users_for_human(
-            organization_id=organization_id.str, email=user.human_handle.email, now=now
+            organization_id=organization_id.str,
+            email=user.human_handle.email,
+            now=pendulum.from_timestamp(now.timestamp()),
         )
     )
     if len(not_revoked_users) != 1 or not_revoked_users[0]["user_id"] != user.user_id.str:
@@ -245,7 +248,7 @@ async def _do_create_user_without_human_handle(
                 user_certificate=user.user_certificate,
                 redacted_user_certificate=user.redacted_user_certificate,
                 user_certifier=user.user_certifier.str if user.user_certifier else None,
-                created_on=user.created_on,
+                created_on=pendulum.from_timestamp(user.created_on.timestamp()),
             )
         )
 
@@ -321,7 +324,7 @@ async def _create_device(
                 device_certificate=device.device_certificate,
                 redacted_device_certificate=device.redacted_device_certificate,
                 device_certifier=device.device_certifier.str if device.device_certifier else None,
-                created_on=device.created_on,
+                created_on=pendulum.from_timestamp(device.created_on.timestamp()),
             )
         )
     except UniqueViolationError:

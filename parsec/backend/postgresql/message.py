@@ -3,6 +3,8 @@
 from libparsec.types import DateTime
 from typing import List, Tuple
 
+import pendulum
+
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.backend.message import BaseMessageComponent
@@ -64,7 +66,7 @@ async def send_message(
         *_q_insert_message(
             organization_id=organization_id.str,
             recipient=recipient.str,
-            timestamp=timestamp,
+            timestamp=pendulum.from_timestamp(timestamp.timestamp()),
             sender=sender.str,
             body=body,
         )

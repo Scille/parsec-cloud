@@ -3,6 +3,8 @@
 from libparsec.types import DateTime
 from typing import List, Optional
 
+import pendulum
+
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
@@ -135,7 +137,11 @@ async def _do_delete_invitation(
     if deleted_on:
         raise InvitationAlreadyDeletedError(token)
 
-    await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.value))
+    await conn.execute(
+        *_q_delete_invitation(
+            row_id=row_id, on=pendulum.from_timestamp(on.timestamp()), reason=reason.value
+        )
+    )
     await send_signal(
         conn,
         BackendEvent.INVITE_STATUS_CHANGED,
@@ -453,7 +459,7 @@ async def _do_new_user_invitation(
                 token=token,
                 greeter_user_id=greeter_user_id.str,
                 claimer_email=claimer_email,
-                created_on=created_on,
+                created_on=pendulum.from_timestamp(created_on.timestamp()),
             )
         )
     await send_signal(

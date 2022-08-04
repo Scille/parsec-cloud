@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+import datetime
 from typing import Mapping
 from uuid import UUID
 from libparsec.types import DateTime, LocalDateTime
@@ -27,7 +28,11 @@ def packb(data: Mapping, exc_cls=SerdePackingError) -> bytes:
     def _default(obj):
         # TODO: we should be only testing against DateTime, but
         # asyncpg returns datetime
-        if isinstance(obj, DateTime) or isinstance(obj, LocalDateTime):
+        if (
+            isinstance(obj, DateTime)
+            or isinstance(obj, LocalDateTime)
+            or isinstance(obj, datetime.datetime)
+        ):
             return ExtType(1, struct_pack("!d", obj.timestamp()))
         elif isinstance(obj, UUID):
             return ExtType(2, obj.bytes)

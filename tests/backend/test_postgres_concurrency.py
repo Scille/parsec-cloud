@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+import pendulum
 import pytest
 import trio
 import triopg
@@ -219,7 +220,7 @@ async def test_concurrency_pki_enrollment_accept(
                 accepter_der_x509_certificate=b"whatever",
                 accept_payload_signature=b"whatever",
                 accept_payload=b"whatever",
-                accepted_on=DateTime.now(),
+                accepted_on=pendulum.from_timestamp(DateTime.now().timestamp()),
                 user=backend_user,
                 first_device=backend_first_device,
             )
@@ -248,7 +249,7 @@ async def test_concurrency_pki_enrollment_accept(
             submitter_der_x509_certificate_email="whatever",
             submit_payload_signature=b"whatever",
             submit_payload=b"whatever",
-            submitted_on=DateTime.now(),
+            submitted_on=pendulum.from_timestamp(DateTime.now().timestamp()),
         )
 
         # Concurrent PKI enrollement accept
@@ -258,6 +259,7 @@ async def test_concurrency_pki_enrollment_accept(
                     nursery.start_soon(_concurrent_enrollment_accept, backend)
 
     assert len(results) == 10
+    print(results)
     assert len([r for r in results if isinstance(r, PkiEnrollmentNoLongerAvailableError)]) == 9
 
     async with triopg.connect(postgresql_url) as conn:

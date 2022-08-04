@@ -113,7 +113,7 @@ async def _check_realm_access(
         raise VlobAccessError()
 
     role_granted_on = rep[1]
-    return role_granted_on
+    return DateTime.from_timestamp(role_granted_on.timestamp())
 
 
 async def _check_realm_and_read_access(

@@ -2,6 +2,8 @@
 
 from typing import Tuple, List, Optional
 
+from libparsec.types import DateTime
+
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceLabel, HumanHandle
 from parsec.api.data import UserProfile
 from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
@@ -377,7 +379,7 @@ async def query_get_user_with_device(
         device_certificate=d_row["device_certificate"],
         redacted_device_certificate=d_row["redacted_device_certificate"],
         device_certifier=DeviceID(d_row["device_certifier"]) if d_row["device_certifier"] else None,
-        created_on=d_row["created_on"],
+        created_on=DateTime.from_timestamp(d_row["created_on"].timestamp()),
     )
     user = User(
         user_id=device_id.user_id,
@@ -386,8 +388,10 @@ async def query_get_user_with_device(
         user_certificate=u_row["user_certificate"],
         redacted_user_certificate=u_row["redacted_user_certificate"],
         user_certifier=DeviceID(u_row["user_certifier"]) if u_row["user_certifier"] else None,
-        created_on=u_row["created_on"],
-        revoked_on=u_row["revoked_on"],
+        created_on=DateTime.from_timestamp(u_row["created_on"].timestamp()),
+        revoked_on=DateTime.from_timestamp(u_row["revoked_on"].timestamp())
+        if u_row["revoked_on"]
+        else None,
         revoked_user_certificate=u_row["revoked_user_certificate"],
         revoked_user_certifier=DeviceID(u_row["revoked_user_certifier"])
         if u_row["revoked_user_certifier"]
