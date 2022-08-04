@@ -163,7 +163,7 @@ before-build = "python -m pip install pip"
 PATH = "$PATH:$HOME/.cargo/bin"
 
 [tool.cibuildwheel.windows]
-before-build = "bash -c 'env; python -m pip install pip'"
+before-build = "python -m pip install -U pip"
 
 [build-system]
 requires = [
@@ -173,6 +173,6 @@ requires = [
     "PyQt5~=5.15",
     "Babel~=2.10",
     "docutils~=0.17",
-    "pip; platform_system != 'Windows'"
+    "pip"
 ]
 build-backend = "poetry.core.masonry.api"

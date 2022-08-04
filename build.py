@@ -46,23 +46,8 @@ def build():
     log.debug("Environment:")
     for key, value in os.environ.items():
         log.debug(f"- {key} = {value}")
-    run(f'{PYTHON_PATH} -c "import sys; print(sys.executable)"')
-    run(f'python -c "import sys; print(sys.executable)"')
-
-    import pathlib
-
-    python_path_env = os.environ.get("PYTHONPATH")
-    if python_path_env:
-        log.debug("Debugging PYTHONPATH env var")
-        for x in pathlib.Path().iterdir():
-            log.debug(x)
-
-    run(f'{PYTHON_PATH} -c "import maturin; print(maturin)"')
-    run(f"{PYTHON_PATH} -m ensurepip -vvv")
-    run(f'{PYTHON_PATH} -c "import pip; print(pip)"')
 
     run(f"{PYTHON_PATH} --version")
-    run(f"{PYTHON_PATH} -m pip -V")
     run(f"{PYTHON_PATH} -m pip freeze")
     run(f"{PYTHON_PATH} misc/generate_pyqt.py")
     check_venv()
