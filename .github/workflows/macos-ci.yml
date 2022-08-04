@@ -64,6 +64,11 @@ jobs:
             | python3 - --version=${{ env.poetry-version }}
           echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
 
+      - uses: ./.github/actions/setup-rust
+        with:
+          version: ${{ env.rust-version }}
+          cache-key: python
+
       - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
         id: setup-python
         with:
