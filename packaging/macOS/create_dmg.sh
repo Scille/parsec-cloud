@@ -11,39 +11,15 @@ Path to the app in its dist folder is needed as argument.
 if [ -z "$1" ]; then
     echo "Error: No argument given, path to app needed"
     exit 1
-elif ! [[ $1 == *"dist/Parsec.app" ]]; then
-    echo "Error: Path to dist/Parsec.app needed as argument"
+elif ! [[ $1 == *"Parsec.app" ]]; then
+    echo "Error: Path to Parsec.app needed as argument"
     exit 1
 fi
 
 
-# Get .app parent directory
-if [[ $1 == "/Users/"* ]]; then # Check if path is already absolute
-    APP_DIR=`dirname $1`
-else
-    APP_DIR=`dirname $PWD/$1`
-fi
-
-
-# Check if said directory exists
-if [ ! -d "$APP_DIR" ]; then
-    echo "Error: Given argument isn't a directory or doesn't exist"
-    exit 1
-fi
-
-
-# Might be a remaining .zip file in the folder from notarization
-rm $APP_DIR/parsec.zip
-
-
-# Check if folder is empty, or too full, and that the .app is there
-if [ `ls -la $APP_DIR | wc -l | xargs` != 4 ]; then
-    echo "Error: dist folder is either empty or contains more than the app"
-    exit 1
-elif [[ `ls -la $APP_DIR | awk 'NR == 4' | cut -f14 -d' '` != "Parsec.app" ]]; then
-    echo "Error: dist folder content isn't Parsec.app"
-    exit 1
-fi
+# Make tmp directory for the app
+APP_DIR=`mktemp -d`
+cp -R $1 $APP_DIR
 
 
 # Get script directory to find background image later
