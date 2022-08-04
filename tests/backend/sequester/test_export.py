@@ -5,7 +5,6 @@ import sqlite3
 from pendulum import now as pendulum_now, datetime, DateTime
 import oscrypto.asymmetric
 
-from parsec import IS_OXIDIZED
 from parsec.crypto import SecretKey, HashDigest
 from parsec.sequester_crypto import SequesterEncryptionKeyDer
 from parsec.api.protocol import (
@@ -431,7 +430,6 @@ async def test_sequester_export_full_run(
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Manifest.dump_and_sign is not implemented on Rust yet")
 async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, alice, bob, adam):
     output_db_path = tmp_path / "export.sqlite"
     realm1 = RealmID.new()

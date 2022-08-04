@@ -3,13 +3,8 @@
 from parsec._version import __version__
 
 # The parsec.utils module includes a bit of patching, let's make sure it is imported
-import parsec.utils  # noqa
+__import__("parsec.utils")
 
-try:
-    import libparsec  # noqa
-except ImportError:
-    IS_OXIDIZED = False
-else:
-    IS_OXIDIZED = True
+import parsec._parsec  # noqa
 
-__all__ = ("__version__", "IS_OXIDIZED")
+__all__ = [__version__]
