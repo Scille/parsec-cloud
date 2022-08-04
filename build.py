@@ -51,8 +51,11 @@ def build():
 
     import pathlib
 
-    for x in pathlib.Path(os.environ["PYTHONPATH"]).iterdir():
-        log.debug(x)
+    python_path_env = os.environ.get("PYTHONPATH")
+    if python_path_env:
+        log.debug("Debugging PYTHONPATH env var")
+        for x in pathlib.Path().iterdir():
+            log.debug(x)
 
     run(f'{PYTHON_PATH} -c "import maturin; print(maturin)"')
     run(f"{PYTHON_PATH} -m ensurepip -vvv")
