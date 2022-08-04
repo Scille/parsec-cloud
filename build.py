@@ -29,13 +29,10 @@ def check_venv():
     # Both conda and venv are configured, pick conda
     if os.environ.get("CONDA_PREFIX") and os.environ.get("VIRTUAL_ENV"):
         del os.environ["VIRTUAL_ENV"]
-    # Linux build with cibuildwheel detected, set `VIRTUAL_ENV`
-    if sys.platform == "linux" and in_cibuildwheel():
-        proc = subprocess.run(
-            "which python", shell=True, check=True, capture_output=True, text=True
-        )
-        python_path = proc.stdout.strip()
-        log.debug(f"python_path={python_path}, sys.executable={sys.executable}")
+    # Build with cibuildwheel detected, set `VIRTUAL_ENV`
+    if in_cibuildwheel():
+        python_path = sys.executable
+        log.debug(f"python_path={python_path}")
         os.environ["VIRTUAL_ENV"] = os.path.dirname(os.path.dirname(python_path))
         log.debug(
             f"Linux build with cibuildwheel detected, set `VIRTUAL_ENV` as: {os.environ['VIRTUAL_ENV']}"
