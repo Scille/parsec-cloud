@@ -157,9 +157,13 @@ build = "cp39-{manylinux,macos,win}*"
 archs = ["auto64"]
 build-verbosity = 3
 before-all = "bash ci/setup-rust.sh"
+before-build = "python -m pip install pip"
 
 [tool.cibuildwheel.environment]
 PATH = "$PATH:$HOME/.cargo/bin"
+
+[tool.cibuildwheel.windows]
+before-build = "bash -c 'env; python -m pip install pip'"
 
 [build-system]
 requires = [
@@ -169,6 +173,6 @@ requires = [
     "PyQt5~=5.15",
     "Babel~=2.10",
     "docutils~=0.17",
-    "pip==22.*"
+    "pip; platform_system != 'Windows'"
 ]
 build-backend = "poetry.core.masonry.api"

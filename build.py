@@ -5,14 +5,16 @@ import sys
 import logging
 import subprocess
 
-log = logging.getLogger("build")
-
 YELLOW_FG = "\x1b[33m"
 DEFAULT_FG = "\x1b[39m"
 
+log = logging.getLogger("build")
 logging.basicConfig(
     level=logging.DEBUG, format=f"{YELLOW_FG}[%(levelname)s] %(message)s{DEFAULT_FG}"
 )
+
+PYTHON_PATH = sys.executable
+log.debug(f"PYTHON_PATH={PYTHON_PATH}")
 
 
 def run(cmd, **kwargs):
@@ -31,20 +33,18 @@ def check_venv():
         del os.environ["VIRTUAL_ENV"]
     # Build with cibuildwheel detected, set `VIRTUAL_ENV`
     if in_cibuildwheel():
-        python_path = sys.executable
-        log.debug(f"python_path={python_path}")
-        os.environ["VIRTUAL_ENV"] = os.path.dirname(os.path.dirname(python_path))
+        os.environ["VIRTUAL_ENV"] = os.path.dirname(os.path.dirname(PYTHON_PATH))
         log.debug(
-            f"Linux build with cibuildwheel detected, set `VIRTUAL_ENV` as: {os.environ['VIRTUAL_ENV']}"
+            f"Build with cibuildwheel detected, set `VIRTUAL_ENV` as: {os.environ['VIRTUAL_ENV']}"
         )
     if not os.environ.get("CONDA_PREFIX") and not os.environ.get("VIRTUAL_ENV"):
         raise RuntimeError("A virtual env is required to run `maturin develop`")
 
 
 def build():
-    run("python --version")
-    run("pip freeze")
-    run("python misc/generate_pyqt.py")
+    run(f"{PYTHON_PATH} --version")
+    run(f"{PYTHON_PATH} -m pip freeze")
+    run(f"{PYTHON_PATH} misc/generate_pyqt.py")
     check_venv()
     release = "--release" if in_cibuildwheel() else ""
     run(f"maturin develop {release}")
