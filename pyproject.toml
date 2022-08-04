@@ -169,6 +169,6 @@ requires = [
     "PyQt5~=5.15",
     "Babel~=2.10",
     "docutils~=0.17",
-    "pip~=22.0"
+    "pip==22.*"
 ]
 build-backend = "poetry.core.masonry.api"
