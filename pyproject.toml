@@ -167,6 +167,7 @@ before-build = "bash -c 'env; python -m pip install pip'"
 
 [tool.cibuildwheel.macos]
 archs = ["universal2"]
+before-all = "bash ci/setup-rust.sh 1.62 -t aarch64-apple-darwin -t x86_64-apple-darwin"
 
 [build-system]
 requires = [
