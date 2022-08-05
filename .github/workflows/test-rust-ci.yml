@@ -1,0 +1,67 @@
+name: test-rust-ci
+
+on:
+  pull_request:
+    paths:
+      - oxidation/**.rs
+      - oxidation/**.toml
+      - Cargo.toml
+      - Cargo.lock
+      - src/**.rs
+  push:
+    branches:
+      - master
+
+env:
+  rust-version: 1.62.0
+
+jobs:
+  testing-rust-matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-20.04
+          - macos-12
+          - windows-2022
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          version: ${{ env.rust-version }}
+          cache-key: rust
+        timeout-minutes: 10
+
+      # Pyo3 need additional configuration on MacOS to be manually build
+      # see https://pyo3.rs/master/building_and_distribution.html#macos
+      - name: (MacOS) Configure cargo for PyO3
+        if: startsWith(matrix.os, 'macos-')
+        shell: bash
+        run: |
+          set -eux
+          set -o pipefail
+          mkdir -p .cargo
+          cat << EOF | tee .cargo/config.toml
+          [target.x86_64-apple-darwin]
+          rustflags = [
+            "-C", "link-arg=-undefined",
+            "-C", "link-arg=dynamic_lookup",
+          ]
+          EOF
+
+      - name: Build rust codebase
+        shell: bash
+        run: |
+          set -ex
+          cargo build --workspace
+          cargo test --workspace --no-run
+
+      - name: Test rust codebase
+        shell: bash
+        run: |
+          set -ex
+          cargo test --package libparsec_crypto --features use-sodiumoxide
+          cargo test --package libparsec_crypto --features use-rustcrypto
+          cargo test --workspace --features mock-time --exclude libparsec_crypto
