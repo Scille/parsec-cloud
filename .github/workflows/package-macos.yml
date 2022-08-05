@@ -79,7 +79,7 @@ jobs:
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
 
       - name: Build wheel
-        run: ${{ steps.setup-python.outputs.python-path }} packaging/wheel/wheel_it.py . --output dist --skip-wheel
+        run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
@@ -109,7 +109,7 @@ jobs:
         run: cp -Rv ${{ github.workspace }}/packaging/macOS/* ${{ runner.temp }}
 
       - name: Freeze Parsec
-        run: ${{ steps.setup-python.outputs.python-path }} freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
+        run: python freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
         working-directory: ${{ runner.temp }}
 
       - name: Debug ${{ runner.temp }} dir
