@@ -21,7 +21,7 @@ env:
 jobs:
   package-macos-build-wheel:
     # We use an old version of `macos` because currently when we generate the wheel with cpython 3.9 and
-    # We try to install it in the later job `package-macos-build-app`, The generated wheel is considered in compatible with python 3.9 without additional hint
+    # We try to install it in the later job `package-macos-build-app`, The generated wheel is considered incompatible with python 3.9 without additional hint
     runs-on: macos-10.15
     env:
       # Need feature from poetry 1.2.x that aren't present in 1.1.x
