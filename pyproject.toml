@@ -172,7 +172,7 @@ requires = [
     "PyQt5~=5.15",
     "Babel~=2.10",
     "docutils~=0.17",
-    # We need pip to be installed because `maturin` require it.
+    # We need pip to be installed because `maturin` requires it.
     # We don't fix a version, because we don't want to force the installation of pip
     # Because we could get the following error: `ERROR: To modify pip, please run the following command: [...]`
     # When doing the command `pip install pip`
