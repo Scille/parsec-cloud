@@ -32,7 +32,7 @@ def check_venv():
     if os.environ.get("CONDA_PREFIX") and os.environ.get("VIRTUAL_ENV"):
         del os.environ["VIRTUAL_ENV"]
     # Build with cibuildwheel detected, set `VIRTUAL_ENV`
-    if in_cibuildwheel():
+    if in_cibuildwheel() and os.environ.get("VIRTUAL_ENV") is None:
         os.environ["VIRTUAL_ENV"] = os.path.dirname(os.path.dirname(PYTHON_PATH))
         log.debug(
             f"Build with cibuildwheel detected, set `VIRTUAL_ENV` as: {os.environ['VIRTUAL_ENV']}"
