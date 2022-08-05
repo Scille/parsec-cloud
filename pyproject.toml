@@ -156,7 +156,7 @@ script = "build.py"
 build = "cp39-{manylinux,macos,win}*"
 archs = ["auto64"]
 build-verbosity = 3
-before-all = "bash ci/setup-rust.sh"
+before-all = "bash misc/setup-rust.sh"
 before-build = "python -m pip install -U pip"
 
 [tool.cibuildwheel.environment]
