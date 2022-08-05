@@ -19,7 +19,7 @@ serialization_format = { path = "../serialization_format" }
 flate2 = "1.0.24"
 serde = { version = "1.0.142", features = ["derive"] }
 serde_with = "2.0.0"
-serde_repr = "0.1.7"
+serde_repr = "0.1.9"
 rmp-serde = "1.0.0"
 serde_bytes = "0.11.7"
 sha2 = "0.10.0"
