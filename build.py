@@ -2,23 +2,23 @@
 
 import os
 import sys
-import logging
 import subprocess
 
-YELLOW_FG = "\x1b[33m"
-DEFAULT_FG = "\x1b[39m"
 
-log = logging.getLogger("build")
-logging.basicConfig(
-    level=logging.DEBUG, format=f"{YELLOW_FG}[%(levelname)s] %(message)s{DEFAULT_FG}"
-)
+def display(line: str):
+    YELLOW_FG = "\x1b[33m"
+    DEFAULT_FG = "\x1b[39m"
+
+    # Flush is required to prevent mixing with the output of sub-command with the output of the script
+    print(f"{YELLOW_FG}{line}{DEFAULT_FG}", flush=True)
+
 
 PYTHON_EXECUTABLE_PATH = sys.executable
-log.debug(f"PYTHON_EXECUTABLE_PATH={PYTHON_EXECUTABLE_PATH}")
+display(f"PYTHON_EXECUTABLE_PATH={PYTHON_EXECUTABLE_PATH}")
 
 
 def run(cmd, **kwargs):
-    log.debug(f">>> {cmd}")
+    display(f">>> {cmd}")
     ret = subprocess.run(cmd, shell=True, check=True, **kwargs)
     return ret
 
@@ -34,7 +34,7 @@ def check_venv():
     # Build with cibuildwheel detected, set `VIRTUAL_ENV`
     if in_cibuildwheel() and os.environ.get("VIRTUAL_ENV") is None:
         os.environ["VIRTUAL_ENV"] = os.path.dirname(os.path.dirname(PYTHON_EXECUTABLE_PATH))
-        log.debug(
+        display(
             f"Build with cibuildwheel detected, set `VIRTUAL_ENV` as: {os.environ['VIRTUAL_ENV']}"
         )
     if not os.environ.get("CONDA_PREFIX") and not os.environ.get("VIRTUAL_ENV"):
@@ -47,9 +47,9 @@ def force_maturin_release() -> bool:
 
 def build():
     # Debug
-    log.debug("Environment:")
+    display("Environment:")
     for key, value in os.environ.items():
-        log.debug(f"- {key} = {value}")
+        display(f"- {key} = {value}")
 
     run(f"{PYTHON_EXECUTABLE_PATH} --version")
     run(f"{PYTHON_EXECUTABLE_PATH} -m pip freeze")
@@ -64,5 +64,5 @@ def build():
 
 
 if __name__ == "__main__":
-    log.debug("Launching poetry build.py script")
+    display("Launching poetry build.py script")
     build()
