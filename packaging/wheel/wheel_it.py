@@ -60,10 +60,8 @@ def main(program_source: Path, output_dir: Path, skip_wheel: bool = False):
     constraints.write_text("\n".join(constraints_data), encoding="utf8")
 
     if not skip_wheel:
-        # Finally generate the wheel, note we don't use Poetry for the job given:
-        # - It is not possible to choose the output directory
-        # - And more importantly, Poetry is not PEP517 compliant and build wheel
-        #   without building binary resources (it basically only zip the source code)
+        # Finally generate the wheel, note we don't use Poetry for the job because
+        # It is not possible to choose the output directory
         run(
             f"{python} -m pip wheel {program_source} --wheel-dir {output_dir} --use-pep517 --no-deps"
         )
