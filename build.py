@@ -46,11 +46,6 @@ def force_maturin_release() -> bool:
 
 
 def build():
-    # Debug
-    display("Environment:")
-    for key, value in os.environ.items():
-        display(f"- {key} = {value}")
-
     run(f"{PYTHON_EXECUTABLE_PATH} --version")
     run(f"{PYTHON_EXECUTABLE_PATH} -m pip freeze")
     run(f"{PYTHON_EXECUTABLE_PATH} misc/generate_pyqt.py")
