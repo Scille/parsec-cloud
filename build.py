@@ -13,8 +13,8 @@ logging.basicConfig(
     level=logging.DEBUG, format=f"{YELLOW_FG}[%(levelname)s] %(message)s{DEFAULT_FG}"
 )
 
-PYTHON_PATH = sys.executable
-log.debug(f"PYTHON_PATH={PYTHON_PATH}")
+PYTHON_EXECUTABLE_PATH = sys.executable
+log.debug(f"PYTHON_EXECUTABLE_PATH={PYTHON_EXECUTABLE_PATH}")
 
 
 def run(cmd, **kwargs):
@@ -33,7 +33,7 @@ def check_venv():
         del os.environ["VIRTUAL_ENV"]
     # Build with cibuildwheel detected, set `VIRTUAL_ENV`
     if in_cibuildwheel() and os.environ.get("VIRTUAL_ENV") is None:
-        os.environ["VIRTUAL_ENV"] = os.path.dirname(os.path.dirname(PYTHON_PATH))
+        os.environ["VIRTUAL_ENV"] = os.path.dirname(os.path.dirname(PYTHON_EXECUTABLE_PATH))
         log.debug(
             f"Build with cibuildwheel detected, set `VIRTUAL_ENV` as: {os.environ['VIRTUAL_ENV']}"
         )
@@ -51,9 +51,9 @@ def build():
     for key, value in os.environ.items():
         log.debug(f"- {key} = {value}")
 
-    run(f"{PYTHON_PATH} --version")
-    run(f"{PYTHON_PATH} -m pip freeze")
-    run(f"{PYTHON_PATH} misc/generate_pyqt.py")
+    run(f"{PYTHON_EXECUTABLE_PATH} --version")
+    run(f"{PYTHON_EXECUTABLE_PATH} -m pip freeze")
+    run(f"{PYTHON_EXECUTABLE_PATH} misc/generate_pyqt.py")
     check_venv()
     release = "--release" if in_cibuildwheel() or force_maturin_release() else ""
     run(f"maturin develop {release}")
