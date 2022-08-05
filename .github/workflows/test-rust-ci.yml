@@ -8,6 +8,7 @@ on:
       - Cargo.toml
       - Cargo.lock
       - src/**.rs
+      - .github/workflows/test-rust-ci.yml
   push:
     branches:
       - master
