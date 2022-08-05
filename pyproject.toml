@@ -157,13 +157,10 @@ build = "cp39-{manylinux,macos,win}*"
 archs = ["auto64"]
 build-verbosity = 3
 before-all = "bash ci/setup-rust.sh"
-before-build = "python -m pip install pip"
+before-build = "python -m pip install -U pip"
 
 [tool.cibuildwheel.environment]
 PATH = "$PATH:$HOME/.cargo/bin"
-
-[tool.cibuildwheel.windows]
-before-build = "python -m pip install -U pip"
 
 [build-system]
 requires = [
