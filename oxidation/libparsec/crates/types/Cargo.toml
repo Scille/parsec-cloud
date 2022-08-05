@@ -16,7 +16,7 @@ serialization_format = { path = "../serialization_format" }
 libparsec_crypto = { path = "../crypto" }
 
 lazy_static = "1.4.0"
-serde = { version = "1.0.141", features = ["derive"] }
+serde = { version = "1.0.142", features = ["derive"] }
 serde_with = "2.0.0"
 serde_repr = "0.1.7"
 rmp-serde = "1.0.0"
