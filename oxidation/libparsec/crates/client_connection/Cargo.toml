@@ -22,7 +22,7 @@ libparsec_protocol = { path = "../protocol" }
 libparsec_crypto = { path = "../crypto" }
 # Used to encoded binary data.
 base64 = "0.13.0"
-chrono = "0.4.19"
+chrono = "0.4.20"
 
 [dev-dependencies]
 anyhow = "1.0.59"
