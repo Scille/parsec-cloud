@@ -41,6 +41,10 @@ def check_venv():
         raise RuntimeError("A virtual env is required to run `maturin develop`")
 
 
+def force_maturin_release() -> bool:
+    return os.environ.get("FORCE_MATURIN_RELEASE", "0") == "1"
+
+
 def build():
     # Debug
     log.debug("Environment:")
@@ -51,7 +55,7 @@ def build():
     run(f"{PYTHON_PATH} -m pip freeze")
     run(f"{PYTHON_PATH} misc/generate_pyqt.py")
     check_venv()
-    release = "--release" if in_cibuildwheel() else ""
+    release = "--release" if in_cibuildwheel() or force_maturin_release() else ""
     run(f"maturin develop {release}")
     # An alternative to `maturin develop` is:
     # run("maturin build -r")
