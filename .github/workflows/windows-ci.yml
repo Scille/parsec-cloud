@@ -20,28 +20,6 @@ env:
     -vv
 
 jobs:
-  windows-ci-rust:
-    runs-on: windows-2022
-    steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
-      - uses: ./.github/actions/setup-rust
-        with:
-          version: ${{ env.rust-version }}
-          cache-key: test&build
-        timeout-minutes: 10
-
-      - name: Build rust codebase
-        run: |
-          cargo build --workspace
-          cargo test --workspace --no-run
-
-      - name: Test rust codebase
-        run: |
-          cargo test --package libparsec_crypto --features use-sodiumoxide
-          cargo test --package libparsec_crypto --features use-rustcrypto
-
-          cargo test --workspace --features mock-time --exclude libparsec_crypto
-
   windows-ci-python:
     runs-on: windows-2022
     steps:
