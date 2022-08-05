@@ -160,6 +160,8 @@ before-all = "bash ci/setup-rust.sh"
 before-build = "python -m pip install -U pip"
 
 [tool.cibuildwheel.environment]
+# Need to add `Rust` installation path in the `PATH` variable
+# because `cibuildwheel` don't allow the export variable in `before-*` steps
 PATH = "$PATH:$HOME/.cargo/bin"
 
 [build-system]
