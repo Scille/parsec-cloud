@@ -26,12 +26,6 @@ mod trustchain;
 /// import the module.
 #[pymodule]
 fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<api_crypto::HashDigest>()?;
-    m.add_class::<api_crypto::SigningKey>()?;
-    m.add_class::<api_crypto::VerifyKey>()?;
-    m.add_class::<api_crypto::SecretKey>()?;
-    m.add_class::<api_crypto::PrivateKey>()?;
-    m.add_class::<api_crypto::PublicKey>()?;
     m.add_class::<addrs::BackendAddr>()?;
     m.add_class::<addrs::BackendOrganizationAddr>()?;
     m.add_class::<addrs::BackendActionAddr>()?;

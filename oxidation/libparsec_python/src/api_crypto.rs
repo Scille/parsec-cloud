@@ -296,10 +296,6 @@ impl PublicKey {
         self.0.as_ref()
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(String::from("PublicKey(<redacted>)"))
-    }
-
     fn __richcmp__(&self, py: Python, value: &PublicKey, op: CompareOp) -> PyObject {
         match op {
             CompareOp::Eq => (self == value).into_py(py),
