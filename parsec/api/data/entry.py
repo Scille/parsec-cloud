@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from parsec.serde import fields
 from parsec.api.protocol import StrBased
-from libparsec.types import EntryID
+from parsec._parsec import EntryID
 
 __all__ = ("EntryID", "EntryIDField", "EntryName", "EntryNameField")
 

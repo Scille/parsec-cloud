@@ -5,7 +5,7 @@ from typing import Union, TypeVar, Optional, Tuple, Pattern
 from enum import Enum
 
 from parsec.serde import fields
-from libparsec.types import OrganizationID, UserID, DeviceName, DeviceID, DeviceLabel, HumanHandle
+from parsec._parsec import OrganizationID, UserID, DeviceName, DeviceID, DeviceLabel, HumanHandle
 
 UserIDTypeVar = TypeVar("UserIDTypeVar", bound="UserID")
 DeviceIDTypeVar = TypeVar("DeviceIDTypeVar", bound="DeviceID")

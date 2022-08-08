@@ -1907,8 +1907,10 @@ dependencies = [
 name = "parsec"
 version = "0.0.0"
 dependencies = [
+ "fancy-regex",
  "libparsec",
  "pyo3",
+ "uuid",
 ]
 
 [[package]]

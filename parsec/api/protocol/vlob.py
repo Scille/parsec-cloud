@@ -5,7 +5,7 @@ from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import DeviceIDField
 from parsec.api.protocol.realm import RealmIDField
 from parsec.api.protocol.sequester import SequesterServiceIDField
-from libparsec.types import VlobID
+from parsec._parsec import VlobID
 
 __all__ = (
     "VlobID",

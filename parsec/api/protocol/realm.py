@@ -4,7 +4,7 @@ from enum import Enum
 from parsec.serde import fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import UserIDField, DeviceIDField
-from libparsec.types import RealmID
+from parsec._parsec import RealmID
 
 __all__ = (
     "RealmID",

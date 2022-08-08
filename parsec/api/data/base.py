@@ -98,7 +98,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))  # type: ignore[arg-type]
+            return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
     def evolve(self: BaseSignedDataTypeVar, **kwargs: object) -> BaseSignedDataTypeVar:
@@ -273,7 +273,7 @@ class BaseData(metaclass=DataMeta):
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))  # type: ignore[arg-type]
+            return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
     def evolve(self, **kwargs):

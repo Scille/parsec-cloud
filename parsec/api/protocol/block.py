@@ -16,7 +16,7 @@ from parsec.api.protocol.base import (
     cmd_rep_factory,
 )
 from parsec.api.protocol.realm import RealmIDField
-from libparsec.types import BlockID
+from parsec._parsec import BlockID
 
 __all__ = ("BlockID", "BlockIDField", "block_create_serializer", "block_read_serializer")
 

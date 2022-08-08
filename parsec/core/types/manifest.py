@@ -35,7 +35,7 @@ from parsec.api.data.manifest import (
 )
 from parsec.core.types.base import BaseLocalData
 from enum import Enum
-from libparsec.types import ChunkID
+from parsec._parsec import ChunkID
 
 __all__ = (
     "WorkspaceEntry",  # noqa: Republishing

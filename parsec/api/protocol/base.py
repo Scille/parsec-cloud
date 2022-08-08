@@ -314,7 +314,7 @@ class BaseReq(metaclass=CmdReqMeta):
 
     def __eq__(self, other: Any) -> bool:  # type: ignore[misc]
         if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))  # type: ignore[arg-type]
+            return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
     def evolve(self, **kwargs):  # type: ignore[no-untyped-def]
@@ -337,7 +337,7 @@ class BaseRep(metaclass=CmdRepMeta):
 
     def __eq__(self, other: Any) -> bool:  # type: ignore[misc]
         if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))  # type: ignore[arg-type]
+            return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
     def evolve(self, **kwargs):  # type: ignore[no-untyped-def]
