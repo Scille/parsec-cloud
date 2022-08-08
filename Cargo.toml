@@ -13,8 +13,9 @@ name = "parsec"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.16.5", features = ["extension-module"] }
 libparsec = { version = "0.1.0", path = "oxidation/libparsec", features = ["mock-time"] }
+
+pyo3 = { version = "0.16.5", features = ["extension-module"] }
 
 [workspace]
 members = [
