@@ -147,7 +147,6 @@ setuptools = "^63.1.0"
 maturin = "~=0.13"
 cibuildwheel = "2.8.1"
 
-
 [tool.poetry.build]
 generate-setup-file = false
 script = "build.py"
@@ -157,7 +156,7 @@ build = "cp39-{manylinux,macos,win}*"
 archs = ["auto64"]
 build-verbosity = 3
 before-all = "bash misc/setup-rust.sh"
-before-build = "python -m pip install -U pip===22.2.1"
+before-build = "python -m pip install -U pip"
 
 [tool.cibuildwheel.environment]
 # Need to add `Rust` installation path in the `PATH` variable
@@ -178,6 +177,6 @@ requires = [
     # We don't fix a version, because we don't want to force the installation of pip
     # Because we could get the following error: `ERROR: To modify pip, please run the following command: [...]`
     # When doing the command `pip install pip`
-    "pip===22.2.1"
+    "pip; platform_system != 'Windows'"
 ]
 build-backend = "poetry.core.masonry.api"
