@@ -30,6 +30,7 @@ jobs:
           version: ${{ env.rust-version }}
           components: rustfmt, clippy
           cache-key: qa
+        timeout-minutes: 10
 
       - name: Debug installed tools
         run: |
