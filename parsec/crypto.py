@@ -9,7 +9,7 @@ from nacl.bindings import crypto_scalarmult
 from nacl.pwhash import argon2i
 from nacl.utils import random
 
-from libparsec.hazmat import SecretKey, HashDigest, SigningKey, VerifyKey, PrivateKey, PublicKey
+from parsec._parsec import SecretKey, HashDigest, SigningKey, VerifyKey, PrivateKey, PublicKey
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 
