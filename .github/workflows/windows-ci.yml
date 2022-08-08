@@ -80,7 +80,11 @@ jobs:
         run: poetry env use ${{ steps.setup-python.outputs.python-path }}
 
       - name: Install python deps
-        run: poetry install -E core -E backend
+        run: |
+          # Windows only allow to install pip this way
+          # Pip is used for the `build-system.requirements`
+          poetry run python -m pip install -U pip
+          poetry install -E core -E backend
 
       - name: Generate PyQT GUI data
         run: poetry run python misc/generate_pyqt.py
