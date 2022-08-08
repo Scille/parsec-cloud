@@ -9,7 +9,7 @@ on:
 env:
   rust-version: 1.62.0
   python-version: "3.9"
-  poetry-version: 1.1.14
+  poetry-version: 1.2.0b3
   sqlite-version: 3390100
   winfsp-version: 1.8.20304
   pytest-args: >-
@@ -59,6 +59,7 @@ jobs:
       - name: Install poetry
         shell: bash
         run: |
+          set -eux
           export POETRY_HOME=${APPDATA}/.poetry
           curl -sSL https://install.python-poetry.org \
             | python3 - --version=${{ env.poetry-version }}
