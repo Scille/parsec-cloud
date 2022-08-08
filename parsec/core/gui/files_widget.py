@@ -506,6 +506,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if len(files) > 1:
             show_error(self, _("TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"))
             return
+        if len(files) == 0:
+            show_error(self, _("TEXT_FILE_STATUS_NO_FILE_SELECTED_ERROR"))
+            return
         selected_path = self.current_directory / files[0].name
 
         FileStatusWidget.show_modal(
