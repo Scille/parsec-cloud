@@ -13,6 +13,9 @@ inputs:
 runs:
   using: composite
   steps:
+    # We need to install poetry before the correct version of python
+    # Because we configured the action `setup-python` to use `poetry` as the cache system
+    # And the action will failed if it can't find `poetry` or `poetry.lock`
     - name: (*Nix) Install poetry-${{ inputs.poetry-version }}
       shell: bash
       if: runner.os != 'Windows'
