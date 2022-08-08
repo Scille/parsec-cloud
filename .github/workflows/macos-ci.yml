@@ -20,27 +20,15 @@ jobs:
       - name: Install macfuse
         run: brew install --cask macfuse
 
-      - name: Install poetry
-        run: |
-          set -eux
-          export POETRY_HOME="$HOME/.poetry"
-          mkdir -p "$POETRY_HOME"
-          curl -sSL https://install.python-poetry.org | python3 - --version=${{ env.poetry-version }}
-          echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
-
       - uses: ./.github/actions/setup-rust
         with:
           version: ${{ env.rust-version }}
           cache-key: python
 
-      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
-        id: setup-python
+      - uses: ./.github/actions/setup-python-poetry
         with:
           python-version: ${{ env.python-version }}
-          cache: poetry
-
-      - name: Configure python path for poetry
-        run: poetry env use ${{ steps.setup-python.outputs.python-path }}
+          poetry-version: ${{ env.poetry-version }}
 
       - name: Install python deps
         run: poetry install -E core -E backend
