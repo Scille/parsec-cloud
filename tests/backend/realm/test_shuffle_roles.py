@@ -14,7 +14,6 @@ from hypothesis_trio.stateful import (
 )
 from unittest.mock import ANY
 
-from parsec import IS_OXIDIZED
 from parsec.backend.asgi import app_factory
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import RealmRole
@@ -24,7 +23,6 @@ from tests.backend.common import realm_get_role_certificates, realm_update_roles
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
 def test_shuffle_roles(
     hypothesis_settings,
     reset_testbed,

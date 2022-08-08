@@ -68,18 +68,29 @@ jobs:
           echo "::warning title=Wheel version::$VERSION"
           echo "::set-output name=version::$VERSION"
 
-      - name: Create output dir
-        run: mkdir dist
+      - name: Include pip in the build dependencies
+        # For some reason, `ensurepip` in `build.py` does not work in this specific case
+        # (i.e building wheel using cibuildwheel on windows). Hence, we add `pip` to the
+        # build-sytem requires, so it is included in the build environement. The reason
+        # why this is not the general approach is because this fails on windows when doing
+        # a `poetry install` (since it installs the requirements using `pip install ...`
+        # instead of `python -m pip install ...`)
+        run: sed -i "s#pip; platform_system != 'Windows'#pip#" pyproject.toml
+
+      - name: Build wheel
+        uses: pypa/cibuildwheel@afb4329fe32181c15d34ef94bf64dad7715b44ba  # ping v2.8.1
+        with:
+          output-dir: dist
 
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
 
-      - name: Build wheel
-        run: python packaging/wheel/wheel_it.py . --output dist
+      - name: Generate requirements & constraints infos
+        run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
-          name: ${{ runner.os }}-wheel
+          name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist/
 
   package-windows-build-installer-content:
@@ -94,7 +105,7 @@ jobs:
 
       - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
         with:
-          name: ${{ runner.os }}-wheel
+          name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
 
       - name: Prepare build directory

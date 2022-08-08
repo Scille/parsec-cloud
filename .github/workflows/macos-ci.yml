@@ -9,7 +9,7 @@ on:
 env:
   rust-version: 1.62.0
   python-version: "3.9"
-  poetry-version: 1.1.13
+  poetry-version: 1.2.0b3
 
 jobs:
   rust:
@@ -59,16 +59,25 @@ jobs:
 
       - name: Install poetry
         run: |
+          set -eux
           export POETRY_HOME="$HOME/.poetry"
           mkdir -p "$POETRY_HOME"
-          curl -sSL https://install.python-poetry.org \
-            | python3 - --version=${{ env.poetry-version }}
+          curl -sSL https://install.python-poetry.org | python3 - --version=${{ env.poetry-version }}
           echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
 
+      - uses: ./.github/actions/setup-rust
+        with:
+          version: ${{ env.rust-version }}
+          cache-key: python
+
       - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+        id: setup-python
         with:
           python-version: ${{ env.python-version }}
           cache: poetry
+
+      - name: Configure python path for poetry
+        run: poetry env use ${{ steps.setup-python.outputs.python-path }}
 
       - name: Install python deps
         run: poetry install -E core -E backend

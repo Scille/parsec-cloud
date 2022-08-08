@@ -3,7 +3,6 @@
 import pytest
 from pendulum import datetime
 
-from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.api.protocol import VlobID
 from parsec.core.fs import FSError
@@ -65,10 +64,9 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
 
             # Also test timestamped workspace
             # Note: oxidation doesn't implement WorkspaceStorageTimestamped
-            if not IS_OXIDIZED:
-                with pytest.raises(FSError) as exc:
-                    await workspace.to_timestamped(options["backend_timestamp"])
-                assert str(exc.value) == exc_msg
+            with pytest.raises(FSError) as exc:
+                await workspace.to_timestamped(options["backend_timestamp"])
+            assert str(exc.value) == exc_msg
 
     return TestBed()
 

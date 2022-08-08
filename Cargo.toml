@@ -1,3 +1,20 @@
+[package]
+name = "parsec"
+# We don't use this version to set the version of parsec
+# For that you're looking for `parsec/_version.py`
+version = "0.0.0"
+edition = "2021"
+
+[package.metadata.maturin]
+name = "parsec._parsec"
+
+[lib]
+name = "parsec"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.16.5", features = ["extension-module"] }
+
 [workspace]
 members = [
     "oxidation/libparsec",

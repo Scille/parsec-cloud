@@ -11,7 +11,6 @@ from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
 )
 
-from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 from tests.common import call_with_control, compare_fs_dumps
@@ -22,7 +21,6 @@ st_fs = st.sampled_from(["fs_1", "fs_2"])
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
 def test_fs_online_concurrent_user(
     hypothesis_settings,
     reset_testbed,

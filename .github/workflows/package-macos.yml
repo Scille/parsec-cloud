@@ -20,7 +20,9 @@ env:
 
 jobs:
   package-macos-build-wheel:
-    runs-on: macos-12
+    # We use an old version of `macos` because currently when we generate the wheel with cpython 3.9 and
+    # We try to install it in the later job `package-macos-build-app`, The generated wheel is considered incompatible with python 3.9 without additional hint
+    runs-on: macos-10.15
     env:
       # Need feature from poetry 1.2.x that aren't present in 1.1.x
       poetry-version: 1.2.0b3
@@ -38,6 +40,7 @@ jobs:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
       - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+        id: setup-python
         with:
           python-version: ${{ env.python-version }}
           cache: poetry
@@ -67,43 +70,46 @@ jobs:
           echo "::warning title=Wheel version::$VERSION"
           echo "::set-output name=version::$VERSION"
 
-      - name: Create output dir
-        run: mkdir dist
+      - name: Build wheel
+        uses: pypa/cibuildwheel@afb4329fe32181c15d34ef94bf64dad7715b44ba  # ping v2.8.1
+        with:
+          output-dir: dist
 
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
 
-      - name: Build wheel
-        run: python packaging/wheel/wheel_it.py . --output dist
+      - name: Generate requirements & constraints infos
+        run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
         with:
-          name: ${{ runner.os }}-wheel
+          name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist/
 
 
   package-macos-build-app:
-    runs-on: macos-12
+    runs-on: macos-10.15
     needs: package-macos-build-wheel
     env:
       WHEEL_VERSION: ${{ needs.package-macos-build-wheel.outputs.wheel-version }}
     steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
       - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+        id: setup-python
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
-
       - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
         with:
-          name: ${{ runner.os }}-wheel
+          name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
 
       - name: Copy packaging script
         run: cp -Rv ${{ github.workspace }}/packaging/macOS/* ${{ runner.temp }}
 
       - name: Freeze Parsec
-        run: python3 freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
+        run: python freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
         working-directory: ${{ runner.temp }}
 
       - name: Debug ${{ runner.temp }} dir

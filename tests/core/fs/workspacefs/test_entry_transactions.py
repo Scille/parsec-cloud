@@ -12,7 +12,6 @@ from pendulum import datetime
 from hypothesis_trio.stateful import initialize, invariant, rule, run_state_machine_as_test, Bundle
 from hypothesis import strategies as st
 
-from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
 from parsec.core.fs.storage import WorkspaceStorage
@@ -244,7 +243,6 @@ class PathElement:
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
 def test_entry_transactions(
     tmpdir,
     hypothesis_settings,
