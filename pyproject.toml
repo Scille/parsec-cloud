@@ -159,8 +159,10 @@ before-all = "bash misc/setup-rust.sh"
 before-build = "python -m pip install -U pip"
 
 [tool.cibuildwheel.environment]
-# Need to add `Rust` installation path in the `PATH` variable
-# because `cibuildwheel` don't allow the export variable in `before-*` steps
+# As it name suggests, `misc/setup-rust.sh` (run during cibuildwheel's before-all) will
+# install Rust if it is not already available. In this case, Rust bin dir was previously
+# non-existant and hence $PATH don't know about it (and maturin will fail when calling cargo).
+# For this reason we force $PATH to contain Rust bin dir.
 PATH = "$PATH:$HOME/.cargo/bin"
 
 [build-system]
