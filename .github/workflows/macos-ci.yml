@@ -20,6 +20,7 @@ jobs:
         with:
           version: ${{ env.rust-version }}
           cache-key: test&build
+        timeout-minutes: 10
 
       # Pyo3 need additional configuration on MacOS to be manually build
       # see https://pyo3.rs/master/building_and_distribution.html#macos

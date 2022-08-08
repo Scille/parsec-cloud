@@ -28,6 +28,7 @@ jobs:
         with:
           version: ${{ env.rust-version }}
           cache-key: test&build
+        timeout-minutes: 10
 
       - name: Build rust codebase
         run: |
