@@ -59,7 +59,7 @@ jobs:
           cache-key: python
         timeout-minutes: 10
 
-      - uses: ./.github/actions/setup-poetry
+      - uses: ./.github/actions/setup-python-poetry
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}

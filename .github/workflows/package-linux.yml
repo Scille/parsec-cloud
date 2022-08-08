@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
-      - uses: ./.github/actions/setup-poetry
+      - uses: ./.github/actions/setup-python-poetry
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
