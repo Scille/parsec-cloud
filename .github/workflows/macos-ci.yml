@@ -33,9 +33,6 @@ jobs:
       - name: Install python deps
         run: poetry install -E core -E backend
 
-      - name: Generate PyQT GUI data
-        run: poetry run python misc/generate_pyqt.py
-
       - name: Test python
         run: >
           poetry run pytest
