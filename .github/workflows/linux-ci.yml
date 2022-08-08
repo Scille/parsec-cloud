@@ -57,9 +57,6 @@ jobs:
       - name: Install python deps
         run: poetry install -E core -E backend
 
-      - name: Generate PyQT GUI data
-        run: poetry run python misc/generate_pyqt.py
-
       - name: Basic tests
         run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests
         timeout-minutes: 3
