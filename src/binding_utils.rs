@@ -158,6 +158,7 @@ macro_rules! parse_kwargs_optional {
         }
     };
 }
+
 macro_rules! parse_kwargs {
     ($kwargs: ident $(,[$var: ident $(:$ty: ty)?, $name: literal $(,$function: ident)?])* $(,)?) => {
         crate::binding_utils::parse_kwargs_optional!(
@@ -167,5 +168,6 @@ macro_rules! parse_kwargs {
         $(let $var = $var.expect(concat!("Missing `", stringify!($name), "` argument"));)*
     };
 }
+
 pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;
