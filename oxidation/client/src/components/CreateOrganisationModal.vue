@@ -19,7 +19,7 @@
     <ion-content class="ion-padding">
       <div v-if="pageStep === 1">
         <div class="flex-row">
-          <ion-item class="ion-margin-bottom">
+          <ion-item class="flex-row-item ion-margin-bottom">
             <ion-label position="stacked">
               {{ $t('CreateOrganization.organizationName') }}
             </ion-label>
@@ -30,7 +30,7 @@
               :placeholder="$t('CreateOrganization.organizationNamePlaceholder')"
             />
           </ion-item>
-          <ion-item class="ion-margin-bottom">
+          <ion-item class="flex-row-item ion-margin-bottom">
             <ion-label position="stacked">
               {{ $t('CreateOrganization.fullname') }}
             </ion-label>
@@ -221,9 +221,8 @@ function closeModal(): Promise<boolean> {
     flex-flow: row wrap;
     justify-content: space-between;
 
-    ion-item {
+    .flex-row-item {
       width: 48%;
-
     }
   }
 }
