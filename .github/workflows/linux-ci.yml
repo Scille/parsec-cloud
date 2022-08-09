@@ -47,7 +47,7 @@ jobs:
 
       - name: Basic tests
         run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests
-        timeout-minutes: 3
+        timeout-minutes: 5
 
       - name: Mountpoint tests
         run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests --runmountpoint --runslow -m mountpoint
