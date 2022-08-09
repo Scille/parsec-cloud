@@ -3,7 +3,7 @@
 use pyo3::basic::CompareOp;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyBytes, PyString, PyType};
+use pyo3::types::{IntoPyDict, PyType};
 use uuid::Uuid;
 
 use crate::binding_utils::{comp_op, hash_generic};
@@ -95,17 +95,16 @@ impl EntryID {
     }
 
     #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
-        let b = bytes.as_bytes();
-        match uuid::Uuid::from_slice(b) {
+    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
+        match uuid::Uuid::from_slice(bytes) {
             Ok(uuid) => Ok(Self(libparsec::types::EntryID::from(uuid))),
             Err(_) => Err(PyValueError::new_err("Invalid UUID")),
         }
     }
 
     #[classmethod]
-    pub fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
-        match hex.to_string().parse::<libparsec::types::EntryID>() {
+    pub fn from_hex(_cls: &PyType, hex: &str) -> PyResult<Self> {
+        match hex.parse::<libparsec::types::EntryID>() {
             Ok(entry_id) => Ok(Self(entry_id)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -118,8 +117,8 @@ impl EntryID {
     }
 
     #[getter]
-    fn bytes<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.as_bytes()))
+    fn bytes(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.as_bytes()[..])
     }
 
     #[getter]
@@ -176,17 +175,16 @@ impl BlockID {
     }
 
     #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
-        let b = bytes.as_bytes();
-        match uuid::Uuid::from_slice(b) {
+    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
+        match uuid::Uuid::from_slice(bytes) {
             Ok(uuid) => Ok(Self(libparsec::types::BlockID::from(uuid))),
             Err(_) => Err(PyValueError::new_err("Invalid UUID")),
         }
     }
 
     #[classmethod]
-    fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
-        match hex.to_string().parse::<libparsec::types::BlockID>() {
+    fn from_hex(_cls: &PyType, hex: &str) -> PyResult<Self> {
+        match hex.parse::<libparsec::types::BlockID>() {
             Ok(entry_id) => Ok(Self(entry_id)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -199,8 +197,8 @@ impl BlockID {
     }
 
     #[getter]
-    fn bytes<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.as_bytes()))
+    fn bytes(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.as_bytes()[..])
     }
 
     #[getter]
@@ -261,17 +259,16 @@ impl RealmID {
     }
 
     #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
-        let b = bytes.as_bytes();
-        match uuid::Uuid::from_slice(b) {
+    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
+        match uuid::Uuid::from_slice(bytes) {
             Ok(uuid) => Ok(Self(libparsec::types::RealmID::from(uuid))),
             Err(_) => Err(PyValueError::new_err("Invalid UUID")),
         }
     }
 
     #[classmethod]
-    fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
-        match hex.to_string().parse::<libparsec::types::RealmID>() {
+    fn from_hex(_cls: &PyType, hex: &str) -> PyResult<Self> {
+        match hex.parse::<libparsec::types::RealmID>() {
             Ok(entry_id) => Ok(Self(entry_id)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -284,8 +281,8 @@ impl RealmID {
     }
 
     #[getter]
-    fn bytes<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.as_bytes()))
+    fn bytes(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.as_bytes()[..])
     }
 
     #[getter]
@@ -346,17 +343,16 @@ impl VlobID {
     }
 
     #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
-        let b = bytes.as_bytes();
-        match uuid::Uuid::from_slice(b) {
+    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
+        match uuid::Uuid::from_slice(bytes) {
             Ok(uuid) => Ok(Self(libparsec::types::VlobID::from(uuid))),
             Err(_) => Err(PyValueError::new_err("Invalid UUID")),
         }
     }
 
     #[classmethod]
-    fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
-        match hex.to_string().parse::<libparsec::types::VlobID>() {
+    fn from_hex(_cls: &PyType, hex: &str) -> PyResult<Self> {
+        match hex.parse::<libparsec::types::VlobID>() {
             Ok(entry_id) => Ok(Self(entry_id)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
@@ -369,8 +365,8 @@ impl VlobID {
     }
 
     #[getter]
-    fn bytes<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.as_bytes()))
+    fn bytes(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.as_bytes()[..])
     }
 
     #[getter]
@@ -661,28 +657,29 @@ impl ChunkID {
     }
 
     #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
-        let b = bytes.as_bytes();
-        match uuid::Uuid::from_slice(b) {
+    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
+        match uuid::Uuid::from_slice(bytes) {
             Ok(uuid) => Ok(Self(libparsec::types::ChunkID::from(uuid))),
             Err(_) => Err(PyValueError::new_err("Invalid UUID")),
         }
     }
 
     #[classmethod]
-    fn from_hex(_cls: &PyType, hex: &PyString) -> PyResult<Self> {
-        match hex.to_string().parse::<libparsec::types::ChunkID>() {
+    fn from_hex(_cls: &PyType, hex: &str) -> PyResult<Self> {
+        match hex.parse::<libparsec::types::ChunkID>() {
             Ok(entry_id) => Ok(Self(entry_id)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
     }
 
-    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
         match op {
-            CompareOp::Eq => (self.0 == other.0).into_py(py),
-            CompareOp::Ne => (self.0 != other.0).into_py(py),
-            CompareOp::Lt => (self.0 < other.0).into_py(py),
-            _ => py.NotImplemented(),
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            CompareOp::Lt => self.0 < other.0,
+            CompareOp::Gt => self.0 > other.0,
+            CompareOp::Le => self.0 <= other.0,
+            CompareOp::Ge => self.0 >= other.0,
         }
     }
 
@@ -705,8 +702,8 @@ impl ChunkID {
     }
 
     #[getter]
-    fn bytes<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, self.0.as_bytes()))
+    fn bytes(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.as_bytes()[..])
     }
 
     #[getter]
@@ -742,12 +739,14 @@ impl HumanHandle {
         Ok(format!("<HumanHandle {} >", self.0))
     }
 
-    fn __richcmp__(&self, py: Python, other: &HumanHandle, op: CompareOp) -> PyObject {
+    fn __richcmp__(&self, other: &HumanHandle, op: CompareOp) -> bool {
         match op {
-            CompareOp::Eq => (self.0.email == other.0.email).into_py(py),
-            CompareOp::Ne => (self.0.email != other.0.email).into_py(py),
-            CompareOp::Lt => (self.0.email < other.0.email).into_py(py),
-            _ => py.NotImplemented(),
+            CompareOp::Eq => self.0.email == other.0.email,
+            CompareOp::Ne => self.0.email != other.0.email,
+            CompareOp::Lt => self.0.email < other.0.email,
+            CompareOp::Gt => self.0.email > other.0.email,
+            CompareOp::Le => self.0.email <= other.0.email,
+            CompareOp::Ge => self.0.email >= other.0.email,
         }
     }
 
@@ -756,12 +755,12 @@ impl HumanHandle {
     }
 
     #[getter]
-    fn email(&self) -> PyResult<&String> {
+    fn email(&self) -> PyResult<&str> {
         Ok(&self.0.email)
     }
 
     #[getter]
-    fn label(&self) -> PyResult<&String> {
+    fn label(&self) -> PyResult<&str> {
         Ok(&self.0.label)
     }
 }
