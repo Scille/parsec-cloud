@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-// TODO: Remove when all dependencies are removed
-
 use pyo3::basic::CompareOp;
 use pyo3::exceptions::PyValueError;
 use pyo3::import_exception;
@@ -296,6 +294,10 @@ impl PublicKey {
 
     fn encode(&self) -> &[u8] {
         self.0.as_ref()
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(String::from("PublicKey(<redacted>)"))
     }
 
     fn __richcmp__(&self, py: Python, value: &PublicKey, op: CompareOp) -> PyObject {

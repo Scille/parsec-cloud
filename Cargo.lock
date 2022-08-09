@@ -1907,6 +1907,7 @@ dependencies = [
 name = "parsec"
 version = "0.0.0"
 dependencies = [
+ "libparsec",
  "pyo3",
 ]
 
