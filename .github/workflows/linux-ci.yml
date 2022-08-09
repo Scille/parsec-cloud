@@ -72,4 +72,4 @@ jobs:
 
       - name: Hypothesis tests
         run: poetry run pytest ${{ env.PYTEST_BASE_ARGS }} tests --runslow -m slow --numprocesses auto
-        timeout-minutes: 20
+        timeout-minutes: 50
