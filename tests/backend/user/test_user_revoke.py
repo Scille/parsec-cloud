@@ -8,8 +8,8 @@ from parsec._parsec import DateTime
 from quart.testing.connections import WebsocketDisconnectError
 
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.data import RevokedUserCertificate, UserProfile
-from parsec.api.protocol import HandshakeRevokedDevice
+from parsec.api.data import RevokedUserCertificate
+from parsec.api.protocol import HandshakeRevokedDevice, UserProfile
 
 from tests.common import freeze_time
 from tests.backend.common import user_revoke, ping

@@ -11,6 +11,7 @@ from parsec.api.protocol import (
     InvitationType,
     InvitationDeletedReason,
     InvitationStatus,
+    UserProfile,
 )
 
 from parsec.api.data import EntryName

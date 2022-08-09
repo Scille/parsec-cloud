@@ -15,7 +15,6 @@ from parsec.crypto import (
 from parsec.api.data import (
     DataError,
     SASCode,
-    UserProfile,
     generate_sas_codes,
     generate_sas_code_candidates,
     InviteUserData,
@@ -32,6 +31,7 @@ from parsec.api.protocol import (
     InvitationToken,
     InvitationDeletedReason,
     DeviceLabel,
+    UserProfile,
 )
 from parsec.core.backend_connection import BackendAuthenticatedCmds
 from parsec.core.types import LocalDevice

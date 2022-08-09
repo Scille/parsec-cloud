@@ -7,10 +7,9 @@ from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.api.data import (
     UserCertificate,
     DeviceCertificate,
-    UserProfile,
     SequesterAuthorityCertificate,
 )
-from parsec.api.protocol import HumanHandle, DeviceLabel
+from parsec.api.protocol import HumanHandle, DeviceLabel, UserProfile
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.types import LocalDevice, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device

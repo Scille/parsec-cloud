@@ -7,8 +7,15 @@ from pathlib import Path
 from uuid import uuid4
 from parsec._parsec import DateTime
 
-from parsec.api.data import UserProfile, UserCertificate, DeviceCertificate, EntryID, EntryName
-from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle, DeviceName, DeviceLabel
+from parsec.api.data import UserCertificate, DeviceCertificate, EntryID, EntryName
+from parsec.api.protocol import (
+    OrganizationID,
+    DeviceID,
+    HumanHandle,
+    DeviceName,
+    DeviceLabel,
+    UserProfile,
+)
 from parsec.crypto import SigningKey
 from parsec.core import logged_core_factory
 from parsec.core.logged_core import LoggedCore

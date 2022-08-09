@@ -8,8 +8,8 @@ from binascii import unhexlify
 
 from parsec._version import __version__
 from parsec.crypto import SigningKey, PrivateKey, SecretKey, VerifyKey
-from parsec.api.data import UserProfile, EntryID
-from parsec.api.protocol import HumanHandle, DeviceID, DeviceLabel
+from parsec.api.data import EntryID
+from parsec.api.protocol import HumanHandle, DeviceID, DeviceLabel, UserProfile
 from parsec.core.types import LocalDevice, BackendOrganizationAddr
 
 

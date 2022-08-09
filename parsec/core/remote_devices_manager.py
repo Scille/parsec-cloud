@@ -94,7 +94,9 @@ class RemoteDevicesManager:
             )
         return verified_user, verified_revoked_user
 
-    async def get_device(self, device_id: DeviceID, no_cache: bool = False) -> DeviceCertificate:
+    async def get_device(
+        self, device_id: Optional[DeviceID], no_cache: bool = False
+    ) -> DeviceCertificate:
         """
         Raises:
             RemoteDevicesManagerError

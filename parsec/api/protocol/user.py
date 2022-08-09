@@ -18,19 +18,19 @@ __all__ = (
 
 
 class TrustchainSchema(BaseSchema):
-    devices = fields.List(fields.Bytes(required=True))
-    users = fields.List(fields.Bytes(required=True))
-    revoked_users = fields.List(fields.Bytes(required=True))
+    devices = fields.List(fields.Bytes(required=True))  # type: ignore[arg-type]
+    users = fields.List(fields.Bytes(required=True))  # type: ignore[arg-type]
+    revoked_users = fields.List(fields.Bytes(required=True))  # type: ignore[arg-type]
 
 
 class UserGetReqSchema(BaseReqSchema):
-    user_id = UserIDField(required=True)
+    user_id = UserIDField(required=True)  # type: ignore[arg-type]
 
 
 class UserGetRepSchema(BaseRepSchema):
     user_certificate = fields.Bytes(required=True)
-    revoked_user_certificate = fields.Bytes(required=True, allow_none=True)
-    device_certificates = fields.List(fields.Bytes(required=True), required=True)
+    revoked_user_certificate = fields.Bytes(required=True, allow_none=True)  # type: ignore[arg-type]
+    device_certificates = fields.List(fields.Bytes(required=True), required=True)  # type: ignore[arg-type]
 
     trustchain = fields.Nested(TrustchainSchema, required=True)
 
@@ -96,7 +96,7 @@ class HumanFindReqSchema(BaseReqSchema):
 
 
 class HumanFindResultItemSchema(BaseSchema):
-    user_id = UserIDField(required=True)
+    user_id = UserIDField(required=True)  # type: ignore[arg-type]
     human_handle = HumanHandleField(required=True, allow_none=True)
     revoked = fields.Boolean(required=True)
 

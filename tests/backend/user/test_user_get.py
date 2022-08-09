@@ -3,8 +3,7 @@
 import pytest
 from parsec._parsec import DateTime
 
-from parsec.api.data import UserProfile
-from parsec.api.protocol import packb, user_get_serializer, UserID
+from parsec.api.protocol import packb, user_get_serializer, UserID, UserProfile
 
 from parsec.backend.asgi import app_factory
 

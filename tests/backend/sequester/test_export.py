@@ -17,10 +17,10 @@ from parsec.api.protocol import (
     UserProfile,
 )
 from parsec.api.data import (
-    UserCertificateContent,
-    RevokedUserCertificateContent,
-    DeviceCertificateContent,
-    RealmRoleCertificateContent,
+    UserCertificate,
+    RevokedUserCertificate,
+    DeviceCertificate,
+    RealmRoleCertificate,
     EntryID,
     EntryName,
     FileManifest,
@@ -474,7 +474,7 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     # 2000-05-01: Adam revoked by Alice
 
     # Populate `user_` table
-    alice_user_certif = UserCertificateContent(
+    alice_user_certif = UserCertificate(
         user_id=alice.user_id,
         profile=UserProfile.ADMIN,
         human_handle=alice.human_handle,
@@ -482,7 +482,7 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
         author=None,
         timestamp=DateTime(2000, 1, 1),
     ).dump_and_sign(coolorg.root_signing_key)
-    bob_user_certif = UserCertificateContent(
+    bob_user_certif = UserCertificate(
         user_id=bob.user_id,
         profile=UserProfile.STANDARD,
         human_handle=bob.human_handle,
@@ -490,7 +490,7 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
         author=alice.device_id,
         timestamp=DateTime(2000, 1, 2),
     ).dump_and_sign(alice.signing_key)
-    adam_user_certif = UserCertificateContent(
+    adam_user_certif = UserCertificate(
         user_id=adam.user_id,
         profile=UserProfile.STANDARD,
         human_handle=adam.human_handle,
@@ -498,7 +498,7 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
         author=alice.device_id,
         timestamp=DateTime(2000, 1, 3),
     ).dump_and_sign(alice.signing_key)
-    adam_revoked_user_certif = RevokedUserCertificateContent(
+    adam_revoked_user_certif = RevokedUserCertificate(
         user_id=adam.user_id, author=alice.device_id, timestamp=DateTime(2000, 5, 1)
     ).dump_and_sign(alice.signing_key)
     con.executemany(
@@ -511,21 +511,21 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     )
 
     # Populate `device` table
-    alice_device_certif = DeviceCertificateContent(
+    alice_device_certif = DeviceCertificate(
         device_id=alice.device_id,
         device_label=alice.device_label,
         verify_key=alice.verify_key,
         author=None,
         timestamp=DateTime(2000, 1, 1),
     ).dump_and_sign(coolorg.root_signing_key)
-    bob_device_certif = DeviceCertificateContent(
+    bob_device_certif = DeviceCertificate(
         device_id=bob.device_id,
         device_label=bob.device_label,
         verify_key=bob.verify_key,
         author=alice.device_id,
         timestamp=DateTime(2000, 1, 2),
     ).dump_and_sign(alice.signing_key)
-    adam_device_certif = DeviceCertificateContent(
+    adam_device_certif = DeviceCertificate(
         device_id=adam.device_id,
         device_label=adam.device_label,
         verify_key=adam.verify_key,
@@ -546,35 +546,35 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
 
     # Populate `realm_role` table
     realm_roles = [
-        RealmRoleCertificateContent(
+        RealmRoleCertificate(
             realm_id=realm1,
             user_id=alice.user_id,
             role=RealmRole.OWNER,
             timestamp=DateTime(2000, 2, 1),
             author=None,
         ).dump_and_sign(coolorg.root_signing_key),
-        RealmRoleCertificateContent(
+        RealmRoleCertificate(
             realm_id=realm1,
             user_id=bob.user_id,
             role=RealmRole.READER,
             timestamp=DateTime(2000, 2, 2),
             author=alice.device_id,
         ).dump_and_sign(alice.signing_key),
-        RealmRoleCertificateContent(
+        RealmRoleCertificate(
             realm_id=realm1,
             user_id=bob.user_id,
             role=RealmRole.MANAGER,
             timestamp=DateTime(2000, 2, 3),
             author=alice.device_id,
         ).dump_and_sign(alice.signing_key),
-        RealmRoleCertificateContent(
+        RealmRoleCertificate(
             realm_id=realm1,
             user_id=adam.user_id,
             role=RealmRole.CONTRIBUTOR,
             timestamp=DateTime(2000, 2, 4),
             author=bob.device_id,
         ).dump_and_sign(bob.signing_key),
-        RealmRoleCertificateContent(
+        RealmRoleCertificate(
             realm_id=realm1,
             user_id=adam.user_id,
             role=None,

@@ -5,8 +5,8 @@ import pytest
 from parsec._parsec import DateTime
 from collections import defaultdict
 
-from parsec.api.data import UserCertificate, DeviceCertificate, UserProfile
-from parsec.api.protocol import UserID, apiv1_organization_bootstrap_serializer
+from parsec.api.data import UserCertificate, DeviceCertificate
+from parsec.api.protocol import UserID, apiv1_organization_bootstrap_serializer, UserProfile
 from parsec.api.protocol.handshake import HandshakeOrganizationExpired
 
 from tests.common import customize_fixtures, local_device_to_backend_user

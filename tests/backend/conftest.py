@@ -4,7 +4,7 @@ import pytest
 from parsec._parsec import DateTime
 from contextlib import asynccontextmanager
 
-from parsec.api.data import RealmRoleCertificateContent
+from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import (
     OrganizationID,
     VlobID,
@@ -179,7 +179,7 @@ def realm_factory(next_timestamp):
     async def _realm_factory(backend, author, realm_id=None, now=None):
         realm_id = realm_id or RealmID.new()
         now = now or next_timestamp()
-        certif = RealmRoleCertificateContent.build_realm_root_certif(
+        certif = RealmRoleCertificate.build_realm_root_certif(
             author=author.device_id, timestamp=now, realm_id=realm_id
         ).dump_and_sign(author.signing_key)
         with backend.event_bus.listen() as spy:

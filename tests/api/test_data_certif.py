@@ -7,11 +7,11 @@ import zlib
 from parsec.serde import packb, unpackb
 from parsec.api.data import (
     DataError,
-    UserProfile,
     UserCertificate,
     DeviceCertificate,
     RevokedUserCertificate,
 )
+from parsec.api.protocol import UserProfile
 
 
 @pytest.fixture(autouse=True, scope="module")

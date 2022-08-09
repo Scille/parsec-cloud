@@ -145,11 +145,6 @@ try:
         VlobMaintenanceSaveReencryptionBatchReq,
         VlobMaintenanceSaveReencryptionBatchRep,
         ReencryptionBatchEntry,
-        # Certif
-        UserCertificate,
-        DeviceCertificate,
-        RevokedUserCertificate,
-        RealmRoleCertificate,
         # Trustchain
         TrustchainContext,
         # LocalDevice
@@ -389,11 +384,6 @@ __all__ = (
     "VlobMaintenanceSaveReencryptionBatchReq",
     "VlobMaintenanceSaveReencryptionBatchRep",
     "ReencryptionBatchEntry",
-    # Certif
-    "UserCertificate",
-    "DeviceCertificate",
-    "RevokedUserCertificate",
-    "RealmRoleCertificate",
     # Trustchain
     "TrustchainContext",
     # LocalDevice

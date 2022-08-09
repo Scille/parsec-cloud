@@ -3,7 +3,7 @@
 import pytest
 from parsec._parsec import DateTime
 
-from parsec.api.data import RealmRoleCertificateContent
+from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import RealmRole
 
 from tests.backend.common import realm_status, realm_update_roles
@@ -26,7 +26,7 @@ async def test_status(bob_ws, alice_ws, alice, bob, realm):
     # Also test lesser role have access
     await realm_update_roles(
         alice_ws,
-        RealmRoleCertificateContent(
+        RealmRoleCertificate(
             author=alice.device_id,
             timestamp=DateTime.now(),
             realm_id=realm,

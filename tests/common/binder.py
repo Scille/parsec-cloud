@@ -12,7 +12,7 @@ from parsec.api.data import (
     UserManifest,
     RevokedUserCertificate,
     DeviceCertificate,
-    RealmRoleCertificateContent,
+    RealmRoleCertificate,
 )
 from parsec.api.protocol import UserID, RealmRole, RealmID, VlobID
 from parsec.core.types import (
@@ -294,7 +294,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
                     self_granted_role=RealmGrantedRole(
                         realm_id=realm_id,
                         user_id=author.user_id,
-                        certificate=RealmRoleCertificateContent(
+                        certificate=RealmRoleCertificate(
                             author=author.device_id,
                             timestamp=realm_create_timestamp,
                             realm_id=realm_id,

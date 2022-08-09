@@ -4,8 +4,8 @@ import pytest
 from parsec._parsec import DateTime
 
 from parsec.backend.user import INVITATION_VALIDITY, User, Device
-from parsec.api.data import UserCertificate, DeviceCertificate, UserProfile
-from parsec.api.protocol import DeviceID, DeviceLabel
+from parsec.api.data import UserCertificate, DeviceCertificate
+from parsec.api.protocol import DeviceID, DeviceLabel, UserProfile
 
 from tests.common import customize_fixtures, freeze_time
 from tests.backend.common import user_get, user_create

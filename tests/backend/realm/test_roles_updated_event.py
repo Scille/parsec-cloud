@@ -3,7 +3,7 @@
 import pytest
 from parsec._parsec import DateTime
 
-from parsec.api.data import RealmRoleCertificateContent
+from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import RealmID, RealmRole, APIEvent
 from parsec.backend.backend_events import BackendEvent
 
@@ -16,7 +16,7 @@ async def test_realm_create(backend, alice, alice_ws):
     await events_subscribe(alice_ws)
 
     realm_id = RealmID.from_hex("C0000000000000000000000000000000")
-    certif = RealmRoleCertificateContent.build_realm_root_certif(
+    certif = RealmRoleCertificate.build_realm_root_certif(
         author=alice.device_id, timestamp=DateTime.now(), realm_id=realm_id
     ).dump_and_sign(alice.signing_key)
     with backend.event_bus.listen() as spy:
@@ -32,7 +32,7 @@ async def test_roles_updated_for_participant(
     async def _update_role_and_check_events(role):
 
         with backend.event_bus.listen() as spy:
-            certif = RealmRoleCertificateContent(
+            certif = RealmRoleCertificate(
                 author=alice.device_id,
                 timestamp=next_timestamp(),
                 realm_id=realm,

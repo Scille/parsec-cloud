@@ -27,8 +27,9 @@ from parsec.api.protocol import (
     DeviceIDField,
     DeviceLabel,
     DeviceLabelField,
+    UserProfile,
 )
-from parsec.api.data import DataError, UserProfile
+from parsec.api.data import DataError
 from parsec.core.types import EntryID, LocalDevice, BackendOrganizationAddr
 
 

@@ -60,7 +60,7 @@ class RealmStatusRepSchema(BaseRepSchema):
     in_maintenance = fields.Boolean(required=True)
     maintenance_type = MaintenanceTypeField(required=True, allow_none=True)
     maintenance_started_on = fields.DateTime(required=True, allow_none=True)
-    maintenance_started_by = DeviceIDField(required=True, allow_none=True)
+    maintenance_started_by = DeviceIDField(required=True, allow_none=True)  # type: ignore[arg-type]
     encryption_revision = fields.Integer(required=True)
 
 
@@ -84,7 +84,7 @@ class RealmGetRoleCertificatesReqSchema(BaseReqSchema):
 
 
 class RealmGetRoleCertificatesRepSchema(BaseRepSchema):
-    certificates = fields.List(fields.Bytes(required=True), required=True)
+    certificates = fields.List(fields.Bytes(required=True), required=True)  # type: ignore[arg-type]
 
 
 realm_get_role_certificates_serializer = CmdSerializer(
@@ -108,7 +108,7 @@ class RealmStartReencryptionMaintenanceReqSchema(BaseReqSchema):
     realm_id = RealmIDField(required=True)
     encryption_revision = fields.Integer(required=True)
     timestamp = fields.DateTime(required=True)
-    per_participant_message = fields.Map(UserIDField(), fields.Bytes(required=True), required=True)
+    per_participant_message = fields.Map(UserIDField(), fields.Bytes(required=True), required=True)  # type: ignore[arg-type]
 
 
 class RealmStartReencryptionMaintenanceRepSchema(BaseRepSchema):

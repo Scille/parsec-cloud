@@ -77,7 +77,7 @@ pub fn py_to_rs_user_profile(profile: &PyAny) -> PyResult<libparsec::types::User
 pub fn rs_to_py_user_profile(profile: &libparsec::types::UserProfile) -> PyResult<PyObject> {
     use libparsec::types::UserProfile::*;
     Python::with_gil(|py| -> PyResult<PyObject> {
-        let cls = py.import("parsec.api.data")?.getattr("UserProfile")?;
+        let cls = py.import("parsec.api.protocol")?.getattr("UserProfile")?;
         let profile_name = match profile {
             Admin => "ADMIN",
             Standard => "STANDARD",

@@ -4,11 +4,10 @@ from typing import TYPE_CHECKING, Tuple, List, Sequence, Optional
 from parsec._parsec import DateTime
 
 from parsec.crypto import VerifyKey
-from parsec.api.protocol import UserID, DeviceID
+from parsec.api.protocol import UserID, DeviceID, UserProfile
 from parsec.api.data import (
     DataError,
     UserCertificate,
-    UserProfile,
     RevokedUserCertificate,
     DeviceCertificate,
 )

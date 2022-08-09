@@ -14,7 +14,7 @@ from parsec.api.protocol import UserID, DeviceID, RealmID, RealmRole, VlobID
 from parsec.api.data import (
     DataError,
     BlockAccess,
-    RealmRoleCertificateContent,
+    RealmRoleCertificate,
     BaseManifest as BaseRemoteManifest,
     UserCertificate,
     DeviceCertificate,
@@ -163,7 +163,7 @@ class UserRemoteLoader:
         self.get_previous_workspace_entry = get_previous_workspace_entry
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
-        self._realm_role_certificates_cache: Optional[List[RealmRoleCertificateContent]] = None
+        self._realm_role_certificates_cache: Optional[List[RealmRoleCertificate]] = None
         self._sequester_services_cache: Optional[List[SequesterServiceCertificate]] = None
 
     def clear_realm_role_certificate_cache(self) -> None:
@@ -174,7 +174,7 @@ class UserRemoteLoader:
     ) -> Optional[RealmRole]:
 
         # Lazily iterate over user certificates from newest to oldest
-        def _get_user_certificates_from_cache() -> Iterator[RealmRoleCertificateContent]:
+        def _get_user_certificates_from_cache() -> Iterator[RealmRoleCertificate]:
             if self._realm_role_certificates_cache is None:
                 return
             for certif in reversed(self._realm_role_certificates_cache):
@@ -199,7 +199,7 @@ class UserRemoteLoader:
 
     async def _load_realm_role_certificates(
         self, realm_id: Optional[EntryID] = None
-    ) -> Tuple[List[RealmRoleCertificateContent], Dict[UserID, RealmRole]]:
+    ) -> Tuple[List[RealmRoleCertificate], Dict[UserID, RealmRole]]:
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.realm_get_role_certificates(
                 RealmID((realm_id or self.workspace_id).uuid)
@@ -214,7 +214,7 @@ class UserRemoteLoader:
             # Must read unverified certificates to access metadata
             unsecure_certifs = sorted(
                 [
-                    (RealmRoleCertificateContent.unsecure_load(uv_role), uv_role)
+                    (RealmRoleCertificate.unsecure_load(uv_role), uv_role)
                     for uv_role in rep["certificates"]
                 ],
                 key=lambda x: x[0].timestamp,
@@ -230,7 +230,7 @@ class UserRemoteLoader:
                 with translate_remote_devices_manager_errors():
                     author = await self.remote_devices_manager.get_device(unsecure_certif.author)
 
-                RealmRoleCertificateContent.verify_and_load(
+                RealmRoleCertificate.verify_and_load(
                     raw_certif,
                     author_verify_key=author.verify_key,
                     expected_author=author.device_id,
@@ -274,7 +274,7 @@ class UserRemoteLoader:
 
     async def load_realm_role_certificates(
         self, realm_id: Optional[EntryID] = None
-    ) -> List[RealmRoleCertificateContent]:
+    ) -> List[RealmRoleCertificate]:
         """
         Raises:
             FSError
@@ -362,7 +362,7 @@ class UserRemoteLoader:
             FSBackendOfflineError
         """
         timestamp = self.device.timestamp()
-        certif = RealmRoleCertificateContent.build_realm_root_certif(
+        certif = RealmRoleCertificate.build_realm_root_certif(
             author=self.device.device_id, timestamp=timestamp, realm_id=RealmID(realm_id.uuid)
         ).dump_and_sign(self.device.signing_key)
 

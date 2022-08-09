@@ -13,8 +13,8 @@ from hypothesis.stateful import (
     RuleBasedStateMachine,
 )
 
-from parsec.api.protocol import UserID, DeviceName
-from parsec.api.data import UserProfile, UserCertificate, RevokedUserCertificate, DeviceCertificate
+from parsec.api.protocol import UserID, DeviceName, UserProfile
+from parsec.api.data import UserCertificate, RevokedUserCertificate, DeviceCertificate
 from parsec.core.trustchain import TrustchainContext
 
 

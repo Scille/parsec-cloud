@@ -4,8 +4,8 @@ import pytest
 from typing import Dict, Optional, Tuple
 from parsec._parsec import DateTime
 
-from parsec.api.data import UserCertificate, DeviceCertificate, RevokedUserCertificate, UserProfile
-from parsec.api.protocol import UserID
+from parsec.api.data import UserCertificate, DeviceCertificate, RevokedUserCertificate
+from parsec.api.protocol import UserID, UserProfile
 from parsec.api.protocol.types import DeviceID
 from parsec.core.types import LocalDevice
 from parsec.core.trustchain import TrustchainContext, TrustchainError

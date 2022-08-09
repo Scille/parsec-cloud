@@ -158,8 +158,8 @@ class HandshakeAuthenticatedAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.EnumCheckedConstant(HandshakeType.AUTHENTICATED, required=True)
     client_api_version = ApiVersionField(required=True)
-    organization_id = OrganizationIDField(required=True)
-    device_id = DeviceIDField(required=True)
+    organization_id = OrganizationIDField(required=True)  # type: ignore[arg-type]
+    device_id = DeviceIDField(required=True)  # type: ignore[arg-type]
     rvk = fields.VerifyKey(required=True)
     answer = fields.Bytes(required=True)
 
@@ -168,7 +168,7 @@ class HandshakeInvitedAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.EnumCheckedConstant(HandshakeType.INVITED, required=True)
     client_api_version = ApiVersionField(required=True)
-    organization_id = OrganizationIDField(required=True)
+    organization_id = OrganizationIDField(required=True)  # type: ignore[arg-type]
     invitation_type = InvitationTypeField(required=True)
     token = InvitationTokenField(required=True)
 
@@ -191,7 +191,7 @@ class APIV1_HandshakeAnonymousAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.EnumCheckedConstant(APIV1_HandshakeType.ANONYMOUS, required=True)
     client_api_version = ApiVersionField(required=True)
-    organization_id = OrganizationIDField(required=True)
+    organization_id = OrganizationIDField(required=True)  # type: ignore[arg-type]
     # Cannot provide rvk during organization bootstrap
     rvk = fields.VerifyKey(missing=None)
 

@@ -10,6 +10,8 @@ from parsec.crypto import SecretKey, PrivateKey, SigningKey
 from parsec.serde import fields, post_load
 from parsec.api.protocol import (
     UserID,
+    UserProfile,
+    UserProfileField,
     DeviceID,
     OrganizationID,
     HumanHandle,
@@ -18,7 +20,7 @@ from parsec.api.protocol import (
     DeviceLabel,
     DeviceLabelField,
 )
-from parsec.api.data import BaseSchema, EntryID, EntryIDField, UserProfile, UserProfileField
+from parsec.api.data import BaseSchema, EntryID, EntryIDField
 from parsec.core.types.base import BaseLocalData
 from parsec.core.types.backend_address import BackendOrganizationAddr, BackendOrganizationAddrField
 

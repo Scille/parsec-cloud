@@ -4,8 +4,7 @@ import pytest
 from parsec._parsec import DateTime
 from unittest.mock import ANY
 
-from parsec.api.data import UserProfile
-from parsec.api.protocol import VlobID, BlockID
+from parsec.api.protocol import VlobID, BlockID, UserProfile
 
 from tests.common import customize_fixtures
 from tests.backend.common import organization_stats

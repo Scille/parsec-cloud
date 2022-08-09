@@ -14,12 +14,11 @@ from pathlib import Path
 
 from parsec.crypto import SigningKey, PrivateKey
 from parsec.api.data import (
-    UserProfile,
     UserCertificate,
     UserManifest,
     RevokedUserCertificate,
     DeviceCertificate,
-    RealmRoleCertificateContent,
+    RealmRoleCertificate,
     PkiEnrollmentSubmitPayload,
     PkiEnrollmentAcceptPayload,
     DataError,
@@ -33,6 +32,7 @@ from parsec.api.protocol import (
     RealmRole,
     RealmID,
     VlobID,
+    UserProfile,
 )
 from parsec.core.types import (
     LocalDevice,
@@ -550,7 +550,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
                     self_granted_role=RealmGrantedRole(
                         realm_id=realm_id,
                         user_id=author.user_id,
-                        certificate=RealmRoleCertificateContent(
+                        certificate=RealmRoleCertificate(
                             author=author.device_id,
                             timestamp=realm_create_timestamp,
                             realm_id=realm_id,

@@ -15,7 +15,7 @@ from hypothesis_trio.stateful import (
 from unittest.mock import ANY
 
 from parsec.backend.asgi import app_factory
-from parsec.api.data import RealmRoleCertificateContent
+from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import RealmRole
 
 from tests.common import call_with_control
@@ -105,7 +105,7 @@ def test_shuffle_roles(
         async def _give_role(self, author_ws, author, recipient, role):
             author_ws = await self.get_ws(author)
 
-            certif = RealmRoleCertificateContent(
+            certif = RealmRoleCertificate(
                 author=author.device_id,
                 timestamp=next_timestamp(),
                 realm_id=self.realm_id,

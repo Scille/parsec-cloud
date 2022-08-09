@@ -7,8 +7,7 @@ from typing import Union, Optional
 from contextlib import asynccontextmanager
 
 from parsec.crypto import SigningKey
-from parsec.api.data import UserProfile
-from parsec.api.protocol import OrganizationID, DeviceID, DeviceLabel, HumanHandle
+from parsec.api.protocol import OrganizationID, DeviceID, DeviceLabel, HumanHandle, UserProfile
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
 

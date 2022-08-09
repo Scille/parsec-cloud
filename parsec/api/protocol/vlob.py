@@ -32,8 +32,8 @@ class SequesterInconsistencyRepSchema(BaseRepSchema):
     """
 
     status = fields.CheckedConstant("sequester_inconsistency", required=True)
-    sequester_authority_certificate = fields.Bytes(required=True, allow_none=False)
-    sequester_services_certificates = fields.List(fields.Bytes(), required=True, allow_none=False)
+    sequester_authority_certificate = fields.Bytes(required=True, allow_none=False)  # type: ignore[arg-type]
+    sequester_services_certificates = fields.List(fields.Bytes(), required=True, allow_none=False)  # type: ignore[arg-type]
 
 
 class VlobCreateReqSchema(BaseReqSchema):
@@ -52,7 +52,7 @@ class VlobCreateReqSchema(BaseReqSchema):
     # Key is sequester service ID, value is blob encrypted with the service key
     # New in API version 2.8/3.2 (Parsec 2.11.0)
     sequester_blob = fields.Map(
-        SequesterServiceIDField(), fields.Bytes(), required=False, allow_none=True
+        SequesterServiceIDField(), fields.Bytes(), required=False, allow_none=True  # type: ignore[arg-type]
     )
 
 
@@ -79,7 +79,7 @@ class VlobReadReqSchema(BaseReqSchema):
 class VlobReadRepSchema(BaseRepSchema):
     version = fields.Integer(required=True, validate=_validate_version)
     blob = fields.Bytes(required=True)
-    author = DeviceIDField(required=True)
+    author = DeviceIDField(required=True)  # type: ignore[arg-type]
     timestamp = fields.DateTime(required=True)
     # This field is used by the client to figure out if its role certificate cache is up-to-date enough
     # to be able to perform the proper integrity checks on the manifest timestamp.
@@ -101,7 +101,7 @@ class VlobUpdateReqSchema(BaseReqSchema):
     # Key is sequester service ID, value is blob encrypted with the service key
     # New in API version 2.8/3.2 (Parsec 2.11.0)
     sequester_blob = fields.Map(
-        SequesterServiceIDField(), fields.Bytes(), required=False, allow_none=True
+        SequesterServiceIDField(), fields.Bytes(), required=False, allow_none=True  # type: ignore[arg-type]
     )
 
 
@@ -137,7 +137,7 @@ class VlobListVersionsReqSchema(BaseReqSchema):
 class VlobListVersionsRepSchema(BaseRepSchema):
     versions = fields.Map(
         fields.Integer(required=True),
-        fields.Tuple(fields.DateTime(required=True), DeviceIDField(required=True)),
+        fields.Tuple(fields.DateTime(required=True), DeviceIDField(required=True)),  # type: ignore[arg-type]
         required=True,
     )
 

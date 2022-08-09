@@ -6,7 +6,7 @@ import attr
 from parsec.backend.user import UserAlreadyRevokedError
 
 from parsec.utils import timestamps_in_the_ballpark
-from parsec.api.data import DataError, RealmRoleCertificateContent
+from parsec.api.data import DataError, RealmRoleCertificate
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
@@ -125,7 +125,7 @@ class BaseRealmComponent:
         msg = realm_create_serializer.req_load(msg)
 
         try:
-            data = RealmRoleCertificateContent.verify_and_load(
+            data = RealmRoleCertificate.verify_and_load(
                 msg["role_certificate"],
                 author_verify_key=client_ctx.verify_key,
                 expected_author=client_ctx.device_id,
@@ -274,7 +274,7 @@ class BaseRealmComponent:
         msg = realm_update_roles_serializer.req_load(msg)
 
         try:
-            data = RealmRoleCertificateContent.verify_and_load(
+            data = RealmRoleCertificate.verify_and_load(
                 msg["role_certificate"],
                 author_verify_key=client_ctx.verify_key,
                 expected_author=client_ctx.device_id,

@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import ANY
 
-from parsec.api.data import UserProfile
+from parsec.api.protocol import UserProfile
 from parsec.backend.asgi import app_factory
 
 from tests.common import freeze_time, customize_fixtures
