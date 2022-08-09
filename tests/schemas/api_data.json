@@ -264,49 +264,6 @@
         },
         "serializing": "zip+msgpack"
     },
-    "RealmRoleCertificateContent": {
-        "fields": {
-            "author": {
-                "allow_none": false,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "realm_id": {
-                "allow_none": false,
-                "required": true,
-                "type": "RealmIDField"
-            },
-            "role": {
-                "allow_none": true,
-                "enum_allowed_values": [
-                    "OWNER",
-                    "MANAGER",
-                    "CONTRIBUTOR",
-                    "READER"
-                ],
-                "enum_type": "RealmRole",
-                "required": true,
-                "type": "RealmRoleField"
-            },
-            "timestamp": {
-                "allow_none": false,
-                "required": true,
-                "type": "DateTime"
-            },
-            "type": {
-                "allow_none": false,
-                "required": true,
-                "type": "CheckedConstant",
-                "value": "realm_role_certificate"
-            },
-            "user_id": {
-                "allow_none": false,
-                "required": true,
-                "type": "UserIDField"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
     "SequesterAuthorityCertificate": {
         "fields": {
             "author": {
