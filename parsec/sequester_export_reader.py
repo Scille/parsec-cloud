@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import List, Dict, Iterator, Mapping, Optional, Tuple
-from pathlib import Path
+from pathlib import Path, PurePath
 from pendulum import from_timestamp as pendulum_from_timestamp
 from contextlib import contextmanager
 import sqlite3
@@ -25,7 +25,6 @@ from parsec.api.data import (
     RealmRoleCertificateContent,
     DataError,
 )
-from parsec.core.fs.path import FsPath
 
 
 REALM_EXPORT_DB_MAGIC_NUMBER = 87947
@@ -112,7 +111,7 @@ class RealmExportDb:
         out_certificates: List[
             Tuple[UserCertificateContent, Optional[RevokedUserCertificateContent]]
         ],
-    ) -> Iterator[Tuple[Optional[FsPath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
         rows = self.con.execute(
             "SELECT _id, user_certificate, revoked_user_certificate FROM user_"
         ).fetchall()
@@ -143,7 +142,7 @@ class RealmExportDb:
 
     def load_device_certificates(
         self, out_certificates: List[Tuple[int, DeviceCertificateContent]]
-    ) -> Iterator[Tuple[Optional[FsPath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
         rows = self.con.execute("SELECT _id, device_certificate FROM device").fetchall()
         for row in rows:
             try:
@@ -159,7 +158,7 @@ class RealmExportDb:
 
     def load_role_certificates(
         self, out_certificates: List[RealmRoleCertificateContent]
-    ) -> Iterator[Tuple[Optional[FsPath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
         rows = self.con.execute("SELECT _id, role_certificate FROM realm_role").fetchall()
         for row in rows:
             try:
@@ -230,8 +229,8 @@ class WorkspaceExport:
         return manifest
 
     def extract_children(
-        self, output: Path, fs_path: FsPath, children: Mapping[EntryName, EntryID]
-    ) -> Iterator[Tuple[Optional[FsPath], RealmExportProgress, str]]:
+        self, output: Path, fs_path: PurePath, children: Mapping[EntryName, EntryID]
+    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)
         """
@@ -247,7 +246,7 @@ class WorkspaceExport:
             )
 
         for child_name, child_id in children.items():
-            child_fs_path = fs_path / child_name
+            child_fs_path = fs_path / child_name.str
             # TODO: this may cause issue on Windows (e.g. `AUX`, `COM1`, `<!>`)
             child_output = output / child_name.str
             try:
@@ -275,8 +274,8 @@ class WorkspaceExport:
                 )
 
     def extract_file(
-        self, output: Path, fs_path: FsPath, manifest: FileManifest
-    ) -> Iterator[Tuple[Optional[FsPath], RealmExportProgress, str]]:
+        self, output: Path, fs_path: PurePath, manifest: FileManifest
+    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)
         """
@@ -347,11 +346,14 @@ class WorkspaceExport:
 
     def extract_workspace(
         self, output: Path
-    ) -> Iterator[Tuple[Optional[FsPath], RealmExportProgress, str]]:
+    ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)
         """
-        fs_path = FsPath("/")
+        # In theory we should use `parsec.core.fs.path.FsPath` instead of `pathlib.PurePath`.
+        # However we cannot import stuff from `parsec.core` if only backend dependencies are
+        # installed. In our case `PurePath` is good enough given we need anything fancy anyway.
+        fs_path = PurePath("/")
         try:
             workspace_manifest = self.load_workspace_manifest()
         except InconsistentWorkspaceError as exc:
@@ -370,7 +372,7 @@ class WorkspaceExport:
 
 def extract_workspace(
     output: Path, export_db: Path, decryption_key: PrivateKey
-) -> Iterator[Tuple[Optional[FsPath], RealmExportProgress, str]]:
+) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
     with RealmExportDb.open(export_db) as db:
         out_certificates = []
         yield from db.load_device_certificates(out_certificates=out_certificates)
