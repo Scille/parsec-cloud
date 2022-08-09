@@ -56,8 +56,6 @@ repos:
     hooks:
       - id: mypy
         language_version: python3.9
-        # Include libparsec stub files
-        args: [ oxidation/libparsec_python/libparsec ]
         additional_dependencies:
           - trio_typing[mypy]~=0.5  # `qtrio` requires `trio_typing~=0.5` for the moment
           - pendulum~=2.1
