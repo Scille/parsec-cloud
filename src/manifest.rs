@@ -372,6 +372,14 @@ impl FolderManifest {
         Ok(format!("{:?}", self.0))
     }
 
+    fn dump_and_sign<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    }
+
     fn dump_sign_and_encrypt<'p>(
         &self,
         py: Python<'p>,
@@ -559,6 +567,14 @@ impl FileManifest {
 
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("{:?}", self.0))
+    }
+
+    fn dump_and_sign<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
     }
 
     fn dump_sign_and_encrypt<'p>(
@@ -763,6 +779,14 @@ impl WorkspaceManifest {
         Ok(format!("{:?}", self.0))
     }
 
+    fn dump_and_sign<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    }
+
     fn dump_sign_and_encrypt<'p>(
         &self,
         py: Python<'p>,
@@ -936,6 +960,14 @@ impl UserManifest {
 
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("{:?}", self.0))
+    }
+
+    fn dump_and_sign<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
     }
 
     fn dump_sign_and_encrypt<'p>(

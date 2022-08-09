@@ -2,13 +2,14 @@ from typing import Optional, Tuple
 from parsec._parsec import (
     EntryID,
     SecretKey,
-    RealmRole,
     BlockID,
     HashDigest,
     DeviceID,
     SigningKey,
     VerifyKey,
 )
+
+from parsec.api.protocol import RealmRole
 
 from parsec.types import FrozenDict
 
@@ -110,6 +111,7 @@ class FolderManifest:
     @property
     def children(self) -> FrozenDict[EntryName, EntryID]: ...
     def evolve(self, **kwargs): ...
+    def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: SecretKey) -> bytes: ...
     def decrypt_verify_and_load(
         encrypted: bytes,
@@ -157,6 +159,7 @@ class FileManifest:
     @property
     def blocks(self) -> Tuple[BlockAccess]: ...
     def evolve(self, **kwargs): ...
+    def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: SecretKey) -> bytes: ...
     def decrypt_verify_and_load(
         encrypted: bytes,
@@ -195,6 +198,7 @@ class WorkspaceManifest:
     @property
     def children(self) -> FrozenDict[EntryName, EntryID]: ...
     def evolve(self, **kwargs): ...
+    def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: SecretKey) -> bytes: ...
     def decrypt_verify_and_load(
         encrypted: bytes,
