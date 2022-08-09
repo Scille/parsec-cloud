@@ -1,11 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
+import trio
+from urllib.request import urlopen, Request, HTTPError
 
 from parsec import __version__ as parsec_version
 from parsec.api.protocol import OrganizationID, InvitationToken, InvitationType
 from parsec.core.types.backend_address import BackendInvitationAddr
-from parsec.backend.asgi import MAX_CONTENT_LENGTH, app_factory
+from parsec.backend.asgi import MAX_CONTENT_LENGTH, serve_backend_with_asgi
 
 from tests.common import customize_fixtures
 
@@ -59,17 +61,36 @@ async def test_forward_proto_enforce_https(backend_asgi_app):
 
 
 @pytest.mark.trio
-async def test_server_header_in_debug(backend_factory):
-
-    config = {"debug": True}
-    expected_server_label = f"parsec/{parsec_version}"
+@pytest.mark.parametrize("mode", ("prod", "debug"))
+async def test_server_header_in_debug(backend_factory, mode):
+    if mode == "debug":
+        config = {"debug": True}
+        expected_server_header = f"parsec/{parsec_version}"
+    else:
+        assert mode == "prod"
+        config = {"debug": False}
+        expected_server_header = f"parsec"
 
     async with backend_factory(populated=False, config=config) as backend:
-        app = app_factory(backend)
-        client = app.test_client()
-        rep = await client.get("/")
-        assert rep.status == "200 OK"
-        assert rep.headers["server"] == expected_server_label
+        async with trio.open_nursery() as nursery:
+            binds = await nursery.start(serve_backend_with_asgi, backend, "127.0.0.1", 0)
+            baseurl = binds[0]
+
+            for endpoint, method, expected_status in [
+                ("/", "GET", 200),
+                ("/", "HEAD", 200),
+                ("/dummy", "GET", 404),
+                ("/", "POST", 405),
+            ]:
+                req = Request(url=f"{baseurl}{endpoint}", method=method)
+                try:
+                    rep = await trio.to_thread.run_sync(urlopen, req)
+                except HTTPError as exc:
+                    rep = exc
+                assert rep.status == expected_status
+                assert rep.headers["server"] == expected_server_header
+
+            nursery.cancel_scope.cancel()
 
 
 @pytest.mark.trio
