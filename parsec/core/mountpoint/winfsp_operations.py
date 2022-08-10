@@ -14,6 +14,7 @@ from winfspy import (
     CREATE_FILE_CREATE_OPTIONS,
 )
 from winfspy.plumbing import dt_to_filetime, NTSTATUS, SecurityDescriptor
+import pendulum
 
 from parsec.api.data import EntryID
 from parsec.core.core_events import CoreEvent
@@ -158,8 +159,8 @@ def stat_to_file_attributes(stat):
 
 
 def stat_to_winfsp_attributes(stat):
-    created = dt_to_filetime(stat["created"])
-    updated = dt_to_filetime(stat["updated"])
+    created = dt_to_filetime(pendulum.from_timestamp(stat["created"].timestamp()))
+    updated = dt_to_filetime(pendulum.from_timestamp(stat["updated"].timestamp()))
     attributes = {
         "creation_time": created,
         "last_access_time": updated,
