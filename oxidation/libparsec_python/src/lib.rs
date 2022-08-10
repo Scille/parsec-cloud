@@ -44,14 +44,6 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ids::DeviceName>()?;
     m.add_class::<ids::DeviceLabel>()?;
     m.add_class::<ids::UserID>()?;
-    m.add_class::<invite::InvitationToken>()?;
-    m.add_class::<invite::SASCode>()?;
-    m.add_function(wrap_pyfunction!(invite::generate_sas_codes, m)?)?;
-    m.add_function(wrap_pyfunction!(invite::generate_sas_code_candidates, m)?)?;
-    m.add_class::<invite::InviteUserData>()?;
-    m.add_class::<invite::InviteUserConfirmation>()?;
-    m.add_class::<invite::InviteDeviceData>()?;
-    m.add_class::<invite::InviteDeviceConfirmation>()?;
     m.add_class::<manifest::EntryName>()?;
     m.add_class::<manifest::WorkspaceEntry>()?;
     m.add_class::<manifest::BlockAccess>()?;
