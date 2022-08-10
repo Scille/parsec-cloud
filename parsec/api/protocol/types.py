@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from unicodedata import normalize
-from typing import Union, TypeVar, Optional, Tuple, Pattern
+from typing import Union, TypeVar, Optional, Tuple, Pattern, Type
 from enum import Enum
 
 from parsec.serde import fields
@@ -55,11 +55,11 @@ class StrBased:
         return self._str
 
 
-OrganizationIDField = fields.str_based_field_factory(OrganizationID)
-UserIDField = fields.str_based_field_factory(UserID)
-DeviceNameField = fields.str_based_field_factory(DeviceName)
-DeviceIDField = fields.str_based_field_factory(DeviceID)
-DeviceLabelField = fields.str_based_field_factory(DeviceLabel)
+OrganizationIDField: Type[fields.Field] = fields.str_based_field_factory(OrganizationID)
+UserIDField: Type[fields.Field] = fields.str_based_field_factory(UserID)
+DeviceNameField: Type[fields.Field] = fields.str_based_field_factory(DeviceName)
+DeviceIDField: Type[fields.Field] = fields.str_based_field_factory(DeviceID)
+DeviceLabelField: Type[fields.Field] = fields.str_based_field_factory(DeviceLabel)
 
 
 class HumanHandleField(fields.Tuple):
@@ -97,4 +97,4 @@ class UserProfile(Enum):
     OUTSIDER = "OUTSIDER"
 
 
-UserProfileField = fields.enum_field_factory(UserProfile)
+UserProfileField: Type[fields.Field] = fields.enum_field_factory(UserProfile)

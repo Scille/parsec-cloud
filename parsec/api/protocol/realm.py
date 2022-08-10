@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from typing import Type
 from enum import Enum
 from parsec.serde import fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
@@ -35,9 +36,9 @@ class RealmRole(Enum):
     READER = "READER"
 
 
-RealmRoleField = fields.enum_field_factory(RealmRole)
-MaintenanceTypeField = fields.enum_field_factory(MaintenanceType)
-RealmIDField = fields.uuid_based_field_factory(RealmID)
+RealmRoleField: Type[fields.BaseEnumField] = fields.enum_field_factory(RealmRole)
+MaintenanceTypeField: Type[fields.BaseEnumField] = fields.enum_field_factory(MaintenanceType)
+RealmIDField: Type[fields.Field] = fields.uuid_based_field_factory(RealmID)
 
 
 class RealmCreateReqSchema(BaseReqSchema):

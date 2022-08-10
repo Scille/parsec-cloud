@@ -1,16 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import Optional
 import attr
-from functools import wraps
+from enum import Enum
+from functools import wraps, partial
 from pendulum import DateTime
-from typing import Dict, Type, cast, TypeVar, Mapping, Any, Tuple, Sequence
+from typing import (
+    Optional,
+    Dict,
+    Type,
+    cast,
+    TypeVar,
+    Mapping,
+    Any,
+    Tuple,
+    Sequence,
+    Union,
+    Callable,
+)
 
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.serde import (
     BaseSchema,
     fields,
     post_load,
+    BaseSerializer,
     MsgpackSerializer,
     SerdeValidationError,
     SerdePackingError,
@@ -51,10 +64,11 @@ T = TypeVar("T")
 
 
 class BaseReqSchema(BaseSchema):
-    cmd = fields.String(required=True)
+    # Typing is for inheritance overloading
+    cmd: Union[fields.String, fields.CheckedConstant] = fields.String(required=True)
 
     @post_load
-    def _drop_cmd_field(self, item: Dict[str, T]) -> Dict[str, T]:  # type: ignore[misc]
+    def _drop_cmd_field(self, item: Dict[str, T]) -> Dict[str, T]:
         if self.drop_cmd_field:
             item.pop("cmd")
         return item
@@ -71,12 +85,15 @@ class BaseTypedReqSchema(BaseReqSchema):
     # Children must provide a checked constant `cmd` field
 
     @post_load
-    def make_obj(self, data: Dict[str, Any]) -> "BaseReq":  # type: ignore[misc]
+    def make_obj(self, data: Dict[str, Any]) -> "BaseReq":
         return self.TYPE(**data)  # type: ignore[call-arg]
 
 
 class BaseRepSchema(BaseSchema):
-    status = fields.CheckedConstant("ok", required=True)
+    # Typing is for inheritance overloading
+    status: Union[fields.CheckedConstant, fields.String] = fields.CheckedConstant(
+        "ok", required=True
+    )
 
 
 class BaseTypedRepSchema(BaseRepSchema):
@@ -86,7 +103,7 @@ class BaseTypedRepSchema(BaseRepSchema):
     # Children must provide a checked constant `status` field
 
     @post_load
-    def make_obj(self, data: Dict[str, Any]) -> "BaseRep":  # type: ignore[misc]
+    def make_obj(self, data: Dict[str, Any]) -> "BaseRep":
         data.pop("status")
         return self.TYPE(**data)  # type: ignore[call-arg]
 
@@ -99,9 +116,7 @@ class ErrorRepSchema(BaseRepSchema):
 
 
 class RequireGreaterTimestampRepSchema(BaseRepSchema):
-    status: fields.CheckedConstant = fields.CheckedConstant(
-        "require_greater_timestamp", required=True
-    )
+    status = fields.CheckedConstant("require_greater_timestamp", required=True)
     strictly_greater_than = fields.DateTime(required=True, allow_none=False)
 
 
@@ -126,7 +141,7 @@ class TimestampOutOfBallparkRepSchema(BaseRepSchema):
     backend_timestamp = fields.DateTime(required=False, allow_none=False)
 
     @post_load
-    def make_obj(self, data: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore[misc]
+    def make_obj(self, data: Dict[str, Any]) -> Dict[str, Any]:
         # Cannot use `missing=None` with `allow_none=False`
         data.setdefault("ballpark_client_early_offset", None)
         data.setdefault("ballpark_client_late_offset", None)
@@ -150,9 +165,12 @@ class CmdSerializer:
         assert issubclass(req_cls, BaseReq)
         assert all(issubclass(x, BaseRep) for x in rep_clss)
 
-        rep_schemas = {
-            x.SCHEMA_CLS._declared_fields["status"].default: x.SCHEMA_CLS for x in rep_clss
-        }
+        rep_schemas: Dict[str, Type[BaseSchema]] = {}
+        for rep_cls in rep_clss:
+            rep_cls_status = rep_cls.SCHEMA_CLS._declared_fields["status"].default
+            assert isinstance(rep_cls_status, str)
+            rep_schemas[rep_cls_status] = rep_cls.SCHEMA_CLS
+
         rep_schema_ok = rep_schemas.pop("ok")
         return cls(
             req_schema_cls=req_cls.SCHEMA_CLS,
@@ -216,14 +234,30 @@ class CmdSerializer:
 
             return wrapper
 
-        self.req_load = _maybe_untype_wrapper(self._req_serializer.load)
-        self.req_dump = _maybe_untype_wrapper(self._req_serializer.dump)
-        self.rep_load = _maybe_untype_wrapper(self._rep_serializer.load)
-        self.rep_dump = _maybe_untype_wrapper(self._rep_serializer.dump)
-        self.req_loads = _maybe_untype_wrapper(self._req_serializer.loads)
-        self.req_dumps = _maybe_untype_wrapper(self._req_serializer.dumps)
-        self.rep_loads = _maybe_untype_wrapper(self._rep_serializer.loads)
-        self.rep_dumps = _maybe_untype_wrapper(self._rep_serializer.dumps)
+        self.req_load: Callable[[Dict[str, Any]], Dict[str, Any]] = _maybe_untype_wrapper(
+            self._req_serializer.load
+        )
+        self.req_dump: Callable[[Dict[str, Any]], Dict[str, Any]] = _maybe_untype_wrapper(
+            self._req_serializer.dump
+        )
+        self.rep_load: Callable[[Dict[str, Any]], Dict[str, Any]] = _maybe_untype_wrapper(
+            self._rep_serializer.load
+        )
+        self.rep_dump: Callable[[Dict[str, Any]], Dict[str, Any]] = _maybe_untype_wrapper(
+            self._rep_serializer.dump
+        )
+        self.req_loads: Callable[[bytes], Dict[str, Any]] = _maybe_untype_wrapper(
+            self._req_serializer.loads
+        )
+        self.req_dumps: Callable[[Dict[str, Any]], bytes] = _maybe_untype_wrapper(
+            self._req_serializer.dumps
+        )
+        self.rep_loads: Callable[[bytes], Dict[str, Any]] = _maybe_untype_wrapper(
+            self._rep_serializer.loads
+        )
+        self.rep_dumps: Callable[[Dict[str, Any]], bytes] = _maybe_untype_wrapper(
+            self._rep_serializer.dumps
+        )
 
     def require_greater_timestamp_rep_dump(
         self, strictly_greater_than: DateTime
@@ -311,21 +345,22 @@ BaseReqTypeVar = TypeVar("BaseReqTypeVar", bound="BaseReq")
 class BaseReq(metaclass=CmdReqMeta):
     # Must be overloaded by child classes
     SCHEMA_CLS = BaseTypedReqSchema
+    SERIALIZER: BaseSerializer
 
-    def __eq__(self, other: Any) -> bool:  # type: ignore[misc]
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))  # type: ignore[arg-type]
+            return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
     def evolve(self, **kwargs):  # type: ignore[no-untyped-def]
         return attr.evolve(self, **kwargs)
 
     def dump(self) -> bytes:
-        return self.SERIALIZER.dumps(self)  # type: ignore[attr-defined]
+        return self.SERIALIZER.dumps(self)
 
     @classmethod
     def load(cls: Type[BaseReqTypeVar], raw: bytes) -> BaseReqTypeVar:
-        return cls.SERIALIZER.loads(raw)  # type: ignore[attr-defined]
+        return cls.SERIALIZER.loads(raw)
 
 
 BaseRepTypeVar = TypeVar("BaseRepTypeVar", bound="BaseRep")
@@ -334,24 +369,25 @@ BaseRepTypeVar = TypeVar("BaseRepTypeVar", bound="BaseRep")
 class BaseRep(metaclass=CmdRepMeta):
     # Must be overloaded by child classes
     SCHEMA_CLS = BaseTypedRepSchema
+    SERIALIZER: BaseSerializer
 
-    def __eq__(self, other: Any) -> bool:  # type: ignore[misc]
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))  # type: ignore[arg-type]
+            return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
     def evolve(self, **kwargs):  # type: ignore[no-untyped-def]
         return attr.evolve(self, **kwargs)
 
     def dump(self) -> bytes:
-        return self.SERIALIZER.dumps(self)  # type: ignore[attr-defined]
+        return self.SERIALIZER.dumps(self)
 
     @classmethod
-    def load(cls: Type[BaseReqTypeVar], raw: bytes) -> BaseReqTypeVar:  # type: ignore[misc]
-        return cls.SERIALIZER.loads(raw)  # type: ignore[attr-defined]
+    def load(cls: Type[BaseRepTypeVar], raw: bytes) -> BaseRepTypeVar:
+        return cls.SERIALIZER.loads(raw)
 
 
-def cmd_rep_error_type_factory(  # type: ignore[no-any-unimported]
+def cmd_rep_error_type_factory(
     name: str, status: str, extra_fields: Dict[str, fields.Field] = {}
 ) -> Type[BaseRep]:
     """
@@ -371,14 +407,17 @@ def cmd_rep_error_type_factory(  # type: ignore[no-any-unimported]
             [...] # extra_fields
 
     """
-    schema_fields = {**extra_fields, "status": fields.CheckedConstant(status, required=True)}
+    schema_fields: Dict[str, fields.Field] = {
+        **extra_fields,
+        "status": fields.CheckedConstant(status, required=True),
+    }
 
     @post_load
-    def make_obj(self, data: Dict[str, Any]) -> Type[BaseRep]:  # type: ignore[no-untyped-def, misc]
+    def make_obj(self: BaseTypedRepSchema, data: Dict[str, Any]) -> BaseRep:
         data.pop("status")
         return rep_cls(**data)
 
-    schema_cls = type("SCHEMA_CLS", (BaseTypedRepSchema,), {"make_obj": make_obj, **schema_fields})
+    schema_cls = type("SCHEMA_CLS", (BaseTypedRepSchema,), {"make_obj": make_obj, **schema_fields})  # type: ignore[arg-type]
     rep_cls = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)(
         type(
             name,
@@ -397,11 +436,15 @@ def cmd_rep_error_type_factory(  # type: ignore[no-any-unimported]
 def cmd_rep_factory(name: str, *rep_types: Type[BaseRep]):  # type: ignore[no-untyped-def]
     assert name.endswith("Rep")
 
+    rep_schemas: Dict[Union[Enum, str], Union[BaseSchema, Type[BaseSchema]]] = {}
+    for rep_type in rep_types:
+        status = rep_type.SCHEMA_CLS._declared_fields["status"].default
+        assert isinstance(status, (str, Enum))
+        rep_schemas[status] = rep_type.SCHEMA_CLS
+
     class RepSchema(OneOfSchemaLegacy):
         type_field = "status"
-        type_schemas = {
-            x.SCHEMA_CLS._declared_fields["status"].default: x.SCHEMA_CLS for x in rep_types
-        }
+        type_schemas = rep_schemas
 
         def get_obj_type(self, obj: Dict[str, object]) -> str:
             return cast(str, obj.get("status"))
@@ -410,11 +453,10 @@ def cmd_rep_factory(name: str, *rep_types: Type[BaseRep]):  # type: ignore[no-un
 
     serializer = MsgpackSerializer(RepSchema, InvalidMessageError, MessageSerializationError)
 
-    @classmethod  # type: ignore[misc]
-    def load(cls, raw: bytes) -> Dict[Any, Any]:  # type: ignore[no-untyped-def, misc]
-        return serializer.loads(raw)
+    # Define the `CmdRep.load` classmethod
+    load_meth = partial(serializer.loads)
 
-    fields = {"load": load, "TYPES": rep_types}
+    fields = {"load": load_meth, "TYPES": rep_types}
     for rep_type in rep_types:
         assert rep_type.__name__.startswith(name)
         rep_type_name = rep_type.__name__[len(name) :]
@@ -427,11 +469,15 @@ def cmd_rep_factory(name: str, *rep_types: Type[BaseRep]):  # type: ignore[no-un
 def any_cmd_req_factory(name: str, *req_types: Type[BaseReq]):  # type: ignore[no-untyped-def]
     assert name.endswith("Req")
 
+    req_schemas: Dict[Union[Enum, str], Union[BaseSchema, Type[BaseSchema]]] = {}
+    for req_type in req_types:
+        cmd = req_type.SCHEMA_CLS._declared_fields["cmd"].default
+        assert isinstance(cmd, (str, Enum))
+        req_schemas[cmd] = req_type.SCHEMA_CLS
+
     class AnyCmdReqSchema(OneOfSchemaLegacy):
         type_field = "cmd"
-        type_schemas = {
-            x.SCHEMA_CLS._declared_fields["cmd"].default: x.SCHEMA_CLS for x in req_types
-        }
+        type_schemas = req_schemas
 
         def get_obj_type(self, obj: Dict[str, object]) -> Optional[str]:
             return cast(str, obj.get("cmd"))
@@ -440,11 +486,10 @@ def any_cmd_req_factory(name: str, *req_types: Type[BaseReq]):  # type: ignore[n
 
     serializer = MsgpackSerializer(AnyCmdReqSchema, InvalidMessageError, MessageSerializationError)
 
-    @classmethod  # type: ignore[misc]
-    def load(cls, raw: bytes) -> Dict[Any, Any]:  # type: ignore[no-untyped-def, misc]
-        return serializer.loads(raw)
+    # Define the `CmdRep.load` classmethod
+    load_meth = partial(serializer.loads)
 
-    fields = {"load": load, "TYPES": req_types}
+    fields = {"load": load_meth, "TYPES": req_types}
     suffix = "Req"
     for rep_type in req_types:
         assert rep_type.__name__.endswith(suffix)

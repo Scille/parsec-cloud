@@ -129,7 +129,7 @@ class BaseManifest(BaseAPISignedData):
         id = EntryIDField(required=True)
 
         @property
-        def type_schemas(self) -> Dict[ManifestType, Type[OneOfSchema]]:  # type: ignore[override]
+        def type_schemas(self) -> Dict[ManifestType, Type[BaseSignedDataSchema]]:  # type: ignore[override]
             return {
                 ManifestType.FILE_MANIFEST: _PyFileManifest.SCHEMA_CLS,
                 ManifestType.FOLDER_MANIFEST: _PyFolderManifest.SCHEMA_CLS,

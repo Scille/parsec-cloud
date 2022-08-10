@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Type
 import attr
 
 from parsec.serde import fields
@@ -21,7 +21,7 @@ from parsec._parsec import BlockID
 __all__ = ("BlockID", "BlockIDField", "block_create_serializer", "block_read_serializer")
 
 
-BlockIDField = fields.uuid_based_field_factory(BlockID)
+BlockIDField: Type[fields.Field] = fields.uuid_based_field_factory(BlockID)
 
 
 class BlockCreateReqSchema(BaseReqSchema):

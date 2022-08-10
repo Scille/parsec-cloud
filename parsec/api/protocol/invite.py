@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from enum import Enum
-from typing import Dict, cast, TYPE_CHECKING
+from typing import Dict, cast, Type, TYPE_CHECKING
 
 from parsec.types import UUID4
 from parsec.serde import BaseSchema, OneOfSchema, fields
@@ -50,8 +50,8 @@ class InvitationType(Enum):
     DEVICE = "DEVICE"
 
 
-InvitationTokenField = fields.uuid_based_field_factory(InvitationToken)
-InvitationTypeField = fields.enum_field_factory(InvitationType)
+InvitationTokenField: Type[fields.Field] = fields.uuid_based_field_factory(InvitationToken)
+InvitationTypeField: Type[fields.BaseEnumField] = fields.enum_field_factory(InvitationType)
 
 
 class InviteNewUserReqSchema(BaseReqSchema):

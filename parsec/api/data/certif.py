@@ -88,10 +88,10 @@ class UserCertificateContent(BaseAPISignedData):
     @classmethod
     def verify_and_load(
         cls,
-        *args,
+        *args: Any,
         expected_user: Optional[UserID] = None,
         expected_human_handle: Optional[HumanHandle] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> "UserCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_user is not None and data.user_id != expected_user:
@@ -130,7 +130,7 @@ class RevokedUserCertificateContent(BaseAPISignedData):
 
     @classmethod
     def verify_and_load(
-        cls, *args, expected_user: Optional[UserID] = None, **kwargs
+        cls, *args: Any, expected_user: Optional[UserID] = None, **kwargs: Any
     ) -> "RevokedUserCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_user is not None and data.user_id != expected_user:
@@ -222,7 +222,9 @@ class RealmRoleCertificateContent(BaseAPISignedData):
     role: Optional[RealmRole]  # Set to None if role removed
 
     @classmethod
-    def build_realm_root_certif(cls, author: DeviceID, timestamp: DateTime, realm_id: RealmID):
+    def build_realm_root_certif(
+        cls, author: DeviceID, timestamp: DateTime, realm_id: RealmID
+    ) -> "RealmRoleCertificateContent":
         return cls(
             author=author,
             timestamp=timestamp,
@@ -234,11 +236,11 @@ class RealmRoleCertificateContent(BaseAPISignedData):
     @classmethod
     def verify_and_load(
         cls,
-        *args,
+        *args: Any,
         expected_realm: Optional[RealmID] = None,
         expected_user: Optional[UserID] = None,
         expected_role: Optional[RealmRole] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> "RealmRoleCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_user is not None and data.user_id != expected_user:

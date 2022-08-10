@@ -128,7 +128,7 @@ class HandshakeChallengeSchema(BaseSchema):
     backend_timestamp = fields.DateTime(required=False, allow_none=False)
 
     @post_load
-    def make_obj(self, data: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore[misc]
+    def make_obj(self, data: Dict[str, Any]) -> Dict[str, Any]:
         # Cannot use `missing=None` with `allow_none=False`
         data.setdefault("ballpark_client_early_offset", None)
         data.setdefault("ballpark_client_late_offset", None)
