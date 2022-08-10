@@ -26,13 +26,6 @@ mod trustchain;
 /// import the module.
 #[pymodule]
 fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<addrs::BackendAddr>()?;
-    m.add_class::<addrs::BackendOrganizationAddr>()?;
-    m.add_class::<addrs::BackendActionAddr>()?;
-    m.add_class::<addrs::BackendOrganizationBootstrapAddr>()?;
-    m.add_class::<addrs::BackendOrganizationFileLinkAddr>()?;
-    m.add_class::<addrs::BackendInvitationAddr>()?;
-    m.add_class::<addrs::BackendPkiEnrollmentAddr>()?;
     m.add_class::<ids::OrganizationID>()?;
     m.add_class::<ids::EntryID>()?;
     m.add_class::<ids::BlockID>()?;
