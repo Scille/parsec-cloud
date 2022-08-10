@@ -32,14 +32,18 @@ CREATE TABLE organization (
 -- Sequester
 -------------------------------------------------------
 
+
+
 CREATE TABLE sequester_service(
     _id SERIAL PRIMARY KEY,
     service_id UUID NOT NULL,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
+    service_type sequester_service_type NOT NULL,
     service_certificate BYTEA NOT NULL,
     service_label VARCHAR(254) NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
     disabled_on TIMESTAMPTZ, -- NULL if currently enabled
+    webhook_url TEXT, -- NULL if service_type != WEBHOOK;
 
     UNIQUE(organization, service_id)
 );
