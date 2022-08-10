@@ -3,7 +3,7 @@
 from parsec.backend.backend_events import BackendEvent
 import pytest
 import trio
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.crypto import PrivateKey, HashDigest
 from parsec.api.protocol import InvitationType

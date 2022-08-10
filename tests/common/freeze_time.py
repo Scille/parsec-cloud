@@ -2,7 +2,7 @@
 
 import trio
 import pendulum
-from libparsec.types import DateTime
+from parsec._parsec import DateTime, freeze_time as _Rs_freeze_time
 from contextlib import contextmanager
 
 from parsec.api.protocol import DeviceID
@@ -94,21 +94,11 @@ def freeze_time(time=None, device=None):
         # Set new context
         __freeze_time_task = current_task
         pendulum.set_test_now(time)
-        try:
-            from libparsec.types import freeze_time as _Rs_freeze_time
-        except ImportError:
-            pass
-        else:
-            _Rs_freeze_time(time)
+        _Rs_freeze_time(time)
 
         yield time
     finally:
         # Restore previous context
         __freeze_time_task = previous_task
         pendulum.set_test_now(previous_time)
-        try:
-            from libparsec.types import freeze_time as _Rs_freeze_time
-        except ImportError:
-            pass
-        else:
-            _Rs_freeze_time(previous_time)
+        _Rs_freeze_time(previous_time)

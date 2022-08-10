@@ -5,7 +5,7 @@ from parsec.core.core_events import CoreEvent
 from PyQt5.QtCore import pyqtSignal, Qt, QTimer
 from PyQt5.QtWidgets import QWidget, QLabel
 
-from libparsec.types import DateTime, LocalDateTime
+from parsec._parsec import DateTime, LocalDateTime
 
 from contextlib import contextmanager
 from structlog import get_logger

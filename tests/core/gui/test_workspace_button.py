@@ -2,7 +2,7 @@
 
 import pytest
 
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from PyQt5 import QtCore
 
 from parsec.api.data import EntryName

@@ -2,7 +2,7 @@
 
 # flake8: noqa
 
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *

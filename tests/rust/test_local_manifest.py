@@ -2,7 +2,7 @@
 
 import pytest
 
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 import re
 from parsec.api.data import EntryID, BlockID, EntryName
 from parsec.api.data.manifest import (

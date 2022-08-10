@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 from uuid import UUID
 from collections import defaultdict
 import attr
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import OrganizationID, DeviceID
 from parsec.backend.backend_events import BackendEvent

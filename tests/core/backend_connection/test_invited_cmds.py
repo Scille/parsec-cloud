@@ -96,7 +96,7 @@ async def test_handshake_unknown_organization(running_backend, coolorg):
 
 
 from parsec.api.protocol import InvitationDeletedReason
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 
 @pytest.mark.trio

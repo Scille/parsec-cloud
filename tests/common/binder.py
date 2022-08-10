@@ -2,7 +2,7 @@
 
 import pytest
 from typing import Union, Optional, Tuple
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from functools import partial
 from dataclasses import dataclass
 

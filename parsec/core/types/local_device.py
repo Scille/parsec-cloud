@@ -4,7 +4,7 @@ import attr
 from typing import TYPE_CHECKING, Tuple, Optional
 from hashlib import sha256
 from marshmallow import ValidationError
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
 from parsec.serde import fields, post_load

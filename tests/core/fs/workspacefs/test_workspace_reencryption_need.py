@@ -10,7 +10,7 @@ from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
     Bundle,
 )
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import RealmID, RealmRole
 from parsec.api.data import RealmRoleCertificateContent, EntryName

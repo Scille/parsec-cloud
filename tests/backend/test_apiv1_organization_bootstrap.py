@@ -2,7 +2,7 @@
 
 import trio
 import pytest
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from collections import defaultdict
 
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile

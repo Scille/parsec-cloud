@@ -8,7 +8,7 @@ from string import ascii_lowercase
 from contextlib import contextmanager
 import attr
 import pytest
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from hypothesis_trio.stateful import initialize, invariant, rule, run_state_machine_as_test, Bundle
 from hypothesis import strategies as st
 

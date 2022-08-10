@@ -3,7 +3,7 @@
 import attr
 from typing import List
 from uuid import UUID
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.data import DataError, PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 from parsec.api.protocol import (

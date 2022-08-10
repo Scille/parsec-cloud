@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Tuple, List, Dict, Optional
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from uuid import UUID
 
 from parsec.crypto import VerifyKey, PublicKey

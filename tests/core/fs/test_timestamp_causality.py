@@ -3,7 +3,7 @@
 import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmRole, UserProfile

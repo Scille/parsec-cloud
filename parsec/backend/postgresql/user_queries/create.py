@@ -4,7 +4,7 @@ from parsec.backend.backend_events import BackendEvent
 import itertools
 from triopg import UniqueViolationError
 import pendulum
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import OrganizationID
 from parsec.backend.user import (

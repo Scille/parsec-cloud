@@ -6,7 +6,7 @@ import sys
 import subprocess
 import pytest
 import pendulum
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from collections import defaultdict
 from typing import Union, Optional, Tuple, Iterable
 from hashlib import sha1

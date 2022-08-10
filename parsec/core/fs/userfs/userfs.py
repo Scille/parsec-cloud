@@ -3,7 +3,7 @@
 import trio
 from pathlib import Path
 from trio_typing import TaskStatus
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from typing import (
     Tuple,
     Optional,

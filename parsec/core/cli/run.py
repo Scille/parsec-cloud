@@ -4,7 +4,7 @@ import trio
 import click
 import multiprocessing
 from pathlib import Path
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from typing import Optional
 
 from parsec.utils import trio_run

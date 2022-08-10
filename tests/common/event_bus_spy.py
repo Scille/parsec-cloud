@@ -3,7 +3,7 @@
 import pytest
 import trio
 import attr
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from contextlib import contextmanager
 from unittest.mock import ANY
 from enum import Enum

@@ -3,7 +3,7 @@
 import os
 import sys
 import pytest
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from hypothesis_trio.stateful import initialize, rule, run_state_machine_as_test
 from hypothesis import strategies as st
 

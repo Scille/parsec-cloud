@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QWidget, QDialog, QApplication
 
 from structlog import get_logger
 
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.lang import get_qlocale, translate as _, format_datetime

@@ -2,7 +2,7 @@
 
 import pytest
 from typing import Dict, Optional, Tuple
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.data import (
     UserCertificateContent,

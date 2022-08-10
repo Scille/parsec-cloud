@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.serde import BaseSchema, fields
 from parsec.api.protocol.base import ErrorRepSchema, packb

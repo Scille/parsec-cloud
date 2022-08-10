@@ -3,7 +3,7 @@
 from parsec.core.backend_connection.exceptions import BackendOutOfBallparkError
 from parsec.core.core_events import CoreEvent
 import pytest
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from unittest.mock import ANY
 from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_US
 from parsec.crypto import SecretKey

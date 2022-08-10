@@ -3,7 +3,7 @@
 import pytest
 import trio
 
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     DeviceLabel,

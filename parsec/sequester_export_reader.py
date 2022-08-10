@@ -2,7 +2,7 @@
 
 from typing import List, Dict, Iterator, Mapping, Optional, Tuple
 from pathlib import Path, PurePath
-from pendulum import from_timestamp as pendulum_from_timestamp
+from parsec._parsec import DateTime
 from contextlib import contextmanager
 import sqlite3
 import enum
@@ -199,7 +199,7 @@ class WorkspaceExport:
                 author, author_verify_key = self.devices_form_internal_id[author_internal_id]
             except KeyError:
                 raise InconsistentWorkspaceError(f"Missing device certificate for `{author}`")
-            timestamp = pendulum_from_timestamp(raw_timestamp / 1000)
+            timestamp = DateTime.from_timestamp(raw_timestamp / 1000)
 
             decrypted_blob = sequester_service_decrypt(
                 decryption_key=self.decryption_key, data=blob

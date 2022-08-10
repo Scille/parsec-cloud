@@ -2,7 +2,7 @@
 
 import pytest
 
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import (
     UserID,
@@ -207,7 +207,7 @@ def test_realm_role_certificate():
 
     kwargs = {
         "author": DeviceID.new(),
-        "timestamp": pendulum.now(),
+        "timestamp": DateTime.now(),
         "realm_id": RealmID.new(),
         "user_id": UserID("bob"),
         "role": RealmRole.OWNER,
@@ -219,7 +219,7 @@ def test_realm_role_certificate():
 
     kwargs = {
         "author": DeviceID.new(),
-        "timestamp": pendulum.now(),
+        "timestamp": DateTime.now(),
         "realm_id": RealmID.new(),
         "user_id": UserID("alice"),
         "role": RealmRole.CONTRIBUTOR,

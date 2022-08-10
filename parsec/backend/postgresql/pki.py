@@ -4,7 +4,7 @@ import hashlib
 from typing import List
 from uuid import UUID
 from asyncpg import UniqueViolationError
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 import pendulum
 
 from parsec.api.protocol import OrganizationID
@@ -338,8 +338,10 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         user_certificate=row["user_certificate"],
                         redacted_user_certificate=row["redacted_user_certificate"],
                         user_certifier=None,
-                        created_on=row["created_on"],
-                        revoked_on=row["revoked_on"],
+                        created_on=DateTime.from_timestamp(row["created_on"].timestamp()),
+                        revoked_on=DateTime.from_timestamp(row["revoked_on"].timestamp())
+                        if row["revoked_on"]
+                        else None,
                         revoked_user_certificate=row["revoked_user_certificate"],
                         revoked_user_certifier=None,
                     )

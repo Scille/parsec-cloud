@@ -2,7 +2,7 @@
 
 import attr
 from typing import List, Optional, Tuple
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.event_bus import EventBus

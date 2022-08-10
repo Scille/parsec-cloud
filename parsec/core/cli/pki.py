@@ -4,7 +4,7 @@ import attr
 from typing import Sequence, Optional, Callable
 from uuid import UUID
 import platform
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 import click
 
 from parsec.api.protocol import DeviceLabel

@@ -5,6 +5,7 @@ mod api_crypto;
 mod binding_utils;
 mod ids;
 mod invite;
+mod time;
 
 /// A Python module implemented in Rust.
 #[pymodule]
@@ -45,5 +46,9 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<invite::InviteUserConfirmation>()?;
     m.add_class::<invite::InviteDeviceData>()?;
     m.add_class::<invite::InviteDeviceConfirmation>()?;
+
+    m.add_function(wrap_pyfunction!(time::freeze_time, m)?)?;
+    m.add_class::<time::DateTime>()?;
+    m.add_class::<time::LocalDateTime>()?;
     Ok(())
 }

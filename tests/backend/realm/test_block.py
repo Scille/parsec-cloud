@@ -3,7 +3,7 @@
 import trio
 import pytest
 from unittest.mock import ANY
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from hypothesis import given, strategies as st
 
 from parsec.backend.realm import RealmGrantedRole

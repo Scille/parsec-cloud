@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Type
+from parsec._parsec import DateTime
 from uuid import UUID as _UUID
 from enum import Enum
 from collections import Mapping

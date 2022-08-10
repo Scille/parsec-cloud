@@ -6,7 +6,7 @@ import errno
 import trio
 from functools import partial
 from pathlib import PurePath
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from structlog import get_logger
 from typing import Optional, Iterator
 from contextlib import contextmanager

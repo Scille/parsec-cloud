@@ -3,7 +3,7 @@
 import trio
 from typing import Optional, Callable
 from functools import partial
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from contextlib import asynccontextmanager
 
 from parsec.serde import packb

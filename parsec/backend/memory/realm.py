@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import attr
-from libparsec.types import DateTime
-from typing import List, Dict, Optional, Tuple
+from parsec._parsec import DateTime
+from typing import TYPE_CHECKING, List, Dict, Optional, Tuple
 
 from parsec.api.data import UserProfile
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID

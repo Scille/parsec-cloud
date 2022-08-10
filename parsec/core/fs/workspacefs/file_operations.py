@@ -4,7 +4,7 @@
 
 import bisect
 from typing import Tuple, List, Set, Iterator, Union, Sequence, TYPE_CHECKING
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
 

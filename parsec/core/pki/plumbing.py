@@ -6,7 +6,7 @@ from uuid import UUID
 from importlib import import_module
 
 import trio
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.crypto import PrivateKey, SigningKey

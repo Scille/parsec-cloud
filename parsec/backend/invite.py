@@ -9,7 +9,7 @@ import tempfile
 from enum import Enum
 from collections import defaultdict
 from typing import Dict, List, Optional, Union, Set, cast
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from email.message import Message
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart

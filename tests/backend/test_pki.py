@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from uuid import uuid4
 import pytest
 
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from parsec.api.data import PkiEnrollmentSubmitPayload
 from parsec.api.data.certif import RevokedUserCertificateContent
 from parsec.api.data.pki import PkiEnrollmentAcceptPayload

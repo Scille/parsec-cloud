@@ -2,7 +2,7 @@
 
 import trio
 import pytest
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from functools import partial
 
 from parsec.backend.utils import ClientType

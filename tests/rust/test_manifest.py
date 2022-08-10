@@ -2,7 +2,7 @@
 
 import pytest
 
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.data import EntryID, BlockID, EntryName
 from parsec.api.protocol import RealmRole, DeviceID

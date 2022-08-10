@@ -5,7 +5,7 @@ import random
 from typing import Tuple, Optional
 from pathlib import Path
 from uuid import uuid4
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.data import (
     UserProfile,

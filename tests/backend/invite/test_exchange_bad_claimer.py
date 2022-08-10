@@ -2,7 +2,7 @@
 
 import pytest
 import trio
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import InvitationDeletedReason
 from parsec.backend.events import BackendEvent

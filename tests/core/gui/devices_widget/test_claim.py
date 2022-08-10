@@ -2,7 +2,7 @@
 
 import pytest
 import trio
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from PyQt5 import QtCore
 from contextlib import asynccontextmanager
 from functools import partial

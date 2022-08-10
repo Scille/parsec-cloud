@@ -6,7 +6,7 @@ import trio
 import triopg
 from uuid import uuid4
 from contextlib import contextmanager
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from unittest.mock import patch
 
 from parsec.backend.organization import OrganizationAlreadyBootstrappedError

@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from libparsec.types import DateTime
+from typing import Dict, Optional
+from parsec._parsec import DateTime
 import pendulum
 from triopg import UniqueViolationError
 

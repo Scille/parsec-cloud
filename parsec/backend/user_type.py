@@ -2,7 +2,7 @@
 
 import attr
 from typing import Optional, Tuple
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.utils import timestamps_in_the_ballpark

@@ -3,7 +3,7 @@
 import pytest
 import trio
 from unittest.mock import ANY
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import UserProfile
 from parsec.core import logged_core_factory

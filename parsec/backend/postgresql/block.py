@@ -2,7 +2,7 @@
 
 import pendulum
 from triopg.exceptions import UniqueViolationError
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, BlockID
 from parsec.backend.utils import OperationKind

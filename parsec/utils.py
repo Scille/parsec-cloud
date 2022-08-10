@@ -2,7 +2,7 @@
 
 import attr
 import trio
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from structlog import get_logger
 from contextlib import asynccontextmanager
 

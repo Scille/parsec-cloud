@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 import pendulum
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID

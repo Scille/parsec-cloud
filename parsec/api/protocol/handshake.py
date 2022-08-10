@@ -4,7 +4,7 @@ from typing import Tuple, Optional, cast, Dict, Sequence, Union, Any
 from enum import Enum
 from secrets import token_bytes
 
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.crypto import SigningKey, VerifyKey, CryptoError
 from parsec.serde import BaseSchema, OneOfSchema, fields, validate, post_load

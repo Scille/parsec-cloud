@@ -3,7 +3,7 @@
 import datetime
 from typing import Mapping
 from uuid import UUID
-from libparsec.types import DateTime, LocalDateTime
+from parsec._parsec import DateTime, LocalDateTime
 from struct import pack as struct_pack, unpack as struct_unpack
 from msgpack import (
     packb as msgpack_packb,

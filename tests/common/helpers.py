@@ -7,7 +7,7 @@ import pendulum
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
 from contextlib import ExitStack
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import WorkspaceRole

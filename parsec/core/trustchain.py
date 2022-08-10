@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import TYPE_CHECKING, Tuple, List, Sequence, Optional
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import UserID, DeviceID
@@ -46,7 +46,7 @@ class TrustchainContext:
         now = now or DateTime.now()
         try:
             cached_on, verified_user = self._users_cache[user_id]
-            if (now - cached_on).total_seconds() < self.cache_validity:
+            if now - cached_on < self.cache_validity:
                 return verified_user
         except KeyError:
             pass
@@ -58,7 +58,7 @@ class TrustchainContext:
         now = now or DateTime.now()
         try:
             cached_on, verified_revoked_user = self._revoked_users_cache[user_id]
-            if (now - cached_on).total_seconds() < self.cache_validity:
+            if now - cached_on < self.cache_validity:
                 return verified_revoked_user
         except KeyError:
             pass
@@ -70,7 +70,7 @@ class TrustchainContext:
         now = now or DateTime.now()
         try:
             cached_on, verified_device = self._devices_cache[device_id]
-            if (now - cached_on).total_seconds() < self.cache_validity:
+            if now - cached_on < self.cache_validity:
                 return verified_device
         except KeyError:
             pass

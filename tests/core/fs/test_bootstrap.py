@@ -2,7 +2,7 @@
 
 import pytest
 import trio
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.crypto import SecretKey
 from parsec.api.data import UserManifest, WorkspaceEntry, EntryName

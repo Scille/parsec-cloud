@@ -3,7 +3,7 @@
 import sys
 import subprocess
 import pytest
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 from collections import defaultdict
 from typing import Optional, Tuple, Iterable
 from hashlib import sha1

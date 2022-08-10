@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import ANY
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.data import UserProfile

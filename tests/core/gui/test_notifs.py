@@ -2,7 +2,7 @@
 
 import pytest
 from pathlib import Path
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.core.core_events import CoreEvent
 from parsec.api.protocol import RealmRole

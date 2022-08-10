@@ -3,7 +3,7 @@
 from parsec.types import FrozenDict
 import pytest
 import re
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.api.data import EntryName

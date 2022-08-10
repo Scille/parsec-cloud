@@ -10,7 +10,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.types import LocalDevice
 from parsec.crypto import SigningKey, SecretKey
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 
 async def _create_new_device_for_self(

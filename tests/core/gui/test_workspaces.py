@@ -4,7 +4,7 @@ import pytest
 from PyQt5 import QtCore
 from unittest.mock import Mock
 from pathlib import Path
-from libparsec.types import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.data import EntryName, EntryID
 from parsec.core.types import WorkspaceRole
