@@ -19,6 +19,8 @@ from parsec.backend.sequester import (
     SequesterServiceAlreadyDisabledError,
     SequesterCertificateValidationError,
     SequesterCertificateOutOfBallparkError,
+    SequesterServiceType,
+    SequesterWrongServiceType,
 )
 
 if TYPE_CHECKING:
@@ -161,7 +163,11 @@ class MemorySequesterComponent(BaseSequesterComponent):
     ) -> List[Tuple[VlobID, int, bytes]]:
         dump: List[Tuple[VlobID, int, bytes]] = []
         # Check orga and service exists
-        self._get_service(organization_id=organization_id, service_id=service_id)
+        service = self._get_service(organization_id=organization_id, service_id=service_id)
+        if service.service_type != SequesterServiceType.STORAGE:
+            raise SequesterWrongServiceType(
+                "Service type {service.service_type} is not compatible with export"
+            )
         # Do the actual dump
         for (vorg, vid), vlob in self._vlob_component._vlobs.items():
             if vorg != organization_id or vlob.realm_id != realm_id:

@@ -21,6 +21,8 @@ from parsec.backend.sequester import (
     SequesterServiceAlreadyEnabledError,
     SequesterServiceAlreadyExists,
     SequesterServiceNotFoundError,
+    SequesterServiceType,
+    SequesterWrongServiceType,
 )
 from parsec.crypto import CryptoError
 from parsec.utils import timestamps_in_the_ballpark
@@ -46,13 +48,17 @@ INSERT INTO sequester_service(
     service_certificate,
     service_label,
     created_on
+    service_type,
+    webhook_url,
 )
 VALUES(
     $service_id,
     { q_organization_internal_id("$organization_id") },
     $service_certificate,
     $service_label,
-    $created_on
+    $created_on,
+    $service_type,
+    $webhook_url
 )
 """
 )
@@ -101,7 +107,7 @@ LIMIT 1
 
 _q_get_sequester_service = Q(
     f"""
-SELECT service_label, service_certificate, created_on, disabled_on
+SELECT service_label, service_certificate, created_on, disabled_on, service_type, webhook_url
 FROM sequester_service
 WHERE
     service_id=$service_id
@@ -198,6 +204,8 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     service_label=service.service_label,
                     service_certificate=service.service_certificate,
                     created_on=service.created_on,
+                    service_type=service.service_type.value,
+                    webhook_url=service.webhook_url,
                 )
             )
             if result != "INSERT 0 1":
@@ -294,6 +302,8 @@ class PGPSequesterComponent(BaseSequesterComponent):
             service_certificate=row[1],
             created_on=row[2],
             disabled_on=row[3],
+            service_type=row[4],
+            webhook_url=row[5],
         )
 
     async def get_service(
@@ -327,7 +337,11 @@ class PGPSequesterComponent(BaseSequesterComponent):
     ) -> List[Tuple[VlobID, int, bytes]]:
         async with self.dbh.pool.acquire() as conn:
             # Check organization and service exists
-            await self._get_service(conn, organization_id, service_id)
+            service = await self._get_service(conn, organization_id, service_id)
+            if service.service_type != SequesterServiceType.STORAGE:
+                raise SequesterWrongServiceType(
+                    "Service type {service.service_type} is not compatible with export"
+                )
             data = await conn.fetch(
                 *_get_sequester_blob(
                     organization_id=organization_id.str, service_id=service_id, realm_id=realm_id

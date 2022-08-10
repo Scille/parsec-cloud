@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+from enum import Enum
 from typing import Optional, List, Tuple
 import attr
 from pendulum import DateTime, now as pendulum_now
@@ -51,6 +52,15 @@ class SequesterServiceAlreadyEnabledError(SequesterError):
     pass
 
 
+class SequesterWrongServiceType(SequesterError):
+    pass
+
+
+class SequesterServiceType(Enum):
+    STORAGE = "storage"
+    WEBHOOK = "webhook"
+
+
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class SequesterService:
     service_id: SequesterServiceID
@@ -58,6 +68,8 @@ class SequesterService:
     service_certificate: bytes
     created_on: DateTime = attr.ib(factory=pendulum_now)
     disabled_on: Optional[DateTime] = None
+    service_type: SequesterServiceType = SequesterServiceType.STORAGE
+    webhook_url: Optional[str] = None
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.service_id})"
@@ -147,5 +159,6 @@ class BaseSequesterComponent:
             SequesterDisabledError
             SequesterOrganizationNotFoundError
             SequesterServiceNotFoundError
+            SequesterWrongServiceType
         """
         raise NotImplementedError
