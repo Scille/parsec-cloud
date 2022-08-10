@@ -10,6 +10,8 @@ env:
   python-version: "3.9"
   rust-version: 1.62.0
   node-version: "16"
+  # Need feature from poetry 1.2.x that aren't present in 1.1.x
+  poetry-version: 1.2.0b3
 
 jobs:
   check-quality-assurance:
@@ -17,9 +19,10 @@ jobs:
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
-      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+      - uses: ./.github/actions/setup-python-poetry
         with:
           python-version: ${{ env.python-version }}
+          poetry-version: ${{ env.poetry-version }}
 
       - uses: actions/setup-node@2fddd8803e2f5c9604345a0b591c3020ee971a93  # pin v3.4.1
         with:
@@ -34,7 +37,6 @@ jobs:
 
       - name: Debug installed tools
         run: |
-          set -x
           python --version
           node --version
           # Rust tools
@@ -46,8 +48,7 @@ jobs:
           cargo --version
 
       - name: Debug rust cache
-        run: |
-          ls -la ~/.cargo/{.,bin,git,registry} target || true
+        run: ls -la ~/.cargo/{.,bin,git,registry} target || true
 
       - name: Check Commit Signature
         run: python .github/scripts/check_commit_signature.py
@@ -69,5 +70,8 @@ jobs:
         run: |
           sed -i '/id: mixed-line-ending/a\        args: [ --fix=lf ]' .pre-commit-config.yaml
           cat .pre-commit-config.yaml
+
+      - name: Install project (needed for mypy check)
+        run: poetry install -E core -E backend
 
       - uses: ./.github/actions/use-pre-commit
