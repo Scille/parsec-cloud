@@ -1,5 +1,5 @@
 <template>
-  <ion-label>
+  <ion-label class="ion-text-wrap">
     {{ title }}
     <div
       class="ion-text-wrap"
