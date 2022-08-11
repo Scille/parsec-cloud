@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - parsec/**
+      - tests/**
       - pyproject.toml
       - poetry.lock
       - .github/workflows/test-python-ci.yml
