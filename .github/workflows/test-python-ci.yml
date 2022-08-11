@@ -93,7 +93,7 @@ jobs:
 
       - name: Basic tests
         run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto
-        timeout-minutes: 5
+        timeout-minutes: 10
 
       - name: (Not MacOS) Mountpoint tests
         if: startsWith(matrix.os, 'macos-') != true
