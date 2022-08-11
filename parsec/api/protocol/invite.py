@@ -112,7 +112,7 @@ class InvitationStatus(Enum):
     DELETED = "DELETED"
 
 
-InvitationStatusField = fields.enum_field_factory(InvitationStatus)
+InvitationStatusField: Type[fields.BaseEnumField] = fields.enum_field_factory(InvitationStatus)
 
 
 class InviteListItemUserSchema(BaseSchema):
