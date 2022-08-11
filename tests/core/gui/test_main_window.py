@@ -1,31 +1,40 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
-
-from pathlib import Path
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from PyQt5 import QtCore, QtWidgets
+from unittest.mock import patch
+from PyQt5 import QtCore, QtWidgets, QtGui
 
 from parsec.api.protocol import InvitationType, OrganizationID
+from parsec.api.data import UserProfile, EntryName
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
 from parsec.core.local_device import (
     AvailableDevice,
-    _save_device_with_password,
+    DeviceFileType,
     save_device_with_password,
+    save_device_with_password_in_config,
 )
-from parsec.core.types import EntryID, FsPath
+from parsec.core.types import EntryID
 from parsec.core.types import (
     BackendInvitationAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationFileLinkAddr,
     BackendOrganizationAddr,
+    WorkspaceRole,
 )
 from parsec.core.gui import desktop
+
+from tests.common import customize_fixtures
 
 
 @pytest.fixture
 def catch_create_org_widget(widget_catcher_factory):
     return widget_catcher_factory("parsec.core.gui.create_org_widget.CreateOrgWidget")
+
+
+@pytest.fixture
+def catch_org_info_widget(widget_catcher_factory):
+    return widget_catcher_factory("parsec.core.gui.organization_info_widget.OrganizationInfoWidget")
 
 
 @pytest.fixture
@@ -44,49 +53,45 @@ def catch_text_input_widget(widget_catcher_factory):
 
 
 @pytest.fixture
-async def invitation_organization_link(running_backend):
+async def organization_bootstrap_addr(running_backend):
     org_id = OrganizationID("ShinraElectricPowerCompany")
     org_token = "123"
     await running_backend.backend.organization.create(org_id, org_token)
-    return str(BackendOrganizationBootstrapAddr.build(running_backend.addr, org_id, org_token))
+    return BackendOrganizationBootstrapAddr.build(running_backend.addr, org_id, org_token)
 
 
 @pytest.fixture
-async def invitation_device_link(backend, bob):
+async def device_invitation_addr(backend, bob):
     invitation = await backend.invite.new_for_device(
         organization_id=bob.organization_id, greeter_user_id=bob.user_id
     )
-    return str(
-        BackendInvitationAddr.build(
-            backend_addr=bob.organization_addr,
-            organization_id=bob.organization_id,
-            invitation_type=InvitationType.DEVICE,
-            token=invitation.token,
-        )
+    return BackendInvitationAddr.build(
+        backend_addr=bob.organization_addr.get_backend_addr(),
+        organization_id=bob.organization_id,
+        invitation_type=InvitationType.DEVICE,
+        token=invitation.token,
     )
 
 
 @pytest.fixture
-async def invitation_user_link(backend, bob):
+async def user_invitation_addr(backend, bob):
     invitation = await backend.invite.new_for_user(
         organization_id=bob.organization_id,
         greeter_user_id=bob.user_id,
         claimer_email="billy@billy.corp",
     )
-    return str(
-        BackendInvitationAddr.build(
-            backend_addr=bob.organization_addr,
-            organization_id=bob.organization_id,
-            invitation_type=InvitationType.USER,
-            token=invitation.token,
-        )
+    return BackendInvitationAddr.build(
+        backend_addr=bob.organization_addr.get_backend_addr(),
+        organization_id=bob.organization_id,
+        invitation_type=InvitationType.USER,
+        token=invitation.token,
     )
 
 
 @pytest.fixture
-def bob_available_device(bob, tmpdir):
-    key_file_path = Path(tmpdir) / "bob_device.key"
-    _save_device_with_password(key_file=key_file_path, device=bob, password="")
+def bob_available_device(bob, tmp_path):
+    key_file_path = tmp_path / "bob_device.keys"
+    save_device_with_password(key_file=key_file_path, device=bob, password="", force=True)
     return AvailableDevice(
         key_file_path=key_file_path,
         organization_id=bob.organization_id,
@@ -94,6 +99,7 @@ def bob_available_device(bob, tmpdir):
         human_handle=bob.human_handle,
         device_label=bob.device_label,
         slug=bob.slug,
+        type=DeviceFileType.PASSWORD,
     )
 
 
@@ -112,22 +118,25 @@ async def logged_gui_with_files(
         "parsec.core.gui.files_widget.get_text_input", lambda *args, **kwargs: ("dir1")
     )
 
-    await aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(w_w.button_add_workspace, QtCore.Qt.LeftButton)
 
     def _workspace_button_ready():
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert not isinstance(wk_button, QtWidgets.QLabel)
+        # Important: this is necessary for the incoming click to reliably work
+        assert wk_button.switch_button.isChecked()
 
-    await aqtbot.wait_until(_workspace_button_ready, timeout=2000)
+    await aqtbot.wait_until(_workspace_button_ready)
 
     f_w = logged_gui.test_get_files_widget()
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
-    await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
 
     def _entry_available():
-        assert f_w.workspace_fs.get_workspace_name() == "w1"
+        assert f_w.workspace_fs is not None
+        assert f_w.workspace_fs.get_workspace_name() == EntryName("w1")
         assert f_w.table_files.rowCount() == 1
 
     await aqtbot.wait_until(_entry_available)
@@ -139,7 +148,7 @@ async def logged_gui_with_files(
         assert folder
         assert folder.text() == "dir1"
 
-    await aqtbot.mouse_click(f_w.button_create_folder, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(f_w.button_create_folder, QtCore.Qt.LeftButton)
 
     await aqtbot.wait_until(_folder_ready)
 
@@ -155,27 +164,11 @@ async def logged_gui_with_files(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_file(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui_with_files,
-    bob,
-    monkeypatch,
-    bob_available_device,
-):
+async def test_link_file(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
-    url = BackendOrganizationFileLinkAddr.build(
-        f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, f_w.current_directory
-    )
+    url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
 
-    monkeypatch.setattr(
-        "parsec.core.gui.main_window.list_available_devices",
-        lambda *args, **kwargs: [bob_available_device],
-    )
-
-    await aqtbot.run(logged_gui.add_instance, str(url))
+    logged_gui.add_instance(str(url))
 
     def _folder_ready():
         assert f_w.isVisible()
@@ -191,30 +184,13 @@ async def test_link_file(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_file_unmounted(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    # logged_gui,
-    logged_gui_with_files,
-    bob,
-    monkeypatch,
-    bob_available_device,
-):
+async def test_link_file_unmounted(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
 
     core = logged_gui.test_get_core()
-    url = BackendOrganizationFileLinkAddr.build(
-        f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, f_w.current_directory
-    )
+    url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
 
-    monkeypatch.setattr(
-        "parsec.core.gui.main_window.list_available_devices",
-        lambda *args, **kwargs: [bob_available_device],
-    )
-
-    await aqtbot.run(logged_gui.add_instance, str(url))
+    logged_gui.add_instance(str(url))
 
     def _folder_ready():
         assert f_w.isVisible()
@@ -238,34 +214,18 @@ async def test_link_file_unmounted(
 
     await aqtbot.wait_until(_unmounted)
 
-    await aqtbot.run(logged_gui.add_instance, str(url))
+    logged_gui.add_instance(str(url))
 
     await aqtbot.wait_until(_mounted)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_file_invalid_path(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui_with_files,
-    bob,
-    monkeypatch,
-    bob_available_device,
-):
+async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
-    url = BackendOrganizationFileLinkAddr.build(
-        f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, "/not_a_valid_path"
-    )
+    url = f_w.workspace_fs.generate_file_link("/unknown")
 
-    monkeypatch.setattr(
-        "parsec.core.gui.main_window.list_available_devices",
-        lambda *args, **kwargs: [bob_available_device],
-    )
-
-    await aqtbot.run(logged_gui.add_instance, str(url))
+    logged_gui.add_instance(str(url))
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -278,27 +238,18 @@ async def test_link_file_invalid_path(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_file_invalid_workspace(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui_with_files,
-    bob,
-    monkeypatch,
-    bob_available_device,
-):
+@pytest.mark.parametrize("kind", ["bad_workspace_id", "legacy_url_format"])
+async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_files, kind):
     logged_gui, w_w, f_w = logged_gui_with_files
-    url = BackendOrganizationFileLinkAddr.build(
-        f_w.core.device.organization_addr, "not_a_workspace", "/dir1"
-    )
+    org_addr = f_w.core.device.organization_addr
+    if kind == "bad_workspace_id":
+        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id}?action=file_link&workspace_id=not_a_uuid&path=HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs"
+    elif kind == "legacy_url_format":
+        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id}?action=file_link&workspace_id=449977b2-889a-4a62-bc54-f89c26175e90&path=%2Fbar.txt&no_ssl=true&rvk=ZY3JDUOCOKTLCXWS6CJTAELDZSMZYFK5QLNJAVY6LFJV5IRJWAIAssss"
+    else:
+        assert False
 
-    monkeypatch.setattr(
-        "parsec.core.gui.main_window.list_available_devices",
-        lambda *args, **kwargs: [bob_available_device],
-    )
-
-    await aqtbot.run(logged_gui.add_instance, str(url))
+    logged_gui.add_instance(url)
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -311,45 +262,45 @@ async def test_link_file_invalid_workspace(
 @pytest.mark.trio
 async def test_link_file_disconnected(
     aqtbot,
-    running_backend,
-    backend,
     autoclose_dialog,
     logged_gui_with_files,
     bob,
     monkeypatch,
     bob_available_device,
+    snackbar_catcher,
 ):
     gui, w_w, f_w = logged_gui_with_files
-    url = BackendOrganizationFileLinkAddr.build(
-        f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, "/dir1"
-    )
+    addr = f_w.workspace_fs.generate_file_link("/dir1")
 
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
         lambda *args, **kwargs: [bob_available_device],
     )
 
+    snackbar_catcher.reset()
+
     # Log out and send link
     await gui.test_logout_and_switch_to_login_widget()
-    await aqtbot.run(gui.add_instance, str(url))
+    gui.add_instance(addr.to_url())
 
-    def _assert_dialogs():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [
+    def _assert_snackbars():
+        assert len(snackbar_catcher.snackbars) == 1
+        assert snackbar_catcher.snackbars == [
             (
-                "",
+                "INFO",
                 translate("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
                     organization=bob.organization_id
                 ),
             )
         ]
 
-    await aqtbot.wait_until(_assert_dialogs)
+    await aqtbot.wait_until(_assert_snackbars)
 
     # Assert login widget is displayed
     lw = gui.test_get_login_widget()
 
     def _password_widget_shown():
+        assert lw.widget.layout().count() == 1
         assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
         password_w = lw.widget.layout().itemAt(0).widget()
         assert password_w.button_login.isEnabled()
@@ -358,8 +309,9 @@ async def test_link_file_disconnected(
 
     password_w = lw.widget.layout().itemAt(0).widget()
 
-    # Connect to the organization
-    await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+    tabw = gui.test_get_tab()
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
+        aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
     def _wait():
         central_widget = gui.test_get_central_widget()
@@ -384,40 +336,39 @@ async def test_link_file_disconnected(
 @pytest.mark.trio
 async def test_link_file_disconnected_cancel_login(
     aqtbot,
-    running_backend,
-    backend,
     autoclose_dialog,
     logged_gui_with_files,
     bob,
     monkeypatch,
     bob_available_device,
+    snackbar_catcher,
 ):
     gui, w_w, f_w = logged_gui_with_files
-    url = BackendOrganizationFileLinkAddr.build(
-        f_w.core.device.organization_addr, f_w.workspace_fs.workspace_id, "/dir1"
-    )
+    url = f_w.workspace_fs.generate_file_link("/dir1")
 
     monkeypatch.setattr(
         "parsec.core.gui.main_window.list_available_devices",
         lambda *args, **kwargs: [bob_available_device],
     )
 
+    snackbar_catcher.reset()
+
     # Log out and send link
     await gui.test_logout_and_switch_to_login_widget()
-    await aqtbot.run(gui.add_instance, str(url))
+    gui.add_instance(str(url))
 
-    def _assert_dialogs():
-        assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [
+    def _assert_snackbars():
+        assert len(snackbar_catcher.snackbars) == 1
+        assert snackbar_catcher.snackbars == [
             (
-                "",
+                "INFO",
                 translate("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
                     organization=bob.organization_id
                 ),
             )
         ]
 
-    await aqtbot.wait_until(_assert_dialogs)
+    await aqtbot.wait_until(_assert_snackbars)
 
     # Assert login widget is displayed
     lw = gui.test_get_login_widget()
@@ -433,7 +384,7 @@ async def test_link_file_disconnected_cancel_login(
 
     # Cancel login
     async with aqtbot.wait_signal(lw.login_canceled):
-        await aqtbot.mouse_click(password_w.button_back, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(password_w.button_back, QtCore.Qt.LeftButton)
 
     await gui.test_switch_to_logged_in(bob)
 
@@ -448,18 +399,53 @@ async def test_link_file_disconnected_cancel_login(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_link_organization(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui,
-    bob,
-    monkeypatch,
-    catch_create_org_widget,
-    invitation_organization_link,
+async def test_link_file_unknown_workspace(
+    aqtbot, core_config, gui_factory, autoclose_dialog, running_backend, alice
 ):
-    await aqtbot.run(logged_gui.add_instance, invitation_organization_link)
+    password = "P@ssw0rd"
+    save_device_with_password_in_config(core_config.config_dir, alice, password)
+
+    file_link = BackendOrganizationFileLinkAddr.build(
+        organization_addr=alice.organization_addr,
+        workspace_id=EntryID.new(),
+        encrypted_path=b"<whatever>",
+    )
+
+    gui = await gui_factory(core_config=core_config, start_arg=file_link.to_url())
+    lw = gui.test_get_login_widget()
+
+    def _password_prompt():
+        assert len(autoclose_dialog.dialogs) == 0
+        lpi_w = lw.widget.layout().itemAt(0).widget()
+        assert isinstance(lpi_w, LoginPasswordInputWidget)
+
+    await aqtbot.wait_until(_password_prompt)
+
+    lpi_w = lw.widget.layout().itemAt(0).widget()
+    await aqtbot.key_clicks(lpi_w.line_edit_password, password)
+    await aqtbot.wait_until(lambda: lpi_w.line_edit_password.text() == password)
+
+    tabw = gui.test_get_tab()
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
+        aqtbot.mouse_click(lpi_w.button_login, QtCore.Qt.LeftButton)
+
+    def _error_shown():
+        assert len(autoclose_dialog.dialogs) == 1
+        print(autoclose_dialog.dialogs)
+        assert autoclose_dialog.dialogs[0] == (
+            "Error",
+            "You do not have access to the workspace containing the file. It may not have been shared with you.",
+        )
+
+    await aqtbot.wait_until(_error_shown)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_link_organization(
+    aqtbot, logged_gui, catch_create_org_widget, organization_bootstrap_addr
+):
+    logged_gui.add_instance(organization_bootstrap_addr.to_url())
     co_w = await catch_create_org_widget()
     assert co_w
     assert logged_gui.tab_center.count() == 2
@@ -468,18 +454,10 @@ async def test_link_organization(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_organization_disconnected(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui,
-    bob,
-    monkeypatch,
-    catch_create_org_widget,
-    invitation_organization_link,
+    aqtbot, logged_gui, catch_create_org_widget, organization_bootstrap_addr
 ):
     await logged_gui.test_logout_and_switch_to_login_widget()
-    await aqtbot.run(logged_gui.add_instance, invitation_organization_link)
+    logged_gui.add_instance(organization_bootstrap_addr.to_url())
     co_w = await catch_create_org_widget()
     assert co_w
     assert logged_gui.tab_center.count() == 1
@@ -487,18 +465,16 @@ async def test_link_organization_disconnected(
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.parametrize("http_redirection_url", (True, False))
 async def test_link_claim_device(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui,
-    bob,
-    monkeypatch,
-    catch_claim_device_widget,
-    invitation_device_link,
+    aqtbot, logged_gui, catch_claim_device_widget, device_invitation_addr, http_redirection_url
 ):
-    await aqtbot.run(logged_gui.add_instance, invitation_device_link)
+    if http_redirection_url:
+        url = device_invitation_addr.to_http_redirection_url()
+    else:
+        url = device_invitation_addr.to_url()
+
+    logged_gui.add_instance(url)
     cd_w = await catch_claim_device_widget()
     assert cd_w
     assert logged_gui.tab_center.count() == 2
@@ -507,37 +483,30 @@ async def test_link_claim_device(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_claim_device_disconnected(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui,
-    bob,
-    monkeypatch,
-    catch_claim_device_widget,
-    invitation_device_link,
+    aqtbot, logged_gui, catch_claim_device_widget, device_invitation_addr
 ):
     await logged_gui.test_logout_and_switch_to_login_widget()
-    await aqtbot.run(logged_gui.add_instance, invitation_device_link)
+    logged_gui.add_instance(device_invitation_addr.to_url())
     cd_w = await catch_claim_device_widget()
     assert cd_w
     assert logged_gui.tab_center.count() == 1
 
 
+# This test has been detected as flaky.
+# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
+@pytest.mark.parametrize("http_redirection_url", (True, False))
 async def test_link_claim_user(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui,
-    bob,
-    monkeypatch,
-    catch_claim_user_widget,
-    invitation_user_link,
+    aqtbot, logged_gui, catch_claim_user_widget, user_invitation_addr, http_redirection_url
 ):
-    await aqtbot.run(logged_gui.add_instance, invitation_user_link)
+    if http_redirection_url:
+        url = user_invitation_addr.to_http_redirection_url()
+    else:
+        url = user_invitation_addr.to_url()
+
+    logged_gui.add_instance(url)
     cd_w = await catch_claim_user_widget()
     assert cd_w
     assert logged_gui.tab_center.count() == 2
@@ -546,18 +515,10 @@ async def test_link_claim_user(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_claim_user_disconnected(
-    aqtbot,
-    running_backend,
-    backend,
-    autoclose_dialog,
-    logged_gui,
-    bob,
-    monkeypatch,
-    catch_claim_user_widget,
-    invitation_user_link,
+    aqtbot, logged_gui, catch_claim_user_widget, user_invitation_addr
 ):
     await logged_gui.test_logout_and_switch_to_login_widget()
-    await aqtbot.run(logged_gui.add_instance, invitation_user_link)
+    logged_gui.add_instance(user_invitation_addr.to_url())
     cd_w = await catch_claim_user_widget()
     assert cd_w
     assert logged_gui.tab_center.count() == 1
@@ -565,11 +526,9 @@ async def test_link_claim_user_disconnected(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_tab_login_logout(
-    aqtbot, running_backend, gui_factory, autoclose_dialog, core_config, alice, monkeypatch
-):
+async def test_tab_login_logout(gui_factory, core_config, alice, monkeypatch):
     password = "P@ssw0rd"
-    save_device_with_password(core_config.config_dir, alice, password)
+    save_device_with_password_in_config(core_config.config_dir, alice, password)
     gui = await gui_factory()
 
     # Fix the return value of ensure_string_size, because it can depend of the size of the window
@@ -597,11 +556,47 @@ async def test_tab_login_logout(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_tab_login_logout_two_tabs(
-    aqtbot, running_backend, gui_factory, autoclose_dialog, core_config, alice, monkeypatch
+@customize_fixtures(logged_gui_as_admin=True)
+async def test_show_org_info(
+    aqtbot, logged_gui, running_backend, snackbar_catcher, catch_org_info_widget
 ):
+    c_w = logged_gui.test_get_central_widget()
+    assert c_w is not None
+    c_w.button_user.menu().actions()[0].trigger()
+    oi_w = await catch_org_info_widget()
+    assert oi_w
+
+    assert (
+        oi_w.label_backend_addr.text()
+        == logged_gui.test_get_core().device.organization_addr.to_url()
+    )
+    assert oi_w.label_data_size.text() == "Data size: <b>0 B</b>"
+    # Metadata size vary slightly between runs
+    assert oi_w.label_metadata_size.text().startswith("Metadata size: <b>")
+    assert oi_w.label_total_size.text().startswith("Total size: <b>")
+    assert oi_w.label_user_active.text() == "3 active user(s)"
+    assert oi_w.label_user_revoked.text() == "0 revoked user(s)"
+    assert oi_w.label_user_admin.text() == "2 administrator(s)"
+    assert oi_w.label_user_standard.text() == "1 standard user(s)"
+    assert oi_w.label_user_outsider.text() == "0 outsider(s)"
+
+    assert oi_w.label_outsider_allowed.text() == translate("TEXT_ORG_INFO_OUTSIDER_ALLOWED")
+    assert oi_w.label_user_limit.text() == translate("TEXT_ORG_INFO_USER_LIMIT_UNLIMITED")
+    assert not oi_w.label_sequestration_state.isVisible()
+
+    aqtbot.mouse_click(oi_w.button_copy_to_clipboard, QtCore.Qt.LeftButton)
+    assert snackbar_catcher.snackbars == [
+        ("INFO", translate("TEXT_BACKEND_ADDR_COPIED_TO_CLIPBOARD"))
+    ]
+    clipboard = QtGui.QGuiApplication.clipboard()
+    assert clipboard.text() == c_w.core.device.organization_addr.to_url()
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_tab_login_logout_two_tabs(aqtbot, gui_factory, core_config, alice, monkeypatch):
     password = "P@ssw0rd"
-    save_device_with_password(core_config.config_dir, alice, password)
+    save_device_with_password_in_config(core_config.config_dir, alice, password)
     gui = await gui_factory()
 
     # Fix the return value of ensure_string_size, because it can depend of the size of the window
@@ -618,7 +613,7 @@ async def test_tab_login_logout_two_tabs(
     assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     logged_tab = gui.test_get_tab()
 
-    await aqtbot.mouse_click(gui.add_tab_button, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(gui.add_tab_button, QtCore.Qt.LeftButton)
     assert gui.tab_center.count() == 2
     assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     assert gui.tab_center.tabText(1) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
@@ -638,10 +633,10 @@ async def test_tab_login_logout_two_tabs(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_tab_login_logout_two_tabs_logged_in(
-    aqtbot, running_backend, gui_factory, autoclose_dialog, core_config, alice, bob, monkeypatch
+    aqtbot, gui_factory, core_config, alice, bob, monkeypatch
 ):
     password = "P@ssw0rd"
-    save_device_with_password(core_config.config_dir, alice, password)
+    save_device_with_password_in_config(core_config.config_dir, alice, password)
     gui = await gui_factory()
 
     # Fix the return value of ensure_string_size, because it can depend of the size of the window
@@ -657,12 +652,12 @@ async def test_tab_login_logout_two_tabs_logged_in(
     assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     alice_logged_tab = gui.test_get_tab()
 
-    await aqtbot.mouse_click(gui.add_tab_button, QtCore.Qt.LeftButton)
+    aqtbot.mouse_click(gui.add_tab_button, QtCore.Qt.LeftButton)
     assert gui.tab_center.count() == 2
     assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
     assert gui.tab_center.tabText(1) == translate("TEXT_TAB_TITLE_LOG_IN_SCREEN")
 
-    save_device_with_password(core_config.config_dir, bob, password)
+    save_device_with_password_in_config(core_config.config_dir, bob, password)
     await gui.test_switch_to_logged_in(bob)
     assert gui.tab_center.count() == 2
     assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
@@ -686,19 +681,19 @@ async def test_tab_login_logout_two_tabs_logged_in(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_link_file_unknown_org(
-    core_config, gui_factory, autoclose_dialog, running_backend, alice
+    aqtbot, core_config, gui_factory, autoclose_dialog, running_backend, alice
 ):
     password = "P@ssw0rd"
-    save_device_with_password(core_config.config_dir, alice, password)
+    save_device_with_password_in_config(core_config.config_dir, alice, password)
 
     # Cheating a bit but it does not matter, we just want a link that appears valid with
     # an unknown organization
     org_addr = BackendOrganizationAddr.build(
-        running_backend.addr, "UnknownOrg", alice.organization_addr.root_verify_key
+        running_backend.addr, OrganizationID("UnknownOrg"), alice.organization_addr.root_verify_key
     )
 
     file_link = BackendOrganizationFileLinkAddr.build(
-        org_addr, EntryID(), FsPath("/doesntmattereither")
+        organization_addr=org_addr, workspace_id=EntryID.new(), encrypted_path=b"<whatever>"
     )
 
     gui = await gui_factory(core_config=core_config, start_arg=file_link.to_url())
@@ -710,10 +705,47 @@ async def test_link_file_unknown_org(
         "TEXT_FILE_LINK_NOT_IN_ORG_organization"
     ).format(organization="UnknownOrg")
 
+    def _devices_listed():
+        assert lw.widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
+
     accounts_w = lw.widget.layout().itemAt(0).widget()
     assert accounts_w
 
     assert isinstance(accounts_w, LoginPasswordInputWidget)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@customize_fixtures(adam_profile=UserProfile.OUTSIDER)
+async def test_outsider_profil_limit(
+    aqtbot, running_backend, adam, core_config, gui_factory, alice_user_fs
+):
+    wid = await alice_user_fs.workspace_create(EntryName("workspace1"))
+    await alice_user_fs.workspace_share(wid, adam.user_id, WorkspaceRole.READER)
+    await alice_user_fs.process_last_messages()
+    await alice_user_fs.sync()
+
+    gui = await gui_factory()
+    await gui.test_switch_to_logged_in(adam)
+
+    w_w = await gui.test_switch_to_workspaces_widget()
+
+    def _workspace_button_shown():
+        layout_workspace = w_w.layout_workspaces.itemAt(0)
+        assert layout_workspace is not None
+        workspace_button = layout_workspace.widget()
+        assert not isinstance(workspace_button, QtWidgets.QLabel)
+
+    await aqtbot.wait_until(_workspace_button_shown)
+    layout_workspace = w_w.layout_workspaces.itemAt(0)
+    workspace_button = layout_workspace.widget()
+    assert workspace_button.button_share.isVisible() is False
+    assert w_w.button_add_workspace.isVisible() is False
+
+    c_w = gui.test_get_central_widget()
+    assert c_w.menu.button_users.isVisible() is False
 
 
 @pytest.fixture
@@ -723,12 +755,14 @@ async def random_clipboard_data(running_backend):
 
 @pytest.fixture
 async def clipboard_text_provider(
-    invitation_organization_link, invitation_device_link, invitation_user_link
+    organization_bootstrap_addr,
+    device_invitation_addr,
+    user_invitation_addr,
 ):
     texts = [
-        invitation_organization_link,
-        invitation_device_link,
-        invitation_user_link,
+        organization_bootstrap_addr.to_url(),
+        device_invitation_addr.to_url(),
+        user_invitation_addr.to_url(),
         "Still sane, Exile?",
     ]
 
@@ -748,18 +782,14 @@ async def test_join_organization_text_in_clipboard(
     autoclose_dialog,
     gui,
     catch_text_input_widget,
-    qt_thread_gateway,
     clipboard_text_provider,
     clipboard_text_index,
 ):
     clipboard_text = clipboard_text_provider(clipboard_text_index)
 
-    def _copy_to_clipboard():
-        desktop.copy_to_clipboard(clipboard_text)
+    desktop.copy_to_clipboard(clipboard_text)
 
-    await qt_thread_gateway.send_action(_copy_to_clipboard)
-
-    await aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
+    aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
     text_input_w = await catch_text_input_widget()
     assert text_input_w
 
@@ -767,3 +797,32 @@ async def test_join_organization_text_in_clipboard(
         assert text_input_w.line_edit_text.text() == ""
     else:
         assert text_input_w.line_edit_text.text() == clipboard_text
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_commercial_open_switch_offer(aqtbot, gui_factory, alice, monkeypatch):
+    gui = await gui_factory()
+    await gui.test_switch_to_logged_in(alice)
+    c_w = gui.test_get_central_widget()
+    assert c_w is not None
+
+    actions = c_w.button_user.menu().actions()
+    assert len(actions) == 4
+    assert "Update subscription" not in [a.text() for a in actions]
+
+    await gui.test_logout_and_switch_to_login_widget()
+
+    monkeypatch.setattr("parsec.core.gui.central_widget.is_saas_addr", lambda _: True)
+
+    await gui.test_switch_to_logged_in(alice)
+    c_w = gui.test_get_central_widget()
+    assert c_w is not None
+
+    actions = c_w.button_user.menu().actions()
+    assert len(actions) == 6
+    assert actions[0].text() == "Update subscription"
+
+    with patch("parsec.core.gui.central_widget.desktop.open_url") as mock:
+        actions[0].triggered.emit()
+        mock.assert_called_once()

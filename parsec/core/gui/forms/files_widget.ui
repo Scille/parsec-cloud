@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1229</width>
-    <height>489</height>
+    <width>945</width>
+    <height>524</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -258,6 +258,22 @@ QScrollBar:vertical {
          </spacer>
         </item>
         <item>
+         <widget class="SpinnerWidget" name="spinner" native="true">
+          <property name="minimumSize">
+           <size>
+            <width>32</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>32</width>
+            <height>32</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QWidget" name="badge_widget" native="true">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -433,6 +449,20 @@ QScrollBar:vertical {
      </layout>
     </widget>
    </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QLabel" name="label_elements">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
   </layout>
  </widget>
  <customwidgets>
@@ -445,6 +475,12 @@ QScrollBar:vertical {
    <class>FileTable</class>
    <extends>QTableWidget</extends>
    <header>parsec.core.gui.file_table</header>
+  </customwidget>
+  <customwidget>
+   <class>SpinnerWidget</class>
+   <extends>QWidget</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

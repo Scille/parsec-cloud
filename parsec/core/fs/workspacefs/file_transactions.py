@@ -1,18 +1,17 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from parsec.core.core_events import CoreEvent
 from typing import Tuple, List, Callable, Dict, Optional, cast, AsyncIterator
-
 from collections import defaultdict
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.event_bus import EventBus
+from parsec.api.data import BlockAccess
+from parsec.api.protocol import DeviceID
 from parsec.core.types import FileDescriptor, EntryID, LocalDevice
-
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import BaseWorkspaceStorage
 from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor, FSEndOfFileError
-
 from parsec.core.types import (
     Chunk,
     WorkspaceEntry,
@@ -27,7 +26,6 @@ from parsec.core.fs.workspacefs.file_operations import (
     prepare_resize,
     prepare_reshape,
 )
-from parsec.api.data import BlockAccess
 
 
 __all__ = ("FSInvalidFileDescriptor", "FileTransactions")
@@ -83,14 +81,20 @@ class FileTransactions:
         local_storage: BaseWorkspaceStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
+        preferred_language: str,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
-        self.local_author = device.device_id
+        self.device = device
         self.local_storage = local_storage
         self.remote_loader = remote_loader
         self.event_bus = event_bus
         self._write_count: Dict[FileDescriptor, int] = defaultdict(int)
+        self.preferred_language = preferred_language
+
+    @property
+    def local_author(self) -> DeviceID:
+        return self.device.device_id
 
     # Event helper
 
@@ -219,8 +223,11 @@ class FileTransactions:
                 return 0
 
             # Prepare
+            updated = self.device.timestamp()
             offset = normalize_argument(offset, manifest)
-            manifest, write_operations, removed_ids = prepare_write(manifest, len(content), offset)
+            manifest, write_operations, removed_ids = prepare_write(
+                manifest, len(content), offset, updated
+            )
 
             # Writing
             for chunk, offset in write_operations:
@@ -303,7 +310,8 @@ class FileTransactions:
             return
 
         # Prepare
-        manifest, write_operations, removed_ids = prepare_resize(manifest, length)
+        updated = self.device.timestamp()
+        manifest, write_operations, removed_ids = prepare_resize(manifest, length, updated)
 
         # Writing
         for chunk, offset in write_operations:
@@ -323,7 +331,7 @@ class FileTransactions:
         missing = []
 
         # Perform operations
-        for source, destination, update, removed_ids in prepare_reshape(manifest):
+        for block, source, destination, write_back, removed_ids in prepare_reshape(manifest):
 
             # Build data block
             data, extra_missing = await self._build_data(source)
@@ -335,11 +343,11 @@ class FileTransactions:
 
             # Write data if necessary
             new_chunk = destination.evolve_as_block(data)
-            if source != (destination,):
+            if write_back:
                 await self._write_chunk(new_chunk, data)
 
             # Craft the new manifest
-            manifest = update(manifest, new_chunk)
+            manifest = manifest.evolve_single_block(block, new_chunk)
 
             # Set the new manifest, acting as a checkpoint
             await self.local_storage.set_manifest(

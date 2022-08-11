@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from parsec.core.backend_connection.exceptions import (
     BackendConnectionError,
@@ -8,6 +8,8 @@ from parsec.core.backend_connection.exceptions import (
     BackendInvitationNotFound,
     BackendInvitationAlreadyUsed,
     BackendNotFoundError,
+    BackendInvitationOnExistingMember,
+    BackendOutOfBallparkError,
 )
 from parsec.core.backend_connection.authenticated import (
     BackendAuthenticatedCmds,
@@ -20,11 +22,11 @@ from parsec.core.backend_connection.apiv1_annonymous import (
     APIV1_BackendAnonymousCmds,
     apiv1_backend_anonymous_cmds_factory,
 )
-from parsec.core.backend_connection.apiv1_administration import (
-    APIV1_BackendAdministrationCmds,
-    apiv1_backend_administration_cmds_factory,
+from parsec.core.backend_connection.anonymous import (
+    pki_enrollment_submit,
+    pki_enrollment_info,
+    organization_bootstrap,
 )
-
 
 __all__ = (
     # Exceptions
@@ -35,6 +37,8 @@ __all__ = (
     "BackendInvitationNotFound",
     "BackendInvitationAlreadyUsed",
     "BackendNotFoundError",
+    "BackendInvitationOnExistingMember",
+    "BackendOutOfBallparkError",
     # Authenticated
     "BackendAuthenticatedCmds",
     "BackendConnStatus",
@@ -43,10 +47,11 @@ __all__ = (
     # Invited
     "BackendInvitedCmds",
     "backend_invited_cmds_factory",
-    # APIv1 Annonymous
+    # Anonymous
+    "organization_bootstrap",
+    "pki_enrollment_submit",
+    "pki_enrollment_info",
+    # APIv1 Anonymous
     "APIV1_BackendAnonymousCmds",
     "apiv1_backend_anonymous_cmds_factory",
-    # APIv1 Administration
-    "APIV1_BackendAdministrationCmds",
-    "apiv1_backend_administration_cmds_factory",
 )

@@ -1,8 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from pendulum import datetime
 
+from parsec.api.data import EntryName
+from parsec.api.protocol import VlobID
 from parsec.core.fs import FSError
 
 
@@ -37,7 +39,7 @@ def testbed(running_backend, alice_user_fs, alice):
                 organization_id=alice.organization_id,
                 author=options["backend_author"],
                 encryption_revision=1,
-                vlob_id=alice.user_manifest_id,
+                vlob_id=VlobID(alice.user_manifest_id.uuid),
                 version=self._next_version,
                 timestamp=options["backend_timestamp"],
                 blob=options["blob"],
@@ -53,6 +55,14 @@ def testbed(running_backend, alice_user_fs, alice):
 async def test_empty_blob(testbed):
     with pytest.raises(FSError) as exc:
         await testbed.run(blob=b"")
+    assert "Invalid user manifest" in str(exc.value)
+
+
+@pytest.mark.trio
+async def test_invalid_blob(testbed):
+    blob = b"\x01" * 200
+    with pytest.raises(FSError) as exc:
+        await testbed.run(blob=blob)
     assert "Invalid user manifest" in str(exc.value)
 
 
@@ -102,11 +112,11 @@ async def test_invalid_timestamp(testbed, alice, alice2):
 @pytest.mark.trio
 async def test_create_workspace_bad_name(alice_user_fs):
     with pytest.raises(ValueError):
-        await alice_user_fs.workspace_create("..")
+        await alice_user_fs.workspace_create(EntryName(".."))
 
 
 @pytest.mark.trio
 async def test_rename_workspace_bad_name(alice_user_fs):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     with pytest.raises(ValueError):
-        await alice_user_fs.workspace_rename(wid, "..")
+        await alice_user_fs.workspace_rename(wid, EntryName(".."))

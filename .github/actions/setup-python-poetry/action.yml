@@ -1,0 +1,48 @@
+name: setup-python-poetry
+description: Install Python & Poetry
+
+inputs:
+  python-version:
+    description: Python version to install
+    required: true
+
+  poetry-version:
+    description: Poetry version to install
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # We need to install poetry before the correct version of python
+    # Because we configured the action `setup-python` to use `poetry` as the cache system
+    # And the action will failed if it can't find `poetry` or `poetry.lock`
+    - name: (*Nix) Install poetry-${{ inputs.poetry-version }}
+      shell: bash
+      if: runner.os != 'Windows'
+      run: |
+        set -eux
+        export POETRY_HOME="$HOME/.poetry"
+        mkdir -p "$POETRY_HOME"
+        curl -sSL https://install.python-poetry.org | python3 - --version=${{ inputs.poetry-version }}
+        echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
+
+    - name: (Windows) Install poetry-${{ inputs.poetry-version }}
+      shell: bash
+      if: runner.os == 'Windows'
+      run: |
+        set -eux
+        export POETRY_HOME=${APPDATA}/.poetry
+        curl -sSL https://install.python-poetry.org \
+          | python3 - --version=${{ env.poetry-version }}
+        echo "${APPDATA}\.poetry\bin" >> "$GITHUB_PATH"
+
+    - name: Install python-${{ inputs.python-version }}
+      uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+      id: setup-python
+      with:
+        python-version: ${{ env.python-version }}
+        cache: poetry
+
+    - name: (*Nix) Configure poetry to use the installed python
+      shell: ${{ runner.os != 'Windows' && 'bash' || 'pwsh' }}
+      run: poetry env use ${{ steps.setup-python.outputs.python-path }}

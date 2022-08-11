@@ -1,18 +1,20 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from pendulum import datetime
 
+from parsec.api.data import EntryName
+from parsec.api.protocol import VlobID
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
 
-from tests.common import freeze_time
+from tests.common import freeze_time, customize_fixtures
 
 
 @pytest.fixture
 async def testbed(running_backend, alice_user_fs, alice, bob):
     with freeze_time("2000-01-01"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
         workspace = alice_user_fs.get_workspace(wid)
         await workspace.sync()
         local_manifest = await workspace.local_storage.get_manifest(wid)
@@ -48,7 +50,7 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
                 organization_id=alice.organization_id,
                 author=options["backend_author"],
                 encryption_revision=1,
-                vlob_id=wid,
+                vlob_id=VlobID(wid.uuid),
                 version=self._next_version,
                 timestamp=options["backend_timestamp"],
                 blob=options["blob"],
@@ -61,6 +63,7 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
             assert str(exc.value) == exc_msg
 
             # Also test timestamped workspace
+            # Note: oxidation doesn't implement WorkspaceStorageTimestamped
             with pytest.raises(FSError) as exc:
                 await workspace.to_timestamped(options["backend_timestamp"])
             assert str(exc.value) == exc_msg
@@ -104,10 +107,33 @@ async def test_invalid_timestamp(testbed, alice, alice2):
     await testbed.run(backend_timestamp=bad_timestamp, exc_msg=exc_msg)
 
 
+def backend_disable_vlob_checks(backend):
+    from parsec.backend.realm import RealmNotFoundError
+    from parsec.backend.vlob import VlobRealmNotFoundError
+    from parsec.backend.memory.vlob import MemoryVlobComponent
+
+    # Disable checks in the backend to allow invalid data to be stored
+
+    def patched_check_realm_access(organization_id, realm_id, *args, **kwargs):
+        try:
+            return backend.vlob._realm_component._get_realm(organization_id, realm_id)
+        except RealmNotFoundError:
+            raise VlobRealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+
+    assert isinstance(backend.vlob, MemoryVlobComponent)
+    backend.vlob._check_realm_access = patched_check_realm_access
+
+
 @pytest.mark.trio
-async def test_no_user_certif(testbed, alice, bob):
+@customize_fixtures(backend_force_mocked=True)
+async def test_no_user_certif(running_backend, testbed, alice, bob):
     # Data created before workspace manifest access
     exc_msg = "Manifest was created at 2000-01-02T00:00:00+00:00 by `bob@dev1` which had no right to access the workspace at that time"
+
+    # Backend enforces consistency between user role and vlob access, so we have
+    # to disable those checks to be able to send our invalid data to the core
+    backend_disable_vlob_checks(running_backend.backend)
+
     await testbed.run(
         backend_author=bob.device_id,
         signed_author=bob.device_id,

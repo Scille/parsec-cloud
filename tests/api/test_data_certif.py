@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from pendulum import now as pendulum_now
@@ -96,9 +96,9 @@ def test_user_certificate_supports_legacy_is_admin_field(alice, bob):
     # Manually craft a certificate in legacy format
     raw_legacy_certif = {
         "type": "user_certificate",
-        "author": bob.device_id,
+        "author": str(bob.device_id),
         "timestamp": now,
-        "user_id": alice.user_id,
+        "user_id": str(alice.user_id),
         "public_key": alice.public_key.encode(),
         "is_admin": True,
     }

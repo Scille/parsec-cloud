@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import enum
 
@@ -19,3 +19,4 @@ class ntstatus(enum.IntEnum):
     STATUS_DIRECTORY_NOT_EMPTY = 0xC0000101
     STATUS_NOT_A_DIRECTORY = 0xC0000103
     STATUS_HOST_UNREACHABLE = 0xC000023D
+    STATUS_NAME_TOO_LONG = 0xC0000106

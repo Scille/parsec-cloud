@@ -1,19 +1,32 @@
 #! /bin/sh
 
-mkdir -p ~/.config/parsec
-LOG_FILE=~/.config/parsec/parsec-core.log
-echo Starting parsec core >> $LOG_FILE
-export XDG_CURRENT_DESKTOP=unknown
-PYTHON=${SNAP}/usr/bin/python3
+# Move to the snap directory as we don't want the current directory to be part of `sys.path`
+# We could use the isolated `-I` python option but this would also disable `PYTHONPATH`
+# Note that this would be an issue if the GUI CLI used file arguments, which is luckily not the case.
+cd ${SNAP}
 
-# The site-packages dir containing parsec and it dependencies  is defined
-# by `$SNAP/usr/lib/python3.6/sitecustomize.py` which use $SNAP environ
-# variable for this. Given we are going to unset $SNAP, we replace it
-# by $SNAPCRAFT_STAGE which is also used by this script.
-export SNAPCRAFT_STAGE=$SNAP
-# *Sob* sitecustomize.py has changed and now also requires
-# $SNAPCRAFT_PART_INSTALL to be defined...
-export SNAPCRAFT_PART_INSTALL=$SNAP
+# Expose /sbin and /bin as they are not set in snap classic mode
+# In particular, this is useful to access `/bin/fusermount` which is used by libfuse
+# We also override the original path as we should not rely on tools installed on the system
+# From this point on, we should avoid using tools from the system.
+# One notable exception is `xdg-open` which is necessary to open the files from the GUI.
+export PATH=${SNAP}/sbin:${SNAP}/bin:${SNAP}/usr/bin:${PATH}
+
+# Select the python provided by snap and set the right python path
+PYTHON=${SNAP}/usr/bin/python3.9
+export PYTHONPATH=${SNAP}/site-packages
+
+# We can't rely on `ctypes.util.find_library` in classic snap environement,
+# so we use the `FUSE_LIBRARY_PATH` enviroment variable.
+export FUSE_LIBRARY_PATH=${SNAP}/lib/x86_64-linux-gnu/libfuse.so.2
+
+# This was a hot fix from 2019 for a segfault with ubuntu 18
+# See https://github.com/Scille/parsec-cloud/issues/162 for more information.
+# This is likely why we don't have native dialogs on linux with snap.
+# Update 2022: we're removing this hot fix and hope for the best.
+# Good news is we should be able to have native dialogs with snap builds.
+# If any segfaults happen on some linux distro, we should try to restore it and see if it helps.
+# export XDG_CURRENT_DESKTOP=unknown
 
 # SNAP env variable is used by Qt to determine we are within a sandbox
 # and hence should use xdg-desktop-portal. However this is broken
@@ -22,4 +35,5 @@ export SNAPCRAFT_PART_INSTALL=$SNAP
 # (i.e. without sandbox).
 unset SNAP
 
-$PYTHON -I -m parsec.cli core gui --log-level=INFO --log-file=$LOG_FILE $@
+# Execute the parsec.cli module with arguments forwarding
+exec $PYTHON -m parsec.cli core gui $@

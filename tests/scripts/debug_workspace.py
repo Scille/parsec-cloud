@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 
 import os
@@ -8,9 +8,8 @@ import trio
 from tqdm import tqdm
 from humanize import naturalsize
 
-from parsec.logging import configure_logging
 from parsec.core.logged_core import logged_core_factory
-from parsec.core.types import FsPath
+from parsec.core.fs import FsPath
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.local_device import list_available_devices, load_device_with_password
 from parsec.test_utils import (
@@ -20,7 +19,6 @@ from parsec.test_utils import (
 )
 
 
-LOG_LEVEL = "WARNING"
 DEVICE_ID = "alice@laptop"
 PASSWORD = "test"
 
@@ -75,7 +73,6 @@ async def benchmark_file_writing(device, workspace):
 async def main():
 
     # Config
-    configure_logging(LOG_LEVEL)
     config_dir = get_default_config_dir(os.environ)
     config = load_config(config_dir)
     devices = list_available_devices(config_dir)

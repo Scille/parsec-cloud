@@ -1,12 +1,16 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import os
 import trio
+import errno
 import pytest
 from unittest.mock import patch
 
+from parsec.api.data import EntryName
+from parsec.core.core_events import CoreEvent
 from parsec.core.mountpoint import mountpoint_manager_factory, MountpointDriverCrash
+
+from tests.common import real_clock_timeout
 
 
 @pytest.mark.linux  # win32 doesn't allow to remove an opened file
@@ -37,7 +41,7 @@ def test_delete_then_close_file(mountpoint_service):
 @pytest.mark.trio
 @pytest.mark.mountpoint
 async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, event_bus):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
 
@@ -51,7 +55,7 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, ev
             expected = {"mountpoint": mountpoint_path, "workspace_id": wid, "timestamp": None}
 
             completed_process = await trio.run_process(command)
-            with trio.fail_after(1):
+            async with real_clock_timeout():
                 # fusermount might fail for some reasons
                 while completed_process.returncode:
                     completed_process = await trio.run_process(command)
@@ -67,7 +71,7 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, ev
 @pytest.mark.trio
 @pytest.mark.mountpoint
 async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_user_fs):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     mountpoint_path = base_mountpoint / "w"
 
     class ToughLuckError(Exception):
@@ -96,7 +100,7 @@ async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_user_fs):
 @pytest.mark.mountpoint
 async def test_unmount_due_to_cancelled_scope(base_mountpoint, alice, alice_user_fs, event_bus):
     mountpoint_path = base_mountpoint / "w"
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
 
     with trio.CancelScope() as cancel_scope:
         async with mountpoint_manager_factory(
@@ -116,7 +120,7 @@ async def test_unmount_due_to_cancelled_scope(base_mountpoint, alice, alice_user
 async def test_mountpoint_path_already_in_use_concurrent_with_non_empty_dir(
     monkeypatch, base_mountpoint, alice_user_fs
 ):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     mountpoint_path = base_mountpoint.absolute() / "w"
 
     # Here instead of checking the path can be used as a mountpoint, we
@@ -150,7 +154,7 @@ async def test_mountpoint_path_already_in_use_concurrent_with_mountpoint(
     monkeypatch, base_mountpoint, running_backend, alice_user_fs, alice2_user_fs
 ):
     # Create a workspace and make it available in two devices
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     await alice_user_fs.sync()
     await alice2_user_fs.sync()
 
@@ -189,3 +193,20 @@ async def test_mountpoint_path_already_in_use_concurrent_with_mountpoint(
 
         # Test is over, stop alice2 mountpoint and exit
         nursery.cancel_scope.cancel()
+
+
+@pytest.mark.linux
+@pytest.mark.mountpoint
+@pytest.mark.parametrize("name", ("x" * 256, "飞" * 85 + "x"))
+def test_create_a_file_with_a_name_exceeding_255_bytes(mountpoint_service, name):
+    """
+    This test is kept as a fuse/linux-only test since accesses to files with name
+    over 255 bytes on windows do not reach the `winfsp_operations` module. Also on
+    windows, the version with ascii characters return with an "Invalid argument" error
+    while the version with unicode characters return with a "File not found" error.
+    """
+    w_path = mountpoint_service.wpath
+    path = w_path / name
+    with pytest.raises(OSError) as e:
+        os.open(path, os.O_CREAT)
+    assert e.value.errno == errno.ENAMETOOLONG

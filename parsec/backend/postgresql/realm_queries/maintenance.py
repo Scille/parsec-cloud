@@ -1,12 +1,19 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import pendulum
-from uuid import UUID
-from typing import Dict
+from typing import Dict, List, Optional
 
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import DeviceID, UserID, OrganizationID, RealmRole
+from parsec.api.protocol import (
+    DeviceID,
+    UserID,
+    OrganizationID,
+    RealmID,
+    RealmRole,
+    MaintenanceType,
+)
 from parsec.backend.realm import (
+    RealmStatus,
     RealmAccessError,
     RealmNotFoundError,
     RealmEncryptionRevisionError,
@@ -22,10 +29,10 @@ from parsec.backend.postgresql.utils import (
     query,
     q_organization_internal_id,
     q_user,
+    q_device,
     q_device_internal_id,
     q_realm,
     q_realm_internal_id,
-    STR_TO_REALM_ROLE,
 )
 
 
@@ -33,18 +40,28 @@ _q_get_realm_status = Q(
     q_realm(
         organization_id="$organization_id",
         realm_id="$realm_id",
-        select="encryption_revision, maintenance_started_by, maintenance_started_on, maintenance_type",
+        select=f"encryption_revision, { q_device(_id='maintenance_started_by', select='device_id') } maintenance_started_by, maintenance_started_on, maintenance_type",
     )
 )
 
 
-async def get_realm_status(conn, organization_id, realm_id):
+async def get_realm_status(conn, organization_id: OrganizationID, realm_id: RealmID) -> RealmStatus:
     rep = await conn.fetchrow(
-        *_q_get_realm_status(organization_id=organization_id, realm_id=realm_id)
+        *_q_get_realm_status(organization_id=organization_id.str, realm_id=realm_id.uuid)
     )
     if not rep:
         raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
-    return rep
+
+    return RealmStatus(
+        maintenance_type=MaintenanceType(rep["maintenance_type"])
+        if rep["maintenance_type"]
+        else None,
+        maintenance_started_on=rep["maintenance_started_on"],
+        maintenance_started_by=DeviceID(rep["maintenance_started_by"])
+        if rep["maintenance_started_by"]
+        else None,
+        encryption_revision=rep["encryption_revision"],
+    )
 
 
 _q_get_realm_role_for_not_revoked_with_users = Q(
@@ -79,7 +96,9 @@ ORDER BY user_, certified_on DESC
 )
 
 
-async def _get_realm_role_for_not_revoked(conn, organization_id, realm_id, users=None):
+async def _get_realm_role_for_not_revoked(
+    conn, organization_id: OrganizationID, realm_id: RealmID, users: Optional[List[UserID]] = None
+):
     now = pendulum.now()
 
     def _cook_role(row):
@@ -87,15 +106,17 @@ async def _get_realm_role_for_not_revoked(conn, organization_id, realm_id, users
             return None
         if row["role"] is None:
             return None
-        return STR_TO_REALM_ROLE[row["role"]]
+        return RealmRole(row["role"])
 
     if users:
         rep = await conn.fetch(
             *_q_get_realm_role_for_not_revoked_with_users(
-                organization_id=organization_id, realm_id=realm_id, users_ids=users
+                organization_id=organization_id.str,
+                realm_id=realm_id.uuid,
+                users_ids=[u.str for u in users],
             )
         )
-        roles = {row["user_id"]: _cook_role(row) for row in rep}
+        roles = {UserID(row["user_id"]): _cook_role(row) for row in rep}
         for user in users or ():
             if user not in roles:
                 raise RealmNotFoundError(f"User `{user}` doesn't exist")
@@ -104,10 +125,14 @@ async def _get_realm_role_for_not_revoked(conn, organization_id, realm_id, users
 
     else:
         rep = await conn.fetch(
-            *_q_get_realm_role_for_not_revoked(organization_id=organization_id, realm_id=realm_id)
+            *_q_get_realm_role_for_not_revoked(
+                organization_id=organization_id.str, realm_id=realm_id.uuid
+            )
         )
 
-        return {row["user_id"]: _cook_role(row) for row in rep if _cook_role(row) is not None}
+        return {
+            UserID(row["user_id"]): _cook_role(row) for row in rep if _cook_role(row) is not None
+        }
 
 
 _q_query_start_reencryption_maintenance_update_realm = Q(
@@ -141,16 +166,16 @@ async def query_start_reencryption_maintenance(
     conn,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: UUID,
+    realm_id: RealmID,
     encryption_revision: int,
     per_participant_message: Dict[UserID, bytes],
     timestamp: pendulum.DateTime,
 ) -> None:
     # Retrieve realm and make sure it is not under maintenance
-    rep = await get_realm_status(conn, organization_id, realm_id)
-    if rep["maintenance_type"]:
+    status = await get_realm_status(conn, organization_id, realm_id)
+    if status.in_maintenance:
         raise RealmInMaintenanceError(f"Realm `{realm_id}` alrealy in maintenance")
-    if encryption_revision != rep["encryption_revision"] + 1:
+    if encryption_revision != status.encryption_revision + 1:
         raise RealmEncryptionRevisionError("Invalid encryption revision")
 
     roles = await _get_realm_role_for_not_revoked(conn, organization_id, realm_id)
@@ -163,9 +188,9 @@ async def query_start_reencryption_maintenance(
 
     await conn.execute(
         *_q_query_start_reencryption_maintenance_update_realm(
-            organization_id=organization_id,
-            realm_id=realm_id,
-            maintenance_started_by=author,
+            organization_id=organization_id.str,
+            realm_id=realm_id.uuid,
+            maintenance_started_by=author.str,
             maintenance_started_on=timestamp,
             maintenance_type="REENCRYPTION",
             encryption_revision=encryption_revision,
@@ -174,8 +199,8 @@ async def query_start_reencryption_maintenance(
 
     await conn.execute(
         *_q_query_start_reencryption_maintenance_update_vlob_encryption_revision(
-            organization_id=organization_id,
-            realm_id=realm_id,
+            organization_id=organization_id.str,
+            realm_id=realm_id.uuid,
             encryption_revision=encryption_revision,
         )
     )
@@ -232,23 +257,23 @@ async def query_finish_reencryption_maintenance(
     conn,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: UUID,
+    realm_id: RealmID,
     encryption_revision: int,
 ) -> None:
     # Retrieve realm and make sure it is not under maintenance
-    rep = await get_realm_status(conn, organization_id, realm_id)
+    status = await get_realm_status(conn, organization_id, realm_id)
     roles = await _get_realm_role_for_not_revoked(conn, organization_id, realm_id, [author.user_id])
     if roles.get(author.user_id) != RealmRole.OWNER:
         raise RealmAccessError()
-    if not rep["maintenance_type"]:
+    if not status.in_maintenance:
         raise RealmNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
-    if encryption_revision != rep["encryption_revision"]:
+    if encryption_revision != status.encryption_revision:
         raise RealmEncryptionRevisionError("Invalid encryption revision")
 
     # Test reencryption operations are over
     rep = await conn.fetch(
         *_query_finish_reencryption_maintenance_get_info(
-            organization_id=organization_id,
+            organization_id=organization_id.str,
             realm_id=realm_id,
             encryption_revision=encryption_revision,
         )
@@ -266,7 +291,7 @@ async def query_finish_reencryption_maintenance(
 
     await conn.execute(
         *_query_finish_reencryption_maintenance_update_realm(
-            organization_id=organization_id, realm_id=realm_id
+            organization_id=organization_id.str, realm_id=realm_id
         )
     )
 

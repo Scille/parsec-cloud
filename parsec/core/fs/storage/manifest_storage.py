@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import re
 
@@ -6,7 +6,7 @@ import trio
 from pathlib import Path
 from structlog import get_logger
 from typing import Dict, Tuple, Set, Optional, Union, Pattern, AsyncIterator, AsyncContextManager
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
 from parsec.core.types import EntryID, ChunkID, LocalDevice, BaseLocalManifest, BlockID
@@ -196,7 +196,7 @@ class ManifestStorage:
                 "FROM vlobs WHERE need_sync = 1 OR base_version != remote_version"
             )
             for manifest_id, need_sync, bv, rv in cursor.fetchall():
-                manifest_id = EntryID(manifest_id)
+                manifest_id = EntryID.from_bytes(manifest_id)
                 if need_sync:
                     local_changes.add(manifest_id)
                 if bv != rv:
@@ -269,37 +269,46 @@ class ManifestStorage:
             if entry_id not in self._cache_ahead_of_localdb:
                 return
 
-            # Safely get the manifest
+            # Safely get the manifest and other information
             manifest = self._cache[entry_id]
+            pending_chunks_ids = [
+                (chunk_id.bytes,) for chunk_id in self._cache_ahead_of_localdb[entry_id]
+            ]
+            local_symkey = self.device.local_symkey
 
-            # Dump and decrypt the manifest
-            ciphered = manifest.dump_and_encrypt(self.device.local_symkey)
+            def _thread_target() -> None:
+                # Dump and decrypt the manifest
+                ciphered = manifest.dump_and_encrypt(local_symkey)
 
-            # Insert into the local database
-            cursor.execute(
-                """INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
-                VALUES (
+                # Insert into the local database
+                cursor.execute(
+                    """INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
+                    VALUES (
                     ?, ?, ?, ?,
-                    max(
-                        ?,
-                        IFNULL((SELECT remote_version FROM vlobs WHERE vlob_id=?), 0)
-                    )
-                )""",
-                (
-                    entry_id.bytes,
-                    ciphered,
-                    manifest.need_sync,
-                    manifest.base_version,
-                    manifest.base_version,
-                    entry_id.bytes,
-                ),
-            )
+                        max(
+                            ?,
+                            IFNULL((SELECT remote_version FROM vlobs WHERE vlob_id=?), 0)
+                        )
+                    )""",
+                    (
+                        entry_id.bytes,
+                        ciphered,
+                        manifest.need_sync,
+                        manifest.base_version,
+                        manifest.base_version,
+                        entry_id.bytes,
+                    ),
+                )
 
-            # Clean all the pending chunks
-            for chunk_id in self._cache_ahead_of_localdb[entry_id]:
-                cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
+                # Clean all the pending chunks
+                if pending_chunks_ids:
+                    cursor.executemany("DELETE FROM chunks WHERE chunk_id = ?", pending_chunks_ids)
 
-            # Safely tag entry as up-to-date
+            # Run CPU and IO expensive logic in a thread
+            await self.localdb.run_in_thread(_thread_target)
+
+        # Tag entry as up-to-date only if no new manifest has been written in the meantime
+        if manifest == self._cache[entry_id]:
             self._cache_ahead_of_localdb.pop(entry_id)
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
@@ -334,7 +343,7 @@ class ManifestStorage:
             # Remove from local database
             cursor.execute("DELETE FROM vlobs WHERE vlob_id = ?", (entry_id.bytes,))
             cursor.execute("SELECT changes()")
-            deleted, = cursor.fetchone()
+            (deleted,) = cursor.fetchone()
 
             # Clean all the pending chunks
             # TODO: should also add the content of the popped manifest

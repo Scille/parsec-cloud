@@ -1,10 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
-from uuid import uuid4
 
-from parsec.api.protocol import INVITED_CMDS, InvitationType
+from parsec.api.protocol import INVITED_CMDS, InvitationToken, InvitationType
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import (
     BackendNotAvailable,
@@ -23,7 +22,7 @@ async def invitation_addr(backend, alice):
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     return BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -63,6 +62,7 @@ async def test_ping(running_backend, invitation_addr):
 
 @pytest.mark.trio
 async def test_handshake_organization_expired(running_backend, expiredorg, expiredorgalice):
+    print("===============")
     invitation = await running_backend.backend.invite.new_for_device(
         organization_id=expiredorgalice.organization_id, greeter_user_id=expiredorgalice.user_id
     )
@@ -87,7 +87,7 @@ async def test_handshake_unknown_organization(running_backend, coolorg):
         backend_addr=running_backend.addr,
         organization_id=coolorg.organization_id,
         invitation_type=InvitationType.DEVICE,
-        token=uuid4(),
+        token=InvitationToken.new(),
     )
     with pytest.raises(BackendInvitationNotFound) as exc:
         async with backend_invited_cmds_factory(invitation_addr) as cmds:

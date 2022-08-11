@@ -1,15 +1,14 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import os
 import sys
 import errno
-from uuid import uuid4
-
+from itertools import count
 import trio
 import pytest
 from pathlib import Path, PurePath
 
+from parsec.api.data import EntryID, EntryName
 from parsec.core.mountpoint import (
     mountpoint_manager_factory,
     MountpointConfigurationError,
@@ -18,10 +17,13 @@ from parsec.core.mountpoint import (
     MountpointFuseNotAvailable,
     MountpointWinfspNotAvailable,
 )
-from parsec.core import logged_core_factory
-from parsec.core.types import FsPath, WorkspaceRole
 
-from tests.common import create_shared_workspace
+from parsec.core.core_events import CoreEvent
+from parsec.core import logged_core_factory
+from parsec.core.types import WorkspaceRole
+from parsec.core.fs import FsPath
+
+from tests.common import create_shared_workspace, real_clock_timeout
 
 
 # Helper
@@ -52,7 +54,7 @@ async def test_mount_unknown_workspace(base_mountpoint, alice_user_fs, event_bus
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
-        wid = uuid4()
+        wid = EntryID.new()
         with pytest.raises(MountpointConfigurationError) as exc:
             await mountpoint_manager.mount_workspace(wid)
 
@@ -65,7 +67,7 @@ async def test_base_mountpoint_not_created(base_mountpoint, alice_user_fs, event
     # Path should be created if it doesn' exist
     base_mountpoint = base_mountpoint / "dummy/dummy/dummy"
 
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
 
@@ -81,12 +83,12 @@ async def test_base_mountpoint_not_created(base_mountpoint, alice_user_fs, event
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-@pytest.mark.skipif(os.name == "nt", reason="Windows uses drive")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows uses drive")
 async def test_mountpoint_path_already_in_use(
     base_mountpoint, running_backend, alice_user_fs, alice2_user_fs
 ):
     # Create a workspace and make it available in two devices
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     await alice_user_fs.sync()
     await alice2_user_fs.sync()
 
@@ -126,7 +128,7 @@ async def test_mount_and_explore_workspace(
 ):
     # Populate a bit the fs first...
 
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.mkdir("/foo")
     await workspace.touch("/bar.txt")
@@ -184,7 +186,7 @@ async def test_mount_and_explore_workspace(
 async def test_idempotent_mount(base_mountpoint, alice_user_fs, event_bus, manual_unmount):
     # Populate a bit the fs first...
 
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
 
@@ -221,7 +223,7 @@ async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpd
 
     async with logged_core_factory(core_config, alice) as alice_core:
         manager = alice_core.mountpoint_manager
-        wid = await alice_core.user_fs.workspace_create("w")
+        wid = await alice_core.user_fs.workspace_create(EntryName("w"))
         workspace = alice_core.user_fs.get_workspace(wid)
         await workspace.touch("/bar.txt")
 
@@ -240,7 +242,7 @@ def test_manifest_not_available(mountpoint_service_factory):
 
     async def _bootstrap(user_fs, mountpoint_manager):
         nonlocal x_path
-        wid = await user_fs.workspace_create("x")
+        wid = await user_fs.workspace_create(EntryName("x"))
         workspace = user_fs.get_workspace(wid)
         await workspace.touch("/foo.txt")
         foo_id = await workspace.path_id("/foo.txt")
@@ -251,8 +253,8 @@ def test_manifest_not_available(mountpoint_service_factory):
     mountpoint_service_factory(_bootstrap)
 
     with pytest.raises(OSError) as exc:
-        (x_path / "foo.txt").stat()
-    if os.name == "nt":
+        Path(x_path / "foo.txt").stat()
+    if sys.platform == "win32":
         # This winerror code corresponds to ntstatus.STATUS_HOST_UNREACHABLE
         ERROR_HOST_UNREACHABLE = 1232
         assert exc.value.winerror == ERROR_HOST_UNREACHABLE
@@ -264,8 +266,8 @@ def test_manifest_not_available(mountpoint_service_factory):
 @pytest.mark.mountpoint
 async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus):
     # Populate a bit the fs first...
-    wid = await alice_user_fs.workspace_create("mounted_wksp")
-    wid2 = await alice_user_fs.workspace_create("not_mounted_wksp")
+    wid = await alice_user_fs.workspace_create(EntryName("mounted_wksp"))
+    wid2 = await alice_user_fs.workspace_create(EntryName("not_mounted_wksp"))
     workspace1 = alice_user_fs.get_workspace(wid)
     workspace2 = alice_user_fs.get_workspace(wid2)
     await workspace1.touch("/bar.txt")
@@ -281,7 +283,7 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus)
 
         assert isinstance(bar_path, PurePath)
         # Windows uses drives, not base_mountpoint
-        if os.name != "nt":
+        if sys.platform != "win32":
             expected = base_mountpoint / "mounted_wksp" / "bar.txt"
             assert str(bar_path) == str(expected.absolute())
         assert await trio.Path(bar_path).exists()
@@ -307,24 +309,26 @@ def test_unhandled_crash_in_fs_operation(caplog, mountpoint_service, monkeypatch
     )
 
     with pytest.raises(OSError) as exc:
-        (mountpoint_service.wpath / "crash_me").stat()
+        Path(mountpoint_service.wpath / "crash_me").stat()
 
     assert exc.value.errno == errno.EINVAL
-    if os.name == "nt":
-        caplog.assert_occured(
-            "[exception] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
+    if sys.platform == "win32":
+        caplog.assert_occured_once(
+            "[error    ] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
         )
 
     else:
-        caplog.assert_occured(
-            "[exception] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
+        caplog.assert_occured_once(
+            "[error    ] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
         )
 
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
 @pytest.mark.parametrize("revoking", ["read", "write"])
-@pytest.mark.skipif(sys.platform == "darwin", reason="TODO : crash on macOS")
+@pytest.mark.skipif(
+    sys.platform == "darwin", reason="Does not raise PermissionError in assert_cannot_read"
+)
 async def test_mountpoint_revoke_access(
     base_mountpoint,
     alice_user_fs,
@@ -338,12 +342,15 @@ async def test_mountpoint_revoke_access(
     new_role = None if revoking == "read" else WorkspaceRole.READER
 
     # Bob creates and share two files with Alice
-    wid = await create_shared_workspace("w", bob_user_fs, alice_user_fs, alice2_user_fs)
+    wid = await create_shared_workspace(EntryName("w"), bob_user_fs, alice_user_fs, alice2_user_fs)
     workspace = bob_user_fs.get_workspace(wid)
     await workspace.touch("/foo.txt")
     await workspace.touch("/bar.txt")
     await workspace.touch("/to_delete.txt")
     await workspace.sync()
+    # Retrieve workspace manifest v1 to replace the default empty speculative placeholder
+    await alice_user_fs.get_workspace(wid).sync()
+    await alice2_user_fs.get_workspace(wid).sync()
 
     def get_root_path(mountpoint_manager):
         root_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/"))
@@ -371,7 +378,7 @@ async def test_mountpoint_revoke_access(
     async def assert_cannot_write(mountpoint_manager, new_role):
         expected_error, expected_errno = PermissionError, errno.EACCES
         # On linux, errno.EROFS is not translated to a PermissionError
-        if new_role is WorkspaceRole.READER and os.name != "nt":
+        if new_role is WorkspaceRole.READER and sys.platform != "win32":
             expected_error, expected_errno = OSError, errno.EROFS
         root_path = get_root_path(mountpoint_manager)
         foo_path = root_path / "foo.txt"
@@ -393,6 +400,14 @@ async def test_mountpoint_revoke_access(
         assert ctx.value.errno == expected_errno
         with pytest.raises(expected_error) as ctx:
             await bar_path.unlink()
+
+        def sync_open():
+            for flag in (os.O_WRONLY, os.O_RDWR, os.O_RDWR | os.O_APPEND, os.O_WRONLY | os.O_EXCL):
+                with pytest.raises(expected_error) as ctx:
+                    os.open(foo_path, flag)
+                assert ctx.value.errno == expected_errno
+
+        await trio.to_thread.run_sync(sync_open)
 
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
@@ -471,7 +486,7 @@ async def test_mountpoint_revoke_access(
 
 
 @pytest.mark.mountpoint
-@pytest.mark.skipif(os.name == "nt", reason="TODO: crash with WinFSP :'(")
+@pytest.mark.skipif(sys.platform == "win32", reason="TODO: crash with WinFSP :'(")
 def test_stat_mountpoint(mountpoint_service):
     async def _bootstrap(user_fs, mountpoint_manager):
         workspace = user_fs.get_workspace(mountpoint_service.wid)
@@ -491,7 +506,7 @@ def test_stat_mountpoint(mountpoint_service):
 async def test_mountpoint_access_unicode(base_mountpoint, alice_user_fs, event_bus):
     weird_name = "ÉŸ奇怪😀🔫🐍"
 
-    wid = await alice_user_fs.workspace_create(weird_name)
+    wid = await alice_user_fs.workspace_create(EntryName(weird_name))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch(f"/{weird_name}")
 
@@ -534,7 +549,7 @@ def test_nested_rw_access(mountpoint_service):
 async def test_mountpoint_iterdir_with_many_files(
     n, base_path, base_mountpoint, alice_user_fs, event_bus
 ):
-    wid = await alice_user_fs.workspace_create("w")
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.mkdir(base_path, parents=True, exist_ok=True)
     names = [f"some_file_{i:03d}.txt" for i in range(n)]
@@ -565,21 +580,77 @@ async def test_mountpoint_iterdir_with_many_files(
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-@pytest.mark.parametrize("timeout", [x * 0.002 for x in range(20)])
-async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus, timeout):
+async def test_cancel_mount_workspace(base_mountpoint, alice_user_fs, event_bus):
+    """
+    This function tests the race conditions between the mounting of a workspace
+    and trio cancellation. In particular, it produces interesting results when trying to
+    unmount a workspace while it's still initializing.
 
-    wid = await alice_user_fs.workspace_create("w")
+    The following timeout values are useful for more thorough testing:
 
+        [x * 0.00001 for x in range(2000, 2500)]
+    """
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
+
+    # Reuse the same mountpoint manager for all the mountings to
+    # make sure state is not polutated by previous mount attempts
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
 
-        with trio.move_on_after(timeout) as cancel_scope:
-            await mountpoint_manager.mount_workspace(wid)
-        if cancel_scope.cancelled_caught:
-            with pytest.raises(MountpointNotMounted):
-                mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/"))
+        for timeout in count(0, 0.002):
+            print(f"timeout: {timeout}")
+
+            async with real_clock_timeout():
+
+                with trio.move_on_after(timeout) as cancel_scope:
+                    await mountpoint_manager.mount_workspace(wid)
+
+                if cancel_scope.cancelled_caught:
+                    with pytest.raises(MountpointNotMounted):
+                        mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/"))
+                else:
+                    # Sanity check
+                    path = trio.Path(mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/")))
+                    await path.exists()
+                    # Timeout has become too high to be useful, time to stop the test
+                    break
+
+
+@pytest.mark.mountpoint
+def test_deadlock_detection(mountpoint_service, caplog, monkeypatch):
+    async def _in_trio_land(user_fs, mountpoint_manager):
+        # We're in trio-land, performing a sync-call to the mountpoint
+        # This creates a deadlock as the file system thread is going to try
+        # to reach the trio thread which is stuck in the sync call
+        # Let's make sure the deadlock detection works
+        with pytest.raises(OSError) as ctx:
+            os.open(mountpoint_service.wpath / "foo.txt", os.O_RDONLY)
+
+        # TODO: Inconsistent status returned by macOS, it might be because the
+        # mountpount is not fully ready when we try our access (though it is
+        # unlikely given we do active stat polling as part of the mount
+        # operation especially to avoid such situation... on top of that it
+        # seems retrying the os access always return a ENXIO errno)
+        if sys.platform == "darwin" and ctx.value.errno == errno.ENXIO:
+            pytest.xfail("TODO: macOS inconsistent ENXIO errno")
+
+        # It is possible to have the OS trying to access files in our back
+        # (e.g. macOS doing statis on the infamous `._file` files), which is
+        # going to create extra errors logs. Hence we check we have at least one
+        # "trio thread is unreachable" error (and not exactly one !).
+        if sys.platform == "win32":
+            caplog.assert_occured(
+                "[error    ] The trio thread is unreachable, a deadlock might have occured [parsec.core.mountpoint.winfsp_operations]"
+            )
         else:
-            path = trio.Path(mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/")))
-            await path.exists()
-            assert not await (path / "foo").exists()
+            assert ctx.value.errno == errno.EINVAL
+            caplog.assert_occured(
+                "[error    ] The trio thread is unreachable, a deadlock might have occured [parsec.core.mountpoint.fuse_operations]"
+            )
+
+    # Lower the deadlock timeout detection to 100 ms to make the test faster
+    monkeypatch.setattr(
+        "parsec.core.mountpoint.thread_fs_access.ThreadFSAccess.DEADLOCK_TIMEOUT", 0.1
+    )
+    mountpoint_service.execute(_in_trio_land)

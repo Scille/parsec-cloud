@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import List, Tuple
 from collections import defaultdict
@@ -38,6 +38,6 @@ class MemoryMessageComponent(BaseMessageComponent):
 
     async def get(
         self, organization_id: OrganizationID, recipient: UserID, offset: int
-    ) -> List[Tuple[DeviceID, bytes]]:
+    ) -> List[Tuple[DeviceID, DateTime, bytes]]:
         messages = self._organizations[organization_id]
         return messages[recipient][offset:]

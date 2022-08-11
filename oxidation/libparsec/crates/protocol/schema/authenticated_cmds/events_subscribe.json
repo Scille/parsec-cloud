@@ -1,0 +1,13 @@
+{
+    "label": "EventsSubscribe",
+    "req": {
+        "cmd": "events_subscribe",
+        "other_fields": []
+    },
+    "reps": [
+        {
+            "status": "ok",
+            "other_fields": []
+        }
+    ]
+}

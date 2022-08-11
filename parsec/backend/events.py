@@ -1,9 +1,21 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import trio
 
-from parsec.api.protocol import events_subscribe_serializer, events_listen_serializer, APIEvent
-from parsec.backend.utils import catch_protocol_errors, run_with_breathing_transport, api
+from parsec.api.protocol import (
+    OrganizationID,
+    DeviceID,
+    UserID,
+    RealmID,
+    RealmRole,
+    InvitationStatus,
+    InvitationToken,
+    events_subscribe_serializer,
+    events_listen_serializer,
+    APIEvent,
+)
+from parsec.api.protocol.types import UserProfile
+from parsec.backend.utils import catch_protocol_errors, api
 from parsec.backend.realm import BaseRealmComponent
 from parsec.backend.backend_events import BackendEvent
 from functools import partial
@@ -20,7 +32,15 @@ class EventsComponent:
     async def api_events_subscribe(self, client_ctx, msg):
         msg = events_subscribe_serializer.req_load(msg)
 
-        def _on_roles_updated(event, backend_event, organization_id, author, realm_id, user, role):
+        def _on_roles_updated(
+            event: APIEvent,
+            backend_event: BackendEvent,
+            organization_id: OrganizationID,
+            author: DeviceID,
+            realm_id: RealmID,
+            user: UserID,
+            role: RealmRole,
+        ) -> None:
             if organization_id != client_ctx.organization_id or user != client_ctx.user_id:
                 return
 
@@ -39,18 +59,31 @@ class EventsComponent:
                     {"event": event, "realm_id": realm_id, "role": role}
                 )
             except trio.WouldBlock:
-                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+                client_ctx.logger.warning("dropping event (queue is full)")
 
-        def _on_pinged(event, backend_event, organization_id, author, ping):
+        def _on_pinged(
+            event: APIEvent,
+            backend_event: BackendEvent,
+            organization_id: OrganizationID,
+            author: DeviceID,
+            ping: str,
+        ) -> None:
             if organization_id != client_ctx.organization_id or author == client_ctx.device_id:
                 return
 
             try:
                 client_ctx.send_events_channel.send_nowait({"event": event, "ping": ping})
             except trio.WouldBlock:
-                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+                client_ctx.logger.warning("dropping event (queue is full)")
 
-        def _on_realm_events(event, backend_event, organization_id, author, realm_id, **kwargs):
+        def _on_realm_events(
+            event: APIEvent,
+            backend_event: BackendEvent,
+            organization_id: OrganizationID,
+            author: DeviceID,
+            realm_id: RealmID,
+            **kwargs
+        ) -> None:
             if (
                 organization_id != client_ctx.organization_id
                 or author == client_ctx.device_id
@@ -63,20 +96,32 @@ class EventsComponent:
                     {"event": event, "realm_id": realm_id, **kwargs}
                 )
             except trio.WouldBlock:
-                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+                client_ctx.logger.warning("dropping event (queue is full)")
 
-        def _on_message_received(event, backend_event, organization_id, author, recipient, index):
+        def _on_message_received(
+            event: APIEvent,
+            backend_event: BackendEvent,
+            organization_id: OrganizationID,
+            author: DeviceID,
+            recipient: UserID,
+            index: int,
+        ) -> None:
             if organization_id != client_ctx.organization_id or recipient != client_ctx.user_id:
                 return
 
             try:
                 client_ctx.send_events_channel.send_nowait({"event": event, "index": index})
             except trio.WouldBlock:
-                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+                client_ctx.logger.warning("dropping event (queue is full)")
 
         def _on_invite_status_changed(
-            event, backend_event, organization_id, greeter, token, status
-        ):
+            event: APIEvent,
+            backend_event: BackendEvent,
+            organization_id: OrganizationID,
+            greeter: UserID,
+            token: InvitationToken,
+            status: InvitationStatus,
+        ) -> None:
             if organization_id != client_ctx.organization_id or greeter != client_ctx.user_id:
                 return
 
@@ -85,11 +130,23 @@ class EventsComponent:
                     {"event": event, "token": token, "invitation_status": status}
                 )
             except trio.WouldBlock:
-                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+                client_ctx.logger.warning("dropping event (queue is full)")
+
+        def _on_pki_enrollment_updated(
+            event: APIEvent, backend_event: BackendEvent, organization_id: OrganizationID
+        ) -> None:
+            if (
+                organization_id != client_ctx.organization_id
+                and client_ctx.profile != UserProfile.ADMIN
+            ):
+                return
+            try:
+                client_ctx.send_events_channel.send_nowait({"event": event})
+            except trio.WouldBlock:
+                client_ctx.logger.warning("dropping event (queue is full)")
 
         # Command should be idempotent
         if not client_ctx.events_subscribed:
-
             # Connect the new callbacks
             client_ctx.event_bus_ctx.connect(
                 BackendEvent.PINGED, partial(_on_pinged, APIEvent.PINGED)
@@ -115,6 +172,11 @@ class EventsComponent:
                 partial(_on_invite_status_changed, APIEvent.INVITE_STATUS_CHANGED),
             )
 
+            client_ctx.event_bus_ctx.connect(
+                BackendEvent.PKI_ENROLLMENTS_UPDATED,
+                partial(_on_pki_enrollment_updated, APIEvent.PKI_ENROLLMENTS_UPDATED),
+            )
+
             # Final event to keep up to date the list of realm we should listen on
             client_ctx.event_bus_ctx.connect(
                 BackendEvent.REALM_ROLES_UPDATED,
@@ -130,18 +192,13 @@ class EventsComponent:
 
         return events_subscribe_serializer.rep_dump({"status": "ok"})
 
-    @api("events_listen")
+    @api("events_listen", cancel_on_client_sending_new_cmd=True)
     @catch_protocol_errors
     async def api_events_listen(self, client_ctx, msg):
         msg = events_listen_serializer.req_load(msg)
 
         if msg["wait"]:
-            event_data = await run_with_breathing_transport(
-                client_ctx.transport, client_ctx.receive_events_channel.receive
-            )
-
-            if not event_data:
-                return {"status": "cancelled", "reason": "Client cancelled the listening"}
+            event_data = await client_ctx.receive_events_channel.receive()
 
         else:
             try:

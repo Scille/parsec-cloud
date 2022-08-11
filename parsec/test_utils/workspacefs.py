@@ -1,19 +1,25 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import string
 
-from parsec.core.fs import UserFS, WorkspaceFS, FSFileNotFoundError
-from parsec.core.types import FsPath, EntryID
+from parsec.api.data.entry import EntryName
+from parsec.core.fs import FsPath, UserFS, WorkspaceFS, FSFileNotFoundError
+from parsec.core.types import EntryID
 
 
 async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath):
+    """
+    Create directory and make it inconsistent by adding an entry refering
+    to an unknown EntryID.
+    """
+
     await workspace.mkdir(dir)
     await workspace.touch(dir / "foo.txt")
     rep_info = await workspace.transactions.entry_info(dir)
     rep_manifest = await workspace.local_storage.get_manifest(rep_info["id"])
     children = rep_manifest.children
-    children["newfail.txt"] = EntryID("b9295787-d9aa-6cbd-be27-1ff83ac72fa6")
-    rep_manifest.evolve(children=children)
+    children[EntryName("newfail.txt")] = EntryID.from_hex("b9295787-d9aa-6cbd-be27-1ff83ac72fa6")
+    rep_manifest = rep_manifest.evolve(children=children)
     async with workspace.local_storage.lock_manifest(rep_info["id"]):
         await workspace.local_storage.set_manifest(rep_info["id"], rep_manifest)
     await workspace.sync()
@@ -69,7 +75,7 @@ async def make_workspace_dir_complex_versions(workspace: WorkspaceFS, dir: FsPat
         await workspace.sync()
 
 
-async def create_inconsistent_workspace(user_fs: UserFS, name="w") -> WorkspaceFS:
+async def create_inconsistent_workspace(user_fs: UserFS, name=EntryName("w")) -> WorkspaceFS:
     wid = await user_fs.workspace_create(name)
     workspace = user_fs.get_workspace(wid)
     await make_workspace_dir_inconsistent(workspace, FsPath("/rep"))

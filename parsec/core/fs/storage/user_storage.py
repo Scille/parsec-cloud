@@ -1,15 +1,35 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from pathlib import Path
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 from typing import Dict, Set, Tuple, AsyncIterator, cast
 
-from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import EntryID, LocalDevice, LocalUserManifest
-
-from parsec.core.fs.storage.version import USER_STORAGE_NAME
+from parsec.core.fs.exceptions import FSLocalMissError
+from parsec.core.fs.storage.version import get_user_data_storage_db_path
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
+
+
+async def user_storage_non_speculative_init(data_base_dir: Path, device: LocalDevice) -> None:
+    data_path = get_user_data_storage_db_path(data_base_dir, device)
+
+    # Local data storage service
+    async with LocalDatabase.run(data_path) as localdb:
+
+        # Manifest storage service
+        async with ManifestStorage.run(
+            device, localdb, device.user_manifest_id
+        ) as manifest_storage:
+
+            timestamp = device.timestamp()
+            manifest = LocalUserManifest.new_placeholder(
+                author=device.device_id,
+                id=device.user_manifest_id,
+                timestamp=timestamp,
+                speculative=False,
+            )
+            await manifest_storage.set_manifest(device.user_manifest_id, manifest)
 
 
 class UserStorage:
@@ -19,23 +39,19 @@ class UserStorage:
     """
 
     def __init__(
-        self,
-        device: LocalDevice,
-        path: Path,
-        user_manifest_id: EntryID,
-        manifest_storage: ManifestStorage,
+        self, device: LocalDevice, user_manifest_id: EntryID, manifest_storage: ManifestStorage
     ):
-        self.path = path
         self.device = device
         self.user_manifest_id = user_manifest_id
         self.manifest_storage = manifest_storage
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, device: LocalDevice, path: Path) -> AsyncIterator["UserStorage"]:
+    async def run(cls, data_base_dir: Path, device: LocalDevice) -> AsyncIterator["UserStorage"]:
+        data_path = get_user_data_storage_db_path(data_base_dir, device)
 
         # Local database service
-        async with LocalDatabase.run(path / USER_STORAGE_NAME) as localdb:
+        async with LocalDatabase.run(data_path) as localdb:
 
             # Manifest storage service
             async with ManifestStorage.run(
@@ -43,7 +59,7 @@ class UserStorage:
             ) as manifest_storage:
 
                 # Instanciate the user storage
-                self = cls(device, path, device.user_manifest_id, manifest_storage)
+                self = cls(device, device.user_manifest_id, manifest_storage)
 
                 # Populate the cache with the user manifest to be able to
                 # access it synchronously at all time
@@ -80,13 +96,20 @@ class UserStorage:
         try:
             await self.manifest_storage.get_manifest(self.user_manifest_id)
         except FSLocalMissError:
-            # In the unlikely event the user manifest is not present in
-            # local (e.g. device just created or during tests), we fall
-            # back on an empty manifest which is a good aproximation of
-            # the very first version of the manifest (field `created` is
-            # invalid, but it will be corrected by the merge during sync).
+            # It is possible to lack the user manifest in local if our
+            # device hasn't tried to access it yet (and we are not the
+            # initial device of our user, in which case the user local db is
+            # initialized with a non-speculative local manifest placeholder).
+            # In such case it is easy to fall back on an empty manifest
+            # which is a good enough aproximation of the very first version
+            # of the manifest (field `created` is invalid, but it will be
+            # correction by the merge during sync).
+            timestamp = self.device.timestamp()
             manifest = LocalUserManifest.new_placeholder(
-                self.device.device_id, id=self.device.user_manifest_id
+                self.device.device_id,
+                id=self.device.user_manifest_id,
+                timestamp=timestamp,
+                speculative=True,
             )
             await self.manifest_storage.set_manifest(self.user_manifest_id, manifest)
 

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from PyQt5 import QtCore, QtWidgets
@@ -10,7 +10,7 @@ from parsec.core.gui import custom_dialogs
 def test_get_text_dialog_close(qtbot):
     w = custom_dialogs.TextInputWidget(message="Message")
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
-    qtbot.addWidget(d)
+    qtbot.add_widget(d)
     d.show()
 
     assert d.isVisible() is True
@@ -28,11 +28,13 @@ def test_get_text_dialog_close(qtbot):
 @pytest.mark.gui
 def test_get_text_dialog_accept(qtbot):
     w = custom_dialogs.TextInputWidget(
-        message="Message", placeholder="Placeholder", default_text="Default"
+        message="Message", placeholder="Placeholder", default_text="Default", selection=(1, 3)
     )
+    qtbot.wait(10)
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
     w.dialog = d
-    qtbot.addWidget(d)
+    w.line_edit_text.setFocus()
+    qtbot.add_widget(d)
     d.show()
 
     assert d.isVisible() is True
@@ -41,11 +43,12 @@ def test_get_text_dialog_accept(qtbot):
     assert w.label_message.text() == "Message"
     assert w.line_edit_text.placeholderText() == "Placeholder"
     assert w.line_edit_text.text() == "Default"
+    assert w.line_edit_text.selectedText() == "efa"
     w.line_edit_text.setText("")
     qtbot.keyClicks(w.line_edit_text, "test")
     qtbot.mouseClick(w.button_ok, QtCore.Qt.LeftButton)
     assert d.result() == QtWidgets.QDialog.Accepted
-    assert w.text == "test"
+    qtbot.wait_until(lambda: w.text == "test")
     assert w.isVisible() is False
 
 
@@ -54,7 +57,7 @@ def test_ask_question_no(qtbot):
     w = custom_dialogs.QuestionWidget(message="Message", button_texts=["YES", "NO"])
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
     w.dialog = d
-    qtbot.addWidget(d)
+    qtbot.add_widget(d)
 
     d.show()
     assert d.isVisible() is True
@@ -74,7 +77,7 @@ def test_ask_question_yes(qtbot):
     w = custom_dialogs.QuestionWidget(message="Message", button_texts=["YES", "NO"])
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
     w.dialog = d
-    qtbot.addWidget(d)
+    qtbot.add_widget(d)
 
     d.show()
     assert d.isVisible() is True
@@ -94,7 +97,7 @@ def test_ask_question_close(qtbot):
     w = custom_dialogs.QuestionWidget(message="Message", button_texts=["YES", "NO"])
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
     w.dialog = d
-    qtbot.addWidget(d)
+    qtbot.add_widget(d)
 
     d.show()
     assert d.isVisible() is True

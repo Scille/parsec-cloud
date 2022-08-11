@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from pendulum import DateTime
 from typing import Dict, Type, TypeVar, Any
@@ -29,7 +29,7 @@ class BaseMessageContent(BaseAPISignedData):
 
         @property
         def type_schemas(  # type: ignore[override]
-            self
+            self,
         ) -> Dict[MessageContentType, Type[OneOfSchema]]:
             return {
                 MessageContentType.SHARING_GRANTED: SharingGrantedMessageContent.SCHEMA_CLS,

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import pendulum
 from typing import Tuple, List, Optional
@@ -10,15 +10,12 @@ from parsec.backend.user import (
     Device,
     Trustchain,
     GetUserAndDevicesResult,
-    UserInvitation,
-    DeviceInvitation,
     HumanFindResultItem,
 )
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.user_queries import (
     query_create_user,
     query_create_device,
-    query_find,
     query_find_humans,
     query_get_user,
     query_get_user_with_trustchain,
@@ -26,14 +23,7 @@ from parsec.backend.postgresql.user_queries import (
     query_get_user_with_devices_and_trustchain,
     query_get_user_with_device,
     query_revoke_user,
-    query_create_user_invitation,
-    query_get_user_invitation,
-    query_claim_user_invitation,
-    query_cancel_user_invitation,
-    query_create_device_invitation,
-    query_get_device_invitation,
-    query_claim_device_invitation,
-    query_cancel_device_invitation,
+    query_dump_users,
 )
 
 
@@ -84,24 +74,6 @@ class PGUserComponent(BaseUserComponent):
         async with self.dbh.pool.acquire() as conn:
             return await query_get_user_with_device(conn, organization_id, device_id)
 
-    async def find(
-        self,
-        organization_id: OrganizationID,
-        query: Optional[str] = None,
-        page: int = 1,
-        per_page: int = 100,
-        omit_revoked: bool = False,
-    ) -> Tuple[List[UserID], int]:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_find(
-                conn=conn,
-                organization_id=organization_id,
-                query=query,
-                page=page,
-                per_page=per_page,
-                omit_revoked=omit_revoked,
-            )
-
     async def find_humans(
         self,
         organization_id: OrganizationID,
@@ -122,65 +94,13 @@ class PGUserComponent(BaseUserComponent):
                 omit_non_human=omit_non_human,
             )
 
-    async def create_user_invitation(
-        self, organization_id: OrganizationID, invitation: UserInvitation
-    ) -> None:
-        async with self.dbh.pool.acquire() as conn:
-            await query_create_user_invitation(conn, organization_id, invitation)
-
-    async def get_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> UserInvitation:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_get_user_invitation(conn, organization_id, user_id)
-
-    async def claim_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID, encrypted_claim: bytes = b""
-    ) -> UserInvitation:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_claim_user_invitation(
-                conn, organization_id, user_id, encrypted_claim
-            )
-
-    async def cancel_user_invitation(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> None:
-        async with self.dbh.pool.acquire() as conn:
-            await query_cancel_user_invitation(conn, organization_id, user_id)
-
-    async def create_device_invitation(
-        self, organization_id: OrganizationID, invitation: DeviceInvitation
-    ) -> None:
-        async with self.dbh.pool.acquire() as conn:
-            await query_create_device_invitation(conn, organization_id, invitation)
-
-    async def get_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> DeviceInvitation:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_get_device_invitation(conn, organization_id, device_id)
-
-    async def claim_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID, encrypted_claim: bytes = b""
-    ) -> DeviceInvitation:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_claim_device_invitation(
-                conn, organization_id, device_id, encrypted_claim
-            )
-
-    async def cancel_device_invitation(
-        self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> None:
-        async with self.dbh.pool.acquire() as conn:
-            await query_cancel_device_invitation(conn, organization_id, device_id)
-
     async def revoke_user(
         self,
         organization_id: OrganizationID,
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: pendulum.DateTime = None,
+        revoked_on: Optional[pendulum.DateTime] = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             return await query_revoke_user(
@@ -191,3 +111,7 @@ class PGUserComponent(BaseUserComponent):
                 revoked_user_certifier,
                 revoked_on,
             )
+
+    async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:
+        async with self.dbh.pool.acquire() as conn:
+            return await query_dump_users(conn, organization_id)

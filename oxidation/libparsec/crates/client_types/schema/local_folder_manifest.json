@@ -1,0 +1,44 @@
+{
+    "label": "LocalFolderManifest",
+    "type": "local_folder_manifest",
+    "other_fields": [
+        {
+            "name": "base",
+            "type": "FolderManifest"
+        },
+        {
+            "name": "need_sync",
+            "type": "Boolean"
+        },
+        {
+            "name": "updated",
+            "type": "DateTime"
+        },
+        {
+            "name": "children",
+            "type": "Map<EntryName, EntryID>"
+        },
+        {
+            // Added in Parsec v1.15
+            // Confined entries are entries that are meant to stay locally and not be added
+            // to the uploaded remote manifest when synchronizing. The criteria for being
+            // confined is to have a filename that matched the "prevent sync" pattern at the time of
+            // the last change (or when a new filter was successfully applied)
+            "name": "local_confinement_points",
+            "type": "Set<EntryID>",
+            // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
+            "introduced_in_revision": 115
+        },
+        {
+            // Added in Parsec v1.15
+            // Filtered entries are entries present in the base manifest that are not exposed
+            // locally. We keep track of them to remember that those entries have not been
+            // deleted locally and hence should be restored when crafting the remote manifest
+            // to upload.
+            "name": "remote_confinement_points",
+            "type": "Set<EntryID>",
+            // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
+            "introduced_in_revision": 115
+        }
+    ]
+}

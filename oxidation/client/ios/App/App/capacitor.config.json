@@ -1,0 +1,11 @@
+{
+	"appId": "com.scille.parsec",
+	"appName": "client",
+	"webDir": "dist",
+	"bundledWebRuntime": false,
+	"plugins": {
+		"SplashScreen": {
+			"androidScaleType": "CENTER_CROP"
+		}
+	}
+}

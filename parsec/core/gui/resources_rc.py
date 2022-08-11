@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 try:
     from parsec.core.gui._resources_rc import *  # noqa
 except ImportError as exc:
     raise ModuleNotFoundError(
         """PyQt resources bundle hasn't been generated.
-You must install the parsec package or run `python setup.py generate_pyqt_resources_bundle`
+Running `python misc/generate_pyqt.py build` should fix the issue
 """
     ) from exc
 

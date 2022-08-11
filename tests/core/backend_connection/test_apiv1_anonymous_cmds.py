@@ -1,9 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
 
 from parsec.api.protocol import APIV1_ANONYMOUS_CMDS
+from parsec.api.protocol.types import OrganizationID
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import (
     BackendNotAvailable,
@@ -57,22 +58,11 @@ async def test_handshake_organization_expired(running_backend, expiredorg):
 
 
 @pytest.mark.trio
-async def test_handshake_rvk_mismatch(running_backend, coolorg, otherorg):
-    bad_rvk_org_addr = BackendOrganizationAddr.build(
-        backend_addr=coolorg.addr,
-        organization_id=coolorg.organization_id,
-        root_verify_key=otherorg.root_verify_key,
-    )
-    with pytest.raises(BackendConnectionRefused) as exc:
-        async with apiv1_backend_anonymous_cmds_factory(bad_rvk_org_addr) as cmds:
-            await cmds.ping()
-    assert str(exc.value) == "Root verify key for organization differs between client and server"
-
-
-@pytest.mark.trio
 async def test_handshake_unknown_organization(running_backend, coolorg):
     unknown_org_addr = BackendOrganizationAddr.build(
-        backend_addr=coolorg.addr, organization_id="dummy", root_verify_key=coolorg.root_verify_key
+        backend_addr=coolorg.addr.get_backend_addr(),
+        organization_id=OrganizationID("dummy"),
+        root_verify_key=coolorg.root_verify_key,
     )
     with pytest.raises(BackendConnectionRefused) as exc:
         async with apiv1_backend_anonymous_cmds_factory(unknown_org_addr) as cmds:

@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from uuid import UUID
 from typing import List, Tuple
 
+from parsec.backend.utils import OperationKind
 from parsec.backend.realm import RealmRole
-from parsec.api.protocol import DeviceID, OrganizationID
+from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
 from parsec.backend.postgresql.utils import (
     Q,
     query,
@@ -122,7 +122,7 @@ async def _check_realm_and_maintenance_access(
     conn, organization_id, author, realm_id, encryption_revision
 ):
     await _check_realm(
-        conn, organization_id, realm_id, encryption_revision, expected_maintenance=True
+        conn, organization_id, realm_id, encryption_revision, OperationKind.MAINTENANCE
     )
     can_write_roles = (RealmRole.OWNER,)
     await _check_realm_access(conn, organization_id, realm_id, author, can_write_roles)
@@ -133,22 +133,22 @@ async def query_maintenance_get_reencryption_batch(
     conn,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: UUID,
+    realm_id: RealmID,
     encryption_revision: int,
     size: int,
-) -> List[Tuple[UUID, int, bytes]]:
+) -> List[Tuple[VlobID, int, bytes]]:
     await _check_realm_and_maintenance_access(
         conn, organization_id, author, realm_id, encryption_revision
     )
     rep = await conn.fetch(
         *_q_maintenance_get_reencryption_batch(
-            organization_id=organization_id,
-            realm_id=realm_id,
+            organization_id=organization_id.str,
+            realm_id=realm_id.uuid,
             encryption_revision=encryption_revision,
             size=size,
         )
     )
-    return [(row["vlob_id"], row["version"], row["blob"]) for row in rep]
+    return [(VlobID(row["vlob_id"]), row["version"], row["blob"]) for row in rep]
 
 
 @query(in_transaction=True)
@@ -156,9 +156,9 @@ async def query_maintenance_save_reencryption_batch(
     conn,
     organization_id: OrganizationID,
     author: DeviceID,
-    realm_id: UUID,
+    realm_id: RealmID,
     encryption_revision: int,
-    batch: List[Tuple[UUID, int, bytes]],
+    batch: List[Tuple[VlobID, int, bytes]],
 ) -> Tuple[int, int]:
     await _check_realm_and_maintenance_access(
         conn, organization_id, author, realm_id, encryption_revision
@@ -166,9 +166,9 @@ async def query_maintenance_save_reencryption_batch(
     for vlob_id, version, blob in batch:
         await conn.execute(
             *_q_maintenance_save_reencryption_batch(
-                organization_id=organization_id,
-                realm_id=realm_id,
-                vlob_id=vlob_id,
+                organization_id=organization_id.str,
+                realm_id=realm_id.uuid,
+                vlob_id=vlob_id.uuid,
                 version=version,
                 encryption_revision=encryption_revision,
                 blob=blob,
@@ -178,8 +178,8 @@ async def query_maintenance_save_reencryption_batch(
 
     rep = await conn.fetchrow(
         *_q_maintenance_save_reencryption_batch_get_stat(
-            organization_id=organization_id,
-            realm_id=realm_id,
+            organization_id=organization_id.str,
+            realm_id=realm_id.uuid,
             encryption_revision=encryption_revision,
         )
     )

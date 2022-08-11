@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from uuid import UUID
 import attr
+from typing import TYPE_CHECKING, Dict, Tuple
 
-from parsec.api.protocol import DeviceID, OrganizationID
-from parsec.api.protocol import RealmRole
-from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
+from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole, BlockID
+from parsec.backend.utils import OperationKind
+from parsec.backend.realm import RealmNotFoundError
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import (
     BaseBlockComponent,
@@ -13,54 +13,83 @@ from parsec.backend.block import (
     BlockAccessError,
     BlockNotFoundError,
     BlockInMaintenanceError,
+    BlockStoreError,
 )
+
+if TYPE_CHECKING:
+    from parsec.backend.memory.realm import MemoryRealmComponent
 
 
 @attr.s(auto_attribs=True)
 class BlockMeta:
-    realm_id: UUID
+    realm_id: RealmID
     size: int
 
 
 class MemoryBlockComponent(BaseBlockComponent):
     def __init__(self):
         self._blockmetas = {}
-        self._blockstore_component = None
-        self._realm_component = None
+        self._blockstore_component: "MemoryBlockStoreComponent" = None
+        self._realm_component: "MemoryRealmComponent" = None
 
     def register_components(
-        self, blockstore: BaseBlockStoreComponent, realm: BaseRealmComponent, **other_components
-    ):
+        self,
+        blockstore: "MemoryBlockStoreComponent",
+        realm: "MemoryRealmComponent",
+        **other_components,
+    ) -> None:
         self._blockstore_component = blockstore
         self._realm_component = realm
 
-    def _check_realm_read_access(self, organization_id, realm_id, user_id):
-        can_read_roles = (
-            RealmRole.OWNER,
-            RealmRole.MANAGER,
-            RealmRole.CONTRIBUTOR,
-            RealmRole.READER,
-        )
-        self._check_realm_access(organization_id, realm_id, user_id, can_read_roles)
+    def _check_realm_read_access(
+        self, organization_id: OrganizationID, realm_id: RealmID, user_id: UserID
+    ) -> None:
+        self._check_realm_access(organization_id, realm_id, user_id, OperationKind.DATA_READ)
 
-    def _check_realm_write_access(self, organization_id, realm_id, user_id):
-        can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
-        self._check_realm_access(organization_id, realm_id, user_id, can_write_roles)
+    def _check_realm_write_access(
+        self, organization_id: OrganizationID, realm_id: RealmID, user_id: UserID
+    ) -> None:
+        self._check_realm_access(organization_id, realm_id, user_id, OperationKind.DATA_WRITE)
 
-    def _check_realm_access(self, organization_id, realm_id, user_id, allowed_roles):
+    def _check_realm_access(
+        self,
+        organization_id: OrganizationID,
+        realm_id: RealmID,
+        user_id: UserID,
+        operation_kind: OperationKind,
+    ) -> None:
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
             raise BlockNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
+        allowed_roles: Tuple[RealmRole, ...]
+        if operation_kind == operation_kind.DATA_READ:
+            allowed_roles = (
+                RealmRole.OWNER,
+                RealmRole.MANAGER,
+                RealmRole.CONTRIBUTOR,
+                RealmRole.READER,
+            )
+        elif operation_kind == operation_kind.DATA_WRITE:
+            allowed_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
+        elif operation_kind == operation_kind.MAINTENANCE:
+            allowed_roles = (RealmRole.OWNER,)
+        else:
+            assert False, f"Operation kind {operation_kind} not supported"
+
         if realm.roles.get(user_id) not in allowed_roles:
             raise BlockAccessError()
 
-        if realm.status.in_maintenance:
+        # Special case of reading while in reencryption is authorized
+        if realm.status.in_reencryption and operation_kind == OperationKind.DATA_READ:
+            pass
+        # Access is not allowed while in maintenance
+        elif realm.status.in_maintenance:
             raise BlockInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
 
     async def read(
-        self, organization_id: OrganizationID, author: DeviceID, block_id: UUID
+        self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
     ) -> bytes:
         try:
             blockmeta = self._blockmetas[(organization_id, block_id)]
@@ -76,31 +105,32 @@ class MemoryBlockComponent(BaseBlockComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        block_id: UUID,
-        realm_id: UUID,
+        block_id: BlockID,
+        realm_id: RealmID,
         block: bytes,
     ) -> None:
         self._check_realm_write_access(organization_id, realm_id, author.user_id)
+        if (organization_id, block_id) in self._blockmetas:
+            raise BlockAlreadyExistsError()
 
         await self._blockstore_component.create(organization_id, block_id, block)
+
         self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id, len(block))
 
 
 class MemoryBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self):
-        self._blocks = {}
+        self._blocks: Dict[Tuple[OrganizationID, BlockID], bytes] = {}
 
-    async def read(self, organization_id: OrganizationID, block_id: UUID) -> bytes:
+    async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
         try:
             return self._blocks[(organization_id, block_id)]
 
         except KeyError:
-            raise BlockNotFoundError()
+            raise BlockStoreError()
 
-    async def create(self, organization_id: OrganizationID, block_id: UUID, block: bytes) -> None:
+    async def create(
+        self, organization_id: OrganizationID, block_id: BlockID, block: bytes
+    ) -> None:
         key = (organization_id, block_id)
-        if key in self._blocks:
-            # Should not happen if client play with uuid randomness
-            raise BlockAlreadyExistsError()
-
         self._blocks[key] = block

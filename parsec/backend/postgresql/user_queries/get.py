@@ -1,8 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from typing import Tuple
+from typing import Tuple, List, Optional
 
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle
+from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceLabel, HumanHandle
+from parsec.api.data import UserProfile
 from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
 from parsec.backend.postgresql.utils import (
     Q,
@@ -11,7 +12,26 @@ from parsec.backend.postgresql.utils import (
     q_device,
     q_user_internal_id,
     q_human,
-    STR_TO_USER_PROFILE,
+)
+
+_q_get_organization_users = Q(
+    f"""
+SELECT
+    user_id,
+    { q_human(_id="user_.human", select="email") } as human_email,
+    { q_human(_id="user_.human", select="label") } as human_label,
+    profile,
+    user_certificate,
+    redacted_user_certificate,
+    { q_device(select="device_id", _id="user_.user_certifier") } as user_certifier,
+    created_on,
+    revoked_on,
+    revoked_user_certificate,
+    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier
+FROM user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+"""
 )
 
 
@@ -32,6 +52,22 @@ FROM user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND user_id = $user_id
+"""
+)
+
+
+_q_get_organization_devices = Q(
+    f"""
+SELECT
+    device_id,
+    device_label,
+    device_certificate,
+    redacted_device_certificate,
+    { q_device(table_alias="d", select="d.device_id", _id="device.device_certifier") } as device_certifier,
+    created_on
+FROM device
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
 """
 )
 
@@ -170,49 +206,57 @@ FROM cte2;
 
 
 async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> User:
-    row = await conn.fetchrow(*_q_get_user(organization_id=organization_id, user_id=user_id))
+    row = await conn.fetchrow(
+        *_q_get_user(organization_id=organization_id.str, user_id=user_id.str)
+    )
     if not row:
         raise UserNotFoundError(user_id)
 
+    human_handle = None
     if row["human_email"]:
         human_handle = HumanHandle(email=row["human_email"], label=row["human_label"])
-    else:
-        human_handle = None
 
     return User(
         user_id=user_id,
         human_handle=human_handle,
-        profile=STR_TO_USER_PROFILE[row["profile"]],
+        profile=UserProfile(row["profile"]),
         user_certificate=row["user_certificate"],
         redacted_user_certificate=row["redacted_user_certificate"],
-        user_certifier=row["user_certifier"],
+        user_certifier=DeviceID(row["user_certifier"]) if row["user_certifier"] else None,
         created_on=row["created_on"],
         revoked_on=row["revoked_on"],
         revoked_user_certificate=row["revoked_user_certificate"],
-        revoked_user_certifier=row["revoked_user_certifier"],
+        revoked_user_certifier=DeviceID(row["revoked_user_certifier"])
+        if row["revoked_user_certifier"]
+        else None,
     )
 
 
 async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID) -> Device:
-    row = await conn.fetchrow(*_q_get_device(organization_id=organization_id, device_id=device_id))
+    row = await conn.fetchrow(
+        *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
+    )
     if not row:
         raise UserNotFoundError(device_id)
 
     return Device(
         device_id=device_id,
-        device_label=row["device_label"],
+        device_label=DeviceLabel(row["device_label"]),
         device_certificate=row["device_certificate"],
         redacted_device_certificate=row["redacted_device_certificate"],
-        device_certifier=row["device_certifier"],
+        device_certifier=DeviceID(row["device_certifier"]),
         created_on=row["created_on"],
     )
 
 
 async def _get_trustchain(
-    conn, organization_id: OrganizationID, *device_ids: Tuple[DeviceID], redacted: bool = False
-) -> Tuple[Device]:
+    conn, organization_id: OrganizationID, *device_ids: Optional[DeviceID], redacted: bool = False
+) -> Trustchain:
     rows = await conn.fetch(
-        *_q_get_trustchain(organization_id=organization_id, device_ids=device_ids)
+        *_q_get_trustchain(
+            organization_id=organization_id.str,
+            device_ids=[d.str for d in device_ids if d is not None],
+        )
     )
     user_certif_field = "redacted_user_certificate" if redacted else "user_certificate"
     device_certif_field = "redacted_device_certificate" if redacted else "device_certificate"
@@ -235,18 +279,18 @@ async def _get_trustchain(
 
 async def _get_user_devices(
     conn, organization_id: OrganizationID, user_id: UserID
-) -> Tuple[Device]:
+) -> Tuple[Device, ...]:
     results = await conn.fetch(
-        *_q_get_user_devices(organization_id=organization_id, user_id=user_id)
+        *_q_get_user_devices(organization_id=organization_id.str, user_id=user_id.str)
     )
 
     return tuple(
         Device(
             device_id=DeviceID(row["device_id"]),
-            device_label=row["device_label"],
+            device_label=DeviceLabel(row["device_label"]) if row["device_label"] else None,
             device_certificate=row["device_certificate"],
             redacted_device_certificate=row["redacted_device_certificate"],
-            device_certifier=row["device_certifier"],
+            device_certifier=DeviceID(row["device_certifier"]) if row["device_certifier"] else None,
             created_on=row["created_on"],
         )
         for row in results
@@ -300,10 +344,10 @@ async def query_get_user_with_devices_and_trustchain(
     return GetUserAndDevicesResult(
         user_certificate=user.redacted_user_certificate if redacted else user.user_certificate,
         revoked_user_certificate=user.revoked_user_certificate,
-        device_certificates=[
+        device_certificates=tuple(
             d.redacted_device_certificate if redacted else d.device_certificate
             for d in user_devices
-        ],
+        ),
         trustchain_device_certificates=trustchain.devices,
         trustchain_user_certificates=trustchain.users,
         trustchain_revoked_user_certificates=trustchain.revoked_users,
@@ -315,37 +359,82 @@ async def query_get_user_with_device(
     conn, organization_id: OrganizationID, device_id: DeviceID
 ) -> Tuple[User, Device]:
     d_row = await conn.fetchrow(
-        *_q_get_device(organization_id=organization_id, device_id=device_id)
+        *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
     )
     u_row = await conn.fetchrow(
-        *_q_get_user(organization_id=organization_id, user_id=device_id.user_id)
+        *_q_get_user(organization_id=organization_id.str, user_id=device_id.user_id.str)
     )
     if not u_row or not d_row:
         raise UserNotFoundError(device_id)
 
+    human_handle = None
     if u_row["human_email"]:
         human_handle = HumanHandle(email=u_row["human_email"], label=u_row["human_label"])
-    else:
-        human_handle = None
 
     device = Device(
         device_id=device_id,
-        device_label=d_row["device_label"],
+        device_label=DeviceLabel(d_row["device_label"]) if d_row["device_label"] else None,
         device_certificate=d_row["device_certificate"],
         redacted_device_certificate=d_row["redacted_device_certificate"],
-        device_certifier=d_row["device_certifier"],
+        device_certifier=DeviceID(d_row["device_certifier"]) if d_row["device_certifier"] else None,
         created_on=d_row["created_on"],
     )
     user = User(
         user_id=device_id.user_id,
         human_handle=human_handle,
-        profile=STR_TO_USER_PROFILE[u_row["profile"]],
+        profile=UserProfile(u_row["profile"]),
         user_certificate=u_row["user_certificate"],
         redacted_user_certificate=u_row["redacted_user_certificate"],
-        user_certifier=u_row["user_certifier"],
+        user_certifier=DeviceID(u_row["user_certifier"]) if u_row["user_certifier"] else None,
         created_on=u_row["created_on"],
         revoked_on=u_row["revoked_on"],
         revoked_user_certificate=u_row["revoked_user_certificate"],
-        revoked_user_certifier=u_row["revoked_user_certifier"],
+        revoked_user_certifier=DeviceID(u_row["revoked_user_certifier"])
+        if u_row["revoked_user_certifier"]
+        else None,
     )
     return user, device
+
+
+@query()
+async def query_dump_users(
+    conn, organization_id: OrganizationID
+) -> Tuple[List[User], List[Device]]:
+    users = []
+    devices = []
+
+    rows = await conn.fetch(*_q_get_organization_users(organization_id=organization_id.str))
+    for row in rows:
+        users.append(
+            User(
+                user_id=UserID(row["user_id"]),
+                human_handle=HumanHandle(email=row["human_email"], label=row["human_label"]),
+                profile=UserProfile(row["profile"]),
+                user_certificate=row["user_certificate"],
+                redacted_user_certificate=row["redacted_user_certificate"],
+                user_certifier=DeviceID(row["user_certifier"]) if row["user_certifier"] else None,
+                created_on=row["created_on"],
+                revoked_on=row["revoked_on"],
+                revoked_user_certificate=row["revoked_user_certificate"],
+                revoked_user_certifier=DeviceID(row["revoked_user_certifier"])
+                if row["revoked_user_certifier"]
+                else None,
+            )
+        )
+
+    rows = await conn.fetch(*_q_get_organization_devices(organization_id=organization_id.str))
+    for row in rows:
+        devices.append(
+            Device(
+                device_id=DeviceID(row["device_id"]),
+                device_label=DeviceLabel(row["device_label"]),
+                device_certificate=row["device_certificate"],
+                redacted_device_certificate=row["redacted_device_certificate"],
+                device_certifier=DeviceID(row["device_certifier"])
+                if row["device_certifier"]
+                else None,
+                created_on=row["created_on"],
+            )
+        )
+
+    return users, devices

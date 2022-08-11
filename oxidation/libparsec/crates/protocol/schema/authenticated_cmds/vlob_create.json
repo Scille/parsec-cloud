@@ -1,0 +1,61 @@
+{
+    "label": "VlobCreate",
+    "req": {
+        "cmd": "vlob_create",
+        "other_fields": [
+            {
+                "name": "realm_id",
+                "type": "RealmID"
+            },
+            {
+                "name": "encryption_revision",
+                "type": "Index"
+            },
+            {
+                "name": "vlob_id",
+                "type": "VlobID"
+            },
+            {
+                // If blob contains a signed message, it timestamp cannot be directly enforced
+                // by the backend (given the message is probably also encrypted).
+                // Hence the timestamp is passed in clear so backend can reject the message
+                // if it considers the timestamp invalid. On top of that each client asking
+                // for the message will receive the declared timestamp to check against
+                // the actual timestamp within the message.
+                "name": "timestamp",
+                "type": "DateTime"
+            },
+            {
+                "name": "blob",
+                "type": "Bytes"
+            }
+        ]
+    },
+    "reps": [
+        {
+            "status": "ok",
+            "other_fields": []
+        },
+        {
+            "status": "already_exists",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        },
+        {
+            "status": "not_allowed",
+            "other_fields": []
+        },
+        {
+            "status": "bad_encryption_revision",
+            "other_fields": []
+        },
+        {
+            "status": "in_maintenance",
+            "other_fields": []
+        }
+    ]
+}

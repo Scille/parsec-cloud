@@ -1,10 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import os
 import string
-import platform
-from importlib import import_module
-import importlib_resources
+import sys
+import importlib.resources
 from pathlib import Path
 from structlog import get_logger
 from contextlib import contextmanager
@@ -24,24 +23,27 @@ EXPLORER_DRIVES_DEFAULT_ICON_TEMPLATE = EXPLORER_DRIVES + "\\{}\\DefaultIcon"
 
 # Winreg helper
 
-_psutil = None
+
+# Psutil is a dependency only on Windows, winreg is part of stdlib
+# but only available on Windows. Hence must rely on dynamic import
+# so that the current module can be imported from any OS.
+#
+# On top of that, we use good ol' `import foo` (nothing beats that !) instead
+# of the fancy `importlib.import_module`. This is to make sure PyInstaller
+# won't mess application packaging by missing this import during
+# tree-shaking (see issue #1690).
 
 
 def get_psutil():
-    global _psutil
-    if not _psutil:
-        _psutil = import_module("psutil")
-    return _psutil
+    import psutil
 
-
-_winreg = None
+    return psutil
 
 
 def get_winreg():
-    global _winreg
-    if not _winreg:
-        _winreg = import_module("winreg")
-    return _winreg
+    import winreg
+
+    return winreg
 
 
 def try_winreg():
@@ -90,7 +92,7 @@ def winreg_has_user_key(key):
 
 
 def is_acrobat_reader_dc_present():
-    if platform.system() != "Windows" or not try_winreg():
+    if sys.platform != "win32" or not try_winreg():
         return False
 
     return winreg_has_user_key(ACROBAT_READER_DC_PRIVILEGED)
@@ -172,12 +174,12 @@ def del_parsec_drive_icon(letter: str):
 @contextmanager
 def parsec_drive_icon_context(letter):
     # Winreg is not available for some reasons
-    if platform.system() != "Windows" or not try_winreg():
+    if sys.platform != "win32" or not try_winreg():
         yield
         return
 
     # Safe context for removing the key after usage
-    with importlib_resources.path(resources, DRIVE_ICON_NAME) as drive_icon_path:
+    with importlib.resources.files(resources).joinpath(DRIVE_ICON_NAME) as drive_icon_path:
         set_parsec_drive_icon(letter, drive_icon_path)
         try:
             yield
@@ -187,7 +189,7 @@ def parsec_drive_icon_context(letter):
 
 def cleanup_parsec_drive_icons():
     # Winreg is not available for some reasons
-    if platform.system() != "Windows" or not try_winreg():
+    if sys.platform != "win32" or not try_winreg():
         return
 
     # Loop over the 26 drives

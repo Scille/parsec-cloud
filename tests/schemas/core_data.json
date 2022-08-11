@@ -1,4 +1,234 @@
 {
+    "DeviceFileSchema": {
+        "oneof_fallback_schema": null,
+        "oneof_field": "type",
+        "oneof_schemas": {
+            "password": {
+                "fields": {
+                    "ciphertext": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "bytesField"
+                    },
+                    "device_id": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "DeviceIDField"
+                    },
+                    "device_label": {
+                        "allow_none": true,
+                        "required": true,
+                        "type": "DeviceLabelField"
+                    },
+                    "human_handle": {
+                        "allow_none": true,
+                        "args_types": [
+                            {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "String"
+                            },
+                            {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "String"
+                            }
+                        ],
+                        "required": true,
+                        "type": "HumanHandleField"
+                    },
+                    "organization_id": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "OrganizationIDField"
+                    },
+                    "salt": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "bytesField"
+                    },
+                    "slug": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    },
+                    "type": {
+                        "allow_none": false,
+                        "enum_type": "DeviceFileType",
+                        "required": true,
+                        "type": "EnumCheckedConstant",
+                        "value": "password"
+                    }
+                }
+            },
+            "recovery": {
+                "fields": {
+                    "ciphertext": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "bytesField"
+                    },
+                    "device_id": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "DeviceIDField"
+                    },
+                    "device_label": {
+                        "allow_none": true,
+                        "required": true,
+                        "type": "DeviceLabelField"
+                    },
+                    "human_handle": {
+                        "allow_none": true,
+                        "args_types": [
+                            {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "String"
+                            },
+                            {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "String"
+                            }
+                        ],
+                        "required": true,
+                        "type": "HumanHandleField"
+                    },
+                    "organization_id": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "OrganizationIDField"
+                    },
+                    "slug": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    },
+                    "type": {
+                        "allow_none": false,
+                        "enum_type": "DeviceFileType",
+                        "required": true,
+                        "type": "EnumCheckedConstant",
+                        "value": "recovery"
+                    }
+                }
+            },
+            "smartcard": {
+                "fields": {
+                    "certificate_id": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    },
+                    "certificate_sha1": {
+                        "allow_none": true,
+                        "required": true,
+                        "type": "bytesField"
+                    },
+                    "ciphertext": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "bytesField"
+                    },
+                    "device_id": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "DeviceIDField"
+                    },
+                    "device_label": {
+                        "allow_none": true,
+                        "required": true,
+                        "type": "DeviceLabelField"
+                    },
+                    "encrypted_key": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "bytesField"
+                    },
+                    "human_handle": {
+                        "allow_none": true,
+                        "args_types": [
+                            {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "String"
+                            },
+                            {
+                                "allow_none": false,
+                                "required": true,
+                                "type": "String"
+                            }
+                        ],
+                        "required": true,
+                        "type": "HumanHandleField"
+                    },
+                    "organization_id": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "OrganizationIDField"
+                    },
+                    "slug": {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    },
+                    "type": {
+                        "allow_none": false,
+                        "enum_type": "DeviceFileType",
+                        "required": true,
+                        "type": "EnumCheckedConstant",
+                        "value": "smartcard"
+                    }
+                }
+            }
+        },
+        "serializing": "msgpack"
+    },
+    "LegacyDeviceFileSchema": {
+        "fields": {
+            "ciphertext": {
+                "allow_none": false,
+                "required": true,
+                "type": "bytesField"
+            },
+            "device_label": {
+                "allow_none": true,
+                "required": false,
+                "type": "DeviceLabelField"
+            },
+            "human_handle": {
+                "allow_none": true,
+                "args_types": [
+                    {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    },
+                    {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    }
+                ],
+                "required": false,
+                "type": "HumanHandleField"
+            },
+            "salt": {
+                "allow_none": false,
+                "required": true,
+                "type": "bytesField"
+            },
+            "type": {
+                "allow_none": false,
+                "enum_type": "DeviceFileType",
+                "required": true,
+                "type": "EnumCheckedConstant",
+                "value": "password"
+            }
+        },
+        "serializing": "msgpack"
+    },
     "LocalDevice": {
         "fields": {
             "device_id": {
@@ -9,7 +239,7 @@
             "device_label": {
                 "allow_none": true,
                 "required": false,
-                "type": "String"
+                "type": "DeviceLabelField"
             },
             "human_handle": {
                 "allow_none": true,
@@ -50,6 +280,12 @@
             },
             "profile": {
                 "allow_none": false,
+                "enum_allowed_values": [
+                    "ADMIN",
+                    "STANDARD",
+                    "OUTSIDER"
+                ],
+                "enum_type": "UserProfile",
                 "required": false,
                 "type": "UserProfileField"
             },
@@ -154,6 +390,7 @@
                         },
                         "type": {
                             "allow_none": false,
+                            "enum_type": "ManifestType",
                             "required": true,
                             "type": "EnumCheckedConstant",
                             "value": "file_manifest"
@@ -267,6 +504,7 @@
             },
             "type": {
                 "allow_none": false,
+                "enum_type": "LocalManifestType",
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "local_file_manifest"
@@ -328,6 +566,7 @@
                         },
                         "type": {
                             "allow_none": false,
+                            "enum_type": "ManifestType",
                             "required": true,
                             "type": "EnumCheckedConstant",
                             "value": "folder_manifest"
@@ -355,7 +594,7 @@
                 },
                 "nested_type": {
                     "allow_none": false,
-                    "required": true,
+                    "required": false,
                     "type": "EntryIDField"
                 },
                 "required": true,
@@ -365,7 +604,7 @@
                 "allow_none": false,
                 "container_type": {
                     "allow_none": false,
-                    "required": true,
+                    "required": false,
                     "type": "EntryIDField"
                 },
                 "required": false,
@@ -380,7 +619,7 @@
                 "allow_none": false,
                 "container_type": {
                     "allow_none": false,
-                    "required": true,
+                    "required": false,
                     "type": "EntryIDField"
                 },
                 "required": false,
@@ -388,6 +627,7 @@
             },
             "type": {
                 "allow_none": false,
+                "enum_type": "LocalManifestType",
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "local_folder_manifest"
@@ -396,6 +636,112 @@
                 "allow_none": false,
                 "required": true,
                 "type": "DateTime"
+            }
+        },
+        "serializing": "msgpack"
+    },
+    "LocalPendingEnrollment": {
+        "fields": {
+            "addr": {
+                "allow_none": false,
+                "required": true,
+                "type": "BackendPkiEnrollmentAddrField"
+            },
+            "ciphertext": {
+                "allow_none": false,
+                "required": true,
+                "type": "bytesField"
+            },
+            "encrypted_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "bytesField"
+            },
+            "enrollment_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "UUID"
+            },
+            "submit_payload": {
+                "allow_none": false,
+                "required": true,
+                "schema": {
+                    "fields": {
+                        "public_key": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "PublicKey"
+                        },
+                        "requested_device_label": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "DeviceLabelField"
+                        },
+                        "type": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "CheckedConstant",
+                            "value": "pki_enrollment_submit_payload"
+                        },
+                        "verify_key": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "VerifyKey"
+                        }
+                    }
+                },
+                "type": "Nested"
+            },
+            "submitted_on": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "local_pending_enrollment"
+            },
+            "x509_certificate": {
+                "allow_none": false,
+                "required": true,
+                "schema": {
+                    "fields": {
+                        "certificate_id": {
+                            "allow_none": true,
+                            "required": true,
+                            "type": "String"
+                        },
+                        "certificate_sha1": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "bytesField"
+                        },
+                        "der_x509_certificate": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "bytesField"
+                        },
+                        "issuer": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "Dict"
+                        },
+                        "subject": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "Dict"
+                        },
+                        "type": {
+                            "allow_none": false,
+                            "required": true,
+                            "type": "CheckedConstant",
+                            "value": "x509_certificate"
+                        }
+                    }
+                },
+                "type": "Nested"
             }
         },
         "serializing": "msgpack"
@@ -434,6 +780,7 @@
                         },
                         "type": {
                             "allow_none": false,
+                            "enum_type": "ManifestType",
                             "required": true,
                             "type": "EnumCheckedConstant",
                             "value": "user_manifest"
@@ -482,6 +829,13 @@
                                         },
                                         "role": {
                                             "allow_none": true,
+                                            "enum_allowed_values": [
+                                                "OWNER",
+                                                "MANAGER",
+                                                "CONTRIBUTOR",
+                                                "READER"
+                                            ],
+                                            "enum_type": "RealmRole",
                                             "required": true,
                                             "type": "RealmRoleField"
                                         },
@@ -511,8 +865,14 @@
                 "required": true,
                 "type": "Boolean"
             },
+            "speculative": {
+                "allow_none": false,
+                "required": false,
+                "type": "Boolean"
+            },
             "type": {
                 "allow_none": false,
+                "enum_type": "LocalManifestType",
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "local_user_manifest"
@@ -556,6 +916,13 @@
                             },
                             "role": {
                                 "allow_none": true,
+                                "enum_allowed_values": [
+                                    "OWNER",
+                                    "MANAGER",
+                                    "CONTRIBUTOR",
+                                    "READER"
+                                ],
+                                "enum_type": "RealmRole",
                                 "required": true,
                                 "type": "RealmRoleField"
                             },
@@ -618,6 +985,7 @@
                         },
                         "type": {
                             "allow_none": false,
+                            "enum_type": "ManifestType",
                             "required": true,
                             "type": "EnumCheckedConstant",
                             "value": "workspace_manifest"
@@ -645,7 +1013,7 @@
                 },
                 "nested_type": {
                     "allow_none": false,
-                    "required": true,
+                    "required": false,
                     "type": "EntryIDField"
                 },
                 "required": true,
@@ -655,7 +1023,7 @@
                 "allow_none": false,
                 "container_type": {
                     "allow_none": false,
-                    "required": true,
+                    "required": false,
                     "type": "EntryIDField"
                 },
                 "required": false,
@@ -670,14 +1038,20 @@
                 "allow_none": false,
                 "container_type": {
                     "allow_none": false,
-                    "required": true,
+                    "required": false,
                     "type": "EntryIDField"
                 },
                 "required": false,
                 "type": "FrozenSet"
             },
+            "speculative": {
+                "allow_none": false,
+                "required": false,
+                "type": "Boolean"
+            },
             "type": {
                 "allow_none": false,
+                "enum_type": "LocalManifestType",
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "local_workspace_manifest"

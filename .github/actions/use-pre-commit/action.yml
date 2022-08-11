@@ -1,0 +1,58 @@
+name: pre-commit
+description: install & run-precommit
+
+inputs:
+  extra-args:
+    description: options to pass to pre-commit run-precommit
+    required: false
+    default: --all-files
+  config-file:
+    description: where is located the pre-commit config file
+    required: false
+    default: .pre-commit-config.yaml
+  version:
+    description: pre-commit version to use
+    required: false
+    default: 2.19.0
+
+outputs:
+  cache-hit:
+    description: A boolean value to indicate an exact match was found for the key.
+    value: ${{ steps.cache-pre-commit.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - name: Cache pre-commit install
+      id: cache-pre-commit
+      uses: actions/cache@c3f1317a9e7b1ef106c153ac8c0f00fed3ddbc0d # pin v3.0.4
+      with:
+        key: pre-commit-${{ inputs.version }}-${{ hashFiles(inputs.config-file) }}
+        path: |
+          ~/.cache/pre-commit
+          ~/.pre-commit-venv
+
+    - name: Create virtualenv
+      if: steps.cache-pre-commit.outputs.cache-hit != 'true'
+      run: python -m venv ~/.pre-commit-venv
+      shell: bash
+
+    - name: Install pre-commit
+      if: steps.cache-pre-commit.outputs.cache-hit != 'true'
+      run: |
+        source ~/.pre-commit-venv/bin/activate
+        python -m pip install pre-commit==2.19.0
+      shell: bash
+
+    - name: Debug installed python package
+      run: |
+        source ~/.pre-commit-venv/bin/activate
+        python -m pip freeze --local
+        pre-commit --version
+      shell: bash
+
+    - name: Run pre-commit
+      run: |
+        source ~/.pre-commit-venv/bin/activate
+        pre-commit run --show-diff-on-failure --color=always ${{ inputs.extra-args }}
+      shell: bash

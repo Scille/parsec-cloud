@@ -1,12 +1,17 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
+from typing import Optional, Callable
 from functools import partial
 from pendulum import now as pendulum_now
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
+from parsec.serde import packb
 from parsec.api.protocol import (
     ping_serializer,
+    organization_stats_serializer,
+    organization_config_serializer,
+    organization_bootstrap_serializer,
     block_create_serializer,
     block_read_serializer,
     realm_create_serializer,
@@ -46,7 +51,94 @@ from parsec.api.protocol import (
     invite_3b_greeter_signify_trust_serializer,
     invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
+    pki_enrollment_submit_serializer,
+    pki_enrollment_info_serializer,
+    pki_enrollment_list_serializer,
+    pki_enrollment_reject_serializer,
+    pki_enrollment_accept_serializer,
 )
+
+from tests.common import real_clock_timeout
+
+
+def craft_http_request(
+    target: str, method: str, headers: dict, body: Optional[bytes], protocol: str = "1.0"
+) -> bytes:
+    if body is None:
+        body = b""
+    else:
+        assert isinstance(body, bytes)
+        headers = {**headers, "content-length": len(body)}
+
+    # Use HTTP 1.0 by default given 1.1 requires Host header
+    req = f"{method} {target} HTTP/{protocol}\r\n"
+    req += "\r\n".join(f"{key}: {value}" for key, value in headers.items())
+    while not req.endswith("\r\n\r\n"):
+        req += "\r\n"
+
+    return req.encode("ascii") + body
+
+
+def parse_http_response(raw: bytes):
+    head, _ = raw.split(b"\r\n\r\n", 1)  # Ignore the body part
+    status, *headers = head.split(b"\r\n")
+    protocole, status_code, status_label = status.split(b" ", 2)
+    assert protocole == b"HTTP/1.1"
+    cooked_status = (int(status_code.decode("ascii")), status_label.decode("ascii"))
+    cooked_headers = {}
+    for header in headers:
+        key, value = header.split(b": ")
+        cooked_headers[key.decode("ascii").lower()] = value.decode("ascii")
+    return cooked_status, cooked_headers
+
+
+async def do_http_request(
+    stream: trio.abc.Stream,
+    target: Optional[str] = None,
+    method: str = "GET",
+    req: Optional[bytes] = None,
+    headers: Optional[dict] = None,
+    body: Optional[bytes] = None,
+):
+    if req is None:
+        assert target is not None
+        req = craft_http_request(target, method, headers or {}, body)
+    else:
+        assert target is None
+        assert headers is None
+        assert body is None
+    await stream.send_all(req)
+
+    # In theory there is no guarantee `stream.receive_some()` outputs
+    # an entire HTTP request (it typically depends on the TCP stack and
+    # the network).
+    # However given we communicate only on the localhost loop, we can
+    # cross our fingers really hard and expect the http header part will come
+    # as a single trame.
+    rep = b""
+    while b"\r\n\r\n" not in rep:
+        part = await stream.receive_some()
+        if not part:
+            # Connection closed by peer
+            raise trio.BrokenResourceError
+        rep += part
+    status, rep_headers = parse_http_response(rep)
+    rep_content = rep.split(b"\r\n\r\n", 1)[1]
+    content_size = int(rep_headers.get("content-length", "0"))
+    if content_size:
+        while len(rep_content) < content_size:
+            rep_content += await stream.receive_some()
+        # No need to check for another request beeing put after the
+        # body in the buffer given we don't use keep alive
+        assert len(rep_content) == content_size
+    else:
+        # In case the current request is a connection upgrade to websocket, the
+        # server is allowed to start sending websocket messages right away that
+        # may end up as part of the TCP trame that contained the response
+        if b"Connection: Upgrade" not in rep:
+            assert rep_content == b""
+
+    return status, rep_headers, rep_content
 
 
 class CmdSock:
@@ -56,13 +148,16 @@ class CmdSock:
         self.parse_args = parse_args
         self.check_rep_by_default = check_rep_by_default
 
-    async def _do_send(self, sock, args, kwargs):
+    async def _do_send(self, ws, req_post_processing, args, kwargs):
         req = {"cmd": self.cmd, **self.parse_args(self, *args, **kwargs)}
-        raw_req = self.serializer.req_dumps(req)
-        await sock.send(raw_req)
+        if req_post_processing:
+            raw_req = packb(req_post_processing(self.serializer.req_dump(req)))
+        else:
+            raw_req = self.serializer.req_dumps(req)
+        await ws.send(raw_req)
 
-    async def _do_recv(self, sock, check_rep):
-        raw_rep = await sock.recv()
+    async def _do_recv(self, ws, check_rep):
+        raw_rep = await ws.receive()
         rep = self.serializer.rep_loads(raw_rep)
 
         if check_rep:
@@ -70,10 +165,10 @@ class CmdSock:
 
         return rep
 
-    async def __call__(self, sock, *args, **kwargs):
+    async def __call__(self, ws, *args, req_post_processing: Callable = None, **kwargs):
         check_rep = kwargs.pop("check_rep", self.check_rep_by_default)
-        await self._do_send(sock, args, kwargs)
-        return await self._do_recv(sock, check_rep)
+        await self._do_send(ws, req_post_processing, args, kwargs)
+        return await self._do_recv(ws, check_rep)
 
     class AsyncCallRepBox:
         def __init__(self, do_recv):
@@ -92,15 +187,15 @@ class CmdSock:
             self._rep = await self._do_recv()
 
     @asynccontextmanager
-    async def async_call(self, sock, *args, **kwargs):
+    async def async_call(self, sock, *args, req_post_processing: Callable = None, **kwargs):
         check_rep = kwargs.pop("check_rep", self.check_rep_by_default)
-        await self._do_send(sock, args, kwargs)
+        await self._do_send(sock, req_post_processing, args, kwargs)
 
         box = self.AsyncCallRepBox(do_recv=partial(self._do_recv, sock, check_rep))
         yield box
 
         if not box.rep_done:
-            with trio.fail_after(1):
+            async with real_clock_timeout():
                 await box.do_recv()
 
 
@@ -111,6 +206,35 @@ ping = CmdSock(
     "ping",
     ping_serializer,
     parse_args=lambda self, ping="foo": {"ping": ping},
+    check_rep_by_default=True,
+)
+
+
+### Organization ###
+
+
+organization_config = CmdSock(
+    "organization_config", organization_config_serializer, check_rep_by_default=True
+)
+
+
+organization_stats = CmdSock(
+    "organization_stats", organization_stats_serializer, check_rep_by_default=True
+)
+
+
+organization_bootstrap = CmdSock(
+    "organization_bootstrap",
+    organization_bootstrap_serializer,
+    parse_args=lambda self, bootstrap_token, root_verify_key, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate, sequester_authority_certificate=None: {
+        "bootstrap_token": bootstrap_token,
+        "root_verify_key": root_verify_key,
+        "user_certificate": user_certificate,
+        "device_certificate": device_certificate,
+        "redacted_user_certificate": redacted_user_certificate,
+        "redacted_device_certificate": redacted_device_certificate,
+        "sequester_authority_certificate": sequester_authority_certificate,
+    },
     check_rep_by_default=True,
 )
 
@@ -152,7 +276,7 @@ realm_stats = CmdSock(
 realm_get_role_certificates = CmdSock(
     "realm_get_role_certificates",
     realm_get_role_certificates_serializer,
-    parse_args=lambda self, realm_id, since=None: {"realm_id": realm_id, "since": since},
+    parse_args=lambda self, realm_id: {"realm_id": realm_id},
 )
 realm_update_roles = CmdSock(
     "realm_update_roles",
@@ -191,12 +315,13 @@ realm_finish_reencryption_maintenance = CmdSock(
 vlob_create = CmdSock(
     "vlob_create",
     vlob_create_serializer,
-    parse_args=lambda self, realm_id, vlob_id, blob, timestamp=None, encryption_revision=1: {
+    parse_args=lambda self, realm_id, vlob_id, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
         "realm_id": realm_id,
         "vlob_id": vlob_id,
         "blob": blob,
         "timestamp": timestamp or pendulum_now(),
         "encryption_revision": encryption_revision,
+        "sequester_blob": sequester_blob,
     },
     check_rep_by_default=True,
 )
@@ -213,12 +338,13 @@ vlob_read = CmdSock(
 vlob_update = CmdSock(
     "vlob_update",
     vlob_update_serializer,
-    parse_args=lambda self, vlob_id, version, blob, encryption_revision=1, timestamp=None: {
+    parse_args=lambda self, vlob_id, version, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
         "vlob_id": vlob_id,
         "version": version,
         "blob": blob,
         "encryption_revision": encryption_revision,
         "timestamp": timestamp or pendulum_now(),
+        "sequester_blob": sequester_blob,
     },
     check_rep_by_default=True,
 )
@@ -292,22 +418,18 @@ user_get = CmdSock(
 human_find = CmdSock(
     "human_find",
     human_find_serializer,
-    parse_args=lambda self, query=None, omit_revoked=None, omit_non_human=None, page=None, per_page=None: {
-        k: v
-        for k, v in [
-            ("query", query),
-            ("omit_revoked", omit_revoked),
-            ("omit_non_human", omit_non_human),
-            ("page", page),
-            ("per_page", per_page),
-        ]
-        if v is not None
+    parse_args=lambda self, query=None, omit_revoked=False, omit_non_human=False, page=1, per_page=100: {
+        "query": query,
+        "omit_revoked": omit_revoked,
+        "omit_non_human": omit_non_human,
+        "page": page,
+        "per_page": per_page,
     },
 )
 user_create = CmdSock(
     "user_create",
     user_create_serializer,
-    parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate=None, redacted_device_certificate=None: {
+    parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
         k: v
         for k, v in {
             "user_certificate": user_certificate,
@@ -412,4 +534,46 @@ invite_4_claimer_communicate = CmdSock(
     "invite_4_claimer_communicate",
     invite_4_claimer_communicate_serializer,
     parse_args=lambda self, payload: {"payload": payload},
+)
+
+
+### PKI enrollment ###
+
+
+pki_enrollment_submit = CmdSock(
+    "pki_enrollment_submit",
+    pki_enrollment_submit_serializer,
+    parse_args=lambda self, enrollment_id, force, submitter_der_x509_certificate, submitter_der_x509_certificate_email, submit_payload_signature, submit_payload: {
+        "enrollment_id": enrollment_id,
+        "force": force,
+        "submitter_der_x509_certificate": submitter_der_x509_certificate,
+        "submitter_der_x509_certificate_email": submitter_der_x509_certificate_email,
+        "submit_payload_signature": submit_payload_signature,
+        "submit_payload": submit_payload,
+    },
+)
+pki_enrollment_info = CmdSock(
+    "pki_enrollment_info",
+    pki_enrollment_info_serializer,
+    parse_args=lambda self, enrollment_id: {"enrollment_id": enrollment_id},
+)
+pki_enrollment_list = CmdSock("pki_enrollment_list", pki_enrollment_list_serializer)
+pki_enrollment_reject = CmdSock(
+    "pki_enrollment_reject",
+    pki_enrollment_reject_serializer,
+    parse_args=lambda self, enrollment_id: {"enrollment_id": enrollment_id},
+)
+pki_enrollment_accept = CmdSock(
+    "pki_enrollment_accept",
+    pki_enrollment_accept_serializer,
+    parse_args=lambda self, enrollment_id, accepter_der_x509_certificate, accept_payload_signature, accept_payload, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
+        "enrollment_id": enrollment_id,
+        "accepter_der_x509_certificate": accepter_der_x509_certificate,
+        "accept_payload_signature": accept_payload_signature,
+        "accept_payload": accept_payload,
+        "user_certificate": user_certificate,
+        "device_certificate": device_certificate,
+        "redacted_user_certificate": redacted_user_certificate,
+        "redacted_device_certificate": redacted_device_certificate,
+    },
 )

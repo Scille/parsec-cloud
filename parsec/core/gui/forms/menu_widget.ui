@@ -30,7 +30,7 @@
 	background-color: #222222;
 }
 
-#button_devices, #button_files, #button_users {
+#button_devices, #button_files, #button_users, #button_enrollment {
 	color: #999999;
 	background-color: #222222;
 	text-align: left;
@@ -38,13 +38,13 @@
 	font-size: 16px;
 }
 
-#button_devices:checked, #button_files:checked, #button_users:checked {
+#button_devices:checked, #button_files:checked, #button_users:checked, #button_enrollment:checked {
 	background-color: #333333;
 	border: 0;
 	color: #FFFFFF;
 }
 
-#button_devices:hover, #button_files:hover, #button_users:hover {
+#button_devices:hover, #button_files:hover, #button_users:hover, #button_enrollment:hover {
 	color: #EEEEEE;
 }
 
@@ -352,6 +352,64 @@
          </widget>
         </item>
         <item>
+         <widget class="MenuButton" name="button_enrollment">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>64</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>64</height>
+           </size>
+          </property>
+          <property name="baseSize">
+           <size>
+            <width>0</width>
+            <height>64</height>
+           </size>
+          </property>
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+          <property name="text">
+           <string>ACTION_MENU_ENROLLMENT</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../rc/resources.qrc">
+            <normaloff>:/icons/images/material/person_add.svg</normaloff>:/icons/images/material/person_add.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>32</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <property name="checked_color" stdset="0">
+           <color>
+            <red>27</red>
+            <green>141</green>
+            <blue>215</blue>
+           </color>
+          </property>
+          <property name="unchecked_color" stdset="0">
+           <color>
+            <red>153</red>
+            <green>153</green>
+            <blue>153</blue>
+           </color>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="verticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -385,70 +443,6 @@
            <property name="bottomMargin">
             <number>10</number>
            </property>
-           <item>
-            <widget class="QWidget" name="widget_organization_stats" native="true">
-             <layout class="QHBoxLayout" name="horizontalLayout">
-              <property name="spacing">
-               <number>10</number>
-              </property>
-              <property name="leftMargin">
-               <number>10</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <layout class="QVBoxLayout" name="verticalLayout_4">
-                <item>
-                 <widget class="QLabel" name="label_organization_name">
-                  <property name="font">
-                   <font>
-                    <pointsize>11</pointsize>
-                    <weight>75</weight>
-                    <bold>true</bold>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string/>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                  </property>
-                  <property name="wordWrap">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLabel" name="label_organization_size">
-                  <property name="maximumSize">
-                   <size>
-                    <width>300</width>
-                    <height>300</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string/>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                  </property>
-                  <property name="wordWrap">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </widget>
-           </item>
            <item>
             <widget class="QWidget" name="widget_connection" native="true">
              <layout class="QHBoxLayout" name="horizontalLayout_6">

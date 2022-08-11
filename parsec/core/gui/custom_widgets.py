@@ -1,6 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import math
+
+from enum import Enum
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor, QPixmap, QFont, QFontMetrics
@@ -11,9 +13,12 @@ from PyQt5.QtWidgets import (
     QWidget,
     QListView,
     QComboBox,
+    QLineEdit,
+    QToolButton,
 )
 from PyQt5.QtSvg import QSvgWidget
 
+from parsec.api.data import SASCode
 from parsec.core.gui.ui.code_input_widget import Ui_CodeInputWidget
 from parsec.core.gui.ui.spinner_widget import Ui_SpinnerWidget
 
@@ -47,10 +52,10 @@ class CodeInputWidget(QWidget, Ui_CodeInputWidget):
     none_clicked = pyqtSignal()
 
     class CodeButton(QPushButton):
-        clicked_with_code = pyqtSignal(str)
+        clicked_with_code = pyqtSignal(SASCode)
 
         def __init__(self, code):
-            super().__init__(str(code))
+            super().__init__(code.str)
             self.code = code
             font = self.font()
             font.setBold(True)
@@ -252,10 +257,111 @@ class ClickableLabel(QLabel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.setCursor(QCursor(Qt.PointingHandCursor))
 
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
             self.clicked.emit(self.text())
+
+
+class OverlayLabel(ClickableLabel):
+    OPEN_FULLSCREEN_ICON = None
+    CLOSE_FULLSCREEN_ICON = None
+
+    class ClickMode(Enum):
+        OpenFullScreen = 1
+        CloseFullScreen = 2
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._pix = None
+        self.click_mode = OverlayLabel.ClickMode.OpenFullScreen
+        self.show_icon = True
+        if not OverlayLabel.OPEN_FULLSCREEN_ICON:
+            OverlayLabel.OPEN_FULLSCREEN_ICON = Pixmap(":/icons/images/material/fullscreen.svg")
+            OverlayLabel.OPEN_FULLSCREEN_ICON.replace_color(QColor(0, 0, 0), QColor(164, 164, 164))
+        if not OverlayLabel.CLOSE_FULLSCREEN_ICON:
+            OverlayLabel.CLOSE_FULLSCREEN_ICON = Pixmap(
+                ":/icons/images/material/fullscreen_exit.svg"
+            )
+            OverlayLabel.CLOSE_FULLSCREEN_ICON.replace_color(QColor(0, 0, 0), QColor(164, 164, 164))
+
+    def set_mode(self, click_mode, show_icon):
+        self.click_mode = click_mode
+        self.show_icon = show_icon
+
+    def enterEvent(self, event):
+        self._draw_overlay()
+
+    def leaveEvent(self, event):
+        self._draw_overlay()
+
+    def setPixmap(self, pix):
+        self._pix = pix.copy()
+        self._draw_overlay()
+
+    def _draw_overlay(self):
+        if not self._pix:
+            return
+
+        if not self.underMouse():
+            super().setPixmap(self._pix)
+            return
+
+        icon = None
+
+        if self.click_mode == OverlayLabel.ClickMode.OpenFullScreen and self.show_icon:
+            icon = OverlayLabel.OPEN_FULLSCREEN_ICON
+            icon = icon.scaled(self._pix.width() - 10, self._pix.height() - 10, Qt.KeepAspectRatio)
+        elif self.click_mode == OverlayLabel.ClickMode.CloseFullScreen and self.show_icon:
+            icon = OverlayLabel.CLOSE_FULLSCREEN_ICON
+            icon = icon.scaled(
+                int(self._pix.width() / 5), int(self._pix.height() / 5), Qt.KeepAspectRatio
+            )
+
+        p = self._pix.copy()
+        painter = QPainter(p)
+        if icon:
+            pos_x = int(p.width() / 2) - int(icon.width() / 2)
+            pos_y = int(p.height() / 2) - int(icon.height() / 2)
+            painter.drawPixmap(pos_x, pos_y, icon)
+        painter.end()
+        super().setPixmap(p)
+
+
+class FilterLineEdit(QLineEdit):
+    clear_clicked = pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.textChanged.connect(self._on_text_changed)
+        self.button_clear = QToolButton()
+        self.button_clear.setVisible(False)
+        self.button_clear.clicked.connect(self._on_button_clear_clicked)
+        self.button_clear.setParent(self)
+        self.button_clear.setCursor(Qt.PointingHandCursor)
+        icon = Pixmap(":/icons/images/material/clear.svg")
+        icon.replace_color(QColor(0, 0, 0), QColor(164, 164, 164))
+        self.button_clear.setIcon(QIcon(icon))
+        self.button_clear.setStyleSheet("border: 0;")
+
+    def resizeEvent(self, event):
+        ret = super().resizeEvent(event)
+        self._move_button()
+        return ret
+
+    def _on_button_clear_clicked(self):
+        self.setText("")
+        self.clear_clicked.emit()
+
+    def _on_text_changed(self, text):
+        self.button_clear.setVisible(len(text))
+
+    def _move_button(self):
+        r = self.geometry()
+        self.button_clear.setGeometry(
+            r.x() + r.width() - self.button_clear.width(), r.y(), r.height(), r.height()
+        )
 
 
 class IconLabel(QLabel):

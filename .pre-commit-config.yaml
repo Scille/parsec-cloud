@@ -1,40 +1,113 @@
 exclude: ^misc/bench.py$
 repos:
--   repo: https://github.com/ambv/black
-    rev: 19.3b0
+  ##############
+  # Common stuff
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.2.3 # Use the ref you want to point at
     hooks:
-    - id: black
-      args:
-          - "--line-length=100"
-          - "--exclude=parsec/core/gui/_resources_rc.py"
-          - "--exclude=parsec/core/gui/ui/"
-      language_version: python3
--   repo: https://gitlab.com/pycqa/flake8
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+
+  - repo: local
+    hooks:
+      # - id: releaser
+      #   name: releaser
+      #   entry: python ./misc/releaser.py check
+      #   language: python
+      #   language_version: python3
+      #   pass_filenames: false
+      #   require_serial: true
+      - id: license_headers
+        name: license_headers
+        entry: python ./misc/license_headers.py add
+        language: python
+        language_version: python3
+        # see: https://github.com/pre-commit/identify/blob/master/identify/extensions.py
+        types_or: [ python, sql, rust, vue, ts, tsx, javascript, jsx ]
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.26.3
+    hooks:
+      - id: yamllint
+
+  ########
+  # Python
+
+  - repo: https://github.com/ambv/black
+    rev: 22.6.0
+    hooks:
+      - id: black
+        args:
+          [
+            --line-length=100,
+            --exclude=parsec/core/gui/_resources_rc.py,
+            --exclude=parsec/core/gui/ui/,
+          ]
+        language_version: python3
+
+  - repo: https://gitlab.com/pycqa/flake8
     rev: 3.8.3
     hooks:
-    - id: flake8
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.782
+      - id: flake8
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.910  # Latest version compatible with `trio_typing==0.5.0`
     hooks:
-    - id: mypy
-      additional_dependencies: [trio_typing, pendulum]
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.2.3  # Use the ref you want to point at
+      - id: mypy
+        language_version: python3.9
+        additional_dependencies:
+          - trio_typing[mypy]~=0.5  # `qtrio` requires `trio_typing~=0.5` for the moment
+          - pendulum~=2.1
+          - mypy-extensions~=0.4
+          - typing-extensions~=3.10
+          - Quart~=0.17
+          - quart-trio~=0.9
+          - PyQt5_stubs~=5.15
+        # Mypy will complain if it find two files with the same name which
+        # are not part of a package (typically occurs for packaging script helpers)
+        files: ^(parsec|tests)/
+
+  ######
+  # Rust
+
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
     hooks:
-    - id: mixed-line-ending
-    - id: trailing-whitespace
--   repo: local
+      - id: fmt
+      - id: clippy
+        args:
+          [
+            --workspace,
+            --tests,
+            --bins,
+            --lib,
+            --,
+            --deny=warnings,
+            --deny=clippy::self_named_module_files,
+          ]
+
+  ####
+  # Js
+
+  - repo: local
     hooks:
-    - id: releaser
-      name: releaser
-      entry: python ./misc/releaser.py check
-      language: python
-      language_version: python3
-      pass_filenames: false
-      require_serial: true
-    - id: license_headers
-      name: license_headers
-      entry: python ./misc/license_headers.py add
-      language: python
-      language_version: python3
-      types: [python]
+      - id: eslint
+        name: eslint
+        description: ""
+        entry: eslint
+        language: node
+        files: ^oxidation/client/
+        # see: https://github.com/pre-commit/identify/blob/master/identify/extensions.py
+        types_or: [ vue, ts, tsx, javascript, jsx ]
+        args: [ --config=oxidation/client/.eslintrc.js ]
+        # Deps should be kept updated with `oxidation/client/package-lock.json` !
+        additional_dependencies:
+          - eslint@8.10.0
+          - eslint-plugin-cypress@2.12.1
+          - eslint-plugin-vue@8.5.0
+          - "@typescript-eslint/eslint-plugin@5.14.0"
+          - "@typescript-eslint/parser@5.14.0"
+          - "@vue/cli-plugin-eslint@5.0.1"
+          - "@vue/eslint-config-typescript@9.1.0"
+          - "@intlify/eslint-plugin-vue-i18n@1.4.0"

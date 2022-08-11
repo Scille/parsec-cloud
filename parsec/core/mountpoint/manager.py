@@ -1,21 +1,21 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec.core.core_events import CoreEvent
-import os
 import trio
 import logging
+import sys
+
 from pathlib import PurePath
 from pendulum import DateTime
 from structlog import get_logger
 from typing import Sequence, Optional
 from importlib import __import__ as import_function
-from sys import platform as _platform
+from subprocess import CalledProcessError
+from contextlib import asynccontextmanager
 
-from async_generator import asynccontextmanager
-
-from parsec.utils import start_task
-from parsec.core.types import FsPath, EntryID
-from parsec.core.fs.workspacefs import WorkspaceFSTimestamped
+from parsec.core.core_events import CoreEvent
+from parsec.core.types import EntryID
+from parsec.core.fs import FsPath, WorkspaceFSTimestamped
+from parsec.utils import TaskStatus, start_task, open_service_nursery
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError, FSWorkspaceTimestampedTooEarly
 from parsec.core.mountpoint.exceptions import (
     MountpointConfigurationError,
@@ -35,7 +35,7 @@ from parsec.core.win_registry import cleanup_parsec_drive_icons
 # avoid spending too much time importing them later while the
 # trio loop is running.
 try:
-    if os.name == "nt":
+    if sys.platform == "win32":
         import_function("winfspy")
     else:
         import_function("fuse")
@@ -47,7 +47,7 @@ logger = get_logger()
 
 def get_mountpoint_runner():
     # Windows
-    if os.name == "nt":
+    if sys.platform == "win32":
 
         try:
             # Use import function for easier mock up
@@ -85,12 +85,14 @@ class MountpointManager:
         self._mountpoint_tasks = {}
         self._timestamped_workspacefs = {}
 
-        if os.name == "nt":
+        if sys.platform == "win32":
             self._build_mountpoint_path = lambda base_path, parts: base_path / "\\".join(
                 winify_entry_name(x) for x in parts
             )
         else:
-            self._build_mountpoint_path = lambda base_path, parts: base_path / "/".join(parts)
+            self._build_mountpoint_path = lambda base_path, parts: base_path / "/".join(
+                [part.str for part in parts]
+            )
 
     def _get_workspace(self, workspace_id: EntryID):
         try:
@@ -140,24 +142,55 @@ class MountpointManager:
             self._timestamped_workspacefs[workspace_id] = {timestamp: new_workspace}
         return new_workspace
 
-    async def _mount_workspace_helper(self, workspace_fs, timestamp: DateTime = None):
-        key = (workspace_fs.workspace_id, timestamp)
+    async def _mount_workspace_helper(self, workspace_fs, timestamp: DateTime = None) -> TaskStatus:
+        workspace_id = workspace_fs.workspace_id
+        key = workspace_id, timestamp
 
-        async def curried_runner(task_status=trio.TASK_STATUS_IGNORED):
+        async def curried_runner(task_status: TaskStatus):
+            event_kwargs = {}
+
             try:
-                return await self._runner(
+                async with self._runner(
                     self.user_fs,
                     workspace_fs,
                     self.base_mountpoint_path,
                     config=self.config,
                     event_bus=self.event_bus,
-                    task_status=task_status,
-                )
-            finally:
-                self._mountpoint_tasks.pop(key, None)
+                ) as mountpoint_path:
 
+                    # Another runner started before us
+                    if key in self._mountpoint_tasks:
+                        raise MountpointAlreadyMounted(
+                            f"Workspace `{workspace_id}` already mounted."
+                        )
+
+                    # Prepare kwargs for both started and stopped events
+                    event_kwargs = {
+                        "mountpoint": mountpoint_path,
+                        "workspace_id": workspace_fs.workspace_id,
+                        "timestamp": timestamp,
+                    }
+
+                    # Set the mountpoint as mounted THEN send the corresponding event
+                    task_status.started(mountpoint_path)
+                    self._mountpoint_tasks[key] = task_status
+                    self.event_bus.send(CoreEvent.MOUNTPOINT_STARTED, **event_kwargs)
+
+                    # It is the reponsability of the runner context teardown to wait
+                    # for cancellation. This is done to avoid adding an extra nursery
+                    # into the winfsp runner, for simplicity. This could change in the
+                    # future in which case we'll simmply add a `sleep_forever` below.
+
+            finally:
+                # Pop the mountpoint task if its ours
+                if self._mountpoint_tasks.get(key) == task_status:
+                    del self._mountpoint_tasks[key]
+                # Send stopped event if started has been previously sent
+                if event_kwargs:
+                    self.event_bus.send(CoreEvent.MOUNTPOINT_STOPPED, **event_kwargs)
+
+        # Start the mountpoint runner task
         runner_task = await start_task(self._nursery, curried_runner)
-        self._mountpoint_tasks[key] = runner_task
         return runner_task
 
     def get_path_in_mountpoint(
@@ -266,15 +299,41 @@ class MountpointManager:
 
 
 async def cleanup_macos_mountpoint_folder(base_mountpoint_path):
-    # In case of a crash on macOS, workspaces don't unmount correctly and leave empty directories
-    # in the default mount folder. This function is used to clean these anytime a login occurs.
-    for dirs in os.listdir(base_mountpoint_path):
-        dir_path = str(base_mountpoint_path) + "/" + str(dirs)
-        stats = os.statvfs(dir_path)
-        if stats.f_blocks == 0 and stats.f_ffree == 0 and stats.f_bavail == 0:
-            await trio.run_process(["diskutil", "unmount", dir_path])
-            if dirs in os.listdir(base_mountpoint_path):  # checking if there is something to delete
-                await trio.run_process(["rm", "-d", dir_path])  # otherwise an empty dir remains
+    # In case of a crash on macOS, workspaces don't unmount correctly and leave empty
+    # mountpoints or directories in the default mount folder. This function is used to
+    # unmount and/or delete these anytime a login occurs. In some rare and so far unknown
+    # conditions, the unmount call can fail, raising a CalledProcessError, hence the
+    # exception below. In such cases, the issue stops occurring after a system reboot,
+    # making the exception catching a temporary solution.
+    base_mountpoint_path = trio.Path(base_mountpoint_path)
+    try:
+        mountpoint_names = await base_mountpoint_path.iterdir()
+    except FileNotFoundError:
+        # Unlike with `pathlib.Path.iterdir` which returns a lazy itertor,
+        # `trio.Path.iterdir` does FS access and may raise FileNotFoundError
+        return
+    for mountpoint_name in mountpoint_names:
+        mountpoint_path = base_mountpoint_path / mountpoint_name
+        stats = await trio.Path(mountpoint_path).stat()
+        if (
+            stats.st_size == 0
+            and stats.st_blocks == 0
+            and stats.st_atime == 0
+            and stats.st_mtime == 0
+            and stats.st_ctime == 0
+        ):
+            try:
+                await trio.run_process(["diskutil", "unmount", "force", mountpoint_path])
+            except CalledProcessError as exc:
+                logger.warning(
+                    "Error during mountpoint cleanup: diskutil unmount failed",
+                    exc_info=exc,
+                    mountpoint_path=mountpoint_path,
+                )
+            try:
+                await trio.Path(mountpoint_path).rmdir()
+            except FileNotFoundError:
+                pass
 
 
 @asynccontextmanager
@@ -295,13 +354,10 @@ async def mountpoint_manager_factory(
     runner = get_mountpoint_runner()
 
     # Now is a good time to perform some cleanup in the registry
-    if os.name == "nt":
+    if sys.platform == "win32":
         cleanup_parsec_drive_icons()
-    elif _platform == "darwin":
-        try:
-            await cleanup_macos_mountpoint_folder(base_mountpoint_path)
-        except FileNotFoundError:
-            pass
+    elif sys.platform == "darwin":
+        await cleanup_macos_mountpoint_folder(base_mountpoint_path)
 
     def on_event(event, new_entry, previous_entry=None):
         # Workspace created
@@ -323,7 +379,7 @@ async def mountpoint_manager_factory(
             return
 
     # Instantiate the mountpoint manager with its own nursery
-    async with trio.open_service_nursery() as nursery:
+    async with open_service_nursery() as nursery:
         mountpoint_manager = MountpointManager(
             user_fs, event_bus, base_mountpoint_path, config, runner, nursery
         )
@@ -332,7 +388,7 @@ async def mountpoint_manager_factory(
         try:
 
             # A nursery dedicated to new workspace events
-            async with trio.open_service_nursery() as mount_nursery:
+            async with open_service_nursery() as mount_nursery:
 
                 # Setup new workspace events
                 with event_bus.connect_in_context(

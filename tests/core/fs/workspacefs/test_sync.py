@@ -1,9 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from functools import partial
 import pytest
 
-from parsec.core.types import FsPath
+from parsec.api.data import EntryName
+from parsec.core.fs import FsPath
 
 from tests.common import create_shared_workspace
 
@@ -11,7 +12,7 @@ from tests.common import create_shared_workspace
 @pytest.fixture
 @pytest.mark.trio
 async def shared_workspaces(alice_user_fs, bob_user_fs, running_backend):
-    wid = await create_shared_workspace("w", alice_user_fs, bob_user_fs)
+    wid = await create_shared_workspace(EntryName("w"), alice_user_fs, bob_user_fs)
     alice_workspace = alice_user_fs.get_workspace(wid)
     bob_workspace = bob_user_fs.get_workspace(wid)
     return alice_workspace, bob_workspace

@@ -1,0 +1,45 @@
+name: 🐛 | Bug Report
+description: >
+  File a bug report
+title: "[🐛 | Bug]: "
+labels:
+  - bug
+  - triage
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: What version of our software are you running ?
+      placeholder: version
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: What platforms you were running our software when the bug happened ?
+      multiple: true
+      options:
+        - Windows
+        - Linux
+        - MacOS
+        - Android
+        - Web
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened ?
+      description: Also tell us, what did you expect to happen ?
+      placeholder: Tell us what you see !
+    validations:
+      required: true
+  - type: textarea
+    id: more-info
+    attributes:
+      label: Relevant output
+      description: When the bug happened, Can you include the error message (if any) and/or a screenshot (if possible) ?
+  - type: markdown
+    attributes:
+      value: Thanks for completing our bug report !

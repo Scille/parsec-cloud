@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 # Monitor POC, shamelessly taken from curio
 
@@ -14,7 +14,6 @@ import logging
 import trio
 from trio.abc import Instrument
 from trio.lowlevel import current_statistics
-
 
 LOGGER = logging.getLogger("trio.monitor")
 
@@ -79,6 +78,16 @@ def render_task_tree(task, format_task):
     return "\n".join(line for line in task_tree_lines(task, format_task)) + "\n"
 
 
+class TaskWrapper:
+    def __init__(self, task):
+        self.task = task
+        self._monitor_state = None
+        self._monitor_short_id = None
+
+    def __getattr__(self, name):
+        return getattr(self.task, name)
+
+
 class Monitor(Instrument):
     def __init__(self, host=MONITOR_HOST, port=MONITOR_PORT):
         self.address = (host, port)
@@ -102,19 +111,21 @@ class Monitor(Instrument):
         self._ui_thread.start()
 
     def task_spawned(self, task):
-        self._tasks[id(task)] = task
-        task._monitor_short_id = self._next_task_short_id
+        task_wrapper = TaskWrapper(task)
+        self._tasks[id(task)] = task_wrapper
+        task_wrapper._monitor_short_id = self._next_task_short_id
         self._next_task_short_id += 1
-        task._monitor_state = "spawned"
+        task_wrapper._monitor_state = "spawned"
 
     def task_scheduled(self, task):
-        task._monitor_state = "scheduled"
+        self._tasks[id(task)]._monitor_state = "scheduled"
 
     def before_task_step(self, task):
-        task._monitor_state = "running"
+        self._tasks[id(task)]._monitor_state = "running"
 
     def after_task_step(self, task):
-        task._monitor_state = "waiting"
+        if id(task) in self._tasks:
+            self._tasks[id(task)]._monitor_state = "waiting"
 
     def task_exited(self, task):
         del self._tasks[id(task)]
@@ -289,11 +300,12 @@ io_statistics:
             )
 
     def command_task_tree(self, sout):
-        root_task = next(iter(self._tasks.values()))
+        root_task = next(iter(self._tasks.values())).task
         while root_task.parent_nursery is not None:
             root_task = root_task.parent_nursery.parent_task
 
         def _format_task(task):
+            task = self._tasks[id(task)]
             return "%s (id=%s, %s%s)" % (
                 task.name,
                 task._monitor_short_id,
@@ -349,7 +361,9 @@ io_statistics:
         task = self.get_task_from_short_id(taskid)
         while task:
             sout.write("%-6d %12s %s\n" % (task._monitor_short_id, "running", task.name))
-            task = task.parent_nursery._parent_task if task.parent_nursery else None
+            task = (
+                self._tasks[id(task.parent_nursery._parent_task)] if task.parent_nursery else None
+            )
 
     def command_exit(self, sout):
         sout.write("Leaving monitor. Hit Ctrl-C to exit\n")

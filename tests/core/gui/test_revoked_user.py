@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from PyQt5.QtWidgets import QLabel
@@ -8,7 +8,15 @@ from PyQt5.QtWidgets import QLabel
 @pytest.mark.trio
 @pytest.mark.parametrize("wait_idle_core", [False, True])
 async def test_revoked_notification(
-    aqtbot, running_backend, backend, autoclose_dialog, logged_gui, alice, bob, wait_idle_core
+    aqtbot,
+    running_backend,
+    backend,
+    autoclose_dialog,
+    logged_gui,
+    alice,
+    bob,
+    wait_idle_core,
+    snackbar_catcher,
 ):
 
     central_widget = logged_gui.test_get_central_widget()
@@ -30,7 +38,7 @@ async def test_revoked_notification(
 
     # Assert dialog
     def _revoked_notified():
-        assert autoclose_dialog.dialogs == [("Error", "This device is revoked")]
+        assert snackbar_catcher.snackbars == [("WARN", "This device is revoked")]
 
     await aqtbot.wait_until(_revoked_notified)
 

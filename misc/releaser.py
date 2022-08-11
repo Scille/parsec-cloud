@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
 
 """
 This script is used to ease the parsec release process.
@@ -21,6 +22,9 @@ A typical release process looks as follow:
     # Push the produced tag and commits
     $ git push --follow-tags
 
+    # Alternally, you can revert the commits and delete the tag in case you made
+    # an error (of course don't do that if you have already push the changes !)
+    $ ./misc/releaser.py rollback
 
 """
 
@@ -28,7 +32,7 @@ import sys
 import argparse
 import pathlib
 from copy import copy
-from datetime import date
+from datetime import date, datetime
 from collections import defaultdict
 import subprocess
 import re
@@ -36,9 +40,12 @@ import textwrap
 import math
 
 
+LICENSE_CONVERSION_DELAY = 4 * 365 * 24 * 3600  # 4 years
 PROJECT_DIR = pathlib.Path(__file__).resolve().parent.parent
 HISTORY_FILE = PROJECT_DIR / "HISTORY.rst"
+BUSL_LICENSE_FILE = PROJECT_DIR / "licenses/BUSL-Scille.txt"
 VERSION_FILE = PROJECT_DIR / "parsec/_version.py"
+PYPROJECT_FILE = PROJECT_DIR / "pyproject.toml"
 FRAGMENTS_DIR = PROJECT_DIR / "newsfragments"
 FRAGMENT_TYPES = {
     "feature": "Features",
@@ -49,6 +56,10 @@ FRAGMENT_TYPES = {
     "misc": "Miscellaneous internal changes",
     "empty": "Miscellaneous internal changes that shouldn't even be collected",
 }
+COLOR_END = "\033[0m"
+COLOR_RED = "\033[91m"
+COLOR_GREEN = "\033[92m"
+COLOR_YELLOW = "\033[93m"
 
 
 RELEASE_REGEX = (
@@ -181,9 +192,9 @@ assert Version("1.2.3-b10+dev") < Version("1.2.3-rc1+dev")
 assert Version("1.2.3-b10+dev") < Version("1.2.3+dev")
 
 
-def run_git(cmd, verbose=False):
-    cmd = f"git {cmd}"
-    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+def run_git(*cmd, verbose=False):
+    cmd = ["git", *cmd]
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
         raise RuntimeError(
             f"Error while running `{cmd}`: returned {proc.returncode}\n"
@@ -192,30 +203,73 @@ def run_git(cmd, verbose=False):
         )
     stderr = proc.stderr.decode()
     if verbose and stderr:
-        print(f"[Stderr stream from `{cmd}`]\n{stderr}[End stderr stream]", file=sys.stderr)
+        print(
+            f"[Stderr stream from {COLOR_RED}{cmd}{COLOR_END}]\n{stderr}[End stderr stream]",
+            file=sys.stderr,
+        )
     return proc.stdout.decode()
 
 
 def get_version_from_repo_describe_tag(verbose=False):
     # Note we only search for annotated tags
-    return Version(run_git("describe --debug", verbose=verbose))
+    return Version(run_git("describe", "--debug", verbose=verbose))
 
 
 def get_version_from_code():
     global_dict = {}
-    exec((VERSION_FILE).read_text(), global_dict)
+    exec(VERSION_FILE.read_text(encoding="utf8"), global_dict)
     __version__ = global_dict.get("__version__")
     if not __version__:
         raise ReleaseError(f"Cannot find __version__ in {VERSION_FILE!s}")
+
+    # Also extract from pyproject.toml to be sure it is consistent
+    # We are far too lazy to do a proper TOML parsing, so back to good old regex
+    pyproject_txt = PYPROJECT_FILE.read_text(encoding="utf8")
+    assert pyproject_txt.startswith(
+        '[tool.poetry]\nname = "parsec-cloud"\nversion = "'
+    )  # Sanity check
+    match = re.match(r'^version\s*=\s*"(.*)"$', pyproject_txt.splitlines()[2].strip())
+    if __version__ != match.group(1):
+        raise ReleaseError(f"Version mismatch between `parsec/_version.py` and `pyproject.toml` !")
+
     return Version(__version__)
 
 
-def replace_code_version(new_version: Version):
-    version_txt = (VERSION_FILE).read_text()
+def update_version_file(new_version: Version) -> None:
+    version_txt = VERSION_FILE.read_text(encoding="utf8")
     updated_version_txt = re.sub(
-        r'__version__\W=\W".*"', f'__version__ = "{new_version}"', version_txt
+        r'__version__\W=\W".*"', f'__version__ = "{new_version}"', version_txt, count=1
     )
-    (VERSION_FILE).write_text(updated_version_txt)
+    assert updated_version_txt != version_txt
+    VERSION_FILE.write_bytes(
+        updated_version_txt.encode("utf8")
+    )  # Use write_bytes to keep \n on Windows
+
+    pyproject_txt = PYPROJECT_FILE.read_text(encoding="utf8")
+    assert pyproject_txt.startswith(
+        '[tool.poetry]\nname = "parsec-cloud"\nversion = "'
+    )  # Sanity check
+    updated_pyproject_txt = re.sub(
+        r'version\W=\W".*"', f'version = "{new_version}"', pyproject_txt, count=1
+    )
+    assert updated_pyproject_txt != pyproject_txt
+    PYPROJECT_FILE.write_bytes(
+        updated_pyproject_txt.encode("utf8")
+    )  # Use write_bytes to keep \n on Windows
+
+
+def update_license_file(new_version: Version, new_release_date: date) -> None:
+    license_txt = BUSL_LICENSE_FILE.read_text(encoding="utf8")
+    half_updated_license_txt = re.sub(
+        r"Change Date:.*", f"Change Date:  {new_release_date.strftime('%b %d, %Y')}", license_txt
+    )
+    updated_version_txt = re.sub(
+        r"Licensed Work:.*", f"Licensed Work:  Parsec {new_version}", half_updated_license_txt
+    )
+    assert updated_version_txt != half_updated_license_txt
+    BUSL_LICENSE_FILE.write_bytes(
+        updated_version_txt.encode("utf8")
+    )  # Use write_bytes to keep \n on Windows
 
 
 def collect_newsfragments():
@@ -232,26 +286,34 @@ def collect_newsfragments():
     return fragments
 
 
-def build_release(version, stage_pause):
+def build_release(version):
     if version.is_dev:
         raise ReleaseError(f"Invalid release version: {version}")
-    print(f"Build release {version}")
+    print(f"Build release {COLOR_GREEN}{version}{COLOR_END}")
     old_version = get_version_from_code()
-    if version < old_version:
+    if version <= old_version:
         raise ReleaseError(
-            f"Previous version incompatible with new one ({old_version} vs {version})"
+            f"Previous version incompatible with new one ({COLOR_YELLOW}{old_version}{COLOR_END} vs {COLOR_YELLOW}{version}{COLOR_END})"
         )
 
+    now = datetime.utcnow()
+    release_date = now.date()
+    # Cannot just add years to date given it wouldn't handle february 29th
+    license_conversion_date = datetime.fromtimestamp(
+        now.timestamp() + LICENSE_CONVERSION_DELAY
+    ).date()
+    assert release_date.toordinal() < license_conversion_date.toordinal()
+
     # Check repo is clean
-    stdout = run_git("status --porcelain --untracked-files=no")
+    stdout = run_git("status", "--porcelain", "--untracked-files=no")
     if stdout.strip():
         raise ReleaseError("Repository is not clean, aborting")
 
     # Update __version__
-    replace_code_version(version)
+    update_version_file(version)
 
     # Update HISTORY.rst
-    history_txt = HISTORY_FILE.read_text()
+    history_txt = HISTORY_FILE.read_text(encoding="utf8")
     header_split = ".. towncrier release notes start\n"
     if header_split in history_txt:
         header, history_body = history_txt.split(header_split, 1)
@@ -261,7 +323,7 @@ def build_release(version, stage_pause):
         history_body = history_txt
 
     newsfragments = collect_newsfragments()
-    new_entry_title = f"Parsec {version} ({date.today().isoformat()})"
+    new_entry_title = f"Parsec {version} ({release_date.isoformat()})"
     new_entry = f"\n\n{new_entry_title}\n{len(new_entry_title) * '-'}\n"
     issues_per_type = defaultdict(list)
     for fragment in newsfragments:
@@ -269,7 +331,7 @@ def build_release(version, stage_pause):
         # Don't add empty fragments. Still needed to be collected as they will be deleted later
         if type == "empty":
             continue
-        issue_txt = f"{fragment.read_text()} (`#{issue_id} <https://github.com/Scille/parsec-cloud/issues/{issue_id}>`__)\n"
+        issue_txt = f"{fragment.read_text(encoding='utf8')} (`#{issue_id} <https://github.com/Scille/parsec-cloud/issues/{issue_id}>`__)\n"
         wrapped_issue_txt = textwrap.fill(
             issue_txt, width=80, break_long_words=False, initial_indent="* ", subsequent_indent="  "
         )
@@ -286,45 +348,56 @@ def build_release(version, stage_pause):
             new_entry += "\n"
 
     updated_history_txt = f"{history_header}{new_entry}{history_body}".strip() + "\n"
-    HISTORY_FILE.write_text(updated_history_txt)
+    HISTORY_FILE.write_bytes(
+        updated_history_txt.encode("utf8")
+    )  # Use write_bytes to keep \n on Windows
+
+    # Update BUSL license date marker & version info
+    update_license_file(version, license_conversion_date)
 
     # Make git commit
     commit_msg = f"Bump version {old_version} -> {version}"
-    print(f"Create commit `{commit_msg}`")
-    if stage_pause:
-        input("Pausing, press enter when ready")
-    run_git(f"add {HISTORY_FILE.absolute()} {VERSION_FILE.absolute()}")
+
+    print(f"Create commit {COLOR_GREEN}{commit_msg}{COLOR_END}")
+    input(
+        f"Pausing so you can check {COLOR_YELLOW}HISTORY.rst{COLOR_END} is okay, press enter when ready"
+    )
+
+    run_git(
+        "add",
+        HISTORY_FILE.absolute(),
+        BUSL_LICENSE_FILE.absolute(),
+        VERSION_FILE.absolute(),
+        PYPROJECT_FILE.absolute(),
+    )
     if newsfragments:
         fragments_pathes = [str(x.absolute()) for x in newsfragments]
-        run_git(f"rm {' '.join(fragments_pathes)}")
+        run_git("rm", *fragments_pathes)
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
-    run_git(f"commit -m '{commit_msg}' --no-verify")
+    run_git("commit", "-m", commit_msg, "--no-verify")
 
-    print(f"Create tag {version}")
-    if stage_pause:
-        input("Pausing, press enter when ready")
-    run_git(f"tag {version} -m 'Release version {version}' -a -s")
+    print(f"Create tag {COLOR_GREEN}{version}{COLOR_END}")
+    run_git("tag", str(version), "-m", f"Release version {version}", "-a", "-s")
 
     # Update __version__ with dev suffix
     dev_version = version.evolve(is_dev=True)
     commit_msg = f"Bump version {version} -> {dev_version}"
-    print(f"Create commit `{commit_msg}`")
-    if stage_pause:
-        input("Pausing, press enter when ready")
-    replace_code_version(dev_version)
-    run_git(f"add {VERSION_FILE.absolute()}")
+    print(f"Create commit {COLOR_GREEN}{commit_msg}{COLOR_END}")
+    update_version_file(dev_version)
+    update_license_file(dev_version, license_conversion_date)
+    run_git("add", BUSL_LICENSE_FILE.absolute(), VERSION_FILE.absolute(), PYPROJECT_FILE.absolute())
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
-    run_git(f"commit -m '{commit_msg}' --no-verify")
+    run_git("commit", "-m", commit_msg, "--no-verify")
 
 
 def check_release(version):
-    print(f"Checking release {version}")
+    print(f"Checking release {COLOR_GREEN}{version}{COLOR_END}")
 
     # Check __version__
     code_version = get_version_from_code()
     if code_version != version:
         raise ReleaseError(
-            f"Invalid __version__ in parsec/_version.py: expected `{version}`, got `{code_version}`"
+            f"Invalid __version__ in parsec/_version.py: expected `{COLOR_YELLOW}{version}{COLOR_END}`, got `{COLOR_YELLOW}{code_version}{COLOR_END}`"
         )
 
     # Check newsfragments
@@ -336,7 +409,7 @@ def check_release(version):
         )
 
     # Check tag exist and is an annotated&signed one
-    show_info = run_git(f"show --quiet {version}")
+    show_info = run_git("show", "--quiet", str(version))
     tag_type = show_info.split(" ", 1)[0]
     if tag_type != "tag":
         raise ReleaseError(f"{version} is not an annotated tag (type: {tag_type})")
@@ -344,13 +417,43 @@ def check_release(version):
         raise ReleaseError(f"{version} is not signed")
 
 
+def rollback_last_release():
+    if run_git("diff-index", "HEAD", "--").strip():
+        raise ReleaseError("Local changes are present, aborting...")
+
+    current_version = get_version_from_code()
+    if not current_version.is_dev:
+        raise ReleaseError(
+            f"Invalid __version__ in parsec/_version.py: expected {COLOR_YELLOW}vX.Y.Z+dev{COLOR_END}, got {COLOR_YELLOW}{current_version}{COLOR_END}"
+        )
+
+    version = current_version.evolve(is_dev=False)
+    print(
+        f"__version__ in parsec/_version.py contains version {COLOR_GREEN}{current_version}{COLOR_END}, hence we should rollback version {COLOR_GREEN}{version}{COLOR_END}"
+    )
+
+    # Retrieve `Bump version vX.Y.A+dev -> vX.Y.B` and `Bump version vX.Y.B -> vX.Y.B+dev` commits
+    head, head_minus_1, head_minus_2 = run_git("rev-list", "-n", "3", "HEAD").strip().splitlines()
+
+    tag_commit = run_git("rev-list", "-n", "1", str(version)).strip()
+    if tag_commit != head_minus_1:
+        raise ReleaseError(
+            f"Cannot rollback as tag {COLOR_YELLOW}{version}{COLOR_END} doesn't point on {COLOR_YELLOW}HEAD^{COLOR_END}"
+        )
+
+    print(f"Removing tag {COLOR_GREEN}{version}{COLOR_END}")
+    run_git("tag", "--delete", str(version))
+    print(f"Reset mastor to {COLOR_GREEN}{head_minus_2}{COLOR_END} (i.e. HEAD~2)")
+    run_git("reset", "--hard", head_minus_2)
+
+
 def check_non_release(version):
-    print(f"Checking non-release {version}")
+    print(f"Checking non-release {COLOR_GREEN}{version}{COLOR_END}")
     # Check __version__
     code_version = get_version_from_code()
     if code_version != version:
         raise ReleaseError(
-            f"Invalid __version__ in parsec/_version.py: expected `{version}`, got `{code_version}`"
+            f"Invalid __version__ in parsec/_version.py: expected {COLOR_YELLOW}{version}{COLOR_END}, got {COLOR_YELLOW}{code_version}{COLOR_END}"
         )
 
     # Force newsfragments format sanity check
@@ -358,22 +461,32 @@ def check_non_release(version):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    description = (
+        f"""tl;dr:
+Create release commit&tag: {COLOR_GREEN}./misc/releaser.py build v1.2.3{COLOR_END}
+Oops I've made a mistake: {COLOR_GREEN}./misc/releaser.py rollback{COLOR_END}
+    """
+        + __doc__
     )
-    parser.add_argument("command", choices=("build", "check"))
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("command", choices=("build", "check", "rollback"))
     parser.add_argument("version", type=Version, nargs="?")
     parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("-P", "--stage-pause", action="store_true")
     args = parser.parse_args()
 
     try:
         if args.command == "build":
             if not args.version:
                 raise SystemExit("version is required for build command")
-            current_version = get_version_from_repo_describe_tag(args.verbose)
-            check_non_release(current_version)
-            build_release(args.version, args.stage_pause)
+            # TODO: rethink the non-release checks
+            # current_version = get_version_from_repo_describe_tag(args.verbose)
+            # check_non_release(current_version)
+            build_release(args.version)
+
+        elif args.command == "rollback":
+            rollback_last_release()
 
         else:  # Check
 
@@ -383,7 +496,12 @@ if __name__ == "__main__":
                 version = args.version
 
             if version.is_dev:
-                check_non_release(version)
+                # TODO: rethink the non-release checks
+                # check_non_release(version)
+                print(
+                    f"Detected dev version {COLOR_GREEN}{version}{COLOR_END}, nothing to check..."
+                )
+                pass
 
             else:
                 check_release(version)

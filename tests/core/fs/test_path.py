@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 
-from parsec.core.types import FsPath
+from parsec.core.fs import FsPath
 
 
 @pytest.mark.parametrize(

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from string import ascii_lowercase
@@ -11,6 +11,8 @@ from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
 )
 
+from parsec.api.data import EntryName
+
 from tests.common import call_with_control, compare_fs_dumps
 
 # The point is not to find breaking filenames here, so keep it simple
@@ -22,9 +24,8 @@ st_fs = st.sampled_from(["fs_1", "fs_2"])
 def test_fs_online_concurrent_tree_and_sync(
     hypothesis_settings,
     reset_testbed,
-    backend_addr,
     backend_factory,
-    server_factory,
+    running_backend_factory,
     user_fs_factory,
     alice,
     alice2,
@@ -41,10 +42,10 @@ def test_fs_online_concurrent_tree_and_sync(
 
             return await self.get_root_nursery().start(call_with_control, _user_fs_controlled_cb)
 
-        async def start_backend(self, devices):
+        async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client, backend_addr) as server:
+                    async with running_backend_factory(backend) as server:
                         await started_cb(backend=backend, server=server)
 
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)
@@ -60,14 +61,14 @@ def test_fs_online_concurrent_tree_and_sync(
         @initialize(target=Folders)
         async def init(self):
             await reset_testbed()
-            self.device1 = alice
-            self.device2 = alice2
+            self.backend_controller = await self.start_backend()
 
-            self.backend_controller = await self.start_backend([self.device1, self.device2])
+            self.device1 = self.backend_controller.server.correct_addr(alice)
+            self.device2 = self.backend_controller.server.correct_addr(alice2)
             self.user_fs1_controller = await self.start_fs(self.device1)
             self.user_fs2_controller = await self.start_fs(self.device2)
 
-            self.wid = await self.user_fs1.workspace_create("w")
+            self.wid = await self.user_fs1.workspace_create(EntryName("w"))
             workspace = self.user_fs1.get_workspace(self.wid)
             await workspace.sync()
             await self.user_fs1.sync()
@@ -111,7 +112,7 @@ def test_fs_online_concurrent_tree_and_sync(
             except OSError:
                 pass
 
-        @rule(fs=FSs, path=Files)
+        @rule(target=Files, fs=FSs, path=Files)
         async def delete_file(self, fs, path):
             workspace = fs.get_workspace(self.wid)
             try:
@@ -120,7 +121,7 @@ def test_fs_online_concurrent_tree_and_sync(
                 pass
             return path
 
-        @rule(fs=FSs, path=Folders)
+        @rule(target=Folders, fs=FSs, path=Folders)
         async def delete_folder(self, fs, path):
             workspace = fs.get_workspace(self.wid)
             try:

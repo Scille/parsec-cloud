@@ -1,3 +1,5 @@
+.. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 .. _doc_introduction:
 
 ============
@@ -5,8 +7,8 @@ Introduction
 ============
 
 
-Parsec is a free software (AGPL v3) aiming at easily share your work and
-data in the cloud in a total privacy thanks to end-to-end cryptographic security.
+Parsec allows you to easily share your work and data in the cloud in total
+privacy thanks to end-to-end cryptographic security.
 
 
 .. image:: parsec_snapshot.png

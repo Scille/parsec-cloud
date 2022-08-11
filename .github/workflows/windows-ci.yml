@@ -1,0 +1,61 @@
+name: windows-ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+env:
+  rust-version: 1.62.0
+  python-version: "3.9"
+  poetry-version: 1.2.0b3
+  sqlite-version: 3390100
+  winfsp-version: 1.8.20304
+  pytest-args: >-
+    --log-level=DEBUG
+    --durations=10
+    --side-effects-timeout=10
+    -x
+    -vv
+
+jobs:
+  windows-ci-python:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - name: Install WinFSP
+        shell: bash
+        run: |
+          choco install -y --limit-output winfsp --version=${{ env.winfsp-version }}
+          mkdir winfsp-test
+          curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-tests-1.8.20304.zip -o winfsp-test/winfsp-tests.zip
+          unzip winfsp-test/winfsp-tests.zip -d winfsp-test
+          pwd
+          echo "$(pwd)\winfsp-test" >> "$GITHUB_PATH"
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          version: ${{ env.rust-version }}
+          cache-key: python
+
+      - uses: ./.github/actions/setup-python-poetry
+        with:
+          python-version: ${{ env.python-version }}
+          poetry-version: ${{ env.poetry-version }}
+
+      - name: Install python deps
+        run: poetry install -E core -E backend
+
+      - name: Test fast
+        run: poetry run pytest tests ${{ env.pytest-args }} -n auto
+
+      - name: Test Mountpoint
+        run: poetry run pytest tests ${{ env.pytest-args }} --runmountpoint --runslow -m mountpoint
+
+      - name: Test Gui
+        run: poetry run pytest tests ${{ env.pytest-args }} --rungui --runmountpoint --runslow -m gui
+
+      - name: Test Slow
+        run: poetry run pytest tests ${{ env.pytest-args }} -n auto --runslow -m slow

@@ -1,26 +1,38 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
 
 from pendulum import now as pendulum_now
 from parsec.api.data import UserProfile
-from parsec.api.protocol import HumanHandle, InvitationType, InvitationDeletedReason
+from parsec.api.protocol import (
+    DeviceLabel,
+    HumanHandle,
+    InvitationType,
+    InvitationDeletedReason,
+    InvitationStatus,
+)
 
-from parsec.core.backend_connection import backend_invited_cmds_factory
+from parsec.api.data import EntryName
+from parsec.core.backend_connection import (
+    backend_invited_cmds_factory,
+    backend_authenticated_cmds_factory,
+)
 from parsec.core.types import BackendInvitationAddr, LocalDevice, WorkspaceRole
 from parsec.core.invite import (
     InvitePeerResetError,
+    InviteActiveUsersLimitReachedError,
     claimer_retrieve_info,
     DeviceClaimInitialCtx,
     UserClaimInitialCtx,
     DeviceGreetInitialCtx,
     UserGreetInitialCtx,
 )
-
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUsed
-from parsec.api.protocol import InvitationStatus
+from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+
+from tests.common import real_clock_timeout
 
 
 @pytest.mark.trio
@@ -32,15 +44,15 @@ async def test_good_device_claim(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
     if with_labels:
-        requested_device_label = "Foo's label"
-        granted_device_label = "Bar's label"
+        requested_device_label = DeviceLabel("Foo's label")
+        granted_device_label = DeviceLabel("Bar's label")
     else:
         requested_device_label = None
         granted_device_label = None
@@ -100,7 +112,7 @@ async def test_good_device_claim(
 
         await in_progress_ctx.do_create_new_device(author=alice, device_label=granted_device_label)
 
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         async with trio.open_nursery() as nursery:
             nursery.start_soon(_run_claimer)
             nursery.start_soon(_run_greeter)
@@ -135,13 +147,18 @@ async def test_good_device_claim(
     # Test the behavior of this new device
     async with user_fs_factory(bob) as bobfs:
         async with user_fs_factory(alice) as alicefs:
-            async with user_fs_factory(new_device, initialize_in_v0=True) as newfs:
+            async with user_fs_factory(new_device) as newfs:
+                # New device should start with a speculative user manifest
+                um = newfs.get_user_manifest()
+                assert um.is_placeholder
+                assert um.speculative
+
                 # Old device modify user manifest
-                await alicefs.workspace_create("wa")
+                await alicefs.workspace_create(EntryName("wa"))
                 await alicefs.sync()
 
                 # New sharing from other user
-                wb_id = await bobfs.workspace_create("wb")
+                wb_id = await bobfs.workspace_create(EntryName("wb"))
                 await bobfs.workspace_share(wb_id, alice.user_id, WorkspaceRole.CONTRIBUTOR)
 
                 # Test new device get access to both new workspaces
@@ -158,7 +175,7 @@ async def test_good_device_claim(
 @pytest.mark.trio
 @pytest.mark.parametrize("with_labels", [False, True])
 async def test_good_user_claim(
-    backend, running_backend, alice, alice_backend_cmds, user_fs_factory, with_labels
+    backend, running_backend, data_base_dir, alice, alice_backend_cmds, user_fs_factory, with_labels
 ):
     claimer_email = "zack@example.com"
 
@@ -168,7 +185,7 @@ async def test_good_user_claim(
         claimer_email=claimer_email,
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.USER,
         token=invitation.token,
@@ -177,9 +194,9 @@ async def test_good_user_claim(
     if with_labels:
         # Let's pretent we invited a Fortnite player...
         requested_human_handle = HumanHandle(email="ZACK@example.com", label="xXx_Z4ck_xXx")
-        requested_device_label = "Ultr4_B00st"
+        requested_device_label = DeviceLabel("Ultr4_B00st")
         granted_human_handle = HumanHandle(email="zack@example.com", label="Zack")
-        granted_device_label = "Desktop"
+        granted_device_label = DeviceLabel("Desktop")
     else:
         requested_human_handle = None
         requested_device_label = None
@@ -219,6 +236,9 @@ async def test_good_user_claim(
                 requested_human_handle=requested_human_handle,
             )
             assert isinstance(new_device, LocalDevice)
+            # User storage should be populated with non-speculative user manifest
+            # before save the device
+            await user_storage_non_speculative_init(data_base_dir=data_base_dir, device=new_device)
 
     async def _run_greeter():
         initial_ctx = UserGreetInitialCtx(cmds=alice_backend_cmds, token=invitation_addr.token)
@@ -250,7 +270,7 @@ async def test_good_user_claim(
             profile=granted_profile,
         )
 
-    with trio.fail_after(1):
+    async with real_clock_timeout():
         async with trio.open_nursery() as nursery:
             nursery.start_soon(_run_claimer)
             nursery.start_soon(_run_greeter)
@@ -290,13 +310,18 @@ async def test_good_user_claim(
 
     # Test the behavior of this new user device
     async with user_fs_factory(alice) as alicefs:
-        async with user_fs_factory(new_device, initialize_in_v0=True) as newfs:
+        async with user_fs_factory(new_device) as newfs:
+            # New user should start with a non-speculative user manifest
+            um = newfs.get_user_manifest()
+            assert um.is_placeholder
+            assert not um.speculative
+
             # Share a workspace with new user
-            aw_id = await alicefs.workspace_create("alice_workspace")
+            aw_id = await alicefs.workspace_create(EntryName("alice_workspace"))
             await alicefs.workspace_share(aw_id, new_device.user_id, WorkspaceRole.CONTRIBUTOR)
 
             # New user cannot create a new workspace
-            zw_id = await newfs.workspace_create("zack_workspace")
+            zw_id = await newfs.workspace_create(EntryName("zack_workspace"))
             await newfs.workspace_share(zw_id, alice.user_id, WorkspaceRole.READER)
 
             # Now both users should have the same workspaces
@@ -307,8 +332,8 @@ async def test_good_user_claim(
             alice_um = alicefs.get_user_manifest()
             zack_um = newfs.get_user_manifest()
 
-            assert {(w.id, w.key) for w in alice_um.workspaces} == {
-                (w.id, w.key) for w in zack_um.workspaces
+            assert {(w.id, w.key.secret) for w in alice_um.workspaces} == {
+                (w.id, w.key.secret) for w in zack_um.workspaces
             }
 
 
@@ -318,7 +343,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -334,7 +359,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
         greeter_in_progress_ctx = None
 
         # Step 1
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             async with trio.open_nursery() as nursery:
 
                 async def _do_claimer():
@@ -349,7 +374,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
                 nursery.start_soon(_do_greeter)
 
         # Claimer restart the conduit while greeter try to do step 2
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             async with trio.open_nursery() as nursery:
 
                 async def _do_claimer():
@@ -364,7 +389,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
                 greeter_in_progress_ctx = await greeter_initial_ctx.do_wait_peer()
 
         # Now do the other way around: greeter restart conduit while claimer try step 2
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             async with trio.open_nursery() as nursery:
 
                 async def _do_greeter():
@@ -390,7 +415,7 @@ async def test_claimer_handle_cancel_event(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -438,13 +463,13 @@ async def test_claimer_handle_cancel_event(
                 return
             greeter_in_progress_ctx = await greeter_in_progress_ctx.do_signify_trust()
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             async with trio.open_nursery() as nursery:
 
                 nursery.start_soon(_do_claimer)
                 nursery.start_soon(_do_greeter)
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
 
             async with trio.open_nursery() as nursery:
 
@@ -466,7 +491,7 @@ async def test_claimer_handle_cancel_event(
                 async def _do_claimer_claim_device():
                     with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
                         await claimer_in_progress_ctx.do_claim_device(
-                            requested_device_label="TheSecretDevice"
+                            requested_device_label=DeviceLabel("TheSecretDevice")
                         )
                     assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
 
@@ -497,7 +522,7 @@ async def test_claimer_handle_command_failure(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
-        backend_addr=alice.organization_addr,
+        backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
         invitation_type=InvitationType.DEVICE,
         token=invitation.token,
@@ -545,7 +570,7 @@ async def test_claimer_handle_command_failure(
                 return
             greeter_in_progress_ctx = await greeter_in_progress_ctx.do_signify_trust()
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
 
             async with trio.open_nursery() as nursery:
                 nursery.start_soon(_do_claimer)
@@ -556,7 +581,6 @@ async def test_claimer_handle_command_failure(
         async def _send_event(*args, **kwargs):
             if BackendEvent.INVITE_STATUS_CHANGED in args and (
                 kwargs.get("status") == InvitationStatus.DELETED
-                or kwargs.get("status_str") == InvitationStatus.DELETED.value
             ):
                 deleted_event.set()
             await trio.sleep(0)
@@ -564,7 +588,7 @@ async def test_claimer_handle_command_failure(
         backend.invite._send_event = _send_event
         monkeypatch.setattr("parsec.backend.postgresql.invite.send_signal", _send_event)
 
-        with trio.fail_after(1):
+        async with real_clock_timeout():
             await _cancel_invitation()
             await deleted_event.wait()
             with pytest.raises(BackendInvitationAlreadyUsed) as exc_info:
@@ -576,8 +600,65 @@ async def test_claimer_handle_command_failure(
                     await claimer_in_progress_ctx.do_wait_peer_trust()
                 elif fail_on_step == "claim_device":
                     await claimer_in_progress_ctx.do_claim_device(
-                        requested_device_label="TheSecretDevice"
+                        requested_device_label=DeviceLabel("TheSecretDevice")
                     )
                 else:
                     raise AssertionError(f"Unknown step {fail_on_step}")
             assert str(exc_info.value) == "Invalid handshake: Invitation already deleted"
+
+
+@pytest.mark.trio
+async def test_user_claim_but_active_users_limit_reached(backend, running_backend, alice):
+    # Organization has reached active user limit
+    await backend.organization.update(alice.organization_id, active_users_limit=1)
+
+    # Invitation is still ok...
+    invitation = await backend.invite.new_for_user(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        claimer_email="zack@example.com",
+    )
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr.get_backend_addr(),
+        organization_id=alice.organization_id,
+        invitation_type=InvitationType.USER,
+        token=invitation.token,
+    )
+
+    async def _run_greeter():
+        async with backend_authenticated_cmds_factory(
+            alice.organization_addr, alice.device_id, alice.signing_key
+        ) as alice_backend_cmds:
+            initial_ctx = UserGreetInitialCtx(cmds=alice_backend_cmds, token=invitation_addr.token)
+            in_progress_ctx = await initial_ctx.do_wait_peer()
+            in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
+            in_progress_ctx = await in_progress_ctx.do_signify_trust()
+            in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
+
+            # ...this is where the limit should be enforced
+            with pytest.raises(InviteActiveUsersLimitReachedError):
+                await in_progress_ctx.do_create_new_user(
+                    author=alice,
+                    device_label=in_progress_ctx.requested_device_label,
+                    human_handle=in_progress_ctx.requested_human_handle,
+                    profile=UserProfile.STANDARD,
+                )
+
+    async def _run_claimer():
+        async with backend_invited_cmds_factory(addr=invitation_addr) as cmds:
+            initial_ctx = await claimer_retrieve_info(cmds)
+            in_progress_ctx = await initial_ctx.do_wait_peer()
+            in_progress_ctx = await in_progress_ctx.do_signify_trust()
+            in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
+
+            await in_progress_ctx.do_claim_user(
+                requested_device_label=None, requested_human_handle=None
+            )
+
+    async with real_clock_timeout():
+        async with trio.open_nursery() as nursery:
+            nursery.start_soon(_run_claimer)
+            await _run_greeter()
+            # Claimer is not notified that the greeter has failed so we
+            # must explicitly cancel it
+            nursery.cancel_scope.cancel()

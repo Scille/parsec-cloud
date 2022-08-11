@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from pendulum import DateTime
 from typing import List, Tuple
@@ -52,13 +52,20 @@ OFFSET $offset
 )
 
 
-async def send_message(conn, organization_id, sender, recipient, timestamp, body):
+async def send_message(
+    conn,
+    organization_id: OrganizationID,
+    sender: DeviceID,
+    recipient: UserID,
+    timestamp: DateTime,
+    body: bytes,
+) -> None:
     index = await conn.fetchval(
         *_q_insert_message(
-            organization_id=organization_id,
-            recipient=recipient,
+            organization_id=organization_id.str,
+            recipient=recipient.str,
             timestamp=timestamp,
-            sender=sender,
+            sender=sender.str,
             body=body,
         )
     )
@@ -94,7 +101,7 @@ class PGMessageComponent(BaseMessageComponent):
         async with self.dbh.pool.acquire() as conn:
             data = await conn.fetch(
                 *_q_get_messages(
-                    organization_id=organization_id, recipient=recipient, offset=offset
+                    organization_id=organization_id.str, recipient=recipient.str, offset=offset
                 )
             )
         return [(DeviceID(d[0]), d[1], d[2]) for d in data]

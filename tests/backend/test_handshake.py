@@ -1,13 +1,14 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from uuid import uuid4
+from unittest.mock import ANY
 
-from parsec.api.protocol import packb, unpackb, OrganizationID
+from parsec.api.protocol import packb, unpackb
+from parsec.api.protocol.handshake import ServerHandshake
 from parsec.api.version import ApiVersion, API_VERSION
-from parsec.api.transport import Transport
 from parsec.api.protocol import (
     AuthenticatedClientHandshake,
+    InvitationToken,
     InvitationType,
     InvitedClientHandshake,
     HandshakeRVKMismatch,
@@ -18,50 +19,55 @@ from parsec.backend.backend_events import BackendEvent
 
 
 @pytest.mark.trio
-async def test_handshake_invalid_format(backend, server_factory):
-    async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+@pytest.mark.parametrize(
+    "kind",
+    ["bad_handshake_type", "irrelevant_dict", "valid_msgpack_but_not_a_dict", "invalid_msgpack"],
+)
+async def test_handshake_send_invalid_answer_data(backend_asgi_app, kind):
+    if kind == "bad_handshake_type":
+        bad_req = packb({"handshake": "dummy", "client_api_version": API_VERSION})
+    elif kind == "irrelevant_dict":
+        bad_req = packb({"foo": "bar"})
+    elif kind == "valid_msgpack_but_not_a_dict":
+        bad_req = b"\x00"  # Encodes the number 0 as positive fixint
+    else:
+        assert kind == "invalid_msgpack"
+        bad_req = b"\xc1"  # Never used value according to msgpack spec
 
-        await transport.recv()  # Get challenge
-        req = {"handshake": "dummy", "client_api_version": API_VERSION}
-        await transport.send(packb(req))
-        result_req = await transport.recv()
-        assert unpackb(result_req) == {
-            "handshake": "result",
-            "result": "bad_protocol",
-            "help": "{'handshake': ['Invalid value, should be `answer`']}",
-        }
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
+
+        await ws.receive()  # Get challenge
+        await ws.send(bad_req)
+        result_req = await ws.receive()
+        assert unpackb(result_req) == {"handshake": "result", "result": "bad_protocol", "help": ANY}
 
 
 @pytest.mark.trio
-async def test_handshake_incompatible_version(backend, server_factory):
-    async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+async def test_handshake_incompatible_version(backend_asgi_app):
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
         incompatible_version = ApiVersion(API_VERSION.version + 1, 0)
-        await transport.recv()  # Get challenge
+        await ws.receive()  # Get challenge
         req = {
             "handshake": "answer",
             "type": "anonymous",
             "client_api_version": incompatible_version,
-            "organization_id": OrganizationID("Org"),
+            "organization_id": "Org",
             "token": "whatever",
         }
-        await transport.send(packb(req))
-        result_req = await transport.recv()
+        await ws.send(packb(req))
+        result_req = await ws.receive()
         assert unpackb(result_req) == {
             "handshake": "result",
             "result": "bad_protocol",
-            "help": "No overlap between client API versions {3.0} and backend API versions {"
-            + str(API_VERSION)
-            + ", 1.2}",
+            "help": f"No overlap between client API versions {{{incompatible_version}}} and backend API versions {{{', '.join(map(str, ServerHandshake.SUPPORTED_API_VERSIONS))}}}",
         }
 
 
 @pytest.mark.trio
-async def test_authenticated_handshake_good(backend, server_factory, alice):
+async def test_authenticated_handshake_good(backend_asgi_app, alice):
     ch = AuthenticatedClientHandshake(
         organization_id=alice.organization_id,
         device_id=alice.device_id,
@@ -69,15 +75,14 @@ async def test_authenticated_handshake_good(backend, server_factory, alice):
         root_verify_key=alice.root_verify_key,
     )
 
-    async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        challenge_req = await transport.recv()
+        challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
-        await transport.send(answer_req)
-        result_req = await transport.recv()
+        await ws.send(answer_req)
+        result_req = await ws.receive()
         ch.process_result_req(result_req)
 
         assert ch.client_api_version == API_VERSION
@@ -85,29 +90,28 @@ async def test_authenticated_handshake_good(backend, server_factory, alice):
 
 
 @pytest.mark.trio
-async def test_authenticated_handshake_bad_rvk(backend, server_factory, alice, otherorg):
+async def test_authenticated_handshake_bad_rvk(backend_asgi_app, alice, otherorg):
     ch = AuthenticatedClientHandshake(
         organization_id=alice.organization_id,
         device_id=alice.device_id,
         user_signkey=alice.signing_key,
         root_verify_key=otherorg.root_verify_key,
     )
-    async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        challenge_req = await transport.recv()
+        challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
-        await transport.send(answer_req)
-        result_req = await transport.recv()
+        await ws.send(answer_req)
+        result_req = await ws.receive()
         with pytest.raises(HandshakeRVKMismatch):
             ch.process_result_req(result_req)
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("invitation_type", InvitationType)
-async def test_invited_handshake_good(backend, server_factory, alice, invitation_type):
+async def test_invited_handshake_good(backend_asgi_app, backend, alice, invitation_type):
     if invitation_type == InvitationType.USER:
         invitation = await backend.invite.new_for_user(
             organization_id=alice.organization_id,
@@ -124,15 +128,14 @@ async def test_invited_handshake_good(backend, server_factory, alice, invitation
         invitation_type=invitation_type,
         token=invitation.token,
     )
-    async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        challenge_req = await transport.recv()
+        challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
-        await transport.send(answer_req)
-        result_req = await transport.recv()
+        await ws.send(answer_req)
+        result_req = await ws.receive()
         ch.process_result_req(result_req)
 
         assert ch.client_api_version == API_VERSION
@@ -141,25 +144,26 @@ async def test_invited_handshake_good(backend, server_factory, alice, invitation
 
 @pytest.mark.trio
 @pytest.mark.parametrize("invitation_type", InvitationType)
-async def test_invited_handshake_bad_token(backend, server_factory, coolorg, invitation_type):
+async def test_invited_handshake_bad_token(backend_asgi_app, coolorg, invitation_type):
     ch = InvitedClientHandshake(
-        organization_id=coolorg.organization_id, invitation_type=invitation_type, token=uuid4()
+        organization_id=coolorg.organization_id,
+        invitation_type=invitation_type,
+        token=InvitationToken.new(),
     )
-    async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        challenge_req = await transport.recv()
+        challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
-        await transport.send(answer_req)
-        result_req = await transport.recv()
+        await ws.send(answer_req)
+        result_req = await ws.receive()
         with pytest.raises(HandshakeBadIdentity):
             ch.process_result_req(result_req)
 
 
 @pytest.mark.trio
-async def test_invited_handshake_bad_token_type(backend, server_factory, alice):
+async def test_invited_handshake_bad_token_type(backend_asgi_app, backend, alice):
     invitation = await backend.invite.new_for_device(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
@@ -169,30 +173,27 @@ async def test_invited_handshake_bad_token_type(backend, server_factory, alice):
         invitation_type=InvitationType.USER,
         token=invitation.token,
     )
-    async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        challenge_req = await transport.recv()
+        challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
-        await transport.send(answer_req)
-        result_req = await transport.recv()
+        await ws.send(answer_req)
+        result_req = await ws.receive()
         with pytest.raises(HandshakeBadIdentity):
             ch.process_result_req(result_req)
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ["invited", "authenticated"])
-async def test_handshake_unknown_organization(
-    backend, server_factory, organization_factory, alice, type
-):
+async def test_handshake_unknown_organization(backend_asgi_app, organization_factory, alice, type):
     bad_org = organization_factory()
     if type == "invited":
         ch = InvitedClientHandshake(
             organization_id=bad_org.organization_id,
             invitation_type=InvitationType.USER,
-            token=uuid4(),
+            token=InvitationToken.new(),
         )
     else:  # authenticated
         ch = AuthenticatedClientHandshake(
@@ -202,27 +203,26 @@ async def test_handshake_unknown_organization(
             root_verify_key=bad_org.root_verify_key,
         )
 
-    async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        challenge_req = await transport.recv()
+        challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
-        await transport.send(answer_req)
-        result_req = await transport.recv()
+        await ws.send(answer_req)
+        result_req = await ws.receive()
         with pytest.raises(HandshakeBadIdentity):
             ch.process_result_req(result_req)
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ["invited", "authenticated"])
-async def test_handshake_expired_organization(backend, server_factory, expiredorg, alice, type):
+async def test_handshake_expired_organization(backend_asgi_app, backend, expiredorg, alice, type):
     if type == "invited":
         ch = InvitedClientHandshake(
             organization_id=expiredorg.organization_id,
             invitation_type=InvitationType.USER,
-            token=uuid4(),
+            token=InvitationToken.new(),
         )
     else:  # authenticated
         ch = AuthenticatedClientHandshake(
@@ -233,36 +233,50 @@ async def test_handshake_expired_organization(backend, server_factory, expiredor
         )
 
     with backend.event_bus.listen() as spy:
-        async with server_factory(backend.handle_client) as server:
-            stream = server.connection_factory()
-            transport = await Transport.init_for_client(stream, server.addr.hostname)
+        client = backend_asgi_app.test_client()
+        async with client.websocket("/ws") as ws:
 
-            challenge_req = await transport.recv()
+            challenge_req = await ws.receive()
             answer_req = ch.process_challenge_req(challenge_req)
 
-            await transport.send(answer_req)
-            result_req = await transport.recv()
+            await ws.send(answer_req)
+            result_req = await ws.receive()
             with pytest.raises(HandshakeOrganizationExpired):
                 ch.process_result_req(result_req)
             await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
 
 
 @pytest.mark.trio
-async def test_authenticated_handshake_unknown_device(backend, server_factory, mallory):
+async def test_authenticated_handshake_unknown_device(backend_asgi_app, mallory):
     ch = AuthenticatedClientHandshake(
         organization_id=mallory.organization_id,
         device_id=mallory.device_id,
         user_signkey=mallory.signing_key,
         root_verify_key=mallory.root_verify_key,
     )
-    async with server_factory(backend.handle_client) as server:
-        stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr.hostname)
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
 
-        challenge_req = await transport.recv()
+        challenge_req = await ws.receive()
         answer_req = ch.process_challenge_req(challenge_req)
 
-        await transport.send(answer_req)
-        result_req = await transport.recv()
+        await ws.send(answer_req)
+        result_req = await ws.receive()
         with pytest.raises(HandshakeBadIdentity):
             ch.process_result_req(result_req)
+
+
+@pytest.mark.trio
+async def test_handshake_string_websocket_message(backend_asgi_app, mallory):
+    client = backend_asgi_app.test_client()
+    async with client.websocket("/ws") as ws:
+
+        await ws.receive()  # Get the challenge
+        await ws.send("hello")
+
+        result_req = await ws.receive()
+        assert unpackb(result_req) == {
+            "result": "bad_protocol",
+            "handshake": "result",
+            "help": "Expected bytes message in websocket",
+        }

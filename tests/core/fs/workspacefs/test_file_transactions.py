@@ -1,15 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import os
+import sys
 import pytest
 from pendulum import datetime
-from pathlib import Path
-from hypothesis_trio.stateful import (
-    initialize,
-    rule,
-    run_state_machine_as_test,
-    TrioAsyncioRuleBasedStateMachine,
-)
+from hypothesis_trio.stateful import initialize, rule, run_state_machine_as_test
 from hypothesis import strategies as st
 
 from parsec.core.types import EntryID, LocalFileManifest, Chunk
@@ -49,7 +44,9 @@ class File:
 async def foo_txt(alice, alice_file_transactions):
     local_storage = alice_file_transactions.local_storage
     now = datetime(2000, 1, 2)
-    placeholder = LocalFileManifest.new_placeholder(alice.device_id, parent=EntryID(), now=now)
+    placeholder = LocalFileManifest.new_placeholder(
+        alice.device_id, parent=EntryID.new(), timestamp=now
+    )
     remote_v1 = placeholder.to_remote(author=alice.device_id, timestamp=now)
     manifest = LocalFileManifest.from_remote(remote_v1)
     async with local_storage.lock_entry_id(manifest.id):
@@ -162,7 +159,7 @@ async def test_flush_file(alice_file_transactions, foo_txt):
 
 
 @pytest.mark.trio
-async def test_block_not_loaded_entry(alice_file_transactions, foo_txt):
+async def test_block_not_loaded_entry(running_backend, alice_file_transactions, foo_txt):
     file_transactions = alice_file_transactions
 
     foo_manifest = await foo_txt.get_manifest()
@@ -186,7 +183,7 @@ async def test_block_not_loaded_entry(alice_file_transactions, foo_txt):
 
 
 @pytest.mark.trio
-async def test_load_block_from_remote(alice_file_transactions, foo_txt):
+async def test_load_block_from_remote(running_backend, alice_file_transactions, foo_txt):
     file_transactions = alice_file_transactions
 
     # Prepare the backend
@@ -211,24 +208,31 @@ async def test_load_block_from_remote(alice_file_transactions, foo_txt):
     assert data == chunk1_data + chunk2_data[:4]
 
 
-size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB
+size = st.integers(min_value=0, max_value=4 * 1024**2)  # Between 0 and 4MB
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Windows file style not compatible with oracle")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows file style not compatible with oracle")
 def test_file_operations(
-    tmpdir, hypothesis_settings, reset_testbed, file_transactions_factory, alice, alice_backend_cmds
+    tmpdir,
+    hypothesis_settings,
+    user_fs_online_state_machine,
+    file_transactions_factory,
+    alice,
+    tmp_path,
 ):
     tentative = 0
 
-    class FileOperationsStateMachine(TrioAsyncioRuleBasedStateMachine):
+    class FileOperationsStateMachine(user_fs_online_state_machine):
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
-                async with WorkspaceStorage.run(alice, Path("/dummy"), EntryID()) as local_storage:
-                    file_transactions = await file_transactions_factory(
-                        self.device, alice_backend_cmds, local_storage=local_storage
-                    )
-                    await started_cb(file_transactions=file_transactions)
+                async with WorkspaceStorage.run(
+                    tmp_path / f"file_operations-{tentative}", alice, EntryID.new()
+                ) as local_storage:
+                    async with file_transactions_factory(
+                        self.device, local_storage=local_storage
+                    ) as file_transactions:
+                        await started_cb(file_transactions=file_transactions)
 
             self.transactions_controller = await self.get_root_nursery().start(
                 call_with_control, _transactions_controlled_cb
@@ -238,7 +242,8 @@ def test_file_operations(
         async def init(self):
             nonlocal tentative
             tentative += 1
-            await reset_testbed()
+            await self.reset_all()
+            await self.start_backend()
 
             self.device = alice
             await self.start_transactions()
@@ -246,7 +251,7 @@ def test_file_operations(
             self.local_storage = self.file_transactions.local_storage
 
             self.fresh_manifest = LocalFileManifest.new_placeholder(
-                alice.device_id, parent=EntryID()
+                alice.device_id, parent=EntryID.new(), timestamp=alice.timestamp()
             )
             self.entry_id = self.fresh_manifest.id
             async with self.local_storage.lock_entry_id(self.entry_id):

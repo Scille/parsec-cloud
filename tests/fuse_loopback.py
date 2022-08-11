@@ -1,10 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import time
 import os.path
 from errno import EACCES
 from pathlib import Path
-from threading import Lock
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -15,7 +14,6 @@ from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_exit
 class Loopback(LoggingMixIn, Operations):
     def __init__(self, root):
         self.root = os.path.realpath(root)
-        self.rwlock = Lock()
 
     def __call__(self, op, path, *args):
         return super(Loopback, self).__call__(op, self.root + path, *args)
@@ -66,9 +64,7 @@ class Loopback(LoggingMixIn, Operations):
     open = os.open
 
     def read(self, path, size, offset, fh):
-        with self.rwlock:
-            os.lseek(fh, offset, 0)
-            return os.read(fh, size)
+        return os.pread(fh, size, offset)
 
     def readdir(self, path, fh):
         return [".", ".."] + os.listdir(path)
@@ -112,9 +108,7 @@ class Loopback(LoggingMixIn, Operations):
     utimens = os.utime
 
     def write(self, path, data, offset, fh):
-        with self.rwlock:
-            os.lseek(fh, offset, 0)
-            return os.write(fh, data)
+        return os.pwrite(fh, data, offset)
 
 
 class ControlledLoopback(Loopback):

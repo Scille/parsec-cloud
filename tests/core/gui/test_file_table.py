@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import pendulum
-import uuid
 
 from PyQt5 import QtCore
 
+from parsec.api.data import EntryID, EntryName
 from parsec.core.gui.file_table import FileTable
 from parsec.core.gui.lang import switch_language
 
@@ -15,7 +15,7 @@ def test_file_table_parent_folder(qtbot, core_config):
     switch_language(core_config, "en")
 
     w = FileTable(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     assert w.rowCount() == 0
     assert w.columnCount() == 5
@@ -30,7 +30,7 @@ def test_file_table_parent_workspace(qtbot, core_config):
     switch_language(core_config, "en")
 
     w = FileTable(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     assert w.rowCount() == 0
     assert w.columnCount() == 5
@@ -44,7 +44,7 @@ def test_file_table_parent_workspace(qtbot, core_config):
 def test_file_table_clear(qtbot):
 
     w = FileTable(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     w.add_parent_workspace()
     assert w.rowCount() == 1
@@ -57,12 +57,12 @@ def test_file_table_sort(qtbot, core_config):
     switch_language(core_config, "en")
 
     w = FileTable(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     w.add_parent_workspace()
-    w.add_folder("Dir1", uuid.uuid4(), True, False)
+    w.add_folder(EntryName("Dir1"), EntryID.new(), True, False)
     w.add_file(
-        "File1.txt",
-        uuid.uuid4(),
+        EntryName("File1.txt"),
+        EntryID.new(),
         100,
         pendulum.datetime(2000, 1, 15),
         pendulum.datetime(2000, 1, 20),
@@ -70,8 +70,8 @@ def test_file_table_sort(qtbot, core_config):
         False,
     )
     w.add_file(
-        "AnotherFile.txt",
-        uuid.uuid4(),
+        EntryName("AnotherFile.txt"),
+        EntryID.new(),
         80,
         pendulum.datetime(2000, 1, 10),
         pendulum.datetime(2000, 1, 25),

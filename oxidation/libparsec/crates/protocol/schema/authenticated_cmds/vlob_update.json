@@ -1,0 +1,59 @@
+{
+    "label": "VlobUpdate",
+    "req": {
+        "cmd": "vlob_update",
+        "other_fields": [
+            {
+                "name": "encryption_revision",
+                "type": "Index"
+            },
+            {
+                "name": "vlob_id",
+                "type": "VlobID"
+            },
+            {
+                "name": "timestamp",
+                "type": "DateTime"
+            },
+            {
+                "name": "version",
+                "type": "Version"
+            },
+            {
+                "name": "blob",
+                "type": "Bytes"
+            }
+        ]
+    },
+    "reps": [
+        {
+            "status": "ok",
+            "other_fields": []
+        },
+        {
+            "status": "not_found",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        },
+        {
+            "status": "not_allowed",
+            "other_fields": []
+        },
+        {
+            "status": "bad_version",
+            "other_fields": []
+        },
+        {
+            "status": "bad_encryption_revision",
+            "other_fields": []
+        },
+        {
+            "status": "in_maintenance",
+            "other_fields": []
+        }
+    ]
+}

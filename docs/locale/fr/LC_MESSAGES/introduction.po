@@ -5,18 +5,18 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Parsec 1.7.2+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-26 20:04+0100\n"
+"Project-Id-Version: Parsec 1.7.2+dev\n"
+"POT-Creation-Date: 2022-03-15 11:20+0100\n"
 "PO-Revision-Date: 2020-02-27 17:42+0100\n"
+"Last-Translator: \n"
+"Language: fr\n"
+"Language-Team: \n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
-"Last-Translator: \n"
-"Language-Team: \n"
-"Language: fr\n"
-"X-Generator: Poedit 2.2.1\n"
+"Generated-By: Babel 2.9.1\n"
 
 #: ../../introduction.rst:5
 msgid "Introduction"
@@ -24,12 +24,12 @@ msgstr "Introduction"
 
 #: ../../introduction.rst:8
 msgid ""
-"Parsec is a free software (AGPL v3) aiming at easily share your work and data in "
-"the cloud in a total privacy thanks to end-to-end cryptographic security."
+"Parsec allows you to easily share your work and data in the cloud in "
+"total privacy thanks to end-to-end cryptographic security."
 msgstr ""
-"Parsec est un logiciel libre (AGPL v3) visant à permettre de partager votre "
-"travail et vos données dans le cloud en toute confidentialité par le biais d'un "
-"système de chiffrement de bout en bout."
+"Parsec vous permet de partager votre travail et vos données dans le cloud"
+" en toute confidentialité via une technologie de chiffrement de bout en "
+"bout."
 
 #: ../../introduction.rst:16
 msgid "Key features:"
@@ -37,59 +37,60 @@ msgstr "Principales fonctionnalités"
 
 #: ../../introduction.rst:18
 msgid ""
-"Works as a virtual drive on you computer. You can access and modify all the data "
-"stored in Parsec with your regular softwares just like you would on your local "
-"hard-drive."
+"Works as a virtual drive on you computer. You can access and modify all "
+"the data stored in Parsec with your regular softwares just like you would"
+" on your local hard-drive."
 msgstr ""
-"Parsec fonctionne comme un disque virtuel sur votre ordinateur. Vous pouvez "
-"accéder et modifier les données stockées dans Parsec avec vos logiciels habituels "
-"de la même façon que vous le feriez avec des données présentes sur votre disque "
-"dur."
+"Parsec fonctionne comme un disque virtuel sur votre ordinateur. Vous "
+"pouvez accéder et modifier les données stockées dans Parsec avec vos "
+"logiciels habituels de la même façon que vous le feriez avec des données "
+"présentes sur votre disque dur."
 
 #: ../../introduction.rst:21
 msgid ""
-"Never lose any data. Encrypted data are synchronized with the remote server that "
-"never destroys anything, hence you can browse data history and recover from any "
-"point in time."
+"Never lose any data. Encrypted data are synchronized with the remote "
+"server that never destroys anything, hence you can browse data history "
+"and recover from any point in time."
 msgstr ""
-"Ne perdez jamais la moindre donnée ! Les données chiffrées sont synchronisées avec "
-"le serveur distant qui ne supprime jamais rien. Vous pouvez donc consulter "
-"l'historique de vos données et revenir à n'importe quel moment dans le passé."
+"Ne perdez jamais la moindre donnée ! Les données chiffrées sont "
+"synchronisées avec le serveur distant qui ne supprime jamais rien. Vous "
+"pouvez donc consulter l'historique de vos données et revenir à n'importe "
+"quel moment dans le passé."
 
-#: ../../introduction.rst:23
+#: ../../introduction.rst:24
 msgid ""
-"Client-side cryptographic security. Data and metadata are only visible by you and "
-"the ones you choose to share with."
+"Client-side cryptographic security. Data and metadata are only visible by"
+" you and the ones you choose to share with."
 msgstr ""
-"Chiffrement effectué côté client. Les données et méta-données ne sont lisibles que "
-"par vous et ceux avec qui vous avez décidé de les partager."
+"Chiffrement effectué côté client. Les données et méta-données ne sont "
+"lisibles que par vous et ceux avec qui vous avez décidé de les partager."
 
-#: ../../introduction.rst:25
+#: ../../introduction.rst:26
 msgid ""
-"Cryptographic signature. Each modification is signed by it author making trivial "
-"to identify modifications."
+"Cryptographic signature. Each modification is signed by it author making "
+"trivial to identify modifications."
 msgstr ""
-"Signature cryptographique. Chaque modification est signée par son auteur, rendant "
-"donc triviale son identification."
-
-#: ../../introduction.rst:27
-msgid ""
-"Simplified enrollment. New user enrollment is simple as sharing a link and a token "
-"code."
-msgstr ""
-"Inscription des nouveaux utilisateurs facilitée. Il suffit de partager un lien "
-"d'invitation ainsi qu'un code pin au nouveau venu pour l'ajouter au système."
+"Signature cryptographique. Chaque modification est signée par son auteur,"
+" rendant donc triviale son identification."
 
 #: ../../introduction.rst:28
 msgid ""
-"Simple to host."
+"Simplified enrollment. New user enrollment is simple as sharing a link "
+"and a token code."
 msgstr ""
-"Simple à auto-héberger."
+"Inscription des nouveaux utilisateurs facilitée. Il suffit de partager un"
+" lien d'invitation ainsi qu'un code pin au nouveau venu pour l'ajouter au"
+" système."
 
-#: ../../introduction.rst:33
-msgid "Overview"
-msgstr "Vue d'ensemble"
+#: ../../introduction.rst:29
+msgid "Simple to host."
+msgstr "Simple à auto-héberger."
 
-#: ../../introduction.rst:44
-msgid "Parsec single server, multi organizations showcase"
-msgstr "Cas d'usage de Parsec avec un seul serveur contenant plusieurs organisations"
+#~ msgid "Overview"
+#~ msgstr "Vue d'ensemble"
+
+#~ msgid "Parsec single server, multi organizations showcase"
+#~ msgstr ""
+#~ "Cas d'usage de Parsec avec un seul"
+#~ " serveur contenant plusieurs organisations"
+

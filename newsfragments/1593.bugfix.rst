@@ -1,1 +1,0 @@
-Fix uncatched error in GUI when bootstrapping organization with an invalid url

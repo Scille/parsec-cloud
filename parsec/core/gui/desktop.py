@@ -1,13 +1,24 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from PyQt5.QtCore import QUrl, QFileInfo, QSysInfo, QLocale
+import trio
+from typing import Iterable
+from pathlib import PurePath
+import re
+
+from PyQt5.QtCore import QUrl, QSysInfo, QLocale
 from PyQt5.QtGui import QDesktopServices, QGuiApplication, QClipboard
 
-from parsec.api.protocol import DeviceName
 
-
-def open_file(path):
-    return QDesktopServices.openUrl(QUrl.fromLocalFile(QFileInfo(path).absoluteFilePath()))
+async def open_files_job(paths: Iterable[PurePath]):
+    status = True
+    for path in paths:
+        assert path.is_absolute()
+        # Run QDesktopServices in a thread in order to avoid any accidental access
+        # to the parsec file system as this would cause a serious deadlock.
+        status &= await trio.to_thread.run_sync(
+            lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
+        )
+    return status, paths
 
 
 def open_url(url):
@@ -30,7 +41,7 @@ def get_default_device():
     device = QSysInfo.machineHostName()
     if device.lower() == "localhost":
         device = QSysInfo.productType()
-    return "".join([c for c in device if DeviceName.regex.match(c)])
+    return "".join([c for c in device if re.match(r"[\w\-]", c)])
 
 
 def get_locale_language():
@@ -38,8 +49,10 @@ def get_locale_language():
 
 
 def copy_to_clipboard(text):
-    QGuiApplication.clipboard().setText(text, QClipboard.Clipboard)
-    QGuiApplication.clipboard().setText(text, QClipboard.Selection)
+    clipboard = QGuiApplication.clipboard()
+    clipboard.setText(text, QClipboard.Clipboard)
+    if clipboard.supportsSelection():
+        clipboard.setText(text, QClipboard.Selection)
 
 
 def get_clipboard():

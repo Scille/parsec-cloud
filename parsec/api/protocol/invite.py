@@ -1,14 +1,17 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from enum import Enum
-from typing import Dict, cast
+from typing import Dict, cast, TYPE_CHECKING
 
+from parsec.types import UUID4
 from parsec.serde import BaseSchema, OneOfSchema, fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import HumanHandleField, UserIDField
 
 
 __all__ = (
+    "InvitationToken",
+    "InvitationTokenField",
     "invite_new_serializer",
     "invite_delete_serializer",
     "invite_list_serializer",
@@ -28,11 +31,26 @@ __all__ = (
 )
 
 
+class InvitationToken(UUID4):
+    __slots__ = ()
+
+
+_PyInvitationToken = InvitationToken
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import InvitationToken as _RsInvitationToken
+    except:
+        pass
+    else:
+        InvitationToken = _RsInvitationToken
+
+
 class InvitationType(Enum):
     USER = "USER"
     DEVICE = "DEVICE"
 
 
+InvitationTokenField = fields.uuid_based_field_factory(InvitationToken)
 InvitationTypeField = fields.enum_field_factory(InvitationType)
 
 
@@ -58,8 +76,20 @@ class InviteNewReqSchema(OneOfSchema):
         return cast(InvitationType, obj["type"])
 
 
+class InvitationEmailSentStatus(Enum):
+    SUCCESS = "SUCCESS"
+    NOT_AVAILABLE = "NOT_AVAILABLE"
+    BAD_RECIPIENT = "BAD_RECIPIENT"
+
+
+InvitationEmailSentStatusField = fields.enum_field_factory(InvitationEmailSentStatus)
+
+
 class InviteNewRepSchema(BaseRepSchema):
-    token = fields.UUID(required=True)
+    token = InvitationTokenField(required=True)
+    # Added in API 2.3 (Parsec v2.6.0)
+    # Field used when the invitation is correctly created but the invitation email cannot be sent
+    email_sent = InvitationEmailSentStatusField(required=False, allow_none=False)
 
 
 invite_new_serializer = CmdSerializer(InviteNewReqSchema, InviteNewRepSchema)
@@ -75,7 +105,7 @@ InvitationDeletedReasonField = fields.enum_field_factory(InvitationDeletedReason
 
 
 class InviteDeleteReqSchema(BaseReqSchema):
-    token = fields.UUID(required=True)
+    token = InvitationTokenField(required=True)
     reason = InvitationDeletedReasonField(required=True)
 
 
@@ -101,7 +131,7 @@ InvitationStatusField = fields.enum_field_factory(InvitationStatus)
 
 class InviteListItemUserSchema(BaseSchema):
     type = fields.EnumCheckedConstant(InvitationType.USER, required=True)
-    token = fields.UUID(required=True)
+    token = InvitationTokenField(required=True)
     created_on = fields.DateTime(required=True)
     claimer_email = fields.String(required=True)
     status = InvitationStatusField(required=True)
@@ -109,7 +139,7 @@ class InviteListItemUserSchema(BaseSchema):
 
 class InviteListItemDeviceSchema(BaseSchema):
     type = fields.EnumCheckedConstant(InvitationType.DEVICE, required=True)
-    token = fields.UUID(required=True)
+    token = InvitationTokenField(required=True)
     created_on = fields.DateTime(required=True)
     status = InvitationStatusField(required=True)
 
@@ -140,13 +170,13 @@ class InviteInfoUserRepSchema(BaseRepSchema):
     type = fields.EnumCheckedConstant(InvitationType.USER, required=True)
     claimer_email = fields.String(required=True)
     greeter_user_id = UserIDField(required=True)
-    greeter_human_handle = HumanHandleField(allow_none=True, missing=True)
+    greeter_human_handle = HumanHandleField(allow_none=True, required=True)
 
 
 class InviteInfoDeviceRepSchema(BaseRepSchema):
     type = fields.EnumCheckedConstant(InvitationType.DEVICE, required=True)
     greeter_user_id = UserIDField(required=True)
-    greeter_human_handle = HumanHandleField(allow_none=True, missing=True)
+    greeter_human_handle = HumanHandleField(allow_none=True, required=True)
 
 
 class InviteInfoRepSchema(OneOfSchema):
@@ -177,7 +207,7 @@ invite_1_claimer_wait_peer_serializer = CmdSerializer(
 
 
 class Invite1GreeterWaitPeerReqSchema(BaseReqSchema):
-    token = fields.UUID(required=True)
+    token = InvitationTokenField(required=True)
     greeter_public_key = fields.PublicKey(required=True)
 
 
@@ -191,7 +221,7 @@ invite_1_greeter_wait_peer_serializer = CmdSerializer(
 
 
 class Invite2aClaimerSendHashedNonceHashNonceReqSchema(BaseReqSchema):
-    claimer_hashed_nonce = fields.Bytes(required=True)
+    claimer_hashed_nonce = fields.HashDigest(required=True)
 
 
 class Invite2aClaimerSendHashedNonceHashNonceRepSchema(BaseRepSchema):
@@ -205,11 +235,11 @@ invite_2a_claimer_send_hashed_nonce_serializer = CmdSerializer(
 
 
 class Invite2aGreeterGetHashedNonceReqSchema(BaseReqSchema):
-    token = fields.UUID(required=True)
+    token = InvitationTokenField(required=True)
 
 
 class Invite2aGreeterGetHashedNonceRepSchema(BaseRepSchema):
-    claimer_hashed_nonce = fields.Bytes(required=True)
+    claimer_hashed_nonce = fields.HashDigest(required=True)
 
 
 invite_2a_greeter_get_hashed_nonce_serializer = CmdSerializer(
@@ -218,7 +248,7 @@ invite_2a_greeter_get_hashed_nonce_serializer = CmdSerializer(
 
 
 class Invite2bGreeterSendNonceReqSchema(BaseReqSchema):
-    token = fields.UUID(required=True)
+    token = InvitationTokenField(required=True)
     greeter_nonce = fields.Bytes(required=True)
 
 
@@ -245,7 +275,7 @@ invite_2b_claimer_send_nonce_serializer = CmdSerializer(
 
 
 class Invite3aGreeterWaitPeerTrustReqSchema(BaseReqSchema):
-    token = fields.UUID(required=True)
+    token = InvitationTokenField(required=True)
 
 
 class Invite3aGreeterWaitPeerTrustRepSchema(BaseRepSchema):
@@ -271,7 +301,7 @@ invite_3b_claimer_wait_peer_trust_serializer = CmdSerializer(
 
 
 class Invite3bGreeterSignifyTrustReqSchema(BaseReqSchema):
-    token = fields.UUID(required=True)
+    token = InvitationTokenField(required=True)
 
 
 class Invite3bGreeterSignifyTrustRepSchema(BaseRepSchema):
@@ -297,7 +327,7 @@ invite_3a_claimer_signify_trust_serializer = CmdSerializer(
 
 
 class Invite4GreeterCommunicateReqSchema(BaseReqSchema):
-    token = fields.UUID(required=True)
+    token = InvitationTokenField(required=True)
     payload = fields.Bytes(required=True)
 
 

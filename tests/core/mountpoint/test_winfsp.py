@@ -1,10 +1,12 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import os
 import time
 import threading
+from pathlib import Path
 
+from parsec.api.data import EntryName
 from parsec.core.fs.utils import ntstatus
 
 
@@ -16,10 +18,10 @@ def test_rename_to_another_drive(mountpoint_service):
 
     async def _bootstrap(user_fs, mountpoint_manager):
         nonlocal x_path, y_path
-        xid = await user_fs.workspace_create("x")
+        xid = await user_fs.workspace_create(EntryName("x"))
         xworkspace = user_fs.get_workspace(xid)
         await xworkspace.touch("/foo.txt")
-        yid = await user_fs.workspace_create("y")
+        yid = await user_fs.workspace_create(EntryName("y"))
         x_path = await mountpoint_manager.mount_workspace(xid)
         y_path = await mountpoint_manager.mount_workspace(yid)
         print(x_path, y_path)
@@ -27,7 +29,7 @@ def test_rename_to_another_drive(mountpoint_service):
     mountpoint_service.execute(_bootstrap)
 
     with pytest.raises(OSError) as exc:
-        (x_path / "foo.txt").rename(y_path / "foo.txt")
+        Path(x_path / "foo.txt").rename(y_path / "foo.txt")
     assert str(exc.value).startswith(
         "[WinError 17] The system cannot move the file to a different disk drive"
     )
@@ -93,7 +95,7 @@ def test_teardown_during_fs_access(mountpoint_service, monkeypatch):
     try:
 
         with pytest.raises(OSError) as exc:
-            (mountpoint_service.wpath / "stop_loop").stat()
+            Path(mountpoint_service.wpath / "stop_loop").stat()
 
         assert str(exc.value).startswith(
             "[WinError 995] The I/O operation has been aborted because of either a thread exit or an application request"
@@ -151,7 +153,7 @@ def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service_factory
 
         for name, _ in items:
             # Apply bad name to both the mountpoint folder and data inside it
-            wid = await user_fs.workspace_create(name)
+            wid = await user_fs.workspace_create(EntryName(name))
             workspace = user_fs.get_workspace(wid)
             await workspace.touch(f"/{name}")
             workspaces.append(await mountpoint_manager.mount_workspace(wid))
@@ -161,8 +163,8 @@ def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service_factory
     mountpoint_service_factory(_bootstrap)
 
     for workspace, (_, cooked_name) in zip(workspaces, items):
-        assert workspace.exists()
-        entries = list(workspace.iterdir())
+        assert Path(workspace).exists()
+        entries = list(Path(workspace).iterdir())
         assert [x.name for x in entries] == [cooked_name]
         assert entries[0].exists()
 
@@ -176,16 +178,16 @@ def test_mount_workspace_with_too_long_name(mountpoint_service_factory):
     too_long_once_encoded = "x" + "😀" * 16
 
     async def _bootstrap(user_fs, mountpoint_manager):
-        wid = await user_fs.workspace_create(too_long)
+        wid = await user_fs.workspace_create(EntryName(too_long))
         workspaces.append(await mountpoint_manager.mount_workspace(wid))
 
-        wid = await user_fs.workspace_create(too_long_once_encoded)
+        wid = await user_fs.workspace_create(EntryName(too_long_once_encoded))
         workspaces.append(await mountpoint_manager.mount_workspace(wid))
 
     workspaces = []
     mountpoint_service_factory(_bootstrap)
     for workspace in workspaces:
-        assert workspace.exists()
+        assert Path(workspace).exists()
 
 
 @pytest.mark.win32
@@ -236,8 +238,8 @@ def test_replace_if_exists(mountpoint_service):
 
     mountpoint_service.execute(_bootstrap)
 
-    foo = mountpoint_service.wpath / "foo.txt"
-    bar = mountpoint_service.wpath / "bar.txt"
+    foo = Path(mountpoint_service.wpath / "foo.txt")
+    bar = Path(mountpoint_service.wpath / "bar.txt")
     assert foo.read_bytes() == b"foo"
     assert bar.read_bytes() == b"bar"
     foo.replace(bar)

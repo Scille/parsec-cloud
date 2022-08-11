@@ -1,1 +1,0 @@
-Reworked the dialog to see a workspace as it was to make it a little bit sexier

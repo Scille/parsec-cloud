@@ -1,11 +1,16 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import trio
 from typing import Optional
 from structlog import get_logger
-from urllib.request import urlopen, Request, URLError
+from urllib.request import urlopen, Request
 
-from parsec.api.protocol import OrganizationID, DeviceID, organization_bootstrap_webhook_serializer
+from parsec.api.protocol import (
+    OrganizationID,
+    DeviceID,
+    DeviceLabel,
+    organization_bootstrap_webhook_serializer,
+)
 
 
 logger = get_logger()
@@ -17,12 +22,12 @@ def _do_urllib_request(url: str, data: bytes) -> None:
     )
     try:
         with urlopen(req, timeout=30) as rep:
-            if rep.getcode() != 200:
+            if not 200 <= rep.status < 300:
                 logger.warning(
-                    "webhook bad return status", url=url, data=data, return_status=rep.getcode()
+                    "webhook bad return status", url=url, data=data, return_status=rep.status
                 )
 
-    except URLError as exc:
+    except OSError as exc:
         logger.warning("webhook failure", url=url, data=data, exc_info=exc)
 
 
@@ -34,7 +39,7 @@ class WebhooksComponent:
         self,
         organization_id: OrganizationID,
         device_id: DeviceID,
-        device_label: Optional[str],
+        device_label: Optional[DeviceLabel],
         human_email: Optional[str],
         human_label: Optional[str],
     ):

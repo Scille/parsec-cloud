@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from parsec.core.core_events import CoreEvent
-import platform
+import sys
 
 from PyQt5.QtWidgets import QWidget
 
@@ -20,11 +20,13 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         self.jobs_ctx = jobs_ctx
         self.setupUi(self)
 
-        if platform.system() != "Windows":
+        if sys.platform != "win32":
             self.widget_version.hide()
 
         self.button_save.clicked.connect(self.save)
         self.check_box_tray.setChecked(self.core_config.gui_tray_enabled)
+        if sys.platform == "darwin" and self.core_config.gui_tray_enabled:
+            self.check_box_tray.setEnabled(False)
         current = None
         for lg, key in lang.LANGUAGES.items():
             self.combo_languages.addItem(lg, key)
@@ -34,7 +36,6 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
             self.combo_languages.setCurrentText(current)
         self.check_box_check_at_startup.setChecked(self.core_config.gui_check_version_at_startup)
         self.check_box_send_data.setChecked(self.core_config.telemetry_enabled)
-        self.check_box_workspace_color.setChecked(self.core_config.gui_workspace_color)
         self.button_check_version.clicked.connect(self.check_version)
         self.check_box_show_confined.setChecked(self.core_config.gui_show_confined)
 
@@ -49,7 +50,6 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
             gui_tray_enabled=self.check_box_tray.isChecked(),
             gui_language=self.combo_languages.currentData(),
             gui_check_version_at_startup=self.check_box_check_at_startup.isChecked(),
-            gui_workspace_color=self.check_box_workspace_color.isChecked(),
             gui_show_confined=self.check_box_show_confined.isChecked(),
         )
         show_info(self, _("TEXT_SETTINGS_NEED_RESTART"))

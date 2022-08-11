@@ -1,13 +1,18 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
 import attr
-from uuid import UUID
-from typing import List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple
 from collections import defaultdict
 from pendulum import DateTime, now as pendulum_now
 
-from parsec.api.protocol import OrganizationID, UserID, InvitationStatus, InvitationDeletedReason
+from parsec.api.protocol import (
+    OrganizationID,
+    UserID,
+    InvitationToken,
+    InvitationStatus,
+    InvitationDeletedReason,
+)
 from parsec.backend.invite import (
     ConduitState,
     NEXT_CONDUIT_STATE,
@@ -19,7 +24,11 @@ from parsec.backend.invite import (
     InvitationNotFoundError,
     InvitationAlreadyDeletedError,
     InvitationInvalidStateError,
+    InvitationAlreadyMemberError,
 )
+
+if TYPE_CHECKING:
+    from parsec.backend.memory.user import MemoryUserComponent
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -41,15 +50,15 @@ class MemoryInviteComponent(BaseInviteComponent):
         super().__init__(*args, **kwargs)
         self._send_event = send_event
         self._organizations = defaultdict(OrganizationStore)
-        self._user_component = None
+        self._user_component: "MemoryUserComponent" = None
 
-    def register_components(self, **other_components):
-        self._user_component = other_components["user"]
+    def register_components(self, user: "MemoryUserComponent", **other_components):
+        self._user_component = user
 
     def _get_invitation_and_conduit(
         self,
         organization_id: OrganizationID,
-        token: UUID,
+        token: InvitationToken,
         expected_greeter: Optional[UserID] = None,
     ) -> Tuple[Invitation, Conduit]:
         org = self._organizations[organization_id]
@@ -64,7 +73,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter: Optional[UserID],
-        token: UUID,
+        token: InvitationToken,
         state: ConduitState,
         payload: bytes,
     ) -> ConduitListenCtx:
@@ -173,12 +182,26 @@ class MemoryInviteComponent(BaseInviteComponent):
         claimer_email: str,
         created_on: Optional[DateTime] = None,
     ) -> UserInvitation:
-        return await self._new(
+        """
+        Raise: InvitationAlreadyMemberError
+        """
+        org = self._user_component._organizations[organization_id]
+
+        for _, user in org.users.items():
+            if (
+                user.human_handle
+                and user.human_handle.email == claimer_email
+                and not user.is_revoked()
+            ):
+                raise InvitationAlreadyMemberError()
+        result = await self._new(
             organization_id=organization_id,
             greeter_user_id=greeter_user_id,
             claimer_email=claimer_email,
             created_on=created_on,
         )
+        assert isinstance(result, UserInvitation)
+        return result
 
     async def new_for_device(
         self,
@@ -186,9 +209,11 @@ class MemoryInviteComponent(BaseInviteComponent):
         greeter_user_id: UserID,
         created_on: Optional[DateTime] = None,
     ) -> DeviceInvitation:
-        return await self._new(
+        result = await self._new(
             organization_id=organization_id, greeter_user_id=greeter_user_id, created_on=created_on
         )
+        assert isinstance(result, DeviceInvitation)
+        return result
 
     async def _new(
         self,
@@ -241,7 +266,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         organization_id: OrganizationID,
         greeter: UserID,
-        token: UUID,
+        token: InvitationToken,
         on: DateTime,
         reason: InvitationDeletedReason,
     ) -> None:
@@ -269,12 +294,12 @@ class MemoryInviteComponent(BaseInviteComponent):
                 invitations.append(invitation)
         return sorted(invitations, key=lambda x: x.created_on)
 
-    async def info(self, organization_id: OrganizationID, token: UUID) -> Invitation:
+    async def info(self, organization_id: OrganizationID, token: InvitationToken) -> Invitation:
         invitation, _ = self._get_invitation_and_conduit(organization_id, token)
         return invitation
 
     async def claimer_joined(
-        self, organization_id: OrganizationID, greeter: UserID, token: UUID
+        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
     ) -> None:
         await self._send_event(
             BackendEvent.INVITE_STATUS_CHANGED,
@@ -285,7 +310,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         )
 
     async def claimer_left(
-        self, organization_id: OrganizationID, greeter: UserID, token: UUID
+        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
     ) -> None:
         await self._send_event(
             BackendEvent.INVITE_STATUS_CHANGED,

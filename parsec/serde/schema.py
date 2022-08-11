@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from marshmallow import Schema, MarshalResult, UnmarshalResult, ValidationError, post_load
 from typing import Union, Dict, Type
@@ -11,7 +11,6 @@ try:
     class BaseSchema(Schema):
         class Meta:
             jit = toastedmarshmallow.Jit
-
 
 except ImportError:
     BaseSchema = Schema
@@ -175,7 +174,6 @@ class OneOfSchema(BaseSchema):
                     result_errors[idx] = result.errors
 
             result = UnmarshalResult(result_data, result_errors)
-
         if result.errors and self.strict:
             raise ValidationError(result.errors)
 

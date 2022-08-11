@@ -1,9 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import os
+import sys
 import pytest
 
-if os.name != "nt":
+if sys.platform != "win32":
     pytest.skip("Windows only", allow_module_level=True)
 
 from winfspy.tests.winfstest import test_winfs as winfstest

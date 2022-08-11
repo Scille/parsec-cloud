@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from pendulum import now as pendulum_now
@@ -10,8 +10,8 @@ from tests.backend.common import realm_status, realm_update_roles
 
 
 @pytest.mark.trio
-async def test_status(backend, bob_backend_sock, alice_backend_sock, alice, bob, realm):
-    rep = await realm_status(alice_backend_sock, realm)
+async def test_status(bob_ws, alice_ws, alice, bob, realm):
+    rep = await realm_status(alice_ws, realm)
     assert rep == {
         "status": "ok",
         "in_maintenance": False,
@@ -21,11 +21,11 @@ async def test_status(backend, bob_backend_sock, alice_backend_sock, alice, bob,
         "encryption_revision": 1,
     }
     # Cheap test on no access
-    rep = await realm_status(bob_backend_sock, realm)
+    rep = await realm_status(bob_ws, realm)
     assert rep == {"status": "not_allowed"}
     # Also test lesser role have access
     await realm_update_roles(
-        alice_backend_sock,
+        alice_ws,
         RealmRoleCertificateContent(
             author=alice.device_id,
             timestamp=pendulum_now(),
@@ -34,7 +34,7 @@ async def test_status(backend, bob_backend_sock, alice_backend_sock, alice, bob,
             role=RealmRole.READER,
         ).dump_and_sign(alice.signing_key),
     )
-    rep = await realm_status(bob_backend_sock, realm)
+    rep = await realm_status(bob_ws, realm)
     assert rep == {
         "status": "ok",
         "in_maintenance": False,

@@ -1,5 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from typing import Mapping
 from uuid import UUID
 from pendulum import from_timestamp
 from datetime import datetime
@@ -18,7 +19,7 @@ from parsec.serde.exceptions import SerdePackingError
 MAX_BIN_LEN = 1024 * 1024  # 1 MB
 
 
-def packb(data: dict, exc_cls=SerdePackingError) -> bytes:
+def packb(data: Mapping, exc_cls=SerdePackingError) -> bytes:
     """
     Raises:
         SerdePackingError
@@ -58,18 +59,28 @@ def unpackb(raw_data: bytes, exc_cls=SerdePackingError) -> dict:
     """
 
     try:
-        return msgpack_unpackb(
-            raw_data, ext_hook=_unpackb_ext_hook, raw=False, max_bin_len=MAX_BIN_LEN
+        ret = msgpack_unpackb(
+            raw_data,
+            ext_hook=_unpackb_ext_hook,
+            raw=False,
+            max_bin_len=MAX_BIN_LEN,
+            strict_map_key=False,
         )
 
     except (ExtraData, ValueError, FormatError, StackError) as exc:
         raise exc_cls(f"Invalid msgpack data: {exc}") from exc
 
+    # MessagePack can return any type (int, string, list etc.) as root value
+    if not isinstance(ret, dict):
+        raise exc_cls(f"Invalid msgpack data: root must be a map")
+
+    return ret
+
 
 class Unpacker:
     def __init__(self, exc_cls=SerdePackingError):
         self._unpacker = msgpack_Unpacker(
-            ext_hook=_unpackb_ext_hook, raw=False, max_bin_len=MAX_BIN_LEN
+            ext_hook=_unpackb_ext_hook, raw=False, max_bin_len=MAX_BIN_LEN, strict_map_key=False
         )
         self._exc_cls = exc_cls
 

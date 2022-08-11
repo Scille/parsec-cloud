@@ -1,4 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
+import sys
 
 from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
@@ -10,7 +12,7 @@ from parsec.core.types import EntryID, WorkspaceRole
 from parsec.core.fs.workspacefs import ReencryptionNeed
 
 from parsec.core.gui.lang import translate as _, format_datetime
-from parsec.core.gui.workspace_roles import get_role_translation
+from parsec.core.gui.workspace_roles import NOT_SHARED_KEY, get_role_translation
 from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.custom_widgets import ensure_string_size
 
@@ -46,48 +48,30 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     open_clicked = pyqtSignal(WorkspaceFS)
     switch_clicked = pyqtSignal(bool, WorkspaceFS, object)
 
-    def __init__(
-        self,
-        workspace_name,
-        workspace_fs,
-        users_roles,
-        is_mounted,
-        files=None,
-        timestamped=False,
-        reencryption_needs=None,
-    ):
-        super().__init__()
+    def __init__(self, workspace_fs, parent=None):
+        # Initialize UI
+        super().__init__(parent=parent)
         self.setupUi(self)
-        self.users_roles = users_roles
-        self.workspace_name = workspace_name
+
+        # Read-only attributes
         self.workspace_fs = workspace_fs
-        self.timestamped = timestamped
+
+        # Property inner state
+        self._reencrypting = None
+        self._reencryption_needs = None
+
+        # Static initialization
         self.switch_button = SwitchButton()
         self.widget_actions.layout().insertWidget(0, self.switch_button)
         self.switch_button.clicked.connect(self._on_switch_clicked)
-
-        self.reencrypting = None
-        self.reencryption_needs = reencryption_needs
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
-        self.label_role.setText(get_role_translation(self.current_role))
-        files = files or []
 
         if not self.timestamped:
             self.button_delete.hide()
-            if not len(files):
-                self.widget_empty.show()
-                self.widget_files.hide()
-                self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
-            else:
-                for i, f in enumerate(files, 1):
-                    if i > 4:
-                        break
-                    label = getattr(self, "file{}_name".format(i))
-                    label.setText(f)
-                self.widget_files.show()
-                self.widget_empty.hide()
+            self.button_reencrypt.hide()
+            self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
         else:
             self.switch_button.setChecked(True)
             self.button_reencrypt.hide()
@@ -97,11 +81,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_shared.hide()
             self.label_owner.hide()
             self.switch_button.hide()
-            widg_tmp = TemporaryWorkspaceWidget()
-            widg_tmp.label_timestamp.setText(format_datetime(self.timestamp))
-            self.widget_empty.layout().addWidget(widg_tmp)
-            self.widget_empty.show()
-            self.widget_files.hide()
+            widget_tmp = TemporaryWorkspaceWidget()
+            self.widget_empty.layout().addWidget(widget_tmp)
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(0x99, 0x99, 0x99))
@@ -109,8 +90,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         effect.setXOffset(2)
         effect.setYOffset(2)
         self.setGraphicsEffect(effect)
-        if not self.is_owner:
-            self.button_reencrypt.hide()
         self.widget_reencryption.hide()
         self.button_share.clicked.connect(self.button_share_clicked)
         self.button_share.apply_style()
@@ -126,12 +105,65 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.button_open.apply_style()
         self.label_owner.apply_style()
         self.label_shared.apply_style()
-        if not self.is_owner:
-            self.label_owner.hide()
-        if not self.is_shared:
-            self.label_shared.hide()
+
+    def apply_state(
+        self, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False
+    ):
+        # Not meant to change
+        assert timestamped == self.timestamped
+        assert workspace_fs == self.workspace_fs
+
+        # Update attributes
+        self.workspace_name = workspace_name
+        self.workspace_fs = workspace_fs
+        self.users_roles = users_roles
+        self.files = files or []
+
+        # Update dependent widgets
+        if not self.timestamped:
+            if not len(self.files):
+                self.widget_empty.show()
+                self.widget_files.hide()
+            else:
+                self.widget_files.show()
+                self.widget_empty.hide()
+                for i in range(1, 5):
+                    label = getattr(self, "file{}_name".format(i))
+                    if len(files) >= i:
+                        label.setText(files[i - 1].str)
+                    else:
+                        label.setText("")
+        else:
+            widget_temp = self.widget_empty.layout().itemAt(0).widget()
+            widget_temp.label_timestamp.setText(format_datetime(self.timestamp))
+
+        # Retrieve current role for ourself
+        user_id = self.workspace_fs.device.user_id
+        try:
+            current_role, _ = self.users_roles[user_id]
+        except KeyError:
+            current_role = NOT_SHARED_KEY
+
+        self.label_role.setText(get_role_translation(current_role))
+        self.label_owner.setVisible(self.is_owner)
+        self.label_shared.setVisible(self.is_shared)
         self.reload_workspace_name(self.workspace_name)
         self.set_mountpoint_state(is_mounted)
+
+    @classmethod
+    def create(
+        cls, workspace_name, workspace_fs, users_roles, is_mounted, files=None, timestamped=False
+    ):
+        instance = cls(workspace_fs)
+        instance.apply_state(
+            workspace_name=workspace_name,
+            workspace_fs=workspace_fs,
+            users_roles=users_roles,
+            is_mounted=is_mounted,
+            files=files,
+            timestamped=timestamped,
+        )
+        return instance
 
     @property
     def is_shared(self):
@@ -157,16 +189,14 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         user_id = self.workspace_fs.device.user_id
         return user_id in self.users_roles and self.users_roles[user_id][0] == WorkspaceRole.OWNER
 
-    @property
-    def current_role(self):
-        user_id = self.workspace_fs.device.user_id
-        return self.users_roles[user_id][0]
-
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
         menu = QMenu(self)
 
-        action = menu.addAction(_("ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"))
+        if sys.platform == "darwin":
+            action = menu.addAction(_("ACTION_WORKSPACE_OPEN_IN_FINDER"))
+        else:
+            action = menu.addAction(_("ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"))
         action.triggered.connect(self.button_open_workspace_clicked)
         if not self.timestamped:
             action = menu.addAction(_("ACTION_WORKSPACE_RENAME"))
@@ -224,6 +254,10 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         return getattr(self.workspace_fs, "timestamp", None)
 
     @property
+    def timestamped(self):
+        return self.timestamp is not None
+
+    @property
     def reencryption_needs(self) -> Optional[ReencryptionNeed]:
         return self._reencryption_needs
 
@@ -253,6 +287,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.button_reencrypt.hide()
             self.widget_actions.show()
             self.widget_reencryption.hide()
+            self.button_reencrypt.setVisible(bool(self.reencryption_needs))
             self.setContextMenuPolicy(Qt.CustomContextMenu)
 
         self._reencrypting = val
@@ -267,7 +302,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     def reload_workspace_name(self, workspace_name):
         self.workspace_name = workspace_name
-        display = workspace_name
+        display = workspace_name.str
         extra_space = 40
 
         if not self.timestamped:
@@ -278,7 +313,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                     user=self.owner.short_user_display
                 )
             elif len(self.others) == 1 and self.others[0]:
-                user, = self.others
+                (user,) = self.others
                 shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(
                     user=user.short_user_display
                 )
@@ -295,6 +330,10 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             display += "-" + _("TEXT_WORKSPACE_IS_TIMESTAMPED_date").format(
                 date=format_datetime(self.workspace_fs.timestamp)
             )
+            if self.is_shared:
+                extra_space += 40
+            if self.is_owner:
+                extra_space += 40
         self.label_title.setToolTip(display)
         size = self.size().width() - extra_space
         self.label_title.setText(ensure_string_size(display, size, self.label_title.font()))
@@ -304,15 +343,11 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.clicked.emit(self.workspace_fs)
 
     def _on_switch_clicked(self, state):
-        self.set_mountpoint_state(state)
         self.switch_clicked.emit(state, self.workspace_fs, self.timestamp)
 
     def set_mountpoint_state(self, state):
         if self.timestamped:
             return
-        # TODO: we should be waiting for the mount to be done before switching
-        # state. Currently we risk concurrent issues if the user click while the
-        # mount is not finished
         self.switch_button.setChecked(state)
         if state:
             self.widget.setStyleSheet("background-color: #FFFFFF;")

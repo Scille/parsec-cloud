@@ -1,9 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
-
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtGui import QValidator
+
+from parsec.core.gui.validators import trim_string
 
 
 # Qt's validators suck. They only allow characters to be entered
@@ -18,7 +19,7 @@ class ValidatedLineEdit(QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._validator = None
-        self.textEdited.connect(self._on_text_edited)
+        self.textChanged.connect(self._on_text_edited)
 
     # Override of Qt just to avoid mistakes
     def setValidator(self, validator):
@@ -26,6 +27,9 @@ class ValidatedLineEdit(QLineEdit):
 
     def set_validator(self, validator):
         self._validator = validator
+
+    def clean_text(self):
+        return trim_string(self.text())
 
     def _on_text_edited(self, text):
         if self._validator:

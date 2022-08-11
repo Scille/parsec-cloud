@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from PyQt5.QtCore import Qt, QDate, QTime, pyqtSignal
 from PyQt5.QtGui import QColor
@@ -8,9 +8,9 @@ from structlog import get_logger
 
 import pendulum
 
+from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.lang import get_qlocale, translate as _, format_datetime
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
-from parsec.core.gui.trio_thread import ThreadSafeQtSignal
 from parsec.core.gui.ui.timestamped_workspace_widget import Ui_TimestampedWorkspaceWidget
 
 
@@ -23,8 +23,8 @@ async def _do_workspace_get_creation_timestamp(workspace_fs):
 
 
 class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
-    get_creation_timestamp_success = pyqtSignal()
-    get_creation_timestamp_error = pyqtSignal()
+    get_creation_timestamp_success = pyqtSignal(QtToTrioJob)
+    get_creation_timestamp_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, workspace_fs, jobs_ctx):
         super().__init__()
@@ -32,20 +32,24 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
         self.dialog = None
         self.workspace_fs = workspace_fs
         self.jobs_ctx = jobs_ctx
+        self.creation_date = None
+        self.creation_time = None
         self.calendar_widget.setLocale(get_qlocale())
         for d in (Qt.Saturday, Qt.Sunday):
             fmt = self.calendar_widget.weekdayTextFormat(d)
             fmt.setForeground(QColor(0, 0, 0))
             self.calendar_widget.setWeekdayTextFormat(d, fmt)
-        self.get_creation_timestamp_success.connect(self.enable_with_timestamp)
+        self.get_creation_timestamp_success.connect(self.on_success)
         self.get_creation_timestamp_error.connect(self.on_error)
         self.limits_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_creation_timestamp_success"),
-            ThreadSafeQtSignal(self, "get_creation_timestamp_error"),
+            self.get_creation_timestamp_success,
+            self.get_creation_timestamp_error,
             _do_workspace_get_creation_timestamp,
             workspace_fs=workspace_fs,
         )
         self.button_show.clicked.connect(self._on_show_clicked)
+        # Only enable widget once limits_job has finished
+        self.setEnabled(False)
 
     @property
     def date(self):
@@ -65,7 +69,7 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
 
     def cancel(self):
         if self.limits_job:
-            self.limits_job.cancel_and_join()
+            self.limits_job.cancel()
 
     def set_time_limits(self):
         selected_date = self.calendar_widget.selectedDate()
@@ -78,8 +82,9 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
         else:
             self.time_edit.clearMaximumTime()
 
-    def on_error(self):
-        if self.limits_job and self.limits_job.status != "cancelled":
+    def on_error(self, job):
+        assert self.limits_job is job
+        if self.limits_job.status != "cancelled":
             show_error(
                 self,
                 _("TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"),
@@ -88,7 +93,8 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
         self.limits_job = None
         self.dialog.reject()
 
-    def enable_with_timestamp(self):
+    def on_success(self, job):
+        assert self.limits_job is job
         creation = self.limits_job.ret.in_timezone("local")
         self.limits_job = None
         self.creation_date = (creation.year, creation.month, creation.day)
@@ -106,6 +112,8 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
         self.calendar_widget.selectionChanged.connect(self.set_time_limits)
         self.set_time_limits()
         self.time_edit.setDisplayFormat("h:mm:ss")
+        # All set, now user can pick date&time !
+        self.setEnabled(True)
 
     def on_close(self):
         self.cancel()

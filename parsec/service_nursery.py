@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 """
 This `open_service_nursery` implementation is taken from @oremanj gist:
@@ -12,7 +12,7 @@ from typing import Any, AsyncIterator, Awaitable, Callable, MutableSet, Optional
 
 import attr
 import trio
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 
 @attr.s(cmp=False)
@@ -124,7 +124,7 @@ def _get_coroutine_or_flag_problem(
 
 
 @asynccontextmanager
-async def open_service_nursery() -> AsyncIterator:
+async def open_service_nursery_with_multierror() -> AsyncIterator:
     """Provides a nursery augmented with a cancellation ordering constraint.
     If an entire service nursery becomes cancelled, either due to an
     exception raised by some task in the nursery or due to the

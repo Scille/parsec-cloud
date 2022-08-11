@@ -1,11 +1,14 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from typing import TYPE_CHECKING
 from parsec.api.protocol.base import (
     ProtocolError,
     MessageSerializationError,
     InvalidMessageError,
     packb,
     unpackb,
+    api_typed_msg_adapter,
+    any_cmd_req_factory,
 )
 from parsec.api.protocol.types import (
     UserID,
@@ -18,6 +21,11 @@ from parsec.api.protocol.types import (
     DeviceNameField,
     OrganizationIDField,
     HumanHandleField,
+    UserProfileField,
+    UserProfile,
+    DeviceLabelField,
+    DeviceLabel,
+    StrBased,
 )
 from parsec.api.protocol.handshake import (
     HandshakeError,
@@ -27,6 +35,7 @@ from parsec.api.protocol.handshake import (
     HandshakeOrganizationExpired,
     HandshakeRVKMismatch,
     HandshakeRevokedDevice,
+    HandshakeOutOfBallparkError,
     HandshakeAPIVersionError,
     ServerHandshake,
     HandshakeType,
@@ -34,18 +43,15 @@ from parsec.api.protocol.handshake import (
     AuthenticatedClientHandshake,
     InvitedClientHandshake,
     APIV1_HandshakeType,
-    APIV1_AuthenticatedClientHandshake,
     APIV1_AnonymousClientHandshake,
-    APIV1_AdministrationClientHandshake,
 )
 from parsec.api.protocol.organization import (
-    apiv1_organization_create_serializer,
+    organization_bootstrap_serializer,
     apiv1_organization_bootstrap_serializer,
     organization_bootstrap_webhook_serializer,
     organization_stats_serializer,
-    apiv1_organization_stats_serializer,
-    apiv1_organization_status_serializer,
-    apiv1_organization_update_serializer,
+    organization_config_serializer,
+    UsersPerProfileDetailItemSchema,
 )
 from parsec.api.protocol.events import (
     events_subscribe_serializer,
@@ -55,26 +61,19 @@ from parsec.api.protocol.events import (
 from parsec.api.protocol.ping import ping_serializer
 from parsec.api.protocol.user import (
     user_get_serializer,
-    apiv1_user_find_serializer,
-    apiv1_user_invite_serializer,
-    apiv1_user_get_invitation_creator_serializer,
-    apiv1_user_claim_serializer,
-    apiv1_user_cancel_invitation_serializer,
-    apiv1_user_create_serializer,
     user_create_serializer,
     user_revoke_serializer,
-    apiv1_device_invite_serializer,
-    apiv1_device_get_invitation_creator_serializer,
-    apiv1_device_claim_serializer,
-    apiv1_device_cancel_invitation_serializer,
-    apiv1_device_create_serializer,
     device_create_serializer,
     human_find_serializer,
 )
 from parsec.api.protocol.invite import (
+    InvitationToken,
+    InvitationTokenField,
     InvitationType,
+    InvitationTypeField,
     InvitationDeletedReason,
     InvitationStatus,
+    InvitationStatusField,
     invite_new_serializer,
     invite_delete_serializer,
     invite_list_serializer,
@@ -91,9 +90,12 @@ from parsec.api.protocol.invite import (
     invite_3b_greeter_signify_trust_serializer,
     invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
+    InvitationEmailSentStatus,
 )
 from parsec.api.protocol.message import message_get_serializer
 from parsec.api.protocol.realm import (
+    RealmID,
+    RealmIDField,
     RealmRole,
     RealmRoleField,
     MaintenanceType,
@@ -106,8 +108,19 @@ from parsec.api.protocol.realm import (
     realm_start_reencryption_maintenance_serializer,
     realm_finish_reencryption_maintenance_serializer,
 )
-from parsec.api.protocol.block import block_create_serializer, block_read_serializer
+from parsec.api.protocol.block import (
+    BlockID,
+    BlockIDField,
+    block_create_serializer,
+    block_read_serializer,
+    BlockReadReq,
+    BlockReadRep,
+    BlockReadRepType,
+    _PyBlockReadReq,
+)
 from parsec.api.protocol.vlob import (
+    VlobID,
+    VlobIDField,
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
@@ -116,13 +129,29 @@ from parsec.api.protocol.vlob import (
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
 )
-from parsec.api.protocol.cmds import (
-    AUTHENTICATED_CMDS,
-    INVITED_CMDS,
-    APIV1_AUTHENTICATED_CMDS,
-    APIV1_ANONYMOUS_CMDS,
-    APIV1_ADMINISTRATION_CMDS,
+from parsec.api.protocol.pki import (
+    PkiEnrollmentStatus,
+    PkiEnrollmentStatusField,
+    pki_enrollment_submit_serializer,
+    pki_enrollment_info_serializer,
+    pki_enrollment_list_serializer,
+    pki_enrollment_reject_serializer,
+    pki_enrollment_accept_serializer,
 )
+from parsec.api.protocol.sequester import SequesterServiceID, SequesterServiceIDField
+from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS, APIV1_ANONYMOUS_CMDS
+
+
+AuthenticatedAnyCmdReq = any_cmd_req_factory("AuthenticatedAnyCmdReq", _PyBlockReadReq)
+
+_PyAuthenticatedAnyCmdReq = AuthenticatedAnyCmdReq
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import AuthenticatedAnyCmdReq as _RsAuthenticatedAnyCmdReq
+    except:
+        pass
+    else:
+        AuthenticatedAnyCmdReq = _RsAuthenticatedAnyCmdReq
 
 
 __all__ = (
@@ -131,6 +160,7 @@ __all__ = (
     "InvalidMessageError",
     "packb",
     "unpackb",
+    "api_typed_msg_adapter",
     "HandshakeError",
     "HandshakeFailedChallenge",
     "HandshakeBadAdministrationToken",
@@ -138,6 +168,7 @@ __all__ = (
     "HandshakeOrganizationExpired",
     "HandshakeRVKMismatch",
     "HandshakeRevokedDevice",
+    "HandshakeOutOfBallparkError",
     "HandshakeAPIVersionError",
     "ServerHandshake",
     "HandshakeType",
@@ -145,9 +176,7 @@ __all__ = (
     "AuthenticatedClientHandshake",
     "InvitedClientHandshake",
     "APIV1_HandshakeType",
-    "APIV1_AuthenticatedClientHandshake",
     "APIV1_AnonymousClientHandshake",
-    "APIV1_AdministrationClientHandshake",
     # Types
     "UserID",
     "DeviceID",
@@ -159,15 +188,18 @@ __all__ = (
     "DeviceNameField",
     "OrganizationIDField",
     "HumanHandleField",
+    "UserProfileField",
+    "UserProfile",
+    "DeviceLabelField",
+    "DeviceLabel",
+    "StrBased",
     # Organization
-    "apiv1_organization_create_serializer",
+    "organization_bootstrap_serializer",
     "apiv1_organization_bootstrap_serializer",
     "organization_bootstrap_webhook_serializer",
-    "organization_bootstrap_serializer",
     "organization_stats_serializer",
-    "apiv1_organization_stats_serializer",
-    "apiv1_organization_status_serializer",
-    "apiv1_organization_update_serializer",
+    "organization_config_serializer",
+    "UsersPerProfileDetailItemSchema",
     # Events
     "events_subscribe_serializer",
     "events_listen_serializer",
@@ -176,25 +208,19 @@ __all__ = (
     "ping_serializer",
     # User
     "user_get_serializer",
-    "apiv1_user_find_serializer",
-    "apiv1_user_invite_serializer",
-    "apiv1_user_get_invitation_creator_serializer",
-    "apiv1_user_claim_serializer",
-    "apiv1_user_cancel_invitation_serializer",
-    "apiv1_user_create_serializer",
     "user_create_serializer",
     "user_revoke_serializer",
-    "apiv1_device_invite_serializer",
-    "apiv1_device_get_invitation_creator_serializer",
-    "apiv1_device_claim_serializer",
-    "apiv1_device_cancel_invitation_serializer",
-    "apiv1_device_create_serializer",
     "device_create_serializer",
     "human_find_serializer",
     # Invite
+    "InvitationToken",
+    "InvitationTokenField",
     "InvitationType",
+    "InvitationTypeField",
     "InvitationDeletedReason",
     "InvitationStatus",
+    "InvitationStatusField",
+    "InvitationEmailSentStatus",
     "invite_new_serializer",
     "invite_delete_serializer",
     "invite_list_serializer",
@@ -213,7 +239,9 @@ __all__ = (
     "invite_4_claimer_communicate_serializer",
     # Message
     "message_get_serializer",
-    # Data group
+    # Realm
+    "RealmID",
+    "RealmIDField",
     "RealmRole",
     "RealmRoleField",
     "MaintenanceType",
@@ -226,6 +254,8 @@ __all__ = (
     "realm_start_reencryption_maintenance_serializer",
     "realm_finish_reencryption_maintenance_serializer",
     # Vlob
+    "VlobID",
+    "VlobIDField",
     "vlob_create_serializer",
     "vlob_read_serializer",
     "vlob_update_serializer",
@@ -234,12 +264,27 @@ __all__ = (
     "vlob_maintenance_get_reencryption_batch_serializer",
     "vlob_maintenance_save_reencryption_batch_serializer",
     # Block
+    "BlockID",
+    "BlockIDField",
     "block_create_serializer",
     "block_read_serializer",
+    "BlockReadReq",
+    "BlockReadRep",
+    "BlockReadRepType",
+    # PKI enrollment
+    "PkiEnrollmentStatus",
+    "PkiEnrollmentStatusField",
+    "pki_enrollment_submit_serializer",
+    "pki_enrollment_info_serializer",
+    "pki_enrollment_list_serializer",
+    "pki_enrollment_reject_serializer",
+    "pki_enrollment_accept_serializer",
+    # Sequester
+    "SequesterServiceID",
+    "SequesterServiceIDField",
     # List of cmds
     "AUTHENTICATED_CMDS",
     "INVITED_CMDS",
-    "APIV1_AUTHENTICATED_CMDS",
     "APIV1_ANONYMOUS_CMDS",
-    "APIV1_ADMINISTRATION_CMDS",
+    "AuthenticatedAnyCmdReq",
 )

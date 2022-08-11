@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 # Imports
 
 import bisect
-from functools import partial
-from typing import Tuple, List, Set, Iterator, Callable, Union, Sequence
+from typing import Tuple, List, Set, Iterator, Union, Sequence, TYPE_CHECKING
+from pendulum import DateTime
 
 from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
 
@@ -12,7 +12,7 @@ from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
 Chunks = Tuple[Chunk, ...]
 ChunkIDSet = Set[Union[ChunkID, BlockID]]
 WriteOperationList = List[Tuple[Chunk, int]]
-UpdateLocalFileManifestCallable = Callable[[LocalFileManifest, Chunk], LocalFileManifest]
+
 
 # Helpers
 
@@ -134,7 +134,7 @@ def block_write(
 
 
 def prepare_write(
-    manifest: LocalFileManifest, size: int, offset: int
+    manifest: LocalFileManifest, size: int, offset: int, timestamp: DateTime
 ) -> Tuple[LocalFileManifest, WriteOperationList, ChunkIDSet]:
     # Prepare
     padding = 0
@@ -170,7 +170,9 @@ def prepare_write(
 
     # Evolve manifest
     new_size = max(manifest.size, offset + size)
-    new_manifest = manifest.evolve_and_mark_updated(size=new_size, blocks=tuple(blocks))
+    new_manifest = manifest.evolve_and_mark_updated(
+        size=new_size, blocks=tuple(blocks), timestamp=timestamp
+    )
 
     # Return write result
     return new_manifest, write_operations, removed_ids
@@ -180,7 +182,7 @@ def prepare_write(
 
 
 def prepare_truncate(
-    manifest: LocalFileManifest, size: int
+    manifest: LocalFileManifest, size: int, timestamp: DateTime
 ) -> Tuple[LocalFileManifest, ChunkIDSet]:
     # Prepare
     block, remainder = locate(size, manifest.blocksize)
@@ -202,18 +204,18 @@ def prepare_truncate(
         removed_ids |= chunk_id_set(chunks)
 
     # Craft new manifest
-    new_manifest = manifest.evolve_and_mark_updated(size=size, blocks=blocks)
+    new_manifest = manifest.evolve_and_mark_updated(size=size, blocks=blocks, timestamp=timestamp)
 
     # Return truncate result
     return new_manifest, removed_ids
 
 
 def prepare_resize(
-    manifest: LocalFileManifest, size: int
+    manifest: LocalFileManifest, size: int, timestamp: DateTime
 ) -> Tuple[LocalFileManifest, WriteOperationList, ChunkIDSet]:
     if size >= manifest.size:
-        return prepare_write(manifest, 0, size)
-    manifest, removed_ids = prepare_truncate(manifest, size)
+        return prepare_write(manifest, 0, size, timestamp)
+    manifest, removed_ids = prepare_truncate(manifest, size, timestamp)
     return manifest, [], removed_ids
 
 
@@ -221,30 +223,19 @@ def prepare_resize(
 
 
 def prepare_reshape(
-    manifest: LocalFileManifest
-) -> Iterator[Tuple[Chunks, Chunk, UpdateLocalFileManifestCallable, ChunkIDSet]]:
-
-    # Update manifest
-    def update_manifest(
-        block: int, manifest: LocalFileManifest, new_chunk: Chunk
-    ) -> LocalFileManifest:
-        blocks = list(manifest.blocks)
-        blocks[block] = (new_chunk,)
-        return manifest.evolve(blocks=tuple(blocks))
+    manifest: LocalFileManifest,
+) -> Iterator[Tuple[int, Chunks, Chunk, bool, ChunkIDSet]]:
 
     # Loop over blocks
     for block, chunks in enumerate(manifest.blocks):
 
         # Already a block
-        if len(chunks) == 1 and chunks[0].is_block:
+        if len(chunks) == 1 and chunks[0].is_block():
             continue
 
-        # Update callback
-        block_update = partial(update_manifest, block)
-
         # Already a pseudo-block
-        if len(chunks) == 1 and chunks[0].is_pseudo_block:
-            yield (chunks, chunks[0], block_update, set())
+        if len(chunks) == 1 and chunks[0].is_pseudo_block():
+            yield (block, chunks, chunks[0], False, set())
             continue
 
         # Prepare new block
@@ -255,4 +246,38 @@ def prepare_reshape(
         removed_ids = chunk_id_set(chunks)
 
         # Yield operations
-        yield (chunks, new_chunk, block_update, removed_ids)
+        yield (block, chunks, new_chunk, True, removed_ids)
+
+
+_py_prepare_read = prepare_read
+_py_prepare_write = prepare_write
+_py_prepare_resize = prepare_resize
+_py_prepare_reshape = prepare_reshape
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import prepare_read as _rs_prepare_read
+    except:
+        pass
+    else:
+        prepare_read = _rs_prepare_read
+
+    try:
+        from libparsec.types import prepare_write as _rs_prepare_write
+    except:
+        pass
+    else:
+        prepare_write = _rs_prepare_write
+
+    try:
+        from libparsec.types import prepare_resize as _rs_prepare_resize
+    except:
+        pass
+    else:
+        prepare_resize = _rs_prepare_resize
+
+    try:
+        from libparsec.types import prepare_reshape as _rs_prepare_reshape
+    except:
+        pass
+    else:
+        prepare_reshape = _rs_prepare_reshape

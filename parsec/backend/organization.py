@@ -1,29 +1,32 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import attr
 import pendulum
-from typing import Optional
+from typing import Optional, Union, Tuple
 from secrets import token_hex
-
-from pendulum import DateTime
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
+from parsec.sequester_crypto import SequesterVerifyKeyDer
+from parsec.api.data import (
+    UserCertificateContent,
+    DeviceCertificateContent,
+    DataError,
+    UserProfile,
+    SequesterAuthorityCertificate,
+)
 from parsec.api.protocol import (
     OrganizationID,
-    HandshakeType,
     organization_stats_serializer,
-    APIV1_HandshakeType,
-    apiv1_organization_create_serializer,
+    organization_bootstrap_serializer,
     apiv1_organization_bootstrap_serializer,
-    apiv1_organization_stats_serializer,
-    apiv1_organization_status_serializer,
-    apiv1_organization_update_serializer,
+    organization_config_serializer,
 )
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
+from parsec.backend.utils import ClientType, catch_protocol_errors, api, Unset, UnsetType
 from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent
-from parsec.backend.utils import catch_protocol_errors, api
+from parsec.backend.config import BackendConfig
+from parsec.backend.client_context import AnonymousClientContext, APIV1_AnonymousClientContext
 
 
 class OrganizationError(Exception):
@@ -55,21 +58,34 @@ class OrganizationExpiredError(OrganizationError):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class SequesterAuthority:
+    certificate: bytes
+    verify_key_der: SequesterVerifyKeyDer
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class Organization:
     organization_id: OrganizationID
     bootstrap_token: str
-    expiration_date: Optional[DateTime] = None
-    root_verify_key: Optional[VerifyKey] = None
+    is_expired: bool
+    root_verify_key: Optional[VerifyKey]
+    user_profile_outsider_allowed: bool
+    active_users_limit: Optional[int]
+    sequester_authority: Optional[SequesterAuthority]
+    sequester_services_certificates: Optional[Tuple[bytes, ...]]
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
 
-    @property
-    def is_expired(self):
-        return self.expiration_date is not None and self.expiration_date <= DateTime.now()
-
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class UsersPerProfileDetailItem:
+    profile: UserProfile
+    active: int
+    revoked: int
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -77,56 +93,49 @@ class OrganizationStats:
     data_size: int
     metadata_size: int
     users: int
+    active_users: int
+    realms: int
+    users_per_profile_detail: Tuple[UsersPerProfileDetailItem, ...]
+
+
+def generate_bootstrap_token() -> str:
+    return token_hex(32)
 
 
 class BaseOrganizationComponent:
-    def __init__(self, webhooks: WebhooksComponent, bootstrap_token_size: int = 32):
+    def __init__(self, webhooks: WebhooksComponent, config: BackendConfig):
         self.webhooks = webhooks
-        self.bootstrap_token_size = bootstrap_token_size
+        self._config = config
 
-    @api("organization_create", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
+    @api("organization_config")
     @catch_protocol_errors
-    async def api_organization_create(self, client_ctx, msg):
-        msg = apiv1_organization_create_serializer.req_load(msg)
-
-        bootstrap_token = token_hex(self.bootstrap_token_size)
-        expiration_date = msg.get("expiration_date", None)
+    async def api_authenticated_organization_config(self, client_ctx, msg):
+        msg = organization_config_serializer.req_load(msg)
+        organization_id = client_ctx.organization_id
         try:
-            await self.create(
-                msg["organization_id"],
-                bootstrap_token=bootstrap_token,
-                expiration_date=expiration_date,
-            )
-
-        except OrganizationAlreadyExistsError:
-            return {"status": "already_exists"}
-
-        rep = {"bootstrap_token": bootstrap_token, "status": "ok"}
-        if expiration_date:
-            rep["expiration_date"] = expiration_date
-
-        return apiv1_organization_create_serializer.rep_dump(rep)
-
-    @api("organization_status", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
-    @catch_protocol_errors
-    async def api_organization_status(self, client_ctx, msg):
-        msg = apiv1_organization_status_serializer.req_load(msg)
-
-        try:
-            organization = await self.get(msg["organization_id"])
+            organization = await self.get(organization_id)
 
         except OrganizationNotFoundError:
             return {"status": "not_found"}
 
-        return apiv1_organization_status_serializer.rep_dump(
-            {
-                "is_bootstrapped": organization.is_bootstrapped(),
-                "expiration_date": organization.expiration_date,
-                "status": "ok",
-            }
-        )
+        if organization.sequester_authority:
+            sequester_authority_certificate = organization.sequester_authority.certificate
+            sequester_services_certificates = organization.sequester_services_certificates
+        else:
+            sequester_authority_certificate = None
+            sequester_services_certificates = None
 
-    @api("organization_stats", handshake_types=[HandshakeType.AUTHENTICATED])
+        rep = {
+            "status": "ok",
+            "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
+            "active_users_limit": organization.active_users_limit,
+            "sequester_authority_certificate": sequester_authority_certificate,
+            "sequester_services_certificates": sequester_services_certificates,
+        }
+
+        return organization_config_serializer.rep_dump(rep)
+
+    @api("organization_stats")
     @catch_protocol_errors
     async def api_authenticated_organization_stats(self, client_ctx, msg):
         msg = organization_stats_serializer.req_load(msg)
@@ -147,51 +156,29 @@ class BaseOrganizationComponent:
         return organization_stats_serializer.rep_dump(
             {
                 "status": "ok",
-                "users": stats.users,
                 "data_size": stats.data_size,
                 "metadata_size": stats.metadata_size,
+                "realms": stats.realms,
+                "users": stats.users,
+                "active_users": stats.active_users,
+                "users_per_profile_detail": stats.users_per_profile_detail,
             }
         )
 
-    @api("organization_stats", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
+    @api("organization_bootstrap", client_types=[ClientType.APIV1_ANONYMOUS, ClientType.ANONYMOUS])
     @catch_protocol_errors
-    async def apiv1_administration_organization_stats(self, client_ctx, msg):
-        msg = apiv1_organization_stats_serializer.req_load(msg)
+    async def api_organization_bootstrap(
+        self, client_ctx: Union[APIV1_AnonymousClientContext, AnonymousClientContext], msg: dict
+    ):
+        # Use the correct serializer depending on the API
+        if isinstance(client_ctx, APIV1_AnonymousClientContext):
+            serializer = apiv1_organization_bootstrap_serializer
+        else:
+            assert isinstance(client_ctx, AnonymousClientContext)
+            serializer = organization_bootstrap_serializer
 
-        try:
-            stats = await self.stats(msg["organization_id"])
+        msg = serializer.req_load(msg)
 
-        except OrganizationNotFoundError:
-            return {"status": "not_found"}
-
-        return apiv1_organization_stats_serializer.rep_dump(
-            {
-                "status": "ok",
-                "users": stats.users,
-                "data_size": stats.data_size,
-                "metadata_size": stats.metadata_size,
-            }
-        )
-
-    @api("organization_update", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
-    @catch_protocol_errors
-    async def api_organization_update(self, client_ctx, msg):
-        msg = apiv1_organization_update_serializer.req_load(msg)
-
-        try:
-            await self.set_expiration_date(
-                msg["organization_id"], expiration_date=msg["expiration_date"]
-            )
-
-        except OrganizationNotFoundError:
-            return {"status": "not_found"}
-
-        return apiv1_organization_update_serializer.rep_dump({"status": "ok"})
-
-    @api("organization_bootstrap", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
-    @catch_protocol_errors
-    async def api_organization_bootstrap(self, client_ctx, msg):
-        msg = apiv1_organization_bootstrap_serializer.req_load(msg)
         bootstrap_token = msg["bootstrap_token"]
         root_verify_key = msg["root_verify_key"]
 
@@ -204,12 +191,14 @@ class BaseOrganizationComponent:
             )
 
             ru_data = rd_data = None
+            # TODO: Remove this `if` statement once APIv1 is no longer supported
             if "redacted_user_certificate" in msg:
                 ru_data = UserCertificateContent.verify_and_load(
                     msg["redacted_user_certificate"],
                     author_verify_key=root_verify_key,
                     expected_author=None,
                 )
+            # TODO: Remove this `if` statement once APIv1 is no longer supported
             if "redacted_device_certificate" in msg:
                 rd_data = DeviceCertificateContent.verify_and_load(
                     msg["redacted_device_certificate"],
@@ -242,10 +231,9 @@ class BaseOrganizationComponent:
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(u_data.timestamp, now):
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certification.",
-            }
+            return serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=u_data.timestamp
+            )
 
         if ru_data:
             if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
@@ -274,14 +262,55 @@ class BaseOrganizationComponent:
         if (rd_data and not ru_data) or (ru_data and not rd_data):
             return {
                 "status": "invalid_data",
-                "reason": "Redacted user&device certificate muste be provided together",
+                "reason": "Redacted user&device certificate must be provided together",
             }
+
+        # Sequester can not be set with APIV1
+        if isinstance(client_ctx, APIV1_AnonymousClientContext):
+            sequester_authority = None
+
+        else:
+            sequester_authority_certificate = msg["sequester_authority_certificate"]
+            if sequester_authority_certificate is None:
+                sequester_authority = None
+
+            else:
+                try:
+                    sequester_authority_certif_data = SequesterAuthorityCertificate.verify_and_load(
+                        sequester_authority_certificate,
+                        author_verify_key=root_verify_key,
+                        expected_author=None,
+                    )
+
+                except DataError:
+                    return {
+                        "status": "invalid_data",
+                        "reason": "Invalid signature for sequester authority certificate",
+                    }
+
+                if not timestamps_in_the_ballpark(sequester_authority_certif_data.timestamp, now):
+                    return serializer.timestamp_out_of_ballpark_rep_dump(
+                        backend_timestamp=now,
+                        client_timestamp=sequester_authority_certif_data.timestamp,
+                    )
+
+                if sequester_authority_certif_data.timestamp != u_data.timestamp:
+                    return {
+                        "status": "invalid_data",
+                        "reason": "Device, user and sequester authority certificates must have the same timestamp.",
+                    }
+
+                sequester_authority = SequesterAuthority(
+                    certificate=sequester_authority_certificate,
+                    verify_key_der=sequester_authority_certif_data.verify_key_der,
+                )
 
         user = User(
             user_id=u_data.user_id,
             human_handle=u_data.human_handle,
             profile=u_data.profile,
             user_certificate=msg["user_certificate"],
+            # TODO: Remove this `get` method once APIv1 is no longer supported
             redacted_user_certificate=msg.get("redacted_user_certificate", msg["user_certificate"]),
             user_certifier=u_data.author,
             created_on=u_data.timestamp,
@@ -290,6 +319,7 @@ class BaseOrganizationComponent:
             device_id=d_data.device_id,
             device_label=d_data.device_label,
             device_certificate=msg["device_certificate"],
+            # TODO: Remove this `get` method once APIv1 is no longer supported
             redacted_device_certificate=msg.get(
                 "redacted_device_certificate", msg["device_certificate"]
             ),
@@ -298,7 +328,12 @@ class BaseOrganizationComponent:
         )
         try:
             await self.bootstrap(
-                client_ctx.organization_id, user, first_device, bootstrap_token, root_verify_key
+                id=client_ctx.organization_id,
+                user=user,
+                first_device=first_device,
+                bootstrap_token=bootstrap_token,
+                root_verify_key=root_verify_key,
+                sequester_authority=sequester_authority,
             )
 
         except OrganizationAlreadyBootstrappedError:
@@ -307,7 +342,7 @@ class BaseOrganizationComponent:
         except (OrganizationNotFoundError, OrganizationInvalidBootstrapTokenError):
             return {"status": "not_found"}
 
-        # Note: we let OrganizationFirstUserCreationError bobbles up given
+        # Note: we let OrganizationFirstUserCreationError bubbles up given
         # it should not occurs under normal circumstances
 
         # Finally notify webhook
@@ -319,10 +354,17 @@ class BaseOrganizationComponent:
             human_label=user.human_handle.label if user.human_handle else None,
         )
 
-        return apiv1_organization_bootstrap_serializer.rep_dump({"status": "ok"})
+        return serializer.rep_dump({"status": "ok"})
 
     async def create(
-        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[DateTime] = None
+        self,
+        id: OrganizationID,
+        bootstrap_token: str,
+        # `None` is a valid value for some of those params, hence it cannot be used
+        # as "param not set" marker and we use a custom `Unset` singleton instead.
+        # `None` stands for "no limit"
+        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
     ) -> None:
         """
         Raises:
@@ -344,6 +386,7 @@ class BaseOrganizationComponent:
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
+        sequester_authority: Optional[SequesterAuthority] = None,
     ) -> None:
         """
         Raises:
@@ -361,7 +404,16 @@ class BaseOrganizationComponent:
         """
         raise NotImplementedError()
 
-    async def set_expiration_date(self, id: OrganizationID, expiration_date: DateTime = None):
+    async def update(
+        self,
+        id: OrganizationID,
+        # `None` is a valid value for some of those params, hence it cannot be used
+        # as "param not set" marker and we use a custom `Unset` singleton instead.
+        is_expired: Union[UnsetType, bool] = Unset,
+        # `None` stands for "no limit"
+        active_users_limit: Union[UnsetType, Optional[int]] = Unset,
+        user_profile_outsider_allowed: Union[UnsetType, bool] = Unset,
+    ) -> None:
         """
         Raises:
             OrganizationNotFoundError

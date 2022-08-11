@@ -1,6 +1,5 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import pendulum
 import pytest
 from PyQt5 import QtCore
 
@@ -10,22 +9,33 @@ from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
 )
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
-from parsec.core.local_device import save_device_with_password
+from parsec.core.local_device import save_device_with_password_in_config
 from tests.common import customize_fixtures, freeze_time
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_expired_notification_logging(
-    aqtbot, running_backend, autoclose_dialog, expiredorgalice, gui_factory, core_config
+    aqtbot,
+    running_backend,
+    autoclose_dialog,
+    expiredorgalice,
+    gui_factory,
+    core_config,
+    snackbar_catcher,
 ):
 
     # Log has alice on an expired organization
-    save_device_with_password(core_config.config_dir, expiredorgalice, "P@ssw0rd")
+    save_device_with_password_in_config(core_config.config_dir, expiredorgalice, "P@ssw0rd")
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
     tabw = gui.test_get_tab()
+
+    def _devices_listed():
+        assert lw.widget.layout().count() > 0
+
+    await aqtbot.wait_until(_devices_listed)
 
     def _password_widget_shown():
         assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
@@ -37,11 +47,11 @@ async def test_expired_notification_logging(
     await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-        await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+        aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
     # Assert dialog
     def _expired_notified():
-        assert autoclose_dialog.dialogs == [("Error", "The organization has expired")]
+        assert snackbar_catcher.snackbars == [("WARN", "The organization has expired")]
 
     await aqtbot.wait_until(_expired_notified)
 
@@ -49,15 +59,26 @@ async def test_expired_notification_logging(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_expired_notification_from_connection(
-    aqtbot, running_backend, autoclose_dialog, expiredorgalice, gui_factory, core_config
+    aqtbot,
+    running_backend,
+    autoclose_dialog,
+    expiredorgalice,
+    gui_factory,
+    core_config,
+    snackbar_catcher,
 ):
-    save_device_with_password(core_config.config_dir, expiredorgalice, "P@ssw0rd")
+    save_device_with_password_in_config(core_config.config_dir, expiredorgalice, "P@ssw0rd")
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
     tabw = gui.test_get_tab()
 
     # Force logging on an expired organization
     with freeze_time("1989-12-17"):
+
+        def _devices_listed():
+            assert lw.widget.layout().count() > 0
+
+        await aqtbot.wait_until(_devices_listed)
 
         def _password_widget_shown():
             assert isinstance(lw.widget.layout().itemAt(0).widget(), LoginPasswordInputWidget)
@@ -69,7 +90,7 @@ async def test_expired_notification_from_connection(
         await aqtbot.key_clicks(password_w.line_edit_password, "P@ssw0rd")
 
         async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-            await aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
+            aqtbot.mouse_click(password_w.button_login, QtCore.Qt.LeftButton)
 
         # Assert logged in
         def _notified():
@@ -79,20 +100,20 @@ async def test_expired_notification_from_connection(
 
         await aqtbot.wait_until(_notified)
 
-    # Trigger another handshake
-    with pytest.raises(BackendConnectionRefused):
-        async with backend_authenticated_cmds_factory(
-            expiredorgalice.organization_addr,
-            expiredorgalice.device_id,
-            expiredorgalice.signing_key,
-        ) as cmds:
-            async with cmds.acquire_transport():
-                # This shall never happen, we shall have been rejected while acquiring the transport
-                assert False
+        # Trigger another handshake
+        with pytest.raises(BackendConnectionRefused):
+            async with backend_authenticated_cmds_factory(
+                expiredorgalice.organization_addr,
+                expiredorgalice.device_id,
+                expiredorgalice.signing_key,
+            ) as cmds:
+                async with cmds.acquire_transport():
+                    # This shall never happen, we shall have been rejected while acquiring the transport
+                    assert False
 
     # Assert dialog
     def _expired_notified():
-        assert autoclose_dialog.dialogs == [("Error", "The organization has expired")]
+        assert snackbar_catcher.snackbars == [("WARN", "The organization has expired")]
 
     await aqtbot.wait_until(_expired_notified)
 
@@ -101,17 +122,15 @@ async def test_expired_notification_from_connection(
 @pytest.mark.trio
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_expired_notification_from_update(
-    aqtbot, logged_gui, running_backend, autoclose_dialog, alice
+    aqtbot, logged_gui, running_backend, autoclose_dialog, alice, snackbar_catcher
 ):
 
     # Set expiration date
     with running_backend.backend.event_bus.listen() as spy:
-        await running_backend.backend.organization.set_expiration_date(
-            alice.organization_id, pendulum.datetime(1989, 1, 1)
-        )
+        await running_backend.backend.organization.update(id=alice.organization_id, is_expired=True)
         await spy.wait_with_timeout(BackendEvent.ORGANIZATION_EXPIRED)
 
     def _expired_notified():
-        assert autoclose_dialog.dialogs == [("Error", "The organization has expired")]
+        assert snackbar_catcher.snackbars == [("WARN", "The organization has expired")]
 
     await aqtbot.wait_until(_expired_notified)

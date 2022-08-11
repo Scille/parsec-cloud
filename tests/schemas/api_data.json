@@ -1,92 +1,4 @@
 {
-    "APIV1_DeviceClaimAnswerContent": {
-        "fields": {
-            "private_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "PrivateKey"
-            },
-            "type": {
-                "allow_none": false,
-                "required": true,
-                "type": "CheckedConstant",
-                "value": "device_claim_answer"
-            },
-            "user_manifest_id": {
-                "allow_none": false,
-                "required": true,
-                "type": "EntryIDField"
-            },
-            "user_manifest_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "SecretKeyField"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
-    "APIV1_DeviceClaimContent": {
-        "fields": {
-            "answer_public_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "PublicKey"
-            },
-            "device_id": {
-                "allow_none": false,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "token": {
-                "allow_none": false,
-                "required": true,
-                "type": "String"
-            },
-            "type": {
-                "allow_none": false,
-                "required": true,
-                "type": "CheckedConstant",
-                "value": "device_claim"
-            },
-            "verify_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "VerifyKey"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
-    "APIV1_UserClaimContent": {
-        "fields": {
-            "device_id": {
-                "allow_none": false,
-                "required": true,
-                "type": "DeviceIDField"
-            },
-            "public_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "PublicKey"
-            },
-            "token": {
-                "allow_none": false,
-                "required": true,
-                "type": "String"
-            },
-            "type": {
-                "allow_none": false,
-                "required": true,
-                "type": "CheckedConstant",
-                "value": "user_claim"
-            },
-            "verify_key": {
-                "allow_none": false,
-                "required": true,
-                "type": "VerifyKey"
-            }
-        },
-        "serializing": "zip+msgpack"
-    },
     "DeviceCertificateContent": {
         "fields": {
             "author": {
@@ -102,7 +14,7 @@
             "device_label": {
                 "allow_none": true,
                 "required": false,
-                "type": "String"
+                "type": "DeviceLabelField"
             },
             "timestamp": {
                 "allow_none": false,
@@ -201,6 +113,7 @@
             },
             "type": {
                 "allow_none": false,
+                "enum_type": "ManifestType",
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "file_manifest"
@@ -262,6 +175,7 @@
             },
             "type": {
                 "allow_none": false,
+                "enum_type": "ManifestType",
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "folder_manifest"
@@ -288,8 +202,8 @@
             },
             "device_label": {
                 "allow_none": true,
-                "required": false,
-                "type": "String"
+                "required": true,
+                "type": "DeviceLabelField"
             },
             "human_handle": {
                 "allow_none": true,
@@ -305,7 +219,7 @@
                         "type": "String"
                     }
                 ],
-                "required": false,
+                "required": true,
                 "type": "HumanHandleField"
             },
             "private_key": {
@@ -315,6 +229,12 @@
             },
             "profile": {
                 "allow_none": false,
+                "enum_allowed_values": [
+                    "ADMIN",
+                    "STANDARD",
+                    "OUTSIDER"
+                ],
+                "enum_type": "UserProfile",
                 "required": true,
                 "type": "UserProfileField"
             },
@@ -346,8 +266,8 @@
         "fields": {
             "requested_device_label": {
                 "allow_none": true,
-                "required": false,
-                "type": "String"
+                "required": true,
+                "type": "DeviceLabelField"
             },
             "type": {
                 "allow_none": false,
@@ -372,8 +292,8 @@
             },
             "device_label": {
                 "allow_none": true,
-                "required": false,
-                "type": "String"
+                "required": true,
+                "type": "DeviceLabelField"
             },
             "human_handle": {
                 "allow_none": true,
@@ -389,11 +309,17 @@
                         "type": "String"
                     }
                 ],
-                "required": false,
+                "required": true,
                 "type": "HumanHandleField"
             },
             "profile": {
                 "allow_none": false,
+                "enum_allowed_values": [
+                    "ADMIN",
+                    "STANDARD",
+                    "OUTSIDER"
+                ],
+                "enum_type": "UserProfile",
                 "required": true,
                 "type": "UserProfileField"
             },
@@ -420,8 +346,8 @@
             },
             "requested_device_label": {
                 "allow_none": true,
-                "required": false,
-                "type": "String"
+                "required": true,
+                "type": "DeviceLabelField"
             },
             "requested_human_handle": {
                 "allow_none": true,
@@ -437,7 +363,7 @@
                         "type": "String"
                     }
                 ],
-                "required": false,
+                "required": true,
                 "type": "HumanHandleField"
             },
             "type": {
@@ -473,9 +399,90 @@
             },
             "type": {
                 "allow_none": false,
+                "enum_type": "MessageContentType",
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "ping"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "PkiEnrollmentAcceptPayload": {
+        "fields": {
+            "device_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "DeviceIDField"
+            },
+            "device_label": {
+                "allow_none": true,
+                "required": true,
+                "type": "DeviceLabelField"
+            },
+            "human_handle": {
+                "allow_none": true,
+                "args_types": [
+                    {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    },
+                    {
+                        "allow_none": false,
+                        "required": true,
+                        "type": "String"
+                    }
+                ],
+                "required": true,
+                "type": "HumanHandleField"
+            },
+            "profile": {
+                "allow_none": false,
+                "enum_allowed_values": [
+                    "ADMIN",
+                    "STANDARD",
+                    "OUTSIDER"
+                ],
+                "enum_type": "UserProfile",
+                "required": true,
+                "type": "UserProfileField"
+            },
+            "root_verify_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "VerifyKey"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "pki_enrollment_answer_payload"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "PkiEnrollmentSubmitPayload": {
+        "fields": {
+            "public_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "PublicKey"
+            },
+            "requested_device_label": {
+                "allow_none": false,
+                "required": true,
+                "type": "DeviceLabelField"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "pki_enrollment_submit_payload"
+            },
+            "verify_key": {
+                "allow_none": false,
+                "required": true,
+                "type": "VerifyKey"
             }
         },
         "serializing": "zip+msgpack"
@@ -490,10 +497,17 @@
             "realm_id": {
                 "allow_none": false,
                 "required": true,
-                "type": "UUID"
+                "type": "RealmIDField"
             },
             "role": {
                 "allow_none": true,
+                "enum_allowed_values": [
+                    "OWNER",
+                    "MANAGER",
+                    "CONTRIBUTOR",
+                    "READER"
+                ],
+                "enum_type": "RealmRole",
                 "required": true,
                 "type": "RealmRoleField"
             },
@@ -542,6 +556,64 @@
         },
         "serializing": "zip+msgpack"
     },
+    "SequesterAuthorityCertificate": {
+        "fields": {
+            "author": {
+                "allow_none": true,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": null
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "sequester_authority_certificate"
+            },
+            "verify_key_der": {
+                "allow_none": false,
+                "required": true,
+                "type": "SequesterVerifyKeyDerField"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
+    "SequesterServiceCertificate": {
+        "fields": {
+            "encryption_key_der": {
+                "allow_none": false,
+                "required": true,
+                "type": "SequesterEncryptionKeyDerField"
+            },
+            "service_id": {
+                "allow_none": false,
+                "required": true,
+                "type": "SequesterServiceIDField"
+            },
+            "service_label": {
+                "allow_none": false,
+                "required": true,
+                "type": "String"
+            },
+            "timestamp": {
+                "allow_none": false,
+                "required": true,
+                "type": "DateTime"
+            },
+            "type": {
+                "allow_none": false,
+                "required": true,
+                "type": "CheckedConstant",
+                "value": "sequester_service_certificate"
+            }
+        },
+        "serializing": "zip+msgpack"
+    },
     "SharingGrantedMessageContent": {
         "fields": {
             "author": {
@@ -581,6 +653,7 @@
             },
             "type": {
                 "allow_none": false,
+                "enum_type": "MessageContentType",
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "sharing.granted"
@@ -627,6 +700,7 @@
             },
             "type": {
                 "allow_none": false,
+                "enum_type": "MessageContentType",
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "sharing.reencrypted"
@@ -653,6 +727,7 @@
             },
             "type": {
                 "allow_none": false,
+                "enum_type": "MessageContentType",
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "sharing.revoked"
@@ -691,6 +766,12 @@
             },
             "profile": {
                 "allow_none": false,
+                "enum_allowed_values": [
+                    "ADMIN",
+                    "STANDARD",
+                    "OUTSIDER"
+                ],
+                "enum_type": "UserProfile",
                 "required": false,
                 "type": "UserProfileField"
             },
@@ -747,6 +828,7 @@
             },
             "type": {
                 "allow_none": false,
+                "enum_type": "ManifestType",
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "user_manifest"
@@ -795,6 +877,13 @@
                             },
                             "role": {
                                 "allow_none": true,
+                                "enum_allowed_values": [
+                                    "OWNER",
+                                    "MANAGER",
+                                    "CONTRIBUTOR",
+                                    "READER"
+                                ],
+                                "enum_type": "RealmRole",
                                 "required": true,
                                 "type": "RealmRoleField"
                             },
@@ -852,6 +941,7 @@
             },
             "type": {
                 "allow_none": false,
+                "enum_type": "ManifestType",
                 "required": true,
                 "type": "EnumCheckedConstant",
                 "value": "workspace_manifest"

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from hypothesis_trio.stateful import (
@@ -12,8 +12,8 @@ from hypothesis_trio.stateful import (
 )
 from pendulum import now as pendulum_now
 
-from parsec.api.protocol import RealmRole
-from parsec.api.data import RealmRoleCertificateContent
+from parsec.api.protocol import RealmID, RealmRole
+from parsec.api.data import RealmRoleCertificateContent, EntryName
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import call_with_control
@@ -23,11 +23,9 @@ from tests.common import call_with_control
 def test_workspace_reencryption_need(
     hypothesis_settings,
     reset_testbed,
-    backend_addr,
     backend_factory,
     backend_data_binder_factory,
-    server_factory,
-    oracle_fs_with_sync_factory,
+    running_backend_factory,
     user_fs_factory,
     local_device_factory,
     alice,
@@ -42,7 +40,7 @@ def test_workspace_reencryption_need(
                 pass
 
             async def _user_fs_controlled_cb(started_cb):
-                async with user_fs_factory(device=alice) as user_fs:
+                async with user_fs_factory(device=self.device) as user_fs:
                     await started_cb(user_fs=user_fs)
 
             self.user_fs_controller = await self.get_root_nursery().start(
@@ -52,7 +50,7 @@ def test_workspace_reencryption_need(
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client, backend_addr) as server:
+                    async with running_backend_factory(backend) as server:
                         await started_cb(backend=backend, server=server)
 
             self.backend_controller = await self.get_root_nursery().start(
@@ -83,7 +81,7 @@ def test_workspace_reencryption_need(
             certif = RealmRoleCertificateContent(
                 author=author.device_id,
                 timestamp=now,
-                realm_id=self.wid,
+                realm_id=RealmID(self.wid.uuid),
                 user_id=user.user_id,
                 role=role,
             ).dump_and_sign(author.signing_key)
@@ -91,7 +89,7 @@ def test_workspace_reencryption_need(
                 author.organization_id,
                 RealmGrantedRole(
                     certificate=certif,
-                    realm_id=self.wid,
+                    realm_id=RealmID(self.wid.uuid),
                     user_id=user.user_id,
                     role=role,
                     granted_by=author.device_id,
@@ -117,10 +115,11 @@ def test_workspace_reencryption_need(
             self.since_reencryption_role_revoked = set()
 
             await self.start_backend()
+            self.device = self.backend_controller.server.correct_addr(alice)
             self.backend_data_binder = backend_data_binder_factory(self.backend)
 
             await self.start_user_fs()
-            self.wid = await self.user_fs.workspace_create("w")
+            self.wid = await self.user_fs.workspace_create(EntryName("w"))
             await self.user_fs.sync()
             self.workspacefs = self.user_fs.get_workspace(self.wid)
 

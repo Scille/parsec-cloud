@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import os
-import sys
 import pytest
 from hypothesis.stateful import RuleBasedStateMachine, initialize, rule, run_state_machine_as_test
 from hypothesis import strategies as st
+from parsec.api.data import EntryName
 
 
 # Just an arbitrary value to limit the size of data hypothesis generates
@@ -14,7 +14,6 @@ BALLPARK = 10000
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
-@pytest.mark.skipif(sys.platform == "darwin", reason="TODO: Infinitely looping on macOS")
 def test_file_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service_factory):
     tentative = 0
 
@@ -28,7 +27,7 @@ def test_file_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service
 
             async def _bootstrap(user_fs, mountpoint_manager):
                 nonlocal wpath
-                wid = await user_fs.workspace_create("w")
+                wid = await user_fs.workspace_create(EntryName("w"))
                 wpath = await mountpoint_manager.mount_workspace(wid)
 
             self.mountpoint_service = mountpoint_service_factory(_bootstrap)

@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import Tuple, cast, Optional, AsyncIterator, Dict
-from async_generator import asynccontextmanager
+from typing import Tuple, cast, Optional, AsyncIterator, Dict, List, NamedTuple
+from contextlib import asynccontextmanager
 
+from parsec.api.data import BlockAccess
 from parsec.core.types import (
     EntryID,
-    FsPath,
     WorkspaceRole,
     BaseLocalManifest,
     LocalFileManifest,
@@ -14,9 +14,8 @@ from parsec.core.types import (
     FileDescriptor,
     LocalFolderishManifests,
 )
-
-
 from parsec.core.core_events import CoreEvent
+from parsec.core.fs.path import FsPath
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.exceptions import (
     FSPermissionError,
@@ -33,6 +32,15 @@ from parsec.core.fs.exceptions import (
 
 
 WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.CONTRIBUTOR)
+
+
+class BlockInfo(NamedTuple):
+    local_and_remote_blocks: List[Optional[BlockAccess]]
+    local_only_blocks: List[Optional[BlockAccess]]
+    remote_only_blocks: List[Optional[BlockAccess]]
+    file_size: int
+    proper_blocks_size: int
+    pending_chunks_size: int
 
 
 class EntryTransactions(FileTransactions):
@@ -180,6 +188,51 @@ class EntryTransactions(FileTransactions):
             await self._load_manifest(entry_id)
 
     # Transactions
+    async def entry_get_blocks_by_type(self, path: FsPath, limit: int) -> BlockInfo:
+
+        manifest, confinement_point = await self._get_manifest_from_path(path)
+        manifest: LocalFileManifest
+        block_dict = {}
+        total_size = 0
+        for manifest_blocks in manifest.blocks:
+            for chunk in manifest_blocks:
+                if limit < (total_size + chunk.raw_size):
+                    break
+                if chunk.access:
+                    block_dict[chunk.id] = chunk
+                    total_size += chunk.raw_size
+
+        block_ids = set(block_dict)
+
+        file_size = manifest.size
+        proper_blocks_size = sum(
+            chunk.raw_size for chunks in manifest.blocks for chunk in chunks if chunk.is_block()
+        )
+        pending_chunks_size = sum(
+            chunk.raw_size for chunks in manifest.blocks for chunk in chunks if not chunk.is_block()
+        )
+
+        # To avoid concurrency problems block storage is called first
+        local_and_remote_block_ids = set(
+            await self.local_storage.get_local_block_ids(list(block_ids))
+        )
+        local_only_block_ids = set(await self.local_storage.get_local_chunk_ids(list(block_ids)))
+        remote_only_block_ids = block_ids - local_and_remote_block_ids - local_only_block_ids
+
+        local_only_blocks = [block_dict[block_id].access for block_id in local_only_block_ids]
+        remote_only_blocks = [block_dict[block_id].access for block_id in remote_only_block_ids]
+        local_and_remote_blocks = [
+            block_dict[block_id].access for block_id in local_and_remote_block_ids
+        ]
+
+        return BlockInfo(
+            local_and_remote_blocks,
+            local_only_blocks,
+            remote_only_blocks,
+            file_size,
+            proper_blocks_size,
+            pending_chunks_size,
+        )
 
     async def entry_info(self, path: FsPath) -> Dict[str, object]:
         # Check read rights
@@ -255,6 +308,7 @@ class EntryTransactions(FileTransactions):
             new_parent = parent.evolve_children_and_mark_updated(
                 {destination.name: source_entry_id, source.name: None},
                 prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+                timestamp=self.device.timestamp(),
             )
 
             # Atomic change
@@ -289,6 +343,7 @@ class EntryTransactions(FileTransactions):
             new_parent = parent.evolve_children_and_mark_updated(
                 {path.name: None},
                 prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+                timestamp=self.device.timestamp(),
             )
 
             # Atomic change
@@ -319,6 +374,7 @@ class EntryTransactions(FileTransactions):
             new_parent = parent.evolve_children_and_mark_updated(
                 {path.name: None},
                 prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+                timestamp=self.device.timestamp(),
             )
 
             # Atomic change
@@ -342,12 +398,16 @@ class EntryTransactions(FileTransactions):
                 raise FSFileExistsError(filename=path)
 
             # Create folder
-            child = LocalFolderManifest.new_placeholder(self.local_author, parent=parent.id)
+            timestamp = self.device.timestamp()
+            child = LocalFolderManifest.new_placeholder(
+                self.local_author, parent=parent.id, timestamp=timestamp
+            )
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated(
                 {path.name: child.id},
                 prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+                timestamp=self.device.timestamp(),
             )
 
             # ~ Atomic change
@@ -375,12 +435,16 @@ class EntryTransactions(FileTransactions):
                 raise FSFileExistsError(filename=path)
 
             # Create file
-            child = LocalFileManifest.new_placeholder(self.local_author, parent=parent.id)
+            timestamp = self.device.timestamp()
+            child = LocalFileManifest.new_placeholder(
+                self.local_author, parent=parent.id, timestamp=timestamp
+            )
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated(
                 {path.name: child.id},
                 prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
+                timestamp=self.device.timestamp(),
             )
 
             # ~ Atomic change

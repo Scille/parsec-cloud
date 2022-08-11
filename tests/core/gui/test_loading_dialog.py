@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 
@@ -10,7 +10,7 @@ def test_loading_dialog(qtbot):
 
     w = LoadingWidget(total_size=10000)
 
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     assert w.progress_bar.text() == "0%"
     assert w.progress_bar.value() == 0
 
@@ -36,7 +36,7 @@ def test_loading_dialog_overflow(qtbot):
     # Test for a file length > to 2Go (overflow of signed int32)
     w = LoadingWidget(total_size=3000000000)
 
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
     assert w.progress_bar.text() == "0%"
     assert w.progress_bar.value() == 0
 

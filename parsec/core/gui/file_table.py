@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from collections import namedtuple
 import pendulum
 import pathlib
+import sys
 from enum import IntEnum
-
+import attr
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QColor, QKeySequence
 from PyQt5.QtWidgets import (
@@ -18,8 +18,7 @@ from PyQt5.QtWidgets import (
     QGraphicsDropShadowEffect,
 )
 
-from parsec.core.types import WorkspaceRole
-
+from parsec.core.types import EntryID, WorkspaceRole
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.file_items import (
     FileTableItem,
@@ -29,7 +28,7 @@ from parsec.core.gui.file_items import (
     FileType,
     NAME_DATA_INDEX,
     TYPE_DATA_INDEX,
-    UUID_DATA_INDEX,
+    ENTRY_ID_DATA_INDEX,
     COPY_STATUS_DATA_INDEX,
 )
 from parsec.core.gui.custom_widgets import Pixmap
@@ -69,17 +68,26 @@ class ItemDelegate(QStyledItemDelegate):
         super().paint(painter, view_option, index)
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class SelectedFile:
+    row: int
+    type: FileType
+    name: str
+    entry_id: EntryID
+
+
 class FileTable(QTableWidget):
     FIXED_COL_SIZE = 560
     NAME_COL_MIN_SIZE = 150
 
-    file_moved = pyqtSignal(str, str)
+    file_moved = pyqtSignal(FileType, str, str)
     item_activated = pyqtSignal(FileType, str)
     files_dropped = pyqtSignal(list, str)
     delete_clicked = pyqtSignal()
     rename_clicked = pyqtSignal()
     open_clicked = pyqtSignal()
     show_history_clicked = pyqtSignal()
+    show_status_clicked = pyqtSignal()
     paste_clicked = pyqtSignal()
     cut_clicked = pyqtSignal()
     copy_clicked = pyqtSignal()
@@ -157,25 +165,25 @@ class FileTable(QTableWidget):
                     self.paste_clicked.emit()
 
     def selected_files(self):
-        SelectedFile = namedtuple("SelectedFile", ["row", "type", "name", "uuid"])
-
         files = []
-        for r in self.selectedRanges():
-            for row in range(r.topRow(), r.bottomRow() + 1):
-                item = self.item(row, Column.NAME)
-                files.append(
-                    SelectedFile(
-                        row,
-                        item.data(TYPE_DATA_INDEX),
-                        item.data(NAME_DATA_INDEX),
-                        item.data(UUID_DATA_INDEX),
-                    )
+        # As it turns out, Qt can return several overlapping ranges
+        # Fix the overlap by using a sorted set
+        rows = {row for r in self.selectedRanges() for row in range(r.topRow(), r.bottomRow() + 1)}
+        for row in sorted(rows):
+            item = self.item(row, Column.NAME)
+            files.append(
+                SelectedFile(
+                    row,
+                    item.data(TYPE_DATA_INDEX),
+                    item.data(NAME_DATA_INDEX),
+                    EntryID.from_hex(item.data(ENTRY_ID_DATA_INDEX)),
                 )
+            )
         return files
 
-    def has_file(self, uuid):
+    def has_file(self, entry_id):
         return any(
-            uuid == self.item(row, Column.NAME).data(UUID_DATA_INDEX)
+            entry_id.hex == self.item(row, Column.NAME).data(ENTRY_ID_DATA_INDEX)
             for row in range(self.rowCount())
             if self.item(row, Column.NAME)
         )
@@ -189,7 +197,10 @@ class FileTable(QTableWidget):
         selected = self.selected_files()
         menu = QMenu(self)
 
-        action = menu.addAction(_("ACTION_FILE_OPEN_CURRENT_DIRECTORY"))
+        if sys.platform == "darwin":
+            action = menu.addAction(_("ACTION_FILE_OPEN_CURRENT_DIRECTORY_MAC"))
+        else:
+            action = menu.addAction(_("ACTION_FILE_OPEN_CURRENT_DIRECTORY"))
         action.triggered.connect(self.open_current_dir_clicked.emit)
         if len(selected):
             action = menu.addAction(_("ACTION_FILE_MENU_OPEN"))
@@ -206,6 +217,8 @@ class FileTable(QTableWidget):
         if len(selected) == 1:
             action = menu.addAction(_("ACTION_FILE_MENU_SHOW_FILE_HISTORY"))
             action.triggered.connect(self.show_history_clicked.emit)
+            action = menu.addAction(_("ACTION_FILE_MENU_SHOW_FILE_STATUS"))
+            action.triggered.connect(self.show_status_clicked.emit)
             action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
             action.triggered.connect(self.file_path_clicked.emit)
         if not self.is_read_only():
@@ -247,6 +260,20 @@ class FileTable(QTableWidget):
         self.setRowCount(0)
         self.previous_selection = []
 
+    def set_file_status(self, entry_id, synced=None, confined=None):
+        for i in range(1, self.rowCount()):
+            item = self.item(i, 0)
+            if item and item.data(ENTRY_ID_DATA_INDEX) == entry_id.hex:
+                if (
+                    item.data(TYPE_DATA_INDEX) == FileType.File
+                    or item.data(TYPE_DATA_INDEX) == FileType.Folder
+                ):
+                    if confined is not None:
+                        item.confined = confined
+                    if synced is not None:
+                        item.is_synced = synced
+                return
+
     def change_selection(self):
         selected = self.selectedItems()
         for item in self.previous_selection:
@@ -284,7 +311,7 @@ class FileTable(QTableWidget):
         for col, item in zip(Column, items):
             item.setData(NAME_DATA_INDEX, "")
             item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
-            item.setData(UUID_DATA_INDEX, None)
+            item.setData(ENTRY_ID_DATA_INDEX, None)
             item.setFlags(Qt.ItemIsEnabled)
             self.setItem(row_idx, col, item)
 
@@ -303,38 +330,41 @@ class FileTable(QTableWidget):
         for col, item in zip(Column, items):
             item.setData(NAME_DATA_INDEX, "")
             item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
-            item.setData(UUID_DATA_INDEX, None)
+            item.setData(ENTRY_ID_DATA_INDEX, None)
             item.setFlags(Qt.ItemIsEnabled)
             self.setItem(row_idx, col, item)
 
-    def add_folder(self, folder_name, uuid, is_synced, is_confined, selected=False):
+    def add_folder(self, folder_name, entry_id, is_synced, is_confined, selected=False):
         if is_confined and not self.config.gui_show_confined:
             return
+        entry_id = entry_id.hex
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FolderTableItem(is_synced, is_confined)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.ICON, item)
-        item = CustomTableItem(folder_name)
-        item.setData(NAME_DATA_INDEX, folder_name)
-        item.setToolTip("\n".join(folder_name[i : i + 64] for i in range(0, len(folder_name), 64)))
+        item = CustomTableItem(folder_name.str)
+        item.setData(NAME_DATA_INDEX, folder_name.str)
+        item.setToolTip(
+            "\n".join(folder_name.str[i : i + 64] for i in range(0, len(folder_name.str), 64))
+        )
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.NAME, item)
         item = CustomTableItem()
         item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.CREATED, item)
         item = CustomTableItem()
         item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.UPDATED, item)
         item = CustomTableItem()
         item.setData(NAME_DATA_INDEX, -1)
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.SIZE, item)
         if selected:
             self.setRangeSelected(
@@ -344,7 +374,7 @@ class FileTable(QTableWidget):
     def add_file(
         self,
         file_name,
-        uuid,
+        entry_id,
         file_size,
         created_on,
         updated_on,
@@ -354,72 +384,78 @@ class FileTable(QTableWidget):
     ):
         if is_confined and not self.config.gui_show_confined:
             return
+        entry_id = entry_id.hex
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = FileTableItem(is_synced, is_confined, file_name)
+        item = FileTableItem(is_synced, is_confined, file_name.str)
         item.setData(NAME_DATA_INDEX, 1)
         item.setData(TYPE_DATA_INDEX, FileType.File)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.ICON, item)
-        item = CustomTableItem(file_name)
-        item.setToolTip("\n".join(file_name[i : i + 64] for i in range(0, len(file_name), 64)))
-        item.setData(NAME_DATA_INDEX, file_name)
+        item = CustomTableItem(file_name.str)
+        item.setToolTip(
+            "\n".join(file_name.str[i : i + 64] for i in range(0, len(file_name.str), 64))
+        )
+        item.setData(NAME_DATA_INDEX, file_name.str)
         item.setData(TYPE_DATA_INDEX, FileType.File)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.NAME, item)
         item = CustomTableItem(format_datetime(created_on))
         item.setData(NAME_DATA_INDEX, created_on)
         item.setData(TYPE_DATA_INDEX, FileType.File)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.CREATED, item)
         item = CustomTableItem(format_datetime(updated_on))
         item.setData(NAME_DATA_INDEX, updated_on)
         item.setData(TYPE_DATA_INDEX, FileType.File)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.UPDATED, item)
         item = CustomTableItem(get_filesize(file_size))
         item.setData(NAME_DATA_INDEX, file_size)
         item.setData(TYPE_DATA_INDEX, FileType.File)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.SIZE, item)
         if selected:
             self.setRangeSelected(
                 QTableWidgetSelectionRange(row_idx, 0, row_idx, len(Column) - 1), True
             )
 
-    def add_inconsistency(self, file_name, uuid):
+    def add_inconsistency(self, file_name, entry_id):
         inconsistency_color = QColor(255, 144, 155)
         row_idx = self.rowCount()
+        entry_id = entry_id.hex
         self.insertRow(row_idx)
         item = InconsistencyTableItem(False, False)
         item.setData(NAME_DATA_INDEX, 1)
         item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         item.setBackground(inconsistency_color)
         self.setItem(row_idx, Column.ICON, item)
-        item = CustomTableItem(file_name)
-        item.setToolTip("\n".join(file_name[i : i + 64] for i in range(0, len(file_name), 64)))
-        item.setData(NAME_DATA_INDEX, file_name)
+        item = CustomTableItem(file_name.str)
+        item.setToolTip(
+            "\n".join(file_name.str[i : i + 64] for i in range(0, len(file_name.str), 64))
+        )
+        item.setData(NAME_DATA_INDEX, file_name.str)
         item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         item.setBackground(inconsistency_color)
         self.setItem(row_idx, Column.NAME, item)
         item = CustomTableItem()
         item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
         item.setBackground(inconsistency_color)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.CREATED, item)
         item = CustomTableItem()
         item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         item.setBackground(inconsistency_color)
         self.setItem(row_idx, Column.UPDATED, item)
         item = CustomTableItem(-1)
         item.setData(NAME_DATA_INDEX, -1)
         item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
-        item.setData(UUID_DATA_INDEX, uuid)
+        item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         item.setBackground(inconsistency_color)
         self.setItem(row_idx, Column.SIZE, item)
 
@@ -480,9 +516,9 @@ class FileTable(QTableWidget):
             for row in rows:
                 file_name = self.item(row, Column.NAME).text()
                 if file_type == FileType.ParentFolder:
-                    self.file_moved.emit(file_name, "..")
+                    self.file_moved.emit(FileType.Folder, file_name, "..")
                 else:
-                    self.file_moved.emit(file_name, target_name)
+                    self.file_moved.emit(file_type, file_name, target_name)
             for row in rows:
                 self.removeRow(row)
             event.accept()

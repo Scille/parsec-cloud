@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 from enum import IntEnum
@@ -6,11 +6,14 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
+from parsec.api.protocol import InvitationEmailSentStatus
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
-from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
+from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info, show_info_copy_link
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.qrcode_widget import generate_qr_code
+from parsec.core.gui.snackbar_widget import SnackbarManager
 from parsec.core.gui import desktop
 from parsec.core.gui.ui.greet_device_widget import Ui_GreetDeviceWidget
 from parsec.core.gui.ui.greet_device_code_exchange_widget import Ui_GreetDeviceCodeExchangeWidget
@@ -114,7 +117,9 @@ class Greeter:
 
 async def _do_send_email(core):
     try:
-        return await core.new_device_invitation(send_email=True)
+        addr, email_sent_status = await core.new_device_invitation(send_email=True)
+        return addr, email_sent_status
+
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
@@ -139,6 +144,9 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
         self.invite_addr = invite_addr
         self.core = core
 
+        pix = generate_qr_code(invite_addr.to_url())
+        self.qrcode_widget.set_image(pix)
+
         self.wait_peer_job = None
         self.wait_peer_success.connect(self._on_wait_peer_success)
         self.wait_peer_error.connect(self._on_wait_peer_error)
@@ -160,22 +168,49 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
 
     def _on_copy_addr_clicked(self):
         desktop.copy_to_clipboard(self.invite_addr.to_url())
-        show_info(self, _("TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"))
+        SnackbarManager.inform(_("TEXT_GREET_DEVICE_ADDR_COPIED_TO_CLIPBOARD"))
 
     def _on_button_send_email_clicked(self):
         self.button_send_email.setDisabled(True)
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "send_email_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "send_email_error", QtToTrioJob),
-            _do_send_email,
-            core=self.core,
+            self.send_email_success, self.send_email_error, _do_send_email, core=self.core
         )
 
     def _on_send_email_success(self, job):
         # In theory the invitation address shouldn't have changed, but better safe than sorry
-        self.invite_addr = job.ret
-        self.button_send_email.setText(_("TEXT_GREET_DEVICE_EMAIL_SENT"))
-        self.button_send_email.setDisabled(True)
+
+        self.invite_addr, email_sent_status = job.ret
+
+        if email_sent_status == InvitationEmailSentStatus.SUCCESS:
+            self.button_send_email.setText(_("TEXT_GREET_DEVICE_EMAIL_SENT"))
+            self.button_send_email.setDisabled(True)
+            SnackbarManager.inform(
+                _("TEXT_GREET_DEVICE_EMAIL_SENT_email").format(
+                    email=self.core.device.human_handle.email
+                )
+            )
+        else:
+            if email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
+                show_info_copy_link(
+                    self,
+                    _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),
+                    _("TEXT_INVITE_DEVICE_EMAIL_BAD_RECIPIENT_directlink").format(
+                        directlink=self.invite_addr
+                    ),
+                    _("ACTION_COPY_ADDR"),
+                    str(self.invite_addr),
+                )
+            else:
+                show_info_copy_link(
+                    self,
+                    _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),
+                    _("TEXT_INVITE_DEVICE_EMAIL_NOT_AVAILABLE_directlink").format(
+                        directlink=self.invite_addr
+                    ),
+                    _("ACTION_COPY_ADDR"),
+                    str(self.invite_addr),
+                )
+            self.button_send_email.setDisabled(False)
 
     def _on_send_email_error(self, job):
         show_error(self, _("TEXT_GREET_DEVICE_SEND_EMAIL_ERROR"), exception=job.exc)
@@ -186,9 +221,7 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
         self.button_send_email.setDisabled(True)
         self.button_start.setText(_("TEXT_GREET_DEVICE_WAITING"))
         self.wait_peer_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "wait_peer_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "wait_peer_error", QtToTrioJob),
-            self.greeter.wait_peer,
+            self.wait_peer_success, self.wait_peer_error, self.greeter.wait_peer
         )
 
     def _on_wait_peer_success(self, job):
@@ -215,6 +248,8 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_DEVICE_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -269,18 +304,14 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         self.label_wait_info.hide()
 
         self.get_greeter_sas_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_greeter_sas_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "get_greeter_sas_error", QtToTrioJob),
-            self.greeter.get_greeter_sas,
+            self.get_greeter_sas_success, self.get_greeter_sas_error, self.greeter.get_greeter_sas
         )
 
     def _on_good_claimer_code_clicked(self):
         self.widget_claimer_code.hide()
         self.label_wait_info.show()
         self.signify_trust_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "signify_trust_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "signify_trust_error", QtToTrioJob),
-            self.greeter.signify_trust,
+            self.signify_trust_success, self.signify_trust_error, self.greeter.signify_trust
         )
 
     def _on_wrong_claimer_code_clicked(self):
@@ -299,11 +330,9 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         assert job.is_finished()
         assert job.status == "ok"
         greeter_sas = job.ret
-        self.line_edit_greeter_code.setText(str(greeter_sas))
+        self.line_edit_greeter_code.setText(greeter_sas.str)
         self.wait_peer_trust_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "wait_peer_trust_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "wait_peer_trust_error", QtToTrioJob),
-            self.greeter.wait_peer_trust,
+            self.wait_peer_trust_success, self.wait_peer_trust_error, self.greeter.wait_peer_trust
         )
 
     def _on_get_greeter_sas_error(self, job):
@@ -320,6 +349,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_DEVICE_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -349,6 +380,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_DEVICE_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -375,6 +408,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_DEVICE_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -386,9 +421,7 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         assert job.is_finished()
         assert job.status == "ok"
         self.get_claimer_sas_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_claimer_sas_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "get_claimer_sas_error", QtToTrioJob),
-            self.greeter.get_claimer_sas,
+            self.get_claimer_sas_success, self.get_claimer_sas_error, self.greeter.get_claimer_sas
         )
 
     def _on_wait_peer_trust_error(self, job):
@@ -405,6 +438,8 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_DEVICE_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -428,8 +463,8 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
 
     def _run_greeter(self):
         self.greeter_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "greeter_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "greeter_error", QtToTrioJob),
+            self.greeter_success,
+            self.greeter_error,
             self.greeter.run,
             core=self.core,
             token=self.invite_addr.token,
@@ -529,7 +564,7 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
             if current_page and getattr(current_page, "cancel", None):
                 current_page.cancel()
         if self.greeter_job:
-            self.greeter_job.cancel_and_join()
+            self.greeter_job.cancel()
 
     def on_close(self):
         self.cancel()

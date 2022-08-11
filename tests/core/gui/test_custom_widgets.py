@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 
@@ -9,7 +9,7 @@ from parsec.core.gui import custom_widgets
 def test_file_line_edit(qtbot):
 
     w = custom_widgets.FileLabel(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     w.setText("A_short_file_name.txt")
     assert w.text() == "A_short_file_name.txt"

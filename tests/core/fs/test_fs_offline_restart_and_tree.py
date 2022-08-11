@@ -1,10 +1,12 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import os
+import sys
 import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule, Bundle
 from string import ascii_lowercase
+
+from parsec.api.data import EntryName
 
 
 def get_path(path):
@@ -16,7 +18,7 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
 def test_fs_offline_restart_and_tree(user_fs_offline_state_machine, oracle_fs_factory, alice):
     class FSOfflineRestartAndTree(user_fs_offline_state_machine):
         Files = Bundle("file")
@@ -27,7 +29,7 @@ def test_fs_offline_restart_and_tree(user_fs_offline_state_machine, oracle_fs_fa
             await self.reset_all()
             self.device = alice
             await self.restart_user_fs(self.device)
-            self.wid = await self.user_fs.workspace_create("w")
+            self.wid = await self.user_fs.workspace_create(EntryName("w"))
             self.workspace = self.user_fs.get_workspace(self.wid)
 
             self.oracle_fs = oracle_fs_factory()
@@ -61,7 +63,7 @@ def test_fs_offline_restart_and_tree(user_fs_offline_state_machine, oracle_fs_fa
                     await self.workspace.mkdir(path=get_path(path), exist_ok=False)
             return path
 
-        @rule(path=Files)
+        @rule(target=Files, path=Files)
         async def delete_file(self, path):
             expected_status = self.oracle_fs.unlink(path)
             if expected_status == "ok":
@@ -71,7 +73,7 @@ def test_fs_offline_restart_and_tree(user_fs_offline_state_machine, oracle_fs_fa
                     await self.workspace.unlink(path=get_path(path))
             return path
 
-        @rule(path=Folders)
+        @rule(target=Folders, path=Folders)
         async def delete_folder(self, path):
             expected_status = self.oracle_fs.rmdir(path)
             if expected_status == "ok":

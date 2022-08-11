@@ -1,5 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+import sys
 import pytest
 import threading
 import trio
@@ -7,6 +8,7 @@ from pathlib import Path
 from inspect import iscoroutinefunction
 from queue import Queue
 
+from parsec.api.data import EntryName
 from parsec.utils import start_task
 from parsec.core.mountpoint import mountpoint_manager_factory
 
@@ -23,6 +25,12 @@ def mountpoint_service_factory(tmpdir, local_device_factory, user_fs_factory, re
     Run a trio loop with fs and mountpoint manager in a separate thread to
     allow blocking operations on the mountpoint in the test
     """
+
+    # Signals have to be patched in the main thread when using fuse
+    if sys.platform != "win32":
+        from parsec.core.mountpoint.fuse_runner import _patch_signals
+
+        _patch_signals()
 
     async def _run_mountpoint(
         base_mountpoint, bootstrap_cb, *, task_status=trio.TASK_STATUS_IGNORED
@@ -108,7 +116,7 @@ def mountpoint_service(mountpoint_service_factory):
 
     async def _bootstrap(user_fs, mountpoint_manager):
         nonlocal wid, wpath
-        wid = await user_fs.workspace_create("w")
+        wid = await user_fs.workspace_create(EntryName("w"))
         wpath = await mountpoint_manager.mount_workspace(wid)
 
     service = mountpoint_service_factory(_bootstrap)

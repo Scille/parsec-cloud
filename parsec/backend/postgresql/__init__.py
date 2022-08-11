@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from parsec.backend.postgresql.handler import (
     PGHandler,
@@ -14,6 +14,7 @@ from parsec.backend.postgresql.message import PGMessageComponent
 from parsec.backend.postgresql.realm import PGRealmComponent
 from parsec.backend.postgresql.vlob import PGVlobComponent
 from parsec.backend.postgresql.block import PGBlockComponent, PGBlockStoreComponent
+from parsec.backend.postgresql.pki import PGPkiEnrollmentComponent
 from parsec.backend.postgresql.factory import components_factory
 
 
@@ -31,5 +32,6 @@ __all__ = [
     "PGVlobComponent",
     "PGBlockComponent",
     "PGBlockStoreComponent",
+    "PGPkiEnrollmentComponent",
     "components_factory",
 ]

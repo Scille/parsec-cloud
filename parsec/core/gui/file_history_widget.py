@@ -1,10 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
+
+from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog
-from parsec.core.gui.trio_thread import ThreadSafeQtSignal
 from parsec.core.gui.file_size import get_filesize
 from parsec.core.gui.ui.file_history_widget import Ui_FileHistoryWidget
 from parsec.core.gui.ui.file_history_button import Ui_FileHistoryButton
@@ -46,8 +47,8 @@ class FileHistoryButton(QWidget, Ui_FileHistoryButton):
 
 
 class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
-    get_versions_success = pyqtSignal()
-    get_versions_error = pyqtSignal()
+    get_versions_success = pyqtSignal(QtToTrioJob)
+    get_versions_error = pyqtSignal(QtToTrioJob)
 
     def __init__(
         self,
@@ -101,8 +102,8 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
                 w.hide()
                 w.setParent(0)
         self.versions_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_versions_success"),
-            ThreadSafeQtSignal(self, "get_versions_error"),
+            self.get_versions_success,
+            self.get_versions_error,
             _do_workspace_version,
             version_lister=self.version_lister,
             path=self.path,
@@ -122,7 +123,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
         self.layout_history.addWidget(button)
         button.show()
 
-    def on_get_version_success(self):
+    def on_get_version_success(self, job):
         versions_list, download_limit_reached = self.versions_job.ret
         if download_limit_reached:
             self.button_load_more_entries.setVisible(False)
@@ -139,7 +140,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             )
         self.set_loading_in_progress(False)
 
-    def on_get_version_error(self):
+    def on_get_version_error(self, job):
         if self.versions_job and self.versions_job.status != "cancelled":
             show_error(self, _("TEXT_FILE_HISTORY_LIST_FAILURE"), exception=self.versions_job.exc)
         self.versions_job = None
@@ -147,7 +148,7 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
 
     def on_close(self):
         if self.versions_job:
-            self.versions_job.cancel_and_join()
+            self.versions_job.cancel()
 
     @classmethod
     def show_modal(

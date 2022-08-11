@@ -1,3 +1,18 @@
 #! /bin/sh
 
-${SNAP}/usr/bin/python3 -I -m parsec.cli $@
+# Expose /sbin and /bin as they are not set in snap classic mode
+# In particular, this is useful to access `/bin/fusermount` which is used by libfuse
+# We also override the original path as we should not rely on tools installed on the system
+# From this point on, we should avoid using tools from the system.
+export PATH=${SNAP}/sbin:${SNAP}/bin:${SNAP}/usr/bin:${PATH}
+
+# Select the python provided by snap and set the right python path
+PYTHON=${SNAP}/usr/bin/python3.9
+export PYTHONPATH=${SNAP}/site-packages
+
+# We can't rely on `ctypes.util.find_library` in classic snap environement,
+# so we use the `FUSE_LIBRARY_PATH` enviroment variable.
+export FUSE_LIBRARY_PATH=${SNAP}/lib/x86_64-linux-gnu/libfuse.so.2
+
+# Execute the parsec.cli module with arguments forwarding
+exec ${PYTHON} -m parsec.cli $@

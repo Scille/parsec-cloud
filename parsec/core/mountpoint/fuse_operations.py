@@ -1,17 +1,23 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import os
+import re
 import errno
-from typing import Optional
+import trio
+from functools import partial
+from pathlib import PurePath
+from pendulum import DateTime
 from structlog import get_logger
+from typing import Optional, Iterator
 from contextlib import contextmanager
 from stat import S_IRWXU, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
-
-from parsec.core.types import FsPath
-from parsec.core.fs import FSLocalOperationError, FSRemoteOperationError
+from parsec.api.data import EntryID, EntryName
+from parsec.core.core_events import CoreEvent
+from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
+from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
+from parsec.core.fs.exceptions import FSReadOnlyError
 
 
 logger = get_logger()
@@ -27,50 +33,140 @@ logger = get_logger()
 BANNED_PREFIXES = (".Trash-",)
 
 
-def is_banned(name):
-    return any(name.startswith(prefix) for prefix in BANNED_PREFIXES)
+def is_banned(name: EntryName):
+    return any(name.str.startswith(prefix) for prefix in BANNED_PREFIXES)
 
 
 @contextmanager
-def translate_error(event_bus, operation, path):
+def get_path_and_translate_error(
+    fs_access: ThreadFSAccess,
+    operation: str,
+    context: Optional[str],
+    mountpoint: PurePath,
+    workspace_id: EntryID,
+    timestamp: Optional[DateTime],
+) -> Iterator[FsPath]:
+    path: FsPath = FsPath("/<unknown>")
     try:
-        yield
+        # The context argument might be None or "-" in some special cases
+        # related to `release` and `releasedir` (when the file descriptor
+        # is available but the corresponding path is not). In those cases,
+        # we can simply ignore the path.
+        if context not in (None, "-"):
+            # FsPath conversion might raise an FSNameTooLongError so make
+            # sure it runs within the try-except so it can be caught by the
+            # FSLocalOperationError filter.
+            path = FsPath(context)
+        yield path
 
     except FuseOSError:
         raise
+
+    except FSReadOnlyError as exc:
+        fs_access.send_event(
+            CoreEvent.MOUNTPOINT_READONLY,
+            exc=exc,
+            operation=operation,
+            path=path,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        raise FuseOSError(exc.errno) from exc
 
     except FSLocalOperationError as exc:
         raise FuseOSError(exc.errno) from exc
 
     except FSRemoteOperationError as exc:
-        event_bus.send(CoreEvent.MOUNTPOINT_REMOTE_ERROR, exc=exc, operation=operation, path=path)
+        fs_access.send_event(
+            CoreEvent.MOUNTPOINT_REMOTE_ERROR,
+            exc=exc,
+            operation=operation,
+            path=path,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
         raise FuseOSError(exc.errno) from exc
 
+    except TrioDealockTimeoutError as exc:
+        # This exception is raised when the trio thread cannot be reached.
+        # This is likely due to a deadlock, i.e the trio thread performing
+        # a synchronous call to access the fuse file system (this can easily
+        # happen in a third party library, e.g `QDesktopServices::openUrl`).
+        # The fuse/winfsp kernel driver being involved in the deadlock, the
+        # effects can easily propagate to the file explorer or the system
+        # in general. This is why it is much better to break out of it with
+        # and to return an error code indicating that the operation failed.
+        logger.error(
+            "The trio thread is unreachable, a deadlock might have occured",
+            operation=operation,
+            path=str(path),
+            mountpoint=str(mountpoint),
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        fs_access.send_event(
+            CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
+            exc=exc,
+            operation=operation,
+            path=path,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        # Use EINVAL as error code, so it behaves the same as internal errors
+        raise FuseOSError(errno.EINVAL) from exc
+
     except Exception as exc:
-        logger.exception("Unhandled exception in fuse mountpoint")
-        event_bus.send(
-            CoreEvent.MOUNTPOINT_UNHANDLED_ERROR, exc=exc, operation=operation, path=path
+        logger.exception(
+            "Unhandled exception in fuse mountpoint",
+            operation=operation,
+            path=str(path),
+            mountpoint=str(mountpoint),
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        fs_access.send_event(
+            CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
+            exc=exc,
+            operation=operation,
+            path=path,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
         )
         # Use EINVAL as fallback error code, since this is what fusepy does.
         raise FuseOSError(errno.EINVAL) from exc
 
+    except trio.Cancelled as exc:  # Cancelled inherits BaseException
+        # Might be raised by `self.fs_access` if the trio loop finishes in our back
+        raise FuseOSError(errno.EACCES) from exc
+
 
 class FuseOperations(LoggingMixIn, Operations):
-    def __init__(self, event_bus, fs_access):
+    def __init__(
+        self,
+        fs_access: ThreadFSAccess,
+        mountpoint: PurePath,
+        workspace_id: EntryID,
+        timestamp: Optional[DateTime],
+    ):
         super().__init__()
-        self.event_bus = event_bus
         self.fs_access = fs_access
         self.fds = {}
         self._need_exit = False
+        self._get_path_and_translate_error = partial(
+            get_path_and_translate_error,
+            fs_access=self.fs_access,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
 
-    def __call__(self, name, path, *args, **kwargs):
-        # The path argument might be None or "-" in some special cases
-        # related to `release` and `releasedir` (when the file descriptor
-        # is available but the corresponding path is not). In those cases,
-        # we can simply ignore the path.
-        path = FsPath(path) if path not in (None, "-") else None
-        with translate_error(self.event_bus, name, path):
-            return super().__call__(name, path, *args, **kwargs)
+    def __call__(self, operation: str, context: Optional[str], *args, **kwargs):
+        with self._get_path_and_translate_error(operation=operation, context=context) as path:
+            return super().__call__(operation, path, *args, **kwargs)
 
     def schedule_exit(self):
         # TODO: Currently call fuse_exit from a non fuse thread is not possible
@@ -87,9 +183,10 @@ class FuseOperations(LoggingMixIn, Operations):
         return {
             "f_bsize": 512 * 1024,  # 512 KB, i.e the default block size
             "f_frsize": 512 * 1024,  # 512 KB, i.e the default block size
-            "f_blocks": 512 * 1024,  # 512 K blocks is 1 TB
-            "f_bfree": 512 * 1024,  # 512 K blocks is 1 TB
-            "f_bavail": 512 * 1024,  # 512 K blocks is 1 TB
+            "f_blocks": 2 * 1024**2,  # 2 Mblocks is 1 TB
+            "f_bfree": 2 * 1024**2,  # 2 Mblocks is 1 TB
+            "f_bavail": 2 * 1024**2,  # 2 Mblocks is 1 TB
+            "f_namemax": 255,  # 255 bytes as maximum length for filenames
         }
 
     def getattr(self, path: FsPath, fh: Optional[int] = None):
@@ -135,7 +232,7 @@ class FuseOperations(LoggingMixIn, Operations):
         if stat["type"] == "file":
             raise FuseOSError(errno.ENOTDIR)
 
-        return [".", ".."] + list(stat["children"])
+        return [".", ".."] + list(c.str for c in stat["children"])
 
     def create(self, path: FsPath, mode: int):
         if is_banned(path.name):
@@ -145,7 +242,7 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def open(self, path: FsPath, flags: int = 0):
         # Filter file status and file creation flags
-        write_mode = flags in (os.O_WRONLY, os.O_RDWR)
+        write_mode = (flags % 4) in (os.O_WRONLY, os.O_RDWR)
         _, fd = self.fs_access.file_open(path, write_mode=write_mode)
         return fd
 
@@ -182,7 +279,14 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def rename(self, path: FsPath, destination: str):
         destination = FsPath(destination)
-        self.fs_access.entry_rename(path, destination, overwrite=True)
+        if not path.parent.is_root() and re.match(r".*\.sb-\w*-\w*", str(path.parent.name)):
+            # This shouldn't happen with the defer_permission option in the FUSE function,
+            # but if there ever is a permission error while saving with Apple softwares,
+            # this is a fallback to avoid any unintended behavior related to this format
+            # of temporary files. See https://github.com/Scille/parsec-cloud/pull/2211
+            self.fs_access.workspace_move(path, destination)
+        else:
+            self.fs_access.entry_rename(path, destination, overwrite=True)
         return 0
 
     def flush(self, path: FsPath, fh: int):

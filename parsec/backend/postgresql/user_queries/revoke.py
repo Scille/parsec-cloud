@@ -1,4 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
+from typing import Optional
 
 import pendulum
 
@@ -13,6 +15,7 @@ from parsec.backend.postgresql.utils import (
     q_device_internal_id,
     q_user,
 )
+from parsec.backend.postgresql.user_queries.create import q_take_user_device_write_lock
 
 
 _q_revoke_user = Q(
@@ -41,14 +44,15 @@ async def query_revoke_user(
     user_id: UserID,
     revoked_user_certificate: bytes,
     revoked_user_certifier: DeviceID,
-    revoked_on: pendulum.DateTime = None,
+    revoked_on: Optional[pendulum.DateTime] = None,
 ) -> None:
+    await q_take_user_device_write_lock(conn, organization_id)
     result = await conn.execute(
         *_q_revoke_user(
-            organization_id=organization_id,
-            user_id=user_id,
+            organization_id=organization_id.str,
+            user_id=user_id.str,
             revoked_user_certificate=revoked_user_certificate,
-            revoked_user_certifier=revoked_user_certifier,
+            revoked_user_certifier=revoked_user_certifier.str,
             revoked_on=revoked_on or pendulum.now(),
         )
     )
@@ -56,7 +60,7 @@ async def query_revoke_user(
     if result != "UPDATE 1":
         # TODO: avoid having to do another query to find the error
         err_result = await conn.fetchrow(
-            *_q_revoke_user_error(organization_id=organization_id, user_id=user_id)
+            *_q_revoke_user_error(organization_id=organization_id.str, user_id=user_id.str)
         )
         if not err_result:
             raise UserNotFoundError(user_id)

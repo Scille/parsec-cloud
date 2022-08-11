@@ -1,9 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from pendulum import datetime
 from unittest.mock import ANY
 
+from parsec.api.data import EntryName
+from parsec.api.protocol import RealmID
 from parsec.core.types import EntryID
 from parsec.core.fs import (
     FSError,
@@ -13,13 +15,14 @@ from parsec.core.fs import (
     FSBadEncryptionRevision,
 )
 from parsec.backend.backend_events import BackendEvent
+
 from tests.common import freeze_time
 
 
 @pytest.fixture
 async def workspace(running_backend, alice_user_fs):
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
         # Sync workspace manifest v1
         await alice_user_fs.sync()
         w = alice_user_fs.get_workspace(wid)
@@ -48,7 +51,7 @@ async def test_do_reencryption(running_backend, workspace, alice, alice_user_fs)
                     {
                         "organization_id": alice.organization_id,
                         "author": alice.device_id,
-                        "realm_id": workspace,
+                        "realm_id": RealmID(workspace.uuid),
                         "encryption_revision": 2,
                     },
                 ),
@@ -82,14 +85,14 @@ async def test_do_reencryption(running_backend, workspace, alice, alice_user_fs)
 
 @pytest.mark.trio
 async def test_reencrypt_placeholder(running_backend, alice, alice_user_fs):
-    wid = await alice_user_fs.workspace_create("w1")
+    wid = await alice_user_fs.workspace_create(EntryName("w1"))
     with pytest.raises(FSError):
         await alice_user_fs.workspace_start_reencryption(wid)
 
 
 @pytest.mark.trio
 async def test_unknown_workspace(alice_user_fs):
-    bad_wid = EntryID()
+    bad_wid = EntryID.new()
 
     with pytest.raises(FSWorkspaceNotFoundError):
         await alice_user_fs.workspace_start_reencryption(bad_wid)
@@ -154,7 +157,7 @@ async def test_concurrent_continue_reencryption(running_backend, workspace, alic
 @pytest.mark.trio
 async def test_reencryption_already_started(running_backend, alice_user_fs):
     with freeze_time("2000-01-02"):
-        wid = await alice_user_fs.workspace_create("w1")
+        wid = await alice_user_fs.workspace_create(EntryName("w1"))
     await alice_user_fs.sync()
 
     await alice_user_fs.workspace_start_reencryption(wid)
@@ -171,14 +174,14 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
     aw = alice2_user_fs.get_workspace(workspace)
 
     # Populate local cache for workspace root manifest
-    await aw.path_info("/")
+    await aw.sync()
 
     # Start reencryption
     job = await alice2_user_fs.workspace_start_reencryption(workspace)
 
     # WorkspaceFS doesn't have encryption revision until user messages are processed
     assert aw.get_encryption_revision() == 1
-    # Data not in local cache cannot be accessed
+    # Data in local cache can be accessed
     root_info = await aw.path_info("/")
     assert root_info == {
         "id": workspace,
@@ -188,13 +191,15 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         "updated": datetime(2000, 1, 2),
         "is_placeholder": False,
         "need_sync": False,
-        "children": ["foo.txt"],
+        "children": [EntryName("foo.txt")],
         "confinement_point": None,
     }
-    with pytest.raises(FSWorkspaceInMaintenance):
-        await aw.path_info("/foo.txt")
+    # Data not in local cache can be downloaded
+    foo_info = await aw.path_info("/foo.txt")
+    assert foo_info["type"] == "file"
+    assert foo_info["need_sync"] is False
 
-    # Also cannot sync data
+    # But data cannot be synced
     with freeze_time("2000-01-03"):
         await aw.touch("/bar.txt")
         bar_id = await aw.path_id("/bar.txt")
@@ -207,7 +212,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         if total == done:
             break
 
-    # Still not allowed to access data due to outdated encryption_revision
+    # The data in cache in still available
     root_info2 = await aw.path_info("/")
     assert root_info2 == {
         "id": workspace,
@@ -217,13 +222,14 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         "updated": datetime(2000, 1, 3),
         "is_placeholder": False,
         "need_sync": True,
-        "children": ["bar.txt", "foo.txt"],
+        "children": [EntryName("bar.txt"), EntryName("foo.txt")],
         "confinement_point": None,
     }
-    with pytest.raises(FSBadEncryptionRevision):
-        await aw.path_info("/foo.txt")
+    foo_info = await aw.path_info("/foo.txt")
+    assert foo_info["type"] == "file"
+    assert foo_info["need_sync"] is False
 
-    # Stilly not allowed to do the sync
+    # But we're still not allowed to do the sync
     with pytest.raises(FSBadEncryptionRevision):
         await aw.sync_by_id(bar_id)
 
@@ -231,7 +237,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
     await alice2_user_fs.process_last_messages()
     assert aw.get_encryption_revision() == 2
     file_info = await aw.path_info("/foo.txt")
-    assert file_info == {
+    assert {
         "id": ANY,
         "type": "file",
         "base_version": 2,
@@ -241,7 +247,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
         "need_sync": False,
         "size": 2,
         "confinement_point": None,
-    }
+    } == file_info
 
     # Finally sync is ok
     await aw.sync_by_id(bar_id)

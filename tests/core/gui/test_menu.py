@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from PyQt5 import QtCore
@@ -10,7 +10,7 @@ from parsec.core.gui.menu_widget import MenuWidget
 def test_activate_files(qtbot):
 
     w = MenuWidget(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     w.button_devices.setChecked(True)
     w.button_users.setChecked(True)
@@ -27,7 +27,7 @@ def test_activate_files(qtbot):
 def test_activate_users(qtbot):
 
     w = MenuWidget(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     w.button_files.setChecked(True)
     w.button_devices.setChecked(True)
@@ -44,7 +44,7 @@ def test_activate_users(qtbot):
 def test_activate_devices(qtbot):
 
     w = MenuWidget(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     w.button_files.setChecked(True)
     w.button_users.setChecked(True)
@@ -60,7 +60,7 @@ def test_activate_devices(qtbot):
 @pytest.mark.gui
 def test_clicked(qtbot):
     w = MenuWidget(parent=None)
-    qtbot.addWidget(w)
+    qtbot.add_widget(w)
 
     w.button_files.setChecked(True)
     w.button_users.setChecked(True)

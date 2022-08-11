@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from string import ascii_lowercase
@@ -12,6 +12,8 @@ from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
     multiple,
 )
+
+from parsec.api.data import EntryName
 
 from tests.common import call_with_control
 
@@ -33,9 +35,8 @@ def check_fs_dump(entry):
 def test_fs_online_idempotent_sync(
     hypothesis_settings,
     reset_testbed,
-    backend_addr,
     backend_factory,
-    server_factory,
+    running_backend_factory,
     user_fs_factory,
     alice,
 ):
@@ -55,7 +56,7 @@ def test_fs_online_idempotent_sync(
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client, backend_addr) as server:
+                    async with running_backend_factory(backend) as server:
                         await started_cb(backend=backend, server=server)
 
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)
@@ -68,10 +69,10 @@ def test_fs_online_idempotent_sync(
         async def init(self):
             await reset_testbed()
             self.backend_controller = await self.start_backend()
-            self.device = alice
-            self.user_fs_controller = await self.start_user_fs(alice)
+            self.device = self.backend_controller.server.correct_addr(alice)
+            self.user_fs_controller = await self.start_user_fs(self.device)
 
-            wid = await self.user_fs.workspace_create("w")
+            wid = await self.user_fs.workspace_create(EntryName("w"))
             self.workspace = self.user_fs.get_workspace(wid)
             await self.workspace.touch("/good_file.txt")
             await self.workspace.mkdir("/good_folder")

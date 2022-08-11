@@ -1,13 +1,20 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="main-title" style="text-align: center">
-    <h1 class="text-secondary font-weight-bolder text-center">
+<div class="text-center">
+    <img src="/static/parsec-vert.png" alt="Parsec logo" class="logo">
+    <div class="main-title-spacer bg-primary"></div>
+    <h1 class="text-secondary text-center">
         Parsec backend server is running !
     </h1>
-    <p class="text-muted text-center" style="font-size: 25px">
-        You should go <a href="https://www.parsec.cloud/get-parsec">install the Parsec client</a>
-        or <a href="https://docs.parsec.cloud">have a look at the documentation</a>.
-    </p>
+    <div style="justify-content: center;">
+        <p class="text-muted text-left" style="font-size: 1.5em;margin-bottom: 0;">
+            Now you should :
+        </p>
+        <ul class="text-left text-muted">
+            <li><a href="https://www.parsec.cloud/get-parsec" target="_blank">Install the Parsec client</a></li>
+            <li><a href="https://docs.parsec.cloud" target="_blank">Have a look at the documentation</a></li>
+        </ul>
+    </div>
     <div class="main-title-spacer bg-primary"></div>
 </div>
 {% endblock %}

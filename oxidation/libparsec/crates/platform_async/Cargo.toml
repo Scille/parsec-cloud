@@ -1,0 +1,35 @@
+[package]
+name = "libparsec_platform_async"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+flume = "0.10.14"
+# futures is used for its macros `select_all` and `join_all`
+futures = "0.3.21"
+
+[dev-dependencies]
+log = "0.4.17"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2.80"
+wasm-bindgen-futures = "0.4.31"
+# Window feature is require for `Timer`.
+web-sys = { version = "0.3.58", features = ["Window"] }
+js-sys = "0.3.58"
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test = "0.3.31"
+# Used for binding `log` with `console.log*`
+console_log = "0.2.0"
+# Used for `futures_lite::future::or` and don't require `Unpin`
+futures-lite = "1.12.0"
+# Need to add the feature `Performance` to be able to estimate the time tasken during the tests.
+web-sys = { version = "0.3.58", features = ["Window", "Performance"]}
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1.20.1", features = ["rt", "time", "sync", "macros"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+tokio = { version = "1.20.1", features = ["full"] }
+simple_logger = "2.2.0"

@@ -1,9 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import re
 import pytest
 
-from parsec.core.types import FsPath
+from parsec.api.data import EntryName
+from parsec.core.fs import FsPath
 from tests.common import create_shared_workspace
 
 
@@ -98,7 +99,7 @@ async def test_local_confinement_points(alice_workspace, running_backend):
 
 @pytest.mark.trio
 async def test_sync_with_different_patterns(running_backend, alice_user_fs, alice2_user_fs):
-    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    wid = await create_shared_workspace(EntryName("w"), alice_user_fs, alice2_user_fs)
     workspace1 = alice_user_fs.get_workspace(wid)
     workspace2 = alice2_user_fs.get_workspace(wid)
 
@@ -282,6 +283,7 @@ async def test_common_temporary_files(alice_workspace):
         "test.lnk",
         ".~test",
         "~$test",
+        "mydoc.docx.sb-324kJJ4-AGBJ32A",
     ]
     for path in confined_file_list:
         path = "/" + path

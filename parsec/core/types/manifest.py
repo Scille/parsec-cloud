@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 import functools
-from typing import Optional, Tuple, TypeVar, Type, Union, NoReturn, FrozenSet, Pattern, Dict
-from pendulum import DateTime, now as pendulum_now
+from typing import Optional, Tuple, TypeVar, Type, Union, FrozenSet, Pattern, Dict, TYPE_CHECKING
+from pendulum import DateTime
 
-from parsec.types import UUID4, FrozenDict
+from parsec.types import FrozenDict
 from parsec.crypto import SecretKey, HashDigest
 from parsec.serde import fields, OneOfSchema, validate, post_load
 from parsec.api.protocol import DeviceID, RealmRole
@@ -15,8 +15,8 @@ from parsec.api.data import (
     WorkspaceEntry,
     BlockAccess,
     BlockID,
-    BaseManifest as BaseRemoteManifest,
     UserManifest as RemoteUserManifest,
+    BaseManifest as BaseRemoteManifest,
     WorkspaceManifest as RemoteWorkspaceManifest,
     FolderManifest as RemoteFolderManifest,
     FileManifest as RemoteFileManifest,
@@ -25,8 +25,17 @@ from parsec.api.data import (
     EntryNameField,
     EntryIDField,
 )
+from parsec.api.data.manifest import (
+    _PyBlockAccess,
+    _PyFileManifest,
+    _PyFolderManifest,
+    _PyWorkspaceManifest,
+    _PyUserManifest,
+    _PyWorkspaceEntry,
+)
 from parsec.core.types.base import BaseLocalData
 from enum import Enum
+from parsec._parsec import ChunkID
 
 __all__ = (
     "WorkspaceEntry",  # noqa: Republishing
@@ -41,10 +50,6 @@ DEFAULT_BLOCK_SIZE = 512 * 1024  # 512 KB
 
 # Cheap rename
 WorkspaceRole = RealmRole
-
-
-class ChunkID(UUID4):
-    pass
 
 
 ChunkIDField = fields.uuid_based_field_factory(ChunkID)
@@ -63,7 +68,7 @@ class Chunk(BaseData):
     still with respect to the file addressing.
 
     This means the following rule applies:
-        raw_offset <= start < stop <= raw_start + raw_size
+        raw_offset <= start < stop <= raw_offset + raw_size
 
     Access is an optional block access that can be used to produce a remote manifest
     when the chunk corresponds to an actual block within the context of this manifest.
@@ -75,7 +80,7 @@ class Chunk(BaseData):
         stop = fields.Integer(required=True, validate=validate.Range(min=1))
         raw_offset = fields.Integer(required=True, validate=validate.Range(min=0))
         raw_size = fields.Integer(required=True, validate=validate.Range(min=1))
-        access = fields.Nested(BlockAccess.SCHEMA_CLS, required=True, allow_none=True)
+        access = fields.Nested(_PyBlockAccess.SCHEMA_CLS, required=True, allow_none=True)
 
         @post_load
         def make_obj(self, data):
@@ -87,6 +92,12 @@ class Chunk(BaseData):
     raw_offset: int
     raw_size: int
     access: Optional[BlockAccess]
+
+    # Integrity
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        assert self.raw_offset <= self.start < self.stop <= self.raw_offset + self.raw_size
 
     # Ordering
 
@@ -102,15 +113,12 @@ class Chunk(BaseData):
             return attr.astuple(self).__eq__(attr.astuple(other))
         raise TypeError
 
-    # Properties
-
-    @property
     def is_block(self):
         # Requires an access
         if self.access is None:
             return False
         # Pseudo block
-        if not self.is_pseudo_block:
+        if not self.is_pseudo_block():
             return False
         # Offset inconsistent
         if self.raw_offset != self.access.offset:
@@ -120,7 +128,6 @@ class Chunk(BaseData):
             return False
         return True
 
-    @property
     def is_pseudo_block(self):
         # Not left aligned
         if self.start != self.raw_offset:
@@ -136,7 +143,7 @@ class Chunk(BaseData):
     def new(cls, start: int, stop: int) -> "Chunk":
         assert start < stop
         return cls(
-            id=ChunkID(),
+            id=ChunkID.new(),
             start=start,
             stop=stop,
             raw_offset=start,
@@ -145,9 +152,9 @@ class Chunk(BaseData):
         )
 
     @classmethod
-    def from_block_acess(cls, block_access: BlockAccess):
+    def from_block_access(cls, block_access: BlockAccess):
         return cls(
-            id=ChunkID(block_access.id),
+            id=ChunkID(block_access.id.uuid),
             raw_offset=block_access.offset,
             raw_size=block_access.size,
             start=block_access.offset,
@@ -159,7 +166,7 @@ class Chunk(BaseData):
 
     def evolve_as_block(self, data: bytes) -> "Chunk":
         # No-op
-        if self.is_block:
+        if self.is_block():
             return self
 
         # Check alignement
@@ -168,7 +175,7 @@ class Chunk(BaseData):
 
         # Craft access
         access = BlockAccess(
-            id=BlockID(self.id),
+            id=BlockID(self.id.uuid),
             key=SecretKey.generate(),
             offset=self.start,
             size=self.stop - self.start,
@@ -180,10 +187,21 @@ class Chunk(BaseData):
 
     # Export
 
-    def get_block_access(self) -> Optional[BlockAccess]:
-        if not self.is_block:
+    def get_block_access(self) -> BlockAccess:
+        if not self.is_block():
             raise TypeError("This chunk does not correspond to a block")
+        assert self.access is not None
         return self.access
+
+
+_PyChunk = Chunk
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import Chunk as _RsChunk
+    except:
+        pass
+    else:
+        Chunk = _RsChunk
 
 
 # Manifests data classes
@@ -223,10 +241,10 @@ class BaseLocalManifest(BaseLocalData):
         @property
         def type_schemas(self):
             return {
-                LocalManifestType.LOCAL_FILE_MANIFEST: LocalFileManifest.SCHEMA_CLS,
-                LocalManifestType.LOCAL_FOLDER_MANIFEST: LocalFolderManifest.SCHEMA_CLS,
-                LocalManifestType.LOCAL_WORKSPACE_MANIFEST: LocalWorkspaceManifest.SCHEMA_CLS,
-                LocalManifestType.LOCAL_USER_MANIFEST: LocalUserManifest.SCHEMA_CLS,
+                LocalManifestType.LOCAL_FILE_MANIFEST: _PyLocalFileManifest.SCHEMA_CLS,
+                LocalManifestType.LOCAL_FOLDER_MANIFEST: _PyLocalFolderManifest.SCHEMA_CLS,
+                LocalManifestType.LOCAL_WORKSPACE_MANIFEST: _PyLocalWorkspaceManifest.SCHEMA_CLS,
+                LocalManifestType.LOCAL_USER_MANIFEST: _PyLocalUserManifest.SCHEMA_CLS,
             }
 
         def get_obj_type(self, obj):
@@ -256,11 +274,13 @@ class BaseLocalManifest(BaseLocalData):
 
     # Evolve methods
 
-    def evolve_and_mark_updated(self: LocalManifestTypeVar, **data) -> LocalManifestTypeVar:
-        if "updated" not in data:
-            data["updated"] = pendulum_now()
-        data.setdefault("need_sync", True)
-        return self.evolve(**data)
+    def evolve_and_mark_updated(
+        self: LocalManifestTypeVar, timestamp: DateTime, **data
+    ) -> LocalManifestTypeVar:
+        if "need_sync" in data:
+            raise TypeError("Unexpected keyword argument `need_sync`")
+        data["need_sync"] = True
+        return self.evolve(updated=timestamp, **data)
 
     # Remote methods
 
@@ -284,26 +304,29 @@ class BaseLocalManifest(BaseLocalData):
         remote: BaseRemoteManifest,
         prevent_sync_pattern: Pattern,
         local_manifest: LocalManifestTypeVar,
+        timestamp: DateTime,
     ) -> LocalManifestsTypeVar:
         if isinstance(remote, RemoteFileManifest):
             return LocalFileManifest.from_remote(remote)
         elif isinstance(remote, RemoteFolderManifest):
             return LocalFolderManifest.from_remote_with_local_context(
-                remote, prevent_sync_pattern, local_manifest
+                remote, prevent_sync_pattern, local_manifest, timestamp=timestamp
             )
         elif isinstance(remote, RemoteWorkspaceManifest):
             return LocalWorkspaceManifest.from_remote_with_local_context(
-                remote, prevent_sync_pattern, local_manifest
+                remote, prevent_sync_pattern, local_manifest, timestamp=timestamp
             )
         elif isinstance(remote, RemoteUserManifest):
             return LocalUserManifest.from_remote(remote)
         raise ValueError("Wrong remote type")
 
-    def to_remote(self, author: Optional[DeviceID], timestamp: DateTime = None) -> NoReturn:
+    def to_remote(
+        self, author: Optional[DeviceID], timestamp: DateTime = None
+    ) -> BaseRemoteManifest:
         raise NotImplementedError
 
     def match_remote(self, remote_manifest: BaseRemoteManifest) -> bool:
-        reference: BaseRemoteManifest = self.to_remote(
+        reference = self.to_remote(
             author=remote_manifest.author, timestamp=remote_manifest.timestamp
         )
         return reference.evolve(version=remote_manifest.version) == remote_manifest
@@ -338,13 +361,13 @@ class BaseLocalManifest(BaseLocalData):
 class LocalFileManifest(BaseLocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FILE_MANIFEST, required=True)
-        base = fields.Nested(RemoteFileManifest.SCHEMA_CLS, required=True)
+        base = fields.Nested(_PyFileManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         size = fields.Integer(required=True, validate=validate.Range(min=0))
         blocksize = fields.Integer(required=True, validate=validate.Range(min=8))
         blocks = fields.FrozenList(
-            fields.FrozenList(fields.Nested(Chunk.SCHEMA_CLS)), required=True
+            fields.FrozenList(fields.Nested(_PyChunk.SCHEMA_CLS)), required=True
         )
 
         @post_load
@@ -362,27 +385,26 @@ class LocalFileManifest(BaseLocalManifest):
         cls,
         author: DeviceID,
         parent: EntryID,
-        id: Optional[EntryID] = None,
-        now: DateTime = None,
-        blocksize=DEFAULT_BLOCK_SIZE,
+        timestamp: DateTime,
+        blocksize: int = DEFAULT_BLOCK_SIZE,
     ) -> "LocalFileManifest":
-        now = now or pendulum_now()
+        id = EntryID.new()
         blocks = ()
         return cls(
             base=RemoteFileManifest(
                 author=author,
-                timestamp=now,
-                id=id or EntryID(),
+                timestamp=timestamp,
+                id=id,
                 parent=parent,
                 version=0,
-                created=now,
-                updated=now,
+                created=timestamp,
+                updated=timestamp,
                 blocksize=blocksize,
                 size=0,
                 blocks=blocks,
             ),
             need_sync=True,
-            updated=now,
+            updated=timestamp,
             blocksize=blocksize,
             size=0,
             blocks=blocks,
@@ -412,7 +434,7 @@ class LocalFileManifest(BaseLocalManifest):
         for chunks in self.blocks:
             if len(chunks) != 1:
                 return False
-            if not chunks[0].is_block:
+            if not chunks[0].is_block():
                 return False
         return True
 
@@ -431,6 +453,11 @@ class LocalFileManifest(BaseLocalManifest):
                 current = chunk.stop
         assert current == self.size
 
+    def evolve_single_block(self, block: int, new_chunk: Chunk) -> "LocalFileManifest":
+        blocks = list(self.blocks)
+        blocks[block] = (new_chunk,)
+        return self.evolve(blocks=tuple(blocks))
+
     # Remote methods
 
     @classmethod
@@ -443,10 +470,12 @@ class LocalFileManifest(BaseLocalManifest):
             updated=remote.updated,
             size=remote.size,
             blocksize=remote.blocksize,
-            blocks=tuple((Chunk.from_block_acess(block_access),) for block_access in remote.blocks),
+            blocks=tuple(
+                (Chunk.from_block_access(block_access),) for block_access in remote.blocks
+            ),
         )
 
-    def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteFileManifest:
+    def to_remote(self, author: DeviceID, timestamp: DateTime) -> RemoteFileManifest:
         # Checks
         self.assert_integrity()
         assert self.is_reshaped()
@@ -456,7 +485,7 @@ class LocalFileManifest(BaseLocalManifest):
 
         return RemoteFileManifest(
             author=author,
-            timestamp=timestamp or pendulum_now(),
+            timestamp=timestamp,
             id=self.id,
             parent=self.parent,
             version=self.base_version + 1,
@@ -473,7 +502,18 @@ class LocalFileManifest(BaseLocalManifest):
         return super().match_remote(remote_manifest)
 
 
-LocalFolderishManifestTypeVar = TypeVar("LocalManifestTypeVar", bound="LocalFolderishManifestMixin")
+_PyLocalFileManifest = LocalFileManifest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import LocalFileManifest as _RsLocalFileManifest
+    except:
+        pass
+    else:
+        LocalFileManifest = _RsLocalFileManifest
+
+LocalFolderishManifestTypeVar = TypeVar(
+    "LocalFolderishManifestTypeVar", bound="LocalFolderishManifestMixin"
+)
 
 
 class LocalFolderishManifestMixin:
@@ -483,23 +523,29 @@ class LocalFolderishManifestMixin:
 
     def evolve_children_and_mark_updated(
         self: LocalFolderishManifestTypeVar,
-        data: Dict[str, Optional[EntryID]],
+        data: Dict[EntryName, Optional[EntryID]],
         prevent_sync_pattern: Pattern,
+        timestamp: DateTime,
     ) -> LocalFolderishManifestTypeVar:
-        updated = False
+        actually_updated = False
         new_children = dict(self.children)
         new_local_confinement_points = set(self.local_confinement_points)
 
         # Deal with removal first
         for name, entry_id in data.items():
+            # Here `entry_id` can be either:
+            # - a new entry id that might overwrite the previous one with the same name if it exists
+            # - `None` which means the entry for the corresponding name should be removed
             if name not in new_children:
+                # Make sure we don't remove a name that does not exist
+                assert entry_id is not None
                 continue
             # Remove old entry
             old_entry_id = new_children.pop(name)
             if old_entry_id in new_local_confinement_points:
                 new_local_confinement_points.discard(old_entry_id)
             else:
-                updated = True
+                actually_updated = True
 
         # Make sure no entry_id is duplicated
         assert not set(data.values()).intersection(new_children.values())
@@ -510,24 +556,26 @@ class LocalFolderishManifestMixin:
                 continue
             # Add new entry
             new_children[name] = entry_id
-            if prevent_sync_pattern.match(name):
+            if prevent_sync_pattern.match(name.str):
                 new_local_confinement_points.add(entry_id)
             else:
-                updated = True
+                actually_updated = True
 
         new_local_confinement_points = frozenset(new_local_confinement_points)
-        if not updated:
+        if not actually_updated:
             return self.evolve(
                 children=new_children, local_confinement_points=new_local_confinement_points
             )
         return self.evolve_and_mark_updated(
-            children=new_children, local_confinement_points=new_local_confinement_points
+            children=new_children,
+            local_confinement_points=new_local_confinement_points,
+            timestamp=timestamp,
         )
 
     # Filtering and confinement helpers
 
     def _filter_local_confinement_points(
-        self: LocalFolderishManifestTypeVar
+        self: LocalFolderishManifestTypeVar,
     ) -> LocalFolderishManifestTypeVar:
         if not self.local_confinement_points:
             return self
@@ -542,19 +590,26 @@ class LocalFolderishManifestMixin:
         self: LocalFolderishManifestTypeVar,
         other: LocalFolderishManifestTypeVar,
         prevent_sync_pattern: Pattern,
+        timestamp: DateTime,
     ) -> LocalFolderishManifestTypeVar:
         # Using self.remote_confinement_points is useful to restore entries that were present locally
         # before applying a new filter that filtered those entries from the remote manifest
         if not other.local_confinement_points and not self.remote_confinement_points:
             return self
+        # Create a set for fast lookup in order to make sure no entry gets duplicated.
+        # This might happen when a synchronized entry is renamed to a confined name locally.
+        self_entry_ids = set(self.children.values())
         previously_local_confinement_points = {
             name: entry_id
             for name, entry_id in other.children.items()
-            if entry_id in other.local_confinement_points
-            or entry_id in self.remote_confinement_points
+            if entry_id not in self_entry_ids
+            and (
+                entry_id in other.local_confinement_points
+                or entry_id in self.remote_confinement_points
+            )
         }
         return self.evolve_children_and_mark_updated(
-            previously_local_confinement_points, prevent_sync_pattern
+            previously_local_confinement_points, prevent_sync_pattern, timestamp
         )
 
     def _filter_remote_entries(
@@ -564,7 +619,7 @@ class LocalFolderishManifestMixin:
             {
                 entry_id
                 for name, entry_id in self.children.items()
-                if prevent_sync_pattern.match(name)
+                if prevent_sync_pattern.match(name.str)
             }
         )
         if not remote_confinement_points:
@@ -577,7 +632,7 @@ class LocalFolderishManifestMixin:
         return self.evolve(children=children, remote_confinement_points=remote_confinement_points)
 
     def _restore_remote_confinement_points(
-        self: LocalFolderishManifestTypeVar
+        self: LocalFolderishManifestTypeVar,
     ) -> LocalFolderishManifestTypeVar:
         if not self.remote_confinement_points:
             return self
@@ -590,7 +645,7 @@ class LocalFolderishManifestMixin:
     # Apply "prevent sync" pattern
 
     def apply_prevent_sync_pattern(
-        self: LocalFolderishManifestTypeVar, prevent_sync_pattern: Pattern
+        self: LocalFolderishManifestTypeVar, prevent_sync_pattern: Pattern, timestamp: DateTime
     ) -> LocalFolderishManifestTypeVar:
         # Filter local confinement points
         result = self._filter_local_confinement_points()
@@ -599,34 +654,39 @@ class LocalFolderishManifestMixin:
         # Filter remote confinement_points
         result = result._filter_remote_entries(prevent_sync_pattern)
         # Restore local confinement points
-        return result._restore_local_confinement_points(self, prevent_sync_pattern)
+        return result._restore_local_confinement_points(
+            self, prevent_sync_pattern, timestamp=timestamp
+        )
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_FOLDER_MANIFEST, required=True)
-        base = fields.Nested(RemoteFolderManifest.SCHEMA_CLS, required=True)
+        base = fields.Nested(_PyFolderManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
-        children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+        children = fields.FrozenMap(EntryNameField(), EntryIDField(), required=True)
+        # Added in Parsec v1.15
         # Confined entries are entries that are meant to stay locally and not be added
         # to the uploaded remote manifest when synchronizing. The criteria for being
         # confined is to have a filename that matched the "prevent sync" pattern at the time of
         # the last change (or when a new filter was successfully applied)
-        local_confinement_points = fields.FrozenSet(EntryIDField(required=True))
-
+        local_confinement_points = fields.FrozenSet(
+            EntryIDField(), allow_none=False, required=False, missing=frozenset()
+        )
+        # Added in Parsec v1.15
         # Filtered entries are entries present in the base manifest that are not exposed
         # locally. We keep track of them to remember that those entries have not been
         # deleted locally and hence should be restored when crafting the remote manifest
         # to upload.
-        remote_confinement_points = fields.FrozenSet(EntryIDField(required=True))
+        remote_confinement_points = fields.FrozenSet(
+            EntryIDField(), allow_none=False, required=False, missing=frozenset()
+        )
 
         @post_load
         def make_obj(self, data):
             data.pop("type")
-            data.setdefault("local_confinement_points", frozenset())
-            data.setdefault("remote_confinement_points", frozenset())
             return LocalFolderManifest(**data)
 
     base: RemoteFolderManifest
@@ -636,23 +696,23 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
 
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, parent: EntryID, id: EntryID = None, now: DateTime = None
+        cls, author: DeviceID, parent: EntryID, timestamp: DateTime
     ) -> "LocalFolderManifest":
-        now = now or pendulum_now()
+        id = EntryID.new()
         children = FrozenDict()
         return cls(
             base=RemoteFolderManifest(
                 author=author,
-                timestamp=now,
-                id=id or EntryID(),
+                timestamp=timestamp,
+                id=id,
                 parent=parent,
                 version=0,
-                created=now,
-                updated=now,
+                created=timestamp,
+                updated=timestamp,
                 children=children,
             ),
             need_sync=True,
-            updated=now,
+            updated=timestamp,
             children=children,
             local_confinement_points=frozenset(),
             remote_confinement_points=frozenset(),
@@ -694,11 +754,14 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         remote: RemoteFolderManifest,
         prevent_sync_pattern: Pattern,
         local_manifest: "LocalFolderManifest",
+        timestamp: DateTime,
     ) -> "LocalFolderManifest":
         result = cls.from_remote(remote, prevent_sync_pattern)
-        return result._restore_local_confinement_points(local_manifest, prevent_sync_pattern)
+        return result._restore_local_confinement_points(
+            local_manifest, prevent_sync_pattern, timestamp=timestamp
+        )
 
-    def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteFolderManifest:
+    def to_remote(self, author: DeviceID, timestamp: DateTime) -> RemoteFolderManifest:
         # Filter confined entries
         processed_manifest = self._filter_local_confinement_points()
         # Restore filtered entries
@@ -706,7 +769,7 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         # Create remote manifest
         return RemoteFolderManifest(
             author=author,
-            timestamp=timestamp or pendulum_now(),
+            timestamp=timestamp,
             id=self.id,
             parent=self.parent,
             version=self.base_version + 1,
@@ -716,30 +779,61 @@ class LocalFolderManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         )
 
 
+_PyLocalFolderManifest = LocalFolderManifest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import LocalFolderManifest as _RsLocalFolderManifest
+    except:
+        pass
+    else:
+        LocalFolderManifest = _RsLocalFolderManifest
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_WORKSPACE_MANIFEST, required=True)
-        base = fields.Nested(RemoteWorkspaceManifest.SCHEMA_CLS, required=True)
+        base = fields.Nested(_PyWorkspaceManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
-        children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+        children = fields.FrozenMap(EntryNameField(), EntryIDField(), required=True)
+        # Added in Parsec v1.15
         # Confined entries are entries that are meant to stay locally and not be added
         # to the uploaded remote manifest when synchronizing. The criteria for being
         # confined is to have a filename that matched the "prevent sync" pattern at the time of
         # the last change (or when a new filter was successfully applied)
-        local_confinement_points = fields.FrozenSet(EntryIDField(required=True))
+        local_confinement_points = fields.FrozenSet(
+            EntryIDField(), allow_none=False, required=False, missing=frozenset()
+        )
+        # Added in Parsec v1.15
         # Filtered entries are entries present in the base manifest that are not exposed
         # locally. We keep track of them to remember that those entries have not been
         # deleted locally and hence should be restored when crafting the remote manifest
         # to upload.
-        remote_confinement_points = fields.FrozenSet(EntryIDField(required=True))
+        remote_confinement_points = fields.FrozenSet(
+            EntryIDField(), allow_none=False, required=False, missing=frozenset()
+        )
+        # Added in Parsec v1.15
+        # Speculative placeholders are created when we want to access a workspace
+        # but didn't retrieve manifest data from backend yet. This implies:
+        # - non-placeholders cannot be speculative
+        # - the only non-speculative placeholder is the placeholder initialized
+        #   during the initial workspace creation
+        # This speculative information is useful during merge to understand if
+        # a data is not present in the placeholder compared with a remote because:
+        # a) the data is not locally known (speculative is True)
+        # b) the data is known, but has been locally removed (speculative is False)
+        # Prevented to be `required=True` by backward compatibility
+        speculative = fields.Boolean(allow_none=False, required=False, missing=False)
 
         @post_load
         def make_obj(self, data):
+            # TODO: Ensure non-placeholder cannot be marked speculative
+            assert data["speculative"] is False or data["base"].version == 0
+            # TODO: Should this assert be in remote workspace manifest definition instead ?
+            # TODO: but in theory remote workspace manifest should assert version > 0 !
+            assert data["base"].version != 0 or not data["base"].children
             data.pop("type")
-            data.setdefault("local_confinement_points", frozenset())
-            data.setdefault("remote_confinement_points", frozenset())
             return LocalWorkspaceManifest(**data)
 
     base: RemoteWorkspaceManifest
@@ -747,27 +841,29 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
     local_confinement_points: FrozenSet[EntryID]
     remote_confinement_points: FrozenSet[EntryID]
 
+    speculative: bool
+
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, id: EntryID = None, now: DateTime = None
+        cls, author: DeviceID, timestamp: DateTime, id: EntryID = None, speculative: bool = False
     ) -> "LocalWorkspaceManifest":
-        now = now or pendulum_now()
         children = FrozenDict()
         return cls(
             base=RemoteWorkspaceManifest(
                 author=author,
-                timestamp=now,
-                id=id or EntryID(),
+                timestamp=timestamp,
+                id=id or EntryID.new(),
                 version=0,
-                created=now,
-                updated=now,
+                created=timestamp,
+                updated=timestamp,
                 children=children,
             ),
             need_sync=True,
-            updated=now,
+            updated=timestamp,
             children=children,
             local_confinement_points=frozenset(),
             remote_confinement_points=frozenset(),
+            speculative=speculative,
         )
 
     # Evolve methods
@@ -792,6 +888,7 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
             children=remote.children,
             local_confinement_points=frozenset(),
             remote_confinement_points=frozenset(),
+            speculative=False,
         )
         # Filter remote entries
         return result._filter_remote_entries(prevent_sync_pattern)
@@ -802,11 +899,14 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         remote: RemoteFolderManifest,
         prevent_sync_pattern: Pattern,
         local_manifest: "LocalWorkspaceManifest",
+        timestamp: DateTime,
     ) -> "LocalWorkspaceManifest":
         result = cls.from_remote(remote, prevent_sync_pattern)
-        return result._restore_local_confinement_points(local_manifest, prevent_sync_pattern)
+        return result._restore_local_confinement_points(
+            local_manifest, prevent_sync_pattern, timestamp=timestamp
+        )
 
-    def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteWorkspaceManifest:
+    def to_remote(self, author: DeviceID, timestamp: DateTime) -> RemoteWorkspaceManifest:
         # Filter confined entries
         processed_manifest = self._filter_local_confinement_points()
         # Restore filtered entries
@@ -814,7 +914,7 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         # Create remote manifest
         return RemoteWorkspaceManifest(
             author=author,
-            timestamp=timestamp or pendulum_now(),
+            timestamp=timestamp,
             id=self.id,
             version=self.base_version + 1,
             created=self.created,
@@ -823,19 +923,47 @@ class LocalWorkspaceManifest(BaseLocalManifest, LocalFolderishManifestMixin):
         )
 
 
+_PyLocalWorkspaceManifest = LocalWorkspaceManifest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import LocalWorkspaceManifest as _RsLocalWorkspaceManifest
+    except:
+        pass
+    else:
+        LocalWorkspaceManifest = _RsLocalWorkspaceManifest
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class LocalUserManifest(BaseLocalManifest):
     class SCHEMA_CLS(BaseSchema):
         type = fields.EnumCheckedConstant(LocalManifestType.LOCAL_USER_MANIFEST, required=True)
-        base = fields.Nested(RemoteUserManifest.SCHEMA_CLS, required=True)
+        base = fields.Nested(_PyUserManifest.SCHEMA_CLS, required=True)
         need_sync = fields.Boolean(required=True)
         updated = fields.DateTime(required=True)
         last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
-        workspaces = fields.FrozenList(fields.Nested(WorkspaceEntry.SCHEMA_CLS), required=True)
+        workspaces = fields.FrozenList(fields.Nested(_PyWorkspaceEntry.SCHEMA_CLS), required=True)
+        # Added in Parsec v1.15
+        # Speculative placeholders are created when we want to access the
+        # user manifest but didn't retrieve it from backend yet. This implies:
+        # - non-placeholders cannot be speculative
+        # - the only non-speculative placeholder is the placeholder initialized
+        #   during the initial user claim (by opposition of subsequent device
+        #   claims on the same user)
+        # This speculative information is useful during merge to understand if
+        # a data is not present in the placeholder compared with a remote because:
+        # a) the data is not locally known (speculative is True)
+        # b) the data is known, but has been locally removed (speculative is False)
+        # Prevented to be `required=True` by backward compatibility
+        speculative = fields.Boolean(allow_none=False, required=False, missing=False)
 
         @post_load
         def make_obj(self, data):
             data.pop("type")
+            # TODO: Ensure non-placeholder cannot be marked speculative
+            assert data["speculative"] is False or data["base"].version == 0
+            # TODO: Should this assert be in remote workspace manifest definition instead ?
+            # TODO: but in theory remote workspace manifest should assert version > 0 !
+            assert data["base"].version != 0 or not data["base"].workspaces
             return LocalUserManifest(**data)
 
     base: RemoteUserManifest
@@ -843,27 +971,28 @@ class LocalUserManifest(BaseLocalManifest):
     last_processed_message: int
     workspaces: Tuple[WorkspaceEntry, ...]
 
+    speculative: bool
+
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, id: EntryID = None, now: DateTime = None
+        cls, author: DeviceID, timestamp: DateTime, id: EntryID = None, speculative: bool = False
     ) -> "LocalUserManifest":
-        workspaces = ()
-        now = now or pendulum_now()
         return cls(
             base=RemoteUserManifest(
                 author=author,
-                timestamp=now,
-                id=id or EntryID(),
+                timestamp=timestamp,
+                id=id or EntryID.new(),
                 version=0,
-                created=now,
-                updated=now,
+                created=timestamp,
+                updated=timestamp,
                 last_processed_message=0,
-                workspaces=workspaces,
+                workspaces=(),
             ),
             need_sync=True,
-            updated=now,
+            updated=timestamp,
             last_processed_message=0,
-            workspaces=workspaces,
+            workspaces=(),
+            speculative=speculative,
         )
 
     # Helper
@@ -873,9 +1002,11 @@ class LocalUserManifest(BaseLocalManifest):
 
     # Evolve methods
 
-    def evolve_workspaces_and_mark_updated(self, *data) -> "LocalUserManifest":
+    def evolve_workspaces_and_mark_updated(self, timestamp: DateTime, *data) -> "LocalUserManifest":
         workspaces = {**{w.id: w for w in self.workspaces}, **{w.id: w for w in data}}
-        return self.evolve_and_mark_updated(workspaces=tuple(workspaces.values()))
+        return self.evolve_and_mark_updated(
+            workspaces=tuple(workspaces.values()), timestamp=timestamp
+        )
 
     def evolve_workspaces(self, *data) -> "LocalUserManifest":
         workspaces = {**{w.id: w for w in self.workspaces}, **{w.id: w for w in data}}
@@ -891,12 +1022,13 @@ class LocalUserManifest(BaseLocalManifest):
             updated=remote.updated,
             last_processed_message=remote.last_processed_message,
             workspaces=remote.workspaces,
+            speculative=False,
         )
 
-    def to_remote(self, author: DeviceID, timestamp: DateTime = None) -> RemoteUserManifest:
+    def to_remote(self, author: DeviceID, timestamp: DateTime) -> RemoteUserManifest:
         return RemoteUserManifest(
             author=author,
-            timestamp=timestamp or pendulum_now(),
+            timestamp=timestamp,
             id=self.id,
             version=self.base_version + 1,
             created=self.created,
@@ -904,3 +1036,13 @@ class LocalUserManifest(BaseLocalManifest):
             last_processed_message=self.last_processed_message,
             workspaces=self.workspaces,
         )
+
+
+_PyLocalUserManifest = LocalUserManifest
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import LocalUserManifest as _RsLocalUserManifest
+    except:
+        pass
+    else:
+        LocalUserManifest = _RsLocalUserManifest

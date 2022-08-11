@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
@@ -8,6 +8,8 @@ from collections import defaultdict
 from random import randrange, choice
 from string import ascii_lowercase
 
+from parsec.api.data import EntryName
+from parsec.api.protocol import UserID
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
 
@@ -221,7 +223,8 @@ async def _fuzzer_cmd(id, core, workspace, fs_state):
     else:
         path = fs_state.get_path()
         try:
-            await core.user_fs.workspace_share(path[1:], "bob", WorkspaceRole.OWNER)
+            entry_id = await workspace.path_id(path)
+            await core.user_fs.workspace_share(entry_id, UserID("bob"), WorkspaceRole.OWNER)
             fs_state.add_stat(id, "share_ok", f"path={path}")
         except FSError as exc:
             fs_state.add_stat(id, "share_bad", f"path={path}, raised {exc!r}")
@@ -231,7 +234,7 @@ async def _fuzzer_cmd(id, core, workspace, fs_state):
 @pytest.mark.slow
 async def test_fuzz_core(request, running_backend, alice_core):
     await trio.sleep(0.1)  # Somehow fixes the test
-    wid = await alice_core.user_fs.workspace_create("w")
+    wid = await alice_core.user_fs.workspace_create(EntryName("w"))
     workspace = alice_core.user_fs.get_workspace(wid)
     try:
         async with trio.open_service_nursery() as nursery:

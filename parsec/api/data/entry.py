@@ -1,48 +1,43 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from uuid import UUID, uuid4
-from typing import Optional, Union
+from typing import TYPE_CHECKING
 
 from parsec.serde import fields
-
+from parsec.api.protocol import StrBased
+from parsec._parsec import EntryID
 
 __all__ = ("EntryID", "EntryIDField", "EntryName", "EntryNameField")
 
 
-class EntryID(UUID):
-    __slots__ = ()
-
-    def __init__(self, init: Optional[Union[UUID, bytes, str]] = None):
-        init = uuid4() if init is None else init
-        if isinstance(init, UUID):
-            super().__init__(bytes=init.bytes)
-        elif isinstance(init, bytes):
-            super().__init__(bytes=init)
-        else:
-            super().__init__(hex=init)
+class EntryNameTooLongError(ValueError):
+    pass
 
 
 EntryIDField = fields.uuid_based_field_factory(EntryID)
 
 
-class EntryName(str):
-    __slots__ = ()
+class EntryName(StrBased):
+    # Ignore the REGEX
+    REGEX = None
+    MAX_BYTE_SIZE = 255
 
     def __init__(self, raw: str):
+        try:
+            super().__init__(raw)
+        except ValueError:
+            raise EntryNameTooLongError("Invalid data")
+        if raw == "" or raw == "." or raw == ".." or "/" in raw or "\x00" in raw:
+            raise ValueError("Invalid data")
 
-        # Stick to UNIX filesystem philosophy:
-        # - no `.` or `..` name
-        # - no `/` or null byte in the name
-        # - max 255 bytes long name
-        if (
-            not isinstance(raw, str)
-            or not 0 < len(raw.encode("utf8")) < 256
-            or raw == "."
-            or raw == ".."
-            or "/" in raw
-            or "\x00" in raw
-        ):
-            raise ValueError("Invalid entry name")
+
+_PyEntryName = EntryName
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import EntryName as _RsEntryName
+    except:
+        pass
+    else:
+        EntryName = _RsEntryName
 
 
 EntryNameField = fields.str_based_field_factory(EntryName)

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import os
 import re
@@ -6,7 +6,8 @@ from enum import IntEnum
 from typing import Union, Optional, NoReturn, Type, Dict
 
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
-from parsec.core.types import FsPath, AnyPath, FileDescriptor
+from parsec.core.types import FileDescriptor
+from parsec.core.fs.path import FsPath, AnyPath
 from parsec.core.fs.exceptions import (
     FSUnsupportedOperation,
     FSOffsetError,
@@ -72,7 +73,7 @@ class WorkspaceFile:
     async def ainit(self) -> None:
         """Initializing the File Object.
 
-            Check the FileState, open or create the file, truncate it and move the offset if needed.
+        Check the FileState, open or create the file, truncate it and move the offset if needed.
         """
         if self._state == FileState.INIT:
             self._state = FileState.OPEN
@@ -122,14 +123,15 @@ class WorkspaceFile:
                     # Flush the file (typically causes the manifest to be reshaped)
                     await self._transactions.fd_flush(self.fileno())
                 except FSLocalStorageClosedError:
-                    return
+                    pass
             finally:
                 # Ignore storage closed exceptions, since it follows an operational error
                 try:
                     # Close the file
                     await self._transactions.fd_close(self.fileno())
                 except FSLocalStorageClosedError:
-                    return
+                    # Careful here: do not return as this would silence a possible exception raised during the flush
+                    pass
         finally:
             self._state = FileState.CLOSED
 
@@ -165,7 +167,7 @@ class WorkspaceFile:
         return self._path
 
     async def read(self, size: int = -1) -> bytes:
-        """ Read up to size bytes from the object and return them.
+        """Read up to size bytes from the object and return them.
 
         As a convenience, if size is unspecified or -1, all bytes until EOF are returned.
         If 0 bytes are returned, and size was not 0, this indicates end of file.
@@ -197,7 +199,7 @@ class WorkspaceFile:
         raise NotImplementedError
 
     async def seek(self, offset: int, whence: int = os.SEEK_SET) -> int:
-        """ Change the stream position to the given offset.
+        """Change the stream position to the given offset.
         Behaviour depends on the whence parameter. The default value for whence is SEEK_SET.
         SEEK_SET or 0 -> seek from the start of the stream (the default);
         Offset have to be 0 or bigger.
@@ -238,7 +240,7 @@ class WorkspaceFile:
         return self._offset
 
     async def truncate(self, size: Optional[int] = None) -> int:
-        """ Resize the stream to the given size in bytes.
+        """Resize the stream to the given size in bytes.
         Resize to the current position if size is not specified.
         The current stream position isn't changed.
         This resizing can extend or reduce the current file size. In case of extension, the
@@ -271,9 +273,9 @@ class WorkspaceFile:
         return "w" in self._mode or "a" in self._mode or "x" in self._mode or "+" in self._mode
 
     async def write(self, data: Union[str, bytes]) -> int:
-        """ Check write right and execute write_bytes or write_str depend on the mode
-            Raises:
-            FSUnsupportedOperation
+        """Check write right and execute write_bytes or write_str depend on the mode
+        Raises:
+        FSUnsupportedOperation
         """
         if not self.writable():
             raise FSUnsupportedOperation
@@ -293,7 +295,7 @@ class WorkspaceFile:
         raise NotImplementedError
 
     async def _write_bytes(self, data: bytes) -> int:
-        """ Write the given bytes-like object.
+        """Write the given bytes-like object.
         Return the number of bytes written.
         """
 

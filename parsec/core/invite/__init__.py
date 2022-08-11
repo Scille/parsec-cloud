@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from parsec.core.invite.exceptions import (
     InviteError,
     InvitePeerResetError,
     InviteNotFoundError,
     InviteAlreadyUsedError,
-    InviteTimestampError,
+    InviteActiveUsersLimitReachedError,
 )
 from parsec.core.invite.claimer import (
     claimer_retrieve_info,
@@ -45,7 +45,7 @@ __all__ = (
     "InvitePeerResetError",
     "InviteNotFoundError",
     "InviteAlreadyUsedError",
-    "InviteTimestampError",
+    "InviteActiveUsersLimitReachedError",
     # Claimer
     "claimer_retrieve_info",
     "BaseClaimInitialCtx",

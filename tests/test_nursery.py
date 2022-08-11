@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 import pytest
@@ -15,7 +15,7 @@ async def test_open_service_nursery_exists():
 
 
 @pytest.mark.trio
-async def test_open_service_nursery_multierror_collapse():
+async def test_open_service_nursery_multierror_collapse(caplog):
     async def _raise(exc):
         raise exc
 
@@ -33,6 +33,8 @@ async def test_open_service_nursery_multierror_collapse():
         async with trio.open_service_nursery() as nursery:
             nursery.start_soon(_raise, RuntimeError())
             await _raise(ZeroDivisionError(1, 2, 3))
+
+    caplog.assert_occured_once("[warning  ] A MultiError has been detected [parsec.utils]")
 
     exception = ctx.value
     assert isinstance(exception, ZeroDivisionError)

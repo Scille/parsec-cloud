@@ -1,8 +1,0 @@
-# This is needed to update core libraries that are going to be
-# used when running the setup.py
-# Note we cannot use the setup_requires of setup.py or even pyproject.toml
-# for this task given this update is required to install setup dependencies
-# (typically PyQt which wheel uses manylinux2014 since version 5.15.0)
-pip>=20.1.1
-setuptools>=49.2.0
-wheel>=0.34.2

@@ -4,11 +4,11 @@ summary: Secure cloud framework # 79 char long summary
 description: |
   Parsec is an open-source cloud-based application that allow simple yet
   cryptographically secure file hosting.
-base: core18
+base: core20
 type: app
 
 confinement: classic # classic is needed to have fuse working
-icon: "./bin/parsec.png"
+icon: ./bin/parsec.png
 grade: stable # must be 'stable' to release into candidate/stable channels
 
 apps:
@@ -16,42 +16,241 @@ apps:
     command: parsec
     desktop: parsec.desktop
     environment:
-      SENTRY_URL: https://863e60bbef39406896d2b7a5dbd491bb@sentry.io/1212848
+      SSL_CAFILE: ${SNAP}/cacert.pem
+      PARSEC_SENTRY_DSN: https://863e60bbef39406896d2b7a5dbd491bb@o155936.ingest.sentry.io/1212848
       PREFERRED_ORG_CREATION_BACKEND_ADDR: parsec://saas.parsec.cloud/
   cli:
     command: parsec-cli
     environment:
-      SENTRY_URL: https://863e60bbef39406896d2b7a5dbd491bb@sentry.io/1212848
+      SSL_CAFILE: ${SNAP}/cacert.pem
+      PARSEC_SENTRY_DSN: https://863e60bbef39406896d2b7a5dbd491bb@o155936.ingest.sentry.io/1212848
       PREFERRED_ORG_CREATION_BACKEND_ADDR: parsec://saas.parsec.cloud/
 
 parts:
   bootstrap:
     plugin: dump
-    source: "./bin"
-    override-pull: |
-      snapcraftctl pull
+    source: ./bin
+    override-build: |
       # Make sure executables *are* executable
       chmod 755 parsec
       chmod 755 parsec-cli
 
+      snapcraftctl build
+
   parsec-core:
-    plugin: python
-    python-version: python3
-    source: "./src"
+    plugin: nil
+    source: ./src
     source-type: local
-    override-pull: |
-      snapcraftctl pull
-      # Ugly hack given snapcraft doesn't support extra requirements...
-      sed -i "s#install_requires=requirements#install_requires=requirements + extra_requirements['core']#g" setup.py
+    override-build: |
+      snapcraftctl build
+
+      # Snapcraft's python plugin doesn't work well with classic mode,
+      # hence we have to roll our own packaging trick:
+      # - we manually copy Parsec & dependencies into a directory
+      # - we ask snapcraft to bundle the python version we want
+      # - we overload PYTHONPATH at runtime so that python finds our modules
+
+      VENV=${SNAPCRAFT_PART_BUILD}/venv
+
+      # Install Parsec & dependencies in a virtual env...
+      /usr/bin/python3.9 --version
+      /usr/bin/python3.9 -m venv ${VENV}  # must use absolute path here
+      ${VENV}/bin/python -m pip --version
+      # Update pip given the one on the system is most likely too old...
+      ${VENV}/bin/python -m pip install --upgrade pip wheel
+      ${VENV}/bin/python -m pip --version
+      WHEEL=$(ls ./parsec_cloud-*.whl)
+      ${VENV}/bin/python -m pip install --requirement ./core-requirements.txt
+      ${VENV}/bin/python -m pip install $WHEEL[core] --no-deps
+
+      # Bundled libssl doesn't know where host OS stores it CA certificates,
+      # hence we bundle them instead.
+      # For this, Certifi provides the Mozilla-curated certifs bundled as a
+      # single file and we just have to copy it into our Snap.
+      # Note we don't use ubuntu package's  `ca-certificate` here given it
+      # comes as multiple pem files that must be cooked with `update-ca-certificate`
+      # command before being actually usable by openssl.
+      ${VENV}/bin/python -m pip install -U certifi
+      cp $(${VENV}/bin/python -m certifi) ${SNAPCRAFT_PART_INSTALL}/cacert.pem
+
+      # ...then only keep the installed packages from the virtual env
+      # this is fine given the same python is used between build and runtime
+      cp -R ${VENV}/lib/python3.*/site-packages ${SNAPCRAFT_PART_INSTALL}/site-packages
+
+      # And now for the grand PyQt5 cooking !
+      # This aggressive remove of all possible .so has two objectives:
+      # - Saving size
+      # - more importantly, reducing the number of dependencies that must be
+      #   shipped with the snap given they are a real headache to figure out :/
+
+      PYQT_DIR=${SNAPCRAFT_PART_INSTALL}/site-packages/PyQt5/
+      # 1) Remove stuff not needed during runtime
+      # Bindings declaration
+      rm -rf ${PYQT_DIR}/bindings
+      # UI compiler
+      rm -rf ${PYQT_DIR}/uic
+      # Type hints
+      rm ${PYQT_DIR}/*.pyi
+      # Resources compiler
+      rm ${PYQT_DIR}/pyrcc.*.so
+      rm ${PYQT_DIR}/pyrcc_main.py
+      # Translation compiler
+      rm ${PYQT_DIR}/pylupdate.*.so
+      rm ${PYQT_DIR}/pylupdate_main.py
+
+      # 2) Remove unused Qt modules
+      # We use in the codebase: QtWidgets, QtCore, QtGui, QtSvg
+      # On top of that we also keep QtDbus that is needed in platform support
+      for QT_MODULE in \
+        Bluetooth \
+        Designer \
+        Help \
+        Location \
+        Multimedia \
+        MultimediaWidgets \
+        Network \
+        Nfc \
+        OpenGL \
+        Positioning \
+        Qml \
+        Quick \
+        Quick3D \
+        QuickWidgets \
+        RemoteObjects \
+        Sensors \
+        SerialPort \
+        Sql \
+        Test \
+        TextToSpeech \
+        WebChannel \
+        WebSockets \
+        X11Extras \
+        Xml \
+        XmlPatterns
+      do
+        rm ${PYQT_DIR}/Qt${QT_MODULE}.*.so
+        rm ${PYQT_DIR}/Qt5/lib/libQt5${QT_MODULE}.so.*
+      done
+      rm ${PYQT_DIR}/_QOpenGLFunctions_*.*.so
+      # Remove extensions that requires module we removed
+      for QT_PLUGIN in \
+        assetimporters/libassimp.so \
+        assetimporters/libuip.so \
+        audio/libqtaudio_alsa.so \
+        audio/libqtmedia_pulse.so \
+        bearer/libqconnmanbearer.so \
+        bearer/libqgenericbearer.so \
+        bearer/libqnmbearer.so \
+        generic/libqtuiotouchplugin.so \
+        geometryloaders/libdefaultgeometryloader.so \
+        geometryloaders/libgltfgeometryloader.so \
+        geoservices/libqtgeoservices_esri.so \
+        geoservices/libqtgeoservices_itemsoverlay.so \
+        geoservices/libqtgeoservices_mapbox.so \
+        geoservices/libqtgeoservices_mapboxgl.so \
+        geoservices/libqtgeoservices_nokia.so \
+        geoservices/libqtgeoservices_osm.so \
+        mediaservice/libgstaudiodecoder.so \
+        mediaservice/libgstcamerabin.so \
+        mediaservice/libgstmediacapture.so \
+        mediaservice/libgstmediaplayer.so \
+        platforms/libqvnc.so \
+        platforms/libqwebgl.so \
+        platformthemes/libqgtk3.so \
+        playlistformats/libqtmultimedia_m3u.so \
+        position/libqtposition_geoclue.so \
+        position/libqtposition_geoclue2.so \
+        position/libqtposition_positionpoll.so \
+        position/libqtposition_serialnmea.so \
+        printsupport/libcupsprintersupport.so \
+        renderers/libopenglrenderer.so \
+        renderplugins/libscene2d.so \
+        sceneparsers/libgltfsceneexport.so \
+        sceneparsers/libgltfsceneimport.so \
+        sensorgestures/libqtsensorgestures_plugin.so \
+        sensorgestures/libqtsensorgestures_shakeplugin.so \
+        sensors/libqtsensors_generic.so \
+        sensors/libqtsensors_iio-sensor-proxy.so \
+        sensors/libqtsensors_linuxsys.so \
+        sqldrivers/libqsqlite.so \
+        sqldrivers/libqsqlodbc.so \
+        sqldrivers/libqsqlpsql.so \
+        texttospeech/libqtexttospeech_speechd.so \
+        webview/libqtwebview_webengine.so
+      do
+        rm ${PYQT_DIR}/Qt5/plugins/${QT_PLUGIN}
+      done
+
+    build-packages:
+      - python3.9-venv
+      - python3.9
+      - python3.9-dev  # Needed by duckpy (itself required by pypac)
     stage-packages:
+      # Why so much packages ?
+      # Well because Python 3.9 is part of base image core20 so Snapcraft
+      # strips it out of the snap to save space, but this doesn't work for
+      # classic mode (given host OS is used then !), so we have to manually
+      # specify all the packages to force their inclusion.
+      # This list has been generated doing (with a bit of manual tweaking):
+      # apt-cache depends --recurse  --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances python3.9
+      - python3.9
+      - python3.9-minimal
+      # Yes, we even package libc (otherwise it may cause issue when runnig on non-ubuntu OS)
+      - libc6
+      - libcrypt1
+      - libpython3.9-minimal
+      - libssl1.1
+      - libexpat1
+      - zlib1g
+      - libpython3.9-stdlib
+      - mime-support
+      - libbz2-1.0
+      - libdb5.3
+      - libffi7
+      - liblzma5
+      - libmpdec2
+      - libncursesw6
+      - libreadline8
+      - libsqlite3-0
+      - libtinfo6
+      - libuuid1
+      # Qt5 has a lot of dependencies (e.g. libxcb, libx) and it's easy to
+      # miss some. It seems those are enough, but this is purely speculative...
+      - libfreetype6
+      - libpng16-16
+      - libx11-xcb1
+      - libx11-6
+      - libxcomposite1
+      - libxext6
+      - libasound2
+      - libdrm2
+      - libfontconfig1
+      - libpulse-mainloop-glib0
+      - libpulse0
+      - libwayland-client0
+      - libwayland-cursor0
+      - libwayland-egl1
+      - libxcb-glx0
+      - libxcb-icccm4
+      - libxcb-image0
+      - libxcb-keysyms1
+      - libxcb-randr0
+      - libxcb-render-util0
+      - libxcb-render0
+      - libxcb-shape0
+      - libxcb-shm0
+      - libxcb-sync1
+      - libxcb-util1
+      - libxcb-xfixes0
+      - libxcb-xinerama0
+      - libxcb-xkb1
+      - libxcb1
+      - libxkbcommon-x11-0
+      - libxkbcommon0
+      # OpenGL and friends seem needed for some widgets...
+      - libgl1
+      - libegl1
       # fuse package contains fusermount which is sometime needed by libfuse2
       # (see: https://github.com/Scille/parsec-cloud/issues/1253)
       - fuse
       - libfuse2
-      - libxext6
-      - libx11-6
-      - libx11-xcb1
-      - libfreetype6
-      - libpng16-16
-      - libfontconfig
-      - libxkbcommon-x11-0

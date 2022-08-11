@@ -1,10 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from parsec.backend.postgresql.vlob_queries.write import (
-    query_update,
-    query_vlob_updated,
-    query_create,
-)
+from parsec.backend.postgresql.vlob_queries.write import query_update, query_create
 from parsec.backend.postgresql.vlob_queries.maintenance import (
     query_maintenance_save_reencryption_batch,
     query_maintenance_get_reencryption_batch,
@@ -17,7 +13,6 @@ from parsec.backend.postgresql.vlob_queries.read import (
 
 __all__ = (
     "query_update",
-    "query_vlob_updated",
     "query_maintenance_save_reencryption_batch",
     "query_maintenance_get_reencryption_batch",
     "query_read",

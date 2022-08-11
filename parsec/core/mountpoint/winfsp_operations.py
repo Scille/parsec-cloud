@@ -1,8 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec.core.core_events import CoreEvent
-import functools
+from pathlib import PurePath
+from pendulum import DateTime
+from functools import partial, wraps
 from contextlib import contextmanager
+from typing import Optional, Union, Iterator
 from trio import Cancelled, RunFinishedError
 from structlog import get_logger
 from winfspy import (
@@ -13,10 +15,12 @@ from winfspy import (
 )
 from winfspy.plumbing import dt_to_filetime, NTSTATUS, SecurityDescriptor
 
-from parsec.core.types import FsPath
-from parsec.core.fs import FSLocalOperationError, FSRemoteOperationError
+from parsec.api.data import EntryID
+from parsec.core.core_events import CoreEvent
+from parsec.core.fs import FsPath, FSLocalOperationError, FSRemoteOperationError
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 from parsec.core.mountpoint.winify import winify_entry_name, unwinify_entry_name
+from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess, TrioDealockTimeoutError
 
 
 logger = get_logger()
@@ -28,17 +32,50 @@ FILE_WRITE_DATA = 1 << 1
 
 def _winpath_to_parsec(path: str) -> FsPath:
     # Given / is not allowed, no need to check if path already contains it
-    return FsPath(unwinify_entry_name(path.replace("\\", "/")))
+    return FsPath(
+        tuple(unwinify_entry_name(x) for x in path.replace("\\", "/").split("/") if x != "")
+    )
 
 
 def _parsec_to_winpath(path: FsPath) -> str:
     return "\\" + "\\".join(winify_entry_name(entry) for entry in path.parts)
 
 
+class OpenedFolder:
+    def __init__(self, path):
+        self.path = path
+        self.deleted = False
+
+    def is_root(self):
+        return self.path.is_root()
+
+
+class OpenedFile:
+    def __init__(self, path, fd):
+        self.path = path
+        self.fd = fd
+        self.deleted = False
+
+
 @contextmanager
-def translate_error(event_bus, operation, path):
+def get_path_and_translate_error(
+    fs_access: ThreadFSAccess,
+    operation: str,
+    file_context: Union[OpenedFile, OpenedFolder, str],
+    mountpoint: PurePath,
+    workspace_id: EntryID,
+    timestamp: Optional[DateTime],
+) -> Iterator[FsPath]:
+    path: FsPath = FsPath("/<unkonwn>")
     try:
-        yield
+        if isinstance(file_context, (OpenedFile, OpenedFolder)):
+            path = file_context.path
+        else:
+            # FsPath conversion might raise an FSNameTooLongError so make
+            # sure it runs within the try-except so it can be caught by the
+            # FSLocalOperationError filter.
+            path = _winpath_to_parsec(file_context)
+        yield path
 
     except NTStatusError:
         raise
@@ -47,7 +84,15 @@ def translate_error(event_bus, operation, path):
         raise NTStatusError(exc.ntstatus) from exc
 
     except FSRemoteOperationError as exc:
-        event_bus.send(CoreEvent.MOUNTPOINT_REMOTE_ERROR, exc=exc, operation=operation, path=path)
+        fs_access.send_event(
+            CoreEvent.MOUNTPOINT_REMOTE_ERROR,
+            exc=exc,
+            operation=operation,
+            path=path,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
         raise NTStatusError(exc.ntstatus) from exc
 
     except (Cancelled, RunFinishedError) as exc:
@@ -55,10 +100,44 @@ def translate_error(event_bus, operation, path):
         # are running
         raise NTStatusError(NTSTATUS.STATUS_NO_SUCH_DEVICE) from exc
 
+    except TrioDealockTimeoutError as exc:
+        # See the similar clause in `fuse_operations` for a detailed explanation
+        logger.error(
+            "The trio thread is unreachable, a deadlock might have occured",
+            operation=operation,
+            path=str(path),
+            mountpoint=str(mountpoint),
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        fs_access.send_event(
+            CoreEvent.MOUNTPOINT_TRIO_DEADLOCK_ERROR,
+            exc=exc,
+            operation=operation,
+            path=path,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
+
     except Exception as exc:
-        logger.exception("Unhandled exception in winfsp mountpoint", operation=operation, path=path)
-        event_bus.send(
-            CoreEvent.MOUNTPOINT_UNHANDLED_ERROR, exc=exc, operation=operation, path=path
+        logger.exception(
+            "Unhandled exception in winfsp mountpoint",
+            operation=operation,
+            path=str(path),
+            mountpoint=str(mountpoint),
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
+        fs_access.send_event(
+            CoreEvent.MOUNTPOINT_UNHANDLED_ERROR,
+            exc=exc,
+            operation=operation,
+            path=path,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
         )
         raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
 
@@ -86,7 +165,7 @@ def stat_to_winfsp_attributes(stat):
         "last_access_time": updated,
         "last_write_time": updated,
         "change_time": updated,
-        "index_number": stat["id"].int & 0xFFFFFFFF,  # uint64_t
+        "index_number": stat["id"].uuid.int & 0xFFFFFFFF,  # uint64_t
     }
 
     if stat["type"] == "folder":
@@ -109,54 +188,51 @@ def stat_to_winfsp_attributes(stat):
     return attributes
 
 
-class OpenedFolder:
-    def __init__(self, path):
-        self.path = path
-        self.deleted = False
-
-    def is_root(self):
-        return self.path.is_root()
-
-
-class OpenedFile:
-    def __init__(self, path, fd):
-        self.path = path
-        self.fd = fd
-        self.deleted = False
-
-
 def handle_error(func):
     """A decorator to handle error in wfspy operations"""
     operation = func.__name__
 
-    @functools.wraps(func)
+    @wraps(func)
     def wrapper(self, arg, *args, **kwargs):
-        path = arg.path if isinstance(arg, (OpenedFile, OpenedFolder)) else _winpath_to_parsec(arg)
-        with translate_error(self.event_bus, operation, path):
+        with self._get_path_and_translate_error(operation=operation, file_context=arg):
             return func.__get__(self)(arg, *args, **kwargs)
 
     return wrapper
 
 
 class WinFSPOperations(BaseFileSystemOperations):
-    def __init__(self, event_bus, volume_label, fs_access):
+    def __init__(
+        self,
+        fs_access: ThreadFSAccess,
+        volume_label: str,
+        mountpoint: PurePath,
+        workspace_id: EntryID,
+        timestamp: Optional[DateTime],
+    ):
         super().__init__()
         # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format  # noqa
         self._security_descriptor = SecurityDescriptor.from_string(
             # "O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;WD)"
             "O:BAG:BAD:NO_ACCESS_CONTROL"
         )
-        self.event_bus = event_bus
         self.fs_access = fs_access
 
         # We have currently no way of easily getting the size of workspace
         # Also, the total size of a workspace is not limited
         # For the moment let's settle on 0 MB used for 1 TB available
         self._volume_info = {
-            "total_size": 1 * 1024 * 1024 * 1024,  # 1 TB
-            "free_size": 1 * 1024 * 1024 * 1024,  # 1 TB
+            "total_size": 1 * 1024**4,  # 1 TB
+            "free_size": 1 * 1024**4,  # 1 TB
             "volume_label": volume_label,
         }
+
+        self._get_path_and_translate_error = partial(
+            get_path_and_translate_error,
+            fs_access=self.fs_access,
+            mountpoint=mountpoint,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
 
     def get_volume_info(self):
         return self._volume_info
@@ -310,7 +386,7 @@ class WinFSPOperations(BaseFileSystemOperations):
         iter_children_names = iter(stat["children"])
         if marker is not None:
             for child_name in iter_children_names:
-                if child_name == marker:
+                if child_name.str == marker:
                     break
 
         # All remaining children are located after the marker

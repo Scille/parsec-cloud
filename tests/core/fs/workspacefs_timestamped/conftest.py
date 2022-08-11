@@ -1,7 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import pendulum
+
+from parsec.api.data import EntryName
 
 from tests.common import freeze_time
 
@@ -26,10 +28,12 @@ day14 = pendulum.datetime(2000, 1, 14)
 @pytest.mark.trio
 async def alice_workspace(alice_user_fs, running_backend):
     with freeze_time(day0):
-        wid = await alice_user_fs.workspace_create("w")
+        wid = await alice_user_fs.workspace_create(EntryName("w"))
         workspace = alice_user_fs.get_workspace(wid)
         await workspace.mkdir("/foo")
         # No sync, we want alice_workspace.to_timestamped to fail at day0
+        # Still let's create the realm now to avoid restamping
+        await alice_user_fs.remote_loader.create_realm(wid)
     with freeze_time(day1):
         await workspace.sync()
     with freeze_time(day2):

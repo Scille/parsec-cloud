@@ -1,13 +1,15 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import List, Tuple, Dict, Optional
-from uuid import UUID
-import pendulum
+from pendulum import DateTime, now as pendulum_now
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.api.protocol import (
+    RealmID,
+    VlobID,
     DeviceID,
     OrganizationID,
+    SequesterServiceID,
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
@@ -31,11 +33,11 @@ class VlobVersionError(VlobError):
     pass
 
 
-class VlobTimestampError(VlobError):
+class VlobNotFoundError(VlobError):
     pass
 
 
-class VlobNotFoundError(VlobError):
+class VlobRealmNotFoundError(VlobError):
     pass
 
 
@@ -59,15 +61,43 @@ class VlobMaintenanceError(VlobError):
     pass
 
 
+class VlobRequireGreaterTimestampError(VlobError):
+    @property
+    def strictly_greater_than(self):
+        return self.args[0]
+
+
+class VlobSequesterDisabledError(VlobError):
+    pass
+
+
+class VlobSequesterServiceInconsistencyError(VlobError):
+    def __init__(
+        self, sequester_authority_certificate: bytes, sequester_services_certificates: List[bytes]
+    ):
+        self.sequester_authority_certificate = sequester_authority_certificate
+        self.sequester_services_certificates = sequester_services_certificates
+
+
 class BaseVlobComponent:
     @api("vlob_create")
     @catch_protocol_errors
     async def api_vlob_create(self, client_ctx, msg):
+        """
+        This API call, when successful, performs the writing of a new vlob version to the database.
+        Before adding new entries, extra care should be taken in order to guarantee the consistency in
+        the ordering of the different timestamps stored in the database.
+
+        See the `api_vlob_update` docstring for more information about the checks performed and the
+        error returned in case those checks failed.
+        """
         msg = vlob_create_serializer.req_load(msg)
 
-        now = pendulum.now()
+        now = pendulum_now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return {"status": "bad_timestamp", "reason": f"Timestamp is out of date."}
+            return vlob_create_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=msg["timestamp"]
+            )
 
         try:
             await self.create(client_ctx.organization_id, client_ctx.device_id, **msg)
@@ -75,14 +105,31 @@ class BaseVlobComponent:
         except VlobAlreadyExistsError as exc:
             return vlob_create_serializer.rep_dump({"status": "already_exists", "reason": str(exc)})
 
-        except VlobAccessError:
+        except (VlobAccessError, VlobRealmNotFoundError):
             return vlob_create_serializer.rep_dump({"status": "not_allowed"})
+
+        except VlobRequireGreaterTimestampError as exc:
+            return vlob_create_serializer.require_greater_timestamp_rep_dump(
+                exc.strictly_greater_than
+            )
 
         except VlobEncryptionRevisionError:
             return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
 
         except VlobInMaintenanceError:
             return vlob_create_serializer.rep_dump({"status": "in_maintenance"})
+
+        except VlobSequesterDisabledError:
+            return vlob_create_serializer.rep_dump({"status": "not_a_sequestered_organization"})
+
+        except VlobSequesterServiceInconsistencyError as exc:
+            return vlob_create_serializer.rep_dump(
+                {
+                    "status": "sequester_inconsistency",
+                    "sequester_authority_certificate": exc.sequester_authority_certificate,
+                    "sequester_services_certificates": exc.sequester_services_certificates,
+                }
+            )
 
         return vlob_create_serializer.rep_dump({"status": "ok"})
 
@@ -92,7 +139,7 @@ class BaseVlobComponent:
         msg = vlob_read_serializer.req_load(msg)
 
         try:
-            version, blob, author, created_on = await self.read(
+            version, blob, author, created_on, author_last_role_granted_on = await self.read(
                 client_ctx.organization_id, client_ctx.device_id, **msg
             )
 
@@ -104,9 +151,6 @@ class BaseVlobComponent:
 
         except VlobVersionError:
             return vlob_read_serializer.rep_dump({"status": "bad_version"})
-
-        except VlobTimestampError:
-            return vlob_read_serializer.rep_dump({"status": "bad_timestamp"})
 
         except VlobEncryptionRevisionError:
             return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
@@ -121,17 +165,37 @@ class BaseVlobComponent:
                 "version": version,
                 "author": author,
                 "timestamp": created_on,
+                "author_last_role_granted_on": author_last_role_granted_on,
             }
         )
 
     @api("vlob_update")
     @catch_protocol_errors
     async def api_vlob_update(self, client_ctx, msg):
+        """
+        This API call, when successful, performs the writing of a new vlob version to the database.
+        Before adding new entries, extra care should be taken in order to guarantee the consistency in
+        the ordering of the different timestamps stored in the database.
+
+        In particular, the backend server performs the following checks:
+        - The vlob version must have a timestamp greater or equal than the timestamp of the previous
+          version of the same vlob.
+        - The vlob version must have a timestamp strictly greater than the timestamp of the last role
+          certificate for the corresponding user in the corresponding realm.
+
+        If one of those constraints is not satisfied, an error is returned with the status
+        `require_greater_timestamp` indicating to the client that it should craft a new certificate
+        with a timestamp strictly greater than the timestamp provided with the error.
+
+        The `api_realm_update_roles` and `api_vlob_create` calls also perform similar checks.
+        """
         msg = vlob_update_serializer.req_load(msg)
 
-        now = pendulum.now()
+        now = pendulum_now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return {"status": "bad_timestamp", "reason": f"Timestamp is out of date."}
+            return vlob_update_serializer.timestamp_out_of_ballpark_rep_dump(
+                backend_timestamp=now, client_timestamp=msg["timestamp"]
+            )
 
         try:
             await self.update(client_ctx.organization_id, client_ctx.device_id, **msg)
@@ -142,17 +206,31 @@ class BaseVlobComponent:
         except VlobAccessError:
             return vlob_update_serializer.rep_dump({"status": "not_allowed"})
 
+        except VlobRequireGreaterTimestampError as exc:
+            return vlob_update_serializer.require_greater_timestamp_rep_dump(
+                exc.strictly_greater_than
+            )
+
         except VlobVersionError:
             return vlob_update_serializer.rep_dump({"status": "bad_version"})
-
-        except VlobTimestampError:
-            return vlob_update_serializer.rep_dump({"status": "bad_timestamp"})
 
         except VlobEncryptionRevisionError:
             return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
 
         except VlobInMaintenanceError:
             return vlob_update_serializer.rep_dump({"status": "in_maintenance"})
+
+        except VlobSequesterDisabledError:
+            return vlob_create_serializer.rep_dump({"status": "not_a_sequestered_organization"})
+
+        except VlobSequesterServiceInconsistencyError as exc:
+            return vlob_create_serializer.rep_dump(
+                {
+                    "status": "sequester_inconsistency",
+                    "sequester_authority_certificate": exc.sequester_authority_certificate,
+                    "sequester_services_certificates": exc.sequester_services_certificates,
+                }
+            )
 
         return vlob_update_serializer.rep_dump({"status": "ok"})
 
@@ -173,7 +251,7 @@ class BaseVlobComponent:
         except VlobAccessError:
             return vlob_poll_changes_serializer.rep_dump({"status": "not_allowed"})
 
-        except VlobNotFoundError as exc:
+        except VlobRealmNotFoundError as exc:
             return vlob_poll_changes_serializer.rep_dump(
                 {"status": "not_found", "reason": str(exc)}
             )
@@ -223,7 +301,7 @@ class BaseVlobComponent:
                 {"status": "not_allowed"}
             )
 
-        except VlobNotFoundError as exc:
+        except VlobRealmNotFoundError as exc:
             return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
                 {"status": "not_found", "reason": str(exc)}
             )
@@ -270,7 +348,8 @@ class BaseVlobComponent:
                 {"status": "not_allowed"}
             )
 
-        except VlobNotFoundError as exc:
+        # No need to catch VlobNotFoundError given unknown vlob/version in batch are ignored
+        except VlobRealmNotFoundError as exc:
             return vlob_maintenance_save_reencryption_batch_serializer.rep_dump(
                 {"status": "not_found", "reason": str(exc)}
             )
@@ -296,17 +375,21 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
-        vlob_id: UUID,
-        timestamp: pendulum.DateTime,
+        vlob_id: VlobID,
+        timestamp: DateTime,
         blob: bytes,
+        # Sequester is a special case, so give it a default version to simplify tests
+        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
     ) -> None:
         """
         Raises:
             VlobAlreadyExistsError
             VlobEncryptionRevisionError: if encryption_revision mismatch
             VlobInMaintenanceError
+            VlobSequesterDisabledError
+            VlobSequesterServiceInconsistencyError
         """
         raise NotImplementedError()
 
@@ -315,10 +398,10 @@ class BaseVlobComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         encryption_revision: int,
-        vlob_id: UUID,
+        vlob_id: VlobID,
         version: Optional[int] = None,
-        timestamp: Optional[pendulum.DateTime] = None,
-    ) -> Tuple[int, bytes, DeviceID, pendulum.DateTime]:
+        timestamp: Optional[DateTime] = None,
+    ) -> Tuple[int, bytes, DeviceID, DateTime, DateTime]:
         """
         Raises:
             VlobAccessError
@@ -334,25 +417,28 @@ class BaseVlobComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         encryption_revision: int,
-        vlob_id: UUID,
+        vlob_id: VlobID,
         version: int,
-        timestamp: pendulum.DateTime,
+        timestamp: DateTime,
         blob: bytes,
+        # Sequester is a special case, so give it a default version to simplify tests
+        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
     ) -> None:
         """
         Raises:
             VlobAccessError
             VlobVersionError
-            VlobTimestampError
             VlobNotFoundError
             VlobEncryptionRevisionError: if encryption_revision mismatch
             VlobInMaintenanceError
+            VlobSequesterDisabledError
+            VlobSequesterServiceInconsistencyError
         """
         raise NotImplementedError()
 
     async def poll_changes(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int
-    ) -> Tuple[int, Dict[UUID, int]]:
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, checkpoint: int
+    ) -> Tuple[int, Dict[VlobID, int]]:
         """
         Raises:
             VlobInMaintenanceError
@@ -362,8 +448,8 @@ class BaseVlobComponent:
         raise NotImplementedError()
 
     async def list_versions(
-        self, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
-    ) -> Dict[int, Tuple[pendulum.DateTime, DeviceID]]:
+        self, organization_id: OrganizationID, author: DeviceID, vlob_id: VlobID
+    ) -> Dict[int, Tuple[DateTime, DeviceID]]:
         """
         Raises:
             VlobInMaintenanceError
@@ -376,10 +462,10 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
         size: int,
-    ) -> List[Tuple[UUID, int, bytes]]:
+    ) -> List[Tuple[VlobID, int, bytes]]:
         """
         Raises:
             VlobNotFoundError
@@ -393,9 +479,9 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        realm_id: UUID,
+        realm_id: RealmID,
         encryption_revision: int,
-        batch: List[Tuple[UUID, int, bytes]],
+        batch: List[Tuple[VlobID, int, bytes]],
     ) -> Tuple[int, int]:
         """
         Raises:

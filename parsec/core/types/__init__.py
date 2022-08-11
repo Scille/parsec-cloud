@@ -1,21 +1,18 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Union, NewType
 
 from parsec.api.data import EntryID, EntryIDField, EntryName, EntryNameField
-
-from parsec.core.types.base import FsPath, AnyPath
 
 from parsec.core.types.backend_address import (
     BackendAddr,
     BackendOrganizationAddr,
     BackendActionAddr,
     BackendOrganizationBootstrapAddr,
-    BackendOrganizationClaimUserAddr,
-    BackendOrganizationClaimDeviceAddr,
     BackendOrganizationAddrField,
     BackendOrganizationFileLinkAddr,
     BackendInvitationAddr,
+    BackendPkiEnrollmentAddr,
 )
 from parsec.core.types.local_device import LocalDevice, UserInfo, DeviceInfo
 from parsec.core.types.manifest import (
@@ -34,6 +31,13 @@ from parsec.core.types.manifest import (
     Chunk,
     ChunkID,
 )
+
+from parsec.core.types.organizations import (
+    OrganizationStats,
+    UsersPerProfileDetailItem,
+    OrganizationConfig,
+)
+
 from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
 from parsec.api.data import FolderManifest as RemoteFolderManifest
 
@@ -48,9 +52,6 @@ __all__ = (
     "LocalFolderishManifests",
     "RemoteFolderishManifests",
     "LocalNonRootManifests",
-    # Base
-    "FsPath",
-    "AnyPath",
     # Entry
     "EntryID",
     "EntryIDField",
@@ -61,11 +62,10 @@ __all__ = (
     "BackendOrganizationAddr",
     "BackendActionAddr",
     "BackendOrganizationBootstrapAddr",
-    "BackendOrganizationClaimUserAddr",
-    "BackendOrganizationClaimDeviceAddr",
     "BackendOrganizationAddrField",
     "BackendOrganizationFileLinkAddr",
     "BackendInvitationAddr",
+    "BackendPkiEnrollmentAddr",
     # local_device
     "LocalDevice",
     "UserInfo",
@@ -83,4 +83,8 @@ __all__ = (
     "BlockID",
     "Chunk",
     "ChunkID",
+    # organizations
+    "OrganizationStats",
+    "UsersPerProfileDetailItem",
+    "OrganizationConfig",
 )

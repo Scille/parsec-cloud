@@ -1,13 +1,13 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from itertools import count
-from typing import Optional, List, Dict, AsyncIterator, Tuple, Union, Pattern
+from typing import Optional, Dict, AsyncIterator, Union, Pattern, Iterable
 
-from pendulum import now as pendulum_now
+from pendulum import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.api.data import BaseManifest as BaseRemoteManifest
+from parsec.api.data import EntryNameTooLongError, BaseManifest as BaseRemoteManifest
 from parsec.core.types import (
     Chunk,
     EntryID,
@@ -32,9 +32,30 @@ from parsec.core.fs.exceptions import (
 __all__ = "SyncTransactions"
 
 DEFAULT_BLOCK_SIZE = 512 * 1024  # 512Ko
+FILENAME_CONFLICT_KEY = "FILENAME_CONFLICT"
+FILE_CONTENT_CONFLICT_KEY = "FILE_CONTENT_CONFLICT"
+TRANSLATIONS = {
+    "en": {
+        "FILENAME_CONFLICT": "Parsec - name conflict",
+        "FILE_CONTENT_CONFLICT": "Parsec - content conflict",
+    },
+    "fr": {
+        "FILENAME_CONFLICT": "Parsec - Conflit de nom",
+        "FILE_CONTENT_CONFLICT": "Parsec - Conflit de contenu",
+    },
+}
 
 
 # Helpers
+
+
+def get_translated_message(preferred_language: str, key: str) -> str:
+    try:
+        translations = TRANSLATIONS[preferred_language]
+    except KeyError:  # Default to english
+        translations = TRANSLATIONS["en"]
+
+    return translations.get(key, key)
 
 
 def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Optional[EntryName]:
@@ -43,28 +64,48 @@ def get_filename(manifest: LocalFolderishManifests, entry_id: EntryID) -> Option
 
 
 def get_conflict_filename(
-    filename: EntryName, filenames: List[EntryName], author: DeviceID
+    filename: EntryName,
+    filenames: Iterable[EntryName],
+    suffix_key: str,
+    preferred_language: str = "en",
 ) -> EntryName:
     counter = count(2)
-    new_filename = full_name(filename, f"conflicting with {author}")
-    while new_filename in filenames:
-        new_filename = full_name(filename, f"conflicting with {author} - {next(counter)}")
+
+    suffix = get_translated_message(preferred_language, suffix_key)
+    new_filename = full_name(filename, suffix)
+    filename_set = set(filenames)
+    while new_filename in filename_set:
+        new_filename = full_name(filename, f"{suffix} ({next(counter)})")
     return new_filename
 
 
-def full_name(name: EntryName, *suffixes: str) -> EntryName:
-    # No suffix
-    if not suffixes:
-        return name
-
-    # No extension
-    suffix_string = "".join(f" ({suffix})" for suffix in suffixes)
-    if "." not in name[1:]:
-        return EntryName(name + suffix_string)
-
-    # Extension
-    first_name, *ext = name.split(".")
-    return EntryName(".".join([first_name + suffix_string, *ext]))
+def full_name(name: EntryName, suffix: str) -> EntryName:
+    # Separate file name from the extentions (if any)
+    name_parts = name.str.split(".")
+    non_empty_indexes = (i for i, part in enumerate(name_parts) if part)
+    first_non_empty_index = next(non_empty_indexes, len(name_parts) - 1)
+    original_base_name = ".".join(name_parts[: first_non_empty_index + 1])
+    original_extensions = name_parts[first_non_empty_index + 1 :]
+    # Loop over attemps, in case the produced entry name is too long
+    base_name = original_base_name
+    extensions = original_extensions
+    while True:
+        # Convert to EntryName
+        try:
+            return EntryName(".".join([f"{base_name} ({suffix})", *extensions]))
+        # Entry name too long
+        except EntryNameTooLongError:
+            # Simply strip 10 characters from the first name then try again
+            if len(base_name) > 10:
+                base_name = base_name[:-10]
+            # Very rare case where the extensions are very long
+            else:
+                # This assert should only fail when the suffix is longer than 200 bytes,
+                # which should not happen
+                assert extensions
+                # Pop the left most extension and restore the original base name
+                extensions = extensions[1:]
+                base_name = original_base_name
 
 
 # Merging helpers
@@ -74,7 +115,7 @@ def merge_folder_children(
     base_children: Dict[EntryName, EntryID],
     local_children: Dict[EntryName, EntryID],
     remote_children: Dict[EntryName, EntryID],
-    remote_device_name: DeviceID,
+    preferred_language: str = "en",
 ) -> Dict[EntryName, EntryID]:
     # Prepare lookups
     base_reversed = {entry_id: name for name, entry_id in base_children.items()}
@@ -85,8 +126,8 @@ def merge_folder_children(
     ids = set(local_reversed) | set(remote_reversed)
 
     # First map all ids to their rightful name
-    solved_local_children: Dict[EntryName, Tuple[EntryID, Tuple[str, ...]]] = {}
-    solved_remote_children: Dict[EntryName, Tuple[EntryID, Tuple[str, ...]]] = {}
+    solved_local_children: Dict[EntryName, EntryID] = {}
+    solved_remote_children: Dict[EntryName, EntryID] = {}
     for id in ids:
         base_name = base_reversed.get(id)
         local_name = local_reversed.get(id)
@@ -94,11 +135,11 @@ def merge_folder_children(
 
         # Added locally
         if base_name is None and local_name is not None:
-            solved_local_children[local_name] = local_children[local_name], ()
+            solved_local_children[local_name] = local_children[local_name]
 
         # Added remotely
         elif base_name is None and remote_name is not None:
-            solved_remote_children[remote_name] = remote_children[remote_name], ()
+            solved_remote_children[remote_name] = remote_children[remote_name]
 
         # Removed locally
         elif local_name is None:
@@ -113,29 +154,36 @@ def merge_folder_children(
 
         # Preserved remotely and locally with the same naming
         elif local_name == remote_name:
-            solved_local_children[local_name] = local_children[local_name], ()
+            solved_remote_children[remote_name] = remote_children[remote_name]
 
         # Name changed locally
         elif base_name == remote_name:
-            solved_local_children[local_name] = local_children[local_name], ()
+            solved_local_children[local_name] = local_children[local_name]
 
         # Name changed remotely
         elif base_name == local_name:
-            solved_remote_children[remote_name] = remote_children[remote_name], ()
+            solved_remote_children[remote_name] = remote_children[remote_name]
 
         # Name changed both locally and remotely
         else:
-            suffix = f"renamed by {remote_device_name}"
-            solved_remote_children[remote_name] = remote_children[remote_name], (suffix,)
+            # In this case, we simply decide that the remote is right since it means
+            # another user managed to upload their change first. Tough luck for the
+            # local device!
+            solved_remote_children[remote_name] = remote_children[remote_name]
 
     # Merge mappings and fix conflicting names
     children = {}
-    for name, (entry_id, suffixes) in solved_remote_children.items():
-        children[full_name(name, *suffixes)] = entry_id
-    for name, (entry_id, suffixes) in solved_local_children.items():
+    for name, entry_id in solved_remote_children.items():
+        children[name] = entry_id
+    for name, entry_id in solved_local_children.items():
         if name in children:
-            suffixes = *suffixes, f"conflicting with {remote_device_name}"
-        children[full_name(name, *suffixes)] = entry_id
+            name = get_conflict_filename(
+                filename=name,
+                filenames=children.keys(),
+                suffix_key=FILENAME_CONFLICT_KEY,
+                preferred_language=preferred_language,
+            )
+        children[name] = entry_id
 
     # Return
     return children
@@ -143,16 +191,18 @@ def merge_folder_children(
 
 def merge_manifests(
     local_author: DeviceID,
+    timestamp: DateTime,
     prevent_sync_pattern: Pattern[str],
     local_manifest: BaseLocalManifest,
     remote_manifest: Optional[BaseRemoteManifest] = None,
     force_apply_pattern: Optional[bool] = False,
+    preferred_language: str = "en",
 ) -> BaseLocalManifest:
     # Start by re-applying pattern (idempotent)
     if force_apply_pattern and isinstance(
         local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)
     ):
-        local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern)
+        local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern, timestamp)
 
     # The remote hasn't changed
     if remote_manifest is None or remote_manifest.version <= local_manifest.base_version:
@@ -163,7 +213,7 @@ def merge_manifests(
     remote_version = remote_manifest.version
     local_version = local_manifest.base_version
     local_from_remote = BaseLocalManifest.from_remote_with_local_context(
-        remote_manifest, prevent_sync_pattern, local_manifest
+        remote_manifest, prevent_sync_pattern, local_manifest, timestamp
     )
 
     # Only the remote has changed
@@ -177,27 +227,70 @@ def merge_manifests(
     if local_manifest.match_remote(remote_manifest):
         return local_from_remote
 
-    # The remote changes are ours, simply acknowledge them and keep our local changes
-    if remote_manifest.author == local_author:
+    # The remote changes are ours (our current local changes occurs while
+    # we were uploading previous local changes that became the remote changes),
+    # simply acknowledge them remote changes and keep our local changes
+    #
+    # However speculative manifest can lead to a funny behavior:
+    # 1) alice has access to the workspace
+    # 2) alice upload a new remote workspace manifest
+    # 3) alice gets it local storage removed
+    # So next time alice tries to access this workspace she will
+    # creates a speculative workspace manifest.
+    # This speculative manifest will eventually be synced against
+    # the previous remote remote manifest which appears to be remote
+    # changes we know about (given we are the author of it !).
+    # If the speculative flag is not taken into account, we would
+    # consider we have  willingly removed all entries from the remote,
+    # hence uploading a new expurged remote manifest.
+    #
+    # Of course removing local storage is an unlikely situation, but:
+    # - it cannot be ruled out and would produce rare&exotic behavior
+    #   that would be considered as bug :/
+    # - the fixtures and backend data binder system used in the tests
+    #   makes it much more likely
+    speculative = isinstance(local_manifest, LocalWorkspaceManifest) and local_manifest.speculative
+    if remote_manifest.author == local_author and not speculative:
         return local_manifest.evolve(base=remote_manifest)
 
     # The remote has been updated by some other device
-    assert remote_manifest.author != local_author
+    assert remote_manifest.author != local_author or speculative is True
 
     # Cannot solve a file conflict directly
-    if not isinstance(local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
+    if isinstance(local_manifest, LocalFileManifest):
         raise FSFileConflictError(local_manifest, remote_manifest)
 
+    assert isinstance(local_manifest, (LocalFolderManifest, LocalWorkspaceManifest))
     # Solve the folder conflict
     new_children = merge_folder_children(
-        local_manifest.base.children,
-        local_manifest.children,
-        local_from_remote.children,
-        remote_manifest.author,
+        base_children=local_manifest.base.children,
+        local_children=local_manifest.children,
+        remote_children=local_from_remote.children,
+        preferred_language=preferred_language,
     )
 
-    # Mark as updated
-    return local_from_remote.evolve_and_mark_updated(children=new_children)
+    # Children merge can end up with nothing to sync.
+    #
+    # This is typically the case when we sync for the first time a workspace
+    # shared with us that we didn't modify:
+    # - the workspace manifest is a speculative placeholder (with arbitrary update&create dates)
+    # - on sync the update date is different than in the remote, so a merge occurs
+    # - given we didn't modify the workspace, the children merge is trivial
+    # So without this check each each user we share the workspace with would
+    # sync a new workspace manifest version with only it updated date changing :/
+    #
+    # Another case where this happen:
+    # - we have local change on our workspace manifest for removing an entry
+    # - we rely on a base workspace manifest in version N
+    # - remote workspace manifest is in version N+1 and already integrate the removal
+    #
+    # /!\ Extra attention should be payed here if we want to add new fields
+    # /!\ with they own sync logic, as this optimization may shadow them !
+
+    if new_children == local_from_remote.children:
+        return local_from_remote
+    else:
+        return local_from_remote.evolve_and_mark_updated(children=new_children, timestamp=timestamp)
 
 
 class SyncTransactions(EntryTransactions):
@@ -208,19 +301,20 @@ class SyncTransactions(EntryTransactions):
         self, remote_manifest: RemoteFolderishManifests
     ) -> AsyncIterator[EntryID]:
         # Check children placeholder
-        for chield_entry_id in remote_manifest.children.values():
+        for child_entry_id in remote_manifest.children.values():
             try:
-                child_manifest = await self.local_storage.get_manifest(chield_entry_id)
+                child_manifest = await self.local_storage.get_manifest(child_entry_id)
             except FSLocalMissError:
                 continue
             if child_manifest.is_placeholder:
-                yield chield_entry_id
+                yield child_entry_id
 
     async def get_minimal_remote_manifest(self, entry_id: EntryID) -> Optional[BaseRemoteManifest]:
         manifest = await self.local_storage.get_manifest(entry_id)
         if not manifest.is_placeholder:
             return None
-        return manifest.base.evolve(author=self.local_author, timestamp=pendulum_now(), version=1)
+        timestamp = self.device.timestamp()
+        return manifest.base.evolve(author=self.local_author, timestamp=timestamp, version=1)
 
     # Atomic transactions
 
@@ -235,7 +329,10 @@ class SyncTransactions(EntryTransactions):
                 return
 
             # Craft new local manifest
-            new_local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern)
+            timestamp = self.device.timestamp()
+            new_local_manifest = local_manifest.apply_prevent_sync_pattern(
+                prevent_sync_pattern, timestamp
+            )
 
             # Set the new base manifest
             if new_local_manifest != local_manifest:
@@ -291,14 +388,17 @@ class SyncTransactions(EntryTransactions):
                 assert local_manifest.is_reshaped()
 
             # Merge manifests
+            timestamp = self.device.timestamp()
             prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
             force_apply_pattern = not self.local_storage.get_prevent_sync_pattern_fully_applied()
             new_local_manifest = merge_manifests(
-                self.local_author,
-                prevent_sync_pattern,
-                local_manifest,
-                remote_manifest,
-                force_apply_pattern,
+                local_author=self.local_author,
+                timestamp=timestamp,
+                prevent_sync_pattern=prevent_sync_pattern,
+                local_manifest=local_manifest,
+                remote_manifest=remote_manifest,
+                force_apply_pattern=force_apply_pattern,
+                preferred_language=self.preferred_language,
             )
 
             # Extract authors
@@ -326,7 +426,8 @@ class SyncTransactions(EntryTransactions):
                 return None
 
             # Produce the new remote manifest to upload
-            return new_local_manifest.to_remote(self.local_author, pendulum_now())
+            timestamp = self.device.timestamp()
+            return new_local_manifest.to_remote(self.local_author, timestamp)
 
     async def file_reshape(self, entry_id: EntryID) -> None:
 
@@ -394,15 +495,22 @@ class SyncTransactions(EntryTransactions):
                     new_blocks.append(tuple(new_chunks))
 
                 # Prepare
+                timestamp = self.device.timestamp()
                 prevent_sync_pattern = self.local_storage.get_prevent_sync_pattern()
                 new_name = get_conflict_filename(
-                    filename, list(parent_manifest.children), remote_manifest.author
+                    filename=filename,
+                    filenames=parent_manifest.children.keys(),
+                    suffix_key=FILE_CONTENT_CONFLICT_KEY,
+                    preferred_language=self.preferred_language,
                 )
                 new_manifest = LocalFileManifest.new_placeholder(
-                    self.local_author, parent=parent_id
+                    self.local_author, parent=parent_id, timestamp=timestamp
                 ).evolve(size=current_manifest.size, blocks=tuple(new_blocks))
+                timestamp = self.device.timestamp()
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
-                    {new_name: new_manifest.id}, prevent_sync_pattern=prevent_sync_pattern
+                    {new_name: new_manifest.id},
+                    prevent_sync_pattern=prevent_sync_pattern,
+                    timestamp=timestamp,
                 )
                 other_manifest = BaseLocalManifest.from_remote(
                     remote_manifest, prevent_sync_pattern=prevent_sync_pattern

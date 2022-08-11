@@ -1,11 +1,12 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import os
+import sys
 import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule, Bundle
 from string import ascii_lowercase
 
+from parsec.api.data import EntryName, EntryID
 from parsec.core.fs import FSWorkspaceNotFoundError
 
 
@@ -14,7 +15,7 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
 def test_fs_online_user(user_fs_online_state_machine, oracle_fs_with_sync_factory, alice):
     class FSOfflineUser(user_fs_online_state_machine):
         Workspaces = Bundle("workspace")
@@ -22,11 +23,12 @@ def test_fs_online_user(user_fs_online_state_machine, oracle_fs_with_sync_factor
         @initialize()
         async def init(self):
             await self.reset_all()
-            self.device = alice
+            await self.start_backend()
+
+            self.device = self.backend_controller.server.correct_addr(alice)
             self.oracle_fs = oracle_fs_with_sync_factory()
             self.workspace = None
 
-            await self.start_backend()
             await self.restart_user_fs(self.device)
 
         @rule()
@@ -54,7 +56,7 @@ def test_fs_online_user(user_fs_online_state_machine, oracle_fs_with_sync_factor
         @rule(target=Workspaces, name=st_entry_name)
         async def create_workspace(self, name):
             self.oracle_fs.create_workspace(f"/{name}")
-            wid = await self.user_fs.workspace_create(name)
+            wid = await self.user_fs.workspace_create(EntryName(name))
             self.workspace = self.user_fs.get_workspace(wid)
             await self.user_fs.sync()
             return wid, name
@@ -66,10 +68,10 @@ def test_fs_online_user(user_fs_online_state_machine, oracle_fs_with_sync_factor
             dst = f"/{new_name}"
             expected_status = self.oracle_fs.rename_workspace(src, dst)
             if expected_status == "ok":
-                await self.user_fs.workspace_rename(wid, new_name)
+                await self.user_fs.workspace_rename(wid, EntryName(new_name))
             else:
                 with pytest.raises(FSWorkspaceNotFoundError):
-                    await self.user_fs.workspace_rename(workspace, new_name)
+                    await self.user_fs.workspace_rename(EntryID.new(), EntryName(new_name))
             return wid, new_name
 
         @rule(workspace=Workspaces)

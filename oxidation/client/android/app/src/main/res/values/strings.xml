@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Parsec</string>
+    <string name="title_activity_main">Parsec</string>
+    <string name="package_name">com.scille.parsec</string>
+    <string name="custom_url_scheme">com.scille.parsec</string>
+</resources>

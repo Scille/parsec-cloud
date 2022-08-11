@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pendulum
 from typing import Callable
@@ -11,6 +11,7 @@ from parsec.core.fs.workspacefs.workspacefs import WorkspaceFS
 class WorkspaceFSTimestamped(WorkspaceFS):
     def __init__(self, workspacefs: WorkspaceFS, timestamp: pendulum.DateTime):
         self.workspace_id = workspacefs.workspace_id
+        self.get_workspace_entry: Callable[[], WorkspaceEntry]
         if isinstance(workspacefs, WorkspaceFSTimestamped):
             self.get_workspace_entry = workspacefs.get_workspace_entry
         else:
@@ -20,6 +21,7 @@ class WorkspaceFSTimestamped(WorkspaceFS):
         self.backend_cmds = workspacefs.backend_cmds
         self.event_bus = workspacefs.event_bus
         self.remote_devices_manager = workspacefs.remote_devices_manager
+        self.preferred_language = workspacefs.preferred_language
 
         self.timestamp = timestamp
 
@@ -31,6 +33,7 @@ class WorkspaceFSTimestamped(WorkspaceFS):
             self.local_storage,
             self.remote_loader,
             self.event_bus,
+            self.preferred_language,
         )
 
     def timestamp_get_entry(

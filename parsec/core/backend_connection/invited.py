@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 from typing import Optional, AsyncGenerator
 
 from parsec.api.protocol import INVITED_CMDS

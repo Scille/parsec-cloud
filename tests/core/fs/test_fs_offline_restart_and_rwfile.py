@@ -1,10 +1,12 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
 
-from tests.oracles import FileOracle
+from parsec.api.data import EntryName
+
+from tests.common import FileOracle
 
 
 BLOCK_SIZE = 16
@@ -19,7 +21,7 @@ def test_fs_offline_restart_and_rwfile(user_fs_offline_state_machine, alice):
             await self.reset_all()
             self.device = alice
             await self.restart_user_fs(self.device)
-            self.wid = await self.user_fs.workspace_create("w")
+            self.wid = await self.user_fs.workspace_create(EntryName("w"))
             self.workspace = self.user_fs.get_workspace(self.wid)
             await self.workspace.touch("/foo.txt")
             self.file_oracle = FileOracle()

@@ -1,0 +1,44 @@
+name: macos-ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+env:
+  rust-version: 1.62.0
+  python-version: "3.9"
+  poetry-version: 1.2.0b3
+
+jobs:
+  macos-ci-python:
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - name: Install macfuse
+        run: brew install --cask macfuse
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          version: ${{ env.rust-version }}
+          cache-key: python
+
+      - uses: ./.github/actions/setup-python-poetry
+        with:
+          python-version: ${{ env.python-version }}
+          poetry-version: ${{ env.poetry-version }}
+
+      - name: Install python deps
+        run: poetry install -E core -E backend
+
+      - name: Test python
+        run: >
+          poetry run pytest
+          -n auto
+          -vv
+          -x
+          --log-level=DEBUG
+          --durations=10
+          --side-effects-timeout=10

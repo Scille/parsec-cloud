@@ -1,6 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
-
-from pathlib import Path
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from pendulum import now
@@ -19,15 +17,18 @@ from parsec.core.types import (
     Chunk,
 )
 
+from tests.common import customize_fixtures
+
 
 def create_manifest(device, type=LocalWorkspaceManifest, use_legacy_none_author=False):
     author = device.device_id
+    timestamp = device.timestamp()
     if type is LocalUserManifest:
-        manifest = LocalUserManifest.new_placeholder(author)
+        manifest = LocalUserManifest.new_placeholder(author, timestamp=timestamp)
     elif type is LocalWorkspaceManifest:
-        manifest = type.new_placeholder(author)
+        manifest = type.new_placeholder(author, timestamp=timestamp)
     else:
-        manifest = type.new_placeholder(author, parent=EntryID())
+        manifest = type.new_placeholder(author, parent=EntryID.new(), timestamp=timestamp)
     if use_legacy_none_author:
         base = manifest.base.evolve(author=None)
         manifest = manifest.evolve(base=base)
@@ -36,16 +37,17 @@ def create_manifest(device, type=LocalWorkspaceManifest, use_legacy_none_author=
 
 @pytest.fixture
 def workspace_id():
-    return EntryID()
+    return EntryID.new()
 
 
 @pytest.fixture
-async def alice_workspace_storage(tmpdir, alice, workspace_id):
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws:
+async def alice_workspace_storage(data_base_dir, alice, workspace_id):
+    async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
         yield aws
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_lock_required(alice_workspace_storage):
     manifest = create_manifest(alice_workspace_storage.device)
     msg = f"Entry `{manifest.id}` modified without beeing locked"
@@ -66,7 +68,8 @@ async def test_lock_required(alice_workspace_storage):
 
 
 @pytest.mark.trio
-async def test_basic_set_get_clear(alice_workspace_storage):
+@customize_fixtures(real_data_storage=True)
+async def test_basic_set_get_clear(data_base_dir, alice_workspace_storage):
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device)
     async with aws.lock_entry_id(manifest.id):
@@ -79,7 +82,7 @@ async def test_basic_set_get_clear(alice_workspace_storage):
         await aws.set_manifest(manifest.id, manifest)
         assert await aws.get_manifest(manifest.id) == manifest
         # Make sure data are not only stored in cache
-        async with WorkspaceStorage.run(aws.device, aws.path, aws.workspace_id) as aws2:
+        async with WorkspaceStorage.run(data_base_dir, aws.device, aws.workspace_id) as aws2:
             assert await aws2.get_manifest(manifest.id) == manifest
 
         # 3) Clear data
@@ -89,23 +92,24 @@ async def test_basic_set_get_clear(alice_workspace_storage):
         with pytest.raises(FSLocalMissError):
             await aws.clear_manifest(manifest.id)
 
-        async with WorkspaceStorage.run(aws.device, aws.path, aws.workspace_id) as aws3:
+        async with WorkspaceStorage.run(data_base_dir, aws.device, aws.workspace_id) as aws3:
             with pytest.raises(FSLocalMissError):
                 assert await aws3.get_manifest(manifest.id) == manifest
 
 
 @pytest.mark.trio
-async def test_cache_set_get(tmpdir, alice, workspace_id):
+@customize_fixtures(real_data_storage=True)
+async def test_cache_set_get(data_base_dir, alice, workspace_id):
     manifest = create_manifest(alice)
 
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws:
+    async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
 
         async with aws.lock_entry_id(manifest.id):
 
             # 1) Set data
             await aws.set_manifest(manifest.id, manifest, cache_only=True)
             assert await aws.get_manifest(manifest.id) == manifest
-            async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws2:
+            async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws2:
                 with pytest.raises(FSLocalMissError):
                     await aws2.get_manifest(manifest.id)
 
@@ -117,14 +121,14 @@ async def test_cache_set_get(tmpdir, alice, workspace_id):
             # 3) Re-set data
             await aws.set_manifest(manifest.id, manifest, cache_only=True)
             assert await aws.get_manifest(manifest.id) == manifest
-            async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws3:
+            async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws3:
                 with pytest.raises(FSLocalMissError):
                     await aws3.get_manifest(manifest.id)
 
             # 4) Flush data
             await aws.ensure_manifest_persistent(manifest.id)
             assert await aws.get_manifest(manifest.id) == manifest
-            async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws4:
+            async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws4:
                 assert await aws4.get_manifest(manifest.id) == manifest
 
             # 5) Idempotency
@@ -132,6 +136,7 @@ async def test_cache_set_get(tmpdir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("cache_only", (False, True))
 @pytest.mark.parametrize("clear_manifest", (False, True))
 async def test_chunk_clearing(alice_workspace_storage, cache_only, clear_manifest):
@@ -158,8 +163,8 @@ async def test_chunk_clearing(alice_workspace_storage, cache_only, clear_manifes
 
         # The chunks are still accessible
         if cache_only:
-            await aws.get_chunk(chunk1.id) == b"abc"
-            await aws.get_chunk(chunk2.id) == b"def"
+            assert await aws.get_chunk(chunk1.id) == b"abc"
+            assert await aws.get_chunk(chunk2.id) == b"def"
 
         # The chunks are gone
         else:
@@ -185,18 +190,20 @@ async def test_chunk_clearing(alice_workspace_storage, cache_only, clear_manifes
 
 
 @pytest.mark.trio
-async def test_cache_flushed_on_exit(tmpdir, alice, workspace_id):
+@customize_fixtures(real_data_storage=True)
+async def test_cache_flushed_on_exit(data_base_dir, alice, workspace_id):
     manifest = create_manifest(alice)
 
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws:
+    async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
         async with aws.lock_entry_id(manifest.id):
             await aws.set_manifest(manifest.id, manifest, cache_only=True)
 
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws2:
+    async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws2:
         assert await aws2.get_manifest(manifest.id) == manifest
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_clear_cache(alice_workspace_storage):
     aws = alice_workspace_storage
     manifest1 = create_manifest(aws.device)
@@ -231,13 +238,14 @@ async def test_clear_cache(alice_workspace_storage):
     "type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest, LocalUserManifest]
 )
 @pytest.mark.trio
-async def test_serialize_types(tmpdir, alice, workspace_id, type):
+@customize_fixtures(real_data_storage=True)
+async def test_serialize_types(data_base_dir, alice, workspace_id, type):
     manifest = create_manifest(alice, type)
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws:
+    async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
         async with aws.lock_entry_id(manifest.id):
             await aws.set_manifest(manifest.id, manifest)
 
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws2:
+    async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws2:
         assert await aws2.get_manifest(manifest.id) == manifest
 
 
@@ -245,50 +253,65 @@ async def test_serialize_types(tmpdir, alice, workspace_id, type):
     "type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest, LocalUserManifest]
 )
 @pytest.mark.trio
-async def test_deserialize_legacy_types(tmpdir, alice, workspace_id, type):
+@pytest.mark.skip("Legacy types are not handled in Rust")
+@customize_fixtures(real_data_storage=True)
+async def test_deserialize_legacy_types(data_base_dir, alice, workspace_id, type):
     # In parsec < 1.15, the author field used to be None for placeholders
     # That means those manifests can still exist in the local storage
     # However, they should not appear anywhere in the new code bases
 
     # Create legacy manifests to dump and save them in the local storage
     manifest = create_manifest(alice, type, use_legacy_none_author=True)
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws:
+    async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
         async with aws.lock_entry_id(manifest.id):
             await aws.set_manifest(manifest.id, manifest)
 
     # Make sure they come out with the author field set to LOCAL_AUTHOR_LEGACY_PLACEHOLDER
     expected_base = manifest.base.evolve(author=LOCAL_AUTHOR_LEGACY_PLACEHOLDER)
     expected = manifest.evolve(base=expected_base)
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws2:
+    async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws2:
         assert await aws2.get_manifest(manifest.id) == expected
 
 
 @pytest.mark.trio
-async def test_serialize_non_empty_local_file_manifest(tmpdir, alice, workspace_id):
+@customize_fixtures(real_data_storage=True)
+async def test_serialize_non_empty_local_file_manifest(data_base_dir, alice, workspace_id):
     manifest = create_manifest(alice, LocalFileManifest)
     chunk1 = Chunk.new(0, 7).evolve_as_block(b"0123456")
     chunk2 = Chunk.new(7, 8)
     chunk3 = Chunk.new(8, 10)
     blocks = (chunk1, chunk2), (chunk3,)
-    manifest = manifest.evolve_and_mark_updated(blocksize=8, size=10, blocks=blocks)
+    manifest = manifest.evolve_and_mark_updated(
+        blocksize=8, size=10, blocks=blocks, timestamp=alice.timestamp()
+    )
     manifest.assert_integrity()
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws:
+    async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
         async with aws.lock_entry_id(manifest.id):
             await aws.set_manifest(manifest.id, manifest)
 
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws2:
+    async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws2:
         assert await aws2.get_manifest(manifest.id) == manifest
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_realm_checkpoint(alice_workspace_storage):
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device, LocalFileManifest)
 
     assert await aws.get_realm_checkpoint() == 0
+    # Workspace storage starts with a speculative workspace manifest placeholder
+    assert await aws.get_need_sync_entries() == ({aws.workspace_id}, set())
+
+    workspace_manifest = create_manifest(aws.device, LocalWorkspaceManifest)
+    base = workspace_manifest.to_remote(aws.device.device_id, timestamp=aws.device.timestamp())
+    workspace_manifest = workspace_manifest.evolve(base=base, need_sync=False)
+    await aws.set_manifest(aws.workspace_id, workspace_manifest, check_lock_status=False)
+
+    assert await aws.get_realm_checkpoint() == 0
     assert await aws.get_need_sync_entries() == (set(), set())
 
-    await aws.update_realm_checkpoint(11, {manifest.id: 22, EntryID(): 33})
+    await aws.update_realm_checkpoint(11, {manifest.id: 22, EntryID.new(): 33})
 
     assert await aws.get_realm_checkpoint() == 11
     assert await aws.get_need_sync_entries() == (set(), set())
@@ -303,16 +326,17 @@ async def test_realm_checkpoint(alice_workspace_storage):
     assert await aws.get_realm_checkpoint() == 11
     assert await aws.get_need_sync_entries() == (set(), set())
 
-    await aws.update_realm_checkpoint(44, {manifest.id: 55, EntryID(): 66})
+    await aws.update_realm_checkpoint(44, {manifest.id: 55, EntryID.new(): 66})
 
     assert await aws.get_realm_checkpoint() == 44
     assert await aws.get_need_sync_entries() == (set(), set([manifest.id]))
 
 
 @pytest.mark.trio
-async def test_lock_manifest(tmpdir, alice, workspace_id):
+@customize_fixtures(real_data_storage=True)
+async def test_lock_manifest(data_base_dir, alice, workspace_id):
     manifest = create_manifest(alice, LocalFileManifest)
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws:
+    async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
 
         with pytest.raises(FSLocalMissError):
             async with aws.lock_manifest(manifest.id):
@@ -328,6 +352,7 @@ async def test_lock_manifest(tmpdir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_block_interface(alice_workspace_storage):
     data = b"0123456"
     aws = alice_workspace_storage
@@ -357,6 +382,7 @@ async def test_block_interface(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_chunk_interface(alice_workspace_storage):
     data = b"0123456"
     aws = alice_workspace_storage
@@ -386,6 +412,26 @@ async def test_chunk_interface(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
+async def test_chunk_many(alice_workspace_storage):
+    data = b"0123456"
+    aws = alice_workspace_storage
+    # More than the sqLite max argument limit to prevent regression
+    chunks_number = 2000
+    chunks = []
+    for i in range(chunks_number):
+        c = Chunk.new(0, 7)
+        chunks.append(c.id)
+        await aws.chunk_storage.set_chunk(c.id, data)
+    assert len(chunks) == chunks_number
+    ret = await aws.get_local_chunk_ids(chunks)
+    for i in range(len(ret)):
+        assert ret[i]
+    assert len(ret) == chunks_number
+
+
+@pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_file_descriptor(alice_workspace_storage):
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device, LocalFileManifest)
@@ -404,19 +450,20 @@ async def test_file_descriptor(alice_workspace_storage):
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_run_vacuum(alice_workspace_storage):
     # Should be a no-op
     await alice_workspace_storage.run_vacuum()
 
 
 @pytest.mark.trio
+@customize_fixtures(real_data_storage=True)
 async def test_timestamped_storage(alice_workspace_storage):
     timestamp = now()
     aws = alice_workspace_storage
     taws = aws.to_timestamped(timestamp)
     assert taws.timestamp == timestamp
     assert taws.device == aws.device
-    assert taws.path == aws.path
     assert taws.workspace_id == aws.workspace_id
     assert taws.manifest_storage is None
     assert taws.block_storage == aws.block_storage
@@ -444,7 +491,7 @@ async def test_timestamped_storage(alice_workspace_storage):
         await taws.clear_memory_cache("flush")
 
     with pytest.raises(FSLocalMissError):
-        await taws.get_manifest(EntryID())
+        await taws.get_manifest(EntryID.new())
 
     manifest = create_manifest(aws.device)
     with pytest.raises(FSError):
@@ -460,11 +507,12 @@ async def test_timestamped_storage(alice_workspace_storage):
 
 
 @pytest.mark.trio
-async def test_vacuum(tmpdir, alice, workspace_id):
+@customize_fixtures(real_data_storage=True)
+async def test_vacuum(data_base_dir, alice, workspace_id):
     data_size = 1 * 1024 * 1024
     chunk = Chunk.new(0, data_size)
     async with WorkspaceStorage.run(
-        alice, tmpdir, workspace_id, vacuum_threshold=data_size // 2
+        data_base_dir, alice, workspace_id, data_vacuum_threshold=data_size // 2
     ) as aws:
 
         # Make sure the storage is empty
@@ -503,7 +551,8 @@ async def test_vacuum(tmpdir, alice, workspace_id):
 
 
 @pytest.mark.trio
-async def test_garbage_collection(tmpdir, alice, workspace_id):
+@customize_fixtures(real_data_storage=True)
+async def test_garbage_collection(data_base_dir, alice, workspace_id):
     block_size = DEFAULT_BLOCK_SIZE
     cache_size = 1 * block_size
     data = b"\x00" * block_size
@@ -511,7 +560,9 @@ async def test_garbage_collection(tmpdir, alice, workspace_id):
     chunk2 = Chunk.new(0, block_size).evolve_as_block(data)
     chunk3 = Chunk.new(0, block_size).evolve_as_block(data)
 
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id, cache_size=cache_size) as aws:
+    async with WorkspaceStorage.run(
+        data_base_dir, alice, workspace_id, cache_size=cache_size
+    ) as aws:
         assert await aws.block_storage.get_nb_blocks() == 0
         await aws.set_clean_block(chunk1.access.id, data)
         assert await aws.block_storage.get_nb_blocks() == 1
@@ -524,15 +575,17 @@ async def test_garbage_collection(tmpdir, alice, workspace_id):
 
 
 @pytest.mark.trio
-async def test_storage_file_tree(alice, tmpdir, workspace_id):
-    path = Path(tmpdir)
-    manifest_sqlite_db = path / "workspace_data-v1.sqlite"
-    chunk_sqlite_db = path / "workspace_data-v1.sqlite"
-    block_sqlite_db = path / "workspace_cache-v1.sqlite"
+@customize_fixtures(real_data_storage=True)
+async def test_storage_file_tree(data_base_dir, alice, workspace_id):
+    manifest_sqlite_db = data_base_dir / alice.slug / str(workspace_id) / "workspace_data-v1.sqlite"
+    chunk_sqlite_db = data_base_dir / alice.slug / str(workspace_id) / "workspace_data-v1.sqlite"
+    block_sqlite_db = data_base_dir / alice.slug / str(workspace_id) / "workspace_cache-v1.sqlite"
 
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws:
+    async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
         assert aws.manifest_storage.path == manifest_sqlite_db
         assert aws.chunk_storage.path == chunk_sqlite_db
         assert aws.block_storage.path == block_sqlite_db
 
-    assert set(path.iterdir()) == {manifest_sqlite_db, chunk_sqlite_db, block_sqlite_db}
+    assert manifest_sqlite_db.is_file()
+    assert chunk_sqlite_db.is_file()
+    assert block_sqlite_db.is_file()

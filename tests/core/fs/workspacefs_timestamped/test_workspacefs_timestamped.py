@@ -1,9 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from unittest.mock import ANY
 
-from parsec.core.types import FsPath
+from parsec.api.data import EntryName
+from parsec.core.fs import FsPath
 from parsec.core.fs.exceptions import FSWorkspaceTimestampedTooEarly
 
 
@@ -13,9 +14,9 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         await alice_workspace.to_timestamped(timestamp_0)
 
     info = await alice_workspace_t1.path_info("/")
-    assert info == {
+    assert {
         "base_version": ANY,
-        "children": ["foo"],
+        "children": [EntryName("foo")],
         "created": ANY,
         "id": ANY,
         "is_placeholder": False,
@@ -23,10 +24,10 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "type": "folder",
         "updated": ANY,
         "confinement_point": None,
-    }
+    } == info
 
     info = await alice_workspace_t1.path_info("/foo")
-    assert info == {
+    assert {
         "base_version": ANY,
         "children": [],
         "created": ANY,
@@ -36,15 +37,15 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "type": "folder",
         "updated": ANY,
         "confinement_point": None,
-    }
+    } == info
 
     with pytest.raises(FileNotFoundError):
         info = await alice_workspace_t1.path_info("/foo/bar")
 
     info = await alice_workspace_t2.path_info("/foo")
-    assert info == {
+    assert {
         "base_version": ANY,
-        "children": ["bar"],
+        "children": [EntryName("bar")],
         "created": ANY,
         "id": ANY,
         "is_placeholder": False,
@@ -52,10 +53,10 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "type": "folder",
         "updated": ANY,
         "confinement_point": None,
-    }
+    } == info
 
     info = await alice_workspace_t2.path_info("/foo/bar")
-    assert info == {
+    assert {
         "base_version": ANY,
         "size": 0,
         "created": ANY,
@@ -65,7 +66,7 @@ async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice
         "type": "file",
         "updated": ANY,
         "confinement_point": None,
-    }
+    } == info
 
     with pytest.raises(FileNotFoundError):
         info = await alice_workspace_t2.path_info("/foo/baz")

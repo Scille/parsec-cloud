@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 """Versioning helpers
 
@@ -25,8 +25,9 @@ from pendulum import DateTime
 from collections import defaultdict
 
 from parsec.api.protocol import DeviceID
-from parsec.core.types import FsPath, EntryID
+from parsec.core.types import EntryID
 from parsec.utils import open_service_nursery
+from parsec.core.fs.path import FsPath
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 from parsec.api.data import FileManifest, UserManifest, FolderManifest, WorkspaceManifest
 
@@ -290,7 +291,7 @@ class ManifestCache:
             current_manifest = parent_manifest
 
         # Return the path
-        return FsPath("/" + "/".join(reversed(parts)))
+        return FsPath("/" + "/".join(reversed([part.str for part in parts])))
 
 
 class ManifestCacheCounter:

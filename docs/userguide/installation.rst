@@ -1,3 +1,5 @@
+.. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 .. _doc_userguide_install_client:
 
 
@@ -31,12 +33,6 @@ If you are familiar with Snap, you may notice that Parsec snap is provided in cl
         sudo snap install parsec --classic
 
 
-MacOS
------
-
-Parsec is not yet available on MacOS.
-
-
 Via pip
 -------
 
@@ -55,3 +51,45 @@ Or intall it with all its dependencies, for the GUI.
 .. note::
 
     Parsec requires Python >= 3.6 to work.
+
+
+MacOS
+-----
+
+MacOS (10.15, >= 11.0) installer is available as a DMG installer on `GitHub <https://github.com/Scille/parsec/releases/latest>`_ (installer named ``parsec-vX.Y.Z-macos-amd64.dmg``).
+
+The MacOS version needs `FUSE for MacOS <https://osxfuse.github.io/>`_ to be installed, which can be troublesome on Big Sur. See `this discussion <https://github.com/osxfuse/osxfuse/issues/814>`_ about it and the OS' limitations.
+
+
+FUSE for MacOS installation
+***************************
+
+From `FUSE for MacOS <https://osxfuse.github.io/>`_ website, you can find the lastest version to download at the indicated location.
+
+.. image:: screens/macfuse_download.png
+    :align: center
+    :alt: FUSE for MacOS download screen
+
+Open the ``.dmg`` file and follow its instructions to install. If the opening fails, check the `App Store and identified developers` box in System Preferences > Security & Privacy:
+
+.. image:: screens/macfuse_system_preferences.png
+    :align: center
+    :alt: MacOS path to Security and Privacy
+
+.. image:: screens/macfuse_allow_developer.png
+    :align: center
+    :alt: MacOS allow identified developer
+
+To change this setting, click the lock first which will require admin rights.
+
+Once the installation is done, a `System Extension Updated` window will pop up. Click `Open Security Preferences`, and click the lock, then click `Allow`:
+
+.. image:: screens/macfuse_system_extension.png
+    :align: center
+    :alt: System Extension Updated window
+
+.. image:: screens/macfuse_allow_extension.png
+    :align: center
+    :alt: MacOS allow extension
+
+Finally, reboot your Mac to complete the installation.

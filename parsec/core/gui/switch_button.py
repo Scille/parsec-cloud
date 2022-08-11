@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 """
 Switch button implementation in PyQt5
@@ -106,7 +106,7 @@ class SwitchButton(QAbstractButton):
         p.setPen(text_color)
         p.setOpacity(text_opacity)
         font = p.font()
-        font.setPixelSize(1.5 * self._thumb_radius)
+        font.setPixelSize(int(round(1.5 * self._thumb_radius)))
         p.setFont(font)
         p.drawText(
             QRectF(

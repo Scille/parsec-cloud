@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from PyQt5.QtCore import Qt, QRect, QPoint, QSize
 from PyQt5.QtWidgets import QLayout, QStyle, QSizePolicy
@@ -37,13 +37,19 @@ class FlowLayout(QLayout):
         return None
 
     def clear(self):
+        for w in self.pop_all():
+            w.setParent(None)
+
+    def pop_all(self):
+        results = []
         while self.count() != 0:
             item = self.takeAt(0)
             if item:
                 w = item.widget()
                 self.removeWidget(w)
                 w.hide()
-                w.setParent(None)
+                results.append(w)
+        return results
 
     def expandingDirections(self):
         return Qt.Horizontal

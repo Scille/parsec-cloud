@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from string import ascii_lowercase
@@ -11,6 +11,7 @@ from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
 )
 
+from parsec.api.data import EntryName
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 from tests.common import call_with_control, compare_fs_dumps
 
@@ -23,9 +24,8 @@ st_fs = st.sampled_from(["fs_1", "fs_2"])
 def test_fs_online_concurrent_user(
     hypothesis_settings,
     reset_testbed,
-    backend_addr,
     backend_factory,
-    server_factory,
+    running_backend_factory,
     user_fs_factory,
     alice,
     alice2,
@@ -41,10 +41,10 @@ def test_fs_online_concurrent_user(
 
             return await self.get_root_nursery().start(call_with_control, _user_fs_controlled_cb)
 
-        async def start_backend(self, devices):
+        async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client, backend_addr) as server:
+                    async with running_backend_factory(backend) as server:
                         await started_cb(backend=backend, server=server)
 
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)
@@ -60,14 +60,14 @@ def test_fs_online_concurrent_user(
         @initialize(target=Workspaces)
         async def init(self):
             await reset_testbed()
-            self.device1 = alice
-            self.device2 = alice2
+            self.backend_controller = await self.start_backend()
 
-            self.backend_controller = await self.start_backend([self.device1, self.device2])
+            self.device1 = self.backend_controller.server.correct_addr(alice)
+            self.device2 = self.backend_controller.server.correct_addr(alice2)
             self.user_fs1_controller = await self.start_user_fs(self.device1)
             self.user_fs2_controller = await self.start_user_fs(self.device2)
 
-            self.wid = await self.user_fs1.workspace_create("w")
+            self.wid = await self.user_fs1.workspace_create(EntryName("w"))
             workspace = self.user_fs1.get_workspace(self.wid)
             await workspace.sync()
             await self.user_fs1.sync()
@@ -86,7 +86,7 @@ def test_fs_online_concurrent_user(
         @rule(target=Workspaces, fs=FSs, name=st_entry_name)
         async def create_workspace(self, fs, name):
             try:
-                wid = await fs.workspace_create(name)
+                wid = await fs.workspace_create(EntryName(name))
                 workspace = fs.get_workspace(wid)
                 await workspace.sync()
             except AssertionError:
@@ -99,7 +99,7 @@ def test_fs_online_concurrent_user(
             if wid == "wrong":
                 return src[0], src[1]
             try:
-                await fs.workspace_rename(wid, dst_name)
+                await fs.workspace_rename(wid, EntryName(dst_name))
             except FSWorkspaceNotFoundError:
                 pass
             return wid, dst_name

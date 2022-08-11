@@ -1,19 +1,20 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 import trio
 from collections import defaultdict
-from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional
-from pendulum import DateTime, now as pendulum_now
+from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
+from pendulum import DateTime
 
+from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
+from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
-from parsec.api.data import BaseManifest as BaseRemoteManifest
+from parsec.api.data import BaseManifest as BaseRemoteManifest, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
-from parsec.api.protocol import UserID, MaintenanceType
+from parsec.api.protocol import UserID, MaintenanceType, RealmID
 from parsec.core.types import (
-    FsPath,
-    AnyPath,
     EntryID,
+    EntryName,
     LocalDevice,
     WorkspaceRole,
     WorkspaceEntry,
@@ -24,7 +25,9 @@ from parsec.core.types import (
     RemoteWorkspaceManifest,
     RemoteFolderishManifests,
     DEFAULT_BLOCK_SIZE,
+    BackendOrganizationFileLinkAddr,
 )
+from parsec.core.fs.path import AnyPath, FsPath
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.backend_connection import (
     BackendAuthenticatedCmds,
@@ -70,25 +73,30 @@ class WorkspaceFS:
         self,
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
+        get_previous_workspace_entry: Callable[[], Awaitable[Optional[WorkspaceEntry]]],
         device: LocalDevice,
         local_storage: BaseWorkspaceStorage,
         backend_cmds: BackendAuthenticatedCmds,
         event_bus: EventBus,
         remote_devices_manager: RemoteDevicesManager,
+        preferred_language: str = "en",
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
+        self.get_previous_workspace_entry = get_previous_workspace_entry
         self.device = device
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
         self.remote_devices_manager = remote_devices_manager
+        self.preferred_language = preferred_language
         self.sync_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
 
         self.remote_loader = RemoteLoader(
             self.device,
             self.workspace_id,
             self.get_workspace_entry,
+            self.get_previous_workspace_entry,
             self.backend_cmds,
             self.remote_devices_manager,
             self.local_storage,
@@ -100,16 +108,47 @@ class WorkspaceFS:
             self.local_storage,
             self.remote_loader,
             self.event_bus,
+            self.preferred_language,
         )
 
     def __repr__(self) -> str:
         try:
             name = self.get_workspace_name()
         except Exception:
-            name = "<could not retrieve name>"
+            name = EntryName("<could not retrieve name>")
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
 
-    def get_workspace_name(self) -> str:
+    async def get_blocks_by_type(self, path: AnyPath, limit: int = 1000000000) -> BlockInfo:
+        path = FsPath(path)
+        return await self.transactions.entry_get_blocks_by_type(path, limit)
+
+    async def load_block(self, block: BlockAccess) -> None:
+        """
+        Raises:
+            FSError
+            FSRemoteBlockNotFound
+            FSBackendOfflineError
+            FSRemoteOperationError
+            FSWorkspaceInMaintenance
+            FSWorkspaceNoAccess
+        """
+        await self.remote_loader.load_block(block)
+
+    async def receive_load_blocks(
+        self, blocks: List[BlockAccess], nursery: trio.Nursery
+    ) -> "trio.MemoryReceiveChannel[BlockAccess]":
+        """
+        Raises:
+                FSError
+                FSRemoteBlockNotFound
+                FSBackendOfflineError
+                FSRemoteOperationError
+                FSWorkspaceInMaintenance
+                FSWorkspaceInMaintenance
+        """
+        return await self.remote_loader.receive_load_blocks(blocks, nursery)
+
+    def get_workspace_name(self) -> EntryName:
         return self.get_workspace_entry().name
 
     def get_encryption_revision(self) -> int:
@@ -145,8 +184,8 @@ class WorkspaceFS:
             FSBackendOfflineError
         """
         try:
-            workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
-            if workspace_manifest.is_placeholder:
+            workspace_manifest = self.local_storage.get_workspace_manifest()
+            if workspace_manifest.is_placeholder and not workspace_manifest.speculative:
                 return {self.device.user_id: WorkspaceRole.OWNER}
 
         except FSLocalMissError:
@@ -168,8 +207,8 @@ class WorkspaceFS:
         """
         wentry = self.get_workspace_entry()
         try:
-            workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
-            if workspace_manifest.is_placeholder:
+            workspace_manifest = self.local_storage.get_workspace_manifest()
+            if workspace_manifest.is_placeholder and not workspace_manifest.speculative:
                 return ReencryptionNeed(
                     user_revoked=(), role_revoked=(), reencryption_already_in_progress=False
                 )
@@ -178,7 +217,7 @@ class WorkspaceFS:
             pass
 
         try:
-            rep = await self.backend_cmds.realm_status(self.workspace_id)
+            rep = await self.backend_cmds.realm_status(RealmID(self.workspace_id.uuid))
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -285,7 +324,7 @@ class WorkspaceFS:
         info = await self.transactions.entry_info(path)
         if "children" not in info:
             raise FSNotADirectoryError(filename=str(path))
-        for child in cast(Dict[str, EntryID], info["children"]):
+        for child in cast(Dict[EntryName, EntryID], info["children"]):
             yield path / child
 
     async def listdir(self, path: AnyPath) -> List[FsPath]:
@@ -504,12 +543,7 @@ class WorkspaceFS:
             await self.minimal_sync(child)
 
     async def _upload_blocks(self, manifest: RemoteFileManifest) -> None:
-        for access in manifest.blocks:
-            try:
-                data = await self.local_storage.get_dirty_block(access.id)
-            except FSLocalMissError:
-                continue
-            await self.remote_loader.upload_block(access, data)
+        await self.remote_loader.upload_blocks(list(manifest.blocks))
 
     async def minimal_sync(self, entry_id: EntryID) -> None:
         """
@@ -521,25 +555,31 @@ class WorkspaceFS:
 
         # Get a minimal manifest to upload
         try:
-            remote_manifest = await self.transactions.get_minimal_remote_manifest(entry_id)
+            to_sync_remote_manifest = await self.transactions.get_minimal_remote_manifest(entry_id)
         # Not available locally so nothing to synchronize
         except FSLocalMissError:
             return
 
         # No miminal manifest to upload, the entry is not a placeholder
-        if remote_manifest is None:
+        if to_sync_remote_manifest is None:
             return
 
         # Upload the miminal manifest
         try:
-            await self.remote_loader.upload_manifest(entry_id, remote_manifest)
+            # `actual_remote_manifest` is different from `to_sync_remote_manifest`
+            # given manifest's timestamp got updated before the upload
+            actual_remote_manifest = await self.remote_loader.upload_manifest(
+                entry_id, to_sync_remote_manifest
+            )
         # The upload has failed: download the latest remote manifest
         except FSRemoteSyncError:
-            remote_manifest = await self.remote_loader.load_manifest(entry_id)
+            actual_remote_manifest = await self.remote_loader.load_manifest(entry_id)
 
         # Register the manifest to unset the placeholder tag
         try:
-            await self.transactions.synchronization_step(entry_id, remote_manifest, final=True)
+            await self.transactions.synchronization_step(
+                entry_id, actual_remote_manifest, final=True
+            )
         # Not available locally so nothing to synchronize
         except FSLocalMissError:
             pass
@@ -600,12 +640,11 @@ class WorkspaceFS:
             if isinstance(new_remote_manifest, RemoteFileManifest):
                 await self._upload_blocks(cast(RemoteFileManifest, new_remote_manifest))
 
-            # Restamp the remote manifest
-            new_remote_manifest = new_remote_manifest.evolve(timestamp=pendulum_now())
-
             # Upload the new manifest containing the latest changes
             try:
-                await self.remote_loader.upload_manifest(entry_id, new_remote_manifest)
+                remote_manifest = await self.remote_loader.upload_manifest(
+                    entry_id, new_remote_manifest
+                )
 
             # The upload has failed: download the latest remote manifest
             except FSRemoteSyncError:
@@ -614,18 +653,13 @@ class WorkspaceFS:
             # The upload has succeeded: loop one last time to acknowledge this new version
             else:
                 final = True
-                remote_manifest = new_remote_manifest
 
     async def _create_realm_if_needed(self) -> None:
-        # Get workspace manifest
-        try:
-            workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
-
-        # Cannot be a placeholder if we know about it but don't have it in local
-        except FSLocalMissError:
-            return
-
-        if workspace_manifest.is_placeholder:
+        workspace_manifest = self.local_storage.get_workspace_manifest()
+        # Non-placeholder means sync already occured, speculative placeholder
+        # means the realm has been created by somebody else
+        if workspace_manifest.is_placeholder and not workspace_manifest.speculative:
+            # Realm creation is idempotent
             await self.remote_loader.create_realm(self.workspace_id)
 
     async def sync_by_id(
@@ -724,7 +758,7 @@ class WorkspaceFS:
             if not isinstance(manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
                 return result
 
-            children: Dict[str, Dict[str, object]] = {}
+            children: Dict[EntryName, Dict[str, object]] = {}
             for key, value in manifest.children.items():
                 children[key] = await rec(value)
             result["children"] = children
@@ -732,3 +766,27 @@ class WorkspaceFS:
             return result
 
         return await rec(self.workspace_id)
+
+    def generate_file_link(self, path: AnyPath) -> BackendOrganizationFileLinkAddr:
+        """
+        Raises: Nothing
+        """
+        workspace_entry = self.get_workspace_entry()
+        encrypted_path = workspace_entry.key.encrypt(str(FsPath(path)).encode("utf-8"))
+        return BackendOrganizationFileLinkAddr.build(
+            organization_addr=self.device.organization_addr,
+            workspace_id=workspace_entry.id,
+            encrypted_path=encrypted_path,
+        )
+
+    def decrypt_file_link_path(self, addr: BackendOrganizationFileLinkAddr) -> FsPath:
+        """
+        Raises: ValueError
+        """
+        workspace_entry = self.get_workspace_entry()
+        try:
+            raw_path = workspace_entry.key.decrypt(addr.encrypted_path)
+        except CryptoError:
+            raise ValueError("Cannot decrypt path")
+        # FsPath raises ValueError, decode() raises UnicodeDecodeError which is a subclass of ValueError
+        return FsPath(raw_path.decode("utf-8"))

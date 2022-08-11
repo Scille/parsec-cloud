@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
-from typing import Tuple, Optional
+from typing import TYPE_CHECKING, Tuple, Optional
 from hashlib import sha256
 from marshmallow import ValidationError
 from pendulum import DateTime, now as pendulum_now
@@ -15,6 +15,8 @@ from parsec.api.protocol import (
     HumanHandle,
     DeviceIDField,
     HumanHandleField,
+    DeviceLabel,
+    DeviceLabelField,
 )
 from parsec.api.data import BaseSchema, EntryID, EntryIDField, UserProfile, UserProfileField
 from parsec.core.types.base import BaseLocalData
@@ -26,14 +28,17 @@ class LocalDevice(BaseLocalData):
     class SCHEMA_CLS(BaseSchema):
         organization_addr = BackendOrganizationAddrField(required=True)
         device_id = DeviceIDField(required=True)
-        device_label = fields.String(allow_none=True, missing=None)
-        human_handle = HumanHandleField(allow_none=True, missing=None)
+        # Added in Parsec v1.14
+        device_label = DeviceLabelField(required=False, allow_none=True, missing=None)
+        # Added in Parsec v1.13
+        human_handle = HumanHandleField(required=False, allow_none=True, missing=None)
         signing_key = fields.SigningKey(required=True)
         private_key = fields.PrivateKey(required=True)
         # `profile` replaces `is_admin` field (which is still required for backward
         # compatibility), hence `None` is not allowed
         is_admin = fields.Boolean(required=True)
-        profile = UserProfileField(allow_none=False)
+        # Added in Parsec v1.14
+        profile = UserProfileField(required=False, allow_none=False)
         user_manifest_id = EntryIDField(required=True)
         user_manifest_key = fields.SecretKey(required=True)
         local_symkey = fields.SecretKey(required=True)
@@ -56,7 +61,7 @@ class LocalDevice(BaseLocalData):
 
     organization_addr: BackendOrganizationAddr
     device_id: DeviceID
-    device_label: Optional[str]
+    device_label: Optional[DeviceLabel]
     human_handle: Optional[HumanHandle]
     signing_key: SigningKey
     private_key: PrivateKey
@@ -69,6 +74,10 @@ class LocalDevice(BaseLocalData):
     @property
     def is_admin(self) -> bool:
         return self.profile == UserProfile.ADMIN
+
+    @property
+    def is_outsider(self) -> bool:
+        return self.profile == UserProfile.OUTSIDER
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.device_id})"
@@ -143,6 +152,25 @@ class LocalDevice(BaseLocalData):
     def device_display(self) -> str:
         return str(self.device_label or self.device_id.device_name)
 
+    def timestamp(self) -> DateTime:
+        """This method centralizes the production of parsec timestamps for a given device.
+        At the moment it is simply an alias to `pendulum.now` but it has two main benefits:
+        1. Allowing for easier testing by patching this method in device-sepecific way
+        2. Allowing for other implementation in the future allowing to track, check and
+           possibly alter the production of timestamps.
+        """
+        return pendulum_now()
+
+
+_PyLocalDevice = LocalDevice
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import LocalDevice as _RsLocalDevice
+    except:
+        pass
+    else:
+        LocalDevice = _RsLocalDevice
+
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserInfo:
@@ -162,7 +190,12 @@ class UserInfo:
 
     @property
     def is_revoked(self):
-        return pendulum_now() >= self.revoked_on if self.revoked_on else False
+        # Note that we might consider a user revoked even though our current time is still
+        # below the revokation timestamp. This is because there is no clear causality between
+        # our time and the production of the revokation timestamp (as it might have been produced
+        # by another device). So we simply consider a user revoked if a revokation timestamp has
+        # been issued.
+        return bool(self.revoked_on)
 
     def __repr__(self):
         return f"<UserInfo {self.user_display}>"
@@ -171,7 +204,7 @@ class UserInfo:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceInfo:
     device_id: DeviceID
-    device_label: Optional[str]
+    device_label: Optional[DeviceLabel]
     created_on: DateTime
 
     @property

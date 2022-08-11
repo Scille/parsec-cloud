@@ -1,29 +1,38 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 import pytest
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 try:
     from tests.fuse_loopback import loopback_fs
 except ImportError:
     pytest.skip("Fuse is required", allow_module_level=True)
 
-
+from parsec.api.data import EntryName
 from parsec.core.fs import UserFS
 from parsec.core.logged_core import get_prevent_sync_pattern
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.fs.exceptions import FSLocalStorageOperationalError, FSLocalStorageClosedError
+from tests.common import customize_fixtures
 
 fixtures = (loopback_fs,)
 
 
 @pytest.fixture
-async def alice_fs_context(loopback_fs, event_bus_factory, alice):
+async def alice_fs_context(loopback_fs, event_bus_factory, alice, monkeypatch):
+    @staticmethod
+    async def _run_in_thread_patched(fn, *args):
+        return fn(*args)
+
+    # Disable running sqlite in threads as it causes inconsistent issues with the loopback FS
+    monkeypatch.setattr(
+        "parsec.core.fs.storage.local_database.LocalDatabase.run_in_thread", _run_in_thread_patched
+    )
 
     event_bus = event_bus_factory()
-    path = loopback_fs.path / alice.device_name
+    path = loopback_fs.path / alice.device_name.str
     await trio.Path(path).mkdir()
 
     @asynccontextmanager
@@ -33,12 +42,12 @@ async def alice_fs_context(loopback_fs, event_bus_factory, alice):
         ) as cmds:
             rdm = RemoteDevicesManager(cmds, alice.root_verify_key)
             async with UserFS.run(
-                alice, path, cmds, rdm, event_bus, get_prevent_sync_pattern()
+                path, alice, cmds, rdm, event_bus, get_prevent_sync_pattern()
             ) as user_fs:
                 yield user_fs
 
     async with _alice_context() as user_fs:
-        wid = await user_fs.workspace_create("w")
+        wid = await user_fs.workspace_create(EntryName("w"))
 
     @asynccontextmanager
     async def _alice_fs_context(allow_sqlite_error_at_exit=False):
@@ -59,6 +68,7 @@ async def alice_fs_context(loopback_fs, event_bus_factory, alice):
 @pytest.mark.trio
 @pytest.mark.linux
 @pytest.mark.diskfull
+@customize_fixtures(real_data_storage=True)
 async def test_workspace_fs_with_disk_full_simple(alice_fs_context, loopback_fs):
     """Make sure the sqlite database can recover from a full disk error."""
     async with alice_fs_context() as fs:
@@ -83,6 +93,7 @@ async def test_workspace_fs_with_disk_full_simple(alice_fs_context, loopback_fs)
 @pytest.mark.trio
 @pytest.mark.linux
 @pytest.mark.diskfull
+@customize_fixtures(real_data_storage=True)
 async def test_workspace_fs_with_disk_full_large_write(alice_fs_context, loopback_fs):
     """Make sure the sqlite database can recover from a full disk error."""
     async with alice_fs_context() as fs:
@@ -115,6 +126,7 @@ async def test_workspace_fs_with_disk_full_large_write(alice_fs_context, loopbac
 @pytest.mark.trio
 @pytest.mark.linux
 @pytest.mark.diskfull
+@customize_fixtures(real_data_storage=True)
 async def test_workspace_fs_with_disk_full_issue_1535(
     alice_fs_context, loopback_fs, running_backend
 ):
@@ -147,6 +159,7 @@ async def test_workspace_fs_with_disk_full_issue_1535(
 @pytest.mark.slow
 @pytest.mark.linux
 @pytest.mark.diskfull
+@customize_fixtures(real_data_storage=True)
 async def test_workspace_fs_with_disk_full_systematic(alice_fs_context, loopback_fs):
     """A more systematic but slower search for corruption."""
     for number_of_write_before_full in range(50):
@@ -166,6 +179,7 @@ async def test_workspace_fs_with_disk_full_systematic(alice_fs_context, loopback
 @pytest.mark.slow
 @pytest.mark.linux
 @pytest.mark.diskfull
+@customize_fixtures(real_data_storage=True)
 async def test_workspace_fs_with_disk_full_systematic_with_flush(alice_fs_context, loopback_fs):
     """A more systematic but slower search for corruption."""
     for number_of_write_before_full in range(50):
@@ -189,6 +203,7 @@ async def test_workspace_fs_with_disk_full_systematic_with_flush(alice_fs_contex
 @pytest.mark.slow
 @pytest.mark.linux
 @pytest.mark.diskfull
+@customize_fixtures(real_data_storage=True)
 async def test_workspace_fs_with_disk_full_systematic_with_sync(
     alice_fs_context, loopback_fs, running_backend
 ):

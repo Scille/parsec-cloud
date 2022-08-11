@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from enum import Enum
 
@@ -21,16 +21,20 @@ class CoreEvent(Enum):
     FS_ENTRY_CONFINED = "fs.entry.confined"
     FS_ENTRY_UPDATED = "fs.entry.updated"
     FS_ENTRY_FILE_CONFLICT_RESOLVED = "fs.entry.file_conflict_resolved"
-    FS_ENTRY_FILE_UPDATE_CONFLICTED = "fs.entry.file_update_conflicted"
     FS_WORKSPACE_CREATED = "fs.workspace.created"
     # Gui
     GUI_CONFIG_CHANGED = "gui.config.changed"
     # Mountpoint
     MOUNTPOINT_REMOTE_ERROR = "mountpoint.remote_error"
-    MOUNTPOINT_STARTED = "mountpoint.started"
     MOUNTPOINT_STARTING = "mountpoint.starting"
+    MOUNTPOINT_STARTED = "mountpoint.started"
+    MOUNTPOINT_STOPPING = "mountpoint.stopping"
     MOUNTPOINT_STOPPED = "mountpoint.stopped"
+    MOUNTPOINT_READONLY = "mountpoint.readonly"
     MOUNTPOINT_UNHANDLED_ERROR = "mountpoint.unhandled_error"
+    MOUNTPOINT_TRIO_DEADLOCK_ERROR = "mountpoint.trio_deadlock_error"
     # Others
     SHARING_UPDATED = "sharing.updated"
     USERFS_UPDATED = "userfs.updated"
+    # Pki enrollment
+    PKI_ENROLLMENTS_UPDATED = "pki_enrollment.updated"

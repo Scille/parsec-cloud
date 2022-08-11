@@ -1,7 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 
+from parsec.api.data import EntryName
 from parsec.core.fs import FSWorkspaceNoAccess
 
 from tests.common import create_shared_workspace
@@ -9,7 +10,7 @@ from tests.common import create_shared_workspace
 
 @pytest.mark.trio
 async def test_manifest_no_access(running_backend, alice_user_fs, bob_user_fs):
-    wid = await create_shared_workspace("w", alice_user_fs, bob_user_fs)
+    wid = await create_shared_workspace(EntryName("w"), alice_user_fs, bob_user_fs)
     alice_w = alice_user_fs.get_workspace(wid)
     bob_w = bob_user_fs.get_workspace(wid)
     await alice_w.touch("/foo.txt")
@@ -18,7 +19,7 @@ async def test_manifest_no_access(running_backend, alice_user_fs, bob_user_fs):
 
     # Load workspace manifest
     info = await bob_w.path_info("/")
-    assert list(info["children"]) == ["foo.txt"]
+    assert list(info["children"]) == [EntryName("foo.txt")]
 
     # Remove access to bob
     await alice_user_fs.workspace_share(wid, bob_user_fs.device.user_id, None)
@@ -40,7 +41,7 @@ async def test_manifest_no_access(running_backend, alice_user_fs, bob_user_fs):
 
 @pytest.mark.trio
 async def test_block_no_access(running_backend, alice_user_fs, bob_user_fs):
-    wid = await create_shared_workspace("w", alice_user_fs, bob_user_fs)
+    wid = await create_shared_workspace(EntryName("w"), alice_user_fs, bob_user_fs)
     alice_w = alice_user_fs.get_workspace(wid)
     bob_w = bob_user_fs.get_workspace(wid)
     await alice_w.touch("/foo.txt")

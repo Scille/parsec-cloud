@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 from enum import IntEnum
@@ -7,10 +7,15 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
 from parsec.api.data import UserProfile
-from parsec.api.protocol import HumanHandle
+from parsec.api.protocol import DeviceLabel, HumanHandle
 from parsec.core.backend_connection import BackendNotAvailable
-from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
+from parsec.core.invite import (
+    InviteError,
+    InvitePeerResetError,
+    InviteActiveUsersLimitReachedError,
+    InviteAlreadyUsedError,
+)
+from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
 from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui import validators
 from parsec.core.gui.lang import translate as _
@@ -150,7 +155,9 @@ class Greeter:
             raise JobResultError(status="get-claim-request-failed", origin=exc)
         return human_handle, device_label
 
-    async def create_new_user(self, human_handle, device_label, profile):
+    async def create_new_user(
+        self, human_handle: HumanHandle, device_label: DeviceLabel, profile: UserProfile
+    ) -> None:
         await self.main_mc_send.send(self.Step.CreateNewUser)
         await self.main_mc_send.send((human_handle, device_label, profile))
         r, exc = await self.job_mc_recv.receive()
@@ -179,9 +186,7 @@ class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
         self.button_start.setDisabled(True)
         self.button_start.setText(_("TEXT_GREET_USER_WAITING"))
         self.wait_peer_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "wait_peer_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "wait_peer_error", QtToTrioJob),
-            self.greeter.wait_peer,
+            self.wait_peer_success, self.wait_peer_error, self.greeter.wait_peer
         )
 
     def _on_wait_peer_success(self, job):
@@ -208,6 +213,8 @@ class GreetUserInstructionsWidget(QWidget, Ui_GreetUserInstructionsWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -222,7 +229,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
     create_user_success = pyqtSignal(QtToTrioJob)
     create_user_error = pyqtSignal(QtToTrioJob)
 
-    def __init__(self, jobs_ctx, greeter):
+    def __init__(self, jobs_ctx, greeter, user_profile_outsider_allowed=False):
         super().__init__()
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -234,15 +241,32 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.label_waiting.show()
 
         self.line_edit_user_full_name.validity_changed.connect(self.check_infos)
-        self.line_edit_user_full_name.set_validator(validators.NotEmptyValidator())
+        self.line_edit_user_full_name.set_validator(validators.UserNameValidator())
         self.line_edit_user_email.validity_changed.connect(self.check_infos)
         self.line_edit_user_email.set_validator(validators.EmailValidator())
         self.line_edit_device.validity_changed.connect(self.check_infos)
-        self.line_edit_device.set_validator(validators.DeviceNameValidator())
+        self.line_edit_device.set_validator(validators.DeviceLabelValidator())
+        self.combo_profile.currentIndexChanged.connect(self.check_infos)
 
-        # self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
+        self.combo_profile.addItem(_("TEXT_SELECT_USER_PROFILE"), None)
+        self.combo_profile.addItem(_("TEXT_USER_PROFILE_OUTSIDER"), UserProfile.OUTSIDER)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_STANDARD"), UserProfile.STANDARD)
         self.combo_profile.addItem(_("TEXT_USER_PROFILE_ADMIN"), UserProfile.ADMIN)
+
+        item = self.combo_profile.model().item(2)
+        item.setToolTip(_("TEXT_USER_PROFILE_STANDARD_TOOLTIP"))
+        item = self.combo_profile.model().item(3)
+        item.setToolTip(_("TEXT_USER_PROFILE_ADMIN_TOOLTIP"))
+
+        if not user_profile_outsider_allowed:
+            item = self.combo_profile.model().item(1)
+            item.setEnabled(False)
+            item.setToolTip(_("NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"))
+        else:
+            item = self.combo_profile.model().item(1)
+            item.setToolTip(_("TEXT_USER_PROFILE_OUTSIDER_TOOLTIP"))
+
+        # No profile by default, forcing the greeter to choose one
         self.combo_profile.setCurrentIndex(0)
 
         self.get_requests_success.connect(self._on_get_requests_success)
@@ -252,9 +276,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.button_create_user.clicked.connect(self._on_create_user_clicked)
 
         self.get_requests_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_requests_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "get_requests_error", QtToTrioJob),
-            self.greeter.get_claim_requests,
+            self.get_requests_success, self.get_requests_error, self.greeter.get_claim_requests
         )
 
     def check_infos(self, _=None):
@@ -262,6 +284,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
             self.line_edit_user_full_name.is_input_valid()
             and self.line_edit_device.is_input_valid()
             and self.line_edit_user_email.is_input_valid()
+            and self.combo_profile.currentIndex() != 0
         ):
             self.button_create_user.setDisabled(False)
         else:
@@ -269,19 +292,17 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
 
     def _on_create_user_clicked(self):
         assert not self.create_user_job
-        handle = None
-        device_label = self.line_edit_device.text()
-        try:
-            user_name = validators.trim_user_name(self.line_edit_user_full_name.text())
-            handle = HumanHandle(label=user_name, email=self.line_edit_user_email.text())
-        except ValueError as exc:
-            show_error(self, _("TEXT_GREET_USER_INVALID_HUMAN_HANDLE"), exception=exc)
-            return
+        # No try/except given inputs are validated with validators
+        device_label = DeviceLabel(self.line_edit_device.clean_text())
+        handle = HumanHandle(
+            label=self.line_edit_user_full_name.clean_text(), email=self.line_edit_user_email.text()
+        )
+
         self.button_create_user.setDisabled(True)
         self.button_create_user.setText(_("TEXT_GREET_USER_WAITING"))
         self.create_user_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "create_user_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "create_user_error", QtToTrioJob),
+            self.create_user_success,
+            self.create_user_error,
             self.greeter.create_new_user,
             human_handle=handle,
             device_label=device_label,
@@ -311,6 +332,10 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
+                elif isinstance(exc, InviteActiveUsersLimitReachedError):
+                    msg = _("TEXT_GREET_USER_ACTIVE_USERS_LIMIT_REACHED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -326,7 +351,7 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
         self.widget_info.show()
         self.line_edit_user_full_name.setText(human_handle.label)
         self.line_edit_user_email.setText(human_handle.email)
-        self.line_edit_device.setText(device_label)
+        self.line_edit_device.setText(device_label.str)
         self.check_infos()
 
     def _on_get_requests_error(self, job):
@@ -343,6 +368,8 @@ class GreetUserCheckInfoWidget(QWidget, Ui_GreetUserCheckInfoWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -395,17 +422,13 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         self.get_claimer_sas_error.connect(self._on_get_claimer_sas_error)
 
         self.get_greeter_sas_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_greeter_sas_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "get_greeter_sas_error", QtToTrioJob),
-            self.greeter.get_greeter_sas,
+            self.get_greeter_sas_success, self.get_greeter_sas_error, self.greeter.get_greeter_sas
         )
 
     def _on_good_claimer_code_clicked(self):
         self.widget_claimer_code.setDisabled(True)
         self.signify_trust_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "signify_trust_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "signify_trust_error", QtToTrioJob),
-            self.greeter.signify_trust,
+            self.signify_trust_success, self.signify_trust_error, self.greeter.signify_trust
         )
 
     def _on_wrong_claimer_code_clicked(self):
@@ -424,11 +447,9 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         assert job.is_finished()
         assert job.status == "ok"
         greeter_sas = job.ret
-        self.line_edit_greeter_code.setText(str(greeter_sas))
+        self.line_edit_greeter_code.setText(greeter_sas.str)
         self.wait_peer_trust_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "wait_peer_trust_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "wait_peer_trust_error", QtToTrioJob),
-            self.greeter.wait_peer_trust,
+            self.wait_peer_trust_success, self.wait_peer_trust_error, self.greeter.wait_peer_trust
         )
 
     def _on_get_greeter_sas_error(self, job):
@@ -445,6 +466,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -474,6 +497,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -500,6 +525,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -511,9 +538,7 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
         assert job.is_finished()
         assert job.status == "ok"
         self.get_claimer_sas_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "get_claimer_sas_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "get_claimer_sas_error", QtToTrioJob),
-            self.greeter.get_claimer_sas,
+            self.get_claimer_sas_success, self.get_claimer_sas_error, self.greeter.get_claimer_sas
         )
 
     def _on_wait_peer_trust_error(self, job):
@@ -530,6 +555,8 @@ class GreetUserCodeExchangeWidget(QWidget, Ui_GreetUserCodeExchangeWidget):
                 exc = job.exc.params.get("origin", None)
                 if isinstance(exc, InvitePeerResetError):
                     msg = _("TEXT_GREET_USER_PEER_RESET")
+                elif isinstance(exc, InviteAlreadyUsedError):
+                    msg = _("TEXT_INVITATION_ALREADY_USED")
             show_error(self, msg, exception=exc)
         self.failed.emit(job)
 
@@ -553,8 +580,8 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
 
     def _run_greeter(self):
         self.greeter_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "greeter_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "greeter_error", QtToTrioJob),
+            self.greeter_success,
+            self.greeter_error,
             self.greeter.run,
             core=self.core,
             token=self.token,
@@ -582,6 +609,12 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         # No reason to restart the process if the invitation is already used, simply close the dialog
         if job is not None and isinstance(
             job.exc.params.get("origin", None), InviteAlreadyUsedError
+        ):
+            self.dialog.reject()
+            return
+        # No reason to restart the process if active users limit has been reached
+        if job is not None and isinstance(
+            job.exc.params.get("origin", None), InviteActiveUsersLimitReachedError
         ):
             self.dialog.reject()
             return
@@ -613,7 +646,12 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
         current_page = self.main_layout.takeAt(0).widget()
         current_page.hide()
         current_page.setParent(None)
-        page = GreetUserCheckInfoWidget(self.jobs_ctx, self.greeter)
+        # The organization's config value is already cached in the core's logic
+        # so the GUI doesn't need to set the value in its own cache
+        organization_config = self.core.get_organization_config()
+        page = GreetUserCheckInfoWidget(
+            self.jobs_ctx, self.greeter, organization_config.user_profile_outsider_allowed
+        )
         page.succeeded.connect(self._on_finished)
         page.failed.connect(self._on_page_failed)
         self.main_layout.addWidget(page)
@@ -661,7 +699,7 @@ class GreetUserWidget(QWidget, Ui_GreetUserWidget):
             if current_page and getattr(current_page, "cancel", None):
                 current_page.cancel()
         if self.greeter_job:
-            self.greeter_job.cancel_and_join()
+            self.greeter_job.cancel()
 
     def on_close(self):
         self.cancel()

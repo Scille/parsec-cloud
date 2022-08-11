@@ -1,21 +1,20 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import trio
-from uuid import UUID
 import struct
 from structlog import get_logger
 from sys import byteorder
-from typing import List, Optional
+from typing import List, Optional, Union
 
-from parsec.api.protocol import OrganizationID
+from parsec.utils import open_service_nursery
+from parsec.api.protocol import OrganizationID, BlockID
+from parsec.backend.block import BlockStoreError
 from parsec.backend.blockstore import BaseBlockStoreComponent
-from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
 
 
 logger = get_logger()
 
 
-def _xor_buffers(*buffers):
+def _xor_buffers(*buffers: bytes) -> bytes:
     buff_len = len(buffers[0])
     xored = int.from_bytes(buffers[0], byteorder)
     for buff in buffers[1:]:
@@ -40,7 +39,9 @@ def generate_checksum_chunk(chunks: List[bytes]) -> bytes:
     return _xor_buffers(*chunks)
 
 
-def rebuild_block_from_chunks(chunks: List[Optional[bytes]], checksum_chunk: bytes) -> bytes:
+def rebuild_block_from_chunks(
+    chunks: List[Optional[bytes]], checksum_chunk: Optional[bytes]
+) -> bytes:
     valid_chunks = [chunk for chunk in chunks if chunk is not None]
     assert len(chunks) - len(valid_chunks) <= 1  # Cannot correct more than 1 chunk
     try:
@@ -49,59 +50,53 @@ def rebuild_block_from_chunks(chunks: List[Optional[bytes]], checksum_chunk: byt
         chunks[missing_chunk_id] = _xor_buffers(*valid_chunks, checksum_chunk)
     except StopIteration:
         pass
-
+    # By now, all chunks are valid
+    chunks: List[bytes]
     payload = b"".join(chunks)
-    block_len, = struct.unpack("!I", payload[:4])
+    (block_len,) = struct.unpack("!I", payload[:4])
     return payload[4 : 4 + block_len]
 
 
 class RAID5BlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, blockstores):
+    def __init__(self, blockstores: List[BaseBlockStoreComponent], partial_create_ok: bool = False):
         self.blockstores = blockstores
+        self._partial_create_ok = partial_create_ok
+        self._logger = logger.bind(blockstore_type="RAID5", partial_create_ok=partial_create_ok)
 
-    async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
-        timeout_count = 0
-        fetch_results = [None] * len(self.blockstores)
+    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
+        error_count = 0
+        fetch_results: List[Union[Exception, Optional[bytes]]] = [None] * len(self.blockstores)
 
-        async def _partial_blockstore_read(nursery, blockstore_index):
-            nonlocal timeout_count
+        async def _partial_blockstore_read(nursery, blockstore_index: int) -> None:
+            nonlocal error_count
             nonlocal fetch_results
             try:
                 fetch_results[blockstore_index] = await self.blockstores[blockstore_index].read(
                     organization_id, id
                 )
-
-            except BlockNotFoundError as exc:
-                # We don't know yet if this id doesn't exists globally or only in this blockstore...
+            except BlockStoreError as exc:
                 fetch_results[blockstore_index] = exc
-
-            except BlockTimeoutError as exc:
-                fetch_results[blockstore_index] = exc
-                timeout_count += 1
-                logger.warning(
-                    f"Cannot reach RAID5 blockstore #{blockstore_index} to read block {id}",
-                    exc_info=exc,
-                )
-                if timeout_count > 1:
+                error_count += 1
+                if error_count > 1:
                     nursery.cancel_scope.cancel()
                 else:
                     # Try to fetch the checksum to rebuild the current missing chunk...
                     nursery.start_soon(_partial_blockstore_read, nursery, len(self.blockstores) - 1)
 
-        async with trio.open_service_nursery() as nursery:
+        async with open_service_nursery() as nursery:
             # Don't fetch the checksum by default
             for blockstore_index in range(len(self.blockstores) - 1):
                 nursery.start_soon(_partial_blockstore_read, nursery, blockstore_index)
 
-        if timeout_count == 0:
+        if error_count == 0:
             # Sanity check: no errors and we didn't fetch the checksum
             assert len([res for res in fetch_results if res is None]) == 1
             assert fetch_results[-1] is None
             assert not len([res for res in fetch_results if isinstance(res, Exception)])
 
-            return rebuild_block_from_chunks(fetch_results[:-1], None)
+            return rebuild_block_from_chunks(fetch_results[:-1], None)  # type: ignore
 
-        elif timeout_count == 1:
+        elif error_count == 1:
             checksum = fetch_results[-1]
             # Sanity check: one error and we have fetched the checksum
             assert len([res for res in fetch_results if res is None]) == 0
@@ -117,12 +112,16 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             )
 
         else:
-            logger.error(
-                f"Block {id} cannot be read: Too many failing blockstores in the RAID5 cluster"
+            # No need to log the detail of the nodes errors, they should have
+            # already been logged before raising their exceptions
+            self._logger.warning(
+                "Block read error: More than 1 nodes have failed",
+                organization_id=str(organization_id),
+                block_id=str(id),
             )
-            raise BlockTimeoutError("More than 1 blockstores has failed in the RAID5 cluster")
+            raise BlockStoreError("More than 1 RAID5 nodes have failed")
 
-    async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
+    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
         nb_chunks = len(self.blockstores) - 1
         chunks = split_block_in_chunks(block, nb_chunks)
         assert len(chunks) == nb_chunks
@@ -131,36 +130,45 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
         # Actually do the upload
         error_count = 0
 
-        async def _subblockstore_create(nursery, blockstore_index, chunk_or_checksum):
+        async def _subblockstore_create(
+            nursery, blockstore_index: int, chunk_or_checksum: bytes
+        ) -> None:
             nonlocal error_count
             try:
                 await self.blockstores[blockstore_index].create(
                     organization_id, id, chunk_or_checksum
                 )
-            except BlockAlreadyExistsError:
-                # It's possible a previous tentative to upload this block has
-                # failed due to another blockstore not available. In such case
-                # a retrial will raise AlreadyExistsError on all the blockstores
-                # that sucessfully uploaded the block during last attempt.
-                # Only solution to solve this is to ignore AlreadyExistsError.
-                pass
-            except BlockTimeoutError as exc:
+            except BlockStoreError:
                 error_count += 1
-                logger.warning(
-                    f"Cannot reach RAID5 blockstore #{blockstore_index} to create block {id}",
-                    exc_info=exc,
-                )
-                if error_count > 1:
+                if error_count > 1 or not self._partial_create_ok:
                     # Early exit
                     nursery.cancel_scope.cancel()
 
-        async with trio.open_service_nursery() as nursery:
+        async with open_service_nursery() as nursery:
             for i, chunk_or_checksum in enumerate([*chunks, checksum_chunk]):
                 nursery.start_soon(_subblockstore_create, nursery, i, chunk_or_checksum)
 
-        if error_count > 1:
+        if self._partial_create_ok:
             # Only a single blockstore is allowed to fail
-            logger.error(
-                f"Block {id} cannot be created: Too many failing blockstores in the RAID5 cluster"
-            )
-            raise BlockTimeoutError("More than 1 blockstores has failed in the RAID5 cluster")
+            # Note it's possible to have error_count > 1 and still have some blokstore nodes
+            # that have written the block. This is no big deal given we consider the create
+            # operation to be idempotent (and two create with the same orgID/ID couple are
+            # expected to have the same block data).
+            if error_count > 1:
+                # No need to log the detail of the nodes errors, they should have
+                # already been logged before raising their exceptions
+                self._logger.warning(
+                    "Block create error: More than 1 nodes have failed",
+                    organization_id=str(organization_id),
+                    block_id=str(id),
+                )
+                raise BlockStoreError("More than 1 RAID5 nodes have failed")
+
+        else:
+            if error_count:
+                self._logger.warning(
+                    "Block create error: A node have failed",
+                    organization_id=str(organization_id),
+                    block_id=str(id),
+                )
+                raise BlockStoreError("A RAID5 node have failed")

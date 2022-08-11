@@ -1,6 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
+import pendulum
 from unittest.mock import ANY
 from uuid import uuid4
 
@@ -9,6 +10,7 @@ from parsec.api.protocol import (
     packb,
     unpackb,
     InvalidMessageError,
+    InvitationToken,
     InvitationType,
     HandshakeFailedChallenge,
     HandshakeBadIdentity,
@@ -23,7 +25,10 @@ from parsec.api.protocol import (
     InvitedClientHandshake,
     HandshakeOrganizationExpired,
 )
-from parsec.api.version import API_V2_VERSION, ApiVersion
+from parsec.api.protocol.handshake import answer_serializer
+
+from parsec.api.version import API_VERSION, ApiVersion
+from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 
 
 def test_good_authenticated_handshake(alice):
@@ -44,7 +49,7 @@ def test_good_authenticated_handshake(alice):
     assert sh.answer_type == HandshakeType.AUTHENTICATED
     assert sh.answer_data == {
         "answer": ANY,
-        "client_api_version": API_V2_VERSION,
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key,
@@ -53,13 +58,13 @@ def test_good_authenticated_handshake(alice):
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
-    assert sh.client_api_version == API_V2_VERSION
+    assert sh.client_api_version == API_VERSION
 
 
 @pytest.mark.parametrize("invitation_type", (InvitationType.USER, InvitationType.DEVICE))
 def test_good_invited_handshake(coolorg, invitation_type):
     organization_id = OrganizationID("Org")
-    token = uuid4()
+    token = InvitationToken.new()
 
     sh = ServerHandshake()
     ch = InvitedClientHandshake(
@@ -76,7 +81,7 @@ def test_good_invited_handshake(coolorg, invitation_type):
     assert sh.state == "answer"
     assert sh.answer_type == HandshakeType.INVITED
     assert sh.answer_data == {
-        "client_api_version": API_V2_VERSION,
+        "client_api_version": API_VERSION,
         "organization_id": organization_id,
         "invitation_type": invitation_type,
         "token": token,
@@ -86,7 +91,7 @@ def test_good_invited_handshake(coolorg, invitation_type):
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
-    assert sh.client_api_version == API_V2_VERSION
+    assert sh.client_api_version == API_VERSION
 
 
 # 1) Server build challenge (nothing more to test...)
@@ -99,17 +104,13 @@ def test_good_invited_handshake(coolorg, invitation_type):
     "req",
     [
         {},
-        {
-            "handshake": "foo",
-            "challenge": b"1234567890",
-            "supported_api_versions": [API_V2_VERSION],
-        },
+        {"handshake": "foo", "challenge": b"1234567890", "supported_api_versions": [API_VERSION]},
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"challenge": b"1234567890"},
-        {"challenge": b"1234567890", "supported_api_versions": [API_V2_VERSION]},
+        {"challenge": b"1234567890", "supported_api_versions": [API_VERSION]},
         {"handshake": "challenge", "challenge": None},
-        {"handshake": "challenge", "challenge": None, "supported_api_versions": [API_V2_VERSION]},
-        {"handshake": "challenge", "challenge": 42, "supported_api_versions": [API_V2_VERSION]},
+        {"handshake": "challenge", "challenge": None, "supported_api_versions": [API_VERSION]},
+        {"handshake": "challenge", "challenge": 42, "supported_api_versions": [API_VERSION]},
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"handshake": "challenge", "challenge": b"1234567890", "supported_api_versions": "invalid"},
     ],
@@ -153,6 +154,9 @@ def test_process_challenge_req_good_api_version(
         "handshake": "challenge",
         "challenge": b"1234567890",
         "supported_api_versions": [backend_version],
+        "backend_timestamp": pendulum.now(),
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
     }
     monkeypatch.setattr(ch, "SUPPORTED_API_VERSIONS", [client_version])
 
@@ -214,6 +218,9 @@ def test_process_challenge_req_good_multiple_api_version(
         "handshake": "challenge",
         "challenge": b"1234567890",
         "supported_api_versions": list(backend_versions),
+        "backend_timestamp": pendulum.now(),
+        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
+        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
     }
     monkeypatch.setattr(ch, "SUPPORTED_API_VERSIONS", client_versions)
 
@@ -315,14 +322,14 @@ def test_process_challenge_req_good_multiple_api_version(
 )
 def test_process_answer_req_bad_format(req, alice):
     for key, good_value in [
-        ("organization_id", alice.organization_id),
-        ("device_id", alice.device_id),
+        ("organization_id", str(alice.organization_id)),
+        ("device_id", str(alice.device_id)),
         ("rvk", alice.root_verify_key.encode()),
         ("token", uuid4()),
     ]:
         if req.get(key) == "<good>":
             req[key] = good_value
-    req["client_api_version"] = API_V2_VERSION
+    req["client_api_version"] = API_VERSION
     sh = ServerHandshake()
     sh.build_challenge_req()
     with pytest.raises(InvalidMessageError):
@@ -338,11 +345,11 @@ def test_build_result_req_bad_key(alice, bob):
     answer = {
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
-        "client_api_version": API_V2_VERSION,
-        "organization_id": alice.organization_id,
-        "device_id": alice.device_id,
+        "client_api_version": API_VERSION,
+        "organization_id": str(alice.organization_id),
+        "device_id": str(alice.device_id),
         "rvk": alice.root_verify_key.encode(),
-        "answer": alice.signing_key.sign(sh.challenge),
+        "answer": alice.signing_key.sign(answer_serializer.dumps({"answer": sh.challenge})),
     }
     sh.process_answer_req(packb(answer))
     with pytest.raises(HandshakeFailedChallenge):
@@ -355,11 +362,13 @@ def test_build_result_req_bad_challenge(alice):
     answer = {
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
-        "client_api_version": API_V2_VERSION,
-        "organization_id": alice.organization_id,
-        "device_id": alice.device_id,
+        "client_api_version": API_VERSION,
+        "organization_id": str(alice.organization_id),
+        "device_id": str(alice.device_id),
         "rvk": alice.root_verify_key.encode(),
-        "answer": alice.signing_key.sign(sh.challenge + b"-dummy"),
+        "answer": alice.signing_key.sign(
+            answer_serializer.dumps({"answer": sh.challenge + b"-dummy"})
+        ),
     }
     sh.process_answer_req(packb(answer))
     with pytest.raises(HandshakeFailedChallenge):
@@ -383,11 +392,11 @@ def test_build_bad_outcomes(alice, method, expected_result):
     answer = {
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
-        "client_api_version": API_V2_VERSION,
-        "organization_id": alice.organization_id,
-        "device_id": alice.device_id,
+        "client_api_version": API_VERSION,
+        "organization_id": str(alice.organization_id),
+        "device_id": str(alice.device_id),
         "rvk": alice.root_verify_key.encode(),
-        "answer": alice.signing_key.sign(sh.challenge),
+        "answer": alice.signing_key.sign(answer_serializer.dumps({"answer": sh.challenge})),
     }
     sh.process_answer_req(packb(answer))
     req = getattr(sh, method)()

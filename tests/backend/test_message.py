@@ -1,9 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from pendulum import datetime
 
 from parsec.api.protocol import message_get_serializer, APIEvent
+from parsec.backend.asgi import app_factory
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.config import PostgreSQLBlockStoreConfig
 
@@ -12,22 +13,22 @@ from tests.backend.test_events import events_subscribe, events_listen, events_li
 
 async def message_get(sock, offset=0):
     await sock.send(message_get_serializer.req_dumps({"cmd": "message_get", "offset": offset}))
-    raw_rep = await sock.recv()
+    raw_rep = await sock.receive()
     return message_get_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio
-async def test_message_from_bob_to_alice(backend, alice, bob, alice_backend_sock):
-    await events_subscribe(alice_backend_sock)
+async def test_message_from_bob_to_alice(backend, alice, bob, alice_ws):
+    await events_subscribe(alice_ws)
     d1 = datetime(2000, 1, 1)
-    async with events_listen(alice_backend_sock) as listen:
+    async with events_listen(alice_ws) as listen:
         await backend.message.send(
             bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from Bob !"
         )
 
     assert listen.rep == {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 1}
 
-    rep = await message_get(alice_backend_sock)
+    rep = await message_get(alice_ws)
     assert rep == {
         "status": "ok",
         "messages": [
@@ -37,14 +38,14 @@ async def test_message_from_bob_to_alice(backend, alice, bob, alice_backend_sock
 
 
 @pytest.mark.trio
-async def test_message_get_with_offset(backend, alice, bob, alice_backend_sock):
+async def test_message_get_with_offset(backend, alice, bob, alice_ws):
     d1 = datetime(2000, 1, 1)
     d2 = datetime(2000, 1, 2)
     await backend.message.send(bob.organization_id, bob.device_id, alice.user_id, d1, b"1")
     await backend.message.send(bob.organization_id, bob.device_id, alice.user_id, d1, b"2")
     await backend.message.send(bob.organization_id, bob.device_id, alice.user_id, d2, b"3")
 
-    rep = await message_get(alice_backend_sock, 1)
+    rep = await message_get(alice_ws, 1)
     assert rep == {
         "status": "ok",
         "messages": [
@@ -57,7 +58,7 @@ async def test_message_get_with_offset(backend, alice, bob, alice_backend_sock):
 @pytest.mark.trio
 @pytest.mark.postgresql
 async def test_message_from_bob_to_alice_multi_backends(
-    postgresql_url, alice, bob, backend_factory, backend_sock_factory
+    postgresql_url, alice, bob, backend_factory, backend_authenticated_ws_factory
 ):
     d1 = datetime(2000, 1, 1)
     async with backend_factory(
@@ -67,17 +68,18 @@ async def test_message_from_bob_to_alice_multi_backends(
         config={"blockstore_config": PostgreSQLBlockStoreConfig(), "db_url": postgresql_url},
     ) as backend_2:
 
-        async with backend_sock_factory(backend_1, alice) as alice_backend_sock:
+        app_1 = app_factory(backend_1)
+        async with backend_authenticated_ws_factory(app_1, alice) as alice_ws:
 
-            await events_subscribe(alice_backend_sock)
-            async with events_listen(alice_backend_sock) as listen:
+            await events_subscribe(alice_ws)
+            async with events_listen(alice_ws) as listen:
                 await backend_2.message.send(
                     bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from Bob !"
                 )
 
             assert listen.rep == {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 1}
 
-            rep = await message_get(alice_backend_sock)
+            rep = await message_get(alice_ws)
             assert rep == {
                 "status": "ok",
                 "messages": [
@@ -92,9 +94,9 @@ async def test_message_from_bob_to_alice_multi_backends(
 
 
 @pytest.mark.trio
-async def test_message_received_event(backend, alice_backend_sock, alice, bob):
+async def test_message_received_event(backend, alice_ws, alice, bob):
     d1 = datetime(2000, 1, 1)
-    await events_subscribe(alice_backend_sock)
+    await events_subscribe(alice_ws)
 
     # Good message
     with backend.event_bus.listen() as spy:
@@ -111,9 +113,9 @@ async def test_message_received_event(backend, alice_backend_sock, alice, bob):
         )
 
     reps = [
-        await events_listen_nowait(alice_backend_sock),
-        await events_listen_nowait(alice_backend_sock),
-        await events_listen_nowait(alice_backend_sock),
+        await events_listen_nowait(alice_ws),
+        await events_listen_nowait(alice_ws),
+        await events_listen_nowait(alice_ws),
     ]
     assert reps == [
         {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 1},
@@ -130,10 +132,7 @@ async def test_message_received_event(backend, alice_backend_sock, alice, bob):
         # No guarantees those events occur before the commands' return
         await spy.wait_multiple_with_timeout([BackendEvent.MESSAGE_RECEIVED])
 
-    reps = [
-        await events_listen_nowait(alice_backend_sock),
-        await events_listen_nowait(alice_backend_sock),
-    ]
+    reps = [await events_listen_nowait(alice_ws), await events_listen_nowait(alice_ws)]
     assert reps == [
         {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 3},
         {"status": "no_events"},

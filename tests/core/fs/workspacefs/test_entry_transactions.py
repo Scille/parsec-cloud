@@ -1,6 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import os
+import sys
 import errno
 from pathlib import Path
 from string import ascii_lowercase
@@ -8,19 +9,14 @@ from contextlib import contextmanager
 import attr
 import pytest
 from pendulum import datetime
-from hypothesis_trio.stateful import (
-    TrioAsyncioRuleBasedStateMachine,
-    initialize,
-    invariant,
-    rule,
-    run_state_machine_as_test,
-    Bundle,
-)
+from hypothesis_trio.stateful import initialize, invariant, rule, run_state_machine_as_test, Bundle
 from hypothesis import strategies as st
 
+from parsec.api.data import EntryName
+from parsec.core.fs import FsPath
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
-from parsec.core.types import FsPath, EntryID, LocalFolderManifest
+from parsec.core.types import EntryID, LocalFolderManifest
 
 from tests.common import freeze_time, call_with_control
 
@@ -42,7 +38,7 @@ async def test_root_entry_info(alice_entry_transactions):
 
 
 @pytest.mark.trio
-async def test_file_create(alice_entry_transactions, alice_file_transactions, alice):
+async def test_file_create(alice_entry_transactions, alice_file_transactions):
     entry_transactions = alice_entry_transactions
     file_transactions = alice_file_transactions
 
@@ -60,7 +56,7 @@ async def test_file_create(alice_entry_transactions, alice_file_transactions, al
         "need_sync": True,
         "created": datetime(2000, 1, 1),
         "updated": datetime(2000, 1, 2),
-        "children": ["foo.txt"],
+        "children": [EntryName("foo.txt")],
         "confinement_point": None,
     }
 
@@ -143,7 +139,7 @@ async def test_rename_non_empty_folder(alice_entry_transactions):
     foo2_id = await entry_transactions.entry_rename(FsPath("/foo"), FsPath("/foo2"))
     assert foo2_id == foo_id
     stat = await entry_transactions.entry_info(FsPath("/"))
-    assert stat["children"] == ["foo2"]
+    assert stat["children"] == [EntryName("foo2")]
 
     info = await entry_transactions.entry_info(FsPath("/foo2"))
     assert info["id"] == foo_id
@@ -175,7 +171,7 @@ async def test_cannot_replace_root(alice_entry_transactions):
 
 
 @pytest.mark.trio
-async def test_access_not_loaded_entry(alice, bob, alice_entry_transactions):
+async def test_access_not_loaded_entry(running_backend, alice_entry_transactions):
     entry_transactions = alice_entry_transactions
 
     entry_id = entry_transactions.get_workspace_entry().id
@@ -246,37 +242,40 @@ class PathElement:
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
 def test_entry_transactions(
     tmpdir,
     hypothesis_settings,
-    reset_testbed,
+    user_fs_online_state_machine,
     entry_transactions_factory,
     file_transactions_factory,
     alice,
-    alice_backend_cmds,
+    tmp_path,
 ):
     tentative = 0
 
     # The point is not to find breaking filenames here, so keep it simple
     st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
-    class EntryTransactionsStateMachine(TrioAsyncioRuleBasedStateMachine):
+    class EntryTransactionsStateMachine(user_fs_online_state_machine):
         Files = Bundle("file")
         Folders = Bundle("folder")
 
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
-                async with WorkspaceStorage.run(alice, Path("/dummy"), EntryID()) as local_storage:
-                    entry_transactions = await entry_transactions_factory(
-                        self.device, alice_backend_cmds, local_storage=local_storage
-                    )
-                    file_transactions = await file_transactions_factory(
-                        self.device, alice_backend_cmds, local_storage=local_storage
-                    )
-                    await started_cb(
-                        entry_transactions=entry_transactions, file_transactions=file_transactions
-                    )
+                async with WorkspaceStorage.run(
+                    tmp_path / f"entry_transactions-{tentative}", alice, EntryID.new()
+                ) as local_storage:
+                    async with entry_transactions_factory(
+                        self.device, local_storage=local_storage
+                    ) as entry_transactions:
+                        async with file_transactions_factory(
+                            self.device, local_storage=local_storage
+                        ) as file_transactions:
+                            await started_cb(
+                                entry_transactions=entry_transactions,
+                                file_transactions=file_transactions,
+                            )
 
             self.transactions_controller = await self.get_root_nursery().start(
                 call_with_control, _transactions_controlled_cb
@@ -286,10 +285,11 @@ def test_entry_transactions(
         async def init_root(self):
             nonlocal tentative
             tentative += 1
-            await reset_testbed()
+            await self.reset_all()
+            await self.start_backend()
 
             self.last_step_id_to_path = set()
-            self.device = alice
+            self.device = self.backend_controller.server.correct_addr(alice)
             await self.start_transactions()
             self.entry_transactions = self.transactions_controller.entry_transactions
             self.file_transactions = self.transactions_controller.file_transactions
@@ -338,6 +338,11 @@ def test_entry_transactions(
                 path.to_oracle().unlink()
             except OSError as exc:
                 expected_exc = exc
+
+            # On MacOS, unlink() raises a PermissionError if used on a directory
+            if sys.platform == "darwin" and isinstance(expected_exc, PermissionError):
+                if path.to_oracle().is_dir():
+                    expected_exc = IsADirectoryError()
 
             with expect_raises(expected_exc):
                 await self.entry_transactions.file_delete(path.to_parsec())

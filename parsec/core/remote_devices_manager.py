@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Tuple, Optional, List
 
@@ -18,7 +18,7 @@ from parsec.core.backend_connection import (
 from parsec.core.trustchain import TrustchainContext, TrustchainError
 
 
-DEFAULT_CACHE_VALIDITY = 60 * 60  # 1h
+DEFAULT_CACHE_VALIDITY = 60 * 60  # 3600 seconds, 1 hour
 
 
 class RemoteDevicesManagerError(Exception):

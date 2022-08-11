@@ -1,26 +1,26 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import os
+import sys
 import pytest
 from pathlib import Path
 from uuid import UUID, uuid4
 
 from parsec.crypto import SigningKey
 from parsec.serde import packb, unpackb
-from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle
+from parsec.api.protocol import OrganizationID, DeviceID, DeviceLabel, HumanHandle
 from parsec.core.types import LocalDevice
 from parsec.core.local_device import (
     AvailableDevice,
+    DeviceFileType,
     get_key_file,
     get_default_key_file,
     get_devices_dir,
     list_available_devices,
     load_device_with_password,
-    save_device_with_password,
+    save_device_with_password_in_config,
     change_device_password,
     LocalDeviceCryptoError,
     LocalDeviceNotFoundError,
-    LocalDeviceAlreadyExistsError,
     LocalDevicePackingError,
 )
 
@@ -58,10 +58,10 @@ def test_list_devices(organization_factory, local_device_factory, config_dir):
     o2d21 = local_device_factory("d2@1", org2, has_human_handle=False, has_device_label=False)
 
     for device in [o1d11, o1d12, o1d21]:
-        save_device_with_password(config_dir, device, "S3Cr37")
+        save_device_with_password_in_config(config_dir, device, "S3Cr37")
 
     for device in [o2d11, o2d12, o2d21]:
-        save_device_with_password(config_dir, device, "secret")
+        save_device_with_password_in_config(config_dir, device, "secret")
 
     # Also add dummy stuff that should be ignored
     device_dir = config_dir / "devices"
@@ -81,6 +81,7 @@ def test_list_devices(organization_factory, local_device_factory, config_dir):
             human_handle=d.human_handle,
             device_label=d.device_label,
             slug=d.slug,
+            type=DeviceFileType.PASSWORD,
         )
         for d in [o1d11, o1d12, o1d21, o2d11, o2d12, o2d21]
     }
@@ -103,6 +104,7 @@ def test_list_devices_support_legacy_file_without_labels(config_dir):
         human_handle=None,
         device_label=None,
         slug=slug,
+        type=DeviceFileType.PASSWORD,
     )
     assert devices == [expected_device]
 
@@ -115,6 +117,7 @@ def test_available_device_display(config_dir, alice):
         human_handle=None,
         device_label=None,
         slug=alice.slug,
+        type=DeviceFileType.PASSWORD,
     )
 
     with_labels = AvailableDevice(
@@ -124,12 +127,13 @@ def test_available_device_display(config_dir, alice):
         human_handle=alice.human_handle,
         device_label=alice.device_label,
         slug=alice.slug,
+        type=DeviceFileType.PASSWORD,
     )
 
-    assert without_labels.device_display == alice.device_name
-    assert without_labels.user_display == alice.user_id
+    assert without_labels.device_display == str(alice.device_name)
+    assert without_labels.user_display == str(alice.user_id)
 
-    assert with_labels.device_display == alice.device_label
+    assert with_labels.device_display == str(alice.device_label)
     assert with_labels.user_display == str(alice.human_handle)
 
 
@@ -144,6 +148,7 @@ def test_available_devices_slughash_uniqueness(
             human_handle=device.human_handle,
             device_label=device.device_label,
             slug=device.slug,
+            type=DeviceFileType.PASSWORD,
         )
 
     def _assert_different_as_available(d1, d2):
@@ -174,7 +179,7 @@ def test_available_devices_slughash_uniqueness(
     dummy_key = SigningKey.generate().verify_key
     o1u1d1_bad_rvk = o1u1d1.evolve(
         organization_addr=o1u1d1.organization_addr.build(
-            backend_addr=o1u1d1.organization_addr,
+            backend_addr=o1u1d1.organization_addr.get_backend_addr(),
             organization_id=o1u1d1.organization_addr.organization_id,
             root_verify_key=dummy_key,
         )
@@ -182,7 +187,7 @@ def test_available_devices_slughash_uniqueness(
     _assert_different_as_available(o1u1d1, o1u1d1_bad_rvk)
 
     # Finally make sure slughash is stable through save/load
-    save_device_with_password(config_dir, o1u1d1, "S3Cr37")
+    save_device_with_password_in_config(config_dir, o1u1d1, "S3Cr37")
     key_file = get_key_file(config_dir, o1u1d1)
     o1u1d1_reloaded = load_device_with_password(key_file, "S3Cr37")
     available_device = _to_available(o1u1d1)
@@ -193,7 +198,7 @@ def test_available_devices_slughash_uniqueness(
 @pytest.mark.parametrize("path_exists", (True, False))
 def test_password_save_and_load(path_exists, config_dir, alice):
     config_dir = config_dir if path_exists else config_dir / "dummy"
-    save_device_with_password(config_dir, alice, "S3Cr37")
+    save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
     key_file = get_key_file(config_dir, alice)
     alice_reloaded = load_device_with_password(key_file, "S3Cr37")
@@ -201,7 +206,7 @@ def test_password_save_and_load(path_exists, config_dir, alice):
 
 
 def test_load_bad_password(config_dir, alice):
-    save_device_with_password(config_dir, alice, "S3Cr37")
+    save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
     with pytest.raises(LocalDeviceCryptoError):
         key_file = get_key_file(config_dir, alice)
@@ -217,11 +222,18 @@ def test_load_bad_data(config_dir, alice):
         load_device_with_password(alice_key, "S3Cr37")
 
 
-def test_password_save_already_existing(config_dir, alice):
-    save_device_with_password(config_dir, alice, "S3Cr37")
+def test_password_save_already_existing(config_dir, alice, alice2, otheralice):
+    save_device_with_password_in_config(config_dir, alice, "S3Cr37")
 
-    with pytest.raises(LocalDeviceAlreadyExistsError):
-        save_device_with_password(config_dir, alice, "S3Cr37")
+    # Different devices should not overwrite each other
+    save_device_with_password_in_config(config_dir, otheralice, "S3Cr37")
+    save_device_with_password_in_config(config_dir, alice2, "S3Cr37")
+
+    # Overwritting self is allowed
+    save_device_with_password_in_config(config_dir, alice, "S3Cr37")
+
+    devices = list_available_devices(config_dir)
+    assert len(devices) == 3
 
 
 def test_password_load_not_found(config_dir, alice):
@@ -234,7 +246,7 @@ def test_same_device_id_different_orginazations(config_dir, alice, otheralice):
     devices = (alice, otheralice)
 
     for device in devices:
-        save_device_with_password(config_dir, device, f"S3Cr37-{device.organization_id}")
+        save_device_with_password_in_config(config_dir, device, f"S3Cr37-{device.organization_id}")
 
     for device in devices:
         key_file = get_key_file(config_dir, device)
@@ -246,7 +258,7 @@ def test_change_password(config_dir, alice):
     old_password = "0ldP@ss"
     new_password = "N3wP@ss"
 
-    save_device_with_password(config_dir, alice, old_password)
+    save_device_with_password_in_config(config_dir, alice, old_password)
     key_file = get_key_file(config_dir, alice)
 
     change_device_password(key_file, old_password, new_password)
@@ -268,8 +280,8 @@ def test_supports_legacy_is_admin_field(alice):
         "private_key": alice.private_key.encode(),
         "is_admin": True,
         "user_manifest_id": UUID(alice.user_manifest_id.hex),
-        "user_manifest_key": bytes(alice.user_manifest_key),
-        "local_symkey": bytes(alice.local_symkey),
+        "user_manifest_key": bytes(alice.user_manifest_key.secret),
+        "local_symkey": bytes(alice.local_symkey.secret),
     }
     dumped_legacy_local_user = packb(raw_legacy_local_user)
 
@@ -291,7 +303,7 @@ def test_supports_legacy_is_admin_field(alice):
 def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
     # Legacy path might exceed the 256 characters limit in some cases (see issue #1356)
     # So we use the `\\?\` workaround: https://stackoverflow.com/a/57502760/2846140
-    if os.name == "nt":
+    if sys.platform == "win32":
         config_dir = Path("\\\\?\\" + str(config_dir.resolve()))
 
     # Device information
@@ -312,7 +324,7 @@ def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
             "salt": b"12345",
             "ciphertext": b"whatever",
             "human_handle": (human_email.encode(), human_label.encode()),
-            "device_label": device_label.encode(),
+            "device_label": device_label,
         }
     )
 
@@ -326,15 +338,73 @@ def test_list_devices_support_legacy_file_with_meaningful_name(config_dir):
         organization_id=OrganizationID(organization_id),
         device_id=DeviceID(device_id),
         human_handle=HumanHandle(human_email, human_label),
-        device_label=device_label,
+        device_label=DeviceLabel(device_label),
         slug=slug,
+        type=DeviceFileType.PASSWORD,
+    )
+    assert devices == [expected_device]
+    assert get_key_file(config_dir, expected_device) == key_file_path
+
+
+@pytest.mark.parametrize("type", ("password", "smartcard"))
+def test_list_devices_support_key_file(config_dir, type):
+    if type == "password":
+        data_extra = {"type": "password", "salt": b"12345"}
+        available_device_extra = {"type": DeviceFileType.PASSWORD}
+
+    elif type == "smartcard":
+        data_extra = {
+            "type": "smartcard",
+            "encrypted_key": b"12345",
+            "certificate_id": "42",
+            "certificate_sha1": b"12345",
+        }
+        available_device_extra = {"type": DeviceFileType.SMARTCARD}
+
+    # Device information
+    user_id = uuid4().hex
+    device_name = uuid4().hex
+    organization_id = "Org"
+    rvk_hash = (uuid4().hex)[:10]
+    device_id = f"{user_id}@{device_name}"
+    slug = f"{rvk_hash}#{organization_id}#{device_id}"
+    human_label = "Billy Mc BillFace"
+    human_email = "billy@bill.com"
+    device_label = "My device"
+
+    # Craft file data
+    key_file_data = packb(
+        {
+            "ciphertext": b"whatever",
+            "human_handle": (human_email.encode(), human_label.encode()),
+            "device_label": device_label,
+            "device_id": device_id,
+            "organization_id": organization_id,
+            "slug": slug,
+            **data_extra,
+        }
+    )
+
+    key_file_path = get_devices_dir(config_dir) / "device.keys"
+    key_file_path.parent.mkdir(parents=True)
+    key_file_path.write_bytes(key_file_data)
+
+    devices = list_available_devices(config_dir)
+    expected_device = AvailableDevice(
+        key_file_path=key_file_path,
+        organization_id=OrganizationID(organization_id),
+        device_id=DeviceID(device_id),
+        human_handle=HumanHandle(human_email, human_label),
+        device_label=DeviceLabel(device_label),
+        slug=slug,
+        **available_device_extra,
     )
     assert devices == [expected_device]
     assert get_key_file(config_dir, expected_device) == key_file_path
 
 
 def test_multiple_files_same_device(config_dir, alice):
-    path = save_device_with_password(config_dir, alice, "test")
+    path = save_device_with_password_in_config(config_dir, alice, "test")
 
     # File names contain the slughash
     assert path.stem == alice.slughash
@@ -345,8 +415,10 @@ def test_multiple_files_same_device(config_dir, alice):
     # Make sure we don't list duplicates
     devices = list_available_devices(config_dir)
     assert len(devices) == 1
+    assert devices[0].device_id == alice.device_id
 
     # Remove orignal file
     path.unlink()
     devices = list_available_devices(config_dir)
     assert len(devices) == 1
+    assert devices[0].device_id == alice.device_id

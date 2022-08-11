@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pathlib
 from enum import IntEnum
@@ -12,7 +12,7 @@ from parsec.core.gui.custom_widgets import Pixmap
 
 NAME_DATA_INDEX = Qt.UserRole
 TYPE_DATA_INDEX = Qt.UserRole + 1
-UUID_DATA_INDEX = Qt.UserRole + 2
+ENTRY_ID_DATA_INDEX = Qt.UserRole + 2
 COPY_STATUS_DATA_INDEX = Qt.UserRole + 3
 
 

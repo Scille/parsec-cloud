@@ -158,16 +158,6 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="button_previous">
-       <property name="text">
-        <string>ACTION_PREVIOUS</string>
-       </property>
-       <property name="flat">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QPushButton" name="button_validate">
        <property name="text">
         <string>ACTION_NEXT</string>

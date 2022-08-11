@@ -1,0 +1,21 @@
+{
+    "label": "Invite3bClaimerWaitPeerTrust",
+    "req": {
+        "cmd": "invite_3b_claimer_wait_peer_trust",
+        "other_fields": []
+    },
+    "reps": [
+        {
+            "status": "ok",
+            "other_fields": []
+        },
+        {
+            "status": "not_found",
+            "other_fields": []
+        },
+        {
+            "status": "invalid_state",
+            "other_fields": []
+        }
+    ]
+}

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from uuid import uuid4
 from typing import Optional, Type, Union
@@ -20,7 +20,7 @@ from wsproto.events import (
     Pong,
 )
 
-from parsec.api.protocol.handshake import ServerHandshake
+from parsec._version import __version__
 
 
 __all__ = ("TransportError", "Transport")
@@ -29,6 +29,7 @@ __all__ = ("TransportError", "Transport")
 logger = get_logger()
 WEBSOCKET_HANDSHAKE_TIMEOUT = 3.0
 TRANSPORT_TARGET = "/ws"
+USER_AGENT = f"parsec/{__version__}"
 
 
 class TransportError(Exception):
@@ -44,7 +45,7 @@ class TransportClosedByPeer(TransportError):
 
 
 class Transport:
-    RECEIVE_BYTES = 2 ** 20  # 1Mo
+    RECEIVE_BYTES = 2**20  # 1Mo
 
     def __init__(self, stream: Stream, ws: WSConnection, keepalive: Optional[int] = None):
         self.stream = stream
@@ -53,23 +54,6 @@ class Transport:
         self.conn_id = uuid4().hex
         self.logger = logger.bind(conn_id=self.conn_id)
         self._ws_events = ws.events()
-        self._handshake: Optional[ServerHandshake] = None
-
-    # Application handshake interface
-    # TODO: Investigate a better place for providing an access to the peer API version
-    # Note: This should not be confused with the websocket handshake
-
-    @property
-    def handshake(self) -> ServerHandshake:
-        if self._handshake is None:
-            raise TypeError("The handshake has not been set")
-        return self._handshake
-
-    @handshake.setter
-    def handshake(self, handshake: ServerHandshake) -> None:
-        if self._handshake is not None:
-            raise TypeError("The handshake has already been set")
-        self._handshake = handshake
 
     async def _next_ws_event(self) -> Event:
         try:
@@ -110,13 +94,21 @@ class Transport:
             raise TransportError(*exc.args) from exc
 
     @classmethod
-    async def init_for_client(cls: Type["Transport"], stream: Stream, host: str) -> "Transport":
+    async def init_for_client(
+        cls: Type["Transport"], stream: Stream, host: str, keepalive: Optional[int] = None
+    ) -> "Transport":
         ws = WSConnection(ConnectionType.CLIENT)
-        transport = cls(stream, ws)
+        transport = cls(stream, ws, keepalive)
 
         # Because this is a client WebSocket, we need to initiate the connection
         # handshake by sending a Request event.
-        await transport._net_send(Request(host=host, target=TRANSPORT_TARGET))
+        await transport._net_send(
+            Request(
+                host=host,
+                target=TRANSPORT_TARGET,
+                extra_headers=[(b"User-Agent", USER_AGENT.encode())],
+            )
+        )
 
         # Get handshake answer
         event = await transport._next_ws_event()
@@ -132,13 +124,17 @@ class Transport:
         return transport
 
     @classmethod
-    async def init_for_server(  # type: ignore[misc]
+    async def init_for_server(
         cls: Type["Transport"], stream: Stream, upgrade_request: Optional[H11Request] = None
     ) -> "Transport":
         ws = WSConnection(ConnectionType.SERVER)
         if upgrade_request:
+            # TODO: remove type ignore comments once those issues have been treated
+            # https://github.com/python-hyper/wsproto/issues/173
+            # https://github.com/python-hyper/wsproto/issues/174
             ws.initiate_upgrade_connection(
-                headers=upgrade_request.headers, path=upgrade_request.target
+                headers=upgrade_request.headers,  # type: ignore[arg-type]
+                path=upgrade_request.target,  # type: ignore[arg-type]
             )
         transport = cls(stream, ws)
 

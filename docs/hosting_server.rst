@@ -1,3 +1,5 @@
+.. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 .. _doc_hosting_server:
 
 ==============
@@ -35,19 +37,21 @@ web application.
 Installation
 ============
 
-.. code::
+.. code-block:: shell
 
-    $ python -m venv venv
-    $ . ./venv/bin/activate
-    $ pip install parsec-cloud[backend]
+    python -m venv venv
+    . ./venv/bin/activate
+    pip install parsec-cloud[backend]
 
 
 Run
 ===
 
-Use the ``parsec backend run`` command to start Parsec server, for instance::
+Use the ``parsec backend run`` command to start Parsec server, for instance:
 
-    $ parsec backend run --port $PORT --host 0.0.0.0 --db postgresql://<...> --blockstore s3:<...> --administration-token <token>
+.. code-block:: shell
+
+    parsec backend run --port $PORT --host 0.0.0.0 --db postgresql://<...> --blockstore s3:<...> --administration-token <token>
 
 
 Settings
@@ -58,9 +62,11 @@ Settings
 
     Settings can be specified by using environment variable ``PARSEC_CMD_ARGS``.
     All available command line arguments can be used and environ variables
-    within it will be expanded. For instance::
+    within it will be expanded. For instance:
 
-        $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
+    .. code-block:: shell
+
+        DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
 
 Host
 ----
@@ -278,7 +284,7 @@ with an ``application/json`` body with the following fields:
 
 Example:
 
-.. code:: json
+.. code-block:: json
 
     {
       "organization_id": "MyOrg",
@@ -291,10 +297,16 @@ Example:
 Sentry
 ------
 
-* ``--sentry-url <url>``
-* Environ: ``PARSEC_SENTRY_URL``
+* ``--sentry-dsn <url>``
+* Environ: ``PARSEC_SENTRY_DSN``
 
 `Sentry <https://sentry.io/>`_ URL for telemetry report.
+
+* ``--sentry-environment <name>``
+* Environ: ``PARSEC_SENTRY_ENVIRONMENT``
+* Default: ``production``
+
+Customize environment name for Sentry's telemetry reports.
 
 Debug
 -----
@@ -306,4 +318,6 @@ Enable debug informations.
 
 * ``--dev``
 
-Equivalent to ``--debug --db=MOCKED --blockstore=MOCKED --administration-token=s3cr3t``.
+Equivalent to ``--debug --db=MOCKED --blockstore=MOCKED --administration-token=s3cr3t
+--email-sender=no-reply@parsec.com --email-host=MOCKED
+--backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)``.

@@ -1,1 +1,0 @@
-Made copy and cut of files asynchronous in the GUI

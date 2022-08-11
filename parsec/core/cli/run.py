@@ -1,14 +1,24 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 import click
+import multiprocessing
 from pathlib import Path
 from pendulum import DateTime, parse as pendulum_parse
+from typing import Optional
 
 from parsec.utils import trio_run
+from parsec.logging import configure_sentry_logging
 from parsec.cli_utils import cli_exception_handler, generate_not_available_cmd
 from parsec.core import logged_core_factory
-from parsec.core.cli.utils import core_config_and_device_options, core_config_options
+from parsec.core.types import LocalDevice
+from parsec.core.config import CoreConfig
+from parsec.core.cli.utils import (
+    cli_command_base_options,
+    gui_command_base_options,
+    core_config_and_device_options,
+    core_config_options,
+)
 
 try:
     from parsec.core.gui import run_gui as _run_gui
@@ -23,15 +33,36 @@ else:
     @click.argument("url", required=False)
     @click.option("--diagnose", "-d", is_flag=True)
     @core_config_options
-    def run_gui(config, url, diagnose, **kwargs):
+    @gui_command_base_options
+    def run_gui(
+        config: CoreConfig,
+        url: str,
+        diagnose: bool,
+        sentry_dsn: Optional[str],
+        sentry_environment: str,
+        **kwargs,
+    ) -> None:
         """
         Run parsec GUI
         """
-        config = config.evolve(mountpoint_enabled=True)
-        _run_gui(config, start_arg=url, diagnose=diagnose)
+        # Necessary for DialogInProcess since it's not the default on windows
+        # This method should only be called once which is why we do it here.
+        multiprocessing.set_start_method("spawn")
+
+        with cli_exception_handler(config.debug):
+            if config.telemetry_enabled and sentry_dsn:
+                configure_sentry_logging(dsn=sentry_dsn, environment=sentry_environment)
+
+            config = config.evolve(mountpoint_enabled=True)
+            try:
+                _run_gui(config, start_arg=url, diagnose=diagnose)
+            except KeyboardInterrupt:
+                click.echo("bye ;-)")
 
 
-async def _run_mountpoint(config, device, timestamp: DateTime = None):
+async def _run_mountpoint(
+    config: CoreConfig, device: LocalDevice, timestamp: Optional[DateTime] = None
+) -> None:
     config = config.evolve(mountpoint_enabled=True)
     async with logged_core_factory(config, device):
         display_device = click.style(device.device_id, fg="yellow")
@@ -42,10 +73,17 @@ async def _run_mountpoint(config, device, timestamp: DateTime = None):
 
 
 @click.command(short_help="run parsec mountpoint")
-@core_config_and_device_options
 @click.option("--mountpoint", "-m", type=click.Path(exists=False))
 @click.option("--timestamp", "-t", type=lambda t: pendulum_parse(t, tz="local"))
-def run_mountpoint(config, device, mountpoint, timestamp, **kwargs):
+@core_config_and_device_options
+@cli_command_base_options
+def run_mountpoint(
+    config: CoreConfig,
+    device: LocalDevice,
+    mountpoint: Path,
+    timestamp: Optional[DateTime],
+    **kwargs,
+) -> None:
     """
     Expose device's parsec drive on the given mountpoint.
     """
@@ -53,4 +91,7 @@ def run_mountpoint(config, device, mountpoint, timestamp, **kwargs):
     if mountpoint:
         config = config.evolve(mountpoint_base_dir=Path(mountpoint))
     with cli_exception_handler(config.debug):
-        trio_run(_run_mountpoint, config, device, timestamp)
+        try:
+            trio_run(_run_mountpoint, config, device, timestamp)
+        except KeyboardInterrupt:
+            click.echo("bye ;-)")

@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import Tuple, List, Sequence, Optional
+from typing import TYPE_CHECKING, Tuple, List, Sequence, Optional
 from pendulum import DateTime, now as pendulum_now
 
 from parsec.crypto import VerifyKey
@@ -19,7 +19,7 @@ class TrustchainError(Exception):
 
 
 def _build_signature_path(*devices_ids):
-    return " <-sign- ".join(devices_ids)
+    return " <-sign- ".join([str(d) for d in devices_ids])
 
 
 class CertifState:
@@ -101,14 +101,14 @@ class TrustchainContext:
         verified_user = verified_users[0]
         if expected_user_id and verified_user.user_id != expected_user_id:
             raise TrustchainError(
-                f"Expected certificate from `{expected_user_id}` but got `{verified_user.user_id}`"
+                f"Unexpected certificate: expected `{expected_user_id}` but got `{verified_user.user_id}`"
             )
 
         if revoked_user_certif:
             verified_revoked_user = verified_revoked_users[0]
             if expected_user_id and verified_revoked_user.user_id != expected_user_id:
                 raise TrustchainError(
-                    f"Expected certificate from `{expected_user_id}` but got `{verified_revoked_user.user_id}`"
+                    f"Unexpected certificate: expected `{expected_user_id}` but got `{verified_revoked_user.user_id}`"
                 )
         else:
             verified_revoked_user = None
@@ -117,7 +117,7 @@ class TrustchainContext:
         for verified_device in verified_devices:
             if expected_user_id and verified_device.device_id.user_id != expected_user_id:
                 raise TrustchainError(
-                    f"Expected certificate from `{expected_user_id}` but got `{verified_device.device_id}`"
+                    f"Unexpected certificate: expected `{expected_user_id}` but got `{verified_device.device_id}`"
                 )
 
         return verified_user, verified_revoked_user, verified_devices
@@ -229,7 +229,7 @@ class TrustchainContext:
                 elif author_user.profile != UserProfile.ADMIN:
                     path = _build_signature_path(*sign_chain, author_id)
                     raise TrustchainError(
-                        f"{path}:  Invalid signature given {author_user.user_id} is not admin"
+                        f"{path}: Invalid signature given {author_user.user_id} is not admin"
                     )
             # Also make sure author wasn't revoked at creation time
             author_revoked_user = _get_eventually_verified_revoked_user(author_id.user_id)
@@ -333,3 +333,13 @@ class TrustchainContext:
             [state.content for state in revoked_users_states.values()],
             [state.content for state in devices_states.values()],
         )
+
+
+_PyTrustchainContext = TrustchainContext
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import TrustchainContext as _RsTrustchainContext
+    except:
+        pass
+    else:
+        TrustchainContext = _RsTrustchainContext

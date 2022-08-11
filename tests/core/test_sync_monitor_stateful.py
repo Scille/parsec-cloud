@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
@@ -13,6 +13,7 @@ from hypothesis_trio.stateful import (
     multiple,
 )
 
+from parsec.api.data import EntryName
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FSWorkspaceNotFoundError, FSWorkspaceNoAccess
 
@@ -49,10 +50,10 @@ def recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=False):
 @pytest.mark.slow
 def test_sync_monitor_stateful(
     hypothesis_settings,
+    frozen_clock,
     reset_testbed,
-    backend_addr,
     backend_factory,
-    server_factory,
+    running_backend_factory,
     core_factory,
     user_fs_factory,
     alice,
@@ -77,8 +78,7 @@ def test_sync_monitor_stateful(
         def __init__(self):
             super().__init__()
             # Core's sync and message monitors must be kept frozen
-            mock_clock = trio.testing.MockClock(rate=0, autojump_threshold=0)
-            self.set_clock(mock_clock)
+            self.set_clock(frozen_clock)
             self.file_count = 0
             self.data_count = 0
             self.workspace_count = 0
@@ -93,14 +93,14 @@ def test_sync_monitor_stateful(
 
         def get_next_workspace_name(self):
             self.workspace_count = self.workspace_count + 1
-            return f"w{self.workspace_count}"
+            return EntryName(f"w{self.workspace_count}")
 
         def get_workspace(self, device_id, wid):
             return self.user_fs_per_device[device_id].get_workspace(wid)
 
         async def start_alice_core(self):
             async def _core_controlled_cb(started_cb):
-                async with core_factory(alice) as core:
+                async with core_factory(self.alice) as core:
                     await started_cb(core=core)
 
             self.alice_core_controller = await self.get_root_nursery().start(
@@ -110,7 +110,7 @@ def test_sync_monitor_stateful(
 
         async def start_bob_user_fs(self):
             async def _user_fs_controlled_cb(started_cb):
-                async with user_fs_factory(device=bob) as user_fs:
+                async with user_fs_factory(device=self.bob) as user_fs:
                     await started_cb(user_fs=user_fs)
 
             self.bob_user_fs_controller = await self.get_root_nursery().start(
@@ -121,7 +121,7 @@ def test_sync_monitor_stateful(
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client, backend_addr) as server:
+                    async with running_backend_factory(backend) as server:
                         await started_cb(backend=backend, server=server)
 
             self.backend_controller = await self.get_root_nursery().start(
@@ -133,6 +133,8 @@ def test_sync_monitor_stateful(
             await reset_testbed()
 
             await self.start_backend()
+            self.alice = self.backend_controller.server.correct_addr(alice)
+            self.bob = self.backend_controller.server.correct_addr(bob)
             self.bob_user_fs = await self.start_bob_user_fs()
             self.alice_core = await self.start_alice_core()
             self.user_fs_per_device = {
@@ -211,14 +213,14 @@ def test_sync_monitor_stateful(
         @rule(target=SyncedFiles)
         async def let_core_monitors_process_changes(self):
             # Wait for alice core to settle down
-            await trio.sleep(300)
+            await frozen_clock.sleep_with_autojump(300)
             # Bob get back alice's changes
             await self.bob_user_fs.sync()
             for bob_workspace_entry in self.bob_user_fs.get_user_manifest().workspaces:
                 bob_w = self.bob_user_fs.get_workspace(bob_workspace_entry.id)
                 await bob_w.sync()
             # Alice get back possible changes from bob's sync
-            await trio.sleep(300)
+            await frozen_clock.sleep_with_autojump(300)
 
             # Now alice and bob should have agreed on the data
             new_synced_files = []

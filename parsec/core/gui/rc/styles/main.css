@@ -29,7 +29,7 @@ QPushButton:hover {
 
 /* LineEdit: ENABLED, READONLY, DISABLED */
 
-QLineEdit {
+QLineEdit, QTextEdit {
     background-color: #FFFFFF;
     border: 1px solid #99999980;
     color: #333333;
@@ -96,6 +96,10 @@ QComboBox QListView::item {
     height: 38px;
 }
 
+QComboBox QListView::item:disabled {
+    background-color: #BBBBBB;
+}
+
 QComboBox QListView::item:selected {
     background-color: #0092FF;
     color: #FFFFFF;
@@ -132,6 +136,11 @@ QCheckBox::indicator:checked {
 
 /* RadioButton: ENABLED, DISABLED */
 
+
+QRadioButton {
+    color: #000000;
+}
+
 QRadioButton::indicator {
     width: 20px;
     height: 20px;
@@ -160,6 +169,7 @@ QRadioButton::indicator:checked {
 QTimeEdit {
     background-color: #FFFFFF;
     border: 1px solid #99999980;
+    color: #333333;
     padding-left: 15px;
     border-radius: 4px;
     height: 38px;
@@ -480,6 +490,10 @@ QLabel {
 }
 
 /* QTableWidget */
+
+QTableWidget {
+    background-color: #FFFFFF;
+}
 
 QHeaderView {
     background-color: #222222;

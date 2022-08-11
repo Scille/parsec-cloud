@@ -1,0 +1,76 @@
+{
+    "label": "UserCreate",
+    "req": {
+        "cmd": "user_create",
+        "other_fields": [
+            {
+                "name": "user_certificate",
+                "type": "Bytes"
+            },
+            {
+                "name": "device_certificate",
+                "type": "Bytes"
+            },
+            {
+                // Same certificates than above, but expurged of human_handle/device_label
+                "name": "redacted_user_certificate",
+                "type": "Bytes"
+            },
+            {
+                "name": "redacted_device_certificate",
+                "type": "Bytes"
+            }
+        ]
+    },
+    "reps": [
+        {
+            "status": "ok",
+            "other_fields": []
+        },
+        {
+            "status": "not_allowed",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        },
+        {
+            "status": "invalid_certification",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        },
+        {
+            "status": "invalid_data",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        },
+        {
+            "status": "already_exists",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        },
+        {
+            "status": "active_users_limit_reached",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        }
+    ]
+}

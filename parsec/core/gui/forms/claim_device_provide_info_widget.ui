@@ -103,7 +103,7 @@
     </widget>
    </item>
    <item>
-    <widget class="PasswordChoiceWidget" name="widget_password" native="true">
+    <widget class="AuthenticationChoiceWidget" name="widget_auth" native="true">
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <property name="spacing">
        <number>10</number>
@@ -174,15 +174,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PasswordChoiceWidget</class>
-   <extends>QWidget</extends>
-   <header>parsec.core.gui.password_validation</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>ValidatedLineEdit</class>
    <extends>QLineEdit</extends>
    <header>parsec.core.gui.input_widgets</header>
+  </customwidget>
+  <customwidget>
+   <class>AuthenticationChoiceWidget</class>
+   <extends>QWidget</extends>
+   <header>parsec.core.gui.authentication_choice_widget</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

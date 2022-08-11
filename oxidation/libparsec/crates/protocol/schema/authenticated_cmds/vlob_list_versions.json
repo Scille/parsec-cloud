@@ -1,0 +1,40 @@
+{
+    "label": "VlobListVersions",
+    "req": {
+        "cmd": "vlob_list_versions",
+        "other_fields": [
+            {
+                "name": "vlob_id",
+                "type": "VlobID"
+            }
+        ]
+    },
+    "reps": [
+        {
+            "status": "ok",
+            "other_fields": [
+                {
+                    "name": "versions",
+                    "type": "Map<Index, (DateTime, DeviceID)>"
+                }
+            ]
+        },
+        {
+            "status": "not_allowed",
+            "other_fields": []
+        },
+        {
+            "status": "not_found",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                }
+            ]
+        },
+        {
+            "status": "in_maintenance",
+            "other_fields": []
+        }
+    ]
+}

@@ -32,7 +32,7 @@
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS</string>
+      <string/>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -40,7 +40,7 @@
     </widget>
    </item>
    <item>
-    <widget class="PasswordChoiceWidget" name="widget_password" native="true">
+    <widget class="AuthenticationChoiceWidget" name="widget_auth" native="true">
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">
        <number>10</number>
@@ -104,9 +104,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PasswordChoiceWidget</class>
+   <class>AuthenticationChoiceWidget</class>
    <extends>QWidget</extends>
-   <header>parsec.core.gui.password_validation</header>
+   <header>parsec.core.gui.authentication_choice_widget</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

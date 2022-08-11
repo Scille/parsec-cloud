@@ -1,16 +1,16 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec.core.core_events import CoreEvent
 import pytest
-import trio
-from unittest.mock import ANY
 from pendulum import datetime, now as pendulum_now
 
-from tests.common import create_shared_workspace, freeze_time
-
-from parsec.api.data import PingMessageContent
+from parsec.api.data import PingMessageContent, EntryName
+from parsec.api.protocol import UserID
 from parsec.core.types import WorkspaceEntry, WorkspaceRole
+from parsec.crypto import SecretKey
+from parsec.core.core_events import CoreEvent
 from parsec.core.backend_connection import BackendConnStatus
+
+from tests.common import create_shared_workspace, freeze_time
 
 
 @pytest.mark.trio
@@ -39,9 +39,12 @@ async def _send_msg(backend, author, recipient, ping="ping"):
     )
 
 
+# This test has been detected as flaky.
+# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
+@pytest.mark.flaky(reruns=3)
 async def test_process_while_offline(
-    autojump_clock, running_backend, alice_core, bob_user_fs, alice, bob
+    frozen_clock, running_backend, alice_core, bob_user_fs, alice, bob
 ):
     assert alice_core.backend_status == BackendConnStatus.READY
 
@@ -49,9 +52,10 @@ async def test_process_while_offline(
         with alice_core.event_bus.listen() as spy:
             # Force wakeup of the message monitor
             alice_core.event_bus.send(CoreEvent.BACKEND_MESSAGE_RECEIVED, index=42)
+
             assert not alice_core.are_monitors_idle()
 
-            with trio.fail_after(60):  # autojump, so not *really* 60s
+            async with frozen_clock.real_clock_timeout():
                 await spy.wait(
                     CoreEvent.BACKEND_CONNECTION_CHANGED,
                     {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
@@ -66,7 +70,8 @@ async def test_process_while_offline(
 
     with alice_core.event_bus.listen() as spy:
         # Alice is back online, should retrieve Bob's message fine
-        with trio.fail_after(60):  # autojump, so not *really* 60s
+        await frozen_clock.sleep_with_autojump(30)
+        async with frozen_clock.real_clock_timeout():
             await spy.wait(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.READY, "status_exc": None},
@@ -78,9 +83,10 @@ async def test_process_while_offline(
 
 @pytest.mark.trio
 async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
+    KEY = SecretKey.generate()
     # First, create a folder and sync it on backend
     with freeze_time("2000-01-01"):
-        wid = await alice_core.user_fs.workspace_create("foo")
+        wid = await alice_core.user_fs.workspace_create(EntryName("foo"))
     workspace = alice_core.user_fs.get_workspace(wid)
     with freeze_time("2000-01-02"):
         await workspace.sync()
@@ -89,66 +95,99 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
     with bob_core.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
             await alice_core.user_fs.workspace_share(
-                wid, recipient="bob", role=WorkspaceRole.MANAGER
+                wid, recipient=UserID("bob"), role=WorkspaceRole.MANAGER
             )
+
+        def _update_event(event):
+            if event.event == CoreEvent.SHARING_UPDATED:
+                event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(
+                    key=KEY, role_cached_on=datetime(2000, 1, 1)
+                )
+            return event
 
         # Bob should get a notification
         await spy.wait_with_timeout(
             CoreEvent.SHARING_UPDATED,
             {
                 "new_entry": WorkspaceEntry(
-                    name="foo",
+                    name=EntryName("foo"),
                     id=wid,
-                    key=ANY,
+                    key=KEY,
                     encryption_revision=1,
                     encrypted_on=datetime(2000, 1, 1),
-                    role_cached_on=ANY,
+                    role_cached_on=datetime(2000, 1, 1),
                     role=WorkspaceRole.MANAGER,
                 ),
                 "previous_entry": None,
             },
+            update_event_func=_update_event,
         )
 
 
 @pytest.mark.trio
 async def test_revoke_sharing_trigger_event(alice_core, bob_core, running_backend):
+    KEY = SecretKey.generate()
+
+    def _update_event(event):
+        if event.event == CoreEvent.SHARING_UPDATED:
+            event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(
+                key=KEY, role_cached_on=datetime(2000, 1, 2)
+            )
+            event.kwargs["previous_entry"] = event.kwargs["previous_entry"].evolve(
+                key=KEY, role_cached_on=datetime(2000, 1, 2)
+            )
+        return event
+
     with freeze_time("2000-01-02"):
-        wid = await create_shared_workspace("w", alice_core, bob_core)
+        wid = await create_shared_workspace(EntryName("w"), alice_core, bob_core)
 
     with bob_core.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
-            await alice_core.user_fs.workspace_share(wid, recipient="bob", role=None)
+            await alice_core.user_fs.workspace_share(wid, recipient=UserID("bob"), role=None)
 
         # Each workspace participant should get the message
         await spy.wait_with_timeout(
             CoreEvent.SHARING_UPDATED,
             {
                 "new_entry": WorkspaceEntry(
-                    name="w",
+                    name=EntryName("w"),
                     id=wid,
-                    key=ANY,
+                    key=KEY,
                     encryption_revision=1,
                     encrypted_on=datetime(2000, 1, 2),
-                    role_cached_on=ANY,
+                    role_cached_on=datetime(2000, 1, 2),
                     role=None,
                 ),
                 "previous_entry": WorkspaceEntry(
-                    name="w",
+                    name=EntryName("w"),
                     id=wid,
-                    key=ANY,
+                    key=KEY,
                     encryption_revision=1,
                     encrypted_on=datetime(2000, 1, 2),
-                    role_cached_on=ANY,
+                    role_cached_on=datetime(2000, 1, 2),
                     role=WorkspaceRole.MANAGER,
                 ),
             },
+            update_event_func=_update_event,
         )
 
 
 @pytest.mark.trio
 async def test_new_reencryption_trigger_event(alice_core, bob_core, running_backend):
+    KEY = SecretKey.generate()
+
+    def _update_event(event):
+        if event.event == CoreEvent.SHARING_UPDATED:
+            event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(
+                key=KEY, role_cached_on=datetime(2000, 1, 3)
+            )
+            event.kwargs["previous_entry"] = event.kwargs["previous_entry"].evolve(
+                key=KEY, role_cached_on=datetime(2000, 1, 2)
+            )
+        return event
+
     with freeze_time("2000-01-02"):
-        wid = await create_shared_workspace("w", alice_core, bob_core)
+        wid = await create_shared_workspace(EntryName("w"), alice_core, bob_core)
 
     with alice_core.event_bus.listen() as aspy, bob_core.event_bus.listen() as bspy:
         with freeze_time("2000-01-03"):
@@ -159,45 +198,47 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
             CoreEvent.SHARING_UPDATED,
             {
                 "new_entry": WorkspaceEntry(
-                    name="w",
+                    name=EntryName("w"),
                     id=wid,
-                    key=ANY,
+                    key=KEY,
                     encryption_revision=2,
                     encrypted_on=datetime(2000, 1, 3),
-                    role_cached_on=ANY,
+                    role_cached_on=datetime(2000, 1, 3),
                     role=WorkspaceRole.OWNER,
                 ),
                 "previous_entry": WorkspaceEntry(
-                    name="w",
+                    name=EntryName("w"),
                     id=wid,
-                    key=ANY,
+                    key=KEY,
                     encryption_revision=1,
                     encrypted_on=datetime(2000, 1, 2),
-                    role_cached_on=ANY,
+                    role_cached_on=datetime(2000, 1, 2),
                     role=WorkspaceRole.OWNER,
                 ),
             },
+            update_event_func=_update_event,
         )
         await bspy.wait_with_timeout(
             CoreEvent.SHARING_UPDATED,
             {
                 "new_entry": WorkspaceEntry(
-                    name="w",
+                    name=EntryName("w"),
                     id=wid,
-                    key=ANY,
+                    key=KEY,
                     encryption_revision=2,
                     encrypted_on=datetime(2000, 1, 3),
-                    role_cached_on=ANY,
+                    role_cached_on=datetime(2000, 1, 3),
                     role=WorkspaceRole.MANAGER,
                 ),
                 "previous_entry": WorkspaceEntry(
-                    name="w",
+                    name=EntryName("w"),
                     id=wid,
-                    key=ANY,
+                    key=KEY,
                     encryption_revision=1,
                     encrypted_on=datetime(2000, 1, 2),
-                    role_cached_on=ANY,
+                    role_cached_on=datetime(2000, 1, 2),
                     role=WorkspaceRole.MANAGER,
                 ),
             },
+            update_event_func=_update_event,
         )

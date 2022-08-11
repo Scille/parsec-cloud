@@ -1,0 +1,155 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-2020, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec v2.6.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-03-15 11:20+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.1\n"
+
+#: ../../functional_architecture.rst:5
+msgid "WiP : Parsec client functional components"
+msgstr ""
+
+#: ../../functional_architecture.rst:7
+msgid "Missing translations and figures"
+msgstr ""
+
+#: ../../functional_architecture.rst:10
+msgid "Mountpoint"
+msgstr ""
+
+#: ../../functional_architecture.rst:11
+msgid ""
+"Le composant Mountpoint est responsable de l’interaction avec le système "
+"de fichiers pour communiquer avec les applications tiers selon une "
+"logique très simple consistant à transmettre toutes les requêtes natives "
+"au système de fichiers virtuel défini dans le composant Core."
+msgstr ""
+
+#: ../../functional_architecture.rst:16
+msgid "GUI"
+msgstr ""
+
+#: ../../functional_architecture.rst:17
+msgid ""
+"Le composant GUI gérant l'interface utilisateur interagit avec le "
+"composant Core ou directement avec le système de fichiers natif, mais pas"
+" avec le composant Mountpoint. Contrairement au composant Mountpoint, la "
+"GUI souscrit aux événements exposés par le serveur de métadonnées, tels "
+"que les notifications en cas d’actions concurrentes, de suppression d'un "
+"groupe etc. cela afin d’en informer l’utilisateur."
+msgstr ""
+
+#: ../../functional_architecture.rst:23
+msgid "CORE"
+msgstr ""
+
+#: ../../functional_architecture.rst:24
+msgid ""
+"Outre les deux fonctions précédentes, le composant Core intègre toute la "
+"logique du client et contient cinq sous-modules (Figure 3) dont les rôles"
+" sont les suivants :"
+msgstr ""
+
+#: ../../functional_architecture.rst:27
+msgid ""
+"● Le Système de Fichiers Virtuels (VFS) reçoit toutes les requêtes "
+"relatives au système de fichiers en provenance du composant Mountpoint "
+"et, à cette fin, dispose d’une API qui simule une interface de système de"
+" fichiers. Pour optimiser ses performances, ce composant ne cherche pas à"
+" pousser les modifications jusqu’au serveur de métadonnées; il se "
+"contente de stocker de manière chiffrées les modifications sur le disque "
+"dur de la machine locale."
+msgstr ""
+
+#: ../../functional_architecture.rst:33
+msgid ""
+"● Le Synchroniseur est le composant qui transfère périodiquement les "
+"données modifiées stockées sur la machine locale vers le serveur de "
+"métadonnées. Il s’occupe d’écouter les notifications du serveur de "
+"métadonnées en cas de modification des données par un autre terminal "
+"ainsi que de résoudre les conflits de version entre les données locales "
+"et celles du serveur de métadonnées."
+msgstr ""
+
+#: ../../functional_architecture.rst:38
+msgid ""
+"● Le Gestionnaire d’Identités stocke dans la mémoire locale l’identité de"
+" l’utilisateur connecté (sous la forme d’une session). La phrase de passe"
+" de l’utilisateur, qui n’est pas stockée, à laquelle on a rajouté un sel,"
+" chiffre la clé privée du terminal (DEVICE_SIG_S_KEY), ainsi que celle de"
+" l’utilisateur (USER_ENC_S_KEY) qui est partagée entre tous les terminaux"
+" de l’utilisateur. La DEVICE_SIG_S_KEY sert à signer une modification, et"
+" la USER_ENC_S_KEY sert à déchiffrer les métadonnées personnelles de "
+"l’utilisateur."
+msgstr ""
+
+#: ../../functional_architecture.rst:45
+msgid ""
+"● La Messagerie a pour rôle d’écouter les messages techniques "
+"(notifications) en provenance du serveur de métadonnées (le Core est lié "
+"via une socket TCP au serveur de métadonnées). Ces messages peuvent soit "
+"demander une action du Core (par exemple en cas de partage de fichier), "
+"soit être à but purement informatif et affichés sous la forme d’une "
+"notification."
+msgstr ""
+
+#: ../../functional_architecture.rst:50
+msgid ""
+"● Le Partage gère les opérations de partage. S’il reçoit un message de "
+"partage de workspace, il déchiffre ce message et ajoute les entrées "
+"correspondantes dans le user manifest de l’utilisateur. Si des messages "
+"ont été envoyés alors qu’aucun des terminaux de l’utilisateur n’étaient "
+"connectés, ils sont gardés en file d’attente sur le serveur de "
+"métadonnées et traités à la connexion de l’utilisateur."
+msgstr ""
+
+#: ../../functional_architecture.rst:57
+msgid "Le serveur de métadonnées"
+msgstr ""
+
+#: ../../functional_architecture.rst:58
+msgid ""
+"Le serveur de métadonnées est dans un environnement distant et contient "
+"trois sous-modules :"
+msgstr ""
+
+#: ../../functional_architecture.rst:60
+msgid ""
+"● La Messagerie permet d’envoyer des notifications techniques aux "
+"utilisateurs"
+msgstr ""
+
+#: ../../functional_architecture.rst:62
+msgid ""
+"● Le Stockage des Données/Métadonnées. Les données des fichiers (les "
+"Blocks) sont stockées sur un service de stockages objet (AWS S3 ou "
+"OpenStack Swift), les métadonnées (les Vlobs, pour Versioned Blobs) sont "
+"stockées dans une base PostgreSQL"
+msgstr ""
+
+#: ../../functional_architecture.rst:66
+msgid ""
+"● Le module Notification des Terminaux - s’occupe d’envoyer des "
+"notifications aux terminaux connectés lors de modifications des données "
+"ou bien de la réception d’un nouveau message"
+msgstr ""
+
+#: ../../functional_architecture.rst:69
+msgid ""
+"● Le Gestionnaire de Clés Publiques contient une correspondance entre "
+"l’identité des utilisateurs/terminaux et leur clé publique "
+"(USER_ENC_P_KEY et DEVICE_SIG_P_KEY)."
+msgstr ""
+

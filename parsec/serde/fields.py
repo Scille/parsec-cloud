@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from pendulum import DateTime as PendulumDateTime
 from uuid import UUID as _UUID
@@ -8,6 +8,7 @@ from marshmallow import ValidationError
 from marshmallow.fields import (
     # Republishing
     Int,
+    Float,
     String,
     List,
     Dict,
@@ -27,6 +28,10 @@ from parsec.crypto import (
     PrivateKey as _PrivateKey,
     PublicKey as _PublicKey,
 )
+from parsec.sequester_crypto import (
+    SequesterVerifyKeyDer as _SequesterVerifyKeyDer,
+    SequesterEncryptionKeyDer as _SequesterEncryptionKeyDer,
+)
 
 
 __all__ = (
@@ -35,6 +40,7 @@ __all__ = (
     "str_based_field_factory",
     "uuid_based_field_factory",
     "Int",
+    "Float",
     "String",
     "List",
     "Dict",
@@ -61,13 +67,15 @@ __all__ = (
 )
 
 
-def enum_field_factory(enum):
+class BaseEnumField(Field):
+    ENUM: Enum
+
     def _serialize(self, value, attr, obj):
         if value is None:
             return None
 
-        if not isinstance(value, enum):
-            raise ValidationError(f"Not a {enum.__name__}")
+        if not isinstance(value, self.ENUM):
+            raise ValidationError(f"Not a {self.ENUM.__name__}")
 
         return value.value
 
@@ -75,18 +83,22 @@ def enum_field_factory(enum):
         if not isinstance(value, str):
             raise ValidationError("Not string")
 
-        for choice in enum:
+        for choice in self.ENUM:
             if choice.value == value:
                 return choice
         else:
             raise ValidationError(f"Invalid role `{value}`")
 
-    return type(
-        f"{enum.__name__}Field", (Field,), {"_serialize": _serialize, "_deserialize": _deserialize}
-    )
+
+# Using inheritance to define enum fields allows for easy instrospection detection
+# which is useful when checking api changes in tests (see tests/schemas/builder.py)
+def enum_field_factory(enum):
+    return type(f"{enum.__name__}Field", (BaseEnumField,), {"ENUM": enum})
 
 
 def bytes_based_field_factory(value_type):
+    assert isinstance(value_type, type)
+
     def _serialize(self, value, attr, obj):
         if value is None:
             return None
@@ -111,13 +123,20 @@ def bytes_based_field_factory(value_type):
 
 
 def str_based_field_factory(value_type):
+    assert isinstance(value_type, type)
+
     def _serialize(self, value, attr, data):
         if value is None:
             return None
 
+        assert isinstance(value, value_type)
         return str(value)
 
     def _deserialize(self, value, attr, data):
+
+        if not isinstance(value, str):
+            raise ValidationError("Not string")
+
         try:
             return value_type(value)
         except ValueError as exc:
@@ -131,15 +150,21 @@ def str_based_field_factory(value_type):
 
 
 def uuid_based_field_factory(value_type):
+    assert isinstance(value_type, type)
+
     def _serialize(self, value, attr, data):
         if value is None:
             return None
 
-        return value
+        assert isinstance(value, value_type)
+        return value.uuid
 
     def _deserialize(self, value, attr, data):
+        if not isinstance(value, _UUID):
+            raise ValidationError("Not an UUID")
+
         try:
-            return value_type(str(value))
+            return value_type(value)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
@@ -347,6 +372,88 @@ class PublicKey(Field):
             raise ValidationError("Invalid verify key.")
 
 
-SecretKey = bytes_based_field_factory(_SecretKey)
-HashDigest = bytes_based_field_factory(_HashDigest)
 Bytes = bytes_based_field_factory(bytes)
+
+
+class HashDigestField(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return value.digest
+
+    def _deserialize(self, value, attr, data):
+        if not isinstance(value, bytes):
+            raise ValidationError("Not bytes")
+
+        try:
+            return _HashDigest(value)
+
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+HashDigest = HashDigestField
+
+
+class SecretKeyField(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return value.secret
+
+    def _deserialize(self, value, attr, data):
+        if not isinstance(value, bytes):
+            raise ValidationError("Not bytes")
+
+        try:
+            return _SecretKey(value)
+
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+SecretKey = SecretKeyField
+
+
+class SequesterVerifyKeyDerField(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return value.dump()
+
+    def _deserialize(self, value, attr, data):
+        if not isinstance(value, bytes):
+            raise ValidationError("Not bytes")
+
+        try:
+            return _SequesterVerifyKeyDer(value)
+
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+SequesterVerifyKeyDer = SequesterVerifyKeyDerField
+
+
+class SequesterEncryptionKeyDerField(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return value.dump()
+
+    def _deserialize(self, value, attr, data):
+        if not isinstance(value, bytes):
+            raise ValidationError("Not bytes")
+
+        try:
+            return _SequesterEncryptionKeyDer(value)
+
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+SequesterEncryptionKeyDer = SequesterEncryptionKeyDerField

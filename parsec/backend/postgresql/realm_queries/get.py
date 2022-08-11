@@ -1,11 +1,16 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import pendulum
-from uuid import UUID
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from parsec.api.protocol import DeviceID, UserID, OrganizationID, RealmRole
-from parsec.backend.realm import RealmStatus, RealmAccessError, RealmNotFoundError
+from parsec.api.protocol import (
+    OrganizationID,
+    DeviceID,
+    UserID,
+    RealmID,
+    RealmRole,
+    MaintenanceType,
+)
+from parsec.backend.realm import RealmStatus, RealmAccessError, RealmNotFoundError, RealmGrantedRole
 from parsec.backend.postgresql.utils import (
     Q,
     query,
@@ -16,8 +21,6 @@ from parsec.backend.postgresql.utils import (
     q_device,
     q_realm,
     q_realm_internal_id,
-    STR_TO_REALM_ROLE,
-    STR_TO_REALM_MAINTENANCE_TYPE,
 )
 from parsec.backend.realm import RealmStats
 
@@ -98,13 +101,31 @@ ORDER BY realm, certified_on DESC
 )
 
 
+_q_get_organization_realms_granted_roles = Q(
+    f"""
+SELECT
+    realm.realm_id,
+    { q_user(_id="realm_user_role.user_", select="user_id") } as user_id,
+    role,
+    certificate,
+    { q_device(_id="realm_user_role.certified_by", select="device_id") } as granted_by,
+    certified_on as granted_on
+FROM realm_user_role
+INNER JOIN realm
+ON realm_user_role.realm = realm._id
+WHERE
+    realm.organization = { q_organization_internal_id("$organization_id") }
+"""
+)
+
+
 @query()
 async def query_get_status(
-    conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
 ) -> RealmStatus:
     ret = await conn.fetchrow(
         *_q_get_realm_status(
-            organization_id=organization_id, realm_id=realm_id, user_id=author.user_id
+            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
         )
     )
     if not ret:
@@ -114,20 +135,24 @@ async def query_get_status(
         raise RealmAccessError()
 
     return RealmStatus(
-        maintenance_type=STR_TO_REALM_MAINTENANCE_TYPE.get(ret["maintenance_type"]),
+        maintenance_type=MaintenanceType(ret["maintenance_type"])
+        if ret["maintenance_type"]
+        else None,
         maintenance_started_on=ret["maintenance_started_on"],
-        maintenance_started_by=ret["maintenance_started_by"],
+        maintenance_started_by=DeviceID(ret["maintenance_started_by"])
+        if ret["maintenance_started_by"]
+        else None,
         encryption_revision=ret["encryption_revision"],
     )
 
 
 @query(in_transaction=True)
 async def query_get_stats(
-    conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
 ) -> RealmStats:
     ret = await conn.fetchrow(
         *_q_has_realm_access(
-            organization_id=organization_id, realm_id=realm_id, user_id=author.user_id
+            organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
         )
     )
     if not ret:
@@ -135,47 +160,40 @@ async def query_get_stats(
 
     if not ret["has_access"]:
         raise RealmAccessError()
-    blocks_size = await conn.fetch(
-        *_q_get_blocks_size_from_realm(organization_id=organization_id, realm_id=realm_id)
+    blocks_size_rep = await conn.fetchrow(
+        *_q_get_blocks_size_from_realm(organization_id=organization_id.str, realm_id=realm_id.uuid)
     )
-    vlobs_size = await conn.fetch(
-        *_q_get_vlob_size_from_realm(organization_id=organization_id, realm_id=realm_id)
+    vlobs_size_rep = await conn.fetchrow(
+        *_q_get_vlob_size_from_realm(organization_id=organization_id.str, realm_id=realm_id.uuid)
     )
-    RealmStats.blocks_size = 0
-    RealmStats.vlobs_size = 0
-    if "sum" in blocks_size[0] and blocks_size[0]["sum"] is not None:
-        RealmStats.blocks_size = blocks_size[0]["sum"]
-    if "sum" in vlobs_size[0] and vlobs_size[0]["sum"] is not None:
-        RealmStats.vlobs_size = vlobs_size[0]["sum"]
 
-    return RealmStats
+    blocks_size = blocks_size_rep["sum"] or 0
+    vlobs_size = vlobs_size_rep["sum"] or 0
+
+    return RealmStats(blocks_size=blocks_size, vlobs_size=vlobs_size)
 
 
 @query()
 async def query_get_current_roles(
-    conn, organization_id: OrganizationID, realm_id: UUID
+    conn, organization_id: OrganizationID, realm_id: RealmID
 ) -> Dict[UserID, RealmRole]:
     ret = await conn.fetch(
-        *_q_get_current_roles(organization_id=organization_id, realm_id=realm_id)
+        *_q_get_current_roles(organization_id=organization_id.str, realm_id=realm_id.uuid)
     )
 
     if not ret:
         # Existing group must have at least one owner user
         raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
-    return {UserID(user_id): STR_TO_REALM_ROLE[role] for user_id, role in ret if role is not None}
+    return {UserID(user_id): RealmRole(role) for user_id, role in ret if role is not None}
 
 
 @query()
 async def query_get_role_certificates(
-    conn,
-    organization_id: OrganizationID,
-    author: DeviceID,
-    realm_id: UUID,
-    since: pendulum.DateTime,
+    conn, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID
 ) -> List[bytes]:
     ret = await conn.fetch(
-        *_q_get_role_certificates(organization_id=organization_id, realm_id=realm_id)
+        *_q_get_role_certificates(organization_id=organization_id.str, realm_id=realm_id.uuid)
     )
 
     if not ret:
@@ -184,9 +202,9 @@ async def query_get_role_certificates(
 
     out = []
     author_current_role = None
-    for user_id, role, certif, certified_on in ret:
-        if not since or certified_on > since:
-            out.append(certif)
+    for user_id, role, certif, _ in ret:
+        user_id = UserID(user_id)
+        out.append(certif)
         if user_id == author.user_id:
             author_current_role = role
 
@@ -199,10 +217,34 @@ async def query_get_role_certificates(
 @query()
 async def query_get_realms_for_user(
     conn, organization_id: OrganizationID, user: UserID
-) -> Dict[UUID, RealmRole]:
-    rep = await conn.fetch(*_q_get_realms_for_user(organization_id=organization_id, user_id=user))
+) -> Dict[RealmID, Optional[RealmRole]]:
+    rep = await conn.fetch(
+        *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
+    )
     return {
-        row["realm_id"]: STR_TO_REALM_ROLE.get(row["role"])
-        for row in rep
-        if row["role"] is not None
+        RealmID(row["realm_id"]): RealmRole(row["role"]) for row in rep if row["role"] is not None
     }
+
+
+@query()
+async def query_dump_realms_granted_roles(
+    conn, organization_id: OrganizationID
+) -> List[RealmGrantedRole]:
+    granted_roles = []
+    rows = await conn.fetch(
+        *_q_get_organization_realms_granted_roles(organization_id=organization_id.str)
+    )
+
+    for row in rows:
+        granted_roles.append(
+            RealmGrantedRole(
+                certificate=row["certificate"],
+                realm_id=RealmID(row["realm_id"]),
+                user_id=UserID(row["user_id"]),
+                role=RealmRole(row["role"]),
+                granted_by=DeviceID(row["granted_by"]),
+                granted_on=row["granted_on"],
+            )
+        )
+
+    return granted_roles

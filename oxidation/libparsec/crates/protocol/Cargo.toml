@@ -1,0 +1,40 @@
+[package]
+name = "libparsec_protocol"
+version = "0.0.0"
+edition = "2021"
+license = " BUSL-1.1"
+autotests = false
+
+[[test]]
+name = "integration"
+path = "tests/mod.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libparsec_crypto = { path = "../crypto" }
+libparsec_types = { path = "../types" }
+serialization_format = { path = "../serialization_format" }
+
+paste = "1.0.8"
+rand = "0.8.5"
+rmp-serde = "1.0.0"
+serde = { version = "1.0.142", features = ["derive"] }
+serde_json = "1.0.83"
+serde_with = "2.0.0"
+thiserror = "1.0.32"
+http = "0.2.8"
+futures = "0.3.21"
+dotenv = "0.15.0"
+smol = "1.2.5"
+async-std = "1.12.0"
+async-tungstenite = { version = "0.17.1", features = ["async-std-runtime"] }
+
+[dev-dependencies]
+tests_fixtures = { path = "../tests_fixtures" }
+hex-literal = "0.3.3"
+rstest = "0.15.0"
+serde_json = "1.0.83"
+
+[features]
+test = []

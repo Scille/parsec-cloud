@@ -1,27 +1,36 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import re
 import attr
 import fnmatch
-from uuid import UUID
 from pathlib import Path
-import importlib_resources
-from pendulum import now as pendulum_now
+import importlib.resources
 from typing import Optional, Tuple, List, Pattern
 from structlog import get_logger
 from functools import partial
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from parsec.event_bus import EventBus
-from parsec.api.protocol import UserID, InvitationType, InvitationDeletedReason
-from parsec.api.data import RevokedUserCertificateContent
+from parsec.api.protocol import (
+    UserID,
+    InvitationType,
+    InvitationToken,
+    InvitationDeletedReason,
+    InvitationEmailSentStatus,
+)
+from parsec.api.data import RevokedUserCertificateContent, EntryName
+from parsec.core.pki import accepter_list_submitted_from_backend
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
 from parsec.core.config import CoreConfig
+from parsec.core.types import OrganizationConfig, OrganizationStats, UsersPerProfileDetailItem
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnectionError,
     BackendNotFoundError,
+    BackendInvitationNotFound,
+    BackendInvitationAlreadyUsed,
+    BackendInvitationOnExistingMember,
     BackendConnStatus,
     BackendNotAvailable,
 )
@@ -41,6 +50,7 @@ from parsec.core.mountpoint import mountpoint_manager_factory, MountpointManager
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import UserFS
+from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 
 
 logger = get_logger()
@@ -88,19 +98,12 @@ def get_prevent_sync_pattern(prevent_sync_pattern_path: Optional[Path] = None) -
         pattern = _get_prevent_sync_pattern(prevent_sync_pattern_path)
     # Default to the pattern from the ignore file in the core resources
     if pattern is None:
-        with importlib_resources.path(core_resources, "default_pattern.ignore") as path:
+        with importlib.resources.files(core_resources).joinpath("default_pattern.ignore") as path:
             pattern = _get_prevent_sync_pattern(path)
     # As a last resort use the failsafe
     if pattern is None:
         return FAILSAFE_PATTERN_FILTER
     return pattern
-
-
-@attr.s(frozen=True, slots=True, auto_attribs=True)
-class OrganizationStats:
-    users: int
-    data_size: int
-    metadata_size: int
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -127,6 +130,12 @@ class LoggedCore:
     def backend_status_exc(self) -> Optional[Exception]:
         return self._backend_conn.status_exc
 
+    def find_workspace_from_name(self, workspace_name: EntryName):
+        for workspace in self.user_fs.get_user_manifest().workspaces:
+            if workspace_name == workspace.name:
+                return workspace
+        raise FSWorkspaceNotFoundError(f"Unknown workspace {workspace_name}")
+
     async def find_humans(
         self,
         query: str = None,
@@ -150,6 +159,8 @@ class LoggedCore:
             raise BackendConnectionError(f"Backend error: {rep}")
         results = []
         for item in rep["results"]:
+            # Note `BackendNotFoundError` should never occurs (unless backend is broken !)
+            # here given we are feeding the backend the user IDs it has provided us
             user_info = await self.get_user_info(item["user_id"])
             results.append(user_info)
         return (results, rep["total"])
@@ -159,11 +170,19 @@ class LoggedCore:
         Raises:
             BackendConnectionError
         """
+
         rep = await self._backend_conn.cmds.organization_stats()
         if rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
         return OrganizationStats(
-            users=rep["users"], data_size=rep["data_size"], metadata_size=rep["metadata_size"]
+            data_size=rep["data_size"],
+            metadata_size=rep["metadata_size"],
+            realms=rep["realms"],
+            users=rep["users"],
+            active_users=rep["active_users"],
+            users_per_profile_detail=[
+                UsersPerProfileDetailItem(**x) for x in rep["users_per_profile_detail"]
+            ],
         )
 
     async def get_user_info(self, user_id: UserID) -> UserInfo:
@@ -197,9 +216,11 @@ class LoggedCore:
         """
         user_id = user_id or self.device.user_id
         try:
-            user_certif, revoked_user_certif, device_certifs = await self._remote_devices_manager.get_user_and_devices(
-                user_id, no_cache=True
-            )
+            (
+                user_certif,
+                revoked_user_certif,
+                device_certifs,
+            ) = await self._remote_devices_manager.get_user_and_devices(user_id, no_cache=True)
         except RemoteDevicesManagerBackendOfflineError as exc:
             raise BackendNotAvailable(str(exc)) from exc
         except RemoteDevicesManagerNotFoundError as exc:
@@ -218,6 +239,7 @@ class LoggedCore:
                     created_on=device_certif.timestamp,
                 )
             )
+        results.sort(key=lambda device: device.created_on, reverse=True)
         return results
 
     async def revoke_user(self, user_id: UserID) -> None:
@@ -225,9 +247,9 @@ class LoggedCore:
         Raises:
             BackendConnectionError
         """
-        now = pendulum_now()
+        timestamp = self.device.timestamp()
         revoked_user_certificate = RevokedUserCertificateContent(
-            author=self.device.device_id, timestamp=now, user_id=user_id
+            author=self.device.device_id, timestamp=timestamp, user_id=user_id
         ).dump_and_sign(self.device.signing_key)
         rep = await self._backend_conn.cmds.user_revoke(
             revoked_user_certificate=revoked_user_certificate
@@ -238,7 +260,9 @@ class LoggedCore:
         # Invalidate potential cache to avoid displaying the user as not-revoked
         self._remote_devices_manager.invalidate_user_cache(user_id)
 
-    async def new_user_invitation(self, email: str, send_email: bool) -> BackendInvitationAddr:
+    async def new_user_invitation(
+        self, email: str, send_email: bool
+    ) -> Tuple[BackendInvitationAddr, InvitationEmailSentStatus]:
         """
         Raises:
             BackendConnectionError
@@ -246,16 +270,29 @@ class LoggedCore:
         rep = await self._backend_conn.cmds.invite_new(
             type=InvitationType.USER, claimer_email=email, send_email=send_email
         )
-        if rep["status"] != "ok":
+        if rep["status"] == "already_member":
+            raise BackendInvitationOnExistingMember("An user already exist with this email")
+        elif rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
-        return BackendInvitationAddr.build(
-            backend_addr=self.device.organization_addr,
-            organization_id=self.device.organization_id,
-            invitation_type=InvitationType.USER,
-            token=rep["token"],
+
+        if not ("email_sent" in rep):
+            email_sent = InvitationEmailSentStatus.SUCCESS
+        else:
+            email_sent = rep["email_sent"]
+
+        return (
+            BackendInvitationAddr.build(
+                backend_addr=self.device.organization_addr.get_backend_addr(),
+                organization_id=self.device.organization_id,
+                invitation_type=InvitationType.USER,
+                token=rep["token"],
+            ),
+            email_sent,
         )
 
-    async def new_device_invitation(self, send_email: bool) -> BackendInvitationAddr:
+    async def new_device_invitation(
+        self, send_email: bool
+    ) -> Tuple[BackendInvitationAddr, InvitationEmailSentStatus]:
         """
         Raises:
             BackendConnectionError
@@ -265,22 +302,37 @@ class LoggedCore:
         )
         if rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
-        return BackendInvitationAddr.build(
-            backend_addr=self.device.organization_addr,
-            organization_id=self.device.organization_id,
-            invitation_type=InvitationType.DEVICE,
-            token=rep["token"],
+
+        if not ("email_sent" in rep):
+            email_sent = InvitationEmailSentStatus.SUCCESS
+        else:
+            email_sent = rep["email_sent"]
+
+        return (
+            BackendInvitationAddr.build(
+                backend_addr=self.device.organization_addr.get_backend_addr(),
+                organization_id=self.device.organization_id,
+                invitation_type=InvitationType.DEVICE,
+                token=rep["token"],
+            ),
+            email_sent,
         )
 
     async def delete_invitation(
-        self, token: UUID, reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED
+        self,
+        token: InvitationToken,
+        reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED,
     ) -> None:
         """
         Raises:
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_delete(token=token, reason=reason)
-        if rep["status"] != "ok":
+        if rep["status"] == "not_found":
+            raise BackendInvitationNotFound("Invitation not found")
+        elif rep["status"] == "already_deleted":
+            raise BackendInvitationAlreadyUsed("Invitation already used")
+        elif rep["status"] != "ok":
             raise BackendConnectionError(f"Backend error: {rep}")
 
     async def list_invitations(self) -> List[dict]:  # TODO: better return type
@@ -293,7 +345,7 @@ class LoggedCore:
             raise BackendConnectionError(f"Backend error: {rep}")
         return rep["invitations"]
 
-    async def start_greeting_user(self, token: UUID) -> UserGreetInProgress1Ctx:
+    async def start_greeting_user(self, token: InvitationToken) -> UserGreetInProgress1Ctx:
         """
         Raises:
             BackendConnectionError
@@ -302,7 +354,7 @@ class LoggedCore:
         initial_ctx = UserGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
         return await initial_ctx.do_wait_peer()
 
-    async def start_greeting_device(self, token: UUID) -> DeviceGreetInProgress1Ctx:
+    async def start_greeting_device(self, token: InvitationToken) -> DeviceGreetInProgress1Ctx:
         """
         Raises:
             BackendConnectionError
@@ -311,6 +363,14 @@ class LoggedCore:
         initial_ctx = DeviceGreetInitialCtx(cmds=self._backend_conn.cmds, token=token)
         return await initial_ctx.do_wait_peer()
 
+    def get_organization_config(self) -> OrganizationConfig:
+        return self._backend_conn.get_organization_config()
+
+    async def list_submitted_enrollment_requests(self):
+        return await accepter_list_submitted_from_backend(
+            cmds=self._backend_conn.cmds, extra_trust_roots=self.config.pki_extra_trust_roots
+        )
+
 
 @asynccontextmanager
 async def logged_core_factory(
@@ -318,7 +378,6 @@ async def logged_core_factory(
 ):
     event_bus = event_bus or EventBus()
     prevent_sync_pattern = get_prevent_sync_pattern(config.prevent_sync_pattern_path)
-
     backend_conn = BackendAuthenticatedConn(
         addr=device.organization_addr,
         device_id=device.device_id,
@@ -329,10 +388,16 @@ async def logged_core_factory(
         keepalive=config.backend_connection_keepalive,
     )
 
-    path = config.data_base_dir / device.slug
     remote_devices_manager = RemoteDevicesManager(backend_conn.cmds, device.root_verify_key)
     async with UserFS.run(
-        device, path, backend_conn.cmds, remote_devices_manager, event_bus, prevent_sync_pattern
+        data_base_dir=config.data_base_dir,
+        device=device,
+        backend_cmds=backend_conn.cmds,
+        remote_devices_manager=remote_devices_manager,
+        event_bus=event_bus,
+        prevent_sync_pattern=prevent_sync_pattern,
+        preferred_language=config.gui_language,
+        workspace_storage_cache_size=config.workspace_storage_cache_size,
     ) as user_fs:
 
         backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))

@@ -1,9 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
+from unicodedata import normalize
 
 from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID, HumanHandle
-from parsec.api.data import SASCode
+from parsec.api.data import SASCode, EntryName, EntryNameTooLongError
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -23,6 +24,17 @@ from parsec.api.data import SASCode
 def test_max_bytes_size(cls, data):
     with pytest.raises(ValueError):
         cls(data)
+
+
+@pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
+def test_normalization(cls):
+    nfc_str = normalize("NFC", "àæßšūÿź")
+    nfd_str = normalize("NFD", nfc_str)
+
+    assert nfc_str != nfd_str
+    assert str(cls(nfd_str)) == nfc_str
+    assert str(cls(nfc_str)) == nfc_str
+    assert str(cls(nfc_str + nfd_str)) == nfc_str + nfc_str
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -85,6 +97,7 @@ def test_human_handle_compare():
         ("a@x", "A"),  # Smallest size
         (f"{'a' * 64}@{'x' * 185}.com", "x" * 254),  # Max sizes
         (f"{'飞' * 21}@{'飞' * 62}.com", f"{'飞' * 84}xx"),  # Unicode & max size
+        ("john.doe@example.com", "J.D."),
     ),
 )
 def test_valid_human_handle(email, label):
@@ -100,11 +113,31 @@ def test_valid_human_handle(email, label):
         (f"{'飞' * 21}@{'飞' * 63}.x", "Alice"),  # 255 bytes long utf8 email
         ("alice@example.com", ""),  # Empty label
         ("", "Alice"),  # Empty email
+        ("", "Alice <alice@example.com>"),  # Empty email and misleading label
+        ("Alice <alice@example.com>", ""),  # Empty label and misleading label
+        ("Alice <@example.com>", "Alice"),  # Missing local part in email
     ),
 )
 def test_invalid_human_handle(email, label):
     with pytest.raises(ValueError):
         HumanHandle(email, label)
+
+
+def test_human_handle_normalization():
+    nfc_label = normalize("NFC", "àæßšūÿź")
+    nfd_label = normalize("NFD", nfc_label)
+    nfc_email = normalize("NFC", "àæßš@ūÿ.ź")
+    nfd_email = normalize("NFD", nfc_email)
+    assert nfc_label != nfd_label
+    assert nfc_email != nfd_email
+
+    hh = HumanHandle(nfd_email, nfd_label)
+    assert hh.email == nfc_email
+    assert hh.label == nfc_label
+
+    hh = HumanHandle(nfc_email, nfc_label)
+    assert hh.email == nfc_email
+    assert hh.label == nfc_label
 
 
 def test_sas_code():
@@ -117,11 +150,66 @@ def test_sas_code():
     assert SASCode.from_int(0xFFFFF) == SASCode("9999")
 
     with pytest.raises(ValueError):
-        SASCode.from_int(2 ** 20)
+        SASCode.from_int(2**20)
 
-    with pytest.raises(ValueError):
+    # OverflowError for Rust binding
+    with pytest.raises((ValueError, OverflowError)):
         SASCode.from_int(-1)
 
     for invalid in ["", "AAA", "AAAAA", "aaaa", "AAAI", "AAAO", "AAA0", "AAA1"]:
         with pytest.raises(ValueError):
             SASCode(invalid)
+
+
+@pytest.mark.parametrize(
+    "data",
+    (
+        "foo",
+        "foo.txt",
+        "x" * 255,  # Max size
+        "飞" * 85,  # Unicode & max size
+        "X1-_é飞" "🌍☄️==🦕🦖💀",  # Probably a bad name for a real folder...
+        ".a",  # Dot and dot-dot are allowed if they are not alone
+        "..a",
+        "a..",
+        "a.",
+    ),
+)
+def test_valid_entry_name(data):
+    EntryName(data)
+
+
+@pytest.mark.parametrize("data", ("x" * 256, "飞" * 85 + "x"))
+def test_entry_name_too_long(data):
+    with pytest.raises(EntryNameTooLongError):
+        EntryName(data)
+
+
+@pytest.mark.parametrize(
+    "data",
+    (
+        ".",  # Not allowed
+        "..",  # Not allowed
+        "/x",  # Slash not allowed
+        "x/x",
+        "x/",
+        "/",
+        "\x00x",  # Null-byte not allowed
+        "x\x00x",
+        "x\x00",
+        "\x00",
+    ),
+)
+def test_invalid_entry_name(data):
+    with pytest.raises(ValueError):
+        EntryName(data)
+
+
+def test_entry_name_normalization():
+    nfc_str = normalize("NFC", "àáâäæãåāçćčèéêëēėęîïíīįìłñńôöòóœøōõßśšûüùúūÿžźż")
+    nfd_str = normalize("NFD", nfc_str)
+
+    assert nfc_str != nfd_str
+    assert EntryName(nfd_str).str == nfc_str
+    assert EntryName(nfc_str).str == nfc_str
+    assert EntryName(nfc_str + nfd_str).str == nfc_str + nfc_str

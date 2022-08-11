@@ -1,22 +1,12 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from parsec.serde import fields, BaseSchema, JSONSerializer
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
-from parsec.api.protocol.types import OrganizationIDField, DeviceIDField
-
-
-class APIV1_OrganizationCreateReqSchema(BaseReqSchema):
-    organization_id = OrganizationIDField(required=True)
-    expiration_date = fields.DateTime(allow_none=True, required=False)
-
-
-class APIV1_OrganizationCreateRepSchema(BaseRepSchema):
-    bootstrap_token = fields.String(required=True)
-    expiration_date = fields.DateTime(allow_none=True, required=False)
-
-
-apiv1_organization_create_serializer = CmdSerializer(
-    APIV1_OrganizationCreateReqSchema, APIV1_OrganizationCreateRepSchema
+from parsec.api.protocol.types import (
+    OrganizationIDField,
+    DeviceIDField,
+    UserProfileField,
+    DeviceLabelField,
 )
 
 
@@ -25,6 +15,7 @@ class APIV1_OrganizationBootstrapReqSchema(BaseReqSchema):
     root_verify_key = fields.VerifyKey(required=True)
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
+    # Added Parsec 1.14.0, but we forgot to bump API V1 revision :'(
     # Same certificates than above, but expurged of human_handle/device_label
     # Backward compatibility prevent those field to be required, however
     # they should be considered so by recent version of Parsec (hence the
@@ -33,9 +24,8 @@ class APIV1_OrganizationBootstrapReqSchema(BaseReqSchema):
     # redacted fields. In such case we consider the non-redacted can also
     # be used as redacted given the to-be-redacted fields have been introduce
     # in later version of Parsec.
-    redacted_user_certificate = fields.Bytes(allow_none=False)
-    redacted_device_certificate = fields.Bytes(allow_none=False)
-    root_verify_key = fields.VerifyKey(required=True)
+    redacted_user_certificate = fields.Bytes(required=False, allow_none=False)
+    redacted_device_certificate = fields.Bytes(required=False, allow_none=False)
 
 
 class APIV1_OrganizationBootstrapRepSchema(BaseRepSchema):
@@ -48,15 +38,44 @@ apiv1_organization_bootstrap_serializer = CmdSerializer(
 )
 
 
+class OrganizationBootstrapReqSchema(BaseReqSchema):
+    bootstrap_token = fields.String(required=True)
+    root_verify_key = fields.VerifyKey(required=True)
+    user_certificate = fields.Bytes(required=True)
+    device_certificate = fields.Bytes(required=True)
+    redacted_user_certificate = fields.Bytes(required=True)
+    redacted_device_certificate = fields.Bytes(required=True)
+    # Added in API version 2.8/3.2 (Parsec 2.11.0)
+    # Set to `None` for sequester disabled
+    # Note there is absolutely no way to change this later as this certif must
+    # be signed by the root key which has been destroyed after bootstrap
+    sequester_authority_certificate = fields.Bytes(required=False, allow_none=True, missing=None)
+
+
+class OrganizationBootstrapRepSchema(BaseRepSchema):
+    pass
+
+
+organization_bootstrap_serializer = CmdSerializer(
+    OrganizationBootstrapReqSchema, OrganizationBootstrapRepSchema
+)
+
+
 class OrganizationBootstrapWebhookSchema(BaseSchema):
     organization_id = OrganizationIDField(required=True)
     device_id = DeviceIDField(required=True)
-    device_label = fields.String(allow_none=True, required=True)
+    device_label = DeviceLabelField(allow_none=True, required=True)
     human_email = fields.String(allow_none=True, required=True)
     human_label = fields.String(allow_none=True, required=True)
 
 
 organization_bootstrap_webhook_serializer = JSONSerializer(OrganizationBootstrapWebhookSchema)
+
+
+class UsersPerProfileDetailItemSchema(BaseSchema):
+    profile = UserProfileField(required=True)
+    active = fields.Integer(required=True)
+    revoked = fields.Integer(required=True)
 
 
 class OrganizationStatsReqSchema(BaseReqSchema):
@@ -66,7 +85,12 @@ class OrganizationStatsReqSchema(BaseReqSchema):
 class OrganizationStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
     metadata_size = fields.Integer(required=True)
+    realms = fields.Integer(required=True)
     users = fields.Integer(required=True)
+    active_users = fields.Integer(required=True)
+    users_per_profile_detail = fields.List(
+        fields.Nested(UsersPerProfileDetailItemSchema), required=True
+    )
 
 
 organization_stats_serializer = CmdSerializer(
@@ -74,44 +98,24 @@ organization_stats_serializer = CmdSerializer(
 )
 
 
-class APIV1_OrganizationStatsReqSchema(BaseReqSchema):
-    organization_id = OrganizationIDField(required=True)
-
-
-class APIV1_OrganizationStatsRepSchema(BaseRepSchema):
-    data_size = fields.Integer(required=True)
-    metadata_size = fields.Integer(required=True)
-    users = fields.Integer(required=True)
-
-
-apiv1_organization_stats_serializer = CmdSerializer(
-    APIV1_OrganizationStatsReqSchema, APIV1_OrganizationStatsRepSchema
-)
-
-
-class APIV1_OrganizationStatusReqSchema(BaseReqSchema):
-    organization_id = OrganizationIDField(required=True)
-
-
-class APIV1_OrganizationStatusRepSchema(BaseRepSchema):
-    is_bootstrapped = fields.Boolean(required=True)
-    expiration_date = fields.DateTime(allow_none=True, required=False)
-
-
-apiv1_organization_status_serializer = CmdSerializer(
-    APIV1_OrganizationStatusReqSchema, APIV1_OrganizationStatusRepSchema
-)
-
-
-class APIV1_OrganizationUpdateReqSchema(BaseReqSchema):
-    organization_id = OrganizationIDField(required=True)
-    expiration_date = fields.DateTime(allow_none=True, required=False)
-
-
-class APIV1_OrganizationUpdateRepSchema(BaseRepSchema):
+class OrganizationConfigReqSchema(BaseReqSchema):
     pass
 
 
-apiv1_organization_update_serializer = CmdSerializer(
-    APIV1_OrganizationUpdateReqSchema, APIV1_OrganizationUpdateRepSchema
+class OrganizationConfigRepSchema(BaseRepSchema):
+    user_profile_outsider_allowed = fields.Boolean(required=True)
+    # `None` stands for "no limit" here
+    active_users_limit = fields.Integer(allow_none=True, required=True)
+    # Field set to `None` if sequester is disabled for the organization
+    # New in API version 2.8/3.2 (Parsec 2.11.0)
+    sequester_authority_certificate = fields.Bytes(allow_none=True, required=False, missing=None)
+    # Field set to `None` if sequester is disabled for the organization
+    # New in API version 2.8/3.2 (Parsec 2.11.0)
+    sequester_services_certificates = fields.List(
+        fields.Bytes(), allow_none=True, required=False, missing=None
+    )
+
+
+organization_config_serializer = CmdSerializer(
+    OrganizationConfigReqSchema, OrganizationConfigRepSchema
 )

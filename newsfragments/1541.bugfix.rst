@@ -1,1 +1,0 @@
-Fix an error when opening a workspace in the file explorer

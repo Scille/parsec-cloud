@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from parsec.api.protocol import RealmRole, OrganizationID
 from parsec.backend.backend_events import BackendEvent
@@ -67,11 +67,14 @@ SELECT
 async def query_create(
     conn, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
 ) -> None:
+    assert self_granted_role.granted_by is not None
     assert self_granted_role.granted_by.user_id == self_granted_role.user_id
     assert self_granted_role.role == RealmRole.OWNER
 
     realm_internal_id = await conn.fetchval(
-        *_q_insert_realm(organization_id=organization_id, realm_id=self_granted_role.realm_id)
+        *_q_insert_realm(
+            organization_id=organization_id.str, realm_id=self_granted_role.realm_id.uuid
+        )
     )
     if not realm_internal_id:
         raise RealmAlreadyExistsError()
@@ -79,10 +82,10 @@ async def query_create(
     await conn.execute(
         *_q_insert_realm_role(
             realm_internal_id=realm_internal_id,
-            organization_id=organization_id,
-            user_id=self_granted_role.user_id,
+            organization_id=organization_id.str,
+            user_id=self_granted_role.user_id.str,
             certificate=self_granted_role.certificate,
-            certified_by=self_granted_role.granted_by,
+            certified_by=self_granted_role.granted_by.str,
             certified_on=self_granted_role.granted_on,
         )
     )
@@ -96,5 +99,5 @@ async def query_create(
         author=self_granted_role.granted_by,
         realm_id=self_granted_role.realm_id,
         user=self_granted_role.user_id,
-        role_str=self_granted_role.role.value,
+        role=self_granted_role.role,
     )

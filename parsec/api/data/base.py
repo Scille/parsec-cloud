@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
-from typing import Optional, Any, TypeVar, Type
+from typing import Optional, Tuple, Dict, Any, TypeVar, Type
 from pendulum import DateTime
 
 from parsec.serde import (
@@ -38,12 +38,12 @@ class DataMeta(type):
     BASE_SCHEMA_CLS = BaseSchema
     CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 
-    def __new__(cls, name, bases, nmspc):
+    def __new__(cls, name: str, bases: Tuple[type, ...], nmspc: Dict[str, Any]):
         # Sanity checks
         if "SCHEMA_CLS" not in nmspc:
             raise RuntimeError("Missing attribute `SCHEMA_CLS` in class definition")
         if not issubclass(nmspc["SCHEMA_CLS"], cls.BASE_SCHEMA_CLS):
-            raise RuntimeError(f"Attribute `SCHEMA_CLS` must inherit {BaseSignedDataSchema!r}")
+            raise RuntimeError(f"Attribute `SCHEMA_CLS` must inherit {cls.BASE_SCHEMA_CLS!r}")
 
         raw_cls = type.__new__(cls, name, bases, nmspc)
 
@@ -51,20 +51,23 @@ class DataMeta(type):
         schema_cls_fields = set(nmspc["SCHEMA_CLS"]._declared_fields)
         bases_schema_cls = (base for base in bases if hasattr(base, "SCHEMA_CLS"))
         for base in bases_schema_cls:
-            assert base.SCHEMA_CLS._declared_fields.keys() <= schema_cls_fields
+            assert (
+                base.SCHEMA_CLS._declared_fields.keys()  # type: ignore[attr-defined]
+                <= schema_cls_fields
+            )
 
         # Sanity check: attr fields need to be defined in SCHEMA_CLS
         if "__attrs_attrs__" in nmspc:
             assert {att.name for att in nmspc["__attrs_attrs__"]} <= schema_cls_fields
         try:
-            serializer_cls = raw_cls.SERIALIZER_CLS
+            serializer_cls = raw_cls.SERIALIZER_CLS  # type: ignore[attr-defined]
         except AttributeError:
             raise RuntimeError("Missing attribute `SERIALIZER_CLS` in class definition")
 
         if not issubclass(serializer_cls, BaseSerializer):
             raise RuntimeError(f"Attribute `SERIALIZER_CLS` must inherit {BaseSerializer!r}")
 
-        raw_cls.SERIALIZER = serializer_cls(
+        raw_cls.SERIALIZER = serializer_cls(  # type: ignore[attr-defined]
             nmspc["SCHEMA_CLS"], DataValidationError, DataSerializationError
         )
 
@@ -95,7 +98,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))
+            return attr.astuple(self).__eq__(attr.astuple(other))  # type: ignore[arg-type]
         return NotImplemented
 
     def evolve(self: BaseSignedDataTypeVar, **kwargs: object) -> BaseSignedDataTypeVar:
@@ -270,7 +273,7 @@ class BaseData(metaclass=DataMeta):
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
-            return attr.astuple(self).__eq__(attr.astuple(other))
+            return attr.astuple(self).__eq__(attr.astuple(other))  # type: ignore[arg-type]
         return NotImplemented
 
     def evolve(self, **kwargs):

@@ -75,7 +75,7 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <widget class="QLineEdit" name="line_edit_search">
+        <widget class="FilterLineEdit" name="line_edit_search">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -447,14 +447,19 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>Button</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+  <customwidget>
    <class>SpinnerWidget</class>
    <extends>QWidget</extends>
    <header>parsec.core.gui.custom_widgets</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>Button</class>
-   <extends>QPushButton</extends>
+   <class>FilterLineEdit</class>
+   <extends>QLineEdit</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>

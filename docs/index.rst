@@ -1,3 +1,5 @@
+.. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 .. note::
     Parsec's documentation is available in various languages and versions.
     Expand the "Read the Docs" panel at the bottom of the sidebar to see the list.

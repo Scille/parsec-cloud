@@ -1,38 +1,30 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
+import re
 
-from parsec.api.protocol import InvitationType
+from parsec.crypto import SigningKey
+from parsec.api.protocol import InvitationType, OrganizationID, InvitationToken
 from parsec.core.types import (
+    EntryID,
     BackendAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
-    BackendOrganizationClaimUserAddr,
-    BackendOrganizationClaimDeviceAddr,
     BackendOrganizationFileLinkAddr,
     BackendInvitationAddr,
 )
 
 
-ORG = "MyOrg"
-RVK = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
-TOKEN = "a0000000000000000000000000000001"
-DOMAIN = "parsec.cloud.com"
-USER_ID = "John"
-DEVICE_ID = "John%40Dev42"
-PATH = "%2Fdir%2Ffile"
-WORKSPACE_ID = "2d4ded12-7406-4608-833b-7f57f01156e2"
-INVITATION_TYPE = "claim_user"
 DEFAULT_ARGS = {
-    "ORG": ORG,
-    "RVK": RVK,
-    "TOKEN": TOKEN,
-    "DOMAIN": DOMAIN,
-    "USER_ID": USER_ID,
-    "DEVICE_ID": DEVICE_ID,
-    "PATH": PATH,
-    "WORKSPACE_ID": WORKSPACE_ID,
-    "INVITATION_TYPE": INVITATION_TYPE,
+    "ORG": "MyOrg",
+    "RVK": "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss",
+    "TOKEN": "a0000000000000000000000000000001",
+    "DOMAIN": "parsec.cloud.com",
+    "USER_ID": "John",
+    "DEVICE_ID": "John%40Dev42",
+    "ENCRYPTED_PATH": "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs",
+    "WORKSPACE_ID": "2d4ded1274064608833b7f57f01156e2",
+    "INVITATION_TYPE": "claim_user",
 }
 
 
@@ -66,30 +58,10 @@ BackendOrganizationBootstrapAddrTestbed = AddrTestbed(
     BackendOrganizationBootstrapAddr,
     "parsec://{DOMAIN}/{ORG}?action=bootstrap_organization&token={TOKEN}",
 )
-BackendOrganizationClaimUserAddrTestbed = AddrTestbed(
-    "org_claim_user_addr",
-    BackendOrganizationClaimUserAddr,
-    "parsec://{DOMAIN}/{ORG}?action=claim_user&user_id={USER_ID}&token={TOKEN}&rvk={RVK}",
-)
-BackendOrganizationClaimDeviceAddrTestbed = AddrTestbed(
-    "org_claim_device_addr",
-    BackendOrganizationClaimDeviceAddr,
-    "parsec://{DOMAIN}/{ORG}?action=claim_device&device_id={DEVICE_ID}&token={TOKEN}&rvk={RVK}",
-)
-BackendOrganizationClaimUserAddrNoTokenTestbed = AddrTestbed(
-    "org_claim_user_addr_no_token",
-    BackendOrganizationClaimUserAddr,
-    "parsec://{DOMAIN}/{ORG}?action=claim_user&user_id={USER_ID}&rvk={RVK}",
-)
-BackendOrganizationClaimDeviceAddrNoTokenTestbed = AddrTestbed(
-    "org_claim_device_addr_no_token",
-    BackendOrganizationClaimDeviceAddr,
-    "parsec://{DOMAIN}/{ORG}?action=claim_device&device_id={DEVICE_ID}&rvk={RVK}",
-)
 BackendOrganizationFileLinkAddrTestbed = AddrTestbed(
     "org_file_link_addr",
     BackendOrganizationFileLinkAddr,
-    "parsec://{DOMAIN}/{ORG}?action=file_link&workspace_id={WORKSPACE_ID}&path={PATH}&rvk={RVK}",
+    "parsec://{DOMAIN}/{ORG}?action=file_link&workspace_id={WORKSPACE_ID}&path={ENCRYPTED_PATH}",
 )
 BackendInvitationAddrTestbed = AddrTestbed(
     "org_invitation_addr",
@@ -103,13 +75,16 @@ BackendInvitationAddrTestbed = AddrTestbed(
         BackendAddrTestbed,
         BackendOrganizationAddrTestbed,
         BackendOrganizationBootstrapAddrTestbed,
-        BackendOrganizationClaimUserAddrTestbed,
-        BackendOrganizationClaimDeviceAddrTestbed,
-        BackendOrganizationClaimUserAddrNoTokenTestbed,
-        BackendOrganizationClaimDeviceAddrNoTokenTestbed,
         BackendOrganizationFileLinkAddrTestbed,
         BackendInvitationAddrTestbed,
-    ]
+    ],
+    ids=[
+        "backend_addr",
+        "backend_organization_addr",
+        "backend_organization_bootstrap_addr",
+        "backend_organization_file_link_addr",
+        "backend_invitation_addr",
+    ],
 )
 def addr_testbed(request):
     return request.param
@@ -119,13 +94,15 @@ def addr_testbed(request):
     params=[
         BackendOrganizationAddrTestbed,
         BackendOrganizationBootstrapAddrTestbed,
-        BackendOrganizationClaimUserAddrTestbed,
-        BackendOrganizationClaimDeviceAddrTestbed,
-        BackendOrganizationClaimUserAddrNoTokenTestbed,
-        BackendOrganizationClaimDeviceAddrNoTokenTestbed,
         BackendOrganizationFileLinkAddrTestbed,
         BackendInvitationAddrTestbed,
-    ]
+    ],
+    ids=[
+        "backend_organization_addr",
+        "backend_organization_bootstrap_addr",
+        "backend_organization_file_link_addr",
+        "backend_invitation_addr",
+    ],
 )
 def addr_with_org_testbed(request):
     return request.param
@@ -134,10 +111,9 @@ def addr_with_org_testbed(request):
 @pytest.fixture(
     params=[
         BackendOrganizationBootstrapAddrTestbed,
-        BackendOrganizationClaimUserAddrTestbed,
-        BackendOrganizationClaimDeviceAddrTestbed,
         # BackendInvitationAddrTestbed token format is different from apiv1's token
-    ]
+    ],
+    ids=["backend_organization_bootstrap_addr"],
 )
 def addr_with_token_testbed(request):
     return request.param
@@ -182,7 +158,7 @@ def test_addr_with_no_hostname(addr_testbed, with_port):
     url = addr_testbed.generate_url(DOMAIN=domain)
     with pytest.raises(ValueError) as exc:
         addr_testbed.cls.from_url(url)
-    assert str(exc.value) == "Missing mandatory hostname"
+    assert str(exc.value) in ["Missing mandatory hostname", "Invalid URL"]
 
 
 def test_good_addr_with_unknown_field(addr_testbed):
@@ -193,12 +169,55 @@ def test_good_addr_with_unknown_field(addr_testbed):
     assert url2 == url
 
 
+def test_good_addr_with_http_redirection(addr_testbed):
+    redirection_url = re.sub(r"^parsec://([^/]*)(.*)$", r"https://\1/redirect\2", addr_testbed.url)
+    addr = addr_testbed.cls.from_url(redirection_url, allow_http_redirection=True)
+    assert addr.to_url() == addr_testbed.url
+
+    # Also try http redirection
+    addr_from_redirection = addr_testbed.cls.from_url(
+        add_args_to_url(addr_testbed.url, "no_ssl=true")
+    )
+    redirection_url = re.sub(r"^parsec://([^/]*)(.*)$", r"http://\1/redirect\2", addr_testbed.url)
+    addr = addr_testbed.cls.from_url(redirection_url, allow_http_redirection=True)
+    assert addr_from_redirection.to_url() == addr.to_url()
+
+
+def test_good_addr_with_http_redirection_overwritting_no_ssl(addr_testbed):
+    # no_ssl param should be ignored given it is already provided in the scheme
+    redirection_url = re.sub(r"^parsec://([^/]*)(.*)$", r"https://\1/redirect\2", addr_testbed.url)
+    redirection_url = add_args_to_url(redirection_url, "no_ssl=true")
+    addr_from_redirection = addr_testbed.cls.from_url(redirection_url, allow_http_redirection=True)
+    assert addr_from_redirection.to_url() == addr_testbed.url
+
+
+def test_addr_with_http_redirection_not_enabled(addr_testbed):
+    # no_ssl param should be ignored given it is already provided in the scheme
+    redirection_url = re.sub(r"^parsec://([^/]*)(.*)$", r"https://\1/redirect\2", addr_testbed.url)
+    # HTTP redirection handling is disabled by default
+    with pytest.raises(ValueError):
+        addr_testbed.cls.from_url(redirection_url)
+
+
+def test_bad_addr_with_http_redirection(addr_testbed):
+    # Missing `/redirect` path prefix
+    bad_url = addr_testbed.url.replace("parsec://", "https://")
+    with pytest.raises(ValueError):
+        addr_testbed.cls.from_url(bad_url)
+
+    # Bad scheme
+    bad_url = re.sub(r"^parsec://([^/]*)(.*)$", r"dummy://\1/redirect\2", addr_testbed.url)
+    with pytest.raises(ValueError):
+        addr_testbed.cls.from_url(bad_url)
+
+
 def test_good_addr_with_unicode_org_name(addr_with_org_testbed):
     orgname = "康熙帝"
     orgname_percent_quoted = "%E5%BA%B7%E7%86%99%E5%B8%9D"
     url = addr_with_org_testbed.generate_url(ORG=orgname_percent_quoted)
     addr = addr_with_org_testbed.cls.from_url(url)
-    assert addr.organization_id == orgname
+    assert isinstance(addr.organization_id, OrganizationID)
+    assert str(addr.organization_id) == orgname
     url2 = addr.to_url()
     assert url2 == url
 
@@ -242,6 +261,7 @@ def test_good_addr_with_no_token(addr_with_token_testbed):
     assert addr2 == addr
 
 
+@pytest.mark.skip("Rust replaces invalid UTF-8 characters instead of raising a ValueError")
 def test_addr_with_bad_percent_encoded_token(addr_with_token_testbed):
     bad_percent_quoted = "%E5%BA%B7%E7"  # Not a valid utf8 string
     url = addr_with_token_testbed.generate_url(TOKEN=bad_percent_quoted)
@@ -256,11 +276,19 @@ def test_file_link_addr_invalid_workspace(addr_file_link_testbed, invalid_worksp
         addr_file_link_testbed.cls.from_url(url)
 
 
-@pytest.mark.parametrize("invalid_path", [None, "dir/path"])
+@pytest.mark.parametrize("invalid_path", [None, "__notbase32__"])
 def test_file_link_addr_invalid_path(addr_file_link_testbed, invalid_path):
-    url = addr_file_link_testbed.generate_url(PATH=invalid_path)
+    url = addr_file_link_testbed.generate_url(ENCRYPTED_PATH=invalid_path)
     with pytest.raises(ValueError):
         addr_file_link_testbed.cls.from_url(url)
+
+
+def test_file_link_addr_get_encrypted_path(addr_file_link_testbed):
+    serialized_encrypted_path = "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs"
+    encrypted_path = b"<encrypted_payload>"
+    url = addr_file_link_testbed.generate_url(ENCRYPTED_PATH=serialized_encrypted_path)
+    addr = addr_file_link_testbed.cls.from_url(url)
+    assert addr.encrypted_path == encrypted_path
 
 
 @pytest.mark.parametrize("invalid_type", [None, "claim", "claim_foo"])
@@ -300,5 +328,57 @@ def test_invitation_addr_to_http_url(addr_invitation_testbed, no_ssl):
     addr = addr_invitation_testbed.cls.from_url(url)
     http_url = addr.to_http_redirection_url()
     assert (
-        http_url == f"{http_scheme}{DOMAIN}/redirect/{ORG}?action={INVITATION_TYPE}&token={TOKEN}"
+        http_url
+        == http_scheme
+        + "{DOMAIN}/redirect/{ORG}?action={INVITATION_TYPE}&token={TOKEN}".format(**DEFAULT_ARGS)
     )
+
+
+def test_build_addrs():
+    backend_addr = BackendAddr.from_url(BackendAddrTestbed.url)
+    assert backend_addr.hostname == "parsec.cloud.com"
+    assert backend_addr.port == 443
+    assert backend_addr.use_ssl is True
+
+    organization_id = OrganizationID("MyOrg")
+    root_verify_key = SigningKey.generate().verify_key
+
+    organization_addr = BackendOrganizationAddr.build(
+        backend_addr=backend_addr, organization_id=organization_id, root_verify_key=root_verify_key
+    )
+    assert organization_addr.organization_id == organization_id
+    assert organization_addr.root_verify_key == root_verify_key
+
+    organization_bootstrap_addr = BackendOrganizationBootstrapAddr.build(
+        backend_addr=backend_addr,
+        organization_id=organization_id,
+        token="a0000000000000000000000000000001",
+    )
+    assert organization_bootstrap_addr.token == "a0000000000000000000000000000001"
+    assert organization_bootstrap_addr.organization_id == organization_id
+
+    organization_bootstrap_addr2 = BackendOrganizationBootstrapAddr.build(
+        backend_addr=backend_addr, organization_id=organization_id, token=None
+    )
+    assert organization_bootstrap_addr2.organization_id == organization_id
+    assert organization_bootstrap_addr2.token == ""
+
+    organization_file_link_addr = BackendOrganizationFileLinkAddr.build(
+        organization_addr=organization_addr,
+        workspace_id=EntryID.from_hex("2d4ded12-7406-4608-833b-7f57f01156e2"),
+        encrypted_path=b"<encrypted_payload>",
+    )
+    assert organization_file_link_addr.workspace_id == EntryID.from_hex(
+        "2d4ded12-7406-4608-833b-7f57f01156e2"
+    )
+    assert organization_file_link_addr.encrypted_path == b"<encrypted_payload>"
+
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=backend_addr,
+        organization_id=organization_id,
+        invitation_type=InvitationType.USER,
+        token=InvitationToken.from_hex("a0000000000000000000000000000001"),
+    )
+    assert invitation_addr.organization_id == organization_id
+    assert invitation_addr.token == InvitationToken.from_hex("a0000000000000000000000000000001")
+    assert invitation_addr.invitation_type == InvitationType.USER

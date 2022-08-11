@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager
 from typing import Optional, AsyncGenerator
 
-from parsec.core.types import BackendOrganizationAddr
+from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import apiv1_connect
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
@@ -17,12 +17,8 @@ class APIV1_BackendAnonymousCmds:
         self.addr = addr
         self.acquire_transport = acquire_transport
 
-    user_claim = expose_cmds(cmds.user_claim)
-    user_get_invitation_creator = expose_cmds(cmds.user_get_invitation_creator)
-    device_claim = expose_cmds(cmds.device_claim)
-    device_get_invitation_creator = expose_cmds(cmds.device_get_invitation_creator)
-    organization_bootstrap = expose_cmds(cmds.organization_bootstrap)
     ping = expose_cmds(cmds.ping)
+    organization_bootstrap = expose_cmds(cmds.organization_bootstrap)
 
 
 for cmd in APIV1_ANONYMOUS_CMDS:
@@ -31,7 +27,7 @@ for cmd in APIV1_ANONYMOUS_CMDS:
 
 @asynccontextmanager
 async def apiv1_backend_anonymous_cmds_factory(
-    addr: BackendOrganizationAddr, keepalive: Optional[int] = None
+    addr: BackendOrganizationBootstrapAddr, keepalive: Optional[int] = None
 ) -> AsyncGenerator[APIV1_BackendAnonymousCmds, None]:
     """
     Raises:

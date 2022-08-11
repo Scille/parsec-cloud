@@ -1,22 +1,31 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import math
 from collections import defaultdict
-
+from typing import Optional, Union, Dict, Sequence
 import trio
 from trio.lowlevel import current_clock
 from structlog import get_logger
 
+from parsec.api.protocol import RealmID
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import EntryID, WorkspaceRole
 from parsec.core.fs import (
+    UserFS,
     FSBackendOfflineError,
+    FSBadEncryptionRevision,
     FSWorkspaceNotFoundError,
     FSWorkspaceNoReadAccess,
     FSWorkspaceNoWriteAccess,
     FSWorkspaceInMaintenance,
 )
-from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.backend_connection import (
+    BackendConnectionError,
+    BackendNotAvailable,
+    BackendAuthenticatedCmds,
+)
+from parsec.core.fs.storage import UserStorage, WorkspaceStorage, BaseWorkspaceStorage
+from parsec.event_bus import EventBus
 
 
 logger = get_logger()
@@ -35,7 +44,7 @@ async def freeze_sync_monitor_mockpoint():
     pass
 
 
-def timestamp():
+def current_time():
     # Use time from trio clock to easily mock it
     return current_clock().current_time()
 
@@ -67,7 +76,7 @@ class SyncContext:
       storage to get the list of changes (entry id + version) it has missed
     """
 
-    def __init__(self, user_fs, id: EntryID, read_only: bool = False):
+    def __init__(self, user_fs: UserFS, id: EntryID, read_only: bool = False):
         self.user_fs = user_fs
         self.id = id
         self.read_only = read_only
@@ -77,16 +86,16 @@ class SyncContext:
         self._remote_changes = set()
         self._local_confinement_points = defaultdict(set)
 
-    def _sync(self, entry_id: EntryID):
+    def _sync(self, entry_id: EntryID) -> None:
         raise NotImplementedError
 
-    def _get_backend_cmds(self):
+    def _get_backend_cmds(self) -> BackendAuthenticatedCmds:
         raise NotImplementedError
 
-    def _get_local_storage(self):
+    def _get_local_storage(self) -> Union[UserStorage, BaseWorkspaceStorage]:
         raise NotImplementedError
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{type(self).__name__}(id={self.id!r})"
 
     async def _load_changes(self) -> bool:
@@ -101,7 +110,9 @@ class SyncContext:
         # 1) Fetch new checkpoint and changes
         realm_checkpoint = await self._get_local_storage().get_realm_checkpoint()
         try:
-            rep = await self._get_backend_cmds().vlob_poll_changes(self.id, realm_checkpoint)
+            rep = await self._get_backend_cmds().vlob_poll_changes(
+                RealmID(self.id.uuid), realm_checkpoint
+            )
 
         except BackendNotAvailable:
             raise
@@ -124,11 +135,13 @@ class SyncContext:
             changes = rep["changes"]
 
         # 2) Store new checkpoint and changes
-        await self._get_local_storage().update_realm_checkpoint(new_checkpoint, changes)
+        await self._get_local_storage().update_realm_checkpoint(
+            new_checkpoint, {EntryID.from_hex(name.hex): val for name, val in changes.items()}
+        )
 
         # 3) Compute local and remote changes that need to be synced
         need_sync_local, need_sync_remote = await self._get_local_storage().get_need_sync_entries()
-        now = timestamp()
+        now = current_time()
         # Ignore local changes in read only mode
         if not self.read_only:
             self._local_changes = {entry_id: LocalChange(now) for entry_id in need_sync_local}
@@ -155,7 +168,7 @@ class SyncContext:
                 wake_up = True
 
         # Update local_changes dictionnary
-        now = timestamp()
+        now = current_time()
         try:
             new_due_time = self._local_changes[entry_id].changed(now)
         except KeyError:
@@ -172,15 +185,15 @@ class SyncContext:
 
     def set_remote_change(self, entry_id: EntryID) -> bool:
         self._remote_changes.add(entry_id)
-        self.due_time = timestamp()
+        self.due_time = current_time()
         return True
 
     def set_confined_entry(self, entry_id: EntryID, cause_id: EntryID) -> None:
         self._local_confinement_points[cause_id].add(entry_id)
 
-    def _compute_due_time(self, now=None, min_due_time=None):
+    def _compute_due_time(self, now: Optional[float] = None, min_due_time: Optional[float] = None):
         if self._remote_changes:
-            self.due_time = now or timestamp()
+            self.due_time = now or current_time()
         elif self._local_changes:
             # TODO: index changes by due_time to avoid this O(n) operation
             self.due_time = min(
@@ -199,7 +212,7 @@ class SyncContext:
         return self.due_time
 
     async def tick(self) -> float:
-        now = timestamp()
+        now = current_time()
         if self.due_time > now:
             return self.due_time
 
@@ -229,8 +242,11 @@ class SyncContext:
                 # modifications. Hence we can forget about this change given
                 # it's `self._local_changes` role to keep track of local changes.
                 pass
-            except FSWorkspaceInMaintenance:
-                # Not the right time for the sync, retry later
+            except (FSWorkspaceInMaintenance, FSBadEncryptionRevision):
+                # Not the right time for the sync, retry later.
+                # `FSBadEncryptionRevision` occurs if the reencryption is quick
+                # enough to start and finish before we process the sharing.reencrypted
+                # message so we try a sync with the old encryption revision.
                 min_due_time = now + MAINTENANCE_MIN_WAIT
                 self._remote_changes.add(entry_id)
 
@@ -257,8 +273,11 @@ class SyncContext:
                     # the write access in the future) but pretent it just accured
                     # to avoid a busy sync loop until `read_only` flag is updated.
                     self._local_changes[entry_id] = LocalChange(now)
-                except FSWorkspaceInMaintenance:
-                    # Not the right time for the sync, retry later
+                except (FSWorkspaceInMaintenance, FSBadEncryptionRevision):
+                    # Not the right time for the sync, retry later.
+                    # `FSBadEncryptionRevision` occurs if the reencryption is quick
+                    # enough to start and finish before we process the sharing.reencrypted
+                    # message so we try a sync with the old encryption revision.
                     min_due_time = now + MAINTENANCE_MIN_WAIT
                     self._local_changes[entry_id] = LocalChange(now)
 
@@ -272,32 +291,33 @@ class SyncContext:
 
 
 class WorkspaceSyncContext(SyncContext):
-    def __init__(self, user_fs, id: EntryID):
+    def __init__(self, user_fs: UserFS, id: EntryID):
         self.workspace = user_fs.get_workspace(id)
         read_only = self.workspace.get_workspace_entry().role == WorkspaceRole.READER
         super().__init__(user_fs, id, read_only=read_only)
 
-    async def _sync(self, entry_id: EntryID):
+    async def _sync(self, entry_id: EntryID) -> None:
         # No recursion here: only the manifest that has changed
         # (remotely or locally) should get synchronized
         await self.workspace.sync_by_id(entry_id, recursive=False)
 
-    def _get_backend_cmds(self):
+    def _get_backend_cmds(self) -> BackendAuthenticatedCmds:
         return self.workspace.backend_cmds
 
-    def _get_local_storage(self):
+    def _get_local_storage(self) -> WorkspaceStorage:
+        assert isinstance(self.workspace.local_storage, WorkspaceStorage)
         return self.workspace.local_storage
 
 
 class UserManifestSyncContext(SyncContext):
-    async def _sync(self, entry_id: EntryID):
+    async def _sync(self, entry_id: EntryID) -> None:
         assert entry_id == self.id
         await self.user_fs.sync()
 
-    def _get_backend_cmds(self):
+    def _get_backend_cmds(self) -> BackendAuthenticatedCmds:
         return self.user_fs.backend_cmds
 
-    def _get_local_storage(self):
+    def _get_local_storage(self) -> UserStorage:
         return self.user_fs.storage
 
 
@@ -307,14 +327,14 @@ class SyncContextStore:
     when a newly created workspace is modified for the first time)
     """
 
-    def __init__(self, user_fs):
+    def __init__(self, user_fs: UserFS):
         self.user_fs = user_fs
-        self._ctxs = {}
+        self._ctxs: Dict[EntryID, SyncContext] = {}
 
-    def iter(self):
+    def iter(self) -> Sequence[SyncContext]:
         return self._ctxs.copy().values()
 
-    def get(self, entry_id):
+    def get(self, entry_id: EntryID) -> Optional[SyncContext]:
         try:
             return self._ctxs[entry_id]
         except KeyError:
@@ -336,7 +356,7 @@ class SyncContextStore:
         self._ctxs.pop(entry_id, None)
 
 
-async def monitor_sync(user_fs, event_bus, task_status):
+async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status):
     ctxs = SyncContextStore(user_fs)
     early_wakeup = trio.Event()
 
@@ -371,7 +391,7 @@ async def monitor_sync(user_fs, event_bus, task_status):
             if ctx:
                 # Change the due_time so the context understants the early
                 # wakeup is for him
-                ctx.due_time = timestamp()
+                ctx.due_time = current_time()
                 _trigger_early_wakeup()
 
     def _on_entry_confined(event, entry_id, cause_id, workspace_id):
@@ -391,7 +411,7 @@ async def monitor_sync(user_fs, event_bus, task_status):
             ctx = ctxs.get(ctx.id)
             if ctx:
                 # Add small cooldown just to be sure not end up in a crazy busy error loop
-                ctx.due_time = timestamp() + TICK_CRASH_COOLDOWN
+                ctx.due_time = current_time() + TICK_CRASH_COOLDOWN
                 return ctx.due_time
             else:
                 return math.inf

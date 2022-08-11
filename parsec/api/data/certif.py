@@ -1,13 +1,17 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import Optional, Any, Dict, Type, TypeVar
-from uuid import UUID
-from enum import Enum
+from typing import TYPE_CHECKING, Optional, Any, Dict, Type, TypeVar, Literal
 from marshmallow import ValidationError
+from pendulum import DateTime
 
 from parsec.crypto import VerifyKey, PublicKey
+from parsec.sequester_crypto import SequesterVerifyKeyDer, SequesterEncryptionKeyDer
 from parsec.serde import fields, post_load
 from parsec.api.protocol import (
+    SequesterServiceID,
+    SequesterServiceIDField,
+    RealmID,
+    RealmIDField,
     DeviceID,
     UserID,
     HumanHandle,
@@ -16,28 +20,20 @@ from parsec.api.protocol import (
     UserIDField,
     HumanHandleField,
     RealmRoleField,
+    UserProfileField,
+    UserProfile,
+    DeviceLabel,
+    DeviceLabelField,
 )
-from parsec.api.data.base import DataValidationError, BaseAPISignedData, BaseSignedDataSchema
+from parsec.api.data.base import (
+    BaseAPIData,
+    DataValidationError,
+    BaseAPISignedData,
+    BaseSignedDataSchema,
+)
 import attr
 
-
-class UserProfile(Enum):
-    """
-    Standard user can create new realms and invite new devices for himself.
-
-    Admin can invite and revoke users and on top of what standard user can do.
-
-    Outsider is only able to collaborate on existing realm and should only
-    access redacted certificates (hence he cannot create new realms or
-    get OWNER/MANAGER role on a realm)
-    """
-
-    ADMIN = "ADMIN"
-    STANDARD = "STANDARD"
-    OUTSIDER = "OUTSIDER"
-
-
-UserProfileField = fields.enum_field_factory(UserProfile)
+from parsec.serde.schema import BaseSchema
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
@@ -48,12 +44,14 @@ class UserCertificateContent(BaseAPISignedData):
 
         type = fields.CheckedConstant("user_certificate", required=True)
         user_id = UserIDField(required=True)
+        # Added in Parsec v1.13
         # Human handle can be none in case of redacted certificate
         human_handle = HumanHandleField(allow_none=True, missing=None)
         public_key = fields.PublicKey(required=True)
         # `profile` replaces `is_admin` field (which is still required for backward
         # compatibility), hence `None` is not allowed
         is_admin = fields.Boolean(required=True)
+        # Added in Parsec v1.14
         profile = UserProfileField(allow_none=False)
 
         @post_load
@@ -107,6 +105,16 @@ class UserCertificateContent(BaseAPISignedData):
         return data
 
 
+_PyUserCertificateContent = UserCertificateContent
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import UserCertificate as _RsUserCertificateContent
+    except:
+        pass
+    else:
+        UserCertificateContent = _RsUserCertificateContent
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class RevokedUserCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
@@ -136,6 +144,15 @@ DeviceCertificateContentTypeVar = TypeVar(
     "DeviceCertificateContentTypeVar", bound="DeviceCertificateContent"
 )
 
+_PyRevokedUserCertificateContent = RevokedUserCertificateContent
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import RevokedUserCertificate as _RsRevokedUserCertificateContent
+    except:
+        pass
+    else:
+        RevokedUserCertificateContent = _RsRevokedUserCertificateContent
+
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class DeviceCertificateContent(BaseAPISignedData):
@@ -145,8 +162,9 @@ class DeviceCertificateContent(BaseAPISignedData):
 
         type = fields.CheckedConstant("device_certificate", required=True)
         device_id = DeviceIDField(required=True)
+        # Added in Parsec v1.14
         # Device label can be none in case of redacted certificate
-        device_label = fields.String(allow_none=True, missing=None)
+        device_label = DeviceLabelField(allow_none=True, missing=None)
         verify_key = fields.VerifyKey(required=True)
 
         @post_load
@@ -158,7 +176,7 @@ class DeviceCertificateContent(BaseAPISignedData):
     author: Optional[DeviceID]  # type: ignore[assignment]
 
     device_id: DeviceID
-    device_label: Optional[str]
+    device_label: Optional[DeviceLabel]
     verify_key: VerifyKey
 
     @classmethod
@@ -176,11 +194,21 @@ class DeviceCertificateContent(BaseAPISignedData):
         return data
 
 
+_PyDeviceCertificateContent = DeviceCertificateContent
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import DeviceCertificate as _RsDeviceCertificateContent
+    except:
+        pass
+    else:
+        DeviceCertificateContent = _RsDeviceCertificateContent
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class RealmRoleCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("realm_role_certificate", required=True)
-        realm_id = fields.UUID(required=True)
+        realm_id = RealmIDField(required=True)
         user_id = UserIDField(required=True)
         role = RealmRoleField(required=True, allow_none=True)
 
@@ -189,12 +217,12 @@ class RealmRoleCertificateContent(BaseAPISignedData):
             data.pop("type")
             return RealmRoleCertificateContent(**data)
 
-    realm_id: UUID
+    realm_id: RealmID
     user_id: UserID
     role: Optional[RealmRole]  # Set to None if role removed
 
     @classmethod
-    def build_realm_root_certif(cls, author, timestamp, realm_id):
+    def build_realm_root_certif(cls, author: DeviceID, timestamp: DateTime, realm_id: RealmID):
         return cls(
             author=author,
             timestamp=timestamp,
@@ -207,7 +235,7 @@ class RealmRoleCertificateContent(BaseAPISignedData):
     def verify_and_load(
         cls,
         *args,
-        expected_realm: Optional[UUID] = None,
+        expected_realm: Optional[RealmID] = None,
         expected_user: Optional[UserID] = None,
         expected_role: Optional[RealmRole] = None,
         **kwargs,
@@ -226,3 +254,54 @@ class RealmRoleCertificateContent(BaseAPISignedData):
                 f"Invalid role: expected `{expected_role}`, got `{data.role}`"
             )
         return data
+
+
+_PyRealmRoleCertificateContent = RealmRoleCertificateContent
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import RealmRoleCertificate as _RsRealmRoleCertificateContent
+    except:
+        pass
+    else:
+        RealmRoleCertificateContent = _RsRealmRoleCertificateContent
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class SequesterAuthorityCertificate(BaseAPISignedData):
+    class SCHEMA_CLS(BaseSignedDataSchema):
+        type = fields.CheckedConstant("sequester_authority_certificate", required=True)
+        # Override author field to always uses None given this certificate can only be signed by the root key
+        author = fields.CheckedConstant(
+            None, required=True, allow_none=True
+        )  # Constant None fields required to be allowed to be None !
+        verify_key_der = fields.SequesterVerifyKeyDerField(required=True)
+
+        @post_load
+        def make_obj(self, data: Dict[str, Any]) -> "SequesterAuthorityCertificate":
+            data.pop("type")
+            return SequesterAuthorityCertificate(**data)
+
+    # Override author field to always uses None given this certificate can only be signed by the root key
+    author: Literal[None]  # type: ignore[assignment]
+    verify_key_der: SequesterVerifyKeyDer
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class SequesterServiceCertificate(BaseAPIData):
+    class SCHEMA_CLS(BaseSchema):
+        # No author field here given we are signed by the sequester authority
+        type = fields.CheckedConstant("sequester_service_certificate", required=True)
+        timestamp = fields.DateTime(required=True)
+        service_id = SequesterServiceIDField(required=True)
+        service_label = fields.String(required=True)
+        encryption_key_der = fields.SequesterEncryptionKeyDerField(required=True)
+
+        @post_load
+        def make_obj(self, data: Dict[str, Any]) -> "SequesterServiceCertificate":
+            data.pop("type")
+            return SequesterServiceCertificate(**data)
+
+    timestamp: DateTime
+    service_id: SequesterServiceID
+    service_label: str
+    encryption_key_der: SequesterEncryptionKeyDer

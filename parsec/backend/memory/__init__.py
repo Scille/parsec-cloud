@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from parsec.backend.memory.organization import MemoryOrganizationComponent
 from parsec.backend.memory.ping import MemoryPingComponent
@@ -7,6 +7,7 @@ from parsec.backend.memory.invite import MemoryInviteComponent
 from parsec.backend.memory.message import MemoryMessageComponent
 from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.memory.vlob import MemoryVlobComponent
+from parsec.backend.memory.pki import MemoryPkiEnrollmentComponent
 from parsec.backend.memory.block import MemoryBlockComponent, MemoryBlockStoreComponent
 from parsec.backend.memory.factory import components_factory
 
@@ -20,6 +21,7 @@ __all__ = [
     "MemoryVlobComponent",
     "MemoryEventsComponent",
     "MemoryBlockComponent",
+    "MemoryPkiEnrollmentComponent",
     "MemoryBlockStoreComponent",
     "components_factory",
 ]
