@@ -7,6 +7,8 @@ from contextlib import contextmanager
 from parsec.api.protocol import DeviceID
 from parsec.core.types import LocalDevice
 
+from parsec._parsec import freeze_time as _Rs_freeze_time
+
 
 __freeze_time_dict = {}
 

@@ -68,6 +68,8 @@ from parsec._parsec_pyi.trustchain import TrustchainContext
 
 from parsec._parsec_pyi.local_device import LocalDevice
 
+from parsec._parsec_pyi.time import freeze_time
+
 __all__ = [
     # Certif
     "UserCertificate",
@@ -125,4 +127,6 @@ __all__ = [
     "TrustchainContext",
     # Local Device
     "LocalDevice",
+    # Time
+    "freeze_time",
 ]

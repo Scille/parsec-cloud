@@ -1,10 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use pyo3::prelude::pyfunction;
+use pyo3::{PyAny, PyResult};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::pyclass::CompareOp;
 use pyo3::types::PyType;
-use pyo3::PyResult;
 
 use crate::binding_utils::hash_generic;
 
