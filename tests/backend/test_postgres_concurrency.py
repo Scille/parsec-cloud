@@ -258,7 +258,6 @@ async def test_concurrency_pki_enrollment_accept(
                     nursery.start_soon(_concurrent_enrollment_accept, backend)
 
     assert len(results) == 10
-    print(results)
     assert len([r for r in results if isinstance(r, PkiEnrollmentNoLongerAvailableError)]) == 9
 
     async with triopg.connect(postgresql_url) as conn:

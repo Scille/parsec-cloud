@@ -14,7 +14,7 @@ from winfspy import (
     CREATE_FILE_CREATE_OPTIONS,
 )
 from winfspy.plumbing import dt_to_filetime, NTSTATUS, SecurityDescriptor
-import datetime
+from datetime import datetime
 
 from parsec.api.data import EntryID
 from parsec.core.core_events import CoreEvent

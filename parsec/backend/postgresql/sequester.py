@@ -316,7 +316,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     service_label=entry["service_label"],
                     service_certificate=entry["service_certificate"],
                     created_on=entry["created_on"],
-                    disabled_on=entry["disabled_on"] if entry["disabled_on"] else None,
+                    disabled_on=entry["disabled_on"],
                 )
                 for entry in entries
             ]

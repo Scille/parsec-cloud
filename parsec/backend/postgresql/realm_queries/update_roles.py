@@ -175,7 +175,6 @@ async def query_update_roles(
     last_role_granted_on = None
     if existing_user_role is not None:
         existing_user_role, last_role_granted_on = existing_user_role
-        last_role_granted_on = last_role_granted_on
         if existing_user_role is not None:
             existing_user_role = RealmRole(existing_user_role)
 

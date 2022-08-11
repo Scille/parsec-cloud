@@ -338,7 +338,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         redacted_user_certificate=row["redacted_user_certificate"],
                         user_certifier=None,
                         created_on=row["created_on"],
-                        revoked_on=row["revoked_on"] if row["revoked_on"] else None,
+                        revoked_on=row["revoked_on"],
                         revoked_user_certificate=row["revoked_user_certificate"],
                         revoked_user_certifier=None,
                     )
