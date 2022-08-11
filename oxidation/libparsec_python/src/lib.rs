@@ -153,7 +153,6 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     // Trustchain
     m.add_class::<trustchain::TrustchainContext>()?;
     // Time
-    m.add_function(wrap_pyfunction!(time::freeze_time, m)?)?;
     m.add_class::<time::DateTime>()?;
     m.add_class::<time::LocalDateTime>()?;
     // LocalDevice

@@ -3,36 +3,29 @@
 import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime, mock_time
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmRole, UserProfile
 from parsec.core.fs.exceptions import FSReadOnlyError, FSWorkspaceNoWriteAccess
 
 
 @pytest.fixture
-def shift_now(monkeypatch):
-    testing = True
+def shift_now():
+    # Here we don't freeze time, but make it shift gradually:
+    # we DateTime.now() still take the current time but add a delay that become greater and
+    # greater with any subsequent call to `shift_now`
     current_delay_us = 0
-
-    def get_real_now():
-        nonlocal testing
-        try:
-            testing = False
-            return DateTime.now()
-        finally:
-            testing = True
 
     def _shift_now(delay):
         nonlocal current_delay_us
         current_delay_us += int(delay * 1_000_000)
+        mock_time(current_delay_us)
 
-    monkeypatch.setattr("pendulum.has_test_now", lambda: testing)
-    monkeypatch.setattr(
-        "pendulum.get_test_now", lambda: get_real_now().add(microseconds=current_delay_us)
-    )
-
-    return _shift_now
+    try:
+        yield _shift_now
+    finally:
+        mock_time(None)
 
 
 @pytest.fixture

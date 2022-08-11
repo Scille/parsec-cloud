@@ -3,7 +3,6 @@
 import trio
 import attr
 import pytest
-import pendulum
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
 from contextlib import ExitStack
@@ -221,12 +220,13 @@ def next_timestamp():
     last_timestamp = None
 
     def _next_timestamp():
-        if pendulum.has_test_now():
-            return DateTime.now()
         nonlocal last_timestamp
-        while last_timestamp == DateTime.now():
-            pass
-        last_timestamp = DateTime.now()
-        return last_timestamp
+        current_timestamp = DateTime.now()
+        for _ in range(100):
+            if current_timestamp != last_timestamp:
+                last_timestamp = current_timestamp
+                return last_timestamp
+        else:
+            raise RuntimeError("Is DateTime.now() frozen ?")
 
     return _next_timestamp

@@ -47,7 +47,7 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<invite::InviteDeviceData>()?;
     m.add_class::<invite::InviteDeviceConfirmation>()?;
 
-    m.add_function(wrap_pyfunction!(time::freeze_time, m)?)?;
+    m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
     m.add_class::<time::DateTime>()?;
     m.add_class::<time::LocalDateTime>()?;
     Ok(())

@@ -7,12 +7,6 @@ use pyo3::PyResult;
 
 use crate::binding_utils::hash_generic;
 
-#[pyfunction]
-pub(crate) fn freeze_time(time: Option<DateTime>) -> PyResult<()> {
-    libparsec::types::DateTime::freeze_time(time.map(|x| x.0));
-    Ok(())
-}
-
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
 pub(crate) struct DateTime(pub libparsec::types::DateTime);

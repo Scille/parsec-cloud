@@ -114,21 +114,34 @@ impl DateTime {
     }
 }
 
+pub enum MockedTime {
+    RealTime,
+    FrozenTime(DateTime),
+    ShiftedTime(i64),
+}
+
 #[cfg(feature = "mock-time")]
 mod mock_time {
-    use super::DateTime;
+    use super::{DateTime, MockedTime};
+    use chrono::Duration;
     use std::cell::RefCell;
 
     thread_local! {
-        static MOCK_TIME: RefCell<Option<DateTime>> = RefCell::new(None);
+        static MOCK_TIME: RefCell<MockedTime> = RefCell::new(MockedTime::RealTime);
     }
 
     impl DateTime {
         pub fn now() -> Self {
-            MOCK_TIME.with(|cell| cell.borrow().unwrap_or(chrono::Utc::now().into()))
+            MOCK_TIME.with(|cell| match *cell.borrow() {
+                MockedTime::RealTime => chrono::Utc::now().into(),
+                MockedTime::FrozenTime(dt) => dt,
+                MockedTime::ShiftedTime(dt) => {
+                    (chrono::Utc::now() + Duration::microseconds(dt)).into()
+                }
+            })
         }
 
-        pub fn freeze_time(time: Option<Self>) {
+        pub fn mock_time(time: MockedTime) {
             MOCK_TIME.with(|cell| *cell.borrow_mut() = time)
         }
     }

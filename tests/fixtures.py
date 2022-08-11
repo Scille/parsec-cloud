@@ -5,7 +5,6 @@ import re
 import sys
 import subprocess
 import pytest
-import pendulum
 from parsec._parsec import DateTime
 from collections import defaultdict
 from typing import Union, Optional, Tuple, Iterable
@@ -65,25 +64,6 @@ def fixtures_customization(request):
         return request.node.function._fixtures_customization
     except AttributeError:
         return {}
-
-
-@pytest.fixture
-def next_timestamp():
-    """On windows, 2 calls to `DateTime.now()` can yield the same value.
-    For some tests, this creates edges cases we want to avoid.
-    """
-    last_timestamp = None
-
-    def _next_timestamp():
-        if pendulum.has_test_now():
-            return DateTime.now()
-        nonlocal last_timestamp
-        while last_timestamp == DateTime.now():
-            pass
-        last_timestamp = DateTime.now()
-        return last_timestamp
-
-    return _next_timestamp
 
 
 @attr.s
