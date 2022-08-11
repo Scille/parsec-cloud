@@ -32,6 +32,16 @@ from parsec._parsec.invite import (
     InviteUserData,
 )
 
+from parsec._parsec.addrs import (
+    BackendAddr,
+    BackendActionAddr,
+    BackendInvitationAddr,
+    BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationFileLinkAddr,
+    BackendPkiEnrollmentAddr,
+)
+
 __all__ = [
     # crypto
     "SecretKey",
@@ -61,4 +71,12 @@ __all__ = [
     "InviteDeviceData",
     "InviteDeviceConfirmation",
     "InviteUserData",
+    # addrs
+    "BackendAddr",
+    "BackendActionAddr",
+    "BackendInvitationAddr",
+    "BackendOrganizationAddr",
+    "BackendOrganizationBootstrapAddr",
+    "BackendOrganizationFileLinkAddr",
+    "BackendPkiEnrollmentAddr",
 ]

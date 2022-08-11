@@ -1,5 +1,6 @@
 use pyo3::prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 
+mod addrs;
 mod api_crypto;
 mod binding_utils;
 mod ids;
@@ -9,6 +10,14 @@ mod invite;
 #[pymodule]
 #[pyo3(name = "_parsec")]
 fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<addrs::BackendAddr>()?;
+    m.add_class::<addrs::BackendOrganizationAddr>()?;
+    m.add_class::<addrs::BackendActionAddr>()?;
+    m.add_class::<addrs::BackendOrganizationBootstrapAddr>()?;
+    m.add_class::<addrs::BackendOrganizationFileLinkAddr>()?;
+    m.add_class::<addrs::BackendInvitationAddr>()?;
+    m.add_class::<addrs::BackendPkiEnrollmentAddr>()?;
+
     m.add_class::<api_crypto::HashDigest>()?;
     m.add_class::<api_crypto::SigningKey>()?;
     m.add_class::<api_crypto::VerifyKey>()?;
