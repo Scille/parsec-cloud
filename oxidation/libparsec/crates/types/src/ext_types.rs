@@ -123,7 +123,6 @@ pub enum MockedTime {
 #[cfg(feature = "mock-time")]
 mod mock_time {
     use super::{DateTime, MockedTime};
-    use chrono::Duration;
     use std::cell::RefCell;
 
     thread_local! {
@@ -135,9 +134,7 @@ mod mock_time {
             MOCK_TIME.with(|cell| match *cell.borrow() {
                 MockedTime::RealTime => chrono::Utc::now().into(),
                 MockedTime::FrozenTime(dt) => dt,
-                MockedTime::ShiftedTime(dt) => {
-                    (chrono::Utc::now() + Duration::microseconds(dt)).into()
-                }
+                MockedTime::ShiftedTime(dt) => DateTime::from(chrono::Utc::now()) + dt,
             })
         }
 

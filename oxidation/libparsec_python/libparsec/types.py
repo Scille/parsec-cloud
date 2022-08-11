@@ -153,9 +153,7 @@ try:
         # Trustchain
         TrustchainContext,
         # Time
-        freeze_time,
         DateTime,
-        LocalDateTime,
         # LocalDevice
         LocalDevice,
         # Storage
@@ -401,9 +399,7 @@ __all__ = (
     # Trustchain
     "TrustchainContext",
     # Time
-    "freeze_time",
     "DateTime",
-    "LocalDateTime",
     # LocalDevice
     "LocalDevice",
     # Storage
