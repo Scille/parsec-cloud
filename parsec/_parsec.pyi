@@ -49,6 +49,14 @@ from parsec._parsec_pyi.addrs import (
     BackendPkiEnrollmentAddr,
 )
 
+from parsec._parsec_pyi.local_manifest import (
+    Chunk,
+    LocalFileManifest,
+    LocalFolderManifest,
+    LocalUserManifest,
+    LocalWorkspaceManifest,
+)
+
 from parsec._parsec_pyi.manifest import (
     EntryName,
     WorkspaceEntry,
@@ -111,6 +119,12 @@ __all__ = [
     "BackendOrganizationBootstrapAddr",
     "BackendOrganizationFileLinkAddr",
     "BackendPkiEnrollmentAddr",
+    # Local Manifest
+    "Chunk",
+    "LocalFileManifest",
+    "LocalFolderManifest",
+    "LocalUserManifest",
+    "LocalWorkspaceManifest",
     # Manifest
     "EntryName",
     "WorkspaceEntry",
