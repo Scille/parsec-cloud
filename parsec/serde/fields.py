@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Type
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime as RsDateTime
 from uuid import UUID as _UUID
 from enum import Enum
 from collections import Mapping
@@ -212,7 +212,7 @@ class DateTime(Field):
     """DateTime already handled by pack/unpack"""
 
     def _deserialize(self, value, attr, data):
-        if not isinstance(value, DateTime):
+        if not isinstance(value, RsDateTime):
             raise ValidationError("Not a datetime")
 
         return value

@@ -61,6 +61,8 @@ __freeze_time_task = None
 
 @contextmanager
 def freeze_time(time=None, device=None):
+    mocks_stack = []
+
     # Get current time if not provided
     if time is None:
         time = DateTime.now()
@@ -79,7 +81,7 @@ def freeze_time(time=None, device=None):
 
     # Save previous context
     previous_task = __freeze_time_task
-    previous_time = pendulum.get_test_now()
+    previous_time = mocks_stack.pop() if mocks_stack else None
 
     # Get current trio task
     try:
@@ -93,12 +95,12 @@ def freeze_time(time=None, device=None):
     try:
         # Set new context
         __freeze_time_task = current_task
-        pendulum.set_test_now(time)
+        mocks_stack.append(time)
         mock_time(time)
 
         yield time
     finally:
         # Restore previous context
         __freeze_time_task = previous_task
-        pendulum.set_test_now(previous_time)
+        mocks_stack.append(previous_time)
         mock_time(previous_time)
