@@ -5,7 +5,7 @@ on:
     paths:
       - parsec/**
       - pyproject.toml
-      - pyproject.lock
+      - poetry.lock
       - .github/workflows/test-python-ci.yml
   push:
     branches:
