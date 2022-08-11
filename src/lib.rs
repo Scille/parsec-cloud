@@ -10,6 +10,7 @@ mod certif;
 mod ids;
 mod invite;
 mod local_device;
+mod local_manifest;
 mod manifest;
 mod time;
 mod trustchain;
@@ -60,6 +61,16 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<invite::InviteDeviceConfirmation>()?;
 
     m.add_class::<local_device::LocalDevice>()?;
+
+    m.add_class::<local_manifest::Chunk>()?;
+    m.add_class::<local_manifest::LocalFileManifest>()?;
+    m.add_class::<local_manifest::LocalFolderManifest>()?;
+    m.add_class::<local_manifest::LocalWorkspaceManifest>()?;
+    m.add_class::<local_manifest::LocalUserManifest>()?;
+    m.add_function(wrap_pyfunction!(
+        local_manifest::local_manifest_decrypt_and_load,
+        m
+    )?)?;
 
     m.add_class::<manifest::EntryName>()?;
     m.add_class::<manifest::WorkspaceEntry>()?;

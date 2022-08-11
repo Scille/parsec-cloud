@@ -520,13 +520,13 @@ impl FileManifest {
 
     #[getter]
     fn blocks<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
-        let elems: Vec<PyObject> = self
+        let elements: Vec<PyObject> = self
             .0
             .blocks
             .iter()
             .map(|x| BlockAccess(x.clone()).into_py(py))
             .collect();
-        Ok(PyTuple::new(py, elems))
+        Ok(PyTuple::new(py, elements))
     }
 }
 
