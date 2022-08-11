@@ -11,8 +11,19 @@ from parsec._parsec import (
     BackendOrganizationFileLinkAddr,
     BackendPkiEnrollmentAddr,
 )
+from typing import Union
 
 PARSEC_SCHEME = "parsec"
+
+BackendAddrType = Union[
+    BackendAddr,
+    BackendActionAddr,
+    BackendInvitationAddr,
+    BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationFileLinkAddr,
+    BackendPkiEnrollmentAddr,
+]
 
 
 class BackendOrganizationAddrField(fields.Field):
@@ -65,4 +76,5 @@ __all__ = [
     "BackendOrganizationBootstrapAddr",
     "BackendOrganizationFileLinkAddr",
     "BackendPkiEnrollmentAddr",
+    "BackendAddrType",
 ]
