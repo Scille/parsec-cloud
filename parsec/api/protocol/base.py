@@ -4,8 +4,19 @@ from enum import Enum
 import attr
 from functools import partial, wraps
 from parsec._parsec import DateTime
-from typing import Callable, Dict, Optional, Type, Union, cast, TypeVar, Mapping, Any, Tuple, Sequence
-
+from typing import (
+    Callable,
+    Dict,
+    Optional,
+    Type,
+    Union,
+    cast,
+    TypeVar,
+    Mapping,
+    Any,
+    Tuple,
+    Sequence,
+)
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.serde import (
     BaseSchema,
