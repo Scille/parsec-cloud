@@ -66,6 +66,8 @@ from parsec._parsec_pyi.time import (
 
 from parsec._parsec_pyi.trustchain import TrustchainContext
 
+from parsec._parsec_pyi.local_device import LocalDevice
+
 __all__ = [
     # Certif
     "UserCertificate",
@@ -100,7 +102,7 @@ __all__ = [
     "InviteDeviceData",
     "InviteDeviceConfirmation",
     "InviteUserData",
-    # addrs
+    # Addrs
     "BackendAddr",
     "BackendActionAddr",
     "BackendInvitationAddr",
@@ -116,9 +118,11 @@ __all__ = [
     "FileManifest",
     "WorkspaceManifest",
     "UserManifest",
-    # time
+    # Time
     "DateTime",
     "LocalDateTime",
-    # trustchain
+    # Trustchain
     "TrustchainContext",
+    # Local Device
+    "LocalDevice",
 ]
