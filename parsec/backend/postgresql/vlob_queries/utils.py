@@ -2,7 +2,6 @@
 
 from typing import Optional, Tuple
 from parsec._parsec import DateTime
-from pendulum import instance as pendulum_instance
 
 from parsec.api.protocol import OrganizationID, RealmID, DeviceID, VlobID
 from parsec.backend.utils import OperationKind
@@ -113,7 +112,7 @@ async def _check_realm_access(
         raise VlobAccessError()
 
     role_granted_on = rep[1]
-    return DateTime.from_timestamp(role_granted_on.timestamp())
+    return role_granted_on
 
 
 async def _check_realm_and_read_access(
@@ -191,4 +190,4 @@ async def _get_last_role_granted_on(
             organization_id=organization_id.str, realm_id=realm_id.uuid, user_id=author.user_id.str
         )
     )
-    return None if rep is None else DateTime.from_timestamp(pendulum_instance(rep[1]).timestamp())
+    return None if rep is None else rep[1]

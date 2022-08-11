@@ -2,7 +2,6 @@
 
 from typing import Dict, Optional
 from parsec._parsec import DateTime
-import pendulum
 from triopg import UniqueViolationError
 
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
@@ -92,7 +91,7 @@ async def _set_vlob_updated(
             organization_id=organization_id.str,
             realm_id=realm_id.uuid,
             user_id=author.user_id.str,
-            timestamp=pendulum.from_timestamp(timestamp.timestamp()),
+            timestamp=timestamp,
         )
     )
 
@@ -180,7 +179,7 @@ async def query_update(
     elif previous["version"] != version - 1:
         raise VlobVersionError()
 
-    elif DateTime.from_timestamp(previous["created_on"].timestamp()) > timestamp:
+    elif previous["created_on"] > timestamp:
         raise VlobRequireGreaterTimestampError(previous["created_on"])
 
     try:
@@ -193,7 +192,7 @@ async def query_update(
                 vlob_id=vlob_id.uuid,
                 blob=blob,
                 blob_len=len(blob),
-                timestamp=pendulum.from_timestamp(timestamp.timestamp()),
+                timestamp=timestamp,
                 version=version,
             )
         )
@@ -292,7 +291,7 @@ async def query_create(
                 vlob_id=vlob_id.uuid,
                 blob=blob,
                 blob_len=len(blob),
-                timestamp=pendulum.from_timestamp(timestamp.timestamp()),
+                timestamp=timestamp,
             )
         )
 

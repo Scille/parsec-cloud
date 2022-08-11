@@ -2,8 +2,6 @@
 
 from typing import Tuple, List, Optional
 
-from parsec._parsec import DateTime
-
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceLabel, HumanHandle
 from parsec.api.data import UserProfile
 from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
@@ -225,10 +223,8 @@ async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> U
         user_certificate=row["user_certificate"],
         redacted_user_certificate=row["redacted_user_certificate"],
         user_certifier=DeviceID(row["user_certifier"]) if row["user_certifier"] else None,
-        created_on=DateTime.from_timestamp(row["created_on"].timestamp()),
-        revoked_on=DateTime.from_timestamp(row["revoked_on"].timestamp())
-        if row["revoked_on"]
-        else None,
+        created_on=row["created_on"],
+        revoked_on=row["revoked_on"],
         revoked_user_certificate=row["revoked_user_certificate"],
         revoked_user_certifier=DeviceID(row["revoked_user_certifier"])
         if row["revoked_user_certifier"]
@@ -249,7 +245,7 @@ async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID
         device_certificate=row["device_certificate"],
         redacted_device_certificate=row["redacted_device_certificate"],
         device_certifier=DeviceID(row["device_certifier"]),
-        created_on=DateTime.from_timestamp(row["created_on"].timestamp()),
+        created_on=row["created_on"],
     )
 
 
@@ -295,7 +291,7 @@ async def _get_user_devices(
             device_certificate=row["device_certificate"],
             redacted_device_certificate=row["redacted_device_certificate"],
             device_certifier=DeviceID(row["device_certifier"]) if row["device_certifier"] else None,
-            created_on=DateTime.from_timestamp(row["created_on"].timestamp()),
+            created_on=row["created_on"],
         )
         for row in results
     )
@@ -381,7 +377,7 @@ async def query_get_user_with_device(
         device_certificate=d_row["device_certificate"],
         redacted_device_certificate=d_row["redacted_device_certificate"],
         device_certifier=DeviceID(d_row["device_certifier"]) if d_row["device_certifier"] else None,
-        created_on=DateTime.from_timestamp(d_row["created_on"].timestamp()),
+        created_on=d_row["created_on"],
     )
     user = User(
         user_id=device_id.user_id,
@@ -390,10 +386,8 @@ async def query_get_user_with_device(
         user_certificate=u_row["user_certificate"],
         redacted_user_certificate=u_row["redacted_user_certificate"],
         user_certifier=DeviceID(u_row["user_certifier"]) if u_row["user_certifier"] else None,
-        created_on=DateTime.from_timestamp(u_row["created_on"].timestamp()),
-        revoked_on=DateTime.from_timestamp(u_row["revoked_on"].timestamp())
-        if u_row["revoked_on"]
-        else None,
+        created_on=u_row["created_on"],
+        revoked_on=u_row["revoked_on"],
         revoked_user_certificate=u_row["revoked_user_certificate"],
         revoked_user_certifier=DeviceID(u_row["revoked_user_certifier"])
         if u_row["revoked_user_certifier"]
@@ -419,10 +413,8 @@ async def query_dump_users(
                 user_certificate=row["user_certificate"],
                 redacted_user_certificate=row["redacted_user_certificate"],
                 user_certifier=DeviceID(row["user_certifier"]) if row["user_certifier"] else None,
-                created_on=DateTime.from_timestamp(row["created_on"].timestamp()),
-                revoked_on=DateTime.from_timestamp(row["revoked_on"].timestamp())
-                if row["revoked_on"]
-                else None,
+                created_on=row["created_on"],
+                revoked_on=row["revoked_on"],
                 revoked_user_certificate=row["revoked_user_certificate"],
                 revoked_user_certifier=DeviceID(row["revoked_user_certifier"])
                 if row["revoked_user_certifier"]
@@ -441,7 +433,7 @@ async def query_dump_users(
                 device_certifier=DeviceID(row["device_certifier"])
                 if row["device_certifier"]
                 else None,
-                created_on=DateTime.from_timestamp(row["created_on"].timestamp()),
+                created_on=row["created_on"],
             )
         )
 

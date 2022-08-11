@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import pendulum
 from parsec.api.protocol import RealmRole, OrganizationID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import RealmGrantedRole, RealmAlreadyExistsError
@@ -87,7 +86,7 @@ async def query_create(
             user_id=self_granted_role.user_id.str,
             certificate=self_granted_role.certificate,
             certified_by=self_granted_role.granted_by.str,
-            certified_on=pendulum.from_timestamp(self_granted_role.granted_on.timestamp()),
+            certified_on=self_granted_role.granted_on,
         )
     )
 

@@ -5,7 +5,6 @@ from typing import List
 from uuid import UUID
 from asyncpg import UniqueViolationError
 from parsec._parsec import DateTime
-import pendulum
 
 from parsec.api.protocol import OrganizationID
 from parsec.api.protocol.pki import PkiEnrollmentStatus
@@ -299,7 +298,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                                 organization_id=organization_id.str,
                                 enrollment_id=row["enrollment_id"],
                                 enrollment_state=PkiEnrollmentStatus.CANCELLED.value,
-                                cancelled_on=pendulum.from_timestamp(submitted_on.timestamp()),
+                                cancelled_on=submitted_on,
                             )
                         )
                         await send_signal(
@@ -338,10 +337,8 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         user_certificate=row["user_certificate"],
                         redacted_user_certificate=row["redacted_user_certificate"],
                         user_certifier=None,
-                        created_on=DateTime.from_timestamp(row["created_on"].timestamp()),
-                        revoked_on=DateTime.from_timestamp(row["revoked_on"].timestamp())
-                        if row["revoked_on"]
-                        else None,
+                        created_on=row["created_on"],
+                        revoked_on=row["revoked_on"] if row["revoked_on"] else None,
                         revoked_user_certificate=row["revoked_user_certificate"],
                         revoked_user_certifier=None,
                     )
@@ -372,7 +369,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         submit_payload_signature=submit_payload_signature,
                         submit_payload=submit_payload,
                         enrollment_state=PkiEnrollmentStatus.SUBMITTED.value,
-                        submitted_on=pendulum.from_timestamp(submitted_on.timestamp()),
+                        submitted_on=submitted_on,
                     )
                 )
             except UniqueViolationError:
@@ -453,7 +450,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     organization_id=organization_id.str,
                     enrollment_id=enrollment_id,
                     enrollment_state=PkiEnrollmentStatus.REJECTED.value,
-                    rejected_on=pendulum.from_timestamp(rejected_on.timestamp()),
+                    rejected_on=rejected_on,
                 )
             )
             await send_signal(
@@ -515,7 +512,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     enrollment_state=PkiEnrollmentStatus.ACCEPTED.value,
                     organization_id=organization_id.str,
                     enrollment_id=enrollment_id,
-                    accepted_on=pendulum.from_timestamp(accepted_on.timestamp()),
+                    accepted_on=accepted_on,
                     accepter_der_x509_certificate=accepter_der_x509_certificate,
                     accept_payload_signature=accept_payload_signature,
                     accept_payload=accept_payload,

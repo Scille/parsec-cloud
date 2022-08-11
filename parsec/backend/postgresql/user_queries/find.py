@@ -4,8 +4,6 @@ from parsec._parsec import DateTime
 from functools import lru_cache
 from typing import Tuple, List, Optional
 
-import pendulum
-
 from parsec.api.protocol import UserID, OrganizationID, HumanHandle
 from parsec.backend.user import HumanFindResultItem
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id, query
@@ -108,7 +106,7 @@ async def query_retrieve_active_human_by_email(
     result = await conn.fetchrow(
         *_q_retrieve_active_human_by_email(
             organization_id=organization_id.str,
-            now=pendulum.from_timestamp(DateTime.now().timestamp()),
+            now=DateTime.now(),
             email=email,
         )
     )
@@ -138,7 +136,7 @@ async def query_find_humans(
     if query:
         args = q(
             organization_id=organization_id.str,
-            now=pendulum.from_timestamp(DateTime.now().timestamp()),
+            now=DateTime.now(),
             query=_escape_sql_like_arg(query),
             offset=offset,
             limit=per_page,
@@ -146,7 +144,7 @@ async def query_find_humans(
     else:
         args = q(
             organization_id=organization_id.str,
-            now=pendulum.from_timestamp(DateTime.now().timestamp()),
+            now=DateTime.now(),
             offset=offset,
             limit=per_page,
         )

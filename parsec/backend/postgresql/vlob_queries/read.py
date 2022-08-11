@@ -3,8 +3,6 @@
 from parsec._parsec import DateTime
 from typing import Dict, Tuple, Optional
 
-import pendulum
-
 from parsec.api.protocol import OrganizationID, DeviceID, VlobID, RealmID
 from parsec.backend.vlob import VlobVersionError, VlobNotFoundError
 from parsec.backend.postgresql.utils import (
@@ -122,7 +120,7 @@ async def query_read(
                     realm_id=realm_id.uuid,
                     encryption_revision=encryption_revision,
                     vlob_id=vlob_id.uuid,
-                    timestamp=pendulum.from_timestamp(timestamp.timestamp()),
+                    timestamp=timestamp,
                 )
             )
             if not data:
@@ -145,7 +143,6 @@ async def query_read(
     assert isinstance(version, int)
     assert isinstance(blob, bytes)
     vlob_author = DeviceID(vlob_author)
-    created_on = DateTime.from_timestamp(created_on.timestamp())
 
     author_last_role_granted_on = await _get_last_role_granted_on(
         conn, organization_id, realm_id, vlob_author
@@ -221,7 +218,7 @@ async def query_list_versions(
 
     return {
         row["version"]: (
-            DateTime.from_timestamp(row["created_on"].timestamp()),
+            row["created_on"],
             DeviceID(row["author"]),
         )
         for row in rows

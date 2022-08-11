@@ -25,7 +25,6 @@ from parsec.backend.sequester import (
 from parsec.crypto import CryptoError
 from parsec.utils import timestamps_in_the_ballpark
 from parsec._parsec import DateTime
-import pendulum
 
 
 # Sequester authority never gets modified past organization bootstrap, hence no need
@@ -197,7 +196,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     service_id=service.service_id,
                     service_label=service.service_label,
                     service_certificate=service.service_certificate,
-                    created_on=pendulum.from_timestamp(service.created_on.timestamp()),
+                    created_on=service.created_on,
                 )
             )
             if result != "INSERT 0 1":
@@ -241,7 +240,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                 *_q_disable_sequester_service(
                     organization_id=organization_id.str,
                     service_id=service_id,
-                    disabled_on=pendulum.from_timestamp(disabled_on.timestamp()),
+                    disabled_on=disabled_on,
                 )
             )
             if result != "UPDATE 1":
@@ -292,8 +291,8 @@ class PGPSequesterComponent(BaseSequesterComponent):
             service_id=service_id,
             service_label=row[0],
             service_certificate=row[1],
-            created_on=DateTime.from_timestamp(row[2].timestamp()),
-            disabled_on=DateTime.from_timestamp(row[3].timestamp()) if row[3] else None,
+            created_on=row[2],
+            disabled_on=row[3],
         )
 
     async def get_service(
@@ -316,10 +315,8 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     service_id=SequesterServiceID(entry["service_id"]),
                     service_label=entry["service_label"],
                     service_certificate=entry["service_certificate"],
-                    created_on=DateTime.from_timestamp(entry["created_on"].timestamp()),
-                    disabled_on=DateTime.from_timestamp(entry["disabled_on"].timestamp())
-                    if entry["disabled_on"]
-                    else None,
+                    created_on=entry["created_on"],
+                    disabled_on=entry["disabled_on"] if entry["disabled_on"] else None,
                 )
                 for entry in entries
             ]
