@@ -12,7 +12,7 @@ from parsec._parsec_pyi.ids import (
 )
 
 from parsec.api.protocol.types import UserProfile
-from parsec.serde.fields import DateTime
+from pendulum import DateTime
 
 class LocalDevice:
     def __init__(
