@@ -62,13 +62,12 @@ from parsec._parsec_pyi.manifest import (
 from parsec._parsec_pyi.time import (
     DateTime,
     LocalDateTime,
+    mock_time,
 )
 
 from parsec._parsec_pyi.trustchain import TrustchainContext
 
 from parsec._parsec_pyi.local_device import LocalDevice
-
-from parsec._parsec_pyi.time import freeze_time
 
 __all__ = [
     # Certif
@@ -123,10 +122,9 @@ __all__ = [
     # Time
     "DateTime",
     "LocalDateTime",
+    "mock_time",
     # Trustchain
     "TrustchainContext",
     # Local Device
     "LocalDevice",
-    # Time
-    "freeze_time",
 ]

@@ -4,25 +4,9 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::pyclass::CompareOp;
 use pyo3::types::PyType;
-use pyo3::{PyAny, PyResult};
+use pyo3::PyResult;
 
 use crate::binding_utils::hash_generic;
-
-#[pyfunction]
-/// mock_time takes as argument a DateTime (for FrozenTime), an int (for ShiftedTime) or None (for RealTime)
-pub(crate) fn mock_time(time: &PyAny) -> PyResult<()> {
-    use libparsec::types::MockedTime::*;
-    libparsec::types::DateTime::mock_time(if let Ok(dt) = time.extract::<DateTime>() {
-        FrozenTime(dt.0)
-    } else if let Ok(dt) = time.extract::<i64>() {
-        ShiftedTime(dt)
-    } else if time.is_none() {
-        RealTime
-    } else {
-        return Err(PyValueError::new_err("Invalid field time"));
-    });
-    Ok(())
-}
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]

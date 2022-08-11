@@ -1,5 +1,5 @@
 from typing import Optional, Tuple
-from parsec._parsec_pyi import BackendOrganizationAddr
+from parsec._parsec_pyi.addrs import BackendOrganizationAddr
 from parsec._parsec_pyi.crypto import PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey
 from parsec._parsec_pyi.ids import (
     DeviceID,
@@ -10,9 +10,9 @@ from parsec._parsec_pyi.ids import (
     OrganizationID,
     UserID,
 )
+from parsec._parsec_pyi.time import DateTime
 
 from parsec.api.protocol.types import UserProfile
-from pendulum import DateTime
 
 class LocalDevice:
     def __init__(

@@ -4,8 +4,9 @@ import attr
 from typing import Optional
 from pendulum import DateTime
 
-from parsec.api.protocol import UserID, DeviceID, HumanHandle, DeviceLabel
-from parsec.api.data import UserProfile
+from parsec.api.protocol import UserID, DeviceID, HumanHandle, DeviceLabel, UserProfile
+
+from parsec._parsec import LocalDevice
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -53,3 +54,6 @@ class DeviceInfo:
 
     def __repr__(self):
         return f"DeviceInfo({self.device_display})"
+
+
+__all__ = ["LocalDevice", "DeviceInfo", "UserInfo"]
