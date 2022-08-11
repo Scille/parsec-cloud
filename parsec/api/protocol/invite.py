@@ -1,15 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from enum import Enum
-from typing import Dict, cast
+from typing import Dict, cast, Type
 
 from parsec.serde import BaseSchema, OneOfSchema, fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import HumanHandleField, UserIDField
 
-from parsec._parsec import (
-    InvitationToken,
-)
+from parsec._parsec import InvitationToken
 
 __all__ = (
     "InvitationToken",
