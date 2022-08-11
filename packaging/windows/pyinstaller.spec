@@ -21,7 +21,7 @@ EXCLUDED_MODULES = {"parsec.backend"}
 def collect_package_datas(package_name):
     datas = []
     package_path = Path(find_spec(package_name).submodule_search_locations[0])
-    ignored_extensions = {"py", "pyc", "pyo", "pyd"}
+    ignored_extensions = {"py", "pyc", "pyo", "pyd", "pyi"}
 
     def _collect_recursive(subpackage_stems):
         subpackage_name = ".".join(subpackage_stems)

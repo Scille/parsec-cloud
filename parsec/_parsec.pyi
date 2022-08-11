@@ -1,4 +1,4 @@
-from parsec._parsec.crypto import (
+from parsec._parsec_pyi.crypto import (
     SecretKey,
     HashDigest,
     SigningKey,
@@ -7,7 +7,7 @@ from parsec._parsec.crypto import (
     PublicKey,
 )
 
-from parsec._parsec.ids import (
+from parsec._parsec_pyi.ids import (
     OrganizationID,
     EntryID,
     BlockID,
@@ -21,7 +21,7 @@ from parsec._parsec.ids import (
     RealmID,
 )
 
-from parsec._parsec.invite import (
+from parsec._parsec_pyi.invite import (
     InvitationToken,
     SASCode,
     generate_sas_code_candidates,
@@ -32,7 +32,7 @@ from parsec._parsec.invite import (
     InviteUserData,
 )
 
-from parsec._parsec.addrs import (
+from parsec._parsec_pyi.addrs import (
     BackendAddr,
     BackendActionAddr,
     BackendInvitationAddr,
