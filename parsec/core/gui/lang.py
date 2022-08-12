@@ -8,6 +8,7 @@ from structlog import get_logger
 from PyQt5.QtCore import QCoreApplication, QIODevice, QFile, QDataStream, QLocale
 
 from parsec.core.gui.desktop import get_locale_language
+from parsec._parsec import DateTime
 
 
 LANGUAGES = {"English": "en", "Français": "fr"}
@@ -19,7 +20,9 @@ logger = get_logger()
 
 
 def format_datetime(dt, full=False, seconds=False):
-    dt = dt.to_local()
+    # Handle if it is already a LocalDateTime
+    if isinstance(dt, DateTime):
+        dt = dt.to_local()
     if _current_locale_language == "fr":
         if seconds:
             return dt.format("%d/%m/%Y %H:%M:S")
