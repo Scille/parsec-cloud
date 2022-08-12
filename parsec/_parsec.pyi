@@ -1,3 +1,10 @@
+from parsec._parsec_pyi.certif import (
+    UserCertificate,
+    DeviceCertificate,
+    RevokedUserCertificate,
+    RealmRoleCertificate,
+)
+
 from parsec._parsec_pyi.crypto import (
     SecretKey,
     HashDigest,
@@ -48,7 +55,12 @@ from parsec._parsec_pyi.time import (
 )
 
 __all__ = [
-    # crypto
+    # Certif
+    "UserCertificate",
+    "DeviceCertificate",
+    "RevokedUserCertificate",
+    "RealmRoleCertificate",
+    # Crypto
     "SecretKey",
     "HashDigest",
     "SigningKey",
