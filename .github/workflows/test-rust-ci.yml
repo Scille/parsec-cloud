@@ -9,6 +9,7 @@ on:
       - Cargo.lock
       - src/**.rs
       - .github/workflows/test-rust-ci.yml
+      - .github/actions/setup-rust/**
   push:
     branches:
       - master
