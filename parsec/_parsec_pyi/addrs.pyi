@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from parsec._parsec import OrganizationID, VerifyKey, EntryID, InvitationToken
 
 class BackendAddr:
@@ -65,12 +65,22 @@ class BackendOrganizationAddr:
     ) -> BackendOrganizationAddr: ...
     @classmethod
     def build(
-        cls, backend_addr: BackendAddr, organization_id: OrganizationID, root_verify_key: VerifyKey
+        cls,
+        backend_addr: BackendAddr,
+        organization_id: OrganizationID,
+        root_verify_key: VerifyKey,
     ) -> BackendOrganizationAddr: ...
 
 class BackendActionAddr:
     @classmethod
-    def from_url(cls, url: str, allow_http_redirection: bool = False) -> BackendActionAddr: ...
+    def from_url(
+        cls, url: str, allow_http_redirection: bool = False
+    ) -> Union[
+        BackendOrganizationBootstrapAddr,
+        BackendOrganizationFileLinkAddr,
+        BackendInvitationAddr,
+        BackendPkiEnrollmentAddr,
+    ]: ...
 
 class BackendOrganizationBootstrapAddr:
     def __init__(
