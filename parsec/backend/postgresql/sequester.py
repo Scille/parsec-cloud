@@ -47,9 +47,9 @@ INSERT INTO sequester_service(
     organization,
     service_certificate,
     service_label,
-    created_on
+    created_on,
     service_type,
-    webhook_url,
+    webhook_url
 )
 VALUES(
     $service_id,
@@ -196,7 +196,6 @@ class PGPSequesterComponent(BaseSequesterComponent):
             )
             if row:
                 raise SequesterServiceAlreadyExists
-
             result = await conn.execute(
                 *_q_create_sequester_service(
                     organization_id=organization_id.str,
@@ -204,7 +203,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     service_label=service.service_label,
                     service_certificate=service.service_certificate,
                     created_on=service.created_on,
-                    service_type=service.service_type.value,
+                    service_type=service.service_type.value.upper(),
                     webhook_url=service.webhook_url,
                 )
             )
@@ -302,7 +301,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
             service_certificate=row[1],
             created_on=row[2],
             disabled_on=row[3],
-            service_type=row[4],
+            service_type=SequesterServiceType(row[4].lower()),
             webhook_url=row[5],
         )
 
