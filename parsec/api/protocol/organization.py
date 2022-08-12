@@ -62,9 +62,9 @@ organization_bootstrap_serializer = CmdSerializer(
 
 
 class OrganizationBootstrapWebhookSchema(BaseSchema):
-    organization_id = OrganizationIDField(required=True)  # type: ignore[arg-type]
-    device_id = DeviceIDField(required=True)  # type: ignore[arg-type]
-    device_label = DeviceLabelField(allow_none=True, required=True)  # type: ignore[arg-type]
+    organization_id = OrganizationIDField(required=True)
+    device_id = DeviceIDField(required=True)
+    device_label = DeviceLabelField(allow_none=True, required=True)
     human_email = fields.String(allow_none=True, required=True)
     human_label = fields.String(allow_none=True, required=True)
 
@@ -73,7 +73,7 @@ organization_bootstrap_webhook_serializer = JSONSerializer(OrganizationBootstrap
 
 
 class UsersPerProfileDetailItemSchema(BaseSchema):
-    profile = UserProfileField(required=True)  # type: ignore[arg-type]
+    profile = UserProfileField(required=True)
     active = fields.Integer(required=True)
     revoked = fields.Integer(required=True)
 
@@ -108,11 +108,11 @@ class OrganizationConfigRepSchema(BaseRepSchema):
     active_users_limit = fields.Integer(allow_none=True, required=True)
     # Field set to `None` if sequester is disabled for the organization
     # New in API version 2.8/3.2 (Parsec 2.11.0)
-    sequester_authority_certificate = fields.Bytes(allow_none=True, required=False, missing=None)  # type: ignore[arg-type]
+    sequester_authority_certificate = fields.Bytes(allow_none=True, required=False, missing=None)
     # Field set to `None` if sequester is disabled for the organization
     # New in API version 2.8/3.2 (Parsec 2.11.0)
     sequester_services_certificates = fields.List(
-        fields.Bytes(), allow_none=True, required=False, missing=None  # type: ignore[arg-type]
+        fields.Bytes(), allow_none=True, required=False, missing=None
     )
 
 

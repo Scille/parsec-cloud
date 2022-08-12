@@ -63,8 +63,8 @@ class EventsMessageReceivedRepSchema(BaseRepSchema):
 
 class EventsInviteStatusChangedRepSchema(BaseRepSchema):
     event = fields.EnumCheckedConstant(APIEvent.INVITE_STATUS_CHANGED, required=True)
-    token = InvitationTokenField(required=True)  # type: ignore[arg-type]
-    invitation_status = InvitationStatusField(required=True)  # type: ignore[arg-type]
+    token = InvitationTokenField(required=True)
+    invitation_status = InvitationStatusField(required=True)
 
 
 class EventPkiEnrollmentUpdated(BaseRepSchema):
