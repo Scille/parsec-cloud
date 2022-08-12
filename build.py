@@ -42,7 +42,7 @@ def check_venv():
 
 
 def force_maturin_release() -> bool:
-    return os.environ.get("FORCE_MATURIN_RELEASE", "1") == "1"
+    return os.environ.get("FORCE_MATURIN_RELEASE", "0") == "1"
 
 
 def build():
