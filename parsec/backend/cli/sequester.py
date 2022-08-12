@@ -20,7 +20,7 @@ from parsec.backend.cli.utils import db_backend_options, blockstore_backend_opti
 from parsec.backend.config import BaseBlockStoreConfig
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.user import User
-from parsec.backend.sequester import SequesterService
+from parsec.backend.sequester import SequesterService, SequesterServiceType
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.sequester import PGPSequesterComponent
@@ -31,6 +31,9 @@ from parsec.backend.postgresql.realm import PGRealmComponent
 
 class SequesterBackendCliError(Exception):
     pass
+
+
+SERVICE_TYPE_CHOICES = {service.value: service for service in SequesterServiceType}
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -132,6 +135,19 @@ def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> Ba
     help="Organization ID where to register the service",
     required=True,
 )
+@click.option(
+    "--service_type",
+    type=click.Choice(SERVICE_TYPE_CHOICES),
+    required=True,
+    help="Service type",
+)
+@click.option(
+    "--webhook_url",
+    type=str,
+    required=False,
+    default=None,
+    help="[Service Type webhook only] webhook url used to send encrypted service data",
+)
 @db_backend_options
 def create_service(
     service_public_key: Path,
@@ -141,7 +157,14 @@ def create_service(
     db: str,
     db_max_connections: int,
     db_min_connections: int,
+    service_type: SequesterServiceType,
+    webhook_url: str,
 ):
+    # Check service type
+    if webhook_url is not None and service_type != SequesterServiceType.WEBHOOK:
+        raise SequesterBackendCliError(
+            f"Incompatible service type {service_type} with webhook_url option\nwebhook_url can only be used with {SequesterServiceType.WEBHOOK}."
+        )
     # Load key files
     service_key = SequesterEncryptionKeyDer(service_public_key.read_bytes())
     authority_key = oscrypto.asymmetric.load_private_key(authority_private_key.read_bytes())
@@ -160,6 +183,8 @@ def create_service(
         service_label=service_label,
         service_certificate=certificate,
         created_on=now,
+        service_type=service_type,
+        webhook_url=webhook_url,
     )
     db_config = _get_config(db, db_min_connections, db_max_connections)
 
