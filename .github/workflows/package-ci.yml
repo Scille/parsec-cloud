@@ -1,13 +1,9 @@
-name: package-linux
+name: package-ci
 
-# This workflow will be triggered on:
-# - push on the main branch
-# - push on the releases branches
-# - tag push matching the version pattern
 on:
   pull_request:
     paths:
-      - .github/workflows/package-linux.yml
+      - .github/workflows/package-ci.yml
   push:
     branches:
       - master
@@ -17,14 +13,19 @@ on:
 
 env:
   rust-version: 1.62.0
-  python-version: "3.9"
+  python-version: 3.9
+  poetry-version: 1.2.0b3
 
 jobs:
-  package-linux-build-wheel:
-    runs-on: ubuntu-22.04
-    env:
-      # Need feature from poetry 1.2.x that aren't present in 1.1.x
-      poetry-version: 1.2.0b3
+  package-wheel:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-22.04
+          - macos-10.15
+          - windows-2022
+    runs-on: ${{ matrix.os }}
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
     steps:
@@ -34,11 +35,13 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
+        timeout-minutes: 10
 
       - name: Get wheel version
         id: wheel-version
+        shell: bash
         run: |
-          set -e
+          set -eux
           # Retrieve Parsec version and customize it if we are not building on a tag
           # See https://www.python.org/dev/peps/pep-0440/#local-version-identifiers
           if ([ "${{ github.ref_type }}" == "tag" ])
@@ -51,18 +54,29 @@ jobs:
             COMMIT=`git rev-parse --verify --short HEAD`
             VERSION="$VERSION.$COMMIT"
             # Customize version with tag
-            sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" parsec/_version.py
+            sed -i.back -e "s#^\\(__version__ = \\).*\$#\\1'$VERSION'#" parsec/_version.py
             test $(grep -E 'version = ' -o pyproject.toml | wc -l) -eq 1  # Sanity check for the next sed
-            sed -i "s#^\\(version = \\).*\$#\\1'$VERSION'#" pyproject.toml
+            sed -i.back -e "s#^\\(version = \\).*\$#\\1'$VERSION'#" pyproject.toml
           fi
 
           echo "::warning title=Wheel version::$VERSION"
           echo "::set-output name=version::$VERSION"
 
+        # For some reason, `ensurepip` in `build.py` does not work in this specific case
+        # (i.e building wheel using cibuildwheel on windows). Hence, we add `pip` to the
+        # build-system requires, so it is included in the build environment. The reason
+        # why this is not the general approach is because this fails on windows when doing
+        # a `poetry install` (since it installs the requirements using `pip install ...`
+        # instead of `python -m pip install ...`)
+      - name: (Windows) Include pip in the build dependencies
+        if: startsWith(matrix.os, 'windows-')
+        run: sed -i "s#pip; platform_system != 'Windows'#pip#" pyproject.toml
+
       - name: Build wheel
         uses: pypa/cibuildwheel@afb4329fe32181c15d34ef94bf64dad7715b44ba  # ping v2.8.1
         with:
           output-dir: dist
+        timeout-minutes: 30
 
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
@@ -74,12 +88,13 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist/
+        timeout-minutes: 5
 
   package-linux-build-snap:
-    needs: package-linux-build-wheel
+    needs: package-wheel
     runs-on: ubuntu-20.04
     env:
-      WHEEL_VERSION: ${{ needs.package-linux-build-wheel.outputs.wheel-version }}
+      WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
     steps:
       - name: Install snapcraft
         run: sudo snap install snapcraft --classic
@@ -166,7 +181,7 @@ jobs:
         run: snapcraft upload --release=edge dist/parsec*.snap
 
   package-linux-release-pypi:
-    needs: [ package-linux-build-wheel, package-linux-test-snap ]
+    needs: [ package-wheel, package-linux-test-snap ]
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     steps:
@@ -180,3 +195,89 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}
+
+  package-windows-build-installer-content:
+    needs: package-wheel
+    runs-on: windows-2022
+    steps:
+      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+        with:
+          python-version: ${{ env.python-version }}
+
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-wheel
+          path: dist
+
+      - name: Prepare build directory
+        run: Copy-Item -Recurse -Path ${{ github.workspace }}\packaging\windows\* -Destination ${{ runner.temp }}
+        working-directory: ${{ runner.temp }}
+
+      - name: Debug ${{ runner.temp }} dir
+        run: Get-ChildItem -Recurse -Path ${{ runner.temp }}
+
+      - name: Freeze Parsec
+        run: python3 freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
+        working-directory: ${{ runner.temp }}
+
+      - name: Debug build directory
+        run: Get-ChildItem -Path ${{ runner.temp }}\build
+
+      # Cannot do the NSIS installer part in CI given it requires to sign `parsec.exe`
+
+      - name: Prepare artifact
+        run: |
+          md dist
+          Copy-Item -Path build\manifest.ini -Destination dist
+          Copy-Item -Path build\install_files.nsh -Destination dist
+          Copy-Item -Path build\uninstall_files.nsh -Destination dist
+          Copy-Item -Recurse -Path build\parsec-* -Destination dist
+          Copy-Item -Path build\winfsp-* -Destination dist
+        working-directory: ${{ runner.temp }}
+
+      - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-installer-content
+          path: ${{ runner.temp }}/dist/
+
+  package-macos-build-app:
+    runs-on: macos-10.15
+    needs: package-wheel
+    env:
+      WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - uses: actions/setup-python@c4e89fac7e8767b327bbad6cb4d859eda999cf08  # pin v4.1.0
+        id: setup-python
+        with:
+          python-version: ${{ env.python-version }}
+
+      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-wheel
+          path: dist
+
+      - name: Copy packaging script
+        run: cp -Rv ${{ github.workspace }}/packaging/macOS/* ${{ runner.temp }}
+
+      - name: Freeze Parsec
+        run: python freeze_program.py ${{ github.workspace }} --wheel-it-dir ${{ github.workspace }}/dist
+        working-directory: ${{ runner.temp }}
+
+      - name: Debug ${{ runner.temp }} dir
+        run: ls -lR ${{ runner.temp }}
+
+      - name: Generate Parsec.app
+        run: >
+          tar --verbose --create --bzip2
+          --file parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2
+          --directory build/pyinstaller_dist parsec.app
+        working-directory: ${{ runner.temp }}
+
+      - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-installer
+          path: ${{ runner.temp }}/parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2
