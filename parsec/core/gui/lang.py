@@ -23,7 +23,7 @@ def format_datetime(dt, full=False, seconds=False):
     # Handle if it is already a LocalDateTime
     if isinstance(dt, DateTime):
         dt = dt.to_local()
-    if _current_locale_language == "fr":
+    if _current_locale_language == "en":
         if seconds:
             return dt.format("%d/%m/%Y %H:%M:S")
         return dt.format("%d/%m/%Y %H:%M")
