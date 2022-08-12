@@ -108,9 +108,7 @@ class RealmExportDb:
 
     def load_user_certificates(
         self,
-        out_certificates: List[
-            Tuple[UserCertificate, Optional[RevokedUserCertificate]]
-        ],
+        out_certificates: List[Tuple[UserCertificate, Optional[RevokedUserCertificate]]],
     ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
         rows = self.con.execute(
             "SELECT _id, user_certificate, revoked_user_certificate FROM user_"

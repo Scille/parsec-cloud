@@ -18,6 +18,7 @@ import attr
 
 from parsec.serde.schema import BaseSchema
 
+
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 class SequesterAuthorityCertificate(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
