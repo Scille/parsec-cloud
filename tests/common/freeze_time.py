@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
-from datetime import datetime
 from parsec._parsec import DateTime, mock_time
 from contextlib import contextmanager
 
@@ -21,8 +20,8 @@ def _timestamp_mockup(device):
 def freeze_device_time(device, current_time):
     # Parse time
     if isinstance(current_time, str):
-        current_time = datetime.strptime(current_time, "%Y-%m-%d")
-        current_time = DateTime.from_timestamp(current_time.timestamp())
+        [y, m, d] = current_time.split("-")
+        current_time = DateTime(int(y), int(m), int(d))
 
     # Get device id
     if isinstance(device, LocalDevice):
@@ -76,8 +75,8 @@ def freeze_time(time=None, device=None):
     # Parse time
     global __freeze_time_task
     if isinstance(time, str):
-        time = datetime.strptime(time, "%Y-%m-%d")
-        time = DateTime.from_timestamp(time.timestamp())
+        [y, m, d] = time.split("-")
+        time = DateTime(int(y), int(m), int(d))
 
     # Save previous context
     previous_task = __freeze_time_task
