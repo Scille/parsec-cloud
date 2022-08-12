@@ -137,8 +137,8 @@ def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> Ba
 )
 @click.option(
     "--service_type",
-    type=click.Choice(SERVICE_TYPE_CHOICES),
-    required=True,
+    type=click.Choice(SERVICE_TYPE_CHOICES.keys(), case_sensitive=False),
+    default=SequesterServiceType.STORAGE.value,
     help="Service type",
 )
 @click.option(
@@ -160,6 +160,7 @@ def create_service(
     service_type: SequesterServiceType,
     webhook_url: str,
 ):
+    service_type = SERVICE_TYPE_CHOICES[service_type]
     # Check service type
     if webhook_url is not None and service_type != SequesterServiceType.WEBHOOK:
         raise SequesterBackendCliError(
