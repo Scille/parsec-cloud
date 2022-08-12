@@ -2,7 +2,7 @@
 
 import pytest
 
-import pendulum
+from parsec._parsec import DateTime
 
 from parsec.api.data import EntryID, BlockID, EntryName
 from parsec.api.protocol import RealmRole, DeviceID
@@ -72,8 +72,8 @@ def test_workspace_entry():
         "id": EntryID.new(),
         "key": SecretKey.generate(),
         "encryption_revision": 1,
-        "encrypted_on": pendulum.now(),
-        "role_cached_on": pendulum.now(),
+        "encrypted_on": DateTime.now(),
+        "role_cached_on": DateTime.now(),
         "role": RealmRole.OWNER,
     }
 
@@ -86,8 +86,8 @@ def test_workspace_entry():
         "id": EntryID.new(),
         "key": SecretKey.generate(),
         "encryption_revision": 42,
-        "encrypted_on": pendulum.now(),
-        "role_cached_on": pendulum.now(),
+        "encrypted_on": DateTime.now(),
+        "role_cached_on": DateTime.now(),
         "role": None,
     }
     py_we = py_we.evolve(**kwargs)
@@ -174,9 +174,9 @@ def test_file_manifest():
         "version": 42,
         "size": 1337,
         "blocksize": 64,
-        "timestamp": pendulum.now(),
-        "created": pendulum.now(),
-        "updated": pendulum.now(),
+        "timestamp": DateTime.now(),
+        "created": DateTime.now(),
+        "updated": DateTime.now(),
         "blocks": (
             BlockAccess(
                 id=BlockID.new(),
@@ -197,9 +197,9 @@ def test_file_manifest():
         "id": EntryID.new(),
         "parent": EntryID.new(),
         "version": 1337,
-        "timestamp": pendulum.now(),
-        "created": pendulum.now(),
-        "updated": pendulum.now(),
+        "timestamp": DateTime.now(),
+        "created": DateTime.now(),
+        "updated": DateTime.now(),
         "blocks": (
             BlockAccess(
                 id=BlockID.new(),
@@ -240,9 +240,9 @@ def test_folder_manifest():
         "id": EntryID.new(),
         "parent": EntryID.new(),
         "version": 42,
-        "timestamp": pendulum.now(),
-        "created": pendulum.now(),
-        "updated": pendulum.now(),
+        "timestamp": DateTime.now(),
+        "created": DateTime.now(),
+        "updated": DateTime.now(),
         "children": {EntryName("file1.txt"): EntryID.new()},
     }
     py_wm = _PyFolderManifest(**kwargs)
@@ -254,9 +254,9 @@ def test_folder_manifest():
         "id": EntryID.new(),
         "parent": EntryID.new(),
         "version": 1337,
-        "timestamp": pendulum.now(),
-        "created": pendulum.now(),
-        "updated": pendulum.now(),
+        "timestamp": DateTime.now(),
+        "created": DateTime.now(),
+        "updated": DateTime.now(),
         "children": {EntryName("file2.mp4"): EntryID.new()},
     }
 
@@ -291,9 +291,9 @@ def test_workspace_manifest():
         "author": DeviceID("user@device"),
         "id": EntryID.new(),
         "version": 42,
-        "timestamp": pendulum.now(),
-        "created": pendulum.now(),
-        "updated": pendulum.now(),
+        "timestamp": DateTime.now(),
+        "created": DateTime.now(),
+        "updated": DateTime.now(),
         "children": {EntryName("file1.txt"): EntryID.new()},
     }
     py_wm = _PyWorkspaceManifest(**kwargs)
@@ -304,9 +304,9 @@ def test_workspace_manifest():
         "author": DeviceID("a@b"),
         "id": EntryID.new(),
         "version": 1337,
-        "timestamp": pendulum.now(),
-        "created": pendulum.now(),
-        "updated": pendulum.now(),
+        "timestamp": DateTime.now(),
+        "created": DateTime.now(),
+        "updated": DateTime.now(),
         "children": {EntryName("file2.mp4"): EntryID.new()},
     }
 
@@ -359,9 +359,9 @@ def test_user_manifest():
         "author": DeviceID("user@device"),
         "id": EntryID.new(),
         "version": 42,
-        "timestamp": pendulum.now(),
-        "created": pendulum.now(),
-        "updated": pendulum.now(),
+        "timestamp": DateTime.now(),
+        "created": DateTime.now(),
+        "updated": DateTime.now(),
         "last_processed_message": 4,
         "workspaces": [
             WorkspaceEntry(
@@ -369,8 +369,8 @@ def test_user_manifest():
                 id=EntryID.new(),
                 key=SecretKey.generate(),
                 encryption_revision=1,
-                encrypted_on=pendulum.now(),
-                role_cached_on=pendulum.now(),
+                encrypted_on=DateTime.now(),
+                role_cached_on=DateTime.now(),
                 role=RealmRole.OWNER,
             )
         ],
@@ -384,9 +384,9 @@ def test_user_manifest():
         "author": DeviceID("a@b"),
         "id": EntryID.new(),
         "version": 1337,
-        "timestamp": pendulum.now(),
-        "created": pendulum.now(),
-        "updated": pendulum.now(),
+        "timestamp": DateTime.now(),
+        "created": DateTime.now(),
+        "updated": DateTime.now(),
         "last_processed_message": 7,
         "workspaces": [
             WorkspaceEntry(
@@ -394,8 +394,8 @@ def test_user_manifest():
                 id=EntryID.new(),
                 key=SecretKey.generate(),
                 encryption_revision=1,
-                encrypted_on=pendulum.now(),
-                role_cached_on=pendulum.now(),
+                encrypted_on=DateTime.now(),
+                role_cached_on=DateTime.now(),
                 role=RealmRole.OWNER,
             ),
             WorkspaceEntry(
@@ -403,8 +403,8 @@ def test_user_manifest():
                 id=EntryID.new(),
                 key=SecretKey.generate(),
                 encryption_revision=2,
-                encrypted_on=pendulum.now(),
-                role_cached_on=pendulum.now(),
+                encrypted_on=DateTime.now(),
+                role_cached_on=DateTime.now(),
                 role=RealmRole.CONTRIBUTOR,
             ),
         ],

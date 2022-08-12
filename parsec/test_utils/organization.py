@@ -5,7 +5,7 @@ import random
 from typing import Tuple, Optional
 from pathlib import Path
 from uuid import uuid4
-from pendulum import now as pendulum_now
+from parsec._parsec import DateTime
 
 from parsec.api.data import (
     UserProfile,
@@ -272,7 +272,7 @@ async def _register_new_user(
         human_handle=human_handle,
         profile=profile,
     )
-    now = pendulum_now()
+    now = DateTime.now()
 
     user_certificate = UserCertificateContent(
         author=author.device_id,
@@ -325,7 +325,7 @@ async def _register_new_device(
         user_manifest_key=author.user_manifest_key,
         local_symkey=author.local_symkey,
     )
-    now = pendulum_now()
+    now = DateTime.now()
 
     device_certificate = DeviceCertificateContent(
         author=author.device_id,

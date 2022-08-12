@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import now
+from parsec._parsec import DateTime
 
 from parsec.api.data.manifest import LOCAL_AUTHOR_LEGACY_PLACEHOLDER
 from parsec.core.fs.storage import WorkspaceStorage
@@ -459,7 +459,7 @@ async def test_run_vacuum(alice_workspace_storage):
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
 async def test_timestamped_storage(alice_workspace_storage):
-    timestamp = now()
+    timestamp = DateTime.now()
     aws = alice_workspace_storage
     taws = aws.to_timestamped(timestamp)
     assert taws.timestamp == timestamp

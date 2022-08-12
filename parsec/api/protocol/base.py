@@ -1,23 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import attr
 from enum import Enum
-from functools import wraps, partial
-from pendulum import DateTime
+import attr
+from functools import partial, wraps
+from parsec._parsec import DateTime
 from typing import (
-    Optional,
+    Callable,
     Dict,
+    Optional,
     Type,
+    Union,
     cast,
     TypeVar,
     Mapping,
     Any,
     Tuple,
     Sequence,
-    Union,
-    Callable,
 )
-
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.serde import (
     BaseSchema,

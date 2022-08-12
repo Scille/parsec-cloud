@@ -2,7 +2,7 @@
 
 import attr
 import trio
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from structlog import get_logger
 from contextlib import asynccontextmanager
 
@@ -76,7 +76,7 @@ def timestamps_in_the_ballpark(
     Useful to compare signed message timestamp with the one stored by the
     backend.
     """
-    seconds = (backend - client).total_seconds()
+    seconds = backend - client
     return -ballpark_client_early_offset < seconds < ballpark_client_late_offset
 
 

@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use chrono::{Duration, TimeZone, Timelike};
+use chrono::{Datelike, Duration, TimeZone, Timelike};
 use core::ops::Sub;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use std::ops::Add;
 
 pub(crate) const DATETIME_EXT_ID: i8 = 1;
 pub(crate) const UUID_EXT_ID: i8 = 2;
@@ -41,6 +42,21 @@ use crate::VlobID;
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
 impl DateTime {
+    pub fn from_ymd_and_hms(
+        year: u64,
+        month: u64,
+        day: u64,
+        hour: u64,
+        minute: u64,
+        second: u64,
+    ) -> Self {
+        Self(
+            chrono::Utc
+                .ymd(year as i32, month as u32, day as u32)
+                .and_hms(hour as u32, minute as u32, second as u32),
+        )
+    }
+
     // Don't implement this as `From<f64>` to keep it private
     pub fn from_f64_with_us_precision(ts: f64) -> Self {
         let mut t = ts.trunc() as i64;
@@ -62,6 +78,34 @@ impl DateTime {
         ts_us as f64 / 1e6
     }
 
+    pub fn year(&self) -> u64 {
+        self.0.year() as u64
+    }
+
+    pub fn month(&self) -> u64 {
+        self.0.month() as u64
+    }
+
+    pub fn day(&self) -> u64 {
+        self.0.day() as u64
+    }
+
+    pub fn hour(&self) -> u64 {
+        self.0.hour() as u64
+    }
+
+    pub fn minute(&self) -> u64 {
+        self.0.minute() as u64
+    }
+
+    pub fn second(&self) -> u64 {
+        self.0.second() as u64
+    }
+
+    pub fn to_local(self) -> LocalDateTime {
+        self.into()
+    }
+
     #[cfg(not(feature = "mock-time"))]
     #[inline]
     pub fn now() -> Self {
@@ -70,21 +114,31 @@ impl DateTime {
     }
 }
 
+pub enum MockedTime {
+    RealTime,
+    FrozenTime(DateTime),
+    ShiftedTime(i64),
+}
+
 #[cfg(feature = "mock-time")]
 mod mock_time {
-    use super::DateTime;
+    use super::{DateTime, MockedTime};
     use std::cell::RefCell;
 
     thread_local! {
-        static MOCK_TIME: RefCell<Option<DateTime>> = RefCell::new(None);
+        static MOCK_TIME: RefCell<MockedTime> = RefCell::new(MockedTime::RealTime);
     }
 
     impl DateTime {
         pub fn now() -> Self {
-            MOCK_TIME.with(|cell| cell.borrow().unwrap_or(chrono::Utc::now().into()))
+            MOCK_TIME.with(|cell| match *cell.borrow() {
+                MockedTime::RealTime => chrono::Utc::now().into(),
+                MockedTime::FrozenTime(dt) => dt,
+                MockedTime::ShiftedTime(dt) => DateTime::from(chrono::Utc::now()) + dt,
+            })
         }
 
-        pub fn freeze_time(time: Option<Self>) {
+        pub fn mock_time(time: MockedTime) {
             MOCK_TIME.with(|cell| *cell.borrow_mut() = time)
         }
     }
@@ -136,6 +190,12 @@ impl From<chrono::DateTime<chrono::Utc>> for DateTime {
     }
 }
 
+impl From<LocalDateTime> for DateTime {
+    fn from(ldt: LocalDateTime) -> Self {
+        Self(ldt.0.into())
+    }
+}
+
 impl serde::Serialize for DateTime {
     #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -168,6 +228,20 @@ impl Sub for DateTime {
     type Output = Duration;
     fn sub(self, rhs: Self) -> Self::Output {
         self.0 - rhs.0
+    }
+}
+
+impl Add<i64> for DateTime {
+    type Output = Self;
+    fn add(self, rhs: i64) -> Self::Output {
+        Self(self.0 + Duration::microseconds(rhs))
+    }
+}
+
+impl Sub<i64> for DateTime {
+    type Output = Self;
+    fn sub(self, rhs: i64) -> Self::Output {
+        Self(self.0 - Duration::microseconds(rhs))
     }
 }
 
@@ -218,6 +292,81 @@ impl<'de> serde::de::Visitor<'de> for DateTimeExtVisitor {
         );
 
         Ok(Self::Value::from_f64_with_us_precision(ts))
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd)]
+pub struct LocalDateTime(chrono::DateTime<chrono::Local>);
+
+impl From<DateTime> for LocalDateTime {
+    fn from(dt: DateTime) -> Self {
+        Self(dt.0.into())
+    }
+}
+
+impl LocalDateTime {
+    pub fn from_ymd_and_hms(
+        year: u64,
+        month: u64,
+        day: u64,
+        hour: u64,
+        minute: u64,
+        second: u64,
+    ) -> Self {
+        Self(
+            chrono::Local
+                .ymd(year as i32, month as u32, day as u32)
+                .and_hms(hour as u32, minute as u32, second as u32),
+        )
+    }
+
+    // Don't implement this as `From<f64>` to keep it private
+    pub fn from_f64_with_us_precision(ts: f64) -> Self {
+        let mut t = ts.trunc() as i64;
+        let mut us = (ts.fract() * 1e6).round() as i32;
+        if us >= 1000000 {
+            t += 1;
+            us -= 1000000;
+        } else if us < 0 {
+            t -= 1;
+            us += 1000000;
+        }
+
+        Self(chrono::Local.timestamp_opt(t, (us as u32) * 1000).unwrap())
+    }
+
+    // Don't implement this as `Into<f64>` to keep it private
+    pub fn get_f64_with_us_precision(&self) -> f64 {
+        let ts_us = self.0.timestamp_nanos() / 1000;
+        ts_us as f64 / 1e6
+    }
+
+    pub fn year(&self) -> u64 {
+        self.0.year() as u64
+    }
+
+    pub fn month(&self) -> u64 {
+        self.0.month() as u64
+    }
+
+    pub fn day(&self) -> u64 {
+        self.0.day() as u64
+    }
+
+    pub fn hour(&self) -> u64 {
+        self.0.hour() as u64
+    }
+
+    pub fn minute(&self) -> u64 {
+        self.0.minute() as u64
+    }
+
+    pub fn second(&self) -> u64 {
+        self.0.second() as u64
+    }
+
+    pub fn format(&self, fmt: &str) -> String {
+        self.0.format(fmt).to_string()
     }
 }
 

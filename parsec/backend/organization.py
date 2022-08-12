@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import attr
-import pendulum
-from typing import Optional, Union, Tuple
+from parsec._parsec import DateTime
+from typing import Optional, Tuple, Union
 from secrets import token_hex
 
 from parsec.utils import timestamps_in_the_ballpark
@@ -229,7 +229,7 @@ class BaseOrganizationComponent:
                 "reason": "Device and user must have the same user ID.",
             }
 
-        now = pendulum.now()
+        now = DateTime.now()
         if not timestamps_in_the_ballpark(u_data.timestamp, now):
             return serializer.timestamp_out_of_ballpark_rep_dump(
                 backend_timestamp=now, client_timestamp=u_data.timestamp

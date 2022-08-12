@@ -17,9 +17,10 @@ use libparsec::protocol::invited_cmds::{
 };
 
 use crate::api_crypto::{HashDigest, PublicKey};
-use crate::binding_utils::{py_to_rs_datetime, py_to_rs_invitation_status};
+use crate::binding_utils::py_to_rs_invitation_status;
 use crate::ids::{HumanHandle, UserID};
 use crate::invite::InvitationToken;
+use crate::time::DateTime;
 
 import_exception!(parsec.api.protocol, ProtocolError);
 
@@ -240,12 +241,12 @@ impl InviteListItem {
     fn user(
         _cls: &PyType,
         token: InvitationToken,
-        created_on: &PyAny,
+        created_on: DateTime,
         claimer_email: String,
         status: &PyAny,
     ) -> PyResult<Self> {
         let token = token.0;
-        let created_on = py_to_rs_datetime(created_on)?;
+        let created_on = created_on.0;
         let status = py_to_rs_invitation_status(status)?;
         Ok(Self(invite_list::InviteListItem::User {
             token,
@@ -260,11 +261,11 @@ impl InviteListItem {
     fn device(
         _cls: &PyType,
         token: InvitationToken,
-        created_on: &PyAny,
+        created_on: DateTime,
         status: &PyAny,
     ) -> PyResult<Self> {
         let token = token.0;
-        let created_on = py_to_rs_datetime(created_on)?;
+        let created_on = created_on.0;
         let status = py_to_rs_invitation_status(status)?;
         Ok(Self(invite_list::InviteListItem::Device {
             token,

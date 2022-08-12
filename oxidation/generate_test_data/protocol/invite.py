@@ -2,7 +2,7 @@
 
 # flake8: noqa
 
-from pendulum import datetime
+from parsec._parsec import DateTime
 from utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
@@ -83,14 +83,14 @@ serialized = serializer.rep_dumps(
             {
                 "type": "USER",
                 "token": InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
-                "created_on": datetime(2000, 1, 2, 1),
+                "created_on": DateTime(2000, 1, 2, 1),
                 "claimer_email": "alice@dev1",
                 "status": InvitationStatus.IDLE,
             },
             {
                 "type": "DEVICE",
                 "token": InvitationToken.from_hex("d864b93ded264aae9ae583fd3d40c45a"),
-                "created_on": datetime(2000, 1, 2, 1),
+                "created_on": DateTime(2000, 1, 2, 1),
                 "status": InvitationStatus.IDLE,
             },
         ]

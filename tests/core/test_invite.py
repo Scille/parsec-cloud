@@ -3,7 +3,7 @@
 import pytest
 import trio
 
-from pendulum import now as pendulum_now
+from parsec._parsec import DateTime
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     DeviceLabel,
@@ -426,7 +426,7 @@ async def test_claimer_handle_cancel_event(
             organization_id=alice.organization_id,
             greeter=alice.user_id,
             token=invitation_addr.token,
-            on=pendulum_now(),
+            on=DateTime.now(),
             reason=InvitationDeletedReason.CANCELLED,
         )
 
@@ -533,7 +533,7 @@ async def test_claimer_handle_command_failure(
             organization_id=alice.organization_id,
             greeter=alice.user_id,
             token=invitation_addr.token,
-            on=pendulum_now(),
+            on=DateTime.now(),
             reason=InvitationDeletedReason.CANCELLED,
         )
 

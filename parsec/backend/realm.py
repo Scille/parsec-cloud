@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import Dict, List, Optional
-from pendulum import now as pendulum_now, DateTime
+from parsec._parsec import DateTime
 import attr
 from parsec.backend.user import UserAlreadyRevokedError
 
@@ -136,7 +136,7 @@ class BaseRealmComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        now = pendulum_now()
+        now = DateTime.now()
         if not timestamps_in_the_ballpark(data.timestamp, now):
             return realm_create_serializer.timestamp_out_of_ballpark_rep_dump(
                 backend_timestamp=now, client_timestamp=data.timestamp
@@ -285,7 +285,7 @@ class BaseRealmComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        now = pendulum_now()
+        now = DateTime.now()
         if not timestamps_in_the_ballpark(data.timestamp, now):
             return realm_update_roles_serializer.timestamp_out_of_ballpark_rep_dump(
                 backend_timestamp=now, client_timestamp=data.timestamp
@@ -344,7 +344,7 @@ class BaseRealmComponent:
     async def api_realm_start_reencryption_maintenance(self, client_ctx, msg):
         msg = realm_start_reencryption_maintenance_serializer.req_load(msg)
 
-        now = pendulum_now()
+        now = DateTime.now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
             return (
                 realm_start_reencryption_maintenance_serializer.timestamp_out_of_ballpark_rep_dump(

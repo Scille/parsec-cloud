@@ -3,7 +3,7 @@
 import pytest
 import trio
 import attr
-import pendulum
+from parsec._parsec import DateTime
 from contextlib import contextmanager
 from unittest.mock import ANY
 from enum import Enum
@@ -58,7 +58,7 @@ class PartialObj:
 class SpiedEvent:
     event = attr.ib()
     kwargs = attr.ib(factory=dict)
-    dt = attr.ib(factory=pendulum.now)
+    dt = attr.ib(factory=DateTime.now)
 
     # When using Rust with pyo3 with some types,
     # unittest.mock.ANY cannot be passed to the binding

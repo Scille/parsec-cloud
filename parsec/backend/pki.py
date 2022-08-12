@@ -3,7 +3,7 @@
 import attr
 from typing import List
 from uuid import UUID
-from pendulum import DateTime, now as pendulum_now
+from parsec._parsec import DateTime
 
 from parsec.api.data import DataError, PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 from parsec.api.protocol import (
@@ -132,7 +132,7 @@ class BasePkiEnrollmentComponent:
         except DataError as exc:
             return {"status": "invalid_payload_data", "reason": str(exc)}
 
-        submitted_on = pendulum_now()
+        submitted_on = DateTime.now()
         try:
             await self.submit(
                 organization_id=client_ctx.organization_id,
@@ -244,7 +244,7 @@ class BasePkiEnrollmentComponent:
             await self.reject(
                 organization_id=client_ctx.organization_id,
                 enrollment_id=msg["enrollment_id"],
-                rejected_on=pendulum_now(),
+                rejected_on=DateTime.now(),
             )
             rep = {"status": "ok"}
 
@@ -296,7 +296,7 @@ class BasePkiEnrollmentComponent:
                 accepter_der_x509_certificate=msg["accepter_der_x509_certificate"],
                 accept_payload_signature=msg["accept_payload_signature"],
                 accept_payload=msg["accept_payload"],
-                accepted_on=pendulum_now(),
+                accepted_on=DateTime.now(),
                 user=user,
                 first_device=first_device,
             )

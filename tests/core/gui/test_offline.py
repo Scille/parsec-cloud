@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-import pendulum
+from parsec._parsec import DateTime
 
 from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
@@ -55,7 +55,7 @@ async def test_backend_desync_notification(
     timestamp_shift_minutes = 0
 
     def _timestamp(self):
-        return pendulum.now().subtract(minutes=timestamp_shift_minutes)
+        return DateTime.now().subtract(minutes=timestamp_shift_minutes)
 
     monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
     monkeypatch.setattr("parsec.core.types.local_device.LocalDevice.timestamp", _timestamp)

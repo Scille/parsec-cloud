@@ -5,7 +5,7 @@ import trio
 import triopg
 from uuid import uuid4
 from contextlib import contextmanager
-from pendulum import now as pendulum_now
+from parsec._parsec import DateTime
 from unittest.mock import patch
 
 from parsec.backend.organization import OrganizationAlreadyBootstrappedError
@@ -219,7 +219,7 @@ async def test_concurrency_pki_enrollment_accept(
                 accepter_der_x509_certificate=b"whatever",
                 accept_payload_signature=b"whatever",
                 accept_payload=b"whatever",
-                accepted_on=pendulum_now(),
+                accepted_on=DateTime.now(),
                 user=backend_user,
                 first_device=backend_first_device,
             )
@@ -248,7 +248,7 @@ async def test_concurrency_pki_enrollment_accept(
             submitter_der_x509_certificate_email="whatever",
             submit_payload_signature=b"whatever",
             submit_payload=b"whatever",
-            submitted_on=pendulum_now(),
+            submitted_on=DateTime.now(),
         )
 
         # Concurrent PKI enrollement accept

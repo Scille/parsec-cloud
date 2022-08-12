@@ -2,7 +2,7 @@
 
 import pytest
 import sqlite3
-from pendulum import now as pendulum_now, datetime, DateTime
+from parsec._parsec import DateTime
 import oscrypto.asymmetric
 
 from parsec.crypto import SecretKey, HashDigest
@@ -48,7 +48,7 @@ from tests.common import OrganizationFullData, customize_fixtures, sequester_ser
 async def test_sequester_export_full_run(
     tmp_path, coolorg: OrganizationFullData, backend, alice, alice2, bob, adam, otherorg
 ):
-    curr_now = datetime(2000, 1, 1)
+    curr_now = DateTime(2000, 1, 1)
 
     def _next_day() -> DateTime:
         nonlocal curr_now
@@ -56,7 +56,7 @@ async def test_sequester_export_full_run(
         return curr_now
 
     def _sqlite_timestamp(year: int, month: int, day: int) -> int:
-        return int(datetime(year, month, day).timestamp() * 1000)
+        return int(DateTime(year, month, day).timestamp() * 1000)
 
     output_db_path = tmp_path / "export.sqlite"
 
@@ -290,7 +290,7 @@ async def test_sequester_export_full_run(
             user_id=alice.user_id,
             role=RealmRole.OWNER,
             granted_by=alice.device_id,
-            granted_on=pendulum_now(),
+            granted_on=DateTime.now(),
         ),
     )
     with pytest.raises(RealmExporterOutputDbError):
@@ -313,7 +313,7 @@ async def test_sequester_export_full_run(
             user_id=bob.user_id,
             role=None,
             granted_by=alice.device_id,
-            granted_on=pendulum_now(),
+            granted_on=DateTime.now(),
         ),
     )
     await backend.vlob.update(
@@ -322,7 +322,7 @@ async def test_sequester_export_full_run(
         encryption_revision=1,
         vlob_id=vlob1,
         version=3,
-        timestamp=pendulum_now(),
+        timestamp=DateTime.now(),
         blob=b"vlob1v3",
         sequester_blob={s1.service_id: b"s1:vlob1v3"},
     )
@@ -333,7 +333,7 @@ async def test_sequester_export_full_run(
         realm_id=realm1,
         encryption_revision=1,
         vlob_id=vlob3,
-        timestamp=pendulum_now(),
+        timestamp=DateTime.now(),
         blob=b"vlob3v1",
         sequester_blob={s1.service_id: b"s1:vlob3v1"},
     )
@@ -480,7 +480,7 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
         human_handle=alice.human_handle,
         public_key=alice.public_key,
         author=None,
-        timestamp=datetime(2000, 1, 1),
+        timestamp=DateTime(2000, 1, 1),
     ).dump_and_sign(coolorg.root_signing_key)
     bob_user_certif = UserCertificateContent(
         user_id=bob.user_id,
@@ -488,7 +488,7 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
         human_handle=bob.human_handle,
         public_key=bob.public_key,
         author=alice.device_id,
-        timestamp=datetime(2000, 1, 2),
+        timestamp=DateTime(2000, 1, 2),
     ).dump_and_sign(alice.signing_key)
     adam_user_certif = UserCertificateContent(
         user_id=adam.user_id,
@@ -496,10 +496,10 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
         human_handle=adam.human_handle,
         public_key=adam.public_key,
         author=alice.device_id,
-        timestamp=datetime(2000, 1, 3),
+        timestamp=DateTime(2000, 1, 3),
     ).dump_and_sign(alice.signing_key)
     adam_revoked_user_certif = RevokedUserCertificateContent(
-        user_id=adam.user_id, author=alice.device_id, timestamp=datetime(2000, 5, 1)
+        user_id=adam.user_id, author=alice.device_id, timestamp=DateTime(2000, 5, 1)
     ).dump_and_sign(alice.signing_key)
     con.executemany(
         "INSERT INTO user_(_id, user_certificate, revoked_user_certificate) VALUES (?, ?, ?)",
@@ -516,21 +516,21 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
         device_label=alice.device_label,
         verify_key=alice.verify_key,
         author=None,
-        timestamp=datetime(2000, 1, 1),
+        timestamp=DateTime(2000, 1, 1),
     ).dump_and_sign(coolorg.root_signing_key)
     bob_device_certif = DeviceCertificateContent(
         device_id=bob.device_id,
         device_label=bob.device_label,
         verify_key=bob.verify_key,
         author=alice.device_id,
-        timestamp=datetime(2000, 1, 2),
+        timestamp=DateTime(2000, 1, 2),
     ).dump_and_sign(alice.signing_key)
     adam_device_certif = DeviceCertificateContent(
         device_id=adam.device_id,
         device_label=adam.device_label,
         verify_key=adam.verify_key,
         author=alice.device_id,
-        timestamp=datetime(2000, 1, 3),
+        timestamp=DateTime(2000, 1, 3),
     ).dump_and_sign(alice.signing_key)
     alice_device_internal_id = 1
     bob_device_internal_id = 2
@@ -550,35 +550,35 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
             realm_id=realm1,
             user_id=alice.user_id,
             role=RealmRole.OWNER,
-            timestamp=datetime(2000, 2, 1),
+            timestamp=DateTime(2000, 2, 1),
             author=None,
         ).dump_and_sign(coolorg.root_signing_key),
         RealmRoleCertificateContent(
             realm_id=realm1,
             user_id=bob.user_id,
             role=RealmRole.READER,
-            timestamp=datetime(2000, 2, 2),
+            timestamp=DateTime(2000, 2, 2),
             author=alice.device_id,
         ).dump_and_sign(alice.signing_key),
         RealmRoleCertificateContent(
             realm_id=realm1,
             user_id=bob.user_id,
             role=RealmRole.MANAGER,
-            timestamp=datetime(2000, 2, 3),
+            timestamp=DateTime(2000, 2, 3),
             author=alice.device_id,
         ).dump_and_sign(alice.signing_key),
         RealmRoleCertificateContent(
             realm_id=realm1,
             user_id=adam.user_id,
             role=RealmRole.CONTRIBUTOR,
-            timestamp=datetime(2000, 2, 4),
+            timestamp=DateTime(2000, 2, 4),
             author=bob.device_id,
         ).dump_and_sign(bob.signing_key),
         RealmRoleCertificateContent(
             realm_id=realm1,
             user_id=adam.user_id,
             role=None,
-            timestamp=datetime(2000, 4, 1),
+            timestamp=DateTime(2000, 4, 1),
             author=alice.device_id,
         ).dump_and_sign(alice.signing_key),
     ]
@@ -611,52 +611,52 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     folder3 = EntryID.new()
     workspace_manifest_v1 = WorkspaceManifest(
         author=alice.device_id,
-        timestamp=datetime(2000, 3, 1),
+        timestamp=DateTime(2000, 3, 1),
         version=1,
         id=workspace_id,
-        created=datetime(2000, 3, 1),
-        updated=datetime(2000, 3, 1),
+        created=DateTime(2000, 3, 1),
+        updated=DateTime(2000, 3, 1),
         children={},
     ).dump_and_sign(author_signkey=alice.signing_key)
     file1_manifest_v1 = FileManifest(
         author=bob.device_id,
-        timestamp=datetime(2000, 3, 10),
+        timestamp=DateTime(2000, 3, 10),
         version=1,
         id=file1,
         parent=workspace_id,
-        created=datetime(2000, 3, 10),
-        updated=datetime(2000, 3, 10),
+        created=DateTime(2000, 3, 10),
+        updated=DateTime(2000, 3, 10),
         size=0,
         blocksize=10,
         blocks=[],
     ).dump_and_sign(author_signkey=bob.signing_key)
     folder1_manifest_v1 = FolderManifest(
         author=bob.device_id,
-        timestamp=datetime(2000, 3, 11),
+        timestamp=DateTime(2000, 3, 11),
         version=1,
         id=folder1,
         parent=workspace_id,
-        created=datetime(2000, 3, 11),
-        updated=datetime(2000, 3, 11),
+        created=DateTime(2000, 3, 11),
+        updated=DateTime(2000, 3, 11),
         children={},
     ).dump_and_sign(author_signkey=bob.signing_key)
     folder2_manifest_v1 = FolderManifest(
         author=bob.device_id,
-        timestamp=datetime(2000, 3, 12),
+        timestamp=DateTime(2000, 3, 12),
         version=1,
         id=folder2,
         parent=workspace_id,
-        created=datetime(2000, 3, 12),
-        updated=datetime(2000, 3, 12),
+        created=DateTime(2000, 3, 12),
+        updated=DateTime(2000, 3, 12),
         children={},
     ).dump_and_sign(author_signkey=bob.signing_key)
     workspace_manifest_v2 = WorkspaceManifest(
         author=bob.device_id,
-        timestamp=datetime(2000, 3, 13),
+        timestamp=DateTime(2000, 3, 13),
         version=2,
         id=workspace_id,
-        created=datetime(2000, 3, 13),
-        updated=datetime(2000, 3, 13),
+        created=DateTime(2000, 3, 13),
+        updated=DateTime(2000, 3, 13),
         children={
             EntryName("file1"): file1,
             EntryName("folder1"): folder1,
@@ -665,44 +665,44 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     ).dump_and_sign(author_signkey=bob.signing_key)
     file2_manifest_v1 = FileManifest(
         author=adam.device_id,
-        timestamp=datetime(2000, 3, 20),
+        timestamp=DateTime(2000, 3, 20),
         version=1,
         id=file2,
         parent=folder2,
-        created=datetime(2000, 3, 20),
-        updated=datetime(2000, 3, 20),
+        created=DateTime(2000, 3, 20),
+        updated=DateTime(2000, 3, 20),
         size=0,
         blocksize=10,
         blocks=[],
     ).dump_and_sign(author_signkey=adam.signing_key)
     folder3_manifest_v1 = FolderManifest(
         author=adam.device_id,
-        timestamp=datetime(2000, 3, 21),
+        timestamp=DateTime(2000, 3, 21),
         version=1,
         id=folder3,
         parent=workspace_id,
-        created=datetime(2000, 3, 21),
-        updated=datetime(2000, 3, 21),
+        created=DateTime(2000, 3, 21),
+        updated=DateTime(2000, 3, 21),
         children={},
     ).dump_and_sign(author_signkey=adam.signing_key)
     folder2_manifest_v2 = FolderManifest(
         author=adam.device_id,
-        timestamp=datetime(2000, 3, 22),
+        timestamp=DateTime(2000, 3, 22),
         version=2,
         id=folder2,
         parent=workspace_id,
-        created=datetime(2000, 3, 22),
-        updated=datetime(2000, 3, 22),
+        created=DateTime(2000, 3, 22),
+        updated=DateTime(2000, 3, 22),
         children={EntryName("file2"): file2, EntryName("folder3"): folder3},
     ).dump_and_sign(author_signkey=adam.signing_key)
     file2_manifest_v2 = FileManifest(
         author=adam.device_id,
-        timestamp=datetime(2000, 3, 25),
+        timestamp=DateTime(2000, 3, 25),
         version=2,
         id=file2,
         parent=folder2,
-        created=datetime(2000, 3, 25),
-        updated=datetime(2000, 3, 25),
+        created=DateTime(2000, 3, 25),
+        updated=DateTime(2000, 3, 25),
         size=20,
         blocksize=10,
         blocks=[
@@ -716,7 +716,7 @@ async def test_export_reader_full_run(tmp_path, coolorg: OrganizationFullData, a
     ).dump_and_sign(author_signkey=adam.signing_key)
 
     def _sqlite_ts(year, month, day):
-        return int(datetime(year, month, day).timestamp() * 1000)
+        return int(DateTime(year, month, day).timestamp() * 1000)
 
     vlob_atoms = [
         # / v1

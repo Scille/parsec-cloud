@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import pendulum
+from parsec._parsec import DateTime
 from typing import Dict, List, Optional
 
 from parsec.backend.backend_events import BackendEvent
@@ -99,7 +99,7 @@ ORDER BY user_, certified_on DESC
 async def _get_realm_role_for_not_revoked(
     conn, organization_id: OrganizationID, realm_id: RealmID, users: Optional[List[UserID]] = None
 ):
-    now = pendulum.now()
+    now = DateTime.now()
 
     def _cook_role(row):
         if row["revoked_on"] and row["revoked_on"] <= now:
@@ -169,7 +169,7 @@ async def query_start_reencryption_maintenance(
     realm_id: RealmID,
     encryption_revision: int,
     per_participant_message: Dict[UserID, bytes],
-    timestamp: pendulum.DateTime,
+    timestamp: DateTime,
 ) -> None:
     # Retrieve realm and make sure it is not under maintenance
     status = await get_realm_status(conn, organization_id, realm_id)

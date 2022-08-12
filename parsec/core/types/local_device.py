@@ -4,7 +4,7 @@ import attr
 from typing import TYPE_CHECKING, Tuple, Optional
 from hashlib import sha256
 from marshmallow import ValidationError
-from pendulum import DateTime, now as pendulum_now
+from parsec._parsec import DateTime
 
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
 from parsec.serde import fields, post_load
@@ -154,12 +154,12 @@ class LocalDevice(BaseLocalData):
 
     def timestamp(self) -> DateTime:
         """This method centralizes the production of parsec timestamps for a given device.
-        At the moment it is simply an alias to `pendulum.now` but it has two main benefits:
+        At the moment it is simply an alias to `DateTime.now` but it has two main benefits:
         1. Allowing for easier testing by patching this method in device-sepecific way
         2. Allowing for other implementation in the future allowing to track, check and
            possibly alter the production of timestamps.
         """
-        return pendulum_now()
+        return DateTime.now()
 
 
 _PyLocalDevice = LocalDevice

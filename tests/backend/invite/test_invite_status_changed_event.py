@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import datetime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import InvitationType, InvitationStatus, APIEvent
 
@@ -21,7 +21,7 @@ async def test_greeter_event_on_claimer_join_and_leave(
     invitation = await backend_asgi_app.backend.invite.new_for_device(
         organization_id=alice.organization_id,
         greeter_user_id=alice.user_id,
-        created_on=datetime(2000, 1, 2),
+        created_on=DateTime(2000, 1, 2),
     )
 
     await events_subscribe(alice_ws)
@@ -60,7 +60,7 @@ async def test_greeter_event_on_claimer_join_and_leave(
                 {
                     "type": InvitationType.DEVICE,
                     "token": invitation.token,
-                    "created_on": datetime(2000, 1, 2),
+                    "created_on": DateTime(2000, 1, 2),
                     "status": InvitationStatus.READY,
                 }
             ],
@@ -83,7 +83,7 @@ async def test_greeter_event_on_claimer_join_and_leave(
             {
                 "type": InvitationType.DEVICE,
                 "token": invitation.token,
-                "created_on": datetime(2000, 1, 2),
+                "created_on": DateTime(2000, 1, 2),
                 "status": InvitationStatus.IDLE,
             }
         ],

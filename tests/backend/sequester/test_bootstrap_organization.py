@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import ANY
-from pendulum import now as pendulum_now, datetime
+from parsec._parsec import DateTime
 
 from parsec.core.types import LocalDevice
 
@@ -73,7 +73,7 @@ async def test_sequestered_organization_bootstrap(
     }
 
     # Timestamp out of ballpark in authority certificate
-    timestamp_out_of_ballpark = datetime(2000, 1, 1)
+    timestamp_out_of_ballpark = DateTime(2000, 1, 1)
     authority_certif_bad_timestamp = sequester_authority_factory(
         coolorg.root_signing_key, timestamp=timestamp_out_of_ballpark
     ).certif
@@ -94,7 +94,7 @@ async def test_sequestered_organization_bootstrap(
     }
 
     # Timestamp in authority certificate different than user/device certificates
-    different_timestamp = pendulum_now()
+    different_timestamp = DateTime.now()
     authority_certif_different_timestamp = sequester_authority_factory(
         coolorg.root_signing_key, timestamp=different_timestamp
     ).certif

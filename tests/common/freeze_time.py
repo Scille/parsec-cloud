@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
-import pendulum
+from parsec._parsec import DateTime, mock_time
 from contextlib import contextmanager
 
 from parsec.api.protocol import DeviceID
@@ -13,14 +13,15 @@ __freeze_time_dict = {}
 
 def _timestamp_mockup(device):
     _, time = __freeze_time_dict.get(device.device_id, (None, None))
-    return time if time is not None else pendulum.now()
+    return time or DateTime.now()
 
 
 @contextmanager
 def freeze_device_time(device, current_time):
     # Parse time
     if isinstance(current_time, str):
-        current_time = pendulum.parse(current_time)
+        [y, m, d] = current_time.split("-")
+        current_time = DateTime(int(y), int(m), int(d))
 
     # Get device id
     if isinstance(device, LocalDevice):
@@ -59,9 +60,11 @@ __freeze_time_task = None
 
 @contextmanager
 def freeze_time(time=None, device=None):
+    mocks_stack = []
+
     # Get current time if not provided
     if time is None:
-        time = pendulum.now()
+        time = DateTime.now()
 
     # Freeze a single device
     if device is not None:
@@ -72,11 +75,12 @@ def freeze_time(time=None, device=None):
     # Parse time
     global __freeze_time_task
     if isinstance(time, str):
-        time = pendulum.parse(time)
+        [y, m, d] = time.split("-")
+        time = DateTime(int(y), int(m), int(d))
 
     # Save previous context
     previous_task = __freeze_time_task
-    previous_time = pendulum.get_test_now()
+    previous_time = mocks_stack.pop() if mocks_stack else None
 
     # Get current trio task
     try:
@@ -90,22 +94,12 @@ def freeze_time(time=None, device=None):
     try:
         # Set new context
         __freeze_time_task = current_task
-        pendulum.set_test_now(time)
-        try:
-            from libparsec.types import freeze_time as _Rs_freeze_time
-        except ImportError:
-            pass
-        else:
-            _Rs_freeze_time(time)
+        mocks_stack.append(time)
+        mock_time(time)
 
         yield time
     finally:
         # Restore previous context
         __freeze_time_task = previous_task
-        pendulum.set_test_now(previous_time)
-        try:
-            from libparsec.types import freeze_time as _Rs_freeze_time
-        except ImportError:
-            pass
-        else:
-            _Rs_freeze_time(previous_time)
+        mocks_stack.append(previous_time)
+        mock_time(previous_time)

@@ -2,7 +2,7 @@
 
 # flake8: noqa
 
-from pendulum import datetime
+from parsec._parsec import DateTime
 from utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
@@ -21,7 +21,7 @@ serialized = serializer.rep_dumps(
         "messages": {
             "count": 1,
             "sender": DeviceID("alice@dev1"),
-            "timestamp": datetime(2000, 1, 2, 1),
+            "timestamp": DateTime(2000, 1, 2, 1),
             "body": b"foobar",
         }
     }
