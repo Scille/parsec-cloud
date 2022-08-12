@@ -13,7 +13,7 @@ from parsec.sequester_crypto import (
 )
 from parsec.api.data import SequesterAuthorityCertificate, SequesterServiceCertificate
 from parsec.api.protocol import SequesterServiceID
-from parsec.backend.sequester import SequesterService
+from parsec.backend.sequester import SequesterService, SequesterServiceType
 
 
 @dataclass
@@ -84,5 +84,6 @@ def sequester_service_factory(
             service_id=certif_data.service_id,
             service_label=certif_data.service_label,
             service_certificate=certif,
+            service_type=SequesterServiceType.STORAGE,
         ),
     )
