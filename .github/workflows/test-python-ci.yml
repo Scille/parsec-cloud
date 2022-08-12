@@ -7,6 +7,7 @@ on:
       - tests/**
       - pyproject.toml
       - poetry.lock
+      - src/**
       - .github/workflows/test-python-ci.yml
       - .github/actions/setup-python-poetry/**
       - .github/actions/setup-rust/**
