@@ -364,6 +364,10 @@ impl LocalDateTime {
     pub fn second(&self) -> u64 {
         self.0.second() as u64
     }
+
+    pub fn format(&self, fmt: &str) -> String {
+        self.0.format(fmt).to_string()
+    }
 }
 
 #[cfg(test)]

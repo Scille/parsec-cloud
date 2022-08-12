@@ -174,4 +174,8 @@ impl LocalDateTime {
             libparsec::types::LocalDateTime::from_f64_with_us_precision(ts),
         ))
     }
+
+    fn format(&self, fmt: &str) -> PyResult<String> {
+        Ok(self.0.format(fmt))
+    }
 }
