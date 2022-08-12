@@ -33,19 +33,19 @@ class DateTime:
     def timestamp(self) -> float: ...
     def add(
         self,
-        days: int = 0,
-        hours: int = 0,
-        minutes: int = 0,
-        seconds: int = 0,
-        microseconds: int = 0,
+        days: float = 0,
+        hours: float = 0,
+        minutes: float = 0,
+        seconds: float = 0,
+        microseconds: float = 0,
     ) -> DateTime: ...
     def subtract(
         self,
-        days: int = 0,
-        hours: int = 0,
-        minutes: int = 0,
-        seconds: int = 0,
-        microseconds: int = 0,
+        days: float = 0,
+        hours: float = 0,
+        minutes: float = 0,
+        seconds: float = 0,
+        microseconds: float = 0,
     ) -> DateTime: ...
     def to_local(self) -> LocalDateTime: ...
 

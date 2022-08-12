@@ -58,33 +58,33 @@ impl DateTime {
     }
 
     #[getter]
-    fn year(&self) -> u64 {
-        self.0.year()
+    fn year(&self) -> PyResult<u64> {
+        Ok(self.0.year())
     }
 
     #[getter]
-    fn month(&self) -> u64 {
-        self.0.month()
+    fn month(&self) -> PyResult<u64> {
+        Ok(self.0.month())
     }
 
     #[getter]
-    fn day(&self) -> u64 {
-        self.0.day()
+    fn day(&self) -> PyResult<u64> {
+        Ok(self.0.day())
     }
 
     #[getter]
-    fn hour(&self) -> u64 {
-        self.0.hour()
+    fn hour(&self) -> PyResult<u64> {
+        Ok(self.0.hour())
     }
 
     #[getter]
-    fn minute(&self) -> u64 {
-        self.0.minute()
+    fn minute(&self) -> PyResult<u64> {
+        Ok(self.0.minute())
     }
 
     #[getter]
-    fn second(&self) -> u64 {
-        self.0.second()
+    fn second(&self) -> PyResult<u64> {
+        Ok(self.0.second())
     }
 
     #[classmethod]
@@ -103,37 +103,65 @@ impl DateTime {
         ))
     }
 
-    fn to_local(&self) -> LocalDateTime {
-        LocalDateTime(self.0.to_local())
+    fn to_local(&self) -> PyResult<LocalDateTime> {
+        Ok(LocalDateTime(self.0.to_local()))
     }
 
-    fn __sub__(&self, other: Self) -> i64 {
-        (self.0 - other.0).num_seconds()
+    fn __sub__(&self, other: Self) -> PyResult<f64> {
+        let us = match (self.0 - other.0).num_microseconds() {
+            Some(us) => us,
+            None => {
+                return Err(PyValueError::new_err(format!(
+                    "Could not substract {} {}",
+                    self.0, other.0
+                )))
+            }
+        };
+        Ok(us as f64 / 1e6)
     }
 
-    #[args(days = 0, hours = 0, minutes = 0, seconds = 0, microseconds = 0)]
+    #[args(
+        days = "0.",
+        hours = "0.",
+        minutes = "0.",
+        seconds = "0.",
+        microseconds = "0."
+    )]
     fn subtract(
         &self,
-        days: i64,
-        hours: i64,
-        minutes: i64,
-        seconds: i64,
-        microseconds: i64,
-    ) -> Self {
-        Self(
+        days: f64,
+        hours: f64,
+        minutes: f64,
+        seconds: f64,
+        microseconds: f64,
+    ) -> PyResult<Self> {
+        Ok(Self(
             self.0
-                - (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1_000_000
-                - microseconds,
-        )
+                - ((((days * 24. + hours) * 60. + minutes) * 60. + seconds) * 1e6 + microseconds)
+                    as i64,
+        ))
     }
 
-    #[args(days = 0, hours = 0, minutes = 0, seconds = 0, microseconds = 0)]
-    fn add(&self, days: i64, hours: i64, minutes: i64, seconds: i64, microseconds: i64) -> Self {
-        Self(
+    #[args(
+        days = "0.",
+        hours = "0.",
+        minutes = "0.",
+        seconds = "0.",
+        microseconds = "0."
+    )]
+    fn add(
+        &self,
+        days: f64,
+        hours: f64,
+        minutes: f64,
+        seconds: f64,
+        microseconds: f64,
+    ) -> PyResult<Self> {
+        Ok(Self(
             self.0
-                + (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1_000_000
-                + microseconds,
-        )
+                + ((((days * 24. + hours) * 60. + minutes) * 60. + seconds) * 1e6 + microseconds)
+                    as i64,
+        ))
     }
 }
 
@@ -152,33 +180,33 @@ impl LocalDateTime {
     }
 
     #[getter]
-    fn year(&self) -> u64 {
-        self.0.year()
+    fn year(&self) -> PyResult<u64> {
+        Ok(self.0.year())
     }
 
     #[getter]
-    fn month(&self) -> u64 {
-        self.0.month()
+    fn month(&self) -> PyResult<u64> {
+        Ok(self.0.month())
     }
 
     #[getter]
-    fn day(&self) -> u64 {
-        self.0.day()
+    fn day(&self) -> PyResult<u64> {
+        Ok(self.0.day())
     }
 
     #[getter]
-    fn hour(&self) -> u64 {
-        self.0.hour()
+    fn hour(&self) -> PyResult<u64> {
+        Ok(self.0.hour())
     }
 
     #[getter]
-    fn minute(&self) -> u64 {
-        self.0.minute()
+    fn minute(&self) -> PyResult<u64> {
+        Ok(self.0.minute())
     }
 
     #[getter]
-    fn second(&self) -> u64 {
-        self.0.second()
+    fn second(&self) -> PyResult<u64> {
+        Ok(self.0.second())
     }
 
     fn timestamp(&self) -> PyResult<f64> {
