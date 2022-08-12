@@ -437,12 +437,7 @@ impl UserID {
     }
 
     fn capitalize(&self) -> PyResult<String> {
-        let str = self.0.to_string();
-        let mut it = str.chars();
-        match it.next() {
-            Some(c) => Ok(c.to_uppercase().chain(it).collect()),
-            None => Ok(String::new()),
-        }
+        Ok(self.0.to_string().to_uppercase())
     }
 
     #[getter]
