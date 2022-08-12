@@ -2,14 +2,15 @@ name: test-rust-ci
 
 on:
   pull_request:
-    paths-ignore:
-      - oxidation/**.rs
-      - oxidation/**.toml
-      - Cargo.toml
-      - Cargo.lock
-      - src/**.rs
-      - .github/workflows/test-rust-ci.yml
-      - .github/actions/setup-rust/**
+    paths:
+      - .github/workflows/mock-test-rust-ci.yml
+      - "!oxidation/**.rs"
+      - "!oxidation/**.toml"
+      - "!Cargo.toml"
+      - "!Cargo.lock"
+      - "!src/**.rs"
+      - "!.github/workflows/test-rust-ci.yml"
+      - "!.github/actions/setup-rust/**"
 
 jobs:
   testing-rust-matrix:

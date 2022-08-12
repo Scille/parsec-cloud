@@ -2,15 +2,16 @@ name: test-python-ci
 
 on:
   pull_request:
-    paths-ignore:
-      - parsec/**
-      - tests/**
-      - src/**.rs
-      - pyproject.toml
-      - poetry.lock
-      - .github/workflows/test-python-ci.yml
-      - .github/actions/setup-python-poetry/**
-      - .github/actions/setup-rust/**
+    paths:
+      - .github/workflows/mock-test-python-ci.yml
+      - "!parsec/**"
+      - "!tests/**"
+      - "!src/**.rs"
+      - "!pyproject.toml"
+      - "!poetry.lock"
+      - "!.github/workflows/test-python-ci.yml"
+      - "!.github/actions/setup-python-poetry/**"
+      - "!.github/actions/setup-rust/**"
 
 jobs:
   test-python-matrix:
