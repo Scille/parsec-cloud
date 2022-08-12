@@ -74,7 +74,7 @@ async def _run_mountpoint(
 
 @click.command(short_help="run parsec mountpoint")
 @click.option("--mountpoint", "-m", type=click.Path(exists=False))
-@click.option("--timestamp", "-t", type=lambda t: t.to_local())
+@click.option("--timestamp", "-t", type=lambda t: DateTime.from_timestamp(float(t)).to_local())
 @core_config_and_device_options
 @cli_command_base_options
 def run_mountpoint(
