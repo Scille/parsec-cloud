@@ -337,6 +337,8 @@ class TextInputWidget(QWidget, Ui_InputWidget):
             completer.popup().setStyleSheet("border: 1px solid rgb(30, 78, 162);")
             self.line_edit_text.setCompleter(completer)
         self.button_ok.clicked.connect(self._on_button_clicked)
+        if not selection:
+            self.line_edit_text.setCursorPosition(0)
         self.line_edit_text.setFocus()
 
     @property

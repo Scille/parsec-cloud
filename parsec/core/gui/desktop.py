@@ -53,3 +53,7 @@ def copy_to_clipboard(text):
     clipboard.setText(text, QClipboard.Clipboard)
     if clipboard.supportsSelection():
         clipboard.setText(text, QClipboard.Selection)
+
+
+def get_clipboard():
+    return QGuiApplication.clipboard().text()
