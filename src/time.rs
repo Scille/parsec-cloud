@@ -9,6 +9,7 @@ use pyo3::PyResult;
 use crate::binding_utils::hash_generic;
 
 #[pyfunction]
+/// mock_time takes as argument a DateTime (for FrozenTime), an int (for ShiftedTime) or None (for RealTime)
 pub(crate) fn mock_time(time: &PyAny) -> PyResult<()> {
     use libparsec::types::MockedTime::*;
     libparsec::types::DateTime::mock_time(if let Ok(dt) = time.extract::<DateTime>() {
