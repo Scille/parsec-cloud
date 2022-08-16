@@ -2,15 +2,6 @@ name: test-rust-ci
 
 on:
   pull_request:
-    # Don't forget to update the paths filtering in `mock-test-rust-ci.yml`
-    paths:
-      - oxidation/**.rs
-      - oxidation/**.toml
-      - Cargo.toml
-      - Cargo.lock
-      - src/**.rs
-      - .github/workflows/test-rust-ci.yml
-      - .github/actions/setup-rust/**
   push:
     branches:
       - master
@@ -31,7 +22,18 @@ jobs:
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
 
+      - uses: ./.github/actions/paths-filter
+        id: changes
+
+      - name: Check modified path that require rust-ci run
+        id: rust-changes
+        if: >-
+          steps.changes.outputs.rust == 'true'
+          || steps.changes.outputs.rust-ext == 'true'
+        run: echo "::set-output name=run::true"
+
       - uses: ./.github/actions/setup-rust
+        if: steps.rust-changes.outputs.run == 'true'
         with:
           version: ${{ env.rust-version }}
           cache-key: rust
@@ -40,7 +42,9 @@ jobs:
       # Pyo3 need additional configuration on MacOS to be manually build
       # see https://pyo3.rs/master/building_and_distribution.html#macos
       - name: (MacOS) Configure cargo for PyO3
-        if: startsWith(matrix.os, 'macos-')
+        if: >-
+          steps.rust-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'macos-')
         shell: bash
         run: |
           set -eux
@@ -55,6 +59,7 @@ jobs:
           EOF
 
       - name: Build rust codebase
+        if: steps.rust-changes.outputs.run == 'true'
         shell: bash
         run: |
           set -ex
@@ -62,6 +67,7 @@ jobs:
           cargo test --workspace --no-run
 
       - name: Test rust codebase
+        if: steps.rust-changes.outputs.run == 'true'
         shell: bash
         run: |
           set -ex
