@@ -51,7 +51,7 @@ DEFAULT_BLOCK_SIZE = 512 * 1024  # 512 KB
 WorkspaceRole = RealmRole
 
 
-ChunkIDField = fields.uuid_based_field_factory(ChunkID)
+ChunkIDField: Type[fields.Field] = fields.uuid_based_field_factory(ChunkID)
 
 
 @functools.total_ordering

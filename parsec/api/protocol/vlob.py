@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from typing import Type
 from parsec.serde import BaseSchema, fields, validate
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import DeviceIDField
@@ -20,7 +21,7 @@ __all__ = (
 )
 
 
-VlobIDField = fields.uuid_based_field_factory(VlobID)
+VlobIDField: Type[fields.Field] = fields.uuid_based_field_factory(VlobID)
 
 
 _validate_version = validate.Range(min=1)
