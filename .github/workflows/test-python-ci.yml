@@ -23,6 +23,7 @@ env:
     --side-effects-timeout=10
     -vv
     -x
+  FORCE_MATURIN_RELEASE: 1
 jobs:
   test-python-matrix:
     strategy:

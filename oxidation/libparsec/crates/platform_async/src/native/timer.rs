@@ -24,7 +24,7 @@ impl Timer {
     /// # async fn main() {
     /// let timer = Instant::now();
     /// Timer::after(Duration::from_millis(100)).await;
-    /// assert!(timer.elapsed() < Duration::from_millis(110));
+    /// assert!(timer.elapsed() < Duration::from_millis(120));
     /// # }
     /// ```
     pub fn after(duration: Duration) -> Timer {
