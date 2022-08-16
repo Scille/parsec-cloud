@@ -62,16 +62,6 @@ jobs:
           echo "::warning title=Wheel version::$VERSION"
           echo "::set-output name=version::$VERSION"
 
-        # For some reason, `ensurepip` in `build.py` does not work in this specific case
-        # (i.e building wheel using cibuildwheel on windows). Hence, we add `pip` to the
-        # build-system requires, so it is included in the build environment. The reason
-        # why this is not the general approach is because this fails on windows when doing
-        # a `poetry install` (since it installs the requirements using `pip install ...`
-        # instead of `python -m pip install ...`)
-      - name: (Windows) Include pip in the build dependencies
-        if: startsWith(matrix.os, 'windows-')
-        run: sed -i "s#pip; platform_system != 'Windows'#pip#" pyproject.toml
-
       - name: Build wheel
         uses: pypa/cibuildwheel@afb4329fe32181c15d34ef94bf64dad7715b44ba  # ping v2.8.1
         with:
