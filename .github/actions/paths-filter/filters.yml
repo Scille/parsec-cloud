@@ -1,0 +1,15 @@
+rust:
+  - oxidation/**/*.rs
+  - oxidation/**/*.toml
+  - Cargo.toml
+  - Cargo.lock
+python:
+  - parsec/**
+  - tests/**
+  - pyproject.toml
+  - poetry.lock
+  - build.py
+rust-ext:
+  - src/**/*.rs
+  - Cargo.toml
+  - Cargo.lock
