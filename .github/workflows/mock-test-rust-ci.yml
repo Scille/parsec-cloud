@@ -3,7 +3,7 @@ name: test-rust-ci
 on:
   pull_request:
     paths:
-      - .github/workflows/mock-test-rust-ci.yml
+      - "**"
       - "!oxidation/**.rs"
       - "!oxidation/**.toml"
       - "!Cargo.toml"

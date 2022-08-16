@@ -3,7 +3,7 @@ name: test-python-ci
 on:
   pull_request:
     paths:
-      - .github/workflows/mock-test-python-ci.yml
+      - "**"
       - "!parsec/**"
       - "!tests/**"
       - "!src/**.rs"
