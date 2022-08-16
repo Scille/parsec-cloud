@@ -8,7 +8,9 @@ from parsec.api.data import UserCertificate, DeviceCertificate, RevokedUserCerti
 from parsec.api.protocol import UserID, UserProfile
 from parsec.api.protocol.types import DeviceID
 from parsec.core.types import LocalDevice
-from parsec.core.trustchain import TrustchainContext, TrustchainError
+from parsec.core.trustchain import TrustchainError
+
+from parsec._parsec import TrustchainContext
 
 
 class TrustchainData:

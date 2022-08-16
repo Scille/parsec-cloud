@@ -64,6 +64,8 @@ from parsec._parsec_pyi.time import (
     LocalDateTime,
 )
 
+from parsec._parsec_pyi.trustchain import TrustchainContext
+
 __all__ = [
     # Certif
     "UserCertificate",
@@ -117,4 +119,6 @@ __all__ = [
     # time
     "DateTime",
     "LocalDateTime",
+    # trustchain
+    "TrustchainContext",
 ]

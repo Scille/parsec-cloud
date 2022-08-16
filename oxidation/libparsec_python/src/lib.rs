@@ -9,7 +9,6 @@ use pyo3::prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 mod addrs;
 mod api_crypto;
 mod binding_utils;
-mod certif;
 mod file_operations;
 mod ids;
 mod invite;
@@ -19,7 +18,6 @@ mod manifest;
 mod protocol;
 mod storage;
 mod time;
-mod trustchain;
 
 /// A Python module implemented in Rust. The name of this function must match
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
@@ -137,8 +135,6 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchReq>()?;
     m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchRep>()?;
     m.add_class::<protocol::ReencryptionBatchEntry>()?;
-    // Trustchain
-    m.add_class::<trustchain::TrustchainContext>()?;
     // LocalDevice
     m.add_class::<local_device::LocalDevice>()?;
     // Storage

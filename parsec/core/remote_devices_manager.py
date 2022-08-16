@@ -11,7 +11,9 @@ from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
 )
-from parsec.core.trustchain import TrustchainContext, TrustchainError
+from parsec.core.trustchain import TrustchainError
+
+from parsec._parsec import TrustchainContext
 
 
 DEFAULT_CACHE_VALIDITY = 60 * 60  # 3600 seconds, 1 hour

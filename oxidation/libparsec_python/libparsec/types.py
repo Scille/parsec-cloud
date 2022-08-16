@@ -145,8 +145,6 @@ try:
         VlobMaintenanceSaveReencryptionBatchReq,
         VlobMaintenanceSaveReencryptionBatchRep,
         ReencryptionBatchEntry,
-        # Trustchain
-        TrustchainContext,
         # LocalDevice
         LocalDevice,
         # Storage
@@ -384,8 +382,6 @@ __all__ = (
     "VlobMaintenanceSaveReencryptionBatchReq",
     "VlobMaintenanceSaveReencryptionBatchRep",
     "ReencryptionBatchEntry",
-    # Trustchain
-    "TrustchainContext",
     # LocalDevice
     "LocalDevice",
     # Storage
