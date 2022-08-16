@@ -14,6 +14,7 @@ from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FsPath
 
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.file_table import Column
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
 from parsec.test_utils import create_inconsistent_workspace
 
@@ -752,7 +753,6 @@ async def test_copy_file_link(aqtbot, autoclose_dialog, files_widget_testbed, sn
     f_w.table_files.file_path_clicked.emit()
 
     def _file_link_copied_snackbar():
-        print(snackbar_catcher.snackbars)
         assert snackbar_catcher.snackbars == [("INFO", _("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))]
         url = QGuiApplication.clipboard().text()
         assert url.startswith("parsec://")
@@ -819,7 +819,7 @@ async def test_show_file_status(
 
     selected_files = f_w.table_files.selected_files()
     assert len(selected_files) == 2
-    f_w.show_status()
+    f_w.show_selected_file_status()
 
     assert autoclose_dialog.dialogs == [
         ("Error", _("TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"))
@@ -831,7 +831,7 @@ async def test_show_file_status(
     selected_files = f_w.table_files.selected_files()
     assert len(selected_files) == 1
 
-    f_w.show_status()
+    f_w.show_selected_file_status()
     file_status_w = await catch_file_status_widget()
     assert file_status_w
 
@@ -864,7 +864,7 @@ async def test_show_file_status(
     selected_files = f_w.table_files.selected_files()
     assert len(selected_files) == 1
 
-    f_w.show_status()
+    f_w.show_selected_file_status()
     file_status_w = await catch_file_status_widget()
     assert file_status_w
 
@@ -935,3 +935,85 @@ async def test_import_file_disk_full(
         assert tb.pwd() == "/"
 
     await aqtbot.wait_until(_import_failed)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_new_folder_menu(aqtbot, files_widget_testbed, monkeypatch):
+    tb = files_widget_testbed
+    f_w = files_widget_testbed.files_widget
+
+    await tb.check_files_view(path="/", expected_entries=[])
+
+    monkeypatch.setattr(
+        "parsec.core.gui.files_widget.get_text_input", lambda *args, **kwargs: "NewFolder"
+    )
+    async with aqtbot.wait_signal(f_w.folder_create_success):
+        f_w.table_files.new_folder_clicked.emit()
+
+    await tb.check_files_view(path="/", expected_entries=["NewFolder/"])
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_sort_menu(aqtbot, files_widget_testbed, monkeypatch):
+    tb = files_widget_testbed
+    f_w = files_widget_testbed.files_widget
+
+    await tb.check_files_view(path="/", expected_entries=[])
+
+    # Populate the workspace
+    await tb.workspace_fs.mkdir("/h")
+    await tb.workspace_fs.mkdir("/n")
+    await tb.workspace_fs.mkdir("/w")
+    await tb.workspace_fs.touch("/a.txt")
+    await tb.workspace_fs.touch("/j.txt")
+    await tb.workspace_fs.touch("/v.txt")
+    await tb.check_files_view(
+        path="/", expected_entries=["h/", "n/", "w/", "a.txt", "j.txt", "v.txt"]
+    )
+
+    f_w.table_files.sort_clicked.emit(Column.NAME)
+
+    await tb.check_files_view(
+        path="/", expected_entries=["a.txt", "h/", "j.txt", "n/", "v.txt", "w/"]
+    )
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_current_folder_status_menu(
+    running_backend, aqtbot, files_widget_testbed, catch_file_status_widget
+):
+    f_w = files_widget_testbed.files_widget
+
+    f_w.table_files.show_current_folder_status_clicked.emit()
+
+    file_status_w = await catch_file_status_widget()
+    assert file_status_w
+
+    def _wait_status_shown():
+        path = file_status_w.core.mountpoint_manager.get_path_in_mountpoint(
+            file_status_w.workspace_fs.workspace_id, FsPath("/"), None
+        )
+        assert file_status_w.label_location.text() == str(path)
+        assert file_status_w.label_workspace.text() == "wksp1"
+        assert file_status_w.label_filetype.text() == "folder"
+        assert file_status_w.label_size.text() == "N/A"
+        assert (
+            file_status_w.label_created_on.text() != ""
+            and file_status_w.label_created_on.text() != _("TEXT_FILE_INFO_NON_APPLICABLE")
+        )
+        assert file_status_w.label_created_by.text() == "Boby McBobFace"
+        assert (
+            file_status_w.label_last_updated_on.text() != ""
+            and file_status_w.label_last_updated_on.text() != _("TEXT_FILE_INFO_NON_APPLICABLE")
+        )
+        assert file_status_w.label_last_updated_by.text() == "Boby McBobFace"
+        assert file_status_w.label_availability.text() == "N/A"
+        assert file_status_w.label_uploaded.text() == "N/A"
+        assert file_status_w.label_local.text() == "N/A"
+        assert file_status_w.label_remote.text() == "N/A"
+        assert file_status_w.label_default_block_size.text() == "N/A"
+
+    await aqtbot.wait_until(_wait_status_shown)

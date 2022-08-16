@@ -109,7 +109,9 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         w = cls(jobs_ctx=jobs_ctx, workspace_fs=workspace_fs, path=path, core=core)
         d = GreyedDialog(
             w,
-            title=_("TEXT_FILE_STATUS_TITLE_name").format(name=path.name),
+            title=_("TEXT_FILE_STATUS_TITLE_name").format(
+                name=path.name if not path.is_root() else workspace_fs.get_workspace_name().str
+            ),
             parent=parent,
             width=1000,
         )

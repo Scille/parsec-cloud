@@ -607,6 +607,36 @@ msgstr "Copier"
 msgid "ACTION_FILE_MENU_CUT"
 msgstr "Couper"
 
+msgid "ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source"
+msgstr "Coller depuis {source}"
+
+msgid "ACTION_FILE_MENU_PASTE"
+msgstr "Coller"
+
+msgid "ACTION_FILE_MENU_NEW_FOLDER"
+msgstr "Nouveau répertoire"
+
+msgid "ACTION_FILE_MENU_SORT"
+msgstr "Trier par"
+
+msgid "ACTION_FILE_MENU_SORT_BY_CREATED"
+msgstr "Date de création"
+
+msgid "ACTION_FILE_MENU_SORT_BY_UPDATED"
+msgstr "Date de mise à jour"
+
+msgid "ACTION_FILE_MENU_SORT_BY_SIZE"
+msgstr "Taille"
+
+msgid "ACTION_FILE_MENU_SORT_BY_NAME"
+msgstr "Nom"
+
+msgid "ACTION_FILE_MENU_SHOW_CURRENT_FOLDER_HISTORY"
+msgstr "Voir l'historique"
+
+msgid "ACTION_FILE_MENU_SHOW_CURRENT_FOLDER_STATUS"
+msgstr "Voir l'état"
+
 msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
 msgstr "Voir l'historique"
 
@@ -615,12 +645,6 @@ msgstr "Voir l'état"
 
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Lien vers ce fichier"
-
-msgid "ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source"
-msgstr "Coller depuis {source}"
-
-msgid "ACTION_FILE_MENU_PASTE"
-msgstr "Coller"
 
 msgid "TEXT_FILE_TREE_PARENT_FOLDER"
 msgstr "Répertoire parent"

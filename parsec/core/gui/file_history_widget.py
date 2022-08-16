@@ -173,7 +173,11 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             core=core,
         )
         d = GreyedDialog(
-            w, title=_("TEXT_FILE_HISTORY_TITLE_name").format(name=path.name), parent=parent
+            w,
+            title=_("TEXT_FILE_HISTORY_TITLE_name").format(
+                name=path.name if not path.is_root() else workspace_fs.get_workspace_name().str
+            ),
+            parent=parent,
         )
         w.dialog = d
         if on_finished:
