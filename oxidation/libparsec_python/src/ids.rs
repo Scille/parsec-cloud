@@ -2,10 +2,12 @@
 
 // TODO: Remove when all dependencies are removed
 
-use pyo3::basic::CompareOp;
-use pyo3::exceptions::PyValueError;
-use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyBytes, PyString, PyType};
+use pyo3::{
+    basic::CompareOp,
+    exceptions::PyValueError,
+    prelude::*,
+    types::{IntoPyDict, PyBytes, PyString, PyType},
+};
 use uuid::Uuid;
 
 use crate::binding_utils::{comp_op, hash_generic};

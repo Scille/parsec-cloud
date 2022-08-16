@@ -6,15 +6,15 @@
 #![allow(unused_imports)]
 
 use fancy_regex::Regex;
-use pyo3::basic::CompareOp;
-use pyo3::conversion::IntoPy;
-use pyo3::exceptions::PyValueError;
-use pyo3::prelude::PyModule;
-use pyo3::types::{PyFrozenSet, PyTuple};
-use pyo3::FromPyObject;
-use pyo3::{PyAny, PyObject, PyResult, Python};
-use std::collections::HashSet;
-use std::hash::Hash;
+use pyo3::{
+    basic::CompareOp,
+    conversion::IntoPy,
+    exceptions::PyValueError,
+    prelude::PyModule,
+    types::{PyFrozenSet, PyTuple},
+    FromPyObject, {PyAny, PyObject, PyResult, Python},
+};
+use std::{collections::HashSet, hash::Hash};
 
 pub fn comp_op<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult<bool> {
     Ok(match op {
@@ -27,7 +27,7 @@ pub fn comp_op<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult
     })
 }
 
-pub fn hash_generic(value_to_hash: &str, py: Python) -> PyResult<isize> {
+pub(crate) fn hash_generic(value_to_hash: &str, py: Python) -> PyResult<isize> {
     let builtins = PyModule::import(py, "builtins")?;
     let hash = builtins
         .getattr("hash")?
@@ -100,7 +100,7 @@ pub fn py_to_rs_invitation_status(status: &PyAny) -> PyResult<libparsec::types::
 
 // This implementation is due to
 // https://github.com/PyO3/pyo3/blob/39d2b9d96476e6cc85ca43e720e035e0cdff7a45/src/types/set.rs#L240
-// where Hashset is PySet in FromPyObject trait
+// where HashSet is PySet in FromPyObject trait
 pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyResult<HashSet<T>> {
     set.downcast::<PyFrozenSet>()?
         .iter()

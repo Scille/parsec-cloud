@@ -38,7 +38,6 @@ from parsec.api.data.message import (
     PingMessageContent,
 )
 from parsec.api.data.manifest import (
-    BlockID,
     BlockIDField,
     BlockAccess,
     WorkspaceEntry,
@@ -94,7 +93,6 @@ __all__ = (
     "SharingRevokedMessageContent",
     "PingMessageContent",
     # Manifests
-    "BlockID",
     "BlockIDField",
     "BlockAccess",
     "WorkspaceEntry",

@@ -49,6 +49,16 @@ from parsec._parsec_pyi.addrs import (
     BackendPkiEnrollmentAddr,
 )
 
+from parsec._parsec_pyi.manifest import (
+    EntryName,
+    WorkspaceEntry,
+    BlockAccess,
+    FolderManifest,
+    FileManifest,
+    WorkspaceManifest,
+    UserManifest,
+)
+
 from parsec._parsec_pyi.time import (
     DateTime,
     LocalDateTime,
@@ -96,6 +106,14 @@ __all__ = [
     "BackendOrganizationBootstrapAddr",
     "BackendOrganizationFileLinkAddr",
     "BackendPkiEnrollmentAddr",
+    # Manifest
+    "EntryName",
+    "WorkspaceEntry",
+    "BlockAccess",
+    "FolderManifest",
+    "FileManifest",
+    "WorkspaceManifest",
+    "UserManifest",
     # time
     "DateTime",
     "LocalDateTime",

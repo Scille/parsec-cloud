@@ -6,6 +6,7 @@ mod binding_utils;
 mod certif;
 mod ids;
 mod invite;
+mod manifest;
 mod time;
 
 /// A Python module implemented in Rust.
@@ -52,6 +53,14 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<invite::InviteUserConfirmation>()?;
     m.add_class::<invite::InviteDeviceData>()?;
     m.add_class::<invite::InviteDeviceConfirmation>()?;
+
+    m.add_class::<manifest::EntryName>()?;
+    m.add_class::<manifest::WorkspaceEntry>()?;
+    m.add_class::<manifest::BlockAccess>()?;
+    m.add_class::<manifest::FolderManifest>()?;
+    m.add_class::<manifest::FileManifest>()?;
+    m.add_class::<manifest::WorkspaceManifest>()?;
+    m.add_class::<manifest::UserManifest>()?;
 
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
     m.add_class::<time::DateTime>()?;

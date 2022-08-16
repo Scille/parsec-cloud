@@ -8,13 +8,12 @@ from parsec._parsec import DateTime
 from parsec.types import FrozenDict
 from parsec.crypto import SecretKey, HashDigest
 from parsec.serde import fields, OneOfSchema, validate, post_load
-from parsec.api.protocol import DeviceID, RealmRole
+from parsec.api.protocol import DeviceID, RealmRole, BlockID
 from parsec.api.data import (
     BaseSchema,
     BaseData,
     WorkspaceEntry,
     BlockAccess,
-    BlockID,
     UserManifest as RemoteUserManifest,
     BaseManifest as BaseRemoteManifest,
     WorkspaceManifest as RemoteWorkspaceManifest,

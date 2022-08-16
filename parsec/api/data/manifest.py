@@ -1,13 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
-from typing import Optional, Tuple, Dict, Any, Type, TypeVar, TYPE_CHECKING
-from parsec._parsec import DateTime
+from typing import Optional, Dict, Any, Type, TypeVar
 
-from parsec.types import FrozenDict
-from parsec.crypto import SecretKey, HashDigest
 from parsec.serde import fields, validate, post_load, OneOfSchema, pre_load
-from parsec.api.protocol import RealmRole, RealmRoleField, DeviceID, BlockID, BlockIDField
+from parsec.api.protocol import RealmRoleField, DeviceID, BlockIDField
 from parsec.api.data.base import (
     BaseData,
     BaseSchema,
@@ -15,9 +12,16 @@ from parsec.api.data.base import (
     BaseSignedDataSchema,
     DataValidationError,
 )
-from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
+from parsec.api.data.entry import EntryID, EntryIDField, EntryNameField
 from enum import Enum
-
+from parsec._parsec import (
+    BlockAccess,
+    WorkspaceEntry,
+    FolderManifest,
+    FileManifest,
+    WorkspaceManifest,
+    UserManifest,
+)
 
 LOCAL_AUTHOR_LEGACY_PLACEHOLDER = DeviceID(
     "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER"
@@ -32,7 +36,7 @@ class ManifestType(Enum):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class BlockAccess(BaseData):
+class _PyBlockAccess(BaseData):
     class SCHEMA_CLS(BaseSchema):
         id = BlockIDField(required=True)
         key = fields.SecretKey(required=True)
@@ -44,28 +48,12 @@ class BlockAccess(BaseData):
         def make_obj(self, data: Dict[str, Any]) -> "BlockAccess":
             return BlockAccess(**data)
 
-    id: BlockID
-    key: SecretKey
-    offset: int
-    size: int
-    digest: HashDigest
-
-
-_PyBlockAccess = BlockAccess
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import BlockAccess as _RsBlockAccess
-    except:
-        pass
-    else:
-        BlockAccess = _RsBlockAccess
-
 
 WorkspaceEntryTypeVar = TypeVar("WorkspaceEntryTypeVar", bound="WorkspaceEntry")
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class WorkspaceEntry(BaseData):
+class _PyWorkspaceEntry(BaseData):
     class SCHEMA_CLS(BaseSchema):
         name = EntryNameField(required=True)
         id = EntryIDField(required=True)
@@ -78,42 +66,6 @@ class WorkspaceEntry(BaseData):
         @post_load
         def make_obj(self, data: Dict[str, Any]) -> "WorkspaceEntry":
             return WorkspaceEntry(**data)
-
-    name: EntryName
-    id: EntryID
-    key: SecretKey
-    encryption_revision: int
-    encrypted_on: DateTime
-    role_cached_on: DateTime
-    role: Optional[RealmRole]
-
-    @classmethod
-    def new(
-        cls: Type[WorkspaceEntryTypeVar], name: EntryName, timestamp: DateTime
-    ) -> "WorkspaceEntry":
-        assert isinstance(name, EntryName)
-        return _PyWorkspaceEntry(
-            name=name,
-            id=EntryID.new(),
-            key=SecretKey.generate(),
-            encryption_revision=1,
-            encrypted_on=timestamp,
-            role_cached_on=timestamp,
-            role=RealmRole.OWNER,
-        )
-
-    def is_revoked(self) -> bool:
-        return self.role is None
-
-
-_PyWorkspaceEntry = WorkspaceEntry
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import WorkspaceEntry as _RsWorkspaceEntry
-    except:
-        pass
-    else:
-        WorkspaceEntry = _RsWorkspaceEntry
 
 
 T = TypeVar("T")
@@ -167,7 +119,7 @@ FolderManifestTypeVar = TypeVar("FolderManifestTypeVar", bound="FolderManifest")
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class FolderManifest(BaseManifest):
+class _PyFolderManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.FOLDER_MANIFEST, required=True)
         id = EntryIDField(required=True)
@@ -190,39 +142,9 @@ class FolderManifest(BaseManifest):
             data.pop("type")
             return FolderManifest(**data)
 
-    @classmethod
-    def verify_and_load(  # type: ignore[override]
-        cls: Type["FolderManifest"],
-        *args: object,
-        expected_parent: Optional[EntryID] = None,
-        **kwargs: object,
-    ) -> "FolderManifest":
-        data = super().verify_and_load(*args, **kwargs)  # type: ignore[arg-type]
-        if expected_parent is not None and data.parent != expected_parent:
-            raise DataValidationError(
-                f"Invalid parent ID: expected `{expected_parent}`, got `{data.parent}`"
-            )
-        return data
-
-    id: EntryID
-    parent: EntryID
-    created: DateTime
-    updated: DateTime
-    children: FrozenDict[EntryName, EntryID]
-
-
-_PyFolderManifest = FolderManifest
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import FolderManifest as _RsFolderManifest
-    except:
-        pass
-    else:
-        FolderManifest = _RsFolderManifest
-
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class FileManifest(BaseManifest):
+class _PyFileManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.FILE_MANIFEST, required=True)
         id = EntryIDField(required=True)
@@ -247,41 +169,9 @@ class FileManifest(BaseManifest):
             data.pop("type")
             return FileManifest(**data)
 
-    @classmethod
-    def verify_and_load(  # type: ignore[override]
-        cls: Type["FileManifest"],
-        *args: object,
-        expected_parent: Optional[EntryID] = None,
-        **kwargs: object,
-    ) -> "FileManifest":
-        data = super().verify_and_load(*args, **kwargs)  # type: ignore[arg-type]
-        if expected_parent is not None and data.parent != expected_parent:
-            raise DataValidationError(
-                f"Invalid parent ID: expected `{expected_parent}`, got `{data.parent}`"
-            )
-        return data
-
-    id: EntryID
-    parent: EntryID
-    created: DateTime
-    updated: DateTime
-    size: int
-    blocksize: int
-    blocks: Tuple[BlockAccess]
-
-
-_PyFileManifest = FileManifest
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import FileManifest as _RsFileManifest
-    except:
-        pass
-    else:
-        FileManifest = _RsFileManifest
-
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class WorkspaceManifest(BaseManifest):
+class _PyWorkspaceManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.WORKSPACE_MANIFEST, required=True)
         id = EntryIDField(required=True)
@@ -303,24 +193,9 @@ class WorkspaceManifest(BaseManifest):
             data.pop("type")
             return WorkspaceManifest(**data)
 
-    id: EntryID
-    created: DateTime
-    updated: DateTime
-    children: FrozenDict[EntryName, EntryID]
-
-
-_PyWorkspaceManifest = WorkspaceManifest
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import WorkspaceManifest as _RsWorkspaceManifest
-    except:
-        pass
-    else:
-        WorkspaceManifest = _RsWorkspaceManifest
-
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class UserManifest(BaseManifest):
+class _PyUserManifest(BaseManifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.EnumCheckedConstant(ManifestType.USER_MANIFEST, required=True)
         id = EntryIDField(required=True)
@@ -342,22 +217,3 @@ class UserManifest(BaseManifest):
         def make_obj(self, data: Dict[str, Any]) -> "UserManifest":
             data.pop("type")
             return UserManifest(**data)
-
-    id: EntryID
-    created: DateTime
-    updated: DateTime
-    last_processed_message: int
-    workspaces: Tuple[WorkspaceEntry, ...] = attr.ib(converter=tuple)
-
-    def get_workspace_entry(self, workspace_id: EntryID) -> Optional[WorkspaceEntry]:
-        return next((w for w in self.workspaces if w.id == workspace_id), None)
-
-
-_PyUserManifest = UserManifest
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import UserManifest as _RsUserManifest
-    except:
-        pass
-    else:
-        UserManifest = _RsUserManifest

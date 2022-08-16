@@ -1,17 +1,20 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+use std::{collections::HashMap, num::NonZeroU64};
 
-use pyo3::basic::CompareOp;
-use pyo3::exceptions::PyValueError;
-use pyo3::import_exception;
-use pyo3::prelude::*;
-use pyo3::types::{PyBool, PyBytes, PyDict, PyTuple, PyType};
-use std::collections::HashMap;
-use std::num::NonZeroU64;
+use pyo3::{
+    exceptions::PyValueError,
+    import_exception, pyclass,
+    pyclass::CompareOp,
+    pymethods,
+    types::{PyBool, PyBytes, PyDict, PyTuple, PyType},
+    IntoPy, PyObject, PyResult, Python,
+};
 
-use crate::api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
-use crate::binding_utils::{hash_generic, py_to_rs_realm_role, rs_to_py_realm_role};
-use crate::ids::{BlockID, DeviceID, EntryID};
-use crate::time::DateTime;
+use crate::{
+    api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey},
+    binding_utils::{hash_generic, py_to_rs_realm_role, rs_to_py_realm_role},
+    ids::{BlockID, DeviceID, EntryID},
+    time::DateTime,
+};
 
 import_exception!(parsec.api.data, EntryNameTooLongError);
 import_exception!(parsec.api.data, DataError);
@@ -368,6 +371,14 @@ impl FileManifest {
         Ok(format!("{:?}", self.0))
     }
 
+    fn dump_and_sign<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    }
+
     fn dump_sign_and_encrypt<'p>(
         &self,
         py: Python<'p>,
@@ -572,6 +583,14 @@ impl FolderManifest {
         Ok(format!("{:?}", self.0))
     }
 
+    fn dump_and_sign<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    }
+
     fn dump_sign_and_encrypt<'p>(
         &self,
         py: Python<'p>,
@@ -755,6 +774,14 @@ impl WorkspaceManifest {
         Ok(format!("{:?}", self.0))
     }
 
+    fn dump_and_sign<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    }
+
     fn dump_sign_and_encrypt<'p>(
         &self,
         py: Python<'p>,
@@ -929,6 +956,14 @@ impl UserManifest {
         Ok(format!("{:?}", self.0))
     }
 
+    fn dump_and_sign<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    }
+
     fn dump_sign_and_encrypt<'p>(
         &self,
         py: Python<'p>,
@@ -1077,13 +1112,13 @@ impl UserManifest {
 
     #[getter]
     fn workspaces<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
-        let elems: Vec<PyObject> = self
+        let elements: Vec<PyObject> = self
             .0
             .workspaces
             .clone()
             .into_iter()
             .map(|x| WorkspaceEntry(x).into_py(py))
             .collect();
-        Ok(PyTuple::new(py, elems))
+        Ok(PyTuple::new(py, elements))
     }
 }
