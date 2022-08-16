@@ -63,9 +63,7 @@ class TrustchainContext:
             pass
         return None
 
-    def get_device(
-        self, device_id: DeviceID, now: DateTime = None
-    ) -> Optional[DeviceCertificate]:
+    def get_device(self, device_id: DeviceID, now: DateTime = None) -> Optional[DeviceCertificate]:
         now = now or DateTime.now()
         try:
             cached_on, verified_device = self._devices_cache[device_id]
@@ -82,11 +80,7 @@ class TrustchainContext:
         revoked_user_certif: Optional[bytes] = None,
         devices_certifs: Sequence[bytes] = (),
         expected_user_id: UserID = None,
-    ) -> Tuple[
-        UserCertificate,
-        Optional[RevokedUserCertificate],
-        List[DeviceCertificate],
-    ]:
+    ) -> Tuple[UserCertificate, Optional[RevokedUserCertificate], List[DeviceCertificate]]:
         now = DateTime.now()
         verified_users, verified_revoked_users, verified_devices = self.load_trustchain(
             users=(user_certif, *trustchain["users"]),
@@ -127,11 +121,7 @@ class TrustchainContext:
         revoked_users: Sequence[bytes] = (),
         devices: Sequence[bytes] = (),
         now: DateTime = None,
-    ) -> Tuple[
-        List[UserCertificate],
-        List[RevokedUserCertificate],
-        List[DeviceCertificate],
-    ]:
+    ) -> Tuple[List[UserCertificate], List[RevokedUserCertificate], List[DeviceCertificate]]:
         now = now or DateTime.now()
 
         users_states = {}

@@ -4,8 +4,7 @@ from uuid import uuid4
 import pytest
 
 from parsec._parsec import DateTime
-from parsec.api.data import PkiEnrollmentSubmitPayload
-from parsec.api.data.certif import RevokedUserCertificate
+from parsec.api.data import PkiEnrollmentSubmitPayload, RevokedUserCertificate
 from parsec.api.data.pki import PkiEnrollmentAcceptPayload
 from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.api.protocol.types import UserProfile

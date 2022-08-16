@@ -8,10 +8,10 @@ use pyo3::types::{PyBytes, PyDict, PyType};
 
 use crate::api_crypto::{PublicKey, SigningKey, VerifyKey};
 use crate::binding_utils::{
-    py_to_rs_datetime, py_to_rs_realm_role, py_to_rs_user_profile, rs_to_py_datetime,
-    rs_to_py_realm_role, rs_to_py_user_profile,
+    py_to_rs_realm_role, py_to_rs_user_profile, rs_to_py_realm_role, rs_to_py_user_profile,
 };
 use crate::ids::{DeviceID, DeviceLabel, HumanHandle, RealmID, UserID};
+use crate::time::DateTime;
 
 import_exception!(parsec.api.data, DataError);
 
@@ -26,7 +26,7 @@ impl UserCertificate {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: Option<DeviceID>, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [user_id: UserID, "user_id"],
             [human_handle: Option<HumanHandle>, "human_handle"],
             [public_key: PublicKey, "public_key"],
@@ -38,7 +38,7 @@ impl UserCertificate {
                 Some(device_id) => CertificateSignerOwned::User(device_id.0),
                 None => CertificateSignerOwned::Root,
             },
-            timestamp,
+            timestamp: timestamp.0,
             user_id: user_id.0,
             human_handle: human_handle.map(|human_handle| human_handle.0),
             public_key: public_key.0,
@@ -51,7 +51,7 @@ impl UserCertificate {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [author: Option<DeviceID>, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [user_id: UserID, "user_id"],
             [human_handle: Option<HumanHandle>, "human_handle"],
             [public_key: PublicKey, "public_key"],
@@ -67,7 +67,7 @@ impl UserCertificate {
             }
         }
         if let Some(x) = timestamp {
-            r.timestamp = x;
+            r.timestamp = x.0;
         }
         if let Some(x) = user_id {
             r.user_id = x.0;
@@ -164,8 +164,8 @@ impl UserCertificate {
     }
 
     #[getter]
-    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_datetime(py, self.0.timestamp)
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.timestamp))
     }
 
     #[getter]
@@ -200,7 +200,7 @@ impl DeviceCertificate {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: Option<DeviceID>, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [device_id: DeviceID, "device_id"],
             [device_label: Option<DeviceLabel>, "device_label"],
             [verify_key: VerifyKey, "verify_key"],
@@ -211,7 +211,7 @@ impl DeviceCertificate {
                 Some(device_id) => CertificateSignerOwned::User(device_id.0),
                 None => CertificateSignerOwned::Root,
             },
-            timestamp,
+            timestamp: timestamp.0,
             device_id: device_id.0,
             device_label: device_label.map(|x| x.0),
             verify_key: verify_key.0,
@@ -223,7 +223,7 @@ impl DeviceCertificate {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [author: Option<DeviceID>, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [device_id: DeviceID, "device_id"],
             [device_label: Option<DeviceLabel>, "device_label"],
             [verify_key: VerifyKey, "verify_key"],
@@ -238,7 +238,7 @@ impl DeviceCertificate {
             }
         }
         if let Some(x) = timestamp {
-            r.timestamp = x;
+            r.timestamp = x.0;
         }
         if let Some(x) = device_id {
             r.device_id = x.0;
@@ -322,8 +322,8 @@ impl DeviceCertificate {
     }
 
     #[getter]
-    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_datetime(py, self.0.timestamp)
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.timestamp))
     }
 
     #[getter]
@@ -353,13 +353,13 @@ impl RevokedUserCertificate {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: DeviceID, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [user_id: UserID, "user_id"],
         );
 
         Ok(Self(libparsec::types::RevokedUserCertificate {
             author: author.0,
-            timestamp,
+            timestamp: timestamp.0,
             user_id: user_id.0,
         }))
     }
@@ -369,7 +369,7 @@ impl RevokedUserCertificate {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [author: DeviceID, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [user_id: UserID, "user_id"],
         );
 
@@ -379,7 +379,7 @@ impl RevokedUserCertificate {
             r.author = x.0
         }
         if let Some(x) = timestamp {
-            r.timestamp = x;
+            r.timestamp = x.0;
         }
         if let Some(x) = user_id {
             r.user_id = x.0;
@@ -451,8 +451,8 @@ impl RevokedUserCertificate {
     }
 
     #[getter]
-    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_datetime(py, self.0.timestamp)
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.timestamp))
     }
 
     #[getter]
@@ -472,18 +472,18 @@ impl RealmRoleCertificate {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: Option<DeviceID>, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [realm_id: RealmID, "realm_id"],
             [user_id: UserID, "user_id"],
             [role, "role", py_to_rs_realm_role],
         );
 
         Ok(Self(libparsec::types::RealmRoleCertificate {
+            timestamp: timestamp.0,
             author: match author {
                 Some(device_id) => CertificateSignerOwned::User(device_id.0),
                 None => CertificateSignerOwned::Root,
             },
-            timestamp,
             realm_id: realm_id.0,
             user_id: user_id.0,
             role,
@@ -495,7 +495,7 @@ impl RealmRoleCertificate {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [author: Option<DeviceID>, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [realm_id: RealmID, "realm_id"],
             [user_id: UserID, "user_id"],
             [role, "role", py_to_rs_realm_role],
@@ -510,7 +510,7 @@ impl RealmRoleCertificate {
             }
         }
         if let Some(x) = timestamp {
-            r.timestamp = x;
+            r.timestamp = x.0;
         }
         if let Some(x) = realm_id {
             r.realm_id = x.0;
@@ -610,14 +610,13 @@ impl RealmRoleCertificate {
     fn build_realm_root_certif(
         _cls: &PyType,
         author: DeviceID,
-        timestamp: &PyAny,
+        timestamp: DateTime,
         realm_id: RealmID,
     ) -> PyResult<Self> {
-        let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(Self(libparsec::types::RealmRoleCertificate {
             user_id: author.0.user_id.clone(),
             author: CertificateSignerOwned::User(author.0),
-            timestamp,
+            timestamp: timestamp.0,
             realm_id: realm_id.0,
             role: Some(libparsec::types::RealmRole::Owner),
         }))
@@ -632,8 +631,8 @@ impl RealmRoleCertificate {
     }
 
     #[getter]
-    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_datetime(py, self.0.timestamp)
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.timestamp))
     }
 
     #[getter]

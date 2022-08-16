@@ -1,8 +1,8 @@
 from typing import Optional
-from pendulum import DateTime
 
 from parsec._parsec_pyi.crypto import PublicKey, SigningKey, VerifyKey
 from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, HumanHandle, RealmID, UserID
+from parsec._parsec_pyi.time import DateTime
 
 from parsec.api.protocol import RealmRole, UserProfile
 
