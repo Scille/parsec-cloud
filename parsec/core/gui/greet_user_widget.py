@@ -6,8 +6,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
-from parsec.api.data import UserProfile
-from parsec.api.protocol import DeviceLabel, HumanHandle
+from parsec.api.protocol import DeviceLabel, HumanHandle, UserProfile
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.invite import (
     InviteError,

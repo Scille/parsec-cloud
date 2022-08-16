@@ -18,12 +18,6 @@ from parsec.api.data.entry import (
 )
 
 from parsec.api.data.certif import (
-    UserProfile,
-    UserProfileField,
-    UserCertificateContent,
-    DeviceCertificateContent,
-    RevokedUserCertificateContent,
-    RealmRoleCertificateContent,
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
 )
@@ -56,6 +50,12 @@ from parsec.api.data.manifest import (
 )
 from parsec.api.data.pki import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 
+from parsec._parsec import (
+    UserCertificate,
+    DeviceCertificate,
+    RevokedUserCertificate,
+    RealmRoleCertificate,
+)
 
 __all__ = (
     # Base
@@ -73,12 +73,10 @@ __all__ = (
     "EntryNameField",
     "EntryNameTooLongError",
     # Certifs
-    "UserProfile",
-    "UserProfileField",
-    "UserCertificateContent",
-    "DeviceCertificateContent",
-    "RevokedUserCertificateContent",
-    "RealmRoleCertificateContent",
+    "UserCertificate",
+    "DeviceCertificate",
+    "RevokedUserCertificate",
+    "RealmRoleCertificate",
     "SequesterAuthorityCertificate",
     "SequesterServiceCertificate",
     # Invite

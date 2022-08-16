@@ -8,7 +8,7 @@ from parsec.api.protocol import *
 from parsec.api.data import *
 
 
-uc = UserCertificateContent(
+uc = UserCertificate(
     author=ALICE.device_id,
     timestamp=NOW,
     user_id=BOB.user_id,
@@ -18,7 +18,7 @@ uc = UserCertificateContent(
 ).dump_and_sign(ALICE.signing_key)
 display("user certificate", uc, [ALICE.verify_key, "zip"])
 
-redacted_uc = UserCertificateContent(
+redacted_uc = UserCertificate(
     author=ALICE.device_id,
     timestamp=NOW,
     user_id=BOB.user_id,
@@ -37,7 +37,7 @@ raw_legacy_certif = {
     "is_admin": True,
 }
 uc_old = ALICE.signing_key.sign(zlib.compress(packb(raw_legacy_certif)))
-UserCertificateContent.verify_and_load(
+UserCertificate.verify_and_load(
     uc_old,
     author_verify_key=ALICE.verify_key,
     expected_author=ALICE.device_id,
@@ -50,7 +50,7 @@ display(
     [ALICE.verify_key, "zip"],
 )
 
-dc = DeviceCertificateContent(
+dc = DeviceCertificate(
     author=ALICE.device_id,
     timestamp=NOW,
     device_id=BOB.device_id,
@@ -59,7 +59,7 @@ dc = DeviceCertificateContent(
 ).dump_and_sign(ALICE.signing_key)
 display("device certificate", dc, [ALICE.verify_key, "zip"])
 
-redacted_dc = DeviceCertificateContent(
+redacted_dc = DeviceCertificate(
     author=ALICE.device_id,
     timestamp=NOW,
     device_id=BOB.device_id,
@@ -76,7 +76,7 @@ raw_legacy_certif = {
     "verify_key": BOB.verify_key.encode(),
 }
 dc_old = ALICE.signing_key.sign(zlib.compress(packb(raw_legacy_certif)))
-DeviceCertificateContent.verify_and_load(
+DeviceCertificate.verify_and_load(
     dc_old,
     author_verify_key=ALICE.verify_key,
     expected_author=ALICE.device_id,
@@ -84,12 +84,12 @@ DeviceCertificateContent.verify_and_load(
 )
 display("device certificate legacy no device_label field", dc_old, [ALICE.verify_key, "zip"])
 
-ruc = RevokedUserCertificateContent(
+ruc = RevokedUserCertificate(
     author=ALICE.device_id, timestamp=NOW, user_id=BOB.user_id
 ).dump_and_sign(ALICE.signing_key)
 display("revoked user certificate", ruc, [ALICE.verify_key, "zip"])
 
-rrc = RealmRoleCertificateContent(
+rrc = RealmRoleCertificate(
     author=ALICE.device_id,
     timestamp=NOW,
     realm_id=RealmID.from_hex("4486e7cf02d747bd9126679ba58e0474"),

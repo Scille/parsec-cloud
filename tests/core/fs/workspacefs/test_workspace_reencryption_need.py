@@ -13,7 +13,7 @@ from hypothesis_trio.stateful import (
 from parsec._parsec import DateTime
 
 from parsec.api.protocol import RealmID, RealmRole
-from parsec.api.data import RealmRoleCertificateContent, EntryName
+from parsec.api.data import RealmRoleCertificate, EntryName
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import call_with_control
@@ -78,7 +78,7 @@ def test_workspace_reencryption_need(
 
         async def _update_role(self, author, user, role=RealmRole.MANAGER):
             now = DateTime.now()
-            certif = RealmRoleCertificateContent(
+            certif = RealmRoleCertificate(
                 author=author.device_id,
                 timestamp=now,
                 realm_id=RealmID(self.wid.uuid),

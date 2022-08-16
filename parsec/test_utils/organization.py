@@ -7,14 +7,15 @@ from pathlib import Path
 from uuid import uuid4
 from parsec._parsec import DateTime
 
-from parsec.api.data import (
+from parsec.api.data import UserCertificate, DeviceCertificate, EntryID, EntryName
+from parsec.api.protocol import (
+    OrganizationID,
+    DeviceID,
+    HumanHandle,
+    DeviceName,
+    DeviceLabel,
     UserProfile,
-    UserCertificateContent,
-    DeviceCertificateContent,
-    EntryID,
-    EntryName,
 )
-from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle, DeviceName, DeviceLabel
 from parsec.crypto import SigningKey
 from parsec.core import logged_core_factory
 from parsec.core.logged_core import LoggedCore
@@ -274,7 +275,7 @@ async def _register_new_user(
     )
     now = DateTime.now()
 
-    user_certificate = UserCertificateContent(
+    user_certificate = UserCertificate(
         author=author.device_id,
         timestamp=now,
         user_id=new_device.device_id.user_id,
@@ -284,7 +285,7 @@ async def _register_new_user(
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
 
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=author.device_id,
         timestamp=now,
         device_id=new_device.device_id,
@@ -327,7 +328,7 @@ async def _register_new_device(
     )
     now = DateTime.now()
 
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=author.device_id,
         timestamp=now,
         device_id=new_device.device_id,

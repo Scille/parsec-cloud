@@ -4,8 +4,8 @@ import pytest
 from parsec._parsec import DateTime
 from unittest.mock import ANY
 
-from parsec.api.protocol import VlobID, RealmID, RealmRole
-from parsec.api.data import RealmRoleCertificateContent, UserProfile
+from parsec.api.protocol import VlobID, RealmID, RealmRole, UserProfile
+from parsec.api.data import RealmRoleCertificate
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time, customize_fixtures
@@ -29,7 +29,7 @@ async def test_get_roles_not_found(alice_ws):
 async def _realm_get_clear_role_certifs(sock, realm_id):
     rep = await realm_get_role_certificates(sock, realm_id)
     assert rep["status"] == "ok"
-    cooked = [RealmRoleCertificateContent.unsecure_load(certif) for certif in rep["certificates"]]
+    cooked = [RealmRoleCertificate.unsecure_load(certif) for certif in rep["certificates"]]
     return [item for item in sorted(cooked, key=lambda x: x.timestamp)]
 
 
@@ -38,7 +38,7 @@ def realm_generate_certif_and_update_roles_or_fail(next_timestamp):
     async def _realm_generate_certif_and_update_roles_or_fail(
         ws, author, realm_id, user_id, role, timestamp=None
     ):
-        certif = RealmRoleCertificateContent(
+        certif = RealmRoleCertificate(
             author=author.device_id,
             timestamp=timestamp or next_timestamp(),
             realm_id=realm_id,
@@ -56,7 +56,7 @@ def backend_realm_generate_certif_and_update_roles(next_timestamp):
         backend, author, realm_id, user_id, role, timestamp=None
     ):
         now = timestamp or next_timestamp()
-        certif = RealmRoleCertificateContent(
+        certif = RealmRoleCertificate(
             author=author.device_id, timestamp=now, realm_id=realm_id, user_id=user_id, role=role
         ).dump_and_sign(author.signing_key)
         await backend.realm.update_roles(
@@ -179,7 +179,7 @@ async def test_remove_role_idempotent(
 
     certifs = await _realm_get_clear_role_certifs(alice_ws, realm)
     expected_certifs = [
-        RealmRoleCertificateContent(
+        RealmRoleCertificate(
             author=alice.device_id,
             timestamp=DateTime(2000, 1, 2),
             realm_id=realm,
@@ -189,14 +189,14 @@ async def test_remove_role_idempotent(
     ]
     if start_with_existing_role:
         expected_certifs += [
-            RealmRoleCertificateContent(
+            RealmRoleCertificate(
                 author=alice.device_id,
                 timestamp=DateTime(2000, 1, 3),
                 realm_id=realm,
                 user_id=bob.user_id,
                 role=RealmRole.MANAGER,
             ),
-            RealmRoleCertificateContent(
+            RealmRoleCertificate(
                 author=alice.device_id,
                 timestamp=DateTime(2000, 1, 4),
                 realm_id=realm,

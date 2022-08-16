@@ -3,7 +3,7 @@
 import pytest
 from parsec._parsec import DateTime
 
-from parsec.api.data import RealmRoleCertificateContent
+from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import VlobID, RealmID, RealmRole
 
 from tests.backend.common import realm_update_roles, vlob_update, vlob_poll_changes
@@ -19,7 +19,7 @@ UNKNOWN_REALM_ID = RealmID.from_hex("0000000000000000000000000000000F")
 @pytest.fixture
 def realm_generate_certif_and_update_roles_or_fail(next_timestamp):
     async def _realm_generate_certif_and_update_roles_or_fail(ws, author, realm_id, user_id, role):
-        certif = RealmRoleCertificateContent(
+        certif = RealmRoleCertificate(
             author=author.device_id,
             timestamp=next_timestamp(),
             realm_id=realm_id,

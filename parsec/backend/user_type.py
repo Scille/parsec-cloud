@@ -6,8 +6,8 @@ from parsec._parsec import DateTime
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.utils import timestamps_in_the_ballpark
-from parsec.api.data import UserProfile, UserCertificateContent, DeviceCertificateContent, DataError
-from parsec.api.protocol import UserID, DeviceID, HumanHandle, DeviceLabel
+from parsec.api.data import UserCertificate, DeviceCertificate, DataError
+from parsec.api.protocol import UserID, DeviceID, HumanHandle, DeviceLabel, UserProfile
 
 
 class CertificateValidationError(Exception):
@@ -35,7 +35,7 @@ class Device:
 
     @property
     def verify_key(self) -> VerifyKey:
-        return DeviceCertificateContent.unsecure_load(self.device_certificate).verify_key
+        return DeviceCertificate.unsecure_load(self.device_certificate).verify_key
 
     device_id: DeviceID
     device_label: Optional[DeviceLabel]
@@ -58,7 +58,7 @@ class User:
 
     @property
     def public_key(self) -> PublicKey:
-        return UserCertificateContent.unsecure_load(self.user_certificate).public_key
+        return UserCertificate.unsecure_load(self.user_certificate).public_key
 
     user_id: UserID
     human_handle: Optional[HumanHandle]
@@ -86,18 +86,18 @@ def validate_new_user_certificates(
         UserInvalidCertificationError
     """
     try:
-        d_data = DeviceCertificateContent.verify_and_load(
+        d_data = DeviceCertificate.verify_and_load(
             device_certificate, author_verify_key=author_verify_key, expected_author=expected_author
         )
-        u_data = UserCertificateContent.verify_and_load(
+        u_data = UserCertificate.verify_and_load(
             user_certificate, author_verify_key=author_verify_key, expected_author=expected_author
         )
-        ru_data = UserCertificateContent.verify_and_load(
+        ru_data = UserCertificate.verify_and_load(
             redacted_user_certificate,
             author_verify_key=author_verify_key,
             expected_author=expected_author,
         )
-        rd_data = DeviceCertificateContent.verify_and_load(
+        rd_data = DeviceCertificate.verify_and_load(
             redacted_device_certificate,
             author_verify_key=author_verify_key,
             expected_author=expected_author,
@@ -172,11 +172,11 @@ def validate_new_device_certificate(
     redacted_device_certificate: bytes,
 ) -> Device:
     try:
-        data = DeviceCertificateContent.verify_and_load(
+        data = DeviceCertificate.verify_and_load(
             device_certificate, author_verify_key=author_verify_key, expected_author=expected_author
         )
 
-        redacted_data = DeviceCertificateContent.verify_and_load(
+        redacted_data = DeviceCertificate.verify_and_load(
             redacted_device_certificate,
             author_verify_key=author_verify_key,
             expected_author=expected_author,

@@ -4,8 +4,7 @@ from uuid import uuid4
 import pytest
 
 from parsec._parsec import DateTime
-from parsec.api.data import PkiEnrollmentSubmitPayload
-from parsec.api.data.certif import RevokedUserCertificateContent
+from parsec.api.data import PkiEnrollmentSubmitPayload, RevokedUserCertificate
 from parsec.api.data.pki import PkiEnrollmentAcceptPayload
 from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.api.protocol.types import UserProfile
@@ -373,7 +372,7 @@ async def test_pki_accept_user_already_exist(anonymous_backend_ws, bob, alice, a
 
     # Revoke user
     now = DateTime.now()
-    bob_revocation = RevokedUserCertificateContent(
+    bob_revocation = RevokedUserCertificate(
         author=alice.device_id, timestamp=now, user_id=bob.user_id
     ).dump_and_sign(alice.signing_key)
 
@@ -480,7 +479,7 @@ async def test_pki_submit_already_accepted(anonymous_backend_ws, mallory, alice,
 
     # Revoke user
     now = DateTime.now()
-    revocation = RevokedUserCertificateContent(
+    revocation = RevokedUserCertificate(
         author=alice.device_id, timestamp=now, user_id=user_confirmation.device_id.user_id
     ).dump_and_sign(alice.signing_key)
 
@@ -577,7 +576,7 @@ async def test_pki_complete_sequence(anonymous_backend_ws, mallory, alice_ws, al
 
     async def _revoke(user_id):
         now = DateTime.now()
-        revocation = RevokedUserCertificateContent(
+        revocation = RevokedUserCertificate(
             author=alice.device_id, timestamp=now, user_id=user_id
         ).dump_and_sign(alice.signing_key)
 

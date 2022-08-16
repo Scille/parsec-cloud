@@ -2,8 +2,14 @@
 
 from typing import Tuple, List, Optional
 
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceLabel, HumanHandle
-from parsec.api.data import UserProfile
+from parsec.api.protocol import (
+    OrganizationID,
+    UserID,
+    DeviceID,
+    DeviceLabel,
+    HumanHandle,
+    UserProfile,
+)
 from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
 from parsec.backend.postgresql.utils import (
     Q,

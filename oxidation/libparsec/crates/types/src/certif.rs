@@ -292,7 +292,7 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "RealmRoleCertificateData", from = "RealmRoleCertificateData")]
 pub struct RealmRoleCertificate {
-    pub author: DeviceID,
+    pub author: CertificateSignerOwned,
     pub timestamp: DateTime,
 
     pub realm_id: RealmID,
@@ -301,7 +301,7 @@ pub struct RealmRoleCertificate {
     pub role: Option<RealmRole>, // TODO: use a custom type instead
 }
 
-impl_verify_and_load_no_root!(RealmRoleCertificate);
+impl_verify_and_load_allow_root!(RealmRoleCertificate);
 impl_unsecure_load!(RealmRoleCertificate);
 impl_dump_and_sign!(RealmRoleCertificate);
 

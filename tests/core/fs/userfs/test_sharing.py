@@ -4,8 +4,7 @@ import pytest
 from unittest.mock import ANY
 from parsec._parsec import DateTime
 
-from parsec.api.data import UserManifest, WorkspaceEntry, EntryName
-from parsec.api.data.certif import RevokedUserCertificateContent
+from parsec.api.data import UserManifest, WorkspaceEntry, EntryName, RevokedUserCertificate
 from parsec.api.protocol import RealmID
 from parsec.crypto import SecretKey
 from parsec.core.core_events import CoreEvent
@@ -68,7 +67,7 @@ async def test_share_revoked_recipient(running_backend, alice_user_fs, alice, ma
 
     # Revoke Bob
     timestamp = alice.timestamp()
-    revoked_user_certificate = RevokedUserCertificateContent(
+    revoked_user_certificate = RevokedUserCertificate(
         author=alice.device_id, timestamp=timestamp, user_id=bob.user_id
     ).dump_and_sign(alice.signing_key)
     rep = await alice_user_fs.backend_cmds.user_revoke(

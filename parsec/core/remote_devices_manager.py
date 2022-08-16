@@ -4,11 +4,7 @@ from typing import Tuple, Optional, List
 
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import DeviceID, UserID
-from parsec.api.data import (
-    UserCertificateContent,
-    DeviceCertificateContent,
-    RevokedUserCertificateContent,
-)
+from parsec.api.data import UserCertificate, DeviceCertificate, RevokedUserCertificate
 from parsec.core.backend_connection import (
     BackendAuthenticatedCmds,
     APIV1_BackendAnonymousCmds,
@@ -77,7 +73,7 @@ class RemoteDevicesManager:
 
     async def get_user(
         self, user_id: UserID, no_cache: bool = False
-    ) -> Tuple[UserCertificateContent, Optional[RevokedUserCertificateContent]]:
+    ) -> Tuple[UserCertificate, Optional[RevokedUserCertificate]]:
         """
         Raises:
             RemoteDevicesManagerError
@@ -99,8 +95,8 @@ class RemoteDevicesManager:
         return verified_user, verified_revoked_user
 
     async def get_device(
-        self, device_id: DeviceID, no_cache: bool = False
-    ) -> DeviceCertificateContent:
+        self, device_id: Optional[DeviceID], no_cache: bool = False
+    ) -> DeviceCertificate:
         """
         Raises:
             RemoteDevicesManagerError
@@ -128,11 +124,7 @@ class RemoteDevicesManager:
 
     async def get_user_and_devices(
         self, user_id: UserID, no_cache: bool = False
-    ) -> Tuple[
-        UserCertificateContent,
-        Optional[RevokedUserCertificateContent],
-        List[DeviceCertificateContent],
-    ]:
+    ) -> Tuple[UserCertificate, Optional[RevokedUserCertificate], List[DeviceCertificate]]:
         """
         Note: unlike `get_user` and `get_device`, this method don't rely on cache
         considering only part of the devices to retrieve could be in cache.
@@ -174,9 +166,7 @@ class RemoteDevicesManager:
 
 async def get_device_invitation_creator(
     backend_cmds: APIV1_BackendAnonymousCmds, root_verify_key: VerifyKey, new_device_id: DeviceID
-) -> Tuple[
-    UserCertificateContent, Optional[RevokedUserCertificateContent], DeviceCertificateContent
-]:
+) -> Tuple[UserCertificate, Optional[RevokedUserCertificate], DeviceCertificate]:
     """
     Raises:
         RemoteDevicesManagerError
@@ -218,7 +208,7 @@ async def get_device_invitation_creator(
 
 async def get_user_invitation_creator(
     backend_cmds: APIV1_BackendAnonymousCmds, root_verify_key: VerifyKey, new_user_id: DeviceID
-) -> Tuple[UserCertificateContent, DeviceCertificateContent]:
+) -> Tuple[UserCertificate, DeviceCertificate]:
     """
     Raises:
         RemoteDevicesManagerError

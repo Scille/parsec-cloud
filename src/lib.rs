@@ -3,6 +3,7 @@ use pyo3::prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 mod addrs;
 mod api_crypto;
 mod binding_utils;
+mod certif;
 mod ids;
 mod invite;
 mod time;
@@ -25,6 +26,11 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<api_crypto::SecretKey>()?;
     m.add_class::<api_crypto::PrivateKey>()?;
     m.add_class::<api_crypto::PublicKey>()?;
+
+    m.add_class::<certif::UserCertificate>()?;
+    m.add_class::<certif::RevokedUserCertificate>()?;
+    m.add_class::<certif::DeviceCertificate>()?;
+    m.add_class::<certif::RealmRoleCertificate>()?;
 
     m.add_class::<ids::OrganizationID>()?;
     m.add_class::<ids::EntryID>()?;

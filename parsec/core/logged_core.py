@@ -18,7 +18,7 @@ from parsec.api.protocol import (
     InvitationDeletedReason,
     InvitationEmailSentStatus,
 )
-from parsec.api.data import RevokedUserCertificateContent, EntryName
+from parsec.api.data import RevokedUserCertificate, EntryName
 from parsec.core.pki import accepter_list_submitted_from_backend
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
@@ -248,7 +248,7 @@ class LoggedCore:
             BackendConnectionError
         """
         timestamp = self.device.timestamp()
-        revoked_user_certificate = RevokedUserCertificateContent(
+        revoked_user_certificate = RevokedUserCertificate(
             author=self.device.device_id, timestamp=timestamp, user_id=user_id
         ).dump_and_sign(self.device.signing_key)
         rep = await self._backend_conn.cmds.user_revoke(

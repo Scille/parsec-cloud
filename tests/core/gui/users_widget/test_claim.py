@@ -7,13 +7,13 @@ from contextlib import asynccontextmanager
 from parsec._parsec import DateTime
 from functools import partial
 
-from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     DeviceLabel,
     InvitationToken,
     InvitationType,
     HumanHandle,
     InvitationDeletedReason,
+    UserProfile,
 )
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.invite import UserGreetInitialCtx

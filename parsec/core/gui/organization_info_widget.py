@@ -5,8 +5,7 @@ from PyQt5.QtWidgets import QWidget
 from typing import Optional
 
 from parsec.core.types import OrganizationConfig, OrganizationStats
-from parsec.api.protocol import OrganizationID
-from parsec.api.data import UserProfile
+from parsec.api.protocol import OrganizationID, UserProfile
 
 from parsec.core.gui import desktop
 from parsec.core.gui.snackbar_widget import SnackbarManager

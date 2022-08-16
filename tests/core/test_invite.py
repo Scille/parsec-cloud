@@ -4,13 +4,13 @@ import pytest
 import trio
 
 from parsec._parsec import DateTime
-from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     DeviceLabel,
     HumanHandle,
     InvitationType,
     InvitationDeletedReason,
     InvitationStatus,
+    UserProfile,
 )
 
 from parsec.api.data import EntryName

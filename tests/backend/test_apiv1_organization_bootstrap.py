@@ -5,8 +5,8 @@ import pytest
 from parsec._parsec import DateTime
 from collections import defaultdict
 
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
-from parsec.api.protocol import UserID, apiv1_organization_bootstrap_serializer
+from parsec.api.data import UserCertificate, DeviceCertificate
+from parsec.api.protocol import UserID, apiv1_organization_bootstrap_serializer, UserProfile
 from parsec.api.protocol.handshake import HandshakeOrganizationExpired
 
 from tests.common import customize_fixtures, local_device_to_backend_user
@@ -173,7 +173,7 @@ async def test_organization_bootstrap_bad_data(
     now = DateTime.now()
     bad_now = now.subtract(seconds=1)
 
-    good_cu = UserCertificateContent(
+    good_cu = UserCertificate(
         author=None,
         timestamp=now,
         user_id=good_user_id,
@@ -182,7 +182,7 @@ async def test_organization_bootstrap_bad_data(
         human_handle=newalice.human_handle,
     )
     good_redacted_cu = good_cu.evolve(human_handle=None)
-    good_cd = DeviceCertificateContent(
+    good_cd = DeviceCertificate(
         author=None,
         timestamp=now,
         device_id=good_device_id,

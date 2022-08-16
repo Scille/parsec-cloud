@@ -7,11 +7,10 @@ use pyo3::pyclass::CompareOp;
 use pyo3::types::{PyBytes, PyDict, PyType};
 
 use crate::api_crypto::{PublicKey, SigningKey, VerifyKey};
-use crate::binding_utils::py_to_rs_realm_role;
-use crate::binding_utils::rs_to_py_realm_role;
-use crate::binding_utils::{py_to_rs_user_profile, rs_to_py_user_profile};
-use crate::ids::RealmID;
-use crate::ids::{DeviceID, DeviceLabel, HumanHandle, UserID};
+use crate::binding_utils::{
+    py_to_rs_realm_role, py_to_rs_user_profile, rs_to_py_realm_role, rs_to_py_user_profile,
+};
+use crate::ids::{DeviceID, DeviceLabel, HumanHandle, RealmID, UserID};
 use crate::time::DateTime;
 
 import_exception!(parsec.api.data, DataError);

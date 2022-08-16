@@ -5,7 +5,6 @@ from unittest.mock import ANY
 from parsec._parsec import DateTime
 
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     InvitationStatus,
     InvitationDeletedReason,
@@ -13,6 +12,7 @@ from parsec.api.protocol import (
     InvitationEmailSentStatus,
     HandshakeBadIdentity,
     APIEvent,
+    UserProfile,
 )
 
 from tests.common import freeze_time, customize_fixtures, real_clock_timeout

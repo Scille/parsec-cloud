@@ -25,9 +25,9 @@ from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
 from parsec.api.data import (
     DataError,
-    RealmRoleCertificateContent,
+    RealmRoleCertificate,
     BaseMessageContent,
-    UserCertificateContent,
+    UserCertificate,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
@@ -579,7 +579,7 @@ class UserFS:
 
         # Make sure the corresponding realm has been created in the backend
         if base_um.is_placeholder:
-            certif = RealmRoleCertificateContent.build_realm_root_certif(
+            certif = RealmRoleCertificate.build_realm_root_certif(
                 author=self.device.device_id,
                 timestamp=self.device.timestamp(),
                 realm_id=RealmID(self.device.user_manifest_id.uuid),
@@ -813,7 +813,7 @@ class UserFS:
             raise FSError(f"Cannot create sharing message for `{recipient}`: {exc}") from exc
 
         # Build role certificate
-        role_certificate = RealmRoleCertificateContent(
+        role_certificate = RealmRoleCertificate(
             author=self.device.device_id,
             timestamp=timestamp,
             realm_id=RealmID(workspace_id.uuid),
@@ -1066,7 +1066,7 @@ class UserFS:
                 previous_entry=existing_workspace_entry,
             )
 
-    async def _retrieve_participants(self, workspace_id: EntryID) -> List[UserCertificateContent]:
+    async def _retrieve_participants(self, workspace_id: EntryID) -> List[UserCertificate]:
         """
         Raises:
             FSError
@@ -1086,10 +1086,7 @@ class UserFS:
         return users
 
     def _generate_reencryption_messages(
-        self,
-        new_workspace_entry: WorkspaceEntry,
-        users: List[UserCertificateContent],
-        timestamp: DateTime,
+        self, new_workspace_entry: WorkspaceEntry, users: List[UserCertificate], timestamp: DateTime
     ) -> Dict[UserID, bytes]:
         """
         Raises:

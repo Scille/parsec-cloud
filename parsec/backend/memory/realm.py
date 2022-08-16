@@ -4,8 +4,7 @@ import attr
 from parsec._parsec import DateTime
 from typing import TYPE_CHECKING, List, Dict, Optional, Tuple
 
-from parsec.api.data import UserProfile
-from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID
+from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, UserProfile
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import (
     MaintenanceType,
