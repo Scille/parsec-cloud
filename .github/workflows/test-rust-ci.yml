@@ -2,6 +2,7 @@ name: test-rust-ci
 
 on:
   pull_request:
+    # Don't forget to update the paths filtering in `mock-test-rust-ci.yml`
     paths:
       - oxidation/**.rs
       - oxidation/**.toml

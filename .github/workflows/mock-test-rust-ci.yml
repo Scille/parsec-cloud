@@ -2,6 +2,7 @@ name: test-rust-ci
 
 on:
   pull_request:
+    # Must be keep in sync with the negation of paths filtering setup in `test-rust-ci.yml`
     paths:
       - "**"
       - "!oxidation/**.rs"

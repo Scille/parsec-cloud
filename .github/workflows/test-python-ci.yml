@@ -2,6 +2,7 @@ name: test-python-ci
 
 on:
   pull_request:
+    # Don't forget to update the paths filtering in `mock-test-python-ci.yml`
     paths:
       - parsec/**
       - tests/**
