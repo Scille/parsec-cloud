@@ -2,17 +2,6 @@ name: test-python-ci
 
 on:
   pull_request:
-    # Don't forget to update the paths filtering in `mock-test-python-ci.yml`
-    paths:
-      - parsec/**
-      - tests/**
-      - pyproject.toml
-      - poetry.lock
-      - src/**.rs
-      - build.py
-      - .github/workflows/test-python-ci.yml
-      - .github/actions/setup-python-poetry/**
-      - .github/actions/setup-rust/**
   push:
     branches:
       - master
@@ -40,13 +29,27 @@ jobs:
           - windows-2022
     runs-on: ${{ matrix.os }}
     steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - uses: ./.github/actions/paths-filter
+        id: changes
+
+      - name: Check modified path that require python-ci run
+        id: python-changes
+        if: >-
+          steps.changes.outputs.python == 'true'
+          || steps.changes.outputs.rust-ext == 'true'
+        run: echo "::set-output name=run::true"
+
         # Install required packages for ubuntu:
         # - LibFuse2 since only libfuse3 is available on ubuntu-20.04,
         # - `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
         # - A specific version of postgresql is used for postgre's tests
         # - dependencies for Qt testing. See: https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions
       - name: (Linux) Install packages fuse2, postgre-${{ env.postgre-version }}
-        if: startsWith(matrix.os, 'ubuntu-')
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
         run: >
           sudo apt-get -y install
           libfuse2
@@ -58,11 +61,15 @@ jobs:
           libxcb-xinerama0 libxcb-xfixes0 x11-utils
 
       - name: (MacOS) Install macfuse
-        if: startsWith(matrix.os, 'macos-')
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'macos-')
         run: brew install --cask macfuse
 
       - name: (Windows) Install WinFSP
-        if: startsWith(matrix.os, 'windows-')
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'windows-')
         shell: bash
         run: |
           choco install -y --limit-output winfsp --version=${{ env.winfsp-version }}
@@ -72,24 +79,26 @@ jobs:
           pwd
           echo "$(pwd)\winfsp-test" >> "$GITHUB_PATH"
 
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
-
       - uses: ./.github/actions/setup-rust
+        if: steps.python-changes.outputs.run == 'true'
         with:
           version: ${{ env.rust-version }}
           cache-key: python
         timeout-minutes: 10
 
       - uses: ./.github/actions/setup-python-poetry
+        if: steps.python-changes.outputs.run == 'true'
         id: setup-python
         with:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
 
       - name: Install python deps
+        if: steps.python-changes.outputs.run == 'true'
         run: poetry install -E core -E backend
 
       - name: Debug python & pip version
+        if: steps.python-changes.outputs.run == 'true'
         shell: bash
         continue-on-error: true
         run: |
@@ -98,30 +107,40 @@ jobs:
           poetry run pip --version
 
       - name: Basic tests
+        if: steps.python-changes.outputs.run == 'true'
         run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto
         timeout-minutes: 10
 
       - name: (Not MacOS) Mountpoint tests
-        if: startsWith(matrix.os, 'macos-') != true
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'macos-') != true
         run: poetry run pytest ${{ env.pytest-base-args }} tests --runmountpoint --runslow -m mountpoint
         timeout-minutes: 10
 
       - name: (Linux) Install pytest-xvfb plugin for pytest for Qt Testing
-        if: startsWith(matrix.os, 'ubuntu-')
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
         run: poetry run pip install pytest-xvfb
 
       - name: (Not MacOS) GUI tests
-        if: startsWith(matrix.os, 'macos-') != true
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'macos-') != true
         run: poetry run pytest ${{ env.pytest-base-args }} tests --runmountpoint --runslow --rungui -m gui
         timeout-minutes: 10
 
       - name: (Linux) PostgreSQL tests
-        if: startsWith(matrix.os, 'ubuntu-')
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
         env:
           PGINSTALLATION: /usr/lib/postgresql/${{ env.postgre-version }}/bin
         run: poetry run pytest ${{ env.pytest-base-args }} tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
         timeout-minutes: 10
 
       - name: Hypothesis tests
+        if: steps.python-changes.outputs.run == 'true'
         run: poetry run pytest ${{ env.pytest-base-args }} tests --runslow -m slow --numprocesses auto
         timeout-minutes: 50
