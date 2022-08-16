@@ -2,6 +2,7 @@ name: test-rust-ci
 
 on:
   pull_request:
+    # Don't forget to update the paths filtering in `mock-test-rust-ci.yml`
     paths:
       - oxidation/**.rs
       - oxidation/**.toml
@@ -9,6 +10,7 @@ on:
       - Cargo.lock
       - src/**.rs
       - .github/workflows/test-rust-ci.yml
+      - .github/actions/setup-rust/**
   push:
     branches:
       - master
