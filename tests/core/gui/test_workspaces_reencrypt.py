@@ -226,27 +226,33 @@ async def test_workspace_reencryption_access_error(
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
 
+    # Make adam a workspace owner
     await alice_user_fs.workspace_share(
         reencryption_needed_workspace, adam.user_id, WorkspaceRole.OWNER
     )
 
+    # This weasel removes us from our own workspace!
     async with user_fs_factory(adam) as adam_user_fs:
         await adam_user_fs.process_last_messages()
         await adam_user_fs.workspace_share(
             reencryption_needed_workspace, alice.user_id, WorkspaceRole.READER
         )
 
-    aqtbot.mouse_click(wk_button.button_reencrypt, QtCore.Qt.LeftButton)
+    def _role_changed(expected_role):
+        user_id = wk_button.workspace_fs.device.user_id
+        role, _ = wk_button.users_roles[user_id]
+        assert role == expected_role
 
-    def _assert_error():
-        assert len(autoclose_dialog.dialogs) == 2
-        assert (
-            "Error",
-            translate("TEXT_WORKSPACE_REENCRYPT_ACCESS_ERROR"),
-        ) in autoclose_dialog.dialogs
-        assert wk_button.button_reencrypt.isVisible()
+    # Now we're nothing more than a reader :(
+    await aqtbot.wait_until(lambda: _role_changed(WorkspaceRole.READER))
 
-    await aqtbot.wait_until(_assert_error)
+    def _demoted_message_shown():
+        assert autoclose_dialog.dialogs[0][1] == translate(
+            "TEXT_FILE_SHARING_DEMOTED_TO_READER_workspace"
+        ).format(workspace="w1")
+        assert not wk_button.button_reencrypt.isVisible()
+
+    await aqtbot.wait_until(_demoted_message_shown)
 
 
 @pytest.mark.gui
