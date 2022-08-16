@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.11.1 (2022-08-16)
+---------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a regression which prevented to launch the server in 2.11.0  (`#2812
+  <https://github.com/Scille/parsec-cloud/pull/2812>`__)
+
+
 Parsec v2.11.0-rc4 (2022-07-29)
 -------------------------------
 
