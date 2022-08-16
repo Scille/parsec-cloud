@@ -10,7 +10,7 @@ env:
   rust-version: 1.62.0
 
 jobs:
-  testing-rust-matrix:
+  test-rust-matrix:
     strategy:
       fail-fast: false
       matrix:
