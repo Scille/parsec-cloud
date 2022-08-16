@@ -10,7 +10,7 @@ from parsec.api.protocol.types import DeviceID
 from parsec.core.types import LocalDevice
 from parsec.core.trustchain import TrustchainError
 
-from libparsec.types import TrustchainContext
+from parsec._parsec import TrustchainContext
 
 
 class TrustchainData:

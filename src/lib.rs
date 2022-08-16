@@ -8,6 +8,7 @@ mod ids;
 mod invite;
 mod manifest;
 mod time;
+mod trustchain;
 
 /// A Python module implemented in Rust.
 #[pymodule]
@@ -65,5 +66,7 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
     m.add_class::<time::DateTime>()?;
     m.add_class::<time::LocalDateTime>()?;
+
+    m.add_class::<trustchain::TrustchainContext>()?;
     Ok(())
 }

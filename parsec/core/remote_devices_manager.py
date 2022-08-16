@@ -13,7 +13,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.trustchain import TrustchainError
 
-from libparsec.types import TrustchainContext
+from parsec._parsec import TrustchainContext
 
 
 DEFAULT_CACHE_VALIDITY = 60 * 60  # 3600 seconds, 1 hour
