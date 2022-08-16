@@ -1,13 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import TYPE_CHECKING
-
-from parsec.types import UUID4
 from parsec.serde import BaseSchema, fields, validate
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import DeviceIDField
 from parsec.api.protocol.realm import RealmIDField
-
+from parsec.api.protocol.sequester import SequesterServiceIDField
+from parsec._parsec import VlobID
 
 __all__ = (
     "VlobID",
@@ -22,24 +20,20 @@ __all__ = (
 )
 
 
-class VlobID(UUID4):
-    __slots__ = ()
-
-
-_PyVlobID = VlobID
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import VlobID as _RsVlobID
-    except:
-        pass
-    else:
-        VlobID = _RsVlobID
-
-
 VlobIDField = fields.uuid_based_field_factory(VlobID)
 
 
 _validate_version = validate.Range(min=1)
+
+
+class SequesterInconsistencyRepSchema(BaseRepSchema):
+    """
+    This schema has been added to API version 2.8/3.2 (Parsec v2.11.0).
+    """
+
+    status = fields.CheckedConstant("sequester_inconsistency", required=True)
+    sequester_authority_certificate = fields.Bytes(required=True, allow_none=False)
+    sequester_services_certificates = fields.List(fields.Bytes(), required=True, allow_none=False)
 
 
 class VlobCreateReqSchema(BaseReqSchema):
@@ -54,13 +48,23 @@ class VlobCreateReqSchema(BaseReqSchema):
     # the actual timestamp within the message.
     timestamp = fields.DateTime(required=True)
     blob = fields.Bytes(required=True)
+    # Field set to `None` if sequester is disabled for the organization
+    # Key is sequester service ID, value is blob encrypted with the service key
+    # New in API version 2.8/3.2 (Parsec 2.11.0)
+    sequester_blob = fields.Map(
+        SequesterServiceIDField(), fields.Bytes(), required=False, allow_none=True
+    )
 
 
 class VlobCreateRepSchema(BaseRepSchema):
     pass
 
 
-vlob_create_serializer = CmdSerializer(VlobCreateReqSchema, VlobCreateRepSchema)
+vlob_create_serializer = CmdSerializer(
+    VlobCreateReqSchema,
+    VlobCreateRepSchema,
+    extra_error_schemas={"sequester_inconsistency": SequesterInconsistencyRepSchema},
+)
 
 
 class VlobReadReqSchema(BaseReqSchema):
@@ -93,13 +97,23 @@ class VlobUpdateReqSchema(BaseReqSchema):
     timestamp = fields.DateTime(required=True)
     version = fields.Integer(required=True, validate=_validate_version)
     blob = fields.Bytes(required=True)
+    # Field set to `None` if sequester is disabled for the organization
+    # Key is sequester service ID, value is blob encrypted with the service key
+    # New in API version 2.8/3.2 (Parsec 2.11.0)
+    sequester_blob = fields.Map(
+        SequesterServiceIDField(), fields.Bytes(), required=False, allow_none=True
+    )
 
 
 class VlobUpdateRepSchema(BaseRepSchema):
     pass
 
 
-vlob_update_serializer = CmdSerializer(VlobUpdateReqSchema, VlobUpdateRepSchema)
+vlob_update_serializer = CmdSerializer(
+    VlobUpdateReqSchema,
+    VlobUpdateRepSchema,
+    extra_error_schemas={"sequester_inconsistency": SequesterInconsistencyRepSchema},
+)
 
 
 class VlobPollChangesReqSchema(BaseReqSchema):

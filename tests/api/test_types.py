@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from unicodedata import normalize
@@ -97,6 +97,7 @@ def test_human_handle_compare():
         ("a@x", "A"),  # Smallest size
         (f"{'a' * 64}@{'x' * 185}.com", "x" * 254),  # Max sizes
         (f"{'飞' * 21}@{'飞' * 62}.com", f"{'飞' * 84}xx"),  # Unicode & max size
+        ("john.doe@example.com", "J.D."),
     ),
 )
 def test_valid_human_handle(email, label):
@@ -114,6 +115,7 @@ def test_valid_human_handle(email, label):
         ("", "Alice"),  # Empty email
         ("", "Alice <alice@example.com>"),  # Empty email and misleading label
         ("Alice <alice@example.com>", ""),  # Empty label and misleading label
+        ("Alice <@example.com>", "Alice"),  # Missing local part in email
     ),
 )
 def test_invalid_human_handle(email, label):
@@ -148,7 +150,7 @@ def test_sas_code():
     assert SASCode.from_int(0xFFFFF) == SASCode("9999")
 
     with pytest.raises(ValueError):
-        SASCode.from_int(2 ** 20)
+        SASCode.from_int(2**20)
 
     # OverflowError for Rust binding
     with pytest.raises((ValueError, OverflowError)):

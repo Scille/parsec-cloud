@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 from enum import Enum
@@ -190,7 +190,10 @@ class BackendAuthenticatedConn:
         # On top of that, we pre-populate the cache with a "good enough" default
         # value so organization config is guaranteed to be always available \o/
         self._organization_config = OrganizationConfig(
-            user_profile_outsider_allowed=False, active_users_limit=None
+            user_profile_outsider_allowed=False,
+            active_users_limit=None,
+            sequester_authority=None,
+            sequester_services=None,
         )
         self.event_bus = event_bus
         self.max_cooldown = max_cooldown
@@ -325,9 +328,15 @@ class BackendAuthenticatedConn:
                     )
 
             else:
+                # `organization_config` also provide sequester configuration, however
+                # we just ignore it (the remote_loader will lazily load the config
+                # the first time it tries a manifest upload with the wrong config)
                 self._organization_config = OrganizationConfig(
                     user_profile_outsider_allowed=rep["user_profile_outsider_allowed"],
                     active_users_limit=rep["active_users_limit"],
+                    # Sequester introduced in APIv2.8/3.2
+                    sequester_authority=rep.get("sequester_authority_certificate"),
+                    sequester_services=rep.get("sequester_services_certificates"),
                 )
 
             rep = await cmds.events_subscribe(transport)

@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import pendulum
+from parsec._parsec import DateTime
 from typing import Dict, List, Optional
 
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole
@@ -16,6 +16,7 @@ from parsec.backend.postgresql.realm_queries import (
     query_update_roles,
     query_start_reencryption_maintenance,
     query_finish_reencryption_maintenance,
+    query_dump_realms_granted_roles,
 )
 
 
@@ -75,7 +76,7 @@ class PGRealmComponent(BaseRealmComponent):
         realm_id: RealmID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
-        timestamp: pendulum.DateTime,
+        timestamp: DateTime,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await query_start_reencryption_maintenance(
@@ -99,3 +100,9 @@ class PGRealmComponent(BaseRealmComponent):
             await query_finish_reencryption_maintenance(
                 conn, organization_id, author, realm_id, encryption_revision
             )
+
+    async def dump_realms_granted_roles(
+        self, organization_id: OrganizationID
+    ) -> List[RealmGrantedRole]:
+        async with self.dbh.pool.acquire() as conn:
+            return await query_dump_realms_granted_roles(conn, organization_id)

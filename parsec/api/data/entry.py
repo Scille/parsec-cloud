@@ -1,31 +1,16 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import TYPE_CHECKING
 
-from parsec.types import UUID4
 from parsec.serde import fields
 from parsec.api.protocol import StrBased
-
+from parsec._parsec import EntryID
 
 __all__ = ("EntryID", "EntryIDField", "EntryName", "EntryNameField")
 
 
 class EntryNameTooLongError(ValueError):
     pass
-
-
-class EntryID(UUID4):
-    __slots__ = ()
-
-
-_PyEntryID = EntryID
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import EntryID as _RsEntryID
-    except:
-        pass
-    else:
-        EntryID = _RsEntryID
 
 
 EntryIDField = fields.uuid_based_field_factory(EntryID)

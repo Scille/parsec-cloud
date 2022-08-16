@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
-from pendulum import datetime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import InvitationDeletedReason
 from parsec.backend.events import BackendEvent
@@ -24,7 +24,7 @@ async def test_delete_invitation_while_claimer_connected(exchange_testbed, backe
                 organization_id=tb.organization_id,
                 greeter=tb.greeter.user_id,
                 token=tb.invitation.token,
-                on=datetime(2000, 1, 2),
+                on=DateTime(2000, 1, 2),
                 reason=InvitationDeletedReason.ROTTEN,
             )
             await spy.wait_with_timeout(BackendEvent.INVITE_STATUS_CHANGED)
@@ -121,7 +121,7 @@ async def test_delete_invitation_then_claimer_action_before_backend_closes_conne
         organization_id=tb.organization_id,
         greeter=tb.greeter.user_id,
         token=tb.invitation.token,
-        on=datetime(2000, 1, 2),
+        on=DateTime(2000, 1, 2),
         reason=InvitationDeletedReason.ROTTEN,
     )
 

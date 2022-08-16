@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 from typing import Optional, Tuple, Dict, Any, TypeVar, Type
-from pendulum import DateTime
+from parsec._parsec import DateTime
 
 from parsec.serde import (
     BaseSchema,
@@ -38,7 +38,7 @@ class DataMeta(type):
     BASE_SCHEMA_CLS = BaseSchema
     CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 
-    def __new__(cls, name: str, bases: Tuple[type, ...], nmspc: Dict[str, Any]):
+    def __new__(cls, name: str, bases: Tuple[type, ...], nmspc: Dict[str, Any]):  # type: ignore[no-untyped-def]
         # Sanity checks
         if "SCHEMA_CLS" not in nmspc:
             raise RuntimeError("Missing attribute `SCHEMA_CLS` in class definition")
@@ -81,7 +81,7 @@ class SignedDataMeta(DataMeta):
 BaseSignedDataTypeVar = TypeVar("BaseSignedDataTypeVar", bound="BaseSignedData")
 
 
-@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+@attr.s(slots=True, frozen=True, kw_only=True, eq=False)
 class BaseSignedData(metaclass=SignedDataMeta):
     """
     Most data within the api should inherit this class. The goal is to have
@@ -92,16 +92,17 @@ class BaseSignedData(metaclass=SignedDataMeta):
     # Must be overloaded by child classes
     SCHEMA_CLS = BaseSignedDataSchema
     SERIALIZER_CLS = BaseSerializer
+    SERIALIZER: BaseSerializer  # Configured by the metaclass
 
-    author: DeviceID
-    timestamp: DateTime
+    author: DeviceID = attr.ib()
+    timestamp: DateTime = attr.ib()
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
             return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
-    def evolve(self: BaseSignedDataTypeVar, **kwargs: object) -> BaseSignedDataTypeVar:
+    def evolve(self: BaseSignedDataTypeVar, **kwargs: Any) -> BaseSignedDataTypeVar:
         return attr.evolve(self, **kwargs)
 
     def _serialize(self) -> bytes:
@@ -109,7 +110,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         Raises:
             DataError
         """
-        return self.SERIALIZER.dumps(self)  # type: ignore[attr-defined]
+        return self.SERIALIZER.dumps(self)
 
     @classmethod
     def _deserialize(cls: Type[BaseSignedDataTypeVar], raw: bytes) -> BaseSignedDataTypeVar:
@@ -118,7 +119,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
             DataError
         """
         try:
-            return cls.SERIALIZER.loads(raw)  # type: ignore[attr-defined]
+            return cls.SERIALIZER.loads(raw)
         except DataError:
             raise
 
@@ -175,7 +176,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         author_verify_key: VerifyKey,
         expected_author: Optional[DeviceID],
         expected_timestamp: Optional[DateTime] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> BaseSignedDataTypeVar:
         """
         Raises:
@@ -207,7 +208,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        **kwargs,
+        **kwargs: Any,
     ) -> BaseSignedDataTypeVar:
         """
         Raises:
@@ -235,7 +236,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
-        **kwargs,
+        **kwargs: Any,
     ) -> BaseSignedDataTypeVar:
         """
         Raises:
@@ -270,13 +271,14 @@ class BaseData(metaclass=DataMeta):
     # Must be overloaded by child classes
     SCHEMA_CLS = BaseSchema
     SERIALIZER_CLS = BaseSerializer
+    SERIALIZER: BaseSerializer  # Configured by the metaclass
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, type(self)):
             return attr.astuple(self).__eq__(attr.astuple(other))
         return NotImplemented
 
-    def evolve(self, **kwargs):
+    def evolve(self: BaseDataTypeVar, **kwargs: Any) -> BaseDataTypeVar:
         return attr.evolve(self, **kwargs)
 
     def dump(self) -> bytes:
@@ -284,15 +286,15 @@ class BaseData(metaclass=DataMeta):
         Raises:
             DataError
         """
-        return self.SERIALIZER.dumps(self)  # type: ignore[attr-defined]
+        return self.SERIALIZER.dumps(self)
 
     @classmethod
-    def load(cls: Type[BaseDataTypeVar], raw: bytes, **kwargs: object) -> BaseDataTypeVar:
+    def load(cls: Type[BaseDataTypeVar], raw: bytes, **kwargs: Any) -> BaseDataTypeVar:
         """
         Raises:
             DataError
         """
-        return cls.SERIALIZER.loads(raw)  # type: ignore[attr-defined]
+        return cls.SERIALIZER.loads(raw)
 
     def dump_and_encrypt(self, key: SecretKey) -> bytes:
         """
@@ -320,7 +322,7 @@ class BaseData(metaclass=DataMeta):
 
     @classmethod
     def decrypt_and_load(
-        cls: Type[BaseDataTypeVar], encrypted: bytes, key: SecretKey, **kwargs: object
+        cls: Type[BaseDataTypeVar], encrypted: bytes, key: SecretKey, **kwargs: Any
     ) -> BaseDataTypeVar:
         """
         Raises:
@@ -339,7 +341,7 @@ class BaseData(metaclass=DataMeta):
         cls: Type[BaseDataTypeVar],
         encrypted: bytes,
         recipient_privkey: PrivateKey,
-        **kwargs: object,
+        **kwargs: Any,
     ) -> BaseDataTypeVar:
         """
         Raises:

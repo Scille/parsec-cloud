@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
-import pendulum
+from parsec._parsec import DateTime
 import pytest
 from unittest.mock import ANY
 
@@ -74,6 +74,8 @@ async def test_organization_create(backend_asgi_app):
         root_verify_key=None,
         user_profile_outsider_allowed=True,
         active_users_limit=None,
+        sequester_authority=None,
+        sequester_services_certificates=None,
     )
 
 
@@ -139,6 +141,8 @@ async def test_organization_create_already_exists_not_bootstrapped(backend_asgi_
         root_verify_key=None,
         user_profile_outsider_allowed=True,
         active_users_limit=None,
+        sequester_authority=None,
+        sequester_services_certificates=None,
     )
 
 
@@ -185,6 +189,8 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         root_verify_key=None,
         user_profile_outsider_allowed=False,
         active_users_limit=None,
+        sequester_authority=None,
+        sequester_services_certificates=None,
     )
 
     # New custom initial config should be taken into account each time the org is recreated
@@ -209,6 +215,8 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         root_verify_key=None,
         user_profile_outsider_allowed=True,
         active_users_limit=10,
+        sequester_authority=None,
+        sequester_services_certificates=None,
     )
 
     # Default initial config should also be used if org is recreated without custom config
@@ -229,6 +237,8 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
         root_verify_key=None,
         user_profile_outsider_allowed=True,
         active_users_limit=None,
+        sequester_authority=None,
+        sequester_services_certificates=None,
     )
 
 
@@ -514,7 +524,7 @@ async def test_organization_stats_data(backend_asgi_app, realm, realm_factory, a
         realm_id=realm,
         encryption_revision=1,
         vlob_id=VlobID.new(),
-        timestamp=pendulum.now(),
+        timestamp=DateTime.now(),
         blob=b"1234",
     )
     rep = await organization_stats()

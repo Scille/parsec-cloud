@@ -1,20 +1,24 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from marshmallow import Schema, MarshalResult, UnmarshalResult, ValidationError, post_load
 from typing import Union, Dict, Type
-
 from enum import Enum
+from marshmallow import (
+    Schema as MarshmallowSchema,
+    MarshalResult,
+    UnmarshalResult,
+    ValidationError,
+    post_load,
+)
 
 try:
     import toastedmarshmallow
 
-    class BaseSchema(Schema):
+    class BaseSchema(MarshmallowSchema):
         class Meta:
             jit = toastedmarshmallow.Jit
 
-
 except ImportError:
-    BaseSchema = Schema
+    BaseSchema = MarshmallowSchema
 
 from parsec.serde.fields import String
 
@@ -42,7 +46,7 @@ class OneOfSchema(BaseSchema):
     """
     This is a special kind of schema that actually multiplexes other schemas
     based on object type. When serializing values, it uses get_obj_type() method
-    to get object type name. Then it uses `type_schemas` name-to-Schema mapping
+    to get object type name. Then it uses `type_schemas` name-to-BaseSchema mapping
     to get schema for that particular object type, serializes object using that
     schema and adds an extra "type" field with name of object type.
     Deserialization is reverse.
@@ -57,14 +61,14 @@ class OneOfSchema(BaseSchema):
             def __init__(self, bar):
                 self.bar = bar
 
-        class FooSchema(marshmallow.Schema):
+        class FooSchema(marshmallow.BaseSchema):
             foo = marshmallow.fields.String(required=True)
 
             @marshmallow.post_load
             def make_foo(self, data):
                 return Foo(**data)
 
-        class BarSchema(marshmallow.Schema):
+        class BarSchema(marshmallow.BaseSchema):
             bar = marshmallow.fields.Integer(required=True)
 
             @marshmallow.post_load
@@ -93,10 +97,10 @@ class OneOfSchema(BaseSchema):
     """
 
     type_field: str = "type"
-    type_schemas: Dict[Union[Enum, str], Schema] = {}
-    fallback_type_schema: Type[Schema] = None
-    _instantiated_schemas: Dict[Union[Enum, str], Schema] = None
-    _instantiated_fallback_schema: Schema = None
+    type_schemas: Dict[Union[Enum, str], Union[BaseSchema, Type[BaseSchema]]] = {}
+    fallback_type_schema: Type[BaseSchema] = None
+    _instantiated_schemas: Dict[Union[Enum, str], BaseSchema] = None
+    _instantiated_fallback_schema: BaseSchema = None
 
     def _build_schemas(self):
         enum_types = {type(k) for k in self.type_schemas.keys()}
@@ -104,7 +108,7 @@ class OneOfSchema(BaseSchema):
             raise ValueError("type_schemas key can only be one Enum")
         self._instantiated_schemas = {}
         for k, v in self.type_schemas.items():
-            schema_instance = v if isinstance(v, Schema) else v()
+            schema_instance = v if isinstance(v, BaseSchema) else v()
             if self.type_field not in schema_instance.fields:
                 raise ValueError(f"{schema_instance} needs to define '{self.type_field}' field")
             self._instantiated_schemas[k] = schema_instance
@@ -210,13 +214,13 @@ class OneOfSchema(BaseSchema):
 
 
 class OneOfSchemaLegacy(OneOfSchema):
-    _instantiated_schemas: Dict[str, Schema] = None
-    _instantiated_fallback_schema: Schema = None
+    _instantiated_schemas: Dict[str, BaseSchema] = None
+    _instantiated_fallback_schema: BaseSchema = None
 
     def _get_schema(self, type):
         if self._instantiated_schemas is None:
             self._instantiated_schemas = {
-                k: v if isinstance(v, Schema) else v() for k, v in self.type_schemas.items()
+                k: v if isinstance(v, BaseSchema) else v() for k, v in self.type_schemas.items()
             }
 
             if self.fallback_type_schema:

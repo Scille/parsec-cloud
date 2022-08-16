@@ -1,11 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from triopg.exceptions import UniqueViolationError
-import pendulum
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, BlockID
 from parsec.backend.utils import OperationKind
-from parsec.backend.vlob import BaseVlobComponent
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import (
     BaseBlockComponent,
@@ -118,15 +117,9 @@ async def _check_realm(
 
 
 class PGBlockComponent(BaseBlockComponent):
-    def __init__(
-        self,
-        dbh: PGHandler,
-        blockstore_component: BaseBlockStoreComponent,
-        vlob_component: BaseVlobComponent,
-    ):
+    def __init__(self, dbh: PGHandler, blockstore_component: BaseBlockStoreComponent):
         self.dbh = dbh
         self._blockstore_component = blockstore_component
-        self._vlob_component = vlob_component
 
     async def read(
         self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
@@ -209,7 +202,7 @@ class PGBlockComponent(BaseBlockComponent):
                         realm_id=realm_id.uuid,
                         author=author.str,
                         size=len(block),
-                        created_on=pendulum.now(),
+                        created_on=DateTime.now(),
                     )
                 )
             except UniqueViolationError as exc:

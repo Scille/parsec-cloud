@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-import pendulum
+from parsec._parsec import DateTime
 
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import RealmID, RealmRole, APIEvent
@@ -17,7 +17,7 @@ async def test_realm_create(backend, alice, alice_ws):
 
     realm_id = RealmID.from_hex("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent.build_realm_root_certif(
-        author=alice.device_id, timestamp=pendulum.now(), realm_id=realm_id
+        author=alice.device_id, timestamp=DateTime.now(), realm_id=realm_id
     ).dump_and_sign(alice.signing_key)
     with backend.event_bus.listen() as spy:
         rep = await realm_create(alice_ws, certif)

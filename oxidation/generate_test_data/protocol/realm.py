@@ -1,7 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+
 # flake8: noqa
 
-from pendulum import datetime
+from parsec._parsec import DateTime
 from utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
@@ -49,7 +50,7 @@ serialized = serializer.rep_dumps(
     {
         "in_maintenance": True,
         "maintenance_type": MaintenanceType.GARBAGE_COLLECTION,
-        "maintenance_started_on": datetime(2000, 1, 2, 1),
+        "maintenance_started_on": DateTime(2000, 1, 2, 1),
         "maintenance_started_by": DeviceID("alice@dev1"),
         "encryption_revision": 8,
     }
@@ -163,7 +164,7 @@ serialized = serializer.req_dumps(
         "cmd": "realm_start_reencryption_maintenance",
         "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
         "encryption_revision": 8,
-        "timestamp": datetime(2000, 1, 2, 1),
+        "timestamp": DateTime(2000, 1, 2, 1),
         "per_participant_message": {UserID("109b68ba5cdf428ea0017fc6bcc04d4a"): b"foobar"},
     }
 )

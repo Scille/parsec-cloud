@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
@@ -13,7 +13,6 @@ from hypothesis_trio.stateful import (
     multiple,
 )
 
-from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.core.types import WorkspaceRole
 from parsec.core.fs import FSWorkspaceNotFoundError, FSWorkspaceNoAccess
@@ -49,7 +48,6 @@ def recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=False):
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
 def test_sync_monitor_stateful(
     hypothesis_settings,
     frozen_clock,

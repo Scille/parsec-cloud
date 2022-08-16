@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import pendulum
+from parsec._parsec import DateTime
 from typing import Tuple, List, Optional
 
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
@@ -23,6 +23,7 @@ from parsec.backend.postgresql.user_queries import (
     query_get_user_with_devices_and_trustchain,
     query_get_user_with_device,
     query_revoke_user,
+    query_dump_users,
 )
 
 
@@ -99,7 +100,7 @@ class PGUserComponent(BaseUserComponent):
         user_id: UserID,
         revoked_user_certificate: bytes,
         revoked_user_certifier: DeviceID,
-        revoked_on: Optional[pendulum.DateTime] = None,
+        revoked_on: Optional[DateTime] = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             return await query_revoke_user(
@@ -110,3 +111,7 @@ class PGUserComponent(BaseUserComponent):
                 revoked_user_certifier,
                 revoked_on,
             )
+
+    async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:
+        async with self.dbh.pool.acquire() as conn:
+            return await query_dump_users(conn, organization_id)

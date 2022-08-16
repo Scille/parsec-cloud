@@ -1,11 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 
-import pendulum
+from parsec._parsec import DateTime
 from PyQt5 import QtCore
 
-from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.core.types import WorkspaceRole, UserInfo
 from parsec.core.fs.workspacefs import ReencryptionNeed, WorkspaceFSTimestamped
@@ -45,7 +44,6 @@ def bob_user_info(bob):
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
 async def test_workspace_button(qtbot, workspace_fs, core_config, alice_user_info):
     switch_language(core_config, "en")
 
@@ -272,10 +270,9 @@ async def test_workspace_button_delete_clicked(qtbot, workspace_fs, core_config,
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.xfail(IS_OXIDIZED, reason="TODO: implement `.to_timestamped` method in rust")
 async def test_workspace_button_timestamped(qtbot, workspace_fs, core_config, alice_user_info):
     switch_language(core_config, "en")
-    timestamp = pendulum.now().add(seconds=10)
+    timestamp = DateTime.now().add(seconds=10)
     roles = {alice_user_info.user_id: (WorkspaceRole.OWNER, alice_user_info)}
     ts_workspace_fs = WorkspaceFSTimestamped(workspace_fs, timestamp)
     w = WorkspaceButton.create(

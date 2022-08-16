@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import click
 
@@ -11,6 +11,7 @@ from parsec.core.cli import create_organization
 from parsec.core.cli import stats_organization
 from parsec.core.cli import create_workspace
 from parsec.core.cli import share_workspace
+from parsec.core.cli import reencrypt_workspace
 from parsec.core.cli import bootstrap_organization
 from parsec.core.cli import rsync
 from parsec.core.cli import run
@@ -30,6 +31,7 @@ core_cmd.add_command(run.run_mountpoint, "run")
 core_cmd.add_command(rsync.run_rsync, "rsync")
 core_cmd.add_command(create_workspace.create_workspace, "create_workspace")
 core_cmd.add_command(share_workspace.share_workspace, "share_workspace")
+core_cmd.add_command(reencrypt_workspace.reencrypt_workspace, "reencrypt_workspace")
 core_cmd.add_command(list_devices.list_devices, "list_devices")
 core_cmd.add_command(list_devices.remove_device, "remove_device")
 core_cmd.add_command(recovery.export_recovery_device, "export_recovery_device")

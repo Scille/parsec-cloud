@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from PyQt5.QtWidgets import QWidget
 
@@ -88,6 +88,15 @@ class OrganizationInfoWidget(QWidget, Ui_OrganizationInfoWidget):
                         limit=config.active_users_limit
                     )
                 )
+            self.label_sequestration_state.setToolTip(
+                translate("TEXT_ORG_INFO_SEQUESTRATION_TOOLTIP")
+            )
+            if getattr(config, "sequester_authority", None):
+                self.label_sequestration_state.setText(
+                    translate("TEXT_ORG_INFO_SEQUESTRATION_ACTIVATED")
+                )
+            else:
+                self.label_sequestration_state.setVisible(False)
 
     def _on_copy_addr_clicked(self, org_addr: str):
         desktop.copy_to_clipboard(org_addr)

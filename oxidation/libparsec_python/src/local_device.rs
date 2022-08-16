@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -7,8 +7,9 @@ use pyo3::types::{PyBytes, PyDict, PyType};
 
 use crate::addrs::BackendOrganizationAddr;
 use crate::api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
-use crate::binding_utils::{py_to_rs_user_profile, rs_to_py_datetime, rs_to_py_user_profile};
+use crate::binding_utils::{py_to_rs_user_profile, rs_to_py_user_profile};
 use crate::ids::{DeviceID, DeviceLabel, DeviceName, EntryID, HumanHandle, OrganizationID, UserID};
+use crate::time::DateTime;
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
@@ -204,8 +205,8 @@ impl LocalDevice {
             .unwrap_or_else(|| self.0.device_id.device_name.to_string()))
     }
 
-    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_datetime(py, self.0.timestamp())
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.timestamp()))
     }
 
     #[getter]

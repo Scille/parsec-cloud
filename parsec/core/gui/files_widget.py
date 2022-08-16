@@ -1,9 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 import pathlib
 from typing import Optional, Iterable, Tuple, List
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from enum import IntEnum
 from structlog import get_logger
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -509,6 +509,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if len(files) > 1:
             show_error(self, _("TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"))
             return
+        if len(files) == 0:
+            show_error(self, _("TEXT_FILE_STATUS_NO_FILE_SELECTED_ERROR"))
+            return
         selected_path = self.current_directory / files[0].name
         self.show_history(selected_path)
 
@@ -907,12 +910,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         async with await trio.open_file(source, "rb") as f:
 
             # Getting the file name without extension (anything after the first dot is considered to be the extension)
-            name_we, suffixes = dest.name.str.split(".", 1)
+            name_we, *suffixes = dest.name.str.split(".")
             # Count starts at 2 (1 would be the file without a number)
             count = 2
             while await self.workspace_fs.exists(dest):
                 # Create the new file name by adding the count ("myfile.txt" becomes "myfile (2).txt")
-                new_file_name = EntryName("{} ({}).{}".format(name_we, count, suffixes))
+                new_file_name = EntryName(".".join([f"{name_we} ({count})", *suffixes]))
                 dest = dest.parent / new_file_name
                 count += 1
 

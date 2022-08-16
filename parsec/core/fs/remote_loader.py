@@ -1,13 +1,14 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
 import math
 from contextlib import contextmanager
-from typing import Dict, Optional, List, Tuple, cast, Iterator, Callable, Awaitable
-
+from typing import Dict, Optional, List, Iterable, Tuple, cast, Iterator, Callable, Awaitable
 import trio
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
+from parsec.api.protocol.sequester import SequesterServiceID
 
-from parsec.crypto import HashDigest, CryptoError
+from parsec.crypto import HashDigest, CryptoError, VerifyKey
 from parsec.utils import open_service_nursery
 from parsec.api.protocol import UserID, DeviceID, RealmID, RealmRole, VlobID
 from parsec.api.data import (
@@ -15,17 +16,17 @@ from parsec.api.data import (
     BlockAccess,
     RealmRoleCertificateContent,
     BaseManifest as BaseRemoteManifest,
+    UserCertificateContent,
+    DeviceCertificateContent,
+    RevokedUserCertificateContent,
+    SequesterAuthorityCertificate,
+    SequesterServiceCertificate,
 )
 from parsec.core.types import EntryID, ChunkID, LocalDevice, WorkspaceEntry
 from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
     BackendAuthenticatedCmds,
-)
-from parsec.api.data import (
-    UserCertificateContent,
-    DeviceCertificateContent,
-    RevokedUserCertificateContent,
 )
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManager,
@@ -49,7 +50,7 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNoWriteAccess,
     FSUserNotFoundError,
     FSDeviceNotFoundError,
-    FSInvalidTrustchainEror,
+    FSInvalidTrustchainError,
     FSLocalMissError,
 )
 from parsec.core.fs.storage import BaseWorkspaceStorage
@@ -74,6 +75,52 @@ class VlobRequireGreaterTimestampError(Exception):
         return self.args[0]
 
 
+class VlobSequesterInconsistencyError(Exception):
+    def __init__(
+        self,
+        sequester_authority_certificate: Optional[bytes],
+        sequester_services_certificates: Optional[List[bytes]],
+    ):
+        self.sequester_authority_certificate = sequester_authority_certificate
+        self.sequester_services_certificates = sequester_services_certificates
+
+
+def _validate_sequester_config(
+    root_verify_key: VerifyKey,
+    sequester_authority_certificate: Optional[bytes],
+    sequester_services_certificates: Optional[Iterable[bytes]],
+) -> Tuple[Optional[SequesterAuthorityCertificate], Optional[List[SequesterServiceCertificate]]]:
+    if sequester_authority_certificate is None:
+        return None, None
+
+    try:
+        # In theory `sequester_authority_certificate` and `sequester_services_certificates`
+        # should be both None or both not None. However this is a cheap check to
+        # cover the case the server made a mistake.
+        sequester_services_certificates = sequester_services_certificates or ()
+
+        # 1) Validate authority certificate
+        # Sequestery authority is always signed by the root key, hence `expected_author` is always None
+        authority = SequesterAuthorityCertificate.verify_and_load(
+            sequester_authority_certificate, author_verify_key=root_verify_key, expected_author=None
+        )
+
+        # 2) Validate services certificates
+        services = []
+        for sc in sequester_services_certificates:
+            # Cannot use the regular `verify_and_load` here given authority key is
+            # not a regular `parsec.crypto.VerifyKey`
+            service = SequesterServiceCertificate.load(authority.verify_key_der.verify(sc))
+            services.append(service)
+
+    except (CryptoError, DataError) as exc:
+        raise FSInvalidTrustchainError(
+            f"Invalid sequester configuration returned by server: {exc}"
+        ) from exc
+
+    return authority, services
+
+
 @contextmanager
 def translate_remote_devices_manager_errors() -> Iterator[None]:
     try:
@@ -85,7 +132,7 @@ def translate_remote_devices_manager_errors() -> Iterator[None]:
     except RemoteDevicesManagerDeviceNotFoundError as exc:
         raise FSDeviceNotFoundError(str(exc)) from exc
     except RemoteDevicesManagerInvalidTrustchainError as exc:
-        raise FSInvalidTrustchainEror(str(exc)) from exc
+        raise FSInvalidTrustchainError(str(exc)) from exc
     except RemoteDevicesManagerError as exc:
         raise FSRemoteOperationError(str(exc)) from exc
 
@@ -117,6 +164,7 @@ class UserRemoteLoader:
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
         self._realm_role_certificates_cache: Optional[List[RealmRoleCertificateContent]] = None
+        self._sequester_services_cache: Optional[List[SequesterServiceCertificate]] = None
 
     def clear_realm_role_certificate_cache(self) -> None:
         self._realm_role_certificates_cache = None
@@ -363,12 +411,12 @@ class RemoteLoader(UserRemoteLoader):
         self, blocks: List[BlockAccess], nursery: trio.Nursery
     ) -> "MemoryReceiveChannel[BlockAccess]":
         """
-           Raises:
-               FSError
-               FSRemoteBlockNotFound
-               FSBackendOfflineError
-               FSWorkspaceInMaintenance
-           """
+        Raises:
+            FSError
+            FSRemoteBlockNotFound
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+        """
         blocks_iter = iter(blocks)
 
         send_channel, receive_channel = open_memory_channel[BlockAccess](math.inf)
@@ -639,6 +687,7 @@ class RemoteLoader(UserRemoteLoader):
             FSBackendOfflineError
             FSWorkspaceInMaintenance
             FSBadEncryptionRevision
+            FSInvalidTrustchainError: if backend send invalid sequester configuration
         """
         assert manifest.author == self.device.device_id
 
@@ -653,18 +702,38 @@ class RemoteLoader(UserRemoteLoader):
 
         workspace_entry = self.get_workspace_entry()
 
-        try:
-            ciphered = manifest.dump_sign_and_encrypt(
-                key=workspace_entry.key, author_signkey=self.device.signing_key
-            )
-        except DataError as exc:
-            raise FSError(f"Cannot encrypt vlob: {exc}") from exc
+        if self._sequester_services_cache is None:
+            # Regular mode: we only encrypt the blob with the workspace symetric key
+            sequester_blob = None
+            try:
+                ciphered = manifest.dump_sign_and_encrypt(
+                    key=workspace_entry.key, author_signkey=self.device.signing_key
+                )
+            except DataError as exc:
+                raise FSError(f"Cannot encrypt vlob: {exc}") from exc
+
+        else:
+            # Sequestered organization mode: we also encrypt the blob with each
+            # sequester services' asymetric encryption key
+            try:
+                signed = manifest.dump_and_sign(author_signkey=self.device.signing_key)
+            except DataError as exc:
+                raise FSError(f"Cannot encrypt vlob: {exc}") from exc
+
+            ciphered = workspace_entry.key.encrypt(signed)
+            sequester_blob = {}
+            for service in self._sequester_services_cache:
+                sequester_blob[service.service_id] = service.encryption_key_der.encrypt(signed)
 
         # Upload the vlob
         try:
             if manifest.version == 1:
                 await self._vlob_create(
-                    workspace_entry.encryption_revision, entry_id, ciphered, manifest.timestamp
+                    workspace_entry.encryption_revision,
+                    entry_id,
+                    ciphered,
+                    manifest.timestamp,
+                    sequester_blob,
                 )
             else:
                 await self._vlob_update(
@@ -673,15 +742,34 @@ class RemoteLoader(UserRemoteLoader):
                     ciphered,
                     manifest.timestamp,
                     manifest.version,
+                    sequester_blob,
                 )
         # The backend notified us that some restamping is required
         except VlobRequireGreaterTimestampError as exc:
             return await self.upload_manifest(entry_id, manifest, exc.strictly_greater_than)
+        # The backend notified us that we didn't encrypt the blob for the right sequester
+        # services. This typically occurs for the first vlob update/create (since we lazily
+        # fetch sequester config) or if a sequester service has been created/disabled.
+        except VlobSequesterInconsistencyError as exc:
+            # Ensure the config send by the backend is valid
+            _, sequester_services = _validate_sequester_config(
+                root_verify_key=self.device.root_verify_key,
+                sequester_authority_certificate=exc.sequester_authority_certificate,
+                sequester_services_certificates=exc.sequester_services_certificates,
+            )
+            # Update our cache and retry the request
+            self._sequester_services_cache = sequester_services
+            return await self.upload_manifest(entry_id, manifest)
         else:
             return manifest
 
     async def _vlob_create(
-        self, encryption_revision: int, entry_id: EntryID, ciphered: bytes, now: DateTime
+        self,
+        encryption_revision: int,
+        entry_id: EntryID,
+        ciphered: bytes,
+        now: DateTime,
+        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
     ) -> None:
         """
         Raises:
@@ -702,6 +790,7 @@ class RemoteLoader(UserRemoteLoader):
                 VlobID(entry_id.uuid),
                 now,
                 ciphered,
+                sequester_blob,
             )
         if rep["status"] == "already_exists":
             raise FSRemoteSyncError(entry_id)
@@ -718,6 +807,11 @@ class RemoteLoader(UserRemoteLoader):
             raise FSWorkspaceInMaintenance(
                 "Cannot create vlob while the workspace is in maintenance"
             )
+        elif rep["status"] == "sequester_inconsistency":
+            raise VlobSequesterInconsistencyError(
+                sequester_authority_certificate=rep["sequester_authority_certificate"],
+                sequester_services_certificates=rep["sequester_services_certificates"],
+            )
         elif rep["status"] != "ok":
             raise FSError(f"Cannot create vlob {entry_id}: `{rep['status']}`")
 
@@ -728,6 +822,7 @@ class RemoteLoader(UserRemoteLoader):
         ciphered: bytes,
         now: DateTime,
         version: int,
+        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
     ) -> None:
         """
         Raises:
@@ -742,7 +837,7 @@ class RemoteLoader(UserRemoteLoader):
         # Vlob upload
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_update(
-                encryption_revision, VlobID(entry_id.uuid), version, now, ciphered
+                encryption_revision, VlobID(entry_id.uuid), version, now, ciphered, sequester_blob
             )
 
         if rep["status"] == "not_found":
@@ -761,6 +856,11 @@ class RemoteLoader(UserRemoteLoader):
         elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
                 "Cannot create vlob while the workspace is in maintenance"
+            )
+        elif rep["status"] == "sequester_inconsistency":
+            raise VlobSequesterInconsistencyError(
+                sequester_authority_certificate=rep["sequester_authority_certificate"],
+                sequester_services_certificates=rep["sequester_services_certificates"],
             )
         elif rep["status"] != "ok":
             raise FSError(f"Cannot update vlob {entry_id}: `{rep['status']}`")
@@ -827,7 +927,12 @@ class RemoteLoaderTimestamped(RemoteLoader):
         raise FSError("Cannot upload manifest through a timestamped remote loader")
 
     async def _vlob_create(
-        self, encryption_revision: int, entry_id: EntryID, ciphered: bytes, now: DateTime
+        self,
+        encryption_revision: int,
+        entry_id: EntryID,
+        ciphered: bytes,
+        now: DateTime,
+        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
     ) -> None:
         raise FSError("Cannot create vlob through a timestamped remote loader")
 
@@ -838,5 +943,6 @@ class RemoteLoaderTimestamped(RemoteLoader):
         ciphered: bytes,
         now: DateTime,
         version: int,
+        sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
     ) -> None:
         raise FSError("Cannot update vlob through a timestamped remote loader")

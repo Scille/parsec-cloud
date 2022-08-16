@@ -1,10 +1,10 @@
-.. Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+.. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 .. _doc_development_release:
 
-==================
+===================
 Release Cheat-Sheet
-==================
+===================
 
 Major/minor vs patch versions
 -----------------------------
@@ -40,8 +40,8 @@ know how it ends up ;-)
 
 Release candidate versions must have the naming ``v2.9.0-rc1``, ``v2.9.0-rc2`` etc.
 
-1 - Create the release branch and it associated Pull Request
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1 - Create the release branch
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Master branch being protected, we do our work on a dedicated branch that we call the release branch.
 Release branch naming must be ``<major>.<minor>``, so in our case ``2.9``:
@@ -51,9 +51,8 @@ Release branch naming must be ``<major>.<minor>``, so in our case ``2.9``:
     git checkout master && git pull
     git checkout -b 2.9
     git push --set-upstream origin 2.9
-    # Now open the PR in github !
 
-Pull Request title must be ``Release v2.9.0`` and have ``master`` as target branch.
+Note at this point the branch is even with master, hence we cannot create a Pull Request yet (see part 4).
 
 2 - Create release commits and tag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -94,7 +93,13 @@ You should also check the signature of the commits and tag:
 It's better to push the commit before the tags, this way we can detect if
 somebody has pushed on the branch in our back.
 
-4 - Sign the installers
+4 - Create the release Pull Request
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Release Pull Request starts from the release branch (e.g. ``2.9``) and targets the ``master`` branch.
+Pull Request title must be ``Release v2.9.0``.
+
+5 - Sign the installers
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 The CI is going to generate the installers for Linux, Mac and Windows.
@@ -106,11 +111,11 @@ signed. See the documentation in ``packaging/`` for more information.
 
 On top of that the Python wheel of the project is going to be uploaded to Pypi.
 
-5 - Create the release on Github
+6 - Create the release on Github
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once the tag pushed, it can be converted as a release on github using the
-["Draft a new release"](https://github.com/Scille/parsec-cloud/releases) button.
+`"Draft a new release" <https://github.com/Scille/parsec-cloud/releases>`_ button.
 
 The release should contain the Mac and Windows installers that have been signed during step 4.
 
@@ -120,10 +125,10 @@ Note: The Parsec client's version checker is smart enough to ignore new version
 that doesn't contain an installer for there platform. Hence it's safe to create
 a new github release without any installer.
 
-6 - Merge (or update) the Pull Request
+7 - Merge (or update) the Pull Request
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you were dealing with a final release (e.g. ``2.9.0``), you can merge the branch in master call it a day ;-)
+If you were dealing with a final release (e.g. ``v2.9.0``), you can merge the branch in master call it a day ;-)
 
 However if you just release a RC release:
 - for quickfix you can commit directly on the version branch

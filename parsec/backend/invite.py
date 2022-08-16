@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import attr
 import trio
@@ -9,7 +9,7 @@ import tempfile
 from enum import Enum
 from collections import defaultdict
 from typing import Dict, List, Optional, Union, Set, cast
-from pendulum import DateTime, now as pendulum_now
+from parsec._parsec import DateTime
 from email.message import Message
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -128,7 +128,7 @@ class UserInvitation:
     greeter_human_handle: Optional[HumanHandle]
     claimer_email: str
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
-    created_on: DateTime = attr.ib(factory=pendulum_now)
+    created_on: DateTime = attr.ib(factory=DateTime.now)
     status: InvitationStatus = InvitationStatus.IDLE
 
     def evolve(self, **kwargs):
@@ -141,7 +141,7 @@ class DeviceInvitation:
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
-    created_on: DateTime = attr.ib(factory=pendulum_now)
+    created_on: DateTime = attr.ib(factory=DateTime.now)
     status: InvitationStatus = InvitationStatus.IDLE
 
     def evolve(self, **kwargs):
@@ -399,7 +399,7 @@ class BaseInviteComponent:
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
                 token=msg["token"],
-                on=pendulum_now(),
+                on=DateTime.now(),
                 reason=msg["reason"],
             )
 

@@ -1,9 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from click import BadParameter
 
-from parsec.backend.cli.run import _parse_blockstore_params
+from parsec.backend.cli.utils import _parse_blockstore_params
 from parsec.backend.config import (
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,

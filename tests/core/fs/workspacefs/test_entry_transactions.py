@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import os
 import sys
@@ -8,11 +8,10 @@ from string import ascii_lowercase
 from contextlib import contextmanager
 import attr
 import pytest
-from pendulum import datetime
+from parsec._parsec import DateTime
 from hypothesis_trio.stateful import initialize, invariant, rule, run_state_machine_as_test, Bundle
 from hypothesis import strategies as st
 
-from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
 from parsec.core.fs.storage import WorkspaceStorage
@@ -31,8 +30,8 @@ async def test_root_entry_info(alice_entry_transactions):
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
-        "created": datetime(2000, 1, 1),
-        "updated": datetime(2000, 1, 1),
+        "created": DateTime(2000, 1, 1),
+        "updated": DateTime(2000, 1, 1),
         "children": [],
         "confinement_point": None,
     }
@@ -55,8 +54,8 @@ async def test_file_create(alice_entry_transactions, alice_file_transactions):
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
-        "created": datetime(2000, 1, 1),
-        "updated": datetime(2000, 1, 2),
+        "created": DateTime(2000, 1, 1),
+        "updated": DateTime(2000, 1, 2),
         "children": [EntryName("foo.txt")],
         "confinement_point": None,
     }
@@ -68,8 +67,8 @@ async def test_file_create(alice_entry_transactions, alice_file_transactions):
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
-        "created": datetime(2000, 1, 2),
-        "updated": datetime(2000, 1, 2),
+        "created": DateTime(2000, 1, 2),
+        "updated": DateTime(2000, 1, 2),
         "size": 0,
         "confinement_point": None,
     }
@@ -189,8 +188,8 @@ async def test_access_not_loaded_entry(running_backend, alice_entry_transactions
     assert entry_info == {
         "type": "folder",
         "id": entry_id,
-        "created": datetime(2000, 1, 1),
-        "updated": datetime(2000, 1, 1),
+        "created": DateTime(2000, 1, 1),
+        "updated": DateTime(2000, 1, 1),
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
@@ -244,7 +243,6 @@ class PathElement:
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows path style not compatible with oracle")
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
 def test_entry_transactions(
     tmpdir,
     hypothesis_settings,

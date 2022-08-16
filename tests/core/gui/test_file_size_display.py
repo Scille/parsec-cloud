@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 
@@ -23,9 +23,9 @@ from parsec.core.gui.lang import switch_language
         ("12.3 KB", 1024 * 12 + 300),
         ("123 KB", 1024 * 123 + 400),
         ("0.99 MB", 1023 * 1024),
-        ("2.5 MB", 1024 ** 2 * 2.5),
-        ("1024 TB", 1024 ** 5),
-        (f"{1024 ** 2} TB", 1024 ** 6 + 5 * 1024 ** 3),
+        ("2.5 MB", 1024**2 * 2.5),
+        ("1024 TB", 1024**5),
+        (f"{1024 ** 2} TB", 1024**6 + 5 * 1024**3),
         # Test transitions systematically
         ("0 B", 0),
         ("1 B", 1),

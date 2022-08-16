@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from parsec.backend.postgresql.realm_queries.create import query_create
 from parsec.backend.postgresql.realm_queries.get import (
@@ -7,6 +7,7 @@ from parsec.backend.postgresql.realm_queries.get import (
     query_get_current_roles,
     query_get_role_certificates,
     query_get_realms_for_user,
+    query_dump_realms_granted_roles,
 )
 from parsec.backend.postgresql.realm_queries.update_roles import query_update_roles
 from parsec.backend.postgresql.realm_queries.maintenance import (
@@ -22,6 +23,7 @@ __all__ = (
     "query_get_current_roles",
     "query_get_role_certificates",
     "query_get_realms_for_user",
+    "query_dump_realms_granted_roles",
     "query_update_roles",
     "query_start_reencryption_maintenance",
     "query_finish_reencryption_maintenance",

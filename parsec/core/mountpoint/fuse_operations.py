@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import os
 import re
@@ -6,7 +6,7 @@ import errno
 import trio
 from functools import partial
 from pathlib import PurePath
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from structlog import get_logger
 from typing import Optional, Iterator
 from contextlib import contextmanager
@@ -183,9 +183,9 @@ class FuseOperations(LoggingMixIn, Operations):
         return {
             "f_bsize": 512 * 1024,  # 512 KB, i.e the default block size
             "f_frsize": 512 * 1024,  # 512 KB, i.e the default block size
-            "f_blocks": 2 * 1024 ** 2,  # 2 Mblocks is 1 TB
-            "f_bfree": 2 * 1024 ** 2,  # 2 Mblocks is 1 TB
-            "f_bavail": 2 * 1024 ** 2,  # 2 Mblocks is 1 TB
+            "f_blocks": 2 * 1024**2,  # 2 Mblocks is 1 TB
+            "f_bfree": 2 * 1024**2,  # 2 Mblocks is 1 TB
+            "f_bavail": 2 * 1024**2,  # 2 Mblocks is 1 TB
             "f_namemax": 255,  # 255 bytes as maximum length for filenames
         }
 

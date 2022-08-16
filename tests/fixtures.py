@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 import re
 import sys
 import subprocess
 import pytest
-import pendulum
+from parsec._parsec import DateTime
 from collections import defaultdict
 from typing import Union, Optional, Tuple, Iterable
 from hashlib import sha1
@@ -64,25 +64,6 @@ def fixtures_customization(request):
         return request.node.function._fixtures_customization
     except AttributeError:
         return {}
-
-
-@pytest.fixture
-def next_timestamp():
-    """On windows, 2 calls to `pendulum.now()` can yield the same value.
-    For some tests, this creates edges cases we want to avoid.
-    """
-    last_timestamp = None
-
-    def _next_timestamp():
-        if pendulum.has_test_now():
-            return pendulum.now()
-        nonlocal last_timestamp
-        while last_timestamp == pendulum.now():
-            pass
-        last_timestamp = pendulum.now()
-        return last_timestamp
-
-    return _next_timestamp
 
 
 @attr.s
@@ -796,9 +777,11 @@ def use_actual_parsec_ext_module(monkeypatch, tmp_path):
     monkeypatch.setattr("parsec_ext.smartcard.linux.prompt_password", lambda _: password)
 
     # Create the corresponding instance of `X509Certificate``
-    der_certificate, certificate_id, certificate_sha1 = (
-        parsec_ext.smartcard.get_der_encoded_certificate()
-    )
+    (
+        der_certificate,
+        certificate_id,
+        certificate_sha1,
+    ) = parsec_ext.smartcard.get_der_encoded_certificate()
     issuer, subject, _ = parsec_ext.smartcard.get_certificate_info(der_certificate)
     default_x509_certificate = X509Certificate(
         issuer=issuer,
@@ -856,7 +839,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             x509_certificate: X509Certificate,
             addr: BackendPkiEnrollmentAddr,
             enrollment_id: UUID,
-            submitted_on: pendulum.DateTime,
+            submitted_on: DateTime,
             submit_payload: PkiEnrollmentSubmitPayload,
             signing_key: SigningKey,
             private_key: PrivateKey,

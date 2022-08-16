@@ -12,7 +12,7 @@
         },
         {
             "name": "realm_id",
-            "type": "EntryID"
+            "type": "RealmID"
         },
         {
             "name": "user_id",

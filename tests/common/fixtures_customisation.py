@@ -1,9 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 
 
 _FIXTURES_CUSTOMIZATIONS = {
+    "coolorg_is_sequestered_organization",
     "alice_profile",
     "alice_initial_local_user_manifest",
     "alice2_initial_local_user_manifest",
@@ -20,6 +21,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "adam_initial_remote_user_manifest",
     "adam_has_human_handle",
     "adam_has_device_label",
+    "adam_is_revoked",
     "mallory_profile",
     "mallory_initial_local_user_manifest",
     "mallory_has_human_handle",
@@ -29,7 +31,7 @@ _FIXTURES_CUSTOMIZATIONS = {
     "backend_force_mocked",
     "backend_over_ssl",
     "backend_forward_proto_enforce_https",
-    "backend_spontaneous_organization_boostrap",
+    "backend_spontaneous_organization_bootstrap",
     "logged_gui_as_admin",
     "fake_preferred_org_creation_backend_addr",
     "blockstore_mode",

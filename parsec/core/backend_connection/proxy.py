@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import os
 import trio
@@ -123,10 +123,10 @@ def _get_proxy_from_environ_or_os_config(url: str, hostname: str) -> Optional[st
 
 def blocking_io_get_proxy(target_url: str, hostname: str) -> Optional[str]:
     """
-        Returns: proxy url to use or `None`
+    Returns: proxy url to use or `None`
 
-        Unlike `_get_proxy_from_*`, "" value is never returned (`None` is used
-        instead to represent the fact no proxy should be used)
+    Unlike `_get_proxy_from_*`, "" value is never returned (`None` is used
+    instead to represent the fact no proxy should be used)
     """
     # Proxy config is fetched from the following locations (in order):
     # - HTTP_PROXY_PAC environ variable

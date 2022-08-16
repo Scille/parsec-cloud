@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 import functools
 from typing import Optional, Tuple, TypeVar, Type, Union, FrozenSet, Pattern, Dict, TYPE_CHECKING
-from pendulum import DateTime
+from parsec._parsec import DateTime
 
-from parsec.types import UUID4, FrozenDict
+from parsec.types import FrozenDict
 from parsec.crypto import SecretKey, HashDigest
 from parsec.serde import fields, OneOfSchema, validate, post_load
 from parsec.api.protocol import DeviceID, RealmRole
@@ -35,6 +35,7 @@ from parsec.api.data.manifest import (
 )
 from parsec.core.types.base import BaseLocalData
 from enum import Enum
+from parsec._parsec import ChunkID
 
 __all__ = (
     "WorkspaceEntry",  # noqa: Republishing
@@ -50,19 +51,6 @@ DEFAULT_BLOCK_SIZE = 512 * 1024  # 512 KB
 # Cheap rename
 WorkspaceRole = RealmRole
 
-
-class ChunkID(UUID4):
-    __slots__ = ()
-
-
-_PyChunkID = ChunkID
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import ChunkID as _RsChunkID
-    except:
-        pass
-    else:
-        ChunkID = _RsChunkID
 
 ChunkIDField = fields.uuid_based_field_factory(ChunkID)
 
@@ -587,7 +575,7 @@ class LocalFolderishManifestMixin:
     # Filtering and confinement helpers
 
     def _filter_local_confinement_points(
-        self: LocalFolderishManifestTypeVar
+        self: LocalFolderishManifestTypeVar,
     ) -> LocalFolderishManifestTypeVar:
         if not self.local_confinement_points:
             return self
@@ -644,7 +632,7 @@ class LocalFolderishManifestMixin:
         return self.evolve(children=children, remote_confinement_points=remote_confinement_points)
 
     def _restore_remote_confinement_points(
-        self: LocalFolderishManifestTypeVar
+        self: LocalFolderishManifestTypeVar,
     ) -> LocalFolderishManifestTypeVar:
         if not self.remote_confinement_points:
             return self

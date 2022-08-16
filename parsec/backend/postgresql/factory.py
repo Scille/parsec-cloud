@@ -1,8 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import triopg
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
+from parsec.backend.postgresql.sequester import PGPSequesterComponent
 
 from parsec.event_bus import EventBus
 from parsec.utils import open_service_nursery
@@ -39,17 +40,18 @@ async def components_factory(
             await send_signal(conn, event, **kwargs)
 
     webhooks = WebhooksComponent(config)
-    organization = PGOrganizationComponent(dbh, webhooks, config)
-    user = PGUserComponent(dbh, event_bus)
-    invite = PGInviteComponent(dbh, event_bus, config)
+    organization = PGOrganizationComponent(dbh=dbh, webhooks=webhooks, config=config)
+    user = PGUserComponent(dbh=dbh, event_bus=event_bus)
+    invite = PGInviteComponent(dbh=dbh, event_bus=event_bus, config=config)
     message = PGMessageComponent(dbh)
     realm = PGRealmComponent(dbh)
     vlob = PGVlobComponent(dbh)
     ping = PGPingComponent(dbh)
-    blockstore = blockstore_factory(config.blockstore_config, postgresql_dbh=dbh)
-    block = PGBlockComponent(dbh, blockstore, vlob)
+    blockstore = blockstore_factory(config=config.blockstore_config, postgresql_dbh=dbh)
+    block = PGBlockComponent(dbh=dbh, blockstore_component=blockstore)
     pki = PGPkiEnrollmentComponent(dbh)
-    events = EventsComponent(realm, send_event=_send_event)
+    sequester = PGPSequesterComponent(dbh)
+    events = EventsComponent(realm_component=realm, send_event=_send_event)
 
     components = {
         "events": events,
@@ -64,6 +66,7 @@ async def components_factory(
         "block": block,
         "blockstore": blockstore,
         "pki": pki,
+        "sequester": sequester,
     }
     for component in components.values():
         method = getattr(component, "register_components", None)

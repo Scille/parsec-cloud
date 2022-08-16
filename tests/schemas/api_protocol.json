@@ -135,6 +135,11 @@
                             "required": true,
                             "type": "VerifyKey"
                         },
+                        "sequester_authority_certificate": {
+                            "allow_none": true,
+                            "required": false,
+                            "type": "bytesField"
+                        },
                         "user_certificate": {
                             "allow_none": false,
                             "required": true,
@@ -1324,6 +1329,21 @@
                             "required": true,
                             "type": "Integer"
                         },
+                        "sequester_authority_certificate": {
+                            "allow_none": true,
+                            "required": false,
+                            "type": "bytesField"
+                        },
+                        "sequester_services_certificates": {
+                            "allow_none": true,
+                            "container_type": {
+                                "allow_none": false,
+                                "required": false,
+                                "type": "bytesField"
+                            },
+                            "required": false,
+                            "type": "List"
+                        },
                         "status": {
                             "allow_none": false,
                             "required": true,
@@ -2053,6 +2073,21 @@
                             "required": true,
                             "type": "RealmIDField"
                         },
+                        "sequester_blob": {
+                            "allow_none": true,
+                            "key_type": {
+                                "allow_none": false,
+                                "required": false,
+                                "type": "SequesterServiceIDField"
+                            },
+                            "nested_type": {
+                                "allow_none": false,
+                                "required": false,
+                                "type": "bytesField"
+                            },
+                            "required": false,
+                            "type": "Map"
+                        },
                         "timestamp": {
                             "allow_none": false,
                             "required": true,
@@ -2410,6 +2445,21 @@
                             "allow_none": false,
                             "required": true,
                             "type": "Integer"
+                        },
+                        "sequester_blob": {
+                            "allow_none": true,
+                            "key_type": {
+                                "allow_none": false,
+                                "required": false,
+                                "type": "SequesterServiceIDField"
+                            },
+                            "nested_type": {
+                                "allow_none": false,
+                                "required": false,
+                                "type": "bytesField"
+                            },
+                            "required": false,
+                            "type": "Map"
                         },
                         "timestamp": {
                             "allow_none": false,

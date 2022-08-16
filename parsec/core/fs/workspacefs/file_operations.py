@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 # Imports
 
 import bisect
 from typing import Tuple, List, Set, Iterator, Union, Sequence, TYPE_CHECKING
-from pendulum import DateTime
+from parsec._parsec import DateTime
 
 from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
 
@@ -223,7 +223,7 @@ def prepare_resize(
 
 
 def prepare_reshape(
-    manifest: LocalFileManifest
+    manifest: LocalFileManifest,
 ) -> Iterator[Tuple[int, Chunks, Chunk, bool, ChunkIDSet]]:
 
     # Loop over blocks

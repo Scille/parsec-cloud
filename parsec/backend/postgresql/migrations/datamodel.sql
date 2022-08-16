@@ -1,5 +1,4 @@
--- Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
-
+-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 -- This SQL script is not actually used to initialize the database: we rely
 -- on all the migrations scripts for that (even if the database is brand new !).
@@ -24,9 +23,26 @@ CREATE TABLE organization (
     active_users_limit INTEGER,
     is_expired BOOLEAN NOT NULL,
     _bootstrapped_on TIMESTAMPTZ,
-    _created_on TIMESTAMPTZ NOT NULL
+    _created_on TIMESTAMPTZ NOT NULL,
+    sequester_authority_certificate BYTEA, -- NULL for non-sequestered organization
+    sequester_authority_verify_key_der BYTEA -- NULL for non-sequestered organization
 );
 
+-------------------------------------------------------
+-- Sequester
+-------------------------------------------------------
+
+CREATE TABLE sequester_service(
+    _id SERIAL PRIMARY KEY,
+    service_id UUID NOT NULL,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    service_certificate BYTEA NOT NULL,
+    service_label VARCHAR(254) NOT NULL,
+    created_on TIMESTAMPTZ NOT NULL,
+    disabled_on TIMESTAMPTZ, -- NULL if currently enabled
+
+    UNIQUE(organization, service_id)
+);
 
 -------------------------------------------------------
 --  User
@@ -283,6 +299,13 @@ CREATE TABLE realm_vlob_update (
     UNIQUE(realm, index)
 );
 
+
+CREATE TABLE sequester_service_vlob_atom(
+    _id SERIAL PRIMARY KEY,
+    vlob_atom INTEGER REFERENCES vlob_atom (_id) NOT NULL,
+    service INTEGER REFERENCES sequester_service (_id) NOT NULL,
+    blob BYTEA NOT NULL
+);
 
 -------------------------------------------------------
 --  Block

@@ -1,10 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
-from pendulum import datetime
+from parsec._parsec import DateTime
 
-from parsec import IS_OXIDIZED
 from parsec.crypto import SecretKey
 from parsec.api.data import UserManifest, WorkspaceEntry, EntryName
 from parsec.core.types import LocalUserManifest, WorkspaceRole
@@ -26,15 +25,14 @@ async def test_user_manifest_access_while_speculative(user_fs_factory, alice):
     assert user_manifest.to_stats() == {
         "id": alice.user_manifest_id,
         "base_version": 0,
-        "created": datetime(2000, 1, 1),
-        "updated": datetime(2000, 1, 1),
+        "created": DateTime(2000, 1, 1),
+        "updated": DateTime(2000, 1, 1),
         "is_placeholder": True,
         "need_sync": True,
     }
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: manifest_storage is private")
 async def test_workspace_manifest_access_while_speculative(user_fs_factory, alice):
     # Speculative workspace occurs when workspace is shared to a new user, or
     # when a device gets it local data removed. We use the latter here (even if
@@ -64,8 +62,8 @@ async def test_workspace_manifest_access_while_speculative(user_fs_factory, alic
     assert root_stat == {
         "id": wksp_id,
         "base_version": 0,
-        "created": datetime(2000, 1, 2),
-        "updated": datetime(2000, 1, 2),
+        "created": DateTime(2000, 1, 2),
+        "updated": DateTime(2000, 1, 2),
         "is_placeholder": True,
         "need_sync": True,
         "type": "folder",
@@ -146,8 +144,8 @@ async def test_concurrent_devices_agree_on_user_manifest(
                                     id=wksp1_id,
                                     key=KEY,
                                     encryption_revision=1,
-                                    encrypted_on=datetime(2000, 1, 1),
-                                    role_cached_on=datetime(2000, 1, 1),
+                                    encrypted_on=DateTime(2000, 1, 1),
+                                    role_cached_on=DateTime(2000, 1, 1),
                                     role=WorkspaceRole.OWNER,
                                 ),
                                 WorkspaceEntry(
@@ -155,8 +153,8 @@ async def test_concurrent_devices_agree_on_user_manifest(
                                     id=wksp2_id,
                                     key=KEY,
                                     encryption_revision=1,
-                                    encrypted_on=datetime(2000, 1, 2),
-                                    role_cached_on=datetime(2000, 1, 2),
+                                    encrypted_on=DateTime(2000, 1, 2),
+                                    role_cached_on=DateTime(2000, 1, 2),
                                     role=WorkspaceRole.OWNER,
                                 ),
                             )
@@ -164,15 +162,15 @@ async def test_concurrent_devices_agree_on_user_manifest(
                                 base=UserManifest(
                                     id=alice.user_manifest_id,
                                     version=2,
-                                    timestamp=datetime(2000, 1, 5),
+                                    timestamp=DateTime(2000, 1, 5),
                                     author=alice.device_id,
-                                    created=datetime(2000, 1, 2),
-                                    updated=datetime(2000, 1, 2),
+                                    created=DateTime(2000, 1, 2),
+                                    updated=DateTime(2000, 1, 2),
                                     last_processed_message=0,
                                     workspaces=expected_workspaces_entries,
                                 ),
                                 need_sync=False,
-                                updated=datetime(2000, 1, 2),
+                                updated=DateTime(2000, 1, 2),
                                 last_processed_message=0,
                                 workspaces=expected_workspaces_entries,
                                 speculative=False,
@@ -251,8 +249,8 @@ async def test_concurrent_devices_agree_on_workspace_manifest(
             expected_alice_wksp_stat = {
                 "id": wksp_id,
                 "base_version": 3,
-                "created": datetime(2000, 1, 1),
-                "updated": datetime(2000, 1, 7),
+                "created": DateTime(2000, 1, 1),
+                "updated": DateTime(2000, 1, 7),
                 "is_placeholder": False,
                 "need_sync": False,
                 "type": "folder",
@@ -280,8 +278,8 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
             "id": alice.user_manifest_id,
             # Fixtures populate backend with an empty v1 user manifest created at 2000-01-01
             "base_version": 2,
-            "created": datetime(2000, 1, 1),
-            "updated": datetime(2000, 1, 2),
+            "created": DateTime(2000, 1, 1),
+            "updated": DateTime(2000, 1, 2),
             "is_placeholder": False,
             "need_sync": False,
         }
@@ -295,8 +293,8 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
                     assert alice2_user_manifest_v0.to_stats() == {
                         "id": alice.user_manifest_id,
                         "base_version": 0,
-                        "created": datetime(2000, 1, 4),
-                        "updated": datetime(2000, 1, 4),
+                        "created": DateTime(2000, 1, 4),
+                        "updated": DateTime(2000, 1, 4),
                         "is_placeholder": True,
                         "need_sync": True,
                     }
@@ -340,8 +338,8 @@ async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
             assert alice2_wksp_stat_v0 == {
                 "id": wksp_id,
                 "base_version": 0,
-                "created": datetime(2000, 1, 4),
-                "updated": datetime(2000, 1, 4),
+                "created": DateTime(2000, 1, 4),
+                "updated": DateTime(2000, 1, 4),
                 "is_placeholder": True,
                 "need_sync": True,
                 "type": "folder",
@@ -358,8 +356,8 @@ async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
             assert alice2_wksp_stat_v1 == {
                 "id": wksp_id,
                 "base_version": 1,
-                "created": datetime(2000, 1, 1),
-                "updated": datetime(2000, 1, 2),
+                "created": DateTime(2000, 1, 1),
+                "updated": DateTime(2000, 1, 2),
                 "is_placeholder": False,
                 "need_sync": False,
                 "type": "folder",

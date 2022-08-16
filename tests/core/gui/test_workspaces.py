@@ -1,12 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from PyQt5 import QtCore
 from unittest.mock import Mock
 from pathlib import Path
-from pendulum import datetime
+from parsec._parsec import DateTime
 
-from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName, EntryID
 from parsec.core.types import WorkspaceRole
 from parsec.core.core_events import CoreEvent
@@ -357,7 +356,6 @@ async def test_workspace_filter_user_new_workspace(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
 async def test_display_timestamped_workspace_in_workspaces_list(
     aqtbot, running_backend, logged_gui, monkeypatch, catch_timestamped_workspace_widget, tmp_path
 ):
@@ -380,11 +378,11 @@ async def test_display_timestamped_workspace_in_workspaces_list(
     #   2010: file1.txt creation
     #   2020: file2.txt creation
     #   2022: present day, we want to see the workspace history as it was in 2015
-    year_n = datetime(2000, 1, 1)
-    year_n10 = datetime(2010, 1, 1)
-    year_n15 = datetime(2015, 1, 1)
-    year_n20 = datetime(2020, 1, 1)
-    now = datetime(2022, 1, 1)
+    year_n = DateTime(2000, 1, 1)
+    year_n10 = DateTime(2010, 1, 1)
+    year_n15 = DateTime(2015, 1, 1)
+    year_n20 = DateTime(2020, 1, 1)
+    now = DateTime(2022, 1, 1)
 
     # 2000: Create the workspace
     with freeze_time(year_n):

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from parsec.api.data.base import (
     DataError,
@@ -24,6 +24,8 @@ from parsec.api.data.certif import (
     DeviceCertificateContent,
     RevokedUserCertificateContent,
     RealmRoleCertificateContent,
+    SequesterAuthorityCertificate,
+    SequesterServiceCertificate,
 )
 from parsec.api.data.invite import (
     SASCode,
@@ -77,6 +79,8 @@ __all__ = (
     "DeviceCertificateContent",
     "RevokedUserCertificateContent",
     "RealmRoleCertificateContent",
+    "SequesterAuthorityCertificate",
+    "SequesterServiceCertificate",
     # Invite
     "SASCode",
     "generate_sas_codes",

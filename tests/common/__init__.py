@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from .backend import *  # noqa
 from .binder import *  # noqa
@@ -10,5 +10,6 @@ from .helpers import *  # noqa
 from .oracles import *  # noqa
 from .population import *  # noqa
 from .postgresql import *  # noqa
+from .sequester import *  # noqa
 from .smartcard import *  # noqa
 from .trio_clock import *  # noqa

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -36,18 +36,27 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
             self.label_size.setText(get_filesize(path_info["size"]))
 
         version_lister = self.workspace_fs.get_version_lister()
-
         version_list = await version_lister.list(path=self.path)
-        user_id = version_list[0][0].creator.user_id
+        try:
+            user_id = version_list[0][0].creator.user_id
+            created_time = version_list[0][0].updated
+            updated_time = path_info["updated"]
 
-        created_time = version_list[0][0].updated
-        updated_time = path_info["updated"]
+            version_list = await version_lister.list(
+                path=self.path, starting_timestamp=updated_time
+            )
+            user_id_last = version_list[0][-1].creator.user_id
 
-        version_list = await version_lister.list(path=self.path, starting_timestamp=updated_time)
-        user_id_last = version_list[0][-1].creator.user_id
-
-        creator = await self.core.get_user_info(user_id)
-        last_author = await self.core.get_user_info(user_id_last)
+            creator = await self.core.get_user_info(user_id)
+            last_author = await self.core.get_user_info(user_id_last)
+            self.label_created_on.setText(format_datetime(created_time))
+            self.label_last_updated_on.setText(format_datetime(updated_time))
+            self.label_created_by.setText(creator.short_user_display)
+            self.label_last_updated_by.setText(last_author.short_user_display)
+        except IndexError:
+            # Just ignore the error, labels will just be "N/A" by default, displaying
+            # more to the user might be confusing.
+            pass
 
         full_path = self.core.mountpoint_manager.get_path_in_mountpoint(
             self.workspace_fs.workspace_id,
@@ -61,10 +70,6 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         self.label_filetype.setText(str(path_info["type"]))
 
         self.label_workspace.setText(self.workspace_fs.get_workspace_name().str)
-        self.label_created_on.setText(format_datetime(created_time))
-        self.label_last_updated_on.setText(format_datetime(updated_time))
-        self.label_created_by.setText(creator.short_user_display)
-        self.label_last_updated_by.setText(last_author.short_user_display)
 
         if block_info:
             local_blocks = len(block_info.local_only_blocks)

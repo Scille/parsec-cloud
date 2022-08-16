@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from dataclasses import dataclass
 import sys
@@ -173,6 +173,8 @@ def backend_factory(
                             "bob_initial_remote_user_manifest", "v1"
                         ),
                     )
+                    if fixtures_customization.get("adam_is_revoked", False):
+                        await binder.bind_revocation(adam.user_id, certifier=alice)
 
             yield backend
 
@@ -186,7 +188,7 @@ async def backend(unused_tcp_port, backend_factory, fixtures_customization, back
     tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
     config["email_config"] = MockedEmailConfig(sender="Parsec <no-reply@parsec.com>", tmpdir=tmpdir)
     config["backend_addr"] = backend_addr
-    if fixtures_customization.get("backend_spontaneous_organization_boostrap", False):
+    if fixtures_customization.get("backend_spontaneous_organization_bootstrap", False):
         config["organization_spontaneous_bootstrap"] = True
     if fixtures_customization.get("backend_has_webhook", False):
         # Invalid port, hence we should crash if by mistake we try to reach this url

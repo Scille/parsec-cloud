@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from parsec.core.fs.userfs import UserFS
 from parsec.core.fs.exceptions import (
@@ -39,7 +39,7 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceInMaintenance,
     FSUserNotFoundError,
     FSDeviceNotFoundError,
-    FSInvalidTrustchainEror,
+    FSInvalidTrustchainError,
 )
 from parsec.core.fs.path import FsPath, AnyPath
 from parsec.core.fs.workspacefs import WorkspaceFS, WorkspaceFSTimestamped
@@ -88,5 +88,5 @@ __all__ = (
     "FSWorkspaceInMaintenance",
     "FSUserNotFoundError",
     "FSDeviceNotFoundError",
-    "FSInvalidTrustchainEror",
+    "FSInvalidTrustchainError",
 )

@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import Dict, List, Optional
 from uuid import UUID
 from collections import defaultdict
 import attr
-from pendulum import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import OrganizationID, DeviceID
 from parsec.backend.backend_events import BackendEvent
@@ -50,8 +50,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         self._user_component: MemoryUserComponent = None
         self._enrollments: Dict[OrganizationID, List[PkiEnrollment]] = defaultdict(list)
 
-    def register_components(self, **other_components):
-        self._user_component = other_components["user"]
+    def register_components(self, user: MemoryUserComponent, **other_components):
+        self._user_component = user
 
     async def submit(
         self,

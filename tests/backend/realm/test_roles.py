@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import datetime
+from parsec._parsec import DateTime
 from unittest.mock import ANY
 
 from parsec.api.protocol import VlobID, RealmID, RealmRole
@@ -12,7 +12,7 @@ from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import realm_update_roles, realm_get_role_certificates, vlob_create
 
 
-NOW = datetime(2000, 1, 1)
+NOW = DateTime(2000, 1, 1)
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
 REALM_ID = RealmID.from_hex("0000000000000000000000000000000A")
 
@@ -181,7 +181,7 @@ async def test_remove_role_idempotent(
     expected_certifs = [
         RealmRoleCertificateContent(
             author=alice.device_id,
-            timestamp=datetime(2000, 1, 2),
+            timestamp=DateTime(2000, 1, 2),
             realm_id=realm,
             user_id=alice.user_id,
             role=RealmRole.OWNER,
@@ -191,14 +191,14 @@ async def test_remove_role_idempotent(
         expected_certifs += [
             RealmRoleCertificateContent(
                 author=alice.device_id,
-                timestamp=datetime(2000, 1, 3),
+                timestamp=DateTime(2000, 1, 3),
                 realm_id=realm,
                 user_id=bob.user_id,
                 role=RealmRole.MANAGER,
             ),
             RealmRoleCertificateContent(
                 author=alice.device_id,
-                timestamp=datetime(2000, 1, 4),
+                timestamp=DateTime(2000, 1, 4),
                 realm_id=realm,
                 user_id=bob.user_id,
                 role=None,
@@ -366,7 +366,7 @@ async def test_role_access_during_maintenance(
         realm,
         2,
         {alice.user_id: b"whatever"},
-        datetime(2000, 1, 2),
+        DateTime(2000, 1, 2),
     )
 
     # Get roles allowed...

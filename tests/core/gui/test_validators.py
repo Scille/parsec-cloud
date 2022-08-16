@@ -1,9 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 
 from PyQt5 import QtGui
-from parsec import IS_OXIDIZED
 
 from parsec.core.gui import validators
 from parsec.core.gui.input_widgets import ValidatedLineEdit
@@ -279,7 +278,6 @@ def test_file_name_validator(qtbot, core_config):
 
 
 @pytest.mark.gui
-@pytest.mark.xfail(IS_OXIDIZED, reason="TODO: remove when #2667 is merged")
 @pytest.mark.parametrize(
     "name_and_expected",
     [("    ", False), ("[Test]", False), ("Maurice Moss", True), ("    Maurice    Moss   ", True)],

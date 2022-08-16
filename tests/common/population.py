@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import re
 import pytest
@@ -14,6 +14,7 @@ from parsec.core.local_device import generate_new_device
 
 from tests.common.binder import OrganizationFullData
 from tests.common.freeze_time import freeze_time
+from tests.common.sequester import sequester_authority_factory
 
 
 @pytest.fixture
@@ -21,7 +22,7 @@ def organization_factory(backend_addr):
     organizations = set()
     count = 0
 
-    def _organization_factory(orgname=None):
+    def _organization_factory(orgname=None, sequestered: bool = False):
         nonlocal count
 
         if not orgname:
@@ -37,7 +38,20 @@ def organization_factory(backend_addr):
         )
         root_signing_key = SigningKey.generate()
         addr = bootstrap_addr.generate_organization_addr(root_signing_key.verify_key)
-        return OrganizationFullData(bootstrap_addr, addr, root_signing_key)
+
+        if sequestered:
+            sequester_authority = sequester_authority_factory(
+                organization_root_signing_key=root_signing_key
+            )
+        else:
+            sequester_authority = None
+
+        return OrganizationFullData(
+            bootstrap_addr=bootstrap_addr,
+            addr=addr,
+            root_signing_key=root_signing_key,
+            sequester_authority=sequester_authority,
+        )
 
     return _organization_factory
 
@@ -131,9 +145,12 @@ def local_device_factory(coolorg):
 
 
 @pytest.fixture
-def coolorg(organization_factory):
+def coolorg(fixtures_customization, organization_factory):
     # Fonzie approve this
-    return organization_factory("CoolOrg")
+    return organization_factory(
+        "CoolOrg",
+        sequestered=fixtures_customization.get("coolorg_is_sequestered_organization", False),
+    )
 
 
 @pytest.fixture

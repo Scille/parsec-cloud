@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-from pendulum import DateTime, instance as pendulum_instance
+from parsec._parsec import DateTime
 from typing import Dict, Tuple, Optional
 
 from parsec.api.protocol import OrganizationID, DeviceID, VlobID, RealmID
@@ -143,7 +143,6 @@ async def query_read(
     assert isinstance(version, int)
     assert isinstance(blob, bytes)
     vlob_author = DeviceID(vlob_author)
-    created_on = pendulum_instance(created_on)
 
     author_last_role_granted_on = await _get_last_role_granted_on(
         conn, organization_id, realm_id, vlob_author
@@ -218,6 +217,9 @@ async def query_list_versions(
         raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
 
     return {
-        row["version"]: (pendulum_instance(row["created_on"]), DeviceID(row["author"]))
+        row["version"]: (
+            row["created_on"],
+            DeviceID(row["author"]),
+        )
         for row in rows
     }

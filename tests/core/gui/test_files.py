@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import os
 import trio
@@ -7,7 +7,6 @@ import pytest
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QGuiApplication
 
-from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 from parsec.core.gui.file_size import get_filesize
@@ -220,7 +219,6 @@ async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.xfail(IS_OXIDIZED, reason="TODO: investigate why this test fails with rust bindings")
 async def test_file_browsing_and_edit(
     monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):
@@ -232,6 +230,7 @@ async def test_file_browsing_and_edit(
     out_of_parsec_data.mkdir(parents=True)
     (out_of_parsec_data / "file1.txt").touch()
     (out_of_parsec_data / "file2.txt").touch()
+    (out_of_parsec_data / "file3").touch()
     (out_of_parsec_data / "dir3/dir31").mkdir(parents=True)
     (out_of_parsec_data / "dir3/dir32").mkdir(parents=True)
     (out_of_parsec_data / "dir3/dir31/file311.txt").touch()
@@ -253,13 +252,43 @@ async def test_file_browsing_and_edit(
         "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
         classmethod(
             lambda *args, **kwargs: (
-                [out_of_parsec_data / "file1.txt", out_of_parsec_data / "file2.txt"],
+                [
+                    out_of_parsec_data / "file1.txt",
+                    out_of_parsec_data / "file2.txt",
+                    out_of_parsec_data / "file3",
+                ],
                 True,
             )
         ),
     )
     async with aqtbot.wait_signal(f_w.import_success):
         aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+    await tb.check_files_view(
+        path="/", expected_entries=["dir0/", "dir1/", "zdir2/", "file1.txt", "file2.txt", "file3"]
+    )
+
+    # File with the same name without extension
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QDialogInProcess.getOpenFileNames",
+        classmethod(lambda *args, **kwargs: ([out_of_parsec_data / "file3"], True)),
+    )
+    async with aqtbot.wait_signal(f_w.import_success):
+        aqtbot.mouse_click(f_w.button_import_files, QtCore.Qt.LeftButton)
+    await tb.check_files_view(
+        path="/",
+        expected_entries=[
+            "dir0/",
+            "dir1/",
+            "zdir2/",
+            "file1.txt",
+            "file2.txt",
+            "file3",
+            "file3 (2)",
+        ],
+    )
+
+    await tb.delete("file3")
+    await tb.delete("file3 (2)")
     await tb.check_files_view(
         path="/", expected_entries=["dir0/", "dir1/", "zdir2/", "file1.txt", "file2.txt"]
     )
@@ -811,12 +840,14 @@ async def test_show_file_status(
         assert file_status_w.label_workspace.text() == "wksp1"
         assert file_status_w.label_filetype.text() == "file"
         assert file_status_w.label_size.text() == "0 B"
-        assert file_status_w.label_created_on.text() != "" and file_status_w.label_created_on.text() != _(
-            "TEXT_FILE_INFO_NON_APPLICABLE"
+        assert (
+            file_status_w.label_created_on.text() != ""
+            and file_status_w.label_created_on.text() != _("TEXT_FILE_INFO_NON_APPLICABLE")
         )
         assert file_status_w.label_created_by.text() == "Boby McBobFace"
-        assert file_status_w.label_last_updated_on.text() != "" and file_status_w.label_last_updated_on.text() != _(
-            "TEXT_FILE_INFO_NON_APPLICABLE"
+        assert (
+            file_status_w.label_last_updated_on.text() != ""
+            and file_status_w.label_last_updated_on.text() != _("TEXT_FILE_INFO_NON_APPLICABLE")
         )
         assert file_status_w.label_last_updated_by.text() == "Boby McBobFace"
         assert file_status_w.label_availability.text() == _("TEXT_YES")
@@ -842,12 +873,14 @@ async def test_show_file_status(
         assert file_status_w.label_workspace.text() == "wksp1"
         assert file_status_w.label_filetype.text() == "folder"
         assert file_status_w.label_size.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
-        assert file_status_w.label_created_on.text() != "" and file_status_w.label_created_on.text() != _(
-            "TEXT_FILE_INFO_NON_APPLICABLE"
+        assert (
+            file_status_w.label_created_on.text() != ""
+            and file_status_w.label_created_on.text() != _("TEXT_FILE_INFO_NON_APPLICABLE")
         )
         assert file_status_w.label_created_by.text() == "Boby McBobFace"
-        assert file_status_w.label_last_updated_on.text() != "" and file_status_w.label_last_updated_on.text() != _(
-            "TEXT_FILE_INFO_NON_APPLICABLE"
+        assert (
+            file_status_w.label_last_updated_on.text() != ""
+            and file_status_w.label_last_updated_on.text() != _("TEXT_FILE_INFO_NON_APPLICABLE")
         )
         assert file_status_w.label_last_updated_by.text() == "Boby McBobFace"
         assert file_status_w.label_availability.text() == _("TEXT_FILE_INFO_NON_APPLICABLE")
@@ -861,7 +894,6 @@ async def test_show_file_status(
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Cannot monkeypatch sqlite from oxidized code")
 async def test_import_file_disk_full(
     monkeypatch, tmpdir, aqtbot, autoclose_dialog, files_widget_testbed
 ):

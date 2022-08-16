@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import datetime
+from parsec._parsec import DateTime
 
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import VlobID, RealmID, RealmRole
@@ -9,7 +9,7 @@ from parsec.api.protocol import VlobID, RealmID, RealmRole
 from tests.backend.common import realm_update_roles, vlob_update, vlob_poll_changes
 
 
-NOW = datetime(2000, 1, 3)
+NOW = DateTime(2000, 1, 3)
 VLOB_ID = VlobID.from_hex("00000000000000000000000000000001")
 OTHER_VLOB_ID = VlobID.from_hex("00000000000000000000000000000002")
 YET_ANOTHER_VLOB_ID = VlobID.from_hex("00000000000000000000000000000003")
@@ -165,7 +165,7 @@ async def test_vlob_poll_changes_during_maintenance(backend, alice, alice_ws, re
         realm,
         2,
         {alice.user_id: b"whatever"},
-        datetime(2000, 1, 2),
+        DateTime(2000, 1, 2),
     )
 
     # It's ok to poll changes while the workspace is being reencrypted

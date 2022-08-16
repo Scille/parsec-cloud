@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import re
 import attr
@@ -18,7 +18,7 @@ from parsec.api.protocol import (
     InvitationDeletedReason,
     InvitationEmailSentStatus,
 )
-from parsec.api.data import RevokedUserCertificateContent
+from parsec.api.data import RevokedUserCertificateContent, EntryName
 from parsec.core.pki import accepter_list_submitted_from_backend
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
@@ -130,7 +130,7 @@ class LoggedCore:
     def backend_status_exc(self) -> Optional[Exception]:
         return self._backend_conn.status_exc
 
-    def find_workspace_from_name(self, workspace_name: str):
+    def find_workspace_from_name(self, workspace_name: EntryName):
         for workspace in self.user_fs.get_user_manifest().workspaces:
             if workspace_name == workspace.name:
                 return workspace
@@ -216,9 +216,11 @@ class LoggedCore:
         """
         user_id = user_id or self.device.user_id
         try:
-            user_certif, revoked_user_certif, device_certifs = await self._remote_devices_manager.get_user_and_devices(
-                user_id, no_cache=True
-            )
+            (
+                user_certif,
+                revoked_user_certif,
+                device_certifs,
+            ) = await self._remote_devices_manager.get_user_and_devices(user_id, no_cache=True)
         except RemoteDevicesManagerBackendOfflineError as exc:
             raise BackendNotAvailable(str(exc)) from exc
         except RemoteDevicesManagerNotFoundError as exc:

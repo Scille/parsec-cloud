@@ -1,12 +1,15 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import TYPE_CHECKING, Optional, Any, Dict, Type, TypeVar
+from typing import TYPE_CHECKING, Optional, Any, Dict, Type, TypeVar, Literal
 from marshmallow import ValidationError
-from pendulum import DateTime
+from parsec._parsec import DateTime
 
 from parsec.crypto import VerifyKey, PublicKey
+from parsec.sequester_crypto import SequesterVerifyKeyDer, SequesterEncryptionKeyDer
 from parsec.serde import fields, post_load
 from parsec.api.protocol import (
+    SequesterServiceID,
+    SequesterServiceIDField,
     RealmID,
     RealmIDField,
     DeviceID,
@@ -22,8 +25,15 @@ from parsec.api.protocol import (
     DeviceLabel,
     DeviceLabelField,
 )
-from parsec.api.data.base import DataValidationError, BaseAPISignedData, BaseSignedDataSchema
+from parsec.api.data.base import (
+    BaseAPIData,
+    DataValidationError,
+    BaseAPISignedData,
+    BaseSignedDataSchema,
+)
 import attr
+
+from parsec.serde.schema import BaseSchema
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
@@ -78,10 +88,10 @@ class UserCertificateContent(BaseAPISignedData):
     @classmethod
     def verify_and_load(
         cls,
-        *args,
+        *args: Any,
         expected_user: Optional[UserID] = None,
         expected_human_handle: Optional[HumanHandle] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> "UserCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_user is not None and data.user_id != expected_user:
@@ -120,7 +130,7 @@ class RevokedUserCertificateContent(BaseAPISignedData):
 
     @classmethod
     def verify_and_load(
-        cls, *args, expected_user: Optional[UserID] = None, **kwargs
+        cls, *args: Any, expected_user: Optional[UserID] = None, **kwargs: Any
     ) -> "RevokedUserCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_user is not None and data.user_id != expected_user:
@@ -212,7 +222,9 @@ class RealmRoleCertificateContent(BaseAPISignedData):
     role: Optional[RealmRole]  # Set to None if role removed
 
     @classmethod
-    def build_realm_root_certif(cls, author: DeviceID, timestamp: DateTime, realm_id: RealmID):
+    def build_realm_root_certif(
+        cls, author: DeviceID, timestamp: DateTime, realm_id: RealmID
+    ) -> "RealmRoleCertificateContent":
         return cls(
             author=author,
             timestamp=timestamp,
@@ -224,11 +236,11 @@ class RealmRoleCertificateContent(BaseAPISignedData):
     @classmethod
     def verify_and_load(
         cls,
-        *args,
+        *args: Any,
         expected_realm: Optional[RealmID] = None,
         expected_user: Optional[UserID] = None,
         expected_role: Optional[RealmRole] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> "RealmRoleCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_user is not None and data.user_id != expected_user:
@@ -244,3 +256,54 @@ class RealmRoleCertificateContent(BaseAPISignedData):
                 f"Invalid role: expected `{expected_role}`, got `{data.role}`"
             )
         return data
+
+
+_PyRealmRoleCertificateContent = RealmRoleCertificateContent
+if not TYPE_CHECKING:
+    try:
+        from libparsec.types import RealmRoleCertificate as _RsRealmRoleCertificateContent
+    except:
+        pass
+    else:
+        RealmRoleCertificateContent = _RsRealmRoleCertificateContent
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class SequesterAuthorityCertificate(BaseAPISignedData):
+    class SCHEMA_CLS(BaseSignedDataSchema):
+        type = fields.CheckedConstant("sequester_authority_certificate", required=True)
+        # Override author field to always uses None given this certificate can only be signed by the root key
+        author = fields.CheckedConstant(
+            None, required=True, allow_none=True
+        )  # Constant None fields required to be allowed to be None !
+        verify_key_der = fields.SequesterVerifyKeyDerField(required=True)
+
+        @post_load
+        def make_obj(self, data: Dict[str, Any]) -> "SequesterAuthorityCertificate":
+            data.pop("type")
+            return SequesterAuthorityCertificate(**data)
+
+    # Override author field to always uses None given this certificate can only be signed by the root key
+    author: Literal[None]  # type: ignore[assignment]
+    verify_key_der: SequesterVerifyKeyDer
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
+class SequesterServiceCertificate(BaseAPIData):
+    class SCHEMA_CLS(BaseSchema):
+        # No author field here given we are signed by the sequester authority
+        type = fields.CheckedConstant("sequester_service_certificate", required=True)
+        timestamp = fields.DateTime(required=True)
+        service_id = SequesterServiceIDField(required=True)
+        service_label = fields.String(required=True)
+        encryption_key_der = fields.SequesterEncryptionKeyDerField(required=True)
+
+        @post_load
+        def make_obj(self, data: Dict[str, Any]) -> "SequesterServiceCertificate":
+            data.pop("type")
+            return SequesterServiceCertificate(**data)
+
+    timestamp: DateTime
+    service_id: SequesterServiceID
+    service_label: str
+    encryption_key_der: SequesterEncryptionKeyDer

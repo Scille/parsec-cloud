@@ -1,13 +1,13 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::import_exception;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyTuple};
 
 use crate::api_crypto::VerifyKey;
-use crate::binding_utils::py_to_rs_datetime;
 use crate::certif::{DeviceCertificate, RevokedUserCertificate, UserCertificate};
 use crate::ids::{DeviceID, UserID};
+use crate::time::DateTime;
 
 import_exception!(parsec.core.trustchain, TrustchainError);
 
@@ -34,8 +34,12 @@ impl TrustchainContext {
         Ok(())
     }
 
-    fn get_user(&self, user_id: &UserID, now: Option<&PyAny>) -> PyResult<Option<UserCertificate>> {
-        let now = now.map(|now| py_to_rs_datetime(now).unwrap());
+    fn get_user(
+        &self,
+        user_id: &UserID,
+        now: Option<DateTime>,
+    ) -> PyResult<Option<UserCertificate>> {
+        let now = now.map(|now| now.0);
         Ok(self
             .0
             .get_user(&user_id.0, now)
@@ -46,9 +50,9 @@ impl TrustchainContext {
     fn get_revoked_user(
         &self,
         user_id: &UserID,
-        now: Option<&PyAny>,
+        now: Option<DateTime>,
     ) -> PyResult<Option<RevokedUserCertificate>> {
-        let now = now.map(|now| py_to_rs_datetime(now).unwrap());
+        let now = now.map(|now| now.0);
         Ok(self
             .0
             .get_revoked_user(&user_id.0, now)
@@ -59,9 +63,9 @@ impl TrustchainContext {
     fn get_device(
         &self,
         device_id: &DeviceID,
-        now: Option<&PyAny>,
+        now: Option<DateTime>,
     ) -> PyResult<Option<DeviceCertificate>> {
-        let now = now.map(|now| py_to_rs_datetime(now).unwrap());
+        let now = now.map(|now| now.0);
         Ok(self
             .0
             .get_device(&device_id.0, now)
@@ -74,10 +78,10 @@ impl TrustchainContext {
         users: Vec<Vec<u8>>,
         revoked_users: Vec<Vec<u8>>,
         devices: Vec<Vec<u8>>,
-        now: Option<&PyAny>,
+        now: Option<DateTime>,
         py: Python<'py>,
     ) -> PyResult<(&'py PyTuple, &'py PyTuple, &'py PyTuple)> {
-        let now = now.map(|now| py_to_rs_datetime(now).unwrap());
+        let now = now.map(|now| now.0);
         let (users, revoked_users, devices) = self
             .0
             .load_trustchain(&users, &revoked_users, &devices, now)

@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import pendulum
+from parsec._parsec import DateTime
 import pathlib
 import sys
 from enum import IntEnum
@@ -372,12 +372,12 @@ class FileTable(QTableWidget):
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.NAME, item)
         item = CustomTableItem()
-        item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
+        item.setData(NAME_DATA_INDEX, DateTime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.CREATED, item)
         item = CustomTableItem()
-        item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
+        item.setData(NAME_DATA_INDEX, DateTime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.UPDATED, item)
@@ -461,13 +461,13 @@ class FileTable(QTableWidget):
         item.setBackground(inconsistency_color)
         self.setItem(row_idx, Column.NAME, item)
         item = CustomTableItem()
-        item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
+        item.setData(NAME_DATA_INDEX, DateTime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
         item.setBackground(inconsistency_color)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.CREATED, item)
         item = CustomTableItem()
-        item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
+        item.setData(NAME_DATA_INDEX, DateTime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         item.setBackground(inconsistency_color)

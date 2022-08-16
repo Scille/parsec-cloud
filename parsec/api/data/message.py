@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from typing import Dict, Type, TypeVar, Any
 
 from enum import Enum
@@ -29,8 +29,8 @@ class BaseMessageContent(BaseAPISignedData):
 
         @property
         def type_schemas(  # type: ignore[override]
-            self
-        ) -> Dict[MessageContentType, Type[OneOfSchema]]:
+            self,
+        ) -> Dict[MessageContentType, Type[BaseSignedDataSchema]]:
             return {
                 MessageContentType.SHARING_GRANTED: SharingGrantedMessageContent.SCHEMA_CLS,
                 MessageContentType.SHARING_REENCRYPTED: SharingReencryptedMessageContent.SCHEMA_CLS,
@@ -57,9 +57,7 @@ class SharingGrantedMessageContent(BaseMessageContent):
         # to make sure he is an owner.
 
         @post_load
-        def make_obj(  # type: ignore[misc]
-            self, data: Dict[str, Any]
-        ) -> "SharingGrantedMessageContent":
+        def make_obj(self, data: Dict[str, Any]) -> "SharingGrantedMessageContent":
             data.pop("type")
             return SharingGrantedMessageContent(**data)
 
@@ -79,9 +77,7 @@ class SharingReencryptedMessageContent(SharingGrantedMessageContent):
         # occurs right before a reencryption.
 
         @post_load
-        def make_obj(  # type: ignore[misc]
-            self, data: Dict[str, Any]
-        ) -> "SharingReencryptedMessageContent":
+        def make_obj(self, data: Dict[str, Any]) -> "SharingReencryptedMessageContent":
             data.pop("type")
             return SharingReencryptedMessageContent(**data)
 
@@ -93,9 +89,7 @@ class SharingRevokedMessageContent(BaseMessageContent):
         id = EntryIDField(required=True)
 
         @post_load
-        def make_obj(  # type: ignore[misc]
-            self, data: Dict[str, Any]
-        ) -> "SharingRevokedMessageContent":
+        def make_obj(self, data: Dict[str, Any]) -> "SharingRevokedMessageContent":
             data.pop("type")
             return SharingRevokedMessageContent(**data)
 
@@ -109,7 +103,7 @@ class PingMessageContent(BaseMessageContent):
         ping = fields.String(required=True)
 
         @post_load
-        def make_obj(self, data: Dict[str, Any]) -> "PingMessageContent":  # type: ignore[misc]
+        def make_obj(self, data: Dict[str, Any]) -> "PingMessageContent":
             data.pop("type")
             return PingMessageContent(**data)
 

@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 import click
 import multiprocessing
 from pathlib import Path
-from pendulum import DateTime, parse as pendulum_parse
+from parsec._parsec import DateTime
 from typing import Optional
 
 from parsec.utils import trio_run
@@ -74,7 +74,7 @@ async def _run_mountpoint(
 
 @click.command(short_help="run parsec mountpoint")
 @click.option("--mountpoint", "-m", type=click.Path(exists=False))
-@click.option("--timestamp", "-t", type=lambda t: pendulum_parse(t, tz="local"))
+@click.option("--timestamp", "-t", type=lambda t: DateTime.from_timestamp(float(t)).to_local())
 @core_config_and_device_options
 @cli_command_base_options
 def run_mountpoint(

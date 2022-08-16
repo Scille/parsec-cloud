@@ -1,9 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Type
 import attr
 
-from parsec.types import UUID4
 from parsec.serde import fields
 from parsec.api.protocol.base import (
     BaseReqSchema,
@@ -17,26 +16,12 @@ from parsec.api.protocol.base import (
     cmd_rep_factory,
 )
 from parsec.api.protocol.realm import RealmIDField
-
+from parsec._parsec import BlockID
 
 __all__ = ("BlockID", "BlockIDField", "block_create_serializer", "block_read_serializer")
 
 
-class BlockID(UUID4):
-    __slots__ = ()
-
-
-_PyBlockID = BlockID
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import BlockID as _RsBlockID
-    except:
-        pass
-    else:
-        BlockID = _RsBlockID
-
-
-BlockIDField = fields.uuid_based_field_factory(BlockID)
+BlockIDField: Type[fields.Field] = fields.uuid_based_field_factory(BlockID)
 
 
 class BlockCreateReqSchema(BaseReqSchema):

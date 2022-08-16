@@ -1,11 +1,18 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import re
 import os
+from parsec.backend.sequester import (
+    SequesterServiceAlreadyDisabledError,
+    SequesterServiceAlreadyEnabledError,
+)
 import trio
 from uuid import UUID
 from pathlib import Path
 from functools import partial
+
+from tests.common.fixtures_customisation import customize_fixtures
+from tests.common.sequester import sequester_service_factory
 
 try:
     import fcntl
@@ -116,6 +123,74 @@ def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
     # Test with recipiant
     args = default_args + f"--recipiant=alice@example.com"
     _run_cli_share_workspace_test(args, 0, True)
+
+
+def test_reencrypt_workspace(tmp_path, monkeypatch, alice, bob):
+    config_dir = tmp_path / "config"
+    # Mocking
+    factory_mock = AsyncMock()
+
+    @asynccontextmanager
+    async def logged_core_factory(*args, **kwargs):
+        yield factory_mock(*args, **kwargs)
+
+    password = "S3cr3t"
+    save_device_with_password_in_config(config_dir, bob, password)
+
+    def _run_cli_reencrypt_workspace_test(args, expected_error_code, from_beginning):
+        factory_mock.reset_mock()
+
+        reenc_needs_mock = AsyncMock()
+        reenc_needs_mock.need_reencryption = True
+        reenc_needs_mock.reencryption_already_in_progress = not from_beginning
+
+        workspace_fs_mock = AsyncMock()
+        workspace_fs_mock.get_reencryption_need.return_value = reenc_needs_mock
+        workspace_fs_mock.get_reencryption_need.is_async = True
+
+        job_mock = AsyncMock()
+        job_mock.do_one_batch.return_value = (100, 100)
+        job_mock.do_one_batch.is_async = True
+
+        factory_mock.return_value.user_fs.get_workspace.return_value = workspace_fs_mock
+        if from_beginning:
+            factory_mock.return_value.user_fs.workspace_start_reencryption.return_value = job_mock
+            factory_mock.return_value.user_fs.workspace_start_reencryption.is_async = True
+        else:
+            factory_mock.return_value.user_fs.workspace_continue_reencryption.return_value = (
+                job_mock
+            )
+            factory_mock.return_value.user_fs.workspace_continue_reencryption.is_async = True
+        factory_mock.return_value.find_workspace_from_name.return_value.id = "ws1_id"
+
+        monkeypatch.setattr(
+            "parsec.core.cli.reencrypt_workspace.logged_core_factory", logged_core_factory
+        )
+        runner = CliRunner()
+        result = runner.invoke(cli, args)
+
+        assert result.exit_code == expected_error_code
+        factory_mock.assert_called_once_with(ANY, bob)
+        factory_mock.return_value.user_fs.get_workspace.assert_called_once_with("ws1_id")
+        workspace_fs_mock.get_reencryption_need.assert_called_once()
+        if from_beginning:
+            factory_mock.return_value.user_fs.workspace_start_reencryption.assert_called_once_with(
+                "ws1_id"
+            )
+        else:
+            factory_mock.return_value.user_fs.workspace_continue_reencryption.assert_called_once_with(
+                "ws1_id"
+            )
+        job_mock.do_one_batch.assert_called_once()
+
+    args = (
+        f"core reencrypt_workspace --password {password} "
+        f"--device={bob.slughash} --config-dir={config_dir.as_posix()} "
+        f"--workspace-name=ws1 "
+    )
+
+    _run_cli_reencrypt_workspace_test(args, 0, from_beginning=True)
+    _run_cli_reencrypt_workspace_test(args, 0, from_beginning=False)
 
 
 def _short_cmd(cmd):
@@ -921,3 +996,186 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend_asg
 
         # And all the enrollments should have been taken care of
         assert await run_poll() == []
+
+
+def _setup_sequester_key_paths(tmp_path, coolorg):
+    key_path = tmp_path / "keys"
+    key_path.mkdir()
+    service_key_path = key_path / "service.pem"
+    authority_key_path = key_path / "authority.pem"
+
+    import oscrypto.asymmetric
+
+    service = sequester_service_factory("Test Service", coolorg.sequester_authority)
+    service_key = service.encryption_key
+    authority_key = coolorg.sequester_authority.signing_key
+    service_key_path.write_bytes(oscrypto.asymmetric.dump_public_key(service_key))
+    authority_key_path.write_bytes(
+        oscrypto.asymmetric.dump_private_key(authority_key, passphrase=None)
+    )
+    return authority_key_path, service_key_path
+
+
+async def _cli_invoke_in_thread(runner: CliRunner, cmd: str, input: str = None):
+    # We must run the command from another thread given it will create it own trio loop
+    async with real_clock_timeout():
+        # Pass DEBUG environment variable for better output on crash
+        return await trio.to_thread.run_sync(
+            lambda: runner.invoke(cli, cmd, input=input, env={"DEBUG": "1"})
+        )
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
+async def test_human_accesses(backend, alice, postgresql_url):
+    async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
+        runner = CliRunner()
+
+        cmd = f"backend human_accesses --db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id}"
+
+        result = await _cli_invoke_in_thread(runner, cmd)
+        assert result.exit_code == 0
+        assert result.output.startswith("Found 3 result(s)")
+
+        # Also test with filter
+
+        result = await _cli_invoke_in_thread(runner, f"{cmd} --filter alice")
+        assert result.exit_code == 0
+        assert result.output.startswith("Found 1 result(s)")
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
+@customize_fixtures(coolorg_is_sequestered_organization=True)
+async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
+    async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
+        runner = CliRunner()
+
+        common_args = f"--db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id}"
+
+        async def run_list_services():
+            result = await _cli_invoke_in_thread(
+                runner, f"backend sequester list_services {common_args}"
+            )
+            assert result.exit_code == 0
+            return result
+
+        async def create_service(service_key_path, authority_key_path, service_label):
+            result = await _cli_invoke_in_thread(
+                runner,
+                f"backend sequester create_service {common_args} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --service-label {service_label}",
+            )
+            assert result.exit_code == 0
+            return result
+
+        async def disable_service(service_id: str):
+            return await _cli_invoke_in_thread(
+                runner,
+                f"backend sequester update_service {common_args} --disable --service {service_id}",
+            )
+
+        async def enable_service(service_id: str):
+            return await _cli_invoke_in_thread(
+                runner,
+                f"backend sequester update_service {common_args} --enable --service {service_id}",
+            )
+
+        async def export_service(service_id: str, realm: str, path: str):
+            return await _cli_invoke_in_thread(
+                runner,
+                f"backend sequester export_realm {common_args} --service {service_id} --realm {realm} --output {path} -b MOCKED",
+            )
+
+        # Assert no service configured
+        result = await run_list_services()
+        assert result.output == "Found 0 sequester service(s)\n"
+
+        # Create service
+        authority_key_path, service_key_path = _setup_sequester_key_paths(tmp_path, coolorg)
+        service_label = "TestService"
+        result = await create_service(service_key_path, authority_key_path, service_label)
+
+        # List services
+        result = await run_list_services()
+        assert result.output.startswith("Found 1 sequester service(s)\n")
+        assert service_label in result.output
+        assert "Disabled on" not in result.output
+
+        # Disable service
+        match = re.search(r"Service TestService \(id: ([0-9a-f]+)\)", result.output, re.MULTILINE)
+        assert match
+        service_id = match.group(1)
+        result = await disable_service(service_id)
+        assert result.exit_code == 0
+        result = await run_list_services()
+        assert result.output.startswith("Found 1 sequester service(s)\n")
+        assert service_label in result.output
+        assert "Disabled on" in result.output
+
+        # Service already disabled
+        result = await disable_service(service_id)
+        assert result.exit_code == 1
+        assert isinstance(result.exception, SequesterServiceAlreadyDisabledError)
+
+        # Re enable service
+        result = await enable_service(service_id)
+        assert result.exit_code == 0
+        result = await run_list_services()
+        assert result.output.startswith("Found 1 sequester service(s)\n")
+        assert service_label in result.output
+        assert "Disabled on" not in result.output
+
+        # Service already enabled
+        result = await enable_service(service_id)
+        assert result.exit_code == 1
+        assert isinstance(result.exception, SequesterServiceAlreadyEnabledError)
+
+        # Export realm
+        realms = await backend.realm.get_realms_for_user(alice.organization_id, alice.user_id)
+        realm_id = list(realms.keys())[0]
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        result = await export_service(service_id, realm_id, output_dir)
+        files = list(output_dir.iterdir())
+        assert len(files) == 1
+        assert files[0].name.endswith(f"parsec-sequester-export-realm-{realm_id}.sqlite")
+
+
+@pytest.mark.trio
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Key files paths are expected to be in linux posix format"
+)
+@customize_fixtures(coolorg_is_sequestered_organization=True)
+async def test_bootstrap_sequester(coolorg, tmp_path, backend, running_backend):
+    org = "TheOne"
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    device_label = "device_label"
+    human_label = "human_label"
+    human_email = "human@email.com"
+    password = "P@ssw0rd."
+    runner = CliRunner()
+
+    _, public_key = _setup_sequester_key_paths(tmp_path=tmp_path, coolorg=coolorg)
+
+    async def create_organization():
+        result = await _cli_invoke_in_thread(
+            runner,
+            f"core create_organization {org} --addr={running_backend.addr}  --administration-token={backend.config.administration_token}",
+        )
+        assert result.exit_code == 0
+        url = re.search(r"^Bootstrap organization url: (.*)$", result.output, re.MULTILINE).group(1)
+        return url
+
+    async def bootstrap_organization(url):
+        result = await _cli_invoke_in_thread(
+            runner,
+            f"core bootstrap_organization  {url} --password={password} --device-label={device_label} --human-label={human_label} --human-email={human_email} --config-dir={config_dir.as_posix()} --sequester-verify-key={public_key}",
+            input="y",
+        )
+        assert result.exit_code == 0
+        return result
+
+    url = await create_organization()
+    result = await bootstrap_organization(url)
+    assert "Saving device" in result.output

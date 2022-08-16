@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 import trio
@@ -447,11 +447,11 @@ def _save_device(
 
 def change_device_password(key_file: Path, old_password: str, new_password: str) -> None:
     """
-        LocalDeviceError
-        LocalDeviceNotFoundError
-        LocalDeviceCryptoError
-        LocalDeviceValidationError
-        LocalDevicePackingError
+    LocalDeviceError
+    LocalDeviceNotFoundError
+    LocalDeviceCryptoError
+    LocalDeviceValidationError
+    LocalDevicePackingError
     """
     device = load_device_with_password(key_file, password=old_password)
     save_device_with_password(key_file, device, password=new_password, force=True)
@@ -555,24 +555,24 @@ def is_smartcard_extension_available() -> bool:
 
 def load_device_with_smartcard_sync(key_file: Path) -> LocalDevice:
     """
-        LocalDeviceError
-        LocalDeviceNotFoundError
-        LocalDeviceCryptoError
-        LocalDeviceValidationError
-        LocalDevicePackingError
-        LocalDeviceCertificatePinCodeUnavailableError
+    LocalDeviceError
+    LocalDeviceNotFoundError
+    LocalDeviceCryptoError
+    LocalDeviceValidationError
+    LocalDevicePackingError
+    LocalDeviceCertificatePinCodeUnavailableError
     """
     return _load_smartcard_extension().load_device_with_smartcard(key_file)
 
 
 async def load_device_with_smartcard(key_file: Path) -> LocalDevice:
     """
-        LocalDeviceError
-        LocalDeviceNotFoundError
-        LocalDeviceCryptoError
-        LocalDeviceValidationError
-        LocalDevicePackingError
-        LocalDeviceCertificatePinCodeUnavailableError
+    LocalDeviceError
+    LocalDeviceNotFoundError
+    LocalDeviceCryptoError
+    LocalDeviceValidationError
+    LocalDevicePackingError
+    LocalDeviceCertificatePinCodeUnavailableError
     """
     return await trio.to_thread.run_sync(load_device_with_smartcard_sync, key_file)
 

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.user_storage import UserStorage, user_storage_non_speculative_init

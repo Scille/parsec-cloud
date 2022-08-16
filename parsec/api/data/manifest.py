@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 from typing import Optional, Tuple, Dict, Any, Type, TypeVar, TYPE_CHECKING
-from pendulum import DateTime
+from parsec._parsec import DateTime
 
 from parsec.types import FrozenDict
 from parsec.crypto import SecretKey, HashDigest
@@ -129,7 +129,7 @@ class BaseManifest(BaseAPISignedData):
         id = EntryIDField(required=True)
 
         @property
-        def type_schemas(self) -> Dict[ManifestType, Type[OneOfSchema]]:  # type: ignore[override]
+        def type_schemas(self) -> Dict[ManifestType, Type[BaseSignedDataSchema]]:  # type: ignore[override]
             return {
                 ManifestType.FILE_MANIFEST: _PyFileManifest.SCHEMA_CLS,
                 ManifestType.FOLDER_MANIFEST: _PyFolderManifest.SCHEMA_CLS,

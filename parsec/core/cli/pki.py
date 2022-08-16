@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 from typing import Sequence, Optional, Callable
 from uuid import UUID
 import platform
-from pendulum import DateTime
+from parsec._parsec import DateTime
 import click
 
 from parsec.api.protocol import DeviceLabel
@@ -389,7 +389,11 @@ async def _pki_enrollment_review_pendings(
                     assert action == "accept"
 
                     # Let the admin edit the user information
-                    granted_device_label, granted_human_handle, granted_profile = await ask_info_new_user(
+                    (
+                        granted_device_label,
+                        granted_human_handle,
+                        granted_profile,
+                    ) = await ask_info_new_user(
                         default_device_label=pending.submit_payload.requested_device_label,
                         default_user_label=pending.submitter_x509_certificate.subject_common_name,
                         default_user_email=pending.submitter_x509_certificate.subject_email_address,

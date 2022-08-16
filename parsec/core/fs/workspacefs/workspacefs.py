@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 import trio
 from collections import defaultdict
 from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
-from pendulum import DateTime
+from parsec._parsec import DateTime
 
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
@@ -555,25 +555,31 @@ class WorkspaceFS:
 
         # Get a minimal manifest to upload
         try:
-            remote_manifest = await self.transactions.get_minimal_remote_manifest(entry_id)
+            to_sync_remote_manifest = await self.transactions.get_minimal_remote_manifest(entry_id)
         # Not available locally so nothing to synchronize
         except FSLocalMissError:
             return
 
         # No miminal manifest to upload, the entry is not a placeholder
-        if remote_manifest is None:
+        if to_sync_remote_manifest is None:
             return
 
         # Upload the miminal manifest
         try:
-            await self.remote_loader.upload_manifest(entry_id, remote_manifest)
+            # `actual_remote_manifest` is different from `to_sync_remote_manifest`
+            # given manifest's timestamp got updated before the upload
+            actual_remote_manifest = await self.remote_loader.upload_manifest(
+                entry_id, to_sync_remote_manifest
+            )
         # The upload has failed: download the latest remote manifest
         except FSRemoteSyncError:
-            remote_manifest = await self.remote_loader.load_manifest(entry_id)
+            actual_remote_manifest = await self.remote_loader.load_manifest(entry_id)
 
         # Register the manifest to unset the placeholder tag
         try:
-            await self.transactions.synchronization_step(entry_id, remote_manifest, final=True)
+            await self.transactions.synchronization_step(
+                entry_id, actual_remote_manifest, final=True
+            )
         # Not available locally so nothing to synchronize
         except FSLocalMissError:
             pass

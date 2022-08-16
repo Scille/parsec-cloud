@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 from typing import Optional, List, Tuple
@@ -339,7 +339,13 @@ class UserGreetInProgress4Ctx:
         profile: UserProfile,
     ) -> None:
 
-        user_certificate, redacted_user_certificate, device_certificate, redacted_device_certificate, invite_user_confirmation = _create_new_user_certificates(
+        (
+            user_certificate,
+            redacted_user_certificate,
+            device_certificate,
+            redacted_device_certificate,
+            invite_user_confirmation,
+        ) = _create_new_user_certificates(
             author, device_label, human_handle, profile, self._public_key, self._verify_key
         )
 

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
@@ -41,8 +41,8 @@ async def test_postgresql_notification_listener_terminated(postgresql_url, backe
         with pytest.raises(ConnectionError):
 
             async with backend_factory(config={"db_url": postgresql_url}):
-                pid, = await wait_for_listeners(conn)
-                value, = await conn.fetchrow("SELECT pg_terminate_backend($1)", pid)
+                (pid,) = await wait_for_listeners(conn)
+                (value,) = await conn.fetchrow("SELECT pg_terminate_backend($1)", pid)
                 assert value
                 # Wait to get cancelled by the backend app
                 async with real_clock_timeout():
@@ -100,9 +100,9 @@ async def test_retry_policy_no_retry(postgresql_url, asyncio_loop):
             # Connect to PostgreSQL database
             async with triopg.connect(postgresql_url) as conn:
                 # Wait for the backend to be connected
-                pid, = await wait_for_listeners(conn)
+                (pid,) = await wait_for_listeners(conn)
                 # Terminate the backend listener connection
-                value, = await conn.fetchrow("SELECT pg_terminate_backend($1)", pid)
+                (value,) = await conn.fetchrow("SELECT pg_terminate_backend($1)", pid)
                 assert value
                 # Wait to get cancelled by the connection error `_run_backend`
                 async with real_clock_timeout():
@@ -146,12 +146,12 @@ async def test_retry_policy_allow_retry(postgresql_url, asyncio_loop):
             pid = None
             for _ in range(10):
                 # Wait for the backend to be connected
-                new_pid, = await wait_for_listeners(conn)
+                (new_pid,) = await wait_for_listeners(conn)
                 # Make sure a new connection has been created
                 assert new_pid != pid
                 pid = new_pid
                 # Terminate the backend listener connection
-                value, = await conn.fetchrow("SELECT pg_terminate_backend($1)", pid)
+                (value,) = await conn.fetchrow("SELECT pg_terminate_backend($1)", pid)
                 assert value
                 # Wait for the listener to terminate
                 await wait_for_listeners(conn, to_terminate=True)

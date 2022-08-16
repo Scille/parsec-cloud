@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
-from typing import Optional
-from typing import List
+from typing import Optional, List, Tuple
 
 from parsec.api.protocol import UserProfile
+from parsec.api.data import SequesterAuthorityCertificate, SequesterServiceCertificate
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -28,3 +28,9 @@ class OrganizationStats:
 class OrganizationConfig:
     user_profile_outsider_allowed: bool
     active_users_limit: Optional[int]
+    sequester_authority: Optional[SequesterAuthorityCertificate]
+    sequester_services: Optional[Tuple[SequesterServiceCertificate, ...]]
+
+    @property
+    def is_sequestered_organization(self):
+        return self.sequester_authority is not None

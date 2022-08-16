@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from uuid import UUID
 from structlog import get_logger
@@ -107,6 +107,7 @@ async def organization_bootstrap(
     device_certificate: bytes,
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
+    sequester_authority_certificate: bytes,
 ) -> dict:
     return await _anonymous_cmd(
         organization_bootstrap_serializer,
@@ -119,4 +120,5 @@ async def organization_bootstrap(
         device_certificate=device_certificate,
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
+        sequester_authority_certificate=sequester_authority_certificate,
     )

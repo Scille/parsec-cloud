@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import attr
-from typing import Dict, Tuple
+from typing import TYPE_CHECKING, Dict, Tuple
 
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole, BlockID
 from parsec.backend.utils import OperationKind
-from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
+from parsec.backend.realm import RealmNotFoundError
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import (
     BaseBlockComponent,
@@ -15,6 +15,9 @@ from parsec.backend.block import (
     BlockInMaintenanceError,
     BlockStoreError,
 )
+
+if TYPE_CHECKING:
+    from parsec.backend.memory.realm import MemoryRealmComponent
 
 
 @attr.s(auto_attribs=True)
@@ -26,11 +29,14 @@ class BlockMeta:
 class MemoryBlockComponent(BaseBlockComponent):
     def __init__(self):
         self._blockmetas = {}
-        self._blockstore_component = None
-        self._realm_component = None
+        self._blockstore_component: "MemoryBlockStoreComponent" = None
+        self._realm_component: "MemoryRealmComponent" = None
 
     def register_components(
-        self, blockstore: BaseBlockStoreComponent, realm: BaseRealmComponent, **other_components
+        self,
+        blockstore: "MemoryBlockStoreComponent",
+        realm: "MemoryRealmComponent",
+        **other_components,
     ) -> None:
         self._blockstore_component = blockstore
         self._realm_component = realm
