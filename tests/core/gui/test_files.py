@@ -1000,12 +1000,14 @@ async def test_current_folder_status_menu(
         assert file_status_w.label_workspace.text() == "wksp1"
         assert file_status_w.label_filetype.text() == "folder"
         assert file_status_w.label_size.text() == "N/A"
-        assert file_status_w.label_created_on.text() != "" and file_status_w.label_created_on.text() != _(
-            "TEXT_FILE_INFO_NON_APPLICABLE"
+        assert (
+            file_status_w.label_created_on.text() != ""
+            and file_status_w.label_created_on.text() != _("TEXT_FILE_INFO_NON_APPLICABLE")
         )
         assert file_status_w.label_created_by.text() == "Boby McBobFace"
-        assert file_status_w.label_last_updated_on.text() != "" and file_status_w.label_last_updated_on.text() != _(
-            "TEXT_FILE_INFO_NON_APPLICABLE"
+        assert (
+            file_status_w.label_last_updated_on.text() != ""
+            and file_status_w.label_last_updated_on.text() != _("TEXT_FILE_INFO_NON_APPLICABLE")
         )
         assert file_status_w.label_last_updated_by.text() == "Boby McBobFace"
         assert file_status_w.label_availability.text() == "N/A"
