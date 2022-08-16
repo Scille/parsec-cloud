@@ -5,17 +5,15 @@ use pyo3::{
     import_exception, pyclass,
     pyclass::CompareOp,
     pymethods,
-    types::{PyAny, PyBool, PyBytes, PyDict, PyTuple, PyType},
+    types::{PyBool, PyBytes, PyDict, PyTuple, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
 
 use crate::{
     api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey},
-    binding_utils::{
-        hash_generic, py_to_rs_datetime, py_to_rs_realm_role, rs_to_py_datetime,
-        rs_to_py_realm_role,
-    },
+    binding_utils::{hash_generic, py_to_rs_realm_role, rs_to_py_realm_role},
     ids::{BlockID, DeviceID, EntryID},
+    time::DateTime,
 };
 
 import_exception!(parsec.api.data, EntryNameTooLongError);
@@ -94,8 +92,8 @@ impl WorkspaceEntry {
             [name: EntryName, "name"],
             [key: SecretKey, "key"],
             [encryption_revision: u32, "encryption_revision"],
-            [encrypted_on, "encrypted_on", py_to_rs_datetime],
-            [role_cached_on, "role_cached_on", py_to_rs_datetime],
+            [encrypted_on: DateTime, "encrypted_on"],
+            [role_cached_on: DateTime, "role_cached_on"],
             [role, "role", py_to_rs_realm_role],
         );
 
@@ -104,8 +102,8 @@ impl WorkspaceEntry {
             name: name.0,
             key: key.0,
             encryption_revision,
-            encrypted_on,
-            role_cached_on,
+            encrypted_on: encrypted_on.0,
+            role_cached_on: role_cached_on.0,
             role,
         }))
     }
@@ -122,8 +120,8 @@ impl WorkspaceEntry {
             [name: EntryName, "name"],
             [key: SecretKey, "key"],
             [encryption_revision: u32, "encryption_revision"],
-            [encrypted_on, "encrypted_on", py_to_rs_datetime],
-            [role_cached_on, "role_cached_on", py_to_rs_datetime],
+            [encrypted_on: DateTime, "encrypted_on"],
+            [role_cached_on: DateTime, "role_cached_on"],
             [role, "role", py_to_rs_realm_role],
         );
 
@@ -142,10 +140,10 @@ impl WorkspaceEntry {
             r.encryption_revision = v;
         }
         if let Some(v) = encrypted_on {
-            r.encrypted_on = v;
+            r.encrypted_on = v.0;
         }
         if let Some(v) = role_cached_on {
-            r.role_cached_on = v;
+            r.role_cached_on = v.0;
         }
         if let Some(v) = role {
             r.role = v;
@@ -156,11 +154,10 @@ impl WorkspaceEntry {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType, name: &EntryName, timestamp: &PyAny) -> PyResult<Self> {
-        let dt = py_to_rs_datetime(timestamp)?;
+    fn _class_new(_cls: &PyType, name: &EntryName, timestamp: DateTime) -> PyResult<Self> {
         Ok(Self(libparsec::types::WorkspaceEntry::generate(
             name.0.to_owned(),
-            dt,
+            timestamp.0,
         )))
     }
 
@@ -197,13 +194,13 @@ impl WorkspaceEntry {
     }
 
     #[getter]
-    fn encrypted_on<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.encrypted_on)
+    fn encrypted_on(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.encrypted_on))
     }
 
     #[getter]
-    fn role_cached_on<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.role_cached_on)
+    fn role_cached_on(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.role_cached_on))
     }
 
     #[getter]
@@ -321,201 +318,6 @@ impl BlockAccess {
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct FolderManifest(pub libparsec::types::FolderManifest);
-
-impl FolderManifest {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.author == other.0.author
-            && self.0.id == other.0.id
-            && self.0.version == other.0.version
-            && self.0.parent == other.0.parent
-            && self.0.timestamp == other.0.timestamp
-            && self.0.created == other.0.created
-            && self.0.updated == other.0.updated
-            && self.0.children == other.0.children
-    }
-}
-
-#[pymethods]
-impl FolderManifest {
-    #[new]
-    #[args(py_kwargs = "**")]
-    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs!(
-            py_kwargs,
-            [author: DeviceID, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
-            [id: EntryID, "id"],
-            [parent: EntryID, "parent"],
-            [version: u32, "version"],
-            [created, "created", py_to_rs_datetime],
-            [updated, "updated", py_to_rs_datetime],
-            [children: HashMap<EntryName, EntryID>, "children"],
-        );
-
-        Ok(Self(libparsec::types::FolderManifest {
-            author: author.0,
-            timestamp,
-            version,
-            id: id.0,
-            parent: parent.0,
-            created,
-            updated,
-            children: children
-                .into_iter()
-                .map(|(name, id)| (name.0, id.0))
-                .collect(),
-        }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn dump_and_sign<'p>(
-        &self,
-        py: Python<'p>,
-        author_signkey: &SigningKey,
-    ) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
-    }
-
-    fn dump_sign_and_encrypt<'p>(
-        &self,
-        py: Python<'p>,
-        author_signkey: &SigningKey,
-        key: &SecretKey,
-    ) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(
-            py,
-            &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
-        ))
-    }
-
-    #[classmethod]
-    fn decrypt_verify_and_load(
-        _cls: &PyType,
-        encrypted: &[u8],
-        key: &SecretKey,
-        author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
-        expected_timestamp: &PyAny,
-    ) -> PyResult<Self> {
-        let expected_timestamp = py_to_rs_datetime(expected_timestamp)?;
-        match libparsec::types::FolderManifest::decrypt_verify_and_load(
-            encrypted,
-            &key.0,
-            &author_verify_key.0,
-            &expected_author.0,
-            expected_timestamp,
-        ) {
-            Ok(x) => Ok(Self(x)),
-            Err(err) => Err(PyValueError::new_err(err.to_string())),
-        }
-    }
-
-    #[args(py_kwargs = "**")]
-    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs_optional!(
-            py_kwargs,
-            [author: DeviceID, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
-            [id: EntryID, "id"],
-            [parent: EntryID, "parent"],
-            [version: u32, "version"],
-            [created, "created", py_to_rs_datetime],
-            [updated, "updated", py_to_rs_datetime],
-            [children: HashMap<EntryName, EntryID>, "children"],
-        );
-
-        let mut r = self.0.clone();
-
-        if let Some(v) = author {
-            r.author = v.0;
-        }
-        if let Some(v) = timestamp {
-            r.timestamp = v;
-        }
-        if let Some(v) = id {
-            r.id = v.0;
-        }
-        if let Some(v) = parent {
-            r.parent = v.0;
-        }
-        if let Some(v) = version {
-            r.version = v;
-        }
-        if let Some(v) = created {
-            r.created = v;
-        }
-        if let Some(v) = updated {
-            r.updated = v;
-        }
-        if let Some(v) = children {
-            r.children = v.into_iter().map(|(name, id)| (name.0, id.0)).collect();
-        }
-
-        Ok(Self(r))
-    }
-
-    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
-            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
-            _ => py.NotImplemented(),
-        }
-    }
-
-    #[getter]
-    fn author(&self) -> PyResult<DeviceID> {
-        Ok(DeviceID(self.0.author.clone()))
-    }
-
-    #[getter]
-    fn id(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.id))
-    }
-
-    #[getter]
-    fn parent(&self) -> PyResult<EntryID> {
-        Ok(EntryID(self.0.parent))
-    }
-
-    #[getter]
-    fn version(&self) -> PyResult<u32> {
-        Ok(self.0.version)
-    }
-
-    #[getter]
-    fn timestamp<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.timestamp)
-    }
-
-    #[getter]
-    fn created<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.created)
-    }
-
-    #[getter]
-    fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.updated)
-    }
-
-    #[getter]
-    fn children<'p>(&self, py: Python<'p>) -> PyResult<&'p PyDict> {
-        let d = PyDict::new(py);
-
-        for (k, v) in &self.0.children {
-            let en = EntryName(k.clone()).into_py(py);
-            let me = EntryID(*v).into_py(py);
-            let _ = d.set_item(en, me);
-        }
-        Ok(d)
-    }
-}
-
-#[pyclass]
-#[derive(PartialEq, Eq, Clone)]
 pub(crate) struct FileManifest(pub libparsec::types::FileManifest);
 
 impl FileManifest {
@@ -539,12 +341,12 @@ impl FileManifest {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: DeviceID, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [id: EntryID, "id"],
             [parent: EntryID, "parent"],
             [version: u32, "version"],
-            [created, "created", py_to_rs_datetime],
-            [updated, "updated", py_to_rs_datetime],
+            [created: DateTime, "created"],
+            [updated: DateTime, "updated"],
             [size: u64, "size"],
             [blocksize: u64, "blocksize"],
             [blocks: Vec<BlockAccess>, "blocks"],
@@ -552,12 +354,12 @@ impl FileManifest {
 
         Ok(Self(libparsec::types::FileManifest {
             author: author.0,
-            timestamp,
+            timestamp: timestamp.0,
             id: id.0,
             parent: parent.0,
             version,
-            created,
-            updated,
+            created: created.0,
+            updated: updated.0,
             size,
             blocksize: libparsec::types::Blocksize::try_from(blocksize)
                 .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?,
@@ -596,15 +398,14 @@ impl FileManifest {
         key: &SecretKey,
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
-        expected_timestamp: &PyAny,
+        expected_timestamp: DateTime,
     ) -> PyResult<Self> {
-        let expected_timestamp = py_to_rs_datetime(expected_timestamp)?;
         match libparsec::types::FileManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
             &expected_author.0,
-            expected_timestamp,
+            expected_timestamp.0,
         ) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
@@ -616,12 +417,12 @@ impl FileManifest {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [author: DeviceID, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [id: EntryID, "id"],
             [parent: EntryID, "parent"],
             [version: u32, "version"],
-            [created, "created", py_to_rs_datetime],
-            [updated, "updated", py_to_rs_datetime],
+            [created: DateTime, "created"],
+            [updated: DateTime, "updated"],
             [size: u64, "size"],
             [blocksize: u64, "blocksize"],
             [blocks: Vec<BlockAccess>, "blocks"],
@@ -633,7 +434,7 @@ impl FileManifest {
             r.author = v.0;
         }
         if let Some(v) = timestamp {
-            r.timestamp = v;
+            r.timestamp = v.0;
         }
         if let Some(v) = id {
             r.id = v.0;
@@ -645,10 +446,10 @@ impl FileManifest {
             r.version = v;
         }
         if let Some(v) = created {
-            r.created = v;
+            r.created = v.0;
         }
         if let Some(v) = updated {
-            r.updated = v;
+            r.updated = v.0;
         }
         if let Some(v) = size {
             r.size = v;
@@ -703,41 +504,42 @@ impl FileManifest {
     }
 
     #[getter]
-    fn timestamp<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.timestamp)
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.timestamp))
     }
 
     #[getter]
-    fn created<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.created)
+    fn created(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.created))
     }
 
     #[getter]
-    fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.updated)
+    fn updated(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.updated))
     }
 
     #[getter]
     fn blocks<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
-        let elements: Vec<PyObject> = self
+        let elems: Vec<PyObject> = self
             .0
             .blocks
             .iter()
             .map(|x| BlockAccess(x.clone()).into_py(py))
             .collect();
-        Ok(PyTuple::new(py, elements))
+        Ok(PyTuple::new(py, elems))
     }
 }
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
-pub(crate) struct WorkspaceManifest(pub libparsec::types::WorkspaceManifest);
+pub(crate) struct FolderManifest(pub libparsec::types::FolderManifest);
 
-impl WorkspaceManifest {
+impl FolderManifest {
     fn eq(&self, other: &Self) -> bool {
         self.0.author == other.0.author
             && self.0.id == other.0.id
             && self.0.version == other.0.version
+            && self.0.parent == other.0.parent
             && self.0.timestamp == other.0.timestamp
             && self.0.created == other.0.created
             && self.0.updated == other.0.updated
@@ -746,28 +548,30 @@ impl WorkspaceManifest {
 }
 
 #[pymethods]
-impl WorkspaceManifest {
+impl FolderManifest {
     #[new]
     #[args(py_kwargs = "**")]
     pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: DeviceID, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [id: EntryID, "id"],
+            [parent: EntryID, "parent"],
             [version: u32, "version"],
-            [created, "created", py_to_rs_datetime],
-            [updated, "updated", py_to_rs_datetime],
+            [created: DateTime, "created"],
+            [updated: DateTime, "updated"],
             [children: HashMap<EntryName, EntryID>, "children"],
         );
 
-        Ok(Self(libparsec::types::WorkspaceManifest {
+        Ok(Self(libparsec::types::FolderManifest {
             author: author.0,
-            timestamp,
-            id: id.0,
+            timestamp: timestamp.0,
             version,
-            created,
-            updated,
+            id: id.0,
+            parent: parent.0,
+            created: created.0,
+            updated: updated.0,
             children: children
                 .into_iter()
                 .map(|(name, id)| (name.0, id.0))
@@ -806,15 +610,14 @@ impl WorkspaceManifest {
         key: &SecretKey,
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
-        expected_timestamp: &PyAny,
+        expected_timestamp: DateTime,
     ) -> PyResult<Self> {
-        let expected_timestamp = py_to_rs_datetime(expected_timestamp)?;
-        match libparsec::types::WorkspaceManifest::decrypt_verify_and_load(
+        match libparsec::types::FolderManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
             &expected_author.0,
-            expected_timestamp,
+            expected_timestamp.0,
         ) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
@@ -826,11 +629,12 @@ impl WorkspaceManifest {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [author: DeviceID, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [id: EntryID, "id"],
+            [parent: EntryID, "parent"],
             [version: u32, "version"],
-            [created, "created", py_to_rs_datetime],
-            [updated, "updated", py_to_rs_datetime],
+            [created: DateTime, "created"],
+            [updated: DateTime, "updated"],
             [children: HashMap<EntryName, EntryID>, "children"],
         );
 
@@ -840,7 +644,197 @@ impl WorkspaceManifest {
             r.author = v.0;
         }
         if let Some(v) = timestamp {
-            r.timestamp = v;
+            r.timestamp = v.0;
+        }
+        if let Some(v) = id {
+            r.id = v.0;
+        }
+        if let Some(v) = parent {
+            r.parent = v.0;
+        }
+        if let Some(v) = version {
+            r.version = v;
+        }
+        if let Some(v) = created {
+            r.created = v.0;
+        }
+        if let Some(v) = updated {
+            r.updated = v.0;
+        }
+        if let Some(v) = children {
+            r.children = v.into_iter().map(|(name, id)| (name.0, id.0)).collect();
+        }
+
+        Ok(Self(r))
+    }
+
+    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
+        match op {
+            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
+            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
+            _ => py.NotImplemented(),
+        }
+    }
+
+    #[getter]
+    fn author(&self) -> PyResult<DeviceID> {
+        Ok(DeviceID(self.0.author.clone()))
+    }
+
+    #[getter]
+    fn id(&self) -> PyResult<EntryID> {
+        Ok(EntryID(self.0.id))
+    }
+
+    #[getter]
+    fn parent(&self) -> PyResult<EntryID> {
+        Ok(EntryID(self.0.parent))
+    }
+
+    #[getter]
+    fn version(&self) -> PyResult<u32> {
+        Ok(self.0.version)
+    }
+
+    #[getter]
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.timestamp))
+    }
+
+    #[getter]
+    fn created(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.created))
+    }
+
+    #[getter]
+    fn updated(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.updated))
+    }
+
+    #[getter]
+    fn children<'p>(&self, py: Python<'p>) -> PyResult<&'p PyDict> {
+        let d = PyDict::new(py);
+
+        for (k, v) in &self.0.children {
+            let en = EntryName(k.clone()).into_py(py);
+            let me = EntryID(*v).into_py(py);
+            let _ = d.set_item(en, me);
+        }
+        Ok(d)
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct WorkspaceManifest(pub libparsec::types::WorkspaceManifest);
+
+impl WorkspaceManifest {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.author == other.0.author
+            && self.0.id == other.0.id
+            && self.0.version == other.0.version
+            && self.0.timestamp == other.0.timestamp
+            && self.0.created == other.0.created
+            && self.0.updated == other.0.updated
+            && self.0.children == other.0.children
+    }
+}
+
+#[pymethods]
+impl WorkspaceManifest {
+    #[new]
+    #[args(py_kwargs = "**")]
+    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp: DateTime, "timestamp"],
+            [id: EntryID, "id"],
+            [version: u32, "version"],
+            [created: DateTime, "created"],
+            [updated: DateTime, "updated"],
+            [children: HashMap<EntryName, EntryID>, "children"],
+        );
+
+        Ok(Self(libparsec::types::WorkspaceManifest {
+            author: author.0,
+            timestamp: timestamp.0,
+            id: id.0,
+            version,
+            created: created.0,
+            updated: updated.0,
+            children: children
+                .into_iter()
+                .map(|(name, id)| (name.0, id.0))
+                .collect(),
+        }))
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn dump_and_sign<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    }
+
+    fn dump_sign_and_encrypt<'p>(
+        &self,
+        py: Python<'p>,
+        author_signkey: &SigningKey,
+        key: &SecretKey,
+    ) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
+        ))
+    }
+
+    #[classmethod]
+    fn decrypt_verify_and_load(
+        _cls: &PyType,
+        encrypted: &[u8],
+        key: &SecretKey,
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: DateTime,
+    ) -> PyResult<Self> {
+        match libparsec::types::WorkspaceManifest::decrypt_verify_and_load(
+            encrypted,
+            &key.0,
+            &author_verify_key.0,
+            &expected_author.0,
+            expected_timestamp.0,
+        ) {
+            Ok(x) => Ok(Self(x)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
+        }
+    }
+
+    #[args(py_kwargs = "**")]
+    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs_optional!(
+            py_kwargs,
+            [author: DeviceID, "author"],
+            [timestamp: DateTime, "timestamp"],
+            [id: EntryID, "id"],
+            [version: u32, "version"],
+            [created: DateTime, "created"],
+            [updated: DateTime, "updated"],
+            [children: HashMap<EntryName, EntryID>, "children"],
+        );
+
+        let mut r = self.0.clone();
+
+        if let Some(v) = author {
+            r.author = v.0;
+        }
+        if let Some(v) = timestamp {
+            r.timestamp = v.0;
         }
         if let Some(v) = id {
             r.id = v.0;
@@ -849,10 +843,10 @@ impl WorkspaceManifest {
             r.version = v;
         }
         if let Some(v) = created {
-            r.created = v;
+            r.created = v.0;
         }
         if let Some(v) = updated {
-            r.updated = v;
+            r.updated = v.0;
         }
         if let Some(v) = children {
             r.children = v.into_iter().map(|(name, id)| (name.0, id.0)).collect();
@@ -885,18 +879,18 @@ impl WorkspaceManifest {
     }
 
     #[getter]
-    fn timestamp<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.timestamp)
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.timestamp))
     }
 
     #[getter]
-    fn created<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.created)
+    fn created(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.created))
     }
 
     #[getter]
-    fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.updated)
+    fn updated(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.updated))
     }
 
     #[getter]
@@ -937,22 +931,22 @@ impl UserManifest {
         crate::binding_utils::parse_kwargs!(
             py_kwargs,
             [author: DeviceID, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [id: EntryID, "id"],
             [version: u32, "version"],
-            [created, "created", py_to_rs_datetime],
-            [updated, "updated", py_to_rs_datetime],
+            [created: DateTime, "created"],
+            [updated: DateTime, "updated"],
             [last_processed_message: u64, "last_processed_message"],
             [workspaces: Vec<WorkspaceEntry>, "workspaces"],
         );
 
         Ok(Self(libparsec::types::UserManifest {
             author: author.0,
-            timestamp,
+            timestamp: timestamp.0,
             id: id.0,
             version,
-            created,
-            updated,
+            created: created.0,
+            updated: updated.0,
             last_processed_message,
             workspaces: workspaces.into_iter().map(|w| w.0).collect(),
         }))
@@ -990,17 +984,16 @@ impl UserManifest {
         key: &SecretKey,
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
-        expected_timestamp: &PyAny,
+        expected_timestamp: DateTime,
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
     ) -> PyResult<Self> {
-        let expected_timestamp = py_to_rs_datetime(expected_timestamp)?;
         let data = libparsec::types::UserManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
             &expected_author.0,
-            expected_timestamp,
+            expected_timestamp.0,
         )
         .map_err(|e| DataError::new_err(e.to_string()))?;
         if let Some(expected_id) = expected_id {
@@ -1027,11 +1020,11 @@ impl UserManifest {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [author: DeviceID, "author"],
-            [timestamp, "timestamp", py_to_rs_datetime],
+            [timestamp: DateTime, "timestamp"],
             [id: EntryID, "id"],
             [version: u32, "version"],
-            [created, "created", py_to_rs_datetime],
-            [updated, "updated", py_to_rs_datetime],
+            [created: DateTime, "created"],
+            [updated: DateTime, "updated"],
             [last_processed_message: u64, "last_processed_message"],
             [workspaces: Vec<WorkspaceEntry>, "workspaces"],
         );
@@ -1042,7 +1035,7 @@ impl UserManifest {
             r.author = v.0;
         }
         if let Some(v) = timestamp {
-            r.timestamp = v;
+            r.timestamp = v.0;
         }
         if let Some(v) = id {
             r.id = v.0;
@@ -1051,10 +1044,10 @@ impl UserManifest {
             r.version = v;
         }
         if let Some(v) = created {
-            r.created = v;
+            r.created = v.0;
         }
         if let Some(v) = updated {
-            r.updated = v;
+            r.updated = v.0;
         }
         if let Some(v) = last_processed_message {
             r.last_processed_message = v;
@@ -1098,18 +1091,18 @@ impl UserManifest {
     }
 
     #[getter]
-    fn timestamp<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.timestamp)
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.timestamp))
     }
 
     #[getter]
-    fn created<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.created)
+    fn created(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.created))
     }
 
     #[getter]
-    fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.updated)
+    fn updated(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.updated))
     }
 
     #[getter]

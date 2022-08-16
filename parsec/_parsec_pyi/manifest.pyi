@@ -6,14 +6,13 @@ from parsec._parsec import (
     HashDigest,
     DeviceID,
     SigningKey,
+    DateTime,
     VerifyKey,
 )
 
 from parsec.api.protocol import RealmRole
 
 from parsec.types import FrozenDict
-
-from pendulum import DateTime
 
 class EntryName:
     def __init__(self, name: str) -> None: ...
@@ -57,7 +56,8 @@ class WorkspaceEntry:
     def role_cached_on(self) -> DateTime: ...
     @property
     def role(self) -> RealmRole | None: ...
-    def new(name: EntryName, timestamp: DateTime) -> WorkspaceEntry: ...
+    @classmethod
+    def new(cls, name: EntryName, timestamp: DateTime) -> WorkspaceEntry: ...
     def evolve(self, **kwargs): ...
     def is_revoked(self) -> bool: ...
 
@@ -113,7 +113,9 @@ class FolderManifest:
     def evolve(self, **kwargs): ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: SecretKey) -> bytes: ...
+    @classmethod
     def decrypt_verify_and_load(
+        cls,
         encrypted: bytes,
         key: SecretKey,
         author_verify_key: VerifyKey,
@@ -161,7 +163,9 @@ class FileManifest:
     def evolve(self, **kwargs): ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: SecretKey) -> bytes: ...
+    @classmethod
     def decrypt_verify_and_load(
+        cls,
         encrypted: bytes,
         key: SecretKey,
         author_verify_key: VerifyKey,
@@ -200,7 +204,9 @@ class WorkspaceManifest:
     def evolve(self, **kwargs): ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: SecretKey) -> bytes: ...
+    @classmethod
     def decrypt_verify_and_load(
+        cls,
         encrypted: bytes,
         key: SecretKey,
         author_verify_key: VerifyKey,
@@ -242,7 +248,9 @@ class UserManifest:
     def evolve(self, **kwargs): ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: SecretKey) -> bytes: ...
+    @classmethod
     def decrypt_verify_and_load(
+        cls,
         encrypted: bytes,
         key: SecretKey,
         author_verify_key: VerifyKey,
