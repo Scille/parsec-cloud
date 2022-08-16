@@ -9,6 +9,7 @@ on:
       - "!src/**.rs"
       - "!pyproject.toml"
       - "!poetry.lock"
+      - "!build.py"
       - "!.github/workflows/test-python-ci.yml"
       - "!.github/actions/setup-python-poetry/**"
       - "!.github/actions/setup-rust/**"
