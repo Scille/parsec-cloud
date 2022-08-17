@@ -9,7 +9,7 @@ from parsec._parsec import DateTime
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
-from parsec.api.data import BaseManifest as BaseRemoteManifest, BlockAccess
+from parsec.api.data import BaseManifest as RemoteManifestTypeVar, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.protocol import UserID, MaintenanceType, RealmID
 from parsec.core.types import (
@@ -586,7 +586,7 @@ class WorkspaceFS:
 
     async def _sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True
-    ) -> BaseRemoteManifest:
+    ) -> RemoteManifestTypeVar:
         """
         Synchronize the entry corresponding to a specific ID.
 
@@ -630,7 +630,7 @@ class WorkspaceFS:
 
             # No new manifest to upload, the entry is synced!
             if new_remote_manifest is None:
-                return remote_manifest or (await self.local_storage.get_manifest(entry_id)).base
+                return remote_manifest or (await self.local_storage.get_manifest(entry_id)).base  # type: ignore[return-value]
 
             # Synchronize placeholder children
             if isinstance(new_remote_manifest, (RemoteFolderManifest, RemoteWorkspaceManifest)):

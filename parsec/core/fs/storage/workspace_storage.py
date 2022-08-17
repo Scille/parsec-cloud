@@ -27,7 +27,6 @@ from parsec.core.types import (
     ChunkID,
     LocalDevice,
     FileDescriptor,
-    BaseLocalManifest,
     LocalFileManifest,
     LocalWorkspaceManifest,
 )
@@ -40,6 +39,7 @@ from parsec.core.fs.storage.version import (
     get_workspace_data_storage_db_path,
     get_workspace_cache_storage_db_path,
 )
+from parsec.core.types.manifest import LocalManifestTypeVar
 
 
 logger = get_logger()
@@ -110,13 +110,13 @@ class BaseWorkspaceStorage:
         """
         raise NotImplementedError
 
-    async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
+    async def get_manifest(self, entry_id: EntryID) -> LocalManifestTypeVar:
         raise NotImplementedError
 
     async def set_manifest(
         self,
         entry_id: EntryID,
-        manifest: BaseLocalManifest,
+        manifest: LocalManifestTypeVar,
         cache_only: bool = False,
         check_lock_status: bool = True,
         removed_ids: Optional[Set[Union[BlockID, ChunkID]]] = None,
@@ -152,7 +152,7 @@ class BaseWorkspaceStorage:
                 del self.locking_tasks[entry_id]
 
     @asynccontextmanager
-    async def lock_manifest(self, entry_id: EntryID) -> AsyncIterator[BaseLocalManifest]:
+    async def lock_manifest(self, entry_id: EntryID) -> AsyncIterator[LocalManifestTypeVar]:
         async with self.lock_entry_id(entry_id):
             yield await self.get_manifest(entry_id)
 
@@ -385,14 +385,14 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         """
         return cast(LocalWorkspaceManifest, self.manifest_storage._cache[self.workspace_id])
 
-    async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
+    async def get_manifest(self, entry_id: EntryID) -> LocalManifestTypeVar:
         """Raises: FSLocalMissError"""
         return await self.manifest_storage.get_manifest(entry_id)
 
     async def set_manifest(
         self,
         entry_id: EntryID,
-        manifest: BaseLocalManifest,
+        manifest: LocalManifestTypeVar,
         cache_only: bool = False,
         check_lock_status: bool = True,
         removed_ids: Optional[Set[Union[BlockID, ChunkID]]] = None,
@@ -479,7 +479,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
             chunk_storage=workspace_storage.chunk_storage,
         )
 
-        self._cache: Dict[EntryID, BaseLocalManifest] = {}
+        self._cache: Dict[EntryID, LocalManifestTypeVar] = {}
         self.workspace_storage = workspace_storage
         self.timestamp = timestamp
         self.manifest_storage = None
@@ -526,7 +526,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
         """
         return self.workspace_storage.get_workspace_manifest()
 
-    async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
+    async def get_manifest(self, entry_id: EntryID) -> LocalManifestTypeVar:
         """Raises: FSLocalMissError"""
         assert isinstance(entry_id, EntryID)
         try:
@@ -537,7 +537,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     async def set_manifest(
         self,
         entry_id: EntryID,
-        manifest: BaseLocalManifest,
+        manifest: LocalManifestTypeVar,
         cache_only: bool = False,
         check_lock_status: bool = True,
         removed_ids: Optional[Set[Union[BlockID, ChunkID]]] = None,

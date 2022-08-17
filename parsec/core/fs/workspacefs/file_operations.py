@@ -148,7 +148,7 @@ def prepare_write(
         offset = manifest.size
 
     # Copy buffers
-    blocks = list(manifest.blocks)
+    blocks: list[Tuple[Chunk, ...]] = list(manifest.blocks)
 
     # Loop over blocks
     for block, sub_size, start, content_offset in split_write(size, offset, manifest.blocksize):
