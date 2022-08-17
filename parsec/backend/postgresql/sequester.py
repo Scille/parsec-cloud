@@ -341,7 +341,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
             service = await self._get_service(conn, organization_id, service_id)
             if service.service_type != SequesterServiceType.STORAGE:
                 raise SequesterWrongServiceType(
-                    "Service type {service.service_type} is not compatible with export"
+                    f"Service type {service.service_type} is not compatible with export"
                 )
             data = await conn.fetch(
                 *_get_sequester_blob(
