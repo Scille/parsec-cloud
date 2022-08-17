@@ -32,7 +32,7 @@ class ManifestStorage:
         # since the last call to `clear_memory_cache`
         self._cache: Dict[EntryID, BaseLocalManifest] = {}
 
-        # This dictionnary keeps track of all the entry ids of the manifests
+        # This dictionary keeps track of all the entry ids of the manifests
         # that have been added to the cache but still needs to be written to
         # the localdb. The corresponding value is a set with the ids of all
         # the chunks that needs to be removed from the localdb after the

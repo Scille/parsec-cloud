@@ -239,7 +239,7 @@ class UserRemoteLoader:
                 # Make sure author had the right to do this
                 existing_user_role = current_roles.get(unsecure_certif.user_id)
                 if not current_roles and unsecure_certif.user_id == author.device_id.user_id:
-                    # First user is autosigned
+                    # First user is auto-signed
                     needed_roles: Tuple[Optional[RealmRole], ...] = (None,)
                 elif (
                     existing_user_role in owner_or_manager
@@ -269,7 +269,7 @@ class UserRemoteLoader:
         except DataError as exc:
             raise FSError(f"Invalid realm role certificates: {exc}") from exc
 
-        # Now unsecure_certifs is no longer unsecure given we have valided it items
+        # Now unsecure_certifs is no longer unsecure given we have validated its items
         return [c for c, _ in unsecure_certifs], current_roles
 
     async def load_realm_role_certificates(
@@ -701,7 +701,7 @@ class RemoteLoader(UserRemoteLoader):
         workspace_entry = self.get_workspace_entry()
 
         if self._sequester_services_cache is None:
-            # Regular mode: we only encrypt the blob with the workspace symetric key
+            # Regular mode: we only encrypt the blob with the workspace symmetric key
             sequester_blob = None
             try:
                 ciphered = manifest.dump_sign_and_encrypt(
@@ -712,7 +712,7 @@ class RemoteLoader(UserRemoteLoader):
 
         else:
             # Sequestered organization mode: we also encrypt the blob with each
-            # sequester services' asymetric encryption key
+            # sequester services' asymmetric encryption key
             try:
                 signed = manifest.dump_and_sign(author_signkey=self.device.signing_key)
             except DataError as exc:

@@ -144,7 +144,7 @@ class EntryTransactions(FileTransactions):
         # - 1. Lock the parent (it must exist). While the parent is locked, no
         #   children can be added, renamed or removed.
         # - 2. Lock the children if exists. It it doesn't, there is nothing to lock
-        #   since the parent lock guarentees that it is not going to be added while
+        #   since the parent lock guarantees that it is not going to be added while
         #   using the context.
 
         # This double locking is only required for a single use case: the overwriting

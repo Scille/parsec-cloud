@@ -80,13 +80,13 @@ def get_conflict_filename(
 
 
 def full_name(name: EntryName, suffix: str) -> EntryName:
-    # Separate file name from the extentions (if any)
+    # Separate file name from the extensions (if any)
     name_parts = name.str.split(".")
     non_empty_indexes = (i for i, part in enumerate(name_parts) if part)
     first_non_empty_index = next(non_empty_indexes, len(name_parts) - 1)
     original_base_name = ".".join(name_parts[: first_non_empty_index + 1])
     original_extensions = name_parts[first_non_empty_index + 1 :]
-    # Loop over attemps, in case the produced entry name is too long
+    # Loop over attempts, in case the produced entry name is too long
     base_name = original_base_name
     extensions = original_extensions
     while True:
@@ -242,7 +242,7 @@ def merge_manifests(
     # changes we know about (given we are the author of it !).
     # If the speculative flag is not taken into account, we would
     # consider we have  willingly removed all entries from the remote,
-    # hence uploading a new expurged remote manifest.
+    # hence uploading a new expunged remote manifest.
     #
     # Of course removing local storage is an unlikely situation, but:
     # - it cannot be ruled out and would produce rare&exotic behavior
@@ -431,7 +431,7 @@ class SyncTransactions(EntryTransactions):
 
     async def file_reshape(self, entry_id: EntryID) -> None:
 
-        # Loop over attemps
+        # Loop over attempts
         while True:
 
             # Fetch and lock

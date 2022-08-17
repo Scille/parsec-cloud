@@ -31,7 +31,7 @@ def merge_workspace_entry(
         # should imply `diverged.encrypted_on == target.encrypted_on`, but
         # there is no way to enforce this (e.g. a buggy client may have change
         # this value...). However we'd better keep the remote value to avoid
-        # constant sync fight between two client if they endup with a different
+        # constant sync fight between two client if they end-up with a different
         # value they both consider the "right" one.
         encryption_revision = target.encryption_revision
         encrypted_on = target.encrypted_on
