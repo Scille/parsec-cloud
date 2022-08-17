@@ -118,7 +118,7 @@ LIMIT 1
 
 _q_get_organization_services = Q(
     f"""
-SELECT service_id, service_label, service_certificate, created_on, disabled_on
+SELECT service_id, service_label, service_certificate, created_on, disabled_on, service_type, webhook_url
 FROM sequester_service
 WHERE
     organization={ q_organization_internal_id("$organization_id") }
@@ -327,6 +327,8 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     service_certificate=entry["service_certificate"],
                     created_on=entry["created_on"],
                     disabled_on=entry["disabled_on"],
+                    service_type=SequesterServiceType(entry["service_type"].lower()),
+                    webhook_url=entry["webhook_url"],
                 )
                 for entry in entries
             ]
