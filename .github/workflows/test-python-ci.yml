@@ -23,10 +23,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-20.04
-          - macos-12
-          - windows-2022
+        include:
+          - name: 🐧 Linux
+            os: ubuntu-20.04
+          - name: 🍎 macOS
+            os: macos-12
+          - name: 🏁 Windows
+            os: windows-2022
+    name: '${{ matrix.name }}: 🐍 Python tests'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
