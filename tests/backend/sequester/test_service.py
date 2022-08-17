@@ -12,6 +12,7 @@ from parsec.backend.sequester import (
     SequesterServiceAlreadyExists,
     SequesterCertificateOutOfBallparkError,
     SequesterServiceAlreadyDisabledError,
+    SequesterServiceType,
 )
 
 from tests.common import (
@@ -199,3 +200,28 @@ async def test_create_disable_services(
         await backend.sequester.get_service(
             organization_id=otherorg.organization_id, service_id=service.service_id
         )
+
+
+@pytest.mark.trio
+@customize_fixtures(coolorg_is_sequestered_organization=True)
+async def test_webhook_services(
+    coolorg: OrganizationFullData, otherorg: OrganizationFullData, backend
+):
+    url = "http://somewhere.post"
+    service = sequester_service_factory(
+        "TestWebhookService",
+        coolorg.sequester_authority,
+        service_type=SequesterServiceType.WEBHOOK,
+        webhook_url=url,
+    )
+
+    await backend.sequester.create_service(
+        organization_id=coolorg.organization_id, service=service.backend_service
+    )
+    services = await backend.sequester.get_organization_services(
+        organization_id=coolorg.organization_id
+    )
+
+    assert len(services) == 1
+    registered_service = services[0]
+    assert service.backend_service == registered_service
