@@ -4,7 +4,7 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::pyclass::CompareOp;
 use pyo3::types::PyType;
-use pyo3::PyResult;
+use pyo3::{PyAny, PyResult};
 
 use crate::binding_utils::hash_generic;
 

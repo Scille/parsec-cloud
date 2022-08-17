@@ -135,8 +135,6 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchReq>()?;
     m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchRep>()?;
     m.add_class::<protocol::ReencryptionBatchEntry>()?;
-    // LocalDevice
-    m.add_class::<local_device::LocalDevice>()?;
     // Storage
     m.add_class::<storage::WorkspaceStorage>()?;
     // File operations
