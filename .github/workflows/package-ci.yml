@@ -21,10 +21,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-22.04
-          - macos-10.15
-          - windows-2022
+        include:
+          - name: 🐧 Linux
+            os: ubuntu-22.04
+          - name: 🍎 macOS
+            os: macos-10.15
+          - name: 🏁 Windows
+            os: windows-2022
+    name: '${{ matrix.name }}: 📦 Packaging (build Wheel)'
     runs-on: ${{ matrix.os }}
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
@@ -81,6 +85,7 @@ jobs:
         timeout-minutes: 5
 
   package-linux-build-snap:
+    name: '🐧 Linux: 📦 Packaging (build Snap)'
     needs: package-wheel
     runs-on: ubuntu-20.04
     env:
@@ -130,6 +135,7 @@ jobs:
           path: ${{ runner.temp }}/parsec*.snap
 
   package-linux-test-snap:
+    name: '🐧 Linux: 📦 Packaging (test Snap)'
     needs: package-linux-build-snap
     runs-on: ubuntu-20.04
     steps:
@@ -153,6 +159,7 @@ jobs:
           xvfb-run parsec --diagnose
 
   package-linux-release-snap:
+    name: '🐧 Linux: 📦 Packaging (release Snap)'
     needs: [ package-linux-build-snap, package-linux-test-snap ]
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
@@ -171,6 +178,7 @@ jobs:
         run: snapcraft upload --release=edge dist/parsec*.snap
 
   package-linux-release-pypi:
+    name: '🐧 Linux: 📦 Packaging (release Pypi)'
     needs: [ package-wheel, package-linux-test-snap ]
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
@@ -187,6 +195,7 @@ jobs:
           password: ${{ secrets.PYPI_CREDENTIALS }}
 
   package-windows-build-installer-content:
+    name: '🏁 Windows: 📦 Packaging (build installer content)'
     needs: package-wheel
     runs-on: windows-2022
     steps:
@@ -234,6 +243,7 @@ jobs:
 
   package-macos-build-app:
     runs-on: macos-10.15
+    name: '🍎 macOS: 📦 Packaging (build installer content)'
     needs: package-wheel
     env:
       WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
