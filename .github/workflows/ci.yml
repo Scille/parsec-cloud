@@ -1,0 +1,307 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+env:
+  python-version: "3.9"
+  rust-version: 1.62.0
+  node-version: "16"
+  # Need feature from poetry 1.2.x that aren't present in 1.1.x
+  poetry-version: 1.2.0b3
+  postgre-version: 12
+  pytest-base-args: >-
+    --log-level=DEBUG
+    --durations=10
+    --side-effects-timeout=10
+    -vv
+    -x
+  # Compile Rust extensions in release speeds up Python tests a lot
+  FORCE_MATURIN_RELEASE: 1
+
+jobs:
+
+  # Github PR merging is configured to only require this job to pass
+  ci-is-happy:
+    name: ⭐ CI is happy ⭐
+    needs: [ check-quality-assurance, test-python-matrix, test-rust-matrix ]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "My job here is done !"
+
+##############################################################################
+#                                   📊 Q&A                                   #
+##############################################################################
+
+  check-quality-assurance:
+    name: 📊 Q&A
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - uses: ./.github/actions/setup-python-poetry
+        with:
+          python-version: ${{ env.python-version }}
+          poetry-version: ${{ env.poetry-version }}
+
+      - uses: actions/setup-node@2fddd8803e2f5c9604345a0b591c3020ee971a93  # pin v3.4.1
+        with:
+          node-version: ${{ env.node-version }}
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          version: ${{ env.rust-version }}
+          components: rustfmt, clippy
+          cache-key: rust-python
+        timeout-minutes: 10
+
+      - name: Debug installed tools
+        run: |
+          python --version
+          node --version
+          # Rust tools
+          whereis rustup
+          rustup --version
+          whereis rustc
+          rustc --version
+          whereis cargo
+          cargo --version
+
+      - name: Debug rust cache
+        run: ls -la ~/.cargo/{.,bin,git,registry} target || true
+
+      - name: Check Commit Signature
+        run: python .github/scripts/check_commit_signature.py
+
+      - name: Check Newsfragment
+        if: |
+          startsWith(github.ref, 'refs/pull/')
+          && !(
+            startsWith(github.head_ref, 'dependabot')
+            || startsWith(github.head_ref, 'yolo')
+            || startsWith(github.head_ref, 'release')
+            )
+        run: |
+          whereis git
+          git fetch origin master
+          python .github/scripts/check_newsfragments.py ${{ github.head_ref }}
+
+      - name: Patch pre-commit for line-ending
+        run: |
+          sed -i '/id: mixed-line-ending/a\        args: [ --fix=lf ]' .pre-commit-config.yaml
+          cat .pre-commit-config.yaml
+
+      - name: Install project (needed for mypy check)
+        run: poetry install -E core -E backend
+
+      - uses: ./.github/actions/use-pre-commit
+
+##############################################################################
+#                            🐍 Python tests                                 #
+##############################################################################
+
+  test-python-matrix:
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: 🐧 Linux
+            os: ubuntu-22.04
+          - name: 🍎 macOS
+            os: macos-12
+          - name: 🏁 Windows
+            os: windows-2022
+    name: '${{ matrix.name }}: 🐍 Python tests'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - uses: ./.github/actions/paths-filter
+        id: changes
+
+      - name: Check modified path that require python-ci run
+        id: python-changes
+        if: >-
+          steps.changes.outputs.python == 'true'
+          || steps.changes.outputs.rust-ext == 'true'
+        run: echo "::set-output name=run::true"
+
+        # Install required packages for ubuntu:
+        # - LibFuse2 since only libfuse3 is available on ubuntu-20.04,
+        # - `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
+        # - A specific version of postgresql is used for postgre's tests
+        # - dependencies for Qt testing. See: https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#github-actions
+      - name: (🐧 Linux) Install packages fuse2, postgre-${{ env.postgre-version }}
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        run: >
+          sudo apt-get -y install
+          libfuse2
+          fuse
+          desktop-file-utils
+          postgresql-${{ env.postgre-version }}
+          libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0
+          libxcb-keysyms1 libxcb-randr0 libxcb-render-util0
+          libxcb-xinerama0 libxcb-xfixes0 x11-utils
+
+      - name: (🍎 macOS) Install macfuse
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'macos-')
+        run: brew install --cask macfuse
+
+      - name: (🏁 Windows) Install WinFSP
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'windows-')
+        shell: bash
+        run: |
+          choco install -y --limit-output winfsp --version=${{ env.winfsp-version }}
+          mkdir winfsp-test
+          curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.8/winfsp-tests-1.8.20304.zip -o winfsp-test/winfsp-tests.zip
+          unzip winfsp-test/winfsp-tests.zip -d winfsp-test
+          pwd
+          echo "$(pwd)\winfsp-test" >> "$GITHUB_PATH"
+
+      - uses: ./.github/actions/setup-rust
+        if: steps.python-changes.outputs.run == 'true'
+        with:
+          version: ${{ env.rust-version }}
+          cache-key: rust-python
+        timeout-minutes: 10
+
+      - uses: ./.github/actions/setup-python-poetry
+        if: steps.python-changes.outputs.run == 'true'
+        id: setup-python
+        with:
+          python-version: ${{ env.python-version }}
+          poetry-version: ${{ env.poetry-version }}
+
+      - name: Install python deps
+        if: steps.python-changes.outputs.run == 'true'
+        run: poetry install -E core -E backend
+
+      - name: Debug python & pip version
+        if: steps.python-changes.outputs.run == 'true'
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -x
+          poetry run python --version
+          poetry run pip --version
+
+      - name: Basic tests
+        if: steps.python-changes.outputs.run == 'true'
+        run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto
+        timeout-minutes: 10
+
+      - name: (🐧🏁 Not macOS) Mountpoint tests
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'macos-') != true
+        run: poetry run pytest ${{ env.pytest-base-args }} tests --runmountpoint --runslow -m mountpoint
+        timeout-minutes: 10
+
+      - name: (🐧 Linux) Install pytest-xvfb plugin for pytest for Qt Testing
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        run: poetry run pip install pytest-xvfb
+
+      - name: (🐧🏁 Not macOS) GUI tests
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'macos-') != true
+        run: poetry run pytest ${{ env.pytest-base-args }} tests --runmountpoint --runslow --rungui -m gui
+        timeout-minutes: 10
+
+      - name: (🐧 Linux) PostgreSQL tests
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        env:
+          PGINSTALLATION: /usr/lib/postgresql/${{ env.postgre-version }}/bin
+        run: poetry run pytest ${{ env.pytest-base-args }} tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
+        timeout-minutes: 10
+
+      - name: Hypothesis tests
+        if: steps.python-changes.outputs.run == 'true'
+        run: poetry run pytest ${{ env.pytest-base-args }} tests --runslow -m slow --numprocesses auto
+        timeout-minutes: 50
+
+##############################################################################
+#                            🦀 Rust tests                                   #
+##############################################################################
+
+  test-rust-matrix:
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: 🐧 Linux
+            os: ubuntu-22.04
+          - name: 🍎 macOS
+            os: macos-12
+          - name: 🏁 Windows
+            os: windows-2022
+    name: '${{ matrix.name }}: 🦀 Rust tests'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - uses: ./.github/actions/paths-filter
+        id: changes
+
+      - name: Check modified path that require rust-ci run
+        id: rust-changes
+        if: >-
+          steps.changes.outputs.rust == 'true'
+          || steps.changes.outputs.rust-ext == 'true'
+        run: echo "::set-output name=run::true"
+
+      - uses: ./.github/actions/setup-rust
+        if: steps.rust-changes.outputs.run == 'true'
+        with:
+          version: ${{ env.rust-version }}
+          cache-key: rust
+        timeout-minutes: 10
+
+      # Pyo3 need additional configuration on MacOS to be manually build
+      # see https://pyo3.rs/master/building_and_distribution.html#macos
+      - name: (🍎 macOS) Configure cargo for PyO3
+        if: >-
+          steps.rust-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'macos-')
+        shell: bash
+        run: |
+          set -eux
+          set -o pipefail
+          mkdir -p .cargo
+          cat << EOF | tee .cargo/config.toml
+          [target.x86_64-apple-darwin]
+          rustflags = [
+            "-C", "link-arg=-undefined",
+            "-C", "link-arg=dynamic_lookup",
+          ]
+          EOF
+
+      - name: Build rust codebase
+        if: steps.rust-changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -ex
+          cargo build --workspace
+          cargo test --workspace --no-run
+
+      - name: Test rust codebase
+        if: steps.rust-changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -ex
+          cargo test --package libparsec_crypto --features use-sodiumoxide
+          cargo test --package libparsec_crypto --features use-rustcrypto
+          cargo test --workspace --features mock-time --exclude libparsec_crypto
