@@ -1,11 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
+from unittest.mock import patch
 
 from parsec.api.protocol import OrganizationID, VlobID, SequesterServiceID
 from parsec.backend.sequester import (
     SequesterOrganizationNotFoundError,
     SequesterServiceNotFoundError,
+    SequesterServiceType,
 )
 
 from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
@@ -142,3 +144,52 @@ async def test_vlob_create_update_and_sequester_access(
         await backend.sequester.dump_realm(
             organization_id=coolorg.organization_id, service_id=dummy_service_id, realm_id=realm
         )
+
+
+@customize_fixtures(coolorg_is_sequestered_organization=True)
+@pytest.mark.trio
+async def test_webhook_vlob_create_update(coolorg: OrganizationFullData, alice_ws, realm, backend):
+    vlob_id = VlobID.from_hex("00000000000000000000000000000001")
+    blob = b"<encrypted with workspace's key>"
+    sequester_blob = b"<encrypted sequester blob>"
+
+    with patch("parsec.backend.http_utils.urllib.request") as mock:
+
+        # Register webhook service
+        url = "http://somewhere.post"
+        service = sequester_service_factory(
+            "TestWebhookService",
+            coolorg.sequester_authority,
+            service_type=SequesterServiceType.WEBHOOK,
+            webhook_url=url,
+        )
+
+        await backend.sequester.create_service(
+            organization_id=coolorg.organization_id, service=service.backend_service
+        )
+
+        rep = await vlob_create(
+            alice_ws,
+            realm_id=realm,
+            vlob_id=vlob_id,
+            blob=blob,
+            sequester_blob={service.service_id: sequester_blob},
+            check_rep=False,
+        )
+        assert rep == {"status": "ok"}
+
+        mock.Request.assert_called_once_with(url, data=sequester_blob, headers={}, method="POST")
+        mock.reset_mock()
+
+        sequester_blob = b"<another encrypted sequester blob>"
+        rep = await vlob_update(
+            alice_ws,
+            vlob_id=vlob_id,
+            version=2,
+            blob=blob,
+            sequester_blob={service.service_id: sequester_blob},
+            check_rep=False,
+        )
+
+        assert rep == {"status": "ok"}
+        mock.Request.assert_called_once_with(url, data=sequester_blob, headers={}, method="POST")
