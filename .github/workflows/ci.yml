@@ -97,7 +97,7 @@ jobs:
 
   test-python-matrix:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - name: 🐧 Linux
@@ -231,7 +231,7 @@ jobs:
 
   test-rust-matrix:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - name: 🐧 Linux
