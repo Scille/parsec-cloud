@@ -71,6 +71,10 @@ class VlobSequesterDisabledError(VlobError):
     pass
 
 
+class VlobSequesterServiceRejected(VlobError):
+    pass
+
+
 class VlobSequesterServiceInconsistencyError(VlobError):
     def __init__(
         self, sequester_authority_certificate: bytes, sequester_services_certificates: List[bytes]
@@ -130,6 +134,10 @@ class BaseVlobComponent:
                     "sequester_services_certificates": exc.sequester_services_certificates,
                 }
             )
+
+        except VlobSequesterServiceRejected:
+            # TODO: add return fields: service id and service label
+            return vlob_create_serializer.rep_dump({"status": "sequester_rejected"})
 
         return vlob_create_serializer.rep_dump({"status": "ok"})
 
