@@ -24,6 +24,14 @@ env:
 
 jobs:
 
+  # Github PR merging is configured to only require this job to pass
+  ci-is-happy:
+    name: ⭐ CI is happy ⭐
+    needs: [ check-quality-assurance, test-python-matrix, test-rust-matrix ]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "My job here is done !"
+
 ##############################################################################
 #                                   📊 Q&A                                   #
 ##############################################################################
