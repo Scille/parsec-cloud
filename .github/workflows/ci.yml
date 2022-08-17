@@ -55,7 +55,7 @@ jobs:
         with:
           version: ${{ env.rust-version }}
           components: rustfmt, clippy
-          cache-key: qa
+          cache-key: rust-python
         timeout-minutes: 10
 
       - name: Debug installed tools
@@ -171,7 +171,7 @@ jobs:
         if: steps.python-changes.outputs.run == 'true'
         with:
           version: ${{ env.rust-version }}
-          cache-key: python
+          cache-key: rust-python
         timeout-minutes: 10
 
       - uses: ./.github/actions/setup-python-poetry
