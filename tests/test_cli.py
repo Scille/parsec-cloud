@@ -5,6 +5,7 @@ import os
 from parsec.backend.sequester import (
     SequesterServiceAlreadyDisabledError,
     SequesterServiceAlreadyEnabledError,
+    SequesterServiceType,
 )
 import trio
 from uuid import UUID
@@ -1086,6 +1087,14 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
                 f"backend sequester export_realm {common_args} --service {service_id} --realm {realm} --output {path} -b MOCKED",
             )
 
+        async def create_webhook_service(service_key_path, authority_key_path, service_label):
+            result = await _cli_invoke_in_thread(
+                runner,
+                f"backend sequester create_service {common_args} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --service-label {service_label} --service-type webhook --webhook-url http://nowhere.lost",
+            )
+            assert result.exit_code == 0
+            return result
+
         # Assert no service configured
         result = await run_list_services()
         assert result.output == "Found 0 sequester service(s)\n"
@@ -1139,6 +1148,14 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         files = list(output_dir.iterdir())
         assert len(files) == 1
         assert files[0].name.endswith(f"parsec-sequester-export-realm-{realm_id}.sqlite")
+
+        # Create webhook based service
+        result = await create_webhook_service(
+            service_key_path, authority_key_path, "WebhookService"
+        )
+        services = await backend.sequester.get_organization_services(alice.organization_id)
+        assert services[-1].service_type == SequesterServiceType.WEBHOOK
+        assert services[-1].webhook_url
 
 
 @pytest.mark.trio
