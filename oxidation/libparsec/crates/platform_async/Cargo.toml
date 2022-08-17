@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-flume = "0.10.13"
+flume = "0.10.14"
 # futures is used for its macros `select_all` and `join_all`
 futures = "0.3.21"
 
@@ -28,8 +28,8 @@ futures-lite = "1.12.0"
 web-sys = { version = "0.3.58", features = ["Window", "Performance"]}
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.19.2", features = ["rt", "time", "sync", "macros"] }
+tokio = { version = "1.20.1", features = ["rt", "time", "sync", "macros"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-tokio = { version = "1.19.2", features = ["full"] }
+tokio = { version = "1.20.1", features = ["full"] }
 simple_logger = "2.2.0"

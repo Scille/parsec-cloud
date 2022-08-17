@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
-import pendulum
+from parsec._parsec import DateTime
 import pytest
 from unittest.mock import ANY
 
@@ -524,7 +524,7 @@ async def test_organization_stats_data(backend_asgi_app, realm, realm_factory, a
         realm_id=realm,
         encryption_revision=1,
         vlob_id=VlobID.new(),
-        timestamp=pendulum.now(),
+        timestamp=DateTime.now(),
         blob=b"1234",
     )
     rep = await organization_stats()

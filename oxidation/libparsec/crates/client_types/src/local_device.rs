@@ -1,7 +1,8 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use serde::{Deserialize, Serialize};
 use serde_with::*;
+use serialization_format::parsec_data;
 use sha2::Digest;
 
 use libparsec_crypto::*;
@@ -140,38 +141,14 @@ impl LocalDevice {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct LocalDeviceData {
-    pub organization_addr: BackendOrganizationAddr,
-    pub device_id: DeviceID,
-    // Added in Parsec v1.14
-    // `device_label` and `human_handle` are new fields (so legacy data may not contain
-    // them) that are optional. Hence missing field is handled similarly that `None`.
-    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-    pub device_label: Option<Option<DeviceLabel>>,
-    // Added in Parsec v1.13
-    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-    pub human_handle: Option<Option<HumanHandle>>,
-    pub signing_key: SigningKey,
-    pub private_key: PrivateKey,
-    // `profile` replaces `is_admin` field (which is still required for
-    // backward compatibility), hence `None` is not a valid value (only missing
-    // allowed
-    pub is_admin: bool,
-    // Added in Parsec v1.14
-    #[serde(default, deserialize_with = "maybe_field::deserialize_some")]
-    pub profile: Option<UserProfile>,
-    pub user_manifest_id: EntryID,
-    pub user_manifest_key: SecretKey,
-    pub local_symkey: SecretKey,
-}
+parsec_data!("schema/local_device.json");
 
 impl TryFrom<LocalDeviceData> for LocalDevice {
     type Error = &'static str;
 
     fn try_from(data: LocalDeviceData) -> Result<Self, Self::Error> {
         let profile = match data.profile {
-            Some(profile) => {
+            Maybe::Present(profile) => {
                 // `profile` field is defined, however `is_admin` is also present for
                 // backward compatibility and we must ensure they are both compatible.
                 let expected_is_admin = profile == UserProfile::Admin;
@@ -180,7 +157,7 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
                 }
                 profile
             }
-            None => {
+            Maybe::Absent => {
                 // `profile` field not present, this is legacy data
                 if data.is_admin {
                     UserProfile::Admin
@@ -213,11 +190,11 @@ impl From<LocalDevice> for LocalDeviceData {
         Self {
             organization_addr: obj.organization_addr,
             device_id: obj.device_id,
-            device_label: Some(obj.device_label),
-            human_handle: Some(obj.human_handle),
+            device_label: Maybe::Present(obj.device_label),
+            human_handle: Maybe::Present(obj.human_handle),
             signing_key: obj.signing_key,
             private_key: obj.private_key,
-            profile: Some(obj.profile),
+            profile: Maybe::Present(obj.profile),
             is_admin,
             user_manifest_id: obj.user_manifest_id,
             user_manifest_key: obj.user_manifest_key,

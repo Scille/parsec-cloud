@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import pendulum
+from parsec._parsec import DateTime
 from typing import Dict, List, Optional
 
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole
@@ -76,7 +76,7 @@ class PGRealmComponent(BaseRealmComponent):
         realm_id: RealmID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
-        timestamp: pendulum.DateTime,
+        timestamp: DateTime,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             await query_start_reencryption_maintenance(

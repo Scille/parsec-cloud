@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Union, NewType
 
@@ -13,8 +13,9 @@ from parsec.core.types.backend_address import (
     BackendOrganizationFileLinkAddr,
     BackendInvitationAddr,
     BackendPkiEnrollmentAddr,
+    BackendAddrType,
 )
-from parsec.core.types.local_device import LocalDevice, UserInfo, DeviceInfo
+from parsec.core.types.local_device import UserInfo, DeviceInfo, LocalDevice
 from parsec.core.types.manifest import (
     DEFAULT_BLOCK_SIZE,
     LocalFileManifest,
@@ -66,6 +67,7 @@ __all__ = (
     "BackendOrganizationFileLinkAddr",
     "BackendInvitationAddr",
     "BackendPkiEnrollmentAddr",
+    "BackendAddrType",
     # local_device
     "LocalDevice",
     "UserInfo",

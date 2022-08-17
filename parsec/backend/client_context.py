@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from enum import Enum
 from uuid import uuid4
@@ -9,7 +9,6 @@ import trio
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.event_bus import EventBusConnectionContext
 from parsec.api.version import ApiVersion, API_V2_VERSION
-from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
@@ -18,6 +17,7 @@ from parsec.api.protocol import (
     RealmID,
     HumanHandle,
     DeviceLabel,
+    UserProfile,
 )
 from parsec.backend.utils import ClientType
 from parsec.backend.invite import Invitation

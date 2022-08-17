@@ -1,9 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+import datetime
 from typing import Mapping
 from uuid import UUID
-from pendulum import from_timestamp
-from datetime import datetime
+from parsec._parsec import DateTime, LocalDateTime
 from struct import pack as struct_pack, unpack as struct_unpack
 from msgpack import (
     packb as msgpack_packb,
@@ -26,9 +26,13 @@ def packb(data: Mapping, exc_cls=SerdePackingError) -> bytes:
     """
 
     def _default(obj):
-        # TODO: we should be only testing against pendulum.DateTime, but
+        # TODO: we should be only testing against DateTime, but
         # asyncpg returns datetime
-        if isinstance(obj, datetime):
+        if (
+            isinstance(obj, DateTime)
+            or isinstance(obj, LocalDateTime)
+            or isinstance(obj, datetime.datetime)
+        ):
             return ExtType(1, struct_pack("!d", obj.timestamp()))
         elif isinstance(obj, UUID):
             return ExtType(2, obj.bytes)
@@ -45,7 +49,7 @@ def packb(data: Mapping, exc_cls=SerdePackingError) -> bytes:
 def _unpackb_ext_hook(code, data):
     if code == 1:
         # Uses UTC as default timezone
-        return from_timestamp(struct_unpack("!d", data)[0])
+        return DateTime.from_timestamp(struct_unpack("!d", data)[0])
     elif code == 2:
         return UUID(bytes=data)
 

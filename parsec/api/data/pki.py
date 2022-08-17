@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 from typing import Dict, Any, Optional
@@ -12,9 +12,10 @@ from parsec.api.protocol import (
     HumanHandleField,
     DeviceLabel,
     DeviceLabelField,
+    UserProfile,
+    UserProfileField,
 )
 from parsec.api.data.base import BaseAPIData
-from parsec.api.data.certif import UserProfile, UserProfileField
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)

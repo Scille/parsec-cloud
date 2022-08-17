@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from uuid import uuid4
 from async_generator import asynccontextmanager
 import attr
 import click
-import pendulum
+from parsec._parsec import DateTime
 from typing import Optional, Dict, List, Tuple
 from pathlib import Path
 import oscrypto.asymmetric
@@ -147,7 +147,7 @@ def create_service(
     authority_key = oscrypto.asymmetric.load_private_key(authority_private_key.read_bytes())
     # Generate data schema
     service_id = SequesterServiceID(uuid4())
-    now = pendulum.now()
+    now = DateTime.now()
     certif_data = SequesterServiceCertificate(
         timestamp=now,
         service_id=service_id,

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
 use libparsec_types::UserCertificate;
@@ -375,12 +375,15 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
         "8fa5647969716a11506671527ed21290bea5fee17eae412b4b3273538b4b12730bae333adec8ba"
         "da7236367859626949467ed1aac49ccce4548794d432430020cc3454"
     );
-    let certif =
-        RealmRoleCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id)
-            .unwrap();
+    let certif = RealmRoleCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        CertificateSignerRef::User(&alice.device_id),
+    )
+    .unwrap();
 
     let expected = RealmRoleCertificate {
-        author: alice.device_id.to_owned(),
+        author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: "4486e7cf02d747bd9126679ba58e0474".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
@@ -391,9 +394,12 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
     // Note we cannot just compare with `data` due to signature and keys order
-    let certif2 =
-        RealmRoleCertificate::verify_and_load(&data2, &alice.verify_key(), &alice.device_id)
-            .unwrap();
+    let certif2 = RealmRoleCertificate::verify_and_load(
+        &data2,
+        &alice.verify_key(),
+        CertificateSignerRef::User(&alice.device_id),
+    )
+    .unwrap();
     assert_eq!(certif2, expected);
 }
 
@@ -414,12 +420,15 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
         "283e336571527ed29292ca82d46d45a98939b9f120c9f8e4d4a292ccb4cce4c492d41510e1cc94"
         "1b4c2e6dcfcf335d77df3b512d7df6d23e9612005ac632e4"
     );
-    let certif =
-        RealmRoleCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id)
-            .unwrap();
+    let certif = RealmRoleCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        CertificateSignerRef::User(&alice.device_id),
+    )
+    .unwrap();
 
     let expected = RealmRoleCertificate {
-        author: alice.device_id.to_owned(),
+        author: CertificateSignerOwned::User(alice.device_id.to_owned()),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: "4486e7cf02d747bd9126679ba58e0474".parse().unwrap(),
         user_id: bob.user_id().to_owned(),
@@ -431,8 +440,11 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
     // Note we cannot just compare with `data` due to signature and keys order
-    let certif2 =
-        RealmRoleCertificate::verify_and_load(&data2, &alice.verify_key(), &alice.device_id)
-            .unwrap();
+    let certif2 = RealmRoleCertificate::verify_and_load(
+        &data2,
+        &alice.verify_key(),
+        CertificateSignerRef::User(&alice.device_id),
+    )
+    .unwrap();
     assert_eq!(certif2, expected);
 }

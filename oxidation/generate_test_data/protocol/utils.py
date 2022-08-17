@@ -1,16 +1,15 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import struct
 import math
 import zlib
 import msgpack
-import pendulum
 from binascii import unhexlify
 
 from parsec._version import __version__
 from parsec.crypto import SigningKey, PrivateKey, SecretKey, VerifyKey
-from parsec.api.data import UserProfile, EntryID
-from parsec.api.protocol import HumanHandle, DeviceID, DeviceLabel
+from parsec.api.data import EntryID
+from parsec.api.protocol import HumanHandle, DeviceID, DeviceLabel, UserProfile
 from parsec.core.types import LocalDevice, BackendOrganizationAddr
 
 
@@ -66,7 +65,6 @@ def generate_BOB_local_device():
 
 ALICE = generate_ALICE_local_device()
 BOB = generate_BOB_local_device()
-NOW = pendulum.from_timestamp(1638618643.208821)
 KEY = SecretKey(unhexlify("b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"))
 
 

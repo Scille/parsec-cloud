@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Dict, cast
 from enum import Enum
@@ -31,8 +31,9 @@ class PkiEnrollmentSubmitReqSchema(BaseReqSchema):
     submitter_der_x509_certificate_email = fields.String(
         required=False, missing=None, allow_none=True
     )
+    # Signature should be checked before loading
     submit_payload_signature = fields.Bytes(required=True)
-    submit_payload = fields.Bytes(required=True)  # Signature should be checked before loading
+    submit_payload = fields.Bytes(required=True)
 
 
 class PkiEnrollmentSubmitRepSchema(BaseRepSchema):

@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from pathlib import Path
-from datetime import datetime
+from parsec._parsec import DateTime
 
 from parsec.core.core_events import CoreEvent
 from parsec.api.protocol import RealmRole
@@ -138,9 +138,9 @@ async def test_sharing_notifs(aqtbot, logged_gui, snackbar_catcher, monkeypatch)
     def _snackbar_shown(sb):
         assert snackbar_catcher.snackbars == sb
 
-    ne = WorkspaceEntry.new(EntryName("Workspace"), datetime(2000, 1, 2))
+    ne = WorkspaceEntry.new(EntryName("Workspace"), DateTime(2000, 1, 2))
     ne = ne.evolve(role=RealmRole.CONTRIBUTOR)
-    pe = WorkspaceEntry.new(EntryName("Workspace"), datetime(2000, 1, 1))
+    pe = WorkspaceEntry.new(EntryName("Workspace"), DateTime(2000, 1, 1))
     pe = pe.evolve(role=RealmRole.READER)
 
     c_w.handle_event(CoreEvent.SHARING_UPDATED, new_entry=ne, previous_entry=pe)

@@ -1,12 +1,16 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 from math import ceil
 
-from parsec.api.protocol import InvitationToken, InvitationType, InvitationEmailSentStatus
-from parsec.api.data import UserProfile
+from parsec.api.protocol import (
+    InvitationToken,
+    InvitationType,
+    InvitationEmailSentStatus,
+    UserProfile,
+)
 from parsec.core.types import BackendInvitationAddr, UserInfo
 
 from parsec.core.backend_connection import (

@@ -1,12 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from typing import Type
 from enum import Enum
-from typing import TYPE_CHECKING
-from parsec.types import UUID4
 from parsec.serde import fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import UserIDField, DeviceIDField
-
+from parsec._parsec import RealmID
 
 __all__ = (
     "RealmID",
@@ -25,20 +24,6 @@ __all__ = (
 )
 
 
-class RealmID(UUID4):
-    __slots__ = ()
-
-
-_PyRealmID = RealmID
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import RealmID as _RsRealmID
-    except:
-        pass
-    else:
-        RealmID = _RsRealmID
-
-
 class MaintenanceType(Enum):
     GARBAGE_COLLECTION = "GARBAGE_COLLECTION"
     REENCRYPTION = "REENCRYPTION"
@@ -51,9 +36,9 @@ class RealmRole(Enum):
     READER = "READER"
 
 
-RealmRoleField = fields.enum_field_factory(RealmRole)
-MaintenanceTypeField = fields.enum_field_factory(MaintenanceType)
-RealmIDField = fields.uuid_based_field_factory(RealmID)
+RealmRoleField: Type[fields.BaseEnumField] = fields.enum_field_factory(RealmRole)
+MaintenanceTypeField: Type[fields.BaseEnumField] = fields.enum_field_factory(MaintenanceType)
+RealmIDField: Type[fields.Field] = fields.uuid_based_field_factory(RealmID)
 
 
 class RealmCreateReqSchema(BaseReqSchema):

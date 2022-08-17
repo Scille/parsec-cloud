@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -173,7 +173,11 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
             core=core,
         )
         d = GreyedDialog(
-            w, title=_("TEXT_FILE_HISTORY_TITLE_name").format(name=path.name), parent=parent
+            w,
+            title=_("TEXT_FILE_HISTORY_TITLE_name").format(
+                name=path.name if not path.is_root() else workspace_fs.get_workspace_name().str
+            ),
+            parent=parent,
         )
         w.dialog = d
         if on_finished:

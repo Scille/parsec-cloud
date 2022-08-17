@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 
-import pendulum
+from parsec._parsec import DateTime
 import re
-from parsec.api.data import EntryID, BlockID, EntryName
+from parsec.api.data import EntryID, EntryName
 from parsec.api.data.manifest import (
     FileManifest,
     FolderManifest,
@@ -12,7 +12,7 @@ from parsec.api.data.manifest import (
     WorkspaceManifest,
     UserManifest,
 )
-from parsec.api.protocol import DeviceID
+from parsec.api.protocol import DeviceID, BlockID
 from parsec.crypto import SecretKey, HashDigest
 from parsec.core.types import ChunkID
 
@@ -88,9 +88,9 @@ def test_local_file_manifest():
             version=42,
             size=1337,
             blocksize=85,
-            timestamp=pendulum.now(),
-            created=pendulum.now(),
-            updated=pendulum.now(),
+            timestamp=DateTime.now(),
+            created=DateTime.now(),
+            updated=DateTime.now(),
             blocks=(
                 BlockAccess(
                     id=BlockID.new(),
@@ -102,7 +102,7 @@ def test_local_file_manifest():
             ),
         ),
         "need_sync": True,
-        "updated": pendulum.now(),
+        "updated": DateTime.now(),
         "size": 42,
         "blocksize": 64,
         "blocks": (
@@ -141,9 +141,9 @@ def test_local_file_manifest():
                 "version": 1337,
                 "size": 4096,
                 "blocksize": 512,
-                "timestamp": pendulum.now(),
-                "created": pendulum.now(),
-                "updated": pendulum.now(),
+                "timestamp": DateTime.now(),
+                "created": DateTime.now(),
+                "updated": DateTime.now(),
                 "blocks": (
                     BlockAccess(
                         id=BlockID.new(),
@@ -156,7 +156,7 @@ def test_local_file_manifest():
             }
         ),
         "need_sync": False,
-        "updated": pendulum.now(),
+        "updated": DateTime.now(),
         "size": 2048,
         "blocksize": 1024,
         "blocks": (
@@ -219,7 +219,7 @@ def test_local_file_manifest():
     assert py_lfm.asdict() == rs_lfm.asdict()
 
     di = DeviceID("a@b")
-    ts = pendulum.now()
+    ts = DateTime.now()
 
     kwargs = {
         "size": 1024,
@@ -343,13 +343,13 @@ def test_local_folder_manifest():
             id=EntryID.new(),
             parent=EntryID.new(),
             version=42,
-            timestamp=pendulum.now(),
-            created=pendulum.now(),
-            updated=pendulum.now(),
+            timestamp=DateTime.now(),
+            created=DateTime.now(),
+            updated=DateTime.now(),
             children={EntryName("file1.txt"): EntryID.new()},
         ),
         "need_sync": True,
-        "updated": pendulum.now(),
+        "updated": DateTime.now(),
         "children": {EntryName("wksp2"): EntryID.new()},
         "local_confinement_points": frozenset({EntryID.new()}),
         "remote_confinement_points": frozenset({EntryID.new()}),
@@ -366,14 +366,14 @@ def test_local_folder_manifest():
                 "id": EntryID.new(),
                 "parent": EntryID.new(),
                 "version": 1337,
-                "timestamp": pendulum.now(),
-                "created": pendulum.now(),
-                "updated": pendulum.now(),
+                "timestamp": DateTime.now(),
+                "created": DateTime.now(),
+                "updated": DateTime.now(),
                 "children": {EntryName("file2.mp4"): EntryID.new()},
             }
         ),
         "need_sync": False,
-        "updated": pendulum.now(),
+        "updated": DateTime.now(),
         "children": {EntryName("wksp1"): EntryID.new()},
         "local_confinement_points": frozenset({EntryID.new()}),
         "remote_confinement_points": frozenset({EntryID.new()}),
@@ -400,7 +400,7 @@ def test_local_folder_manifest():
     assert py_lfm.parent == rs_lfm.parent
     assert py_lfm.asdict() == rs_lfm.asdict()
 
-    ts = pendulum.now()
+    ts = DateTime.now()
     ei = EntryID.new()
     di = DeviceID("a@b")
 
@@ -505,13 +505,13 @@ def test_local_workspace_manifest():
             author=DeviceID("user@device"),
             id=EntryID.new(),
             version=42,
-            timestamp=pendulum.now(),
-            created=pendulum.now(),
-            updated=pendulum.now(),
+            timestamp=DateTime.now(),
+            created=DateTime.now(),
+            updated=DateTime.now(),
             children={EntryName("file1.txt"): EntryID.new()},
         ),
         "need_sync": True,
-        "updated": pendulum.now(),
+        "updated": DateTime.now(),
         "children": {EntryName("wksp2"): EntryID.new()},
         "local_confinement_points": frozenset({EntryID.new()}),
         "remote_confinement_points": frozenset({EntryID.new()}),
@@ -528,14 +528,14 @@ def test_local_workspace_manifest():
                 "author": DeviceID("a@b"),
                 "id": EntryID.new(),
                 "version": 1337,
-                "timestamp": pendulum.now(),
-                "created": pendulum.now(),
-                "updated": pendulum.now(),
+                "timestamp": DateTime.now(),
+                "created": DateTime.now(),
+                "updated": DateTime.now(),
                 "children": {EntryName("file2.mp4"): EntryID.new()},
             }
         ),
         "need_sync": False,
-        "updated": pendulum.now(),
+        "updated": DateTime.now(),
         "children": {EntryName("wksp1"): EntryID.new()},
         "local_confinement_points": frozenset({EntryID.new()}),
         "remote_confinement_points": frozenset({EntryID.new()}),
@@ -561,7 +561,7 @@ def test_local_workspace_manifest():
     assert py_lwm.to_stats() == rs_lwm.to_stats()
     assert py_lwm.asdict() == rs_lwm.asdict()
 
-    ts = pendulum.now()
+    ts = DateTime.now()
     ei = EntryID.new()
     di = DeviceID("a@b")
 
@@ -651,14 +651,14 @@ def test_local_user_manifest():
             author=DeviceID("user@device"),
             id=EntryID.new(),
             version=42,
-            timestamp=pendulum.now(),
-            created=pendulum.now(),
-            updated=pendulum.now(),
+            timestamp=DateTime.now(),
+            created=DateTime.now(),
+            updated=DateTime.now(),
             last_processed_message=0,
-            workspaces=(WorkspaceEntry.new(EntryName("user"), pendulum.now()),),
+            workspaces=(WorkspaceEntry.new(EntryName("user"), DateTime.now()),),
         ),
         "need_sync": True,
-        "updated": pendulum.now(),
+        "updated": DateTime.now(),
         "last_processed_message": 0,
         "workspaces": (),
         "speculative": True,
@@ -674,17 +674,17 @@ def test_local_user_manifest():
                 "author": DeviceID("a@b"),
                 "id": EntryID.new(),
                 "version": 1337,
-                "timestamp": pendulum.now(),
-                "created": pendulum.now(),
-                "updated": pendulum.now(),
+                "timestamp": DateTime.now(),
+                "created": DateTime.now(),
+                "updated": DateTime.now(),
                 "last_processed_message": 1,
-                "workspaces": (WorkspaceEntry.new(EntryName("user"), pendulum.now()),),
+                "workspaces": (WorkspaceEntry.new(EntryName("user"), DateTime.now()),),
             }
         ),
         "need_sync": False,
-        "updated": pendulum.now(),
+        "updated": DateTime.now(),
         "last_processed_message": 1,
-        "workspaces": (WorkspaceEntry.new(EntryName("wk"), pendulum.now()),),
+        "workspaces": (WorkspaceEntry.new(EntryName("wk"), DateTime.now()),),
         "speculative": False,
     }
 
@@ -707,7 +707,7 @@ def test_local_user_manifest():
     assert py_lum.to_stats() == rs_lum.to_stats()
     assert py_lum.asdict() == rs_lum.asdict()
 
-    ts = pendulum.now()
+    ts = DateTime.now()
     ei = EntryID.new()
     di = DeviceID("a@b")
 

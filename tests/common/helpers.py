@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 import attr
@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
 from contextlib import ExitStack
-import pendulum
+from parsec._parsec import DateTime
 
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import WorkspaceRole
@@ -214,18 +214,19 @@ def compare_fs_dumps(entry_1, entry_2):
 
 @pytest.fixture
 def next_timestamp():
-    """On windows, 2 calls to `pendulum.now()` can yield the same value.
+    """On windows, 2 calls to `DateTime.now()` can yield the same value.
     For some tests, this creates edges cases we want to avoid.
     """
     last_timestamp = None
 
     def _next_timestamp():
-        if pendulum.has_test_now():
-            return pendulum.now()
         nonlocal last_timestamp
-        while last_timestamp == pendulum.now():
-            pass
-        last_timestamp = pendulum.now()
-        return last_timestamp
+        current_timestamp = DateTime.now()
+        for _ in range(100):
+            if current_timestamp != last_timestamp:
+                last_timestamp = current_timestamp
+                return last_timestamp
+        else:
+            raise RuntimeError("Is DateTime.now() frozen ?")
 
     return _next_timestamp

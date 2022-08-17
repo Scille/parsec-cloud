@@ -35,10 +35,9 @@ repos:
   # Python
 
   - repo: https://github.com/ambv/black
-    rev: 19.3b0
+    rev: 22.6.0
     hooks:
       - id: black
-        additional_dependencies: [ click==8.0.4 ]
         args:
           [
             --line-length=100,
@@ -52,19 +51,24 @@ repos:
     hooks:
       - id: flake8
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.910  # Latest version compatible with `trio_typing==0.5.0`
+  # Long story short we cannot use pre-commit isolated venv system for mypy
+  # given mypy requires to have access to the project dependencies.
+  # We used to specify the list of dependencies actually needed by mypy as
+  # additional dependencies to install before running the pre-commit but it
+  # was increadibly error-prone and create random breakages.
+  # Instead we go the pragmatic way by calling mypy trough poetry:
+  # - `poetry run` will stick to the shell current virtual env
+  # - if the shell is not into a virtual env, poetry will create one and install Parsec&deps
+  # - lastly, mypy is started
+  # So this is similar to what the developer does when running mypy from it dev shell \o/
+  - repo: local
     hooks:
       - id: mypy
-        language_version: python3.9
-        additional_dependencies:
-          - trio_typing[mypy]~=0.5  # `qtrio` requires `trio_typing~=0.5` for the moment
-          - pendulum~=2.1
-          - mypy-extensions~=0.4
-          - typing-extensions~=3.10
-          - Quart~=0.17
-          - quart-trio~=0.9
-          - PyQt5_stubs~=5.15
+        name: Mypy (using `poetry run mypy`)
+        entry: poetry run mypy
+        require_serial: true
+        language: system
+        types_or: [ python, pyi ]
         # Mypy will complain if it find two files with the same name which
         # are not part of a package (typically occurs for packaging script helpers)
         files: ^(parsec|tests)/

@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import datetime
+from parsec._parsec import DateTime
 from contextlib import asynccontextmanager
 
-from parsec.api.data import RealmRoleCertificateContent
+from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import (
     OrganizationID,
     VlobID,
@@ -179,7 +179,7 @@ def realm_factory(next_timestamp):
     async def _realm_factory(backend, author, realm_id=None, now=None):
         realm_id = realm_id or RealmID.new()
         now = now or next_timestamp()
-        certif = RealmRoleCertificateContent.build_realm_root_certif(
+        certif = RealmRoleCertificate.build_realm_root_certif(
             author=author.device_id, timestamp=now, realm_id=realm_id
         ).dump_and_sign(author.signing_key)
         with backend.event_bus.listen() as spy:
@@ -203,7 +203,7 @@ def realm_factory(next_timestamp):
 @pytest.fixture
 async def realm(backend, alice, realm_factory):
     realm_id = RealmID.from_hex("A0000000000000000000000000000000")
-    return await realm_factory(backend, alice, realm_id, datetime(2000, 1, 2))
+    return await realm_factory(backend, alice, realm_id, DateTime(2000, 1, 2))
 
 
 @pytest.fixture
@@ -218,7 +218,7 @@ async def vlobs(backend, alice, realm):
         realm_id=realm,
         encryption_revision=1,
         vlob_id=vlob_ids[0],
-        timestamp=datetime(2000, 1, 2, 1),
+        timestamp=DateTime(2000, 1, 2, 1),
         blob=b"r:A b:1 v:1",
     )
     await backend.vlob.update(
@@ -227,7 +227,7 @@ async def vlobs(backend, alice, realm):
         encryption_revision=1,
         vlob_id=vlob_ids[0],
         version=2,
-        timestamp=datetime(2000, 1, 3),
+        timestamp=DateTime(2000, 1, 3),
         blob=b"r:A b:1 v:2",
     )
     await backend.vlob.create(
@@ -236,7 +236,7 @@ async def vlobs(backend, alice, realm):
         realm_id=realm,
         encryption_revision=1,
         vlob_id=vlob_ids[1],
-        timestamp=datetime(2000, 1, 4),
+        timestamp=DateTime(2000, 1, 4),
         blob=b"r:A b:2 v:1",
     )
     return vlob_ids
@@ -250,10 +250,10 @@ async def vlob_atoms(vlobs):
 @pytest.fixture
 async def other_realm(backend, alice, realm_factory):
     realm_id = RealmID.from_hex("B0000000000000000000000000000000")
-    return await realm_factory(backend, alice, realm_id, datetime(2000, 1, 2))
+    return await realm_factory(backend, alice, realm_id, DateTime(2000, 1, 2))
 
 
 @pytest.fixture
 async def bob_realm(backend, bob, realm_factory):
     realm_id = RealmID.from_hex("C0000000000000000000000000000000")
-    return await realm_factory(backend, bob, realm_id, datetime(2000, 1, 2))
+    return await realm_factory(backend, bob, realm_id, DateTime(2000, 1, 2))

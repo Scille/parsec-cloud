@@ -1,19 +1,19 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import trio
 import attr
 import re
-from pendulum import now as pendulum_now
 from uuid import uuid4
 import triopg
 from typing import List, Tuple, Optional, Iterable
-
 from triopg import UniqueViolationError, UndefinedTableError, PostgresError
 from functools import wraps
 from structlog import get_logger
 from base64 import b64decode, b64encode
 import importlib.resources
+from datetime import datetime
 
+from parsec._parsec import DateTime
 from parsec.event_bus import EventBus
 from parsec.serde import SerdeValidationError, SerdePackingError
 from parsec.utils import start_task, TaskStatus
@@ -105,7 +105,7 @@ async def _apply_migration(conn, migration: MigrationItem) -> None:
         if migration.idx >= CREATE_MIGRATION_TABLE_ID:
             # The migration table is created in the second migration
             sql = "INSERT INTO migration (_id, name, applied) VALUES ($1, $2, $3)"
-            await conn.execute(sql, migration.idx, migration.name, pendulum_now())
+            await conn.execute(sql, migration.idx, migration.name, datetime.now())
 
 
 async def _last_migration_row(conn):
@@ -164,8 +164,30 @@ class PGHandler:
 
     async def _run_connections(self, task_status=trio.TASK_STATUS_IGNORED) -> None:
 
+        # By default AsyncPG only work with Python standard `datetime.DateTime`
+        # for timestamp types, here we override this behavior to uses our own custom
+        # DateTime type
+        async def _init_connection(conn):
+            await conn.set_type_codec(
+                "timestamptz",
+                encoder=lambda x: (int(x.timestamp() * 1000000),),
+                decoder=lambda x: DateTime.from_timestamp(x[0] / 1000000),
+                schema="pg_catalog",
+                format="tuple",
+            )
+            await conn.set_type_codec(
+                "timestamp",
+                encoder=lambda x: (int(x.timestamp() * 1000000),),
+                decoder=lambda x: DateTime.from_timestamp(x[0] / 1000000),
+                schema="pg_catalog",
+                format="tuple",
+            )
+
         async with triopg.create_pool(
-            self.url, min_size=self.min_connections, max_size=self.max_connections
+            self.url,
+            min_size=self.min_connections,
+            max_size=self.max_connections,
+            init=_init_connection,
         ) as self.pool:
             # This connection is dedicated to the notifications listening, so it
             # would only complicate stuff to include it into the connection pool

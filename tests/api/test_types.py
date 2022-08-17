@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from unicodedata import normalize
@@ -150,7 +150,7 @@ def test_sas_code():
     assert SASCode.from_int(0xFFFFF) == SASCode("9999")
 
     with pytest.raises(ValueError):
-        SASCode.from_int(2 ** 20)
+        SASCode.from_int(2**20)
 
     # OverflowError for Rust binding
     with pytest.raises((ValueError, OverflowError)):

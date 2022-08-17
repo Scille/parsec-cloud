@@ -1,6 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from pendulum import DateTime as PendulumDateTime
+from typing import Type
+from parsec._parsec import DateTime as RsDateTime
 from uuid import UUID as _UUID
 from enum import Enum
 from collections import Mapping
@@ -90,13 +91,20 @@ class BaseEnumField(Field):
             raise ValidationError(f"Invalid role `{value}`")
 
 
+# Field factories are correctly typed, however mypy consider the
+# `MyField == make_field_class()` pattern as too similar to variale assignment and
+# disregard factory typing (see: https://github.com/python/typing/discussions/1020)
+# Anyway the solution is to add explicit typing when using the type generator:
+# `MyField: Type[Field] == make_field_class()`, transitivity ? never heard of it !
+
+
 # Using inheritance to define enum fields allows for easy instrospection detection
 # which is useful when checking api changes in tests (see tests/schemas/builder.py)
-def enum_field_factory(enum):
+def enum_field_factory(enum: Type[Enum]) -> Type[BaseEnumField]:
     return type(f"{enum.__name__}Field", (BaseEnumField,), {"ENUM": enum})
 
 
-def bytes_based_field_factory(value_type):
+def bytes_based_field_factory(value_type: Type) -> Type[Field]:
     assert isinstance(value_type, type)
 
     def _serialize(self, value, attr, obj):
@@ -122,7 +130,7 @@ def bytes_based_field_factory(value_type):
     )
 
 
-def str_based_field_factory(value_type):
+def str_based_field_factory(value_type: Type) -> Type[Field]:
     assert isinstance(value_type, type)
 
     def _serialize(self, value, attr, data):
@@ -149,7 +157,7 @@ def str_based_field_factory(value_type):
     )
 
 
-def uuid_based_field_factory(value_type):
+def uuid_based_field_factory(value_type: Type) -> Type[Field]:
     assert isinstance(value_type, type)
 
     def _serialize(self, value, attr, data):
@@ -204,7 +212,7 @@ class DateTime(Field):
     """DateTime already handled by pack/unpack"""
 
     def _deserialize(self, value, attr, data):
-        if not isinstance(value, PendulumDateTime):
+        if not isinstance(value, RsDateTime):
             raise ValidationError("Not a datetime")
 
         return value
@@ -372,7 +380,7 @@ class PublicKey(Field):
             raise ValidationError("Invalid verify key.")
 
 
-Bytes = bytes_based_field_factory(bytes)
+Bytes: Type[Field] = bytes_based_field_factory(bytes)
 
 
 class HashDigestField(Field):

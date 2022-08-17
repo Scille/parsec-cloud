@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use std::{
     future::Future,
@@ -24,7 +24,7 @@ impl Timer {
     /// # async fn main() {
     /// let timer = Instant::now();
     /// Timer::after(Duration::from_millis(100)).await;
-    /// assert!(timer.elapsed() < Duration::from_millis(110));
+    /// assert!(timer.elapsed() < Duration::from_millis(120));
     /// # }
     /// ```
     pub fn after(duration: Duration) -> Timer {

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 
@@ -193,22 +193,22 @@ def test_backend_organization_addr_good(base_url, expected, verify_key):
         (
             # missing org name
             "parsec://foo:42?rvk=<rvk>",
-            ["Invalid data", "Path doesn't form a valid organization id"],
+            ["Invalid OrganizationID", "Path doesn't form a valid organization id"],
         ),
         (
             # missing org name
             "parsec://foo:42/?rvk=<rvk>",
-            ["Invalid data", "Path doesn't form a valid organization id"],
+            ["Invalid OrganizationID", "Path doesn't form a valid organization id"],
         ),
         (
             # bad org name
             "parsec://foo:42/bad/org?rvk=<rvk>",
-            ["Invalid data", "Path doesn't form a valid organization id"],
+            ["Invalid OrganizationID", "Path doesn't form a valid organization id"],
         ),
         (
             # bad org name
             "parsec://foo:42/~org?rvk=<rvk>",
-            ["Invalid data", "Path doesn't form a valid organization id"],
+            ["Invalid OrganizationID", "Path doesn't form a valid organization id"],
         ),
     ],
 )
@@ -287,22 +287,22 @@ def test_backend_organization_bootstrap_addr_good(base_url, expected, verify_key
         (
             # missing org name
             "parsec://foo:42?action=bootstrap_organization&token=123",
-            ["Invalid data", "Path doesn't form a valid organization id"],
+            ["Invalid OrganizationID", "Path doesn't form a valid organization id"],
         ),
         (
             # missing org name
             "parsec://foo:42/?action=bootstrap_organization&token=123",
-            ["Invalid data", "Path doesn't form a valid organization id"],
+            ["Invalid OrganizationID", "Path doesn't form a valid organization id"],
         ),
         (
             # bad org name
             "parsec://foo:42/bad/org?action=bootstrap_organization&token=123",
-            ["Invalid data", "Path doesn't form a valid organization id"],
+            ["Invalid OrganizationID", "Path doesn't form a valid organization id"],
         ),
         (
             # bad org name
             "parsec://foo:42/~org?action=bootstrap_organization&token=123",
-            ["Invalid data", "Path doesn't form a valid organization id"],
+            ["Invalid OrganizationID", "Path doesn't form a valid organization id"],
         ),
     ],
 )

@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from parsec.backend.backend_events import BackendEvent
 import attr
 from typing import TYPE_CHECKING, List, Optional, Tuple
 from collections import defaultdict
-from pendulum import DateTime, now as pendulum_now
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import (
     OrganizationID,
@@ -234,7 +234,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         else:
             # Must create a new invitation
-            created_on = created_on or pendulum_now()
+            created_on = created_on or DateTime.now()
             greeter_human_handle = self._user_component._get_user(
                 organization_id, greeter_user_id
             ).human_handle

@@ -1,11 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from unittest.mock import patch
 from PyQt5 import QtCore, QtWidgets, QtGui
 
-from parsec.api.protocol import InvitationType, OrganizationID
-from parsec.api.data import UserProfile, EntryName
+from parsec.api.protocol import InvitationType, OrganizationID, UserProfile
+from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
 from parsec.core.local_device import (
@@ -22,6 +22,7 @@ from parsec.core.types import (
     BackendOrganizationAddr,
     WorkspaceRole,
 )
+from parsec.core.gui import desktop
 
 from tests.common import customize_fixtures
 
@@ -44,6 +45,11 @@ def catch_claim_device_widget(widget_catcher_factory):
 @pytest.fixture
 def catch_claim_user_widget(widget_catcher_factory):
     return widget_catcher_factory("parsec.core.gui.claim_user_widget.ClaimUserWidget")
+
+
+@pytest.fixture
+def catch_text_input_widget(widget_catcher_factory):
+    return widget_catcher_factory("parsec.core.gui.custom_dialogs.TextInputWidget")
 
 
 @pytest.fixture
@@ -740,6 +746,57 @@ async def test_outsider_profil_limit(
 
     c_w = gui.test_get_central_widget()
     assert c_w.menu.button_users.isVisible() is False
+
+
+@pytest.fixture
+async def random_clipboard_data(running_backend):
+    return "Still sane, Exile?"
+
+
+@pytest.fixture
+async def clipboard_text_provider(
+    organization_bootstrap_addr,
+    device_invitation_addr,
+    user_invitation_addr,
+):
+    texts = [
+        organization_bootstrap_addr.to_url(),
+        device_invitation_addr.to_url(),
+        user_invitation_addr.to_url(),
+        "Still sane, Exile?",
+    ]
+
+    def _select_clipboard_text(idx):
+        return texts[idx]
+
+    return _select_clipboard_text
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+@pytest.mark.parametrize("clipboard_text_index", (0, 1, 2, 3))
+async def test_join_organization_text_in_clipboard(
+    aqtbot,
+    running_backend,
+    backend,
+    autoclose_dialog,
+    gui,
+    catch_text_input_widget,
+    clipboard_text_provider,
+    clipboard_text_index,
+):
+    clipboard_text = clipboard_text_provider(clipboard_text_index)
+
+    desktop.copy_to_clipboard(clipboard_text)
+
+    aqtbot.key_click(gui, "o", QtCore.Qt.ControlModifier, 200)
+    text_input_w = await catch_text_input_widget()
+    assert text_input_w
+
+    if clipboard_text_index == 3:
+        assert text_input_w.line_edit_text.text() == ""
+    else:
+        assert text_input_w.line_edit_text.text() == clipboard_text
 
 
 @pytest.mark.gui

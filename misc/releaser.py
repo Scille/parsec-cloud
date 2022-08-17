@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
 
 """
 This script is used to ease the parsec release process.
@@ -42,7 +43,7 @@ import math
 LICENSE_CONVERSION_DELAY = 4 * 365 * 24 * 3600  # 4 years
 PROJECT_DIR = pathlib.Path(__file__).resolve().parent.parent
 HISTORY_FILE = PROJECT_DIR / "HISTORY.rst"
-BSL_LICENSE_FILE = PROJECT_DIR / "licenses/BSL-Scille.txt"
+BUSL_LICENSE_FILE = PROJECT_DIR / "licenses/BUSL-Scille.txt"
 VERSION_FILE = PROJECT_DIR / "parsec/_version.py"
 PYPROJECT_FILE = PROJECT_DIR / "pyproject.toml"
 FRAGMENTS_DIR = PROJECT_DIR / "newsfragments"
@@ -258,7 +259,7 @@ def update_version_file(new_version: Version) -> None:
 
 
 def update_license_file(new_version: Version, new_release_date: date) -> None:
-    license_txt = BSL_LICENSE_FILE.read_text(encoding="utf8")
+    license_txt = BUSL_LICENSE_FILE.read_text(encoding="utf8")
     half_updated_license_txt = re.sub(
         r"Change Date:.*", f"Change Date:  {new_release_date.strftime('%b %d, %Y')}", license_txt
     )
@@ -266,7 +267,7 @@ def update_license_file(new_version: Version, new_release_date: date) -> None:
         r"Licensed Work:.*", f"Licensed Work:  Parsec {new_version}", half_updated_license_txt
     )
     assert updated_version_txt != half_updated_license_txt
-    BSL_LICENSE_FILE.write_bytes(
+    BUSL_LICENSE_FILE.write_bytes(
         updated_version_txt.encode("utf8")
     )  # Use write_bytes to keep \n on Windows
 
@@ -351,7 +352,7 @@ def build_release(version):
         updated_history_txt.encode("utf8")
     )  # Use write_bytes to keep \n on Windows
 
-    # Update BSL license date marker & version info
+    # Update BUSL license date marker & version info
     update_license_file(version, license_conversion_date)
 
     # Make git commit
@@ -365,7 +366,7 @@ def build_release(version):
     run_git(
         "add",
         HISTORY_FILE.absolute(),
-        BSL_LICENSE_FILE.absolute(),
+        BUSL_LICENSE_FILE.absolute(),
         VERSION_FILE.absolute(),
         PYPROJECT_FILE.absolute(),
     )
@@ -384,7 +385,7 @@ def build_release(version):
     print(f"Create commit {COLOR_GREEN}{commit_msg}{COLOR_END}")
     update_version_file(dev_version)
     update_license_file(dev_version, license_conversion_date)
-    run_git("add", BSL_LICENSE_FILE.absolute(), VERSION_FILE.absolute(), PYPROJECT_FILE.absolute())
+    run_git("add", BUSL_LICENSE_FILE.absolute(), VERSION_FILE.absolute(), PYPROJECT_FILE.absolute())
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
     run_git("commit", "-m", commit_msg, "--no-verify")
 

@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Iterable, Tuple, Optional
 from pathlib import Path
@@ -6,7 +6,7 @@ from uuid import UUID
 from importlib import import_module
 
 import trio
-from pendulum import DateTime
+from parsec._parsec import DateTime
 
 from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.crypto import PrivateKey, SigningKey
@@ -31,7 +31,7 @@ def is_pki_enrollment_available() -> bool:
 
 
 async def pki_enrollment_select_certificate(
-    owner_hint: Optional[LocalDevice] = None
+    owner_hint: Optional[LocalDevice] = None,
 ) -> X509Certificate:
     """
     Raises:
@@ -115,12 +115,14 @@ async def pki_enrollment_load_local_pending_secret_part(
     )
 
 
-def pki_enrollment_load_peer_certificate(der_x509_certificate: bytes,) -> X509Certificate:
+def pki_enrollment_load_peer_certificate(
+    der_x509_certificate: bytes,
+) -> X509Certificate:
     """
     Raises:
         PkiEnrollmentCertificateError
         PkiEnrollmentCertificateCryptoError
-   """
+    """
     return _load_smartcard_extension().pki_enrollment_load_peer_certificate(der_x509_certificate)
 
 

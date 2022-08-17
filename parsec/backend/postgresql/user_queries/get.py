@@ -1,9 +1,15 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import Tuple, List, Optional
 
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceLabel, HumanHandle
-from parsec.api.data import UserProfile
+from parsec.api.protocol import (
+    OrganizationID,
+    UserID,
+    DeviceID,
+    DeviceLabel,
+    HumanHandle,
+    UserProfile,
+)
 from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
 from parsec.backend.postgresql.utils import (
     Q,

@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-import pytest
-from pendulum import now
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec import IS_OXIDIZED
+import pytest
+from parsec._parsec import DateTime
+
 from parsec.api.data.manifest import LOCAL_AUTHOR_LEGACY_PLACEHOLDER
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs import FSError, FSInvalidFileDescriptor
@@ -136,7 +136,6 @@ async def test_cache_set_get(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: manifest_storage is private")
 @customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("cache_only", (False, True))
 @pytest.mark.parametrize("clear_manifest", (False, True))
@@ -353,7 +352,6 @@ async def test_lock_manifest(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: block_storage is private")
 @customize_fixtures(real_data_storage=True)
 async def test_block_interface(alice_workspace_storage):
     data = b"0123456"
@@ -384,7 +382,6 @@ async def test_block_interface(alice_workspace_storage):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: chunk_storage is private")
 @customize_fixtures(real_data_storage=True)
 async def test_chunk_interface(alice_workspace_storage):
     data = b"0123456"
@@ -415,7 +412,6 @@ async def test_chunk_interface(alice_workspace_storage):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: chunk_storage is private")
 @customize_fixtures(real_data_storage=True)
 async def test_chunk_many(alice_workspace_storage):
     data = b"0123456"
@@ -461,10 +457,9 @@ async def test_run_vacuum(alice_workspace_storage):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="Oxidation doesn't implement WorkspaceStorageTimestamped")
 @customize_fixtures(real_data_storage=True)
 async def test_timestamped_storage(alice_workspace_storage):
-    timestamp = now()
+    timestamp = DateTime.now()
     aws = alice_workspace_storage
     taws = aws.to_timestamped(timestamp)
     assert taws.timestamp == timestamp
@@ -512,7 +507,6 @@ async def test_timestamped_storage(alice_workspace_storage):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: no data_local_db")
 @customize_fixtures(real_data_storage=True)
 async def test_vacuum(data_base_dir, alice, workspace_id):
     data_size = 1 * 1024 * 1024
@@ -557,7 +551,6 @@ async def test_vacuum(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: block_storage is private")
 @customize_fixtures(real_data_storage=True)
 async def test_garbage_collection(data_base_dir, alice, workspace_id):
     block_size = DEFAULT_BLOCK_SIZE
@@ -582,7 +575,6 @@ async def test_garbage_collection(data_base_dir, alice, workspace_id):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: manifest_storage is private")
 @customize_fixtures(real_data_storage=True)
 async def test_storage_file_tree(data_base_dir, alice, workspace_id):
     manifest_sqlite_db = data_base_dir / alice.slug / str(workspace_id) / "workspace_data-v1.sqlite"

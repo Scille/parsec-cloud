@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from typing import Tuple
-from pendulum import DateTime
+from parsec._parsec import DateTime
 
 from hypothesis import strategies
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, run_state_machine_as_test
@@ -120,7 +120,7 @@ def test_complete_scenario():
         manifest = storage.write(manifest, b"Hello ", 0, timestamp=t2)
         assert storage.read(manifest, 6, 0) == b"Hello "
 
-    (chunk0,), = manifest.blocks
+    ((chunk0,),) = manifest.blocks
     assert manifest == base.evolve(size=6, blocks=((chunk0,),), updated=t2)
     assert chunk0 == Chunk(id=chunk0.id, start=0, stop=6, raw_offset=0, raw_size=6, access=None)
     assert storage[chunk0.id] == b"Hello "
@@ -129,7 +129,7 @@ def test_complete_scenario():
         manifest = storage.write(manifest, b"world !", 6, t3)
         assert storage.read(manifest, 13, 0) == b"Hello world !"
 
-    (_, chunk1), = manifest.blocks
+    ((_, chunk1),) = manifest.blocks
     assert manifest == base.evolve(size=13, blocks=((chunk0, chunk1),), updated=t3)
     assert chunk1 == Chunk(id=chunk1.id, start=6, stop=13, raw_offset=6, raw_size=7, access=None)
     assert storage[chunk1.id] == b"world !"
@@ -175,7 +175,7 @@ def test_complete_scenario():
         expected = b"Hello world !\n More conte"
         assert storage.read(manifest, 25, 0) == expected
 
-    (_, _, chunk9), = manifest.blocks[1:]
+    ((_, _, chunk9),) = manifest.blocks[1:]
     assert chunk9.id == chunk6.id
     assert manifest == base.evolve(
         size=25, blocks=((chunk0, chunk1, chunk2), (chunk4, chunk5, chunk9)), updated=t7

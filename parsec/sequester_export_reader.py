@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import List, Dict, Iterator, Mapping, Optional, Tuple
 from pathlib import Path, PurePath
-from pendulum import from_timestamp as pendulum_from_timestamp
+from parsec._parsec import DateTime
 from contextlib import contextmanager
 import sqlite3
 import enum
@@ -19,10 +19,10 @@ from parsec.api.data import (
     FileManifest,
     FolderManifest,
     WorkspaceManifest,
-    UserCertificateContent,
-    RevokedUserCertificateContent,
-    DeviceCertificateContent,
-    RealmRoleCertificateContent,
+    UserCertificate,
+    RevokedUserCertificate,
+    DeviceCertificate,
+    RealmRoleCertificate,
     DataError,
 )
 
@@ -108,9 +108,7 @@ class RealmExportDb:
 
     def load_user_certificates(
         self,
-        out_certificates: List[
-            Tuple[UserCertificateContent, Optional[RevokedUserCertificateContent]]
-        ],
+        out_certificates: List[Tuple[UserCertificate, Optional[RevokedUserCertificate]]],
     ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
         rows = self.con.execute(
             "SELECT _id, user_certificate, revoked_user_certificate FROM user_"
@@ -118,7 +116,7 @@ class RealmExportDb:
         for row in rows:
             try:
                 # TODO: check devices are valid
-                user_certif = UserCertificateContent.unsecure_load(row[1])
+                user_certif = UserCertificate.unsecure_load(row[1])
             except DataError as exc:
                 yield (
                     None,
@@ -129,7 +127,7 @@ class RealmExportDb:
             try:
                 if row[2]:
                     # TODO: check devices are valid
-                    revoked_user_certif = RevokedUserCertificateContent.unsecure_load(row[2])
+                    revoked_user_certif = RevokedUserCertificate.unsecure_load(row[2])
                 else:
                     revoked_user_certif = None
                 out_certificates.append((user_certif, revoked_user_certif))
@@ -141,13 +139,13 @@ class RealmExportDb:
                 )
 
     def load_device_certificates(
-        self, out_certificates: List[Tuple[int, DeviceCertificateContent]]
+        self, out_certificates: List[Tuple[int, DeviceCertificate]]
     ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
         rows = self.con.execute("SELECT _id, device_certificate FROM device").fetchall()
         for row in rows:
             try:
                 # TODO: check devices are valid
-                certif = DeviceCertificateContent.unsecure_load(row[1])
+                certif = DeviceCertificate.unsecure_load(row[1])
                 out_certificates.append((row[0], certif))
             except DataError as exc:
                 yield (
@@ -157,13 +155,13 @@ class RealmExportDb:
                 )
 
     def load_role_certificates(
-        self, out_certificates: List[RealmRoleCertificateContent]
+        self, out_certificates: List[RealmRoleCertificate]
     ) -> Iterator[Tuple[Optional[PurePath], RealmExportProgress, str]]:
         rows = self.con.execute("SELECT _id, role_certificate FROM realm_role").fetchall()
         for row in rows:
             try:
                 # TODO: check devices are valid
-                certif = RealmRoleCertificateContent.unsecure_load(row[1])
+                certif = RealmRoleCertificate.unsecure_load(row[1])
                 out_certificates.append(certif)
             except DataError as exc:
                 yield (
@@ -199,7 +197,7 @@ class WorkspaceExport:
                 author, author_verify_key = self.devices_form_internal_id[author_internal_id]
             except KeyError:
                 raise InconsistentWorkspaceError(f"Missing device certificate for `{author}`")
-            timestamp = pendulum_from_timestamp(raw_timestamp / 1000)
+            timestamp = DateTime.from_timestamp(raw_timestamp / 1000)
 
             decrypted_blob = sequester_service_decrypt(
                 decryption_key=self.decryption_key, data=blob

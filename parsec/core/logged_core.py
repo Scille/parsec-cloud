@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import re
 import attr
@@ -18,7 +18,7 @@ from parsec.api.protocol import (
     InvitationDeletedReason,
     InvitationEmailSentStatus,
 )
-from parsec.api.data import RevokedUserCertificateContent, EntryName
+from parsec.api.data import RevokedUserCertificate, EntryName
 from parsec.core.pki import accepter_list_submitted_from_backend
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
@@ -216,9 +216,11 @@ class LoggedCore:
         """
         user_id = user_id or self.device.user_id
         try:
-            user_certif, revoked_user_certif, device_certifs = await self._remote_devices_manager.get_user_and_devices(
-                user_id, no_cache=True
-            )
+            (
+                user_certif,
+                revoked_user_certif,
+                device_certifs,
+            ) = await self._remote_devices_manager.get_user_and_devices(user_id, no_cache=True)
         except RemoteDevicesManagerBackendOfflineError as exc:
             raise BackendNotAvailable(str(exc)) from exc
         except RemoteDevicesManagerNotFoundError as exc:
@@ -246,7 +248,7 @@ class LoggedCore:
             BackendConnectionError
         """
         timestamp = self.device.timestamp()
-        revoked_user_certificate = RevokedUserCertificateContent(
+        revoked_user_certificate = RevokedUserCertificate(
             author=self.device.device_id, timestamp=timestamp, user_id=user_id
         ).dump_and_sign(self.device.signing_key)
         rep = await self._backend_conn.cmds.user_revoke(

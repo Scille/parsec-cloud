@@ -16,13 +16,13 @@ libparsec_crypto = { path = "../crypto" }
 libparsec_types = { path = "../types" }
 serialization_format = { path = "../serialization_format" }
 
-paste = "1.0.5"
+paste = "1.0.8"
 rand = "0.8.5"
 rmp-serde = "1.0.0"
-serde = { version = "1.0.138", features = ["derive"] }
-serde_json = "1.0.82"
-serde_with = "1.14.0"
-thiserror = "1.0.30"
+serde = { version = "1.0.142", features = ["derive"] }
+serde_json = "1.0.83"
+serde_with = "2.0.0"
+thiserror = "1.0.32"
 http = "0.2.8"
 futures = "0.3.21"
 dotenv = "0.15.0"
@@ -33,8 +33,8 @@ async-tungstenite = { version = "0.17.1", features = ["async-std-runtime"] }
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
 hex-literal = "0.3.3"
-rstest = "0.13.0"
-serde_json = "1.0.82"
+rstest = "0.15.0"
+serde_json = "1.0.83"
 
 [features]
 test = []

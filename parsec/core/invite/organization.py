@@ -1,16 +1,15 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Optional
 
 from parsec.crypto import SigningKey, VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.api.data import (
-    UserCertificateContent,
-    DeviceCertificateContent,
-    UserProfile,
+    UserCertificate,
+    DeviceCertificate,
     SequesterAuthorityCertificate,
 )
-from parsec.api.protocol import HumanHandle, DeviceLabel
+from parsec.api.protocol import HumanHandle, DeviceLabel, UserProfile
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.types import LocalDevice, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
@@ -60,7 +59,7 @@ async def bootstrap_organization(
     )
 
     timestamp = device.timestamp()
-    user_certificate = UserCertificateContent(
+    user_certificate = UserCertificate(
         author=None,
         timestamp=timestamp,
         user_id=device.user_id,
@@ -69,7 +68,7 @@ async def bootstrap_organization(
         profile=device.profile,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=None,
         timestamp=timestamp,
         device_id=device.device_id,

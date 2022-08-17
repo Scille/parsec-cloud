@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import Optional, List, Tuple
 import attr
-from pendulum import DateTime, now as pendulum_now
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import OrganizationID, SequesterServiceID, RealmID, VlobID
 
@@ -56,7 +56,7 @@ class SequesterService:
     service_id: SequesterServiceID
     service_label: str
     service_certificate: bytes
-    created_on: DateTime = attr.ib(factory=pendulum_now)
+    created_on: DateTime = attr.ib(factory=DateTime.now)
     disabled_on: Optional[DateTime] = None
 
     def __repr__(self):

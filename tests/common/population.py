@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import re
 import pytest
@@ -7,8 +7,7 @@ from typing import Union, Optional
 from contextlib import asynccontextmanager
 
 from parsec.crypto import SigningKey
-from parsec.api.data import UserProfile
-from parsec.api.protocol import OrganizationID, DeviceID, DeviceLabel, HumanHandle
+from parsec.api.protocol import OrganizationID, DeviceID, DeviceLabel, HumanHandle, UserProfile
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
 
