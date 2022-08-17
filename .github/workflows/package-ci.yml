@@ -21,10 +21,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-22.04
-          - macos-10.15
-          - windows-2022
+        include:
+          - name: 🐧 Linux
+            os: ubuntu-22.04
+          - name: 🍎 macOS
+            os: macos-10.15
+          - name: 🏁 Windows
+            os: windows-2022
+    name: '${{ matrix.name }}: 📦 Packaging'
     runs-on: ${{ matrix.os }}
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
