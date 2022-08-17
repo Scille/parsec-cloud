@@ -60,7 +60,11 @@ class SequesterServiceFullData:
 
 
 def sequester_service_factory(
-    label: str, authority: SequesterAuthorityFullData, timestamp: Optional[DateTime] = None
+    label: str,
+    authority: SequesterAuthorityFullData,
+    timestamp: Optional[DateTime] = None,
+    service_type: Optional[SequesterServiceType] = SequesterServiceType.STORAGE,
+    webhook_url: Optional[str] = None,
 ) -> SequesterServiceFullData:
     timestamp = timestamp or pendulum_now()
     # Don't use such a small key size in real world, this is only for test !
@@ -84,6 +88,7 @@ def sequester_service_factory(
             service_id=certif_data.service_id,
             service_label=certif_data.service_label,
             service_certificate=certif,
-            service_type=SequesterServiceType.STORAGE,
+            service_type=service_type,
+            webhook_url=webhook_url,
         ),
     )
