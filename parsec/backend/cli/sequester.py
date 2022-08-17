@@ -136,13 +136,13 @@ def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> Ba
     required=True,
 )
 @click.option(
-    "--service_type",
-    type=click.Choice(SERVICE_TYPE_CHOICES.keys(), case_sensitive=False),
+    "--service-type",
+    type=click.Choice(list(SERVICE_TYPE_CHOICES.keys()), case_sensitive=False),
     default=SequesterServiceType.STORAGE.value,
     help="Service type",
 )
 @click.option(
-    "--webhook_url",
+    "--webhook-url",
     type=str,
     required=False,
     default=None,
@@ -187,6 +187,7 @@ def create_service(
         service_type=service_type,
         webhook_url=webhook_url,
     )
+
     db_config = _get_config(db, db_min_connections, db_max_connections)
 
     trio_run(_create_service, db_config, organization, sequester_service, use_asyncio=True)
