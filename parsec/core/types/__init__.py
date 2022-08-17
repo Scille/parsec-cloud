@@ -21,8 +21,6 @@ from parsec.core.types.manifest import (
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
-)
-from parsec.core.types.manifest import (
     LocalUserManifest,
     BaseLocalManifest,
     WorkspaceEntry,
