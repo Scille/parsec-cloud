@@ -981,6 +981,7 @@ async def test_sort_menu(aqtbot, files_widget_testbed, monkeypatch):
 
 
 @pytest.mark.gui
+@pytest.mark.flaky(reruns=1)
 @pytest.mark.trio
 async def test_current_folder_status_menu(
     running_backend, aqtbot, files_widget_testbed, catch_file_status_widget
