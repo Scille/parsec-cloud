@@ -215,6 +215,11 @@ jobs:
       - name: Debug build directory
         run: Get-ChildItem -Path ${{ runner.temp }}\build
 
+      - name: Test start generated app
+        shell: bash
+        run: ./build/parsec-*/parsec.exe --diagnose
+        working-directory: ${{ runner.temp }}
+
       # Cannot do the NSIS installer part in CI given it requires to sign `parsec.exe`
 
       - name: Prepare artifact
@@ -259,6 +264,10 @@ jobs:
 
       - name: Debug ${{ runner.temp }} dir
         run: ls -lR ${{ runner.temp }}
+
+      - name: Test open generated app
+        run: open build/pyinstaller_dist/parsec.app --args --diagnose
+        working-directory: ${{ runner.temp }}
 
       - name: Generate Parsec.app
         run: >
