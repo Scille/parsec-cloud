@@ -6,7 +6,6 @@ from typing import Dict, Optional, List, Iterable, Tuple, cast, Iterator, Callab
 import trio
 from parsec._parsec import DateTime
 from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
-from parsec.api.data.manifest import ManifestTypeVar
 from parsec.api.protocol.sequester import SequesterServiceID
 
 from parsec.crypto import HashDigest, CryptoError, VerifyKey
@@ -17,7 +16,7 @@ from parsec.api.data import (
     BlockAccess,
     RealmRoleCertificate,
     BaseManifest as BaseRemoteManifest,
-    ManifestTypeVar as RemoteManifestTypeVar,
+    AnyManifest as RemoteAnyManifest,
     UserCertificate,
     DeviceCertificate,
     RevokedUserCertificate,
@@ -537,7 +536,7 @@ class RemoteLoader(UserRemoteLoader):
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
         workspace_entry: Optional[WorkspaceEntry] = None,
-    ) -> ManifestTypeVar:
+    ) -> RemoteAnyManifest:
         """
         Download a manifest.
 
@@ -640,7 +639,7 @@ class RemoteLoader(UserRemoteLoader):
 
         try:
             remote_manifest = cast(
-                RemoteManifestTypeVar,
+                RemoteAnyManifest,
                 BaseRemoteManifest.decrypt_verify_and_load(
                     rep["blob"],
                     key=workspace_entry.key,
@@ -680,9 +679,9 @@ class RemoteLoader(UserRemoteLoader):
     async def upload_manifest(
         self,
         entry_id: EntryID,
-        manifest: RemoteManifestTypeVar,
+        manifest: RemoteAnyManifest,
         timestamp_greater_than: Optional[DateTime] = None,
-    ) -> RemoteManifestTypeVar:
+    ) -> RemoteAnyManifest:
         """
         Raises:
             FSError
@@ -894,7 +893,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
         workspace_entry: Optional[WorkspaceEntry] = None,
-    ) -> RemoteManifestTypeVar:
+    ) -> RemoteAnyManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
         a WorkspaceFS or a WorkspaceFSTimestamped
@@ -924,9 +923,9 @@ class RemoteLoaderTimestamped(RemoteLoader):
     async def upload_manifest(
         self,
         entry_id: EntryID,
-        manifest: RemoteManifestTypeVar,
+        manifest: RemoteAnyManifest,
         timestamp_greater_than: Optional[DateTime] = None,
-    ) -> RemoteManifestTypeVar:
+    ) -> RemoteAnyManifest:
         raise FSError("Cannot upload manifest through a timestamped remote loader")
 
     async def _vlob_create(

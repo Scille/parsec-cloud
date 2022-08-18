@@ -16,7 +16,7 @@ from parsec.api.data import (
     WorkspaceManifest as RemoteWorkspaceManifest,
     FolderManifest as RemoteFolderManifest,
     FileManifest as RemoteFileManifest,
-    ManifestTypeVar as RemoteManifestTypeVar,
+    AnyManifest as RemoteAnyManifest,
     EntryID,
     EntryName,
     EntryNameField,
@@ -152,7 +152,7 @@ class BaseLocalManifest(BaseLocalData):
 
     @staticmethod
     def from_remote(
-        remote: RemoteManifestTypeVar,
+        remote: RemoteAnyManifest,
         prevent_sync_pattern: Pattern,
     ) -> LocalManifestTypeVar:
         if isinstance(remote, RemoteFileManifest):
@@ -167,7 +167,7 @@ class BaseLocalManifest(BaseLocalData):
 
     @staticmethod
     def from_remote_with_local_context(
-        remote: RemoteManifestTypeVar,
+        remote: RemoteAnyManifest,
         prevent_sync_pattern: Pattern,
         local_manifest: LocalManifestTypeVar,
         timestamp: DateTime,

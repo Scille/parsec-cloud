@@ -7,7 +7,7 @@ from parsec._parsec import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.api.data import EntryNameTooLongError, ManifestTypeVar as RemoteManifestTypeVar
+from parsec.api.data import EntryNameTooLongError, AnyManifest as RemoteAnyManifest
 from parsec.core.types import (
     Chunk,
     EntryID,
@@ -195,7 +195,7 @@ def merge_manifests(
     timestamp: DateTime,
     prevent_sync_pattern: Pattern[str],
     local_manifest: LocalManifestTypeVar,
-    remote_manifest: Optional[RemoteManifestTypeVar] = None,
+    remote_manifest: Optional[RemoteAnyManifest] = None,
     force_apply_pattern: Optional[bool] = False,
     preferred_language: str = "en",
 ) -> LocalManifestTypeVar:
@@ -310,9 +310,7 @@ class SyncTransactions(EntryTransactions):
             if child_manifest.is_placeholder:
                 yield child_entry_id
 
-    async def get_minimal_remote_manifest(
-        self, entry_id: EntryID
-    ) -> Optional[RemoteManifestTypeVar]:
+    async def get_minimal_remote_manifest(self, entry_id: EntryID) -> Optional[RemoteAnyManifest]:
         manifest = await self.local_storage.get_manifest(entry_id)
         if not manifest.is_placeholder:
             return None
@@ -344,9 +342,9 @@ class SyncTransactions(EntryTransactions):
     async def synchronization_step(
         self,
         entry_id: EntryID,
-        remote_manifest: Optional[RemoteManifestTypeVar] = None,
+        remote_manifest: Optional[RemoteAnyManifest] = None,
         final: bool = False,
-    ) -> Optional[RemoteManifestTypeVar]:
+    ) -> Optional[RemoteAnyManifest]:
         """Perform a synchronization step.
 
         This step is meant to be called several times until the right state is reached.
@@ -458,7 +456,7 @@ class SyncTransactions(EntryTransactions):
         self,
         entry_id: EntryID,
         local_manifest: Union[LocalFolderManifest, LocalFileManifest],
-        remote_manifest: RemoteManifestTypeVar,
+        remote_manifest: RemoteAnyManifest,
     ) -> None:
         # This is the only transaction that affects more than one manifests
         # That's because the local version of the file has to be registered in the

@@ -46,7 +46,7 @@ from parsec.api.data.manifest import (
     WorkspaceManifest,
     FolderManifest,
     FileManifest,
-    ManifestTypeVar,
+    AnyManifest,
 )
 from parsec.api.data.pki import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 
@@ -102,7 +102,7 @@ __all__ = (
     "WorkspaceManifest",
     "FolderManifest",
     "FileManifest",
-    "ManifestTypeVar",
+    "AnyManifest",
     # PKI enrollment
     "PkiEnrollmentSubmitPayload",
     "PkiEnrollmentAcceptPayload",
