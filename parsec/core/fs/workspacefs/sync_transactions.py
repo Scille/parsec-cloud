@@ -28,7 +28,7 @@ from parsec.core.fs.exceptions import (
     FSIsADirectoryError,
     FSNotADirectoryError,
 )
-from parsec.core.types.manifest import LocalManifestTypeVar
+from parsec.core.types.manifest import AnyLocalManifest
 
 __all__ = "SyncTransactions"
 
@@ -194,11 +194,11 @@ def merge_manifests(
     local_author: DeviceID,
     timestamp: DateTime,
     prevent_sync_pattern: Pattern[str],
-    local_manifest: LocalManifestTypeVar,
+    local_manifest: AnyLocalManifest,
     remote_manifest: Optional[RemoteAnyManifest] = None,
     force_apply_pattern: Optional[bool] = False,
     preferred_language: str = "en",
-) -> LocalManifestTypeVar:
+) -> AnyLocalManifest:
     # Start by re-applying pattern (idempotent)
     if force_apply_pattern and isinstance(
         local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)

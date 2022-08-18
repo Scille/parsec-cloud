@@ -29,7 +29,7 @@ from parsec.core.fs.exceptions import (
     FSDirectoryNotEmptyError,
     FSLocalMissError,
 )
-from parsec.core.types.manifest import LocalManifestTypeVar
+from parsec.core.types.manifest import AnyLocalManifest
 
 
 WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.CONTRIBUTOR)
@@ -59,7 +59,7 @@ class EntryTransactions(FileTransactions):
 
     # Look-up helpers
 
-    async def _get_manifest(self, entry_id: EntryID) -> LocalManifestTypeVar:
+    async def _get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         try:
             return await self.local_storage.get_manifest(entry_id)
         except FSLocalMissError as exc:
@@ -69,9 +69,7 @@ class EntryTransactions(FileTransactions):
             )
 
     @asynccontextmanager
-    async def _load_and_lock_manifest(
-        self, entry_id: EntryID
-    ) -> AsyncIterator[LocalManifestTypeVar]:
+    async def _load_and_lock_manifest(self, entry_id: EntryID) -> AsyncIterator[AnyLocalManifest]:
         async with self.local_storage.lock_entry_id(entry_id):
             try:
                 local_manifest = await self.local_storage.get_manifest(entry_id)
@@ -84,7 +82,7 @@ class EntryTransactions(FileTransactions):
                 await self.local_storage.set_manifest(entry_id, local_manifest)
             yield local_manifest
 
-    async def _load_manifest(self, entry_id: EntryID) -> LocalManifestTypeVar:
+    async def _load_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         async with self._load_and_lock_manifest(entry_id) as manifest:
             return manifest
 
@@ -116,14 +114,14 @@ class EntryTransactions(FileTransactions):
         return entry_id, confinement_point
 
     @asynccontextmanager
-    async def _lock_manifest_from_path(self, path: FsPath) -> AsyncIterator[LocalManifestTypeVar]:
+    async def _lock_manifest_from_path(self, path: FsPath) -> AsyncIterator[AnyLocalManifest]:
         entry_id, _ = await self._entry_id_from_path(path)
         async with self._load_and_lock_manifest(entry_id) as manifest:
             yield manifest
 
     async def _get_manifest_from_path(
         self, path: FsPath
-    ) -> Tuple[LocalManifestTypeVar, Optional[EntryID]]:
+    ) -> Tuple[AnyLocalManifest, Optional[EntryID]]:
         """Returns a tuple (manifest, confinement_point).
 
         The confinement point corresponds to the entry id of the folderish manifest
@@ -138,7 +136,7 @@ class EntryTransactions(FileTransactions):
     @asynccontextmanager
     async def _lock_parent_manifest_from_path(
         self, path: FsPath
-    ) -> AsyncIterator[Tuple[LocalFolderishManifests, Optional[LocalManifestTypeVar]]]:
+    ) -> AsyncIterator[Tuple[LocalFolderishManifests, Optional[AnyLocalManifest]]]:
         # This is the most complicated locking scenario.
         # It requires locking the parent of the given entry and the entry itself
         # if it exists.

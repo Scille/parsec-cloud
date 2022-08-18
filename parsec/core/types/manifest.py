@@ -53,7 +53,7 @@ __all__ = (
     "LocalFolderManifest",
     "LocalUserManifest",
     "LocalWorkspaceManifest",
-    "LocalManifestTypeVar",
+    "AnyLocalManifest",
 )
 
 
@@ -118,7 +118,7 @@ LocalWorkspaceManifestTypeVar = TypeVar(
     "LocalWorkspaceManifestTypeVar", bound="LocalWorkspaceManifest"
 )
 LocalUserManifestTypeVar = TypeVar("LocalUserManifestTypeVar", bound="LocalUserManifest")
-LocalManifestTypeVar = Union[
+AnyLocalManifest = Union[
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
@@ -154,7 +154,7 @@ class BaseLocalManifest(BaseLocalData):
     def from_remote(
         remote: RemoteAnyManifest,
         prevent_sync_pattern: Pattern,
-    ) -> LocalManifestTypeVar:
+    ) -> AnyLocalManifest:
         if isinstance(remote, RemoteFileManifest):
             return LocalFileManifest.from_remote(remote)
         elif isinstance(remote, RemoteFolderManifest):
@@ -169,9 +169,9 @@ class BaseLocalManifest(BaseLocalData):
     def from_remote_with_local_context(
         remote: RemoteAnyManifest,
         prevent_sync_pattern: Pattern,
-        local_manifest: LocalManifestTypeVar,
+        local_manifest: AnyLocalManifest,
         timestamp: DateTime,
-    ) -> LocalManifestTypeVar:
+    ) -> AnyLocalManifest:
         if isinstance(remote, RemoteFileManifest):
             return LocalFileManifest.from_remote(remote)
         elif isinstance(remote, RemoteFolderManifest):
