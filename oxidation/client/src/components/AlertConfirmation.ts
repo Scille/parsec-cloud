@@ -4,7 +4,7 @@ export async function createAlert(
   header: string,
   message: string,
   cancelLabel: string,
-  OkLabel: string
+  okLabel: string
 ): Promise<HTMLIonAlertElement> {
   return await alertController.create({
     header: header,
@@ -15,7 +15,7 @@ export async function createAlert(
         role: 'cancel'
       },
       {
-        text: OkLabel,
+        text: okLabel,
         role: 'confirm'
       }
     ]
