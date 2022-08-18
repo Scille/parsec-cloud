@@ -6,7 +6,7 @@
       :fullscreen="true"
     >
       <div id="container">
-        <p>{{ $t('HomePage.pleaseConnectToAnOrganisation') }}</p>
+        <p>{{ $t('HomePage.pleaseConnectToAnOrganization') }}</p>
         <ion-button
           @click="openCreateOrganizationModal()"
           expand="full"
@@ -61,7 +61,7 @@ import {
 } from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { useI18n } from 'vue-i18n';
 import JoinByLinkModal from '@/components/JoinByLinkModal.vue';
-import CreateOrganisation from '@/components/CreateOrganisationModal.vue';
+import CreateOrganization from '@/components/CreateOrganizationModal.vue';
 import { createAlert } from '@/components/AlertConfirmation';
 
 const { t } = useI18n();
@@ -82,7 +82,7 @@ async function openJoinByLinkModal(): Promise<void> {
 
 async function openCreateOrganizationModal(): Promise<void> {
   const modal = await modalController.create({
-    component: CreateOrganisation,
+    component: CreateOrganization,
     canDismiss: canDismissModal
   });
   modal.present();

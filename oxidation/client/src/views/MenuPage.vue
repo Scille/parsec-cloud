@@ -114,3 +114,9 @@ function navigateToPage(pageName: string): void {
 
 const router = useRouter();
 </script>
+
+<style scoped>
+  ion-split-pane {
+    --border: none;
+  }
+</style>

@@ -9,7 +9,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding settings-content">
-      <ion-list>
+      <ion-list class="ion-padding">
         <h5>{{ $t('SettingsPage.telemetry') }}</h5>
         <ion-item class="ion-margin-bottom">
           <SettingsOption

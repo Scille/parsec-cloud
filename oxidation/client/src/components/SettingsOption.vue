@@ -1,10 +1,7 @@
 <template>
   <ion-label class="ion-text-wrap">
     {{ title }}
-    <div
-      class="ion-text-wrap"
-      style="color: var(--ion-color-medium);"
-    >
+    <div class="ion-text-wrap setting-description">
       {{ description }}
     </div>
   </ion-label>
@@ -21,4 +18,7 @@ defineProps<{
 </script>
 
 <style scoped>
+  .setting-description {
+    color: var(--ion-color-medium);
+  }
 </style>

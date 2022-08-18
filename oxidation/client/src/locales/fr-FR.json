@@ -11,7 +11,7 @@
         },
         "noDevices": "Vous n'avez pas d'appareils sur ce téléphone.",
         "howToAddDevices": "Pour ajouter un appareil, invitez-le depuis une organisation existante, ou créez une nouvelle organisation.",
-        "pleaseConnectToAnOrganisation": "Bienvenue. Veuillez ajouter une organisation pour commencer à utiliser Parsec.",
+        "pleaseConnectToAnOrganization": "Bienvenue. Veuillez ajouter une organisation pour commencer à utiliser Parsec.",
         "createOrganization": "Créer une organisation",
         "joinByLink": "Rejoindre par lien",
         "joinByQRcode": "Rejoindre par QR code"
