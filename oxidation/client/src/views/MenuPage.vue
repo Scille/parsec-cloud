@@ -107,7 +107,7 @@ import {
 } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 
-function navigateToPage(pageName: string): void{
+function navigateToPage(pageName: string): void {
   router.push({ name: pageName });
   menuController.close();
 }

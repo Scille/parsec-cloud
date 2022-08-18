@@ -89,9 +89,6 @@ import {
   helpCircleOutline
 } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
+
 const router = useRouter();
-
 </script>
-
-<style scoped>
-</style>

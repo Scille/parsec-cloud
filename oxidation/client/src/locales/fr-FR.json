@@ -30,7 +30,7 @@
         "organizationNamePlaceholder": "MonOrganisation",
         "useParsecServer": "Utiliser le serveur PARSEC principal",
         "useMyOwnServer": "Je dispose de mon propre serveur PARSEC",
-        "acceptTOS": "J'accepte la Politique de Confidentialité et les conditions générales de vente ou d'utilisation de PARSEC",
+        "acceptTOS": "J'accepte la Politique de Confidentialité et les Conditions Générales de Vente et d'Utilisation de PARSEC",
         "parsecServerUrl": "URL de votre serveur PARSEC",
         "parsecServerUrlPlaceholder": "parsec://hote:port",
         "registeringDevice": "Enregistrement de votre appareil",
@@ -38,9 +38,9 @@
         "deviceNamePlaceholder": "Desktop123",
         "password": "Mot de passe",
         "confirmPassword": "Confirmer le mot de passe",
-        "next": "suivant",
-        "previous": "précédent",
-        "done": "terminer"
+        "next": "Suivant",
+        "previous": "Précédent",
+        "done": "Terminer"
     },
     "JoinByLinkModal": {
         "pageTitle": "Rejoindre par lien",
@@ -53,9 +53,9 @@
         "areYouSure": "Êtes-vous sûr ?",
         "infoNotSaved": "Si vous avez rempli des informations, elles ne seront pas sauvegardées.",
         "ok": "OK",
-        "cancel": "Cancel",
-        "yes": "Yes",
-        "no": "No"
+        "cancel": "Annuler",
+        "yes": "Oui",
+        "no": "Non"
     },
     "MenuPage": {
         "documents": "Documents",

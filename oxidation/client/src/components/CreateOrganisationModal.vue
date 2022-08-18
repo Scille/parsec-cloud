@@ -24,9 +24,9 @@
               {{ $t('CreateOrganization.organizationName') }}
             </ion-label>
             <ion-input
-              v-model="organisation"
+              v-model="organization"
               type="text"
-              name="organisation"
+              name="organization"
               :placeholder="$t('CreateOrganization.organizationNamePlaceholder')"
             />
           </ion-item>
@@ -38,7 +38,7 @@
               v-model="fullname"
               type="text"
               name="fullname"
-              placeholder="Jean MARTIN"
+              :placeholder="$t('CreateOrganization.fullnamePlaceholder')"
             />
           </ion-item>
         </div>
@@ -55,7 +55,7 @@
         </ion-item>
         <ion-list>
           <ion-radio-group
-            v-model="showTos"
+            v-model="showTOS"
             value="parsecServer"
           >
             <ion-item>
@@ -77,13 +77,13 @@
               />
             </ion-item>
           </ion-radio-group>
-          <ion-item v-if="showTos != 'myOwnServer'">
+          <ion-item v-if="showTOS != 'myOwnServer'">
             <ion-label class="ion-text-wrap">
               {{ $t('CreateOrganization.acceptTOS') }}
             </ion-label>
             <ion-checkbox
               ref="TosCheckbox"
-              v-model="acceptTos"
+              v-model="acceptTOS"
               slot="start"
             />
           </ion-item>
@@ -180,18 +180,16 @@ import {
   modalController
 } from '@ionic/vue';
 
-import {
-  close
-} from 'ionicons/icons';
+import { close } from 'ionicons/icons';
 import { ref } from 'vue';
 
-const showTos = ref('parsecServer');
+const showTOS = ref('parsecServer');
 const ownServerUrl = ref('');
-const acceptTos = ref(false);
+const acceptTOS = ref(false);
 const pageStep = ref(1);
 const email = ref('');
 const fullname = ref('');
-const organisation = ref('');
+const organization = ref('');
 const deviceName = ref('');
 
 function nextStep(): void {
@@ -204,14 +202,13 @@ function previousStep(): void {
 
 /* temporary test, we will do a more complete form validation */
 function firstPageIsFilled(): boolean {
-  return email.value.length > 0 && fullname.value.length > 0 && organisation.value.length > 0
-  && ( acceptTos.value || ownServerUrl.value.length > 0 );
+  return email.value.length > 0 && fullname.value.length > 0 && organization.value.length > 0
+  && ( acceptTOS.value || ownServerUrl.value.length > 0 );
 }
 
 function closeModal(): Promise<boolean> {
   return modalController.dismiss(null, 'cancel');
 }
-
 </script>
 
 <style lang="scss" scoped>

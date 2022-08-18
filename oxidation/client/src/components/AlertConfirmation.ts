@@ -1,8 +1,12 @@
 import { alertController } from '@ionic/vue';
 
-export async function createAlert(header: string, message: string, cancelLabel: string,
-  OkLabel: string): Promise<HTMLIonAlertElement> {
-  const alert = await alertController.create({
+export async function createAlert(
+  header: string,
+  message: string,
+  cancelLabel: string,
+  OkLabel: string
+): Promise<HTMLIonAlertElement> {
+  return await alertController.create({
     header: header,
     message: message,
     buttons: [
@@ -16,5 +20,4 @@ export async function createAlert(header: string, message: string, cancelLabel: 
       }
     ]
   });
-  return alert;
 }
