@@ -40,14 +40,16 @@ class BaseBlockStoreComponent:
     (and not only the ones that failed the first time)
     """
 
-    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
+    async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
         """
         Raises:
             BlockStoreError
         """
         raise NotImplementedError()
 
-    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
+    async def create(
+        self, organization_id: OrganizationID, block_id: BlockID, block: bytes
+    ) -> None:
         """
         Raises:
             BlockStoreError

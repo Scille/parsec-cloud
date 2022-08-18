@@ -238,22 +238,24 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 
-    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
+    async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
         async with self.dbh.pool.acquire() as conn:
             ret = await conn.fetchrow(
-                *_q_get_block_data(organization_id=organization_id.str, block_id=id.uuid)
+                *_q_get_block_data(organization_id=organization_id.str, block_id=block_id.uuid)
             )
             if not ret:
                 raise BlockStoreError("Block not found")
 
             return ret[0]
 
-    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
+    async def create(
+        self, organization_id: OrganizationID, block_id: BlockID, block: bytes
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
             try:
                 ret = await conn.execute(
                     *_q_insert_block_data(
-                        organization_id=organization_id.str, block_id=id.uuid, data=block
+                        organization_id=organization_id.str, block_id=block_id.uuid, data=block
                     )
                 )
                 if ret != "INSERT 0 1":

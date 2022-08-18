@@ -18,13 +18,13 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
         self._partial_create_ok = partial_create_ok
         self._logger = logger.bind(blockstore_type="RAID1", partial_create_ok=partial_create_ok)
 
-    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
+    async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
         value = None
 
         async def _single_blockstore_read(nursery, blockstore: BaseBlockStoreComponent) -> None:
             nonlocal value
             try:
-                value = await blockstore.read(organization_id, id)
+                value = await blockstore.read(organization_id, block_id)
                 nursery.cancel_scope.cancel()
             except BlockStoreError:
                 pass
@@ -37,13 +37,15 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
             self._logger.warning(
                 "Block read error: All nodes have failed",
                 organization_id=organization_id,
-                block_id=id,
+                block_id=block_id,
             )
             raise BlockStoreError("All RAID1 nodes have failed")
 
         return value
 
-    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
+    async def create(
+        self, organization_id: OrganizationID, block_id: BlockID, block: bytes
+    ) -> None:
         at_least_one_success = False
         at_least_one_error = False
 
@@ -53,7 +55,7 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
             nonlocal at_least_one_success
             nonlocal at_least_one_error
             try:
-                await blockstore.create(organization_id, id, block)
+                await blockstore.create(organization_id, block_id, block)
                 at_least_one_success = True
 
             except BlockStoreError:
@@ -71,7 +73,7 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
                 self._logger.warning(
                     "Block create error: All nodes have failed",
                     organization_id=str(organization_id),
-                    block_id=str(id),
+                    block_id=str(block_id),
                 )
                 raise BlockStoreError("All RAID1 nodes have failed")
         else:
@@ -79,6 +81,6 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
                 self._logger.warning(
                     "Block create error: A node have failed",
                     organization_id=str(organization_id),
-                    block_id=str(id),
+                    block_id=str(block_id),
                 )
                 raise BlockStoreError("A RAID1 node have failed")

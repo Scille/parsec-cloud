@@ -514,7 +514,7 @@ LIMIT $4
             cooked_rows = []
             for row in rows:
                 block = await self.input_blockstore.read(
-                    organization_id=self.organization_id, id=BlockID(row["block_id"])
+                    organization_id=self.organization_id, block_id=BlockID(row["block_id"])
                 )
                 cooked_rows.append(
                     (
