@@ -161,10 +161,10 @@ class CmdSock:
         rep = self.serializer.rep_loads(raw_rep)
 
         if check_rep:
-            try:
-                assert rep["status"] == "ok"
-            except:
-                assert rep.is_ok()
+            if isinstance(rep, dict):
+                assert rep["status"] == "ok"  # Legacy rep schemas
+            else:
+                assert rep.is_ok()  # Rust-based rep schemas
 
         return rep
 
