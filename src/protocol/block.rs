@@ -130,7 +130,7 @@ impl BlockCreateRep {
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
         block_create::Rep::load(&buf)
             .map(Self)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map_err(|e| ProtocolError::new_err(e.to_string()))
     }
 }
 
@@ -243,6 +243,6 @@ impl BlockReadRep {
     fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
         block_read::Rep::load(&buf)
             .map(Self)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map_err(|e| ProtocolError::new_err(e.to_string()))
     }
 }

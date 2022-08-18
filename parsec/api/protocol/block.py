@@ -25,10 +25,7 @@ class BlockCreateSerializer:
 
     @staticmethod
     def rep_loads(raw: bytes) -> BlockCreateRep:
-        try:
-            return BlockCreateRep.load(raw)
-        except ValueError as exc:
-            raise exc
+        return BlockCreateRep.load(raw)
 
 
 class BlockReadSerializer:
@@ -38,10 +35,7 @@ class BlockReadSerializer:
 
     @staticmethod
     def rep_loads(raw: bytes) -> BlockReadRep:
-        try:
-            return BlockReadRep.load(raw)
-        except ValueError as exc:
-            raise exc
+        return BlockReadRep.load(raw)
 
 
 block_create_serializer = BlockCreateSerializer

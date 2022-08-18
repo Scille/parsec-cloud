@@ -2,10 +2,9 @@
 
 import trio
 import pytest
-from parsec._parsec import DateTime
 from hypothesis import given, strategies as st
 
-from parsec._parsec import BlockReadRep, BlockCreateRep
+from parsec._parsec import DateTime, BlockReadRep, BlockCreateRep
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.block import BlockStoreError
 from parsec.backend.raid5_blockstore import (
@@ -20,6 +19,7 @@ from parsec.api.protocol import (
     block_read_serializer,
     packb,
     RealmRole,
+    ProtocolError,
 )
 
 from tests.common import customize_fixtures
@@ -355,7 +355,7 @@ async def test_raid5_block_read_multiple_failure(
 async def test_block_create_bad_msg(alice_ws, bad_msg):
     await alice_ws.send(packb({"cmd": "block_create", **bad_msg}))
     raw_rep = await alice_ws.receive()
-    with pytest.raises(ValueError):
+    with pytest.raises(ProtocolError):
         block_create_serializer.rep_loads(raw_rep)
 
 
@@ -379,7 +379,7 @@ async def test_block_read_not_found(alice_ws):
 async def test_block_read_bad_msg(alice_ws, bad_msg):
     await alice_ws.send(packb({"cmd": "block_read", **bad_msg}))
     raw_rep = await alice_ws.receive()
-    with pytest.raises(ValueError):
+    with pytest.raises(ProtocolError):
         # Valid ID doesn't exists in database but this is ok given here we test
         # another layer so it's not important as long as we get our
         # `bad_message` status
