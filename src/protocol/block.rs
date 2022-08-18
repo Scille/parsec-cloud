@@ -80,10 +80,7 @@ impl BlockCreateRep {
     }
 
     fn is_ok(&self) -> PyResult<bool> {
-        Ok(match self.0 {
-            block_create::Rep::Ok => true,
-            _ => false,
-        })
+        Ok(matches!(self.0, block_create::Rep::Ok))
     }
 
     #[classmethod]
@@ -202,10 +199,7 @@ impl BlockReadRep {
     }
 
     fn is_ok(&self) -> PyResult<bool> {
-        Ok(match self.0 {
-            block_read::Rep::Ok { .. } => true,
-            _ => false,
-        })
+        Ok(matches!(self.0, block_read::Rep::Ok { .. }))
     }
 
     #[classmethod]
