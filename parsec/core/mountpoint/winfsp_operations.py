@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from pathlib import PurePath
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from functools import partial, wraps
 from contextlib import contextmanager
 from typing import Optional, Union, Iterator
@@ -14,6 +14,7 @@ from winfspy import (
     CREATE_FILE_CREATE_OPTIONS,
 )
 from winfspy.plumbing import dt_to_filetime, NTSTATUS, SecurityDescriptor
+from datetime import datetime
 
 from parsec.api.data import EntryID
 from parsec.core.core_events import CoreEvent
@@ -158,8 +159,8 @@ def stat_to_file_attributes(stat):
 
 
 def stat_to_winfsp_attributes(stat):
-    created = dt_to_filetime(stat["created"])
-    updated = dt_to_filetime(stat["updated"])
+    created = dt_to_filetime(datetime.fromtimestamp(stat["created"].timestamp()))
+    updated = dt_to_filetime(datetime.fromtimestamp(stat["updated"].timestamp()))
     attributes = {
         "creation_time": created,
         "last_access_time": updated,
@@ -221,8 +222,8 @@ class WinFSPOperations(BaseFileSystemOperations):
         # Also, the total size of a workspace is not limited
         # For the moment let's settle on 0 MB used for 1 TB available
         self._volume_info = {
-            "total_size": 1 * 1024 ** 4,  # 1 TB
-            "free_size": 1 * 1024 ** 4,  # 1 TB
+            "total_size": 1 * 1024**4,  # 1 TB
+            "free_size": 1 * 1024**4,  # 1 TB
             "volume_label": volume_label,
         }
 

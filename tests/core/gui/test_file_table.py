@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-import pendulum
+from parsec._parsec import DateTime
 
 from PyQt5 import QtCore
 
@@ -64,8 +64,8 @@ def test_file_table_sort(qtbot, core_config):
         EntryName("File1.txt"),
         EntryID.new(),
         100,
-        pendulum.datetime(2000, 1, 15),
-        pendulum.datetime(2000, 1, 20),
+        DateTime(2000, 1, 15),
+        DateTime(2000, 1, 20),
         True,
         False,
     )
@@ -73,8 +73,8 @@ def test_file_table_sort(qtbot, core_config):
         EntryName("AnotherFile.txt"),
         EntryID.new(),
         80,
-        pendulum.datetime(2000, 1, 10),
-        pendulum.datetime(2000, 1, 25),
+        DateTime(2000, 1, 10),
+        DateTime(2000, 1, 25),
         True,
         False,
     )

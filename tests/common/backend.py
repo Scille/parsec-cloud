@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from dataclasses import dataclass
 import sys
@@ -173,6 +173,8 @@ def backend_factory(
                             "bob_initial_remote_user_manifest", "v1"
                         ),
                     )
+                    if fixtures_customization.get("adam_is_revoked", False):
+                        await binder.bind_revocation(adam.user_id, certifier=alice)
 
             yield backend
 

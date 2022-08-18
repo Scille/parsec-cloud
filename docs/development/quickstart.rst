@@ -1,4 +1,4 @@
-.. Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+.. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 .. _doc_development_quickstart:
 
@@ -14,8 +14,27 @@ Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
 
 1. You need to have the following tools available:
     - `git <https://git-scm.com/>`_
-    - `python3.9 <https://www.python.org/>`_
-    - `poetry <https://python-poetry.org/>`_
+    - `python v3.9 <https://www.python.org/>`_
+    - `poetry >=1.2.0b3 <https://python-poetry.org/docs/#installation>`_
+    - `Rust v1.62 <https://www.rust-lang.org/fr/learn/get-started>`_
+
+Consider using `pyenv <https://github.com/pyenv/pyenv#installation>_` to install a specific version of Python.
+
+**tl;dr:**
+
+.. code-block:: shell
+
+    # Install Poetry (Doesn't require a specific version of Python)
+    # Note --preview is used to install beta version of Poetry 1.2.0
+    curl --proto '=https' --tlsv1.2 -sSL https://install.python-poetry.org/ | python - --preview
+    # Install Rust
+    curl --proto '=https' --tlsv1.2 -sSL https://sh.rustup.rs | sh -s -- --default-toolchain 1.62
+    # Install Pyenv
+    curl --proto '=https' --tlsv1.2 -sSL https://pyenv.run | bash
+    # Compile Python
+    pyenv install 3.9.10
+    # Create the project virtual with the correct version of Python
+    poetry env use `pyenv prefix 3.9.10`/bin/python
 
 2. You must first clone it with ``git`` and move to the project dir
 
@@ -29,10 +48,6 @@ Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
 .. code-block:: shell
 
     poetry install -E core -E backend
-
-.. note::
-
-    Parsec requires Python 3.9
 
 4. Start a shell with the initialized virtual env
 

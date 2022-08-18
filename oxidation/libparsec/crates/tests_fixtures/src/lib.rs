@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 mod trustchain;
 
@@ -168,8 +168,7 @@ impl std::ops::Deref for TmpPath {
 
 impl Drop for TmpPath {
     fn drop(&mut self) {
-        // Currently std::fs::remove_dir_all encounters issue on Windows platform
-        remove_dir_all::remove_dir_all(&self.0).unwrap();
+        std::fs::remove_dir_all(&self.0).unwrap();
     }
 }
 

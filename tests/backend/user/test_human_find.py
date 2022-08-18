@@ -1,9 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from unittest.mock import ANY
 
-from parsec.api.data import UserProfile
+from parsec.api.protocol import UserProfile
 from parsec.backend.asgi import app_factory
 
 from tests.common import freeze_time, customize_fixtures

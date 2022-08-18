@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -47,6 +47,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "Index" => "u64",
                 "NonZeroInteger" => "::std::num::NonZeroU64",
                 "PublicKey" => "libparsec_crypto::PublicKey",
+                "SigningKey" => "libparsec_crypto::SigningKey",
                 "VerifyKey" => "libparsec_crypto::VerifyKey",
                 "PrivateKey" => "libparsec_crypto::PrivateKey",
                 "SecretKey" => "libparsec_crypto::SecretKey",
@@ -74,6 +75,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "WorkspaceManifest" => "libparsec_types::WorkspaceManifest",
                 "UserManifest" => "libparsec_types::UserManifest",
                 "Chunk" => "libparsec_client_types::Chunk",
+                "BackendOrganizationAddr" => "libparsec_types::BackendOrganizationAddr",
                 ident if types.get(ident).is_some() => {
                     types.get(ident).unwrap_or_else(|| unreachable!())
                 }

@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 
 import sys
 import re
 import argparse
 from pathlib import Path
-from itertools import chain
+from itertools import chain, dropwhile
 from typing import Iterable, Iterator
 
 
-THIS_YEAR = "2021"  # Change me when new year comes ;-)
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -26,28 +25,36 @@ def extract_shabang_and_header_lines(fd):
 
 
 class Licenser:
-    NAME: str
-    HEADER: str
-    HEADER_RE: re.Pattern
+    SPDX_ID: str
+
+    @classmethod
+    def generate_license_line(cls) -> str:
+        raise NotImplementedError
+
+    @classmethod
+    def generate_license_label(cls) -> str:
+        return cls.SPDX_ID
+
+    @classmethod
+    def generate_license_text(cls) -> str:
+        return f"Parsec Cloud (https://parsec.cloud) Copyright (c) {cls.generate_license_label()} 2016-present Scille SAS"
+
+    @classmethod
+    def is_possible_license_line(cls, line: str) -> bool:
+        return "Parsec Cloud (https://parsec.cloud) Copyright (c)" in line
 
     @classmethod
     def check_header(cls, file: Path) -> bool:
         with open(file, "r", encoding="utf-8") as fd:
             shabang_line, header_line = extract_shabang_and_header_lines(fd)
-            match = cls.HEADER_RE.match(header_line.strip())
-            if not match:
-                print(f"Missing {cls.NAME} header", file)
+            expected_license_line = cls.generate_license_line()
+            if header_line != expected_license_line:
+                print(f"Missing {cls.SPDX_ID} header", file)
                 return False
 
-            elif match["year"] != THIS_YEAR:
-                print(
-                    f"Wrong year in the header (got {match['year']}, should be {THIS_YEAR})", file
-                )
-                return False
-
-            for line, line_txt in enumerate(fd.read().split("\n"), 3 if shabang_line else 2):
-                if cls.HEADER_RE.match(line_txt.strip()):
-                    print("Header wrongly present at line", line, file)
+            for line, line_txt in enumerate(fd.readlines(), 3 if shabang_line else 2):
+                if cls.is_possible_license_line(line_txt):
+                    print(f"Header wrongly present at {file}:{line}")
                     return False
 
         return True
@@ -56,88 +63,130 @@ class Licenser:
     def add_header(cls, file: Path) -> bool:
         with open(file, "r", encoding="utf-8") as fd:
             shabang_line, header_line = extract_shabang_and_header_lines(fd)
-            match = cls.HEADER_RE.match(header_line.strip())
-            if not match:
-                print(f"Add missing {cls.NAME} header", file)
-                updated_data = f"{shabang_line}{cls.HEADER}\n\n{header_line}{fd.read()}"
-                file.write_text(updated_data)
-                return True
-
-            elif match["year"] != THIS_YEAR:
-                print("Correct copyright year", file)
-                updated_data = f"{shabang_line}{cls.HEADER}\n{fd.read()}"
-                file.write_text(updated_data)
+            expected_license_line = cls.generate_license_line()
+            if header_line != expected_license_line:
+                print(f"Add missing {cls.SPDX_ID} header: {file}")
+                updated_data = f"{shabang_line}{expected_license_line}\n{header_line}{fd.read()}"
+                file.write_text(updated_data, encoding="utf-8")
                 return True
 
         return False
 
+    @classmethod
+    def remove_header(cls, file: Path) -> bool:
+        with open(file, "r", encoding="utf-8") as fd:
+            lines = []
+            need_rewrite = False
+            for line in fd.readlines():
+                if cls.is_possible_license_line(line):
+                    print(f"Removing license header from {file}")
+                    need_rewrite = True
+                else:
+                    lines.append(line)
 
-class PythonAGPLLicenser(Licenser):
-    NAME = "AGPLv3"
-    HEADER = (
-        f"# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-{THIS_YEAR} Scille SAS"
-    )
-    HEADER_RE = re.compile(
-        r"^# Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPLv3 2016-(?P<year>[0-9]{4}) Scille SAS$"
-    )
-
-
-class PythonBSLLicenser(Licenser):
-    NAME = "BSL"
-    HEADER = f"# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS"
-    HEADER_RE = re.compile(
-        r"^# Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
-    )
-
-
-class SqlBSLLicenser(Licenser):
-    NAME = "BSL"
-    HEADER = f"-- Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS"
-    HEADER_RE = re.compile(
-        r"^-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
-    )
+        if need_rewrite:
+            # Also skip the first empty lines
+            content = "".join(dropwhile(lambda x: not x.strip(), lines))
+            file.write_text(content, encoding="utf-8")
+            return True
+        else:
+            return False
 
 
-class SqlAGPLLicenser(Licenser):
-    NAME = "AGPLv3"
-    HEADER = (
-        f"-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-{THIS_YEAR} Scille SAS"
-    )
-    HEADER_RE = re.compile(
-        r"^-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) AGPLv3 2016-(?P<year>[0-9]{4}) Scille SAS$"
-    )
+class AgplLicenserMixin(Licenser):
+    SPDX_ID = "AGPL-3.0"
 
 
-class RustBSLLicenser(Licenser):
-    NAME = "BSL"
-    HEADER = f"// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS"
-    HEADER_RE = re.compile(
-        r"^// Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
-    )
+class BuslLicenserMixin(Licenser):
+    SPDX_ID = "BUSL-1.1"
+
+    @classmethod
+    def generate_license_label(cls) -> str:
+        return f"{cls.SPDX_ID} (eventually AGPL-3.0)"
 
 
-class JavascriptBSLLicenser(Licenser):
-    NAME = "BSL"
-    HEADER = f"// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS"
-    HEADER_RE = re.compile(
-        r"^// Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
-    )
+class PythonLicenserMixin(Licenser):
+    @classmethod
+    def generate_license_line(cls) -> str:
+        return f"# {cls.generate_license_text()}\n"
 
 
-class VueBSLLicenser(Licenser):
-    NAME = "BSL"
-    HEADER = f"<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS -->"
-    HEADER_RE = re.compile(
-        r"^<!-- Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS -->$"
-    )
+class SqlLicenserMixin(Licenser):
+    @classmethod
+    def generate_license_line(cls) -> str:
+        return f"-- {cls.generate_license_text()}\n"
 
 
-class RstBSLLicenser(Licenser):
-    NAME = "BSL"
-    HEADER = f".. Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-{THIS_YEAR} Scille SAS"
-    HEADER_RE = re.compile(
-        r"^\.\. Parsec Cloud \(https://parsec\.cloud\) Copyright \(c\) BSLv1.1 \(eventually AGPLv3\) 2016-(?P<year>[0-9]{4}) Scille SAS$"
-    )
+class RustLicenserMixin(Licenser):
+    @classmethod
+    def generate_license_line(cls) -> str:
+        return f"// {cls.generate_license_text()}\n"
+
+
+class JavascriptLicenserMixin(Licenser):
+    @classmethod
+    def generate_license_line(cls) -> str:
+        return f"// {cls.generate_license_text()}\n"
+
+
+class VueLicenserMixin(Licenser):
+    @classmethod
+    def generate_license_line(cls) -> str:
+        return f"<!-- {cls.generate_license_text()} -->\n"
+
+
+class RstLicenserMixin(Licenser):
+    @classmethod
+    def generate_license_line(cls) -> str:
+        return f".. {cls.generate_license_text()}\n"
+
+
+class PythonAgplLicenser(AgplLicenserMixin, PythonLicenserMixin):
+    pass
+
+
+class PythonBuslLicenser(BuslLicenserMixin, PythonLicenserMixin):
+    pass
+
+
+class SqlAgplLicenser(AgplLicenserMixin, SqlLicenserMixin):
+    pass
+
+
+class SqlBuslLicenser(BuslLicenserMixin, SqlLicenserMixin):
+    pass
+
+
+class RustAgplLicenser(AgplLicenserMixin, RustLicenserMixin):
+    pass
+
+
+class RustBuslLicenser(BuslLicenserMixin, RustLicenserMixin):
+    pass
+
+
+class JavascriptAgplLicenser(AgplLicenserMixin, JavascriptLicenserMixin):
+    pass
+
+
+class JavascriptBuslLicenser(BuslLicenserMixin, JavascriptLicenserMixin):
+    pass
+
+
+class VueAgplLicenser(AgplLicenserMixin, VueLicenserMixin):
+    pass
+
+
+class VueBuslLicenser(BuslLicenserMixin, VueLicenserMixin):
+    pass
+
+
+class RstAgplLicenser(AgplLicenserMixin, RstLicenserMixin):
+    pass
+
+
+class RstBuslLicenser(BuslLicenserMixin, RstLicenserMixin):
+    pass
 
 
 class SkipLicenser(Licenser):
@@ -149,25 +198,31 @@ class SkipLicenser(Licenser):
     def add_header(cls, file: Path) -> bool:
         return False
 
+    @classmethod
+    def remove_header(cls, file: Path) -> bool:
+        return False
+
 
 LICENSERS_MAP = {
     # First match is used
-    re.compile(r"^parsec/backend/.*\.sql$"): SqlBSLLicenser,
-    re.compile(r"^parsec/backend/.*\.py"): PythonBSLLicenser,
+    re.compile(r"^parsec/backend/.*\.sql$"): SqlBuslLicenser,
+    re.compile(r"^parsec/backend/.*\.py"): PythonBuslLicenser,
     re.compile(r"^parsec/core/gui/_resources_rc.py$"): SkipLicenser,
     re.compile(r"^parsec/core/gui/ui/"): SkipLicenser,
     re.compile(r"^oxidation/(.*/)?(target|node_modules|build|dist)/"): SkipLicenser,
-    re.compile(r"^oxidation/.*\.rs$"): RustBSLLicenser,
-    re.compile(r"^oxidation/.*\.py$"): PythonBSLLicenser,
-    re.compile(r"^oxidation/.*\.sql$"): SqlBSLLicenser,
-    re.compile(r"^docs/.*\.py$"): PythonBSLLicenser,
-    re.compile(r"^docs/.*\.rst$"): RstBSLLicenser,
+    re.compile(r"^oxidation/.*\.rs$"): RustBuslLicenser,
+    re.compile(r"^oxidation/.*\.py$"): PythonBuslLicenser,
+    re.compile(r"^oxidation/.*\.sql$"): SqlBuslLicenser,
+    re.compile(r"^docs/.*\.py$"): PythonBuslLicenser,
+    re.compile(r"^docs/.*\.rst$"): RstBuslLicenser,
     # Js project is a minefield full of node_modules/build/dist/assets etc.
     # so we just cut simple and add copyright only to the important stuff
-    re.compile(r"^oxidation/client/src/.*\.(ts|js)$"): JavascriptBSLLicenser,
-    re.compile(r"^oxidation/client/src/.*\.vue$"): VueBSLLicenser,
-    re.compile(r"^.*\.py$"): PythonAGPLLicenser,
-    re.compile(r"^.*\.sql$"): SqlAGPLLicenser,
+    re.compile(r"^oxidation/client/src/.*\.(ts|js)$"): JavascriptBuslLicenser,
+    re.compile(r"^oxidation/client/src/.*\.vue$"): VueBuslLicenser,
+    # Special case for ourself given we contain the license headers in the source code !
+    re.compile(r"^misc/license_headers.py$"): SkipLicenser,
+    re.compile(r"^.*\.py$"): PythonAgplLicenser,
+    re.compile(r"^.*\.sql$"): SqlAgplLicenser,
 }
 
 
@@ -218,15 +273,35 @@ def add_headers(files: Iterable[Path]) -> int:
     return 0
 
 
+def remove_headers(files: Iterable[Path]) -> int:
+    for file in get_files(files):
+        licenser = get_licenser(file)
+        if not licenser:
+            continue
+        licenser.remove_header(file)
+    return 0
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("cmd", choices=["check", "add"])
+    parser.add_argument("cmd", choices=["check", "add", "remove"])
     parser.add_argument(
-        "files", nargs="*", type=Path, default=[Path("parsec"), Path("tests"), Path("oxidation")]
+        "files",
+        nargs="*",
+        type=Path,
+        default=[
+            Path("parsec"),
+            Path("tests"),
+            Path("oxidation"),
+            Path("packaging"),
+            Path("misc"),
+            Path("docs"),
+            Path(".github"),
+        ],
     )
 
     args = parser.parse_args()
-    if args.cmd == "check":
-        sys.exit(check_headers(args.files))
-    else:
-        sys.exit(add_headers(args.files))
+
+    fn = {"check": check_headers, "add": add_headers, "remove": remove_headers}[args.cmd]
+
+    sys.exit(fn(args.files))

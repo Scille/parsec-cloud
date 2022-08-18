@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import re
 import json
 import pkgutil
 import importlib
-
+from types import ModuleType
 from parsec.serde import (
     BaseSerializer,
     JSONSerializer,
@@ -108,14 +108,14 @@ def data_class_to_spec(data_class):
     }
 
 
-def collect_data_classes_from_module(mod):
+def collect_data_classes_from_module(mod: ModuleType):
     data_classes = []
     for item_name in dir(mod):
         item = getattr(mod, item_name)
         # Ignore non-data classes
-        if not isinstance(item, type) or not issubclass(item, _BASE_DATA_CLASSES):
-            continue
-        if item in _BASE_DATA_CLASSES:
+        if (
+            not isinstance(item, type) or not issubclass(item, _BASE_DATA_CLASSES)
+        ) or item in _BASE_DATA_CLASSES:
             continue
         # Data classes with default serializer cannot be serialized, hence no need
         # to check them (note they will be checked if they are used in Nested field)
@@ -125,6 +125,10 @@ def collect_data_classes_from_module(mod):
         # with external imported schema.
         # Example: Avoid to add imported api schemas while generating parsec.core.types)
         if not item.__module__.startswith(mod.__name__):
+            continue
+        # Skip classes that are prefixed with '_Py'
+        # The prefix '_Py' indicated that the class was replaced by rust impl
+        if item.__name__.startswith("_Py"):
             continue
         data_classes.append(item)
     return data_classes
@@ -136,9 +140,9 @@ def generate_api_data_specs():
     package = parsec.api.data
 
     data_classes = set()
-    for submod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
-        submod = importlib.import_module(submod_info.name)
-        data_classes.update(collect_data_classes_from_module(submod))
+    for sub_module_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
+        sub_module = importlib.import_module(sub_module_info.name)
+        data_classes.update(collect_data_classes_from_module(sub_module))
 
     return {data_cls.__name__: data_class_to_spec(data_cls) for data_cls in data_classes}
 

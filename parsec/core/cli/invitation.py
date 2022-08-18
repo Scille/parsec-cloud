@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import click
 import platform
@@ -7,7 +7,6 @@ from typing import Union, Callable, Tuple
 
 from parsec.utils import trio_run
 from parsec.cli_utils import cli_exception_handler, spinner, aprompt
-from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     DeviceLabel,
     HumanHandle,
@@ -16,6 +15,7 @@ from parsec.api.protocol import (
     InvitationType,
     InvitationEmailSentStatus,
     InvitationDeletedReason,
+    UserProfile,
 )
 from parsec.core.types import BackendInvitationAddr, LocalDevice
 from parsec.core.config import CoreConfig

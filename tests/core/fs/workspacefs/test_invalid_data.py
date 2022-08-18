@@ -1,9 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import datetime
+from parsec._parsec import DateTime
 
-from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 from parsec.api.protocol import VlobID
 from parsec.core.fs import FSError
@@ -30,8 +29,8 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
                 "blob": None,
                 "signed_author": alice.device_id,
                 "backend_author": alice.device_id,
-                "signed_timestamp": datetime(2000, 1, 2),
-                "backend_timestamp": datetime(2000, 1, 2),
+                "signed_timestamp": DateTime(2000, 1, 2),
+                "backend_timestamp": DateTime(2000, 1, 2),
                 "author_signkey": alice.signing_key,
                 "key": workspace.get_workspace_entry().key,
             }
@@ -65,10 +64,9 @@ async def testbed(running_backend, alice_user_fs, alice, bob):
 
             # Also test timestamped workspace
             # Note: oxidation doesn't implement WorkspaceStorageTimestamped
-            if not IS_OXIDIZED:
-                with pytest.raises(FSError) as exc:
-                    await workspace.to_timestamped(options["backend_timestamp"])
-                assert str(exc.value) == exc_msg
+            with pytest.raises(FSError) as exc:
+                await workspace.to_timestamped(options["backend_timestamp"])
+            assert str(exc.value) == exc_msg
 
     return TestBed()
 
@@ -98,7 +96,7 @@ async def test_invalid_author(testbed, alice2):
 
 @pytest.mark.trio
 async def test_invalid_timestamp(testbed, alice, alice2):
-    bad_timestamp = datetime(2000, 1, 3)
+    bad_timestamp = DateTime(2000, 1, 3)
 
     # Invalid timestamp field in manifest
     exc_msg = "Cannot decrypt vlob: Invalid timestamp: expected `2000-01-02T00:00:00+00:00`, got `2000-01-03T00:00:00+00:00`"

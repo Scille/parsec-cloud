@@ -1,9 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 from pathlib import Path
 from trio_typing import TaskStatus
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from typing import (
     Tuple,
     Optional,
@@ -25,9 +25,9 @@ from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
 from parsec.api.data import (
     DataError,
-    RealmRoleCertificateContent,
+    RealmRoleCertificate,
     BaseMessageContent,
-    UserCertificateContent,
+    UserCertificate,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
@@ -329,7 +329,7 @@ class UserFS:
         # Instantiate the local storage
 
         async def workspace_storage_task(
-            task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED
+            task_status: TaskStatus[WorkspaceStorage] = trio.TASK_STATUS_IGNORED,
         ) -> None:
             async with WorkspaceStorage.run(
                 data_base_dir=self.data_base_dir,
@@ -579,7 +579,7 @@ class UserFS:
 
         # Make sure the corresponding realm has been created in the backend
         if base_um.is_placeholder:
-            certif = RealmRoleCertificateContent.build_realm_root_certif(
+            certif = RealmRoleCertificate.build_realm_root_certif(
                 author=self.device.device_id,
                 timestamp=self.device.timestamp(),
                 realm_id=RealmID(self.device.user_manifest_id.uuid),
@@ -813,7 +813,7 @@ class UserFS:
             raise FSError(f"Cannot create sharing message for `{recipient}`: {exc}") from exc
 
         # Build role certificate
-        role_certificate = RealmRoleCertificateContent(
+        role_certificate = RealmRoleCertificate(
             author=self.device.device_id,
             timestamp=timestamp,
             realm_id=RealmID(workspace_id.uuid),
@@ -1066,7 +1066,7 @@ class UserFS:
                 previous_entry=existing_workspace_entry,
             )
 
-    async def _retrieve_participants(self, workspace_id: EntryID) -> List[UserCertificateContent]:
+    async def _retrieve_participants(self, workspace_id: EntryID) -> List[UserCertificate]:
         """
         Raises:
             FSError
@@ -1086,10 +1086,7 @@ class UserFS:
         return users
 
     def _generate_reencryption_messages(
-        self,
-        new_workspace_entry: WorkspaceEntry,
-        users: List[UserCertificateContent],
-        timestamp: DateTime,
+        self, new_workspace_entry: WorkspaceEntry, users: List[UserCertificate], timestamp: DateTime
     ) -> Dict[UserID, bytes]:
         """
         Raises:

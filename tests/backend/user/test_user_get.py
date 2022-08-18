@@ -1,10 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import datetime
+from parsec._parsec import DateTime
 
-from parsec.api.data import UserProfile
-from parsec.api.protocol import packb, user_get_serializer, UserID
+from parsec.api.protocol import packb, user_get_serializer, UserID, UserProfile
 
 from parsec.backend.asgi import app_factory
 
@@ -88,8 +87,8 @@ async def test_api_user_get_ok_deep_trustchain(
 ):
     binder, org, godfrey1, sock = access_testbed
     certificates_store = binder.certificates_store
-    d1 = datetime(2000, 1, 1)
-    d2 = datetime(2000, 1, 2)
+    d1 = DateTime(2000, 1, 1)
+    d2 = DateTime(2000, 1, 2)
 
     roger1 = local_device_factory("roger@dev1", org)
     mike1 = local_device_factory("mike@dev1", org)

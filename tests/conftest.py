@@ -1,11 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import os
 import re
 import sys
 import attr
-import pendulum
 from unittest.mock import patch
 import logging
 import structlog
@@ -14,7 +13,6 @@ import trio_asyncio
 from contextlib import contextmanager
 import hypothesis
 import sqlite3
-from parsec import IS_OXIDIZED
 
 from parsec.monitoring import TaskMonitoringInstrument
 from parsec.core.mountpoint.manager import get_mountpoint_runner
@@ -239,20 +237,17 @@ def pytest_collection_modifyitems(config, items):
 # Autouse fixtures
 
 
-@pytest.fixture(scope="session", autouse=True)
-def mock_timezone_utc(request):
-    # Mock and non-UTC timezones are a really bad mix, so keep things simple
-    with pendulum.test_local_timezone(pendulum.timezone("utc")):
-        yield
-
-
 @pytest.fixture(autouse=True)
 def no_logs_gte_error(caplog):
     yield
 
     # TODO: Concurrency bug in Hypercorn when the server is torndown while a
     # client websocket is currently disconnecting
+    # see: https://github.com/Scille/parsec-cloud/issues/2716
     def skip_hypercorn_buggy_log(record):
+        if record.name == "asyncio" and isinstance(record.exc_info, ConnectionError):
+            return True
+
         if record.name != "hypercorn.error":
             return True
 
@@ -429,7 +424,7 @@ def blockstore(backend_store, fixtures_customization):
 
 @pytest.fixture(autouse=True)
 def persistent_mockup(monkeypatch, fixtures_customization):
-    if fixtures_customization.get("real_data_storage", False) or IS_OXIDIZED:
+    if fixtures_customization.get("real_data_storage", False):
         yield
         return
 

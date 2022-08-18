@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
@@ -13,7 +13,7 @@ use crate as libparsec_types;
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::{DataError, DataResult};
 use crate::{
-    DateTime, DeviceID, DeviceLabel, EntryID, HumanHandle, RealmRole, UserID, UserProfile,
+    DateTime, DeviceID, DeviceLabel, HumanHandle, RealmID, RealmRole, UserID, UserProfile,
 };
 
 #[allow(unused_macros)]
@@ -292,16 +292,16 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "RealmRoleCertificateData", from = "RealmRoleCertificateData")]
 pub struct RealmRoleCertificate {
-    pub author: DeviceID,
+    pub author: CertificateSignerOwned,
     pub timestamp: DateTime,
 
-    pub realm_id: EntryID,
+    pub realm_id: RealmID,
     pub user_id: UserID,
     // Set to None if role removed
     pub role: Option<RealmRole>, // TODO: use a custom type instead
 }
 
-impl_verify_and_load_no_root!(RealmRoleCertificate);
+impl_verify_and_load_allow_root!(RealmRoleCertificate);
 impl_unsecure_load!(RealmRoleCertificate);
 impl_dump_and_sign!(RealmRoleCertificate);
 

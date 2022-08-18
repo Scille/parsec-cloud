@@ -30,6 +30,7 @@ jobs:
   # Step 0: Wheel build
   - job: s0_build_wheel
     displayName: Build wheel
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
     timeoutInMinutes: 10
     pool:
       vmImage: ubuntu-latest
@@ -251,6 +252,7 @@ jobs:
   - job: s1_macos_test
     displayName: MacOS tests
     dependsOn: s0_build_wheel
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
     timeoutInMinutes: 60
     pool:
       vmImage: macOS-12
@@ -314,6 +316,7 @@ jobs:
   - job: s1_windows_test
     displayName: Windows tests
     dependsOn: s0_build_wheel
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
     timeoutInMinutes: 60
     pool:
       vmImage: windows-latest
@@ -474,8 +477,8 @@ jobs:
         artifact: macos_amd64_app
 
 
-  - job: s2_windows_installer_build
-    displayName: Windows installer build
+  - job: s2_windows_installer_content_build
+    displayName: Windows installer content build
     condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
     timeoutInMinutes: 60
     dependsOn: s0_build_wheel
@@ -510,7 +513,7 @@ jobs:
           python -m pip --version
           # Path with backslash are a pain...
           SOURCES_DIRECTORY=`python -c 'print(r"$(Build.SourcesDirectory)".replace("\\\\", "/"))'`
-          cp -R $SOURCES_DIRECTORY/packaging/win32/ winbuild
+          cp -R $SOURCES_DIRECTORY/packaging/windows/ winbuild
         displayName: Prepare build
         workingDirectory: $(Agent.TempDirectory)
       # Must use cmd.exe here instead of bash otherwise `C:\Program Files\Git\bin\link.exe`
@@ -521,13 +524,17 @@ jobs:
         workingDirectory: $(Agent.TempDirectory)/winbuild
       - bash: |
           set -eux
-          makensis.exe installer.nsi
           mkdir dist
-          cp build/parsec*-setup.exe dist
-        displayName: Build NSIS setup
+          cp build/manifest.ini dist/
+          cp build/install_files.nsh dist/
+          cp build/uninstall_files.nsh dist/
+          cp -R build/parsec-* dist/
+          cp build/winfsp-* dist/
+        displayName: Prepare artifact
         workingDirectory: $(Agent.TempDirectory)/winbuild
+      # Cannot do the NSIS installer part in CI given it requires to sign `parsec.exe`
       - publish: $(Agent.TempDirectory)/winbuild/dist
-        artifact: win_$(vs.arch)_installer
+        artifact: win_$(vs.arch)_installer_content
 
 
   #################################################################################
@@ -574,7 +581,7 @@ jobs:
       - s1_windows_test
       - s2_linux_snap_build
       - s2_macos_app_build
-      - s2_windows_installer_build
+      - s2_windows_installer_content_build
       - s3_linux_snap_test
     condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
     timeoutInMinutes: 10
@@ -608,7 +615,7 @@ jobs:
       - s1_windows_test
       - s2_linux_snap_build
       - s2_macos_app_build
-      - s2_windows_installer_build
+      - s2_windows_installer_content_build
       - s3_linux_snap_test
     condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
     timeoutInMinutes: 10

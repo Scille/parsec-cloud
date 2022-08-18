@@ -1,13 +1,13 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from enum import Enum
-from typing import Dict, cast, TYPE_CHECKING
+from typing import Dict, cast, Type
 
-from parsec.types import UUID4
 from parsec.serde import BaseSchema, OneOfSchema, fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import HumanHandleField, UserIDField
 
+from parsec._parsec import InvitationToken
 
 __all__ = (
     "InvitationToken",
@@ -31,27 +31,13 @@ __all__ = (
 )
 
 
-class InvitationToken(UUID4):
-    __slots__ = ()
-
-
-_PyInvitationToken = InvitationToken
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import InvitationToken as _RsInvitationToken
-    except:
-        pass
-    else:
-        InvitationToken = _RsInvitationToken
-
-
 class InvitationType(Enum):
     USER = "USER"
     DEVICE = "DEVICE"
 
 
-InvitationTokenField = fields.uuid_based_field_factory(InvitationToken)
-InvitationTypeField = fields.enum_field_factory(InvitationType)
+InvitationTokenField: Type[fields.Field] = fields.uuid_based_field_factory(InvitationToken)
+InvitationTypeField: Type[fields.BaseEnumField] = fields.enum_field_factory(InvitationType)
 
 
 class InviteNewUserReqSchema(BaseReqSchema):
@@ -82,7 +68,9 @@ class InvitationEmailSentStatus(Enum):
     BAD_RECIPIENT = "BAD_RECIPIENT"
 
 
-InvitationEmailSentStatusField = fields.enum_field_factory(InvitationEmailSentStatus)
+InvitationEmailSentStatusField: Type[fields.BaseEnumField] = fields.enum_field_factory(
+    InvitationEmailSentStatus
+)
 
 
 class InviteNewRepSchema(BaseRepSchema):
@@ -101,7 +89,9 @@ class InvitationDeletedReason(Enum):
     ROTTEN = "ROTTEN"
 
 
-InvitationDeletedReasonField = fields.enum_field_factory(InvitationDeletedReason)
+InvitationDeletedReasonField: Type[fields.BaseEnumField] = fields.enum_field_factory(
+    InvitationDeletedReason
+)
 
 
 class InviteDeleteReqSchema(BaseReqSchema):
@@ -126,7 +116,7 @@ class InvitationStatus(Enum):
     DELETED = "DELETED"
 
 
-InvitationStatusField = fields.enum_field_factory(InvitationStatus)
+InvitationStatusField: Type[fields.BaseEnumField] = fields.enum_field_factory(InvitationStatus)
 
 
 class InviteListItemUserSchema(BaseSchema):

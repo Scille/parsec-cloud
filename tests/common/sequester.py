@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Optional
 from dataclasses import dataclass
-from pendulum import now as pendulum_now, DateTime
+from parsec._parsec import DateTime
 import oscrypto.asymmetric
 
 from parsec.crypto import SigningKey
@@ -27,7 +27,7 @@ class SequesterAuthorityFullData:
 def sequester_authority_factory(
     organization_root_signing_key: SigningKey, timestamp: Optional[DateTime] = None
 ) -> SequesterAuthorityFullData:
-    timestamp = timestamp or pendulum_now()
+    timestamp = timestamp or DateTime.now()
     # Don't use such a small key size in real world, this is only for test !
     # (RSA key generation gets ~10x slower between 1024 and 4096)
     verify_key, signing_key = oscrypto.asymmetric.generate_pair("rsa", bit_size=1024)
@@ -62,7 +62,7 @@ class SequesterServiceFullData:
 def sequester_service_factory(
     label: str, authority: SequesterAuthorityFullData, timestamp: Optional[DateTime] = None
 ) -> SequesterServiceFullData:
-    timestamp = timestamp or pendulum_now()
+    timestamp = timestamp or DateTime.now()
     # Don't use such a small key size in real world, this is only for test !
     # (RSA key generation gets ~10x slower between 1024 and 4096)
     encryption_key, decryption_key = oscrypto.asymmetric.generate_pair("rsa", bit_size=1024)

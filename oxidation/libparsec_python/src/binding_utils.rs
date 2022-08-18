@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use fancy_regex::Regex;
 use pyo3::basic::CompareOp;
@@ -29,19 +29,6 @@ pub fn hash_generic(value_to_hash: &str, py: Python) -> PyResult<isize> {
         .call1((value_to_hash,))?
         .extract::<isize>()?;
     Ok(hash)
-}
-
-pub fn py_to_rs_datetime(timestamp: &PyAny) -> PyResult<libparsec::types::DateTime> {
-    let ts_any =
-        Python::with_gil(|_py| -> PyResult<&PyAny> { timestamp.getattr("timestamp")?.call0() })?;
-    let ts = ts_any.extract::<f64>()?;
-    Ok(libparsec::types::DateTime::from_f64_with_us_precision(ts))
-}
-
-pub fn rs_to_py_datetime(py: Python, datetime: libparsec::types::DateTime) -> PyResult<&PyAny> {
-    let pendulum = PyModule::import(py, "pendulum")?;
-    let args = PyTuple::new(py, vec![datetime.get_f64_with_us_precision()]);
-    pendulum.call_method1("from_timestamp", args)
 }
 
 pub fn rs_to_py_realm_role(role: &libparsec::types::RealmRole) -> PyResult<PyObject> {

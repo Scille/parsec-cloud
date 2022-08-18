@@ -30,29 +30,21 @@ runs:
         key: pre-commit-${{ inputs.version }}-${{ hashFiles(inputs.config-file) }}
         path: |
           ~/.cache/pre-commit
-          ~/.pre-commit-venv
 
-    - name: Create virtualenv
-      if: steps.cache-pre-commit.outputs.cache-hit != 'true'
-      run: python -m venv ~/.pre-commit-venv
-      shell: bash
-
+    # Install pre-commit as a standalone .pyz archive that can be run by Python
     - name: Install pre-commit
       if: steps.cache-pre-commit.outputs.cache-hit != 'true'
       run: |
-        source ~/.pre-commit-venv/bin/activate
-        python -m pip install pre-commit==2.19.0
+        mkdir -p ~/.cache/pre-commit/
+        curl --proto '=https' --tlsv1.2 -sSL https://github.com/pre-commit/pre-commit/releases/download/v${{ inputs.version }}/pre-commit-${{ inputs.version }}.pyz > ~/.cache/pre-commit/pre-commit.pyz
       shell: bash
 
     - name: Debug installed python package
       run: |
-        source ~/.pre-commit-venv/bin/activate
-        python -m pip freeze --local
-        pre-commit --version
+        python --version
+        python ~/.cache/pre-commit/pre-commit.pyz --version
       shell: bash
 
     - name: Run pre-commit
-      run: |
-        source ~/.pre-commit-venv/bin/activate
-        pre-commit run --show-diff-on-failure --color=always ${{ inputs.extra-args }}
+      run: python ~/.cache/pre-commit/pre-commit.pyz run --show-diff-on-failure --color=always ${{ inputs.extra-args }}
       shell: bash

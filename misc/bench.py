@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
+
 # -*- coding: utf-8 -*-
 
 ############################# Naive-Bench ###################################

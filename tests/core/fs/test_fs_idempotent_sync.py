@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from string import ascii_lowercase
@@ -13,7 +13,6 @@ from hypothesis_trio.stateful import (
     multiple,
 )
 
-from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 
 from tests.common import call_with_control
@@ -33,7 +32,6 @@ def check_fs_dump(entry):
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
 def test_fs_online_idempotent_sync(
     hypothesis_settings,
     reset_testbed,

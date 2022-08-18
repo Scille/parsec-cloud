@@ -5,6 +5,46 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.11.1 (2022-08-16)
+---------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a regression which prevented to launch the server in 2.11.0  (`#2812
+  <https://github.com/Scille/parsec-cloud/pull/2812>`__)
+
+
+Parsec v2.11.0 (2022-08-01)
+---------------------------
+
+Features
+~~~~~~~~
+
+* Added reencrypt_workspace CLI  (`#2708 <https://github.com/Scille/parsec-
+  cloud/issues/2708>`__)
+* Display additional information on an organization  (`#2607
+  <https://github.com/Scille/parsec-cloud/issues/2607>`__)
+* Display in the GUI in a dialog if the organization logged into is a
+  sequestered organization. (`#2476 <https://github.com/Scille/parsec-
+  cloud/issues/2476>`__)
+* Added an option to copy a user's email (`#2534
+  <https://github.com/Scille/parsec-cloud/issues/2534>`__)
+* Introduce the sequester feature (`#2462 <https://github.com/Scille/parsec-
+  cloud/issues/2462>`__)
+* Display user name and device name before finishing user enrollment (`#2533
+  <https://github.com/Scille/parsec-cloud/issues/2533>`__)
+* Select the file name by default when renaming a file (`#2531
+  <https://github.com/Scille/parsec-cloud/issues/2531>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix error in server when client searches for users with a query containing an
+  invalid regex  (`#2508 <https://github.com/Scille/parsec-
+  cloud/issues/2508>`__)
+
+
 Parsec v2.10.0 (2022-06-30)
 ---------------------------
 

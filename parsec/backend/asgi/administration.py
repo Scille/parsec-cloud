@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import NoReturn, TYPE_CHECKING
 from functools import wraps
@@ -121,7 +121,7 @@ async def administration_organization_item(raw_organization_id: str):
 
 
 @administration_bp.route(
-    "/administration/organizations/<raw_organization_id>/stats", methods=["GET", "PATCH"]
+    "/administration/organizations/<raw_organization_id>/stats", methods=["GET"]
 )
 @administration_authenticated
 async def administration_organization_stat(raw_organization_id: str):

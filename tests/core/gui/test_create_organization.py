@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
-import pendulum
+from parsec._parsec import DateTime
 from PyQt5 import QtCore
 
 from parsec.api.protocol import OrganizationID, HumanHandle, DeviceLabel
@@ -599,11 +599,11 @@ async def test_create_organization_wrong_timestamp(
     co_w = await catch_create_org_widget()
     assert co_w
 
-    # Patch the pendulum.now() just for the organization creation in the core so we have
+    # Patch the DateTime.now() just for the organization creation in the core so we have
     # a different date than the server
     def _timestamp(device):
         with freeze_time("2000-01-01"):
-            return pendulum.now()
+            return DateTime.now()
 
     monkeypatch.setattr("parsec.core.types.LocalDevice.timestamp", _timestamp)
 

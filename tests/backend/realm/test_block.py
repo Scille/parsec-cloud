@@ -1,9 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 import pytest
 from unittest.mock import ANY
-import pendulum
+from parsec._parsec import DateTime
 from hypothesis import given, strategies as st
 
 from parsec.backend.realm import RealmGrantedRole
@@ -415,7 +415,7 @@ async def test_block_check_other_organization(
                 user_id=sock.device.user_id,
                 role=RealmRole.OWNER,
                 granted_by=sock.device.device_id,
-                granted_on=pendulum.now(),
+                granted_on=DateTime.now(),
             ),
         )
         await block_create(sock, block, realm, b"other org data")
@@ -432,7 +432,7 @@ async def test_access_during_maintenance(backend, alice, alice_ws, realm, block)
         realm,
         2,
         {alice.user_id: b"whatever"},
-        pendulum.now(),
+        DateTime.now(),
     )
     rep = await block_create(alice_ws, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "in_maintenance"}
@@ -442,7 +442,7 @@ async def test_access_during_maintenance(backend, alice, alice_ws, realm, block)
     assert rep["status"] == "ok"
 
 
-@given(block=st.binary(max_size=2 ** 8), nb_blockstores=st.integers(min_value=3, max_value=16))
+@given(block=st.binary(max_size=2**8), nb_blockstores=st.integers(min_value=3, max_value=16))
 def test_split_block(block, nb_blockstores):
     nb_chunks = nb_blockstores - 1
     chunks = split_block_in_chunks(block, nb_chunks)

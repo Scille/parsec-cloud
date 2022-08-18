@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 from typing import Iterable
@@ -53,3 +53,7 @@ def copy_to_clipboard(text):
     clipboard.setText(text, QClipboard.Clipboard)
     if clipboard.supportsSelection():
         clipboard.setText(text, QClipboard.Selection)
+
+
+def get_clipboard():
+    return QGuiApplication.clipboard().text()

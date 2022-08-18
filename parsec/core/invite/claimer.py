@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 from typing import Union, Optional, List, Tuple
@@ -45,7 +45,7 @@ def _check_rep(rep, step_name):
 
 
 async def claimer_retrieve_info(
-    cmds: BackendInvitedCmds
+    cmds: BackendInvitedCmds,
 ) -> Union["UserClaimInitialCtx", "DeviceClaimInitialCtx"]:
     rep = await cmds.invite_info()
     _check_rep(rep, step_name="invitation retrieval")

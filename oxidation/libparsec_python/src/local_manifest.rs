@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::basic::CompareOp;
 use pyo3::exceptions::{PyAssertionError, PyIndexError, PyTypeError, PyValueError};
@@ -9,12 +9,13 @@ use std::num::NonZeroU64;
 use std::panic;
 
 use crate::api_crypto::SecretKey;
-use crate::binding_utils::{py_to_rs_datetime, py_to_rs_regex, py_to_rs_set, rs_to_py_datetime};
+use crate::binding_utils::{py_to_rs_regex, py_to_rs_set};
 use crate::ids::{ChunkID, DeviceID, EntryID};
 use crate::manifest::{
     BlockAccess, EntryName, FileManifest, FolderManifest, UserManifest, WorkspaceEntry,
     WorkspaceManifest,
 };
+use crate::time::DateTime;
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
@@ -210,7 +211,7 @@ impl LocalFileManifest {
             py_kwargs,
             [base: FileManifest, "base"],
             [need_sync: bool, "need_sync"],
-            [updated, "updated", py_to_rs_datetime],
+            [updated: DateTime, "updated"],
             [size: u64, "size"],
             [blocksize: u64, "blocksize"],
             [blocks: Vec<Vec<Chunk>>, "blocks"],
@@ -219,7 +220,7 @@ impl LocalFileManifest {
         Ok(Self(libparsec::client_types::LocalFileManifest {
             base: base.0,
             need_sync,
-            updated,
+            updated: updated.0,
             size,
             blocksize: libparsec::types::Blocksize::try_from(blocksize)
                 .map_err(|_| PyValueError::new_err("Invalid blocksize field"))?,
@@ -236,7 +237,7 @@ impl LocalFileManifest {
             py_kwargs,
             [base: FileManifest, "base"],
             [need_sync: bool, "need_sync"],
-            [updated, "updated", py_to_rs_datetime],
+            [updated: DateTime, "updated"],
             [size: u64, "size"],
             [blocksize: u64, "blocksize"],
             [blocks: Vec<Vec<Chunk>>, "blocks"],
@@ -251,7 +252,7 @@ impl LocalFileManifest {
             r.need_sync = v;
         }
         if let Some(v) = updated {
-            r.updated = v;
+            r.updated = v.0;
         }
         if let Some(v) = size {
             r.size = v;
@@ -321,11 +322,10 @@ impl LocalFileManifest {
         ))
     }
 
-    fn to_remote(&self, author: DeviceID, timestamp: &PyAny) -> PyResult<FileManifest> {
-        let timestamp = py_to_rs_datetime(timestamp)?;
+    fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> PyResult<FileManifest> {
         Ok(FileManifest(
             self.0
-                .to_remote(author.0, timestamp)
+                .to_remote(author.0, timestamp.0)
                 .map_err(PyValueError::new_err)?,
         ))
     }
@@ -362,8 +362,8 @@ impl LocalFileManifest {
     }
 
     #[getter]
-    fn created<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_datetime(py, self.0.base.created)
+    fn created(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.base.created))
     }
 
     #[getter]
@@ -389,20 +389,26 @@ impl LocalFileManifest {
         _cls: &PyType,
         author: DeviceID,
         parent: EntryID,
-        timestamp: &PyAny,
+        timestamp: DateTime,
         blocksize: u64,
     ) -> PyResult<Self> {
-        let timestamp = py_to_rs_datetime(timestamp)?;
         let blocksize =
             libparsec::types::Blocksize::try_from(blocksize).map_err(PyValueError::new_err)?;
 
         Ok(Self(libparsec::client_types::LocalFileManifest::new(
-            author.0, parent.0, timestamp, blocksize,
+            author.0,
+            parent.0,
+            timestamp.0,
+            blocksize,
         )))
     }
 
     #[args(data = "**")]
-    fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
+    fn evolve_and_mark_updated(
+        &self,
+        timestamp: DateTime,
+        data: Option<&PyDict>,
+    ) -> PyResult<Self> {
         if let Some(args) = data {
             if args.get_item("need_sync").is_some() {
                 return Err(PyTypeError::new_err(
@@ -414,7 +420,7 @@ impl LocalFileManifest {
         let mut out = self.evolve(data)?;
 
         out.0.need_sync = true;
-        out.0.updated = py_to_rs_datetime(timestamp)?;
+        out.0.updated = timestamp.0;
 
         Ok(out)
     }
@@ -435,8 +441,8 @@ impl LocalFileManifest {
     }
 
     #[getter]
-    fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.updated)
+    fn updated(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.updated))
     }
 
     #[getter]
@@ -462,12 +468,16 @@ impl LocalFileManifest {
     }
 
     fn to_stats<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
-        let created = rs_to_py_datetime(py, self.0.base.created)?;
-        let updated = rs_to_py_datetime(py, self.0.updated)?;
         Ok([
             ("id", EntryID(self.0.base.id).into_py(py).to_object(py)),
-            ("created", created.to_object(py)),
-            ("updated", updated.to_object(py)),
+            (
+                "created",
+                DateTime(self.0.base.created).into_py(py).to_object(py),
+            ),
+            (
+                "updated",
+                DateTime(self.0.updated).into_py(py).to_object(py),
+            ),
             ("base_version", self.0.base.version.to_object(py)),
             ("is_placeholder", (self.0.base.version == 0).to_object(py)),
             ("need_sync", self.0.need_sync.to_object(py)),
@@ -479,8 +489,8 @@ impl LocalFileManifest {
 
     fn asdict<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
         let parent = EntryID(self.0.base.parent).into_py(py);
-        let created = rs_to_py_datetime(py, self.0.base.created)?;
-        let updated = rs_to_py_datetime(py, self.0.updated)?;
+        let created = DateTime(self.0.base.created).into_py(py);
+        let updated = DateTime(self.0.updated).into_py(py);
         let blocks = self
             .0
             .blocks
@@ -516,7 +526,7 @@ impl LocalFolderManifest {
             py_kwargs,
             [base: FolderManifest, "base"],
             [need_sync: bool, "need_sync"],
-            [updated, "updated", py_to_rs_datetime],
+            [updated: DateTime, "updated"],
             [children: HashMap<EntryName, EntryID>, "children"],
             [local, "local_confinement_points", py_to_rs_set],
             [remote, "remote_confinement_points", py_to_rs_set],
@@ -525,7 +535,7 @@ impl LocalFolderManifest {
         Ok(Self(libparsec::client_types::LocalFolderManifest {
             base: base.0,
             need_sync,
-            updated,
+            updated: updated.0,
             children: children
                 .into_iter()
                 .map(|(name, id)| (name.0, id.0))
@@ -541,7 +551,7 @@ impl LocalFolderManifest {
             py_kwargs,
             [base: FolderManifest, "base"],
             [need_sync: bool, "need_sync"],
-            [updated, "updated", py_to_rs_datetime],
+            [updated: DateTime, "updated"],
             [children: HashMap<EntryName, EntryID>, "children"],
             [
                 local_confinement_points,
@@ -564,7 +574,7 @@ impl LocalFolderManifest {
             r.need_sync = v;
         }
         if let Some(v) = updated {
-            r.updated = v;
+            r.updated = v.0;
         }
         if let Some(v) = children {
             r.children = v.into_iter().map(|(name, id)| (name.0, id.0)).collect();
@@ -606,8 +616,8 @@ impl LocalFolderManifest {
     }
 
     #[getter]
-    fn created<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_datetime(py, self.0.base.created)
+    fn created(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.base.created))
     }
 
     #[getter]
@@ -627,31 +637,29 @@ impl LocalFolderManifest {
         &self,
         data: HashMap<EntryName, Option<EntryID>>,
         prevent_sync_pattern: &PyAny,
-        timestamp: &PyAny,
+        timestamp: DateTime,
     ) -> PyResult<Self> {
         let data = data
             .into_iter()
             .map(|(en, ei)| (en.0, ei.map(|ei| ei.0)))
             .collect();
         let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
-        let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(Self(self.0.clone().evolve_children_and_mark_updated(
             data,
             &prevent_sync_pattern,
-            timestamp,
+            timestamp.0,
         )))
     }
 
     fn apply_prevent_sync_pattern(
         &self,
         prevent_sync_pattern: &PyAny,
-        timestamp: &PyAny,
+        timestamp: DateTime,
     ) -> PyResult<Self> {
         let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
-        let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(Self(self.0.apply_prevent_sync_pattern(
             &prevent_sync_pattern,
-            timestamp,
+            timestamp.0,
         )))
     }
 
@@ -672,16 +680,21 @@ impl LocalFolderManifest {
         _cls: &PyType,
         author: DeviceID,
         parent: EntryID,
-        timestamp: &PyAny,
+        timestamp: DateTime,
     ) -> PyResult<Self> {
-        let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(Self(libparsec::client_types::LocalFolderManifest::new(
-            author.0, parent.0, timestamp,
+            author.0,
+            parent.0,
+            timestamp.0,
         )))
     }
 
     #[args(data = "**")]
-    fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
+    fn evolve_and_mark_updated(
+        &self,
+        timestamp: DateTime,
+        data: Option<&PyDict>,
+    ) -> PyResult<Self> {
         if let Some(args) = data {
             if args.get_item("need_sync").is_some() {
                 return Err(PyTypeError::new_err(
@@ -693,7 +706,7 @@ impl LocalFolderManifest {
         let mut out = self.evolve(data)?;
 
         out.0.need_sync = true;
-        out.0.updated = py_to_rs_datetime(timestamp)?;
+        out.0.updated = timestamp.0;
 
         Ok(out)
     }
@@ -719,23 +732,21 @@ impl LocalFolderManifest {
         remote: FolderManifest,
         prevent_sync_pattern: &PyAny,
         local_manifest: &Self,
-        timestamp: &PyAny,
+        timestamp: DateTime,
     ) -> PyResult<Self> {
         let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
-        let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(Self(
             libparsec::client_types::LocalFolderManifest::from_remote_with_local_context(
                 remote.0,
                 &prevent_sync_pattern,
                 &local_manifest.0,
-                timestamp,
+                timestamp.0,
             ),
         ))
     }
 
-    fn to_remote(&self, author: DeviceID, timestamp: &PyAny) -> PyResult<FolderManifest> {
-        let timestamp = py_to_rs_datetime(timestamp)?;
-        Ok(FolderManifest(self.0.to_remote(author.0, timestamp)))
+    fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> PyResult<FolderManifest> {
+        Ok(FolderManifest(self.0.to_remote(author.0, timestamp.0)))
     }
 
     #[getter]
@@ -754,8 +765,8 @@ impl LocalFolderManifest {
     }
 
     #[getter]
-    fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.updated)
+    fn updated(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.updated))
     }
 
     #[getter]
@@ -792,8 +803,8 @@ impl LocalFolderManifest {
     }
 
     fn to_stats<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
-        let created = rs_to_py_datetime(py, self.0.base.created)?;
-        let updated = rs_to_py_datetime(py, self.0.updated)?;
+        let created = DateTime(self.0.base.created).into_py(py);
+        let updated = DateTime(self.0.updated).into_py(py);
         let mut children = self
             .0
             .children
@@ -825,8 +836,8 @@ impl LocalFolderManifest {
 
     fn asdict<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
         let parent = EntryID(self.0.base.parent).into_py(py);
-        let created = rs_to_py_datetime(py, self.0.base.created)?;
-        let updated = rs_to_py_datetime(py, self.0.updated)?;
+        let created = DateTime(self.0.base.created).into_py(py);
+        let updated = DateTime(self.0.updated).into_py(py);
         let children = self
             .0
             .children
@@ -885,7 +896,7 @@ impl LocalWorkspaceManifest {
             py_kwargs,
             [base: WorkspaceManifest, "base"],
             [need_sync: bool, "need_sync"],
-            [updated, "updated", py_to_rs_datetime],
+            [updated: DateTime, "updated"],
             [children: HashMap<EntryName, EntryID>, "children"],
             [local, "local_confinement_points", py_to_rs_set],
             [remote, "remote_confinement_points", py_to_rs_set],
@@ -895,7 +906,7 @@ impl LocalWorkspaceManifest {
         Ok(Self(libparsec::client_types::LocalWorkspaceManifest {
             base: base.0,
             need_sync,
-            updated,
+            updated: updated.0,
             children: children
                 .into_iter()
                 .map(|(name, id)| (name.0, id.0))
@@ -912,7 +923,7 @@ impl LocalWorkspaceManifest {
             py_kwargs,
             [base: WorkspaceManifest, "base"],
             [need_sync: bool, "need_sync"],
-            [updated, "updated", py_to_rs_datetime],
+            [updated: DateTime, "updated"],
             [children: HashMap<EntryName, EntryID>, "children"],
             [local, "local_confinement_points", py_to_rs_set],
             [remote, "remote_confinement_points", py_to_rs_set],
@@ -928,7 +939,7 @@ impl LocalWorkspaceManifest {
             r.need_sync = v;
         }
         if let Some(v) = updated {
-            r.updated = v;
+            r.updated = v.0;
         }
         if let Some(v) = children {
             r.children = v.into_iter().map(|(name, id)| (name.0, id.0)).collect();
@@ -973,8 +984,8 @@ impl LocalWorkspaceManifest {
     }
 
     #[getter]
-    fn created<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_datetime(py, self.0.base.created)
+    fn created(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.base.created))
     }
 
     #[getter]
@@ -994,31 +1005,29 @@ impl LocalWorkspaceManifest {
         &self,
         data: HashMap<EntryName, Option<EntryID>>,
         prevent_sync_pattern: &PyAny,
-        timestamp: &PyAny,
+        timestamp: DateTime,
     ) -> PyResult<Self> {
         let data = data
             .into_iter()
             .map(|(en, ei)| (en.0, ei.map(|ei| ei.0)))
             .collect();
         let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
-        let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(Self(self.0.clone().evolve_children_and_mark_updated(
             data,
             &prevent_sync_pattern,
-            timestamp,
+            timestamp.0,
         )))
     }
 
     fn apply_prevent_sync_pattern(
         &self,
         prevent_sync_pattern: &PyAny,
-        timestamp: &PyAny,
+        timestamp: DateTime,
     ) -> PyResult<Self> {
         let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
-        let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(Self(self.0.apply_prevent_sync_pattern(
             &prevent_sync_pattern,
-            timestamp,
+            timestamp.0,
         )))
     }
 
@@ -1039,21 +1048,24 @@ impl LocalWorkspaceManifest {
     fn new_placeholder(
         _cls: &PyType,
         author: DeviceID,
-        timestamp: &PyAny,
+        timestamp: DateTime,
         id: Option<EntryID>,
         speculative: bool,
     ) -> PyResult<Self> {
-        let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(Self(libparsec::client_types::LocalWorkspaceManifest::new(
             author.0,
-            timestamp,
+            timestamp.0,
             id.map(|id| id.0),
             speculative,
         )))
     }
 
     #[args(data = "**")]
-    fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
+    fn evolve_and_mark_updated(
+        &self,
+        timestamp: DateTime,
+        data: Option<&PyDict>,
+    ) -> PyResult<Self> {
         if let Some(args) = data {
             if args.get_item("need_sync").is_some() {
                 return Err(PyTypeError::new_err(
@@ -1065,7 +1077,7 @@ impl LocalWorkspaceManifest {
         let mut out = self.evolve(data)?;
 
         out.0.need_sync = true;
-        out.0.updated = py_to_rs_datetime(timestamp)?;
+        out.0.updated = timestamp.0;
 
         Ok(out)
     }
@@ -1091,23 +1103,21 @@ impl LocalWorkspaceManifest {
         remote: WorkspaceManifest,
         prevent_sync_pattern: &PyAny,
         local_manifest: &Self,
-        timestamp: &PyAny,
+        timestamp: DateTime,
     ) -> PyResult<Self> {
         let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
-        let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(Self(
             libparsec::client_types::LocalWorkspaceManifest::from_remote_with_local_context(
                 remote.0,
                 &prevent_sync_pattern,
                 &local_manifest.0,
-                timestamp,
+                timestamp.0,
             ),
         ))
     }
 
-    fn to_remote(&self, author: DeviceID, timestamp: &PyAny) -> PyResult<WorkspaceManifest> {
-        let timestamp = py_to_rs_datetime(timestamp)?;
-        Ok(WorkspaceManifest(self.0.to_remote(author.0, timestamp)))
+    fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> PyResult<WorkspaceManifest> {
+        Ok(WorkspaceManifest(self.0.to_remote(author.0, timestamp.0)))
     }
 
     #[getter]
@@ -1121,8 +1131,8 @@ impl LocalWorkspaceManifest {
     }
 
     #[getter]
-    fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.updated)
+    fn updated(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.updated))
     }
 
     #[getter]
@@ -1169,8 +1179,8 @@ impl LocalWorkspaceManifest {
     }
 
     fn to_stats<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
-        let created = rs_to_py_datetime(py, self.0.base.created)?;
-        let updated = rs_to_py_datetime(py, self.0.updated)?;
+        let created = DateTime(self.0.base.created).into_py(py);
+        let updated = DateTime(self.0.updated).into_py(py);
         let mut children = self
             .0
             .children
@@ -1201,8 +1211,8 @@ impl LocalWorkspaceManifest {
     }
 
     fn asdict<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
-        let created = rs_to_py_datetime(py, self.0.base.created)?;
-        let updated = rs_to_py_datetime(py, self.0.updated)?;
+        let created = DateTime(self.0.base.created).into_py(py);
+        let updated = DateTime(self.0.updated).into_py(py);
         let children = self
             .0
             .children
@@ -1261,7 +1271,7 @@ impl LocalUserManifest {
             py_kwargs,
             [base: UserManifest, "base"],
             [need_sync: bool, "need_sync"],
-            [updated, "updated", py_to_rs_datetime],
+            [updated: DateTime, "updated"],
             [last_processed_message: u64, "last_processed_message"],
             [workspaces: Vec<WorkspaceEntry>, "workspaces"],
             [speculative: bool, "speculative"],
@@ -1270,7 +1280,7 @@ impl LocalUserManifest {
         Ok(Self(libparsec::client_types::LocalUserManifest {
             base: base.0,
             need_sync,
-            updated,
+            updated: updated.0,
             last_processed_message,
             workspaces: workspaces.into_iter().map(|w| w.0).collect(),
             speculative,
@@ -1283,7 +1293,7 @@ impl LocalUserManifest {
             py_kwargs,
             [base: UserManifest, "base"],
             [need_sync: bool, "need_sync"],
-            [updated, "updated", py_to_rs_datetime],
+            [updated: DateTime, "updated"],
             [last_processed_message: u64, "last_processed_message"],
             [workspaces: Vec<WorkspaceEntry>, "workspaces"],
             [speculative: bool, "speculative"],
@@ -1298,7 +1308,7 @@ impl LocalUserManifest {
             r.need_sync = v;
         }
         if let Some(v) = updated {
-            r.updated = v;
+            r.updated = v.0;
         }
         if let Some(v) = last_processed_message {
             r.last_processed_message = v;
@@ -1340,8 +1350,8 @@ impl LocalUserManifest {
     }
 
     #[getter]
-    fn created<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_datetime(py, self.0.base.created)
+    fn created(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.base.created))
     }
 
     #[getter]
@@ -1350,7 +1360,11 @@ impl LocalUserManifest {
     }
 
     #[args(data = "**")]
-    fn evolve_and_mark_updated(&self, timestamp: &PyAny, data: Option<&PyDict>) -> PyResult<Self> {
+    fn evolve_and_mark_updated(
+        &self,
+        timestamp: DateTime,
+        data: Option<&PyDict>,
+    ) -> PyResult<Self> {
         if let Some(args) = data {
             if args.get_item("need_sync").is_some() {
                 return Err(PyTypeError::new_err(
@@ -1362,14 +1376,14 @@ impl LocalUserManifest {
         let mut out = self.evolve(data)?;
 
         out.0.need_sync = true;
-        out.0.updated = py_to_rs_datetime(timestamp)?;
+        out.0.updated = timestamp.0;
 
         Ok(out)
     }
 
     fn evolve_workspaces_and_mark_updated(
         &self,
-        timestamp: &PyAny,
+        timestamp: DateTime,
         workspace: WorkspaceEntry,
     ) -> PyResult<Self> {
         let out = self.evolve_and_mark_updated(timestamp, None)?;
@@ -1397,14 +1411,13 @@ impl LocalUserManifest {
     fn new_placeholder(
         _cls: &PyType,
         author: DeviceID,
-        timestamp: &PyAny,
+        timestamp: DateTime,
         id: Option<EntryID>,
         speculative: bool,
     ) -> PyResult<Self> {
-        let timestamp = py_to_rs_datetime(timestamp)?;
         Ok(Self(libparsec::client_types::LocalUserManifest::new(
             author.0,
-            timestamp,
+            timestamp.0,
             id.map(|id| id.0),
             speculative,
         )))
@@ -1438,9 +1451,8 @@ impl LocalUserManifest {
         Self::from_remote(_cls, remote)
     }
 
-    fn to_remote(&self, author: DeviceID, timestamp: &PyAny) -> PyResult<UserManifest> {
-        let timestamp = py_to_rs_datetime(timestamp)?;
-        Ok(UserManifest(self.0.to_remote(author.0, timestamp)))
+    fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> PyResult<UserManifest> {
+        Ok(UserManifest(self.0.to_remote(author.0, timestamp.0)))
     }
 
     #[getter]
@@ -1454,8 +1466,8 @@ impl LocalUserManifest {
     }
 
     #[getter]
-    fn updated<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
-        rs_to_py_datetime(py, self.0.updated)
+    fn updated(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.updated))
     }
 
     #[getter]
@@ -1485,8 +1497,8 @@ impl LocalUserManifest {
     }
 
     fn to_stats<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
-        let created = rs_to_py_datetime(py, self.0.base.created)?;
-        let updated = rs_to_py_datetime(py, self.0.updated)?;
+        let created = DateTime(self.0.base.created).into_py(py);
+        let updated = DateTime(self.0.updated).into_py(py);
 
         Ok([
             ("id", EntryID(self.0.base.id).into_py(py).to_object(py)),
@@ -1500,8 +1512,8 @@ impl LocalUserManifest {
     }
 
     fn asdict<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDict> {
-        let created = rs_to_py_datetime(py, self.0.base.created)?;
-        let updated = rs_to_py_datetime(py, self.0.updated)?;
+        let created = DateTime(self.0.base.created).into_py(py);
+        let updated = DateTime(self.0.updated).into_py(py);
         let workspaces: Vec<PyObject> = self
             .0
             .workspaces

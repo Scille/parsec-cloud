@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from parsec.api.data.base import (
     DataError,
@@ -18,12 +18,6 @@ from parsec.api.data.entry import (
 )
 
 from parsec.api.data.certif import (
-    UserProfile,
-    UserProfileField,
-    UserCertificateContent,
-    DeviceCertificateContent,
-    RevokedUserCertificateContent,
-    RealmRoleCertificateContent,
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
 )
@@ -44,7 +38,6 @@ from parsec.api.data.message import (
     PingMessageContent,
 )
 from parsec.api.data.manifest import (
-    BlockID,
     BlockIDField,
     BlockAccess,
     WorkspaceEntry,
@@ -56,6 +49,12 @@ from parsec.api.data.manifest import (
 )
 from parsec.api.data.pki import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 
+from parsec._parsec import (
+    UserCertificate,
+    DeviceCertificate,
+    RevokedUserCertificate,
+    RealmRoleCertificate,
+)
 
 __all__ = (
     # Base
@@ -73,12 +72,10 @@ __all__ = (
     "EntryNameField",
     "EntryNameTooLongError",
     # Certifs
-    "UserProfile",
-    "UserProfileField",
-    "UserCertificateContent",
-    "DeviceCertificateContent",
-    "RevokedUserCertificateContent",
-    "RealmRoleCertificateContent",
+    "UserCertificate",
+    "DeviceCertificate",
+    "RevokedUserCertificate",
+    "RealmRoleCertificate",
     "SequesterAuthorityCertificate",
     "SequesterServiceCertificate",
     # Invite
@@ -96,7 +93,6 @@ __all__ = (
     "SharingRevokedMessageContent",
     "PingMessageContent",
     # Manifests
-    "BlockID",
     "BlockIDField",
     "BlockAccess",
     "WorkspaceEntry",

@@ -1,6 +1,6 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import pendulum
+from parsec._parsec import DateTime
 
 from parsec.serde import BaseSchema, fields
 from parsec.api.protocol.base import ErrorRepSchema, packb
@@ -21,8 +21,8 @@ from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFS
 
 
 def test_timestamp_out_of_ballpark_rep_schema_compatibility():
-    client_timestamp = pendulum.now()
-    backend_timestamp = pendulum.now().add(minutes=5)
+    client_timestamp = DateTime.now()
+    backend_timestamp = DateTime.now().add(minutes=5)
 
     # Backend API >= 2.4 with older clients
     data = realm_create_serializer.timestamp_out_of_ballpark_rep_dump(
@@ -55,7 +55,7 @@ def test_handshake_challenge_schema_compatibility():
 
     older_handshake_challenge_serializer = serializer_factory(OlderHandshakeChallengeSchema)
 
-    timestamp = pendulum.now()
+    timestamp = DateTime.now()
     old_data = {"challenge": b"123", "handshake": "challenge", "supported_api_versions": []}
     new_data = {
         **old_data,
@@ -121,7 +121,7 @@ def test_handshake_challenge_schema_for_client_server_api_compatibility(
         "handshake": "challenge",
         "challenge": challenge,
         "supported_api_versions": [backend_version],
-        "backend_timestamp": pendulum.now(),
+        "backend_timestamp": DateTime.now(),
         "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
         "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
     }

@@ -1,1 +1,0 @@
-Fix error in server when client searches for users with a query containing an invalid regex

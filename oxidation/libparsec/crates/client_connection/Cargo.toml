@@ -11,7 +11,7 @@ name = "auth_cmds"
 
 [dependencies]
 # Used to send HTTP request to the server.
-reqwest = "0.11.10"
+reqwest = "0.11.11"
 # Used to perform operation on URL.
 url = "2.2.2"
 # Add primitive type to be used with the proctocol
@@ -22,12 +22,12 @@ libparsec_protocol = { path = "../protocol" }
 libparsec_crypto = { path = "../crypto" }
 # Used to encoded binary data.
 base64 = "0.13.0"
-chrono = "0.4.19"
+chrono = "0.4.20"
 
 [dev-dependencies]
-anyhow = "1.0.57"
+anyhow = "1.0.59"
 env_logger = "0.9.0"
 http-body = "0.4.5"
-hyper = { version = "0.14.19", features = ["server"] }
+hyper = { version = "0.14.20", features = ["server"] }
 log = "0.4.17"
-tokio = { version = "1.19", features = ["rt", "macros", "sync"] }
+tokio = { version = "1.20", features = ["rt", "macros", "sync"] }

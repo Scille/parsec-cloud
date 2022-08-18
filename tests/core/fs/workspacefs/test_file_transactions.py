@@ -1,13 +1,12 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import os
 import sys
 import pytest
-from pendulum import datetime
+from parsec._parsec import DateTime
 from hypothesis_trio.stateful import initialize, rule, run_state_machine_as_test
 from hypothesis import strategies as st
 
-from parsec import IS_OXIDIZED
 from parsec.core.types import EntryID, LocalFileManifest, Chunk
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
@@ -44,7 +43,7 @@ class File:
 @pytest.fixture
 async def foo_txt(alice, alice_file_transactions):
     local_storage = alice_file_transactions.local_storage
-    now = datetime(2000, 1, 2)
+    now = DateTime(2000, 1, 2)
     placeholder = LocalFileManifest.new_placeholder(
         alice.device_id, parent=EntryID.new(), timestamp=now
     )
@@ -62,7 +61,6 @@ async def test_close_unknown_fd(alice_file_transactions):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: manifest_storage is private")
 async def test_operations_on_file(alice_file_transactions, foo_txt):
     file_transactions = alice_file_transactions
 
@@ -88,8 +86,8 @@ async def test_operations_on_file(alice_file_transactions, foo_txt):
         is_placeholder=False,
         need_sync=True,
         base_version=1,
-        created=datetime(2000, 1, 2),
-        updated=datetime(2000, 1, 3),
+        created=DateTime(2000, 1, 2),
+        updated=DateTime(2000, 1, 3),
     )
 
     data = await file_transactions.fd_read(fd, 5, 6)
@@ -111,13 +109,12 @@ async def test_operations_on_file(alice_file_transactions, foo_txt):
         is_placeholder=False,
         need_sync=True,
         base_version=1,
-        created=datetime(2000, 1, 2),
-        updated=datetime(2000, 1, 3),
+        created=DateTime(2000, 1, 2),
+        updated=DateTime(2000, 1, 3),
     )
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(IS_OXIDIZED, reason="WorkspaceStorage: manifest_storage is private")
 async def test_flush_file(alice_file_transactions, foo_txt):
     file_transactions = alice_file_transactions
 
@@ -128,8 +125,8 @@ async def test_flush_file(alice_file_transactions, foo_txt):
         is_placeholder=False,
         need_sync=False,
         base_version=1,
-        created=datetime(2000, 1, 2),
-        updated=datetime(2000, 1, 2),
+        created=DateTime(2000, 1, 2),
+        updated=DateTime(2000, 1, 2),
     )
 
     with freeze_time("2000-01-03"):
@@ -142,8 +139,8 @@ async def test_flush_file(alice_file_transactions, foo_txt):
         is_placeholder=False,
         need_sync=True,
         base_version=1,
-        created=datetime(2000, 1, 2),
-        updated=datetime(2000, 1, 3),
+        created=DateTime(2000, 1, 2),
+        updated=DateTime(2000, 1, 3),
     )
 
     await file_transactions.fd_flush(fd)
@@ -156,8 +153,8 @@ async def test_flush_file(alice_file_transactions, foo_txt):
         is_placeholder=False,
         need_sync=True,
         base_version=1,
-        created=datetime(2000, 1, 2),
-        updated=datetime(2000, 1, 3),
+        created=DateTime(2000, 1, 2),
+        updated=DateTime(2000, 1, 3),
     )
 
 
@@ -211,12 +208,11 @@ async def test_load_block_from_remote(running_backend, alice_file_transactions, 
     assert data == chunk1_data + chunk2_data[:4]
 
 
-size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB
+size = st.integers(min_value=0, max_value=4 * 1024**2)  # Between 0 and 4MB
 
 
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows file style not compatible with oracle")
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
 def test_file_operations(
     tmpdir,
     hypothesis_settings,

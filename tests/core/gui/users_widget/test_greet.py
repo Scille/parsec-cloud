@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
-from pendulum import now as pendulum_now
+from parsec._parsec import DateTime
 from PyQt5 import QtCore
 from contextlib import asynccontextmanager
 from functools import partial
@@ -560,7 +560,7 @@ async def test_greet_user_invitation_cancelled(
                 organization_id=self.author.organization_id,
                 greeter=self.author.user_id,
                 token=self.invitation_addr.token,
-                on=pendulum_now(),
+                on=DateTime.now(),
                 reason=InvitationDeletedReason.CANCELLED,
             )
 

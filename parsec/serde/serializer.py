@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from typing import Dict, Any
 import zlib
 import json
-
 from marshmallow import ValidationError
 
 from parsec.serde.packing import packb, unpackb, SerdePackingError
@@ -10,7 +10,7 @@ from parsec.serde.exceptions import SerdeValidationError
 
 
 class BaseSerializer:
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(schema={self.schema.__class__.__name__})"
 
     def __init__(
@@ -25,7 +25,7 @@ class BaseSerializer:
         self.packing_exc = packing_exc
         self.schema = schema_cls(strict=True)
 
-    def load(self, data: dict):
+    def load(self, data: Dict[str, Any]) -> Any:
         """
         Raises:
             SerdeValidationError
@@ -36,7 +36,7 @@ class BaseSerializer:
         except ValidationError as exc:
             raise self.validation_exc(exc.messages) from exc
 
-    def dump(self, data) -> dict:
+    def dump(self, data: Any) -> Dict[str, Any]:
         """
         Raises:
             SerdeValidationError
@@ -47,10 +47,10 @@ class BaseSerializer:
         except ValidationError as exc:
             raise self.validation_exc(exc.messages) from exc
 
-    def loads(self, data: bytes) -> dict:
+    def loads(self, data: bytes) -> Any:
         raise NotImplementedError
 
-    def dumps(self, data: dict) -> bytes:
+    def dumps(self, data: Any) -> bytes:
         raise NotImplementedError
 
 

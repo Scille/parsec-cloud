@@ -1,10 +1,10 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 from uuid import UUID
 from pathlib import Path
 from hashlib import sha1
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from typing import Iterable, List, Union, Optional
 
 from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
@@ -190,7 +190,13 @@ class PkiEnrollementAccepterValidSubmittedCtx:
             PkiEnrollmentCertificatePinCodeUnavailableError
         """
         # Create the certificate for the new user
-        user_certificate, redacted_user_certificate, device_certificate, redacted_device_certificate, user_confirmation = _create_new_user_certificates(
+        (
+            user_certificate,
+            redacted_user_certificate,
+            device_certificate,
+            redacted_device_certificate,
+            user_confirmation,
+        ) = _create_new_user_certificates(
             author=author,
             device_label=device_label,
             human_handle=human_handle,

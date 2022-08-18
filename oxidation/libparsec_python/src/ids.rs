@@ -1,9 +1,13 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::basic::CompareOp;
-use pyo3::exceptions::PyValueError;
-use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyBytes, PyString, PyType};
+// TODO: Remove when all dependencies are removed
+
+use pyo3::{
+    basic::CompareOp,
+    exceptions::PyValueError,
+    prelude::*,
+    types::{IntoPyDict, PyBytes, PyString, PyType},
+};
 use uuid::Uuid;
 
 use crate::binding_utils::{comp_op, hash_generic};

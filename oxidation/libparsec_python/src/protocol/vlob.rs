@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use std::collections::HashMap;
 
@@ -13,10 +13,8 @@ use libparsec::protocol::authenticated_cmds::{
     vlob_maintenance_save_reencryption_batch, vlob_poll_changes, vlob_read, vlob_update,
 };
 
-use crate::binding_utils::py_to_rs_datetime;
-use crate::binding_utils::rs_to_py_datetime;
-use crate::ids::DeviceID;
-use crate::ids::{RealmID, VlobID};
+use crate::ids::{DeviceID, RealmID, VlobID};
+use crate::time::DateTime;
 
 import_exception!(parsec.api.protocol, ProtocolError);
 
@@ -31,12 +29,12 @@ impl VlobCreateReq {
         realm_id: RealmID,
         encryption_revision: u64,
         vlob_id: VlobID,
-        timestamp: &PyAny,
+        timestamp: DateTime,
         blob: Vec<u8>,
     ) -> PyResult<Self> {
         let realm_id = realm_id.0;
         let vlob_id = vlob_id.0;
-        let timestamp = py_to_rs_datetime(timestamp)?;
+        let timestamp = timestamp.0;
         Ok(Self(vlob_create::Req {
             realm_id,
             encryption_revision,
@@ -73,8 +71,8 @@ impl VlobCreateReq {
     }
 
     #[getter]
-    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_datetime(py, self.0.timestamp)
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.timestamp))
     }
 
     #[getter]
@@ -149,10 +147,10 @@ impl VlobReadReq {
         encryption_revision: u64,
         vlob_id: VlobID,
         version: Option<u32>,
-        timestamp: Option<&PyAny>,
+        timestamp: Option<DateTime>,
     ) -> PyResult<Self> {
         let vlob_id = vlob_id.0;
-        let timestamp = timestamp.map(py_to_rs_datetime).transpose()?;
+        let timestamp = timestamp.map(|x| x.0);
         Ok(Self(vlob_read::Req {
             encryption_revision,
             vlob_id,
@@ -188,11 +186,8 @@ impl VlobReadReq {
     }
 
     #[getter]
-    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<Option<&'py PyAny>> {
-        self.0
-            .timestamp
-            .map(|timestamp| rs_to_py_datetime(py, timestamp))
-            .transpose()
+    fn timestamp(&self) -> PyResult<Option<DateTime>> {
+        Ok(self.0.timestamp.map(DateTime))
     }
 }
 
@@ -209,20 +204,13 @@ impl VlobReadRep {
         version: u32,
         blob: Vec<u8>,
         author: DeviceID,
-        timestamp: &PyAny,
-        author_last_role_granted_on: Option<&PyAny>,
+        timestamp: DateTime,
+        author_last_role_granted_on: Option<DateTime>,
     ) -> PyResult<Self> {
         let author = author.0;
-        let timestamp = py_to_rs_datetime(timestamp)?;
-        let author_last_role_granted_on = match author_last_role_granted_on
-            .map(py_to_rs_datetime)
-            .transpose()
-        {
-            Ok(author_last_role_granted_on) => {
-                libparsec::types::Maybe::Present(author_last_role_granted_on)
-            }
-            _ => libparsec::types::Maybe::Absent,
-        };
+        let timestamp = timestamp.0;
+        let author_last_role_granted_on =
+            libparsec::types::Maybe::Present(author_last_role_granted_on.map(|x| x.0));
         Ok(Self(vlob_read::Rep::Ok {
             version,
             blob,
@@ -291,12 +279,12 @@ impl VlobUpdateReq {
     fn new(
         encryption_revision: u64,
         vlob_id: VlobID,
-        timestamp: &PyAny,
+        timestamp: DateTime,
         version: u32,
         blob: Vec<u8>,
     ) -> PyResult<Self> {
         let vlob_id = vlob_id.0;
-        let timestamp = py_to_rs_datetime(timestamp)?;
+        let timestamp = timestamp.0;
         Ok(Self(vlob_update::Req {
             encryption_revision,
             vlob_id,
@@ -328,8 +316,8 @@ impl VlobUpdateReq {
     }
 
     #[getter]
-    fn timestamp<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        rs_to_py_datetime(py, self.0.timestamp)
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.timestamp))
     }
 
     #[getter]
@@ -531,11 +519,10 @@ pub(crate) struct VlobListVersionsRep(pub vlob_list_versions::Rep);
 impl VlobListVersionsRep {
     #[classmethod]
     #[pyo3(name = "Ok")]
-    fn ok(_cls: &PyType, versions: HashMap<u64, (&PyAny, DeviceID)>) -> PyResult<Self> {
+    fn ok(_cls: &PyType, versions: HashMap<u64, (DateTime, DeviceID)>) -> PyResult<Self> {
         let mut _versions = HashMap::new();
         for (k, (dt, id)) in versions.into_iter() {
-            let dt = py_to_rs_datetime(dt)?;
-            _versions.insert(k, (dt, id.0));
+            _versions.insert(k, (dt.0, id.0));
         }
         let versions = _versions;
         Ok(Self(vlob_list_versions::Rep::Ok { versions }))

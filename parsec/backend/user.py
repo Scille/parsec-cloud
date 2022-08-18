@@ -1,17 +1,18 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import attr
 from typing import List, Optional, Tuple
-from pendulum import now as pendulum_now, DateTime
+from parsec._parsec import DateTime
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.event_bus import EventBus
-from parsec.api.data import UserProfile, RevokedUserCertificateContent, DataError
+from parsec.api.data import RevokedUserCertificate, DataError
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
     DeviceID,
     HumanHandle,
+    UserProfile,
     user_get_serializer,
     human_find_serializer,
     user_create_serializer,
@@ -189,7 +190,7 @@ class BaseUserComponent:
         msg = user_revoke_serializer.req_load(msg)
 
         try:
-            data = RevokedUserCertificateContent.verify_and_load(
+            data = RevokedUserCertificate.verify_and_load(
                 msg["revoked_user_certificate"],
                 author_verify_key=client_ctx.verify_key,
                 expected_author=client_ctx.device_id,
@@ -201,7 +202,7 @@ class BaseUserComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if not timestamps_in_the_ballpark(data.timestamp, pendulum_now()):
+        if not timestamps_in_the_ballpark(data.timestamp, DateTime.now()):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",

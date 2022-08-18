@@ -1,9 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
 import pathlib
 from typing import Optional, Iterable, Tuple, List
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from enum import IntEnum
 from structlog import get_logger
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -298,14 +298,20 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.delete_clicked.connect(self.delete_files)
         self.table_files.open_clicked.connect(self.open_files)
         self.table_files.files_dropped.connect(self.on_files_dropped)
-        self.table_files.show_history_clicked.connect(self.show_history)
-        self.table_files.show_status_clicked.connect(self.show_status)
+        self.table_files.show_history_clicked.connect(self.show_selected_file_history)
+        self.table_files.show_status_clicked.connect(self.show_selected_file_status)
         self.table_files.paste_clicked.connect(self.on_paste_clicked)
         self.table_files.copy_clicked.connect(self.on_copy_clicked)
         self.table_files.cut_clicked.connect(self.on_cut_clicked)
         self.table_files.file_path_clicked.connect(self.on_get_file_path_clicked)
         self.table_files.open_current_dir_clicked.connect(self.on_open_current_dir_clicked)
         self.table_files.itemSelectionChanged.connect(self._on_selection_changed)
+        self.table_files.new_folder_clicked.connect(self.create_folder_clicked)
+        self.table_files.sort_clicked.connect(self._on_sort_clicked)
+        self.table_files.show_current_folder_history_clicked.connect(
+            self.show_current_folder_history
+        )
+        self.table_files.show_current_folder_status_clicked.connect(self.show_current_folder_status)
 
         self.rename_success.connect(self._on_rename_success)
         self.rename_error.connect(self._on_rename_error)
@@ -367,6 +373,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     source_workspace=self.clipboard.source_workspace.get_workspace_name().str,
                 )
         self.reset(default_selection)
+
+    def _on_sort_clicked(self, column):
+        self.table_files.sortItems(column.value)
 
     def _on_selection_changed(self):
         selected_count = len(self.table_files.selected_files())
@@ -482,17 +491,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         show_error(self, _("TEXT_FILE_PASTE_ERROR"))
         self.reset()
 
-    def show_history(self):
-        files = self.table_files.selected_files()
-        if len(files) > 1:
-            show_error(self, _("TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"))
-            return
-        selected_path = self.current_directory / files[0].name
-
+    def show_history(self, path):
         FileHistoryWidget.show_modal(
             jobs_ctx=self.jobs_ctx,
             workspace_fs=self.workspace_fs,
-            path=selected_path,
+            path=path,
             reload_timestamped_signal=self.reload_timestamped_requested,
             update_version_list=self.update_version_list,
             close_version_list=self.close_version_list,
@@ -501,21 +504,40 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             on_finished=None,
         )
 
-    def show_status(self):
+    def show_selected_file_history(self):
+        files = self.table_files.selected_files()
+        if len(files) > 1:
+            show_error(self, _("TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"))
+            return
+        if len(files) == 0:
+            show_error(self, _("TEXT_FILE_STATUS_NO_FILE_SELECTED_ERROR"))
+            return
+        selected_path = self.current_directory / files[0].name
+        self.show_history(selected_path)
+
+    def show_current_folder_history(self):
+        self.show_history(self.current_directory)
+
+    def show_status(self, path):
+        FileStatusWidget.show_modal(
+            jobs_ctx=self.jobs_ctx,
+            workspace_fs=self.workspace_fs,
+            path=path,
+            core=self.core,
+            parent=self,
+            on_finished=None,
+        )
+
+    def show_selected_file_status(self):
         files = self.table_files.selected_files()
         if len(files) > 1:
             show_error(self, _("TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"))
             return
         selected_path = self.current_directory / files[0].name
+        self.show_status(selected_path)
 
-        FileStatusWidget.show_modal(
-            jobs_ctx=self.jobs_ctx,
-            workspace_fs=self.workspace_fs,
-            path=selected_path,
-            core=self.core,
-            parent=self,
-            on_finished=None,
-        )
+    def show_current_folder_status(self):
+        self.show_status(self.current_directory)
 
     def rename_files(self):
         files = self.table_files.selected_files()
@@ -888,12 +910,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         async with await trio.open_file(source, "rb") as f:
 
             # Getting the file name without extension (anything after the first dot is considered to be the extension)
-            name_we, suffixes = dest.name.str.split(".", 1)
+            name_we, *suffixes = dest.name.str.split(".")
             # Count starts at 2 (1 would be the file without a number)
             count = 2
             while await self.workspace_fs.exists(dest):
                 # Create the new file name by adding the count ("myfile.txt" becomes "myfile (2).txt")
-                new_file_name = EntryName("{} ({}).{}".format(name_we, count, suffixes))
+                new_file_name = EntryName(".".join([f"{name_we} ({count})", *suffixes]))
                 dest = dest.parent / new_file_name
                 count += 1
 

@@ -1,10 +1,9 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
 
-from parsec import IS_OXIDIZED
 from parsec.api.data import EntryName
 
 from tests.common import FileOracle
@@ -15,7 +14,6 @@ PLAYGROUND_SIZE = BLOCK_SIZE * 10
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
 def test_fs_offline_restart_and_rwfile(user_fs_offline_state_machine, alice):
     class FSOfflineRestartAndRWFile(user_fs_offline_state_machine):
         @initialize()

@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use serde::{Deserialize, Serialize};
@@ -22,17 +22,26 @@ pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
 macro_rules! impl_manifest_dump_load {
     ($name:ident) => {
         impl $name {
-            pub fn dump_sign_and_encrypt(
-                &self,
-                author_signkey: &SigningKey,
-                key: &SecretKey,
-            ) -> Vec<u8> {
+            /// Dump and sign [Self], this doesn't encrypt the data compared to [Self::dump_sign_and_encrypt]
+            /// This enabled you to encrypt the data with another method than the one provided by [SecretKey]
+            pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
                 let serialized =
                     ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
                 e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
                 let compressed = e.finish().unwrap_or_else(|_| unreachable!());
-                let signed = author_signkey.sign(&compressed);
+
+                author_signkey.sign(&compressed)
+            }
+
+            /// Dump and sign itself, then encrypt the resulting data using the provided [SecretKey]
+            pub fn dump_sign_and_encrypt(
+                &self,
+                author_signkey: &SigningKey,
+                key: &SecretKey,
+            ) -> Vec<u8> {
+                let signed = self.dump_and_sign(author_signkey);
+
                 key.encrypt(&signed)
             }
 

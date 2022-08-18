@@ -1,7 +1,7 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Tuple, List, Dict, Optional
-import pendulum
+from parsec._parsec import DateTime
 from uuid import UUID
 
 from parsec.crypto import VerifyKey, PublicKey
@@ -140,7 +140,9 @@ async def ping(transport: Transport, ping: str = "") -> dict:
     return await _send_cmd(transport, ping_serializer, cmd="ping", ping=ping)
 
 
-async def events_subscribe(transport: Transport,) -> dict:
+async def events_subscribe(
+    transport: Transport,
+) -> dict:
     return await _send_cmd(transport, events_subscribe_serializer, cmd="events_subscribe")
 
 
@@ -163,7 +165,7 @@ async def vlob_create(
     realm_id: RealmID,
     encryption_revision: int,
     vlob_id: VlobID,
-    timestamp: pendulum.DateTime,
+    timestamp: DateTime,
     blob: bytes,
     sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
 ) -> dict:
@@ -185,7 +187,7 @@ async def vlob_read(
     encryption_revision: int,
     vlob_id: VlobID,
     version: int = None,
-    timestamp: pendulum.DateTime = None,
+    timestamp: DateTime = None,
 ) -> dict:
     return await _send_cmd(
         transport,
@@ -203,7 +205,7 @@ async def vlob_update(
     encryption_revision: int,
     vlob_id: VlobID,
     version: int,
-    timestamp: pendulum.DateTime,
+    timestamp: DateTime,
     blob: bytes,
     sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
 ) -> dict:
@@ -305,7 +307,7 @@ async def realm_start_reencryption_maintenance(
     transport: Transport,
     realm_id: RealmID,
     encryption_revision: int,
-    timestamp: pendulum.DateTime,
+    timestamp: DateTime,
     per_participant_message: Dict[UserID, bytes],
 ) -> dict:
     return await _send_cmd(

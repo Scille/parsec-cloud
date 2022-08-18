@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
 from typing import Optional, List, Tuple
@@ -15,15 +15,14 @@ from parsec.crypto import (
 from parsec.api.data import (
     DataError,
     SASCode,
-    UserProfile,
     generate_sas_codes,
     generate_sas_code_candidates,
     InviteUserData,
     InviteUserConfirmation,
     InviteDeviceData,
     InviteDeviceConfirmation,
-    DeviceCertificateContent,
-    UserCertificateContent,
+    DeviceCertificate,
+    UserCertificate,
 )
 from parsec.api.protocol import (
     DeviceName,
@@ -32,6 +31,7 @@ from parsec.api.protocol import (
     InvitationToken,
     InvitationDeletedReason,
     DeviceLabel,
+    UserProfile,
 )
 from parsec.core.backend_connection import BackendAuthenticatedCmds
 from parsec.core.types import LocalDevice
@@ -276,7 +276,7 @@ def _create_new_user_certificates(
     try:
         timestamp = author.timestamp()
 
-        user_certificate = UserCertificateContent(
+        user_certificate = UserCertificate(
             author=author.device_id,
             timestamp=timestamp,
             user_id=device_id.user_id,
@@ -286,7 +286,7 @@ def _create_new_user_certificates(
         )
         redacted_user_certificate = user_certificate.evolve(human_handle=None)
 
-        device_certificate = DeviceCertificateContent(
+        device_certificate = DeviceCertificate(
             author=author.device_id,
             timestamp=timestamp,
             device_id=device_id,
@@ -339,7 +339,13 @@ class UserGreetInProgress4Ctx:
         profile: UserProfile,
     ) -> None:
 
-        user_certificate, redacted_user_certificate, device_certificate, redacted_device_certificate, invite_user_confirmation = _create_new_user_certificates(
+        (
+            user_certificate,
+            redacted_user_certificate,
+            device_certificate,
+            redacted_device_certificate,
+            invite_user_confirmation,
+        ) = _create_new_user_certificates(
             author, device_label, human_handle, profile, self._public_key, self._verify_key
         )
 
@@ -388,7 +394,7 @@ class DeviceGreetInProgress4Ctx:
         try:
             timestamp = author.timestamp()
 
-            device_certificate = DeviceCertificateContent(
+            device_certificate = DeviceCertificate(
                 author=author.device_id,
                 timestamp=timestamp,
                 device_id=device_id,

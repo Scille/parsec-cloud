@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import sys
 
@@ -264,9 +264,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     @reencryption_needs.setter
     def reencryption_needs(self, val: Optional[ReencryptionNeed]):
         self._reencryption_needs = val
-        if not self.is_owner:
-            return
-        if val and val.need_reencryption:
+        if val and val.need_reencryption and self.is_owner:
             self.button_reencrypt.show()
         else:
             self.button_reencrypt.hide()
@@ -313,7 +311,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                     user=self.owner.short_user_display
                 )
             elif len(self.others) == 1 and self.others[0]:
-                user, = self.others
+                (user,) = self.others
                 shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(
                     user=user.short_user_display
                 )

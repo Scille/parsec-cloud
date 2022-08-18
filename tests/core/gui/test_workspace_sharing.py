@@ -1,10 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 
 from PyQt5 import QtCore, QtWidgets
 
-from parsec.api.data import UserProfile, EntryName
+from parsec.api.data import EntryName
+from parsec.api.protocol import UserProfile
 from parsec.core.types import WorkspaceRole
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.gui.workspace_button import WorkspaceButton

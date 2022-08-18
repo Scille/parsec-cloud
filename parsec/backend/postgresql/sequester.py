@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import List, Optional, Tuple
 from triopg._triopg import TrioConnectionProxy
@@ -24,8 +24,7 @@ from parsec.backend.sequester import (
 )
 from parsec.crypto import CryptoError
 from parsec.utils import timestamps_in_the_ballpark
-from pendulum import DateTime
-from pendulum import now as pendulum_now
+from parsec._parsec import DateTime
 
 
 # Sequester authority never gets modified past organization bootstrap, hence no need
@@ -151,8 +150,12 @@ class PGPSequesterComponent(BaseSequesterComponent):
         self.dbh = dbh
 
     async def create_service(
-        self, organization_id: OrganizationID, service: SequesterService
+        self,
+        organization_id: OrganizationID,
+        service: SequesterService,
+        now: Optional[DateTime] = None,
     ) -> None:
+        now = now or DateTime.now()
 
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             sequester_authority = await get_sequester_authority(conn, organization_id)
@@ -174,7 +177,6 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     f"Invalid certification data ({exc})."
                 ) from exc
 
-            now = pendulum_now()
             if not timestamps_in_the_ballpark(certif_data.timestamp, now):
                 raise SequesterCertificateOutOfBallparkError(
                     f"Invalid certification data (timestamp out of ballpark)."
@@ -218,7 +220,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
         disabled_on: Optional[DateTime] = None,
     ) -> None:
 
-        disabled_on = disabled_on or pendulum_now()
+        disabled_on = disabled_on or DateTime.now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             await self._assert_service_enabled(conn, organization_id)
 

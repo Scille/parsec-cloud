@@ -1,19 +1,19 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
 from PyQt5 import QtCore
 from contextlib import asynccontextmanager
-from pendulum import now as pendulum_now
+from parsec._parsec import DateTime
 from functools import partial
 
-from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     DeviceLabel,
     InvitationToken,
     InvitationType,
     HumanHandle,
     InvitationDeletedReason,
+    UserProfile,
 )
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.invite import UserGreetInitialCtx
@@ -538,7 +538,7 @@ async def test_claim_user_invitation_cancelled(
                 organization_id=self.author.organization_id,
                 greeter=self.author.user_id,
                 token=self.invitation_addr.token,
-                on=pendulum_now(),
+                on=DateTime.now(),
                 reason=InvitationDeletedReason.CANCELLED,
             )
 
@@ -640,7 +640,7 @@ async def test_claim_user_already_deleted(
         organization_id=alice.organization_id,
         greeter=alice.user_id,
         token=invitation_addr.token,
-        on=pendulum_now(),
+        on=DateTime.now(),
         reason=InvitationDeletedReason.CANCELLED,
     )
 
@@ -724,7 +724,7 @@ async def test_claim_user_backend_desync(
 
     # Client is 5 minutes ahead
     def _timestamp(self):
-        return pendulum_now().add(minutes=5)
+        return DateTime.now().add(minutes=5)
 
     monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
 

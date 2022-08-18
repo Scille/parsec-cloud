@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 import trio
@@ -7,7 +7,6 @@ from time import monotonic
 from collections import defaultdict
 from random import randrange, choice
 from string import ascii_lowercase
-from parsec import IS_OXIDIZED
 
 from parsec.api.data import EntryName
 from parsec.api.protocol import UserID
@@ -233,7 +232,6 @@ async def _fuzzer_cmd(id, core, workspace, fs_state):
 
 @pytest.mark.trio
 @pytest.mark.slow
-@pytest.mark.xfail(IS_OXIDIZED, reason="TODO: investigate `database is locked` error")
 async def test_fuzz_core(request, running_backend, alice_core):
     await trio.sleep(0.1)  # Somehow fixes the test
     wid = await alice_core.user_fs.workspace_create(EntryName("w"))

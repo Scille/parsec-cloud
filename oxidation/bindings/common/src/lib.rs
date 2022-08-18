@@ -1,4 +1,4 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use base64::DecodeError;
 use std::path::PathBuf;
@@ -7,7 +7,7 @@ use libparsec::crypto::SecretKey;
 pub use libparsec::{create_context, RuntimeContext};
 
 #[cfg(not(target_arch = "wasm32"))]
-use libparsec::core::list_available_devices;
+use libparsec::client_types::list_available_devices;
 /// We can't access file system in web environment
 #[cfg(target_arch = "wasm32")]
 fn list_available_devices(_config_dir: &std::path::Path) -> Result<(), ()> {

@@ -1,12 +1,11 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from PyQt5.QtWidgets import QWidget
 
 from typing import Optional
 
 from parsec.core.types import OrganizationConfig, OrganizationStats
-from parsec.api.protocol import OrganizationID
-from parsec.api.data import UserProfile
+from parsec.api.protocol import OrganizationID, UserProfile
 
 from parsec.core.gui import desktop
 from parsec.core.gui.snackbar_widget import SnackbarManager

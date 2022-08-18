@@ -1,8 +1,8 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import TYPE_CHECKING, Optional, Dict, List, Tuple
 from collections import defaultdict
-from pendulum import DateTime, now as pendulum_now
+from parsec._parsec import DateTime
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import CryptoError
@@ -59,8 +59,13 @@ class MemorySequesterComponent(BaseSequesterComponent):
         )
 
     async def create_service(
-        self, organization_id: OrganizationID, service: SequesterService
+        self,
+        organization_id: OrganizationID,
+        service: SequesterService,
+        now: Optional[DateTime] = None,
     ) -> None:
+        now = now or DateTime.now()
+
         try:
             organization = self._organization_component._organizations[organization_id]
         except KeyError as exc:
@@ -85,7 +90,6 @@ class MemorySequesterComponent(BaseSequesterComponent):
                 f"Invalid certification data ({exc})."
             ) from exc
 
-        now = pendulum_now()
         if not timestamps_in_the_ballpark(certif_data.timestamp, now):
             raise SequesterCertificateOutOfBallparkError(
                 f"Invalid certification data (timestamp out of ballpark)."
@@ -104,7 +108,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         service_id: SequesterServiceID,
         disabled_on: Optional[DateTime] = None,
     ) -> None:
-        disabled_on = disabled_on or pendulum_now()
+        disabled_on = disabled_on or DateTime.now()
         service = self._get_service(organization_id=organization_id, service_id=service_id)
         if not service.is_enabled:
             raise SequesterServiceAlreadyDisabledError

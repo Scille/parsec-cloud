@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import re
 import pytest
@@ -352,7 +352,7 @@ async def test_synchronization_step_transaction(alice_sync_transactions, type):
     children = []
     async for child in sync_transactions.get_placeholder_children(manifest):
         children.append(child)
-    a_entry_id, = children
+    (a_entry_id,) = children
     assert a_entry_id == a_id
 
     # Sync child
@@ -377,7 +377,7 @@ async def test_synchronization_step_transaction(alice_sync_transactions, type):
     children = []
     async for child in sync_transactions.get_placeholder_children(manifest):
         children.append(child)
-    b_entry_id, = children
+    (b_entry_id,) = children
     assert b_entry_id == b_id
 
     # Sync child

@@ -11,4 +11,4 @@ libparsec_bindings_common = { path = "../../../common" }
 lazy_static = "1.4.0"
 jni = "0.19.0"
 log = "0.4.14"
-android_logger = "0.10"
+android_logger = "0.11"

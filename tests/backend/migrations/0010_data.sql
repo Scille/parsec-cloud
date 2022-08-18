@@ -1,5 +1,4 @@
--- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-
+-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 -- pki_certificate_submitted
 INSERT INTO pki_enrollment(_id, organization, enrollment_id, submitter_der_x509_certificate, submitter_der_x509_certificate_sha1, submit_payload_signature, submit_payload, enrollment_state, submitted_on) VALUES(

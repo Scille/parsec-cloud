@@ -1,15 +1,13 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from parsec._version import __version__
 
 # The parsec.utils module includes a bit of patching, let's make sure it is imported
-import parsec.utils  # noqa
+__import__("parsec.utils")
 
 try:
-    import libparsec  # noqa
+    import parsec._parsec  # noqa
 except ImportError:
-    IS_OXIDIZED = False
-else:
-    IS_OXIDIZED = True
+    raise RuntimeError("Missing parsec lib, missing `maturin develop` ?")
 
-__all__ = ("__version__", "IS_OXIDIZED")
+__all__ = [__version__]

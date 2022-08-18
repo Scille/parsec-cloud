@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import trio
 import click
@@ -7,9 +7,6 @@ from typing import Optional, Tuple
 from functools import partial
 import tempfile
 from pathlib import Path
-from hypercorn.config import Config as HyperConfig
-from hypercorn.trio import serve
-import logging
 
 from parsec.utils import trio_run
 from parsec.cli_utils import (
@@ -19,8 +16,8 @@ from parsec.cli_utils import (
     debug_config_options,
 )
 from parsec.backend.cli.utils import db_backend_options, blockstore_backend_options
-from parsec.backend import backend_app_factory, BackendApp
-from parsec.backend.asgi import app_factory
+from parsec.backend import backend_app_factory
+from parsec.backend.asgi import serve_backend_with_asgi
 from parsec.backend.config import (
     BackendConfig,
     EmailConfig,
@@ -416,7 +413,7 @@ async def _run_backend(
                 retry_policy.success()
 
                 # Serve backend through TCP
-                await _serve_backend_with_asgi(
+                await serve_backend_with_asgi(
                     backend=backend,
                     host=host,
                     port=port,
@@ -433,32 +430,3 @@ async def _run_backend(
                 f"Database connection lost ({exc}), retrying in {retry_policy.pause_before_retry} seconds"
             )
             await retry_policy.pause()
-
-
-async def _serve_backend_with_asgi(
-    backend: BackendApp,
-    host: str,
-    port: int,
-    ssl_certfile: Optional[Path],
-    ssl_keyfile: Optional[Path],
-) -> None:
-    app = app_factory(backend)
-    # Note: Hypercorn comes with default values for incoming data size to
-    # avoid DoS abuse, so just trust them on that ;-)
-    hyper_config = HyperConfig.from_mapping(
-        {
-            "bind": [f"{host}:{port}"],
-            "accesslog": logging.getLogger("hypercorn.access"),
-            # Timestamp is added by the log processor configured in `parsec.logging`,
-            # here we configure peer address + req line + rep status + rep body size + time
-            # (e.g. "GET 88.0.12.52:54160 /foo 1.1 404 823o 12343ms")
-            "access_log_format": "%(h)s %(r)s %(s)s %(b)so %(D)sus",
-            "errorlog": logging.getLogger("hypercorn.error"),
-            "certfile": str(ssl_certfile) if ssl_certfile else None,
-            "keyfile": str(ssl_keyfile) if ssl_certfile else None,
-        }
-    )
-    await serve(app, hyper_config)
-    # `hypercorn.serve` catches KeyboardInterrupt and returns, so re-raise
-    # the keyboard interrupt to continue shutdown
-    raise KeyboardInterrupt

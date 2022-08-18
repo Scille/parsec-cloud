@@ -1,22 +1,22 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import attr
-import pendulum
-from typing import Optional, Union, Tuple
+from parsec._parsec import DateTime
+from typing import Optional, Tuple, Union
 from secrets import token_hex
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
 from parsec.api.data import (
-    UserCertificateContent,
-    DeviceCertificateContent,
+    UserCertificate,
+    DeviceCertificate,
     DataError,
-    UserProfile,
     SequesterAuthorityCertificate,
 )
 from parsec.api.protocol import (
     OrganizationID,
+    UserProfile,
     organization_stats_serializer,
     organization_bootstrap_serializer,
     apiv1_organization_bootstrap_serializer,
@@ -183,24 +183,24 @@ class BaseOrganizationComponent:
         root_verify_key = msg["root_verify_key"]
 
         try:
-            u_data = UserCertificateContent.verify_and_load(
+            u_data = UserCertificate.verify_and_load(
                 msg["user_certificate"], author_verify_key=root_verify_key, expected_author=None
             )
-            d_data = DeviceCertificateContent.verify_and_load(
+            d_data = DeviceCertificate.verify_and_load(
                 msg["device_certificate"], author_verify_key=root_verify_key, expected_author=None
             )
 
             ru_data = rd_data = None
             # TODO: Remove this `if` statement once APIv1 is no longer supported
             if "redacted_user_certificate" in msg:
-                ru_data = UserCertificateContent.verify_and_load(
+                ru_data = UserCertificate.verify_and_load(
                     msg["redacted_user_certificate"],
                     author_verify_key=root_verify_key,
                     expected_author=None,
                 )
             # TODO: Remove this `if` statement once APIv1 is no longer supported
             if "redacted_device_certificate" in msg:
-                rd_data = DeviceCertificateContent.verify_and_load(
+                rd_data = DeviceCertificate.verify_and_load(
                     msg["redacted_device_certificate"],
                     author_verify_key=root_verify_key,
                     expected_author=None,
@@ -229,7 +229,7 @@ class BaseOrganizationComponent:
                 "reason": "Device and user must have the same user ID.",
             }
 
-        now = pendulum.now()
+        now = DateTime.now()
         if not timestamps_in_the_ballpark(u_data.timestamp, now):
             return serializer.timestamp_out_of_ballpark_rep_dump(
                 backend_timestamp=now, client_timestamp=u_data.timestamp

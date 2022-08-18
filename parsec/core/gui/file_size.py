@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from parsec.core.gui.lang import translate as _
 
@@ -52,10 +52,10 @@ def get_filesize(bytesize):
     # - Linux: 1k=1000
     # - MacOS: 1k=1000
     SYSTEM = [
-        (1024 ** 0, _("TEXT_FILE_SIZE_B")),
-        (1024 ** 1, _("TEXT_FILE_SIZE_KB")),
-        (1024 ** 2, _("TEXT_FILE_SIZE_MB")),
-        (1024 ** 3, _("TEXT_FILE_SIZE_GB")),
-        (1024 ** 4, _("TEXT_FILE_SIZE_TB")),
+        (1024**0, _("TEXT_FILE_SIZE_B")),
+        (1024**1, _("TEXT_FILE_SIZE_KB")),
+        (1024**2, _("TEXT_FILE_SIZE_MB")),
+        (1024**3, _("TEXT_FILE_SIZE_GB")),
+        (1024**4, _("TEXT_FILE_SIZE_TB")),
     ]
     return size(bytesize, system=SYSTEM)

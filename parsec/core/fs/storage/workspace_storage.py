@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from pathlib import Path
 from collections import defaultdict
@@ -17,7 +17,7 @@ from typing import (
 )
 import trio
 from trio import lowlevel
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from structlog import get_logger
 from contextlib import asynccontextmanager
 
@@ -66,7 +66,7 @@ async def workspace_storage_non_speculative_init(
 
 
 class BaseWorkspaceStorage:
-    """ Common base class for WorkspaceStorage and WorkspaceStorageTimestamped
+    """Common base class for WorkspaceStorage and WorkspaceStorageTimestamped
     Can not be instanciated
     """
 
@@ -414,9 +414,10 @@ class WorkspaceStorage(BaseWorkspaceStorage):
     # "Prevent sync" pattern interface
 
     async def _load_prevent_sync_pattern(self) -> None:
-        self._prevent_sync_pattern, self._prevent_sync_pattern_fully_applied = (
-            await self.manifest_storage.get_prevent_sync_pattern()
-        )
+        (
+            self._prevent_sync_pattern,
+            self._prevent_sync_pattern_fully_applied,
+        ) = await self.manifest_storage.get_prevent_sync_pattern()
 
     async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
         """Set the "prevent sync" pattern for the corresponding workspace

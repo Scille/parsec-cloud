@@ -4,7 +4,7 @@
     "other_fields": [
         {
             "name": "author",
-            "type": "DeviceID"
+            "type": "Option<DeviceID>"
         },
         {
             "name": "timestamp",
@@ -12,7 +12,7 @@
         },
         {
             "name": "realm_id",
-            "type": "EntryID"
+            "type": "RealmID"
         },
         {
             "name": "user_id",

@@ -1,39 +1,31 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
-from pendulum import now
 
-from parsec import IS_OXIDIZED
+from parsec._parsec import DateTime, mock_time
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmRole, UserProfile
 from parsec.core.fs.exceptions import FSReadOnlyError, FSWorkspaceNoWriteAccess
 
 
 @pytest.fixture
-def shift_now(monkeypatch):
-    testing = True
+def shift_now():
+    # Here we don't freeze time, but make it shift gradually:
+    # we DateTime.now() still take the current time but add a delay that become greater and
+    # greater with any subsequent call to `shift_now`
     current_delay_us = 0
-
-    def get_real_now():
-        nonlocal testing
-        try:
-            testing = False
-            return now()
-        finally:
-            testing = True
 
     def _shift_now(delay):
         nonlocal current_delay_us
         current_delay_us += int(delay * 1_000_000)
+        mock_time(current_delay_us)
 
-    monkeypatch.setattr("pendulum.has_test_now", lambda: testing)
-    monkeypatch.setattr(
-        "pendulum.get_test_now", lambda: get_real_now().add(microseconds=current_delay_us)
-    )
-
-    return _shift_now
+    try:
+        yield _shift_now
+    finally:
+        mock_time(None)
 
 
 @pytest.fixture
@@ -48,7 +40,7 @@ def set_device_time_offset(monkeypatch):
         # We're using `now()` plus an offset to control each device time.
         # Using `now()` allows for a realistic progress of time, only shifted for each device.
         # Then the `shift_now` fixture can be used to flash-forward.
-        lambda local_device: now().add(
+        lambda local_device: DateTime.now().add(
             microseconds=per_device_time_offsets_us[local_device.device_id]
         ),
     )
@@ -57,7 +49,6 @@ def set_device_time_offset(monkeypatch):
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(IS_OXIDIZED, reason="No persistent_mockup")
 def test_timestamp_causality(
     user_fs_online_state_machine,
     coolorg,

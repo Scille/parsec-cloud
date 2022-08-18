@@ -1,4 +1,4 @@
-# Parsec Cloud (https://parsec.cloud) Copyright (c) BSLv1.1 (eventually AGPLv3) 2016-2021 Scille SAS
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import click
 
@@ -10,6 +10,7 @@ from parsec.backend.cli.sequester import (
     update_service,
     human_accesses,
     export_realm,
+    extract_realm_export,
 )
 
 
@@ -25,6 +26,7 @@ backend_sequester_cmd.add_command(create_service, "create_service")
 backend_sequester_cmd.add_command(list_services, "list_services")
 backend_sequester_cmd.add_command(update_service, "update_service")
 backend_sequester_cmd.add_command(export_realm, "export_realm")
+backend_sequester_cmd.add_command(extract_realm_export, "extract_realm_export")
 
 
 @click.group()

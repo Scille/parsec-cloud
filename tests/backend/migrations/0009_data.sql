@@ -1,5 +1,4 @@
--- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2016-2021 Scille SAS
-
+-- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 -- Updating a role now updates the realm_user_change table
 -- Here, alice@pc1 (user 20 device 30) grants contributor access to bob (user 21) to the realm 200
