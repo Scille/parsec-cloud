@@ -459,7 +459,7 @@ class RemoteLoader(UserRemoteLoader):
             raise FSWorkspaceInMaintenance(
                 "Cannot download block while the workspace in maintenance"
             )
-        elif not (rep.is_ok()):
+        elif not rep.is_ok():
             raise FSError(f"Cannot download block: `{rep}`")
 
         # Decryption
