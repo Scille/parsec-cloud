@@ -3,8 +3,22 @@
 import pytest
 from unicodedata import normalize
 
+from parsec.serde import packb
+from parsec.crypto import SecretKey
 from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID, HumanHandle
-from parsec.api.data import SASCode, EntryName, EntryNameTooLongError
+from parsec.api.data import (
+    DataError,
+    SASCode,
+    EntryName,
+    EntryNameTooLongError,
+)
+from parsec.core.types import (
+    LocalFileManifest,
+    LocalFolderManifest,
+    LocalWorkspaceManifest,
+    LocalUserManifest,
+    BaseLocalManifest,
+)
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -168,7 +182,8 @@ def test_sas_code():
         "foo.txt",
         "x" * 255,  # Max size
         "飞" * 85,  # Unicode & max size
-        "X1-_é飞" "🌍☄️==🦕🦖💀",  # Probably a bad name for a real folder...
+        "X1-_é飞",
+        "🌍☄️==🦕🦖💀",  # Probably a bad name for a real folder...
         ".a",  # Dot and dot-dot are allowed if they are not alone
         "..a",
         "a..",
@@ -213,3 +228,25 @@ def test_entry_name_normalization():
     assert EntryName(nfd_str).str == nfc_str
     assert EntryName(nfc_str).str == nfc_str
     assert EntryName(nfc_str + nfd_str).str == nfc_str + nfc_str
+
+
+def test_local_manifests_load_invalid_data():
+    key = SecretKey.generate()
+    valid_msgpack_but_bad_fields = packb({"foo": 42})
+
+    for cls in (
+        LocalFileManifest,
+        LocalFolderManifest,
+        LocalWorkspaceManifest,
+        LocalUserManifest,
+        BaseLocalManifest,
+    ):
+        with pytest.raises(DataError):
+            cls.decrypt_and_load(b"", key=key)
+
+        with pytest.raises(DataError):
+            cls.decrypt_and_load(b"\x42" * 10, key=key)
+
+        # Valid to deserialize, invalid fields
+        with pytest.raises(DataError):
+            cls.decrypt_and_load(valid_msgpack_but_bad_fields, key=key)
