@@ -2,7 +2,6 @@
     "HomePage": {
         "mainMenu": {
             "changelog": "Journal des modifications",
-            "about": "À propos",
             "lang": {
                 "frFR": "Français",
                 "enUS": "English"
@@ -15,6 +14,58 @@
             "joinByQRcode": "Rejoindre par QR code"
         },
         "noDevices": "Vous n'avez pas d'appareils sur ce téléphone.",
-        "howToAddDevices": "Pour ajouter un appareil, invitez-le depuis une organisation existante, ou créez une nouvelle organisation."
+        "howToAddDevices": "Pour ajouter un appareil, invitez-le depuis une organisation existante, ou créez une nouvelle organisation.",
+        "pleaseConnectToAnOrganisation": "Bienvenue. Veuillez ajouter une organisation pour commencer à utiliser Parsec.",
+        "createOrganization": "Créer une organisation",
+        "joinByLink": "Rejoindre par lien",
+        "joinByQRcode": "Rejoindre par QR code"
+    },
+    "CreateOrganization": {
+        "pageTitle": "Créer une organisation",
+        "fullname": "Nom complet",
+        "fullnamePlaceholder": "Jean MARTIN",
+        "email": "Email",
+        "emailPlaceholder": "jean.martin{'@'}exemple.com",
+        "organizationName": "Nom de l'organisation",
+        "organizationNamePlaceholder": "MonOrganisation",
+        "useParsecServer": "Utiliser le serveur PARSEC principal",
+        "useMyOwnServer": "Je dispose de mon propre serveur PARSEC",
+        "acceptTOS": "J'accepte la Politique de Confidentialité et les Conditions Générales de Vente et d'Utilisation de PARSEC",
+        "parsecServerUrl": "URL de votre serveur PARSEC",
+        "parsecServerUrlPlaceholder": "parsec://hote:port",
+        "registeringDevice": "Enregistrement de votre appareil",
+        "deviceNameInputLabel": "Nom de l'appareil",
+        "deviceNamePlaceholder": "Desktop123",
+        "password": "Mot de passe",
+        "confirmPassword": "Confirmer le mot de passe",
+        "next": "Suivant",
+        "previous": "Précédent",
+        "done": "Terminer"
+    },
+    "JoinByLinkModal": {
+        "pageTitle": "Rejoindre par lien",
+        "pleaseEnterUrl": "Veuillez entrer l'URL de l'organisation",
+        "urlInputLabel": "URL de l'organisation",
+        "urlPlaceholder": "parsec://hote:port/organisation?action=action&...",
+        "join": "Rejoindre"
+    },
+    "AlertConfirmation": {
+        "areYouSure": "Êtes-vous sûr ?",
+        "infoNotSaved": "Si vous avez rempli des informations, elles ne seront pas sauvegardées.",
+        "ok": "OK",
+        "cancel": "Annuler",
+        "yes": "Oui",
+        "no": "Non"
+    },
+    "MenuPage": {
+        "documents": "Documents",
+        "myOrganization": "Mon organisation",
+        "settings": "Paramètres",
+        "about": "À propos",
+        "support": "Aide et commentaires"
+    },
+    "HeaderPage": {
+        "about": "À propos",
+        "support": "Aide et commentaires"
     }
 }
