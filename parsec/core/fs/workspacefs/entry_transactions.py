@@ -7,12 +7,13 @@ from parsec.api.data import BlockAccess
 from parsec.core.types import (
     EntryID,
     WorkspaceRole,
-    BaseLocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
     FileDescriptor,
     LocalFolderishManifests,
+    AnyLocalManifest,
+    local_manifest_from_remote,
 )
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs.path import FsPath
@@ -29,7 +30,6 @@ from parsec.core.fs.exceptions import (
     FSDirectoryNotEmptyError,
     FSLocalMissError,
 )
-from parsec.core.types.manifest import AnyLocalManifest
 
 
 WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.CONTRIBUTOR)
@@ -64,7 +64,7 @@ class EntryTransactions(FileTransactions):
             return await self.local_storage.get_manifest(entry_id)
         except FSLocalMissError as exc:
             remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
-            return BaseLocalManifest.from_remote(
+            return local_manifest_from_remote(
                 remote_manifest, prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern()
             )
 
@@ -75,7 +75,7 @@ class EntryTransactions(FileTransactions):
                 local_manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError as exc:
                 remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
-                local_manifest = BaseLocalManifest.from_remote(
+                local_manifest = local_manifest_from_remote(
                     remote_manifest,
                     prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
                 )

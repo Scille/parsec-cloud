@@ -12,12 +12,14 @@ from parsec.core.types import (
     Chunk,
     EntryID,
     EntryName,
-    BaseLocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
     LocalFolderishManifests,
     RemoteFolderishManifests,
+    AnyLocalManifest,
+    local_manifest_from_remote,
+    local_manifest_from_remote_with_local_context,
 )
 
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
@@ -28,7 +30,7 @@ from parsec.core.fs.exceptions import (
     FSIsADirectoryError,
     FSNotADirectoryError,
 )
-from parsec.core.types.manifest import AnyLocalManifest
+
 
 __all__ = "SyncTransactions"
 
@@ -213,7 +215,7 @@ def merge_manifests(
     # Extract versions
     remote_version = remote_manifest.version
     local_version = local_manifest.base_version
-    local_from_remote = BaseLocalManifest.from_remote_with_local_context(
+    local_from_remote = local_manifest_from_remote_with_local_context(
         remote_manifest, prevent_sync_pattern, local_manifest, timestamp
     )
 
@@ -513,7 +515,7 @@ class SyncTransactions(EntryTransactions):
                     prevent_sync_pattern=prevent_sync_pattern,
                     timestamp=timestamp,
                 )
-                other_manifest = BaseLocalManifest.from_remote(
+                other_manifest = local_manifest_from_remote(
                     remote_manifest, prevent_sync_pattern=prevent_sync_pattern
                 )
 

@@ -23,6 +23,7 @@ from parsec._parsec import (
     LocalUserManifest,
     LocalWorkspaceManifest,
     DateTime,
+    local_manifest_decrypt_and_load,
 )
 
 if TYPE_CHECKING:
@@ -31,9 +32,9 @@ else:
     AnyLocalManifest = Type["AnyLocalManifest"]
 
 __all__ = (
-    "WorkspaceEntry",  # noqa: Republishing
-    "BlockAccess",  # noqa: Republishing
-    "BlockID",  # noqa: Republishing
+    "WorkspaceEntry",
+    "BlockAccess",
+    "BlockID",
     "WorkspaceRole",
     "Chunk",
     "LocalFileManifest",
@@ -41,6 +42,7 @@ __all__ = (
     "LocalUserManifest",
     "LocalWorkspaceManifest",
     "AnyLocalManifest",
+    "local_manifest_decrypt_and_load",
 )
 
 
@@ -69,53 +71,37 @@ LocalWorkspaceManifestTypeVar = TypeVar(
 LocalUserManifestTypeVar = TypeVar("LocalUserManifestTypeVar", bound="LocalUserManifest")
 
 
-@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False, init=False)
-class BaseLocalManifest:
-    def __init__(self) -> None:
-        raise RuntimeError(f"Trying to initialize {BaseLocalManifest.__name__}")
+def from_remote(
+    remote: RemoteAnyManifest,
+    prevent_sync_pattern: Pattern,
+) -> AnyLocalManifest:
+    if isinstance(remote, RemoteFileManifest):
+        return LocalFileManifest.from_remote(remote)
+    elif isinstance(remote, RemoteFolderManifest):
+        return LocalFolderManifest.from_remote(remote, prevent_sync_pattern)
+    elif isinstance(remote, RemoteWorkspaceManifest):
+        return LocalWorkspaceManifest.from_remote(remote, prevent_sync_pattern)
+    elif isinstance(remote, RemoteUserManifest):
+        return LocalUserManifest.from_remote(remote)
+    raise ValueError("Wrong remote type")
 
-    @staticmethod
-    def decrypt_and_load(encrypted: bytes, key: SecretKey) -> AnyLocalManifest:
-        """
-        Raises:
-            DataError
-        """
-        from parsec._parsec import local_manifest_decrypt_and_load
 
-        return local_manifest_decrypt_and_load(encrypted, key)
-
-    @staticmethod
-    def from_remote(
-        remote: RemoteAnyManifest,
-        prevent_sync_pattern: Pattern,
-    ) -> AnyLocalManifest:
-        if isinstance(remote, RemoteFileManifest):
-            return LocalFileManifest.from_remote(remote)
-        elif isinstance(remote, RemoteFolderManifest):
-            return LocalFolderManifest.from_remote(remote, prevent_sync_pattern)
-        elif isinstance(remote, RemoteWorkspaceManifest):
-            return LocalWorkspaceManifest.from_remote(remote, prevent_sync_pattern)
-        elif isinstance(remote, RemoteUserManifest):
-            return LocalUserManifest.from_remote(remote)
-        raise ValueError("Wrong remote type")
-
-    @staticmethod
-    def from_remote_with_local_context(
-        remote: RemoteAnyManifest,
-        prevent_sync_pattern: Pattern,
-        local_manifest: AnyLocalManifest,
-        timestamp: DateTime,
-    ) -> AnyLocalManifest:
-        if isinstance(remote, RemoteFileManifest):
-            return LocalFileManifest.from_remote(remote)
-        elif isinstance(remote, RemoteFolderManifest):
-            return LocalFolderManifest.from_remote_with_local_context(
-                remote, prevent_sync_pattern, local_manifest, timestamp=timestamp
-            )
-        elif isinstance(remote, RemoteWorkspaceManifest):
-            return LocalWorkspaceManifest.from_remote_with_local_context(
-                remote, prevent_sync_pattern, local_manifest, timestamp=timestamp
-            )
-        elif isinstance(remote, RemoteUserManifest):
-            return LocalUserManifest.from_remote(remote)
-        raise ValueError("Wrong remote type")
+def from_remote_with_local_context(
+    remote: RemoteAnyManifest,
+    prevent_sync_pattern: Pattern,
+    local_manifest: AnyLocalManifest,
+    timestamp: DateTime,
+) -> AnyLocalManifest:
+    if isinstance(remote, RemoteFileManifest):
+        return LocalFileManifest.from_remote(remote)
+    elif isinstance(remote, RemoteFolderManifest):
+        return LocalFolderManifest.from_remote_with_local_context(
+            remote, prevent_sync_pattern, local_manifest, timestamp=timestamp
+        )
+    elif isinstance(remote, RemoteWorkspaceManifest):
+        return LocalWorkspaceManifest.from_remote_with_local_context(
+            remote, prevent_sync_pattern, local_manifest, timestamp=timestamp
+        )
+    elif isinstance(remote, RemoteUserManifest):
+        return LocalUserManifest.from_remote(remote)
+    raise ValueError("Wrong remote type")

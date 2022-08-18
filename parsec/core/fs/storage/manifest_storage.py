@@ -14,14 +14,13 @@ from typing import (
     Pattern,
     AsyncIterator,
     AsyncContextManager,
-    cast,
 )
 from contextlib import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
-from parsec.core.types import EntryID, ChunkID, LocalDevice, BaseLocalManifest, BlockID
+from parsec.core.types import EntryID, ChunkID, LocalDevice, BlockID
 from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
-from parsec.core.types.manifest import AnyLocalManifest
+from parsec.core.types.manifest import AnyLocalManifest, local_manifest_decrypt_and_load
 
 logger = get_logger()
 
@@ -238,9 +237,8 @@ class ManifestStorage:
 
         # Safely fill the cache
         if entry_id not in self._cache:
-            self._cache[entry_id] = cast(
-                AnyLocalManifest,
-                BaseLocalManifest.decrypt_and_load(manifest_row[0], key=self.device.local_symkey),
+            self._cache[entry_id] = local_manifest_decrypt_and_load(
+                manifest_row[0], key=self.device.local_symkey
             )
 
         # Always return the cached value

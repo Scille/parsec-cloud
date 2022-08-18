@@ -17,7 +17,6 @@ from parsec.core.types import (
     LocalFolderManifest,
     LocalWorkspaceManifest,
     LocalUserManifest,
-    BaseLocalManifest,
 )
 
 
@@ -239,7 +238,6 @@ def test_local_manifests_load_invalid_data():
         LocalFolderManifest,
         LocalWorkspaceManifest,
         LocalUserManifest,
-        BaseLocalManifest,
     ):
         with pytest.raises(DataError):
             cls.decrypt_and_load(b"", key=key)
