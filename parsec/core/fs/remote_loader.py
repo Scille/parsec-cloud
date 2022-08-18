@@ -4,8 +4,9 @@ import math
 from contextlib import contextmanager
 from typing import Dict, Optional, List, Iterable, Tuple, cast, Iterator, Callable, Awaitable
 import trio
-from parsec._parsec import DateTime
 from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
+
+from parsec._parsec import DateTime
 from parsec.api.protocol.sequester import SequesterServiceID
 
 from parsec.crypto import HashDigest, CryptoError, VerifyKey
