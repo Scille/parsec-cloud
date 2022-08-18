@@ -263,7 +263,10 @@ def generate_api_protocol_specs():
                 except KeyError:
                     cmd_serializer = cmd_serializers[cmd_name]
             else:
-                cmd_serializer = cmd_serializers[cmd_name]
+                try:
+                    cmd_serializer = cmd_serializers[cmd_name]
+                except:
+                    continue
             used_cmds_serializers.add(cmd_serializer)  # Keep track for sanity check
             cmds_set_specs[cmd_name] = cmd_serializer_to_spec(cmd_serializer)
 

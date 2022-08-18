@@ -161,7 +161,10 @@ class CmdSock:
         rep = self.serializer.rep_loads(raw_rep)
 
         if check_rep:
-            assert rep["status"] == "ok"
+            try:
+                assert rep["status"] == "ok"
+            except:
+                assert rep.is_ok()
 
         return rep
 

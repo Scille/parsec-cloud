@@ -13,6 +13,7 @@ mod invite;
 mod local_device;
 mod local_manifest;
 mod manifest;
+mod protocol;
 mod time;
 mod trustchain;
 
@@ -93,6 +94,16 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
         m
     )?)?;
     m.add_function(wrap_pyfunction!(manifest::manifest_verify_and_load, m)?)?;
+
+    // Block
+    m.add_class::<protocol::BlockCreateReq>()?;
+    m.add_class::<protocol::BlockCreateRep>()?;
+    m.add_class::<protocol::BlockReadReq>()?;
+    m.add_class::<protocol::BlockReadRep>()?;
+
+    // Cmd
+    m.add_class::<protocol::AuthenticatedAnyCmdReq>()?;
+    m.add_class::<protocol::InvitedAnyCmdReq>()?;
 
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
     m.add_class::<time::TimeProvider>()?;

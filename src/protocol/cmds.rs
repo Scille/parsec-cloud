@@ -6,7 +6,7 @@ use pyo3::types::{PyBytes, PyType};
 
 use libparsec::protocol::{authenticated_cmds, invited_cmds};
 
-use crate::protocol::BlockReadReq;
+use crate::protocol::{BlockCreateReq, BlockReadReq};
 
 import_exception!(parsec.api.protocol, ProtocolError);
 
@@ -33,6 +33,7 @@ impl AuthenticatedAnyCmdReq {
         Ok(
             match AnyCmdReq::load(&buf).map_err(ProtocolError::new_err)? {
                 AnyCmdReq::BlockRead(x) => BlockReadReq(x).into_py(py),
+                AnyCmdReq::BlockCreate(x) => BlockCreateReq(x).into_py(py),
                 _ => unimplemented!(),
             },
         )

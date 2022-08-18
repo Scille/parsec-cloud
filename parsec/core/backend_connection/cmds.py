@@ -106,16 +106,19 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
         transport.logger.exception("Invalid response data", cmd=req["cmd"], error=exc)
         raise BackendProtocolError("Invalid response data") from exc
 
-    if rep["status"] == "invalid_msg_format":
-        transport.logger.error("Invalid request data according to backend", cmd=req["cmd"], rep=rep)
-        raise BackendProtocolError("Invalid request data according to backend")
+    if isinstance(rep, Dict):
+        if rep["status"] == "invalid_msg_format":
+            transport.logger.error(
+                "Invalid request data according to backend", cmd=req["cmd"], rep=rep
+            )
+            raise BackendProtocolError("Invalid request data according to backend")
 
-    if rep["status"] == "bad_timestamp":
-        raise BackendOutOfBallparkError(rep)
+        if rep["status"] == "bad_timestamp":
+            raise BackendOutOfBallparkError(rep)
 
-    # Backward compatibility with older backends (<= v2.3)
-    if rep["status"] == "invalid_certification" and "timestamp" in rep["reason"]:
-        raise BackendOutOfBallparkError(rep)
+        # Backward compatibility with older backends (<= v2.3)
+        if rep["status"] == "invalid_certification" and "timestamp" in rep["reason"]:
+            raise BackendOutOfBallparkError(rep)
 
     return rep
 

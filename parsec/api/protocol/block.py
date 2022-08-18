@@ -1,21 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import TYPE_CHECKING, Union, Type
-import attr
+from typing import Type
 
 from parsec.serde import fields
-from parsec.api.protocol.base import (
-    BaseReqSchema,
-    BaseRepSchema,
-    BaseTypedReqSchema,
-    BaseTypedRepSchema,
-    CmdSerializer,
-    BaseReq,
-    BaseRep,
-    cmd_rep_error_type_factory,
-    cmd_rep_factory,
-)
-from parsec.api.protocol.realm import RealmIDField
 from parsec._parsec import BlockID
 
 __all__ = ("BlockID", "BlockIDField", "block_create_serializer", "block_read_serializer")
@@ -23,78 +10,39 @@ __all__ = ("BlockID", "BlockIDField", "block_create_serializer", "block_read_ser
 
 BlockIDField: Type[fields.Field] = fields.uuid_based_field_factory(BlockID)
 
-
-class BlockCreateReqSchema(BaseReqSchema):
-    block_id = BlockIDField(required=True)
-    realm_id = RealmIDField(required=True)
-    block = fields.Bytes(required=True)
-
-
-class BlockCreateRepSchema(BaseRepSchema):
-    pass
-
-
-block_create_serializer = CmdSerializer(BlockCreateReqSchema, BlockCreateRepSchema)
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class BlockReadReq(BaseReq):
-    class SCHEMA_CLS(BaseTypedReqSchema):
-        cmd = fields.CheckedConstant("block_read", required=True)
-        block_id = BlockIDField(required=True)
-
-    block_id: BlockID
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
-class BlockReadRepOk(BaseRep):
-    class SCHEMA_CLS(BaseTypedRepSchema):
-        status = fields.CheckedConstant("ok", required=True)
-        block = fields.Bytes(required=True)
-
-    block: bytes
-
-
-BlockReadRepNotFound = cmd_rep_error_type_factory("BlockReadRepNotFound", "not_found")
-BlockReadRepTimeout = cmd_rep_error_type_factory("BlockReadRepTimeout", "timeout")
-BlockReadRepNotAllowed = cmd_rep_error_type_factory("BlockReadRepNotAllowed", "not_allowed")
-BlockReadRepInMaintenance = cmd_rep_error_type_factory(
-    "BlockReadRepInMaintenance", "in_maintenance"
+from parsec._parsec import (
+    BlockReadReq,
+    BlockReadRep,
+    BlockCreateReq,
+    BlockCreateRep,
 )
 
-BlockReadRep = cmd_rep_factory(
-    "BlockReadRep",
-    BlockReadRepOk,
-    BlockReadRepNotFound,
-    BlockReadRepTimeout,
-    BlockReadRepNotAllowed,
-    BlockReadRepInMaintenance,
-)
 
-BlockReadRepType = Union[
-    BlockReadRepOk,
-    BlockReadRepNotFound,  # type: ignore[valid-type]
-    BlockReadRepTimeout,  # type: ignore[valid-type]
-    BlockReadRepNotAllowed,  # type: ignore[valid-type]
-    BlockReadRepInMaintenance,  # type: ignore[valid-type]
-]
+class BlockCreateSerializer:
+    @staticmethod
+    def req_dumps(req) -> bytes:  # type: ignore[no-untyped-def]
+        return BlockCreateReq(req["block_id"], req["realm_id"], req["block"]).dump()
 
-block_read_serializer = CmdSerializer.from_typed(BlockReadReq, BlockReadRep.TYPES)
+    @staticmethod
+    def rep_loads(raw: bytes) -> BlockCreateRep:
+        try:
+            return BlockCreateRep.load(raw)
+        except ValueError as exc:
+            raise exc
 
-_PyBlockReadReq = BlockReadReq
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import BlockReadReq as _RsBlockReadReq
-    except:
-        pass
-    else:
-        BlockReadReq = _RsBlockReadReq
 
-_PyBlockReadRep = BlockReadRep
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import BlockReadRep as _RsBlockReadRep
-    except:
-        pass
-    else:
-        BlockReadRep = _RsBlockReadRep
+class BlockReadSerializer:
+    @staticmethod
+    def req_dumps(req) -> bytes:  # type: ignore[no-untyped-def]
+        return BlockReadReq(req["block_id"]).dump()
+
+    @staticmethod
+    def rep_loads(raw: bytes) -> BlockReadRep:
+        try:
+            return BlockReadRep.load(raw)
+        except ValueError as exc:
+            raise exc
+
+
+block_create_serializer = BlockCreateSerializer
+block_read_serializer = BlockReadSerializer

@@ -3,6 +3,7 @@
 use pyo3::exceptions::PyValueError;
 use pyo3::import_exception;
 use pyo3::prelude::*;
+use pyo3::pyclass::CompareOp;
 use pyo3::types::{PyBytes, PyType};
 
 use crate::ids::{BlockID, RealmID};
@@ -11,7 +12,7 @@ use libparsec::protocol::authenticated_cmds::{block_create, block_read};
 import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct BlockCreateReq(pub block_create::Req);
 
 #[pymethods]
@@ -27,6 +28,14 @@ impl BlockCreateReq {
 
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("{:?}", self.0))
+    }
+
+    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
+        Ok(match op {
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            _ => return Err(PyValueError::new_err("Not implemented")),
+        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -53,11 +62,30 @@ impl BlockCreateReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct BlockCreateRep(pub block_create::Rep);
 
 #[pymethods]
 impl BlockCreateRep {
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
+        Ok(match op {
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            _ => return Err(PyValueError::new_err("Not implemented")),
+        })
+    }
+
+    fn is_ok(&self) -> PyResult<bool> {
+        Ok(match self.0 {
+            block_create::Rep::Ok => true,
+            _ => false,
+        })
+    }
+
     #[classmethod]
     #[pyo3(name = "Ok")]
     fn ok(_cls: &PyType) -> PyResult<Self> {
@@ -94,10 +122,6 @@ impl BlockCreateRep {
         Ok(Self(block_create::Rep::InMaintenance))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
@@ -114,7 +138,7 @@ impl BlockCreateRep {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct BlockReadReq(pub block_read::Req);
 
 #[pymethods]
@@ -128,6 +152,14 @@ impl BlockReadReq {
 
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("{:?}", self.0))
+    }
+
+    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
+        Ok(match op {
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            _ => return Err(PyValueError::new_err("Not implemented")),
+        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -144,11 +176,38 @@ impl BlockReadReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct BlockReadRep(pub block_read::Rep);
 
 #[pymethods]
 impl BlockReadRep {
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
+        Ok(match op {
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            _ => return Err(PyValueError::new_err("Not implemented")),
+        })
+    }
+
+    #[getter]
+    fn block(&self) -> PyResult<Option<&[u8]>> {
+        Ok(match &self.0 {
+            block_read::Rep::Ok { block } => Some(block),
+            _ => None,
+        })
+    }
+
+    fn is_ok(&self) -> PyResult<bool> {
+        Ok(match self.0 {
+            block_read::Rep::Ok { .. } => true,
+            _ => false,
+        })
+    }
+
     #[classmethod]
     #[pyo3(name = "Ok")]
     fn ok(_cls: &PyType, block: Vec<u8>) -> PyResult<Self> {
@@ -177,10 +236,6 @@ impl BlockReadRep {
     #[pyo3(name = "InMaintenance")]
     fn in_maintenance(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(block_read::Rep::InMaintenance))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {

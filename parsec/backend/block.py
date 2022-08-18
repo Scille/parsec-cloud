@@ -5,9 +5,10 @@ from parsec.api.protocol import (
     DeviceID,
     RealmID,
     BlockID,
-    block_create_serializer,
     BlockReadReq,
     BlockReadRep,
+    BlockCreateReq,
+    BlockCreateRep,
     api_typed_msg_adapter,
 )
 from parsec.backend.utils import catch_protocol_errors, api
@@ -62,29 +63,34 @@ class BaseBlockComponent:
 
     @api("block_create")
     @catch_protocol_errors
-    async def api_block_create(self, client_ctx, msg):
-        msg = block_create_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(BlockCreateReq, BlockCreateRep)
+    async def api_block_create(self, client_ctx, req: BlockCreateReq) -> BlockCreateRep:
         try:
-            await self.create(client_ctx.organization_id, client_ctx.device_id, **msg)
+            await self.create(
+                client_ctx.organization_id,
+                client_ctx.device_id,
+                req.block_id,
+                req.realm_id,
+                req.block,
+            )
 
         except BlockAlreadyExistsError:
-            return block_create_serializer.rep_dump({"status": "already_exists"})
+            return BlockCreateRep.AlreadyExists()
 
         except BlockNotFoundError:
-            return block_create_serializer.rep_dump({"status": "not_found"})
+            return BlockCreateRep.NotFound()
 
         except BlockStoreError:
             # For legacy reasons, block store error status is `timeout`
-            return block_create_serializer.rep_dump({"status": "timeout"})
+            return BlockCreateRep.Timeout()
 
         except BlockAccessError:
-            return block_create_serializer.rep_dump({"status": "not_allowed"})
+            return BlockCreateRep.NotAllowed()
 
         except BlockInMaintenanceError:
-            return block_create_serializer.rep_dump({"status": "in_maintenance"})
+            return BlockCreateRep.InMaintenance()
 
-        return block_create_serializer.rep_dump({"status": "ok"})
+        return BlockCreateRep.Ok()
 
     async def read(
         self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
