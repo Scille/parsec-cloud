@@ -60,9 +60,7 @@ import {
   IonIcon
 } from '@ionic/vue';
 import { ref, nextTick, onMounted } from 'vue';
-import {
-  close
-} from 'ionicons/icons';
+import { close } from 'ionicons/icons';
 const joinUrl = ref('');
 
 function closeModal(): Promise<boolean> {
@@ -87,8 +85,4 @@ function focusOnEditButton(): void {
     console.log('focused');
   });
 }
-
 </script>
-
-<style scoped>
-</style>

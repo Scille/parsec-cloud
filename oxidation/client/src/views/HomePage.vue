@@ -96,8 +96,12 @@ async function openCreateOrganizationModal(): Promise<void> {
 }
 
 async function canDismissModal(): Promise<boolean> {
-  const alert = await createAlert(t('AlertConfirmation.areYouSure'), t('AlertConfirmation.infoNotSaved'),
-    t('AlertConfirmation.cancel'), t('AlertConfirmation.ok'));
+  const alert = await createAlert(
+    t('AlertConfirmation.areYouSure'),
+    t('AlertConfirmation.infoNotSaved'),
+    t('AlertConfirmation.cancel'),
+    t('AlertConfirmation.ok')
+  );
 
   await alert.present();
 
