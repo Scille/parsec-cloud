@@ -12,6 +12,12 @@ use libparsec_types::*;
 
 use tests_fixtures::{alice, Device};
 
+type AliceLocalFileManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFileManifest)>;
+type AliceLocalFolderManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFolderManifest)>;
+type AliceLocalWorkspaceManifest =
+    Box<dyn FnOnce(&Device) -> (&'static [u8], LocalWorkspaceManifest)>;
+type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUserManifest)>;
+
 #[rstest]
 #[case::file_manifest(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
@@ -176,9 +182,7 @@ use tests_fixtures::{alice, Device};
 }))]
 fn serde_local_file_manifest(
     alice: &Device,
-    #[case] generate_data_and_expected: Box<
-        dyn FnOnce(&Device) -> (&'static [u8], LocalFileManifest),
-    >,
+    #[case] generate_data_and_expected: AliceLocalFileManifest,
 ) {
     let (data, expected) = generate_data_and_expected(alice);
     let key = SecretKey::from(hex!(
@@ -357,9 +361,7 @@ fn serde_local_file_manifest_invalid_blocksize() {
 }))]
 fn serde_local_folder_manifest(
     alice: &Device,
-    #[case] generate_data_and_expected: Box<
-        dyn FnOnce(&Device) -> (&'static [u8], LocalFolderManifest),
-    >,
+    #[case] generate_data_and_expected: AliceLocalFolderManifest,
 ) {
     let (data, expected) = generate_data_and_expected(alice);
     let key = SecretKey::from(hex!(
@@ -544,9 +546,7 @@ fn serde_local_folder_manifest(
 }))]
 fn serde_local_workspace_manifest(
     alice: &Device,
-    #[case] generate_data_and_expected: Box<
-        dyn FnOnce(&Device) -> (&'static [u8], LocalWorkspaceManifest),
-    >,
+    #[case] generate_data_and_expected: AliceLocalWorkspaceManifest,
 ) {
     let (data, expected) = generate_data_and_expected(alice);
     let key = SecretKey::from(hex!(
@@ -897,9 +897,7 @@ fn serde_local_workspace_manifest(
 }))]
 fn serde_local_user_manifest(
     alice: &Device,
-    #[case] generate_data_and_expected: Box<
-        dyn FnOnce(&Device) -> (&'static [u8], LocalUserManifest),
-    >,
+    #[case] generate_data_and_expected: AliceLocalUserManifest,
 ) {
     let (data, expected) = generate_data_and_expected(alice);
     let key = SecretKey::from(hex!(

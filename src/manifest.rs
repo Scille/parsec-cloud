@@ -59,7 +59,7 @@ impl EntryName {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        hash_generic(self.0.as_ref(), py)
     }
 
     #[getter]

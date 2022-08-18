@@ -13,7 +13,7 @@ pub enum EntryNameError {
     InvalidName,
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum DataError {
     #[error("Invalid compression")]
     Compression,
