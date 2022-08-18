@@ -121,7 +121,7 @@ async def administration_organization_item(raw_organization_id: str):
 
 
 @administration_bp.route(
-    "/administration/organizations/<raw_organization_id>/stats", methods=["GET", "PATCH"]
+    "/administration/organizations/<raw_organization_id>/stats", methods=["GET"]
 )
 @administration_authenticated
 async def administration_organization_stat(raw_organization_id: str):
