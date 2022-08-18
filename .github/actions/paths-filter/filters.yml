@@ -1,15 +1,18 @@
 rust:
+  - .github/**
   - oxidation/**/*.rs
   - oxidation/**/*.toml
   - Cargo.toml
   - Cargo.lock
 python:
+  - .github/**
   - parsec/**
   - tests/**
   - pyproject.toml
   - poetry.lock
   - build.py
 rust-ext:
+  - .github/**
   - src/**/*.rs
   - Cargo.toml
   - Cargo.lock
