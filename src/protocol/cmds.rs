@@ -16,10 +16,6 @@ pub(crate) struct AuthenticatedAnyCmdReq(pub authenticated_cmds::AnyCmdReq);
 
 #[pymethods]
 impl AuthenticatedAnyCmdReq {
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
@@ -46,10 +42,6 @@ pub(crate) struct InvitedAnyCmdReq(pub invited_cmds::AnyCmdReq);
 
 #[pymethods]
 impl InvitedAnyCmdReq {
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
