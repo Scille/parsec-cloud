@@ -25,7 +25,7 @@ from parsec.backend.postgresql.vlob_queries import (
     query_create,
 )
 from parsec.backend.postgresql.sequester import get_sequester_authority
-
+import urllib
 
 _q_get_sequester_enabled_services = Q(
     f"""
@@ -97,6 +97,10 @@ class PGVlobComponent(BaseVlobComponent):
         conn,
         organization_id: OrganizationID,
         sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
+        author: DeviceID,
+        encryption_revision: int,
+        vlob_id: VlobID,
+        timestamp: DateTime,
     ) -> Optional[Dict[SequesterServiceID, bytes]]:
         sequester_authority = await self._get_sequester_organization_authority(
             conn, organization_id
@@ -122,7 +126,17 @@ class PGVlobComponent(BaseVlobComponent):
         ]
 
         for service_id in webhook_service_id:
-            data = sequester_blob[service_id]
+
+            sequester_data = sequester_blob[service_id]
+            data = {
+                "sequester_blob": sequester_data,
+                "author": author,
+                "encryption_revision": encryption_revision,
+                "vlob_id": vlob_id,
+                "timestamp": timestamp,
+                "organization_id": organization_id,
+            }
+            data = urllib.parse.urlencode(data).encode()
             webhook_url = services[service_id][1]
             raw_rep = await http_request(url=webhook_url, method="POST", data=data)
             print(raw_rep)
@@ -146,6 +160,10 @@ class PGVlobComponent(BaseVlobComponent):
                 conn,
                 organization_id=organization_id,
                 sequester_blob=sequester_blob,
+                author=author,
+                encryption_revision=encryption_revision,
+                vlob_id=vlob_id,
+                timestamp=timestamp,
             )
             await query_create(
                 conn,
@@ -190,7 +208,12 @@ class PGVlobComponent(BaseVlobComponent):
                 conn,
                 organization_id=organization_id,
                 sequester_blob=sequester_blob,
+                author=author,
+                encryption_revision=encryption_revision,
+                vlob_id=vlob_id,
+                timestamp=timestamp,
             )
+
             return await query_update(
                 conn,
                 organization_id,

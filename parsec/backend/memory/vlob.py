@@ -6,7 +6,6 @@ from parsec.backend.sequester import SequesterService, SequesterServiceType
 from pendulum import DateTime
 from typing import TYPE_CHECKING, List, AbstractSet, Tuple, Dict, Optional
 from collections import defaultdict
-
 from parsec.api.protocol import (
     DeviceID,
     OrganizationID,
@@ -33,6 +32,8 @@ from parsec.backend.vlob import (
     VlobSequesterDisabledError,
     VlobSequesterServiceInconsistencyError,
 )
+
+import urllib
 
 if TYPE_CHECKING:
     from parsec.backend.memory.realm import Realm, MemoryRealmComponent
@@ -180,7 +181,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         expect_sequestered_organization: bool,
         expect_active_sequester_services: AbstractSet[SequesterServiceID] = set(),
-    ) -> Optional[Dict[SequesterServiceID, SequesterService]]:
+    ) -> Dict[SequesterServiceID, SequesterService]:
         try:
             org = self._organization_component._organizations[organization_id]
         except KeyError:
@@ -190,7 +191,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             # Regular organization
             if expect_sequestered_organization:
                 raise VlobSequesterDisabledError()
-            return
+            return {}
 
         else:
             # Sequestered organization
@@ -425,7 +426,16 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         # Check webhooks before sending data to storage
         if webhook_data:
-            for data, webhook_url in webhook_data:
+            for sequester_data, webhook_url in webhook_data:
+                data = {
+                    "sequester_blob": sequester_data,
+                    "author": author,
+                    "encryption_revision": encryption_revision,
+                    "vlob_id": vlob_id,
+                    "timestamp": timestamp,
+                    "organization_id": organization_id,
+                }
+                data = urllib.parse.urlencode(data).encode()
                 raw_rep = await http_request(url=webhook_url, method="POST", data=data)
                 print(raw_rep)
                 # TODO check response
@@ -524,7 +534,16 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         # Check webhooks before sending data to storage
         if webhook_data:
-            for data, webhook_url in webhook_data:
+            for sequester_data, webhook_url in webhook_data:
+                data = {
+                    "sequester_blob": sequester_data,
+                    "author": author,
+                    "encryption_revision": encryption_revision,
+                    "vlob_id": vlob_id,
+                    "timestamp": timestamp,
+                    "organization_id": organization_id,
+                }
+                data = urllib.parse.urlencode(data).encode()
                 raw_rep = await http_request(url=webhook_url, method="POST", data=data)
                 print(raw_rep)
                 # TODO check response
