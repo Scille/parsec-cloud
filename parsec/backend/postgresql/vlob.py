@@ -5,7 +5,6 @@ from typing import List, Tuple, Dict, Optional
 
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
 from parsec.api.protocol.sequester import SequesterServiceID
-from parsec.backend.http_utils import http_request
 from parsec.backend.organization import SequesterAuthority
 from parsec.backend.sequester import SequesterDisabledError, SequesterServiceType
 from parsec.backend.vlob import (
@@ -25,7 +24,6 @@ from parsec.backend.postgresql.vlob_queries import (
     query_create,
 )
 from parsec.backend.postgresql.sequester import get_sequester_authority
-import urllib
 
 _q_get_sequester_enabled_services = Q(
     f"""
@@ -46,7 +44,7 @@ async def _check_sequestered_organization(
 ) -> Optional[Dict[SequesterServiceID, Tuple[SequesterServiceType, str]]]:
     if sequester_blob is None and sequester_authority is None:
         # Sequester is disable, fetching sequester services is pointless
-        return
+        return None
 
     if sequester_authority is None:
         raise VlobSequesterDisabledError()
@@ -92,7 +90,7 @@ class PGVlobComponent(BaseVlobComponent):
             await self._fetch_organization_sequester_authority(conn, organization_id)
         return self._sequester_organization_authority_cache[organization_id]
 
-    async def _check_and_perfrom_sequester_services(
+    async def _extract_sequestered_data_and_proceed_webhook(
         self,
         conn,
         organization_id: OrganizationID,
@@ -112,7 +110,7 @@ class PGVlobComponent(BaseVlobComponent):
             sequester_blob=sequester_blob,
         )
         if not sequester_blob or not services:
-            return
+            return None
 
         storage_service_id = [
             service_id
@@ -126,20 +124,17 @@ class PGVlobComponent(BaseVlobComponent):
         ]
 
         for service_id in webhook_service_id:
-
             sequester_data = sequester_blob[service_id]
-            data = {
-                "sequester_blob": sequester_data,
-                "author": author,
-                "encryption_revision": encryption_revision,
-                "vlob_id": vlob_id,
-                "timestamp": timestamp,
-                "organization_id": organization_id,
-            }
-            data = urllib.parse.urlencode(data).encode()
             webhook_url = services[service_id][1]
-            raw_rep = await http_request(url=webhook_url, method="POST", data=data)
-            print(raw_rep)
+            await self.send_vlob_to_webhook_services(
+                webhook_url=webhook_url,
+                sequester_data=sequester_data,
+                author=author,
+                encryption_revision=encryption_revision,
+                vlob_id=vlob_id,
+                timestamp=timestamp,
+                organization_id=organization_id,
+            )
 
         return {service_id: sequester_blob[service_id] for service_id in storage_service_id}
 
@@ -156,7 +151,7 @@ class PGVlobComponent(BaseVlobComponent):
         sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
-            sequester_blob = await self._check_and_perfrom_sequester_services(
+            sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
                 conn,
                 organization_id=organization_id,
                 sequester_blob=sequester_blob,
@@ -204,7 +199,7 @@ class PGVlobComponent(BaseVlobComponent):
         sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
-            sequester_blob = await self._check_and_perfrom_sequester_services(
+            sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
                 conn,
                 organization_id=organization_id,
                 sequester_blob=sequester_blob,

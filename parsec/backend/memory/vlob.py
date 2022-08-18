@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from dataclasses import dataclass, field as dataclass_field
-from parsec.backend.http_utils import http_request
 from parsec.backend.sequester import SequesterService, SequesterServiceType
 from pendulum import DateTime
 from typing import TYPE_CHECKING, List, AbstractSet, Tuple, Dict, Optional
@@ -21,6 +20,7 @@ from parsec.backend.realm import RealmNotFoundError
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
+    VlobSequesterServiceMissingWebhook,
     VlobVersionError,
     VlobNotFoundError,
     VlobRealmNotFoundError,
@@ -33,7 +33,6 @@ from parsec.backend.vlob import (
     VlobSequesterServiceInconsistencyError,
 )
 
-import urllib
 
 if TYPE_CHECKING:
     from parsec.backend.memory.realm import Realm, MemoryRealmComponent
@@ -205,6 +204,63 @@ class MemoryVlobComponent(BaseVlobComponent):
                     sequester_services_certificates=[s.service_certificate for s in services],
                 )
             return {s.service_id: s for s in services}
+
+    async def _extract_sequestered_data_and_proceed_webhook(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        encryption_revision: int,
+        vlob_id: VlobID,
+        timestamp: DateTime,
+        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+    ) -> Optional[Dict[SequesterServiceID, bytes]]:
+        if sequester_blob is None:
+            self._check_sequestered_organization(
+                organization_id=organization_id, expect_sequestered_organization=False
+            )
+            sequestered_data = None
+        else:
+            services = self._check_sequestered_organization(
+                organization_id=organization_id,
+                expect_sequestered_organization=True,
+                expect_active_sequester_services=sequester_blob.keys(),
+            )
+            storage_service_id = [
+                service.service_id
+                for service in services.values()
+                if service.service_type == SequesterServiceType.STORAGE
+            ]
+            webhook_service_id = [
+                service.service_id
+                for service in services.values()
+                if service.service_type == SequesterServiceType.WEBHOOK
+            ]
+            # Get sequester data for storage
+
+            sequestered_data = {
+                service_id: sequester_blob[service_id] for service_id in storage_service_id
+            }
+
+            webhook_data = [
+                (sequester_blob[service_id], services[service_id].webhook_url)
+                for service_id in webhook_service_id
+            ]
+
+            # Check webhooks before sending data to storage
+            for sequester_data, webhook_url in webhook_data:
+                if not webhook_url:
+                    # TODO; only warnind ?
+                    raise VlobSequesterServiceMissingWebhook()
+                await self.send_vlob_to_webhook_services(
+                    webhook_url=webhook_url,
+                    organization_id=organization_id,
+                    sequester_data=sequester_data,
+                    author=author,
+                    encryption_revision=encryption_revision,
+                    vlob_id=vlob_id,
+                    timestamp=timestamp,
+                )
+        return sequestered_data
 
     def _check_realm_read_access(
         self,
@@ -388,57 +444,22 @@ class MemoryVlobComponent(BaseVlobComponent):
         self._check_realm_write_access(
             organization_id, realm_id, author.user_id, encryption_revision, timestamp
         )
-        if sequester_blob is None:
-            self._check_sequestered_organization(
-                organization_id=organization_id, expect_sequestered_organization=False
-            )
-            sequestered_data = None
-            webhook_data = None
-        else:
-            services = self._check_sequestered_organization(
-                organization_id=organization_id,
-                expect_sequestered_organization=True,
-                expect_active_sequester_services=sequester_blob.keys(),
-            )
-            storage_service_id = [
-                service.service_id
-                for service in services.values()
-                if service.service_type == SequesterServiceType.STORAGE
-            ]
-            webhook_service_id = [
-                service.service_id
-                for service in services.values()
-                if service.service_type == SequesterServiceType.WEBHOOK
-            ]
-            # Get sequester data for storage
-
-            sequestered_data = [
-                {service_id: sequester_blob[service_id] for service_id in storage_service_id}
-            ]
-            webhook_data = [
-                (sequester_blob[service_id], services[service_id].webhook_url)
-                for service_id in webhook_service_id
-            ]
 
         key = (organization_id, vlob_id)
         if key in self._vlobs:
             raise VlobAlreadyExistsError()
 
-        # Check webhooks before sending data to storage
-        if webhook_data:
-            for sequester_data, webhook_url in webhook_data:
-                data = {
-                    "sequester_blob": sequester_data,
-                    "author": author,
-                    "encryption_revision": encryption_revision,
-                    "vlob_id": vlob_id,
-                    "timestamp": timestamp,
-                    "organization_id": organization_id,
-                }
-                data = urllib.parse.urlencode(data).encode()
-                raw_rep = await http_request(url=webhook_url, method="POST", data=data)
-                print(raw_rep)
-                # TODO check response
+        extracted_sequestered_data = await self._extract_sequestered_data_and_proceed_webhook(
+            organization_id=organization_id,
+            author=author,
+            encryption_revision=encryption_revision,
+            vlob_id=vlob_id,
+            timestamp=timestamp,
+            sequester_blob=sequester_blob,
+        )
+        sequestered_data = None
+        if extracted_sequestered_data is not None:
+            sequestered_data = [extracted_sequestered_data]
 
         self._vlobs[key] = Vlob(realm_id, [(blob, author, timestamp)], sequestered_data)
 
@@ -495,58 +516,20 @@ class MemoryVlobComponent(BaseVlobComponent):
         self._check_realm_write_access(
             organization_id, vlob.realm_id, author.user_id, encryption_revision, timestamp
         )
-        if sequester_blob is None:
-            self._check_sequestered_organization(
-                organization_id=organization_id, expect_sequestered_organization=False
-            )
-            sequestered_data = None
-            webhook_data = None
-        else:
-            services = self._check_sequestered_organization(
-                organization_id=organization_id,
-                expect_sequestered_organization=True,
-                expect_active_sequester_services=sequester_blob.keys(),
-            )
-
-            storage_service_id = [
-                service.service_id
-                for service in services.values()
-                if service.service_type == SequesterServiceType.STORAGE
-            ]
-            webhook_service_id = [
-                service.service_id
-                for service in services.values()
-                if service.service_type == SequesterServiceType.WEBHOOK
-            ]
-            # Get sequester data for storage
-            sequestered_data = {
-                service_id: sequester_blob[service_id] for service_id in storage_service_id
-            }
-            webhook_data = [
-                (sequester_blob[service_id], services[service_id].webhook_url)
-                for service_id in webhook_service_id
-            ]
 
         if version - 1 != vlob.current_version:
             raise VlobVersionError()
         if timestamp < vlob.data[vlob.current_version - 1][2]:
             raise VlobRequireGreaterTimestampError(vlob.data[vlob.current_version - 1][2])
 
-        # Check webhooks before sending data to storage
-        if webhook_data:
-            for sequester_data, webhook_url in webhook_data:
-                data = {
-                    "sequester_blob": sequester_data,
-                    "author": author,
-                    "encryption_revision": encryption_revision,
-                    "vlob_id": vlob_id,
-                    "timestamp": timestamp,
-                    "organization_id": organization_id,
-                }
-                data = urllib.parse.urlencode(data).encode()
-                raw_rep = await http_request(url=webhook_url, method="POST", data=data)
-                print(raw_rep)
-                # TODO check response
+        sequestered_data = await self._extract_sequestered_data_and_proceed_webhook(
+            organization_id=organization_id,
+            author=author,
+            encryption_revision=encryption_revision,
+            vlob_id=vlob_id,
+            timestamp=timestamp,
+            sequester_blob=sequester_blob,
+        )
 
         vlob.data.append((blob, author, timestamp))
         if sequestered_data is not None:  # /!\ We want to accept empty dicts !

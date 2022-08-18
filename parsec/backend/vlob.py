@@ -1,7 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+import base64
 from typing import List, Tuple, Dict, Optional
 from pendulum import DateTime, now as pendulum_now
+import urllib
+from parsec.backend.http_utils import http_request
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.api.protocol import (
@@ -71,7 +74,11 @@ class VlobSequesterDisabledError(VlobError):
     pass
 
 
-class VlobSequesterServiceRejected(VlobError):
+class VlobSequesterWebhookServiceRejected(VlobError):
+    pass
+
+
+class VlobSequesterServiceMissingWebhook(VlobError):
     pass
 
 
@@ -135,7 +142,7 @@ class BaseVlobComponent:
                 }
             )
 
-        except VlobSequesterServiceRejected:
+        except VlobSequesterWebhookServiceRejected:
             # TODO: add return fields: service id and service label
             return vlob_create_serializer.rep_dump({"status": "sequester_rejected"})
 
@@ -499,3 +506,24 @@ class BaseVlobComponent:
             VlobMaintenanceError: not in maintenance
         """
         raise NotImplementedError()
+
+    async def send_vlob_to_webhook_services(
+        self,
+        webhook_url: str,
+        organization_id: OrganizationID,
+        sequester_data: bytes,
+        author: DeviceID,
+        encryption_revision: int,
+        vlob_id: VlobID,
+        timestamp: DateTime,
+    ):
+        data = {
+            "sequester_blob": base64.urlsafe_b64encode(sequester_data),
+            "author": author,
+            "encryption_revision": encryption_revision,
+            "vlob_id": vlob_id,
+            "timestamp": timestamp,
+            "organization_id": organization_id,
+        }
+        data = urllib.parse.urlencode(data).encode()
+        await http_request(url=webhook_url, method="POST", data=data)
