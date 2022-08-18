@@ -8,7 +8,7 @@
 #
 # ```bash
 # $ bash setup-rust.sh # Will install rust-1.63 (The default)
-# $ bash setup-rust.sh 1.63.1 # Will install rust-1.63.1
+# $ bash setup-rust.sh 1.63.0 # Will install rust-1.63.0
 # ```
 
 set -eux
