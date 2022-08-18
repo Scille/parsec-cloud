@@ -1,9 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import attr
-from typing import TypeVar, Type, Union, Pattern
+from typing import TYPE_CHECKING, TypeVar, Type, Pattern
 
-from parsec._parsec import SecretKey
 from parsec.serde import fields
 from parsec.api.protocol import RealmRole, BlockID
 from parsec.api.data import (
@@ -26,6 +24,11 @@ from parsec._parsec import (
     LocalWorkspaceManifest,
     DateTime,
 )
+
+if TYPE_CHECKING:
+    from parsec._parsec import AnyLocalManifest
+else:
+    AnyLocalManifest = Type["AnyLocalManifest"]
 
 __all__ = (
     "WorkspaceEntry",  # noqa: Republishing
@@ -64,12 +67,6 @@ LocalWorkspaceManifestTypeVar = TypeVar(
     "LocalWorkspaceManifestTypeVar", bound="LocalWorkspaceManifest"
 )
 LocalUserManifestTypeVar = TypeVar("LocalUserManifestTypeVar", bound="LocalUserManifest")
-AnyLocalManifest = Union[
-    LocalFileManifest,
-    LocalFolderManifest,
-    LocalWorkspaceManifest,
-    LocalUserManifest,
-]
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False, init=False)

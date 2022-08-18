@@ -14,6 +14,13 @@ from parsec._parsec_pyi.manifest import (
 )
 from parsec._parsec_pyi.time import DateTime
 
+AnyLocalManifest = Union[
+    LocalFileManifest,
+    LocalFolderManifest,
+    LocalWorkspaceManifest,
+    LocalUserManifest,
+]
+
 class Chunk:
     def __init__(
         self,
@@ -397,3 +404,5 @@ class LocalUserManifest:
         local_manifest: LocalUserManifest,
         timestamp: DateTime,
     ) -> LocalUserManifest: ...
+
+def local_manifest_decrypt_and_load(encrypted: bytes, key: SecretKey) -> AnyLocalManifest: ...
