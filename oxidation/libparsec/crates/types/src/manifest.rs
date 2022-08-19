@@ -53,6 +53,21 @@ macro_rules! impl_manifest_dump_load {
                 expected_timestamp: DateTime,
             ) -> Result<Self, DataError> {
                 let signed = key.decrypt(encrypted)?;
+
+                Self::verify_and_load(
+                    &signed,
+                    author_verify_key,
+                    expected_author,
+                    expected_timestamp,
+                )
+            }
+
+            pub fn verify_and_load(
+                signed: &[u8],
+                author_verify_key: &VerifyKey,
+                expected_author: &DeviceID,
+                expected_timestamp: DateTime,
+            ) -> Result<Self, DataError> {
                 let compressed = author_verify_key.verify(&signed)?;
                 let mut serialized = vec![];
 
