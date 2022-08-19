@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import base64
+import json
 from typing import List, Tuple, Dict, Optional
 from pendulum import DateTime, now as pendulum_now
 import urllib
@@ -76,15 +77,25 @@ class VlobSequesterDisabledError(VlobError):
 
 
 class VlobSequesterWebhookServiceRejectedError(VlobError):
-    pass
+    def __init__(self, service_id, service_label, error, *args, **kwargs):
+        self.service_id = service_id
+        self.service_label = service_label
+        self.error = error
+        VlobError.__init__(self, *args, **kwargs)
 
 
 class VlobSequesterServiceMissingWebhookError(VlobError):
-    pass
+    def __init__(self, service_id, service_label, *args, **kwargs):
+        self.service_id = service_id
+        self.service_label = service_label
+        VlobError.__init__(self, *args, **kwargs)
 
 
 class VlobSequesterServiceWebhookUrlError(VlobError):
-    pass
+    def __init__(self, service_id, service_label, *args, **kwargs):
+        self.service_id = service_id
+        self.service_label = service_label
+        VlobError.__init__(self, *args, **kwargs)
 
 
 class VlobSequesterServiceInconsistencyError(VlobError):
@@ -119,7 +130,9 @@ async def extract_sequestered_data_and_proceed_webhook(
         service = services[webhook_service_id]
         sequester_data = sequester_blob[webhook_service_id]
         if not service.webhook_url:
-            raise VlobSequesterServiceMissingWebhookError()
+            raise VlobSequesterServiceMissingWebhookError(
+                service_id=service.service_id, service_label=service.service_label
+            )
 
         to_webhook_data = {
             "sequester_blob": base64.urlsafe_b64encode(sequester_data),
@@ -133,9 +146,24 @@ async def extract_sequestered_data_and_proceed_webhook(
         try:
             await http_request(url=service.webhook_url, method="POST", data=to_webhook_data)
         except urllib.error.HTTPError as exc:
-            raise VlobSequesterWebhookServiceRejectedError from exc
+            if exc.code == 400:
+                body = json.loads(exc.read())
+                raise VlobSequesterWebhookServiceRejectedError(
+                    service_id=service.service_id,
+                    service_label=service.service_label,
+                    error=body.get("error", ""),
+                ) from exc
+            else:
+                raise VlobSequesterWebhookServiceRejectedError(
+                    service_id=service.service_id,
+                    service_label=service.service_label,
+                    error=f"{exc.code}:{exc.reason}",
+                ) from exc
+
         except urllib.error.URLError as exc:
-            raise VlobSequesterServiceWebhookUrlError from exc
+            raise VlobSequesterServiceWebhookUrlError(
+                service_id=service.service_id, service_label=service.service_label
+            ) from exc
 
     # Get sequester data for storage
     sequestered_data = {
@@ -197,23 +225,25 @@ class BaseVlobComponent:
                 }
             )
 
-        except VlobSequesterWebhookServiceRejectedError:
+        except VlobSequesterWebhookServiceRejectedError as exc:
             return vlob_create_serializer.rep_dump(
                 {
                     "status": "sequester_rejected",
-                    "service_id": "",
-                    "service_label": "",
-                    "service_error": "",
+                    "service_id": exc.service_id,
+                    "service_label": exc.service_label,
+                    "service_error": exc.error,
                 }
             )
 
-        except (VlobSequesterServiceMissingWebhookError, VlobSequesterServiceWebhookUrlError):
+        except (
+            VlobSequesterServiceMissingWebhookError,
+            VlobSequesterServiceWebhookUrlError,
+        ) as exc:
             return vlob_create_serializer.rep_dump(
                 {
                     "status": "sequester_webhook_failed",
-                    "service_id": "",
-                    "service_label": "",
-                    "service_error": "",
+                    "service_id": exc.service_id,
+                    "service_label": exc.service_label,
                 }
             )
 
@@ -318,23 +348,25 @@ class BaseVlobComponent:
                 }
             )
 
-        except VlobSequesterWebhookServiceRejectedError:
+        except VlobSequesterWebhookServiceRejectedError as exc:
             return vlob_create_serializer.rep_dump(
                 {
                     "status": "sequester_rejected",
-                    "service_id": "",
-                    "service_label": "",
-                    "service_error": "",
+                    "service_id": exc.service_id,
+                    "service_label": exc.service_label,
+                    "service_error": exc.error,
                 }
             )
 
-        except (VlobSequesterServiceMissingWebhookError, VlobSequesterServiceWebhookUrlError):
+        except (
+            VlobSequesterServiceMissingWebhookError,
+            VlobSequesterServiceWebhookUrlError,
+        ) as exc:
             return vlob_create_serializer.rep_dump(
                 {
                     "status": "sequester_webhook_failed",
-                    "service_id": "",
-                    "service_label": "",
-                    "service_error": "",
+                    "service_id": exc.service_id,
+                    "service_label": exc.service_label,
                 }
             )
 

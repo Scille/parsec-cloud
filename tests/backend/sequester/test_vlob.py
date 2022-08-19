@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import base64
+import json
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 import urllib
 
@@ -264,15 +265,12 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             coolorg, backend, alice_ws, realm, vlob_id, blob, sequester_blob, url
         )
 
+        new_vlob_id = VlobID.from_hex("00000000000000000000000000000002")
+
+        # Test htttURLErro
         def raise_urlerror(*args, **kwargs):
             raise urllib.error.URLError(reason="CONNECTION REFUSED")
 
-        def raise_httperror(*args, **kwargs):
-            raise urllib.error.HTTPError(url, 405, "METHOD NOT ALLOWED", None, None)
-
-        new_vlob_id = VlobID.from_hex("00000000000000000000000000000002")
-
-        # Test httperror
         mock.build_opener.side_effect = raise_urlerror
         rep = await vlob_create(
             alice_ws,
@@ -295,6 +293,9 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
         assert rep["status"] == "sequester_webhook_failed"
 
         # Test httperror
+        def raise_httperror(*args, **kwargs):
+            raise urllib.error.HTTPError(url, 405, "METHOD NOT ALLOWED", None, None)
+
         mock.build_opener.side_effect = raise_httperror
         rep = await vlob_create(
             alice_ws,
@@ -305,6 +306,9 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             check_rep=False,
         )
         assert rep["status"] == "sequester_rejected"
+        assert rep["service_label"] == service.backend_service.service_label
+        assert rep["service_id"] == service.service_id
+        assert rep["service_error"] == "405:METHOD NOT ALLOWED"
 
         rep = await vlob_update(
             alice_ws,
@@ -315,6 +319,43 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             check_rep=False,
         )
         assert rep["status"] == "sequester_rejected"
+        assert rep["service_label"] == service.backend_service.service_label
+        assert rep["service_id"] == service.service_id
+        assert rep["service_error"] == "405:METHOD NOT ALLOWED"
+
+        # Test error from service
+
+        def raise_httperror_400(*args, **kwargs):
+            fp = Mock()
+            fp.read.return_value = json.dumps({"error": "some_error_from_service"})
+            raise urllib.error.HTTPError(url, 400, "", None, fp)
+
+        mock.build_opener.side_effect = raise_httperror_400
+        rep = await vlob_create(
+            alice_ws,
+            vlob_id=new_vlob_id,
+            realm_id=realm,
+            blob=blob,
+            sequester_blob={service.service_id: sequester_blob},
+            check_rep=False,
+        )
+        assert rep["status"] == "sequester_rejected"
+        assert rep["service_label"] == service.backend_service.service_label
+        assert rep["service_id"] == service.service_id
+        assert rep["service_error"] == "some_error_from_service"
+
+        rep = await vlob_update(
+            alice_ws,
+            vlob_id=vlob_id,
+            version=2,
+            blob=blob,
+            sequester_blob={service.service_id: sequester_blob},
+            check_rep=False,
+        )
+        assert rep["status"] == "sequester_rejected"
+        assert rep["service_label"] == service.backend_service.service_label
+        assert rep["service_id"] == service.service_id
+        assert rep["service_error"] == "some_error_from_service"
 
 
 @customize_fixtures(coolorg_is_sequestered_organization=True)

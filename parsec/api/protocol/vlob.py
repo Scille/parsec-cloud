@@ -36,6 +36,17 @@ class SequesterInconsistencyRepSchema(BaseRepSchema):
     sequester_services_certificates = fields.List(fields.Bytes(), required=True, allow_none=False)
 
 
+class SequesterWebhookRejectedRepSchema(BaseRepSchema):
+    """
+    This schema has been added to API version (PARSEC v2.12.0)
+    """
+
+    status = fields.CheckedConstant("sequester_rejected", required=True)
+    service_id = SequesterServiceIDField(required=True)
+    service_label = fields.String(required=True)
+    service_error = fields.String(required=True)
+
+
 class VlobCreateReqSchema(BaseReqSchema):
     realm_id = RealmIDField(required=True)
     encryption_revision = fields.Integer(required=True)
@@ -63,7 +74,10 @@ class VlobCreateRepSchema(BaseRepSchema):
 vlob_create_serializer = CmdSerializer(
     VlobCreateReqSchema,
     VlobCreateRepSchema,
-    extra_error_schemas={"sequester_inconsistency": SequesterInconsistencyRepSchema},
+    extra_error_schemas={
+        "sequester_inconsistency": SequesterInconsistencyRepSchema,
+        "sequester_rejected": SequesterWebhookRejectedRepSchema,
+    },
 )
 
 
@@ -112,7 +126,10 @@ class VlobUpdateRepSchema(BaseRepSchema):
 vlob_update_serializer = CmdSerializer(
     VlobUpdateReqSchema,
     VlobUpdateRepSchema,
-    extra_error_schemas={"sequester_inconsistency": SequesterInconsistencyRepSchema},
+    extra_error_schemas={
+        "sequester_inconsistency": SequesterInconsistencyRepSchema,
+        "sequester_rejected": SequesterWebhookRejectedRepSchema,
+    },
 )
 
 
