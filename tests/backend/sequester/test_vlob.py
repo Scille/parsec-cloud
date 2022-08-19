@@ -149,6 +149,35 @@ async def test_vlob_create_update_and_sequester_access(
         )
 
 
+async def _register_service_and_create_vlob(
+    coolorg, backend, alice_ws, realm, vlob_id, blob, sequester_blob, url
+):
+    # Register webhook service
+    service = sequester_service_factory(
+        "TestWebhookService",
+        coolorg.sequester_authority,
+        service_type=SequesterServiceType.WEBHOOK,
+        webhook_url=url,
+    )
+    await backend.sequester.create_service(
+        organization_id=coolorg.organization_id, service=service.backend_service
+    )
+
+    # Create one vlob
+    rep = await vlob_create(
+        alice_ws,
+        realm_id=realm,
+        vlob_id=vlob_id,
+        blob=blob,
+        sequester_blob={service.service_id: sequester_blob},
+        check_rep=False,
+    )
+
+    assert rep == {"status": "ok"}
+
+    return service
+
+
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 @pytest.mark.trio
 async def test_webhook_vlob_create_update(
@@ -158,17 +187,10 @@ async def test_webhook_vlob_create_update(
     blob = b"<encrypted with workspace's key>"
     sequester_blob = b"<encrypted sequester blob>"
 
+    url = "http://somewhere.post"
+
     with patch("parsec.backend.http_utils.urllib.request") as mock:
-
-        # Register webhook service
-        url = "http://somewhere.post"
-        service = sequester_service_factory(
-            "TestWebhookService",
-            coolorg.sequester_authority,
-            service_type=SequesterServiceType.WEBHOOK,
-            webhook_url=url,
-        )
-
+        # Helper
         def _assert_webhook_posted(expected_sequester_data):
             mock.Request.assert_called_once()
             # Extract args
@@ -185,19 +207,12 @@ async def test_webhook_vlob_create_update(
             # Reset
             mock.reset_mock()
 
-        await backend.sequester.create_service(
-            organization_id=coolorg.organization_id, service=service.backend_service
+        # Register webhook service
+        service = await _register_service_and_create_vlob(
+            coolorg, backend, alice_ws, realm, vlob_id, blob, sequester_blob, url
         )
 
-        rep = await vlob_create(
-            alice_ws,
-            realm_id=realm,
-            vlob_id=vlob_id,
-            blob=blob,
-            sequester_blob={service.service_id: sequester_blob},
-            check_rep=False,
-        )
-        assert rep == {"status": "ok"}
+        # Vlob has been created, assert that data have been posted
         _assert_webhook_posted(sequester_blob)
 
         sequester_blob = b"<another encrypted sequester blob>"
@@ -213,27 +228,63 @@ async def test_webhook_vlob_create_update(
         assert rep == {"status": "ok"}
         _assert_webhook_posted(sequester_blob)
 
+
+@customize_fixtures(coolorg_is_sequestered_organization=True)
+@pytest.mark.trio
+async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, backend):
+    vlob_id = VlobID.from_hex("00000000000000000000000000000001")
+    blob = b"<encrypted with workspace's key>"
+    sequester_blob = b"<encrypted sequester blob>"
+
+    url = "http://somewhere.post"
+
+    with patch("parsec.backend.http_utils.urllib.request") as mock:
+        service = await _register_service_and_create_vlob(
+            coolorg, backend, alice_ws, realm, vlob_id, blob, sequester_blob, url
+        )
+
         def raise_urlerror(*args, **kwargs):
             raise urllib.error.URLError(reason="CONNECTION REFUSED")
 
         def raise_httperror(*args, **kwargs):
             raise urllib.error.HTTPError(url, 405, "METHOD NOT ALLOWED", None, None)
 
+        new_vlob_id = VlobID.from_hex("00000000000000000000000000000002")
+
         # Test httperror
         mock.build_opener.side_effect = raise_urlerror
-        rep = await vlob_update(
+        rep = await vlob_create(
             alice_ws,
-            vlob_id=vlob_id,
-            version=2,  # Bad version error is raised after sequester checks
+            vlob_id=new_vlob_id,
+            realm_id=realm,
             blob=blob,
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
+        assert rep["status"] == "sequester_webhook_failed"
 
+        rep = await vlob_update(
+            alice_ws,
+            vlob_id=vlob_id,
+            version=2,
+            blob=blob,
+            sequester_blob={service.service_id: sequester_blob},
+            check_rep=False,
+        )
         assert rep["status"] == "sequester_webhook_failed"
 
         # Test httperror
         mock.build_opener.side_effect = raise_httperror
+        rep = await vlob_create(
+            alice_ws,
+            vlob_id=new_vlob_id,
+            realm_id=realm,
+            blob=blob,
+            sequester_blob={service.service_id: sequester_blob},
+            check_rep=False,
+        )
+        assert rep["status"] == "sequester_rejected"
+
         rep = await vlob_update(
             alice_ws,
             vlob_id=vlob_id,
@@ -242,34 +293,37 @@ async def test_webhook_vlob_create_update(
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-
         assert rep["status"] == "sequester_rejected"
 
-        # Reset side effect
-        mock.build_opener.side_effect = None
 
-        # Register service without url webhook
-        broken_service = sequester_service_factory(
-            "BrokenService",
-            coolorg.sequester_authority,
-            service_type=SequesterServiceType.WEBHOOK,
-            webhook_url=None,
-        )
+@customize_fixtures(coolorg_is_sequestered_organization=True)
+@pytest.mark.trio
+async def test_missing_webhook_url(coolorg: OrganizationFullData, alice_ws, realm, backend):
+    vlob_id = VlobID.from_hex("00000000000000000000000000000001")
+    blob = b"<encrypted with workspace's key>"
+    sequester_blob = b"<encrypted sequester blob>"
 
-        await backend.sequester.create_service(
-            organization_id=coolorg.organization_id, service=broken_service.backend_service
-        )
+    # Register service without url webhook
+    broken_service = sequester_service_factory(
+        "BrokenService",
+        coolorg.sequester_authority,
+        service_type=SequesterServiceType.WEBHOOK,
+        webhook_url=None,
+    )
 
-        rep = await vlob_update(
+    await backend.sequester.create_service(
+        organization_id=coolorg.organization_id, service=broken_service.backend_service
+    )
+
+    with patch("parsec.backend.http_utils.urllib.request"):
+        rep = await vlob_create(
             alice_ws,
+            realm_id=realm,
             vlob_id=vlob_id,
-            version=2,
             blob=blob,
+            check_rep=False,
             sequester_blob={
-                service.service_id: sequester_blob,
                 broken_service.service_id: sequester_blob,
             },
-            check_rep=False,
         )
-
         assert rep["status"] == "sequester_webhook_failed"
