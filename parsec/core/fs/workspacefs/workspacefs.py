@@ -9,7 +9,7 @@ from parsec._parsec import DateTime
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
-from parsec.api.data import AnyManifest as RemoteAnyManifest, BlockAccess
+from parsec.api.data import AnyRemoteManifest, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.protocol import UserID, MaintenanceType, RealmID
 from parsec.core.types import (
@@ -586,7 +586,7 @@ class WorkspaceFS:
 
     async def _sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True
-    ) -> RemoteAnyManifest:
+    ) -> AnyRemoteManifest:
         """
         Synchronize the entry corresponding to a specific ID.
 

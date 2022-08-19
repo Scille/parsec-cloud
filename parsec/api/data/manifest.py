@@ -71,7 +71,7 @@ class _PyWorkspaceEntry(BaseData):
 T = TypeVar("T")
 BaseAPISignedDataTypeVar = TypeVar("BaseAPISignedDataTypeVar", bound="BaseAPISignedData")
 BaseManifestTypeVar = TypeVar("BaseManifestTypeVar", bound="BaseManifest")
-AnyManifest = Union[
+AnyRemoteManifest = Union[
     FolderManifest,
     FileManifest,
     WorkspaceManifest,

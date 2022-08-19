@@ -11,7 +11,7 @@ from parsec.api.data import (
     WorkspaceManifest as RemoteWorkspaceManifest,
     FolderManifest as RemoteFolderManifest,
     FileManifest as RemoteFileManifest,
-    AnyManifest as RemoteAnyManifest,
+    AnyRemoteManifest,
 )
 from enum import Enum
 
@@ -72,7 +72,7 @@ LocalUserManifestTypeVar = TypeVar("LocalUserManifestTypeVar", bound="LocalUserM
 
 
 def manifest_from_remote(
-    remote: RemoteAnyManifest,
+    remote: AnyRemoteManifest,
     prevent_sync_pattern: Pattern,
 ) -> AnyLocalManifest:
     if isinstance(remote, RemoteFileManifest):
@@ -87,7 +87,7 @@ def manifest_from_remote(
 
 
 def manifest_from_remote_with_local_context(
-    remote: RemoteAnyManifest,
+    remote: AnyRemoteManifest,
     prevent_sync_pattern: Pattern,
     local_manifest: AnyLocalManifest,
     timestamp: DateTime,

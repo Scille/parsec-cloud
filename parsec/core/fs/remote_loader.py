@@ -17,7 +17,7 @@ from parsec.api.data import (
     BlockAccess,
     RealmRoleCertificate,
     BaseManifest as BaseRemoteManifest,
-    AnyManifest as RemoteAnyManifest,
+    AnyRemoteManifest,
     UserCertificate,
     DeviceCertificate,
     RevokedUserCertificate,
@@ -537,7 +537,7 @@ class RemoteLoader(UserRemoteLoader):
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
         workspace_entry: Optional[WorkspaceEntry] = None,
-    ) -> RemoteAnyManifest:
+    ) -> AnyRemoteManifest:
         """
         Download a manifest.
 
@@ -640,7 +640,7 @@ class RemoteLoader(UserRemoteLoader):
 
         try:
             remote_manifest = cast(
-                RemoteAnyManifest,
+                AnyRemoteManifest,
                 BaseRemoteManifest.decrypt_verify_and_load(
                     rep["blob"],
                     key=workspace_entry.key,
@@ -680,9 +680,9 @@ class RemoteLoader(UserRemoteLoader):
     async def upload_manifest(
         self,
         entry_id: EntryID,
-        manifest: RemoteAnyManifest,
+        manifest: AnyRemoteManifest,
         timestamp_greater_than: Optional[DateTime] = None,
-    ) -> RemoteAnyManifest:
+    ) -> AnyRemoteManifest:
         """
         Raises:
             FSError
@@ -894,7 +894,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
         workspace_entry: Optional[WorkspaceEntry] = None,
-    ) -> RemoteAnyManifest:
+    ) -> AnyRemoteManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
         a WorkspaceFS or a WorkspaceFSTimestamped
@@ -924,9 +924,9 @@ class RemoteLoaderTimestamped(RemoteLoader):
     async def upload_manifest(
         self,
         entry_id: EntryID,
-        manifest: RemoteAnyManifest,
+        manifest: AnyRemoteManifest,
         timestamp_greater_than: Optional[DateTime] = None,
-    ) -> RemoteAnyManifest:
+    ) -> AnyRemoteManifest:
         raise FSError("Cannot upload manifest through a timestamped remote loader")
 
     async def _vlob_create(
