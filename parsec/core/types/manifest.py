@@ -71,7 +71,7 @@ LocalWorkspaceManifestTypeVar = TypeVar(
 LocalUserManifestTypeVar = TypeVar("LocalUserManifestTypeVar", bound="LocalUserManifest")
 
 
-def from_remote(
+def manifest_from_remote(
     remote: RemoteAnyManifest,
     prevent_sync_pattern: Pattern,
 ) -> AnyLocalManifest:
@@ -86,7 +86,7 @@ def from_remote(
     raise ValueError("Wrong remote type")
 
 
-def from_remote_with_local_context(
+def manifest_from_remote_with_local_context(
     remote: RemoteAnyManifest,
     prevent_sync_pattern: Pattern,
     local_manifest: AnyLocalManifest,
