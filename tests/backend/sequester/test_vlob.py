@@ -1,7 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+import base64
 import pytest
 from unittest.mock import patch
+
+import urllib
 
 from parsec.api.protocol import OrganizationID, VlobID, SequesterServiceID
 from parsec.backend.sequester import (
@@ -148,7 +151,9 @@ async def test_vlob_create_update_and_sequester_access(
 
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 @pytest.mark.trio
-async def test_webhook_vlob_create_update(coolorg: OrganizationFullData, alice_ws, realm, backend):
+async def test_webhook_vlob_create_update(
+    coolorg: OrganizationFullData, alice, alice_ws, realm, backend
+):
     vlob_id = VlobID.from_hex("00000000000000000000000000000001")
     blob = b"<encrypted with workspace's key>"
     sequester_blob = b"<encrypted sequester blob>"
@@ -164,6 +169,22 @@ async def test_webhook_vlob_create_update(coolorg: OrganizationFullData, alice_w
             webhook_url=url,
         )
 
+        def _assert_webhook_posted(expected_sequester_data):
+            mock.Request.assert_called_once()
+            # Extract args
+            args, kwargs = mock.Request.call_args
+            assert url in args
+            assert kwargs["method"] == "POST"
+            # Extract http data
+            row_data = kwargs["data"]
+            posted_data = urllib.parse.parse_qs(row_data.decode())
+            assert coolorg.organization_id.str == posted_data["organization_id"][0]
+            assert alice.device_id.str == posted_data["author"][0]
+            assert str(vlob_id) == posted_data["vlob_id"][0]
+            assert expected_sequester_data == base64.b64decode(posted_data["sequester_blob"][0])
+            # Reset
+            mock.reset_mock()
+
         await backend.sequester.create_service(
             organization_id=coolorg.organization_id, service=service.backend_service
         )
@@ -177,9 +198,7 @@ async def test_webhook_vlob_create_update(coolorg: OrganizationFullData, alice_w
             check_rep=False,
         )
         assert rep == {"status": "ok"}
-
-        mock.Request.assert_called_once_with(url, data=sequester_blob, headers={}, method="POST")
-        mock.reset_mock()
+        _assert_webhook_posted(sequester_blob)
 
         sequester_blob = b"<another encrypted sequester blob>"
         rep = await vlob_update(
@@ -192,4 +211,4 @@ async def test_webhook_vlob_create_update(coolorg: OrganizationFullData, alice_w
         )
 
         assert rep == {"status": "ok"}
-        mock.Request.assert_called_once_with(url, data=sequester_blob, headers={}, method="POST")
+        _assert_webhook_posted(sequester_blob)
