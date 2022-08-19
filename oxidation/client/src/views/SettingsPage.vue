@@ -52,6 +52,27 @@
             </ion-select-option>
           </ion-select>
         </ion-item>
+        <h5>{{ $t('SettingsPage.preferences') }}</h5>
+        <ion-item>
+          <ion-label>
+            {{ $t('SettingsPage.theme.label') }}
+          </ion-label>
+          <ion-select
+            interface="popover"
+            :value="theme"
+            @ion-change="changeTheme($event.detail.value)"
+          >
+            <ion-select-option value="dark">
+              {{ $t('SettingsPage.theme.dark') }}
+            </ion-select-option>
+            <ion-select-option value="light">
+              {{ $t('SettingsPage.theme.light') }}
+            </ion-select-option>
+            <ion-select-option value="system">
+              {{ $t('SettingsPage.theme.system') }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
       </ion-list>
     </ion-content>
   </ion-page>
@@ -79,17 +100,35 @@ import SettingsOption from '@/components/SettingsOption.vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Storage } from '@ionic/storage';
+import { onMounted } from '@vue/runtime-core';
 
 const { locale } = useI18n();
+let theme = 'system';
 const enableTelemetry = ref(false);
 const minimizeToSystemTray = ref(false);
+const store = new Storage();
 
 async function changeLang(selectedLang: string): Promise<void> {
   locale.value = selectedLang;
-  const store = new Storage();
   await store.create();
   await store.set('userLocale', selectedLang);
 }
+
+async function changeTheme(selectedTheme: string): Promise<void> {
+  theme = selectedTheme;
+  if (selectedTheme === 'system') {
+    document.body.classList.toggle('dark', window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? true : false);
+  } else {
+    document.body.classList.toggle('dark', selectedTheme === 'dark' ? true : false);
+  }
+  await store.create();
+  await store.set('userTheme', selectedTheme);
+}
+
+onMounted(async (): Promise<void> => {
+  await store.create();
+  theme = await store.get('userTheme') || 'system';
+});
 </script>
 
 <style scoped>
