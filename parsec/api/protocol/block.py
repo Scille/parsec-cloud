@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import Type
+from typing import Type, Any
 
 from parsec.serde import fields
 from parsec._parsec import BlockID
@@ -20,7 +20,7 @@ from parsec._parsec import (
 
 class BlockCreateSerializer:
     @staticmethod
-    def req_dumps(req) -> bytes:  # type: ignore[no-untyped-def]
+    def req_dumps(req: dict[str, Any]) -> bytes:
         return BlockCreateReq(req["block_id"], req["realm_id"], req["block"]).dump()
 
     @staticmethod
@@ -30,7 +30,7 @@ class BlockCreateSerializer:
 
 class BlockReadSerializer:
     @staticmethod
-    def req_dumps(req) -> bytes:  # type: ignore[no-untyped-def]
+    def req_dumps(req: dict[str, Any]) -> bytes:
         return BlockReadReq(req["block_id"]).dump()
 
     @staticmethod
