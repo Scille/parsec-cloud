@@ -6,7 +6,7 @@ use uuid::Uuid;
 use libparsec_crypto::CryptoError;
 use libparsec_types::{EntryID, FileDescriptor};
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum FSError {
     #[error("ConfigurationError")]
     Configuration,

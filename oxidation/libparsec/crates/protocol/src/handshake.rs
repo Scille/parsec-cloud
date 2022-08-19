@@ -102,7 +102,7 @@ pub struct SignedAnswer {
 
 impl_dump_load!(SignedAnswer);
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum HandshakeResult {
     BadAdminToken,
@@ -609,7 +609,7 @@ impl AuthenticatedClientHandshakeStalled {
             self.user_signkey.sign(&challenge)
         };
 
-        return Ok(AuthenticatedClientHandshakeChallenge {
+        Ok(AuthenticatedClientHandshakeChallenge {
             backend_api_version,
             client_api_version,
             supported_api_versions,
@@ -622,7 +622,7 @@ impl AuthenticatedClientHandshakeStalled {
             })
             .dump()
             .map_err(HandshakeError::InvalidMessage)?,
-        });
+        })
     }
 
     pub fn process_result_req(self, req: &[u8]) -> Result<(), HandshakeError> {
@@ -673,7 +673,7 @@ impl InvitedClientHandshakeStalled {
         let (_, backend_api_version, client_api_version, _) =
             load_challenge_req(req, &self.supported_api_versions, self.client_timestamp)?;
 
-        return Ok(InvitedClientHandshakeChallenge {
+        Ok(InvitedClientHandshakeChallenge {
             backend_api_version,
             client_api_version,
             raw: Handshake::Answer(Answer::Invited {
@@ -684,7 +684,7 @@ impl InvitedClientHandshakeStalled {
             })
             .dump()
             .map_err(HandshakeError::InvalidMessage)?,
-        });
+        })
     }
 
     pub fn process_result_req(self, req: &[u8]) -> Result<(), HandshakeError> {

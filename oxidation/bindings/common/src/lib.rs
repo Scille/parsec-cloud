@@ -14,7 +14,7 @@ fn list_available_devices(_config_dir: &std::path::Path) -> Result<(), ()> {
     Err(())
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Cmd {
     Version,
     Encrypt(SecretKey, Vec<u8>),
