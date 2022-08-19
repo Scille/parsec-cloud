@@ -62,6 +62,8 @@ macro_rules! impl_manifest_dump_load {
                 )
             }
 
+            /// Verify the signed value using the given `verify_key`
+            /// And then, it will check for the expected `author` & `timestamp`
             pub fn verify_and_load(
                 signed: &[u8],
                 author_verify_key: &VerifyKey,
@@ -78,18 +80,40 @@ macro_rules! impl_manifest_dump_load {
                 let obj = rmp_serde::from_slice::<Self>(&serialized)
                     .map_err(|_| DataError::Serialization)?;
 
-                if obj.author != *expected_author {
+                obj.verify(expected_author, expected_timestamp, None, None)?;
+                Ok(obj)
+            }
+
+            /// Verify the manifest against a set of expected value
+            pub fn verify(
+                &self,
+                expected_author: &DeviceID,
+                expected_timestamp: DateTime,
+                expected_id: Option<EntryID>,
+                expected_version: Option<u32>,
+            ) -> Result<(), DataError> {
+                if self.author != *expected_author {
                     Err(DataError::UnexpectedAuthor {
                         expected: expected_author.clone(),
-                        got: Some(obj.author),
+                        got: Some(self.author.clone()),
                     })
-                } else if obj.timestamp != expected_timestamp {
+                } else if self.timestamp != expected_timestamp {
                     Err(DataError::UnexpectedTimestamp {
                         expected: expected_timestamp,
-                        got: obj.timestamp,
+                        got: self.timestamp,
+                    })
+                } else if expected_id.is_some() && expected_id != Some(self.id) {
+                    Err(DataError::UnexpectedId {
+                        expected: expected_id.unwrap(),
+                        got: self.id,
+                    })
+                } else if expected_version.is_some() && expected_version != Some(self.version) {
+                    Err(DataError::UnexpectedVersion {
+                        expected: expected_version.unwrap(),
+                        got: self.version,
                     })
                 } else {
-                    Ok(obj)
+                    Ok(())
                 }
             }
         }
@@ -487,7 +511,7 @@ pub enum Manifest {
 }
 
 impl Manifest {
-    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &str> {
+    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &'static str> {
         let blob = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
         rmp_serde::from_slice(&blob).map_err(|_| "Invalid deserialization")
     }
@@ -498,6 +522,8 @@ impl Manifest {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
+        expected_id: Option<EntryID>,
+        expected_version: Option<u32>,
     ) -> Result<Self, DataError> {
         let signed = key.decrypt(encrypted)?;
 
@@ -506,6 +532,8 @@ impl Manifest {
             author_verify_key,
             expected_author,
             expected_timestamp,
+            expected_id,
+            expected_version,
         )
     }
 
@@ -514,11 +542,13 @@ impl Manifest {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
+        expected_id: Option<EntryID>,
+        expected_version: Option<u32>,
     ) -> Result<Self, DataError> {
-        let compressed = author_verify_key.verify(&signed)?;
+        let compressed = author_verify_key.verify(signed)?;
         let mut deserialized = Vec::new();
 
-        ZlibDecoder::new(&compressed)
+        ZlibDecoder::new(&compressed[..])
             .read_to_end(&mut deserialized)
             .map_err(|_| DataError::Compression)?;
 
@@ -526,33 +556,26 @@ impl Manifest {
             rmp_serde::from_slice(&deserialized).map_err(|_| DataError::Serialization)?;
 
         macro_rules! internal_verify {
-            ($obj:ident, $expected_author:ident, $expected_timestamp:ident) => {
-                if $obj.author != *$expected_author {
-                    Err(DataError::UnexpectedAuthor {
-                        expected: $expected_author.clone(),
-                        got: Some($obj.author),
-                    })
-                } else if $obj.timestamp != $expected_timestamp {
-                    Err(DataError::UnexpectedTimestamp {
-                        expected: $expected_timestamp,
-                        got: $obj.timestamp,
-                    })
-                } else {
-                    Ok($obj)
-                }
-            };
+            ($obj:ident) => {{
+                $obj.verify(
+                    expected_author,
+                    expected_timestamp,
+                    expected_id,
+                    expected_version,
+                )?;
+            }};
         }
 
-        match obj {
-            Manifest::File(file) => internal_verify!(file, expected_author, expected_timestamp),
+        match &obj {
+            Manifest::File(file) => internal_verify!(file),
             Manifest::Folder(folder) => {
-                internal_verify!(folder, expected_author, expected_timestamp)
+                internal_verify!(folder)
             }
             Manifest::Workspace(workspace) => {
-                internal_verify!(workspace, expected_author, expected_timestamp)
+                internal_verify!(workspace)
             }
-            Manifest::User(user) => internal_verify!(user, expected_author, expected_timestamp),
-        }?;
+            Manifest::User(user) => internal_verify!(user),
+        }
         Ok(obj)
     }
 }

@@ -69,6 +69,8 @@ from parsec._parsec_pyi.manifest import (
     UserManifest,
     AnyRemoteManifest,
     manifest_decrypt_and_load,
+    manifest_decrypt_verify_and_load,
+    manifest_verify_and_load,
 )
 
 from parsec._parsec_pyi.time import (
@@ -141,6 +143,8 @@ __all__ = [
     "UserManifest",
     "AnyRemoteManifest",
     "manifest_decrypt_and_load",
+    "manifest_decrypt_verify_and_load",
+    "manifest_verify_and_load",
     # Time
     "DateTime",
     "LocalDateTime",

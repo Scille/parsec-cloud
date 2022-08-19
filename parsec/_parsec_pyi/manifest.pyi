@@ -269,3 +269,20 @@ class UserManifest:
     def get_workspace_entry(self, workspace_id: EntryID) -> Optional[WorkspaceEntry]: ...
 
 def manifest_decrypt_and_load(encrypted: bytes, key: SecretKey) -> AnyRemoteManifest: ...
+def manifest_decrypt_verify_and_load(
+    encrypted: bytes,
+    key: SecretKey,
+    author_verify_key: VerifyKey,
+    expected_author: DeviceID,
+    expected_timestamp: DateTime,
+    expected_id: Optional[EntryID] = None,
+    expected_version: Optional[int] = None,
+) -> AnyRemoteManifest: ...
+def manifest_verify_and_load(
+    signed: bytes,
+    author_verify_key: VerifyKey,
+    expected_author: DeviceID,
+    expected_timestamp: DateTime,
+    expected_id: Optional[EntryID] = None,
+    expected_version: Optional[int] = None,
+) -> AnyRemoteManifest: ...
