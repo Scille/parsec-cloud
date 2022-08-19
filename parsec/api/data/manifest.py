@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
-from typing import Optional, Dict, Any, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Optional, Dict, Any, Type, TypeVar
 
 from parsec.serde import fields, validate, post_load, OneOfSchema, pre_load
 from parsec.api.protocol import RealmRoleField, DeviceID, BlockIDField
@@ -22,6 +22,11 @@ from parsec._parsec import (
     WorkspaceManifest,
     UserManifest,
 )
+
+if TYPE_CHECKING:
+    from parsec._parsec import AnyRemoteManifest
+else:
+    AnyRemoteManifest = Type["AnyRemoteManifest"]
 
 LOCAL_AUTHOR_LEGACY_PLACEHOLDER = DeviceID(
     "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER"
@@ -71,12 +76,6 @@ class _PyWorkspaceEntry(BaseData):
 T = TypeVar("T")
 BaseAPISignedDataTypeVar = TypeVar("BaseAPISignedDataTypeVar", bound="BaseAPISignedData")
 BaseManifestTypeVar = TypeVar("BaseManifestTypeVar", bound="BaseManifest")
-AnyRemoteManifest = Union[
-    FolderManifest,
-    FileManifest,
-    WorkspaceManifest,
-    UserManifest,
-]
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)

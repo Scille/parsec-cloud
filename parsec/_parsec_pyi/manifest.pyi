@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from parsec._parsec import (
     EntryID,
     SecretKey,
@@ -13,6 +13,13 @@ from parsec._parsec import (
 from parsec.api.protocol import RealmRole
 
 from parsec.types import FrozenDict
+
+AnyRemoteManifest = Union[
+    FolderManifest,
+    FileManifest,
+    WorkspaceManifest,
+    UserManifest,
+]
 
 class EntryName:
     def __init__(self, name: str) -> None: ...
@@ -260,3 +267,5 @@ class UserManifest:
         expected_timestamp: DateTime,
     ) -> UserManifest: ...
     def get_workspace_entry(self, workspace_id: EntryID) -> Optional[WorkspaceEntry]: ...
+
+def manifest_decrypt_and_load(encrypted: bytes, key: SecretKey) -> AnyRemoteManifest: ...
