@@ -491,4 +491,68 @@ impl Manifest {
         let blob = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
         rmp_serde::from_slice(&blob).map_err(|_| "Invalid deserialization")
     }
+
+    pub fn decrypt_verify_and_load(
+        encrypted: &[u8],
+        key: &SecretKey,
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: DateTime,
+    ) -> Result<Self, DataError> {
+        let signed = key.decrypt(encrypted)?;
+
+        Self::verify_and_load(
+            &signed,
+            author_verify_key,
+            expected_author,
+            expected_timestamp,
+        )
+    }
+
+    pub fn verify_and_load(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: DateTime,
+    ) -> Result<Self, DataError> {
+        let compressed = author_verify_key.verify(&signed)?;
+        let mut deserialized = Vec::new();
+
+        ZlibDecoder::new(&compressed)
+            .read_to_end(&mut deserialized)
+            .map_err(|_| DataError::Compression)?;
+
+        let obj: Self =
+            rmp_serde::from_slice(&deserialized).map_err(|_| DataError::Serialization)?;
+
+        macro_rules! internal_verify {
+            ($obj:ident, $expected_author:ident, $expected_timestamp:ident) => {
+                if $obj.author != *$expected_author {
+                    Err(DataError::UnexpectedAuthor {
+                        expected: $expected_author.clone(),
+                        got: Some($obj.author),
+                    })
+                } else if $obj.timestamp != $expected_timestamp {
+                    Err(DataError::UnexpectedTimestamp {
+                        expected: $expected_timestamp,
+                        got: $obj.timestamp,
+                    })
+                } else {
+                    Ok($obj)
+                }
+            };
+        }
+
+        match obj {
+            Manifest::File(file) => internal_verify!(file, expected_author, expected_timestamp),
+            Manifest::Folder(folder) => {
+                internal_verify!(folder, expected_author, expected_timestamp)
+            }
+            Manifest::Workspace(workspace) => {
+                internal_verify!(workspace, expected_author, expected_timestamp)
+            }
+            Manifest::User(user) => internal_verify!(user, expected_author, expected_timestamp),
+        }?;
+        Ok(obj)
+    }
 }
