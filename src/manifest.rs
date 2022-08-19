@@ -1,10 +1,11 @@
 use std::{collections::HashMap, num::NonZeroU64};
 
+use libparsec::types::Manifest;
 use pyo3::{
     exceptions::PyValueError,
     import_exception, pyclass,
     pyclass::CompareOp,
-    pymethods,
+    pyfunction, pymethods,
     types::{PyBool, PyBytes, PyDict, PyTuple, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
@@ -1120,5 +1121,24 @@ impl UserManifest {
             .map(|x| WorkspaceEntry(x).into_py(py))
             .collect();
         Ok(PyTuple::new(py, elements))
+    }
+}
+
+#[pyfunction]
+pub fn manifest_decrypt_and_load<'py>(
+    py: Python<'py>,
+    encrypted: &[u8],
+    key: &SecretKey,
+) -> PyResult<PyObject> {
+    let decrypt_and_load = match Manifest::decrypt_and_load(encrypted, &key.0) {
+        Ok(value) => value,
+        Err(err) => return Err(DataError::new_err(err)),
+    };
+
+    match decrypt_and_load {
+        Manifest::File(file) => Ok(FileManifest(file)),
+        Manifest::Folder(folder) => Ok(FolderManifest(folder)),
+        Manifest::Workspace(workspace) => Ok(WorkspaceManifest(workspace)),
+        Manifest::User(user) => Ok(UserManifest(user)),
     }
 }

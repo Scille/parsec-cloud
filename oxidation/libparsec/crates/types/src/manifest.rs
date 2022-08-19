@@ -461,3 +461,19 @@ pub enum FileOrFolderManifest {
     #[serde(rename = "folder_manifest")]
     Folder(FolderManifest),
 }
+
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum Manifest {
+    File(FileManifest),
+    Folder(FolderManifest),
+    Workspace(WorkspaceManifest),
+    User(UserManifest),
+}
+
+impl Manifest {
+    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &str> {
+        let blob = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+        rmp_serde::from_slice(&blob).map_err(|_| "Invalid deserialization")
+    }
+}
