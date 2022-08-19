@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
+import zlib
 from unicodedata import normalize
 
 from parsec.serde import packb
@@ -11,6 +12,11 @@ from parsec.api.data import (
     SASCode,
     EntryName,
     EntryNameTooLongError,
+    FileManifest as RemoteFileManifest,
+    FolderManifest as RemoteFolderManifest,
+    WorkspaceManifest as RemoteWorkspaceManifest,
+    UserManifest as RemoteUserManifest,
+    BaseManifest as BaseRemoteManifest,
 )
 from parsec.core.types import (
     LocalFileManifest,
@@ -248,3 +254,25 @@ def test_local_manifests_load_invalid_data():
         # Valid to deserialize, invalid fields
         with pytest.raises(DataError):
             cls.decrypt_and_load(valid_msgpack_but_bad_fields, key=key)
+
+
+def test_remote_manifests_load_invalid_data():
+    key = SecretKey.generate()
+    valid_zip_msgpack_but_bad_fields = zlib.compress(packb({"foo": 42}))
+
+    for cls in (
+        RemoteFileManifest,
+        RemoteFolderManifest,
+        RemoteWorkspaceManifest,
+        RemoteUserManifest,
+        BaseRemoteManifest,
+    ):
+        with pytest.raises(DataError):
+            cls.decrypt_and_load(b"", key=key)
+
+        with pytest.raises(DataError):
+            cls.decrypt_and_load(b"\x42" * 10, key=key)
+
+        # Valid to deserialize, invalid fields
+        with pytest.raises(DataError):
+            cls.decrypt_and_load(valid_zip_msgpack_but_bad_fields, key=key)
