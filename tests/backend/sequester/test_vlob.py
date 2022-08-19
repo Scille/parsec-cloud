@@ -22,6 +22,7 @@ from tests.backend.common import vlob_create, vlob_update
 async def test_vlob_create_update_and_sequester_access(
     coolorg: OrganizationFullData, alice_ws, realm, backend
 ):
+
     # s1&s2 are valid sequester services, s3 is a disabled sequester service
     s1 = sequester_service_factory(
         authority=coolorg.sequester_authority, label="Sequester service 1"
@@ -45,6 +46,17 @@ async def test_vlob_create_update_and_sequester_access(
         organization_id=coolorg.organization_id, service_id=s3.service_id
     )
 
+    # Webhook specific errors are tested in other test
+    s4 = sequester_service_factory(
+        authority=coolorg.sequester_authority,
+        label="Sequester webhook service",
+        service_type=SequesterServiceType.WEBHOOK,
+        webhook_url="http://somewhere.post",
+    )
+    await backend.sequester.create_service(
+        organization_id=coolorg.organization_id, service=s4.backend_service
+    )
+
     vlob_id = VlobID.from_hex("00000000000000000000000000000001")
     dummy_service_id = SequesterServiceID.from_hex("0000000000000000000000000000000A")
     blob = b"<encrypted with workspace's key>"
@@ -56,13 +68,14 @@ async def test_vlob_create_update_and_sequester_access(
         b1 = f"<blob v{vlob_version} for s1>".encode()
         b2 = f"<blob v{vlob_version} for s2>".encode()
         b3 = f"<blob v{vlob_version} for s3>".encode()
+        b4 = f"<blob v{vlob_version} for s4>".encode()
 
         # 1) Try without sequester blob
         rep = await vlob_cmd(alice_ws, **cmd_kwargs, check_rep=False)
         assert rep == {
             "status": "sequester_inconsistency",
             "sequester_authority_certificate": coolorg.sequester_authority.certif,
-            "sequester_services_certificates": [s1.certif, s2.certif],
+            "sequester_services_certificates": [s1.certif, s2.certif, s4.certif],
         }
 
         # 2) Try with sequester blob missing for one service
@@ -72,7 +85,7 @@ async def test_vlob_create_update_and_sequester_access(
         assert rep == {
             "status": "sequester_inconsistency",
             "sequester_authority_certificate": coolorg.sequester_authority.certif,
-            "sequester_services_certificates": [s1.certif, s2.certif],
+            "sequester_services_certificates": [s1.certif, s2.certif, s4.certif],
         }
 
         # 3) Try with unknown additional sequester blob
@@ -85,34 +98,42 @@ async def test_vlob_create_update_and_sequester_access(
         assert rep == {
             "status": "sequester_inconsistency",
             "sequester_authority_certificate": coolorg.sequester_authority.certif,
-            "sequester_services_certificates": [s1.certif, s2.certif],
+            "sequester_services_certificates": [s1.certif, s2.certif, s4.certif],
         }
 
         # 4) Try with blob for a removed sequester service
         rep = await vlob_cmd(
             alice_ws,
             **cmd_kwargs,
-            sequester_blob={s1.service_id: b1, s2.service_id: b2, s3.service_id: b3},
+            sequester_blob={
+                s1.service_id: b1,
+                s2.service_id: b2,
+                s3.service_id: b3,
+                s4.service_id: b4,
+            },
             check_rep=False,
         )
         assert rep == {
             "status": "sequester_inconsistency",
             "sequester_authority_certificate": coolorg.sequester_authority.certif,
-            "sequester_services_certificates": [s1.certif, s2.certif],
+            "sequester_services_certificates": [s1.certif, s2.certif, s4.certif],
         }
 
         # 5) Finally the valid operation
         rep = await vlob_cmd(
             alice_ws,
             **cmd_kwargs,
-            sequester_blob={s1.service_id: b1, s2.service_id: b2},
+            sequester_blob={s1.service_id: b1, s2.service_id: b2, s4.service_id: b4},
             check_rep=False,
         )
         assert rep == {"status": "ok"}
 
     # First test vlob create&update
-    await _test(vlob_create, realm_id=realm, vlob_id=vlob_id, blob=blob)
-    await _test(vlob_update, vlob_id=vlob_id, version=2, blob=blob)
+
+    with patch("parsec.backend.http_utils.urllib.request") as mock:
+        await _test(vlob_create, realm_id=realm, vlob_id=vlob_id, blob=blob)
+        await _test(vlob_update, vlob_id=vlob_id, version=2, blob=blob)
+        mock.Request.assert_called()
 
     # Then test vlob access from sequester services
 
