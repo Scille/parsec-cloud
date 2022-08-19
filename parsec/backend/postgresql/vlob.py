@@ -11,6 +11,8 @@ from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobSequesterDisabledError,
     VlobSequesterServiceInconsistencyError,
+    VlobSequesterServiceMissingWebhookError,
+    send_vlob_to_webhook_services,
 )
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
@@ -126,7 +128,9 @@ class PGVlobComponent(BaseVlobComponent):
         for service_id in webhook_service_id:
             sequester_data = sequester_blob[service_id]
             webhook_url = services[service_id][1]
-            await self.send_vlob_to_webhook_services(
+            if not webhook_url:
+                raise VlobSequesterServiceMissingWebhookError()
+            await send_vlob_to_webhook_services(
                 webhook_url=webhook_url,
                 sequester_data=sequester_data,
                 author=author,

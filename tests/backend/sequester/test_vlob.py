@@ -212,3 +212,64 @@ async def test_webhook_vlob_create_update(
 
         assert rep == {"status": "ok"}
         _assert_webhook_posted(sequester_blob)
+
+        def raise_urlerror(*args, **kwargs):
+            raise urllib.error.URLError(reason="CONNECTION REFUSED")
+
+        def raise_httperror(*args, **kwargs):
+            raise urllib.error.HTTPError(url, 405, "METHOD NOT ALLOWED", None, None)
+
+        # Test httperror
+        mock.build_opener.side_effect = raise_urlerror
+        rep = await vlob_update(
+            alice_ws,
+            vlob_id=vlob_id,
+            version=2,  # Bad version error is raised after sequester checks
+            blob=blob,
+            sequester_blob={service.service_id: sequester_blob},
+            check_rep=False,
+        )
+
+        assert rep["status"] == "sequester_webhook_failed"
+
+        # Test httperror
+        mock.build_opener.side_effect = raise_httperror
+        rep = await vlob_update(
+            alice_ws,
+            vlob_id=vlob_id,
+            version=2,
+            blob=blob,
+            sequester_blob={service.service_id: sequester_blob},
+            check_rep=False,
+        )
+
+        assert rep["status"] == "sequester_rejected"
+
+        # Reset side effect
+        mock.build_opener.side_effect = None
+
+        # Register service without url webhook
+        broken_service = sequester_service_factory(
+            "BrokenService",
+            coolorg.sequester_authority,
+            service_type=SequesterServiceType.WEBHOOK,
+            webhook_url=None,
+        )
+
+        await backend.sequester.create_service(
+            organization_id=coolorg.organization_id, service=broken_service.backend_service
+        )
+
+        rep = await vlob_update(
+            alice_ws,
+            vlob_id=vlob_id,
+            version=2,
+            blob=blob,
+            sequester_blob={
+                service.service_id: sequester_blob,
+                broken_service.service_id: sequester_blob,
+            },
+            check_rep=False,
+        )
+
+        assert rep["status"] == "sequester_webhook_failed"

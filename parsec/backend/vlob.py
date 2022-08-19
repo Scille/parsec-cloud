@@ -74,11 +74,15 @@ class VlobSequesterDisabledError(VlobError):
     pass
 
 
-class VlobSequesterWebhookServiceRejected(VlobError):
+class VlobSequesterWebhookServiceRejectedError(VlobError):
     pass
 
 
-class VlobSequesterServiceMissingWebhook(VlobError):
+class VlobSequesterServiceMissingWebhookError(VlobError):
+    pass
+
+
+class VlobSequesterServiceWebhookUrlError(VlobError):
     pass
 
 
@@ -88,6 +92,32 @@ class VlobSequesterServiceInconsistencyError(VlobError):
     ):
         self.sequester_authority_certificate = sequester_authority_certificate
         self.sequester_services_certificates = sequester_services_certificates
+
+
+async def send_vlob_to_webhook_services(
+    webhook_url: str,
+    organization_id: OrganizationID,
+    sequester_data: bytes,
+    author: DeviceID,
+    encryption_revision: int,
+    vlob_id: VlobID,
+    timestamp: DateTime,
+):
+    data = {
+        "sequester_blob": base64.urlsafe_b64encode(sequester_data),
+        "author": author,
+        "encryption_revision": encryption_revision,
+        "vlob_id": vlob_id,
+        "timestamp": timestamp,
+        "organization_id": organization_id,
+    }
+    data = urllib.parse.urlencode(data).encode()
+    try:
+        await http_request(url=webhook_url, method="POST", data=data)
+    except urllib.error.HTTPError as exc:
+        raise VlobSequesterWebhookServiceRejectedError from exc
+    except urllib.error.URLError as exc:
+        raise VlobSequesterServiceWebhookUrlError from exc
 
 
 class BaseVlobComponent:
@@ -142,9 +172,25 @@ class BaseVlobComponent:
                 }
             )
 
-        except VlobSequesterWebhookServiceRejected:
-            # TODO: add return fields: service id and service label
-            return vlob_create_serializer.rep_dump({"status": "sequester_rejected"})
+        except VlobSequesterWebhookServiceRejectedError:
+            return vlob_create_serializer.rep_dump(
+                {
+                    "status": "sequester_rejected",
+                    "service_id": "",
+                    "service_label": "",
+                    "service_error": "",
+                }
+            )
+
+        except (VlobSequesterServiceMissingWebhookError, VlobSequesterServiceWebhookUrlError):
+            return vlob_create_serializer.rep_dump(
+                {
+                    "status": "sequester_webhook_failed",
+                    "service_id": "",
+                    "service_label": "",
+                    "service_error": "",
+                }
+            )
 
         return vlob_create_serializer.rep_dump({"status": "ok"})
 
@@ -244,6 +290,26 @@ class BaseVlobComponent:
                     "status": "sequester_inconsistency",
                     "sequester_authority_certificate": exc.sequester_authority_certificate,
                     "sequester_services_certificates": exc.sequester_services_certificates,
+                }
+            )
+
+        except VlobSequesterWebhookServiceRejectedError:
+            return vlob_create_serializer.rep_dump(
+                {
+                    "status": "sequester_rejected",
+                    "service_id": "",
+                    "service_label": "",
+                    "service_error": "",
+                }
+            )
+
+        except (VlobSequesterServiceMissingWebhookError, VlobSequesterServiceWebhookUrlError):
+            return vlob_create_serializer.rep_dump(
+                {
+                    "status": "sequester_webhook_failed",
+                    "service_id": "",
+                    "service_label": "",
+                    "service_error": "",
                 }
             )
 
@@ -506,24 +572,3 @@ class BaseVlobComponent:
             VlobMaintenanceError: not in maintenance
         """
         raise NotImplementedError()
-
-    async def send_vlob_to_webhook_services(
-        self,
-        webhook_url: str,
-        organization_id: OrganizationID,
-        sequester_data: bytes,
-        author: DeviceID,
-        encryption_revision: int,
-        vlob_id: VlobID,
-        timestamp: DateTime,
-    ):
-        data = {
-            "sequester_blob": base64.urlsafe_b64encode(sequester_data),
-            "author": author,
-            "encryption_revision": encryption_revision,
-            "vlob_id": vlob_id,
-            "timestamp": timestamp,
-            "organization_id": organization_id,
-        }
-        data = urllib.parse.urlencode(data).encode()
-        await http_request(url=webhook_url, method="POST", data=data)

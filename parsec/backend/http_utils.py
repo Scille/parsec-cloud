@@ -7,7 +7,6 @@ import trio
 import urllib.request
 
 
-# TODO : MOVE IT
 async def http_request(
     url: str,
     data: Optional[bytes] = None,

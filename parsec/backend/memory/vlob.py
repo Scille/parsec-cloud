@@ -20,7 +20,7 @@ from parsec.backend.realm import RealmNotFoundError
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
-    VlobSequesterServiceMissingWebhook,
+    VlobSequesterServiceMissingWebhookError,
     VlobVersionError,
     VlobNotFoundError,
     VlobRealmNotFoundError,
@@ -31,6 +31,7 @@ from parsec.backend.vlob import (
     VlobRequireGreaterTimestampError,
     VlobSequesterDisabledError,
     VlobSequesterServiceInconsistencyError,
+    send_vlob_to_webhook_services,
 )
 
 
@@ -249,9 +250,8 @@ class MemoryVlobComponent(BaseVlobComponent):
             # Check webhooks before sending data to storage
             for sequester_data, webhook_url in webhook_data:
                 if not webhook_url:
-                    # TODO; only warnind ?
-                    raise VlobSequesterServiceMissingWebhook()
-                await self.send_vlob_to_webhook_services(
+                    raise VlobSequesterServiceMissingWebhookError()
+                await send_vlob_to_webhook_services(
                     webhook_url=webhook_url,
                     organization_id=organization_id,
                     sequester_data=sequester_data,
@@ -445,10 +445,6 @@ class MemoryVlobComponent(BaseVlobComponent):
             organization_id, realm_id, author.user_id, encryption_revision, timestamp
         )
 
-        key = (organization_id, vlob_id)
-        if key in self._vlobs:
-            raise VlobAlreadyExistsError()
-
         extracted_sequestered_data = await self._extract_sequestered_data_and_proceed_webhook(
             organization_id=organization_id,
             author=author,
@@ -460,6 +456,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         sequestered_data = None
         if extracted_sequestered_data is not None:
             sequestered_data = [extracted_sequestered_data]
+
+        key = (organization_id, vlob_id)
+        if key in self._vlobs:
+            raise VlobAlreadyExistsError()
 
         self._vlobs[key] = Vlob(realm_id, [(blob, author, timestamp)], sequestered_data)
 
@@ -517,11 +517,6 @@ class MemoryVlobComponent(BaseVlobComponent):
             organization_id, vlob.realm_id, author.user_id, encryption_revision, timestamp
         )
 
-        if version - 1 != vlob.current_version:
-            raise VlobVersionError()
-        if timestamp < vlob.data[vlob.current_version - 1][2]:
-            raise VlobRequireGreaterTimestampError(vlob.data[vlob.current_version - 1][2])
-
         sequestered_data = await self._extract_sequestered_data_and_proceed_webhook(
             organization_id=organization_id,
             author=author,
@@ -530,6 +525,11 @@ class MemoryVlobComponent(BaseVlobComponent):
             timestamp=timestamp,
             sequester_blob=sequester_blob,
         )
+
+        if version - 1 != vlob.current_version:
+            raise VlobVersionError()
+        if timestamp < vlob.data[vlob.current_version - 1][2]:
+            raise VlobRequireGreaterTimestampError(vlob.data[vlob.current_version - 1][2])
 
         vlob.data.append((blob, author, timestamp))
         if sequestered_data is not None:  # /!\ We want to accept empty dicts !
