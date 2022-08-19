@@ -5,6 +5,7 @@ from typing import List, Tuple, Dict, Optional
 from pendulum import DateTime, now as pendulum_now
 import urllib
 from parsec.backend.http_utils import http_request
+from parsec.backend.sequester import SequesterService, SequesterServiceType
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.api.protocol import (
@@ -94,30 +95,54 @@ class VlobSequesterServiceInconsistencyError(VlobError):
         self.sequester_services_certificates = sequester_services_certificates
 
 
-async def send_vlob_to_webhook_services(
-    webhook_url: str,
+async def extract_sequestered_data_and_proceed_webhook(
+    services: Dict[SequesterServiceID, SequesterService],
     organization_id: OrganizationID,
-    sequester_data: bytes,
     author: DeviceID,
     encryption_revision: int,
     vlob_id: VlobID,
     timestamp: DateTime,
+    sequester_blob: Dict[SequesterServiceID, bytes],
 ):
-    data = {
-        "sequester_blob": base64.urlsafe_b64encode(sequester_data),
-        "author": author,
-        "encryption_revision": encryption_revision,
-        "vlob_id": vlob_id,
-        "timestamp": timestamp,
-        "organization_id": organization_id,
+    # Split storage services and webhook services
+    storage_service_ids = [
+        service.service_id
+        for service in services.values()
+        if service.service_type == SequesterServiceType.STORAGE
+    ]
+    webhook_service_ids = [
+        service.service_id
+        for service in services.values()
+        if service.service_type == SequesterServiceType.WEBHOOK
+    ]
+    for webhook_service_id in webhook_service_ids:
+        service = services[webhook_service_id]
+        sequester_data = sequester_blob[webhook_service_id]
+        if not service.webhook_url:
+            raise VlobSequesterServiceMissingWebhookError()
+
+        to_webhook_data = {
+            "sequester_blob": base64.urlsafe_b64encode(sequester_data),
+            "author": author,
+            "encryption_revision": encryption_revision,
+            "vlob_id": vlob_id,
+            "timestamp": timestamp,
+            "organization_id": organization_id,
+        }
+        to_webhook_data = urllib.parse.urlencode(to_webhook_data).encode()
+        try:
+            await http_request(url=service.webhook_url, method="POST", data=to_webhook_data)
+        except urllib.error.HTTPError as exc:
+            raise VlobSequesterWebhookServiceRejectedError from exc
+        except urllib.error.URLError as exc:
+            raise VlobSequesterServiceWebhookUrlError from exc
+
+    # Get sequester data for storage
+    sequestered_data = {
+        service_id: sequester_blob[service_id] for service_id in storage_service_ids
     }
-    data = urllib.parse.urlencode(data).encode()
-    try:
-        await http_request(url=webhook_url, method="POST", data=data)
-    except urllib.error.HTTPError as exc:
-        raise VlobSequesterWebhookServiceRejectedError from exc
-    except urllib.error.URLError as exc:
-        raise VlobSequesterServiceWebhookUrlError from exc
+
+    return sequestered_data
 
 
 class BaseVlobComponent:

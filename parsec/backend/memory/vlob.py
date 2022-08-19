@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from dataclasses import dataclass, field as dataclass_field
-from parsec.backend.sequester import SequesterService, SequesterServiceType
+from parsec.backend.sequester import SequesterService
 from pendulum import DateTime
 from typing import TYPE_CHECKING, List, AbstractSet, Tuple, Dict, Optional
 from collections import defaultdict
@@ -20,7 +20,6 @@ from parsec.backend.realm import RealmNotFoundError
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
-    VlobSequesterServiceMissingWebhookError,
     VlobVersionError,
     VlobNotFoundError,
     VlobRealmNotFoundError,
@@ -31,7 +30,7 @@ from parsec.backend.vlob import (
     VlobRequireGreaterTimestampError,
     VlobSequesterDisabledError,
     VlobSequesterServiceInconsistencyError,
-    send_vlob_to_webhook_services,
+    extract_sequestered_data_and_proceed_webhook,
 )
 
 
@@ -226,40 +225,15 @@ class MemoryVlobComponent(BaseVlobComponent):
                 expect_sequestered_organization=True,
                 expect_active_sequester_services=sequester_blob.keys(),
             )
-            storage_service_id = [
-                service.service_id
-                for service in services.values()
-                if service.service_type == SequesterServiceType.STORAGE
-            ]
-            webhook_service_id = [
-                service.service_id
-                for service in services.values()
-                if service.service_type == SequesterServiceType.WEBHOOK
-            ]
-            # Get sequester data for storage
-
-            sequestered_data = {
-                service_id: sequester_blob[service_id] for service_id in storage_service_id
-            }
-
-            webhook_data = [
-                (sequester_blob[service_id], services[service_id].webhook_url)
-                for service_id in webhook_service_id
-            ]
-
-            # Check webhooks before sending data to storage
-            for sequester_data, webhook_url in webhook_data:
-                if not webhook_url:
-                    raise VlobSequesterServiceMissingWebhookError()
-                await send_vlob_to_webhook_services(
-                    webhook_url=webhook_url,
-                    organization_id=organization_id,
-                    sequester_data=sequester_data,
-                    author=author,
-                    encryption_revision=encryption_revision,
-                    vlob_id=vlob_id,
-                    timestamp=timestamp,
-                )
+            sequestered_data = await extract_sequestered_data_and_proceed_webhook(
+                services,
+                organization_id,
+                author,
+                encryption_revision,
+                vlob_id,
+                timestamp,
+                sequester_blob,
+            )
         return sequestered_data
 
     def _check_realm_read_access(

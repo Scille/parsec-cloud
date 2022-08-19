@@ -6,13 +6,12 @@ from typing import List, Tuple, Dict, Optional
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
 from parsec.api.protocol.sequester import SequesterServiceID
 from parsec.backend.organization import SequesterAuthority
-from parsec.backend.sequester import SequesterDisabledError, SequesterServiceType
+from parsec.backend.sequester import SequesterDisabledError, SequesterService, SequesterServiceType
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobSequesterDisabledError,
     VlobSequesterServiceInconsistencyError,
-    VlobSequesterServiceMissingWebhookError,
-    send_vlob_to_webhook_services,
+    extract_sequestered_data_and_proceed_webhook,
 )
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
@@ -29,7 +28,7 @@ from parsec.backend.postgresql.sequester import get_sequester_authority
 
 _q_get_sequester_enabled_services = Q(
     f"""
-    SELECT service_id, service_certificate, service_type, webhook_url
+    SELECT service_id, service_label, created_on, service_certificate, service_type, webhook_url
     FROM sequester_service
     WHERE organization={ q_organization_internal_id("$organization_id") }
     AND disabled_on IS NULL
@@ -43,7 +42,7 @@ async def _check_sequestered_organization(
     organization_id: OrganizationID,
     sequester_authority: Optional[SequesterAuthority],
     sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
-) -> Optional[Dict[SequesterServiceID, Tuple[SequesterServiceType, str]]]:
+) -> Optional[Dict[SequesterServiceID, SequesterService]]:
     if sequester_blob is None and sequester_authority is None:
         # Sequester is disable, fetching sequester services is pointless
         return None
@@ -62,9 +61,13 @@ async def _check_sequestered_organization(
         )
 
     return {
-        SequesterServiceID(row["service_id"]): (
-            SequesterServiceType(row["service_type"].lower()),
-            row["webhook_url"],
+        SequesterServiceID(row["service_id"]): SequesterService(
+            service_id=SequesterServiceID(row["service_id"]),
+            service_label=row["service_label"],
+            service_certificate=row["service_certificate"],
+            created_on=row["created_on"],
+            service_type=SequesterServiceType(row["service_type"].lower()),
+            webhook_url=row["webhook_url"],
         )
         for row in rows
     }
@@ -114,33 +117,17 @@ class PGVlobComponent(BaseVlobComponent):
         if not sequester_blob or not services:
             return None
 
-        storage_service_id = [
-            service_id
-            for service_id, service in services.items()
-            if service[0] == SequesterServiceType.STORAGE
-        ]
-        webhook_service_id = [
-            service_id
-            for service_id, service in services.items()
-            if service[0] == SequesterServiceType.WEBHOOK
-        ]
+        sequestered_data = await extract_sequestered_data_and_proceed_webhook(
+            services,
+            organization_id,
+            author,
+            encryption_revision,
+            vlob_id,
+            timestamp,
+            sequester_blob,
+        )
 
-        for service_id in webhook_service_id:
-            sequester_data = sequester_blob[service_id]
-            webhook_url = services[service_id][1]
-            if not webhook_url:
-                raise VlobSequesterServiceMissingWebhookError()
-            await send_vlob_to_webhook_services(
-                webhook_url=webhook_url,
-                sequester_data=sequester_data,
-                author=author,
-                encryption_revision=encryption_revision,
-                vlob_id=vlob_id,
-                timestamp=timestamp,
-                organization_id=organization_id,
-            )
-
-        return {service_id: sequester_blob[service_id] for service_id in storage_service_id}
+        return sequestered_data
 
     @retry_on_unique_violation
     async def create(
