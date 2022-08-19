@@ -63,7 +63,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
         self._partial_create_ok = partial_create_ok
         self._logger = logger.bind(blockstore_type="RAID5", partial_create_ok=partial_create_ok)
 
-    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
+    async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
         error_count = 0
         fetch_results: List[Union[Exception, Optional[bytes]]] = [None] * len(self.blockstores)
 
@@ -72,7 +72,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             nonlocal fetch_results
             try:
                 fetch_results[blockstore_index] = await self.blockstores[blockstore_index].read(
-                    organization_id, id
+                    organization_id, block_id
                 )
             except BlockStoreError as exc:
                 fetch_results[blockstore_index] = exc
@@ -117,11 +117,13 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             self._logger.warning(
                 "Block read error: More than 1 nodes have failed",
                 organization_id=str(organization_id),
-                block_id=str(id),
+                block_id=str(block_id),
             )
             raise BlockStoreError("More than 1 RAID5 nodes have failed")
 
-    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
+    async def create(
+        self, organization_id: OrganizationID, block_id: BlockID, block: bytes
+    ) -> None:
         nb_chunks = len(self.blockstores) - 1
         chunks = split_block_in_chunks(block, nb_chunks)
         assert len(chunks) == nb_chunks
@@ -136,7 +138,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             nonlocal error_count
             try:
                 await self.blockstores[blockstore_index].create(
-                    organization_id, id, chunk_or_checksum
+                    organization_id, block_id, chunk_or_checksum
                 )
             except BlockStoreError:
                 error_count += 1
@@ -160,7 +162,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                 self._logger.warning(
                     "Block create error: More than 1 nodes have failed",
                     organization_id=str(organization_id),
-                    block_id=str(id),
+                    block_id=str(block_id),
                 )
                 raise BlockStoreError("More than 1 RAID5 nodes have failed")
 
@@ -169,6 +171,6 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                 self._logger.warning(
                     "Block create error: A node have failed",
                     organization_id=str(organization_id),
-                    block_id=str(id),
+                    block_id=str(block_id),
                 )
                 raise BlockStoreError("A RAID5 node have failed")
