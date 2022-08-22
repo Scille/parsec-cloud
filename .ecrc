@@ -1,0 +1,29 @@
+{
+    "Version": "2.4.0",
+    "Verbose": false,
+    "Debug": false,
+    "IgnoreDefaults": false,
+    "SpacesAftertabs": false,
+    "NoColor": false,
+    "Exclude": [
+        "LICENSE",
+        "licenses",
+        "oxidation/client/android/capacitor-cordova-android-plugins/cordova.variables.gradle",
+        "parsec/core/gui/forms",
+        "oxidation/client/ios/App/App/Info.plist",
+        "packaging/macOS/entitlements.plist",
+        "parsec/core/resources/parsec.icns",
+        "oxidation/client/ios/App/App.xcworkspace",
+        "oxidation/client/ios/App/App.xcodeproj"
+    ],
+    "AllowedContentTypes": [],
+    "PassedFiles": [],
+    "Disable": {
+        "EndOfLine": false,
+        "Indentation": false,
+        "InsertFinalNewline": false,
+        "TrimTrailingWhitespace": false,
+        "IndentSize": false,
+        "MaxLineLength": false
+    }
+}
