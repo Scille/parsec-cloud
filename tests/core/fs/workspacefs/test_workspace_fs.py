@@ -1,17 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import errno
+from typing import Union
 import pytest
 from unittest.mock import ANY
 
 from trio import open_nursery
+from parsec._parsec import (
+    LocalDevice,
+    FileManifest,
+    FolderManifest,
+    UserManifest,
+    WorkspaceManifest,
+)
 
 from parsec.api.protocol import DeviceID, RealmID, RealmRole
-from parsec.api.data import BaseManifest as BaseRemoteManifest, EntryName
+from parsec.api.data import EntryName
 from parsec.core.types import EntryID, DEFAULT_BLOCK_SIZE
 from parsec.core.fs import FsPath
 from parsec.core.fs.exceptions import FSError, FSBackendOfflineError, FSLocalMissError
-from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed
+from parsec.core.fs.workspacefs.workspacefs import ReencryptionNeed, WorkspaceFS
 from parsec.backend.block import BlockNotFoundError
 
 
@@ -386,23 +394,43 @@ async def test_dump(alice_workspace):
 
 
 @pytest.mark.trio
-async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, alice):
+async def test_path_info_remote_loader_exceptions(
+    monkeypatch,
+    alice_workspace: WorkspaceFS,
+    alice: LocalDevice,
+):
     manifest, _ = await alice_workspace.transactions._get_manifest_from_path(FsPath("/foo/bar"))
     async with alice_workspace.local_storage.lock_entry_id(manifest.id):
         await alice_workspace.local_storage.clear_manifest(manifest.id)
 
-    vanilla_file_manifest_deserialize = BaseRemoteManifest._deserialize
+    from parsec.core.backend_connection.authenticated import BackendAuthenticatedCmds
 
-    def mocked_file_manifest_deserialize(*args, **kwargs):
-        return vanilla_file_manifest_deserialize(*args, **kwargs).evolve(**manifest_modifiers)
+    vanilla_vlob_read = BackendAuthenticatedCmds.vlob_read
 
-    monkeypatch.setattr(BaseRemoteManifest, "_deserialize", mocked_file_manifest_deserialize)
+    async def _vlob_read_patched(transport, encryption_revision, vlob_id, version, timestamp):
+        ret = await vanilla_vlob_read(transport, encryption_revision, vlob_id, version, timestamp)
+        if vlob_id.hex == manifest.id.hex:
+            modified_remote_manifest: Union[
+                FileManifest, FolderManifest, UserManifest, WorkspaceManifest
+            ] = manifest.base.evolve(**manifest_modifiers)
+            workspace_entry = alice_workspace.get_workspace_entry()
+            raw_modified_remote_manifest = modified_remote_manifest.dump_sign_and_encrypt(
+                author_signkey=alice.signing_key, key=workspace_entry.key
+            )
+            ret["blob"] = raw_modified_remote_manifest
+        return ret
+
+    monkeypatch.setattr(
+        "parsec.core.backend_connection.authenticated.BackendAuthenticatedCmds.vlob_read",
+        _vlob_read_patched,
+    )
 
     manifest_modifiers = {"id": EntryID.new()}
     with pytest.raises(FSError) as exc:
         await alice_workspace.path_info(FsPath("/foo/bar"))
-    assert f"Invalid entry ID: expected `{manifest.id}`, got `{manifest_modifiers['id']}`" in str(
-        exc.value
+    assert (
+        f"Cannot decrypt vlob: Invalid id: expected `{manifest.id}`, got `{manifest_modifiers['id']}`"
+        in str(exc.value)
     )
 
     manifest_modifiers = {"version": 4}
