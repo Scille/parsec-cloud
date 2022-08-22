@@ -26,6 +26,11 @@ done
 
 jq -r '. | @base64' issues_wrong_project.json > issues_wrong_project.json.b64
 
+ISSUES_TO_ADD=$(wc -l issues_wrong_project.json.b64 | cut -f 1 -d ' ')
+if [ $ISSUES_TO_ADD -eq 0 ]; then
+    echo "No issues to add !"
+    exit 0
+fi
 
 PROJECT_DATA=$(get_project_v2 $PROJECT_ORGA $PROJECT_NUMBER)
 PROJECT_ID=$(jq -r .id <<<"$PROJECT_DATA")
