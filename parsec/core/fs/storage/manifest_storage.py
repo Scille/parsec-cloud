@@ -91,11 +91,11 @@ class ManifestStorage:
                 """
                 CREATE TABLE IF NOT EXISTS vlobs
                 (
-                  vlob_id BLOB PRIMARY KEY NOT NULL, -- UUID
-                  base_version INTEGER NOT NULL,
-                  remote_version INTEGER NOT NULL,
-                  need_sync INTEGER NOT NULL,  -- Boolean
-                  blob BLOB NOT NULL
+                    vlob_id BLOB PRIMARY KEY NOT NULL, -- UUID
+                    base_version INTEGER NOT NULL,
+                    remote_version INTEGER NOT NULL,
+                    need_sync INTEGER NOT NULL,  -- Boolean
+                    blob BLOB NOT NULL
                 );
                 """
             )
@@ -105,8 +105,8 @@ class ManifestStorage:
                 """
                 CREATE TABLE IF NOT EXISTS realm_checkpoint
                 (
-                  _id INTEGER PRIMARY KEY NOT NULL,
-                  checkpoint INTEGER NOT NULL
+                    _id INTEGER PRIMARY KEY NOT NULL,
+                    checkpoint INTEGER NOT NULL
                 );
                 """
             )
@@ -115,9 +115,9 @@ class ManifestStorage:
                 """
                 CREATE TABLE IF NOT EXISTS prevent_sync_pattern
                 (
-                  _id INTEGER PRIMARY KEY NOT NULL,
-                  pattern TEXT NOT NULL,
-                  fully_applied INTEGER NOT NULL  -- Boolean
+                    _id INTEGER PRIMARY KEY NOT NULL,
+                    pattern TEXT NOT NULL,
+                    fully_applied INTEGER NOT NULL  -- Boolean
                 );
                 """
             )

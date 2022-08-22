@@ -27,17 +27,17 @@ class BaseBlockStoreComponent:
 
     The key takeaways here:
     - `BlockStoreComponent.create` must be implemented in an idempotent way
-      (making the assumption multiple creates with the same orgID/ID couple
-      always comes with the same block data).
+        (making the assumption multiple creates with the same orgID/ID couple
+        always comes with the same block data).
     - BlockStoreComponent never raises business logic errors: for instance if a
-      `BlockStoreComponent.read` raises a not found error, it shows the underlying
-      storage is faulty (given `BlockComponent` has already checked the orgID/ID
-      couple exists)
+        `BlockStoreComponent.read` raises a not found error, it shows the underlying
+        storage is faulty (given `BlockComponent` has already checked the orgID/ID
+        couple exists)
     - Each BlockStoreComponent should log any error of it underlying storage, as it
-      most likely indicates some manual maintenance operation is required.
+        most likely indicates some manual maintenance operation is required.
     - An object storage such as S3 has no overwrite protection, hence in case of a
-    partially failed create operation, all object storages will write the new block data
-    (and not only the ones that failed the first time)
+        partially failed create operation, all object storages will write the new block data
+        (and not only the ones that failed the first time)
     """
 
     async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:

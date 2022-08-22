@@ -174,7 +174,7 @@ async def q_take_user_device_write_lock(conn, organization_id: OrganizationID):
     User/device creation is a complexe procedure given it contains checks that
     cannot be enforced by PostgreSQL, e.g.:
     - `user_` table can contain multiple row with the same `human` value, but
-      only one of them can be non-revoked
+        only one of them can be non-revoked
     - PKI-based enrollment also has to ensure no non-revoked `user_` exist
 
     So an easy way to lower complexity on this topic is to get rid of the

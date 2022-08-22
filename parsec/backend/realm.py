@@ -247,13 +247,13 @@ class BaseRealmComponent:
 
         In particular, the backend server performs the following checks:
         - The certificate must have a timestamp strictly greater than the last certificate for
-          the same user in the same realm.
+            the same user in the same realm.
         - If the certificate corresponds to a role without write rights, its timestamp should
-          be strictly greater than the timestamp of the last vlob update performed by the
-          corresponding user in the corresponding realm.
+            be strictly greater than the timestamp of the last vlob update performed by the
+            corresponding user in the corresponding realm.
         - If the certificate corresponds to a role without management rights, its timestamp should
-          be strictly greater than the timestamp of the last role certificate uploaded by the
-          corresponding user in the corresponding realm.
+            be strictly greater than the timestamp of the last role certificate uploaded by the
+            corresponding user in the corresponding realm.
 
         If one of those constraints is not satisfied, an error is returned with the status
         `require_greater_timestamp` indicating to the client that it should craft a new certificate

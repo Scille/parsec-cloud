@@ -246,14 +246,14 @@ class Monitor(Instrument):
     def command_help(self, sout):
         sout.write(
             """Commands:
-         ps               : Show task table
-         stat             : Display general runtime informations
-         tree             : Display hierarchical view of tasks and nurseries
-         where taskid     : Show stack frames for a task
-         cancel taskid    : Cancel an indicated task
-         signal signame   : Send a Unix signal
-         parents taskid   : List task parents
-         quit             : Leave the monitor
+        ps               : Show task table
+        stat             : Display general runtime informations
+        tree             : Display hierarchical view of tasks and nurseries
+        where taskid     : Show stack frames for a task
+        cancel taskid    : Cancel an indicated task
+        signal signame   : Send a Unix signal
+        parents taskid   : List task parents
+        quit             : Leave the monitor
 """
         )
 

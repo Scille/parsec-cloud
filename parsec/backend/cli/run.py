@@ -132,8 +132,8 @@ For instance:
     is_flag=True,
     help="""Allow organization bootstrap without prior creation.
 
-Without this flag, an organization must be created by administration (see
- `parsec core create_organization` command) before bootstrap can occur.
+Without this flag, an organization must be created by administration (see `parsec core create_organization` command)
+before bootstrap can occur.
 
 With this flag, the server allows anybody to bootstrap an organanization
 by providing an empty bootstrap token given 1) the organization is not boostrapped yet

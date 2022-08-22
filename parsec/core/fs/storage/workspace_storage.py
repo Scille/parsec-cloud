@@ -466,7 +466,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     That includes:
     - another cache in memory for fast access to deserialized data
     - the timestamped persistent storage to keep serialized data on the disk :
-      vlobs are in common, not manifests. Actually only vlobs are used, manifests are mocked
+        vlobs are in common, not manifests. Actually only vlobs are used, manifests are mocked
     - the same lock mechanism to protect against race conditions, although it is useless there
     """
 

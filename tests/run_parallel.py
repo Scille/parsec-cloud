@@ -19,10 +19,10 @@ man considering how unstable the CI is right now...
 
 So the idea is simple here:
 - Each child starts pytest with the `--slice-test` option, so parent doesn't even
-  have to do the test dispatching. The drawback is we cannot do work stealing if
-  a job lags behind because it got most of the slow tests.
+    have to do the test dispatching. The drawback is we cannot do work stealing if
+    a job lags behind because it got most of the slow tests.
 - We share as few thing as possible between parent and child process (i.e. a single
-  queue to inform what is going in the child).
+    queue to inform what is going in the child).
 """
 
 from collections import defaultdict
