@@ -104,7 +104,7 @@ import { onMounted } from '@vue/runtime-core';
 import { toggleDarkMode } from '@/states/darkMode';
 
 const { locale } = useI18n();
-let theme = 'system';
+const theme = ref('system');
 const enableTelemetry = ref(false);
 const minimizeToSystemTray = ref(false);
 const store = new Storage();
@@ -116,7 +116,7 @@ async function changeLang(selectedLang: string): Promise<void> {
 }
 
 async function changeTheme(selectedTheme: string): Promise<void> {
-  theme = selectedTheme;
+  theme.value = selectedTheme;
   toggleDarkMode(selectedTheme);
   await store.create();
   await store.set('userTheme', selectedTheme);
@@ -124,7 +124,7 @@ async function changeTheme(selectedTheme: string): Promise<void> {
 
 onMounted(async (): Promise<void> => {
   await store.create();
-  theme = await store.get('userTheme') || 'system';
+  theme.value = await store.get('userTheme') || 'system';
 });
 </script>
 
