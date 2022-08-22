@@ -135,6 +135,18 @@ jobs:
           || github.ref == 'refs/heads/master'
         run: echo "::set-output name=run::true"
 
+      - name: (🐧 Linux) Configure PostgreSQL APT repository
+        if: >-
+          steps.python-changes.outputs.run == 'true'
+          && startsWith(matrix.os, 'ubuntu-')
+        run: |
+          set -x -o pipefail
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            | sudo gpg --dearmor --output /usr/share/keyrings/postgre-sql-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/postgre-sql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/postgre-sql.list
+          sudo apt-get update
+
         # Install required packages for ubuntu:
         # - LibFuse2 since only libfuse3 is available on ubuntu-20.04,
         # - `desktop-file-utils` provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
