@@ -101,6 +101,7 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Storage } from '@ionic/storage';
 import { onMounted } from '@vue/runtime-core';
+import { toggleDarkMode } from '@/states/darkMode';
 
 const { locale } = useI18n();
 let theme = 'system';
@@ -116,11 +117,7 @@ async function changeLang(selectedLang: string): Promise<void> {
 
 async function changeTheme(selectedTheme: string): Promise<void> {
   theme = selectedTheme;
-  if (selectedTheme === 'system') {
-    document.body.classList.toggle('dark', window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? true : false);
-  } else {
-    document.body.classList.toggle('dark', selectedTheme === 'dark' ? true : false);
-  }
+  toggleDarkMode(selectedTheme);
   await store.create();
   await store.set('userTheme', selectedTheme);
 }
