@@ -409,7 +409,7 @@ impl FileManifest {
             expected_timestamp.0,
         ) {
             Ok(x) => Ok(Self(x)),
-            Err(err) => Err(PyValueError::new_err(err.to_string())),
+            Err(err) => Err(DataError::new_err(err.to_string())),
         }
     }
 
@@ -621,7 +621,7 @@ impl FolderManifest {
             expected_timestamp.0,
         ) {
             Ok(x) => Ok(Self(x)),
-            Err(err) => Err(PyValueError::new_err(err.to_string())),
+            Err(err) => Err(DataError::new_err(err.to_string())),
         }
     }
 
@@ -812,7 +812,7 @@ impl WorkspaceManifest {
             expected_timestamp.0,
         ) {
             Ok(x) => Ok(Self(x)),
-            Err(err) => Err(PyValueError::new_err(err.to_string())),
+            Err(err) => Err(DataError::new_err(err.to_string())),
         }
     }
 
