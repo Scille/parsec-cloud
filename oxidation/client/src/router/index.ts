@@ -3,6 +3,8 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 import TestPage from '../views/TestPage.vue';
+import OnlyofficePage from '../views/OnlyofficePage.vue';
+import OnlyofficeEditorPage from '../views/OnlyofficeEditorPage.vue';
 
 let routes: Array<RouteRecordRaw> = [
   {
@@ -42,13 +44,23 @@ let routes: Array<RouteRecordRaw> = [
 ];
 
 if (process.env.VUE_APP_TEST_MODE === 'True') {
-  routes = [
+  routes = routes.concat([
     {
-      path: '/',
+      path: '/test',
       name: 'Test',
       component: TestPage
+    },
+    {
+      path: '/onlyoffice',
+      name: 'onlyoffice',
+      component: OnlyofficePage
+    },
+    {
+      path: '/editor',
+      name: 'editor',
+      component: OnlyofficeEditorPage
     }
-  ];
+  ]);
 }
 
 const router = createRouter({
