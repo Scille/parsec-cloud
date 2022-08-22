@@ -12,6 +12,12 @@ repos:
       - id: end-of-file-fixer
         alias: eof
 
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+    rev: 97461803b9d2cf5f70323ae0058e3447355c8927  # pin v2.4.0
+    hooks:
+      - id: editorconfig-checker
+        alias: ec
+
   - repo: local
     hooks:
       # - id: releaser
