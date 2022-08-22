@@ -10,9 +10,12 @@ PROJECT_ORGA=${1}
 PROJECT_NUMBER=${2}
 
 set -o pipefail
+echo "Debug tool version"
+set -x
 gh --version
 jq --version
 base64 --version
+set +x
 
 echo -n '' > issues_wrong_project.json
 
