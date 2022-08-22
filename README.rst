@@ -7,8 +7,8 @@ Parsec
 ======
 
 .. image:: https://github.com/Scille/parsec-cloud/actions/workflows/quality-assurance.yml/badge.svg
-   :target: https://github.com/Scille/parsec-cloud/actions/workflows/quality-assurance.yml
-   :alt: Quality Assurance
+    :target: https://github.com/Scille/parsec-cloud/actions/workflows/quality-assurance.yml
+    :alt: Quality Assurance
 
 .. image:: https://img.shields.io/azure-devops/tests/Scille/parsec/1/master.svg
     :target: https://dev.azure.com/Scille/parsec/_build?definitionId=1&_a=summary
@@ -54,8 +54,7 @@ Key features:
   and the ones you choose to share with.
 - Cryptographic signature. Each modification is signed by it author making trivial
   to identify modifications.
-- Cloud provider agnostic. Server provides connectors for S3 and swift object
-  storage.
+- Cloud provider agnostic. Server provides connectors for S3 and swift object storage.
 - Simplified enrollment. New user enrollment is simple as sharing a link and a token code.
 
 

@@ -287,11 +287,11 @@ Example:
 .. code-block:: json
 
     {
-      "organization_id": "MyOrg",
-      "device_id": "123@abc",
-      "device_label": "laptop",
-      "human_email": "j.doe@example.com",
-      "human_label": "John Doe"
+        "organization_id": "MyOrg",
+        "device_id": "123@abc",
+        "device_label": "laptop",
+        "human_email": "j.doe@example.com",
+        "human_label": "John Doe"
     }
 
 Sentry

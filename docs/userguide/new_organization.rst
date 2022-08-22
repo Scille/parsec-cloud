@@ -42,7 +42,7 @@ Few key points here:
 
 - User name is the name you'll be referenced by from within the organization
 - Device name is the name your current hardware will be referenced by (e.g.
-  people will see the work you've done on this computer as from ``my_user@my_device``)
+    people will see the work you've done on this computer as from ``my_user@my_device``)
 - The password is used to encrypt your user&device private keys on your computer.
 
 Once this process is completed, you can log-in to the organization you just created.

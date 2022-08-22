@@ -28,11 +28,10 @@ Regarding the different sharing roles:
 
 - Reader: has read-only access to the workspace
 - Contributor: has read&write access
-- Manager: same access as Contributor, but can give Reader and Contributor
-  roles to other users.
+- Manager: same access as Contributor, but can give Reader and Contributor roles to other users.
 - Owner: same as Manager, but can also give Manager and Owner roles to other users.
-  On top of that, owners are responsible for maintenance tasks such as
-  :ref:`workspace re-encryption <doc_userguide_revoke_user_workspace_re_encryption>`.
+    On top of that, owners are responsible for maintenance tasks such as
+    :ref:`workspace re-encryption <doc_userguide_revoke_user_workspace_re_encryption>`.
 
 .. warning::
 
