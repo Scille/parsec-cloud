@@ -54,6 +54,27 @@
             </ion-select-option>
           </ion-select>
         </ion-item>
+        <h5>{{ $t('SettingsPage.preferences') }}</h5>
+        <ion-item>
+          <ion-label>
+            {{ $t('SettingsPage.theme.label') }}
+          </ion-label>
+          <ion-select
+            interface="popover"
+            :value="theme"
+            @ion-change="changeTheme($event.detail.value)"
+          >
+            <ion-select-option value="dark">
+              {{ $t('SettingsPage.theme.dark') }}
+            </ion-select-option>
+            <ion-select-option value="light">
+              {{ $t('SettingsPage.theme.light') }}
+            </ion-select-option>
+            <ion-select-option value="system">
+              {{ $t('SettingsPage.theme.system') }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
       </ion-list>
     </ion-content>
   </ion-page>
@@ -81,17 +102,32 @@ import SettingsOption from '@/components/SettingsOption.vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Storage } from '@ionic/storage';
+import { onMounted } from '@vue/runtime-core';
+import { toggleDarkMode } from '@/states/darkMode';
 
 const { locale } = useI18n();
+const theme = ref('system');
 const enableTelemetry = ref(false);
 const minimizeToSystemTray = ref(false);
+const store = new Storage();
 
 async function changeLang(selectedLang: string): Promise<void> {
   locale.value = selectedLang;
-  const store = new Storage();
   await store.create();
   await store.set('userLocale', selectedLang);
 }
+
+async function changeTheme(selectedTheme: string): Promise<void> {
+  theme.value = selectedTheme;
+  toggleDarkMode(selectedTheme);
+  await store.create();
+  await store.set('userTheme', selectedTheme);
+}
+
+onMounted(async (): Promise<void> => {
+  await store.create();
+  theme.value = await store.get('userTheme') || 'system';
+});
 </script>
 
 <style scoped>

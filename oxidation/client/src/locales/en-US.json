@@ -77,6 +77,13 @@
         },
         "telemetry": "Telemetry",
         "behavior": "Behavior",
-        "localization": "Localization"
+        "localization": "Localization",
+        "preferences": "Preferences",
+        "theme": {
+            "label": "Theme",
+            "dark": "Dark",
+            "light": "Light",
+            "system": "System"
+        }
     }
 }

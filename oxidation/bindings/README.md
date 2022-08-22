@@ -20,8 +20,8 @@ Install neon dependencies and build:
 Requirements:
 
 - Install Android Studio
-- In `File > Settings > Appearance & Behavior > Android SDK > SDK Platform > Show Package Details` : Install Android SDK 30.0.3
-- In `File > Settings > Appearance & Behavior > Android SDK > SDK Tools > Show Package Details` : Install Android NDK 22.1.7171670 and Android SDK Command-line Tools
+- In `File > Settings > Appearance & Behavior > System Settings > Android SDK > SDK Platform > Show Package Details` : Install Android SDK 30.0.3
+- In `File > Settings > Appearance & Behavior > System Settings > Android SDK > SDK Tools > Show Package Details` : Install Android NDK 22.1.7171670 and Android SDK Command-line Tools
 - Python command should be available in PATH environment variable (used by `rust-android-gradle` plugin)
 
 Install Rust targets for cross compilation:
