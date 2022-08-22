@@ -41,7 +41,6 @@ from parsec.api.data.manifest import (
     BlockIDField,
     BlockAccess,
     WorkspaceEntry,
-    BaseManifest,
     UserManifest,
     WorkspaceManifest,
     FolderManifest,

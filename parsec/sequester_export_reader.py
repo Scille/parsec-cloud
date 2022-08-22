@@ -15,7 +15,6 @@ from parsec.api.protocol import RealmID, DeviceID
 from parsec.api.data import (
     EntryName,
     EntryID,
-    BaseManifest,
     FileManifest,
     FolderManifest,
     WorkspaceManifest,
@@ -25,7 +24,7 @@ from parsec.api.data import (
     RealmRoleCertificate,
     DataError,
 )
-
+from parsec.api.data.manifest import manifest_verify_and_load, AnyRemoteManifest
 
 REALM_EXPORT_DB_MAGIC_NUMBER = 87947
 REALM_EXPORT_DB_VERSION = 1  # Only supported version so far
@@ -177,14 +176,14 @@ class WorkspaceExport:
     decryption_key: PrivateKey
     devices_form_internal_id: Dict[int, Tuple[DeviceID, VerifyKey]]
 
-    def load_manifest(self, manifest_id: EntryID) -> BaseManifest:
+    def load_manifest(self, manifest_id: EntryID) -> AnyRemoteManifest:
         row = self.db.con.execute(
             "SELECT version, blob, author, timestamp FROM vlob_atom WHERE vlob_id = ? ORDER BY version DESC LIMIT 1",
             (manifest_id.bytes,),
         ).fetchone()
         if not row:
             raise InconsistentWorkspaceError(
-                f"Cannot retreive workspace manifest: vlob {manifest_id.hex} doesn't exist"
+                f"Cannot retrieve workspace manifest: vlob {manifest_id.hex} doesn't exist"
             )
 
         try:
@@ -202,7 +201,7 @@ class WorkspaceExport:
             decrypted_blob = sequester_service_decrypt(
                 decryption_key=self.decryption_key, data=blob
             )
-            manifest = BaseManifest.verify_and_load(
+            manifest = manifest_verify_and_load(
                 signed=decrypted_blob,
                 author_verify_key=author_verify_key,
                 expected_author=author,
@@ -308,7 +307,7 @@ class WorkspaceExport:
                 continue
 
             try:
-                cleardata = block.key.decrypt(row[0])
+                clear_data = block.key.decrypt(row[0])
 
             except CryptoError as exc:
                 yield (
@@ -321,10 +320,10 @@ class WorkspaceExport:
             try:
                 if fd.tell() != block.offset:
                     fd.seek(block.offset)
-                if block.size != len(cleardata):
-                    fd.write(cleardata[block.size])
+                if block.size != len(clear_data):
+                    fd.write(clear_data[block.size])
                 else:
-                    fd.write(cleardata)
+                    fd.write(clear_data)
             except OSError as exc:
                 yield (
                     fs_path,

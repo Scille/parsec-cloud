@@ -24,7 +24,6 @@ from parsec.serde.fields import (
 
 from parsec.api.protocol.base import CmdSerializer
 from parsec.api.data.base import BaseData, BaseAPIData, BaseSignedData, BaseAPISignedData
-from parsec.api.data.manifest import BaseManifest
 from parsec.api.data.message import BaseMessageContent
 
 from parsec.core.types.base import BaseLocalData
@@ -42,7 +41,6 @@ _BASE_DATA_CLASSES = (
     BaseSignedData,
     BaseAPISignedData,
     BaseLocalData,
-    BaseManifest,
     BaseMessageContent,
 )
 
@@ -151,9 +149,9 @@ def generate_core_data_specs():
 
     package = parsec.core.types
     data_classes = set()
-    for submod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
-        submod = importlib.import_module(submod_info.name)
-        data_classes.update(collect_data_classes_from_module(submod))
+    for sub_mod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
+        sub_mod = importlib.import_module(sub_mod_info.name)
+        data_classes.update(collect_data_classes_from_module(sub_mod))
 
     specs = {data_cls.__name__: data_class_to_spec(data_cls) for data_cls in data_classes}
 
@@ -232,11 +230,11 @@ def generate_api_protocol_specs():
     package = parsec.api.protocol
 
     cmd_serializers = {}
-    for submod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
-        submod = importlib.import_module(submod_info.name)
-        collect_cmd_serializer_from_module(submod, cmd_serializers)
+    for sub_mod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
+        sub_mod = importlib.import_module(sub_mod_info.name)
+        collect_cmd_serializer_from_module(sub_mod, cmd_serializers)
 
-    # Now retrieve the per-familly commands sets and generate specs
+    # Now retrieve the per-family commands sets and generate specs
     from parsec.api.protocol import cmds as cmds_mod
 
     specs = {"APIv1": {}, "APIv2": {}}
@@ -279,7 +277,7 @@ def generate_api_protocol_specs():
     unused_cmds_serializers.remove(realm_stats_serializer)
     assert (
         not unused_cmds_serializers
-    ), f"Command serializer declared but not part of a commands familly group: {unused_cmds_serializers}"
+    ), f"Command serializer declared but not part of a commands family group: {unused_cmds_serializers}"
 
     return specs
 

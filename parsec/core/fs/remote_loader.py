@@ -16,7 +16,6 @@ from parsec.api.data import (
     DataError,
     BlockAccess,
     RealmRoleCertificate,
-    BaseManifest as BaseRemoteManifest,
     AnyRemoteManifest,
     UserCertificate,
     DeviceCertificate,
@@ -24,6 +23,7 @@ from parsec.api.data import (
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
 )
+from parsec.api.data.manifest import manifest_decrypt_verify_and_load
 from parsec.core.types import EntryID, ChunkID, LocalDevice, WorkspaceEntry
 from parsec.core.backend_connection import (
     BackendConnectionError,
@@ -639,17 +639,14 @@ class RemoteLoader(UserRemoteLoader):
             author = await self.remote_devices_manager.get_device(expected_author)
 
         try:
-            remote_manifest = cast(
-                AnyRemoteManifest,
-                BaseRemoteManifest.decrypt_verify_and_load(
-                    rep["blob"],
-                    key=workspace_entry.key,
-                    author_verify_key=author.verify_key,
-                    expected_author=expected_author,
-                    expected_timestamp=expected_timestamp,
-                    expected_version=expected_version,
-                    expected_id=entry_id,
-                ),
+            remote_manifest = manifest_decrypt_verify_and_load(
+                rep["blob"],
+                key=workspace_entry.key,
+                author_verify_key=author.verify_key,
+                expected_author=expected_author,
+                expected_timestamp=expected_timestamp,
+                expected_version=expected_version,
+                expected_id=entry_id,
             )
         except DataError as exc:
             raise FSError(f"Cannot decrypt vlob: {exc}") from exc

@@ -16,7 +16,6 @@ from parsec.api.data import (
     FolderManifest as RemoteFolderManifest,
     WorkspaceManifest as RemoteWorkspaceManifest,
     UserManifest as RemoteUserManifest,
-    BaseManifest as BaseRemoteManifest,
 )
 from parsec.core.types import (
     LocalFileManifest,
@@ -24,6 +23,7 @@ from parsec.core.types import (
     LocalWorkspaceManifest,
     LocalUserManifest,
 )
+from parsec._parsec import LocalDevice
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -256,7 +256,7 @@ def test_local_manifests_load_invalid_data():
             cls.decrypt_and_load(valid_msgpack_but_bad_fields, key=key)
 
 
-def test_remote_manifests_load_invalid_data():
+def test_remote_manifests_load_invalid_data(alice: LocalDevice):
     key = SecretKey.generate()
     valid_zip_msgpack_but_bad_fields = zlib.compress(packb({"foo": 42}))
 
@@ -265,14 +265,32 @@ def test_remote_manifests_load_invalid_data():
         RemoteFolderManifest,
         RemoteWorkspaceManifest,
         RemoteUserManifest,
-        BaseRemoteManifest,
     ):
+        print(f"Testing class {cls.__name__}")
         with pytest.raises(DataError):
-            cls.decrypt_and_load(b"", key=key)
+            cls.decrypt_verify_and_load(
+                b"",
+                key=key,
+                author_verify_key=alice.verify_key,
+                expected_author=alice.device_id,
+                expected_timestamp=alice.timestamp(),
+            )
 
         with pytest.raises(DataError):
-            cls.decrypt_and_load(b"\x42" * 10, key=key)
+            cls.decrypt_verify_and_load(
+                b"\x42" * 10,
+                key=key,
+                author_verify_key=alice.verify_key,
+                expected_author=alice.device_id,
+                expected_timestamp=alice.timestamp(),
+            )
 
         # Valid to deserialize, invalid fields
         with pytest.raises(DataError):
-            cls.decrypt_and_load(valid_zip_msgpack_but_bad_fields, key=key)
+            cls.decrypt_verify_and_load(
+                valid_zip_msgpack_but_bad_fields,
+                key=key,
+                author_verify_key=alice.verify_key,
+                expected_author=alice.device_id,
+                expected_timestamp=alice.timestamp(),
+            )
