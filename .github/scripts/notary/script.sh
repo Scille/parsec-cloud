@@ -45,8 +45,9 @@ for raw_row in $(<issues_wrong_project.json.b64); do
     TITLE=$(jq -r .title <<<"$row")
     TYPE=$(jq -r .type <<<"$row")
 
-    echo "Adding $TYPE \"$TITLE\" to project $PROJECT_TITLE"
+    echo -n "Adding $TYPE \"$TITLE\" to project $PROJECT_TITLE > "
     add_item_to_project $PROJECT_ID $ID
+    echo
     RC=$?
     if [ $RC -ne 0 ]; then
         echo "Failed to add $TYPE \"$TITLE\" to project $PROJECT_TITLE" >&2
