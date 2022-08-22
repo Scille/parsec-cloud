@@ -14,6 +14,12 @@ outputs:
   rust-ext:
     value: ${{ steps.changes.outputs.rust-ext }}
     description: True if a files in the rust-python extension folder was edited.
+  client-web:
+    value: ${{ steps.changes.outputs.client-web }}
+    description: True if a files in the web was edited.
+  client-common:
+    value: ${{ steps.changes.outputs.client-common }}
+    description: True if a files in the ionic-client part was edited.
 
 runs:
   using: composite
