@@ -17,6 +17,7 @@ jq --version
 base64 --version
 set +x
 
+echo "Looking for issues that are assigned to the wrong project."
 echo -n '' > issues_wrong_project.json
 
 for type in issue; do
