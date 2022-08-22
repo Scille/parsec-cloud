@@ -20,23 +20,23 @@
 !define BUILD_DIR "build"
 !searchparse /file ${BUILD_DIR}/manifest.ini `target = "` PROGRAM_FREEZE_BUILD_DIR `"`
 !ifndef PROGRAM_FREEZE_BUILD_DIR
-   !error "Cannot find freeze build directory"
+  !error "Cannot find freeze build directory"
 !endif
 !searchparse /file ${BUILD_DIR}/manifest.ini `program_version = "` PROGRAM_VERSION `"`
 !ifndef PROGRAM_VERSION
-   !error "Program Version Undefined"
+  !error "Program Version Undefined"
 !endif
 !searchparse /file ${BUILD_DIR}/manifest.ini `platform = "` PROGRAM_PLATFORM `"`
 !ifndef PROGRAM_PLATFORM
-   !error "Program Platform Undefined"
+  !error "Program Platform Undefined"
 !endif
 !searchparse /file ${BUILD_DIR}/manifest.ini `winfsp_installer_path = "` WINFSP_INSTALLER_PATH `"`
 !ifndef WINFSP_INSTALLER_PATH
-   !error "WinFSP installer path Undefined"
+  !error "WinFSP installer path Undefined"
 !endif
 !searchparse /file ${BUILD_DIR}/manifest.ini `winfsp_installer_name = "` WINFSP_INSTALLER_NAME `"`
 !ifndef WINFSP_INSTALLER_NAME
-   !error "WinFSP installer name Undefined"
+  !error "WinFSP installer name Undefined"
 !endif
 
 # Python files generated
