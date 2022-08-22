@@ -16,7 +16,7 @@ base64 --version
 
 echo -n '' > issues_wrong_project.json
 
-for type in issue pr; do
+for type in issue; do
     gh $type list \
         --json id,title,number \
         --search "-project:\"$PROJECT_ORGA/$PROJECT_NUMBER\"" \
