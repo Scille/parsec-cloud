@@ -139,12 +139,19 @@ jobs:
         if: >-
           steps.python-changes.outputs.run == 'true'
           && startsWith(matrix.os, 'ubuntu-')
+        env:
+          POSTGRE_APT_KEY_SHA_512: df557805862cd279f40819834af14e1723b18044df9dc22bea710b6980c98cc8ed39e75ed5c9adaa1932992710f1180f0491dc9437bfd485b4aa2b75776407d4  /usr/share/keyrings/postgre-sql-keyring.gpg
         run: |
           set -x -o pipefail
+
           wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc \
             | sudo gpg --dearmor --output /usr/share/keyrings/postgre-sql-keyring.gpg
+
+          printenv POSTGRE_APT_KEY_SHA_512 | sha512sum --strict -c -
+
           echo "deb [signed-by=/usr/share/keyrings/postgre-sql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
             | sudo tee /etc/apt/sources.list.d/postgre-sql.list
+
           sudo apt-get update
 
         # Install required packages for ubuntu:
