@@ -145,6 +145,7 @@ mypy = "v0.910"
 setuptools = "^63.1.0"
 maturin = "~=0.13"
 cibuildwheel = "2.8.1"
+editorconfig-checker = "2.4.0"
 
 [tool.poetry.build]
 generate-setup-file = false
