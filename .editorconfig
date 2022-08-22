@@ -20,11 +20,26 @@ insert_final_newline = false
 [Makefile]
 indent_style = tab
 
-[*.ts]
-indent_size = 2
-
 [*.{yaml,yml}]
 indent_size = 2
 
 [*.{gql,graphql}]
+indent_size = 2
+
+[*.java]
+indent_size = 2
+
+[*.{vue,css,js,ts}]
+indent_size = 2
+
+[*.{rst,md}]
+indent_size = 2
+
+[{Podfile,*.podspec}]
+indent_size = 2
+
+[*.nsi]
+indent_size = 2
+
+[HISTORY.rst]
 indent_size = 2
