@@ -72,8 +72,8 @@ class SyncContext:
     There is two way for it to be informed of remote changes:
     - When online it receive `realm.vlobs_updated` updated events
     - Otherwise (typically when the application starts or when back online after
-      an disconnection) it uses the realm's checkpoint stored in the persistent
-      storage to get the list of changes (entry id + version) it has missed
+        an disconnection) it uses the realm's checkpoint stored in the persistent
+        storage to get the list of changes (entry id + version) it has missed
     """
 
     def __init__(self, user_fs: UserFS, id: EntryID, read_only: bool = False):

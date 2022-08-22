@@ -179,9 +179,9 @@ class BaseVlobComponent:
 
         In particular, the backend server performs the following checks:
         - The vlob version must have a timestamp greater or equal than the timestamp of the previous
-          version of the same vlob.
+            version of the same vlob.
         - The vlob version must have a timestamp strictly greater than the timestamp of the last role
-          certificate for the corresponding user in the corresponding realm.
+            certificate for the corresponding user in the corresponding realm.
 
         If one of those constraints is not satisfied, an error is returned with the status
         `require_greater_timestamp` indicating to the client that it should craft a new certificate
