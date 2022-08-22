@@ -29,14 +29,18 @@ jobs:
   # Github PR merging is configured to only require this job to pass
   ci-is-happy:
     name: ⭐ CI is happy ⭐
-    needs: [ check-quality-assurance, test-python-matrix, test-rust-matrix ]
+    needs:
+      - check-quality-assurance
+      - test-python-matrix
+      - test-rust-matrix
+      - test-web-app
     runs-on: ubuntu-latest
     steps:
       - run: echo "My job here is done !"
 
-##############################################################################
-#                                   📊 Q&A                                   #
-##############################################################################
+  ##############################################################################
+  #                                   📊 Q&A                                   #
+  ##############################################################################
 
   check-quality-assurance:
     name: 📊 Q&A
@@ -102,9 +106,9 @@ jobs:
 
       - uses: ./.github/actions/use-pre-commit
 
-##############################################################################
-#                            🐍 Python tests                                 #
-##############################################################################
+  ##############################################################################
+  #                            🐍 Python tests                                 #
+  ##############################################################################
 
   test-python-matrix:
     strategy:
@@ -258,9 +262,9 @@ jobs:
         run: poetry run pytest ${{ env.pytest-base-args }} tests --runslow -m slow --numprocesses auto
         timeout-minutes: 50
 
-##############################################################################
-#                            🦀 Rust tests                                   #
-##############################################################################
+  ##############################################################################
+  #                            🦀 Rust tests                                   #
+  ##############################################################################
 
   test-rust-matrix:
     strategy:
@@ -332,3 +336,35 @@ jobs:
           cargo test --package libparsec_crypto --features use-sodiumoxide
           cargo test --package libparsec_crypto --features use-rustcrypto
           cargo test --workspace --features mock-time --exclude libparsec_crypto
+
+  ##############################################################################
+  #                            🌐 Web tests                                    #
+  ##############################################################################
+  test-web-app:
+    runs-on: ubuntu-22.04
+    name: 🌐 Web tests
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - uses: ./.github/actions/paths-filter
+        id: changes
+
+      - name: Check modified path that require `test-web` to run
+        id: web-change
+        if: >-
+          steps.changes.outputs.client-web == 'true'
+          || steps.changes.outputs.client-common == 'true'
+          || github.ref == 'refs/heads/master'
+        run: echo "::set-output name=run::true"
+
+      - name: Install dependencies
+        if: steps.web-change.outputs.run == 'true'
+        run: npm clean-install
+        working-directory: oxidation/client
+
+      # Replace it with `npm run test:unit && npm run test:e2e` when those are stable.
+      # Then move this step to package-ci.yml
+      - name: Build WebApp
+        if: steps.web-change.outputs.run == 'true'
+        run: npm run build
+        working-directory: oxidation/client
