@@ -66,7 +66,7 @@ impl UserStorage {
             .get_manifest(self.user_manifest_id)
             .is_err()
         {
-            let timestamp = self.device.timestamp();
+            let timestamp = self.device.now();
             let manifest = LocalUserManifest::new(
                 self.device.device_id.clone(),
                 timestamp,
@@ -101,15 +101,14 @@ mod tests {
     use libparsec_types::{DateTime, UserManifest};
 
     use rstest::rstest;
-    use tests_fixtures::{alice, tmp_path, Device, TmpPath};
+    use tests_fixtures::{alice, timestamp, tmp_path, Device, TmpPath};
 
     use super::super::local_database::SqlitePool;
     use super::*;
 
     #[rstest]
-    fn user_storage(alice: &Device, tmp_path: TmpPath) {
+    fn user_storage(alice: &Device, timestamp: DateTime, tmp_path: TmpPath) {
         let db_path = tmp_path.join("user_storage.sqlite");
-        let now = DateTime::now();
         let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
         let conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
@@ -128,17 +127,16 @@ mod tests {
         let user_manifest = LocalUserManifest {
             base: UserManifest {
                 author: alice.device_id.clone(),
-                timestamp: now,
-
+                timestamp,
                 id: user_manifest_id,
                 version: 0,
-                created: now,
-                updated: now,
+                created: timestamp,
+                updated: timestamp,
                 last_processed_message: 0,
                 workspaces: vec![],
             },
             need_sync: false,
-            updated: now,
+            updated: timestamp,
             last_processed_message: 0,
             workspaces: vec![],
             speculative: false,

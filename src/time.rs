@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::pyclass::CompareOp;
 use pyo3::types::PyType;
@@ -11,17 +11,48 @@ use crate::binding_utils::hash_generic;
 #[pyfunction]
 /// mock_time takes as argument a DateTime (for FrozenTime), an int (for ShiftedTime) or None (for RealTime)
 pub(crate) fn mock_time(time: &PyAny) -> PyResult<()> {
-    use libparsec::types::MockedTime::*;
+    use libparsec::types::MockedTime;
     libparsec::types::DateTime::mock_time(if let Ok(dt) = time.extract::<DateTime>() {
-        FrozenTime(dt.0)
+        MockedTime::FrozenTime(dt.0)
     } else if let Ok(dt) = time.extract::<i64>() {
-        ShiftedTime(dt)
+        MockedTime::ShiftedTime(dt)
     } else if time.is_none() {
-        RealTime
+        MockedTime::RealTime
     } else {
-        return Err(PyValueError::new_err("Invalid field time"));
+        return Err(PyTypeError::new_err("Invalid field time"));
     });
     Ok(())
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone)]
+pub(crate) struct TimeProvider(pub libparsec::types::TimeProvider);
+
+#[pymethods]
+impl TimeProvider {
+    #[new]
+    fn new() -> PyResult<Self> {
+        Ok(Self(libparsec::types::TimeProvider::default()))
+    }
+
+    pub fn now(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.now()))
+    }
+
+    pub fn mock_time(&mut self, time: &PyAny) -> PyResult<()> {
+        use libparsec::types::MockedTime;
+        self.0
+            .mock_time(if let Ok(dt) = time.extract::<DateTime>() {
+                MockedTime::FrozenTime(dt.0)
+            } else if let Ok(dt) = time.extract::<i64>() {
+                MockedTime::ShiftedTime(dt)
+            } else if time.is_none() {
+                MockedTime::RealTime
+            } else {
+                return Err(PyTypeError::new_err("Invalid field time"));
+            });
+        Ok(())
+    }
 }
 
 #[pyclass]
@@ -89,7 +120,7 @@ impl DateTime {
 
     #[classmethod]
     fn now(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::DateTime::now()))
+        Ok(Self(libparsec::types::DateTime::now_legacy()))
     }
 
     fn timestamp(&self) -> PyResult<f64> {

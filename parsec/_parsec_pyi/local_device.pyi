@@ -10,7 +10,7 @@ from parsec._parsec_pyi.ids import (
     OrganizationID,
     UserID,
 )
-from parsec._parsec_pyi.time import DateTime
+from parsec._parsec_pyi.time import DateTime, TimeProvider
 
 from parsec.api.protocol.types import UserProfile
 
@@ -90,6 +90,8 @@ class LocalDevice:
     def user_manifest_key(self) -> SecretKey: ...
     @property
     def local_symkey(self) -> SecretKey: ...
+    @property
+    def time_provider(self) -> TimeProvider: ...
     def timestamp(self) -> DateTime: ...
     def dump(self) -> bytes: ...
     @classmethod

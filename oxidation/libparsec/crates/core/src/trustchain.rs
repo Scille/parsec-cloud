@@ -8,7 +8,7 @@ use libparsec_crypto::VerifyKey;
 use libparsec_protocol::authenticated_cmds::user_get::Trustchain;
 use libparsec_types::{
     CertificateSignerOwned, CertificateSignerRef, DateTime, DeviceCertificate, DeviceID,
-    RevokedUserCertificate, UserCertificate, UserID, UserProfile,
+    RevokedUserCertificate, TimeProvider, UserCertificate, UserID, UserProfile,
 };
 
 #[derive(Debug)]
@@ -20,6 +20,7 @@ struct CertifState<'a, T> {
 
 pub struct TrustchainContext {
     root_verify_key: VerifyKey,
+    time_provider: TimeProvider,
     cache_validity: i64,
     _users_cache: HashMap<UserID, (DateTime, UserCertificate)>,
     _devices_cache: HashMap<DeviceID, (DateTime, DeviceCertificate)>,
@@ -256,9 +257,14 @@ impl TrustchainContext {
 }
 
 impl TrustchainContext {
-    pub fn new(root_verify_key: VerifyKey, cache_validity: i64) -> Self {
+    pub fn new(
+        root_verify_key: VerifyKey,
+        time_provider: TimeProvider,
+        cache_validity: i64,
+    ) -> Self {
         Self {
             root_verify_key,
+            time_provider,
             cache_validity,
             _users_cache: HashMap::new(),
             _devices_cache: HashMap::new(),
@@ -274,8 +280,9 @@ impl TrustchainContext {
         self._users_cache.remove(user_id);
     }
 
-    pub fn get_user(&self, user_id: &UserID, now: Option<DateTime>) -> Option<&UserCertificate> {
-        let now = now.unwrap_or_else(DateTime::now);
+    pub fn get_user(&self, user_id: &UserID) -> Option<&UserCertificate> {
+        let now = self.time_provider.now();
+
         match self._users_cache.get(user_id) {
             Some((cached_on, verified_user))
                 if (now - *cached_on).num_seconds() < self.cache_validity =>
@@ -286,12 +293,9 @@ impl TrustchainContext {
         }
     }
 
-    pub fn get_revoked_user(
-        &self,
-        user_id: &UserID,
-        now: Option<DateTime>,
-    ) -> Option<&RevokedUserCertificate> {
-        let now = now.unwrap_or_else(DateTime::now);
+    pub fn get_revoked_user(&self, user_id: &UserID) -> Option<&RevokedUserCertificate> {
+        let now = self.time_provider.now();
+
         match self._revoked_users_cache.get(user_id) {
             Some((cached_on, verified_revoked_user))
                 if (now - *cached_on).num_seconds() < self.cache_validity =>
@@ -302,12 +306,9 @@ impl TrustchainContext {
         }
     }
 
-    pub fn get_device(
-        &self,
-        device_id: &DeviceID,
-        now: Option<DateTime>,
-    ) -> Option<&DeviceCertificate> {
-        let now = now.unwrap_or_else(DateTime::now);
+    pub fn get_device(&self, device_id: &DeviceID) -> Option<&DeviceCertificate> {
+        let now = self.time_provider.now();
+
         match self._devices_cache.get(device_id) {
             Some((cached_on, verified_device))
                 if (now - *cached_on).num_seconds() < self.cache_validity =>
@@ -323,14 +324,11 @@ impl TrustchainContext {
         users: &[Vec<u8>],
         revoked_users: &[Vec<u8>],
         devices: &[Vec<u8>],
-        now: Option<DateTime>,
     ) -> TrustchainResult<(
         Vec<UserCertificate>,
         Vec<RevokedUserCertificate>,
         Vec<DeviceCertificate>,
     )> {
-        let now = now.unwrap_or_else(DateTime::now);
-
         let mut users_states = HashMap::new();
         let mut devices_states = HashMap::new();
         let mut revoked_users_states = HashMap::new();
@@ -339,7 +337,7 @@ impl TrustchainContext {
         for certif in devices {
             let unverified_device =
                 DeviceCertificate::unsecure_load(certif).unwrap_or_else(|_| unreachable!());
-            match self.get_device(&unverified_device.device_id, Some(now)) {
+            match self.get_device(&unverified_device.device_id) {
                 Some(verified_device) => {
                     devices_states.insert(
                         verified_device.device_id.clone(),
@@ -366,7 +364,7 @@ impl TrustchainContext {
         for certif in users {
             let unverified_user =
                 UserCertificate::unsecure_load(certif).unwrap_or_else(|_| unreachable!());
-            match self.get_user(&unverified_user.user_id, Some(now)) {
+            match self.get_user(&unverified_user.user_id) {
                 Some(verified_user) => {
                     users_states.insert(
                         verified_user.user_id.clone(),
@@ -393,7 +391,7 @@ impl TrustchainContext {
         for certif in revoked_users {
             let unverified_revoked_user =
                 RevokedUserCertificate::unsecure_load(certif).unwrap_or_else(|_| unreachable!());
-            match self.get_revoked_user(&unverified_revoked_user.user_id, Some(now)) {
+            match self.get_revoked_user(&unverified_revoked_user.user_id) {
                 Some(verified_revoked_user) => {
                     revoked_users_states.insert(
                         verified_revoked_user.user_id.clone(),
@@ -460,6 +458,7 @@ impl TrustchainContext {
         }
 
         // Finally populate the cache
+        let now = self.time_provider.now();
         devices_states
             .values()
             .map(|state| state.borrow())
@@ -515,8 +514,6 @@ impl TrustchainContext {
         Option<RevokedUserCertificate>,
         Vec<DeviceCertificate>,
     )> {
-        let now = DateTime::now();
-
         let UserCertificate { user_id, .. } =
             UserCertificate::unsecure_load(&user_certif).unwrap_or_else(|_| unreachable!());
 
@@ -544,7 +541,6 @@ impl TrustchainContext {
             &trustchain.users,
             &trustchain.revoked_users,
             &trustchain.devices,
-            Some(now),
         )?;
 
         Ok((

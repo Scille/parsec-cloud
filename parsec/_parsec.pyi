@@ -72,6 +72,7 @@ from parsec._parsec_pyi.manifest import (
 from parsec._parsec_pyi.time import (
     DateTime,
     LocalDateTime,
+    TimeProvider,
     mock_time,
 )
 
@@ -140,6 +141,7 @@ __all__ = [
     # Time
     "DateTime",
     "LocalDateTime",
+    "TimeProvider",
     "mock_time",
     # Trustchain
     "TrustchainContext",

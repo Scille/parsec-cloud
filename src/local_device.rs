@@ -16,7 +16,7 @@ use crate::{
     api_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey},
     binding_utils::{py_to_rs_user_profile, rs_to_py_user_profile},
     ids::{DeviceID, DeviceLabel, DeviceName, EntryID, HumanHandle, OrganizationID, UserID},
-    time::DateTime,
+    time::{DateTime, TimeProvider},
 };
 
 #[pyclass]
@@ -56,6 +56,7 @@ impl LocalDevice {
             user_manifest_id: user_manifest_id.0,
             user_manifest_key: user_manifest_key.0,
             local_symkey: local_symkey.0,
+            time_provider: libparsec::types::TimeProvider::default(),
         }))
     }
 
@@ -213,10 +214,6 @@ impl LocalDevice {
             .unwrap_or_else(|| self.0.device_id.device_name.to_string()))
     }
 
-    fn timestamp(&self) -> PyResult<DateTime> {
-        Ok(DateTime(self.0.timestamp()))
-    }
-
     #[getter]
     fn organization_addr(&self) -> PyResult<BackendOrganizationAddr> {
         Ok(BackendOrganizationAddr(self.0.organization_addr.clone()))
@@ -265,6 +262,16 @@ impl LocalDevice {
     #[getter]
     fn local_symkey(&self) -> PyResult<SecretKey> {
         Ok(SecretKey(self.0.local_symkey.clone()))
+    }
+
+    #[getter]
+    fn time_provider(&self) -> PyResult<TimeProvider> {
+        Ok(TimeProvider(self.0.time_provider.clone()))
+    }
+
+    // TODO: rename this into `now`
+    fn timestamp(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.now()))
     }
 
     fn dump<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {

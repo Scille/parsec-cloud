@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from parsec._parsec import DateTime
 from hypothesis import strategies as st, note
 from hypothesis.stateful import (
     run_state_machine_as_test,
@@ -19,12 +18,14 @@ from parsec._parsec import (
     UserCertificate,
     RevokedUserCertificate,
     DeviceCertificate,
+    TimeProvider,
 )
 
 
 @pytest.mark.slow
 def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_factory, coolorg):
     name_count = 0
+    time_provider = TimeProvider()
 
     class TrustchainValidate(RuleBasedStateMachine):
         NonRevokedAdminUsers = Bundle("admin users")
@@ -50,7 +51,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
 
             user = UserCertificate(
                 author=certifier_id,
-                timestamp=DateTime.now(),
+                timestamp=time_provider.now(),
                 user_id=local_device.user_id,
                 human_handle=local_device.human_handle,
                 public_key=local_device.public_key,
@@ -61,7 +62,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
 
             device = DeviceCertificate(
                 author=certifier_id,
-                timestamp=DateTime.now(),
+                timestamp=time_provider.now(),
                 device_id=local_device.device_id,
                 device_label=local_device.device_label,
                 verify_key=local_device.verify_key,
@@ -136,7 +137,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             author = possible_authors[author_rand % len(possible_authors)]
             note(f"revoke user: {user} (author: {author.device_id})")
             revoked_user = RevokedUserCertificate(
-                author=author.device_id, timestamp=DateTime.now(), user_id=user
+                author=author.device_id, timestamp=time_provider.now(), user_id=user
             )
             self.revoked_users_content[user] = revoked_user
             self.revoked_users_certifs[user] = revoked_user.dump_and_sign(author.signing_key)
@@ -154,7 +155,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             local_device = local_device_factory(device_id, org=coolorg)
             device = DeviceCertificate(
                 author=author.device_id,
-                timestamp=DateTime.now(),
+                timestamp=time_provider.now(),
                 device_id=local_device.device_id,
                 device_label=local_device.device_label,
                 verify_key=local_device.verify_key,
@@ -164,7 +165,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
 
         @rule(user=st.one_of(NonRevokedAdminUsers, NonRevokedOtherUsers))
         def load_trustchain(self, user):
-            ctx = TrustchainContext(coolorg.root_verify_key, 1)
+            ctx = TrustchainContext(coolorg.root_verify_key, time_provider, 1)
 
             user_certif = next(
                 certif for user_id, certif in self.users_certifs.items() if user_id == user

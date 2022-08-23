@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use libparsec_crypto::VerifyKey;
-use libparsec_types::UserID;
+use libparsec_types::{TimeProvider, UserID};
 
 use crate::TrustchainContext;
 
@@ -12,9 +12,13 @@ pub struct RemoteDevicesManager {
 }
 
 impl RemoteDevicesManager {
-    pub fn new(root_verify_key: VerifyKey) -> Self {
+    pub fn new(root_verify_key: VerifyKey, time_provider: TimeProvider) -> Self {
         Self {
-            trustchain_ctx: TrustchainContext::new(root_verify_key, DEFAULT_CACHE_VALIDITY),
+            trustchain_ctx: TrustchainContext::new(
+                root_verify_key,
+                time_provider,
+                DEFAULT_CACHE_VALIDITY,
+            ),
         }
     }
 

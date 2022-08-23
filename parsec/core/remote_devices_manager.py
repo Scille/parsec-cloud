@@ -13,7 +13,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.trustchain import TrustchainError
 
-from parsec._parsec import TrustchainContext
+from parsec._parsec import TrustchainContext, TimeProvider
 
 
 DEFAULT_CACHE_VALIDITY = 60 * 60  # 3600 seconds, 1 hour
@@ -61,10 +61,11 @@ class RemoteDevicesManager:
         self,
         backend_cmds: BackendAuthenticatedCmds,
         root_verify_key: VerifyKey,
+        time_provider: TimeProvider,
         cache_validity: int = DEFAULT_CACHE_VALIDITY,
     ):
         self._backend_cmds = backend_cmds
-        self._trustchain_ctx = TrustchainContext(root_verify_key, cache_validity)
+        self._trustchain_ctx = TrustchainContext(root_verify_key, time_provider, cache_validity)
 
     @property
     def cache_validity(self) -> int:
