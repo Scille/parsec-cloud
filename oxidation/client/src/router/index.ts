@@ -29,6 +29,11 @@ let routes: Array<RouteRecordRaw> = [
             path: '/home',
             name: 'home',
             component: () => import('@/views/HomePage.vue')
+          },
+          {
+            path: 'workspaces',
+            name: 'workspaces',
+            component: () => import('@/views/WorkspacesPage.vue')
           }
         ]
       },

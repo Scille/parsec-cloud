@@ -249,10 +249,17 @@ body.dark {
     --ion-card-background: #1e1e1e;
 }
 
+/* ion-modal having auto width/height will be available in a future ionic release:
+https: //github.com/ionic-team/ionic-framework/issues/24080 */
+
 ion-modal.join-by-link-modal::part(content) {
     min-height: 300px;
     height: 30vh;
     position: relative;
     display: block;
     contain: content;
+}
+
+ion-modal.one-line-modal::part(content) {
+    height: 210px;
 }

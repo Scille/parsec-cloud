@@ -16,7 +16,7 @@
             <ion-item
               lines="none"
               button
-              @click="navigateToPage('home')"
+              @click="navigateToPage('workspaces')"
             >
               <ion-icon
                 :icon="folderOutline"

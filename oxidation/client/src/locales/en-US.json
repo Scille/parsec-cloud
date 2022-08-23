@@ -85,5 +85,21 @@
             "light": "Light",
             "system": "System"
         }
+    },
+    "WorkspacesPage": {
+        "createWorkspace": "Create workspace",
+        "documents": "Documents",
+        "workspaceContextMenu": {
+            "share": "Share",
+            "history": "History",
+            "cancel": "Cancel"
+        },
+        "CreateWorkspaceModal": {
+            "pageTitle": "Create workspace",
+            "name": "Name",
+            "namePlaceholder": "Workspace",
+            "cancel": "Cancel",
+            "create": "Create"
+        }
     }
 }
