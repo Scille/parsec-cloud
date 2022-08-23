@@ -26,11 +26,6 @@ mod time;
 /// import the module.
 #[pymodule]
 fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<local_manifest::Chunk>()?;
-    m.add_class::<local_manifest::LocalFileManifest>()?;
-    m.add_class::<local_manifest::LocalFolderManifest>()?;
-    m.add_class::<local_manifest::LocalWorkspaceManifest>()?;
-    m.add_class::<local_manifest::LocalUserManifest>()?;
     // Block
     m.add_class::<protocol::BlockCreateReq>()?;
     m.add_class::<protocol::BlockCreateRep>()?;

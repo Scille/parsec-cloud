@@ -7,17 +7,19 @@ from parsec._parsec import DateTime
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
-from parsec.api.data import EntryNameTooLongError, BaseManifest as BaseRemoteManifest
+from parsec.api.data import EntryNameTooLongError, AnyManifest as RemoteAnyManifest
 from parsec.core.types import (
     Chunk,
     EntryID,
     EntryName,
-    BaseLocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
     LocalFolderishManifests,
     RemoteFolderishManifests,
+    AnyLocalManifest,
+    local_manifest_from_remote,
+    local_manifest_from_remote_with_local_context,
 )
 
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
@@ -28,6 +30,7 @@ from parsec.core.fs.exceptions import (
     FSIsADirectoryError,
     FSNotADirectoryError,
 )
+
 
 __all__ = "SyncTransactions"
 
@@ -80,13 +83,13 @@ def get_conflict_filename(
 
 
 def full_name(name: EntryName, suffix: str) -> EntryName:
-    # Separate file name from the extentions (if any)
+    # Separate file name from the extensions (if any)
     name_parts = name.str.split(".")
     non_empty_indexes = (i for i, part in enumerate(name_parts) if part)
     first_non_empty_index = next(non_empty_indexes, len(name_parts) - 1)
     original_base_name = ".".join(name_parts[: first_non_empty_index + 1])
     original_extensions = name_parts[first_non_empty_index + 1 :]
-    # Loop over attemps, in case the produced entry name is too long
+    # Loop over attempts, in case the produced entry name is too long
     base_name = original_base_name
     extensions = original_extensions
     while True:
@@ -193,11 +196,11 @@ def merge_manifests(
     local_author: DeviceID,
     timestamp: DateTime,
     prevent_sync_pattern: Pattern[str],
-    local_manifest: BaseLocalManifest,
-    remote_manifest: Optional[BaseRemoteManifest] = None,
+    local_manifest: AnyLocalManifest,
+    remote_manifest: Optional[RemoteAnyManifest] = None,
     force_apply_pattern: Optional[bool] = False,
     preferred_language: str = "en",
-) -> BaseLocalManifest:
+) -> AnyLocalManifest:
     # Start by re-applying pattern (idempotent)
     if force_apply_pattern and isinstance(
         local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)
@@ -212,7 +215,7 @@ def merge_manifests(
     # Extract versions
     remote_version = remote_manifest.version
     local_version = local_manifest.base_version
-    local_from_remote = BaseLocalManifest.from_remote_with_local_context(
+    local_from_remote = local_manifest_from_remote_with_local_context(
         remote_manifest, prevent_sync_pattern, local_manifest, timestamp
     )
 
@@ -224,7 +227,7 @@ def merge_manifests(
     assert remote_version > local_version and local_manifest.need_sync
 
     # All the local changes have been successfully uploaded
-    if local_manifest.match_remote(remote_manifest):
+    if local_manifest.match_remote(remote_manifest):  # type: ignore[arg-type]
         return local_from_remote
 
     # The remote changes are ours (our current local changes occurs while
@@ -242,7 +245,7 @@ def merge_manifests(
     # changes we know about (given we are the author of it !).
     # If the speculative flag is not taken into account, we would
     # consider we have  willingly removed all entries from the remote,
-    # hence uploading a new expurged remote manifest.
+    # hence uploading a new expunged remote manifest.
     #
     # Of course removing local storage is an unlikely situation, but:
     # - it cannot be ruled out and would produce rare&exotic behavior
@@ -251,7 +254,7 @@ def merge_manifests(
     #   makes it much more likely
     speculative = isinstance(local_manifest, LocalWorkspaceManifest) and local_manifest.speculative
     if remote_manifest.author == local_author and not speculative:
-        return local_manifest.evolve(base=remote_manifest)
+        return local_manifest.evolve(base=remote_manifest)  # type: ignore[arg-type]
 
     # The remote has been updated by some other device
     assert remote_manifest.author != local_author or speculative is True
@@ -265,7 +268,7 @@ def merge_manifests(
     new_children = merge_folder_children(
         base_children=local_manifest.base.children,
         local_children=local_manifest.children,
-        remote_children=local_from_remote.children,
+        remote_children=local_from_remote.children,  # type: ignore[union-attr]
         preferred_language=preferred_language,
     )
 
@@ -287,7 +290,7 @@ def merge_manifests(
     # /!\ Extra attention should be payed here if we want to add new fields
     # /!\ with they own sync logic, as this optimization may shadow them !
 
-    if new_children == local_from_remote.children:
+    if new_children == local_from_remote.children:  # type: ignore[union-attr]
         return local_from_remote
     else:
         return local_from_remote.evolve_and_mark_updated(children=new_children, timestamp=timestamp)
@@ -309,7 +312,7 @@ class SyncTransactions(EntryTransactions):
             if child_manifest.is_placeholder:
                 yield child_entry_id
 
-    async def get_minimal_remote_manifest(self, entry_id: EntryID) -> Optional[BaseRemoteManifest]:
+    async def get_minimal_remote_manifest(self, entry_id: EntryID) -> Optional[RemoteAnyManifest]:
         manifest = await self.local_storage.get_manifest(entry_id)
         if not manifest.is_placeholder:
             return None
@@ -335,15 +338,15 @@ class SyncTransactions(EntryTransactions):
             )
 
             # Set the new base manifest
-            if new_local_manifest != local_manifest:
+            if new_local_manifest != local_manifest:  # type: ignore[operator]
                 await self.local_storage.set_manifest(entry_id, new_local_manifest)
 
     async def synchronization_step(
         self,
         entry_id: EntryID,
-        remote_manifest: Optional[BaseRemoteManifest] = None,
+        remote_manifest: Optional[RemoteAnyManifest] = None,
         final: bool = False,
-    ) -> Optional[BaseRemoteManifest]:
+    ) -> Optional[RemoteAnyManifest]:
         """Perform a synchronization step.
 
         This step is meant to be called several times until the right state is reached.
@@ -410,7 +413,7 @@ class SyncTransactions(EntryTransactions):
             new_base_version = new_local_manifest.base_version
 
             # Set the new base manifest
-            if new_local_manifest != local_manifest:
+            if new_local_manifest != local_manifest:  # type: ignore[operator]
                 await self.local_storage.set_manifest(entry_id, new_local_manifest)
 
             # Send downsynced event
@@ -431,7 +434,7 @@ class SyncTransactions(EntryTransactions):
 
     async def file_reshape(self, entry_id: EntryID) -> None:
 
-        # Loop over attemps
+        # Loop over attempts
         while True:
 
             # Fetch and lock
@@ -455,7 +458,7 @@ class SyncTransactions(EntryTransactions):
         self,
         entry_id: EntryID,
         local_manifest: Union[LocalFolderManifest, LocalFileManifest],
-        remote_manifest: BaseRemoteManifest,
+        remote_manifest: RemoteAnyManifest,
     ) -> None:
         # This is the only transaction that affects more than one manifests
         # That's because the local version of the file has to be registered in the
@@ -512,7 +515,7 @@ class SyncTransactions(EntryTransactions):
                     prevent_sync_pattern=prevent_sync_pattern,
                     timestamp=timestamp,
                 )
-                other_manifest = BaseLocalManifest.from_remote(
+                other_manifest = local_manifest_from_remote(
                     remote_manifest, prevent_sync_pattern=prevent_sync_pattern
                 )
 

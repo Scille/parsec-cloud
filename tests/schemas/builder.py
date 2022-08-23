@@ -28,7 +28,6 @@ from parsec.api.data.manifest import BaseManifest
 from parsec.api.data.message import BaseMessageContent
 
 from parsec.core.types.base import BaseLocalData
-from parsec.core.types.manifest import BaseLocalManifest
 
 
 _SERIALIZER_TO_STR = {
@@ -44,7 +43,6 @@ _BASE_DATA_CLASSES = (
     BaseAPISignedData,
     BaseLocalData,
     BaseManifest,
-    BaseLocalManifest,
     BaseMessageContent,
 )
 

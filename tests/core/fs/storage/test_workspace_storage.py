@@ -50,7 +50,7 @@ async def alice_workspace_storage(data_base_dir, alice, workspace_id):
 @customize_fixtures(real_data_storage=True)
 async def test_lock_required(alice_workspace_storage):
     manifest = create_manifest(alice_workspace_storage.device)
-    msg = f"Entry `{manifest.id}` modified without beeing locked"
+    msg = f"Entry `{manifest.id}` modified without being locked"
 
     with pytest.raises(RuntimeError) as exc:
         await alice_workspace_storage.set_manifest(manifest.id, manifest)

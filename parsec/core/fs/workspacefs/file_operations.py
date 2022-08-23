@@ -25,10 +25,10 @@ def locate_range(start: int, stop: int, blocksize: int) -> Iterator[Tuple[int, i
     start_block, _ = locate(start, blocksize)
     stop_block, _ = locate(stop - 1, blocksize)
     for block in range(start_block, stop_block + 1):
-        blockstart = block * blocksize
-        substart = max(start, blockstart)
-        substop = min(stop, blockstart + blocksize)
-        yield block, substart, substop
+        block_start = block * blocksize
+        sub_start = max(start, block_start)
+        sub_stop = min(stop, block_start + blocksize)
+        yield block, sub_start, sub_stop
 
 
 def index_of_chunk_before_start(chunks: Chunks, start: int) -> int:
@@ -148,18 +148,18 @@ def prepare_write(
         offset = manifest.size
 
     # Copy buffers
-    blocks = list(manifest.blocks)
+    blocks: list[Tuple[Chunk, ...]] = list(manifest.blocks)
 
     # Loop over blocks
-    for block, subsize, start, content_offset in split_write(size, offset, manifest.blocksize):
+    for block, sub_size, start, content_offset in split_write(size, offset, manifest.blocksize):
 
         # Prepare new chunk
-        new_chunk = Chunk.new(start, start + subsize)
+        new_chunk = Chunk.new(start, start + sub_size)
         write_operations.append((new_chunk, content_offset - padding))
 
         # Lazy block write
         chunks = manifest.get_chunks(block)
-        new_chunks, more_removed_ids = block_write(chunks, subsize, start, new_chunk)
+        new_chunks, more_removed_ids = block_write(chunks, sub_size, start, new_chunk)
 
         # Update data structures
         removed_ids |= more_removed_ids

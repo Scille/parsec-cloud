@@ -21,16 +21,16 @@ from parsec.core.types.manifest import (
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
-)
-from parsec.core.types.manifest import (
     LocalUserManifest,
-    BaseLocalManifest,
     WorkspaceEntry,
     WorkspaceRole,
     BlockAccess,
     BlockID,
     Chunk,
     ChunkID,
+    manifest_from_remote as local_manifest_from_remote,
+    manifest_from_remote_with_local_context as local_manifest_from_remote_with_local_context,
+    AnyLocalManifest,
 )
 
 from parsec.core.types.organizations import (
@@ -78,13 +78,15 @@ __all__ = (
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
     "LocalUserManifest",
-    "BaseLocalManifest",
     "WorkspaceEntry",
     "WorkspaceRole",
     "BlockAccess",
     "BlockID",
     "Chunk",
     "ChunkID",
+    "local_manifest_from_remote",
+    "local_manifest_from_remote_with_local_context",
+    "AnyLocalManifest",
     # organizations
     "OrganizationStats",
     "UsersPerProfileDetailItem",

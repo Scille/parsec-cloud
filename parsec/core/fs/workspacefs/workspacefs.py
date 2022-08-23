@@ -9,7 +9,7 @@ from parsec._parsec import DateTime
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
-from parsec.api.data import BaseManifest as BaseRemoteManifest, BlockAccess
+from parsec.api.data import AnyManifest as RemoteAnyManifest, BlockAccess
 from parsec.api.data import FileManifest as RemoteFileManifest
 from parsec.api.protocol import UserID, MaintenanceType, RealmID
 from parsec.core.types import (
@@ -224,7 +224,7 @@ class WorkspaceFS:
 
         except BackendConnectionError as exc:
             raise FSError(
-                f"Cannot retreive remote status for workspace {self.workspace_id}: {exc}"
+                f"Cannot retrieve remote status for workspace {self.workspace_id}: {exc}"
             ) from exc
 
         reencryption_already_in_progress = (
@@ -560,11 +560,11 @@ class WorkspaceFS:
         except FSLocalMissError:
             return
 
-        # No miminal manifest to upload, the entry is not a placeholder
+        # No minimal manifest to upload, the entry is not a placeholder
         if to_sync_remote_manifest is None:
             return
 
-        # Upload the miminal manifest
+        # Upload the minimal manifest
         try:
             # `actual_remote_manifest` is different from `to_sync_remote_manifest`
             # given manifest's timestamp got updated before the upload
@@ -586,7 +586,7 @@ class WorkspaceFS:
 
     async def _sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True
-    ) -> BaseRemoteManifest:
+    ) -> RemoteAnyManifest:
         """
         Synchronize the entry corresponding to a specific ID.
 
@@ -656,7 +656,7 @@ class WorkspaceFS:
 
     async def _create_realm_if_needed(self) -> None:
         workspace_manifest = self.local_storage.get_workspace_manifest()
-        # Non-placeholder means sync already occured, speculative placeholder
+        # Non-placeholder means sync already occurred, speculative placeholder
         # means the realm has been created by somebody else
         if workspace_manifest.is_placeholder and not workspace_manifest.speculative:
             # Realm creation is idempotent
@@ -681,7 +681,7 @@ class WorkspaceFS:
         except FSNoSynchronizationRequired:
             return
 
-        # A file conflict needs to be adressed first
+        # A file conflict needs to be addressed first
         except FSFileConflictError as exc:
             local_manifest, remote_manifest = exc.args
             # Only file manifest have synchronization conflict

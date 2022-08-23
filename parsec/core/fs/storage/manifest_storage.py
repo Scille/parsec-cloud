@@ -5,12 +5,22 @@ import re
 import trio
 from pathlib import Path
 from structlog import get_logger
-from typing import Dict, Tuple, Set, Optional, Union, Pattern, AsyncIterator, AsyncContextManager
+from typing import (
+    Dict,
+    Tuple,
+    Set,
+    Optional,
+    Union,
+    Pattern,
+    AsyncIterator,
+    AsyncContextManager,
+)
 from contextlib import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
-from parsec.core.types import EntryID, ChunkID, LocalDevice, BaseLocalManifest, BlockID
+from parsec.core.types import EntryID, ChunkID, LocalDevice, BlockID
 from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
+from parsec.core.types.manifest import AnyLocalManifest, local_manifest_decrypt_and_load
 
 logger = get_logger()
 
@@ -30,9 +40,9 @@ class ManifestStorage:
 
         # This cache contains all the manifests that have been set or accessed
         # since the last call to `clear_memory_cache`
-        self._cache: Dict[EntryID, BaseLocalManifest] = {}
+        self._cache: Dict[EntryID, AnyLocalManifest] = {}
 
-        # This dictionnary keeps track of all the entry ids of the manifests
+        # This dictionary keeps track of all the entry ids of the manifests
         # that have been added to the cache but still needs to be written to
         # the localdb. The corresponding value is a set with the ids of all
         # the chunks that needs to be removed from the localdb after the
@@ -205,7 +215,7 @@ class ManifestStorage:
 
     # Manifest operations
 
-    async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
+    async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         """
         Raises:
             FSLocalMissError
@@ -227,7 +237,7 @@ class ManifestStorage:
 
         # Safely fill the cache
         if entry_id not in self._cache:
-            self._cache[entry_id] = BaseLocalManifest.decrypt_and_load(
+            self._cache[entry_id] = local_manifest_decrypt_and_load(
                 manifest_row[0], key=self.device.local_symkey
             )
 
@@ -237,7 +247,7 @@ class ManifestStorage:
     async def set_manifest(
         self,
         entry_id: EntryID,
-        manifest: BaseLocalManifest,
+        manifest: AnyLocalManifest,
         cache_only: bool = False,
         removed_ids: Optional[Set[Union[ChunkID, BlockID]]] = None,
     ) -> None:
@@ -308,7 +318,7 @@ class ManifestStorage:
             await self.localdb.run_in_thread(_thread_target)
 
         # Tag entry as up-to-date only if no new manifest has been written in the meantime
-        if manifest == self._cache[entry_id]:
+        if manifest == self._cache[entry_id]:  # type: ignore[operator]
             self._cache_ahead_of_localdb.pop(entry_id)
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:

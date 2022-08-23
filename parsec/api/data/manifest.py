@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import attr
-from typing import Optional, Dict, Any, Type, TypeVar
+from typing import Optional, Dict, Any, Type, TypeVar, Union
 
 from parsec.serde import fields, validate, post_load, OneOfSchema, pre_load
 from parsec.api.protocol import RealmRoleField, DeviceID, BlockIDField
@@ -71,6 +71,12 @@ class _PyWorkspaceEntry(BaseData):
 T = TypeVar("T")
 BaseAPISignedDataTypeVar = TypeVar("BaseAPISignedDataTypeVar", bound="BaseAPISignedData")
 BaseManifestTypeVar = TypeVar("BaseManifestTypeVar", bound="BaseManifest")
+AnyManifest = Union[
+    FolderManifest,
+    FileManifest,
+    WorkspaceManifest,
+    UserManifest,
+]
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)

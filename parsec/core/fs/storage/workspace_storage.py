@@ -27,7 +27,6 @@ from parsec.core.types import (
     ChunkID,
     LocalDevice,
     FileDescriptor,
-    BaseLocalManifest,
     LocalFileManifest,
     LocalWorkspaceManifest,
 )
@@ -40,6 +39,7 @@ from parsec.core.fs.storage.version import (
     get_workspace_data_storage_db_path,
     get_workspace_cache_storage_db_path,
 )
+from parsec.core.types.manifest import AnyLocalManifest
 
 
 logger = get_logger()
@@ -67,7 +67,7 @@ async def workspace_storage_non_speculative_init(
 
 class BaseWorkspaceStorage:
     """Common base class for WorkspaceStorage and WorkspaceStorageTimestamped
-    Can not be instanciated
+    Can not be instantiated
     """
 
     def __init__(
@@ -110,13 +110,13 @@ class BaseWorkspaceStorage:
         """
         raise NotImplementedError
 
-    async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
+    async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         raise NotImplementedError
 
     async def set_manifest(
         self,
         entry_id: EntryID,
-        manifest: BaseLocalManifest,
+        manifest: AnyLocalManifest,
         cache_only: bool = False,
         check_lock_status: bool = True,
         removed_ids: Optional[Set[Union[BlockID, ChunkID]]] = None,
@@ -152,14 +152,14 @@ class BaseWorkspaceStorage:
                 del self.locking_tasks[entry_id]
 
     @asynccontextmanager
-    async def lock_manifest(self, entry_id: EntryID) -> AsyncIterator[BaseLocalManifest]:
+    async def lock_manifest(self, entry_id: EntryID) -> AsyncIterator[AnyLocalManifest]:
         async with self.lock_entry_id(entry_id):
             yield await self.get_manifest(entry_id)
 
     def _check_lock_status(self, entry_id: EntryID) -> None:
         task = self.locking_tasks.get(entry_id)
         if task != lowlevel.current_task():
-            raise RuntimeError(f"Entry `{entry_id}` modified without beeing locked")
+            raise RuntimeError(f"Entry `{entry_id}` modified without being locked")
 
     # File management interface
 
@@ -241,7 +241,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
     That includes:
     - a cache in memory for fast access to deserialized data
     - the persistent storage to keep serialized data on the disk
-    - a lock mecanism to protect against race conditions
+    - a lock mechanism to protect against race conditions
     """
 
     def __init__(
@@ -275,11 +275,11 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         # The cache database usually doesn't require vacuuming as it already has a maximum size.
         # However, vacuuming might still be necessary after a change in the configuration.
         # The cache size plus 10% seems like a reasonable configuration to avoid false positive.
-        cache_localdb_vaccuum_threshold = int(cache_size * 1.1)
+        cache_localdb_vacuum_threshold = int(cache_size * 1.1)
 
         # Local cache storage service
         async with LocalDatabase.run(
-            cache_path, vacuum_threshold=cache_localdb_vaccuum_threshold
+            cache_path, vacuum_threshold=cache_localdb_vacuum_threshold
         ) as cache_localdb:
 
             # Local data storage service
@@ -305,7 +305,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
                         # Chunk storage service
                         async with ChunkStorage.run(device, data_localdb) as chunk_storage:
 
-                            # Instanciate workspace storage
+                            # Instantiate workspace storage
                             instance = cls(
                                 device,
                                 workspace_id,
@@ -360,7 +360,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
             # of the workspace, in which case the workspacefs local db is
             # initialized with a non-speculative local manifest placeholder).
             # In such case it is easy to fall back on an empty manifest
-            # which is a good enough aproximation of the very first version
+            # which is a good enough approximation of the very first version
             # of the manifest (field `created` is invalid, but it will be
             # correction by the merge during sync).
             # This approach also guarantees the workspace root folder is always
@@ -385,14 +385,14 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         """
         return cast(LocalWorkspaceManifest, self.manifest_storage._cache[self.workspace_id])
 
-    async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
+    async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         """Raises: FSLocalMissError"""
         return await self.manifest_storage.get_manifest(entry_id)
 
     async def set_manifest(
         self,
         entry_id: EntryID,
-        manifest: BaseLocalManifest,
+        manifest: AnyLocalManifest,
         cache_only: bool = False,
         check_lock_status: bool = True,
         removed_ids: Optional[Set[Union[BlockID, ChunkID]]] = None,
@@ -447,7 +447,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
     # Vacuum
 
     async def run_vacuum(self) -> None:
-        # Only the data storage needs to get vacuuumed
+        # Only the data storage needs to get vacuumed
         await self.data_localdb.run_vacuum()
 
 
@@ -468,7 +468,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     - another cache in memory for fast access to deserialized data
     - the timestamped persistent storage to keep serialized data on the disk :
       vlobs are in common, not manifests. Actually only vlobs are used, manifests are mocked
-    - the same lock mecanism to protect against race conditions, although it is useless there
+    - the same lock mechanism to protect against race conditions, although it is useless there
     """
 
     def __init__(self, workspace_storage: BaseWorkspaceStorage, timestamp: DateTime):
@@ -479,7 +479,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
             chunk_storage=workspace_storage.chunk_storage,
         )
 
-        self._cache: Dict[EntryID, BaseLocalManifest] = {}
+        self._cache: Dict[EntryID, AnyLocalManifest] = {}
         self.workspace_storage = workspace_storage
         self.timestamp = timestamp
         self.manifest_storage = None
@@ -526,7 +526,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
         """
         return self.workspace_storage.get_workspace_manifest()
 
-    async def get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
+    async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         """Raises: FSLocalMissError"""
         assert isinstance(entry_id, EntryID)
         try:
@@ -537,7 +537,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     async def set_manifest(
         self,
         entry_id: EntryID,
-        manifest: BaseLocalManifest,
+        manifest: AnyLocalManifest,
         cache_only: bool = False,
         check_lock_status: bool = True,
         removed_ids: Optional[Set[Union[BlockID, ChunkID]]] = None,

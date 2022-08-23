@@ -168,7 +168,7 @@ class FileTransactions:
             except FSLocalMissError:
                 return None
 
-            # A parent manifest is necessarely a local folder/workspace manifest
+            # A parent manifest is necessarily a local folder/workspace manifest
             parent_manifest = cast(LocalFolderishManifests, parent_manifest)
 
             # The entry is not confined
@@ -264,7 +264,7 @@ class FileTransactions:
     async def fd_read(
         self, fd: FileDescriptor, size: int, offset: int, raise_eof: bool = False
     ) -> bytes:
-        # Loop over attemps
+        # Loop over attempts
         missing: List[BlockAccess] = []
         while True:
 

@@ -4,8 +4,9 @@ import math
 from contextlib import contextmanager
 from typing import Dict, Optional, List, Iterable, Tuple, cast, Iterator, Callable, Awaitable
 import trio
-from parsec._parsec import DateTime
 from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
+
+from parsec._parsec import DateTime
 from parsec.api.protocol.sequester import SequesterServiceID
 
 from parsec.crypto import HashDigest, CryptoError, VerifyKey
@@ -16,6 +17,7 @@ from parsec.api.data import (
     BlockAccess,
     RealmRoleCertificate,
     BaseManifest as BaseRemoteManifest,
+    AnyManifest as RemoteAnyManifest,
     UserCertificate,
     DeviceCertificate,
     RevokedUserCertificate,
@@ -239,7 +241,7 @@ class UserRemoteLoader:
                 # Make sure author had the right to do this
                 existing_user_role = current_roles.get(unsecure_certif.user_id)
                 if not current_roles and unsecure_certif.user_id == author.device_id.user_id:
-                    # First user is autosigned
+                    # First user is auto-signed
                     needed_roles: Tuple[Optional[RealmRole], ...] = (None,)
                 elif (
                     existing_user_role in owner_or_manager
@@ -269,7 +271,7 @@ class UserRemoteLoader:
         except DataError as exc:
             raise FSError(f"Invalid realm role certificates: {exc}") from exc
 
-        # Now unsecure_certifs is no longer unsecure given we have valided it items
+        # Now unsecure_certifs is no longer unsecure given we have validated its items
         return [c for c, _ in unsecure_certifs], current_roles
 
     async def load_realm_role_certificates(
@@ -535,7 +537,7 @@ class RemoteLoader(UserRemoteLoader):
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
         workspace_entry: Optional[WorkspaceEntry] = None,
-    ) -> BaseRemoteManifest:
+    ) -> RemoteAnyManifest:
         """
         Download a manifest.
 
@@ -637,14 +639,17 @@ class RemoteLoader(UserRemoteLoader):
             author = await self.remote_devices_manager.get_device(expected_author)
 
         try:
-            remote_manifest = BaseRemoteManifest.decrypt_verify_and_load(
-                rep["blob"],
-                key=workspace_entry.key,
-                author_verify_key=author.verify_key,
-                expected_author=expected_author,
-                expected_timestamp=expected_timestamp,
-                expected_version=expected_version,
-                expected_id=entry_id,
+            remote_manifest = cast(
+                RemoteAnyManifest,
+                BaseRemoteManifest.decrypt_verify_and_load(
+                    rep["blob"],
+                    key=workspace_entry.key,
+                    author_verify_key=author.verify_key,
+                    expected_author=expected_author,
+                    expected_timestamp=expected_timestamp,
+                    expected_version=expected_version,
+                    expected_id=entry_id,
+                ),
             )
         except DataError as exc:
             raise FSError(f"Cannot decrypt vlob: {exc}") from exc
@@ -675,9 +680,9 @@ class RemoteLoader(UserRemoteLoader):
     async def upload_manifest(
         self,
         entry_id: EntryID,
-        manifest: BaseRemoteManifest,
+        manifest: RemoteAnyManifest,
         timestamp_greater_than: Optional[DateTime] = None,
-    ) -> BaseRemoteManifest:
+    ) -> RemoteAnyManifest:
         """
         Raises:
             FSError
@@ -701,7 +706,7 @@ class RemoteLoader(UserRemoteLoader):
         workspace_entry = self.get_workspace_entry()
 
         if self._sequester_services_cache is None:
-            # Regular mode: we only encrypt the blob with the workspace symetric key
+            # Regular mode: we only encrypt the blob with the workspace symmetric key
             sequester_blob = None
             try:
                 ciphered = manifest.dump_sign_and_encrypt(
@@ -712,7 +717,7 @@ class RemoteLoader(UserRemoteLoader):
 
         else:
             # Sequestered organization mode: we also encrypt the blob with each
-            # sequester services' asymetric encryption key
+            # sequester services' asymmetric encryption key
             try:
                 signed = manifest.dump_and_sign(author_signkey=self.device.signing_key)
             except DataError as exc:
@@ -889,7 +894,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
         workspace_entry: Optional[WorkspaceEntry] = None,
-    ) -> BaseRemoteManifest:
+    ) -> RemoteAnyManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
         a WorkspaceFS or a WorkspaceFSTimestamped
@@ -919,9 +924,9 @@ class RemoteLoaderTimestamped(RemoteLoader):
     async def upload_manifest(
         self,
         entry_id: EntryID,
-        manifest: BaseRemoteManifest,
+        manifest: RemoteAnyManifest,
         timestamp_greater_than: Optional[DateTime] = None,
-    ) -> BaseRemoteManifest:
+    ) -> RemoteAnyManifest:
         raise FSError("Cannot upload manifest through a timestamped remote loader")
 
     async def _vlob_create(
