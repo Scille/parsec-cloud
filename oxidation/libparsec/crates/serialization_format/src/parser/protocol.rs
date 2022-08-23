@@ -268,6 +268,8 @@ impl Cmds {
 
                 pub mod #module {
                     use super::AnyCmdReq;
+                    use ::serde::de::{Deserializer, Error, IntoDeserializer};
+                    use ::serde::ser::Serializer;
 
                     #nested_types
 
@@ -285,6 +287,17 @@ impl Cmds {
                     #[serde(tag = "status")]
                     pub enum Rep {
                         #variants_rep
+                        #[serde(skip)]
+                        UnknownStatus {
+                            _status: String,
+                            reason: Option<String>,
+                        }
+                    }
+
+                    #[derive(::serde::Deserialize)]
+                    struct UnknownStatus {
+                        status: String,
+                        reason: Option<String>,
                     }
 
                     impl Rep {
@@ -293,7 +306,15 @@ impl Cmds {
                         }
 
                         pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
-                            ::rmp_serde::from_slice(buf)
+                            Ok(if let Ok(data) = ::rmp_serde::from_slice::<Self>(buf) {
+                                data
+                            } else {
+                                let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+                                Self::UnknownStatus {
+                                    _status: data.status,
+                                    reason: data.reason,
+                                }
+                            })
                         }
                     }
                 }
