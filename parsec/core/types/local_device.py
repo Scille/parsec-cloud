@@ -2,11 +2,10 @@
 
 import attr
 from typing import Optional
-from pendulum import DateTime
 
 from parsec.api.protocol import UserID, DeviceID, HumanHandle, DeviceLabel, UserProfile
 
-from parsec._parsec import LocalDevice
+from parsec._parsec import DateTime, LocalDevice
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
