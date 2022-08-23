@@ -5,8 +5,6 @@ mod conftest;
 mod error;
 mod extensions;
 pub mod file_operations;
-// TODO: Wait a fix from diesel
-#[allow(clippy::extra_unused_lifetimes)]
 mod storage;
 
 pub use error::*;
