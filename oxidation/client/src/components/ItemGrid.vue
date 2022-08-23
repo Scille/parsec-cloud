@@ -9,6 +9,7 @@
   >
     <div class="item-grid-container">
       <ion-checkbox
+        v-if="itemType==='file' || itemType==='folder'"
         class="checkbox"
         :checked="isSelected"
         :class="{ selected: isSelected, 'show-on-hover': !isSelected }"
@@ -31,10 +32,11 @@
         :class="{ 'show-on-hover': !isSelected && !isPlatform('mobile')}"
       >
         <ion-button
-          v-if="itemType==='workspace'"
+          v-if="itemType==='workspace' && !isPlatform('mobile')"
           color="dark"
           fill="clear"
           class="ion-no-margin"
+          @click="emit('trigger-share');"
         >
           <ion-icon
             :icon="shareSocial"
@@ -62,7 +64,7 @@
 <script setup lang="ts">
 import { defineProps, ref, defineEmits } from 'vue';
 import { IonButton, IonCheckbox, IonIcon, IonLabel, IonItem, isPlatform } from '@ionic/vue';
-import { folder, ellipsisVertical, shareSocial, briefcase, person, help } from 'ionicons/icons';
+import { folder, document, ellipsisVertical, shareSocial, briefcase, person, help } from 'ionicons/icons';
 
 const props = defineProps<{
   itemType: 'folder' | 'file' | 'workspace' | 'user'
@@ -73,6 +75,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (event: 'trigger-context-menu', ev: Event): void
   (event: 'trigger-action-sheet'): void
+  (event: 'trigger-share'): void
 }>();
 
 const isSelected = ref(false);
@@ -85,6 +88,8 @@ function getIconFromItemType(): string {
   switch (props.itemType) {
   case 'folder':
     return folder;
+  case 'file':
+    return document;
   case 'workspace':
     return briefcase;
   case 'user':

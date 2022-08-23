@@ -100,6 +100,15 @@
             "namePlaceholder": "Espace de travail",
             "cancel": "Annuler",
             "create": "Créer"
+        },
+        "WorkspacesShareModal": {
+            "pageTitle": "Partager l'espace de travail",
+            "reader": "Lecteur",
+            "contributor": "Contributeur",
+            "manager": "Gérant",
+            "owner": "Propriétaire",
+            "notShared": "Non partagé",
+            "inviteNewUser": "Inviter un nouvel utilisateur"
         }
     }
 }

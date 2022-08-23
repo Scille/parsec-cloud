@@ -4,12 +4,14 @@
       <ion-item
         button
         lines="none"
+        @click="onShareClick()"
       >
         <ion-label>{{ $t('WorkspacesPage.workspaceContextMenu.share') }}</ion-label>
       </ion-item>
       <ion-item
         button
         lines="none"
+        @click="onHistoryClick()"
       >
         <ion-label>{{ $t('WorkspacesPage.workspaceContextMenu.history') }}</ion-label>
       </ion-item>
@@ -18,5 +20,13 @@
 </template>
 
 <script setup lang = "ts" >
-import { IonContent, IonItem, IonLabel, IonList } from '@ionic/vue';
+import { IonContent, IonItem, IonLabel, IonList, popoverController } from '@ionic/vue';
+
+function onShareClick(): Promise<boolean> {
+  return popoverController.dismiss(null, 'share');
+}
+
+function onHistoryClick(): Promise<boolean> {
+  return popoverController.dismiss(null, 'history');
+}
 </script>

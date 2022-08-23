@@ -28,6 +28,7 @@
       fill="clear"
       size="default"
       class="action-button"
+      @click.stop="{ $emit('trigger-share'); }"
     >
       <ion-icon
         :icon="shareSocial"
@@ -71,6 +72,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (event: 'trigger-action-sheet'): void
+  (event: 'trigger-share'): void
 }>();
 
 const isSelected = ref(false);

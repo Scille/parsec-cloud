@@ -37,6 +37,7 @@
           :key="workspace.id"
           @contextmenu.prevent="openWorkspaceActionSheet()"
           @trigger-action-sheet="openWorkspaceActionSheet()"
+          @trigger-share="openWorkspaceShareModal()"
         />
       </div>
       <div
@@ -52,6 +53,7 @@
           @contextmenu.prevent="handleContextMenu($event)"
           @trigger-context-menu="openWorkspaceContextMenu($event)"
           @trigger-action-sheet="openWorkspaceActionSheet()"
+          @trigger-share="openWorkspaceShareModal()"
         />
       </div>
       <ion-fab
@@ -91,6 +93,7 @@ import ItemGrid from '@/components/ItemGrid.vue';
 import MobileItemList from '@/components/MobileItemList.vue';
 import WorkspaceContextMenu from '@/components/WorkspaceContextMenu.vue';
 import CreateWorkspaceModal from '@/components/CreateWorkspaceModal.vue';
+import WorkspaceShareModal from '@/components/WorkspaceShareModal.vue';
 import { useI18n } from 'vue-i18n';
 import { ref } from 'vue';
 
@@ -155,11 +158,17 @@ async function openWorkspaceContextMenu(ev: Event): Promise<void> {
       showBackdrop: false,
       dismissOnSelect: true,
       reference: 'event'
+      /* componentProps: {
+        dataTest: 'context menu data test'
+      } */
     });
   await popover.present();
 
   const { role } = await popover.onDidDismiss();
   console.log('onDidDismiss resolved with role', role);
+  if (role==='share') {
+    openWorkspaceShareModal();
+  }
 }
 
 async function openWorkspaceActionSheet(): Promise<void> {
@@ -171,7 +180,7 @@ async function openWorkspaceActionSheet(): Promise<void> {
           text: t('WorkspacesPage.workspaceContextMenu.share'),
           icon: shareSocial,
           handler: () :void => {
-            console.log('Share clicked');
+            openWorkspaceShareModal();
           }
         },
         {
@@ -194,6 +203,19 @@ async function openWorkspaceActionSheet(): Promise<void> {
   await actionSheet.present();
   const { role, data } = await actionSheet.onDidDismiss();
   console.log('onDidDismiss resolved with role and data: ', role, data);
+}
+
+async function openWorkspaceShareModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: WorkspaceShareModal
+  });
+  modal.present();
+
+  const { data, role } = await modal.onWillDismiss();
+
+  if (role === 'confirm') {
+    console.log(data);
+  }
 }
 </script>
 

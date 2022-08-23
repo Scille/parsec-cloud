@@ -100,6 +100,15 @@
             "namePlaceholder": "Workspace",
             "cancel": "Cancel",
             "create": "Create"
+        },
+        "WorkspacesShareModal": {
+            "pageTitle": "Share workspace",
+            "reader": "Reader",
+            "contributor": "Contributor",
+            "manager": "Manager",
+            "owner": "Owner",
+            "notShared": "Not shared",
+            "inviteNewUser": "Invite a new user"
         }
     }
 }
