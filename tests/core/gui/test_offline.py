@@ -58,7 +58,7 @@ async def test_backend_desync_notification(
         return DateTime.now().subtract(minutes=timestamp_shift_minutes)
 
     monkeypatch.setattr("parsec.api.protocol.BaseClientHandshake.timestamp", _timestamp)
-    monkeypatch.setattr("parsec.core.types.local_device.LocalDevice.timestamp", _timestamp)
+    monkeypatch.setattr("parsec.core.types.LocalDevice.timestamp", _timestamp)
 
     def _online():
         assert central_widget.menu.label_connection_state.text() == translate(

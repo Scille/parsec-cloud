@@ -27,7 +27,7 @@ def alice_user_info(alice):
         human_handle=alice.human_handle,
         profile=alice.profile,
         revoked_on=None,
-        created_on=None,
+        created_on=DateTime.now(),
     )
 
 
@@ -38,7 +38,7 @@ def bob_user_info(bob):
         human_handle=bob.human_handle,
         profile=bob.profile,
         revoked_on=None,
-        created_on=None,
+        created_on=DateTime.now(),
     )
 
 

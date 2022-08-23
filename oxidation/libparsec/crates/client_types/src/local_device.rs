@@ -203,7 +203,7 @@ impl From<LocalDevice> for LocalDeviceData {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Hash)]
 pub struct UserInfo {
     pub user_id: UserID,
     pub human_handle: Option<HumanHandle>,
@@ -243,6 +243,7 @@ impl std::fmt::Debug for UserInfo {
     }
 }
 
+#[derive(Clone, PartialEq, Eq, PartialOrd, Hash)]
 pub struct DeviceInfo {
     pub device_id: DeviceID,
     pub device_label: Option<DeviceLabel>,

@@ -67,7 +67,7 @@ from parsec._parsec_pyi.time import (
 
 from parsec._parsec_pyi.trustchain import TrustchainContext
 
-from parsec._parsec_pyi.local_device import LocalDevice
+from parsec._parsec_pyi.local_device import LocalDevice, UserInfo, DeviceInfo
 
 __all__ = [
     # Certif
@@ -127,4 +127,6 @@ __all__ = [
     "TrustchainContext",
     # Local Device
     "LocalDevice",
+    "UserInfo",
+    "DeviceInfo",
 ]
