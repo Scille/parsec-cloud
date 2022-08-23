@@ -1,3 +1,5 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS -->
+
 <template>
   <ion-header>
     <ion-toolbar>
@@ -35,7 +37,6 @@
     />
   </ion-header>
   <ion-content class="ion-padding">
-    test: {{ searchUsertInput }}
     <WorkspaceShareModalUserItem
       v-for="user in filteredUsers"
       :name="user.name"
@@ -145,8 +146,8 @@ function goToInvitationPage(): void {
 const filteredUsers = computed(() => {
   let tempUsersExampleData = usersExampleData;
   if (searchUsertInput.value !== '' && searchUsertInput.value) {
-    tempUsersExampleData=tempUsersExampleData.filter((item) => {
-      return item.name
+    tempUsersExampleData=tempUsersExampleData.filter((user) => {
+      return user.name
         .toLowerCase()
         .includes(searchUsertInput.value.toLowerCase());
     });
