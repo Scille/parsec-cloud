@@ -15,7 +15,6 @@ from parsec.core.types.backend_address import (
     BackendPkiEnrollmentAddr,
     BackendAddrType,
 )
-from parsec.core.types.local_device import UserInfo, DeviceInfo, LocalDevice
 from parsec.core.types.manifest import (
     DEFAULT_BLOCK_SIZE,
     LocalFileManifest,
@@ -41,6 +40,8 @@ from parsec.core.types.organizations import (
 
 from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
 from parsec.api.data import FolderManifest as RemoteFolderManifest
+
+from parsec._parsec import LocalDevice, UserInfo, DeviceInfo
 
 FileDescriptor = NewType("FileDescriptor", int)
 LocalFolderishManifests = Union[LocalFolderManifest, LocalWorkspaceManifest]

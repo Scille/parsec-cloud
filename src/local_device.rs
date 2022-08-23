@@ -6,6 +6,10 @@ use pyo3::{
     pyclass::CompareOp,
     types::{PyBytes, PyDict, PyType},
 };
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
 
 use crate::{
     addrs::BackendOrganizationAddr,
@@ -16,7 +20,7 @@ use crate::{
 };
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct LocalDevice(pub libparsec::client_types::LocalDevice);
 
 #[pymethods]
@@ -116,8 +120,8 @@ impl LocalDevice {
 
     fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
         match op {
-            CompareOp::Eq => self == other,
-            CompareOp::Ne => self != other,
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
             _ => unimplemented!(),
         }
     }
@@ -273,5 +277,164 @@ impl LocalDevice {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct UserInfo(pub libparsec::client_types::UserInfo);
+
+#[pymethods]
+impl UserInfo {
+    #[new]
+    #[args(py_kwargs = "**")]
+    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [user_id: UserID, "user_id"],
+            [human_handle: Option<HumanHandle>, "human_handle"],
+            [profile, "profile", py_to_rs_user_profile],
+            [created_on: DateTime, "created_on"],
+            [revoked_on: Option<DateTime>, "revoked_on"],
+        );
+
+        Ok(Self(libparsec::client_types::UserInfo {
+            user_id: user_id.0,
+            human_handle: human_handle.map(|x| x.0),
+            profile,
+            created_on: created_on.0,
+            revoked_on: revoked_on.map(|x| x.0),
+        }))
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
+        match op {
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            CompareOp::Lt => self.0 < other.0,
+            CompareOp::Gt => self.0 > other.0,
+            CompareOp::Le => self.0 <= other.0,
+            CompareOp::Ge => self.0 >= other.0,
+        }
+    }
+
+    fn __hash__(&self) -> PyResult<u64> {
+        let mut s = DefaultHasher::new();
+        self.0.hash(&mut s);
+        Ok(s.finish())
+    }
+
+    #[getter]
+    fn user_id(&self) -> PyResult<UserID> {
+        Ok(UserID(self.0.user_id.clone()))
+    }
+
+    #[getter]
+    fn human_handle(&self) -> PyResult<Option<HumanHandle>> {
+        Ok(self.0.human_handle.as_ref().map(|x| HumanHandle(x.clone())))
+    }
+
+    #[getter]
+    fn profile(&self) -> PyResult<PyObject> {
+        rs_to_py_user_profile(&self.0.profile)
+    }
+
+    #[getter]
+    fn created_on(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.created_on))
+    }
+
+    #[getter]
+    fn revoked_on(&self) -> PyResult<Option<DateTime>> {
+        Ok(self.0.revoked_on.map(DateTime))
+    }
+
+    #[getter]
+    fn user_display(&self) -> PyResult<String> {
+        Ok(self.0.user_display())
+    }
+
+    #[getter]
+    fn short_user_display(&self) -> PyResult<String> {
+        Ok(self.0.short_user_display())
+    }
+
+    #[getter]
+    fn is_revoked(&self) -> PyResult<bool> {
+        Ok(self.0.is_revoked())
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct DeviceInfo(pub libparsec::client_types::DeviceInfo);
+
+#[pymethods]
+impl DeviceInfo {
+    #[new]
+    #[args(py_kwargs = "**")]
+    pub fn new(py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+        crate::binding_utils::parse_kwargs!(
+            py_kwargs,
+            [device_id: DeviceID, "device_id"],
+            [device_label: Option<DeviceLabel>, "device_label"],
+            [created_on: DateTime, "created_on"],
+        );
+
+        Ok(Self(libparsec::client_types::DeviceInfo {
+            device_id: device_id.0,
+            device_label: device_label.map(|x| x.0),
+            created_on: created_on.0,
+        }))
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
+        match op {
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            CompareOp::Lt => self.0 < other.0,
+            CompareOp::Gt => self.0 > other.0,
+            CompareOp::Le => self.0 <= other.0,
+            CompareOp::Ge => self.0 >= other.0,
+        }
+    }
+
+    fn __hash__(&self) -> PyResult<u64> {
+        let mut s = DefaultHasher::new();
+        self.0.hash(&mut s);
+        Ok(s.finish())
+    }
+
+    #[getter]
+    fn device_id(&self) -> PyResult<DeviceID> {
+        Ok(DeviceID(self.0.device_id.clone()))
+    }
+
+    #[getter]
+    fn device_label(&self) -> PyResult<Option<DeviceLabel>> {
+        Ok(self.0.device_label.as_ref().map(|x| DeviceLabel(x.clone())))
+    }
+
+    #[getter]
+    fn created_on(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.created_on))
+    }
+
+    #[getter]
+    fn device_name(&self) -> PyResult<DeviceName> {
+        Ok(DeviceName(self.0.device_name().clone()))
+    }
+
+    #[getter]
+    fn device_display(&self) -> PyResult<String> {
+        Ok(self.0.device_display())
     }
 }
