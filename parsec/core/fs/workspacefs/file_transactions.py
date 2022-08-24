@@ -4,6 +4,7 @@ from parsec.core.core_events import CoreEvent
 from typing import Tuple, List, Callable, Dict, Optional, cast, AsyncIterator
 from collections import defaultdict
 from contextlib import asynccontextmanager
+from parsec.core.fs.storage.workspace_storage import AnyWorkspaceStorage
 
 from parsec.event_bus import EventBus
 from parsec.api.data import BlockAccess
@@ -78,7 +79,7 @@ class FileTransactions:
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
         device: LocalDevice,
-        local_storage: BaseWorkspaceStorage,
+        local_storage: AnyWorkspaceStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
         preferred_language: str,

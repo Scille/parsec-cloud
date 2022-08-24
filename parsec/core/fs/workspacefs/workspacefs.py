@@ -4,8 +4,10 @@ import attr
 import trio
 from collections import defaultdict
 from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
+
 from parsec._parsec import DateTime
 
+from parsec.core.fs.storage.workspace_storage import AnyWorkspaceStorage
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
@@ -54,7 +56,6 @@ from parsec.core.fs.exceptions import (
     FSError,
 )
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
-from parsec.core.fs.storage import BaseWorkspaceStorage
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -75,7 +76,7 @@ class WorkspaceFS:
         get_workspace_entry: Callable[[], WorkspaceEntry],
         get_previous_workspace_entry: Callable[[], Awaitable[Optional[WorkspaceEntry]]],
         device: LocalDevice,
-        local_storage: BaseWorkspaceStorage,
+        local_storage: AnyWorkspaceStorage,
         backend_cmds: BackendAuthenticatedCmds,
         event_bus: EventBus,
         remote_devices_manager: RemoteDevicesManager,

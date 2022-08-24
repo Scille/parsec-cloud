@@ -4,22 +4,24 @@ from pathlib import Path
 from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
-    cast,
     Dict,
-    Tuple,
     Set,
     Optional,
     AsyncIterator,
     NoReturn,
     Pattern,
     List,
+    Tuple,
+    Type,
+    Union,
 )
 import trio
 from trio import lowlevel
-from parsec._parsec import DateTime
 from structlog import get_logger
 from contextlib import asynccontextmanager
 
+from parsec._parsec import DateTime
+from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 from parsec.core.types import (
     EntryID,
     BlockID,
@@ -29,21 +31,29 @@ from parsec.core.types import (
     LocalFileManifest,
     LocalWorkspaceManifest,
 )
-from parsec.core.config import DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE
 from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
-from parsec.core.fs.storage.chunk_storage import ChunkStorage, BlockStorage
+from parsec.core.fs.storage.chunk_storage import ChunkStorage
 from parsec.core.fs.storage.version import (
     get_workspace_data_storage_db_path,
-    get_workspace_cache_storage_db_path,
 )
 from parsec.core.types.manifest import AnyLocalManifest
+from parsec._parsec import WorkspaceStorage as _SyncWorkspaceStorage
 
 
 logger = get_logger()
 
+if TYPE_CHECKING:
+    from parsec._parsec import PseudoFileDescriptor
+else:
+    PseudoFileDescriptor = Type["PseudoFileDescriptor"]
+
 DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024
+
+AnyWorkspaceStorage = Union["WorkspaceStorage", "WorkspaceStorageTimestamped"]
+
+__all__ = ["WorkspaceStorage", "AnyWorkspaceStorage", "PseudoFileDescriptor"]
 
 
 async def workspace_storage_non_speculative_init(
@@ -234,29 +244,33 @@ class BaseWorkspaceStorage:
         return WorkspaceStorageTimestamped(self, timestamp)
 
 
-class WorkspaceStorage(BaseWorkspaceStorage):
-    """Manage the access to the local storage.
-
-    That includes:
-    - a cache in memory for fast access to deserialized data
-    - the persistent storage to keep serialized data on the disk
-    - a lock mechanism to protect against race conditions
-    """
-
+class WorkspaceStorage:
     def __init__(
         self,
+        data_base_dir: Path,
         device: LocalDevice,
         workspace_id: EntryID,
-        data_localdb: LocalDatabase,
-        cache_localdb: LocalDatabase,
-        block_storage: ChunkStorage,
-        chunk_storage: ChunkStorage,
-        manifest_storage: ManifestStorage,
+        cache_size: int,
+        data_vacuum_threshold: Optional[int] = None,
     ):
-        super().__init__(device, workspace_id, block_storage, chunk_storage)
-        self.data_localdb = data_localdb
-        self.cache_localdb = cache_localdb
-        self.manifest_storage = manifest_storage
+        self.sync_instance = _SyncWorkspaceStorage(
+            data_base_dir,
+            device,
+            workspace_id,
+            cache_size,
+            data_vacuum_threshold,
+        )
+        # Locking structures
+        self.locking_tasks: Dict[EntryID, trio.lowlevel.Task] = {}
+        self.entry_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
+
+    @property
+    def device(self) -> LocalDevice:
+        return self.sync_instance.device
+
+    @property
+    def workspace_id(self) -> EntryID:
+        return self.sync_instance.workspace_id
 
     @classmethod
     @asynccontextmanager
@@ -266,127 +280,119 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         device: LocalDevice,
         workspace_id: EntryID,
         cache_size: int = DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE,
-        data_vacuum_threshold: int = DEFAULT_CHUNK_VACUUM_THRESHOLD,
+        data_vacuum_threshold: Optional[int] = None,
     ) -> AsyncIterator["WorkspaceStorage"]:
-        data_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
-        cache_path = get_workspace_cache_storage_db_path(data_base_dir, device, workspace_id)
-
-        # The cache database usually doesn't require vacuuming as it already has a maximum size.
-        # However, vacuuming might still be necessary after a change in the configuration.
-        # The cache size plus 10% seems like a reasonable configuration to avoid false positive.
-        cache_localdb_vacuum_threshold = int(cache_size * 1.1)
-
-        # Local cache storage service
-        async with LocalDatabase.run(
-            cache_path, vacuum_threshold=cache_localdb_vacuum_threshold
-        ) as cache_localdb:
-
-            # Local data storage service
-            async with LocalDatabase.run(
-                data_path, vacuum_threshold=data_vacuum_threshold
-            ) as data_localdb:
-
-                # Block storage service
-                async with BlockStorage.run(
-                    device, cache_localdb, cache_size=cache_size
-                ) as block_storage:
-
-                    # Clean up block storage and run vacuum if necessary
-                    # (e.g after changing the cache size)
-                    await block_storage.cleanup()
-                    await cache_localdb.run_vacuum()
-
-                    # Manifest storage service
-                    async with ManifestStorage.run(
-                        device, data_localdb, workspace_id
-                    ) as manifest_storage:
-
-                        # Chunk storage service
-                        async with ChunkStorage.run(device, data_localdb) as chunk_storage:
-
-                            # Instantiate workspace storage
-                            instance = cls(
-                                device,
-                                workspace_id,
-                                data_localdb=data_localdb,
-                                cache_localdb=cache_localdb,
-                                block_storage=block_storage,
-                                chunk_storage=chunk_storage,
-                                manifest_storage=manifest_storage,
-                            )
-
-                            # Populate the cache with the workspace manifest to be able to
-                            # access it synchronously at all time
-                            await instance._load_workspace_manifest()
-                            assert instance.workspace_id in instance.manifest_storage._cache
-
-                            # Load "prevent sync" pattern
-                            await instance._load_prevent_sync_pattern()
-
-                            # Yield point
-                            yield instance
+        instance = cls(
+            data_base_dir,
+            device,
+            workspace_id,
+            cache_size,
+            data_vacuum_threshold,
+        )
+        try:
+            yield instance
+        finally:
+            instance.sync_instance.clear_memory_cache(flush=True)
 
     # Helpers
 
     async def clear_memory_cache(self, flush: bool = True) -> None:
-        await self.manifest_storage.clear_memory_cache(flush=flush)
+        return await trio.to_thread.run_sync(self.sync_instance.clear_memory_cache, flush)
 
-    # Checkpoint interface
+    # Locking helpers
 
-    async def get_realm_checkpoint(self) -> int:
-        return await self.manifest_storage.get_realm_checkpoint()
+    @asynccontextmanager
+    async def lock_entry_id(self, entry_id: EntryID) -> AsyncIterator[EntryID]:
+        async with self.entry_locks[entry_id]:
+            try:
+                self.locking_tasks[entry_id] = trio.lowlevel.current_task()
+                yield entry_id
+            finally:
+                del self.locking_tasks[entry_id]
 
-    async def update_realm_checkpoint(
-        self, new_checkpoint: int, changed_vlobs: Dict[EntryID, int]
-    ) -> None:
+    @asynccontextmanager
+    async def lock_manifest(self, entry_id: EntryID) -> AsyncIterator[AnyLocalManifest]:
+        async with self.lock_entry_id(entry_id):
+            yield await self.get_manifest(entry_id)
+
+    def _check_lock_status(self, entry_id: EntryID) -> None:
+        task = self.locking_tasks.get(entry_id)
+        if task != trio.lowlevel.current_task():
+            raise RuntimeError(f"Entry `{entry_id}` modified without being locked")
+
+    # File management interface
+
+    def create_file_descriptor(self, manifest: LocalFileManifest) -> FileDescriptor:
+        return cast(FileDescriptor, self.sync_instance.create_file_descriptor(manifest))
+
+    async def load_file_descriptor(self, fd: PseudoFileDescriptor) -> LocalFileManifest:
+        return await trio.to_thread.run_sync(self.sync_instance.load_file_descriptor, fd)
+
+    def remove_file_descriptor(self, fd: int) -> None:
+        return self.sync_instance.remove_file_descriptor(fd)
+
+    # Block interface
+
+    async def set_clean_block(self, block_id: BlockID, blocks: bytes) -> None:
+        return await trio.to_thread.run_sync(self.sync_instance.set_clean_block, block_id, blocks)
+
+    async def clear_clean_block(self, block_id: BlockID) -> None:
+        return await trio.to_thread.run_sync(self.sync_instance.clear_clean_block, block_id)
+
+    async def get_dirty_block(self, block_id: BlockID) -> bytes:
+        return await trio.to_thread.run_sync(self.sync_instance.get_dirty_block, block_id)
+
+    # Chunk interface
+
+    async def get_chunk(self, chunk_id: ChunkID) -> bytes:
+        return await trio.to_thread.run_sync(self.sync_instance.get_chunk, chunk_id)
+
+    async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> None:
+        return await trio.to_thread.run_sync(self.sync_instance.set_chunk, chunk_id, block)
+
+    async def clear_chunk(self, chunk_id: ChunkID, miss_ok: bool = False) -> None:
+        return await trio.to_thread.run_sync(self.sync_instance.clear_chunk, chunk_id, miss_ok)
+
+    # "Prevent sync" pattern interface
+
+    def get_prevent_sync_pattern(self) -> Pattern[str]:
+        return self.sync_instance.get_prevent_sync_pattern()
+
+    def get_prevent_sync_pattern_fully_applied(self) -> bool:
+        return self.sync_instance.get_prevent_sync_pattern_fully_applied()
+
+    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
+        """Set the "prevent sync" pattern for the corresponding workspace
+
+        This operation is idempotent,
+        i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
         """
-        Raises: Nothing !
-        """
-        await self.manifest_storage.update_realm_checkpoint(new_checkpoint, changed_vlobs)
+        return await trio.to_thread.run_sync(self.sync_instance.set_prevent_sync_pattern, pattern)
 
-    async def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
-        return await self.manifest_storage.get_need_sync_entries()
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
+        """Mark the provided pattern as fully applied.
+
+        This is meant to be called after one made sure that all the manifests in the
+        workspace are compliant with the new pattern. The applied pattern is provided
+        as an argument in order to avoid concurrency issues.
+        """
+        return await trio.to_thread.run_sync(
+            self.sync_instance.mark_prevent_sync_pattern_fully_applied, pattern
+        )
+
+    async def get_local_chunk_ids(self, chunk_ids: List[ChunkID]) -> Tuple[ChunkID, ...]:
+        return await trio.to_thread.run_sync(self.sync_instance.get_local_chunk_ids, chunk_ids)
+
+    async def get_local_block_ids(self, chunk_ids: List[ChunkID]) -> Tuple[ChunkID, ...]:
+        return await trio.to_thread.run_sync(self.sync_instance.get_local_block_ids, chunk_ids)
 
     # Manifest interface
 
-    async def _load_workspace_manifest(self) -> None:
-        try:
-            await self.manifest_storage.get_manifest(self.workspace_id)
-
-        except FSLocalMissError:
-            # It is possible to lack the workspace manifest in local if our
-            # device hasn't tried to access it yet (and we are not the creator
-            # of the workspace, in which case the workspacefs local db is
-            # initialized with a non-speculative local manifest placeholder).
-            # In such case it is easy to fall back on an empty manifest
-            # which is a good enough approximation of the very first version
-            # of the manifest (field `created` is invalid, but it will be
-            # correction by the merge during sync).
-            # This approach also guarantees the workspace root folder is always
-            # consistent (ls/touch/mkdir always works on it), which is not the
-            # case for the others files and folders (as their access may
-            # require communication with the backend).
-            # This is especially important when the workspace is accessed from
-            # file system mountpoint given having a weird error popup when clicking
-            # on the mountpoint from the file explorer really feel like a bug :/
-            timestamp = self.device.timestamp()
-            manifest = LocalWorkspaceManifest.new_placeholder(
-                author=self.device.device_id,
-                id=self.workspace_id,
-                timestamp=timestamp,
-                speculative=True,
-            )
-            await self.manifest_storage.set_manifest(self.workspace_id, manifest)
-
     def get_workspace_manifest(self) -> LocalWorkspaceManifest:
-        """
-        Raises nothing, workspace manifest is guaranteed to be always available
-        """
-        return cast(LocalWorkspaceManifest, self.manifest_storage._cache[self.workspace_id])
+        return self.sync_instance.get_workspace_manifest()
 
     async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
-        """Raises: FSLocalMissError"""
-        return await self.manifest_storage.get_manifest(entry_id)
+        return await trio.to_thread.run_sync(self.sync_instance.get_manifest, entry_id)
 
     async def set_manifest(
         self,
@@ -398,66 +404,43 @@ class WorkspaceStorage(BaseWorkspaceStorage):
     ) -> None:
         if check_lock_status:
             self._check_lock_status(entry_id)
-        await self.manifest_storage.set_manifest(
-            entry_id, manifest, cache_only=cache_only, removed_ids=removed_ids
+        await trio.to_thread.run_sync(
+            self.sync_instance.set_manifest, entry_id, manifest, cache_only, removed_ids
         )
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         self._check_lock_status(entry_id)
-        await self.manifest_storage.ensure_manifest_persistent(entry_id)
+        await trio.to_thread.run_sync(self.sync_instance.ensure_manifest_persistent, entry_id)
 
     async def clear_manifest(self, entry_id: EntryID) -> None:
         self._check_lock_status(entry_id)
-        await self.manifest_storage.clear_manifest(entry_id)
+        await trio.to_thread.run_sync(self.sync_instance.clear_manifest, entry_id)
 
-    # "Prevent sync" pattern interface
+    # Checkpoint interface
 
-    async def _load_prevent_sync_pattern(self) -> None:
-        (
-            self._prevent_sync_pattern,
-            self._prevent_sync_pattern_fully_applied,
-        ) = await self.manifest_storage.get_prevent_sync_pattern()
+    async def get_realm_checkpoint(self) -> int:
+        return await trio.to_thread.run_sync(self.sync_instance.get_realm_checkpoint)
 
-    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
-        """Set the "prevent sync" pattern for the corresponding workspace
+    async def update_realm_checkpoint(
+        self, new_checkpoint: int, change_vlobs: Dict[EntryID, int]
+    ) -> None:
+        return await trio.to_thread.run_sync(
+            self.sync_instance.update_realm_checkpoint, new_checkpoint, change_vlobs
+        )
 
-        This operation is idempotent,
-        i.e it does not reset the `fully_applied` flag if the pattern hasn't changed.
-        """
-        await self.manifest_storage.set_prevent_sync_pattern(pattern)
-        await self._load_prevent_sync_pattern()
+    async def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
+        return await trio.to_thread.run_sync(self.sync_instance.get_need_sync_entries)
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
-        """Mark the provided pattern as fully applied.
-
-        This is meant to be called after one made sure that all the manifests in the
-        workspace are compliant with the new pattern. The applied pattern is provided
-        as an argument in order to avoid concurrency issues.
-        """
-        await self.manifest_storage.mark_prevent_sync_pattern_fully_applied(pattern)
-        await self._load_prevent_sync_pattern()
-
-    async def get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
-        return await self.chunk_storage.get_local_chunk_ids(chunk_id)
-
-    async def get_local_block_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
-        return await self.block_storage.get_local_chunk_ids(chunk_id)
-
-    # Vacuum
+    async def get_local_chunk_ids(self, chunk_ids: List[ChunkID]) -> Tuple[ChunkID, ...]:
+        return await trio.to_thread.run_sync(self.sync_instance.get_local_chunk_ids, chunk_ids)
 
     async def run_vacuum(self) -> None:
-        # Only the data storage needs to get vacuumed
-        await self.data_localdb.run_vacuum()
+        return await trio.to_thread.run_sync(self.sync_instance.run_vacuum)
 
+    # Timestamped workspace
 
-_PyWorkspaceStorage = WorkspaceStorage
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import WorkspaceStorage as _RsWorkspaceStorage
-    except:
-        pass
-    else:
-        WorkspaceStorage = _RsWorkspaceStorage
+    def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
+        raise NotImplementedError()
 
 
 class WorkspaceStorageTimestamped(BaseWorkspaceStorage):

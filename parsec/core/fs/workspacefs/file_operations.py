@@ -3,14 +3,14 @@
 # Imports
 
 import bisect
-from typing import Tuple, List, Set, Iterator, Union, Sequence
+from typing import Tuple, List, Set, Iterator, Sequence
 from parsec._parsec import DateTime, prepare_read, prepare_write, prepare_resize, prepare_reshape
 
-from parsec.core.types import BlockID, LocalFileManifest, Chunk, ChunkID
+from parsec.core.types import LocalFileManifest, Chunk, ChunkID
 
 
 Chunks = Tuple[Chunk, ...]
-ChunkIDSet = Set[Union[ChunkID, BlockID]]
+ChunkIDSet = Set[ChunkID]
 WriteOperationList = List[Tuple[Chunk, int]]
 
 __all__ = [

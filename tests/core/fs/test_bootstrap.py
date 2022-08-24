@@ -34,6 +34,7 @@ async def test_user_manifest_access_while_speculative(user_fs_factory, alice):
     }
 
 
+@pytest.mark.xfail(reason="With rust impl: `manifest_storage.path` isn't accessible to python")
 @pytest.mark.trio
 async def test_workspace_manifest_access_while_speculative(
     user_fs_factory: UserFsFactory,

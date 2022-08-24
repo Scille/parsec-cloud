@@ -195,7 +195,7 @@ async def test_chunk_clearing(
             await aws.get_chunk(chunk2.id)
 
         # Idempotency
-        await aws.manifest_storage._ensure_manifest_persistent(manifest.id)
+        await aws.ensure_manifest_persistent(manifest.id)
 
 
 @pytest.mark.trio
@@ -360,6 +360,7 @@ async def test_lock_manifest(data_base_dir, alice, workspace_id):
             assert await aws.get_manifest(manifest.id) == m2
 
 
+@pytest.mark.xfail(reason="With rust impl: `block_storage` isn't accessible to python")
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
 async def test_block_interface(alice_workspace_storage: WorkspaceStorage):
@@ -390,6 +391,7 @@ async def test_block_interface(alice_workspace_storage: WorkspaceStorage):
     assert await aws.get_dirty_block(block_id) == data
 
 
+@pytest.mark.xfail(reason="With rust impl: `chunk_storage` isn't accessible to python")
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
 async def test_chunk_interface(alice_workspace_storage: WorkspaceStorage):
@@ -431,7 +433,7 @@ async def test_chunk_many(alice_workspace_storage: WorkspaceStorage):
     for i in range(chunks_number):
         c = Chunk.new(0, 7)
         chunks.append(c.id)
-        await aws.chunk_storage.set_chunk(c.id, data)
+        await aws.set_chunk(c.id, data)
     assert len(chunks) == chunks_number
     ret = await aws.get_local_chunk_ids(chunks)
     for i in range(len(ret)):
@@ -474,9 +476,6 @@ async def test_timestamped_storage(alice_workspace_storage: WorkspaceStorage):
     assert taws.timestamp == timestamp
     assert taws.device == aws.device
     assert taws.workspace_id == aws.workspace_id
-    assert taws.manifest_storage is None
-    assert taws.block_storage == aws.block_storage
-    assert taws.chunk_storage == aws.chunk_storage
 
     with pytest.raises(FSError):
         await taws.set_chunk("chunk id", "data")
@@ -515,6 +514,7 @@ async def test_timestamped_storage(alice_workspace_storage: WorkspaceStorage):
     await taws.ensure_manifest_persistent(manifest.id)
 
 
+@pytest.mark.xfail(reason="With rust impl: data_localdb isn't accessible to python")
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
 async def test_vacuum(data_base_dir, alice, workspace_id):
@@ -559,6 +559,7 @@ async def test_vacuum(data_base_dir, alice, workspace_id):
     assert await aws.data_localdb.get_disk_usage() < data_size
 
 
+@pytest.mark.xfail(reason="With rust impl: block_storage isn't accessible to python")
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
 async def test_garbage_collection(data_base_dir, alice, workspace_id):
@@ -583,6 +584,9 @@ async def test_garbage_collection(data_base_dir, alice, workspace_id):
         assert await aws.block_storage.get_nb_blocks() == 0
 
 
+@pytest.mark.xfail(
+    reason="With rust impl: manifest_storage, chunk_storage and block_storage aren't accessible to python"
+)
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
 async def test_storage_file_tree(data_base_dir, alice, workspace_id):
