@@ -33,7 +33,7 @@ pub enum DataError {
     #[error("Invalid timestamp: expected `{expected}`, got `{got}`")]
     UnexpectedTimestamp { expected: DateTime, got: DateTime },
 
-    #[error("Invalid id: expected `{expected}`, got `{got}`")]
+    #[error("Invalid entry ID: expected `{expected}`, got `{got}`")]
     UnexpectedId { expected: EntryID, got: EntryID },
 
     #[error("Invalid version: expected `{expected}`, got `{got}`")]
