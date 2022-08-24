@@ -93,4 +93,3 @@ msgstr "Simple à auto-héberger."
 #~ msgstr ""
 #~ "Cas d'usage de Parsec avec un seul"
 #~ " serveur contenant plusieurs organisations"
-

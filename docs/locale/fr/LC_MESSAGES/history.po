@@ -2376,4 +2376,3 @@ msgstr ""
 #: ../../../HISTORY.rst:1298
 msgid "First stable release"
 msgstr ""
-

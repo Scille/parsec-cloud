@@ -72,4 +72,3 @@ msgid ""
 "The main documentation for the site is organized into the following "
 "sections:"
 msgstr "La documentation principale du site est organisée en plusieurs sections :"
-
