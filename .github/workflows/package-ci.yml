@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/package-ci.yml
+      - packaging
   push:
     branches:
       - master
