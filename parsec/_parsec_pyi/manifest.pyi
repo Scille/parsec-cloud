@@ -128,6 +128,8 @@ class FolderManifest:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
+        expected_id: Optional[EntryID] = None,
+        expected_version: Optional[int] = None,
     ) -> FolderManifest: ...
 
 class FileManifest:
@@ -178,6 +180,8 @@ class FileManifest:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
+        expected_id: Optional[EntryID] = None,
+        expected_version: Optional[int] = None,
     ) -> FileManifest: ...
 
 class WorkspaceManifest:
@@ -219,6 +223,8 @@ class WorkspaceManifest:
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
+        expected_id: Optional[EntryID] = None,
+        expected_version: Optional[int] = None,
     ) -> WorkspaceManifest: ...
 
 class UserManifest:
@@ -261,10 +267,10 @@ class UserManifest:
         encrypted: bytes,
         key: SecretKey,
         author_verify_key: VerifyKey,
-        expected_id: Optional[EntryID],
-        expected_version: Optional[int],
         expected_author: DeviceID,
         expected_timestamp: DateTime,
+        expected_id: Optional[EntryID] = None,
+        expected_version: Optional[int] = None,
     ) -> UserManifest: ...
     def get_workspace_entry(self, workspace_id: EntryID) -> Optional[WorkspaceEntry]: ...
 

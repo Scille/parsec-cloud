@@ -51,6 +51,8 @@ macro_rules! impl_manifest_dump_load {
                 author_verify_key: &VerifyKey,
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
+                expected_id: Option<EntryID>,
+                expected_version: Option<u32>,
             ) -> Result<Self, DataError> {
                 let signed = key.decrypt(encrypted)?;
 
@@ -59,6 +61,8 @@ macro_rules! impl_manifest_dump_load {
                     author_verify_key,
                     expected_author,
                     expected_timestamp,
+                    expected_id,
+                    expected_version,
                 )
             }
 
@@ -69,6 +73,8 @@ macro_rules! impl_manifest_dump_load {
                 author_verify_key: &VerifyKey,
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
+                expected_id: Option<EntryID>,
+                expected_version: Option<u32>,
             ) -> Result<Self, DataError> {
                 let compressed = author_verify_key.verify(&signed)?;
                 let mut serialized = vec![];
@@ -80,7 +86,12 @@ macro_rules! impl_manifest_dump_load {
                 let obj = rmp_serde::from_slice::<Self>(&serialized)
                     .map_err(|_| DataError::Serialization)?;
 
-                obj.verify(expected_author, expected_timestamp, None, None)?;
+                obj.verify(
+                    expected_author,
+                    expected_timestamp,
+                    expected_id,
+                    expected_version,
+                )?;
                 Ok(obj)
             }
 

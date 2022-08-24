@@ -101,6 +101,8 @@ fn serde_file_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
 
@@ -115,6 +117,8 @@ fn serde_file_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(manifest2, expected);
@@ -156,6 +160,8 @@ fn serde_file_manifest_invalid_blocksize(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     );
 
     assert!(manifest.is_err());
@@ -219,6 +225,8 @@ fn serde_folder_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
 
@@ -233,6 +241,8 @@ fn serde_folder_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(manifest2, expected);
@@ -293,6 +303,8 @@ fn serde_workspace_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
 
@@ -307,6 +319,8 @@ fn serde_workspace_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(manifest2, expected);
@@ -403,6 +417,8 @@ fn serde_user_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
 
@@ -417,6 +433,8 @@ fn serde_user_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(manifest2, expected);

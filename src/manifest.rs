@@ -393,6 +393,7 @@ impl FileManifest {
     }
 
     #[classmethod]
+    #[allow(clippy::too_many_arguments)]
     fn decrypt_verify_and_load(
         _cls: &PyType,
         encrypted: &[u8],
@@ -400,17 +401,20 @@ impl FileManifest {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
+        expected_id: Option<EntryID>,
+        expected_version: Option<u32>,
     ) -> PyResult<Self> {
-        match libparsec::types::FileManifest::decrypt_verify_and_load(
+        libparsec::types::FileManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
             &expected_author.0,
             expected_timestamp.0,
-        ) {
-            Ok(x) => Ok(Self(x)),
-            Err(err) => Err(DataError::new_err(err.to_string())),
-        }
+            expected_id.map(|id| id.0),
+            expected_version,
+        )
+        .map(Self)
+        .map_err(|e| DataError::new_err(e.to_string()))
     }
 
     #[args(py_kwargs = "**")]
@@ -605,6 +609,7 @@ impl FolderManifest {
     }
 
     #[classmethod]
+    #[allow(clippy::too_many_arguments)]
     fn decrypt_verify_and_load(
         _cls: &PyType,
         encrypted: &[u8],
@@ -612,17 +617,20 @@ impl FolderManifest {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
+        expected_id: Option<EntryID>,
+        expected_version: Option<u32>,
     ) -> PyResult<Self> {
-        match libparsec::types::FolderManifest::decrypt_verify_and_load(
+        libparsec::types::FolderManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
             &expected_author.0,
             expected_timestamp.0,
-        ) {
-            Ok(x) => Ok(Self(x)),
-            Err(err) => Err(DataError::new_err(err.to_string())),
-        }
+            expected_id.map(|id| id.0),
+            expected_version,
+        )
+        .map(Self)
+        .map_err(|e| DataError::new_err(e.to_string()))
     }
 
     #[args(py_kwargs = "**")]
@@ -796,6 +804,7 @@ impl WorkspaceManifest {
     }
 
     #[classmethod]
+    #[allow(clippy::too_many_arguments)]
     fn decrypt_verify_and_load(
         _cls: &PyType,
         encrypted: &[u8],
@@ -803,17 +812,20 @@ impl WorkspaceManifest {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_timestamp: DateTime,
+        expected_id: Option<EntryID>,
+        expected_version: Option<u32>,
     ) -> PyResult<Self> {
-        match libparsec::types::WorkspaceManifest::decrypt_verify_and_load(
+        libparsec::types::WorkspaceManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
             &expected_author.0,
             expected_timestamp.0,
-        ) {
-            Ok(x) => Ok(Self(x)),
-            Err(err) => Err(DataError::new_err(err.to_string())),
-        }
+            expected_id.map(|id| id.0),
+            expected_version,
+        )
+        .map(Self)
+        .map_err(|e| DataError::new_err(e.to_string()))
     }
 
     #[args(py_kwargs = "**")]
@@ -989,31 +1001,17 @@ impl UserManifest {
         expected_id: Option<EntryID>,
         expected_version: Option<u32>,
     ) -> PyResult<Self> {
-        let data = libparsec::types::UserManifest::decrypt_verify_and_load(
+        libparsec::types::UserManifest::decrypt_verify_and_load(
             encrypted,
             &key.0,
             &author_verify_key.0,
             &expected_author.0,
             expected_timestamp.0,
+            expected_id.map(|id| id.0),
+            expected_version,
         )
-        .map_err(|e| DataError::new_err(e.to_string()))?;
-        if let Some(expected_id) = expected_id {
-            if data.id != expected_id.0 {
-                return Err(DataValidationError::new_err(format!(
-                    "Invalid entry ID: expected `{}`, got `{}`",
-                    expected_id.0, data.id
-                )));
-            }
-        }
-        if let Some(expected_version) = expected_version {
-            if data.version != expected_version {
-                return Err(DataValidationError::new_err(format!(
-                    "Invalid version: expected `{}`, got `{}`",
-                    expected_version, data.version
-                )));
-            }
-        }
-        Ok(Self(data))
+        .map(Self)
+        .map_err(|e| DataError::new_err(e.to_string()))
     }
 
     #[args(py_kwargs = "**")]
