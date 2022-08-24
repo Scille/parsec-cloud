@@ -8,6 +8,8 @@ repos:
     hooks:
       - id: mixed-line-ending
       - id: trailing-whitespace
+      - id: end-of-file-fixer
+        alias: eof
 
   - repo: local
     hooks:
