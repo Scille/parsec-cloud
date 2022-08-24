@@ -2,7 +2,18 @@
 from __future__ import annotations
 
 # Imports
-from parsec._parsec import prepare_read, prepare_reshape, prepare_resize, prepare_write
+from parsec._parsec import (
+    Chunk,
+    ChunkID,
+    prepare_read,
+    prepare_reshape,
+    prepare_resize,
+    prepare_write,
+)
+
+Chunks = tuple[Chunk, ...]
+ChunkIDSet = set[ChunkID]
+WriteOperationList = list[tuple[Chunk, int]]
 
 __all__ = [
     "prepare_read",
