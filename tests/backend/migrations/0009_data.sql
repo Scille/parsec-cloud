@@ -51,5 +51,3 @@ INSERT INTO realm_user_change(_id, realm, user_, last_role_change, last_vlob_upd
     NULL,
     '2021-10-29 11:30:16.791954+02'
 );
-
-
