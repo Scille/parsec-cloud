@@ -1,16 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::exceptions::PyValueError;
-use pyo3::types::PyBytes;
-use pyo3::{import_exception, prelude::*};
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use pyo3::{exceptions::PyValueError, import_exception, prelude::*, types::PyBytes};
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+};
 
-use crate::binding_utils::{py_to_rs_regex, rs_to_py_regex};
-use crate::ids::{BlockID, ChunkID, EntryID};
-use crate::local_device::LocalDevice;
-use crate::local_manifest::{
-    LocalFileManifest, LocalFolderManifest, LocalUserManifest, LocalWorkspaceManifest,
+use crate::{
+    binding_utils::{py_to_rs_regex, rs_to_py_regex},
+    ids::{BlockID, ChunkID, EntryID},
+    local_device::LocalDevice,
+    local_manifest::{
+        LocalFileManifest, LocalFolderManifest, LocalUserManifest, LocalWorkspaceManifest,
+    },
 };
 
 import_exception!(parsec.core.fs.exceptions, FSLocalMissError);

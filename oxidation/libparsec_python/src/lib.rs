@@ -14,7 +14,6 @@ mod local_device;
 mod local_manifest;
 mod manifest;
 mod protocol;
-mod storage;
 mod time;
 
 /// A Python module implemented in Rust. The name of this function must match
@@ -94,7 +93,5 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::HumanFindRep>()?;
     m.add_class::<protocol::Trustchain>()?;
     m.add_class::<protocol::HumanFindResultItem>()?;
-    // Storage
-    m.add_class::<storage::WorkspaceStorage>()?;
     Ok(())
 }

@@ -5,7 +5,7 @@ use pyo3::basic::CompareOp;
 use pyo3::conversion::IntoPy;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::PyModule;
-use pyo3::types::{PyFrozenSet, PyTuple};
+use pyo3::types::PyFrozenSet;
 use pyo3::FromPyObject;
 use pyo3::{PyAny, PyObject, PyResult, Python};
 use std::collections::HashSet;
@@ -111,15 +111,6 @@ pub fn py_to_rs_regex(regex: &PyAny) -> PyResult<Regex> {
         .replace("\\Z", "\\z")
         .replace("\\ ", "\x20");
     Regex::new(&regex).map_err(|e| PyValueError::new_err(e.to_string()))
-}
-
-pub fn rs_to_py_regex<'py>(py: Python<'py>, regex: &Regex) -> PyResult<&'py PyAny> {
-    let re = py.import("re")?;
-    let args = PyTuple::new(
-        py,
-        vec![regex.as_str().replace("\\z", "\\Z").replace('\x20', "\\ ")],
-    );
-    re.call_method1("compile", args)
 }
 
 macro_rules! parse_kwargs_optional {
