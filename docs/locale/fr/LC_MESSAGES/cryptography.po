@@ -387,4 +387,3 @@ msgid ""
 msgstr ""
 "Informer le serveur de métadonnées qu’un nouvel utilisateur peut lire (et"
 " le cas échéant modifier) les éléments reliés à le workspace donnée."
-
