@@ -110,5 +110,23 @@
             "notShared": "Not shared",
             "inviteNewUser": "Invite a new user"
         }
+    },
+    "OrganizationPage": {
+        "pageTitle": "My Organization",
+        "users": "Users",
+        "workspaces": "Workspaces",
+        "storage": "Storage",
+        "OrganizationPageUsers": {
+            "inviteUser": "Invite a user",
+            "pendingInvitations": "pending invitation(s)",
+            "OrganizationPendingUserContextMenu": {
+                "greetUser": "Greet user",
+                "cancelInvitation": "Cancel invitation"
+            },
+            "OrganizationUserContextMenu": {
+                "details": "View details",
+                "revoke": "Revoke"
+            }
+        }
     }
 }

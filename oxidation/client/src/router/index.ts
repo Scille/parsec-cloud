@@ -41,6 +41,29 @@ let routes: Array<RouteRecordRaw> = [
         path: '/settings',
         name: 'settings',
         component: () => import('@/views/SettingsPage.vue')
+      },
+      {
+        path: '/organization',
+        name: 'organization',
+        redirect: { name: 'OrganizationPageUsers' },
+        component: () => import('@/views/OrganizationPage.vue'),
+        children: [
+          {
+            path: 'users',
+            name: 'OrganizationPageUsers',
+            component: () => import('@/views/OrganizationPageUsers.vue')
+          },
+          {
+            path: 'workspaces',
+            name: 'OrganizationPageWorkspaces',
+            component: () => import('../views/OrganizationPageWorkspaces.vue')
+          },
+          {
+            path: 'storage',
+            name: 'OrganizationPageStorage',
+            component: () => import('@/views/OrganizationPageStorage.vue')
+          }
+        ]
       }
     ]
   }
