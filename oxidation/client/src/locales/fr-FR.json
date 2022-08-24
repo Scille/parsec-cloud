@@ -85,5 +85,30 @@
             "light": "Clair",
             "system": "Système"
         }
+    },
+    "WorkspacesPage": {
+        "createWorkspace": "Créer un espace de travail",
+        "documents": "Documents",
+        "workspaceContextMenu": {
+            "share": "Partager",
+            "history": "Historique",
+            "cancel": "Annuler"
+        },
+        "CreateWorkspaceModal": {
+            "pageTitle": "Créer un espace de travail",
+            "name": "Nom",
+            "namePlaceholder": "Espace de travail",
+            "cancel": "Annuler",
+            "create": "Créer"
+        },
+        "WorkspacesShareModal": {
+            "pageTitle": "Partager l'espace de travail",
+            "reader": "Lecteur",
+            "contributor": "Contributeur",
+            "manager": "Gérant",
+            "owner": "Propriétaire",
+            "notShared": "Non partagé",
+            "inviteNewUser": "Inviter un nouvel utilisateur"
+        }
     }
 }

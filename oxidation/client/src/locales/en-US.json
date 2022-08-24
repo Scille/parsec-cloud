@@ -85,5 +85,30 @@
             "light": "Light",
             "system": "System"
         }
+    },
+    "WorkspacesPage": {
+        "createWorkspace": "Create workspace",
+        "documents": "Documents",
+        "workspaceContextMenu": {
+            "share": "Share",
+            "history": "History",
+            "cancel": "Cancel"
+        },
+        "CreateWorkspaceModal": {
+            "pageTitle": "Create workspace",
+            "name": "Name",
+            "namePlaceholder": "Workspace",
+            "cancel": "Cancel",
+            "create": "Create"
+        },
+        "WorkspacesShareModal": {
+            "pageTitle": "Share workspace",
+            "reader": "Reader",
+            "contributor": "Contributor",
+            "manager": "Manager",
+            "owner": "Owner",
+            "notShared": "Not shared",
+            "inviteNewUser": "Invite a new user"
+        }
     }
 }
