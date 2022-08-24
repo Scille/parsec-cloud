@@ -2,16 +2,32 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, AsyncIterator, Awaitable, Callable, Dict, List, Tuple, cast
+from typing import TYPE_CHECKING, AsyncIterator, Awaitable, Callable, cast
 
 import attr
 import structlog
 import trio
 
-from parsec._parsec import CoreEvent, DateTime, FileManifest, RealmStatusRepOk, Regex
-from parsec.api.data import AnyRemoteManifest, BlockAccess
-from parsec.api.data import FileManifest as RemoteFileManifest
-from parsec.api.protocol import MaintenanceType, RealmID, UserID
+from parsec._parsec import (
+    BlockAccess,
+    CoreEvent,
+    DateTime,
+    EntryID,
+    EntryName,
+    FileManifest,
+    LocalDevice,
+    LocalFileManifest,
+    LocalFolderManifest,
+    LocalWorkspaceManifest,
+    MaintenanceType,
+    RealmID,
+    RealmStatusRepOk,
+    Regex,
+    UserID,
+    WorkspaceEntry,
+)
+from parsec._parsec import FileManifest as RemoteFileManifest
+from parsec.api.data import AnyRemoteManifest
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import (
@@ -32,7 +48,7 @@ from parsec.core.fs.exceptions import (
 )
 from parsec.core.fs.path import AnyPath, FsPath
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.storage import BaseWorkspaceStorage
+from parsec.core.fs.storage.workspace_storage import AnyWorkspaceStorage
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
@@ -41,16 +57,9 @@ from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.types import (
     DEFAULT_BLOCK_SIZE,
     BackendOrganizationFileLinkAddr,
-    EntryID,
-    EntryName,
-    LocalDevice,
-    LocalFileManifest,
-    LocalFolderManifest,
-    LocalWorkspaceManifest,
     RemoteFolderishManifests,
     RemoteFolderManifest,
     RemoteWorkspaceManifest,
-    WorkspaceEntry,
     WorkspaceRole,
 )
 from parsec.crypto import CryptoError
@@ -65,8 +74,8 @@ logger = structlog.get_logger()
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class ReencryptionNeed:
-    user_revoked: Tuple[UserID, ...]
-    role_revoked: Tuple[UserID, ...]
+    user_revoked: tuple[UserID, ...]
+    role_revoked: tuple[UserID, ...]
     reencryption_already_in_progress: bool = False
 
     @property
@@ -81,7 +90,7 @@ class WorkspaceFS:
         get_workspace_entry: Callable[[], WorkspaceEntry],
         get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         device: LocalDevice,
-        local_storage: BaseWorkspaceStorage,
+        local_storage: AnyWorkspaceStorage,
         backend_cmds: BackendAuthenticatedCmds,
         event_bus: EventBus,
         remote_devices_manager: RemoteDevicesManager,
@@ -96,7 +105,7 @@ class WorkspaceFS:
         self.event_bus = event_bus
         self.remote_devices_manager = remote_devices_manager
         self.preferred_language = preferred_language
-        self.sync_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
+        self.sync_locks: dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
         self.remote_loader = RemoteLoader(
             self.device,
             self.workspace_id,
@@ -140,7 +149,7 @@ class WorkspaceFS:
         await self.remote_loader.load_block(block)
 
     async def receive_load_blocks(
-        self, blocks: List[BlockAccess], nursery: trio.Nursery
+        self, blocks: list[BlockAccess], nursery: trio.Nursery
     ) -> "trio.MemoryReceiveChannel[BlockAccess]":
         """
         Raises:
@@ -167,7 +176,7 @@ class WorkspaceFS:
 
     # Information
 
-    async def path_info(self, path: AnyPath) -> Dict[str, object]:
+    async def path_info(self, path: AnyPath) -> dict[str, object]:
         """
         Raises:
             FSError
@@ -182,7 +191,7 @@ class WorkspaceFS:
         info = await self.transactions.entry_info(FsPath(path))
         return cast(EntryID, info["id"])
 
-    async def get_user_roles(self) -> Dict[UserID, WorkspaceRole]:
+    async def get_user_roles(self) -> dict[UserID, WorkspaceRole]:
         """
         Raises:
             FSError
@@ -330,10 +339,10 @@ class WorkspaceFS:
         info = await self.transactions.entry_info(path)
         if "children" not in info:
             raise FSNotADirectoryError(filename=str(path))
-        for child in cast(Dict[EntryName, EntryID], info["children"]):
+        for child in cast(dict[EntryName, EntryID], info["children"]):
             yield path / child
 
-    async def listdir(self, path: AnyPath) -> List[FsPath]:
+    async def listdir(self, path: AnyPath) -> list[FsPath]:
         """
         Raises:
             FSError
@@ -592,15 +601,15 @@ class WorkspaceFS:
 
     async def entry_id_to_path(
         self, needle_entry_id: EntryID
-    ) -> Tuple[FsPath, Dict[str, object]] | None:
+    ) -> tuple[FsPath, dict[str, object]] | None:
         async def _recursive_search(
             path: FsPath,
-        ) -> Tuple[FsPath, Dict[str, object]] | None:
+        ) -> tuple[FsPath, dict[str, object]] | None:
             entry_info = await self.path_info(path=path)
             if entry_info["id"] == needle_entry_id:
                 return path, entry_info
             if entry_info["type"] == "folder":
-                children = cast(List[str], entry_info["children"])
+                children = cast(list[str], entry_info["children"])
                 for child_name in children:
                     result = await _recursive_search(path=path / child_name)
                     if result:
@@ -810,9 +819,9 @@ class WorkspaceFS:
 
     # Debugging helper
 
-    async def dump(self) -> Dict[str, object]:
-        async def rec(entry_id: EntryID) -> Dict[str, object]:
-            result: Dict[str, object] = {"id": entry_id}
+    async def dump(self) -> dict[str, object]:
+        async def rec(entry_id: EntryID) -> dict[str, object]:
+            result: dict[str, object] = {"id": entry_id}
             try:
                 manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError:
@@ -823,7 +832,7 @@ class WorkspaceFS:
             if not isinstance(manifest, (LocalFolderManifest, LocalWorkspaceManifest)):
                 return result
 
-            children: Dict[EntryName, Dict[str, object]] = {}
+            children: dict[EntryName, dict[str, object]] = {}
             for key, value in manifest.children.items():
                 children[key] = await rec(value)
             result["children"] = children

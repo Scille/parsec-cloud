@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Union, cast
+from typing import TYPE_CHECKING, Any, Iterable, cast
 
 import trio
 from structlog import get_logger
 
 from parsec._parsec import (
     CoreEvent,
+    EntryID,
     VlobPollChangesRepInMaintenance,
     VlobPollChangesRepNotAllowed,
     VlobPollChangesRepNotFound,
@@ -32,8 +33,8 @@ from parsec.core.fs import (
     UserFS,
 )
 from parsec.core.fs.exceptions import FSServerUploadTemporarilyUnavailableError
-from parsec.core.fs.storage import UserStorage, WorkspaceStorage
-from parsec.core.types import EntryID, WorkspaceRole
+from parsec.core.fs.storage import AnyWorkspaceStorage, UserStorage, WorkspaceStorage
+from parsec.core.types import WorkspaceRole
 from parsec.event_bus import EventBus, EventCallback
 
 if TYPE_CHECKING:
@@ -100,7 +101,7 @@ class SyncContext:
     def _get_backend_cmds(self) -> BackendAuthenticatedCmds:
         raise NotImplementedError
 
-    def _get_local_storage(self) -> Union[UserStorage, WorkspaceStorage]:
+    def _get_local_storage(self) -> UserStorage | AnyWorkspaceStorage:
         raise NotImplementedError
 
     def __repr__(self) -> str:
@@ -339,7 +340,7 @@ class SyncContextStore:
 
     def __init__(self, user_fs: UserFS) -> None:
         self.user_fs = user_fs
-        self._ctxs: Dict[EntryID, SyncContext] = {}
+        self._ctxs: dict[EntryID, SyncContext] = {}
 
     def iter(self) -> Iterable[SyncContext]:
         return self._ctxs.copy().values()

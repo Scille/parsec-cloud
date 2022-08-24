@@ -4,6 +4,7 @@ use std::path::Path;
 
 use pyo3::{exceptions::PyValueError, pyclass, pymethods, types::PyType, PyResult};
 
+#[derive(Clone)]
 #[pyclass]
 pub(crate) struct Regex(pub libparsec::types::Regex);
 

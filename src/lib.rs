@@ -15,6 +15,7 @@ mod misc;
 mod protocol;
 mod regex;
 mod runtime;
+mod storage;
 mod time;
 mod trustchain;
 
@@ -104,6 +105,13 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     )?;
     m.add_function(wrap_pyfunction!(local_device::load_recovery_device, m)?)?;
     m.add_function(wrap_pyfunction!(local_device::save_recovery_device, m)?)?;
+
+    m.add_class::<storage::WorkspaceStorage>()?;
+    m.add_class::<storage::WorkspaceStorageSnapshot>()?;
+    m.add_function(wrap_pyfunction!(
+        storage::workspace_storage_non_speculative_init,
+        m
+    )?)?;
 
     // Time
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
