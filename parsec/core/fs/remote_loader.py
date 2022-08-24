@@ -9,6 +9,7 @@ import trio
 from trio import MemoryReceiveChannel, MemorySendChannel, open_memory_channel
 
 from parsec._parsec import (
+    BlockAccess,
     BlockCreateRepAlreadyExists,
     BlockCreateRepInMaintenance,
     BlockCreateRepNotAllowed,
@@ -18,11 +19,19 @@ from parsec._parsec import (
     BlockReadRepNotAllowed,
     BlockReadRepNotFound,
     BlockReadRepOk,
+    ChunkID,
     DateTime,
+    DeviceID,
+    EntryID,
+    LocalDevice,
     RealmCreateRepAlreadyExists,
     RealmCreateRepOk,
     RealmGetRoleCertificatesRepNotAllowed,
     RealmGetRoleCertificatesRepOk,
+    RealmID,
+    RealmRole,
+    SequesterServiceID,
+    UserID,
     VlobCreateRepAlreadyExists,
     VlobCreateRepBadEncryptionRevision,
     VlobCreateRepInMaintenance,
@@ -32,6 +41,7 @@ from parsec._parsec import (
     VlobCreateRepRequireGreaterTimestamp,
     VlobCreateRepSequesterInconsistency,
     VlobCreateRepTimeout,
+    VlobID,
     VlobListVersionsRepInMaintenance,
     VlobListVersionsRepNotAllowed,
     VlobListVersionsRepNotFound,
@@ -52,10 +62,10 @@ from parsec._parsec import (
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
     VlobUpdateRepTimeout,
+    WorkspaceEntry,
 )
 from parsec.api.data import (
     AnyRemoteManifest,
-    BlockAccess,
     DataError,
     DeviceCertificate,
     RealmRoleCertificate,
@@ -65,7 +75,6 @@ from parsec.api.data import (
     UserCertificate,
 )
 from parsec.api.data.manifest import manifest_decrypt_verify_and_load
-from parsec.api.protocol import DeviceID, RealmID, RealmRole, SequesterServiceID, UserID, VlobID
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.fs.exceptions import (
     FSBackendOfflineError,
@@ -86,7 +95,7 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNoReadAccess,
     FSWorkspaceNoWriteAccess,
 )
-from parsec.core.fs.storage import BaseWorkspaceStorage
+from parsec.core.fs.storage.workspace_storage import AnyWorkspaceStorage
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManager,
     RemoteDevicesManagerBackendOfflineError,
@@ -95,7 +104,6 @@ from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerInvalidTrustchainError,
     RemoteDevicesManagerUserNotFoundError,
 )
-from parsec.core.types import ChunkID, EntryID, LocalDevice, WorkspaceEntry
 from parsec.crypto import CryptoError, HashDigest, VerifyKey
 from parsec.utils import open_service_nursery
 
@@ -435,7 +443,7 @@ class RemoteLoader(UserRemoteLoader):
         get_previous_workspace_entry: Callable[[], Awaitable[WorkspaceEntry | None]],
         backend_cmds: BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
-        local_storage: BaseWorkspaceStorage,
+        local_storage: AnyWorkspaceStorage,
     ):
         super().__init__(
             device,

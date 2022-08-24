@@ -49,15 +49,16 @@ impl UserStorage {
     // User manifest
 
     pub fn get_user_manifest(&self) -> FSResult<LocalUserManifest> {
-        let cache = self
-            .manifest_storage
-            .cache
-            .lock()
-            .expect("Mutex is poisoned");
-        match cache.get(&self.user_manifest_id) {
-            Some(LocalManifest::User(manifest)) => Ok(manifest.clone()),
-            _ => Err(FSError::UserManifestMissing),
-        }
+        self.manifest_storage
+            .get_cached_manifest(self.user_manifest_id)
+            .and_then(|manifest| {
+                if let LocalManifest::User(manifest) = manifest {
+                    Some(manifest)
+                } else {
+                    None
+                }
+            })
+            .ok_or(FSError::UserManifestMissing)
     }
 
     fn load_user_manifest(&self) -> FSResult<()> {
@@ -95,7 +96,7 @@ impl UserStorage {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Mutex;
+    use std::sync::{Arc, Mutex};
 
     use libparsec_crypto::SecretKey;
     use libparsec_types::{DateTime, UserManifest};
@@ -110,7 +111,7 @@ mod tests {
     fn user_storage(alice: &Device, timestamp: DateTime, tmp_path: TmpPath) {
         let db_path = tmp_path.join("user_storage.sqlite");
         let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
-        let conn = Mutex::new(pool.conn().unwrap());
+        let conn = Arc::new(Mutex::new(pool.conn().unwrap()));
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();
         let user_manifest_id = alice.user_manifest_id;

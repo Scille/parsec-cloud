@@ -3,6 +3,7 @@
 use crate::{RegexError, RegexResult};
 use std::{collections::HashSet, fmt::Display, fs, path::Path};
 
+#[derive(Clone)]
 pub struct Regex(pub Vec<regex::Regex>);
 
 /// The fnmatch_regex crate does not escape the character '$'. It is a problem
@@ -58,6 +59,12 @@ impl Regex {
 
     pub fn is_match(&self, string: &str) -> bool {
         self.0.iter().any(|r| r.is_match(string))
+    }
+}
+
+impl From<regex::Regex> for Regex {
+    fn from(re: regex::Regex) -> Self {
+        Self(vec![re])
     }
 }
 
