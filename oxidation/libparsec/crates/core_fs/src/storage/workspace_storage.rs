@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
 use libparsec_client_types::{
     LocalDevice, LocalFileManifest, LocalManifest, LocalWorkspaceManifest,
 };
-use libparsec_types::{BlockID, ChunkID, EntryID, FileDescriptor};
+use libparsec_types::{BlockID, ChunkID, DateTime, EntryID, FileDescriptor};
 
 use super::chunk_storage::ChunkStorage;
 use super::manifest_storage::{ChunkOrBlockID, ManifestStorage};
@@ -22,8 +22,8 @@ use crate::storage::version::{
 
 pub const DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE: u64 = 512 * 1024 * 1024;
 
-#[derive(Default)]
-struct Locker<T: Eq + Hash>(Mutex<HashMap<T, Arc<Mutex<()>>>>);
+#[derive(Default, Clone)]
+struct Locker<T: Eq + Hash>(Arc<Mutex<HashMap<T, Arc<Mutex<()>>>>>);
 
 enum Status {
     Locked,
@@ -53,16 +53,17 @@ impl<T: Eq + Hash + Copy> Locker<T> {
 
 /// WorkspaceStorage is implemented with interior mutability because
 /// we want some parallelism between its fields (e.g entry_locks)
+#[derive(Clone)]
 pub struct WorkspaceStorage {
     pub device: LocalDevice,
     pub workspace_id: EntryID,
-    open_fds: Mutex<HashMap<FileDescriptor, EntryID>>,
-    fd_counter: Mutex<u32>,
+    open_fds: Arc<Mutex<HashMap<FileDescriptor, EntryID>>>,
+    fd_counter: Arc<Mutex<u32>>,
     block_storage: BlockStorage,
     chunk_storage: ChunkStorage,
     manifest_storage: ManifestStorage,
-    prevent_sync_pattern: Mutex<Regex>,
-    prevent_sync_pattern_fully_applied: Mutex<bool>,
+    prevent_sync_pattern: Arc<Mutex<Regex>>,
+    prevent_sync_pattern_fully_applied: Arc<Mutex<bool>>,
     entry_locks: Locker<EntryID>,
 }
 
@@ -92,20 +93,20 @@ impl WorkspaceStorage {
 
         let block_storage = BlockStorage::new(
             device.local_symkey.clone(),
-            Mutex::new(cache_pool.conn()?),
+            Arc::new(Mutex::new(cache_pool.conn()?)),
             cache_size,
             device.time_provider.clone(),
         )?;
 
         let manifest_storage = ManifestStorage::new(
             device.local_symkey.clone(),
-            Mutex::new(data_pool.conn()?),
+            Arc::new(Mutex::new(data_pool.conn()?)),
             workspace_id,
         )?;
 
         let chunk_storage = ChunkStorage::new(
             device.local_symkey.clone(),
-            Mutex::new(data_pool.conn()?),
+            Arc::new(Mutex::new(data_pool.conn()?)),
             device.time_provider.clone(),
         )?;
 
@@ -117,15 +118,17 @@ impl WorkspaceStorage {
             device,
             workspace_id,
             // File descriptors
-            open_fds: Mutex::new(HashMap::new()),
-            fd_counter: Mutex::new(0),
+            open_fds: Arc::new(Mutex::new(HashMap::new())),
+            fd_counter: Arc::new(Mutex::new(0)),
             // Manifest and block storage
             block_storage,
             chunk_storage,
             manifest_storage,
             // Pattern attributes
-            prevent_sync_pattern: Mutex::new(prevent_sync_pattern),
-            prevent_sync_pattern_fully_applied: Mutex::new(prevent_sync_pattern_fully_applied),
+            prevent_sync_pattern: Arc::new(Mutex::new(prevent_sync_pattern)),
+            prevent_sync_pattern_fully_applied: Arc::new(Mutex::new(
+                prevent_sync_pattern_fully_applied,
+            )),
             // Locking structure
             entry_locks: Locker::default(),
         };
@@ -147,6 +150,11 @@ impl WorkspaceStorage {
         self.entry_locks.release(entry_id, guard)
     }
 
+    /// Check if an `entry_id` is locked.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the given `entry_id` is not locked.
     fn check_lock_status(&self, entry_id: EntryID) -> FSResult<()> {
         if let Status::Released = self.entry_locks.check(entry_id) {
             return Err(FSError::Runtime(entry_id));
@@ -154,11 +162,12 @@ impl WorkspaceStorage {
         Ok(())
     }
 
-    pub fn get_prevent_sync_pattern(&self) -> Regex {
+    pub fn get_prevent_sync_pattern(&self) -> libparsec_types::Regex {
         self.prevent_sync_pattern
             .lock()
             .expect("Mutex is poisoned")
             .clone()
+            .into()
     }
 
     pub fn get_prevent_sync_pattern_fully_applied(&self) -> bool {
@@ -290,15 +299,16 @@ impl WorkspaceStorage {
     }
 
     pub fn get_workspace_manifest(&self) -> FSResult<LocalWorkspaceManifest> {
-        let cache = self
-            .manifest_storage
-            .cache
-            .lock()
-            .expect("Mutex is poisoned");
-        match cache.get(&self.workspace_id) {
-            Some(LocalManifest::Workspace(manifest)) => Ok(manifest.clone()),
-            _ => Err(FSError::LocalMiss(*self.workspace_id)),
-        }
+        self.manifest_storage
+            .get_cached_manifest(self.workspace_id)
+            .and_then(|manifest| {
+                if let LocalManifest::Workspace(manifest) = manifest {
+                    Some(manifest)
+                } else {
+                    None
+                }
+            })
+            .ok_or(FSError::LocalMiss(*self.workspace_id))
     }
 
     pub fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
@@ -375,6 +385,187 @@ impl WorkspaceStorage {
         // TODO: Add some condition
         self.chunk_storage.run_vacuum()
     }
+
+    /// Return `true` when the given manifest identified by `entry_id` is cached.
+    pub fn is_manifest_cache_ahead_of_persistance(&self, entry_id: &EntryID) -> bool {
+        self.manifest_storage
+            .is_manifest_cache_ahead_of_persistance(entry_id)
+    }
+
+    /// Take a snapshot of the current [WorkspaceStorage]
+    pub fn to_timestamp(self, _timestamp: DateTime) -> WorkspaceStorageSnapshot {
+        WorkspaceStorageSnapshot::from(self)
+    }
+}
+
+/// Snapshot of a [WorkspaceStorage] at a given time.
+#[derive(Clone)]
+pub struct WorkspaceStorageSnapshot {
+    cache: Arc<Mutex<HashMap<EntryID, LocalManifest>>>,
+    open_fds: Arc<Mutex<HashMap<FileDescriptor, EntryID>>>,
+    fd_counter: Arc<Mutex<u32>>,
+    pub workspace_storage: WorkspaceStorage,
+}
+
+impl From<WorkspaceStorage> for WorkspaceStorageSnapshot {
+    fn from(workspace_storage: WorkspaceStorage) -> Self {
+        Self {
+            cache: Arc::new(Mutex::new(HashMap::default())),
+            workspace_storage,
+            fd_counter: Arc::new(Mutex::new(0)),
+            open_fds: Arc::new(Mutex::new(HashMap::default())),
+        }
+    }
+}
+
+// File management interface.
+
+impl WorkspaceStorageSnapshot {
+    fn get_next_fd(&self) -> FileDescriptor {
+        let mut counter = self.fd_counter.lock().expect("Mutex is poisoned");
+        *counter += 1;
+        FileDescriptor(*counter)
+    }
+
+    pub fn create_file_descriptor(&self, manifest: LocalFileManifest) -> FileDescriptor {
+        let fd = self.get_next_fd();
+        self.open_fds
+            .lock()
+            .expect("Mutex is poisoned")
+            .insert(fd, manifest.base.id);
+        fd
+    }
+
+    pub fn load_file_descriptor(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
+        match self.open_fds.lock().expect("Mutex is poisoned").get(&fd) {
+            Some(&entry_id) => match self.get_manifest(entry_id) {
+                Ok(LocalManifest::File(manifest)) => Ok(manifest),
+                _ => Err(FSError::LocalMiss(*entry_id)),
+            },
+            None => Err(FSError::InvalidFileDescriptor(fd)),
+        }
+    }
+
+    pub fn remove_file_descriptor(&self, fd: FileDescriptor) -> Option<EntryID> {
+        self.open_fds.lock().expect("Mutex is poisoned").remove(&fd)
+    }
+}
+
+impl WorkspaceStorageSnapshot {
+    /// Return a chunk identified by `chunk_id`.
+    /// Will look for the chunk in the [ChunkStorage] & [BlockStorage].
+    pub fn get_chunk(&self, chunk_id: ChunkID) -> FSResult<Vec<u8>> {
+        self.workspace_storage.get_chunk(chunk_id)
+    }
+
+    /// Return the [LocalWorkspaceManifest] of the current [WorkspaceStorageTimestamped].
+    pub fn get_workspace_manifest(&self) -> FSResult<LocalWorkspaceManifest> {
+        self.workspace_storage.get_workspace_manifest()
+    }
+
+    pub fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
+        self.cache
+            .lock()
+            .expect("Mutex is poisoned")
+            .get(&entry_id)
+            .cloned()
+            .ok_or(FSError::LocalMiss(*entry_id))
+    }
+
+    pub fn set_manifest(
+        &self,
+        entry_id: EntryID,
+        manifest: LocalManifest,
+        check_lock_status: bool,
+    ) -> FSResult<()> {
+        if manifest.need_sync() {
+            Err(FSError::WorkspaceStorageTimestamped)
+        } else {
+            if check_lock_status {
+                self.check_lock_status(entry_id)?;
+            }
+            self.cache
+                .lock()
+                .expect("Mutex is poisoned")
+                .insert(entry_id, manifest);
+            Ok(())
+        }
+    }
+
+    /// Check if an `entry_id` is locked.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the given `entry_id` is not locked.
+    pub fn check_lock_status(&self, entry_id: EntryID) -> FSResult<()> {
+        self.workspace_storage.check_lock_status(entry_id)
+    }
+
+    pub fn get_prevent_sync_pattern(&self) -> libparsec_types::Regex {
+        self.workspace_storage.get_prevent_sync_pattern()
+    }
+
+    pub fn get_prevent_sync_pattern_fully_applied(&self) -> bool {
+        self.workspace_storage
+            .get_prevent_sync_pattern_fully_applied()
+    }
+
+    // Block interface.
+
+    pub fn set_clean_block(&self, block_id: BlockID, block: &[u8]) -> FSResult<()> {
+        self.workspace_storage.set_clean_block(block_id, block)
+    }
+
+    pub fn clear_clean_block(&self, block_id: BlockID) {
+        self.workspace_storage.clear_clean_block(block_id)
+    }
+
+    pub fn get_dirty_block(&self, block_id: BlockID) -> FSResult<Vec<u8>> {
+        self.workspace_storage.get_dirty_block(block_id)
+    }
+
+    pub fn lock_entry_id(&self, entry_id: EntryID) -> Arc<Mutex<()>> {
+        self.workspace_storage.lock_entry_id(entry_id)
+    }
+
+    pub fn release_entry_id(&self, entry_id: EntryID, guard: MutexGuard<()>) {
+        self.workspace_storage.release_entry_id(entry_id, guard)
+    }
+
+    /// Clear the local manifest cache
+    pub fn clear_local_cache(&self) {
+        self.cache.lock().expect("Mutex is poisoned").clear()
+    }
+
+    /// Take a snapshot of the current `workspace storage`
+    pub fn to_timestamp(&self) -> Self {
+        Self::from(self.workspace_storage.clone())
+    }
+}
+
+pub fn workspace_storage_non_speculative_init(
+    data_base_dir: &Path,
+    device: LocalDevice,
+    workspace_id: EntryID,
+    timestamp: Option<DateTime>,
+) -> FSResult<()> {
+    let data_path = get_workspace_data_storage_db_path(data_base_dir, &device, workspace_id);
+    let data_pool = SqlitePool::new(
+        data_path
+            .to_str()
+            .expect("Non-Utf-8 character found in data_path"),
+    )?;
+    let conn = Arc::new(Mutex::new(data_pool.conn()?));
+    let manifest_storage = ManifestStorage::new(device.local_symkey.clone(), conn, workspace_id)?;
+    let timestamp = timestamp.unwrap_or_else(|| device.now());
+    let manifest =
+        LocalWorkspaceManifest::new(device.device_id, timestamp, Some(workspace_id), false);
+    manifest_storage.set_manifest(
+        workspace_id,
+        LocalManifest::Workspace(manifest),
+        false,
+        None,
+    )
 }
 
 #[cfg(test)]
@@ -401,7 +592,10 @@ mod tests {
     }
 
     fn clear_cache(storage: &WorkspaceStorage) {
-        storage.manifest_storage.cache.lock().unwrap().clear();
+        storage
+            .manifest_storage
+            .clear_memory_cache(false)
+            .expect("Failed to flush cache");
     }
 
     #[rstest]

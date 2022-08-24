@@ -3,31 +3,27 @@ from __future__ import annotations
 
 from collections import defaultdict
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, Callable, Dict, List, Tuple, cast
+from typing import AsyncIterator, Callable, cast
 
-from parsec._parsec import CoreEvent
-from parsec.api.data import BlockAccess
-from parsec.api.protocol import DeviceID
-from parsec.core.fs.exceptions import FSEndOfFileError, FSInvalidFileDescriptor, FSLocalMissError
-from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.storage import BaseWorkspaceStorage
-from parsec.core.fs.workspacefs.file_operations import (
+from parsec._parsec import (
+    BlockAccess,
+    Chunk,
+    CoreEvent,
+    DeviceID,
+    EntryID,
+    LocalDevice,
+    LocalFileManifest,
+    LocalWorkspaceManifest,
+    WorkspaceEntry,
     prepare_read,
     prepare_reshape,
     prepare_resize,
     prepare_write,
 )
-from parsec.core.types import (
-    Chunk,
-    EntryID,
-    FileDescriptor,
-    LocalDevice,
-    LocalFileManifest,
-    LocalFolderishManifests,
-    LocalNonRootManifests,
-    LocalWorkspaceManifest,
-    WorkspaceEntry,
-)
+from parsec.core.fs.exceptions import FSEndOfFileError, FSInvalidFileDescriptor, FSLocalMissError
+from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.storage.workspace_storage import AnyWorkspaceStorage
+from parsec.core.types import FileDescriptor, LocalFolderishManifests, LocalNonRootManifests
 from parsec.event_bus import EventBus
 
 __all__ = ("FSInvalidFileDescriptor", "FileTransactions")
@@ -80,7 +76,7 @@ class FileTransactions:
         workspace_id: EntryID,
         get_workspace_entry: Callable[[], WorkspaceEntry],
         device: LocalDevice,
-        local_storage: BaseWorkspaceStorage,
+        local_storage: AnyWorkspaceStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
         preferred_language: str,
@@ -91,7 +87,7 @@ class FileTransactions:
         self.local_storage = local_storage
         self.remote_loader = remote_loader
         self.event_bus = event_bus
-        self._write_count: Dict[FileDescriptor, int] = defaultdict(int)
+        self._write_count: dict[FileDescriptor, int] = defaultdict(int)
         self.preferred_language = preferred_language
 
     @property
@@ -114,7 +110,7 @@ class FileTransactions:
         await self.local_storage.set_chunk(chunk.id, data)
         return len(data)
 
-    async def _build_data(self, chunks: Tuple[Chunk, ...]) -> Tuple[bytes, List[BlockAccess]]:
+    async def _build_data(self, chunks: tuple[Chunk, ...]) -> tuple[bytes, list[BlockAccess]]:
         # Empty array
         if not chunks:
             return bytearray(), []
@@ -189,7 +185,7 @@ class FileTransactions:
         manifest = await self.local_storage.load_file_descriptor(fd)
         return manifest.size
 
-    async def fd_info(self, fd: FileDescriptor) -> Dict[str, object]:
+    async def fd_info(self, fd: FileDescriptor) -> dict[str, object]:
         manifest = await self.local_storage.load_file_descriptor(fd)
         stats = manifest.to_stats()
         stats["confinement_point"] = await self._get_confinement_point(manifest.id)
@@ -267,7 +263,7 @@ class FileTransactions:
         self, fd: FileDescriptor, size: int, offset: int, raise_eof: bool = False
     ) -> bytes:
         # Loop over attempts
-        missing: List[BlockAccess] = []
+        missing: list[BlockAccess] = []
         while True:
 
             # Load missing blocks
@@ -326,7 +322,7 @@ class FileTransactions:
 
     async def _manifest_reshape(
         self, manifest: LocalFileManifest, cache_only: bool = False
-    ) -> List[BlockAccess]:
+    ) -> list[BlockAccess]:
         """This internal helper does not perform any locking."""
 
         # Prepare data structures

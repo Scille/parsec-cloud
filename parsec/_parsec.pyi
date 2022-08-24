@@ -508,6 +508,12 @@ from parsec._parsec_pyi.protocol import (
     VlobUpdateReq,
 )
 from parsec._parsec_pyi.regex import Regex
+from parsec._parsec_pyi.storage import (
+    PseudoFileDescriptor,
+    WorkspaceStorage,
+    WorkspaceStorageSnapshot,
+    workspace_storage_non_speculative_init,
+)
 from parsec._parsec_pyi.time import DateTime, LocalDateTime, TimeProvider, mock_time
 from parsec._parsec_pyi.trustchain import (
     TrustchainContext,
@@ -628,6 +634,11 @@ __all__ = [
     "LocalDevice",
     "UserInfo",
     "DeviceInfo",
+    # Storage
+    "WorkspaceStorage",
+    "WorkspaceStorageSnapshot",
+    "PseudoFileDescriptor",
+    "workspace_storage_non_speculative_init",
     # File Operations
     "prepare_read",
     "prepare_reshape",
