@@ -6,12 +6,11 @@
 // Waiting for a fix from pyo3
 #![allow(clippy::borrow_deref_ref)]
 
-use pyo3::prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python};
+use pyo3::prelude::{pymodule, PyModule, PyResult, Python};
 
 mod addrs;
 mod api_crypto;
 mod binding_utils;
-mod file_operations;
 mod ids;
 mod invite;
 mod local_device;
@@ -134,10 +133,5 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::ReencryptionBatchEntry>()?;
     // Storage
     m.add_class::<storage::WorkspaceStorage>()?;
-    // File operations
-    m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
-    m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;
-    m.add_function(wrap_pyfunction!(file_operations::prepare_resize, m)?)?;
-    m.add_function(wrap_pyfunction!(file_operations::prepare_reshape, m)?)?;
     Ok(())
 }

@@ -249,7 +249,7 @@ class ManifestStorage:
         entry_id: EntryID,
         manifest: AnyLocalManifest,
         cache_only: bool = False,
-        removed_ids: Optional[Set[Union[ChunkID, BlockID]]] = None,
+        removed_ids: Optional[Set[ChunkID]] = None,
     ) -> None:
         """
         Raises: Nothing !
