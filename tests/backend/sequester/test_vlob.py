@@ -389,3 +389,86 @@ async def test_missing_webhook_url(coolorg: OrganizationFullData, alice_ws, real
             },
         )
         assert rep["status"] == "sequester_webhook_failed"
+
+
+@customize_fixtures(coolorg_is_sequestered_organization=True)
+@pytest.mark.trio
+async def test_sequester_dump_realm(
+    coolorg: OrganizationFullData, alice_ws, bob_ws, realm, backend
+):
+    vlob_id = VlobID.from_hex("00000000000000000000000000000001")
+    blob = b"<encrypted with workspace's key>"
+    sequester_blob = b"<encrypted sequester blob>"
+
+    # Create and update vlob without sequester
+    await vlob_create(
+        alice_ws, realm_id=realm, vlob_id=vlob_id, blob=blob, sequester_blob={}, check_rep=True
+    )
+    await vlob_update(
+        alice_ws, version=2, vlob_id=vlob_id, sequester_blob={}, blob=blob, check_rep=True
+    )
+
+    # Create sequester service
+    s1 = sequester_service_factory(
+        authority=coolorg.sequester_authority, label="Sequester service 1"
+    )
+
+    await backend.sequester.create_service(
+        organization_id=coolorg.organization_id, service=s1.backend_service
+    )
+
+    # Create updates
+    await vlob_update(
+        alice_ws,
+        version=3,
+        vlob_id=vlob_id,
+        blob=blob,
+        sequester_blob={s1.service_id: sequester_blob},
+        check_rep=True,
+    )
+    await vlob_update(
+        alice_ws,
+        version=4,
+        vlob_id=vlob_id,
+        blob=blob,
+        sequester_blob={s1.service_id: sequester_blob},
+        check_rep=True,
+    )
+    # Dump realm
+    dump = await backend.sequester.dump_realm(
+        organization_id=coolorg.organization_id, service_id=s1.service_id, realm_id=realm
+    )
+
+    assert dump == [(vlob_id, 3, sequester_blob), (vlob_id, 4, sequester_blob)]
+
+    # Create another vlob
+    another_vlob_id = VlobID.from_hex("00000000000000000000000000000002")
+    another_sequester_blob = b"<encrypted sequester blob 2>"
+
+    await vlob_create(
+        alice_ws,
+        realm_id=realm,
+        vlob_id=another_vlob_id,
+        blob=blob,
+        sequester_blob={s1.service_id: another_sequester_blob},
+        check_rep=True,
+    )
+    await vlob_update(
+        alice_ws,
+        version=2,
+        vlob_id=another_vlob_id,
+        sequester_blob={s1.service_id: another_sequester_blob},
+        blob=blob,
+        check_rep=True,
+    )
+
+    dump = await backend.sequester.dump_realm(
+        organization_id=coolorg.organization_id, service_id=s1.service_id, realm_id=realm
+    )
+
+    assert dump == [
+        (vlob_id, 3, sequester_blob),
+        (vlob_id, 4, sequester_blob),
+        (another_vlob_id, 1, another_sequester_blob),
+        (another_vlob_id, 2, another_sequester_blob),
+    ]
