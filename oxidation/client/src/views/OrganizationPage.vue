@@ -48,5 +48,3 @@ import {
 
 </script>
 
-<style scoped>
-</style>
