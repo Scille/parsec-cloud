@@ -12,7 +12,7 @@ from parsec.backend.organization import OrganizationNotFoundError, OrganizationA
 def rpc_msgpack_rep(data: dict) -> Response:
     return Response(
         response=packb(data),
-        # Unlik REST, RPC doesn't use status to encode operational result
+        # Unlike REST, RPC doesn't use status to encode operational result
         status=200,
         content_type="application/msgpack",
     )
@@ -63,7 +63,7 @@ async def anonymous_api(raw_organization_id: str):
         except OrganizationAlreadyExistsError:
             pass
 
-    # Retreive command
+    # Retrieve command
     client_ctx = AnonymousClientContext(organization_id)
     try:
         if not isinstance(cmd, str):

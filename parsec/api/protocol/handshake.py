@@ -308,7 +308,7 @@ class ServerHandshake:
     def build_bad_identity_result_req(self, help: str = "Invalid handshake information") -> bytes:
         """
         We should keep the help for this result voluntarily broad otherwise
-        an attacker could use it to brute force informations.
+        an attacker could use it to brute force information.
         """
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
@@ -425,7 +425,7 @@ class BaseClientHandshake:
         ):
 
             # Add `client_timestamp` to challenge data
-            # so the dictionnary exposes the same fields as `TimestampOutOfBallparkRepSchema`
+            # so the dictionary exposes the same fields as `TimestampOutOfBallparkRepSchema`
             self.challenge_data["client_timestamp"] = self.client_timestamp
 
             # The client is a bit less tolerant than the backend
