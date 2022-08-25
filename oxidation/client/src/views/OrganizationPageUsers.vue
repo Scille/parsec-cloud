@@ -377,17 +377,16 @@ async function openUserActionSheet(): Promise<void> {
   console.log('onDidDismiss resolved with role and data: ', role, data);
 }
 
-const searchUsersAndPendingUsersInput=ref('');
+const searchUsersAndPendingUsersInput = ref('');
 
 const filteredUsers = computed(() => {
-  if (searchUsersAndPendingUsersInput.value && searchUsersAndPendingUsersInput.value !== '') {
+  if (searchUsersAndPendingUsersInput.value !== '') {
     return usersExampleData.filter((user) => {
-      return (user.email
-        .toLowerCase()
-        .includes(searchUsersAndPendingUsersInput.value.toLowerCase()) ||
-        user.name
-          .toLowerCase()
-          .includes(searchUsersAndPendingUsersInput.value.toLowerCase()));
+      return (user.email.toLowerCase().includes(
+        searchUsersAndPendingUsersInput.value.toLowerCase()
+      ) || user.name.toLowerCase().includes(
+        searchUsersAndPendingUsersInput.value.toLowerCase()
+      ));
     });
   } else {
     return usersExampleData;
@@ -395,11 +394,11 @@ const filteredUsers = computed(() => {
 });
 
 const filteredPendingUsers = computed(() => {
-  if (searchUsersAndPendingUsersInput.value && searchUsersAndPendingUsersInput.value !== '') {
+  if (searchUsersAndPendingUsersInput.value !== '') {
     return pendingUsersExampleData.filter((pendingUser) => {
-      return pendingUser.email
-        .toLowerCase()
-        .includes(searchUsersAndPendingUsersInput.value.toLowerCase());
+      return pendingUser.email.toLowerCase().includes(
+        searchUsersAndPendingUsersInput.value.toLowerCase()
+      );
     });
   } else {
     return pendingUsersExampleData;
