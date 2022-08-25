@@ -8,9 +8,9 @@ from pathlib import PurePath
 
 from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import (
-    HandshakeAPIVersionError,
     HandshakeRevokedDevice,
     HandshakeOrganizationExpired,
+    IncompatibleAPIVersionsError,
 )
 from parsec.api.data import EntryName
 from parsec.api.data.manifest import WorkspaceEntry
@@ -347,7 +347,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             icon = QPixmap(":/icons/images/material/cloud_off.svg")
             assert isinstance(status_exc, Exception)
             cause = status_exc.__cause__
-            if isinstance(cause, HandshakeAPIVersionError):
+            if isinstance(cause, IncompatibleAPIVersionsError):
                 tooltip = text = _("TEXT_BACKEND_STATE_API_MISMATCH_versions").format(
                     versions=", ".join([str(v.version) for v in cause.backend_versions])
                 )

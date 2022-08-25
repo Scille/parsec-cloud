@@ -7,6 +7,8 @@ from parsec.api.protocol.base import (
     packb,
     unpackb,
     api_typed_msg_adapter,
+    settle_compatible_versions,
+    IncompatibleAPIVersionsError,
 )
 from parsec.api.protocol.types import (
     UserID,
@@ -34,7 +36,6 @@ from parsec.api.protocol.handshake import (
     HandshakeRVKMismatch,
     HandshakeRevokedDevice,
     HandshakeOutOfBallparkError,
-    HandshakeAPIVersionError,
     ServerHandshake,
     HandshakeType,
     BaseClientHandshake,
@@ -158,7 +159,8 @@ __all__ = (
     "HandshakeRVKMismatch",
     "HandshakeRevokedDevice",
     "HandshakeOutOfBallparkError",
-    "HandshakeAPIVersionError",
+    "IncompatibleAPIVersionsError",
+    "settle_compatible_versions",
     "ServerHandshake",
     "HandshakeType",
     "BaseClientHandshake",
