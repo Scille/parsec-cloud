@@ -89,6 +89,7 @@
     "WorkspacesPage": {
         "createWorkspace": "Créer un espace de travail",
         "documents": "Documents",
+        "user": "utilisateur",
         "workspaceContextMenu": {
             "share": "Partager",
             "history": "Historique",
@@ -109,6 +110,24 @@
             "owner": "Propriétaire",
             "notShared": "Non partagé",
             "inviteNewUser": "Inviter un nouvel utilisateur"
+        }
+    },
+    "OrganizationPage": {
+        "pageTitle": "Mon organisation",
+        "users": "Utilisateurs",
+        "workspaces": "Espaces de travail",
+        "storage": "Stockage",
+        "OrganizationPageUsers": {
+            "inviteUser": "Inviter un utilisateur",
+            "pendingInvitations": "invitation(s) en cours",
+            "OrganizationPendingUserContextMenu": {
+                "greetUser": "Accueillir l'utilisateur",
+                "cancelInvitation": "Annuler l'invitation"
+            },
+            "OrganizationUserContextMenu": {
+                "details": "Voir détails",
+                "revoke": "Révoquer"
+            }
         }
     }
 }

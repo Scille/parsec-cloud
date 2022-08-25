@@ -69,7 +69,7 @@ import { IonButton, IonCheckbox, IonIcon, IonLabel, IonItem, isPlatform } from '
 import { folder, document, ellipsisVertical, shareSocial, briefcase, person, help } from 'ionicons/icons';
 
 const props = defineProps<{
-  itemType: 'folder' | 'file' | 'workspace' | 'user'
+  itemType: 'folder' | 'file' | 'workspace' | 'user' | 'pendingUser'
   primaryLabel: string
   secondaryLabel: string
 }>();
@@ -96,6 +96,8 @@ function getIconFromItemType(): string {
     return briefcase;
   case 'user':
     return person;
+  case 'pendingUser':
+    return help;
   default:
     return help;
   }

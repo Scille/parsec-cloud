@@ -32,7 +32,7 @@
       </ion-buttons>
     </ion-toolbar>
     <ion-searchbar
-      v-model="searchUsertInput"
+      v-model="searchUsersInput"
       v-else
     />
   </ion-header>
@@ -62,7 +62,7 @@
       </ion-buttons>
     </ion-toolbar>
     <ion-searchbar
-      v-model="searchUsertInput"
+      v-model="searchUsersInput"
       v-else
     />
   </ion-footer>
@@ -88,7 +88,7 @@ import {
 import { ref, computed } from 'vue';
 import WorkspaceShareModalUserItem from '@/components/WorkspaceShareModalUserItem.vue';
 
-const searchUsertInput=ref('');
+const searchUsersInput=ref('');
 
 const usersExampleData = [
   {
@@ -144,14 +144,14 @@ function goToInvitationPage(): void {
 }
 
 const filteredUsers = computed(() => {
-  let tempUsersExampleData = usersExampleData;
-  if (searchUsertInput.value !== '' && searchUsertInput.value) {
-    tempUsersExampleData=tempUsersExampleData.filter((user) => {
-      return user.name
-        .toLowerCase()
-        .includes(searchUsertInput.value.toLowerCase());
+  if (searchUsersInput.value !== '') {
+    return usersExampleData.filter((user) => {
+      return user.name.toLowerCase().includes(
+        searchUsersInput.value.toLowerCase()
+      );
     });
+  } else {
+    return usersExampleData;
   }
-  return tempUsersExampleData;
 });
 </script>

@@ -21,7 +21,7 @@
         v-if="thirdLabel"
         class="secondary-text"
       >
-        <p>{{ thirdLabel }} users</p>
+        <p>{{ thirdLabel }}</p>
       </div>
     </ion-label>
     <ion-button
@@ -63,10 +63,10 @@
 <script setup lang="ts">
 import { defineProps, ref, defineEmits } from 'vue';
 import { IonIcon, IonItem, IonLabel, IonButton } from '@ionic/vue';
-import { folder, ellipsisVertical, briefcase, person, help, checkmarkCircle, shareSocial } from 'ionicons/icons';
+import { folder, document, ellipsisVertical, briefcase, person, help, checkmarkCircle, shareSocial } from 'ionicons/icons';
 
 const props = defineProps<{
-  itemType: 'folder' | 'file' | 'workspace' | 'user'
+  itemType: 'folder' | 'file' | 'workspace' | 'user' | 'pendingUser'
   primaryLabel: string
   secondaryLabel: string
   thirdLabel?: string | number
@@ -87,10 +87,14 @@ function getIconFromItemType(): string {
   switch (props.itemType) {
   case 'folder':
     return folder;
+  case 'file':
+    return document;
   case 'workspace':
     return briefcase;
   case 'user':
     return person;
+  case 'pendingUser':
+    return help;
   default:
     return help;
   }
