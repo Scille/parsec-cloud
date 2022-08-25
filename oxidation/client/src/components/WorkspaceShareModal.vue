@@ -144,7 +144,7 @@ function goToInvitationPage(): void {
 }
 
 const filteredUsers = computed(() => {
-  if (searchUsersInput.value && searchUsersInput.value !== '') {
+  if (searchUsersInput.value !== '') {
     return usersExampleData.filter((user) => {
       return user.name
         .toLowerCase()
