@@ -35,7 +35,7 @@
           :item-type="'workspace'"
           :primary-label="workspace.name"
           :secondary-label="workspace.userRole"
-          :third-label="workspace.userCount"
+          :third-label="userCountLabel(workspace.userCount)"
           :key="workspace.id"
           @contextmenu.prevent="openWorkspaceActionSheet()"
           @trigger-action-sheet="openWorkspaceActionSheet()"
@@ -142,6 +142,10 @@ const workspacesExampleData = [
     'userCount': 3
   }
 ];
+
+function userCountLabel(userCount: number): string {
+  return userCount > 1 ? `${userCount} ${t('WorkspacesPage.user')}s` : `${userCount} ${t('WorkspacesPage.user')}`;
+}
 
 function handleContextMenu(ev: Event): void {
   if (isPlatform('mobile')) { // @contextmenu event is triggered by a long press on mobile

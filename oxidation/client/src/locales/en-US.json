@@ -89,6 +89,7 @@
     "WorkspacesPage": {
         "createWorkspace": "Create workspace",
         "documents": "Documents",
+        "user": "user",
         "workspaceContextMenu": {
             "share": "Share",
             "history": "History",
