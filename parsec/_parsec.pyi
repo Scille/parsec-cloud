@@ -79,6 +79,13 @@ from parsec._parsec_pyi.trustchain import TrustchainContext
 
 from parsec._parsec_pyi.local_device import LocalDevice, UserInfo, DeviceInfo
 
+from parsec._parsec_pyi.file_operation import (
+    prepare_read,
+    prepare_reshape,
+    prepare_resize,
+    prepare_write,
+)
+
 __all__ = [
     # Certif
     "UserCertificate",
@@ -147,4 +154,9 @@ __all__ = [
     "LocalDevice",
     "UserInfo",
     "DeviceInfo",
+    # File Operations
+    "prepare_read",
+    "prepare_reshape",
+    "prepare_resize",
+    "prepare_write",
 ]
