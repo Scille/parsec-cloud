@@ -1,11 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from collections import namedtuple
+from typing import NamedTuple
 
 
-class ApiVersion(namedtuple("ApiVersion", "version revision")):
+class ApiVersion(NamedTuple):
+    version: int
+    revision: int
+
     def __str__(self) -> str:
         return f"{self.version}.{self.revision}"
+
+    @classmethod
+    def from_str(cls, value: str) -> "ApiVersion":
+        raw_version, raw_revision = value.split(".")
+        version, revision = int(raw_version), int(raw_revision)
+        return cls(version, revision)
 
 
 # API major versions:
