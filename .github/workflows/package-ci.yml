@@ -26,7 +26,7 @@ jobs:
           - name: 🐧 Linux
             os: ubuntu-22.04
           - name: 🍎 macOS
-            os: macos-11
+            os: macos-12
           - name: 🏁 Windows
             os: windows-2022
     name: '${{ matrix.name }}: 📦 Packaging (build Wheel)'
@@ -273,7 +273,7 @@ jobs:
           path: ${{ runner.temp }}/dist/
 
   package-macos-build-app:
-    runs-on: macos-11
+    runs-on: macos-12
     name: '🍎 macOS: 📦 Packaging (build installer content)'
     needs: package-wheel
     env:
