@@ -4,7 +4,7 @@
   <ion-page>
     <ion-content>
       <ion-toolbar>
-        <ion-searchbar />
+        <ion-searchbar v-model="searchUsersAndPendingUsersInput" />
         <ion-buttons
           slot="primary"
         >
@@ -30,9 +30,54 @@
         </ion-buttons>
       </ion-toolbar>
       <div v-if="listView">
-        <ion-item-divider>1 {{ $t('OrganizationPage.OrganizationPageUsers.pendingInvitations') }}</ion-item-divider>
+        <ion-item-divider>
+          {{ pendingUsersExampleData.length }} {{ $t('OrganizationPage.OrganizationPageUsers.pendingInvitations') }}
+        </ion-item-divider>
+        <table
+          v-if="!isPlatform('mobile')"
+          class="pending-users-table"
+        >
+          <tr
+            v-for="pendingUser in filteredPendingUsers"
+            :key="pendingUser.id"
+          >
+            <td class="pending-user-email">
+              {{ pendingUser.email }}
+            </td>
+            <td>
+              <ion-button
+                color="danger"
+                fill="clear"
+              >
+                <ion-icon
+                  slot="start"
+                  :icon="personRemove"
+                  color="danger"
+                />
+                <ion-label color="danger">
+                  {{ $t('OrganizationPage.OrganizationPageUsers.OrganizationPendingUserContextMenu.cancelInvitation') }}
+                </ion-label>
+              </ion-button>
+            </td>
+            <td>
+              <ion-button
+                color="primary"
+                fill="solid"
+              >
+                <ion-icon
+                  slot="start"
+                  :icon="personAdd"
+                />
+                <ion-label>{{ $t('OrganizationPage.OrganizationPageUsers.OrganizationPendingUserContextMenu.greetUser') }}</ion-label>
+              </ion-button>
+            </td>
+          </tr>
+        </table>
         <MobileItemList
-          primary-label="christophe.dupont@hote.fr"
+          v-for="pendingUser in filteredPendingUsers"
+          :key="pendingUser.id"
+          item-type="pendingUser"
+          :primary-label="pendingUser.email"
           secondary-label="Pending invitation"
           @click="openPendingUserActionSheet()"
           @contextmenu.prevent="openPendingUserActionSheet()"
@@ -40,8 +85,8 @@
         />
         <ion-item-divider>7 utilisateurs : 2 administrateurs, 3 membres, 2 invités.</ion-item-divider>
         <MobileItemList
-          v-for="user in usersExampleData"
-          :item-type="'user'"
+          v-for="user in filteredUsers"
+          item-type="user"
           :primary-label="user.name"
           :secondary-label="user.profile"
           :third-label="user.email"
@@ -54,26 +99,72 @@
       <template
         v-else
       >
-        <ion-item-divider>1 {{ $t('OrganizationPage.OrganizationPageUsers.pendingInvitations') }}</ion-item-divider>
+        <ion-item-divider>
+          {{ pendingUsersExampleData.length }} {{ $t('OrganizationPage.OrganizationPageUsers.pendingInvitations') }}
+        </ion-item-divider>
+        <table
+          v-if="!isPlatform('mobile')"
+          class="pending-users-table"
+        >
+          <tr
+            v-for="pendingUser in filteredPendingUsers"
+            :key="pendingUser.id"
+          >
+            <td class="pending-user-email">
+              {{ pendingUser.email }}
+            </td>
+            <td>
+              <ion-button
+                color="primary"
+                fill="solid"
+              >
+                <ion-icon
+                  slot="start"
+                  :icon="personAdd"
+                />
+                <ion-label>{{ $t('OrganizationPage.OrganizationPageUsers.OrganizationPendingUserContextMenu.greetUser') }}</ion-label>
+              </ion-button>
+            </td>
+            <td>
+              <ion-button
+                color="danger"
+                fill="clear"
+              >
+                <ion-icon
+                  slot="start"
+                  :icon="personRemove"
+                  color="danger"
+                />
+                <ion-label color="danger">
+                  {{ $t('OrganizationPage.OrganizationPageUsers.OrganizationPendingUserContextMenu.cancelInvitation') }}
+                </ion-label>
+              </ion-button>
+            </td>
+          </tr>
+        </table>
         <div
-          class="workspaces-grid-container"
+          v-if="isPlatform('mobile')"
+          class="users-grid-container"
         >
           <ItemGrid
-            primary-label="christophe.dupont@hote.fr"
+            v-for="pendingUser in filteredPendingUsers"
+            item-type="pendingUser"
+            :primary-label="pendingUser.email"
             secondary-label="Pending invitation"
+            :key="pendingUser.id"
             @click="handlePendingUserContextMenu($event)"
             @contextmenu.prevent="handlePendingUserContextMenu($event)"
             @trigger-context-menu="openPendingUserContextMenu($event)"
             @trigger-action-sheet="openPendingUserActionSheet()"
           />
         </div>
-        <ion-item-divider>7 utilisateurs : 2 administrateurs, 3 membres, 2 invités.</ion-item-divider>
+        <ion-item-divider>7 utilisateurs : 2 administrateurs, 3 standard, 2 externes.</ion-item-divider>
         <div
-          class="workspaces-grid-container"
+          class="users-grid-container"
         >
           <ItemGrid
-            v-for="user in usersExampleData"
-            :item-type="'user'"
+            v-for="user in filteredUsers"
+            item-type="user"
             :primary-label="user.name"
             :secondary-label="user.profile"
             :key="user.id"
@@ -116,14 +207,14 @@ import {
 } from '@ionic/vue';
 
 import {
-  add, ban, grid, informationCircle, list, personAdd, personRemove
+  add, ban, grid, informationCircle, list, personAdd, personRemove, help
 } from 'ionicons/icons';
 import ItemGrid from '@/components/ItemGrid.vue';
 import MobileItemList from '@/components/MobileItemList.vue';
 import OrganizationPendingUserContextMenu from '@/components/OrganizationPendingUserContextMenu.vue';
 import OrganizationUserContextMenu from '@/components/OrganizationUserContextMenu.vue';
 import { useI18n } from 'vue-i18n';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const { t } = useI18n();
 const listView = ref(false);
@@ -170,6 +261,17 @@ const usersExampleData = [
     'name': 'Clara Dubois',
     'email': 'clara.dubois@dubois.test',
     'profile': 'Standard'
+  }
+];
+
+const pendingUsersExampleData = [
+  {
+    'id': 344,
+    'email': 'christophe.dupont@hote.fr'
+  },
+  {
+    'id': 455,
+    'email': 'thomas.dupont@test.test'
   }
 ];
 
@@ -274,11 +376,58 @@ async function openUserActionSheet(): Promise<void> {
   const { role, data } = await actionSheet.onDidDismiss();
   console.log('onDidDismiss resolved with role and data: ', role, data);
 }
+
+const searchUsersAndPendingUsersInput=ref('');
+
+const filteredUsers = computed(() => {
+  if (searchUsersAndPendingUsersInput.value && searchUsersAndPendingUsersInput.value !== '') {
+    return usersExampleData.filter((user) => {
+      return (user.email
+        .toLowerCase()
+        .includes(searchUsersAndPendingUsersInput.value.toLowerCase()) ||
+        user.name
+          .toLowerCase()
+          .includes(searchUsersAndPendingUsersInput.value.toLowerCase()));
+    });
+  } else {
+    return usersExampleData;
+  }
+});
+
+const filteredPendingUsers = computed(() => {
+  if (searchUsersAndPendingUsersInput.value && searchUsersAndPendingUsersInput.value !== '') {
+    return pendingUsersExampleData.filter((pendingUser) => {
+      return pendingUser.email
+        .toLowerCase()
+        .includes(searchUsersAndPendingUsersInput.value.toLowerCase());
+    });
+  } else {
+    return pendingUsersExampleData;
+  }
+});
 </script>
 
 <style lang="scss" scoped>
-.workspaces-grid-container {
+.users-grid-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.pending-users-table {
+    table-layout: auto;
+    width: 100%;
+}
+
+.pending-users-table td:nth-last-child(-n+2) {
+    text-align: end;
+    width: 1%;
+}
+
+.pending-users-table td:nth-child(1) {
+    padding-left: 16px;
+}
+
+.pending-user-email {
+    word-break: break-word;
 }
 </style>
