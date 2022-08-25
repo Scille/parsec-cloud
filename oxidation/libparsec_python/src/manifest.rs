@@ -395,6 +395,8 @@ impl FileManifest {
             &author_verify_key.0,
             &expected_author.0,
             expected_timestamp.0,
+            None,
+            None,
         ) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
@@ -599,6 +601,8 @@ impl FolderManifest {
             &author_verify_key.0,
             &expected_author.0,
             expected_timestamp.0,
+            None,
+            None,
         ) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
@@ -782,6 +786,8 @@ impl WorkspaceManifest {
             &author_verify_key.0,
             &expected_author.0,
             expected_timestamp.0,
+            None,
+            None,
         ) {
             Ok(x) => Ok(Self(x)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
@@ -959,6 +965,8 @@ impl UserManifest {
             &author_verify_key.0,
             &expected_author.0,
             expected_timestamp.0,
+            None,
+            None,
         )
         .map_err(|e| DataError::new_err(e.to_string()))?;
         if let Some(expected_id) = expected_id {

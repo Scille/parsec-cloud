@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
+import zlib
 from unicodedata import normalize
 
 from parsec.serde import packb
@@ -11,6 +12,10 @@ from parsec.api.data import (
     SASCode,
     EntryName,
     EntryNameTooLongError,
+    FileManifest as RemoteFileManifest,
+    FolderManifest as RemoteFolderManifest,
+    WorkspaceManifest as RemoteWorkspaceManifest,
+    UserManifest as RemoteUserManifest,
 )
 from parsec.core.types import (
     LocalFileManifest,
@@ -18,6 +23,7 @@ from parsec.core.types import (
     LocalWorkspaceManifest,
     LocalUserManifest,
 )
+from parsec._parsec import LocalDevice
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -232,6 +238,8 @@ def test_entry_name_normalization():
 def test_local_manifests_load_invalid_data():
     key = SecretKey.generate()
     valid_msgpack_but_bad_fields = packb({"foo": 42})
+    valid_zip_bud_bad_msgpack = zlib.compress(b"dummy")
+    invalid_zip = b"\x42" * 10
 
     for cls in (
         LocalFileManifest,
@@ -243,8 +251,62 @@ def test_local_manifests_load_invalid_data():
             cls.decrypt_and_load(b"", key=key)
 
         with pytest.raises(DataError):
-            cls.decrypt_and_load(b"\x42" * 10, key=key)
+            cls.decrypt_and_load(invalid_zip, key=key)
+
+        with pytest.raises(DataError):
+            cls.decrypt_and_load(valid_zip_bud_bad_msgpack, key=key)
 
         # Valid to deserialize, invalid fields
         with pytest.raises(DataError):
             cls.decrypt_and_load(valid_msgpack_but_bad_fields, key=key)
+
+
+def test_remote_manifests_load_invalid_data(alice: LocalDevice):
+    key = SecretKey.generate()
+    valid_zip_msgpack_but_bad_fields = zlib.compress(packb({"foo": 42}))
+    valid_zip_bud_bad_msgpack = zlib.compress(b"dummy")
+    invalid_zip = b"\x42" * 10
+
+    for cls in (
+        RemoteFileManifest,
+        RemoteFolderManifest,
+        RemoteWorkspaceManifest,
+        RemoteUserManifest,
+    ):
+        print(f"Testing class {cls.__name__}")
+        with pytest.raises(DataError):
+            cls.decrypt_verify_and_load(
+                b"",
+                key=key,
+                author_verify_key=alice.verify_key,
+                expected_author=alice.device_id,
+                expected_timestamp=alice.timestamp(),
+            )
+
+        with pytest.raises(DataError):
+            cls.decrypt_verify_and_load(
+                invalid_zip,
+                key=key,
+                author_verify_key=alice.verify_key,
+                expected_author=alice.device_id,
+                expected_timestamp=alice.timestamp(),
+            )
+
+        with pytest.raises(DataError):
+            cls.decrypt_verify_and_load(
+                valid_zip_bud_bad_msgpack,
+                key=key,
+                author_verify_key=alice.verify_key,
+                expected_author=alice.device_id,
+                expected_timestamp=alice.timestamp(),
+            )
+
+        # Valid to deserialize, invalid fields
+        with pytest.raises(DataError):
+            cls.decrypt_verify_and_load(
+                valid_zip_msgpack_but_bad_fields,
+                key=key,
+                author_verify_key=alice.verify_key,
+                expected_author=alice.device_id,
+                expected_timestamp=alice.timestamp(),
+            )

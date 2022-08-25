@@ -2,7 +2,7 @@
 
 use hex_literal::hex;
 use rstest::rstest;
-use std::{collections::HashMap, num::NonZeroU64};
+use std::{collections::HashMap, num::NonZeroU64, str::FromStr};
 
 use libparsec_crypto::*;
 use libparsec_types::*;
@@ -101,6 +101,8 @@ fn serde_file_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
 
@@ -115,6 +117,8 @@ fn serde_file_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(manifest2, expected);
@@ -156,6 +160,8 @@ fn serde_file_manifest_invalid_blocksize(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     );
 
     assert!(manifest.is_err());
@@ -219,6 +225,8 @@ fn serde_folder_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
 
@@ -233,6 +241,8 @@ fn serde_folder_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(manifest2, expected);
@@ -293,6 +303,8 @@ fn serde_workspace_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
 
@@ -307,6 +319,8 @@ fn serde_workspace_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(manifest2, expected);
@@ -403,6 +417,8 @@ fn serde_user_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
 
@@ -417,7 +433,83 @@ fn serde_user_manifest(alice: &Device) {
         &alice.verify_key(),
         &alice.device_id,
         now,
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(manifest2, expected);
+}
+
+#[rstest]
+#[case::valid(None, None, None, None, None)]
+#[case::valid_id(None, None, Some("87c6b5fd3b454c94bab51d6af1c6930b".parse().unwrap()), None, None)]
+#[case::valid_version(None, None, None, Some(42), None)]
+#[case::invalid_dev_id(
+    Some("maurice@pc1"),
+    None,
+    None,
+    None,
+    Some("Invalid author: expected `maurice@pc1`, got `alice@dev1`".to_string())
+)]
+#[case::invalid_timestamp(
+    None,
+    Some("2021-10-24T11:50:43.208821Z".parse().unwrap()),
+    None,
+    None,
+    Some("Invalid timestamp: expected `2021-10-24T11:50:43+00:00`, got `2021-12-04T11:50:43+00:00`".to_string())
+)]
+#[case::invalid_id(
+    None,
+    None,
+    Some("6b398b3dc6804bb784bb07b0d7038c63".parse().unwrap()),
+    None,
+    Some("Invalid entry ID: expected `6b398b3dc6804bb784bb07b0d7038c63`, got `87c6b5fd3b454c94bab51d6af1c6930b`".to_string())
+)]
+#[case::invalid_version(None, None, None, Some(0x1337), Some("Invalid version: expected `4919`, got `42`".to_string()))]
+fn test_file_manifest_verify(
+    alice: &Device,
+    #[case] expected_author: Option<&str>,
+    #[case] expected_timestamp: Option<DateTime>,
+    #[case] expected_id: Option<EntryID>,
+    #[case] expected_version: Option<u32>,
+    #[case] expected_result: Option<String>,
+) {
+    let now = "2021-12-04T11:50:43.208821Z".parse::<DateTime>().unwrap();
+    let id = "87c6b5fd3b454c94bab51d6af1c6930b"
+        .parse::<EntryID>()
+        .unwrap();
+    let version = 42;
+
+    let expected_author = expected_author
+        .map(|author| DeviceID::from_str(author).expect("Invalid raw DeviceID"))
+        .unwrap_or_else(|| alice.device_id.to_owned());
+    let expected_timestamp = expected_timestamp.unwrap_or(now);
+    let expected_id = expected_id;
+    let expected_version = expected_version;
+
+    let manifest = FileManifest {
+        author: alice.device_id.to_owned(),
+        timestamp: now,
+        id,
+        parent: "07748fbf67a646428427865fd730bf3e".parse().unwrap(),
+        version,
+        created: now,
+        updated: now,
+        size: 700,
+        blocksize: Blocksize::try_from(512).unwrap(),
+        blocks: vec![],
+    };
+
+    assert_eq!(
+        manifest
+            .verify(
+                &expected_author,
+                expected_timestamp,
+                expected_id,
+                expected_version,
+            )
+            .map_err(|e| e.to_string())
+            .err(),
+        expected_result
+    );
 }

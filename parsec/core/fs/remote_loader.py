@@ -16,14 +16,14 @@ from parsec.api.data import (
     DataError,
     BlockAccess,
     RealmRoleCertificate,
-    BaseManifest as BaseRemoteManifest,
-    AnyManifest as RemoteAnyManifest,
+    AnyRemoteManifest,
     UserCertificate,
     DeviceCertificate,
     RevokedUserCertificate,
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
 )
+from parsec.api.data.manifest import manifest_decrypt_verify_and_load
 from parsec.core.types import EntryID, ChunkID, LocalDevice, WorkspaceEntry
 from parsec.core.backend_connection import (
     BackendConnectionError,
@@ -537,7 +537,7 @@ class RemoteLoader(UserRemoteLoader):
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
         workspace_entry: Optional[WorkspaceEntry] = None,
-    ) -> RemoteAnyManifest:
+    ) -> AnyRemoteManifest:
         """
         Download a manifest.
 
@@ -639,17 +639,14 @@ class RemoteLoader(UserRemoteLoader):
             author = await self.remote_devices_manager.get_device(expected_author)
 
         try:
-            remote_manifest = cast(
-                RemoteAnyManifest,
-                BaseRemoteManifest.decrypt_verify_and_load(
-                    rep["blob"],
-                    key=workspace_entry.key,
-                    author_verify_key=author.verify_key,
-                    expected_author=expected_author,
-                    expected_timestamp=expected_timestamp,
-                    expected_version=expected_version,
-                    expected_id=entry_id,
-                ),
+            remote_manifest = manifest_decrypt_verify_and_load(
+                rep["blob"],
+                key=workspace_entry.key,
+                author_verify_key=author.verify_key,
+                expected_author=expected_author,
+                expected_timestamp=expected_timestamp,
+                expected_version=expected_version,
+                expected_id=entry_id,
             )
         except DataError as exc:
             raise FSError(f"Cannot decrypt vlob: {exc}") from exc
@@ -680,9 +677,9 @@ class RemoteLoader(UserRemoteLoader):
     async def upload_manifest(
         self,
         entry_id: EntryID,
-        manifest: RemoteAnyManifest,
+        manifest: AnyRemoteManifest,
         timestamp_greater_than: Optional[DateTime] = None,
-    ) -> RemoteAnyManifest:
+    ) -> AnyRemoteManifest:
         """
         Raises:
             FSError
@@ -894,7 +891,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
         workspace_entry: Optional[WorkspaceEntry] = None,
-    ) -> RemoteAnyManifest:
+    ) -> AnyRemoteManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
         a WorkspaceFS or a WorkspaceFSTimestamped
@@ -924,9 +921,9 @@ class RemoteLoaderTimestamped(RemoteLoader):
     async def upload_manifest(
         self,
         entry_id: EntryID,
-        manifest: RemoteAnyManifest,
+        manifest: AnyRemoteManifest,
         timestamp_greater_than: Optional[DateTime] = None,
-    ) -> RemoteAnyManifest:
+    ) -> AnyRemoteManifest:
         raise FSError("Cannot upload manifest through a timestamped remote loader")
 
     async def _vlob_create(
