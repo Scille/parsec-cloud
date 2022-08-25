@@ -17,8 +17,10 @@ PYTHON=${SNAP}/usr/bin/python3.9
 export PYTHONPATH=${SNAP}/site-packages
 
 # We can't rely on `ctypes.util.find_library` in classic snap environement,
-# so we use the `FUSE_LIBRARY_PATH` enviroment variable.
+# so we use the `*_LIBRARY_PATH` enviroment variables.
 export FUSE_LIBRARY_PATH=${SNAP}/lib/x86_64-linux-gnu/libfuse.so.2
+export SSL_LIBRARY_PATH=${SNAP}/usr/lib/x86_64-linux-gnu/libssl.so.1.1
+export CRYPTO_LIBRARY_PATH=${SNAP}/usr/lib/x86_64-linux-gnu/libcrypto.so.1.1
 
 # This was a hot fix from 2019 for a segfault with ubuntu 18
 # See https://github.com/Scille/parsec-cloud/issues/162 for more information.
