@@ -67,7 +67,7 @@ macro_rules! impl_manifest_dump_load {
             }
 
             /// Verify the signed value using the given `verify_key`
-            /// And then, it will check for the expected `author` & `timestamp`
+            /// And then, it will check for the expected values
             pub fn verify_and_load(
                 signed: &[u8],
                 author_verify_key: &VerifyKey,
@@ -95,7 +95,7 @@ macro_rules! impl_manifest_dump_load {
                 Ok(obj)
             }
 
-            /// Verify the manifest against a set of expected value
+            /// Verify the manifest against a set of expected values
             pub fn verify(
                 &self,
                 expected_author: &DeviceID,
