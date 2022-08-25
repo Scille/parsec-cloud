@@ -24,6 +24,7 @@ pub struct Device {
     pub user_manifest_id: EntryID,
     pub user_manifest_key: SecretKey,
     pub local_symkey: SecretKey,
+    pub time_provider: TimeProvider,
 }
 
 impl Device {
@@ -59,6 +60,7 @@ impl Device {
             user_manifest_id: self.user_manifest_id.to_owned(),
             user_manifest_key: self.user_manifest_key.to_owned(),
             local_symkey: self.local_symkey.to_owned(),
+            time_provider: self.time_provider.clone(),
         }
     }
 }
@@ -110,6 +112,7 @@ pub fn alice(coolorg: &Organization) -> Device {
         local_symkey: SecretKey::from(hex!(
             "125a78618995e2e0f9a19bc8617083c809c03deb5457d5b82df5bcaec9966cd4"
         )),
+        time_provider: TimeProvider::default(),
     }
 }
 
@@ -135,6 +138,7 @@ pub fn bob(coolorg: &Organization) -> Device {
         local_symkey: SecretKey::from(hex!(
             "93f25b18491016f20b10dcf4eb7986716d914653d6ab4e778701c13435e6bdf0"
         )),
+        time_provider: TimeProvider::default(),
     }
 }
 
@@ -154,6 +158,7 @@ pub fn mallory(coolorg: &Organization) -> Device {
         user_manifest_id: EntryID::default(),
         user_manifest_key: SecretKey::generate(),
         local_symkey: SecretKey::generate(),
+        time_provider: TimeProvider::default(),
     }
 }
 
@@ -181,4 +186,13 @@ pub fn tmp_path() -> TmpPath {
     std::fs::create_dir_all(&path).expect("Cannot create tmp_path dir");
 
     TmpPath(path)
+}
+
+// Most unittests uses the current time as a shorthand to get a datetime object.
+// This is something that is cumbersome (by design !) in our code given it is
+// achieved by doing `TimeProvider::default().now()`.
+// So instead this fixture should be used when a default `DateTime` object is needed.
+#[fixture]
+pub fn timestamp() -> DateTime {
+    "2020-01-01T00:00:00Z".parse().unwrap()
 }

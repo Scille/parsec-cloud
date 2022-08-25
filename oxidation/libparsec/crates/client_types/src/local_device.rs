@@ -21,6 +21,7 @@ pub struct LocalDevice {
     pub user_manifest_id: EntryID,
     pub user_manifest_key: SecretKey,
     pub local_symkey: SecretKey,
+    pub time_provider: TimeProvider,
 }
 
 impl LocalDevice {
@@ -131,13 +132,11 @@ impl LocalDevice {
         }
     }
 
-    /// This method centralizes the production of parsec timestamps for a given device.
-    /// At the moment it is simply an alias to [DateTime::now] but it has two main benefits:
-    /// 1. Allowing for easier testing by patching this method in device-specific way
-    /// 2. Allowing for other implementation in the future allowing to track, check and
-    ///    possibly alter the production of timestamps.
-    pub fn timestamp(&self) -> DateTime {
-        DateTime::now()
+    /// This method centralizes the production of current time timestamps for a given device.
+    /// This is meant to avoid relying on side effect and hence be able to do per-device
+    /// time mock.
+    pub fn now(&self) -> DateTime {
+        self.time_provider.now()
     }
 }
 
@@ -179,6 +178,7 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
             user_manifest_id: data.user_manifest_id,
             user_manifest_key: data.user_manifest_key,
             local_symkey: data.local_symkey,
+            time_provider: TimeProvider::default(),
         })
     }
 }

@@ -2,15 +2,13 @@
 
 import pytest
 from typing import Dict, Optional, Tuple
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime, TimeProvider, TrustchainContext
 from parsec.api.data import UserCertificate, DeviceCertificate, RevokedUserCertificate
 from parsec.api.protocol import UserID, UserProfile
 from parsec.api.protocol.types import DeviceID
 from parsec.core.types import LocalDevice
 from parsec.core.trustchain import TrustchainError
-
-from parsec._parsec import TrustchainContext
 
 
 class TrustchainData:
@@ -37,7 +35,7 @@ class TrustchainData:
         )
 
     def trustchain_ctx_factory(self) -> TrustchainContext:
-        return TrustchainContext(self.root_verify_key, 1)
+        return TrustchainContext(self.root_verify_key, TimeProvider(), 1)
 
     def add_user_certif(self, certif_content: UserCertificate, certif: bytes) -> None:
         self.users_certifs[certif_content.user_id] = (certif_content, certif)

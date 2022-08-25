@@ -24,7 +24,11 @@ fn test_bad_expected_user(
     alice_device_certif: &DeviceCertificate,
     coolorg: &Organization,
 ) {
-    let mut ctx = TrustchainContext::new(alice.root_verify_key().clone(), 1);
+    let mut ctx = TrustchainContext::new(
+        alice.root_verify_key().clone(),
+        alice.time_provider.clone(),
+        1,
+    );
 
     let err = ctx
         .load_user_and_devices(
@@ -56,8 +60,11 @@ fn test_verify_no_trustchain(
     alice_device_certif: &DeviceCertificate,
     coolorg: &Organization,
 ) {
-    let now = DateTime::now();
-    let mut ctx = TrustchainContext::new(alice.root_verify_key().clone(), 1);
+    let mut ctx = TrustchainContext::new(
+        alice.root_verify_key().clone(),
+        alice.time_provider.clone(),
+        1,
+    );
 
     let mut alice2_device_certif = alice_device_certif.clone();
     let alice2_device_id: DeviceID = "alice@dev2".parse().unwrap();
@@ -87,13 +94,13 @@ fn test_verify_no_trustchain(
         )
         .unwrap();
 
-    assert_eq!(&user, ctx.get_user(alice.user_id(), Some(now)).unwrap());
+    assert_eq!(&user, ctx.get_user(alice.user_id()).unwrap());
     assert_eq!(revoked_user, None);
 
     let devices = devices.iter().collect::<Vec<_>>();
-    assert!(devices.contains(&ctx.get_device(&alice.device_id, Some(now)).unwrap()));
-    assert!(devices.contains(&ctx.get_device(&alice2_device_id, Some(now)).unwrap()));
-    assert!(devices.contains(&ctx.get_device(&alice3_device_id, Some(now)).unwrap()));
+    assert!(devices.contains(&ctx.get_device(&alice.device_id).unwrap()));
+    assert!(devices.contains(&ctx.get_device(&alice2_device_id).unwrap()));
+    assert!(devices.contains(&ctx.get_device(&alice3_device_id).unwrap()));
 }
 
 #[rstest]
@@ -103,7 +110,11 @@ fn test_bad_user_self_signed(
     alice_device_certif: &DeviceCertificate,
     coolorg: &Organization,
 ) {
-    let mut ctx = TrustchainContext::new(alice.root_verify_key().clone(), 1);
+    let mut ctx = TrustchainContext::new(
+        alice.root_verify_key().clone(),
+        alice.time_provider.clone(),
+        1,
+    );
 
     let mut alice_user_certif = alice_user_certif.clone();
     alice_user_certif.author = CertificateSignerOwned::User(alice.device_id.clone());
@@ -138,7 +149,11 @@ fn test_bad_revoked_user_self_signed(
     alice_revoked_user_certif: &RevokedUserCertificate,
     coolorg: &Organization,
 ) {
-    let mut ctx = TrustchainContext::new(alice.root_verify_key().clone(), 1);
+    let mut ctx = TrustchainContext::new(
+        alice.root_verify_key().clone(),
+        alice.time_provider.clone(),
+        1,
+    );
     let mut alice_revoked_user_certif = alice_revoked_user_certif.clone();
     alice_revoked_user_certif.author = alice.device_id.clone();
 
@@ -173,7 +188,11 @@ fn test_invalid_loop_on_device_certif_trustchain_error(
     bob_device_certif: &DeviceCertificate,
     coolorg: &Organization,
 ) {
-    let mut ctx = TrustchainContext::new(alice.root_verify_key().clone(), 1);
+    let mut ctx = TrustchainContext::new(
+        alice.root_verify_key().clone(),
+        alice.time_provider.clone(),
+        1,
+    );
 
     let mut bob_device_certif = bob_device_certif.clone();
     bob_device_certif.author = CertificateSignerOwned::User(alice.device_id.clone());
@@ -225,7 +244,11 @@ fn test_device_signature_while_revoked(
 ) {
     let d1 = DateTime::from(Utc.ymd(2000, 1, 1).and_hms(0, 0, 0));
     let d2 = DateTime::from(Utc.ymd(2000, 1, 2).and_hms(0, 0, 0));
-    let mut ctx = TrustchainContext::new(mallory.root_verify_key().clone(), 1);
+    let mut ctx = TrustchainContext::new(
+        mallory.root_verify_key().clone(),
+        mallory.time_provider.clone(),
+        1,
+    );
 
     let mut mallory_device_certif = mallory_device_certif.clone();
     mallory_device_certif.author = CertificateSignerOwned::User(alice.device_id.clone());
@@ -278,7 +301,11 @@ fn test_user_signature_while_revoked(
 ) {
     let d1 = DateTime::from(Utc.ymd(2000, 1, 1).and_hms(0, 0, 0));
     let d2 = DateTime::from(Utc.ymd(2000, 1, 2).and_hms(0, 0, 0));
-    let mut ctx = TrustchainContext::new(mallory.root_verify_key().clone(), 1);
+    let mut ctx = TrustchainContext::new(
+        mallory.root_verify_key().clone(),
+        mallory.time_provider.clone(),
+        1,
+    );
 
     let mut mallory_user_certif = mallory_user_certif.clone();
     mallory_user_certif.author = CertificateSignerOwned::User(alice.device_id.clone());
@@ -332,7 +359,11 @@ fn test_revoked_user_signature_while_revoked(
 ) {
     let d1 = DateTime::from(Utc.ymd(2000, 1, 1).and_hms(0, 0, 0));
     let d2 = DateTime::from(Utc.ymd(2000, 1, 2).and_hms(0, 0, 0));
-    let mut ctx = TrustchainContext::new(mallory.root_verify_key().clone(), 1);
+    let mut ctx = TrustchainContext::new(
+        mallory.root_verify_key().clone(),
+        mallory.time_provider.clone(),
+        1,
+    );
 
     let mut bob_user_certif = bob_user_certif.clone();
     bob_user_certif.profile = UserProfile::Admin;
@@ -385,7 +416,11 @@ fn test_create_user_not_admin(
     bob_device_certif: &DeviceCertificate,
     coolorg: &Organization,
 ) {
-    let mut ctx = TrustchainContext::new(mallory.root_verify_key().clone(), 1);
+    let mut ctx = TrustchainContext::new(
+        mallory.root_verify_key().clone(),
+        mallory.time_provider.clone(),
+        1,
+    );
 
     let mut alice_user_certif = alice_user_certif.clone();
     alice_user_certif.author = CertificateSignerOwned::User(bob.device_id.clone());
@@ -429,7 +464,11 @@ fn test_revoked_user_not_admin(
     alice_revoked_user_certif: &RevokedUserCertificate,
     coolorg: &Organization,
 ) {
-    let mut ctx = TrustchainContext::new(mallory.root_verify_key().clone(), 1);
+    let mut ctx = TrustchainContext::new(
+        mallory.root_verify_key().clone(),
+        mallory.time_provider.clone(),
+        1,
+    );
 
     let mut bob_user_certif = bob_user_certif.clone();
     bob_user_certif.profile = UserProfile::Standard;
@@ -471,7 +510,11 @@ fn test_verify_user_with_broken_trustchain(
     alice_revoked_user_certif: &RevokedUserCertificate,
     coolorg: &Organization,
 ) {
-    let mut ctx = TrustchainContext::new(mallory.root_verify_key().clone(), 1);
+    let mut ctx = TrustchainContext::new(
+        mallory.root_verify_key().clone(),
+        alice.time_provider.clone(),
+        1,
+    );
 
     let mut mallory_user_certif = mallory_user_certif.clone();
     mallory_user_certif.profile = UserProfile::Admin;

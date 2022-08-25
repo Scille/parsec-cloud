@@ -73,7 +73,7 @@ impl DateTime {
 
     #[classmethod]
     fn now(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec::types::DateTime::now()))
+        Ok(Self(libparsec::types::DateTime::now_legacy()))
     }
 
     fn timestamp(&self) -> PyResult<f64> {

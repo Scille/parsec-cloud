@@ -6,7 +6,6 @@ use libparsec_platform_native::Transport;
 use libparsec_protocol::{
     AuthenticatedClientHandshakeStalled, Handshake, HandshakeResult, ServerHandshakeStalled,
 };
-use libparsec_types::DateTime;
 use rstest::rstest;
 use tests_fixtures::{alice, Device};
 
@@ -16,6 +15,7 @@ fn test_transport(alice: &Device) {
         let addr = "127.0.0.1:0";
         let listener = TcpListener::bind(addr).await.unwrap();
         let server_addr = listener.local_addr().unwrap();
+        let time_provider = alice.time_provider.clone();
 
         let verify_key = alice.verify_key();
         task::spawn(async move {
@@ -23,7 +23,7 @@ fn test_transport(alice: &Device) {
             let mut server = Transport::init_for_server(server_stream).await;
 
             let sh = ServerHandshakeStalled::default()
-                .build_challenge_req(DateTime::now())
+                .build_challenge_req(time_provider.now())
                 .unwrap();
 
             server.send(sh.raw.clone()).await.unwrap();
@@ -49,7 +49,7 @@ fn test_transport(alice: &Device) {
             alice.device_id.clone(),
             alice.signing_key.clone(),
             alice.root_verify_key().clone(),
-            DateTime::now(),
+            alice.time_provider.now(),
         )
         .process_challenge_req(&raw)
         .unwrap();

@@ -95,6 +95,7 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(manifest::manifest_verify_and_load, m)?)?;
 
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
+    m.add_class::<time::TimeProvider>()?;
     m.add_class::<time::DateTime>()?;
     m.add_class::<time::LocalDateTime>()?;
 

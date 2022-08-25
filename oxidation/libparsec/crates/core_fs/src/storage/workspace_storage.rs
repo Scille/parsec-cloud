@@ -94,6 +94,7 @@ impl WorkspaceStorage {
             device.local_symkey.clone(),
             Mutex::new(cache_pool.conn()?),
             cache_size,
+            device.time_provider.clone(),
         )?;
 
         let manifest_storage = ManifestStorage::new(
@@ -102,8 +103,11 @@ impl WorkspaceStorage {
             workspace_id,
         )?;
 
-        let chunk_storage =
-            ChunkStorage::new(device.local_symkey.clone(), Mutex::new(data_pool.conn()?))?;
+        let chunk_storage = ChunkStorage::new(
+            device.local_symkey.clone(),
+            Mutex::new(data_pool.conn()?),
+            device.time_provider.clone(),
+        )?;
 
         let (prevent_sync_pattern, prevent_sync_pattern_fully_applied) =
             manifest_storage.get_prevent_sync_pattern()?;
@@ -267,7 +271,7 @@ impl WorkspaceStorage {
             .get_manifest(self.workspace_id)
             .is_err()
         {
-            let timestamp = self.device.timestamp();
+            let timestamp = self.device.now();
             let manifest = LocalWorkspaceManifest::new(
                 self.device.device_id.clone(),
                 timestamp,
@@ -386,13 +390,13 @@ mod tests {
 
     fn create_workspace_manifest(device: &LocalDevice) -> LocalWorkspaceManifest {
         let author = device.device_id.clone();
-        let timestamp = device.timestamp();
+        let timestamp = device.now();
         LocalWorkspaceManifest::new(author, timestamp, None, false)
     }
 
     fn create_file_manifest(device: &LocalDevice) -> LocalFileManifest {
         let author = device.device_id.clone();
-        let timestamp = device.timestamp();
+        let timestamp = device.now();
         LocalFileManifest::new(author, EntryID::default(), timestamp, DEFAULT_BLOCK_SIZE)
     }
 
@@ -724,8 +728,7 @@ mod tests {
         );
 
         let mut workspace_manifest = create_workspace_manifest(&aws.device);
-        let base =
-            workspace_manifest.to_remote(aws.device.device_id.clone(), aws.device.timestamp());
+        let base = workspace_manifest.to_remote(aws.device.device_id.clone(), aws.device.now());
         workspace_manifest.base = base;
         workspace_manifest.need_sync = false;
         let workspace_manifest = LocalManifest::Workspace(workspace_manifest);

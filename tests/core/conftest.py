@@ -24,7 +24,7 @@ def remote_devices_manager_factory():
         async with backend_authenticated_cmds_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
-            yield RemoteDevicesManager(cmds, device.root_verify_key)
+            yield RemoteDevicesManager(cmds, device.root_verify_key, device.time_provider)
 
     return _remote_devices_manager_factory
 
@@ -86,7 +86,7 @@ def user_fs_factory(data_base_dir, event_bus_factory):
         async with backend_authenticated_cmds_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
-            rdm = RemoteDevicesManager(cmds, device.root_verify_key)
+            rdm = RemoteDevicesManager(cmds, device.root_verify_key, device.time_provider)
             async with UserFS.run(
                 data_base_dir, device, cmds, rdm, event_bus, get_prevent_sync_pattern()
             ) as user_fs:

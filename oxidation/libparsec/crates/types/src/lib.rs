@@ -12,6 +12,7 @@ mod id;
 mod invite;
 mod manifest;
 mod message;
+mod time;
 
 pub use addr::*;
 pub use certif::*;
@@ -21,3 +22,4 @@ pub use id::*;
 pub use invite::*;
 pub use manifest::*;
 pub use message::*;
+pub use time::*;

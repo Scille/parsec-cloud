@@ -40,7 +40,7 @@ async def alice_fs_context(loopback_fs, event_bus_factory, alice, monkeypatch):
         async with backend_authenticated_cmds_factory(
             alice.organization_addr, alice.device_id, alice.signing_key
         ) as cmds:
-            rdm = RemoteDevicesManager(cmds, alice.root_verify_key)
+            rdm = RemoteDevicesManager(cmds, alice.root_verify_key, alice.time_provider)
             async with UserFS.run(
                 path, alice, cmds, rdm, event_bus, get_prevent_sync_pattern()
             ) as user_fs:

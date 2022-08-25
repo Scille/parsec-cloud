@@ -7,7 +7,7 @@ use pyo3::types::{PyDict, PyTuple};
 use crate::api_crypto::VerifyKey;
 use crate::certif::{DeviceCertificate, RevokedUserCertificate, UserCertificate};
 use crate::ids::{DeviceID, UserID};
-use crate::time::DateTime;
+use crate::time::TimeProvider;
 
 import_exception!(parsec.core.trustchain, TrustchainError);
 
@@ -17,9 +17,14 @@ pub(crate) struct TrustchainContext(pub libparsec::core::TrustchainContext);
 #[pymethods]
 impl TrustchainContext {
     #[new]
-    fn new(root_verify_key: &VerifyKey, cache_validity: i64) -> PyResult<Self> {
+    fn new(
+        root_verify_key: &VerifyKey,
+        time_provider: TimeProvider,
+        cache_validity: i64,
+    ) -> PyResult<Self> {
         Ok(Self(libparsec::core::TrustchainContext::new(
             root_verify_key.0.clone(),
+            time_provider.0,
             cache_validity,
         )))
     }
@@ -34,41 +39,22 @@ impl TrustchainContext {
         Ok(())
     }
 
-    fn get_user(
-        &self,
-        user_id: &UserID,
-        now: Option<DateTime>,
-    ) -> PyResult<Option<UserCertificate>> {
-        let now = now.map(|now| now.0);
-        Ok(self
-            .0
-            .get_user(&user_id.0, now)
-            .cloned()
-            .map(UserCertificate))
+    fn get_user(&self, user_id: &UserID) -> PyResult<Option<UserCertificate>> {
+        Ok(self.0.get_user(&user_id.0).cloned().map(UserCertificate))
     }
 
-    fn get_revoked_user(
-        &self,
-        user_id: &UserID,
-        now: Option<DateTime>,
-    ) -> PyResult<Option<RevokedUserCertificate>> {
-        let now = now.map(|now| now.0);
+    fn get_revoked_user(&self, user_id: &UserID) -> PyResult<Option<RevokedUserCertificate>> {
         Ok(self
             .0
-            .get_revoked_user(&user_id.0, now)
+            .get_revoked_user(&user_id.0)
             .cloned()
             .map(RevokedUserCertificate))
     }
 
-    fn get_device(
-        &self,
-        device_id: &DeviceID,
-        now: Option<DateTime>,
-    ) -> PyResult<Option<DeviceCertificate>> {
-        let now = now.map(|now| now.0);
+    fn get_device(&self, device_id: &DeviceID) -> PyResult<Option<DeviceCertificate>> {
         Ok(self
             .0
-            .get_device(&device_id.0, now)
+            .get_device(&device_id.0)
             .cloned()
             .map(DeviceCertificate))
     }
@@ -78,13 +64,11 @@ impl TrustchainContext {
         users: Vec<Vec<u8>>,
         revoked_users: Vec<Vec<u8>>,
         devices: Vec<Vec<u8>>,
-        now: Option<DateTime>,
         py: Python<'py>,
     ) -> PyResult<(&'py PyTuple, &'py PyTuple, &'py PyTuple)> {
-        let now = now.map(|now| now.0);
         let (users, revoked_users, devices) = self
             .0
-            .load_trustchain(&users, &revoked_users, &devices, now)
+            .load_trustchain(&users, &revoked_users, &devices)
             .map_err(|err| TrustchainError::new_err(err.to_string()))?;
 
         let users = users.into_iter().map(|x| UserCertificate(x).into_py(py));

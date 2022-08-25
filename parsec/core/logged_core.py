@@ -388,7 +388,9 @@ async def logged_core_factory(
         keepalive=config.backend_connection_keepalive,
     )
 
-    remote_devices_manager = RemoteDevicesManager(backend_conn.cmds, device.root_verify_key)
+    remote_devices_manager = RemoteDevicesManager(
+        backend_conn.cmds, device.root_verify_key, device.time_provider
+    )
     async with UserFS.run(
         data_base_dir=config.data_base_dir,
         device=device,
