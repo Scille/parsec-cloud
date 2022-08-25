@@ -1,18 +1,42 @@
-rust:
+shared: &shared
   - .github/**
+
+rust:
+  - *shared
   - oxidation/**/*.rs
   - oxidation/**/*.toml
   - Cargo.toml
   - Cargo.lock
+
 python:
-  - .github/**
+  - *shared
   - parsec/**
   - tests/**
   - pyproject.toml
   - poetry.lock
   - build.py
+
 rust-ext:
+  - *shared
   - .github/**
   - src/**/*.rs
   - Cargo.toml
   - Cargo.lock
+
+client-common: &client-common
+  - oxidation/client/src/**
+  - oxidation/client/resources/**
+  - oxidation/client/public/**
+  - oxidation/client/package-lock.json
+  - oxidation/client/package.json
+  - oxidation/client/capacitor.config.ts
+  - oxidation/client/babel.config.js
+  - oxidation/client/tsconfig.json
+  - oxidation/bindings/common/**
+
+client-web:
+  - *shared
+  - *client-common
+  - oxidation/bindings/web/**
+  - oxidation/client/tests/**
+  - oxidation/client/jest.config.js
