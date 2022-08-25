@@ -24,7 +24,7 @@ class BlockCreateSerializer:
         return BlockCreateReq(req["block_id"], req["realm_id"], req["block"]).dump()
 
     @staticmethod
-    def rep_loads(raw: bytes) -> BlockCreateRep:
+    def rep_loads(raw: bytes) -> Any:
         return BlockCreateRep.load(raw)
 
 
@@ -34,7 +34,7 @@ class BlockReadSerializer:
         return BlockReadReq(req["block_id"]).dump()
 
     @staticmethod
-    def rep_loads(raw: bytes) -> BlockReadRep:
+    def rep_loads(raw: bytes) -> Any:
         return BlockReadRep.load(raw)
 
 

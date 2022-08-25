@@ -6,6 +6,10 @@ from functools import partial
 from parsec._parsec import DateTime
 from contextlib import asynccontextmanager
 
+from parsec._parsec import (
+    BlockCreateRepOk,
+    BlockReadRepOk,
+)
 from parsec.serde import packb
 from parsec.api.protocol import (
     ping_serializer,
@@ -164,7 +168,7 @@ class CmdSock:
             if isinstance(rep, dict):
                 assert rep["status"] == "ok"  # Legacy rep schemas
             else:
-                assert rep.is_ok()  # Rust-based rep schemas
+                assert isinstance(rep, (BlockCreateRepOk, BlockReadRepOk))  # Rust-based rep schemas
 
         return rep
 

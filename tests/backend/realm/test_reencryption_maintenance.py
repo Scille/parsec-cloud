@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec._parsec import DateTime, BlockReadRep, BlockCreateRep
+from parsec._parsec import DateTime, BlockReadRepOk, BlockCreateRepInMaintenance
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import UserID, VlobID, BlockID, RealmRole, MaintenanceType, APIEvent
 from parsec.backend.realm import RealmGrantedRole
@@ -562,7 +562,7 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
         rep = await block_create(
             alice_ws, block_id=block_id, realm_id=realm_id, block=b"data", check_rep=False
         )
-        assert rep == BlockCreateRep.InMaintenance()
+        assert isinstance(rep, BlockCreateRepInMaintenance)
 
     async def _assert_read_access_allowed(encryption_revision, expected_blob=b"v1"):
         rep = await vlob_read(
@@ -572,7 +572,7 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
         assert rep["blob"] == expected_blob
 
         rep = await block_read(alice_ws, block_id=block_id)
-        assert rep == BlockReadRep.Ok(b"<block_data>")
+        assert rep == BlockReadRepOk(b"<block_data>")
 
         # For good measure, also try those read-only commands even if they
         # are encryption-revision agnostic

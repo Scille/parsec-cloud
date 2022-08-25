@@ -1,5 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+from parsec._parsec import (
+    BlockCreateRepOk,
+    BlockCreateRepTimeout,
+    BlockCreateRepAlreadyExists,
+    BlockCreateRepInMaintenance,
+    BlockCreateRepNotAllowed,
+    BlockCreateRepNotFound,
+    BlockReadRepOk,
+    BlockReadRepInMaintenance,
+    BlockReadRepNotAllowed,
+    BlockReadRepNotFound,
+    BlockReadRepTimeout,
+)
 from parsec.api.protocol import (
     OrganizationID,
     DeviceID,
@@ -47,19 +60,19 @@ class BaseBlockComponent:
             block = await self.read(client_ctx.organization_id, client_ctx.device_id, req.block_id)
 
         except BlockNotFoundError:
-            return BlockReadRep.NotFound()
+            return BlockReadRepNotFound()
 
         except BlockStoreError:
             # For legacy reasons, block store error status is `timeout`
-            return BlockReadRep.Timeout()
+            return BlockReadRepTimeout()
 
         except BlockAccessError:
-            return BlockReadRep.NotAllowed()
+            return BlockReadRepNotAllowed()
 
         except BlockInMaintenanceError:
-            return BlockReadRep.InMaintenance()
+            return BlockReadRepInMaintenance()
 
-        return BlockReadRep.Ok(block=block)
+        return BlockReadRepOk(block=block)
 
     @api("block_create")
     @catch_protocol_errors
@@ -75,22 +88,22 @@ class BaseBlockComponent:
             )
 
         except BlockAlreadyExistsError:
-            return BlockCreateRep.AlreadyExists()
+            return BlockCreateRepAlreadyExists()
 
         except BlockNotFoundError:
-            return BlockCreateRep.NotFound()
+            return BlockCreateRepNotFound()
 
         except BlockStoreError:
             # For legacy reasons, block store error status is `timeout`
-            return BlockCreateRep.Timeout()
+            return BlockCreateRepTimeout()
 
         except BlockAccessError:
-            return BlockCreateRep.NotAllowed()
+            return BlockCreateRepNotAllowed()
 
         except BlockInMaintenanceError:
-            return BlockCreateRep.InMaintenance()
+            return BlockCreateRepInMaintenance()
 
-        return BlockCreateRep.Ok()
+        return BlockCreateRepOk()
 
     async def read(
         self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID

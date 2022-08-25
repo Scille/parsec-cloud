@@ -98,8 +98,21 @@ from parsec._parsec_pyi.protocol import (
     # Block
     BlockCreateReq,
     BlockCreateRep,
+    BlockCreateRepOk,
+    BlockCreateRepAlreadyExists,
+    BlockCreateRepInMaintenance,
+    BlockCreateRepNotAllowed,
+    BlockCreateRepNotFound,
+    BlockCreateRepTimeout,
+    BlockCreateRepUnknownStatus,
     BlockReadReq,
     BlockReadRep,
+    BlockReadRepOk,
+    BlockReadRepInMaintenance,
+    BlockReadRepNotAllowed,
+    BlockReadRepNotFound,
+    BlockReadRepTimeout,
+    BlockReadRepUnknownStatus,
 )
 
 __all__ = [
@@ -186,6 +199,19 @@ __all__ = [
     # Protocol Block
     "BlockCreateReq",
     "BlockCreateRep",
+    "BlockCreateRepOk",
+    "BlockCreateRepAlreadyExists",
+    "BlockCreateRepInMaintenance",
+    "BlockCreateRepNotAllowed",
+    "BlockCreateRepNotFound",
+    "BlockCreateRepTimeout",
+    "BlockCreateRepUnknownStatus",
     "BlockReadReq",
     "BlockReadRep",
+    "BlockReadRepOk",
+    "BlockReadRepInMaintenance",
+    "BlockReadRepNotAllowed",
+    "BlockReadRepNotFound",
+    "BlockReadRepTimeout",
+    "BlockReadRepUnknownStatus",
 ]
