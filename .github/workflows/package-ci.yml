@@ -73,6 +73,30 @@ jobs:
           output-dir: dist
         timeout-minutes: 30
 
+      - name: Hack the wheel macos version
+        if: startsWith(matrix.os, 'macos-')
+        shell: bash
+        run: |
+          set -eux
+          # Old wheel name
+          OLD_WHEEL_NAME=$(basename dist/parsec_cloud-*.whl)
+          # Unzip the wheel
+          mkdir temp
+          cd temp
+          unzip ../dist/$OLD_WHEEL_NAME
+          # Get platform new wheel name
+          python -m pip install wheel
+          PLATFORM=$(python -c "from wheel.bdist_wheel import get_platform; print(get_platform('.'))")
+          NEW_WHEEL_NAME=$(basename ../dist/parsec_cloud-*.whl | sed "s/macosx_.*_x86_64/$PLATFORM/")
+          # Update archive and zip back
+          sed -i "" "s/macosx_.*_x86_64/$PLATFORM/" parsec_cloud-*.dist-info/WHEEL
+          zip -r $NEW_WHEEL_NAME *
+          cd ..
+          # Replace old wheel with the new one
+          mv temp/$NEW_WHEEL_NAME dist/
+          rm dist/$OLD_WHEEL_NAME
+          rm -rf temp
+
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
 
