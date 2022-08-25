@@ -1,0 +1,3 @@
+Add new backend sequester type: WEBHOOK
+A webhook services is a sequester service with an encryption key. Metadata are also encrypted with the service key and send to the parsec metadata server.
+A webhook service does not store the sequester metadata to a storage, but it posted the metadata to an http service.
