@@ -113,7 +113,7 @@
         }
     },
     "OrganizationPage": {
-        "pageTitle": "My Organization",
+        "pageTitle": "My organization",
         "users": "Users",
         "workspaces": "Workspaces",
         "storage": "Storage",
