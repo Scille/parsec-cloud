@@ -115,8 +115,23 @@ impl VerifyKey {
         }
     }
 
+    /// Verify a message using the given `VerifyKey` and `signed` data
+    /// `signed` data is the concatenation of the `signature` + `data`
     fn verify<'p>(&self, py: Python<'p>, signed: &[u8]) -> PyResult<&'p PyBytes> {
         match self.0.verify(signed) {
+            Ok(v) => Ok(PyBytes::new(py, &v)),
+            Err(_) => Err(CryptoError::new_err("Signature was forged or corrupt")),
+        }
+    }
+
+    /// Verify a message using the given `VerifyKey`, `Signature` and `message`
+    fn verify_with_signature<'p>(
+        &self,
+        py: Python<'p>,
+        signature: &[u8],
+        message: &[u8],
+    ) -> PyResult<&'p PyBytes> {
+        match self.0.verify_with_signature(signature, message) {
             Ok(v) => Ok(PyBytes::new(py, &v)),
             Err(_) => Err(CryptoError::new_err("Signature was forged or corrupt")),
         }
