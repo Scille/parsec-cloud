@@ -80,8 +80,17 @@ impl SigningKey {
         Ok(Self(libparsec::crypto::SigningKey::generate()))
     }
 
+    /// Return the signature + the signed data
     fn sign<'p>(&self, py: Python<'p>, data: &[u8]) -> PyResult<&'p PyBytes> {
         Ok(PyBytes::new(py, self.0.sign(data).as_slice()))
+    }
+
+    /// Return only the signature of the data
+    fn sign_only_signature<'p>(&self, py: Python<'p>, data: &[u8]) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            self.0.sign_only_signature(data).as_slice(),
+        ))
     }
 
     fn encode<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
