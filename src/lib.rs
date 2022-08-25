@@ -7,6 +7,7 @@ mod addrs;
 mod api_crypto;
 mod binding_utils;
 mod certif;
+mod file_operations;
 mod ids;
 mod invite;
 mod local_device;
@@ -38,6 +39,11 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<certif::RevokedUserCertificate>()?;
     m.add_class::<certif::DeviceCertificate>()?;
     m.add_class::<certif::RealmRoleCertificate>()?;
+
+    m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_resize, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_reshape, m)?)?;
 
     m.add_class::<ids::OrganizationID>()?;
     m.add_class::<ids::EntryID>()?;
