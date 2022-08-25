@@ -47,4 +47,3 @@ import {
 } from '@ionic/vue';
 
 </script>
-
