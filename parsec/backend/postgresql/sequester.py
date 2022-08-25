@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+from collections import defaultdict
 from typing import List, Optional, Tuple
 from triopg._triopg import TrioConnectionProxy
 
@@ -128,7 +129,7 @@ ORDER BY _id
 
 _get_sequester_blob = Q(
     f"""
-SELECT sequester_service_vlob_atom.blob, vlob_atom.vlob_id
+SELECT sequester_service_vlob_atom.blob, vlob_atom.vlob_id, vlob_atom._id
 FROM sequester_service_vlob_atom
 INNER JOIN vlob_atom ON vlob_atom._id = sequester_service_vlob_atom.vlob_atom
 INNER JOIN realm_vlob_update ON vlob_atom._id = realm_vlob_update.vlob_atom
@@ -138,6 +139,17 @@ AND organization={ q_organization_internal_id("$organization_id") })
 AND realm_vlob_update.realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
 ORDER BY sequester_service_vlob_atom._id
 """
+)
+
+_get_vlob_atom_ids = Q(
+    f"""
+    SELECT vlob_atom._id, vlob_encryption_revision, vlob_id
+    FROM vlob_atom
+    INNER JOIN realm_vlob_update ON vlob_atom._id = realm_vlob_update.vlob_atom
+
+    WHERE organization={ q_organization_internal_id("$organization_id") }
+    AND realm_vlob_update.realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+    """
 )
 
 
@@ -343,12 +355,57 @@ class PGPSequesterComponent(BaseSequesterComponent):
                 raise SequesterWrongServiceType(
                     f"Service type {service.service_type} is not compatible with export"
                 )
-            data = await conn.fetch(
+
+            # Exctract sequester blobs
+            raw_sequester_data = await conn.fetch(
                 *_get_sequester_blob(
                     organization_id=organization_id.str, service_id=service_id, realm_id=realm_id
                 )
             )
+
+            # Sort data by postgresql table index
+            sequester_blob = {
+                data["_id"]: (data["vlob_id"], data["blob"]) for data in raw_sequester_data
+            }
+            # Get vlob ids
+            sequester_vlob_ids = set([data["vlob_id"] for data in raw_sequester_data])
+
+            # Only vlob that contains sequester data has been downloaded.
+            # A vlob_id can be in different vlob atoms.
+            # Sometimes, those vlob atoms does not have sequester data.
+            # We need to send all sequester vlob to the client and keep track of all updates
+            # Sequester data has an update version.
+            # To get this update version, we need to get all vlob atom (all updates)
+            # for one vlob id.
+
+            # Get all vlobs
+            # Could be better to use "WHERE ... IN ..."" querry to get only vlobs that contains at least one sequester data.
+            # It appears that triopg does not handle "WHERE vlob_id IN ($vlob_ids)" querries if items are UUIDs
+            # No other choice to dump all vlobs.
+            all_vlob_ids = await conn.fetch(
+                *_get_vlob_atom_ids(
+                    organization_id=organization_id.str,
+                    realm_id=realm_id,
+                )
+            )
+
+            vlobs_ids = defaultdict(list)
+            for entry in all_vlob_ids:
+                vlobs_ids[entry["vlob_id"]].append(entry["_id"])
+
+            # Generate dump data
             dump = []
-            for version, entry in enumerate(data, start=1):
-                dump.append((VlobID(entry["vlob_id"]), version, entry["blob"]))
+
+            for vlob_id in sequester_vlob_ids:
+                # Get all vlob atom indexes
+                vlob_atom_indexes = vlobs_ids[vlob_id]
+                # Count versions
+                for version, vlob_atom_index in enumerate(vlob_atom_indexes, start=1):
+                    try:
+                        sequester_vlob_id, blob = sequester_blob[vlob_atom_index]
+                        assert sequester_vlob_id == vlob_id
+                        dump.append((VlobID(vlob_id), version, blob))
+                    except KeyError:
+                        pass
+
             return dump

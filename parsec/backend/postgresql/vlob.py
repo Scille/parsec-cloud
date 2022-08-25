@@ -151,6 +151,7 @@ class PGVlobComponent(BaseVlobComponent):
                 vlob_id=vlob_id,
                 timestamp=timestamp,
             )
+
             await query_create(
                 conn,
                 organization_id,
