@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from base64 import b64encode
 from dataclasses import dataclass
 import sys
 import pytest
@@ -8,23 +9,33 @@ import trio
 import ssl
 import trustme
 import socket
+import structlog
+import tempfile
 from inspect import iscoroutine
 from contextlib import contextmanager, asynccontextmanager
-import tempfile
 from functools import partial
-from typing import Optional, Callable, Union
+from typing import Any, Dict, Literal, Optional, Callable, TypedDict, Union, overload
 from quart_trio import QuartTrio
 from hypercorn.config import Config as HyperConfig
 from hypercorn.trio.run import worker_serve
 from hypercorn.trio.tcp_server import TCPServer
 from hypercorn.trio.worker_context import WorkerContext
 from quart.typing import TestClientProtocol
+from quart.datastructures import Headers
+from quart import Response
 
+from parsec._parsec import DateTime
+from parsec.api.protocol.base import CmdSerializer
+from parsec.backend.asgi.rpc import AUTHORIZATION_PARSEC_ED25519, CONTENT_TYPE_MSGPACK
 from parsec.core.types import BackendAddr, LocalDevice
 from parsec.backend.app import BackendApp
 from parsec.backend import backend_app_factory
 from parsec.backend.asgi import app_factory
 from parsec.backend.config import BackendConfig, MockedEmailConfig, MockedBlockStoreConfig
+from parsec.api.protocol.ping import ping_serializer
+from parsec.api.version import API_VERSION, ApiVersion
+from parsec.api.protocol.types import DeviceID
+from parsec.serde.fields import SigningKey
 
 from tests.common.freeze_time import freeze_time
 from tests.common.trio_clock import real_clock_timeout
@@ -559,6 +570,166 @@ class RunningBackend:
     def test_client(self, use_cookies: bool = True) -> TestClientProtocol:
         """Creates and returns a test client"""
         return self.asgi_app.test_client(use_cookies)
+
+
+class AuthenticatedHeaders(TypedDict):
+    content_type: str
+    api_version: ApiVersion
+    authorization: str
+    signature: str
+    timestamp: DateTime
+    author: DeviceID
+
+
+def to_http_headers(raw_headers: AuthenticatedHeaders) -> Headers:
+    headers = Headers()
+
+    if raw_headers["content_type"] is not None:
+        headers["Content-Type"] = raw_headers["content_type"]
+    if raw_headers["api_version"] is not None:
+        headers["Api-Version"] = raw_headers["api_version"]
+    if raw_headers["authorization"] is not None:
+        headers["Authorization"] = raw_headers["authorization"]
+    if raw_headers["signature"] is not None:
+        headers["Signature"] = raw_headers["signature"]
+    if raw_headers["timestamp"] is not None:
+        headers["Timestamp"] = raw_headers["timestamp"].to_rfc3339_string()
+    if raw_headers["author"] is not None:
+        headers["Author"] = b64encode(raw_headers["author"].str.encode())
+
+    return headers
+
+
+class AuthenticatedHttpApiClient:
+    device: LocalDevice
+    http_client: TestClientProtocol
+    logger: structlog.stdlib.BoundLogger = structlog.get_logger()
+    base_headers: AuthenticatedHeaders
+
+    def __init__(self, device: LocalDevice, http_client: TestClientProtocol) -> None:
+        self.device = device
+        self.http_client = http_client
+        self.base_headers = AuthenticatedHeaders(
+            content_type=CONTENT_TYPE_MSGPACK,
+            api_version=API_VERSION,
+            authorization=AUTHORIZATION_PARSEC_ED25519,
+            author=self.device.device_id,
+        )
+
+    @property
+    def device_id(self) -> DeviceID:
+        return self.device.device_id
+
+    @property
+    def signing_key(self) -> SigningKey:
+        return self.device.signing_key
+
+    @staticmethod
+    def get_request() -> bytes:
+        """Create a dummy request"""
+        return ping_serializer.req_dumps(AuthenticatedHttpApiClient.get_raw_request())
+
+    @staticmethod
+    def get_raw_request():
+        return {"cmd": "ping", "ping": "hello world"}
+
+    @staticmethod
+    def parse_response(raw_data: bytes) -> Dict[str, Any]:
+        """Parse the response for the dummy request"""
+        return ping_serializer.rep_loads(raw_data)
+
+    @staticmethod
+    def expected_response() -> Dict[str, str]:
+        """The expected response for the dummy request"""
+        return {"status": "ok", "pong": "hello world"}
+
+    @overload
+    async def send_dummy_request(
+        self,
+        check_rep: Literal[False],
+        now: Optional[DateTime] = None,
+        extra_headers: AuthenticatedHeaders = {},
+    ) -> Response:
+        ...
+
+    @overload
+    async def send_dummy_request(
+        self,
+        check_rep: Literal[True] = True,
+        now: Optional[DateTime] = None,
+        extra_headers: AuthenticatedHeaders = {},
+    ) -> Dict[str, Any]:
+        ...
+
+    async def send_dummy_request(
+        self,
+        check_rep: bool = True,
+        now: Optional[DateTime] = None,
+        extra_headers: AuthenticatedHeaders = {},
+    ) -> Union[Response, Dict[str, Any]]:
+        return await self.send_request(
+            self.get_raw_request(), ping_serializer, now, extra_headers, check_rep
+        )
+
+    async def send_request(
+        self,
+        req: Dict[str, Any],
+        serializer: CmdSerializer,
+        now: Optional[DateTime] = None,
+        extra_headers: AuthenticatedHeaders = {},
+        check_rep: bool = True,
+    ) -> Union[Response, Dict[str, Any]]:
+        now = now if now is not None else DateTime.now()
+        body = serializer.req_dumps(req)
+        temp_headers: AuthenticatedHeaders = {
+            **self.base_headers,
+            "timestamp": now,
+            "signature": self.sign_request(now, body),
+            **extra_headers,
+        }
+
+        headers = to_http_headers(temp_headers)
+
+        rep = await self.send_authenticated_request(headers, body)
+
+        if check_rep:
+            assert rep.status_code == 200
+            rep_body = await rep.body()
+            return serializer.rep_loads(rep_body)
+        else:
+            return rep
+
+    def sign_request(self, timestamp: DateTime, request: bytes) -> str:
+        device_id = self.device_id
+        signing_key = self.signing_key
+
+        formatted_datetime = timestamp.to_rfc3339_string()
+        data_to_sign = b64encode(device_id.str.encode()) + formatted_datetime.encode() + request
+        signed_message = signing_key.sign_only_signature(data_to_sign)
+        signed_message_b64 = b64encode(signed_message).decode()
+        self.logger.debug(
+            f"signing request for device {device_id}",
+            timestamp={formatted_datetime},
+            signature={signed_message_b64},
+        )
+        return signed_message_b64
+
+    async def send_authenticated_request(self, headers: Headers, body: bytes) -> Response:
+        org_id = self.device.organization_id
+        uri = f"/authenticated/{org_id}"
+
+        self.logger.debug(
+            "Sending authenticated request", uri=uri, org_id=org_id, headers=headers, data=body
+        )
+        return await self.http_client.post(uri, headers=headers, data=body)
+
+
+@pytest.fixture
+def alice_http_client(
+    alice: LocalDevice, running_backend: RunningBackend
+) -> AuthenticatedHttpApiClient:
+    test_client = running_backend.test_client()
+    return AuthenticatedHttpApiClient(alice, test_client)
 
 
 @pytest.fixture
