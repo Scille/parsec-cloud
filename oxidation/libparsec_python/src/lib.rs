@@ -25,14 +25,6 @@ mod time;
 /// import the module.
 #[pymodule]
 fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
-    // Block
-    m.add_class::<protocol::BlockCreateReq>()?;
-    m.add_class::<protocol::BlockCreateRep>()?;
-    m.add_class::<protocol::BlockReadReq>()?;
-    m.add_class::<protocol::BlockReadRep>()?;
-    // Cmd
-    m.add_class::<protocol::AuthenticatedAnyCmdReq>()?;
-    m.add_class::<protocol::InvitedAnyCmdReq>()?;
     // Events
     m.add_class::<protocol::EventsListenReq>()?;
     m.add_class::<protocol::EventsListenRep>()?;

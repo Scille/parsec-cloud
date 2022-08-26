@@ -6,7 +6,17 @@ from typing import Dict, Optional, List, Iterable, Tuple, cast, Iterator, Callab
 import trio
 from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
 
-from parsec._parsec import DateTime
+from parsec._parsec import (
+    DateTime,
+    BlockCreateRepOk,
+    BlockCreateRepAlreadyExists,
+    BlockCreateRepInMaintenance,
+    BlockCreateRepNotAllowed,
+    BlockReadRepOk,
+    BlockReadRepNotFound,
+    BlockReadRepInMaintenance,
+    BlockReadRepNotAllowed,
+)
 from parsec.api.protocol.sequester import SequesterServiceID
 
 from parsec.crypto import HashDigest, CryptoError, VerifyKey
@@ -449,21 +459,21 @@ class RemoteLoader(UserRemoteLoader):
         # Download
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.block_read(access.id)
-        if rep["status"] == "not_found":
+        if isinstance(rep, BlockReadRepNotFound):
             raise FSRemoteBlockNotFound(access)
-        elif rep["status"] == "not_allowed":
+        elif isinstance(rep, BlockReadRepNotAllowed):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot load block: no read access")
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, BlockReadRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 "Cannot download block while the workspace in maintenance"
             )
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot download block: `{rep['status']}`")
+        elif not isinstance(rep, BlockReadRepOk):
+            raise FSError(f"Cannot download block: `{rep}`")
 
         # Decryption
         try:
-            block = access.key.decrypt(rep["block"])
+            block = access.key.decrypt(rep.block)
 
         # Decryption error
         except CryptoError as exc:
@@ -514,16 +524,16 @@ class RemoteLoader(UserRemoteLoader):
                 access.id, RealmID(self.workspace_id.uuid), ciphered
             )
 
-        if rep["status"] == "already_exists":
+        if isinstance(rep, BlockCreateRepAlreadyExists):
             # Ignore exception if the block has already been uploaded
             # This might happen when a failure occurs before the local storage is updated
             pass
-        elif rep["status"] == "not_allowed":
+        elif isinstance(rep, BlockCreateRepNotAllowed):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoWriteAccess("Cannot upload block: no write access")
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, BlockCreateRepInMaintenance):
             raise FSWorkspaceInMaintenance("Cannot upload block while the workspace in maintenance")
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, BlockCreateRepOk):
             raise FSError(f"Cannot upload block: {rep}")
 
         # Update local storage

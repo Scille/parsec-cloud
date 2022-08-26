@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import TYPE_CHECKING
 from parsec.api.protocol.base import (
     ProtocolError,
     MessageSerializationError,
@@ -8,7 +7,6 @@ from parsec.api.protocol.base import (
     packb,
     unpackb,
     api_typed_msg_adapter,
-    any_cmd_req_factory,
 )
 from parsec.api.protocol.types import (
     UserID,
@@ -113,10 +111,6 @@ from parsec.api.protocol.block import (
     BlockIDField,
     block_create_serializer,
     block_read_serializer,
-    BlockReadReq,
-    BlockReadRep,
-    BlockReadRepType,
-    _PyBlockReadReq,
 )
 from parsec.api.protocol.vlob import (
     VlobID,
@@ -140,19 +134,14 @@ from parsec.api.protocol.pki import (
 )
 from parsec.api.protocol.sequester import SequesterServiceID, SequesterServiceIDField
 from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS, APIV1_ANONYMOUS_CMDS
-
-
-AuthenticatedAnyCmdReq = any_cmd_req_factory("AuthenticatedAnyCmdReq", _PyBlockReadReq)
-
-_PyAuthenticatedAnyCmdReq = AuthenticatedAnyCmdReq
-if not TYPE_CHECKING:
-    try:
-        from libparsec.types import AuthenticatedAnyCmdReq as _RsAuthenticatedAnyCmdReq
-    except:
-        pass
-    else:
-        AuthenticatedAnyCmdReq = _RsAuthenticatedAnyCmdReq
-
+from parsec._parsec import (
+    AuthenticatedAnyCmdReq,
+    InvitedAnyCmdReq,
+    BlockReadReq,
+    BlockReadRep,
+    BlockCreateReq,
+    BlockCreateRep,
+)
 
 __all__ = (
     "ProtocolError",
@@ -270,7 +259,8 @@ __all__ = (
     "block_read_serializer",
     "BlockReadReq",
     "BlockReadRep",
-    "BlockReadRepType",
+    "BlockCreateReq",
+    "BlockCreateRep",
     # PKI enrollment
     "PkiEnrollmentStatus",
     "PkiEnrollmentStatusField",
@@ -287,4 +277,5 @@ __all__ = (
     "INVITED_CMDS",
     "APIV1_ANONYMOUS_CMDS",
     "AuthenticatedAnyCmdReq",
+    "InvitedAnyCmdReq",
 )

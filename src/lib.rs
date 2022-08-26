@@ -13,6 +13,7 @@ mod invite;
 mod local_device;
 mod local_manifest;
 mod manifest;
+mod protocol;
 mod time;
 mod trustchain;
 
@@ -93,6 +94,29 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
         m
     )?)?;
     m.add_function(wrap_pyfunction!(manifest::manifest_verify_and_load, m)?)?;
+
+    // Block
+    m.add_class::<protocol::BlockCreateReq>()?;
+    m.add_class::<protocol::BlockCreateRep>()?;
+    m.add_class::<protocol::BlockCreateRepOk>()?;
+    m.add_class::<protocol::BlockCreateRepAlreadyExists>()?;
+    m.add_class::<protocol::BlockCreateRepNotFound>()?;
+    m.add_class::<protocol::BlockCreateRepTimeout>()?;
+    m.add_class::<protocol::BlockCreateRepNotAllowed>()?;
+    m.add_class::<protocol::BlockCreateRepInMaintenance>()?;
+    m.add_class::<protocol::BlockCreateRepUnknownStatus>()?;
+    m.add_class::<protocol::BlockReadReq>()?;
+    m.add_class::<protocol::BlockReadRep>()?;
+    m.add_class::<protocol::BlockReadRepOk>()?;
+    m.add_class::<protocol::BlockReadRepNotFound>()?;
+    m.add_class::<protocol::BlockReadRepTimeout>()?;
+    m.add_class::<protocol::BlockReadRepNotAllowed>()?;
+    m.add_class::<protocol::BlockReadRepInMaintenance>()?;
+    m.add_class::<protocol::BlockReadRepUnknownStatus>()?;
+
+    // Cmd
+    m.add_class::<protocol::AuthenticatedAnyCmdReq>()?;
+    m.add_class::<protocol::InvitedAnyCmdReq>()?;
 
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
     m.add_class::<time::TimeProvider>()?;

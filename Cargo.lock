@@ -1909,6 +1909,7 @@ version = "0.0.0"
 dependencies = [
  "fancy-regex",
  "libparsec",
+ "paste",
  "pyo3",
  "uuid",
 ]

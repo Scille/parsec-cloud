@@ -263,7 +263,12 @@ def generate_api_protocol_specs():
                 except KeyError:
                     cmd_serializer = cmd_serializers[cmd_name]
             else:
-                cmd_serializer = cmd_serializers[cmd_name]
+                try:
+                    cmd_serializer = cmd_serializers[cmd_name]
+                except KeyError:
+                    # Due to oxidation, there is no more schema
+                    assert cmd_name in ["block_create", "block_read"]
+                    continue
             used_cmds_serializers.add(cmd_serializer)  # Keep track for sanity check
             cmds_set_specs[cmd_name] = cmd_serializer_to_spec(cmd_serializer)
 

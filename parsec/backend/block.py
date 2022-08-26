@@ -1,13 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+from parsec._parsec import (
+    BlockCreateRepOk,
+    BlockCreateRepTimeout,
+    BlockCreateRepAlreadyExists,
+    BlockCreateRepInMaintenance,
+    BlockCreateRepNotAllowed,
+    BlockCreateRepNotFound,
+    BlockReadRepOk,
+    BlockReadRepInMaintenance,
+    BlockReadRepNotAllowed,
+    BlockReadRepNotFound,
+    BlockReadRepTimeout,
+)
 from parsec.api.protocol import (
     OrganizationID,
     DeviceID,
     RealmID,
     BlockID,
-    block_create_serializer,
     BlockReadReq,
     BlockReadRep,
+    BlockCreateReq,
+    BlockCreateRep,
     api_typed_msg_adapter,
 )
 from parsec.backend.utils import catch_protocol_errors, api
@@ -46,45 +60,50 @@ class BaseBlockComponent:
             block = await self.read(client_ctx.organization_id, client_ctx.device_id, req.block_id)
 
         except BlockNotFoundError:
-            return BlockReadRep.NotFound()
+            return BlockReadRepNotFound()
 
         except BlockStoreError:
             # For legacy reasons, block store error status is `timeout`
-            return BlockReadRep.Timeout()
+            return BlockReadRepTimeout()
 
         except BlockAccessError:
-            return BlockReadRep.NotAllowed()
+            return BlockReadRepNotAllowed()
 
         except BlockInMaintenanceError:
-            return BlockReadRep.InMaintenance()
+            return BlockReadRepInMaintenance()
 
-        return BlockReadRep.Ok(block=block)
+        return BlockReadRepOk(block=block)
 
     @api("block_create")
     @catch_protocol_errors
-    async def api_block_create(self, client_ctx, msg):
-        msg = block_create_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(BlockCreateReq, BlockCreateRep)
+    async def api_block_create(self, client_ctx, req: BlockCreateReq) -> BlockCreateRep:
         try:
-            await self.create(client_ctx.organization_id, client_ctx.device_id, **msg)
+            await self.create(
+                client_ctx.organization_id,
+                client_ctx.device_id,
+                req.block_id,
+                req.realm_id,
+                req.block,
+            )
 
         except BlockAlreadyExistsError:
-            return block_create_serializer.rep_dump({"status": "already_exists"})
+            return BlockCreateRepAlreadyExists()
 
         except BlockNotFoundError:
-            return block_create_serializer.rep_dump({"status": "not_found"})
+            return BlockCreateRepNotFound()
 
         except BlockStoreError:
             # For legacy reasons, block store error status is `timeout`
-            return block_create_serializer.rep_dump({"status": "timeout"})
+            return BlockCreateRepTimeout()
 
         except BlockAccessError:
-            return block_create_serializer.rep_dump({"status": "not_allowed"})
+            return BlockCreateRepNotAllowed()
 
         except BlockInMaintenanceError:
-            return block_create_serializer.rep_dump({"status": "in_maintenance"})
+            return BlockCreateRepInMaintenance()
 
-        return block_create_serializer.rep_dump({"status": "ok"})
+        return BlockCreateRepOk()
 
     async def read(
         self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID

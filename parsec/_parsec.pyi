@@ -91,6 +91,30 @@ from parsec._parsec_pyi.file_operation import (
     prepare_write,
 )
 
+from parsec._parsec_pyi.protocol import (
+    # Cmd
+    AuthenticatedAnyCmdReq,
+    InvitedAnyCmdReq,
+    # Block
+    BlockCreateReq,
+    BlockCreateRep,
+    BlockCreateRepOk,
+    BlockCreateRepAlreadyExists,
+    BlockCreateRepInMaintenance,
+    BlockCreateRepNotAllowed,
+    BlockCreateRepNotFound,
+    BlockCreateRepTimeout,
+    BlockCreateRepUnknownStatus,
+    BlockReadReq,
+    BlockReadRep,
+    BlockReadRepOk,
+    BlockReadRepInMaintenance,
+    BlockReadRepNotAllowed,
+    BlockReadRepNotFound,
+    BlockReadRepTimeout,
+    BlockReadRepUnknownStatus,
+)
+
 __all__ = [
     # Certif
     "UserCertificate",
@@ -169,4 +193,25 @@ __all__ = [
     "prepare_reshape",
     "prepare_resize",
     "prepare_write",
+    # Protocol Cmd
+    "AuthenticatedAnyCmdReq",
+    "InvitedAnyCmdReq",
+    # Protocol Block
+    "BlockCreateReq",
+    "BlockCreateRep",
+    "BlockCreateRepOk",
+    "BlockCreateRepAlreadyExists",
+    "BlockCreateRepInMaintenance",
+    "BlockCreateRepNotAllowed",
+    "BlockCreateRepNotFound",
+    "BlockCreateRepTimeout",
+    "BlockCreateRepUnknownStatus",
+    "BlockReadReq",
+    "BlockReadRep",
+    "BlockReadRepOk",
+    "BlockReadRepInMaintenance",
+    "BlockReadRepNotAllowed",
+    "BlockReadRepNotFound",
+    "BlockReadRepTimeout",
+    "BlockReadRepUnknownStatus",
 ]
