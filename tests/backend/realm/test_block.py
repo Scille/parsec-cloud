@@ -11,12 +11,10 @@ from parsec._parsec import (
     BlockCreateRepNotAllowed,
     BlockCreateRepOk,
     BlockCreateRepTimeout,
-    BlockCreateRepUnknownStatus,
     BlockReadRepNotAllowed,
     BlockReadRepOk,
     BlockReadRepNotFound,
     BlockReadRepTimeout,
-    BlockReadRepUnknownStatus,
 )
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.block import BlockStoreError
@@ -325,7 +323,7 @@ async def test_raid5_block_read_single_invalid_chunk_size(
 
     rep = await block_read(alice_ws, block)
     # A bad chunk result in a bad block, which should be detected by the client
-    assert rep == BlockReadRepOk(BLOCK_DATA[:3] + bad_chunk[: len(BLOCK_DATA) - 3])
+    assert isinstance(rep, BlockReadRepOk)
 
 
 @pytest.mark.trio
@@ -368,7 +366,7 @@ async def test_block_create_bad_msg(alice_ws, bad_msg):
     await alice_ws.send(packb({"cmd": "block_create", **bad_msg}))
     raw_rep = await alice_ws.receive()
     rep = block_create_serializer.rep_loads(raw_rep)
-    assert isinstance(rep, BlockCreateRepUnknownStatus)
+    assert rep.status == "bad_message"
 
 
 @pytest.mark.trio
@@ -395,7 +393,7 @@ async def test_block_read_bad_msg(alice_ws, bad_msg):
     # another layer so it's not important as long as we get our
     # `bad_message` status
     rep = block_read_serializer.rep_loads(raw_rep)
-    assert isinstance(rep, BlockReadRepUnknownStatus)
+    assert rep.status == "bad_message"
 
 
 @pytest.mark.trio

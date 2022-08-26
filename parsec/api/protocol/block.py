@@ -18,25 +18,18 @@ from parsec._parsec import (
 )
 
 
-class BlockCreateSerializer:
-    @staticmethod
-    def req_dumps(req: dict[str, Any]) -> bytes:
-        return BlockCreateReq(req["block_id"], req["realm_id"], req["block"]).dump()
+class ApiCommandSerializer:
+    def __init__(self, req_schema: Any, rep_schema: Any) -> None:
+        self.req_schema = req_schema
+        self.rep_schema = rep_schema
 
-    @staticmethod
-    def rep_loads(raw: bytes) -> Any:
-        return BlockCreateRep.load(raw)
+    def req_dumps(self, req: dict[str, Any]) -> bytes:
+        req.pop("cmd")
+        return self.req_schema(**req).dump()
 
-
-class BlockReadSerializer:
-    @staticmethod
-    def req_dumps(req: dict[str, Any]) -> bytes:
-        return BlockReadReq(req["block_id"]).dump()
-
-    @staticmethod
-    def rep_loads(raw: bytes) -> Any:
-        return BlockReadRep.load(raw)
+    def rep_loads(self, raw: bytes) -> Any:
+        return self.rep_schema.load(raw)
 
 
-block_create_serializer = BlockCreateSerializer
-block_read_serializer = BlockReadSerializer
+block_create_serializer = ApiCommandSerializer(BlockCreateReq, BlockCreateRep)
+block_read_serializer = ApiCommandSerializer(BlockReadReq, BlockReadRep)
