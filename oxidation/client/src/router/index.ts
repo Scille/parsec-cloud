@@ -7,7 +7,7 @@ import TestPage from '../views/TestPage.vue';
 let routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/home'
+    redirect: '/dragtouploadtestPage'
   },
   {
     path: '/menu',
@@ -34,6 +34,11 @@ let routes: Array<RouteRecordRaw> = [
             path: 'workspaces',
             name: 'workspaces',
             component: () => import('@/views/WorkspacesPage.vue')
+          },
+          {
+            path: '/dragtouploadtestPage',
+            name: 'DragToUploadTestPage',
+            component: () => import('@/views/DragToUploadTestPage.vue')
           }
         ]
       },
