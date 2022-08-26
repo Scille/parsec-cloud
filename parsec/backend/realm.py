@@ -1,12 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import Dict, List, Optional
-from pendulum import now as pendulum_now, DateTime
+from parsec._parsec import DateTime
 import attr
 from parsec.backend.user import UserAlreadyRevokedError
 
 from parsec.utils import timestamps_in_the_ballpark
-from parsec.api.data import DataError, RealmRoleCertificateContent, UserProfile
+from parsec.api.data import DataError, RealmRoleCertificate
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
@@ -14,6 +14,7 @@ from parsec.api.protocol import (
     RealmID,
     RealmRole,
     MaintenanceType,
+    UserProfile,
     realm_status_serializer,
     realm_stats_serializer,
     realm_create_serializer,
@@ -124,7 +125,7 @@ class BaseRealmComponent:
         msg = realm_create_serializer.req_load(msg)
 
         try:
-            data = RealmRoleCertificateContent.verify_and_load(
+            data = RealmRoleCertificate.verify_and_load(
                 msg["role_certificate"],
                 author_verify_key=client_ctx.verify_key,
                 expected_author=client_ctx.device_id,
@@ -136,7 +137,7 @@ class BaseRealmComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        now = pendulum_now()
+        now = DateTime.now()
         if not timestamps_in_the_ballpark(data.timestamp, now):
             return realm_create_serializer.timestamp_out_of_ballpark_rep_dump(
                 backend_timestamp=now, client_timestamp=data.timestamp
@@ -273,7 +274,7 @@ class BaseRealmComponent:
         msg = realm_update_roles_serializer.req_load(msg)
 
         try:
-            data = RealmRoleCertificateContent.verify_and_load(
+            data = RealmRoleCertificate.verify_and_load(
                 msg["role_certificate"],
                 author_verify_key=client_ctx.verify_key,
                 expected_author=client_ctx.device_id,
@@ -285,7 +286,7 @@ class BaseRealmComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        now = pendulum_now()
+        now = DateTime.now()
         if not timestamps_in_the_ballpark(data.timestamp, now):
             return realm_update_roles_serializer.timestamp_out_of_ballpark_rep_dump(
                 backend_timestamp=now, client_timestamp=data.timestamp
@@ -344,7 +345,7 @@ class BaseRealmComponent:
     async def api_realm_start_reencryption_maintenance(self, client_ctx, msg):
         msg = realm_start_reencryption_maintenance_serializer.req_load(msg)
 
-        now = pendulum_now()
+        now = DateTime.now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
             return (
                 realm_start_reencryption_maintenance_serializer.timestamp_out_of_ballpark_rep_dump(

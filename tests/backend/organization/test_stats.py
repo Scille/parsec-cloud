@@ -1,11 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-import pendulum
+from parsec._parsec import DateTime
 from unittest.mock import ANY
 
-from parsec.api.data import UserProfile
-from parsec.api.protocol import VlobID, BlockID
+from parsec.api.protocol import VlobID, BlockID, UserProfile
 
 from tests.common import customize_fixtures
 from tests.backend.common import organization_stats
@@ -36,7 +35,7 @@ async def test_organization_stats_data(alice_ws, realm, realm_factory, alice, ba
         realm_id=realm,
         encryption_revision=1,
         vlob_id=VlobID.new(),
-        timestamp=pendulum.now(),
+        timestamp=DateTime.now(),
         blob=b"1234",
     )
     stats = await organization_stats(alice_ws)

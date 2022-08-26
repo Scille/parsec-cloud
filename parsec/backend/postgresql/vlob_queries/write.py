@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from typing import Dict, Optional
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from triopg import UniqueViolationError
 
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID

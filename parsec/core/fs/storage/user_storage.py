@@ -58,7 +58,7 @@ class UserStorage:
                 device, localdb, device.user_manifest_id
             ) as manifest_storage:
 
-                # Instanciate the user storage
+                # Instantiate the user storage
                 self = cls(device, device.user_manifest_id, manifest_storage)
 
                 # Populate the cache with the user manifest to be able to
@@ -101,7 +101,7 @@ class UserStorage:
             # initial device of our user, in which case the user local db is
             # initialized with a non-speculative local manifest placeholder).
             # In such case it is easy to fall back on an empty manifest
-            # which is a good enough aproximation of the very first version
+            # which is a good enough approximation of the very first version
             # of the manifest (field `created` is invalid, but it will be
             # correction by the merge during sync).
             timestamp = self.device.timestamp()

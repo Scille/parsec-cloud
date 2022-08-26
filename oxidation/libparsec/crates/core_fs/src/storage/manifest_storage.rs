@@ -572,15 +572,16 @@ mod tests {
     use libparsec_types::{BlockAccess, Blocksize, DateTime, DeviceID, FileManifest};
 
     use rstest::rstest;
-    use tests_fixtures::{tmp_path, TmpPath};
+    use tests_fixtures::{timestamp, tmp_path, TmpPath};
 
     use super::*;
     use crate::storage::local_database::SqlitePool;
 
     #[rstest]
-    fn manifest_storage(tmp_path: TmpPath) {
+    fn manifest_storage(tmp_path: TmpPath, timestamp: DateTime) {
+        let t1 = timestamp;
+        let t2 = t1 + 1;
         let db_path = tmp_path.join("manifest_storage.sqlite");
-        let now = DateTime::now();
         let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
         let conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
@@ -624,12 +625,12 @@ mod tests {
         let local_file_manifest = LocalManifest::File(LocalFileManifest {
             base: FileManifest {
                 author: DeviceID::default(),
-                timestamp: now,
+                timestamp: t1,
                 id: EntryID::default(),
                 parent: EntryID::default(),
                 version: 1,
-                created: now,
-                updated: now,
+                created: t1,
+                updated: t1,
                 size: 8,
                 blocksize: Blocksize::try_from(8).unwrap(),
                 blocks: vec![BlockAccess {
@@ -641,7 +642,7 @@ mod tests {
                 }],
             },
             need_sync: false,
-            updated: DateTime::now(),
+            updated: t2,
             size: 8,
             blocksize: Blocksize::try_from(8).unwrap(),
             blocks: vec![vec![Chunk {

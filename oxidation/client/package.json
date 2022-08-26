@@ -3,17 +3,17 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "serve": "npm run wasm:build && npm run wasm:copy && vue-cli-service serve",
+    "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "test:unit": "vue-cli-service test:unit",
     "test:e2e": "vue-cli-service test:e2e",
     "lint": "vue-cli-service lint",
-    "postinstall": "cd electron && npm install",
+    "postinstall": "npm run wasm:build && npm run wasm:copy && cd electron && npm install",
     "android:copy": "npx ionic build && npx cap copy android",
-    "ios:copy": "npx ionic build && npx cap copy ios",
-    "electron:copy": "npx ionic build && npx cap copy @capacitor-community/electron && cd electron && npm run libparsec",
     "android:open": "npm run android:copy && npx cap open android",
+    "ios:copy": "npx ionic build && npx cap copy ios",
     "ios:open": "npm run ios:copy && npx cap open ios",
+    "electron:copy": "npx ionic build && npx cap copy @capacitor-community/electron && cd electron && npm run libparsec",
     "electron:open": "npm run electron:copy && npx cap open @capacitor-community/electron",
     "electron:dist": "npx ionic build && npx cap copy @capacitor-community/electron && cd electron && npm run electron:dist",
     "wasm:build": "cd ../bindings/web && wasm-pack build --target web",
@@ -66,7 +66,8 @@
     "sass": "^1.49.9",
     "sass-loader": "^13.0.2",
     "ts-jest": "^27.0.7",
-    "typescript": "^4.3.5"
+    "typescript": "^4.3.5",
+    "wasm-pack": "^0.10.3"
   },
   "engines": {
     "node": ">=16.13.0 <19.0.0"

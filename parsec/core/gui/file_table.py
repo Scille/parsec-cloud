@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import pendulum
+from parsec._parsec import DateTime
 import pathlib
 import sys
 from enum import IntEnum
@@ -93,6 +93,10 @@ class FileTable(QTableWidget):
     copy_clicked = pyqtSignal()
     file_path_clicked = pyqtSignal()
     open_current_dir_clicked = pyqtSignal()
+    new_folder_clicked = pyqtSignal()
+    sort_clicked = pyqtSignal(Column)
+    show_current_folder_history_clicked = pyqtSignal()
+    show_current_folder_status_clicked = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -214,6 +218,34 @@ class FileTable(QTableWidget):
                 action.triggered.connect(self.copy_clicked.emit)
                 action = menu.addAction(_("ACTION_FILE_MENU_CUT"))
                 action.triggered.connect(self.cut_clicked.emit)
+        else:
+            if not self.is_read_only():
+                if self.paste_status.source_workspace:
+                    action = menu.addAction(
+                        _("ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source").format(
+                            source=self.paste_status.source_workspace
+                        )
+                    )
+                else:
+                    action = menu.addAction(_("ACTION_FILE_MENU_PASTE"))
+                action.triggered.connect(self.paste_clicked.emit)
+                if self.paste_status.status == PasteStatus.Status.Disabled:
+                    action.setDisabled(True)
+            action = menu.addAction(_("ACTION_FILE_MENU_NEW_FOLDER"))
+            action.triggered.connect(self.new_folder_clicked.emit)
+            menu_sort = menu.addMenu(_("ACTION_FILE_MENU_SORT"))
+            action = menu_sort.addAction(_("ACTION_FILE_MENU_SORT_BY_CREATED"))
+            action.triggered.connect(lambda: self.sort_clicked.emit(Column.CREATED))
+            action = menu_sort.addAction(_("ACTION_FILE_MENU_SORT_BY_UPDATED"))
+            action.triggered.connect(lambda: self.sort_clicked.emit(Column.UPDATED))
+            action = menu_sort.addAction(_("ACTION_FILE_MENU_SORT_BY_SIZE"))
+            action.triggered.connect(lambda: self.sort_clicked.emit(Column.SIZE))
+            action = menu_sort.addAction(_("ACTION_FILE_MENU_SORT_BY_NAME"))
+            action.triggered.connect(lambda: self.sort_clicked.emit(Column.NAME))
+            action = menu.addAction(_("ACTION_FILE_MENU_SHOW_CURRENT_FOLDER_HISTORY"))
+            action.triggered.connect(self.show_current_folder_history_clicked.emit)
+            action = menu.addAction(_("ACTION_FILE_MENU_SHOW_CURRENT_FOLDER_STATUS"))
+            action.triggered.connect(self.show_current_folder_status_clicked.emit)
         if len(selected) == 1:
             action = menu.addAction(_("ACTION_FILE_MENU_SHOW_FILE_HISTORY"))
             action.triggered.connect(self.show_history_clicked.emit)
@@ -221,18 +253,6 @@ class FileTable(QTableWidget):
             action.triggered.connect(self.show_status_clicked.emit)
             action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
             action.triggered.connect(self.file_path_clicked.emit)
-        if not self.is_read_only():
-            if self.paste_status.source_workspace:
-                action = menu.addAction(
-                    _("ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source").format(
-                        source=self.paste_status.source_workspace
-                    )
-                )
-            else:
-                action = menu.addAction(_("ACTION_FILE_MENU_PASTE"))
-            action.triggered.connect(self.paste_clicked.emit)
-            if self.paste_status.status == PasteStatus.Status.Disabled:
-                action.setDisabled(True)
         menu.exec_(global_pos)
 
     def item_double_clicked(self, row, column):
@@ -352,12 +372,12 @@ class FileTable(QTableWidget):
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.NAME, item)
         item = CustomTableItem()
-        item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
+        item.setData(NAME_DATA_INDEX, DateTime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.CREATED, item)
         item = CustomTableItem()
-        item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
+        item.setData(NAME_DATA_INDEX, DateTime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.UPDATED, item)
@@ -441,13 +461,13 @@ class FileTable(QTableWidget):
         item.setBackground(inconsistency_color)
         self.setItem(row_idx, Column.NAME, item)
         item = CustomTableItem()
-        item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
+        item.setData(NAME_DATA_INDEX, DateTime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
         item.setBackground(inconsistency_color)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         self.setItem(row_idx, Column.CREATED, item)
         item = CustomTableItem()
-        item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
+        item.setData(NAME_DATA_INDEX, DateTime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
         item.setData(ENTRY_ID_DATA_INDEX, entry_id)
         item.setBackground(inconsistency_color)

@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from triopg.exceptions import UniqueViolationError
-import pendulum
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, BlockID
 from parsec.backend.utils import OperationKind
 from parsec.backend.blockstore import BaseBlockStoreComponent
@@ -202,7 +202,7 @@ class PGBlockComponent(BaseBlockComponent):
                         realm_id=realm_id.uuid,
                         author=author.str,
                         size=len(block),
-                        created_on=pendulum.now(),
+                        created_on=DateTime.now(),
                     )
                 )
             except UniqueViolationError as exc:
@@ -238,22 +238,24 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 
-    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
+    async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
         async with self.dbh.pool.acquire() as conn:
             ret = await conn.fetchrow(
-                *_q_get_block_data(organization_id=organization_id.str, block_id=id.uuid)
+                *_q_get_block_data(organization_id=organization_id.str, block_id=block_id.uuid)
             )
             if not ret:
                 raise BlockStoreError("Block not found")
 
             return ret[0]
 
-    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
+    async def create(
+        self, organization_id: OrganizationID, block_id: BlockID, block: bytes
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
             try:
                 ret = await conn.execute(
                     *_q_insert_block_data(
-                        organization_id=organization_id.str, block_id=id.uuid, data=block
+                        organization_id=organization_id.str, block_id=block_id.uuid, data=block
                     )
                 )
                 if ret != "INSERT 0 1":

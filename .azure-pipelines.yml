@@ -21,7 +21,7 @@ variables:
     --side-effects-timeout=10 \
     -v \
   debug.stress_flaky_tests: 0  # Repeat all flaky tests X times
-  rust.version: 1.62.0
+  rust.version: 1.63.0
 
 jobs:
 

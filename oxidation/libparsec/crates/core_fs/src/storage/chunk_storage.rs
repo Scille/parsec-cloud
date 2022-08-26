@@ -5,7 +5,7 @@ use diesel::{sql_query, table, AsChangeset, ExpressionMethods, Insertable, Query
 use std::sync::Mutex;
 
 use libparsec_crypto::SecretKey;
-use libparsec_types::{ChunkID, DateTime, DEFAULT_BLOCK_SIZE};
+use libparsec_types::{ChunkID, TimeProvider, DEFAULT_BLOCK_SIZE};
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
 use crate::error::{FSError, FSResult};
@@ -34,6 +34,7 @@ struct NewChunk<'a> {
 pub(crate) trait ChunkStorageTrait {
     fn conn(&self) -> &Mutex<SqliteConn>;
     fn local_symkey(&self) -> &SecretKey;
+    fn time_provider(&self) -> &TimeProvider;
 
     fn create_db(&self) -> FSResult<()> {
         let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
@@ -130,7 +131,7 @@ pub(crate) trait ChunkStorageTrait {
     }
 
     fn get_chunk(&self, chunk_id: ChunkID) -> FSResult<Vec<u8>> {
-        let accessed_on = DateTime::now().get_f64_with_us_precision();
+        let accessed_on = self.time_provider().now().get_f64_with_us_precision();
 
         let conn = &mut *self.conn().lock().expect("Mutex is poisoned");
         let changes =
@@ -155,7 +156,7 @@ pub(crate) trait ChunkStorageTrait {
 
     fn set_chunk(&self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
         let ciphered = self.local_symkey().encrypt(raw);
-        let accessed_on = DateTime::now();
+        let accessed_on = self.time_provider().now();
 
         let new_chunk = NewChunk {
             chunk_id: (*chunk_id).as_ref(),
@@ -221,7 +222,7 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
 
     fn set_chunk_upgraded(&self, chunk_id: ChunkID, raw: &[u8]) -> FSResult<()> {
         let ciphered = self.local_symkey().encrypt(raw);
-        let accessed_on = DateTime::now();
+        let accessed_on = self.time_provider().now();
 
         let new_chunk = NewChunk {
             chunk_id: (*chunk_id).as_ref(),
@@ -282,6 +283,7 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
 pub(crate) struct ChunkStorage {
     conn: Mutex<SqliteConn>,
     local_symkey: SecretKey,
+    time_provider: TimeProvider,
 }
 
 impl ChunkStorageTrait for ChunkStorage {
@@ -291,11 +293,22 @@ impl ChunkStorageTrait for ChunkStorage {
     fn local_symkey(&self) -> &SecretKey {
         &self.local_symkey
     }
+    fn time_provider(&self) -> &TimeProvider {
+        &self.time_provider
+    }
 }
 
 impl ChunkStorage {
-    pub fn new(local_symkey: SecretKey, conn: Mutex<SqliteConn>) -> FSResult<Self> {
-        let instance = Self { conn, local_symkey };
+    pub fn new(
+        local_symkey: SecretKey,
+        conn: Mutex<SqliteConn>,
+        time_provider: TimeProvider,
+    ) -> FSResult<Self> {
+        let instance = Self {
+            conn,
+            local_symkey,
+            time_provider,
+        };
         instance.create_db()?;
         Ok(instance)
     }
@@ -306,6 +319,7 @@ pub(crate) struct BlockStorage {
     conn: Mutex<SqliteConn>,
     local_symkey: SecretKey,
     cache_size: u64,
+    time_provider: TimeProvider,
 }
 
 impl ChunkStorageTrait for BlockStorage {
@@ -314,6 +328,9 @@ impl ChunkStorageTrait for BlockStorage {
     }
     fn local_symkey(&self) -> &SecretKey {
         &self.local_symkey
+    }
+    fn time_provider(&self) -> &TimeProvider {
+        &self.time_provider
     }
 }
 
@@ -328,11 +345,13 @@ impl BlockStorage {
         local_symkey: SecretKey,
         conn: Mutex<SqliteConn>,
         cache_size: u64,
+        time_provider: TimeProvider,
     ) -> FSResult<Self> {
         let instance = Self {
             conn,
             local_symkey,
             cache_size,
+            time_provider,
         };
         instance.create_db()?;
         Ok(instance)
@@ -358,7 +377,7 @@ mod tests {
         let conn = Mutex::new(pool.conn().unwrap());
         let local_symkey = SecretKey::generate();
 
-        let chunk_storage = ChunkStorage::new(local_symkey, conn).unwrap();
+        let chunk_storage = ChunkStorage::new(local_symkey, conn, TimeProvider::default()).unwrap();
 
         // Initialization
         chunk_storage.drop_db().unwrap();
@@ -405,7 +424,8 @@ mod tests {
         let local_symkey = SecretKey::generate();
         let cache_size = *DEFAULT_BLOCK_SIZE * 1024;
 
-        let block_storage = BlockStorage::new(local_symkey, new_conn, cache_size).unwrap();
+        let block_storage =
+            BlockStorage::new(local_symkey, new_conn, cache_size, TimeProvider::default()).unwrap();
 
         assert_eq!(block_storage.block_limit(), 1024);
 

@@ -2,7 +2,6 @@
 
 # flake8: noqa
 
-from pendulum import datetime
 from utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *
@@ -76,3 +75,11 @@ display("block_read_rep_not_allowed", serialized, [])
 serialized = serializer.rep_dumps({"status": "in_maintenance"})
 serializer.rep_loads(serialized)
 display("block_read_rep_in_maintenance", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_msg_format"})
+serializer.rep_loads(serialized)
+display("block_read_rep_invalid_msg_format", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "invalid_msg_format", "reason": "reason"})
+serializer.rep_loads(serialized)
+display("block_read_rep_invalid_msg_format", serialized, [])

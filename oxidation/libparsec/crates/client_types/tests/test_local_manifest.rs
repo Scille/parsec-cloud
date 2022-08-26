@@ -10,7 +10,13 @@ use libparsec_client_types::*;
 use libparsec_crypto::*;
 use libparsec_types::*;
 
-use tests_fixtures::{alice, Device};
+use tests_fixtures::{alice, timestamp, Device};
+
+type AliceLocalFileManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFileManifest)>;
+type AliceLocalFolderManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFolderManifest)>;
+type AliceLocalWorkspaceManifest =
+    Box<dyn FnOnce(&Device) -> (&'static [u8], LocalWorkspaceManifest)>;
+type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUserManifest)>;
 
 #[rstest]
 #[case::file_manifest(Box::new(|alice: &Device| {
@@ -176,9 +182,7 @@ use tests_fixtures::{alice, Device};
 }))]
 fn serde_local_file_manifest(
     alice: &Device,
-    #[case] generate_data_and_expected: Box<
-        dyn FnOnce(&Device) -> (&'static [u8], LocalFileManifest),
-    >,
+    #[case] generate_data_and_expected: AliceLocalFileManifest,
 ) {
     let (data, expected) = generate_data_and_expected(alice);
     let key = SecretKey::from(hex!(
@@ -357,9 +361,7 @@ fn serde_local_file_manifest_invalid_blocksize() {
 }))]
 fn serde_local_folder_manifest(
     alice: &Device,
-    #[case] generate_data_and_expected: Box<
-        dyn FnOnce(&Device) -> (&'static [u8], LocalFolderManifest),
-    >,
+    #[case] generate_data_and_expected: AliceLocalFolderManifest,
 ) {
     let (data, expected) = generate_data_and_expected(alice);
     let key = SecretKey::from(hex!(
@@ -544,9 +546,7 @@ fn serde_local_folder_manifest(
 }))]
 fn serde_local_workspace_manifest(
     alice: &Device,
-    #[case] generate_data_and_expected: Box<
-        dyn FnOnce(&Device) -> (&'static [u8], LocalWorkspaceManifest),
-    >,
+    #[case] generate_data_and_expected: AliceLocalWorkspaceManifest,
 ) {
     let (data, expected) = generate_data_and_expected(alice);
     let key = SecretKey::from(hex!(
@@ -897,9 +897,7 @@ fn serde_local_workspace_manifest(
 }))]
 fn serde_local_user_manifest(
     alice: &Device,
-    #[case] generate_data_and_expected: Box<
-        dyn FnOnce(&Device) -> (&'static [u8], LocalUserManifest),
-    >,
+    #[case] generate_data_and_expected: AliceLocalUserManifest,
 ) {
     let (data, expected) = generate_data_and_expected(alice);
     let key = SecretKey::from(hex!(
@@ -1037,10 +1035,9 @@ fn chunk_is_block() {
 }
 
 #[rstest]
-fn local_file_manifest_new() {
+fn local_file_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let parent = EntryID::default();
-    let timestamp = DateTime::now();
     let blocksize = Blocksize::try_from(512).unwrap();
     let lfm = LocalFileManifest::new(author.clone(), parent, timestamp, blocksize);
 
@@ -1061,10 +1058,9 @@ fn local_file_manifest_new() {
 }
 
 #[rstest]
-fn local_file_manifest_is_reshaped() {
+fn local_file_manifest_is_reshaped(timestamp: DateTime) {
     let author = DeviceID::default();
     let parent = EntryID::default();
-    let timestamp = DateTime::now();
     let blocksize = Blocksize::try_from(512).unwrap();
     let mut lfm = LocalFileManifest::new(author, parent, timestamp, blocksize);
 
@@ -1113,8 +1109,7 @@ fn local_file_manifest_is_reshaped() {
         digest: HashDigest::from_data(&[]),
     }
 ]))]
-fn local_file_manifest_from_remote(#[case] input: (u64, Vec<BlockAccess>)) {
-    let timestamp = DateTime::now();
+fn local_file_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec<BlockAccess>)) {
     let (size, blocks) = input;
     let fm = FileManifest {
         author: DeviceID::default(),
@@ -1146,11 +1141,14 @@ fn local_file_manifest_from_remote(#[case] input: (u64, Vec<BlockAccess>)) {
 }
 
 #[rstest]
-fn local_file_manifest_to_remote() {
+fn local_file_manifest_to_remote(timestamp: DateTime) {
+    let t1 = timestamp;
+    let t2 = t1 + 1;
+    let t3 = t2 + 1;
     let author = DeviceID::default();
     let parent = EntryID::default();
     let blocksize = Blocksize::try_from(512).unwrap();
-    let mut lfm = LocalFileManifest::new(author, parent, DateTime::now(), blocksize);
+    let mut lfm = LocalFileManifest::new(author, parent, t1, blocksize);
 
     let block = Chunk {
         id: ChunkID::default(),
@@ -1166,14 +1164,13 @@ fn local_file_manifest_to_remote() {
     let block_access = block.access.clone().unwrap();
     lfm.blocks.push(vec![block]);
     lfm.size = 1;
-    lfm.updated = DateTime::now();
+    lfm.updated = t2;
 
     let author = DeviceID::default();
-    let timestamp = DateTime::now();
-    let fm = lfm.to_remote(author.clone(), timestamp).unwrap();
+    let fm = lfm.to_remote(author.clone(), t3).unwrap();
 
     assert_eq!(fm.author, author);
-    assert_eq!(fm.timestamp, timestamp);
+    assert_eq!(fm.timestamp, t3);
     assert_eq!(fm.id, lfm.base.id);
     assert_eq!(fm.parent, lfm.base.parent);
     assert_eq!(fm.version, lfm.base.version + 1);
@@ -1185,8 +1182,7 @@ fn local_file_manifest_to_remote() {
 }
 
 #[rstest]
-fn local_file_manifest_match_remote() {
-    let timestamp = DateTime::now();
+fn local_file_manifest_match_remote(timestamp: DateTime) {
     let fm = FileManifest {
         author: DeviceID::default(),
         timestamp,
@@ -1226,10 +1222,9 @@ fn local_file_manifest_match_remote() {
 }
 
 #[rstest]
-fn local_folder_manifest_new() {
+fn local_folder_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let parent = EntryID::default();
-    let timestamp = DateTime::now();
     let lfm = LocalFolderManifest::new(author.clone(), parent, timestamp);
 
     assert_eq!(lfm.base.author, author);
@@ -1271,6 +1266,7 @@ fn local_folder_manifest_new() {
     ".mp4",
 ))]
 fn local_folder_manifest_from_remote(
+    timestamp: DateTime,
     #[case] input: (
         HashMap<EntryName, EntryID>,
         HashMap<EntryName, EntryID>,
@@ -1278,7 +1274,6 @@ fn local_folder_manifest_from_remote(
         &str,
     ),
 ) {
-    let timestamp = DateTime::now();
     let (children, expected_children, filtered, regex) = input;
     let fm = FolderManifest {
         author: DeviceID::default(),
@@ -1357,6 +1352,7 @@ fn local_folder_manifest_from_remote(
     ".png",
 )]
 fn local_folder_manifest_from_remote_with_local_context(
+    timestamp: DateTime,
     #[case] children: HashMap<EntryName, EntryID>,
     #[case] local_children: HashMap<EntryName, EntryID>,
     #[case] expected_children: HashMap<EntryName, EntryID>,
@@ -1365,7 +1361,6 @@ fn local_folder_manifest_from_remote_with_local_context(
     #[case] need_sync: bool,
     #[case] regex: &str,
 ) {
-    let timestamp = DateTime::now();
     let fm = FolderManifest {
         author: DeviceID::default(),
         timestamp,
@@ -1402,17 +1397,18 @@ fn local_folder_manifest_from_remote_with_local_context(
 }
 
 #[rstest]
-fn local_folder_manifest_to_remote() {
+fn local_folder_manifest_to_remote(timestamp: DateTime) {
+    let t1 = timestamp;
+    let t2 = t1 + 1;
     let author = DeviceID::default();
     let parent = EntryID::default();
-    let mut lfm = LocalFolderManifest::new(author, parent, DateTime::now());
+    let mut lfm = LocalFolderManifest::new(author, parent, t1);
 
     lfm.children
         .insert("file1.png".parse().unwrap(), EntryID::default());
-    lfm.updated = DateTime::now();
+    lfm.updated = t2;
 
     let author = DeviceID::default();
-    let timestamp = DateTime::now();
     let fm = lfm.to_remote(author.clone(), timestamp);
 
     assert_eq!(fm.author, author);
@@ -1426,8 +1422,7 @@ fn local_folder_manifest_to_remote() {
 }
 
 #[rstest]
-fn local_folder_manifest_match_remote() {
-    let timestamp = DateTime::now();
+fn local_folder_manifest_match_remote(timestamp: DateTime) {
     let fm = FolderManifest {
         author: DeviceID::default(),
         timestamp,
@@ -1482,6 +1477,7 @@ fn local_folder_manifest_match_remote() {
     ".png",
 )]
 fn local_folder_manifest_evolve_children_and_mark_updated(
+    timestamp: DateTime,
     #[case] data: HashMap<EntryName, Option<EntryID>>,
     #[case] children: HashMap<EntryName, EntryID>,
     #[case] expected_children: HashMap<EntryName, EntryID>,
@@ -1489,7 +1485,6 @@ fn local_folder_manifest_evolve_children_and_mark_updated(
     #[case] need_sync: bool,
     #[case] regex: &str,
 ) {
-    let timestamp = DateTime::now();
     let prevent_sync_pattern = Regex::new(regex).unwrap();
 
     let fm = FolderManifest {
@@ -1523,8 +1518,7 @@ fn local_folder_manifest_evolve_children_and_mark_updated(
 
 // TODO
 #[rstest]
-fn local_folder_manifest_apply_prevent_sync_pattern() {
-    let timestamp = DateTime::now();
+fn local_folder_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
     let prevent_sync_pattern = Regex::new("").unwrap();
 
     let fm = FolderManifest {
@@ -1557,10 +1551,9 @@ fn local_folder_manifest_apply_prevent_sync_pattern() {
 }
 
 #[rstest]
-fn local_workspace_manifest_new() {
+fn local_workspace_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let id = EntryID::default();
-    let timestamp = DateTime::now();
     let speculative = false;
     let lwm = LocalWorkspaceManifest::new(author.clone(), timestamp, Some(id), speculative);
 
@@ -1604,6 +1597,7 @@ fn local_workspace_manifest_new() {
     ".mp4",
 ))]
 fn local_workspace_manifest_from_remote(
+    timestamp: DateTime,
     #[case] input: (
         HashMap<EntryName, EntryID>,
         HashMap<EntryName, EntryID>,
@@ -1611,7 +1605,6 @@ fn local_workspace_manifest_from_remote(
         &str,
     ),
 ) {
-    let timestamp = DateTime::now();
     let (children, expected_children, filtered, regex) = input;
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
@@ -1689,7 +1682,9 @@ fn local_workspace_manifest_from_remote(
     true,
     ".png",
 )]
+#[allow(clippy::too_many_arguments)]
 fn local_workspace_manifest_from_remote_with_local_context(
+    timestamp: DateTime,
     #[case] children: HashMap<EntryName, EntryID>,
     #[case] local_children: HashMap<EntryName, EntryID>,
     #[case] expected_children: HashMap<EntryName, EntryID>,
@@ -1698,7 +1693,6 @@ fn local_workspace_manifest_from_remote_with_local_context(
     #[case] need_sync: bool,
     #[case] regex: &str,
 ) {
-    let timestamp = DateTime::now();
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
         timestamp,
@@ -1736,18 +1730,19 @@ fn local_workspace_manifest_from_remote_with_local_context(
 }
 
 #[rstest]
-fn local_workspace_manifest_to_remote() {
+fn local_workspace_manifest_to_remote(timestamp: DateTime) {
+    let t1 = timestamp;
+    let t2 = t1 + 1;
     let author = DeviceID::default();
     let id = EntryID::default();
     let speculative = false;
-    let mut lwm = LocalWorkspaceManifest::new(author, DateTime::now(), Some(id), speculative);
+    let mut lwm = LocalWorkspaceManifest::new(author, t1, Some(id), speculative);
 
     lwm.children
         .insert("file1.png".parse().unwrap(), EntryID::default());
-    lwm.updated = DateTime::now();
+    lwm.updated = t2;
 
     let author = DeviceID::default();
-    let timestamp = DateTime::now();
     let wm = lwm.to_remote(author.clone(), timestamp);
 
     assert_eq!(wm.author, author);
@@ -1760,8 +1755,7 @@ fn local_workspace_manifest_to_remote() {
 }
 
 #[rstest]
-fn local_workspace_manifest_match_remote() {
-    let timestamp = DateTime::now();
+fn local_workspace_manifest_match_remote(timestamp: DateTime) {
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
         timestamp,
@@ -1816,6 +1810,7 @@ fn local_workspace_manifest_match_remote() {
     ".png",
 )]
 fn local_workspace_manifest_evolve_children_and_mark_updated(
+    timestamp: DateTime,
     #[case] data: HashMap<EntryName, Option<EntryID>>,
     #[case] children: HashMap<EntryName, EntryID>,
     #[case] expected_children: HashMap<EntryName, EntryID>,
@@ -1823,7 +1818,6 @@ fn local_workspace_manifest_evolve_children_and_mark_updated(
     #[case] need_sync: bool,
     #[case] regex: &str,
 ) {
-    let timestamp = DateTime::now();
     let prevent_sync_pattern = Regex::new(regex).unwrap();
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
@@ -1856,8 +1850,7 @@ fn local_workspace_manifest_evolve_children_and_mark_updated(
 
 // TODO
 #[rstest]
-fn local_workspace_manifest_apply_prevent_sync_pattern() {
-    let timestamp = DateTime::now();
+fn local_workspace_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
     let prevent_sync_pattern = Regex::new("").unwrap();
 
     let wm = WorkspaceManifest {
@@ -1890,10 +1883,9 @@ fn local_workspace_manifest_apply_prevent_sync_pattern() {
 }
 
 #[rstest]
-fn local_user_manifest_new() {
+fn local_user_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let id = EntryID::default();
-    let timestamp = DateTime::now();
     let speculative = false;
     let lum = LocalUserManifest::new(author.clone(), timestamp, Some(id), speculative);
 
@@ -1912,9 +1904,8 @@ fn local_user_manifest_new() {
 #[rstest]
 #[case::empty((0, vec![]))]
 #[case::last_processed_message((10, vec![]))]
-#[case::workspaces((0, vec![WorkspaceEntry::generate("alice".parse().unwrap(), DateTime::now())]))]
-fn local_user_manifest_from_remote(#[case] input: (u64, Vec<WorkspaceEntry>)) {
-    let timestamp = DateTime::now();
+#[case::workspaces((0, vec![WorkspaceEntry::generate("alice".parse().unwrap(), "2000-01-01T00:00:00Z".parse().unwrap())]))]
+fn local_user_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec<WorkspaceEntry>)) {
     let (last_processed_message, workspaces) = input;
     let um = UserManifest {
         author: DeviceID::default(),
@@ -1936,20 +1927,20 @@ fn local_user_manifest_from_remote(#[case] input: (u64, Vec<WorkspaceEntry>)) {
 }
 
 #[rstest]
-fn local_user_manifest_to_remote() {
+fn local_user_manifest_to_remote(timestamp: DateTime) {
+    let t1 = timestamp;
+    let t2 = t1 + 1;
+    let t3 = t2 + 1;
     let author = DeviceID::default();
     let id = EntryID::default();
     let speculative = false;
-    let mut lum = LocalUserManifest::new(author, DateTime::now(), Some(id), speculative);
+    let mut lum = LocalUserManifest::new(author, t1, Some(id), speculative);
 
-    lum.workspaces.push(WorkspaceEntry::generate(
-        "alice".parse().unwrap(),
-        DateTime::now(),
-    ));
-    lum.updated = DateTime::now();
+    lum.workspaces
+        .push(WorkspaceEntry::generate("alice".parse().unwrap(), t2));
+    lum.updated = t3;
 
     let author = DeviceID::default();
-    let timestamp = DateTime::now();
     let um = lum.to_remote(author.clone(), timestamp);
 
     assert_eq!(um.author, author);
@@ -1962,8 +1953,7 @@ fn local_user_manifest_to_remote() {
 }
 
 #[rstest]
-fn local_user_manifest_match_remote() {
-    let timestamp = DateTime::now();
+fn local_user_manifest_match_remote(timestamp: DateTime) {
     let um = UserManifest {
         author: DeviceID::default(),
         timestamp,

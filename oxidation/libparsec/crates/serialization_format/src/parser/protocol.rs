@@ -268,6 +268,8 @@ impl Cmds {
 
                 pub mod #module {
                     use super::AnyCmdReq;
+                    use ::serde::de::{Deserializer, Error, IntoDeserializer};
+                    use ::serde::ser::Serializer;
 
                     #nested_types
 
@@ -285,6 +287,20 @@ impl Cmds {
                     #[serde(tag = "status")]
                     pub enum Rep {
                         #variants_rep
+                        // `UnknownStatus` covers the case the server returns a valid message but with
+                        // an unknown status value (given change in error status only cause a minor bump in API version)
+                        // Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
+                        #[serde(skip)]
+                        UnknownStatus {
+                            _status: String,
+                            reason: Option<String>,
+                        }
+                    }
+
+                    #[derive(::serde::Deserialize)]
+                    struct UnknownStatus {
+                        status: String,
+                        reason: Option<String>,
                     }
 
                     impl Rep {
@@ -293,7 +309,17 @@ impl Cmds {
                         }
 
                         pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
-                            ::rmp_serde::from_slice(buf)
+                            Ok(if let Ok(data) = ::rmp_serde::from_slice::<Self>(buf) {
+                                data
+                            } else {
+                                // Due to how Serde handles variant discriminant, we cannot express unknown status as a default case in the main schema
+                                // Instead we have this additional deserialization attempt fallback
+                                let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+                                Self::UnknownStatus {
+                                    _status: data.status,
+                                    reason: data.reason,
+                                }
+                            })
                         }
                     }
                 }

@@ -4,7 +4,7 @@ import hashlib
 from typing import List
 from uuid import UUID
 from asyncpg import UniqueViolationError
-from pendulum import DateTime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import OrganizationID
 from parsec.api.protocol.pki import PkiEnrollmentStatus

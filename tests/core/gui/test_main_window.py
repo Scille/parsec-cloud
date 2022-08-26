@@ -4,8 +4,8 @@ import pytest
 from unittest.mock import patch
 from PyQt5 import QtCore, QtWidgets, QtGui
 
-from parsec.api.protocol import InvitationType, OrganizationID
-from parsec.api.data import UserProfile, EntryName
+from parsec.api.protocol import InvitationType, OrganizationID, UserProfile
+from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
 from parsec.core.local_device import (

@@ -18,12 +18,6 @@ from parsec.api.data.entry import (
 )
 
 from parsec.api.data.certif import (
-    UserProfile,
-    UserProfileField,
-    UserCertificateContent,
-    DeviceCertificateContent,
-    RevokedUserCertificateContent,
-    RealmRoleCertificateContent,
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
 )
@@ -44,18 +38,23 @@ from parsec.api.data.message import (
     PingMessageContent,
 )
 from parsec.api.data.manifest import (
-    BlockID,
     BlockIDField,
     BlockAccess,
     WorkspaceEntry,
-    BaseManifest,
     UserManifest,
     WorkspaceManifest,
     FolderManifest,
     FileManifest,
+    AnyRemoteManifest,
 )
 from parsec.api.data.pki import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
 
+from parsec._parsec import (
+    UserCertificate,
+    DeviceCertificate,
+    RevokedUserCertificate,
+    RealmRoleCertificate,
+)
 
 __all__ = (
     # Base
@@ -73,12 +72,10 @@ __all__ = (
     "EntryNameField",
     "EntryNameTooLongError",
     # Certifs
-    "UserProfile",
-    "UserProfileField",
-    "UserCertificateContent",
-    "DeviceCertificateContent",
-    "RevokedUserCertificateContent",
-    "RealmRoleCertificateContent",
+    "UserCertificate",
+    "DeviceCertificate",
+    "RevokedUserCertificate",
+    "RealmRoleCertificate",
     "SequesterAuthorityCertificate",
     "SequesterServiceCertificate",
     # Invite
@@ -96,7 +93,6 @@ __all__ = (
     "SharingRevokedMessageContent",
     "PingMessageContent",
     # Manifests
-    "BlockID",
     "BlockIDField",
     "BlockAccess",
     "WorkspaceEntry",
@@ -105,6 +101,7 @@ __all__ = (
     "WorkspaceManifest",
     "FolderManifest",
     "FileManifest",
+    "AnyRemoteManifest",
     # PKI enrollment
     "PkiEnrollmentSubmitPayload",
     "PkiEnrollmentAcceptPayload",

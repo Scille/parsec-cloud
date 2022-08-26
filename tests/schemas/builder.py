@@ -4,7 +4,7 @@ import re
 import json
 import pkgutil
 import importlib
-
+from types import ModuleType
 from parsec.serde import (
     BaseSerializer,
     JSONSerializer,
@@ -24,11 +24,9 @@ from parsec.serde.fields import (
 
 from parsec.api.protocol.base import CmdSerializer
 from parsec.api.data.base import BaseData, BaseAPIData, BaseSignedData, BaseAPISignedData
-from parsec.api.data.manifest import BaseManifest
 from parsec.api.data.message import BaseMessageContent
 
 from parsec.core.types.base import BaseLocalData
-from parsec.core.types.manifest import BaseLocalManifest
 
 
 _SERIALIZER_TO_STR = {
@@ -43,8 +41,6 @@ _BASE_DATA_CLASSES = (
     BaseSignedData,
     BaseAPISignedData,
     BaseLocalData,
-    BaseManifest,
-    BaseLocalManifest,
     BaseMessageContent,
 )
 
@@ -108,14 +104,14 @@ def data_class_to_spec(data_class):
     }
 
 
-def collect_data_classes_from_module(mod):
+def collect_data_classes_from_module(mod: ModuleType):
     data_classes = []
     for item_name in dir(mod):
         item = getattr(mod, item_name)
         # Ignore non-data classes
-        if not isinstance(item, type) or not issubclass(item, _BASE_DATA_CLASSES):
-            continue
-        if item in _BASE_DATA_CLASSES:
+        if (
+            not isinstance(item, type) or not issubclass(item, _BASE_DATA_CLASSES)
+        ) or item in _BASE_DATA_CLASSES:
             continue
         # Data classes with default serializer cannot be serialized, hence no need
         # to check them (note they will be checked if they are used in Nested field)
@@ -125,6 +121,10 @@ def collect_data_classes_from_module(mod):
         # with external imported schema.
         # Example: Avoid to add imported api schemas while generating parsec.core.types)
         if not item.__module__.startswith(mod.__name__):
+            continue
+        # Skip classes that are prefixed with '_Py'
+        # The prefix '_Py' indicated that the class was replaced by rust impl
+        if item.__name__.startswith("_Py"):
             continue
         data_classes.append(item)
     return data_classes
@@ -136,9 +136,9 @@ def generate_api_data_specs():
     package = parsec.api.data
 
     data_classes = set()
-    for submod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
-        submod = importlib.import_module(submod_info.name)
-        data_classes.update(collect_data_classes_from_module(submod))
+    for sub_module_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
+        sub_module = importlib.import_module(sub_module_info.name)
+        data_classes.update(collect_data_classes_from_module(sub_module))
 
     return {data_cls.__name__: data_class_to_spec(data_cls) for data_cls in data_classes}
 
@@ -149,9 +149,9 @@ def generate_core_data_specs():
 
     package = parsec.core.types
     data_classes = set()
-    for submod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
-        submod = importlib.import_module(submod_info.name)
-        data_classes.update(collect_data_classes_from_module(submod))
+    for sub_mod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
+        sub_mod = importlib.import_module(sub_mod_info.name)
+        data_classes.update(collect_data_classes_from_module(sub_mod))
 
     specs = {data_cls.__name__: data_class_to_spec(data_cls) for data_cls in data_classes}
 
@@ -230,11 +230,11 @@ def generate_api_protocol_specs():
     package = parsec.api.protocol
 
     cmd_serializers = {}
-    for submod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
-        submod = importlib.import_module(submod_info.name)
-        collect_cmd_serializer_from_module(submod, cmd_serializers)
+    for sub_mod_info in pkgutil.walk_packages(package.__path__, prefix=f"{package.__name__}."):
+        sub_mod = importlib.import_module(sub_mod_info.name)
+        collect_cmd_serializer_from_module(sub_mod, cmd_serializers)
 
-    # Now retrieve the per-familly commands sets and generate specs
+    # Now retrieve the per-family commands sets and generate specs
     from parsec.api.protocol import cmds as cmds_mod
 
     specs = {"APIv1": {}, "APIv2": {}}
@@ -263,7 +263,12 @@ def generate_api_protocol_specs():
                 except KeyError:
                     cmd_serializer = cmd_serializers[cmd_name]
             else:
-                cmd_serializer = cmd_serializers[cmd_name]
+                try:
+                    cmd_serializer = cmd_serializers[cmd_name]
+                except KeyError:
+                    # Due to oxidation, there is no more schema
+                    assert cmd_name in ["block_create", "block_read"]
+                    continue
             used_cmds_serializers.add(cmd_serializer)  # Keep track for sanity check
             cmds_set_specs[cmd_name] = cmd_serializer_to_spec(cmd_serializer)
 
@@ -277,7 +282,7 @@ def generate_api_protocol_specs():
     unused_cmds_serializers.remove(realm_stats_serializer)
     assert (
         not unused_cmds_serializers
-    ), f"Command serializer declared but not part of a commands familly group: {unused_cmds_serializers}"
+    ), f"Command serializer declared but not part of a commands family group: {unused_cmds_serializers}"
 
     return specs
 

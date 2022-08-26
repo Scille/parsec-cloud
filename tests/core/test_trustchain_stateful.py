@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import now as pendulum_now
 from hypothesis import strategies as st, note
 from hypothesis.stateful import (
     run_state_machine_as_test,
@@ -13,19 +12,20 @@ from hypothesis.stateful import (
     RuleBasedStateMachine,
 )
 
-from parsec.api.protocol import UserID, DeviceName
-from parsec.api.data import (
-    UserProfile,
-    UserCertificateContent,
-    RevokedUserCertificateContent,
-    DeviceCertificateContent,
+from parsec.api.protocol import UserID, DeviceName, UserProfile
+from parsec._parsec import (
+    TrustchainContext,
+    UserCertificate,
+    RevokedUserCertificate,
+    DeviceCertificate,
+    TimeProvider,
 )
-from parsec.core.trustchain import TrustchainContext
 
 
 @pytest.mark.slow
 def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_factory, coolorg):
     name_count = 0
+    time_provider = TimeProvider()
 
     class TrustchainValidate(RuleBasedStateMachine):
         NonRevokedAdminUsers = Bundle("admin users")
@@ -49,9 +49,9 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             local_device = local_device_factory(device_id, org=coolorg)
             self.local_devices[device_id] = local_device
 
-            user = UserCertificateContent(
+            user = UserCertificate(
                 author=certifier_id,
-                timestamp=pendulum_now(),
+                timestamp=time_provider.now(),
                 user_id=local_device.user_id,
                 human_handle=local_device.human_handle,
                 public_key=local_device.public_key,
@@ -60,9 +60,9 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             self.users_content[device_id.user_id] = user
             self.users_certifs[device_id.user_id] = user.dump_and_sign(certifier_key)
 
-            device = DeviceCertificateContent(
+            device = DeviceCertificate(
                 author=certifier_id,
-                timestamp=pendulum_now(),
+                timestamp=time_provider.now(),
                 device_id=local_device.device_id,
                 device_label=local_device.device_label,
                 verify_key=local_device.verify_key,
@@ -136,8 +136,8 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             ]
             author = possible_authors[author_rand % len(possible_authors)]
             note(f"revoke user: {user} (author: {author.device_id})")
-            revoked_user = RevokedUserCertificateContent(
-                author=author.device_id, timestamp=pendulum_now(), user_id=user
+            revoked_user = RevokedUserCertificate(
+                author=author.device_id, timestamp=time_provider.now(), user_id=user
             )
             self.revoked_users_content[user] = revoked_user
             self.revoked_users_certifs[user] = revoked_user.dump_and_sign(author.signing_key)
@@ -153,9 +153,9 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             device_id = self.next_device_id(user)
             note(f"new device: {device_id} (author: {author.device_id})")
             local_device = local_device_factory(device_id, org=coolorg)
-            device = DeviceCertificateContent(
+            device = DeviceCertificate(
                 author=author.device_id,
-                timestamp=pendulum_now(),
+                timestamp=time_provider.now(),
                 device_id=local_device.device_id,
                 device_label=local_device.device_label,
                 verify_key=local_device.verify_key,
@@ -165,7 +165,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
 
         @rule(user=st.one_of(NonRevokedAdminUsers, NonRevokedOtherUsers))
         def load_trustchain(self, user):
-            ctx = TrustchainContext(coolorg.root_verify_key, 1)
+            ctx = TrustchainContext(coolorg.root_verify_key, time_provider, 1)
 
             user_certif = next(
                 certif for user_id, certif in self.users_certifs.items() if user_id == user

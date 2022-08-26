@@ -21,6 +21,7 @@ pub struct LocalDevice {
     pub user_manifest_id: EntryID,
     pub user_manifest_key: SecretKey,
     pub local_symkey: SecretKey,
+    pub time_provider: TimeProvider,
 }
 
 impl LocalDevice {
@@ -131,13 +132,11 @@ impl LocalDevice {
         }
     }
 
-    /// This method centralizes the production of parsec timestamps for a given device.
-    /// At the moment it is simply an alias to [DateTime::now] but it has two main benefits:
-    /// 1. Allowing for easier testing by patching this method in device-specific way
-    /// 2. Allowing for other implementation in the future allowing to track, check and
-    ///    possibly alter the production of timestamps.
-    pub fn timestamp(&self) -> DateTime {
-        DateTime::now()
+    /// This method centralizes the production of current time timestamps for a given device.
+    /// This is meant to avoid relying on side effect and hence be able to do per-device
+    /// time mock.
+    pub fn now(&self) -> DateTime {
+        self.time_provider.now()
     }
 }
 
@@ -179,6 +178,7 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
             user_manifest_id: data.user_manifest_id,
             user_manifest_key: data.user_manifest_key,
             local_symkey: data.local_symkey,
+            time_provider: TimeProvider::default(),
         })
     }
 }
@@ -200,5 +200,71 @@ impl From<LocalDevice> for LocalDeviceData {
             user_manifest_key: obj.user_manifest_key,
             local_symkey: obj.local_symkey,
         }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Hash)]
+pub struct UserInfo {
+    pub user_id: UserID,
+    pub human_handle: Option<HumanHandle>,
+    pub profile: UserProfile,
+    pub created_on: DateTime,
+    pub revoked_on: Option<DateTime>,
+}
+
+impl UserInfo {
+    pub fn user_display(&self) -> String {
+        self.human_handle
+            .as_ref()
+            .map(|x| x.to_string())
+            .unwrap_or_else(|| self.user_id.to_string())
+    }
+
+    pub fn short_user_display(&self) -> String {
+        self.human_handle
+            .as_ref()
+            .map(|x| x.label.to_string())
+            .unwrap_or_else(|| self.user_id.to_string())
+    }
+
+    /// Note that we might consider a user revoked even though our current time is still
+    /// below the revokation timestamp. This is because there is no clear causality between
+    /// our time and the production of the revokation timestamp (as it might have been produced
+    /// by another device). So we simply consider a user revoked if a revokation timestamp has
+    /// been issued.
+    pub fn is_revoked(&self) -> bool {
+        self.revoked_on.is_some()
+    }
+}
+
+impl std::fmt::Debug for UserInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "<UserInfo {}>", self.user_display())
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Hash)]
+pub struct DeviceInfo {
+    pub device_id: DeviceID,
+    pub device_label: Option<DeviceLabel>,
+    pub created_on: DateTime,
+}
+
+impl DeviceInfo {
+    pub fn device_name(&self) -> &DeviceName {
+        &self.device_id.device_name
+    }
+
+    pub fn device_display(&self) -> String {
+        self.device_label
+            .as_ref()
+            .map(|x| x.to_string())
+            .unwrap_or_else(|| self.device_id.device_name.to_string())
+    }
+}
+
+impl std::fmt::Debug for DeviceInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "DeviceInfo({})", self.device_display())
     }
 }

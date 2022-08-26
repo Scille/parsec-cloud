@@ -2,27 +2,22 @@
 
 import pytest
 from typing import Dict, Optional, Tuple
-from pendulum import datetime
 
-from parsec.api.data import (
-    UserCertificateContent,
-    DeviceCertificateContent,
-    RevokedUserCertificateContent,
-    UserProfile,
-)
-from parsec.api.protocol import UserID
+from parsec._parsec import DateTime, TimeProvider, TrustchainContext
+from parsec.api.data import UserCertificate, DeviceCertificate, RevokedUserCertificate
+from parsec.api.protocol import UserID, UserProfile
 from parsec.api.protocol.types import DeviceID
 from parsec.core.types import LocalDevice
-from parsec.core.trustchain import TrustchainContext, TrustchainError
+from parsec.core.trustchain import TrustchainError
 
 
 class TrustchainData:
     def __init__(self, organization_id, root_verify_key):
         self.organization_id = organization_id
         self.root_verify_key = root_verify_key
-        self.users_certifs: Dict[UserID, Tuple[UserCertificateContent, bytes]] = {}
-        self.devices_certifs: Dict[DeviceID, Tuple[DeviceCertificateContent, bytes]] = {}
-        self.revoked_users_certifs: Dict[UserID, Tuple[RevokedUserCertificateContent, bytes]] = {}
+        self.users_certifs: Dict[UserID, Tuple[UserCertificate, bytes]] = {}
+        self.devices_certifs: Dict[DeviceID, Tuple[DeviceCertificate, bytes]] = {}
+        self.revoked_users_certifs: Dict[UserID, Tuple[RevokedUserCertificate, bytes]] = {}
         self.local_devices: Dict[DeviceID, LocalDevice] = {}
 
     def run_trustchain_load_user_and_devices(self, user: UserID):
@@ -40,17 +35,17 @@ class TrustchainData:
         )
 
     def trustchain_ctx_factory(self) -> TrustchainContext:
-        return TrustchainContext(self.root_verify_key, 1)
+        return TrustchainContext(self.root_verify_key, TimeProvider(), 1)
 
-    def add_user_certif(self, certif_content: UserCertificateContent, certif: bytes) -> None:
+    def add_user_certif(self, certif_content: UserCertificate, certif: bytes) -> None:
         self.users_certifs[certif_content.user_id] = (certif_content, certif)
 
     def add_revoked_user_certif(
-        self, certif_content: RevokedUserCertificateContent, certif: bytes
+        self, certif_content: RevokedUserCertificate, certif: bytes
     ) -> None:
         self.revoked_users_certifs[certif_content.user_id] = (certif_content, certif)
 
-    def add_device_certif(self, certif_content: DeviceCertificateContent, certif: bytes) -> None:
+    def add_device_certif(self, certif_content: DeviceCertificate, certif: bytes) -> None:
         self.devices_certifs[certif_content.device_id] = (certif_content, certif)
 
     def add_local_device(self, local_device: LocalDevice) -> None:
@@ -112,7 +107,7 @@ class TrustchainData:
 
 @pytest.fixture
 def trustchain_data_factory(local_device_factory, coolorg):
-    now = datetime(2000, 1, 1)
+    now = DateTime(2000, 1, 1)
 
     def _trustchain_data_factory(todo_devices, todo_users):
         data = TrustchainData(coolorg.organization_id, coolorg.root_verify_key)
@@ -137,7 +132,7 @@ def trustchain_data_factory(local_device_factory, coolorg):
             # Generate device certificate
             certifier_id, certifier_key = _get_certifier_id_and_key(todo_device.get("certifier"))
             created_on = todo_device.get("created_on", now)
-            device_certificate = DeviceCertificateContent(
+            device_certificate = DeviceCertificate(
                 author=certifier_id,
                 timestamp=created_on,
                 device_id=local_device.device_id,
@@ -158,7 +153,7 @@ def trustchain_data_factory(local_device_factory, coolorg):
             # Generate user certificate
             certifier_id, certifier_key = _get_certifier_id_and_key(todo_user.get("certifier"))
             created_on = todo_user.get("created_on", now)
-            user_certif = UserCertificateContent(
+            user_certif = UserCertificate(
                 author=certifier_id,
                 timestamp=created_on,
                 user_id=local_user.user_id,
@@ -176,7 +171,7 @@ def trustchain_data_factory(local_device_factory, coolorg):
                     raise RuntimeError(
                         f"Missing `{revoker}` to sign revocation of `{todo_user['id']}`"
                     )
-                revoked_user_certificate = RevokedUserCertificateContent(
+                revoked_user_certificate = RevokedUserCertificate(
                     author=revoker_ld.device_id, timestamp=revoked_on, user_id=local_user.user_id
                 )
                 data.add_revoked_user_certif(
@@ -267,8 +262,8 @@ def test_invalid_loop_on_device_certif_trustchain_error(trustchain_data_factory)
 
 
 def test_device_signature_while_revoked(trustchain_data_factory):
-    d1 = datetime(2000, 1, 1)
-    d2 = datetime(2000, 1, 2)
+    d1 = DateTime(2000, 1, 1)
+    d2 = DateTime(2000, 1, 2)
 
     data = trustchain_data_factory(
         todo_devices=(
@@ -291,8 +286,8 @@ def test_device_signature_while_revoked(trustchain_data_factory):
 
 
 def test_user_signature_while_revoked(trustchain_data_factory):
-    d1 = datetime(2000, 1, 1)
-    d2 = datetime(2000, 1, 2)
+    d1 = DateTime(2000, 1, 1)
+    d2 = DateTime(2000, 1, 2)
 
     data = trustchain_data_factory(
         todo_devices=({"id": "alice@dev1"}, {"id": "bob@dev1"}, {"id": "mallory@dev1"}),
@@ -311,8 +306,8 @@ def test_user_signature_while_revoked(trustchain_data_factory):
 
 
 def test_revoked_user_signature_while_revoked(trustchain_data_factory):
-    d1 = datetime(2000, 1, 1)
-    d2 = datetime(2000, 1, 2)
+    d1 = DateTime(2000, 1, 1)
+    d2 = DateTime(2000, 1, 2)
 
     data = trustchain_data_factory(
         todo_devices=({"id": "alice@dev1"}, {"id": "bob@dev1"}, {"id": "mallory@dev1"}),

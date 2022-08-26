@@ -3,7 +3,8 @@
 import base64
 import json
 from typing import List, Tuple, Dict, Optional
-from pendulum import DateTime, now as pendulum_now
+
+from parsec._parsec import DateTime, now as pendulum_now
 import urllib
 from parsec.backend.http_utils import http_request
 from parsec.backend.sequester import SequesterService, SequesterServiceType
@@ -187,7 +188,7 @@ class BaseVlobComponent:
         """
         msg = vlob_create_serializer.req_load(msg)
 
-        now = pendulum_now()
+        now = DateTime.now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
             return vlob_create_serializer.timestamp_out_of_ballpark_rep_dump(
                 backend_timestamp=now, client_timestamp=msg["timestamp"]
@@ -307,7 +308,7 @@ class BaseVlobComponent:
         """
         msg = vlob_update_serializer.req_load(msg)
 
-        now = pendulum_now()
+        now = DateTime.now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
             return vlob_update_serializer.timestamp_out_of_ballpark_rep_dump(
                 backend_timestamp=now, client_timestamp=msg["timestamp"]

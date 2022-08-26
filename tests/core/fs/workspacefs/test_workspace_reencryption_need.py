@@ -10,10 +10,10 @@ from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
     Bundle,
 )
-from pendulum import now as pendulum_now
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import RealmID, RealmRole
-from parsec.api.data import RealmRoleCertificateContent, EntryName
+from parsec.api.data import RealmRoleCertificate, EntryName
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import call_with_control
@@ -77,8 +77,8 @@ def test_workspace_reencryption_need(
                 self.since_reencryption_user_revoked.add(user.user_id)
 
         async def _update_role(self, author, user, role=RealmRole.MANAGER):
-            now = pendulum_now()
-            certif = RealmRoleCertificateContent(
+            now = DateTime.now()
+            certif = RealmRoleCertificate(
                 author=author.device_id,
                 timestamp=now,
                 realm_id=RealmID(self.wid.uuid),

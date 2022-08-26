@@ -2,12 +2,12 @@
 
 import attr
 from typing import Optional, Tuple
-import pendulum
+from parsec._parsec import DateTime
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.utils import timestamps_in_the_ballpark
-from parsec.api.data import UserProfile, UserCertificateContent, DeviceCertificateContent, DataError
-from parsec.api.protocol import UserID, DeviceID, HumanHandle, DeviceLabel
+from parsec.api.data import UserCertificate, DeviceCertificate, DataError
+from parsec.api.protocol import UserID, DeviceID, HumanHandle, DeviceLabel, UserProfile
 
 
 class CertificateValidationError(Exception):
@@ -35,14 +35,14 @@ class Device:
 
     @property
     def verify_key(self) -> VerifyKey:
-        return DeviceCertificateContent.unsecure_load(self.device_certificate).verify_key
+        return DeviceCertificate.unsecure_load(self.device_certificate).verify_key
 
     device_id: DeviceID
     device_label: Optional[DeviceLabel]
     device_certificate: bytes
     redacted_device_certificate: bytes
     device_certifier: Optional[DeviceID]
-    created_on: pendulum.DateTime = attr.ib(factory=pendulum.now)
+    created_on: DateTime = attr.ib(factory=DateTime.now)
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -58,7 +58,7 @@ class User:
 
     @property
     def public_key(self) -> PublicKey:
-        return UserCertificateContent.unsecure_load(self.user_certificate).public_key
+        return UserCertificate.unsecure_load(self.user_certificate).public_key
 
     user_id: UserID
     human_handle: Optional[HumanHandle]
@@ -66,8 +66,8 @@ class User:
     redacted_user_certificate: bytes
     user_certifier: Optional[DeviceID]
     profile: UserProfile = UserProfile.STANDARD
-    created_on: pendulum.DateTime = attr.ib(factory=pendulum.now)
-    revoked_on: Optional[pendulum.DateTime] = None
+    created_on: DateTime = attr.ib(factory=DateTime.now)
+    revoked_on: Optional[DateTime] = None
     revoked_user_certificate: Optional[bytes] = None
     revoked_user_certifier: Optional[DeviceID] = None
 
@@ -86,18 +86,18 @@ def validate_new_user_certificates(
         UserInvalidCertificationError
     """
     try:
-        d_data = DeviceCertificateContent.verify_and_load(
+        d_data = DeviceCertificate.verify_and_load(
             device_certificate, author_verify_key=author_verify_key, expected_author=expected_author
         )
-        u_data = UserCertificateContent.verify_and_load(
+        u_data = UserCertificate.verify_and_load(
             user_certificate, author_verify_key=author_verify_key, expected_author=expected_author
         )
-        ru_data = UserCertificateContent.verify_and_load(
+        ru_data = UserCertificate.verify_and_load(
             redacted_user_certificate,
             author_verify_key=author_verify_key,
             expected_author=expected_author,
         )
-        rd_data = DeviceCertificateContent.verify_and_load(
+        rd_data = DeviceCertificate.verify_and_load(
             redacted_device_certificate,
             author_verify_key=author_verify_key,
             expected_author=expected_author,
@@ -113,7 +113,7 @@ def validate_new_user_certificates(
             "invalid_data", "Device and User certificates must have the same timestamp."
         )
 
-    now = pendulum.now()
+    now = DateTime.now()
     if not timestamps_in_the_ballpark(u_data.timestamp, now):
         raise CertificateValidationError(
             "invalid_certification", "Invalid timestamp in certificate."
@@ -172,11 +172,11 @@ def validate_new_device_certificate(
     redacted_device_certificate: bytes,
 ) -> Device:
     try:
-        data = DeviceCertificateContent.verify_and_load(
+        data = DeviceCertificate.verify_and_load(
             device_certificate, author_verify_key=author_verify_key, expected_author=expected_author
         )
 
-        redacted_data = DeviceCertificateContent.verify_and_load(
+        redacted_data = DeviceCertificate.verify_and_load(
             redacted_device_certificate,
             author_verify_key=author_verify_key,
             expected_author=expected_author,
@@ -187,7 +187,7 @@ def validate_new_device_certificate(
             "invalid_certification", f"Invalid certification data ({exc})."
         )
 
-    if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
+    if not timestamps_in_the_ballpark(data.timestamp, DateTime.now()):
         raise CertificateValidationError(
             "invalid_certification", f"Invalid timestamp in certification."
         )

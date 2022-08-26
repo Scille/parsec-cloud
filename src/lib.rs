@@ -1,10 +1,21 @@
+// Waiting for a fix from pyo3
+#![allow(clippy::borrow_deref_ref)]
+
 use pyo3::prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 
 mod addrs;
 mod api_crypto;
 mod binding_utils;
+mod certif;
+mod file_operations;
 mod ids;
 mod invite;
+mod local_device;
+mod local_manifest;
+mod manifest;
+mod protocol;
+mod time;
+mod trustchain;
 
 /// A Python module implemented in Rust.
 #[pymodule]
@@ -24,6 +35,16 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<api_crypto::SecretKey>()?;
     m.add_class::<api_crypto::PrivateKey>()?;
     m.add_class::<api_crypto::PublicKey>()?;
+
+    m.add_class::<certif::UserCertificate>()?;
+    m.add_class::<certif::RevokedUserCertificate>()?;
+    m.add_class::<certif::DeviceCertificate>()?;
+    m.add_class::<certif::RealmRoleCertificate>()?;
+
+    m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_resize, m)?)?;
+    m.add_function(wrap_pyfunction!(file_operations::prepare_reshape, m)?)?;
 
     m.add_class::<ids::OrganizationID>()?;
     m.add_class::<ids::EntryID>()?;
@@ -45,5 +66,63 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<invite::InviteUserConfirmation>()?;
     m.add_class::<invite::InviteDeviceData>()?;
     m.add_class::<invite::InviteDeviceConfirmation>()?;
+
+    m.add_class::<local_device::LocalDevice>()?;
+    m.add_class::<local_device::UserInfo>()?;
+    m.add_class::<local_device::DeviceInfo>()?;
+
+    m.add_class::<local_manifest::Chunk>()?;
+    m.add_class::<local_manifest::LocalFileManifest>()?;
+    m.add_class::<local_manifest::LocalFolderManifest>()?;
+    m.add_class::<local_manifest::LocalWorkspaceManifest>()?;
+    m.add_class::<local_manifest::LocalUserManifest>()?;
+    m.add_function(wrap_pyfunction!(
+        local_manifest::local_manifest_decrypt_and_load,
+        m
+    )?)?;
+
+    m.add_class::<manifest::EntryName>()?;
+    m.add_class::<manifest::WorkspaceEntry>()?;
+    m.add_class::<manifest::BlockAccess>()?;
+    m.add_class::<manifest::FolderManifest>()?;
+    m.add_class::<manifest::FileManifest>()?;
+    m.add_class::<manifest::WorkspaceManifest>()?;
+    m.add_class::<manifest::UserManifest>()?;
+    m.add_function(wrap_pyfunction!(manifest::manifest_decrypt_and_load, m)?)?;
+    m.add_function(wrap_pyfunction!(
+        manifest::manifest_decrypt_verify_and_load,
+        m
+    )?)?;
+    m.add_function(wrap_pyfunction!(manifest::manifest_verify_and_load, m)?)?;
+
+    // Block
+    m.add_class::<protocol::BlockCreateReq>()?;
+    m.add_class::<protocol::BlockCreateRep>()?;
+    m.add_class::<protocol::BlockCreateRepOk>()?;
+    m.add_class::<protocol::BlockCreateRepAlreadyExists>()?;
+    m.add_class::<protocol::BlockCreateRepNotFound>()?;
+    m.add_class::<protocol::BlockCreateRepTimeout>()?;
+    m.add_class::<protocol::BlockCreateRepNotAllowed>()?;
+    m.add_class::<protocol::BlockCreateRepInMaintenance>()?;
+    m.add_class::<protocol::BlockCreateRepUnknownStatus>()?;
+    m.add_class::<protocol::BlockReadReq>()?;
+    m.add_class::<protocol::BlockReadRep>()?;
+    m.add_class::<protocol::BlockReadRepOk>()?;
+    m.add_class::<protocol::BlockReadRepNotFound>()?;
+    m.add_class::<protocol::BlockReadRepTimeout>()?;
+    m.add_class::<protocol::BlockReadRepNotAllowed>()?;
+    m.add_class::<protocol::BlockReadRepInMaintenance>()?;
+    m.add_class::<protocol::BlockReadRepUnknownStatus>()?;
+
+    // Cmd
+    m.add_class::<protocol::AuthenticatedAnyCmdReq>()?;
+    m.add_class::<protocol::InvitedAnyCmdReq>()?;
+
+    m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
+    m.add_class::<time::TimeProvider>()?;
+    m.add_class::<time::DateTime>()?;
+    m.add_class::<time::LocalDateTime>()?;
+
+    m.add_class::<trustchain::TrustchainContext>()?;
     Ok(())
 }

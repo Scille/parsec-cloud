@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from dataclasses import dataclass, field as dataclass_field
+
 from parsec.backend.sequester import SequesterService
-from pendulum import DateTime
+from parsec._parsec import DateTime
+
 from typing import TYPE_CHECKING, List, AbstractSet, Tuple, Dict, Optional
 from collections import defaultdict
 from parsec.api.protocol import (

@@ -4,8 +4,19 @@ import math
 from contextlib import contextmanager
 from typing import Dict, Optional, List, Iterable, Tuple, cast, Iterator, Callable, Awaitable
 import trio
-from pendulum import DateTime
 from trio import open_memory_channel, MemorySendChannel, MemoryReceiveChannel
+
+from parsec._parsec import (
+    DateTime,
+    BlockCreateRepOk,
+    BlockCreateRepAlreadyExists,
+    BlockCreateRepInMaintenance,
+    BlockCreateRepNotAllowed,
+    BlockReadRepOk,
+    BlockReadRepNotFound,
+    BlockReadRepInMaintenance,
+    BlockReadRepNotAllowed,
+)
 from parsec.api.protocol.sequester import SequesterServiceID
 
 from parsec.crypto import HashDigest, CryptoError, VerifyKey
@@ -14,14 +25,15 @@ from parsec.api.protocol import UserID, DeviceID, RealmID, RealmRole, VlobID
 from parsec.api.data import (
     DataError,
     BlockAccess,
-    RealmRoleCertificateContent,
-    BaseManifest as BaseRemoteManifest,
-    UserCertificateContent,
-    DeviceCertificateContent,
-    RevokedUserCertificateContent,
+    RealmRoleCertificate,
+    AnyRemoteManifest,
+    UserCertificate,
+    DeviceCertificate,
+    RevokedUserCertificate,
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
 )
+from parsec.api.data.manifest import manifest_decrypt_verify_and_load
 from parsec.core.types import EntryID, ChunkID, LocalDevice, WorkspaceEntry
 from parsec.core.backend_connection import (
     BackendConnectionError,
@@ -163,7 +175,7 @@ class UserRemoteLoader:
         self.get_previous_workspace_entry = get_previous_workspace_entry
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
-        self._realm_role_certificates_cache: Optional[List[RealmRoleCertificateContent]] = None
+        self._realm_role_certificates_cache: Optional[List[RealmRoleCertificate]] = None
         self._sequester_services_cache: Optional[List[SequesterServiceCertificate]] = None
 
     def clear_realm_role_certificate_cache(self) -> None:
@@ -174,7 +186,7 @@ class UserRemoteLoader:
     ) -> Optional[RealmRole]:
 
         # Lazily iterate over user certificates from newest to oldest
-        def _get_user_certificates_from_cache() -> Iterator[RealmRoleCertificateContent]:
+        def _get_user_certificates_from_cache() -> Iterator[RealmRoleCertificate]:
             if self._realm_role_certificates_cache is None:
                 return
             for certif in reversed(self._realm_role_certificates_cache):
@@ -199,7 +211,7 @@ class UserRemoteLoader:
 
     async def _load_realm_role_certificates(
         self, realm_id: Optional[EntryID] = None
-    ) -> Tuple[List[RealmRoleCertificateContent], Dict[UserID, RealmRole]]:
+    ) -> Tuple[List[RealmRoleCertificate], Dict[UserID, RealmRole]]:
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.realm_get_role_certificates(
                 RealmID((realm_id or self.workspace_id).uuid)
@@ -214,7 +226,7 @@ class UserRemoteLoader:
             # Must read unverified certificates to access metadata
             unsecure_certifs = sorted(
                 [
-                    (RealmRoleCertificateContent.unsecure_load(uv_role), uv_role)
+                    (RealmRoleCertificate.unsecure_load(uv_role), uv_role)
                     for uv_role in rep["certificates"]
                 ],
                 key=lambda x: x[0].timestamp,
@@ -230,7 +242,7 @@ class UserRemoteLoader:
                 with translate_remote_devices_manager_errors():
                     author = await self.remote_devices_manager.get_device(unsecure_certif.author)
 
-                RealmRoleCertificateContent.verify_and_load(
+                RealmRoleCertificate.verify_and_load(
                     raw_certif,
                     author_verify_key=author.verify_key,
                     expected_author=author.device_id,
@@ -239,7 +251,7 @@ class UserRemoteLoader:
                 # Make sure author had the right to do this
                 existing_user_role = current_roles.get(unsecure_certif.user_id)
                 if not current_roles and unsecure_certif.user_id == author.device_id.user_id:
-                    # First user is autosigned
+                    # First user is auto-signed
                     needed_roles: Tuple[Optional[RealmRole], ...] = (None,)
                 elif (
                     existing_user_role in owner_or_manager
@@ -269,12 +281,12 @@ class UserRemoteLoader:
         except DataError as exc:
             raise FSError(f"Invalid realm role certificates: {exc}") from exc
 
-        # Now unsecure_certifs is no longer unsecure given we have valided it items
+        # Now unsecure_certifs is no longer unsecure given we have validated its items
         return [c for c, _ in unsecure_certifs], current_roles
 
     async def load_realm_role_certificates(
         self, realm_id: Optional[EntryID] = None
-    ) -> List[RealmRoleCertificateContent]:
+    ) -> List[RealmRoleCertificate]:
         """
         Raises:
             FSError
@@ -306,7 +318,7 @@ class UserRemoteLoader:
 
     async def get_user(
         self, user_id: UserID, no_cache: bool = False
-    ) -> Tuple[UserCertificateContent, Optional[RevokedUserCertificateContent]]:
+    ) -> Tuple[UserCertificate, Optional[RevokedUserCertificate]]:
         """
         Raises:
             FSRemoteOperationError
@@ -317,9 +329,7 @@ class UserRemoteLoader:
         with translate_remote_devices_manager_errors():
             return await self.remote_devices_manager.get_user(user_id, no_cache=no_cache)
 
-    async def get_device(
-        self, device_id: DeviceID, no_cache: bool = False
-    ) -> DeviceCertificateContent:
+    async def get_device(self, device_id: DeviceID, no_cache: bool = False) -> DeviceCertificate:
         """
         Raises:
             FSRemoteOperationError
@@ -364,7 +374,7 @@ class UserRemoteLoader:
             FSBackendOfflineError
         """
         timestamp = self.device.timestamp()
-        certif = RealmRoleCertificateContent.build_realm_root_certif(
+        certif = RealmRoleCertificate.build_realm_root_certif(
             author=self.device.device_id, timestamp=timestamp, realm_id=RealmID(realm_id.uuid)
         ).dump_and_sign(self.device.signing_key)
 
@@ -449,21 +459,21 @@ class RemoteLoader(UserRemoteLoader):
         # Download
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.block_read(access.id)
-        if rep["status"] == "not_found":
+        if isinstance(rep, BlockReadRepNotFound):
             raise FSRemoteBlockNotFound(access)
-        elif rep["status"] == "not_allowed":
+        elif isinstance(rep, BlockReadRepNotAllowed):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot load block: no read access")
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, BlockReadRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 "Cannot download block while the workspace in maintenance"
             )
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot download block: `{rep['status']}`")
+        elif not isinstance(rep, BlockReadRepOk):
+            raise FSError(f"Cannot download block: `{rep}`")
 
         # Decryption
         try:
-            block = access.key.decrypt(rep["block"])
+            block = access.key.decrypt(rep.block)
 
         # Decryption error
         except CryptoError as exc:
@@ -514,16 +524,16 @@ class RemoteLoader(UserRemoteLoader):
                 access.id, RealmID(self.workspace_id.uuid), ciphered
             )
 
-        if rep["status"] == "already_exists":
+        if isinstance(rep, BlockCreateRepAlreadyExists):
             # Ignore exception if the block has already been uploaded
             # This might happen when a failure occurs before the local storage is updated
             pass
-        elif rep["status"] == "not_allowed":
+        elif isinstance(rep, BlockCreateRepNotAllowed):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoWriteAccess("Cannot upload block: no write access")
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, BlockCreateRepInMaintenance):
             raise FSWorkspaceInMaintenance("Cannot upload block while the workspace in maintenance")
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, BlockCreateRepOk):
             raise FSError(f"Cannot upload block: {rep}")
 
         # Update local storage
@@ -537,7 +547,7 @@ class RemoteLoader(UserRemoteLoader):
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
         workspace_entry: Optional[WorkspaceEntry] = None,
-    ) -> BaseRemoteManifest:
+    ) -> AnyRemoteManifest:
         """
         Download a manifest.
 
@@ -639,7 +649,7 @@ class RemoteLoader(UserRemoteLoader):
             author = await self.remote_devices_manager.get_device(expected_author)
 
         try:
-            remote_manifest = BaseRemoteManifest.decrypt_verify_and_load(
+            remote_manifest = manifest_decrypt_verify_and_load(
                 rep["blob"],
                 key=workspace_entry.key,
                 author_verify_key=author.verify_key,
@@ -677,9 +687,9 @@ class RemoteLoader(UserRemoteLoader):
     async def upload_manifest(
         self,
         entry_id: EntryID,
-        manifest: BaseRemoteManifest,
+        manifest: AnyRemoteManifest,
         timestamp_greater_than: Optional[DateTime] = None,
-    ) -> BaseRemoteManifest:
+    ) -> AnyRemoteManifest:
         """
         Raises:
             FSError
@@ -703,7 +713,7 @@ class RemoteLoader(UserRemoteLoader):
         workspace_entry = self.get_workspace_entry()
 
         if self._sequester_services_cache is None:
-            # Regular mode: we only encrypt the blob with the workspace symetric key
+            # Regular mode: we only encrypt the blob with the workspace symmetric key
             sequester_blob = None
             try:
                 ciphered = manifest.dump_sign_and_encrypt(
@@ -714,7 +724,7 @@ class RemoteLoader(UserRemoteLoader):
 
         else:
             # Sequestered organization mode: we also encrypt the blob with each
-            # sequester services' asymetric encryption key
+            # sequester services' asymmetric encryption key
             try:
                 signed = manifest.dump_and_sign(author_signkey=self.device.signing_key)
             except DataError as exc:
@@ -891,7 +901,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         timestamp: Optional[DateTime] = None,
         expected_backend_timestamp: Optional[DateTime] = None,
         workspace_entry: Optional[WorkspaceEntry] = None,
-    ) -> BaseRemoteManifest:
+    ) -> AnyRemoteManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
         a WorkspaceFS or a WorkspaceFSTimestamped
@@ -921,9 +931,9 @@ class RemoteLoaderTimestamped(RemoteLoader):
     async def upload_manifest(
         self,
         entry_id: EntryID,
-        manifest: BaseRemoteManifest,
+        manifest: AnyRemoteManifest,
         timestamp_greater_than: Optional[DateTime] = None,
-    ) -> BaseRemoteManifest:
+    ) -> AnyRemoteManifest:
         raise FSError("Cannot upload manifest through a timestamped remote loader")
 
     async def _vlob_create(

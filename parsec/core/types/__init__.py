@@ -15,22 +15,21 @@ from parsec.core.types.backend_address import (
     BackendPkiEnrollmentAddr,
     BackendAddrType,
 )
-from parsec.core.types.local_device import LocalDevice, UserInfo, DeviceInfo
 from parsec.core.types.manifest import (
     DEFAULT_BLOCK_SIZE,
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
-)
-from parsec.core.types.manifest import (
     LocalUserManifest,
-    BaseLocalManifest,
     WorkspaceEntry,
     WorkspaceRole,
     BlockAccess,
     BlockID,
     Chunk,
     ChunkID,
+    manifest_from_remote as local_manifest_from_remote,
+    manifest_from_remote_with_local_context as local_manifest_from_remote_with_local_context,
+    AnyLocalManifest,
 )
 
 from parsec.core.types.organizations import (
@@ -41,6 +40,8 @@ from parsec.core.types.organizations import (
 
 from parsec.api.data import WorkspaceManifest as RemoteWorkspaceManifest
 from parsec.api.data import FolderManifest as RemoteFolderManifest
+
+from parsec._parsec import LocalDevice, UserInfo, DeviceInfo
 
 FileDescriptor = NewType("FileDescriptor", int)
 LocalFolderishManifests = Union[LocalFolderManifest, LocalWorkspaceManifest]
@@ -78,13 +79,15 @@ __all__ = (
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
     "LocalUserManifest",
-    "BaseLocalManifest",
     "WorkspaceEntry",
     "WorkspaceRole",
     "BlockAccess",
     "BlockID",
     "Chunk",
     "ChunkID",
+    "local_manifest_from_remote",
+    "local_manifest_from_remote_with_local_context",
+    "AnyLocalManifest",
     # organizations
     "OrganizationStats",
     "UsersPerProfileDetailItem",

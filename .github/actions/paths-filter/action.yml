@@ -1,0 +1,38 @@
+name: Path filters
+description: Return type of files that have change
+
+outputs:
+  changes:
+    value: ${{ steps.changes.outputs.changes }}
+    description: JSON array with names of all filters matchings any of the changes files.
+  rust:
+    value: ${{ steps.changes.outputs.rust }}
+    description: True if a rust file was edited.
+  python:
+    value: ${{ steps.changes.outputs.python }}
+    description: True if a python file was edited.
+  rust-ext:
+    value: ${{ steps.changes.outputs.rust-ext }}
+    description: True if a files in the rust-python extension folder was edited.
+  client-web:
+    value: ${{ steps.changes.outputs.client-web }}
+    description: True if a files in the web was edited.
+  client-common:
+    value: ${{ steps.changes.outputs.client-common }}
+    description: True if a files in the ionic-client part was edited.
+
+runs:
+  using: composite
+  steps:
+    - uses: dorny/paths-filter@b2feaf19c27470162a626bd6fa8438ae5b263721  # pin v2.10.2
+      id: changes
+      with:
+        filters: .github/actions/paths-filter/filters.yml
+
+    - name: Debug changes
+      shell: bash
+      env:
+        CHANGES: ${{ toJSON(steps.changes.outputs) }}
+      run: |
+        set -o pipefail
+        printenv CHANGES | jq '. + { "changes": .changes | fromjson }'

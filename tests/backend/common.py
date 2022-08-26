@@ -3,9 +3,13 @@
 import trio
 from typing import Optional, Callable
 from functools import partial
-from pendulum import now as pendulum_now
+from parsec._parsec import DateTime
 from contextlib import asynccontextmanager
 
+from parsec._parsec import (
+    BlockCreateRepOk,
+    BlockReadRepOk,
+)
 from parsec.serde import packb
 from parsec.api.protocol import (
     ping_serializer,
@@ -161,7 +165,10 @@ class CmdSock:
         rep = self.serializer.rep_loads(raw_rep)
 
         if check_rep:
-            assert rep["status"] == "ok"
+            if isinstance(rep, dict):
+                assert rep["status"] == "ok"  # Legacy rep schemas
+            else:
+                assert isinstance(rep, (BlockCreateRepOk, BlockReadRepOk))  # Rust-based rep schemas
 
         return rep
 
@@ -319,7 +326,7 @@ vlob_create = CmdSock(
         "realm_id": realm_id,
         "vlob_id": vlob_id,
         "blob": blob,
-        "timestamp": timestamp or pendulum_now(),
+        "timestamp": timestamp or DateTime.now(),
         "encryption_revision": encryption_revision,
         "sequester_blob": sequester_blob,
     },
@@ -343,7 +350,7 @@ vlob_update = CmdSock(
         "version": version,
         "blob": blob,
         "encryption_revision": encryption_revision,
-        "timestamp": timestamp or pendulum_now(),
+        "timestamp": timestamp or DateTime.now(),
         "sequester_blob": sequester_blob,
     },
     check_rep_by_default=True,

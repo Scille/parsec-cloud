@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 use thiserror::Error;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum LocalDeviceError {
     #[error("Could not access to the dir/file: {0}")]
     Access(PathBuf),

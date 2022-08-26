@@ -4,8 +4,7 @@ from typing import Tuple, Optional, cast, Dict, Sequence, Union, Any
 from enum import Enum
 from secrets import token_bytes
 
-import pendulum
-from pendulum.datetime import DateTime
+from parsec._parsec import DateTime
 
 from parsec.crypto import SigningKey, VerifyKey, CryptoError
 from parsec.serde import BaseSchema, OneOfSchema, fields, validate, post_load
@@ -253,7 +252,7 @@ class ServerHandshake:
                 "supported_api_versions": self.SUPPORTED_API_VERSIONS,
                 "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
                 "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
-                "backend_timestamp": pendulum.now(),
+                "backend_timestamp": DateTime.now(),
             }
         )
 
@@ -396,7 +395,7 @@ class BaseClientHandshake:
 
     def timestamp(self) -> DateTime:
         # Exposed as a method for easier testing and monkeypatching
-        return pendulum.now()
+        return DateTime.now()
 
     def load_challenge_req(self, req: bytes) -> None:
         self.challenge_data = handshake_challenge_serializer.loads(req)
@@ -410,9 +409,7 @@ class BaseClientHandshake:
         )
 
         # Parse and cast the challenge content
-        backend_timestamp = cast(
-            Optional[pendulum.DateTime], self.challenge_data.get("backend_timestamp")
-        )
+        backend_timestamp = cast(Optional[DateTime], self.challenge_data.get("backend_timestamp"))
         ballpark_client_early_offset = cast(
             Optional[float], self.challenge_data.get("ballpark_client_early_offset")
         )

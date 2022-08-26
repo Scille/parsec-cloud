@@ -5,7 +5,7 @@ import re
 import sys
 import subprocess
 import pytest
-import pendulum
+from parsec._parsec import DateTime
 from collections import defaultdict
 from typing import Union, Optional, Tuple, Iterable
 from hashlib import sha1
@@ -14,12 +14,11 @@ from pathlib import Path
 
 from parsec.crypto import SigningKey, PrivateKey
 from parsec.api.data import (
-    UserProfile,
-    UserCertificateContent,
+    UserCertificate,
     UserManifest,
-    RevokedUserCertificateContent,
-    DeviceCertificateContent,
-    RealmRoleCertificateContent,
+    RevokedUserCertificate,
+    DeviceCertificate,
+    RealmRoleCertificate,
     PkiEnrollmentSubmitPayload,
     PkiEnrollmentAcceptPayload,
     DataError,
@@ -33,6 +32,7 @@ from parsec.api.protocol import (
     RealmRole,
     RealmID,
     VlobID,
+    UserProfile,
 )
 from parsec.core.types import (
     LocalDevice,
@@ -64,25 +64,6 @@ def fixtures_customization(request):
         return request.node.function._fixtures_customization
     except AttributeError:
         return {}
-
-
-@pytest.fixture
-def next_timestamp():
-    """On windows, 2 calls to `pendulum.now()` can yield the same value.
-    For some tests, this creates edges cases we want to avoid.
-    """
-    last_timestamp = None
-
-    def _next_timestamp():
-        if pendulum.has_test_now():
-            return pendulum.now()
-        nonlocal last_timestamp
-        while last_timestamp == pendulum.now():
-            pass
-        last_timestamp = pendulum.now()
-        return last_timestamp
-
-    return _next_timestamp
 
 
 @attr.s
@@ -429,7 +410,7 @@ def local_device_to_backend_user(
 
     timestamp = device.timestamp()
 
-    user_certificate = UserCertificateContent(
+    user_certificate = UserCertificate(
         author=certifier_id,
         timestamp=timestamp,
         user_id=device.user_id,
@@ -437,7 +418,7 @@ def local_device_to_backend_user(
         profile=device.profile,
         human_handle=device.human_handle,
     )
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=certifier_id,
         timestamp=timestamp,
         device_id=device.device_id,
@@ -569,7 +550,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
                     self_granted_role=RealmGrantedRole(
                         realm_id=realm_id,
                         user_id=author.user_id,
-                        certificate=RealmRoleCertificateContent(
+                        certificate=RealmRoleCertificate(
                             author=author.device_id,
                             timestamp=realm_create_timestamp,
                             realm_id=realm_id,
@@ -716,7 +697,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
 
         async def bind_revocation(self, user_id: UserID, certifier: LocalDevice):
             timestamp = certifier.timestamp()
-            revoked_user_certificate = RevokedUserCertificateContent(
+            revoked_user_certificate = RevokedUserCertificate(
                 author=certifier.device_id, timestamp=timestamp, user_id=user_id
             ).dump_and_sign(certifier.signing_key)
             await self.backend.user.revoke_user(
@@ -858,7 +839,7 @@ def mocked_parsec_ext_smartcard(monkeypatch, request, tmp_path):
             x509_certificate: X509Certificate,
             addr: BackendPkiEnrollmentAddr,
             enrollment_id: UUID,
-            submitted_on: pendulum.DateTime,
+            submitted_on: DateTime,
             submit_payload: PkiEnrollmentSubmitPayload,
             signing_key: SigningKey,
             private_key: PrivateKey,

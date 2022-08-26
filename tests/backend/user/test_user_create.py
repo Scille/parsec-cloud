@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-import pendulum
+from parsec._parsec import DateTime
 
 from parsec.backend.user import INVITATION_VALIDITY, User, Device
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
-from parsec.api.protocol import DeviceID, DeviceLabel
+from parsec.api.data import UserCertificate, DeviceCertificate
+from parsec.api.protocol import DeviceID, DeviceLabel, UserProfile
 
 from tests.common import customize_fixtures, freeze_time
 from tests.backend.common import user_get, user_create
@@ -24,8 +24,8 @@ async def test_user_create_ok(
     profile,
     with_labels,
 ):
-    now = pendulum.now()
-    user_certificate = UserCertificateContent(
+    now = DateTime.now()
+    user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
@@ -34,7 +34,7 @@ async def test_user_create_ok(
         profile=profile,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
@@ -105,8 +105,8 @@ async def test_user_create_nok_active_users_limit_reached(
     # ...so our active user limit has just been reached
     await backend_asgi_app.backend.organization.update(alice.organization_id, active_users_limit=1)
 
-    now = pendulum.now()
-    user_certificate = UserCertificateContent(
+    now = DateTime.now()
+    user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
@@ -115,7 +115,7 @@ async def test_user_create_nok_active_users_limit_reached(
         profile=UserProfile.STANDARD,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
@@ -157,8 +157,8 @@ async def test_user_create_nok_active_users_limit_reached(
 
 @pytest.mark.trio
 async def test_user_create_invalid_certificate(alice_ws, alice, bob, mallory):
-    now = pendulum.now()
-    good_user_certificate = UserCertificateContent(
+    now = DateTime.now()
+    good_user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
@@ -166,14 +166,14 @@ async def test_user_create_invalid_certificate(alice_ws, alice, bob, mallory):
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
-    good_device_certificate = DeviceCertificateContent(
+    good_device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
         device_label=mallory.device_label,
         verify_key=mallory.verify_key,
     ).dump_and_sign(alice.signing_key)
-    bad_user_certificate = UserCertificateContent(
+    bad_user_certificate = UserCertificate(
         author=bob.device_id,
         timestamp=now,
         user_id=mallory.user_id,
@@ -181,7 +181,7 @@ async def test_user_create_invalid_certificate(alice_ws, alice, bob, mallory):
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(bob.signing_key)
-    bad_device_certificate = DeviceCertificateContent(
+    bad_device_certificate = DeviceCertificate(
         author=bob.device_id,
         timestamp=now,
         device_id=mallory.device_id,
@@ -227,8 +227,8 @@ async def test_user_create_invalid_certificate(alice_ws, alice, bob, mallory):
 
 @pytest.mark.trio
 async def test_user_create_not_matching_user_device(alice_ws, alice, bob, mallory):
-    now = pendulum.now()
-    user_certificate = UserCertificateContent(
+    now = DateTime.now()
+    user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
@@ -236,7 +236,7 @@ async def test_user_create_not_matching_user_device(alice_ws, alice, bob, mallor
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=bob.device_id,
@@ -259,8 +259,8 @@ async def test_user_create_not_matching_user_device(alice_ws, alice, bob, mallor
 
 @pytest.mark.trio
 async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mallory):
-    now = pendulum.now()
-    user_certificate = UserCertificateContent(
+    now = DateTime.now()
+    user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
@@ -268,7 +268,7 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
@@ -325,15 +325,15 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
 
 @pytest.mark.trio
 async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallory):
-    now = pendulum.now()
-    device_certificate = DeviceCertificateContent(
+    now = DateTime.now()
+    device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
         device_label=None,  # Can be used as regular and redacted certificate
         verify_key=mallory.verify_key,
     ).dump_and_sign(alice.signing_key)
-    user_certificate = UserCertificateContent(
+    user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
@@ -390,8 +390,8 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
 
 @pytest.mark.trio
 async def test_user_create_already_exists(alice_ws, alice, bob):
-    now = pendulum.now()
-    user_certificate = UserCertificateContent(
+    now = DateTime.now()
+    user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=now,
         user_id=bob.user_id,
@@ -399,7 +399,7 @@ async def test_user_create_already_exists(alice_ws, alice, bob):
         public_key=bob.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=bob.device_id,
@@ -419,9 +419,9 @@ async def test_user_create_already_exists(alice_ws, alice, bob):
 
 @pytest.mark.trio
 async def test_user_create_human_handle_already_exists(alice_ws, alice, bob):
-    now = pendulum.now()
+    now = DateTime.now()
     bob2_device_id = DeviceID("bob2@dev1")
-    user_certificate = UserCertificateContent(
+    user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=now,
         user_id=bob2_device_id.user_id,
@@ -430,7 +430,7 @@ async def test_user_create_human_handle_already_exists(alice_ws, alice, bob):
         profile=UserProfile.STANDARD,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=bob2_device_id,
@@ -465,9 +465,9 @@ async def test_user_create_human_handle_with_revoked_previous_one(
     await backend_data_binder.bind_revocation(user_id=bob.user_id, certifier=alice)
 
     # Now recreate another user with bob's human handle
-    now = pendulum.now()
+    now = DateTime.now()
     bob2_device_id = DeviceID("bob2@dev1")
-    user_certificate = UserCertificateContent(
+    user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=now,
         user_id=bob2_device_id.user_id,
@@ -476,7 +476,7 @@ async def test_user_create_human_handle_with_revoked_previous_one(
         profile=UserProfile.STANDARD,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=bob2_device_id,
@@ -502,9 +502,9 @@ async def test_user_create_human_handle_with_revoked_previous_one(
 
 @pytest.mark.trio
 async def test_user_create_not_matching_certified_on(alice_ws, alice, mallory):
-    date1 = pendulum.datetime(2000, 1, 1)
+    date1 = DateTime(2000, 1, 1)
     date2 = date1.add(seconds=1)
-    user_certificate = UserCertificateContent(
+    user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=date1,
         user_id=mallory.user_id,
@@ -512,7 +512,7 @@ async def test_user_create_not_matching_certified_on(alice_ws, alice, mallory):
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=date2,
         device_id=mallory.device_id,
@@ -535,9 +535,9 @@ async def test_user_create_not_matching_certified_on(alice_ws, alice, mallory):
 
 @pytest.mark.trio
 async def test_user_create_certificate_too_old(alice_ws, alice, mallory):
-    too_old = pendulum.datetime(2000, 1, 1)
+    too_old = DateTime(2000, 1, 1)
     now = too_old.add(seconds=INVITATION_VALIDITY + 1)
-    user_certificate = UserCertificateContent(
+    user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=too_old,
         user_id=mallory.user_id,
@@ -545,7 +545,7 @@ async def test_user_create_certificate_too_old(alice_ws, alice, mallory):
         public_key=mallory.public_key,
         profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=too_old,
         device_id=mallory.device_id,
@@ -583,8 +583,8 @@ async def test_user_create_author_not_admin(backend_asgi_app, bob_ws):
 
 @pytest.mark.trio
 async def test_redacted_certificates_cannot_contain_sensitive_data(alice_ws, alice, mallory):
-    now = pendulum.now()
-    user_certificate = UserCertificateContent(
+    now = DateTime.now()
+    user_certificate = UserCertificate(
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
@@ -593,7 +593,7 @@ async def test_redacted_certificates_cannot_contain_sensitive_data(alice_ws, ali
         profile=UserProfile.STANDARD,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
-    device_certificate = DeviceCertificateContent(
+    device_certificate = DeviceCertificate(
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,

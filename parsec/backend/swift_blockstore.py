@@ -46,8 +46,8 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
         self.swift_client.head_container(container)
         self._logger = logger.bind(blockstore_type="Swift", authurl=auth_url)
 
-    async def read(self, organization_id: OrganizationID, id: BlockID) -> bytes:
-        slug = build_swift_slug(organization_id=organization_id, id=id)
+    async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
+        slug = build_swift_slug(organization_id=organization_id, id=block_id)
         try:
             _, obj = await trio.to_thread.run_sync(
                 self.swift_client.get_object, self._container, slug
@@ -57,15 +57,17 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
             self._logger.warning(
                 "Block read error",
                 organization_id=str(organization_id),
-                block_id=str(id),
+                block_id=str(block_id),
                 exc_info=exc,
             )
             raise BlockStoreError(exc) from exc
 
         return obj
 
-    async def create(self, organization_id: OrganizationID, id: BlockID, block: bytes) -> None:
-        slug = build_swift_slug(organization_id=organization_id, id=id)
+    async def create(
+        self, organization_id: OrganizationID, block_id: BlockID, block: bytes
+    ) -> None:
+        slug = build_swift_slug(organization_id=organization_id, id=block_id)
         try:
             await trio.to_thread.run_sync(
                 partial(self.swift_client.put_object, self._container, slug, block)
@@ -75,7 +77,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
             self._logger.warning(
                 "Block create error",
                 organization_id=str(organization_id),
-                block_id=str(id),
+                block_id=str(block_id),
                 exc_info=exc,
             )
             raise BlockStoreError(exc) from exc

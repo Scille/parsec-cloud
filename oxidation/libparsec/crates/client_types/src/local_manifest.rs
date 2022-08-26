@@ -1018,7 +1018,7 @@ impl LocalUserManifest {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(untagged)]
 pub enum LocalManifest {
     File(LocalFileManifest),

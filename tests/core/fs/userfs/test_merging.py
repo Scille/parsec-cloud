@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import datetime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import RealmRole
 from parsec.api.data import UserManifest, WorkspaceEntry, EntryName
@@ -11,7 +11,7 @@ from parsec.core.fs.userfs.merging import merge_local_user_manifests
 
 @pytest.fixture
 def gen_date():
-    curr = datetime(2000, 1, 1)
+    curr = DateTime(2000, 1, 1)
 
     def _gen():
         nonlocal curr
@@ -143,9 +143,9 @@ def test_merge_local_user_manifest_changes_placeholder(gen_date, alice, speculat
 # Guessing by it name, this test is directed by M. Night Shyamalan ;-)
 @pytest.mark.parametrize("local_changes", (False, True))
 def test_merge_speculative_with_it_unsuspected_former_self(alice, local_changes):
-    d1 = datetime(2000, 1, 1)
-    d2 = datetime(2000, 1, 2)
-    d3 = datetime(2000, 1, 3)
+    d1 = DateTime(2000, 1, 1)
+    d2 = DateTime(2000, 1, 2)
+    d3 = DateTime(2000, 1, 3)
 
     # 1) User manifest is originally created by our device
     local = LocalUserManifest.new_placeholder(

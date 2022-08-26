@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import now as pendulum_now, datetime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import OrganizationID, SequesterServiceID
 from parsec.backend.sequester import (
@@ -66,7 +66,7 @@ async def test_create_disable_services(
 
     # Service certificate timestamp out of ballpark
     service_bad_timestamp = sequester_service_factory(
-        "sequester_service_1", coolorg.sequester_authority, timestamp=datetime(2000, 1, 1)
+        "sequester_service_1", coolorg.sequester_authority, timestamp=DateTime(2000, 1, 1)
     )
     with pytest.raises(SequesterCertificateOutOfBallparkError):
         await backend.sequester.create_service(
@@ -97,7 +97,7 @@ async def test_create_disable_services(
         )
 
     # 2) Disable service
-    disabled_on = pendulum_now()
+    disabled_on = DateTime.now()
 
     # Unknown organization ID
     with pytest.raises(SequesterOrganizationNotFoundError):

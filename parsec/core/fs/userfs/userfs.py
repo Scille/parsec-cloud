@@ -3,7 +3,7 @@
 import trio
 from pathlib import Path
 from trio_typing import TaskStatus
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from typing import (
     Tuple,
     Optional,
@@ -25,9 +25,9 @@ from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
 from parsec.api.data import (
     DataError,
-    RealmRoleCertificateContent,
+    RealmRoleCertificate,
     BaseMessageContent,
-    UserCertificateContent,
+    UserCertificate,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
@@ -121,14 +121,14 @@ class ReencryptionJob:
                     f"Cannot do reencryption maintenance on workspace {workspace_id}: {rep}"
                 )
 
-            donebatch = []
+            done_batch = []
             for item in rep["batch"]:
-                cleartext = self.old_workspace_entry.key.decrypt(item["blob"])
-                newciphered = self.new_workspace_entry.key.encrypt(cleartext)
-                donebatch.append((item["vlob_id"], item["version"], newciphered))
+                clear_text = self.old_workspace_entry.key.decrypt(item["blob"])
+                new_ciphered = self.new_workspace_entry.key.encrypt(clear_text)
+                done_batch.append((item["vlob_id"], item["version"], new_ciphered))
 
             rep = await self.backend_cmds.vlob_maintenance_save_reencryption_batch(
-                workspace_id, new_encryption_revision, donebatch
+                workspace_id, new_encryption_revision, done_batch
             )
             if rep["status"] in ("not_in_maintenance", "bad_encryption_revision"):
                 raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
@@ -369,7 +369,7 @@ class UserFS:
         if workspace_id in self._workspaces:
             return self._workspaces[workspace_id]
 
-        # Instantiate the workpace
+        # Instantiate the workspace
         workspace = await self._instantiate_workspace(workspace_id)
 
         # Set and return
@@ -406,7 +406,7 @@ class UserFS:
             # between saving the non-speculative workspace manifest placeholder
             # and the save of the user manifest containing the workspace entry.
             # Indeed, if we would save the user manifest first and a crash
-            # occured before saving the placeholder, we would endup in the same
+            # occurred before saving the placeholder, we would end-up in the same
             # situation as if the workspace has been created by someone else
             # (i.e. a workspace entry but no local data about this workspace)
             # so we would fallback to a local speculative workspace manifest.
@@ -453,7 +453,7 @@ class UserFS:
             FSBackendOfflineError
         """
         try:
-            # Note encryption_revision is always 1 given we never reencrypt
+            # Note encryption_revision is always 1 given we never re-encrypt
             # the user manifest's realm
             rep = await self.backend_cmds.vlob_read(1, VlobID(self.user_manifest_id.uuid), version)
 
@@ -544,7 +544,7 @@ class UserFS:
         for old_entry, new_entry in entries.values():
             if new_entry is None:
                 logger.warning(
-                    "Workspace entry has diseaper from user manifest", workspace_entry=old_entry
+                    "Workspace entry has disappear from user manifest", workspace_entry=old_entry
                 )
             elif old_entry is None:
                 if new_entry.role is not None:
@@ -558,7 +558,7 @@ class UserFS:
                 # (e.g. if our role went A -> B then B -> A while we were offline)
                 # We should notify this anyway given it means some events could not have
                 # been delivered to us (typically if we got removed from a workspace for
-                # a short period of time while a `realm.vlobs_updated` event occured).
+                # a short period of time while a `realm.vlobs_updated` event occurred).
                 self.event_bus.send(
                     CoreEvent.SHARING_UPDATED, new_entry=new_entry, previous_entry=old_entry
                 )
@@ -579,7 +579,7 @@ class UserFS:
 
         # Make sure the corresponding realm has been created in the backend
         if base_um.is_placeholder:
-            certif = RealmRoleCertificateContent.build_realm_root_certif(
+            certif = RealmRoleCertificate.build_realm_root_certif(
                 author=self.device.device_id,
                 timestamp=self.device.timestamp(),
                 realm_id=RealmID(self.device.user_manifest_id.uuid),
@@ -636,7 +636,7 @@ class UserFS:
         to_sync_um = base_um.to_remote(author=self.device.device_id, timestamp=timestamp)
 
         if self._sequester_services_cache is None:
-            # Regular mode: we only encrypt the blob with the workspace symetric key
+            # Regular mode: we only encrypt the blob with the workspace symmetric key
             sequester_blob = None
             try:
                 ciphered = to_sync_um.dump_sign_and_encrypt(
@@ -647,7 +647,7 @@ class UserFS:
 
         else:
             # Sequestered organization mode: we also encrypt the blob with each
-            # sequester services' asymetric encryption key
+            # sequester services' asymmetric encryption key
             try:
                 signed = to_sync_um.dump_and_sign(author_signkey=self.device.signing_key)
             except DataError as exc:
@@ -660,7 +660,7 @@ class UserFS:
 
         # Sync the vlob with backend
         try:
-            # Note encryption_revision is always 1 given we never reencrypt
+            # Note encryption_revision is always 1 given we never re-encrypt
             # the user manifest's realm
             if to_sync_um.version == 1:
                 rep = await self.backend_cmds.vlob_create(
@@ -721,11 +721,11 @@ class UserFS:
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry) -> None:
         """
-        Ensure the wokspace is usable from outside the local device:
+        Ensure the workspace is usable from outside the local device:
         - realm is created on the server
         - initial version of the workspace manifest has been uploaded to the server
 
-        In theroy, only realm creation is stricly needed for minimal_sync of the
+        In theory, only realm creation is strictly needed for minimal_sync of the
         workspace: given each device starts using the workspace by creating a
         speculative placeholder workspace manifest, any of them could sync
         it placeholder which would become the initial workspace manifest.
@@ -813,7 +813,7 @@ class UserFS:
             raise FSError(f"Cannot create sharing message for `{recipient}`: {exc}") from exc
 
         # Build role certificate
-        role_certificate = RealmRoleCertificateContent(
+        role_certificate = RealmRoleCertificate(
             author=self.device.device_id,
             timestamp=timestamp,
             realm_id=RealmID(workspace_id.uuid),
@@ -991,7 +991,7 @@ class UserFS:
             # Check if we already know this workspace
             already_existing_entry = user_manifest.get_workspace_entry(msg.id)
             if already_existing_entry:
-                # Merge with existing as target to keep possible workpace rename
+                # Merge with existing as target to keep possible workspace rename
                 workspace_entry = merge_workspace_entry(
                     None, workspace_entry, already_existing_entry
                 )
@@ -1066,7 +1066,7 @@ class UserFS:
                 previous_entry=existing_workspace_entry,
             )
 
-    async def _retrieve_participants(self, workspace_id: EntryID) -> List[UserCertificateContent]:
+    async def _retrieve_participants(self, workspace_id: EntryID) -> List[UserCertificate]:
         """
         Raises:
             FSError
@@ -1086,10 +1086,7 @@ class UserFS:
         return users
 
     def _generate_reencryption_messages(
-        self,
-        new_workspace_entry: WorkspaceEntry,
-        users: List[UserCertificateContent],
-        timestamp: DateTime,
+        self, new_workspace_entry: WorkspaceEntry, users: List[UserCertificate], timestamp: DateTime
     ) -> Dict[UserID, bytes]:
         """
         Raises:

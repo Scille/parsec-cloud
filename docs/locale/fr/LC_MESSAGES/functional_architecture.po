@@ -152,4 +152,3 @@ msgid ""
 "l’identité des utilisateurs/terminaux et leur clé publique "
 "(USER_ENC_P_KEY et DEVICE_SIG_P_KEY)."
 msgstr ""
-

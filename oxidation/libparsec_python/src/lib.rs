@@ -3,14 +3,14 @@
 //! This crate implement binding for our python front, and those will never be compile on the arch `wasm32`.
 //! Trying to compile this crate on the target `wasm32-*` will result in a crash of the `pyo3` build script.
 #![cfg(not(target_arch = "wasm32"))]
+// Waiting for a fix from pyo3
+#![allow(clippy::borrow_deref_ref)]
 
-use pyo3::prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python};
+use pyo3::prelude::{pymodule, PyModule, PyResult, Python};
 
 mod addrs;
 mod api_crypto;
 mod binding_utils;
-mod certif;
-mod file_operations;
 mod ids;
 mod invite;
 mod local_device;
@@ -19,34 +19,12 @@ mod manifest;
 mod protocol;
 mod storage;
 mod time;
-mod trustchain;
 
 /// A Python module implemented in Rust. The name of this function must match
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
 /// import the module.
 #[pymodule]
 fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<manifest::EntryName>()?;
-    m.add_class::<manifest::WorkspaceEntry>()?;
-    m.add_class::<manifest::BlockAccess>()?;
-    m.add_class::<manifest::FileManifest>()?;
-    m.add_class::<manifest::FolderManifest>()?;
-    m.add_class::<manifest::WorkspaceEntry>()?;
-    m.add_class::<manifest::WorkspaceManifest>()?;
-    m.add_class::<manifest::UserManifest>()?;
-    m.add_class::<local_manifest::Chunk>()?;
-    m.add_class::<local_manifest::LocalFileManifest>()?;
-    m.add_class::<local_manifest::LocalFolderManifest>()?;
-    m.add_class::<local_manifest::LocalWorkspaceManifest>()?;
-    m.add_class::<local_manifest::LocalUserManifest>()?;
-    // Block
-    m.add_class::<protocol::BlockCreateReq>()?;
-    m.add_class::<protocol::BlockCreateRep>()?;
-    m.add_class::<protocol::BlockReadReq>()?;
-    m.add_class::<protocol::BlockReadRep>()?;
-    // Cmd
-    m.add_class::<protocol::AuthenticatedAnyCmdReq>()?;
-    m.add_class::<protocol::InvitedAnyCmdReq>()?;
     // Events
     m.add_class::<protocol::EventsListenReq>()?;
     m.add_class::<protocol::EventsListenRep>()?;
@@ -145,22 +123,7 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchReq>()?;
     m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchRep>()?;
     m.add_class::<protocol::ReencryptionBatchEntry>()?;
-    // Certif
-    m.add_class::<certif::UserCertificate>()?;
-    m.add_class::<certif::RevokedUserCertificate>()?;
-    m.add_class::<certif::DeviceCertificate>()?;
-    m.add_class::<certif::RealmRoleCertificate>()?;
-    // Trustchain
-    m.add_class::<trustchain::TrustchainContext>()?;
-    m.add_function(wrap_pyfunction!(time::freeze_time, m)?)?;
-    // LocalDevice
-    m.add_class::<local_device::LocalDevice>()?;
     // Storage
     m.add_class::<storage::WorkspaceStorage>()?;
-    // File operations
-    m.add_function(wrap_pyfunction!(file_operations::prepare_read, m)?)?;
-    m.add_function(wrap_pyfunction!(file_operations::prepare_write, m)?)?;
-    m.add_function(wrap_pyfunction!(file_operations::prepare_resize, m)?)?;
-    m.add_function(wrap_pyfunction!(file_operations::prepare_reshape, m)?)?;
     Ok(())
 }

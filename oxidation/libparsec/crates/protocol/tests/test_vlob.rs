@@ -356,7 +356,7 @@ fn serde_vlob_update_req() {
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
-        //   status: "in_maintenance
+        //   status: "in_maintenance"
         &hex!(
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],

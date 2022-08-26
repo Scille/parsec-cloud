@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/package-ci.yml
+      - packaging
   push:
     branches:
       - master
@@ -12,7 +13,7 @@ on:
       - v[0-9]+.[0-9]+.[0-9]+*
 
 env:
-  rust-version: 1.62.0
+  rust-version: 1.63.0
   python-version: 3.9
   poetry-version: 1.2.0b3
 
@@ -21,10 +22,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-22.04
-          - macos-10.15
-          - windows-2022
+        include:
+          - name: 🐧 Linux
+            os: ubuntu-22.04
+          - name: 🍎 macOS
+            os: macos-10.15
+          - name: 🏁 Windows
+            os: windows-2022
+    name: '${{ matrix.name }}: 📦 Packaging (build Wheel)'
     runs-on: ${{ matrix.os }}
     outputs:
       wheel-version: ${{ steps.wheel-version.outputs.version }}
@@ -62,16 +67,6 @@ jobs:
           echo "::warning title=Wheel version::$VERSION"
           echo "::set-output name=version::$VERSION"
 
-        # For some reason, `ensurepip` in `build.py` does not work in this specific case
-        # (i.e building wheel using cibuildwheel on windows). Hence, we add `pip` to the
-        # build-system requires, so it is included in the build environment. The reason
-        # why this is not the general approach is because this fails on windows when doing
-        # a `poetry install` (since it installs the requirements using `pip install ...`
-        # instead of `python -m pip install ...`)
-      - name: (Windows) Include pip in the build dependencies
-        if: startsWith(matrix.os, 'windows-')
-        run: sed -i "s#pip; platform_system != 'Windows'#pip#" pyproject.toml
-
       - name: Build wheel
         uses: pypa/cibuildwheel@afb4329fe32181c15d34ef94bf64dad7715b44ba  # ping v2.8.1
         with:
@@ -91,6 +86,7 @@ jobs:
         timeout-minutes: 5
 
   package-linux-build-snap:
+    name: '🐧 Linux: 📦 Packaging (build Snap)'
     needs: package-wheel
     runs-on: ubuntu-20.04
     env:
@@ -140,6 +136,7 @@ jobs:
           path: ${{ runner.temp }}/parsec*.snap
 
   package-linux-test-snap:
+    name: '🐧 Linux: 📦 Packaging (test Snap)'
     needs: package-linux-build-snap
     runs-on: ubuntu-20.04
     steps:
@@ -153,6 +150,7 @@ jobs:
 
       - name: Never trust a Snap
         run: |
+          set -eux
           sudo snap install --classic --dangerous dist/parsec*.snap
           parsec.cli --version
           parsec.cli --help
@@ -163,6 +161,7 @@ jobs:
           xvfb-run parsec --diagnose
 
   package-linux-release-snap:
+    name: '🐧 Linux: 📦 Packaging (release Snap)'
     needs: [ package-linux-build-snap, package-linux-test-snap ]
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
@@ -181,6 +180,7 @@ jobs:
         run: snapcraft upload --release=edge dist/parsec*.snap
 
   package-linux-release-pypi:
+    name: '🐧 Linux: 📦 Packaging (release Pypi)'
     needs: [ package-wheel, package-linux-test-snap ]
     runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
@@ -197,6 +197,7 @@ jobs:
           password: ${{ secrets.PYPI_CREDENTIALS }}
 
   package-windows-build-installer-content:
+    name: '🏁 Windows: 📦 Packaging (build installer content)'
     needs: package-wheel
     runs-on: windows-2022
     steps:
@@ -225,6 +226,11 @@ jobs:
       - name: Debug build directory
         run: Get-ChildItem -Path ${{ runner.temp }}\build
 
+      - name: Test start generated app
+        shell: bash
+        run: ./build/parsec-*/parsec.exe --diagnose
+        working-directory: ${{ runner.temp }}
+
       # Cannot do the NSIS installer part in CI given it requires to sign `parsec.exe`
 
       - name: Prepare artifact
@@ -244,6 +250,7 @@ jobs:
 
   package-macos-build-app:
     runs-on: macos-10.15
+    name: '🍎 macOS: 📦 Packaging (build installer content)'
     needs: package-wheel
     env:
       WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
@@ -269,6 +276,10 @@ jobs:
 
       - name: Debug ${{ runner.temp }} dir
         run: ls -lR ${{ runner.temp }}
+
+      - name: Test open generated app
+        run: open build/pyinstaller_dist/parsec.app --args --diagnose
+        working-directory: ${{ runner.temp }}
 
       - name: Generate Parsec.app
         run: >

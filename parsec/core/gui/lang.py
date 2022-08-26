@@ -2,13 +2,13 @@
 
 import io
 import gettext
-import pendulum
 
 from structlog import get_logger
 
 from PyQt5.QtCore import QCoreApplication, QIODevice, QFile, QDataStream, QLocale
 
 from parsec.core.gui.desktop import get_locale_language
+from parsec._parsec import DateTime
 
 
 LANGUAGES = {"English": "en", "Français": "fr"}
@@ -20,13 +20,17 @@ logger = get_logger()
 
 
 def format_datetime(dt, full=False, seconds=False):
-    fmt = "L LT"
-    if seconds:
-        fmt = "L LTS"
-    if full:
-        fmt = "LLLL"
-    # The alternative formatter is now the default one since pendulum 2.0.0
-    return dt.in_tz(pendulum.local_timezone()).format(fmt, locale=_current_locale_language)
+    # Handle if it is already a LocalDateTime
+    if isinstance(dt, DateTime):
+        dt = dt.to_local()
+    if _current_locale_language == "en":
+        if seconds:
+            return dt.format("%d/%m/%Y %H:%M:S")
+        return dt.format("%d/%m/%Y %H:%M")
+    else:
+        if seconds:
+            return dt.format("%m/%d/%Y %I:%M:S%p")
+        return dt.format("%m/%d/%Y %I:%M%p")
 
 
 def qt_translate(_, string):

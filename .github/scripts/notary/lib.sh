@@ -57,7 +57,8 @@ function add_item_to_project() {
     gh api graphql \
         -f project="$project_id" \
         -f item="$item_id" \
-        -f query="$(<$QUERY_FILE)" | cat
+        -f query="$(<$QUERY_FILE)" \
+        --jq .data.addProjectV2ItemById.item | cat
 }
 
 # Get project status field id with the desired field value id

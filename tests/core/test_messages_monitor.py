@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import datetime, now as pendulum_now
+from parsec._parsec import DateTime
 
 from parsec.api.data import PingMessageContent, EntryName
 from parsec.api.protocol import UserID
@@ -25,7 +25,7 @@ async def test_monitors_idle(running_backend, alice_core):
 
 
 async def _send_msg(backend, author, recipient, ping="ping"):
-    now = pendulum_now()
+    now = DateTime.now()
     message = PingMessageContent(author=author.device_id, timestamp=now, ping=ping)
     ciphered_message = message.dump_sign_and_encrypt_for(
         author_signkey=author.signing_key, recipient_pubkey=recipient.public_key
@@ -101,7 +101,7 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
         def _update_event(event):
             if event.event == CoreEvent.SHARING_UPDATED:
                 event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(
-                    key=KEY, role_cached_on=datetime(2000, 1, 1)
+                    key=KEY, role_cached_on=DateTime(2000, 1, 1)
                 )
             return event
 
@@ -114,8 +114,8 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
                     id=wid,
                     key=KEY,
                     encryption_revision=1,
-                    encrypted_on=datetime(2000, 1, 1),
-                    role_cached_on=datetime(2000, 1, 1),
+                    encrypted_on=DateTime(2000, 1, 1),
+                    role_cached_on=DateTime(2000, 1, 1),
                     role=WorkspaceRole.MANAGER,
                 ),
                 "previous_entry": None,
@@ -131,10 +131,10 @@ async def test_revoke_sharing_trigger_event(alice_core, bob_core, running_backen
     def _update_event(event):
         if event.event == CoreEvent.SHARING_UPDATED:
             event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(
-                key=KEY, role_cached_on=datetime(2000, 1, 2)
+                key=KEY, role_cached_on=DateTime(2000, 1, 2)
             )
             event.kwargs["previous_entry"] = event.kwargs["previous_entry"].evolve(
-                key=KEY, role_cached_on=datetime(2000, 1, 2)
+                key=KEY, role_cached_on=DateTime(2000, 1, 2)
             )
         return event
 
@@ -154,8 +154,8 @@ async def test_revoke_sharing_trigger_event(alice_core, bob_core, running_backen
                     id=wid,
                     key=KEY,
                     encryption_revision=1,
-                    encrypted_on=datetime(2000, 1, 2),
-                    role_cached_on=datetime(2000, 1, 2),
+                    encrypted_on=DateTime(2000, 1, 2),
+                    role_cached_on=DateTime(2000, 1, 2),
                     role=None,
                 ),
                 "previous_entry": WorkspaceEntry(
@@ -163,8 +163,8 @@ async def test_revoke_sharing_trigger_event(alice_core, bob_core, running_backen
                     id=wid,
                     key=KEY,
                     encryption_revision=1,
-                    encrypted_on=datetime(2000, 1, 2),
-                    role_cached_on=datetime(2000, 1, 2),
+                    encrypted_on=DateTime(2000, 1, 2),
+                    role_cached_on=DateTime(2000, 1, 2),
                     role=WorkspaceRole.MANAGER,
                 ),
             },
@@ -179,10 +179,10 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
     def _update_event(event):
         if event.event == CoreEvent.SHARING_UPDATED:
             event.kwargs["new_entry"] = event.kwargs["new_entry"].evolve(
-                key=KEY, role_cached_on=datetime(2000, 1, 3)
+                key=KEY, role_cached_on=DateTime(2000, 1, 3)
             )
             event.kwargs["previous_entry"] = event.kwargs["previous_entry"].evolve(
-                key=KEY, role_cached_on=datetime(2000, 1, 2)
+                key=KEY, role_cached_on=DateTime(2000, 1, 2)
             )
         return event
 
@@ -202,8 +202,8 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
                     id=wid,
                     key=KEY,
                     encryption_revision=2,
-                    encrypted_on=datetime(2000, 1, 3),
-                    role_cached_on=datetime(2000, 1, 3),
+                    encrypted_on=DateTime(2000, 1, 3),
+                    role_cached_on=DateTime(2000, 1, 3),
                     role=WorkspaceRole.OWNER,
                 ),
                 "previous_entry": WorkspaceEntry(
@@ -211,8 +211,8 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
                     id=wid,
                     key=KEY,
                     encryption_revision=1,
-                    encrypted_on=datetime(2000, 1, 2),
-                    role_cached_on=datetime(2000, 1, 2),
+                    encrypted_on=DateTime(2000, 1, 2),
+                    role_cached_on=DateTime(2000, 1, 2),
                     role=WorkspaceRole.OWNER,
                 ),
             },
@@ -226,8 +226,8 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
                     id=wid,
                     key=KEY,
                     encryption_revision=2,
-                    encrypted_on=datetime(2000, 1, 3),
-                    role_cached_on=datetime(2000, 1, 3),
+                    encrypted_on=DateTime(2000, 1, 3),
+                    role_cached_on=DateTime(2000, 1, 3),
                     role=WorkspaceRole.MANAGER,
                 ),
                 "previous_entry": WorkspaceEntry(
@@ -235,8 +235,8 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
                     id=wid,
                     key=KEY,
                     encryption_revision=1,
-                    encrypted_on=datetime(2000, 1, 2),
-                    role_cached_on=datetime(2000, 1, 2),
+                    encrypted_on=DateTime(2000, 1, 2),
+                    role_cached_on=DateTime(2000, 1, 2),
                     role=WorkspaceRole.MANAGER,
                 ),
             },

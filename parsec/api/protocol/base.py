@@ -1,23 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import attr
 from enum import Enum
-from functools import wraps, partial
-from pendulum import DateTime
+import attr
+from functools import partial, wraps
+from parsec._parsec import DateTime
 from typing import (
-    Optional,
+    Callable,
     Dict,
     Type,
+    Union,
     cast,
     TypeVar,
     Mapping,
     Any,
     Tuple,
     Sequence,
-    Union,
-    Callable,
 )
-
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.serde import (
     BaseSchema,
@@ -460,40 +458,6 @@ def cmd_rep_factory(name: str, *rep_types: Type[BaseRep]):  # type: ignore[no-un
     for rep_type in rep_types:
         assert rep_type.__name__.startswith(name)
         rep_type_name = rep_type.__name__[len(name) :]
-        assert rep_type_name not in fields
-        fields[rep_type_name] = rep_type
-
-    return type(name, (), fields)
-
-
-def any_cmd_req_factory(name: str, *req_types: Type[BaseReq]):  # type: ignore[no-untyped-def]
-    assert name.endswith("Req")
-
-    req_schemas: Dict[Union[Enum, str], Union[BaseSchema, Type[BaseSchema]]] = {}
-    for req_type in req_types:
-        cmd = req_type.SCHEMA_CLS._declared_fields["cmd"].default
-        assert isinstance(cmd, (str, Enum))
-        req_schemas[cmd] = req_type.SCHEMA_CLS
-
-    class AnyCmdReqSchema(OneOfSchemaLegacy):
-        type_field = "cmd"
-        type_schemas = req_schemas
-
-        def get_obj_type(self, obj: Dict[str, object]) -> Optional[str]:
-            return cast(str, obj.get("cmd"))
-
-    AnyCmdReqSchema.__name__ = f"{name}Schema"
-
-    serializer = MsgpackSerializer(AnyCmdReqSchema, InvalidMessageError, MessageSerializationError)
-
-    # Define the `CmdRep.load` classmethod
-    load_meth = partial(serializer.loads)
-
-    fields = {"load": load_meth, "TYPES": req_types}
-    suffix = "Req"
-    for rep_type in req_types:
-        assert rep_type.__name__.endswith(suffix)
-        rep_type_name = rep_type.__name__[: -len(suffix)]
         assert rep_type_name not in fields
         fields[rep_type_name] = rep_type
 

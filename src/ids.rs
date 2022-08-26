@@ -48,7 +48,7 @@ impl OrganizationID {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        hash_generic(self.0.as_ref(), py)
     }
 
     #[getter]
@@ -433,16 +433,11 @@ impl UserID {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        hash_generic(self.0.as_ref(), py)
     }
 
     fn capitalize(&self) -> PyResult<String> {
-        let str = self.0.to_string();
-        let mut it = str.chars();
-        match it.next() {
-            Some(c) => Ok(c.to_uppercase().chain(it).collect()),
-            None => Ok(String::new()),
-        }
+        Ok(self.0.to_string().to_uppercase())
     }
 
     #[getter]
@@ -494,7 +489,7 @@ impl DeviceName {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        hash_generic(self.0.as_ref(), py)
     }
 
     #[getter]
@@ -549,7 +544,7 @@ impl DeviceLabel {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        hash_generic(self.0.as_ref(), py)
     }
 
     #[getter]

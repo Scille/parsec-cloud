@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional, Dict, List, Tuple
 from collections import defaultdict
-from pendulum import DateTime, now as pendulum_now
+from parsec._parsec import DateTime
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import CryptoError
@@ -66,7 +66,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         service: SequesterService,
         now: Optional[DateTime] = None,
     ) -> None:
-        now = now or pendulum_now()
+        now = now or DateTime.now()
 
         try:
             organization = self._organization_component._organizations[organization_id]
@@ -110,7 +110,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         service_id: SequesterServiceID,
         disabled_on: Optional[DateTime] = None,
     ) -> None:
-        disabled_on = disabled_on or pendulum_now()
+        disabled_on = disabled_on or DateTime.now()
         service = self._get_service(organization_id=organization_id, service_id=service_id)
         if not service.is_enabled:
             raise SequesterServiceAlreadyDisabledError

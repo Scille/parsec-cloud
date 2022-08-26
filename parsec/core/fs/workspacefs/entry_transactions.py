@@ -7,12 +7,13 @@ from parsec.api.data import BlockAccess
 from parsec.core.types import (
     EntryID,
     WorkspaceRole,
-    BaseLocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
     FileDescriptor,
     LocalFolderishManifests,
+    AnyLocalManifest,
+    local_manifest_from_remote,
 )
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs.path import FsPath
@@ -58,30 +59,30 @@ class EntryTransactions(FileTransactions):
 
     # Look-up helpers
 
-    async def _get_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
+    async def _get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         try:
             return await self.local_storage.get_manifest(entry_id)
         except FSLocalMissError as exc:
             remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
-            return BaseLocalManifest.from_remote(
+            return local_manifest_from_remote(
                 remote_manifest, prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern()
             )
 
     @asynccontextmanager
-    async def _load_and_lock_manifest(self, entry_id: EntryID) -> AsyncIterator[BaseLocalManifest]:
+    async def _load_and_lock_manifest(self, entry_id: EntryID) -> AsyncIterator[AnyLocalManifest]:
         async with self.local_storage.lock_entry_id(entry_id):
             try:
                 local_manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError as exc:
                 remote_manifest = await self.remote_loader.load_manifest(cast(EntryID, exc.id))
-                local_manifest = BaseLocalManifest.from_remote(
+                local_manifest = local_manifest_from_remote(
                     remote_manifest,
                     prevent_sync_pattern=self.local_storage.get_prevent_sync_pattern(),
                 )
                 await self.local_storage.set_manifest(entry_id, local_manifest)
             yield local_manifest
 
-    async def _load_manifest(self, entry_id: EntryID) -> BaseLocalManifest:
+    async def _load_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         async with self._load_and_lock_manifest(entry_id) as manifest:
             return manifest
 
@@ -113,14 +114,14 @@ class EntryTransactions(FileTransactions):
         return entry_id, confinement_point
 
     @asynccontextmanager
-    async def _lock_manifest_from_path(self, path: FsPath) -> AsyncIterator[BaseLocalManifest]:
+    async def _lock_manifest_from_path(self, path: FsPath) -> AsyncIterator[AnyLocalManifest]:
         entry_id, _ = await self._entry_id_from_path(path)
         async with self._load_and_lock_manifest(entry_id) as manifest:
             yield manifest
 
     async def _get_manifest_from_path(
         self, path: FsPath
-    ) -> Tuple[BaseLocalManifest, Optional[EntryID]]:
+    ) -> Tuple[AnyLocalManifest, Optional[EntryID]]:
         """Returns a tuple (manifest, confinement_point).
 
         The confinement point corresponds to the entry id of the folderish manifest
@@ -135,7 +136,7 @@ class EntryTransactions(FileTransactions):
     @asynccontextmanager
     async def _lock_parent_manifest_from_path(
         self, path: FsPath
-    ) -> AsyncIterator[Tuple[LocalFolderishManifests, Optional[BaseLocalManifest]]]:
+    ) -> AsyncIterator[Tuple[LocalFolderishManifests, Optional[AnyLocalManifest]]]:
         # This is the most complicated locking scenario.
         # It requires locking the parent of the given entry and the entry itself
         # if it exists.
@@ -144,7 +145,7 @@ class EntryTransactions(FileTransactions):
         # - 1. Lock the parent (it must exist). While the parent is locked, no
         #   children can be added, renamed or removed.
         # - 2. Lock the children if exists. It it doesn't, there is nothing to lock
-        #   since the parent lock guarentees that it is not going to be added while
+        #   since the parent lock guarantees that it is not going to be added while
         #   using the context.
 
         # This double locking is only required for a single use case: the overwriting

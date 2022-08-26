@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from pendulum import now as pendulum_now
+from parsec._parsec import DateTime
 
-from parsec.api.data import RealmRoleCertificateContent
+from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import RealmRole
 
 from tests.backend.common import realm_status, realm_update_roles
@@ -26,9 +26,9 @@ async def test_status(bob_ws, alice_ws, alice, bob, realm):
     # Also test lesser role have access
     await realm_update_roles(
         alice_ws,
-        RealmRoleCertificateContent(
+        RealmRoleCertificate(
             author=alice.device_id,
-            timestamp=pendulum_now(),
+            timestamp=DateTime.now(),
             realm_id=realm,
             user_id=bob.user_id,
             role=RealmRole.READER,

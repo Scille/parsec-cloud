@@ -1,0 +1,1 @@
+Added a show status/show history to the current directory in the explorer

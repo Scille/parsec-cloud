@@ -3,7 +3,7 @@
 import pytest
 import trio
 from unittest.mock import ANY
-from pendulum import datetime
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import UserProfile
 from parsec.core import logged_core_factory
@@ -77,7 +77,7 @@ async def test_find_and_get_info(running_backend, alice_core, bob, alice, alice2
             user_id=bob.user_id,
             human_handle=bob.human_handle,
             profile=bob.profile,
-            created_on=datetime(2000, 1, 1),
+            created_on=DateTime(2000, 1, 1),
             revoked_on=None,
         )
     ]
@@ -87,14 +87,14 @@ async def test_find_and_get_info(running_backend, alice_core, bob, alice, alice2
         user_id=bob.user_id,
         human_handle=bob.human_handle,
         profile=bob.profile,
-        created_on=datetime(2000, 1, 1),
+        created_on=DateTime(2000, 1, 1),
         revoked_on=None,
     )
 
     infos = await alice_core.get_user_devices_info(bob.user_id)
     assert infos == [
         DeviceInfo(
-            device_id=bob.device_id, device_label=bob.device_label, created_on=datetime(2000, 1, 1)
+            device_id=bob.device_id, device_label=bob.device_label, created_on=DateTime(2000, 1, 1)
         )
     ]
 
@@ -104,12 +104,12 @@ async def test_find_and_get_info(running_backend, alice_core, bob, alice, alice2
             DeviceInfo(
                 device_id=alice.device_id,
                 device_label=alice.device_label,
-                created_on=datetime(2000, 1, 1),
+                created_on=DateTime(2000, 1, 1),
             ),
             DeviceInfo(
                 device_id=alice2.device_id,
                 device_label=alice2.device_label,
-                created_on=datetime(2000, 1, 1),
+                created_on=DateTime(2000, 1, 1),
             ),
         ]
     )

@@ -4,7 +4,7 @@ import attr
 from uuid import UUID
 from pathlib import Path
 from hashlib import sha1
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from typing import Iterable, List, Union, Optional
 
 from parsec.api.data import PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload

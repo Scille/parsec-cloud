@@ -1,12 +1,7 @@
 {
     "HomePage": {
         "mainMenu": {
-            "changelog": "Changelog",
-            "about": "About",
-            "lang": {
-                "frFR": "Français",
-                "enUS": "English"
-            }
+            "changelog": "Changelog"
         },
         "organizationActionSheet": {
             "header": "Organization",
@@ -15,6 +10,124 @@
             "joinByQRcode": "Join by QR code"
         },
         "noDevices": "You have no devices on this phone.",
-        "howToAddDevices": "To add a device, invite it from an existing organization, or create a new organization."
+        "howToAddDevices": "To add a device, invite it from an existing organization, or create a new organization.",
+        "pleaseConnectToAnOrganization": "Welcome. Please add an organization to start using Parsec.",
+        "createOrganization": "Create an organization",
+        "joinByLink": "Join by link",
+        "joinByQRcode": "Join by QR code"
+    },
+    "CreateOrganization": {
+        "pageTitle": "Create an organization",
+        "fullname": "Full name",
+        "fullnamePlaceholder": "Jean MARTIN",
+        "email": "Email",
+        "emailPlaceholder": "jean.martin{'@'}example.com",
+        "organizationName": "Organization name",
+        "organizationNamePlaceholder": "MyOrganization",
+        "useParsecServer": "Use the main PARSEC server",
+        "useMyOwnServer": "I have my own PARSEC server",
+        "acceptTOS": "I accept PARSEC's Privacy Policy and Terms and Conditions",
+        "parsecServerUrl": "URL of your PARSEC server",
+        "parsecServerUrlPlaceholder": "parsec://hote:port",
+        "registeringDevice": "Registering your device",
+        "deviceNameInputLabel": "Name of the device",
+        "deviceNamePlaceholder": "Desktop123",
+        "password": "Password",
+        "confirmPassword": "Confirm password",
+        "next": "Next",
+        "previous": "Previous",
+        "done": "Done"
+    },
+    "JoinByLinkModal": {
+        "pageTitle": "Join by link",
+        "pleaseEnterUrl": "Please enter the organization's URL",
+        "urlInputLabel": "URL of the organization",
+        "urlPlaceholder": "parsec://hote:port/organization?action=action&...",
+        "join": "Join"
+    },
+    "AlertConfirmation": {
+        "areYouSure": "Are you sure?",
+        "infoNotSaved": "If you have filled in any information, it will not be saved.",
+        "ok": "OK",
+        "cancel": "Cancel",
+        "yes": "Yes",
+        "no": "No"
+    },
+    "MenuPage": {
+        "documents": "Documents",
+        "myOrganization": "My organization",
+        "settings": "Settings",
+        "about": "About",
+        "support": "Help and feedback"
+    },
+    "HeaderPage": {
+        "about": "About",
+        "support": "Help and feedback"
+    },
+    "SettingsPage": {
+        "pageTitle": "Settings",
+        "enableTelemetry": "Enable telemetry",
+        "enableTelemetryDescription": "Automatically send error reports",
+        "minimizeToSystemTray": "Minimize to system tray",
+        "minimizeToSystemTrayDescription": "When the application is closed, Parsec will continue to run in the background",
+        "language": "Language",
+        "lang": {
+            "frFR": "French",
+            "enUS": "English"
+        },
+        "telemetry": "Telemetry",
+        "behavior": "Behavior",
+        "localization": "Localization",
+        "preferences": "Preferences",
+        "theme": {
+            "label": "Theme",
+            "dark": "Dark",
+            "light": "Light",
+            "system": "System"
+        }
+    },
+    "WorkspacesPage": {
+        "createWorkspace": "Create workspace",
+        "documents": "Documents",
+        "user": "user",
+        "workspaceContextMenu": {
+            "share": "Share",
+            "history": "History",
+            "cancel": "Cancel"
+        },
+        "CreateWorkspaceModal": {
+            "pageTitle": "Create workspace",
+            "name": "Name",
+            "namePlaceholder": "Workspace",
+            "cancel": "Cancel",
+            "create": "Create"
+        },
+        "WorkspacesShareModal": {
+            "pageTitle": "Share workspace",
+            "reader": "Reader",
+            "contributor": "Contributor",
+            "manager": "Manager",
+            "owner": "Owner",
+            "notShared": "Not shared",
+            "inviteNewUser": "Invite a new user"
+        }
+    },
+    "OrganizationPage": {
+        "pageTitle": "My organization",
+        "users": "Users",
+        "workspaces": "Workspaces",
+        "storage": "Storage",
+        "OrganizationPageUsers": {
+            "inviteUser": "Invite a user",
+            "pendingInvitations": "pending invitation(s)",
+            "OrganizationPendingUserContextMenu": {
+                "greetUser": "Greet user",
+                "cancelInvitation": "Cancel invitation"
+            },
+            "OrganizationUserContextMenu": {
+                "details": "View details",
+                "revoke": "Revoke"
+            }
+        }
     }
 }

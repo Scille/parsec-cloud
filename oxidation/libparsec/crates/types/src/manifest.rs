@@ -22,17 +22,26 @@ pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
 macro_rules! impl_manifest_dump_load {
     ($name:ident) => {
         impl $name {
-            pub fn dump_sign_and_encrypt(
-                &self,
-                author_signkey: &SigningKey,
-                key: &SecretKey,
-            ) -> Vec<u8> {
+            /// Dump and sign [Self], this doesn't encrypt the data compared to [Self::dump_sign_and_encrypt]
+            /// This enabled you to encrypt the data with another method than the one provided by [SecretKey]
+            pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
                 let serialized =
                     ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
                 let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
                 e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
                 let compressed = e.finish().unwrap_or_else(|_| unreachable!());
-                let signed = author_signkey.sign(&compressed);
+
+                author_signkey.sign(&compressed)
+            }
+
+            /// Dump and sign itself, then encrypt the resulting data using the provided [SecretKey]
+            pub fn dump_sign_and_encrypt(
+                &self,
+                author_signkey: &SigningKey,
+                key: &SecretKey,
+            ) -> Vec<u8> {
+                let signed = self.dump_and_sign(author_signkey);
+
                 key.encrypt(&signed)
             }
 
@@ -42,8 +51,31 @@ macro_rules! impl_manifest_dump_load {
                 author_verify_key: &VerifyKey,
                 expected_author: &DeviceID,
                 expected_timestamp: DateTime,
+                expected_id: Option<EntryID>,
+                expected_version: Option<u32>,
             ) -> Result<Self, DataError> {
                 let signed = key.decrypt(encrypted)?;
+
+                Self::verify_and_load(
+                    &signed,
+                    author_verify_key,
+                    expected_author,
+                    expected_timestamp,
+                    expected_id,
+                    expected_version,
+                )
+            }
+
+            /// Verify the signed value using the given `verify_key`
+            /// And then, it will check for the expected values
+            pub fn verify_and_load(
+                signed: &[u8],
+                author_verify_key: &VerifyKey,
+                expected_author: &DeviceID,
+                expected_timestamp: DateTime,
+                expected_id: Option<EntryID>,
+                expected_version: Option<u32>,
+            ) -> Result<Self, DataError> {
                 let compressed = author_verify_key.verify(&signed)?;
                 let mut serialized = vec![];
 
@@ -54,18 +86,45 @@ macro_rules! impl_manifest_dump_load {
                 let obj = rmp_serde::from_slice::<Self>(&serialized)
                     .map_err(|_| DataError::Serialization)?;
 
-                if obj.author != *expected_author {
+                obj.verify(
+                    expected_author,
+                    expected_timestamp,
+                    expected_id,
+                    expected_version,
+                )?;
+                Ok(obj)
+            }
+
+            /// Verify the manifest against a set of expected values
+            pub fn verify(
+                &self,
+                expected_author: &DeviceID,
+                expected_timestamp: DateTime,
+                expected_id: Option<EntryID>,
+                expected_version: Option<u32>,
+            ) -> Result<(), DataError> {
+                if self.author != *expected_author {
                     Err(DataError::UnexpectedAuthor {
                         expected: expected_author.clone(),
-                        got: Some(obj.author),
+                        got: Some(self.author.clone()),
                     })
-                } else if obj.timestamp != expected_timestamp {
+                } else if self.timestamp != expected_timestamp {
                     Err(DataError::UnexpectedTimestamp {
                         expected: expected_timestamp,
-                        got: obj.timestamp,
+                        got: self.timestamp,
+                    })
+                } else if expected_id.is_some() && expected_id != Some(self.id) {
+                    Err(DataError::UnexpectedId {
+                        expected: expected_id.unwrap(),
+                        got: self.id,
+                    })
+                } else if expected_version.is_some() && expected_version != Some(self.version) {
+                    Err(DataError::UnexpectedVersion {
+                        expected: expected_version.unwrap(),
+                        got: self.version,
                     })
                 } else {
-                    Ok(obj)
+                    Ok(())
                 }
             }
         }
@@ -451,4 +510,83 @@ pub enum FileOrFolderManifest {
     File(FileManifest),
     #[serde(rename = "folder_manifest")]
     Folder(FolderManifest),
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum Manifest {
+    File(FileManifest),
+    Folder(FolderManifest),
+    Workspace(WorkspaceManifest),
+    User(UserManifest),
+}
+
+impl Manifest {
+    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> Result<Self, &'static str> {
+        let blob = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+        rmp_serde::from_slice(&blob).map_err(|_| "Invalid deserialization")
+    }
+
+    pub fn decrypt_verify_and_load(
+        encrypted: &[u8],
+        key: &SecretKey,
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: DateTime,
+        expected_id: Option<EntryID>,
+        expected_version: Option<u32>,
+    ) -> Result<Self, DataError> {
+        let signed = key.decrypt(encrypted)?;
+
+        Self::verify_and_load(
+            &signed,
+            author_verify_key,
+            expected_author,
+            expected_timestamp,
+            expected_id,
+            expected_version,
+        )
+    }
+
+    pub fn verify_and_load(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_timestamp: DateTime,
+        expected_id: Option<EntryID>,
+        expected_version: Option<u32>,
+    ) -> Result<Self, DataError> {
+        let compressed = author_verify_key.verify(signed)?;
+        let mut deserialized = Vec::new();
+
+        ZlibDecoder::new(&compressed[..])
+            .read_to_end(&mut deserialized)
+            .map_err(|_| DataError::Compression)?;
+
+        let obj: Self =
+            rmp_serde::from_slice(&deserialized).map_err(|_| DataError::Serialization)?;
+
+        macro_rules! internal_verify {
+            ($obj:ident) => {{
+                $obj.verify(
+                    expected_author,
+                    expected_timestamp,
+                    expected_id,
+                    expected_version,
+                )?;
+            }};
+        }
+
+        match &obj {
+            Manifest::File(file) => internal_verify!(file),
+            Manifest::Folder(folder) => {
+                internal_verify!(folder)
+            }
+            Manifest::Workspace(workspace) => {
+                internal_verify!(workspace)
+            }
+            Manifest::User(user) => internal_verify!(user),
+        }
+        Ok(obj)
+    }
 }

@@ -3,8 +3,7 @@
 from typing import Optional, Tuple
 
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.data import UserProfile
-from parsec.api.protocol import OrganizationID, RealmRole
+from parsec.api.protocol import OrganizationID, RealmRole, UserProfile
 from parsec.backend.realm import (
     RealmGrantedRole,
     RealmAccessError,

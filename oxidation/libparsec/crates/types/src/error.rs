@@ -2,7 +2,7 @@
 
 use thiserror::Error;
 
-use crate::{DateTime, DeviceID};
+use crate::{DateTime, DeviceID, EntryID};
 use libparsec_crypto::CryptoError;
 
 #[derive(Error, Debug)]
@@ -13,7 +13,7 @@ pub enum EntryNameError {
     InvalidName,
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum DataError {
     #[error("Invalid compression")]
     Compression,
@@ -32,6 +32,12 @@ pub enum DataError {
 
     #[error("Invalid timestamp: expected `{expected}`, got `{got}`")]
     UnexpectedTimestamp { expected: DateTime, got: DateTime },
+
+    #[error("Invalid entry ID: expected `{expected}`, got `{got}`")]
+    UnexpectedId { expected: EntryID, got: EntryID },
+
+    #[error("Invalid version: expected `{expected}`, got `{got}`")]
+    UnexpectedVersion { expected: u32, got: u32 },
 }
 
 pub type DataResult<T> = Result<T, DataError>;

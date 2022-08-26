@@ -1,10 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
+import zlib
 from unicodedata import normalize
 
+from parsec.serde import packb
+from parsec.crypto import SecretKey
 from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID, HumanHandle
-from parsec.api.data import SASCode, EntryName, EntryNameTooLongError
+from parsec.api.data import (
+    DataError,
+    SASCode,
+    EntryName,
+    EntryNameTooLongError,
+    FileManifest as RemoteFileManifest,
+    FolderManifest as RemoteFolderManifest,
+    WorkspaceManifest as RemoteWorkspaceManifest,
+    UserManifest as RemoteUserManifest,
+)
+from parsec.core.types import (
+    LocalFileManifest,
+    LocalFolderManifest,
+    LocalWorkspaceManifest,
+    LocalUserManifest,
+)
+from parsec._parsec import LocalDevice
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -168,7 +187,8 @@ def test_sas_code():
         "foo.txt",
         "x" * 255,  # Max size
         "飞" * 85,  # Unicode & max size
-        "X1-_é飞" "🌍☄️==🦕🦖💀",  # Probably a bad name for a real folder...
+        "X1-_é飞",
+        "🌍☄️==🦕🦖💀",  # Probably a bad name for a real folder...
         ".a",  # Dot and dot-dot are allowed if they are not alone
         "..a",
         "a..",
@@ -213,3 +233,80 @@ def test_entry_name_normalization():
     assert EntryName(nfd_str).str == nfc_str
     assert EntryName(nfc_str).str == nfc_str
     assert EntryName(nfc_str + nfd_str).str == nfc_str + nfc_str
+
+
+def test_local_manifests_load_invalid_data():
+    key = SecretKey.generate()
+    valid_msgpack_but_bad_fields = packb({"foo": 42})
+    valid_zip_bud_bad_msgpack = zlib.compress(b"dummy")
+    invalid_zip = b"\x42" * 10
+
+    for cls in (
+        LocalFileManifest,
+        LocalFolderManifest,
+        LocalWorkspaceManifest,
+        LocalUserManifest,
+    ):
+        with pytest.raises(DataError):
+            cls.decrypt_and_load(b"", key=key)
+
+        with pytest.raises(DataError):
+            cls.decrypt_and_load(invalid_zip, key=key)
+
+        with pytest.raises(DataError):
+            cls.decrypt_and_load(valid_zip_bud_bad_msgpack, key=key)
+
+        # Valid to deserialize, invalid fields
+        with pytest.raises(DataError):
+            cls.decrypt_and_load(valid_msgpack_but_bad_fields, key=key)
+
+
+def test_remote_manifests_load_invalid_data(alice: LocalDevice):
+    key = SecretKey.generate()
+    valid_zip_msgpack_but_bad_fields = zlib.compress(packb({"foo": 42}))
+    valid_zip_bud_bad_msgpack = zlib.compress(b"dummy")
+    invalid_zip = b"\x42" * 10
+
+    for cls in (
+        RemoteFileManifest,
+        RemoteFolderManifest,
+        RemoteWorkspaceManifest,
+        RemoteUserManifest,
+    ):
+        print(f"Testing class {cls.__name__}")
+        with pytest.raises(DataError):
+            cls.decrypt_verify_and_load(
+                b"",
+                key=key,
+                author_verify_key=alice.verify_key,
+                expected_author=alice.device_id,
+                expected_timestamp=alice.timestamp(),
+            )
+
+        with pytest.raises(DataError):
+            cls.decrypt_verify_and_load(
+                invalid_zip,
+                key=key,
+                author_verify_key=alice.verify_key,
+                expected_author=alice.device_id,
+                expected_timestamp=alice.timestamp(),
+            )
+
+        with pytest.raises(DataError):
+            cls.decrypt_verify_and_load(
+                valid_zip_bud_bad_msgpack,
+                key=key,
+                author_verify_key=alice.verify_key,
+                expected_author=alice.device_id,
+                expected_timestamp=alice.timestamp(),
+            )
+
+        # Valid to deserialize, invalid fields
+        with pytest.raises(DataError):
+            cls.decrypt_verify_and_load(
+                valid_zip_msgpack_but_bad_fields,
+                key=key,
+                author_verify_key=alice.verify_key,
+                expected_author=alice.device_id,
+                expected_timestamp=alice.timestamp(),
+            )

@@ -21,7 +21,7 @@ import math
 import typing
 from functools import partial
 from typing import List, Tuple, NamedTuple, Optional, Union, cast, Dict, Awaitable
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from collections import defaultdict
 
 from parsec.api.protocol import DeviceID

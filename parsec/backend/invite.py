@@ -9,7 +9,7 @@ import tempfile
 from enum import Enum
 from collections import defaultdict
 from typing import Dict, List, Optional, Union, Set, cast
-from pendulum import DateTime, now as pendulum_now
+from parsec._parsec import DateTime
 from email.message import Message
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -17,7 +17,6 @@ from structlog import get_logger
 
 from parsec.crypto import PublicKey, HashDigest
 from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
-from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
@@ -27,6 +26,7 @@ from parsec.api.protocol import (
     InvitationDeletedReason,
     InvitationStatus,
     InvitationEmailSentStatus,
+    UserProfile,
     invite_new_serializer,
     invite_delete_serializer,
     invite_list_serializer,
@@ -128,7 +128,7 @@ class UserInvitation:
     greeter_human_handle: Optional[HumanHandle]
     claimer_email: str
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
-    created_on: DateTime = attr.ib(factory=pendulum_now)
+    created_on: DateTime = attr.ib(factory=DateTime.now)
     status: InvitationStatus = InvitationStatus.IDLE
 
     def evolve(self, **kwargs):
@@ -141,7 +141,7 @@ class DeviceInvitation:
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
-    created_on: DateTime = attr.ib(factory=pendulum_now)
+    created_on: DateTime = attr.ib(factory=DateTime.now)
     status: InvitationStatus = InvitationStatus.IDLE
 
     def evolve(self, **kwargs):
@@ -399,7 +399,7 @@ class BaseInviteComponent:
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
                 token=msg["token"],
-                on=pendulum_now(),
+                on=DateTime.now(),
                 reason=msg["reason"],
             )
 

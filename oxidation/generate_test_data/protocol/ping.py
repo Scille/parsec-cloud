@@ -2,7 +2,6 @@
 
 # flake8: noqa
 
-from pendulum import datetime
 from utils import *
 from parsec.crypto import *
 from parsec.api.protocol import *

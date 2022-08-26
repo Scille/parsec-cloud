@@ -68,7 +68,9 @@ class InvitationEmailSentStatus(Enum):
     BAD_RECIPIENT = "BAD_RECIPIENT"
 
 
-InvitationEmailSentStatusField = fields.enum_field_factory(InvitationEmailSentStatus)
+InvitationEmailSentStatusField: Type[fields.BaseEnumField] = fields.enum_field_factory(
+    InvitationEmailSentStatus
+)
 
 
 class InviteNewRepSchema(BaseRepSchema):
@@ -87,7 +89,9 @@ class InvitationDeletedReason(Enum):
     ROTTEN = "ROTTEN"
 
 
-InvitationDeletedReasonField = fields.enum_field_factory(InvitationDeletedReason)
+InvitationDeletedReasonField: Type[fields.BaseEnumField] = fields.enum_field_factory(
+    InvitationDeletedReason
+)
 
 
 class InviteDeleteReqSchema(BaseReqSchema):
@@ -112,7 +116,7 @@ class InvitationStatus(Enum):
     DELETED = "DELETED"
 
 
-InvitationStatusField = fields.enum_field_factory(InvitationStatus)
+InvitationStatusField: Type[fields.BaseEnumField] = fields.enum_field_factory(InvitationStatus)
 
 
 class InviteListItemUserSchema(BaseSchema):

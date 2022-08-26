@@ -16,7 +16,7 @@ Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
     - `git <https://git-scm.com/>`_
     - `python v3.9 <https://www.python.org/>`_
     - `poetry >=1.2.0b3 <https://python-poetry.org/docs/#installation>`_
-    - `Rust v1.62 <https://www.rust-lang.org/fr/learn/get-started>`_
+    - `Rust v1.63 <https://www.rust-lang.org/fr/learn/get-started>`_
 
 Consider using `pyenv <https://github.com/pyenv/pyenv#installation>_` to install a specific version of Python.
 
@@ -28,7 +28,7 @@ Consider using `pyenv <https://github.com/pyenv/pyenv#installation>_` to install
     # Note --preview is used to install beta version of Poetry 1.2.0
     curl --proto '=https' --tlsv1.2 -sSL https://install.python-poetry.org/ | python - --preview
     # Install Rust
-    curl --proto '=https' --tlsv1.2 -sSL https://sh.rustup.rs | sh -s -- --default-toolchain 1.62
+    curl --proto '=https' --tlsv1.2 -sSL https://sh.rustup.rs | sh -s -- --default-toolchain 1.63
     # Install Pyenv
     curl --proto '=https' --tlsv1.2 -sSL https://pyenv.run | bash
     # Compile Python

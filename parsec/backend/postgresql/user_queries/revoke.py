@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-import pendulum
+from parsec._parsec import DateTime
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID
 from parsec.backend.backend_events import BackendEvent
@@ -44,7 +44,7 @@ async def query_revoke_user(
     user_id: UserID,
     revoked_user_certificate: bytes,
     revoked_user_certifier: DeviceID,
-    revoked_on: Optional[pendulum.DateTime] = None,
+    revoked_on: Optional[DateTime] = None,
 ) -> None:
     await q_take_user_device_write_lock(conn, organization_id)
     result = await conn.execute(
@@ -53,7 +53,7 @@ async def query_revoke_user(
             user_id=user_id.str,
             revoked_user_certificate=revoked_user_certificate,
             revoked_user_certifier=revoked_user_certifier.str,
-            revoked_on=revoked_on or pendulum.now(),
+            revoked_on=revoked_on or DateTime.now(),
         )
     )
 

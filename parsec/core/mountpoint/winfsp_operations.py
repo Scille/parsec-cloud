@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from pathlib import PurePath
-from pendulum import DateTime
+from parsec._parsec import DateTime
 from functools import partial, wraps
 from contextlib import contextmanager
 from typing import Optional, Union, Iterator
@@ -14,6 +14,7 @@ from winfspy import (
     CREATE_FILE_CREATE_OPTIONS,
 )
 from winfspy.plumbing import dt_to_filetime, NTSTATUS, SecurityDescriptor
+from datetime import datetime
 
 from parsec.api.data import EntryID
 from parsec.core.core_events import CoreEvent
@@ -158,8 +159,8 @@ def stat_to_file_attributes(stat):
 
 
 def stat_to_winfsp_attributes(stat):
-    created = dt_to_filetime(stat["created"])
-    updated = dt_to_filetime(stat["updated"])
+    created = dt_to_filetime(datetime.fromtimestamp(stat["created"].timestamp()))
+    updated = dt_to_filetime(datetime.fromtimestamp(stat["updated"].timestamp()))
     attributes = {
         "creation_time": created,
         "last_access_time": updated,

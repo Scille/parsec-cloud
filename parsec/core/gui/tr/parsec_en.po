@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-07-25 08:31+0200\n"
+"POT-Creation-Date: 2022-08-08 08:26+0200\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -583,6 +583,36 @@ msgstr "Copy"
 msgid "ACTION_FILE_MENU_CUT"
 msgstr "Cut"
 
+msgid "ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source"
+msgstr "Paste from {source}"
+
+msgid "ACTION_FILE_MENU_PASTE"
+msgstr "Paste"
+
+msgid "ACTION_FILE_MENU_NEW_FOLDER"
+msgstr "New folder"
+
+msgid "ACTION_FILE_MENU_SORT"
+msgstr "Sort by"
+
+msgid "ACTION_FILE_MENU_SORT_BY_CREATED"
+msgstr "Creation date"
+
+msgid "ACTION_FILE_MENU_SORT_BY_UPDATED"
+msgstr "Last update"
+
+msgid "ACTION_FILE_MENU_SORT_BY_SIZE"
+msgstr "Size"
+
+msgid "ACTION_FILE_MENU_SORT_BY_NAME"
+msgstr "Name"
+
+msgid "ACTION_FILE_MENU_SHOW_CURRENT_FOLDER_HISTORY"
+msgstr "Show history"
+
+msgid "ACTION_FILE_MENU_SHOW_CURRENT_FOLDER_STATUS"
+msgstr "Show status"
+
 msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
 msgstr "Show history"
 
@@ -591,12 +621,6 @@ msgstr "Show status"
 
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Get a link to the file"
-
-msgid "ACTION_FILE_MENU_PASTE_FROM_OTHER_WORKSPACE_source"
-msgstr "Paste from {source}"
-
-msgid "ACTION_FILE_MENU_PASTE"
-msgstr "Paste"
 
 msgid "TEXT_FILE_TREE_PARENT_FOLDER"
 msgstr "Parent folder"
@@ -631,6 +655,9 @@ msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
 "Cannot show the status of multiple files at once. Please select a single "
 "file."
+
+msgid "TEXT_FILE_STATUS_NO_FILE_SELECTED_ERROR"
+msgstr "No file selected."
 
 msgid "TEXT_FILE_RENAME_TITLE"
 msgstr "Rename a file"
@@ -3002,4 +3029,3 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
-

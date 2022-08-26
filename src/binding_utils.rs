@@ -6,15 +6,15 @@
 #![allow(unused_imports)]
 
 use fancy_regex::Regex;
-use pyo3::basic::CompareOp;
-use pyo3::conversion::IntoPy;
-use pyo3::exceptions::PyValueError;
-use pyo3::prelude::PyModule;
-use pyo3::types::{PyFrozenSet, PyTuple};
-use pyo3::FromPyObject;
-use pyo3::{PyAny, PyObject, PyResult, Python};
-use std::collections::HashSet;
-use std::hash::Hash;
+use pyo3::{
+    basic::CompareOp,
+    conversion::IntoPy,
+    exceptions::PyValueError,
+    prelude::PyModule,
+    types::{PyFrozenSet, PyTuple},
+    FromPyObject, {PyAny, PyObject, PyResult, Python},
+};
+use std::{collections::HashSet, hash::Hash};
 
 pub fn comp_op<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult<bool> {
     Ok(match op {
@@ -27,26 +27,13 @@ pub fn comp_op<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult
     })
 }
 
-pub fn hash_generic(value_to_hash: &str, py: Python) -> PyResult<isize> {
+pub(crate) fn hash_generic(value_to_hash: &str, py: Python) -> PyResult<isize> {
     let builtins = PyModule::import(py, "builtins")?;
     let hash = builtins
         .getattr("hash")?
         .call1((value_to_hash,))?
         .extract::<isize>()?;
     Ok(hash)
-}
-
-pub fn py_to_rs_datetime(timestamp: &PyAny) -> PyResult<libparsec::types::DateTime> {
-    let ts_any =
-        Python::with_gil(|_py| -> PyResult<&PyAny> { timestamp.getattr("timestamp")?.call0() })?;
-    let ts = ts_any.extract::<f64>()?;
-    Ok(libparsec::types::DateTime::from_f64_with_us_precision(ts))
-}
-
-pub fn rs_to_py_datetime(py: Python, datetime: libparsec::types::DateTime) -> PyResult<&PyAny> {
-    let pendulum = PyModule::import(py, "pendulum")?;
-    let args = PyTuple::new(py, vec![datetime.get_f64_with_us_precision()]);
-    pendulum.call_method1("from_timestamp", args)
 }
 
 pub fn rs_to_py_realm_role(role: &libparsec::types::RealmRole) -> PyResult<PyObject> {
@@ -90,7 +77,7 @@ pub fn py_to_rs_user_profile(profile: &PyAny) -> PyResult<libparsec::types::User
 pub fn rs_to_py_user_profile(profile: &libparsec::types::UserProfile) -> PyResult<PyObject> {
     use libparsec::types::UserProfile::*;
     Python::with_gil(|py| -> PyResult<PyObject> {
-        let cls = py.import("parsec.api.data")?.getattr("UserProfile")?;
+        let cls = py.import("parsec.api.protocol")?.getattr("UserProfile")?;
         let profile_name = match profile {
             Admin => "ADMIN",
             Standard => "STANDARD",
@@ -113,7 +100,7 @@ pub fn py_to_rs_invitation_status(status: &PyAny) -> PyResult<libparsec::types::
 
 // This implementation is due to
 // https://github.com/PyO3/pyo3/blob/39d2b9d96476e6cc85ca43e720e035e0cdff7a45/src/types/set.rs#L240
-// where Hashset is PySet in FromPyObject trait
+// where HashSet is PySet in FromPyObject trait
 pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyResult<HashSet<T>> {
     set.downcast::<PyFrozenSet>()?
         .iter()

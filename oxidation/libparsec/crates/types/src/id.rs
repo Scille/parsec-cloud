@@ -159,7 +159,7 @@ impl From<DeviceID> for String {
  * HumanHandle
  */
 
-#[derive(Clone, Serialize, Deserialize, Eq)]
+#[derive(Clone, Serialize, Deserialize, Eq, PartialOrd)]
 #[serde(try_from = "(&str, &str)", into = "(String, String)")]
 #[non_exhaustive] // Prevent initialization without going through the factory
 pub struct HumanHandle {
@@ -235,7 +235,7 @@ crate::impl_from_maybe!(Option<HumanHandle>);
  * UserProfile
  */
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum UserProfile {
     /// Standard user can create new realms and invite new devices for himself.

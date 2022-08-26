@@ -1,11 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import pytest
-import pendulum
 from uuid import uuid4
+import pytest
 
-from parsec.api.data import PkiEnrollmentSubmitPayload
-from parsec.api.data.certif import RevokedUserCertificateContent
+from parsec._parsec import DateTime
+from parsec.api.data import PkiEnrollmentSubmitPayload, RevokedUserCertificate
 from parsec.api.data.pki import PkiEnrollmentAcceptPayload
 from parsec.api.protocol.pki import PkiEnrollmentStatus
 from parsec.api.protocol.types import UserProfile
@@ -236,7 +235,7 @@ async def test_pki_submit_no_email_provided(anonymous_backend_ws, bob):
 
 @pytest.mark.trio
 async def test_pki_list(anonymous_backend_ws, bob, adam, alice_ws):
-    ref_time = pendulum.now()
+    ref_time = DateTime.now()
     bob_certif = b"<x509 certif>"
     bob_request_id = uuid4()
     bob_certif_signature = b"<signature>"
@@ -372,8 +371,8 @@ async def test_pki_accept_user_already_exist(anonymous_backend_ws, bob, alice, a
     assert rep["status"] == "already_exists"
 
     # Revoke user
-    now = pendulum.now()
-    bob_revocation = RevokedUserCertificateContent(
+    now = DateTime.now()
+    bob_revocation = RevokedUserCertificate(
         author=alice.device_id, timestamp=now, user_id=bob.user_id
     ).dump_and_sign(alice.signing_key)
 
@@ -479,8 +478,8 @@ async def test_pki_submit_already_accepted(anonymous_backend_ws, mallory, alice,
     assert rep["status"] == "already_enrolled"
 
     # Revoke user
-    now = pendulum.now()
-    revocation = RevokedUserCertificateContent(
+    now = DateTime.now()
+    revocation = RevokedUserCertificate(
         author=alice.device_id, timestamp=now, user_id=user_confirmation.device_id.user_id
     ).dump_and_sign(alice.signing_key)
 
@@ -576,8 +575,8 @@ async def test_pki_complete_sequence(anonymous_backend_ws, mallory, alice_ws, al
         return user_confirmation.device_id.user_id
 
     async def _revoke(user_id):
-        now = pendulum.now()
-        revocation = RevokedUserCertificateContent(
+        now = DateTime.now()
+        revocation = RevokedUserCertificate(
             author=alice.device_id, timestamp=now, user_id=user_id
         ).dump_and_sign(alice.signing_key)
 

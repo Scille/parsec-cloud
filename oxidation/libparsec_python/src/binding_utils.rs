@@ -31,19 +31,6 @@ pub fn hash_generic(value_to_hash: &str, py: Python) -> PyResult<isize> {
     Ok(hash)
 }
 
-pub fn py_to_rs_datetime(timestamp: &PyAny) -> PyResult<libparsec::types::DateTime> {
-    let ts_any =
-        Python::with_gil(|_py| -> PyResult<&PyAny> { timestamp.getattr("timestamp")?.call0() })?;
-    let ts = ts_any.extract::<f64>()?;
-    Ok(libparsec::types::DateTime::from_f64_with_us_precision(ts))
-}
-
-pub fn rs_to_py_datetime(py: Python, datetime: libparsec::types::DateTime) -> PyResult<&PyAny> {
-    let pendulum = PyModule::import(py, "pendulum")?;
-    let args = PyTuple::new(py, vec![datetime.get_f64_with_us_precision()]);
-    pendulum.call_method1("from_timestamp", args)
-}
-
 pub fn rs_to_py_realm_role(role: &libparsec::types::RealmRole) -> PyResult<PyObject> {
     Python::with_gil(|py| -> PyResult<PyObject> {
         let cls = py.import("parsec.api.protocol")?.getattr("RealmRole")?;

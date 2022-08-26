@@ -5,7 +5,7 @@ import trio
 from PyQt5 import QtCore
 from functools import partial
 from contextlib import asynccontextmanager
-from pendulum import now as pendulum_now
+from parsec._parsec import DateTime
 
 from parsec.utils import start_task
 from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason, DeviceLabel
@@ -407,7 +407,7 @@ async def test_greet_device_invitation_cancelled(
                 organization_id=self.author.organization_id,
                 greeter=self.author.user_id,
                 token=self.invitation_addr.token,
-                on=pendulum_now(),
+                on=DateTime.now(),
                 reason=InvitationDeletedReason.CANCELLED,
             )
 

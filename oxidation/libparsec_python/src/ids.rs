@@ -2,10 +2,12 @@
 
 // TODO: Remove when all dependencies are removed
 
-use pyo3::basic::CompareOp;
-use pyo3::exceptions::PyValueError;
-use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyBytes, PyString, PyType};
+use pyo3::{
+    basic::CompareOp,
+    exceptions::PyValueError,
+    prelude::*,
+    types::{IntoPyDict, PyBytes, PyString, PyType},
+};
 use uuid::Uuid;
 
 use crate::binding_utils::{comp_op, hash_generic};
@@ -50,7 +52,7 @@ impl OrganizationID {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        hash_generic(self.0.as_ref(), py)
     }
 
     #[getter]
@@ -439,7 +441,7 @@ impl UserID {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        hash_generic(self.0.as_ref(), py)
     }
 
     fn capitalize(&self) -> PyResult<String> {
@@ -500,7 +502,7 @@ impl DeviceName {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        hash_generic(self.0.as_ref(), py)
     }
 
     #[getter]
@@ -555,7 +557,7 @@ impl DeviceLabel {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        hash_generic(self.0.as_ref(), py)
     }
 
     #[getter]

@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QWidget, QDialog, QApplication
 
 from structlog import get_logger
 
-import pendulum
+from parsec._parsec import DateTime
 
 from parsec.core.gui.trio_jobs import QtToTrioJob
 from parsec.core.gui.lang import get_qlocale, translate as _, format_datetime
@@ -95,7 +95,7 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
 
     def on_success(self, job):
         assert self.limits_job is job
-        creation = self.limits_job.ret.in_timezone("local")
+        creation = self.limits_job.ret.to_local()
         self.limits_job = None
         self.creation_date = (creation.year, creation.month, creation.day)
         self.creation_time = (creation.hour, creation.minute, creation.second)
@@ -104,7 +104,7 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
                 created=format_datetime(creation, full=True)
             )
         )
-        now = pendulum.now().in_timezone("local")
+        now = DateTime.now().to_local()
         self.now_date = (now.year, now.month, now.day)
         self.now_time = (now.hour, now.minute, now.second)
         self.calendar_widget.setMinimumDate(QDate(*self.creation_date))

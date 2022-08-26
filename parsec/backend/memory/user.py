@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import attr
-from pendulum import now as pendulum_now, DateTime
+from parsec._parsec import DateTime
 from typing import TYPE_CHECKING, Iterable, Tuple, List, Dict, Optional
 from collections import defaultdict
 
@@ -261,7 +261,7 @@ class MemoryUserComponent(BaseUserComponent):
             ),
             *[res for res in users if res.human_handle is None],
         ]
-        now = pendulum_now()
+        now = DateTime.now()
         results = [
             HumanFindResultItem(
                 user_id=user.user_id,
@@ -319,7 +319,7 @@ class MemoryUserComponent(BaseUserComponent):
             raise UserAlreadyRevokedError()
 
         org.users[user_id] = user.evolve(
-            revoked_on=revoked_on or pendulum_now(),
+            revoked_on=revoked_on or DateTime.now(),
             revoked_user_certificate=revoked_user_certificate,
             revoked_user_certifier=revoked_user_certifier,
         )
