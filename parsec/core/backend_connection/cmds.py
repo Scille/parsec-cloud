@@ -89,12 +89,13 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
         BackendNotAvailable
         BackendCmdsBadResponse
     """
-    transport.logger.info("Request", cmd=req["cmd"])
+    cmd = req["cmd"]
+    transport.logger.info("Request", cmd=cmd)
     try:
         raw_req = serializer.req_dumps(req)
 
     except ProtocolError as exc:
-        transport.logger.exception("Invalid request data", cmd=req["cmd"], error=exc)
+        transport.logger.exception("Invalid request data", cmd=cmd, error=exc)
         raise BackendProtocolError("Invalid request data") from exc
 
     try:
@@ -102,22 +103,20 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
         raw_rep = await transport.recv()
 
     except TransportError as exc:
-        transport.logger.debug("Request failed (backend not available)", cmd=req["cmd"])
+        transport.logger.debug("Request failed (backend not available)", cmd=cmd)
         raise BackendNotAvailable(exc) from exc
 
     try:
         rep = serializer.rep_loads(raw_rep)
 
     except ProtocolError as exc:
-        transport.logger.exception("Invalid response data", cmd=req["cmd"], error=exc)
+        transport.logger.exception("Invalid response data", cmd=cmd, error=exc)
         raise BackendProtocolError("Invalid response data") from exc
 
     # Legacy
     if isinstance(rep, dict):
         if rep["status"] == "invalid_msg_format":
-            transport.logger.error(
-                "Invalid request data according to backend", cmd=req["cmd"], rep=rep
-            )
+            transport.logger.error("Invalid request data according to backend", cmd=cmd, rep=rep)
             raise BackendProtocolError("Invalid request data according to backend")
 
         if rep["status"] == "bad_timestamp":
@@ -132,7 +131,7 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
         if isinstance(rep, (BlockCreateRepUnknownStatus, BlockReadRepUnknownStatus)):
             if rep.status == "invalid_msg_format":
                 transport.logger.error(
-                    "Invalid request data according to backend", cmd=req["cmd"], rep=rep
+                    "Invalid request data according to backend", cmd=cmd, rep=rep
                 )
                 raise BackendProtocolError("Invalid request data according to backend")
 
