@@ -7,12 +7,12 @@ Parsec
 ======
 
 .. image:: https://github.com/Scille/parsec-cloud/actions/workflows/ci.yml/badge.svg
-   :target: https://github.com/Scille/parsec-cloud/actions/workflows/ci.yml
-   :alt: Continuous Integration
+    :target: https://github.com/Scille/parsec-cloud/actions/workflows/ci.yml
+    :alt: Continuous Integration
 
 .. image:: https://github.com/Scille/parsec-cloud/actions/workflows/package-ci.yml/badge.svg
-   :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-ci.yml
-   :alt: Latest Packaging CI
+    :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-ci.yml
+    :alt: Latest Packaging CI
 
 .. image:: https://pyup.io/repos/github/Scille/parsec-cloud/shield.svg
     :target: https://pyup.io/repos/github/Scille/parsec-cloud/
@@ -54,8 +54,7 @@ Key features:
   and the ones you choose to share with.
 - Cryptographic signature. Each modification is signed by it author making trivial
   to identify modifications.
-- Cloud provider agnostic. Server provides connectors for S3 and swift object
-  storage.
+- Cloud provider agnostic. Server provides connectors for S3 and swift object storage.
 - Simplified enrollment. New user enrollment is simple as sharing a link and a token code.
 
 
