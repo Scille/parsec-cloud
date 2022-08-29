@@ -4,7 +4,7 @@ import base64
 import json
 from typing import List, Tuple, Dict, Optional
 
-from parsec._parsec import DateTime, now as pendulum_now
+from parsec._parsec import DateTime
 import urllib
 from parsec.backend.http_utils import http_request
 from parsec.backend.sequester import SequesterService, SequesterServiceType
