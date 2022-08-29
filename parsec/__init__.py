@@ -4,7 +4,7 @@ import os
 from parsec._version import __version__
 
 # The oscrypto library relies on `ctypes.util.find_library`,
-# which doesn't work for snap classic enviornments.
+# which doesn't work for snap classic environments.
 # Hence, we rely on env variables similar to `FUSE_LIBRARY_PATH`
 # to configure oscrypto correctly if those variables are provided.
 SSL_LIBRARY_PATH = os.environ.get("SSL_LIBRARY_PATH")

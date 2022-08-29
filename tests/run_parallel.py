@@ -6,7 +6,7 @@
 Why this an not just pytest_xdist ?
 
 The issue is pytest_xdist is based on the `execnet` library for dispatching
-tests. This is what allow pytest_xdist to run tests accross different machines,
+tests. This is what allow pytest_xdist to run tests across different machines,
 but is a bit overkill if you only want to run tests locally.
 
 However the main issue is that `execnet` doesn't run the actual pytest code
@@ -14,7 +14,7 @@ in the main thread of the newly created process which is an issue on macOS.
 
 On top of that I suspect the forking mechanism of pytest_xdist to keep sharing
 too much things between processes (given the fork occurs after pytest has been
-started). This is probably not the case, but I'm currently a very desesperate
+started). This is probably not the case, but I'm currently a very desperate
 man considering how unstable the CI is right now...
 
 So the idea is simple here:

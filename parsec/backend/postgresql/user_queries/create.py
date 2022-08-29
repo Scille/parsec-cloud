@@ -162,16 +162,16 @@ VALUES (
 
 _q_lock = Q(
     # Use 55 as magic number to represent user/device creation lock
-    # (note this is not stricly needed right now given there is no other
+    # (note this is not strictly needed right now given there is no other
     # advisory lock in the application, but may avoid weird error if we
-    # introduce a new avisory lock while forgetting about this one)
+    # introduce a new advisory lock while forgetting about this one)
     "SELECT pg_advisory_xact_lock(55, _id) FROM organization WHERE organization_id = $organization_id"
 )
 
 
 async def q_take_user_device_write_lock(conn, organization_id: OrganizationID):
     """
-    User/device creation is a complexe procedure given it contains checks that
+    User/device creation is a complex procedure given it contains checks that
     cannot be enforced by PostgreSQL, e.g.:
     - `user_` table can contain multiple row with the same `human` value, but
       only one of them can be non-revoked

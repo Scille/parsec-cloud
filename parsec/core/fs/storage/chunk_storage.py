@@ -51,8 +51,8 @@ class ChunkStorage:
                     pass
 
     def _open_cursor(self) -> AsyncContextManager[Cursor]:
-        # There is no point in commiting dirty chunks:
-        # they are referenced by a manifest that will get commited
+        # There is no point in committing dirty chunks:
+        # they are referenced by a manifest that will get committed
         # soon after them. This greatly improves the performance of
         # writing file using the mountpoint as the OS will typically
         # writes data as blocks of 4K. The manifest being kept in
@@ -196,7 +196,7 @@ class BlockStorage(ChunkStorage):
             yield self
 
     def _open_cursor(self) -> AsyncContextManager[Cursor]:
-        # It doesn't matter for blocks to be commited as soon as they're added
+        # It doesn't matter for blocks to be committed as soon as they're added
         # since they exists in the remote storage anyway. But it's simply more
         # convenient to perform the commit right away as it does't cost much (at
         # least compare to the downloading of the block).
