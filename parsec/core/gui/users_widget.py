@@ -328,8 +328,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             return
 
         self.jobs_ctx.submit_job(
-            self.invite_user_success,
-            self.invite_user_error,
+            (self, "invite_user_success"),
+            (self, "invite_user_error"),
             _do_invite_user,
             core=self.core,
             email=user_email,
@@ -368,8 +368,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         if r != _("TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"):
             return
         self.jobs_ctx.submit_job(
-            self.cancel_invitation_success,
-            self.cancel_invitation_error,
+            (self, "cancel_invitation_success"),
+            (self, "cancel_invitation_error"),
             _do_cancel_invitation,
             core=self.core,
             token=token,
@@ -424,8 +424,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         if result != _("ACTION_USER_REVOCATION_CONFIRM"):
             return
         self.jobs_ctx.submit_job(
-            self.revoke_success,
-            self.revoke_error,
+            (self, "revoke_success"),
+            (self, "revoke_error"),
             _do_revoke_user,
             core=self.core,
             user_info=user_info,
@@ -573,8 +573,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.spinner.show()
         pattern = self.line_edit_search.text()
         self.jobs_ctx.submit_job(
-            self.list_success,
-            self.list_error,
+            (self, "list_success"),
+            (self, "list_error"),
             _do_list_users_and_invitations,
             core=self.core,
             page=self._page,

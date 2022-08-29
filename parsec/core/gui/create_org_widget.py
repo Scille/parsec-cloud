@@ -218,8 +218,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
 
             # TODO: call `await _do_create_org` directly since the context is now async
             self.create_job = self.jobs_ctx.submit_job(
-                self.req_success,
-                self.req_error,
+                (self, "req_success"),
+                (self, "req_error"),
                 _do_create_org,
                 config=self.config,
                 human_handle=human_handle,

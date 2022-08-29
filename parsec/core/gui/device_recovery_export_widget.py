@@ -205,8 +205,8 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
                     self.button_validate.setEnabled(True)
                     return
             self.jobs_ctx.submit_job(
-                self.export_success,
-                self.export_failure,
+                (self, "export_success"),
+                (self, "export_failure"),
                 self._export_recovery_device,
                 config_dir=self.config.config_dir,
                 device=device,

@@ -173,7 +173,7 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
     def _on_button_send_email_clicked(self):
         self.button_send_email.setDisabled(True)
         self.jobs_ctx.submit_job(
-            self.send_email_success, self.send_email_error, _do_send_email, core=self.core
+            (self, "send_email_success"), (self, "send_email_error"), _do_send_email, core=self.core
         )
 
     def _on_send_email_success(self, job):
@@ -221,7 +221,7 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
         self.button_send_email.setDisabled(True)
         self.button_start.setText(_("TEXT_GREET_DEVICE_WAITING"))
         self.wait_peer_job = self.jobs_ctx.submit_job(
-            self.wait_peer_success, self.wait_peer_error, self.greeter.wait_peer
+            (self, "wait_peer_success"), (self, "wait_peer_error"), self.greeter.wait_peer
         )
 
     def _on_wait_peer_success(self, job):
@@ -304,14 +304,18 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         self.label_wait_info.hide()
 
         self.get_greeter_sas_job = self.jobs_ctx.submit_job(
-            self.get_greeter_sas_success, self.get_greeter_sas_error, self.greeter.get_greeter_sas
+            (self, "get_greeter_sas_success"),
+            (self, "get_greeter_sas_error"),
+            self.greeter.get_greeter_sas,
         )
 
     def _on_good_claimer_code_clicked(self):
         self.widget_claimer_code.hide()
         self.label_wait_info.show()
         self.signify_trust_job = self.jobs_ctx.submit_job(
-            self.signify_trust_success, self.signify_trust_error, self.greeter.signify_trust
+            (self, "signify_trust_success"),
+            (self, "signify_trust_error"),
+            self.greeter.signify_trust,
         )
 
     def _on_wrong_claimer_code_clicked(self):
@@ -332,7 +336,9 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         greeter_sas = job.ret
         self.line_edit_greeter_code.setText(greeter_sas.str)
         self.wait_peer_trust_job = self.jobs_ctx.submit_job(
-            self.wait_peer_trust_success, self.wait_peer_trust_error, self.greeter.wait_peer_trust
+            (self, "wait_peer_trust_success"),
+            (self, "wait_peer_trust_error"),
+            self.greeter.wait_peer_trust,
         )
 
     def _on_get_greeter_sas_error(self, job):
@@ -421,7 +427,9 @@ class GreetDeviceCodeExchangeWidget(QWidget, Ui_GreetDeviceCodeExchangeWidget):
         assert job.is_finished()
         assert job.status == "ok"
         self.get_claimer_sas_job = self.jobs_ctx.submit_job(
-            self.get_claimer_sas_success, self.get_claimer_sas_error, self.greeter.get_claimer_sas
+            (self, "get_claimer_sas_success"),
+            (self, "get_claimer_sas_error"),
+            self.greeter.get_claimer_sas,
         )
 
     def _on_wait_peer_trust_error(self, job):
@@ -463,8 +471,8 @@ class GreetDeviceWidget(QWidget, Ui_GreetDeviceWidget):
 
     def _run_greeter(self):
         self.greeter_job = self.jobs_ctx.submit_job(
-            self.greeter_success,
-            self.greeter_error,
+            (self, "greeter_success"),
+            (self, "greeter_error"),
             self.greeter.run,
             core=self.core,
             token=self.invite_addr.token,

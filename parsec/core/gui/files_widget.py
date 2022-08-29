@@ -447,8 +447,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         if self.clipboard.status == Clipboard.Status.Cut:
             self.jobs_ctx.submit_job(
-                self.move_success,
-                self.move_error,
+                (self, "move_success"),
+                (self, "move_error"),
                 _do_move_files,
                 workspace_fs=self.workspace_fs,
                 target_dir=self.current_directory,
@@ -462,8 +462,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         elif self.clipboard.status == Clipboard.Status.Copied:
             self.jobs_ctx.submit_job(
-                self.copy_success,
-                self.copy_error,
+                (self, "copy_success"),
+                (self, "copy_error"),
                 _do_copy_files,
                 workspace_fs=self.workspace_fs,
                 target_dir=self.current_directory,
@@ -559,8 +559,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if not new_name:
                 return
             self.jobs_ctx.submit_job(
-                self.rename_success,
-                self.rename_error,
+                (self, "rename_success"),
+                (self, "rename_error"),
                 _do_rename,
                 workspace_fs=self.workspace_fs,
                 paths=[
@@ -584,8 +584,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 return
 
             self.jobs_ctx.submit_job(
-                self.rename_success,
-                self.rename_error,
+                (self, "rename_success"),
+                (self, "rename_error"),
                 _do_rename,
                 workspace_fs=self.workspace_fs,
                 paths=[
@@ -618,8 +618,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if result != _("ACTION_FILE_DELETE_MULTIPLE") and result != _("ACTION_FILE_DELETE"):
             return
         self.jobs_ctx.submit_job(
-            self.delete_success,
-            self.delete_error,
+            (self, "delete_success"),
+            (self, "delete_error"),
             _do_delete,
             workspace_fs=self.workspace_fs,
             files=[(self.current_directory / f.name, f.type) for f in files],
@@ -641,7 +641,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             for name in names
         ]
         self.jobs_ctx.submit_job(
-            self.file_open_success, self.file_open_error, desktop.open_files_job, paths
+            (self, "file_open_success"), (self, "file_open_error"), desktop.open_files_job, paths
         )
 
     def open_files(self):
@@ -684,8 +684,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.jobs_ctx.submit_throttled_job(
             "files_widget.reload",
             delay,
-            self.folder_stat_success,
-            self.folder_stat_error,
+            (self, "folder_stat_success"),
+            (self, "folder_stat_error"),
             _do_folder_stat,
             workspace_fs=self.workspace_fs,
             path=self.current_directory,
@@ -699,8 +699,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_directory = directory
         self.current_directory_id = None
         self.jobs_ctx.submit_job(
-            self.folder_stat_success,
-            self.folder_stat_error,
+            (self, "folder_stat_success"),
+            (self, "folder_stat_error"),
             _do_folder_stat,
             workspace_fs=self.workspace_fs,
             path=directory,
@@ -717,7 +717,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
         self.default_import_path = str(pathlib.Path(paths[0]).parent)
         self.jobs_ctx.submit_job(
-            self.import_success, self.import_error, self._do_import, paths, self.current_directory
+            (self, "import_success"),
+            (self, "import_error"),
+            self._do_import,
+            paths,
+            self.current_directory,
         )
 
     def import_folder_clicked(self):
@@ -728,7 +732,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
         self.default_import_path = str(path)
         self.jobs_ctx.submit_job(
-            self.import_success, self.import_error, self._do_import, [path], self.current_directory
+            (self, "import_success"),
+            (self, "import_error"),
+            self._do_import,
+            [path],
+            self.current_directory,
         )
 
     def on_files_dropped(self, sources, dest):
@@ -739,7 +747,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         else:
             dest = self.current_directory / dest
         self.jobs_ctx.submit_job(
-            self.import_success, self.import_error, self._do_import, sources, dest
+            (self, "import_success"), (self, "import_error"), self._do_import, sources, dest
         )
 
     # Import job
@@ -949,8 +957,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         else:
             target_dir = self.current_directory / target_name
         self.jobs_ctx.submit_job(
-            self.move_success,
-            self.move_error,
+            (self, "move_success"),
+            (self, "move_error"),
             _do_move_files,
             workspace_fs=self.workspace_fs,
             target_dir=target_dir,
@@ -982,8 +990,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
 
         self.jobs_ctx.submit_job(
-            self.folder_create_success,
-            self.folder_create_error,
+            (self, "folder_create_success"),
+            (self, "folder_create_error"),
             _do_folder_create,
             workspace_fs=self.workspace_fs,
             path=self.current_directory / folder_name,
@@ -1185,8 +1193,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self, timestamp, path, file_type, open_after_load, close_after_remount, reload_after_remount
     ):
         self.jobs_ctx.submit_job(
-            self.reload_timestamped_success,
-            self.reload_timestamped_error,
+            (self, "reload_timestamped_success"),
+            (self, "reload_timestamped_error"),
             _do_remount_timestamped,
             mountpoint_manager=self.core.mountpoint_manager,
             workspace_fs=self.workspace_fs,
