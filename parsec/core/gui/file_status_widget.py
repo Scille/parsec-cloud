@@ -26,7 +26,9 @@ class FileStatusWidget(QWidget, Ui_FileInfoWidget):
         self.path = path
         self.core = core
 
-        self.jobs_ctx.submit_job(self.get_status_success, self.get_status_error, self.get_status)
+        self.jobs_ctx.submit_job(
+            (self, "get_status_success"), (self, "get_status_error"), self.get_status
+        )
 
     async def get_status(self):
         path_info = await self.workspace_fs.path_info(self.path)

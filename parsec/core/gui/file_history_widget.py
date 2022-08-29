@@ -102,8 +102,8 @@ class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
                 w.hide()
                 w.setParent(0)
         self.versions_job = self.jobs_ctx.submit_job(
-            self.get_versions_success,
-            self.get_versions_error,
+            (self, "get_versions_success"),
+            (self, "get_versions_error"),
             _do_workspace_version,
             version_lister=self.version_lister,
             path=self.path,

@@ -1,12 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec.core.core_events import CoreEvent
-
-from PyQt5.QtCore import pyqtSignal, Qt, QTimer
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtBoundSignal, Qt, QTimer
 from PyQt5.QtWidgets import QWidget, QLabel
-
-from parsec._parsec import DateTime, LocalDateTime
-
+from typing import Tuple
 from contextlib import contextmanager
 from structlog import get_logger
 from parsec.core.types import (
@@ -16,6 +12,9 @@ from parsec.core.types import (
     BackendOrganizationFileLinkAddr,
     WorkspaceRole,
 )
+
+from parsec._parsec import DateTime, LocalDateTime
+from parsec.core.core_events import CoreEvent
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs import (
     FsPath,
@@ -391,8 +390,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             if button.is_owner:
                 try:
                     self.jobs_ctx.submit_job(
-                        self.reencryption_needs_success,
-                        self.reencryption_needs_error,
+                        (self, "reencryption_needs_success"),
+                        (self, "reencryption_needs_error"),
                         _get_reencryption_needs,
                         workspace_fs=workspace_fs,
                     )
@@ -497,8 +496,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if token in workspace_name:
             workspace_name, *_ = workspace_name.split(token)
             self.jobs_ctx.submit_job(
-                self.ignore_success,
-                self.ignore_error,
+                (self, "ignore_success"),
+                (self, "ignore_error"),
                 _do_workspace_rename,
                 core=self.core,
                 workspace_id=workspace_fs.workspace_id,
@@ -529,7 +528,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 else None,
             )
             self.jobs_ctx.submit_job(
-                self.file_open_success, self.file_open_error, desktop.open_files_job, [path]
+                (self, "file_open_success"),
+                (self, "file_open_error"),
+                desktop.open_files_job,
+                [path],
             )
         except MountpointNotMounted:
             # The mountpoint has been umounted in our back, nothing left to do
@@ -563,8 +565,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         # the mount_success signal is not connected to anything but
         # is being kept for potential testing purposes
         self.jobs_ctx.submit_job(
-            self.mount_success,
-            self.mount_error,
+            (self, "mount_success"),
+            (self, "mount_error"),
             _do_workspace_mount,
             core=self.core,
             workspace_id=workspace_id,
@@ -577,8 +579,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         # the unmount_success signal is not connected to anything but
         # is being kept for potential testing purposes
         self.jobs_ctx.submit_job(
-            self.unmount_success,
-            self.unmount_error,
+            (self, "unmount_success"),
+            (self, "unmount_error"),
             _do_workspace_unmount,
             core=self.core,
             workspace_id=workspace_id,
@@ -626,8 +628,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if not new_name:
             return
         self.jobs_ctx.submit_job(
-            self.rename_success,
-            self.rename_error,
+            (self, "rename_success"),
+            (self, "rename_error"),
             _do_workspace_rename,
             core=self.core,
             workspace_id=workspace_button.workspace_fs.workspace_id,
@@ -686,7 +688,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             except FSError as exc:
                 raise JobResultError(ret=workspace_id, status="fs-error", origin=exc)
 
-        async def _reencrypt(on_progress, workspace_id):
+        async def _reencrypt(on_progress: Tuple[QObject, str], workspace_id):
+            on_progress: pyqtBoundSignal = getattr(
+                on_progress[0], on_progress[1]
+            )  # Retreive the signal
             with _handle_fs_errors():
                 if reencryption_already_in_progress:
                     job = await self.core.user_fs.workspace_continue_reencryption(workspace_id)
@@ -707,10 +712,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         workspace_button.reencrypting = 1, 0
 
         self.jobs_ctx.submit_job(
-            self.workspace_reencryption_success,
-            self.workspace_reencryption_error,
+            (self, "workspace_reencryption_success"),
+            (self, "workspace_reencryption_error"),
             _reencrypt,
-            on_progress=self.workspace_reencryption_progress,
+            on_progress=(self, "workspace_reencryption_progress"),
             workspace_id=workspace_id,
         )
 
@@ -763,8 +768,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if not workspace_name:
             return
         self.jobs_ctx.submit_job(
-            self.create_success,
-            self.create_error,
+            (self, "create_success"),
+            (self, "create_error"),
             _do_workspace_create,
             core=self.core,
             workspace_name=workspace_name,
@@ -780,8 +785,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.jobs_ctx.submit_throttled_job(
             "workspace_widget.list_workspaces",
             self.REFRESH_WORKSPACES_LIST_DELAY,
-            self.list_success,
-            self.list_error,
+            (self, "list_success"),
+            (self, "list_error"),
             _do_workspace_list,
             core=self.core,
         )

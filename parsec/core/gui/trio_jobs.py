@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import threading
+from typing import List, Dict, Tuple, Callable, Any
 from inspect import iscoroutinefunction, signature
 from contextlib import asynccontextmanager
 import trio
 from structlog import get_logger
+from PyQt5.QtCore import QObject, pyqtBoundSignal
 
 from parsec.core.fs import FSError
 from parsec.core.mountpoint import MountpointError
@@ -12,6 +14,9 @@ from parsec.utils import split_multi_error
 
 
 logger = get_logger()
+
+
+JobResultSignal = Tuple[QObject, str]
 
 
 class JobResultError(Exception):
@@ -26,7 +31,23 @@ class JobSchedulerNotAvailable(Exception):
 
 
 class QtToTrioJob:
-    def __init__(self, fn, args, kwargs, on_success, on_error):
+    def __init__(
+        self,
+        fn: Callable,
+        args: List[Any],
+        kwargs: Dict[str, Any],
+        on_success: JobResultSignal,
+        on_error: JobResultSignal,
+    ):
+        # `pyqtBoundSignal` (i.e. `pyqtSignal` connected to a QObject instance) doesn't
+        # hold a strong reference on the QObject. Hence if the latter gets freed, calling
+        # the signal will result in a segfault !
+        # To avoid this, we should instead pass a tuple (<QObject instance>, <name of signal>).
+        assert all(not isinstance(a, pyqtBoundSignal) for a in args)
+        assert all(not isinstance(v, pyqtBoundSignal) for v in kwargs.values())
+        assert not isinstance(on_success, pyqtBoundSignal)
+        assert not isinstance(on_error, pyqtBoundSignal)
+
         self._on_success = on_success
         self._on_error = on_error
         self._fn = fn
@@ -124,7 +145,8 @@ class QtToTrioJob:
         self._done.set()
         signal = self._on_success if self.is_ok() else self._on_error
         if signal is not None:
-            signal.emit(self)
+            obj, name = signal
+            getattr(obj, name).emit(self)
 
     def cancel(self):
         self.cancel_scope.cancel()
@@ -188,7 +210,9 @@ class QtToTrioJobScheduler:
             self.nursery.start_soon(_throttled_execute, job)
         return job
 
-    def submit_job(self, on_success, on_error, fn, *args, **kwargs):
+    def submit_job(
+        self, on_success: JobResultSignal, on_error: JobResultSignal, fn: Callable, *args, **kwargs
+    ):
         job = QtToTrioJob(fn, args, kwargs, on_success, on_error)
         if self.nursery._closed:
             job.set_cancelled(JobSchedulerNotAvailable())

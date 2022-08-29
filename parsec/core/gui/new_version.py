@@ -201,8 +201,8 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         self.check_new_version_error.connect(self.on_check_new_version_error)
 
         self.version_job = self.jobs_ctx.submit_job(
-            self.check_new_version_success,
-            self.check_new_version_error,
+            (self, "check_new_version_success"),
+            (self, "check_new_version_error"),
             do_check_new_version,
             api_url=self.config.gui_check_version_api_url,
             allow_prerelease=self.config.gui_check_version_allow_pre_release,

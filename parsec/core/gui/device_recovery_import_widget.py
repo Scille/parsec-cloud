@@ -140,8 +140,8 @@ class DeviceRecoveryImportWidget(QWidget, Ui_DeviceRecoveryImportWidget):
             # No try/except given `self.line_edit_device` has already been validated against `DeviceLabel`
             device_label = DeviceLabel(self.current_page.line_edit_device.clean_text())
             self.jobs_ctx.submit_job(
-                self.create_new_device_success,
-                self.create_new_device_failure,
+                (self, "create_new_device_success"),
+                (self, "create_new_device_failure"),
                 self._create_new_device,
                 device_label=device_label,
                 file_path=PurePath(self.current_page.get_recovery_key_file()),
