@@ -112,26 +112,26 @@ async function canDismissModal(): Promise<boolean> {
 
 <style lang="scss" scoped>
 #container {
-	text-align: center;
-	position: absolute;
-	left: 0;
-	right: 0;
-	top: 50%;
-	transform: translateY(-50%);
+  text-align: center;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 
-	max-width: 680px;
-	margin: 0 auto;
+  max-width: 680px;
+  margin: 0 auto;
 
-	p {
-		font-weight: bold;
-	}
+  p {
+    font-weight: bold;
+  }
 }
 
 .lang-list {
-	.item {
-		ion-label {
-			margin-left: 3.5em;
-		}
-	}
+  .item {
+    ion-label {
+      margin-left: 3.5em;
+    }
+  }
 }
 </style>
