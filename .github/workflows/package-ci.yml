@@ -296,3 +296,29 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer
           path: ${{ runner.temp }}/parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2
+
+  package-electron-app:
+    runs-on: ubuntu-22.04
+    name: ⚡ Package electron
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - name: Install dependencies
+        run: |
+          npm clean-install
+          (cd electron && npm clean-install)
+          (cd ../bindings/neon && npm clean-install)
+        working-directory: oxidation/client
+
+      - name: Build Electron App
+        run: |
+          npm run electron:copy
+          npm run electron:dist
+        working-directory: oxidation/client
+
+      - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-electron-app
+          path: |
+            oxidation/client/electron/dist/client_*_*.snap
+            oxidation/client/electron/dist/client-*.AppImage

@@ -23,5 +23,6 @@
   "mac": {
     "category": "your.app.category.type",
     "target": "dmg"
-  }
+  },
+  "extends": null
 }
