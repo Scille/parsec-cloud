@@ -12,11 +12,13 @@ Get the sources
 
 Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
 
-1. You need to have the following tools available:
-    - `git <https://git-scm.com/>`_
-    - `python v3.9 <https://www.python.org/>`_
-    - `poetry >=1.2.0b3 <https://python-poetry.org/docs/#installation>`_
-    - `Rust v1.63 <https://www.rust-lang.org/fr/learn/get-started>`_
+1. Require environment configurations:
+    a. Your text editor need to be configured with `editorconfig <https://editorconfig.org/>`_
+    b. You need to have the following tools available:
+        - `git <https://git-scm.com/>`_
+        - `python v3.9 <https://www.python.org/>`_
+        - `poetry >=1.2.0b3 <https://python-poetry.org/docs/#installation>`_
+        - `Rust v1.63 <https://www.rust-lang.org/fr/learn/get-started>`_
 
 Consider using `pyenv <https://github.com/pyenv/pyenv#installation>_` to install a specific version of Python.
 
