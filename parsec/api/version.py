@@ -12,6 +12,9 @@ class ApiVersion(NamedTuple):
 
     @classmethod
     def from_str(cls, value: str) -> "ApiVersion":
+        """
+        Raises: ValueError
+        """
         raw_version, raw_revision = value.split(".")
         version, revision = int(raw_version), int(raw_revision)
         return cls(version, revision)

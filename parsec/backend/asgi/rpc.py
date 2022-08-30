@@ -1,23 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import binascii
-import base64
-from typing import Tuple
+from base64 import b64decode
+from typing import NoReturn, Tuple, Optional
 from quart import Response, Blueprint, abort, request, g
-from quart.datastructures import Headers
 from nacl.exceptions import CryptoError
 
-from parsec.api.protocol.handshake import ServerHandshake
-from parsec.api.protocol.types import DeviceID
-from parsec.api.version import ApiVersion
-from parsec.backend.asgi.error import (
-    AuthenticationProtocolError,
-    CannotVerifySignatureError,
-    DeviceNotFoundError,
-    InvalidHeaderValueError,
-    HttpProtocolError,
-    UserIsRevokedError,
-)
+from parsec.api.version import API_V2_VERSION, API_V3_VERSION, ApiVersion
+from parsec.api.protocol import DeviceID
 from parsec.backend.user import UserNotFoundError
 from parsec.backend.user_type import Device, User
 
@@ -42,56 +31,176 @@ from parsec.backend.organization import (
 
 CONTENT_TYPE_MSGPACK = "application/msgpack"
 AUTHORIZATION_PARSEC_ED25519 = "PARSEC-SIGN-ED25519"
-
-
-def rpc_msgpack_rep(data: dict) -> Response:
-    return Response(
-        response=packb(data),
-        # Unlike REST, RPC doesn't use status to encode operational result
-        status=200,
-        content_type=CONTENT_TYPE_MSGPACK,
-    )
+SUPPORTED_API_VERSIONS = (
+    API_V2_VERSION,
+    API_V3_VERSION,
+)
 
 
 rpc_bp = Blueprint("anonymous_api", __name__)
 
 
-@rpc_bp.route("/anonymous/<raw_organization_id>", methods=["GET", "POST"])
-async def anonymous_api(raw_organization_id: str):
-    backend: BackendApp = g.backend
+def _rpc_msgpack_rep(data: dict, api_version: ApiVersion) -> Response:
+    return Response(
+        response=packb(data),
+        # Unlike REST, RPC doesn't use status to encode operational result
+        status=200,
+        content_type=CONTENT_TYPE_MSGPACK,
+        headers={"Api-Version": str(api_version)},
+    )
+
+
+# The HTTP RPC API is divided into two layers: handshake and actual command processing
+# The command processing is based on msgpack and is common with the Websocket API.
+#
+# On the other hand, the handshake part is specific to how works HTTP (i.e. the
+# handshake is done for each query in HTTP using headers, unlike the Websocket
+# handshake which is done once by sending challenge/reply messages).
+#
+# So the RPC API handshake cannot return a body in msgpack given at this level
+# we are not settled on what should be used yet (who knows ! maybe in the future
+# we will use another serialization format for the command processing).
+# Instead we rely on the following HTTP status code:
+# - 404: Organization non found or invalid organization ID
+# - 401: Bad authentication info (bad Author/Signature/Timestamp headers)
+# - 415: Bad content-type
+# - 422: Unsupported API version
+
+
+def _handshake_abort(status_code: int, api_version: ApiVersion) -> NoReturn:
+    abort(Response(response="", status=status_code, headers={"Api-Version": str(api_version)}))
+
+
+async def _do_handshake(
+    raw_organization_id: str,
+    backend: BackendApp,
+    allow_missing_organization: bool,
+    check_authentication: bool,
+) -> Tuple[ApiVersion, OrganizationID, Optional[Organization], Optional[User], Optional[Device]]:
+    # The anonymous RPC API existed before the `Api-Version`/`Content-Type` fields
+    # check where introduced, hence we have this workaround to provide backward compatibility
+    # TODO: remove me once Parsec 2.11.1 is deprecated
+    request.headers.setdefault("Api-Version", "3.0")
+    # `urllib.request.Request` uses this `Content-Type` by default if none are provided
+    # (and, you guessed it, we used to not provide one...)
+    # TODO: remove me once Parsec 2.11.1 is deprecated
+    if request.headers.get("Content-Type") == "application/x-www-form-urlencoded":
+        request.headers["Content-Type"] = CONTENT_TYPE_MSGPACK
+
+    # 1) Check API version
+    # Parse `Api-version` from the HTTP Header and return the version implemented
+    # by the server that is compatible with the client.
+    try:
+        client_api_version = ApiVersion.from_str(request.headers.get("Api-Version", ""))
+        api_version, _ = settle_compatible_versions(SUPPORTED_API_VERSIONS, [client_api_version])
+    except (ValueError, IncompatibleAPIVersionsError):
+        supported_api_versions = ";".join(
+            str(api_version) for api_version in SUPPORTED_API_VERSIONS
+        )
+        abort(
+            Response(
+                response="", status=422, headers={"Supported-Api-Versions": supported_api_versions}
+            )
+        )
+
+    # From now on the version is settled, our reply must have the `Api-Version` header
+
+    # 2) Check organization
     # Check whether the organization exists
     try:
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
-        abort(404)
+        _handshake_abort(404, api_version=api_version)
+    organization: Optional[Organization]
     try:
-        await backend.organization.get(organization_id)
+        organization = await backend.organization.get(organization_id)
     except OrganizationNotFoundError:
-        organization_exists = False
+        if not allow_missing_organization:
+            _handshake_abort(404, api_version=api_version)
+        else:
+            organization = None
     else:
-        organization_exists = True
+        if organization.is_expired:
+            abort(_rpc_msgpack_rep({"status": "expired_organization"}, api_version))
+
+    # 3) Check Content-Type
+    if request.headers.get("Content-Type") != CONTENT_TYPE_MSGPACK:
+        _handshake_abort(415, api_version=api_version)
+
+    # 4) Check authentication
+    if not check_authentication:
+        user = None
+        device = None
+
+    else:
+        try:
+            authorization_method = request.headers["Authorization"]
+        except KeyError:
+            _handshake_abort(401, api_version=api_version)
+
+        if authorization_method != AUTHORIZATION_PARSEC_ED25519:
+            _handshake_abort(401, api_version=api_version)
+
+        try:
+            raw_device_id = request.headers["Author"]
+            raw_signature_b64 = request.headers["Signature"]
+        except KeyError:
+            _handshake_abort(401, api_version=api_version)
+
+        try:
+            signature_bytes = b64decode(raw_signature_b64)
+            device_id = DeviceID(b64decode(raw_device_id).decode())
+        except ValueError:
+            _handshake_abort(401, api_version=api_version)
+
+        body: bytes = await request.get_data()
+        try:
+            user, device = await backend.user.get_user_with_device(organization_id, device_id)
+        except UserNotFoundError:
+            _handshake_abort(401, api_version=api_version)
+        else:
+            if user.revoked_on:
+                abort(_rpc_msgpack_rep({"status": "revoked_user"}, api_version))
+
+        try:
+            device.verify_key.verify_with_signature(
+                signature=signature_bytes,
+                message=body,
+            )
+        except CryptoError:
+            _handshake_abort(401, api_version=api_version)
+
+    return api_version, organization_id, organization, user, device
+
+
+@rpc_bp.route("/anonymous/<raw_organization_id>", methods=["GET", "POST"])
+async def anonymous_api(raw_organization_id: str):
+    backend: BackendApp = g.backend
+
+    allow_missing_organization = (
+        request.method == "POST" and backend.config.organization_spontaneous_bootstrap
+    )
+
+    api_version, organization_id, organization, _, _ = await _do_handshake(
+        raw_organization_id=raw_organization_id,
+        backend=backend,
+        allow_missing_organization=allow_missing_organization,
+        check_authentication=False,
+    )
 
     # Reply to GET
     if request.method == "GET":
-        if not organization_exists:
-            abort(404)
-        else:
-            return rpc_msgpack_rep({})
+        return _rpc_msgpack_rep({}, api_version)
 
-    # Reply early to POST when the organization doesn't exists
-    if not organization_exists and not backend.config.organization_spontaneous_bootstrap:
-        abort(404)
-
-    # Get and unpack the body
     body: bytes = await request.get_data(cache=False)
     try:
         msg = unpackb(body)
     except SerdePackingError:
-        return rpc_msgpack_rep({"status": "invalid_msg_format"})
+        return _rpc_msgpack_rep({"status": "invalid_msg_format"}, api_version)
 
     # Lazy creation of the organization if necessary
     cmd = msg.get("cmd")
-    if cmd == "organization_bootstrap" and not organization_exists:
+    if cmd == "organization_bootstrap" and not organization:
         assert backend.config.organization_spontaneous_bootstrap
         try:
             await backend.organization.create(id=organization_id, bootstrap_token="")
@@ -101,164 +210,50 @@ async def anonymous_api(raw_organization_id: str):
     # Retrieve command
     client_ctx = AnonymousClientContext(organization_id)
     if not isinstance(cmd, str):
-        return rpc_msgpack_rep({"status": "unknown_command"})
+        return _rpc_msgpack_rep({"status": "unknown_command"}, api_version)
 
     try:
         cmd_func = backend.apis[ClientType.ANONYMOUS][cmd]
     except KeyError:
-        return rpc_msgpack_rep({"status": "unknown_command"})
+        return _rpc_msgpack_rep({"status": "unknown_command"}, api_version)
 
     # Run command
     rep = await cmd_func(client_ctx, msg)
-    return rpc_msgpack_rep(rep)
+    return _rpc_msgpack_rep(rep, api_version)
 
 
 @rpc_bp.route("/authenticated/<raw_organization_id>", methods=["POST"])
 async def authenticated_api(raw_organization_id: str):
     backend: BackendApp = g.backend
 
-    try:
-        organization_id = OrganizationID(raw_organization_id)
-    except ValueError:
-        abort(404)
+    api_version, organization_id, _, user, device = await _do_handshake(
+        raw_organization_id=raw_organization_id,
+        backend=backend,
+        allow_missing_organization=False,
+        check_authentication=True,
+    )
+    assert isinstance(user, User)
+    assert isinstance(device, Device)
 
-    try:
-        organization = await backend.organization.get(organization_id)
-    except OrganizationNotFoundError:
-        abort(400)
-    else:
-        if organization.is_expired:
-            abort(400)
-
+    # Unpack verified body
     body: bytes = await request.get_data(cache=False)
-    try:
-        user, device = await verify_auth_request(body, request.headers, organization, backend)
-    except (HttpProtocolError, DeviceNotFoundError):
-        abort(400)
-    except AuthenticationProtocolError:
-        abort(401)
-
-    api_version = get_api_version(request.headers)
-
-    client_ctx = build_client_context(organization, user, device, api_version)
-
-    # Unpack the verified body
-    if request.headers["Content-Type"] != CONTENT_TYPE_MSGPACK:
-        abort(400)
     try:
         msg = unpackb(body)
     except SerdePackingError:
-        return rpc_msgpack_rep({"status": "invalid_msg_format"})
+        return _rpc_msgpack_rep({"status": "invalid_msg_format"}, api_version)
 
     cmd = msg.get("cmd")
     if not isinstance(cmd, str):
-        return rpc_msgpack_rep({"status": "unknown_command"})
+        return _rpc_msgpack_rep({"status": "unknown_command"}, api_version)
 
     try:
         cmd_func = backend.apis[ClientType.AUTHENTICATED][cmd]
     except KeyError:
-        return rpc_msgpack_rep({"status": "unknown_command"})
+        return _rpc_msgpack_rep({"status": "unknown_command"}, api_version)
 
-    cmd_rep = await cmd_func(client_ctx, msg)
-    rep = rpc_msgpack_rep(cmd_rep)
-    rep.headers.add("Api-Version", str(client_ctx.api_version))
-    return rep
-
-
-def get_api_version(headers: Headers) -> ApiVersion:
-    """Parse `Api-version` from the HTTP Header and return a compatible `ApiVersion` that can be used by the server & client"""
-
-    try:
-        raw_api_version = request.headers["Api-Version"]
-        client_api_version = ApiVersion.from_str(raw_api_version)
-        settle_api_version, _client_api_version = settle_compatible_versions(
-            ServerHandshake.SUPPORTED_API_VERSIONS, [client_api_version]
-        )
-    except (ValueError, KeyError):
-        abort(400)
-    except IncompatibleAPIVersionsError:
-        abort(400)
-    return settle_api_version
-
-
-async def verify_auth_request(
-    body: bytes, headers: Headers, organization: Organization, backend: BackendApp
-) -> Tuple[User, Device]:
-
-    try:
-        authorization_method = headers["Authorization"]
-    except KeyError:
-        abort(400)
-
-    if authorization_method == AUTHORIZATION_PARSEC_ED25519:
-        try:
-            raw_device_id = headers["Author"]
-            raw_timestamp = headers["Timestamp"].encode()
-            raw_signature_b64 = headers["Signature"]
-        except KeyError:
-            abort(400)
-
-        try:
-            signature_bytes = base64.b64decode(raw_signature_b64)
-        except binascii.Error:
-            abort(400)
-
-        try:
-            device_id = DeviceID(base64.b64decode(raw_device_id).decode())
-        except binascii.Error:
-            abort(400)
-        except ValueError:
-            abort(400)
-        return await verify_auth_request_ed25519(
-            body=body,
-            device_id=device_id,
-            raw_timestamp=raw_timestamp,
-            signature=signature_bytes,
-            organization=organization,
-            backend=backend,
-        )
-    else:
-        raise InvalidHeaderValueError("Authorization", authorization_method)
-
-
-async def verify_auth_request_ed25519(
-    body: bytes,
-    device_id: DeviceID,
-    raw_timestamp: bytes,
-    signature: bytes,
-    organization: Organization,
-    backend: BackendApp,
-) -> Tuple[User, Device]:
-    try:
-        user, device = await backend.user.get_user_with_device(
-            organization.organization_id, device_id
-        )
-    except UserNotFoundError:
-        raise DeviceNotFoundError(organization.organization_id, device_id)
-    else:
-        if user.revoked_on:
-            raise UserIsRevokedError(organization.organization_id, user.user_id)
-
-    verify_key = device.verify_key
-
-    try:
-        # when the verify failed, `verify()` raise the exception `BadSignatureError`
-        verify_key.verify_with_signature(
-            signature=signature,
-            message=base64.b64encode(device_id.str.encode()) + raw_timestamp + body,
-        )
-    except CryptoError as e:
-        raise CannotVerifySignatureError(e)
-
-    return (user, device)
-
-
-def build_client_context(
-    organization: Organization, user: User, device: Device, settle_api_version: ApiVersion
-) -> AuthenticatedClientContext:
     client_ctx = AuthenticatedClientContext(
-        api_version=settle_api_version,
-        organization_id=organization.organization_id,
+        api_version=api_version,
+        organization_id=organization_id,
         device_id=device.device_id,
         human_handle=user.human_handle,
         device_label=device.device_label,
@@ -267,4 +262,5 @@ def build_client_context(
         verify_key=device.verify_key,
     )
 
-    return client_ctx
+    cmd_rep = await cmd_func(client_ctx, msg)
+    return _rpc_msgpack_rep(cmd_rep, api_version)
