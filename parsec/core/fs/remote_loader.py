@@ -90,7 +90,6 @@ from parsec.core.fs.exceptions import (
     FSInvalidTrustchainError,
     FSLocalMissError,
 )
-from parsec.core.fs.storage import BaseWorkspaceStorage
 
 
 # This value is used to increment the timestamp provided by the backend

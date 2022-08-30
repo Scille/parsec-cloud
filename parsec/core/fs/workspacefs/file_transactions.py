@@ -11,7 +11,6 @@ from parsec.api.data import BlockAccess
 from parsec.api.protocol import DeviceID
 from parsec.core.types import FileDescriptor, EntryID, LocalDevice
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.storage import BaseWorkspaceStorage
 from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor, FSEndOfFileError
 from parsec.core.types import (
     Chunk,

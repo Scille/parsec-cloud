@@ -14,9 +14,9 @@ from typing import (
     Tuple,
     Type,
     Union,
+    cast,
 )
 import trio
-from trio import lowlevel
 from structlog import get_logger
 from contextlib import asynccontextmanager
 
@@ -31,10 +31,9 @@ from parsec.core.types import (
     LocalFileManifest,
     LocalWorkspaceManifest,
 )
-from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
+from parsec.core.fs.exceptions import FSError
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
-from parsec.core.fs.storage.chunk_storage import ChunkStorage
 from parsec.core.fs.storage.version import (
     get_workspace_data_storage_db_path,
 )
@@ -72,176 +71,6 @@ async def workspace_storage_non_speculative_init(
                 author=device.device_id, id=workspace_id, timestamp=timestamp, speculative=False
             )
             await manifest_storage.set_manifest(workspace_id, manifest)
-
-
-class BaseWorkspaceStorage:
-    """Common base class for WorkspaceStorage and WorkspaceStorageTimestamped
-    Can not be instantiated
-    """
-
-    def __init__(
-        self,
-        device: LocalDevice,
-        workspace_id: EntryID,
-        block_storage: ChunkStorage,
-        chunk_storage: ChunkStorage,
-    ):
-        self.device = device
-        self.device_id = device.device_id
-        self.workspace_id = workspace_id
-
-        # File descriptors
-        self.open_fds: Dict[FileDescriptor, EntryID] = {}
-        self.fd_counter = 0
-
-        # Locking structures
-        self.locking_tasks: Dict[EntryID, lowlevel.Task] = {}
-        self.entry_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
-
-        # Manifest and block storage
-        self.block_storage = block_storage
-        self.chunk_storage = chunk_storage
-
-        # Pattern attributes
-        # Set by `_load_prevent_sync_pattern` in WorkspaceStorage.run()
-        self._prevent_sync_pattern: Pattern[str]
-        self._prevent_sync_pattern_fully_applied: bool
-
-    def _get_next_fd(self) -> FileDescriptor:
-        self.fd_counter += 1
-        return FileDescriptor(self.fd_counter)
-
-    # Manifest interface
-
-    def get_workspace_manifest(self) -> LocalWorkspaceManifest:
-        """
-        Raises nothing, workspace manifest is guaranteed to be always available
-        """
-        raise NotImplementedError
-
-    async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
-        raise NotImplementedError
-
-    async def set_manifest(
-        self,
-        entry_id: EntryID,
-        manifest: AnyLocalManifest,
-        cache_only: bool = False,
-        check_lock_status: bool = True,
-        removed_ids: Optional[Set[ChunkID]] = None,
-    ) -> None:
-        raise NotImplementedError
-
-    async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
-        raise NotImplementedError
-
-    # Prevent sync pattern interface
-
-    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
-        raise NotImplementedError
-
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
-        raise NotImplementedError
-
-    async def get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
-        raise NotImplementedError
-
-    async def get_local_block_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
-        raise NotImplementedError
-
-    # Locking helpers
-
-    @asynccontextmanager
-    async def lock_entry_id(self, entry_id: EntryID) -> AsyncIterator[EntryID]:
-        async with self.entry_locks[entry_id]:
-            try:
-                self.locking_tasks[entry_id] = lowlevel.current_task()
-                yield entry_id
-            finally:
-                del self.locking_tasks[entry_id]
-
-    @asynccontextmanager
-    async def lock_manifest(self, entry_id: EntryID) -> AsyncIterator[AnyLocalManifest]:
-        async with self.lock_entry_id(entry_id):
-            yield await self.get_manifest(entry_id)
-
-    def _check_lock_status(self, entry_id: EntryID) -> None:
-        task = self.locking_tasks.get(entry_id)
-        if task != lowlevel.current_task():
-            raise RuntimeError(f"Entry `{entry_id}` modified without being locked")
-
-    # File management interface
-
-    def create_file_descriptor(self, manifest: LocalFileManifest) -> FileDescriptor:
-        assert isinstance(manifest, LocalFileManifest)
-        fd = self._get_next_fd()
-        self.open_fds[fd] = manifest.id
-        return fd
-
-    async def load_file_descriptor(self, fd: FileDescriptor) -> LocalFileManifest:
-        try:
-            entry_id = self.open_fds[fd]
-        except KeyError:
-            raise FSInvalidFileDescriptor(fd)
-        manifest = await self.get_manifest(entry_id)
-        assert isinstance(manifest, LocalFileManifest)
-        return manifest
-
-    def remove_file_descriptor(self, fd: FileDescriptor) -> None:
-        try:
-            self.open_fds.pop(fd)
-        except KeyError:
-            raise FSInvalidFileDescriptor(fd)
-
-    # Block interface
-
-    async def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
-        assert isinstance(block_id, BlockID)
-        return await self.block_storage.set_chunk(ChunkID(block_id.uuid), block)
-
-    async def clear_clean_block(self, block_id: BlockID) -> None:
-        assert isinstance(block_id, BlockID)
-        try:
-            await self.block_storage.clear_chunk(ChunkID(block_id.uuid))
-        except FSLocalMissError:
-            pass
-
-    async def get_dirty_block(self, block_id: BlockID) -> bytes:
-        return await self.chunk_storage.get_chunk(ChunkID(block_id.uuid))
-
-    # Chunk interface
-
-    async def get_chunk(self, chunk_id: ChunkID) -> bytes:
-        assert isinstance(chunk_id, ChunkID)
-        try:
-            return await self.chunk_storage.get_chunk(chunk_id)
-        except FSLocalMissError:
-            return await self.block_storage.get_chunk(chunk_id)
-
-    async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> None:
-        assert isinstance(chunk_id, ChunkID)
-        return await self.chunk_storage.set_chunk(chunk_id, block)
-
-    async def clear_chunk(self, chunk_id: ChunkID, miss_ok: bool = False) -> None:
-        assert isinstance(chunk_id, ChunkID)
-        try:
-            await self.chunk_storage.clear_chunk(chunk_id)
-        except FSLocalMissError:
-            if not miss_ok:
-                raise
-
-    # "Prevent sync" pattern interface
-
-    def get_prevent_sync_pattern(self) -> Pattern[str]:
-        return self._prevent_sync_pattern
-
-    def get_prevent_sync_pattern_fully_applied(self) -> bool:
-        return self._prevent_sync_pattern_fully_applied
-
-    # Timestamped workspace
-
-    def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
-        return WorkspaceStorageTimestamped(self, timestamp)
 
 
 class WorkspaceStorage:
@@ -440,10 +269,10 @@ class WorkspaceStorage:
     # Timestamped workspace
 
     def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
-        raise NotImplementedError()
+        return WorkspaceStorageTimestamped(self, timestamp)
 
 
-class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
+class WorkspaceStorageTimestamped:
     """Timestamped version to access a local storage as it was at a given timestamp
 
     That includes:
@@ -453,23 +282,29 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
     - the same lock mechanism to protect against race conditions, although it is useless there
     """
 
-    def __init__(self, workspace_storage: BaseWorkspaceStorage, timestamp: DateTime):
-        super().__init__(
-            workspace_storage.device,
-            workspace_storage.workspace_id,
-            block_storage=workspace_storage.block_storage,
-            chunk_storage=workspace_storage.chunk_storage,
-        )
-
-        self._cache: Dict[EntryID, AnyLocalManifest] = {}
+    def __init__(self, workspace_storage: WorkspaceStorage, timestamp: DateTime):
         self.workspace_storage = workspace_storage
-        self.timestamp = timestamp
-        self.manifest_storage = None
 
-        self._prevent_sync_pattern = workspace_storage._prevent_sync_pattern
-        self._prevent_sync_pattern_fully_applied = (
-            workspace_storage._prevent_sync_pattern_fully_applied
-        )
+        # self._cache: Dict[EntryID, AnyLocalManifest] = {}
+        # self.workspace_storage = workspace_storage
+        self.timestamp = timestamp
+        # self.manifest_storage = None
+
+        # self._prevent_sync_pattern = workspace_storage._prevent_sync_pattern
+        # self._prevent_sync_pattern_fully_applied = (
+        #     workspace_storage._prevent_sync_pattern_fully_applied
+        # )
+
+    @property
+    def device(self) -> LocalDevice:
+        return self.workspace_storage.device
+
+    @property
+    def workspace_id(self) -> EntryID:
+        return self.workspace_storage.workspace_id
+
+    async def get_chunk(self, chunk_id: ChunkID) -> bytes:
+        return await self.workspace_storage.get_chunk(chunk_id)
 
     async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> NoReturn:
         self._throw_permission_error()
@@ -510,11 +345,7 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
 
     async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         """Raises: FSLocalMissError"""
-        assert isinstance(entry_id, EntryID)
-        try:
-            return self._cache[entry_id]
-        except KeyError:
-            raise FSLocalMissError(entry_id)
+        return await self.workspace_storage.get_manifest(entry_id)
 
     async def set_manifest(
         self,
@@ -524,14 +355,68 @@ class WorkspaceStorageTimestamped(BaseWorkspaceStorage):
         check_lock_status: bool = True,
         removed_ids: Optional[Set[ChunkID]] = None,
     ) -> None:
-        assert isinstance(entry_id, EntryID)
         if manifest.need_sync:
             self._throw_permission_error()
-        self._check_lock_status(entry_id)
-        self._cache[entry_id] = manifest
+        return await self.workspace_storage.set_manifest(
+            entry_id, manifest, cache_only, check_lock_status, removed_ids
+        )
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         pass
 
-    # def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
-    #     return WorkspaceStorageTimestamped(self, timestamp)
+    # Block interface
+
+    async def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
+        return await self.workspace_storage.set_clean_block(block_id, block)
+
+    async def clear_clean_block(self, block_id: BlockID) -> None:
+        return await self.workspace_storage.clear_clean_block(block_id)
+
+    async def get_dirty_block(self, block_id: BlockID) -> bytes:
+        return await self.workspace_storage.get_dirty_block(block_id)
+
+    # File management interface
+
+    def create_file_descriptor(self, manifest: LocalFileManifest) -> FileDescriptor:
+        return self.workspace_storage.create_file_descriptor(manifest)
+
+    async def load_file_descriptor(self, fd: FileDescriptor) -> LocalFileManifest:
+        return await self.workspace_storage.load_file_descriptor(fd)
+
+    def remove_file_descriptor(self, fd: FileDescriptor) -> None:
+        return self.workspace_storage.remove_file_descriptor(fd)
+
+    # Locking helpers
+
+    @asynccontextmanager
+    async def lock_entry_id(self, entry_id: EntryID) -> AsyncIterator[EntryID]:
+        async with self.workspace_storage.lock_entry_id(entry_id):
+            yield entry_id
+
+    @asynccontextmanager
+    async def lock_manifest(self, entry_id: EntryID) -> AsyncIterator[AnyLocalManifest]:
+        async with self.workspace_storage.lock_manifest(entry_id) as manifest:
+            yield manifest
+
+    # Prevent sync pattern interface
+
+    async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
+        raise NotImplementedError
+
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
+        raise NotImplementedError
+
+    async def get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+        raise NotImplementedError
+
+    async def get_local_block_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
+        raise NotImplementedError
+
+    def get_prevent_sync_pattern(self) -> Pattern[str]:
+        return self.workspace_storage.get_prevent_sync_pattern()
+
+    def get_prevent_sync_pattern_fully_applied(self) -> bool:
+        return self.workspace_storage.get_prevent_sync_pattern_fully_applied()
+
+    def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
+        return WorkspaceStorageTimestamped(self.workspace_storage, timestamp)

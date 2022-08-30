@@ -30,7 +30,7 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendAuthenticatedCmds,
 )
-from parsec.core.fs.storage import UserStorage, WorkspaceStorage, BaseWorkspaceStorage
+from parsec.core.fs.storage import UserStorage, WorkspaceStorage, AnyWorkspaceStorage
 from parsec.event_bus import EventBus
 
 
@@ -98,7 +98,7 @@ class SyncContext:
     def _get_backend_cmds(self) -> BackendAuthenticatedCmds:
         raise NotImplementedError
 
-    def _get_local_storage(self) -> Union[UserStorage, BaseWorkspaceStorage]:
+    def _get_local_storage(self) -> Union[UserStorage, AnyWorkspaceStorage]:
         raise NotImplementedError
 
     def __repr__(self) -> str:
