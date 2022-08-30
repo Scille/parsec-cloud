@@ -445,8 +445,12 @@ jobs:
         run: npm clean-install
         working-directory: oxidation/client
 
-      # Replace it with `npm run test:unit && npm run test:e2e` when those are stable.
-      # Then move this step to package-ci.yml
+      - name: Test WebApp codebase
+        if: steps.web-change.outputs.run == 'true'
+        run: npm run test
+        working-directory: oxidation/client
+
+      # Then move this step to package-ci.yml when these is stable.
       - name: Build WebApp
         if: steps.web-change.outputs.run == 'true'
         run: npm run web:release
