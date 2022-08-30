@@ -175,10 +175,15 @@ class FileTable(QTableWidget):
         rows = {row for r in self.selectedRanges() for row in range(r.topRow(), r.bottomRow() + 1)}
         for row in sorted(rows):
             item = self.item(row, Column.NAME)
+
+            item_type = item.data(TYPE_DATA_INDEX)
+            if not item_type or (item_type != FileType.Folder and item_type != FileType.File):
+                continue
+
             files.append(
                 SelectedFile(
                     row,
-                    item.data(TYPE_DATA_INDEX),
+                    item_type,
                     item.data(NAME_DATA_INDEX),
                     EntryID.from_hex(item.data(ENTRY_ID_DATA_INDEX)),
                 )
