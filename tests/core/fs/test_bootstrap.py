@@ -4,15 +4,23 @@ from __future__ import annotations
 import pytest
 import trio
 
-from parsec._parsec import DateTime
-from parsec.api.data import EntryName, UserManifest, WorkspaceEntry
+from parsec._parsec import (
+    DateTime,
+    EntryName,
+    LocalDevice,
+    LocalUserManifest,
+    SecretKey,
+    UserManifest,
+    WorkspaceEntry,
+)
+from parsec.core.fs import UserFS
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.types import LocalUserManifest, WorkspaceRole
-from parsec.crypto import SecretKey
+from parsec.core.types import WorkspaceRole
 from tests.common import freeze_time
 from tests.common.fixtures_customisation import customize_fixtures
+from tests.core.conftest import UserFsFactory
 
 
 @pytest.mark.trio
@@ -33,13 +41,17 @@ async def test_user_manifest_access_while_speculative(user_fs_factory, alice):
 
 
 @pytest.mark.trio
-async def test_workspace_manifest_access_while_speculative(user_fs_factory, alice):
+async def test_workspace_manifest_access_while_speculative(
+    user_fs_factory: UserFsFactory,
+    alice: LocalDevice,
+):
     # Speculative workspace occurs when workspace is shared to a new user, or
     # when a device gets it local data removed. We use the latter here (even if
     # it is the less likely of the two) given it is simpler to do in the test.
 
     with freeze_time("2000-01-01"):
         async with user_fs_factory(alice) as user_fs:
+            user_fs: UserFS = user_fs
             wksp_id = await user_fs.workspace_create(EntryName("wksp"))
             # Retreive where the database is stored
             wksp = user_fs.get_workspace(wksp_id)
@@ -216,7 +228,9 @@ async def test_concurrent_devices_agree_on_workspace_manifest(
     await initialize_local_user_manifest(data_base_dir, alice2, initial_user_manifest="v1")
 
     async with user_fs_factory(alice) as alice_user_fs:
+        alice_user_fs: UserFS = alice_user_fs
         async with user_fs_factory(alice2) as alice2_user_fs:
+            alice2_user_fs: UserFS = alice2_user_fs
             with freeze_time("2000-01-01"):
                 wksp_id = await alice_user_fs.workspace_create(EntryName("wksp"))
             # Sync user manifest (containing the workspace entry), but
@@ -315,7 +329,9 @@ async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
     await initialize_local_user_manifest(data_base_dir, alice2, initial_user_manifest="v1")
 
     async with user_fs_factory(alice) as alice_user_fs:
+        alice_user_fs: UserFS = alice_user_fs
         async with user_fs_factory(alice2) as alice2_user_fs:
+            alice2_user_fs: UserFS = alice2_user_fs
             # First Alice creates a workspace, then populates and syncs it
             with freeze_time("2000-01-01"):
                 wksp_id = await alice_user_fs.workspace_create(EntryName("wksp"))
