@@ -3,13 +3,13 @@ from __future__ import annotations
 
 import pytest
 
-from parsec.api.data import EntryName
-from parsec.core.fs import FSWorkspaceNoAccess
+from parsec._parsec import EntryName
+from parsec.core.fs import FSWorkspaceNoAccess, UserFS
 from tests.common import create_shared_workspace
 
 
 @pytest.mark.trio
-async def test_manifest_no_access(running_backend, alice_user_fs, bob_user_fs):
+async def test_manifest_no_access(running_backend, alice_user_fs: UserFS, bob_user_fs: UserFS):
     wid = await create_shared_workspace(EntryName("w"), alice_user_fs, bob_user_fs)
     alice_w = alice_user_fs.get_workspace(wid)
     bob_w = bob_user_fs.get_workspace(wid)
@@ -40,7 +40,7 @@ async def test_manifest_no_access(running_backend, alice_user_fs, bob_user_fs):
 
 
 @pytest.mark.trio
-async def test_block_no_access(running_backend, alice_user_fs, bob_user_fs):
+async def test_block_no_access(running_backend, alice_user_fs: UserFS, bob_user_fs: UserFS):
     wid = await create_shared_workspace(EntryName("w"), alice_user_fs, bob_user_fs)
     alice_w = alice_user_fs.get_workspace(wid)
     bob_w = bob_user_fs.get_workspace(wid)
