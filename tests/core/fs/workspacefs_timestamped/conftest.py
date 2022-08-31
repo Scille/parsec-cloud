@@ -4,6 +4,7 @@ import pytest
 from parsec._parsec import DateTime
 
 from parsec.api.data import EntryName
+from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
 
 from tests.common import freeze_time
 
@@ -93,25 +94,33 @@ async def timestamp_0():
 
 
 @pytest.fixture
-async def alice_workspace_t1(alice_workspace):
+async def alice_workspace_t1(alice_workspace: WorkspaceFS) -> WorkspaceFSTimestamped:
     return await alice_workspace.to_timestamped(day1)
 
 
 @pytest.fixture
-async def alice_workspace_t2(alice_workspace_t1):
+async def alice_workspace_t2(
+    alice_workspace_t1: WorkspaceFSTimestamped,
+) -> WorkspaceFSTimestamped:
     return await alice_workspace_t1.to_timestamped(day2)
 
 
 @pytest.fixture
-async def alice_workspace_t3(alice_workspace_t2):
+async def alice_workspace_t3(
+    alice_workspace_t2: WorkspaceFSTimestamped,
+) -> WorkspaceFSTimestamped:
     return await alice_workspace_t2.to_timestamped(day3)
 
 
 @pytest.fixture
-async def alice_workspace_t4(alice_workspace_t3):
+async def alice_workspace_t4(
+    alice_workspace_t3: WorkspaceFSTimestamped,
+) -> WorkspaceFSTimestamped:
     return await alice_workspace_t3.to_timestamped(day4)
 
 
 @pytest.fixture
-async def alice_workspace_t5(alice_workspace_t4):
+async def alice_workspace_t5(
+    alice_workspace_t4: WorkspaceFSTimestamped,
+) -> WorkspaceFSTimestamped:
     return await alice_workspace_t4.to_timestamped(day5)

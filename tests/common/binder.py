@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from typing import Union, Optional, Tuple
+from typing import Dict, Union, Optional, Tuple
 from parsec._parsec import DateTime
 from functools import partial
 from dataclasses import dataclass
@@ -14,7 +14,7 @@ from parsec.api.data import (
     DeviceCertificate,
     RealmRoleCertificate,
 )
-from parsec.api.protocol import UserID, RealmRole, RealmID, VlobID
+from parsec.api.protocol import UserID, RealmRole, RealmID, VlobID, OrganizationID
 from parsec.core.types import (
     LocalDevice,
     LocalUserManifest,
@@ -54,9 +54,11 @@ class OrganizationFullData:
 
 class InitialUserManifestState:
     def __init__(self):
-        self._v1 = {}
+        self._v1: Dict[Tuple[OrganizationID, UserID], Tuple[UserManifest, LocalUserManifest]] = {}
 
-    def _generate_or_retrieve_user_manifest_v1(self, device):
+    def _generate_or_retrieve_user_manifest_v1(
+        self, device: LocalDevice
+    ) -> Tuple[UserManifest, LocalUserManifest]:
         try:
             return self._v1[(device.organization_id, device.user_id)]
 
@@ -82,17 +84,19 @@ class InitialUserManifestState:
     def force_user_manifest_v1_generation(self, device):
         self._generate_or_retrieve_user_manifest_v1(device)
 
-    def get_user_manifest_v1_for_device(self, device, ciphered=False):
+    def get_user_manifest_v1_for_device(
+        self, device: LocalDevice, ciphered=False
+    ) -> LocalUserManifest:
         _, local = self._generate_or_retrieve_user_manifest_v1(device)
         return local
 
-    def get_user_manifest_v1_for_backend(self, device):
+    def get_user_manifest_v1_for_backend(self, device: LocalDevice) -> UserManifest:
         remote, _ = self._generate_or_retrieve_user_manifest_v1(device)
         return remote
 
 
 @pytest.fixture
-def initial_user_manifest_state():
+def initial_user_manifest_state() -> InitialUserManifestState:
     # User manifest is stored in backend vlob and in devices's local db.
     # Hence this fixture allow us to centralize the first version of this user
     # manifest.

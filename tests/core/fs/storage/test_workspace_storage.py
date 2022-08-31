@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from typing import Type, TypeVar
 import pytest
 from parsec._parsec import DateTime
 
@@ -15,12 +16,18 @@ from parsec.core.types import (
     LocalFileManifest,
     EntryID,
     Chunk,
+    LocalDevice,
 )
 
 from tests.common import customize_fixtures
 
 
-def create_manifest(device, type=LocalWorkspaceManifest, use_legacy_none_author=False):
+Manifest = TypeVar("Manifest", LocalWorkspaceManifest, LocalUserManifest)
+
+
+def create_manifest(
+    device: LocalDevice, type: Type[Manifest] = LocalWorkspaceManifest, use_legacy_none_author=False
+) -> Manifest:
     author = device.device_id
     timestamp = device.timestamp()
     if type is LocalUserManifest:
@@ -41,15 +48,15 @@ def workspace_id():
 
 
 @pytest.fixture
-async def alice_workspace_storage(data_base_dir, alice, workspace_id):
+async def alice_workspace_storage(data_base_dir, alice, workspace_id) -> WorkspaceStorage:
     async with WorkspaceStorage.run(data_base_dir, alice, workspace_id) as aws:
         yield aws
 
 
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
-async def test_lock_required(alice_workspace_storage):
-    manifest = create_manifest(alice_workspace_storage.device)
+async def test_lock_required(alice_workspace_storage: WorkspaceStorage):
+    manifest: LocalWorkspaceManifest = create_manifest(alice_workspace_storage.device)
     msg = f"Entry `{manifest.id}` modified without being locked"
 
     with pytest.raises(RuntimeError) as exc:
@@ -139,9 +146,11 @@ async def test_cache_set_get(data_base_dir, alice, workspace_id):
 @customize_fixtures(real_data_storage=True)
 @pytest.mark.parametrize("cache_only", (False, True))
 @pytest.mark.parametrize("clear_manifest", (False, True))
-async def test_chunk_clearing(alice_workspace_storage, cache_only, clear_manifest):
+async def test_chunk_clearing(
+    alice_workspace_storage: WorkspaceStorage, cache_only: bool, clear_manifest: bool
+):
     aws = alice_workspace_storage
-    manifest = create_manifest(aws.device, LocalFileManifest)
+    manifest: LocalFileManifest = create_manifest(aws.device, LocalFileManifest)
     data1 = b"abc"
     chunk1 = Chunk.new(0, 3)
     data2 = b"def"
@@ -204,7 +213,7 @@ async def test_cache_flushed_on_exit(data_base_dir, alice, workspace_id):
 
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
-async def test_clear_cache(alice_workspace_storage):
+async def test_clear_cache(alice_workspace_storage: WorkspaceStorage):
     aws = alice_workspace_storage
     manifest1 = create_manifest(aws.device)
     manifest2 = create_manifest(aws.device)
@@ -353,7 +362,7 @@ async def test_lock_manifest(data_base_dir, alice, workspace_id):
 
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
-async def test_block_interface(alice_workspace_storage):
+async def test_block_interface(alice_workspace_storage: WorkspaceStorage):
     data = b"0123456"
     aws = alice_workspace_storage
 
@@ -383,7 +392,7 @@ async def test_block_interface(alice_workspace_storage):
 
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
-async def test_chunk_interface(alice_workspace_storage):
+async def test_chunk_interface(alice_workspace_storage: WorkspaceStorage):
     data = b"0123456"
     aws = alice_workspace_storage
     chunk = Chunk.new(0, 7)
@@ -413,7 +422,7 @@ async def test_chunk_interface(alice_workspace_storage):
 
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
-async def test_chunk_many(alice_workspace_storage):
+async def test_chunk_many(alice_workspace_storage: WorkspaceStorage):
     data = b"0123456"
     aws = alice_workspace_storage
     # More than the sqLite max argument limit to prevent regression
@@ -458,7 +467,7 @@ async def test_run_vacuum(alice_workspace_storage):
 
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
-async def test_timestamped_storage(alice_workspace_storage):
+async def test_timestamped_storage(alice_workspace_storage: WorkspaceStorage):
     timestamp = DateTime.now()
     aws = alice_workspace_storage
     taws = aws.to_timestamped(timestamp)

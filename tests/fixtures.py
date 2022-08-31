@@ -55,7 +55,7 @@ from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import User as BackendUser, Device as BackendDevice
 from parsec.backend.realm import RealmGrantedRole
 
-from tests.common import freeze_time, addr_with_device_subdomain
+from tests.common import freeze_time
 
 
 @pytest.fixture
@@ -125,6 +125,8 @@ def local_device_factory(coolorg):
         has_device_label: bool = True,
         base_device_label: Optional[Union[str, DeviceLabel]] = None,
     ):
+        from tests.common import addr_with_device_subdomain
+
         nonlocal count
 
         if not base_device_id:

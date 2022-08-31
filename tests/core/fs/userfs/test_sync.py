@@ -7,14 +7,17 @@ from parsec.api.data import UserManifest, EntryID, EntryName
 from parsec.crypto import SecretKey
 from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_US
 from parsec.core.types import (
+    LocalDevice,
     WorkspaceEntry,
     WorkspaceRole,
     LocalUserManifest,
     LocalWorkspaceManifest,
 )
-from parsec.core.fs import FSWorkspaceNotFoundError, FSBackendOfflineError
+from parsec.core.fs import FSWorkspaceNotFoundError, FSBackendOfflineError, UserFS
 
 from tests.common import freeze_time
+from tests.common.backend import RunningBackend
+from tests.common.binder import InitialUserManifestState
 
 
 KEY = SecretKey.generate()
@@ -36,7 +39,9 @@ async def test_get_manifest(alice_user_fs):
 
 
 @pytest.mark.trio
-async def test_create_workspace(initial_user_manifest_state, alice_user_fs, alice):
+async def test_create_workspace(
+    initial_user_manifest_state: InitialUserManifestState, alice_user_fs: UserFS, alice: LocalDevice
+):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
     um = alice_user_fs.get_user_manifest()
@@ -71,7 +76,10 @@ async def test_create_workspace(initial_user_manifest_state, alice_user_fs, alic
 
 @pytest.mark.trio
 async def test_create_workspace_offline(
-    initial_user_manifest_state, alice_user_fs, alice, running_backend
+    initial_user_manifest_state: InitialUserManifestState,
+    alice_user_fs: UserFS,
+    alice: LocalDevice,
+    running_backend: RunningBackend,
 ):
     with running_backend.offline():
         await test_create_workspace(initial_user_manifest_state, alice_user_fs, alice)

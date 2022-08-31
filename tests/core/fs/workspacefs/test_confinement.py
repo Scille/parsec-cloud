@@ -4,7 +4,7 @@ import re
 import pytest
 
 from parsec.api.data import EntryName
-from parsec.core.fs import FsPath
+from parsec.core.fs import FsPath, UserFS, WorkspaceFS
 from tests.common import create_shared_workspace
 
 
@@ -15,7 +15,7 @@ async def assert_path_info(workspace, path, **kwargs):
 
 
 @pytest.mark.trio
-async def test_local_confinement_points(alice_workspace, running_backend):
+async def test_local_confinement_points(alice_workspace: WorkspaceFS, running_backend):
 
     # Apply a *.tmp pattern
     pattern = re.compile(r".*\.tmp$")
@@ -98,7 +98,9 @@ async def test_local_confinement_points(alice_workspace, running_backend):
 
 
 @pytest.mark.trio
-async def test_sync_with_different_patterns(running_backend, alice_user_fs, alice2_user_fs):
+async def test_sync_with_different_patterns(
+    running_backend, alice_user_fs: UserFS, alice2_user_fs: UserFS
+):
     wid = await create_shared_workspace(EntryName("w"), alice_user_fs, alice2_user_fs)
     workspace1 = alice_user_fs.get_workspace(wid)
     workspace2 = alice2_user_fs.get_workspace(wid)
@@ -170,7 +172,7 @@ async def test_sync_with_different_patterns(running_backend, alice_user_fs, alic
 
 
 @pytest.mark.trio
-async def test_change_pattern(alice_workspace, running_backend):
+async def test_change_pattern(alice_workspace: WorkspaceFS, running_backend):
     root_id = alice_workspace.workspace_id
 
     # Apply a *.x pattern
@@ -253,7 +255,7 @@ async def test_change_pattern(alice_workspace, running_backend):
 
 
 @pytest.mark.trio
-async def test_common_temporary_files(alice_workspace):
+async def test_common_temporary_files(alice_workspace: WorkspaceFS):
     file_list = ["test.txt", "test" "t" ".test"]
     for path in file_list:
         path = "/" + path

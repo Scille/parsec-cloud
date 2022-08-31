@@ -6,6 +6,7 @@ from unittest.mock import ANY
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
 from parsec.core.fs.exceptions import FSWorkspaceTimestampedTooEarly
+from parsec.core.fs.workspacefs.workspacefs_timestamped import WorkspaceFSTimestamped
 
 
 @pytest.mark.trio
@@ -106,7 +107,9 @@ async def test_is_file(alice_workspace_t3):
 
 
 @pytest.mark.trio
-async def test_iterdir(alice_workspace_t2, alice_workspace_t3):
+async def test_iterdir(
+    alice_workspace_t2: WorkspaceFSTimestamped, alice_workspace_t3: WorkspaceFSTimestamped
+):
     lst = [child async for child in alice_workspace_t2.iterdir("/")]
     assert lst == [FsPath("/foo")]
     lst = [child async for child in alice_workspace_t2.iterdir("/foo")]
@@ -123,7 +126,11 @@ async def test_iterdir(alice_workspace_t2, alice_workspace_t3):
 
 
 @pytest.mark.trio
-async def test_listdir(alice_workspace_t1, alice_workspace_t2, alice_workspace_t3):
+async def test_listdir(
+    alice_workspace_t1: WorkspaceFSTimestamped,
+    alice_workspace_t2: WorkspaceFSTimestamped,
+    alice_workspace_t3: WorkspaceFSTimestamped,
+):
     lst = await alice_workspace_t1.listdir("/")
     assert lst == [FsPath("/foo")]
     lst = await alice_workspace_t1.listdir("/foo")
@@ -176,7 +183,9 @@ async def test_truncate(alice_workspace_t4):
 
 
 @pytest.mark.trio
-async def test_read_bytes(alice_workspace_t4, alice_workspace_t5):
+async def test_read_bytes(
+    alice_workspace_t4: WorkspaceFSTimestamped, alice_workspace_t5: WorkspaceFSTimestamped
+):
     assert await alice_workspace_t4.read_bytes("/foo/bar") == b""
     assert await alice_workspace_t4.read_bytes("/files/content") == b"abcde"
     assert await alice_workspace_t5.read_bytes("/files/content") == b"fghij"

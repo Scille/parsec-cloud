@@ -9,7 +9,7 @@ from contextlib import ExitStack
 from parsec._parsec import DateTime
 
 from parsec.core.core_events import CoreEvent
-from parsec.core.types import WorkspaceRole
+from parsec.core.types import WorkspaceRole, EntryID
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import UserFS
 from parsec.api.transport import Transport, TransportError
@@ -117,7 +117,7 @@ async def call_with_control(controlled_fn, *, task_status=trio.TASK_STATUS_IGNOR
         controller.stopped.set()
 
 
-async def create_shared_workspace(name, creator, *shared_with):
+async def create_shared_workspace(name, creator: UserFS, *shared_with: UserFS) -> EntryID:
     """
     Create a workspace and share it with the given Cores/FSs.
     This is more tricky than it seems given all Cores/FSs must agree on the

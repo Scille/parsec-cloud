@@ -6,21 +6,23 @@ from unittest.mock import ANY
 
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID
-from parsec.core.types import EntryID
+from parsec.core.types import EntryID, LocalDevice
 from parsec.core.fs import (
     FSError,
     FSWorkspaceNotFoundError,
     FSWorkspaceNotInMaintenance,
     FSWorkspaceInMaintenance,
     FSBadEncryptionRevision,
+    UserFS,
 )
 from parsec.backend.backend_events import BackendEvent
 
 from tests.common import freeze_time
+from tests.common.backend import RunningBackend
 
 
 @pytest.fixture
-async def workspace(running_backend, alice_user_fs):
+async def workspace(running_backend, alice_user_fs: UserFS) -> EntryID:
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
         # Sync workspace manifest v1
@@ -39,7 +41,9 @@ async def workspace(running_backend, alice_user_fs):
 
 
 @pytest.mark.trio
-async def test_do_reencryption(running_backend, workspace, alice, alice_user_fs):
+async def test_do_reencryption(
+    running_backend: RunningBackend, workspace: EntryID, alice: LocalDevice, alice_user_fs: UserFS
+):
     with running_backend.backend.event_bus.listen() as spy:
         job = await alice_user_fs.workspace_start_reencryption(workspace)
 
@@ -102,7 +106,7 @@ async def test_unknown_workspace(alice_user_fs):
 
 
 @pytest.mark.trio
-async def test_concurrent_start_reencryption(workspace, alice_user_fs):
+async def test_concurrent_start_reencryption(workspace, alice_user_fs: UserFS):
     await alice_user_fs.workspace_start_reencryption(workspace)
 
     with pytest.raises(FSWorkspaceInMaintenance):
@@ -110,13 +114,15 @@ async def test_concurrent_start_reencryption(workspace, alice_user_fs):
 
 
 @pytest.mark.trio
-async def test_continue_reencryption_not_in_maintenance(workspace, alice_user_fs):
+async def test_continue_reencryption_not_in_maintenance(workspace: EntryID, alice_user_fs: UserFS):
     with pytest.raises(FSWorkspaceNotInMaintenance):
         await alice_user_fs.workspace_continue_reencryption(workspace)
 
 
 @pytest.mark.trio
-async def test_continue_reencryption_with_bad_encryption_revision(workspace, alice_user_fs):
+async def test_continue_reencryption_with_bad_encryption_revision(
+    workspace: EntryID, alice_user_fs: UserFS
+):
     await alice_user_fs.workspace_start_reencryption(workspace)
 
     with pytest.raises(FSError):
@@ -124,7 +130,9 @@ async def test_continue_reencryption_with_bad_encryption_revision(workspace, ali
 
 
 @pytest.mark.trio
-async def test_concurrent_continue_reencryption(running_backend, workspace, alice_user_fs):
+async def test_concurrent_continue_reencryption(
+    running_backend: RunningBackend, workspace: EntryID, alice_user_fs: UserFS
+):
     with running_backend.backend.event_bus.listen() as spy:
         job1 = await alice_user_fs.workspace_start_reencryption(workspace)
 
@@ -155,7 +163,7 @@ async def test_concurrent_continue_reencryption(running_backend, workspace, alic
 
 
 @pytest.mark.trio
-async def test_reencryption_already_started(running_backend, alice_user_fs):
+async def test_reencryption_already_started(running_backend, alice_user_fs: UserFS):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
     await alice_user_fs.sync()
@@ -167,7 +175,9 @@ async def test_reencryption_already_started(running_backend, alice_user_fs):
 
 
 @pytest.mark.trio
-async def test_no_access_during_reencryption(running_backend, alice2_user_fs, workspace):
+async def test_no_access_during_reencryption(
+    running_backend, alice2_user_fs: UserFS, workspace: EntryID
+):
     # Workspace have been created with alice_user_fs, hence user alice2_user_fs
     # start with no local cache
     await alice2_user_fs.sync()
