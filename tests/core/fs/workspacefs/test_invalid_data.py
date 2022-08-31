@@ -3,16 +3,17 @@ from __future__ import annotations
 
 import pytest
 
-from parsec._parsec import DateTime
-from parsec.api.data import EntryName
-from parsec.api.protocol import VlobID
-from parsec.core.fs import FSError
+from parsec._parsec import DateTime, EntryName, LocalDevice, VlobID
+from parsec.core.fs import FSError, UserFS
 from parsec.core.types import WorkspaceRole
 from tests.common import customize_fixtures, freeze_time
+from tests.common.backend import RunningBackend
 
 
 @pytest.fixture
-async def testbed(running_backend, alice_user_fs, alice, bob):
+async def testbed(
+    running_backend: RunningBackend, alice_user_fs: UserFS, alice: LocalDevice, bob: LocalDevice
+):
     with freeze_time("2000-01-01"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
         workspace = alice_user_fs.get_workspace(wid)
@@ -78,13 +79,13 @@ async def test_empty_blob(testbed):
 
 
 @pytest.mark.trio
-async def test_invalid_signature(testbed, alice2):
+async def test_invalid_signature(testbed, alice2: LocalDevice):
     exc_msg = "Cannot decrypt vlob: Signature was forged or corrupt"
     await testbed.run(author_signkey=alice2.signing_key, exc_msg=exc_msg)
 
 
 @pytest.mark.trio
-async def test_invalid_author(testbed, alice2):
+async def test_invalid_author(testbed, alice2: LocalDevice):
     # Invalid author field in manifest
     exc_msg = "Cannot decrypt vlob: Invalid author: expected `alice@dev1`, got `alice@dev2`"
     await testbed.run(signed_author=alice2.device_id, exc_msg=exc_msg)
@@ -126,7 +127,7 @@ def backend_disable_vlob_checks(backend):
 
 @pytest.mark.trio
 @customize_fixtures(backend_force_mocked=True)
-async def test_no_user_certif(running_backend, testbed, alice, bob):
+async def test_no_user_certif(running_backend: RunningBackend, testbed, alice, bob: LocalDevice):
     # Data created before workspace manifest access
     exc_msg = "Manifest was created at 2000-01-02T00:00:00Z by `bob@dev1` which had no right to access the workspace at that time"
 

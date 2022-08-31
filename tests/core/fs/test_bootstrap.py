@@ -1,22 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from typing import Literal
+
 import pytest
 import trio
 
-from parsec._parsec import DateTime
-from parsec.api.data import EntryName, UserManifest, WorkspaceEntry
+from parsec._parsec import (
+    DateTime,
+    EntryName,
+    LocalDevice,
+    LocalUserManifest,
+    SecretKey,
+    UserManifest,
+    WorkspaceEntry,
+)
 from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.types import LocalUserManifest, WorkspaceRole
-from parsec.crypto import SecretKey
+from parsec.core.types import WorkspaceRole
 from tests.common import freeze_time
 from tests.common.fixtures_customisation import customize_fixtures
+from tests.core.conftest import UserFsFactory
 
 
 @pytest.mark.trio
-async def test_user_manifest_access_while_speculative(user_fs_factory, alice):
+async def test_user_manifest_access_while_speculative(
+    user_fs_factory: UserFsFactory, alice: LocalDevice
+):
     with freeze_time("2000-01-01"):
         async with user_fs_factory(alice) as user_fs:
             with freeze_time("2000-01-02"):
@@ -33,7 +44,10 @@ async def test_user_manifest_access_while_speculative(user_fs_factory, alice):
 
 
 @pytest.mark.trio
-async def test_workspace_manifest_access_while_speculative(user_fs_factory, alice):
+async def test_workspace_manifest_access_while_speculative(
+    user_fs_factory: UserFsFactory,
+    alice: LocalDevice,
+):
     # Speculative workspace occurs when workspace is shared to a new user, or
     # when a device gets it local data removed. We use the latter here (even if
     # it is the less likely of the two) given it is simpler to do in the test.
@@ -81,9 +95,9 @@ async def test_concurrent_devices_agree_on_user_manifest(
     data_base_dir,
     user_fs_factory,
     coolorg,
-    alice,
-    alice2,
-    with_speculative,
+    alice: LocalDevice,
+    alice2: LocalDevice,
+    with_speculative: Literal["none", "both", "alice2"],
 ):
     KEY = SecretKey.generate()
 
@@ -210,7 +224,12 @@ async def test_concurrent_devices_agree_on_user_manifest(
 
 @pytest.mark.trio
 async def test_concurrent_devices_agree_on_workspace_manifest(
-    running_backend, user_fs_factory, data_base_dir, initialize_local_user_manifest, alice, alice2
+    running_backend,
+    user_fs_factory: UserFsFactory,
+    data_base_dir,
+    initialize_local_user_manifest,
+    alice: LocalDevice,
+    alice2: LocalDevice,
 ):
     await initialize_local_user_manifest(data_base_dir, alice, initial_user_manifest="v1")
     await initialize_local_user_manifest(data_base_dir, alice2, initial_user_manifest="v1")
@@ -309,7 +328,12 @@ async def test_empty_user_manifest_placeholder_noop_on_resolve_sync(
 
 @pytest.mark.trio
 async def test_empty_workspace_manifest_placeholder_noop_on_resolve_sync(
-    running_backend, user_fs_factory, data_base_dir, initialize_local_user_manifest, alice, alice2
+    running_backend,
+    user_fs_factory: UserFsFactory,
+    data_base_dir,
+    initialize_local_user_manifest,
+    alice: LocalDevice,
+    alice2: LocalDevice,
 ):
     await initialize_local_user_manifest(data_base_dir, alice, initial_user_manifest="v1")
     await initialize_local_user_manifest(data_base_dir, alice2, initial_user_manifest="v1")

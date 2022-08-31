@@ -1,10 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import (
     Bundle,
+    MultipleResults,
     TrioAsyncioRuleBasedStateMachine,
     initialize,
     multiple,
@@ -12,10 +15,12 @@ from hypothesis_trio.stateful import (
     run_state_machine_as_test,
 )
 
-from parsec.api.data import EntryName
+from parsec._parsec import DeviceID, EntryID, EntryName, LocalDevice
 from parsec.core.fs import FSWorkspaceNoAccess, FSWorkspaceNotFoundError
+from parsec.core.fs.userfs.userfs import UserFS
 from parsec.core.types import WorkspaceRole
-from tests.common import call_with_control
+from tests.common import CoreFactory, call_with_control
+from tests.core.conftest import UserFsFactory
 
 MISSING = object()
 TO_COMPARE_FIELDS = ("id", "created", "updated", "need_sync", "base_version", "is_placeholder")
@@ -56,13 +61,13 @@ def test_sync_monitor_stateful(
     reset_testbed,
     backend_factory,
     running_backend_factory,
-    core_factory,
-    user_fs_factory,
-    alice,
-    bob,
-    monkeypatch,
+    core_factory: CoreFactory,
+    user_fs_factory: UserFsFactory,
+    alice: LocalDevice,
+    bob: LocalDevice,
+    monkeypatch: pytest.MonkeyPatch,
     remanence_monitor_event,
-    with_remanence_monitor,
+    with_remanence_monitor: bool,
 ):
     if with_remanence_monitor:
         remanence_monitor_event.set()
@@ -78,6 +83,7 @@ def test_sync_monitor_stateful(
             self.file_count = 0
             self.data_count = 0
             self.workspace_count = 0
+            self.user_fs_per_device: dict[DeviceID, UserFS] = {}
 
         def get_next_file_path(self):
             self.file_count = self.file_count + 1
@@ -174,7 +180,7 @@ def test_sync_monitor_stateful(
                 await self._alice_update_file(wid, file_path, create_file=True)
 
         @rule(author=st.one_of(st.just(alice.device_id), st.just(bob.device_id)), file=SyncedFiles)
-        async def update_file(self, author, file):
+        async def update_file(self, author: DeviceID, file: tuple[EntryID, Path]):
             wid, file_path = file
             if author == bob.device_id:
                 await self._bob_update_file(wid, file_path)
@@ -209,7 +215,9 @@ def test_sync_monitor_stateful(
                     return
 
         @rule(target=SyncedFiles)
-        async def let_core_monitors_process_changes(self):
+        async def let_core_monitors_process_changes(
+            self,
+        ) -> MultipleResults[tuple[EntryID, str]]:
             # Set a high clock speed
             self.alice.time_provider.mock_time(speed=1000.0)
             try:

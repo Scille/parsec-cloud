@@ -9,9 +9,9 @@ import attr
 import pytest
 import trio
 
-from parsec._parsec import CoreEvent, DateTime
+from parsec._parsec import CoreEvent, DateTime, EntryID
 from parsec.api.transport import Transport, TransportError
-from parsec.core.fs import UserFS
+from parsec.core.fs.userfs.userfs import UserFS
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import WorkspaceRole
 from tests.common.trio_clock import real_clock_timeout
@@ -117,7 +117,9 @@ async def call_with_control(controlled_fn, *, task_status=trio.TASK_STATUS_IGNOR
         controller.stopped.set()
 
 
-async def create_shared_workspace(name, creator, *shared_with):
+async def create_shared_workspace(
+    name, creator: UserFS | LoggedCore, *shared_with: UserFS
+) -> EntryID:
     """
     Create a workspace and share it with the given Cores/FSs.
     This is more tricky than it seems given all Cores/FSs must agree on the

@@ -7,16 +7,19 @@ import pytest
 from hypothesis import strategies
 from hypothesis.stateful import RuleBasedStateMachine, invariant, rule, run_state_machine_as_test
 
-from parsec._parsec import DateTime
-from parsec.api.protocol import DeviceID
-from parsec.core.fs.workspacefs.file_operations import (
+from parsec._parsec import (
+    Chunk,
+    ChunkID,
+    DateTime,
+    DeviceID,
+    EntryID,
+    LocalFileManifest,
     prepare_read,
     prepare_reshape,
     prepare_resize,
     prepare_write,
 )
 from parsec.core.fs.workspacefs.file_transactions import padded_data
-from parsec.core.types import Chunk, ChunkID, EntryID, LocalFileManifest
 from tests.common import freeze_time
 
 MAX_SIZE = 64

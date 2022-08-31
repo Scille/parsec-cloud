@@ -2,26 +2,35 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import AsyncIterator
 
 import pytest
 from hypothesis_trio.stateful import TrioAsyncioRuleBasedStateMachine, run_state_machine_as_test
 
-from parsec._parsec import DateTime
-from parsec.api.data import EntryName
+from parsec._parsec import (
+    DateTime,
+    EntryID,
+    EntryName,
+    LocalDevice,
+    LocalWorkspaceManifest,
+    WorkspaceEntry,
+)
 from parsec.core.backend_connection.authenticated import backend_authenticated_cmds_factory
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
-from parsec.core.types import EntryID, LocalWorkspaceManifest, WorkspaceEntry
 from tests.common import call_with_control
 
 
 @pytest.fixture
 def transactions_factory(event_bus, remote_devices_manager_factory, core_config):
     @asynccontextmanager
-    async def _transactions_factory(device, local_storage, cls=SyncTransactions):
+    async def _transactions_factory(
+        device: LocalDevice, local_storage: WorkspaceStorage, cls=SyncTransactions
+    ) -> AsyncIterator[SyncTransactions]:
         def _get_workspace_entry():
             return workspace_entry
 
@@ -68,7 +77,9 @@ def transactions_factory(event_bus, remote_devices_manager_factory, core_config)
 @pytest.fixture
 def file_transactions_factory(event_bus, remote_devices_manager_factory, transactions_factory):
     @asynccontextmanager
-    async def _file_transactions_factory(device, local_storage):
+    async def _file_transactions_factory(
+        device: LocalDevice, local_storage: WorkspaceStorage
+    ) -> AsyncIterator[FileTransactions]:
         async with transactions_factory(
             device, local_storage=local_storage, cls=FileTransactions
         ) as file_transactions:
@@ -78,7 +89,9 @@ def file_transactions_factory(event_bus, remote_devices_manager_factory, transac
 
 
 @pytest.fixture
-async def alice_transaction_local_storage(alice, tmp_path):
+async def alice_transaction_local_storage(
+    alice: LocalDevice, tmp_path: Path
+) -> AsyncIterator[WorkspaceStorage]:
     async with WorkspaceStorage.run(
         tmp_path / "alice_transaction_local_storage", alice, EntryID.new()
     ) as storage:
@@ -87,8 +100,8 @@ async def alice_transaction_local_storage(alice, tmp_path):
 
 @pytest.fixture
 async def alice_file_transactions(
-    file_transactions_factory, alice, alice_transaction_local_storage
-):
+    file_transactions_factory, alice: LocalDevice, alice_transaction_local_storage: WorkspaceStorage
+) -> AsyncIterator[FileTransactions]:
     async with file_transactions_factory(
         alice, local_storage=alice_transaction_local_storage
     ) as file_transactions:

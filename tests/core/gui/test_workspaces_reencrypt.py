@@ -6,30 +6,36 @@ from functools import partial
 import pytest
 from PyQt5 import QtCore
 
-from parsec.api.data import EntryName
+from parsec._parsec import EntryID, EntryName, LocalDevice, UserID
 from parsec.core.fs import (
     FSBackendOfflineError,
     FSError,
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
+    UserFS,
 )
 from parsec.core.gui.lang import translate
-from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.gui.workspaces_widget import WorkspaceButton, WorkspacesWidget
 from parsec.core.types import WorkspaceRole
 from tests.common import customize_fixtures
+from tests.core.gui.conftest import AsyncQtBot
 
 
 # Helpers
 
 
-async def revoke_user_workspace_right(workspace, owner_user_fs, invited_user_fs, invited_user_id):
+async def revoke_user_workspace_right(
+    workspace: EntryID, owner_user_fs: UserFS, invited_user_fs: UserFS, invited_user_id: UserID
+):
     await owner_user_fs.workspace_share(workspace, invited_user_id, None)
     await owner_user_fs.process_last_messages()
     await invited_user_fs.process_last_messages()
     await owner_user_fs.sync()
 
 
-async def display_reencryption_button(aqtbot, monkeypatch, workspace_widget):
+async def display_reencryption_button(
+    aqtbot: AsyncQtBot, monkeypatch: pytest.MonkeyPatch, workspace_widget: WorkspacesWidget
+):
     def _workspace_displayed():
         assert workspace_widget.layout_workspaces.count() == 1
         wk_button = workspace_widget.layout_workspaces.itemAt(0).widget()
@@ -54,7 +60,9 @@ async def display_reencryption_button(aqtbot, monkeypatch, workspace_widget):
 
 
 @pytest.fixture
-async def shared_workspace(running_backend, alice_user_fs, bob_user_fs, bob):
+async def shared_workspace(
+    running_backend, alice_user_fs: UserFS, bob_user_fs: UserFS, bob: LocalDevice
+) -> EntryID:
     wid = await alice_user_fs.workspace_create(EntryName("w1"))
     await alice_user_fs.sync()
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.READER)
@@ -66,8 +74,12 @@ async def shared_workspace(running_backend, alice_user_fs, bob_user_fs, bob):
 
 @pytest.fixture
 async def reencryption_needed_workspace(
-    running_backend, shared_workspace, alice_user_fs, bob_user_fs, bob
-):
+    running_backend,
+    shared_workspace: EntryID,
+    alice_user_fs: UserFS,
+    bob_user_fs: UserFS,
+    bob: LocalDevice,
+) -> EntryID:
     await revoke_user_workspace_right(shared_workspace, alice_user_fs, bob_user_fs, bob.user_id)
     return shared_workspace
 
@@ -123,15 +135,15 @@ async def test_workspace_reencryption_display(
 @pytest.mark.trio
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption(
-    aqtbot,
+    aqtbot: AsyncQtBot,
     running_backend,
     logged_gui,
     autoclose_dialog,
-    monkeypatch,
-    reencryption_needed_workspace,
+    monkeypatch: pytest.MonkeyPatch,
+    reencryption_needed_workspace: EntryID,
 ):
 
-    w_w = await logged_gui.test_switch_to_workspaces_widget()
+    w_w: WorkspacesWidget = await logged_gui.test_switch_to_workspaces_widget()
 
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
@@ -303,13 +315,17 @@ async def test_workspace_reencryption_not_found_error(
 @customize_fixtures(logged_gui_as_admin=True)
 async def test_workspace_reencryption_do_one_batch_error(
     caplog,
-    aqtbot,
+    aqtbot: AsyncQtBot,
     running_backend,
     logged_gui,
     autoclose_dialog,
-    monkeypatch,
-    reencryption_needed_workspace,
-    error_type,
+    monkeypatch: pytest.MonkeyPatch,
+    reencryption_needed_workspace: EntryID,
+    error_type: FSBackendOfflineError
+    | FSError
+    | FSWorkspaceNoAccess
+    | FSWorkspaceNotFoundError
+    | Exception,
 ):
 
     expected_errors = {
@@ -320,7 +336,7 @@ async def test_workspace_reencryption_do_one_batch_error(
         Exception: translate("TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR"),
     }
 
-    w_w = await logged_gui.test_switch_to_workspaces_widget()
+    w_w: WorkspacesWidget = await logged_gui.test_switch_to_workspaces_widget()
     await display_reencryption_button(aqtbot, monkeypatch, w_w)
 
     wk_button = w_w.layout_workspaces.itemAt(0).widget()

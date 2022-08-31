@@ -3,11 +3,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import partial
-from typing import Optional, Tuple, Union
 
 import pytest
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, OrganizationID, RealmID, RealmRole, UserID, VlobID
 from parsec.api.data import (
     DeviceCertificate,
     RealmRoleCertificate,
@@ -15,7 +14,6 @@ from parsec.api.data import (
     UserCertificate,
     UserManifest,
 )
-from parsec.api.protocol import RealmID, RealmRole, UserID, VlobID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.organization import SequesterAuthority
 from parsec.backend.realm import RealmGrantedRole
@@ -39,7 +37,7 @@ class OrganizationFullData:
     bootstrap_addr: BackendOrganizationBootstrapAddr
     addr: BackendOrganizationAddr
     root_signing_key: SigningKey
-    sequester_authority: Optional[SequesterAuthorityFullData]
+    sequester_authority: SequesterAuthorityFullData | None
 
     @property
     def bootstrap_token(self):
@@ -56,9 +54,11 @@ class OrganizationFullData:
 
 class InitialUserManifestState:
     def __init__(self):
-        self._v1 = {}
+        self._v1: dict[tuple[OrganizationID, UserID], tuple[UserManifest, LocalUserManifest]] = {}
 
-    def _generate_or_retrieve_user_manifest_v1(self, device):
+    def _generate_or_retrieve_user_manifest_v1(
+        self, device: LocalDevice
+    ) -> tuple[UserManifest, LocalUserManifest]:
         try:
             return self._v1[(device.organization_id, device.user_id)]
 
@@ -84,17 +84,17 @@ class InitialUserManifestState:
     def force_user_manifest_v1_generation(self, device):
         self._generate_or_retrieve_user_manifest_v1(device)
 
-    def get_user_manifest_v1_for_device(self, device, ciphered=False):
+    def get_user_manifest_v1_for_device(self, device: LocalDevice) -> LocalUserManifest:
         _, local = self._generate_or_retrieve_user_manifest_v1(device)
         return local
 
-    def get_user_manifest_v1_for_backend(self, device):
+    def get_user_manifest_v1_for_backend(self, device: LocalDevice) -> UserManifest:
         remote, _ = self._generate_or_retrieve_user_manifest_v1(device)
         return remote
 
 
 @pytest.fixture
-def initial_user_manifest_state():
+def initial_user_manifest_state() -> InitialUserManifestState:
     # User manifest is stored in backend vlob and in devices's local db.
     # Hence this fixture allow us to centralize the first version of this user
     # manifest.
@@ -144,9 +144,9 @@ def initialize_local_user_manifest(initial_user_manifest_state):
 
 def local_device_to_backend_user(
     device: LocalDevice,
-    certifier: Union[LocalDevice, OrganizationFullData],
-    timestamp: Optional[DateTime] = None,
-) -> Tuple[BackendUser, BackendDevice]:
+    certifier: LocalDevice | OrganizationFullData,
+    timestamp: DateTime | None = None,
+) -> tuple[BackendUser, BackendDevice]:
     if isinstance(certifier, OrganizationFullData):
         certifier_id = None
         certifier_signing_key = certifier.root_signing_key
@@ -359,7 +359,7 @@ def backend_data_binder_factory(initial_user_manifest_state):
             org: OrganizationFullData,
             first_device: LocalDevice,
             initial_user_manifest: str = "v1",
-            timestamp: Optional[DateTime] = None,
+            timestamp: DateTime | None = None,
             create_needed: bool = True,
         ):
             assert initial_user_manifest in ("v1", "not_synced")
@@ -409,9 +409,9 @@ def backend_data_binder_factory(initial_user_manifest_state):
         async def bind_device(
             self,
             device: LocalDevice,
-            certifier: Optional[LocalDevice] = None,
-            initial_user_manifest: Optional[str] = None,
-            timestamp: Optional[DateTime] = None,
+            certifier: LocalDevice | None = None,
+            initial_user_manifest: str | None = None,
+            timestamp: DateTime | None = None,
         ):
             assert initial_user_manifest in (None, "v1", "not_synced")
 
