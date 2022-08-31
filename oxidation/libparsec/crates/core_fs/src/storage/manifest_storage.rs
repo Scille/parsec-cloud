@@ -91,7 +91,7 @@ pub struct ManifestStorage {
     /// This cache contains all the manifests that have been set or accessed
     /// since the last call to `clear_memory_cache`
     pub(crate) cache: Mutex<HashMap<EntryID, LocalManifest>>,
-    /// This dictionnary keeps track of all the entry ids of the manifests
+    /// This dictionary keeps track of all the entry ids of the manifests
     /// that have been added to the cache but still needs to be written to
     /// the conn. The corresponding value is a set with the ids of all
     /// the chunks that needs to be removed from the conn after the

@@ -95,7 +95,7 @@ pub fn py_to_rs_invitation_status(status: &PyAny) -> PyResult<libparsec::types::
 
 // This implementation is due to
 // https://github.com/PyO3/pyo3/blob/39d2b9d96476e6cc85ca43e720e035e0cdff7a45/src/types/set.rs#L240
-// where Hashset is PySet in FromPyObject trait
+// where HashSet is PySet in FromPyObject trait
 pub fn py_to_rs_set<'a, T: FromPyObject<'a> + Eq + Hash>(set: &'a PyAny) -> PyResult<HashSet<T>> {
     set.downcast::<PyFrozenSet>()?
         .iter()

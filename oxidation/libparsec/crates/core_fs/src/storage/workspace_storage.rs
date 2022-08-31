@@ -112,7 +112,7 @@ impl WorkspaceStorage {
         let (prevent_sync_pattern, prevent_sync_pattern_fully_applied) =
             manifest_storage.get_prevent_sync_pattern()?;
 
-        // Instanciate workspace storage
+        // Instantiate workspace storage
         let instance = Self {
             device,
             workspace_id,
@@ -665,7 +665,7 @@ mod tests {
         aws.set_manifest(manifest2_id, manifest2.clone(), true, true, None)
             .unwrap();
 
-        // Clear withtout flushing
+        // Clear without flushing
         aws.clear_memory_cache(false).unwrap();
 
         // Manifest 1 is present but manifest2 got lost
