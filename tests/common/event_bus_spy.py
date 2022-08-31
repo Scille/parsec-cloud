@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from enum import Enum
+from typing import Type
 from unittest.mock import ANY
 
 import attr
@@ -284,7 +285,7 @@ class SpiedEventBus(EventBus):
 
 
 @pytest.fixture(scope="session")
-def event_bus_factory():
+def event_bus_factory() -> Type[SpiedEventBus]:
     return SpiedEventBus
 
 

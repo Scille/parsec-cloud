@@ -6,13 +6,14 @@ from urllib.error import HTTPError, URLError
 
 import pytest
 
-from parsec._parsec import CoreEvent
-from parsec.api.data import EntryName
-from parsec.api.protocol import RealmID, VlobID
+from parsec._parsec import CoreEvent, EntryName, LocalDevice, RealmID, VlobID
 from parsec.backend.sequester import SequesterServiceType
+from parsec.core.fs import UserFS
 from parsec.core.fs.exceptions import FSServerUploadTemporarilyUnavailableError
 from parsec.core.fs.path import FsPath
-from tests.common import customize_fixtures, sequester_service_factory
+from parsec.core.fs.workspacefs.workspacefs import WorkspaceFS
+from tests.common import OrganizationFullData, customize_fixtures, sequester_service_factory
+from tests.common.sequester import SequesterServiceFullData
 
 
 @pytest.mark.trio
@@ -24,7 +25,13 @@ from tests.common import customize_fixtures, sequester_service_factory
     bob_initial_local_user_manifest="non_speculative_v0",
 )
 async def test_userfs_sequester_sync(
-    running_backend, backend, alice_user_fs, bob_user_fs, coolorg, alice, bob
+    running_backend,
+    backend,
+    alice_user_fs: UserFS,
+    bob_user_fs: UserFS,
+    coolorg,
+    alice: LocalDevice,
+    bob: LocalDevice,
 ):
     async def _new_sequester_service(label: str):
         service = sequester_service_factory(authority=coolorg.sequester_authority, label=label)
@@ -93,15 +100,23 @@ async def test_userfs_sequester_sync(
 
 @pytest.mark.trio
 @customize_fixtures(coolorg_is_sequestered_organization=True)
-async def test_workspacefs_sequester_sync(running_backend, backend, alice_user_fs, coolorg, alice):
-    async def _new_sequester_service(label: str):
+async def test_workspacefs_sequester_sync(
+    running_backend,
+    backend,
+    alice_user_fs: UserFS,
+    coolorg: OrganizationFullData,
+    alice: LocalDevice,
+):
+    async def _new_sequester_service(label: str) -> SequesterServiceFullData:
         service = sequester_service_factory(authority=coolorg.sequester_authority, label=label)
         await backend.sequester.create_service(
             organization_id=coolorg.organization_id, service=service.backend_service
         )
         return service
 
-    async def _assert_sequester_dump(service, workspace, expected_items):
+    async def _assert_sequester_dump(
+        service: SequesterServiceFullData, workspace: WorkspaceFS, expected_items
+    ):
         realm_id = RealmID.from_entry_id(workspace.workspace_id)
         realm_dump = await backend.sequester.dump_realm(
             organization_id=coolorg.organization_id,

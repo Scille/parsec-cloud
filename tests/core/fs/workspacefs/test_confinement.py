@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
+from contextlib import _AsyncGeneratorContextManager
+from typing import Callable
+
 import pytest
 
-from parsec._parsec import Regex
-from parsec.api.data import EntryName
-from parsec.core.fs import FsPath
-from parsec.core.logged_core import get_prevent_sync_pattern
+from parsec._parsec import EntryName, LocalDevice, Regex
+from parsec.core.fs import FsPath, UserFS, WorkspaceFS
+from parsec.core.logged_core import LoggedCore, get_prevent_sync_pattern
 from tests.common import create_shared_workspace
 
 
@@ -17,7 +19,7 @@ async def assert_path_info(workspace, path, **kwargs):
 
 
 @pytest.mark.trio
-async def test_local_confinement_points(alice_workspace, running_backend):
+async def test_local_confinement_points(alice_workspace: WorkspaceFS, running_backend):
 
     # Apply a *.tmp pattern
     pattern = Regex.from_regex_str(".*\\.tmp$")
@@ -100,7 +102,9 @@ async def test_local_confinement_points(alice_workspace, running_backend):
 
 
 @pytest.mark.trio
-async def test_sync_with_different_patterns(running_backend, alice_user_fs, alice2_user_fs):
+async def test_sync_with_different_patterns(
+    running_backend, alice_user_fs: UserFS, alice2_user_fs: UserFS
+):
     wid = await create_shared_workspace(EntryName("w"), alice_user_fs, alice2_user_fs)
     workspace1 = alice_user_fs.get_workspace(wid)
     workspace2 = alice2_user_fs.get_workspace(wid)
@@ -172,7 +176,7 @@ async def test_sync_with_different_patterns(running_backend, alice_user_fs, alic
 
 
 @pytest.mark.trio
-async def test_change_pattern(alice_workspace, running_backend):
+async def test_change_pattern(alice_workspace: WorkspaceFS, running_backend):
     root_id = alice_workspace.workspace_id
 
     # Apply a *.x pattern
@@ -255,7 +259,7 @@ async def test_change_pattern(alice_workspace, running_backend):
 
 
 @pytest.mark.trio
-async def test_common_temporary_files(alice_workspace):
+async def test_common_temporary_files(alice_workspace: WorkspaceFS):
     file_list = ["test.txt", "test" "t" ".test"]
     for path in file_list:
         path = "/" + path
@@ -309,7 +313,9 @@ def test_stable_prevent_sync_pattern():
 
 
 @pytest.mark.trio
-async def test_database_with_invalid_pattern_resilience(core_factory, alice):
+async def test_database_with_invalid_pattern_resilience(
+    core_factory: Callable[..., _AsyncGeneratorContextManager[LoggedCore]], alice: LocalDevice
+):
     with pytest.raises(ValueError):
         Regex.from_regex_str("[")
 
@@ -320,7 +326,7 @@ async def test_database_with_invalid_pattern_resilience(core_factory, alice):
     async with core_factory(alice) as core:
         wid = await core.user_fs.workspace_create(EntryName("w"))
         workspace = core.user_fs.get_workspace(wid)
-        await workspace.local_storage.manifest_storage.set_prevent_sync_pattern(InvalidRegex())
+        await workspace.local_storage.set_prevent_sync_pattern(InvalidRegex())
 
     async with core_factory(alice) as core:
         workspace = core.user_fs.get_workspace(wid)

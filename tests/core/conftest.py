@@ -2,17 +2,22 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import AsyncContextManager, AsyncIterator, Callable, Type
 
 import pytest
 
+from parsec._parsec import LocalDevice
 from parsec.core.backend_connection import backend_authenticated_cmds_factory
 from parsec.core.fs import UserFS
 from parsec.core.logged_core import get_prevent_sync_pattern
 from parsec.core.remote_devices_manager import RemoteDevicesManager
+from parsec.event_bus import EventBus
+from tests.common.event_bus_spy import SpiedEventBus
 
 
 @pytest.fixture
-def data_base_dir(tmp_path):
+def data_base_dir(tmp_path: Path) -> Path:
     return tmp_path / "local_data"
 
 
@@ -71,9 +76,11 @@ async def bob_backend_cmds(running_backend, bob):
 
 
 @pytest.fixture
-def user_fs_factory(data_base_dir, event_bus_factory):
+def user_fs_factory(data_base_dir: Path, event_bus_factory: Type[SpiedEventBus]):
     @asynccontextmanager
-    async def _user_fs_factory(device, event_bus=None, data_base_dir=data_base_dir):
+    async def _user_fs_factory(
+        device: LocalDevice, event_bus: EventBus = None, data_base_dir: Path = data_base_dir
+    ) -> AsyncIterator[UserFS]:
         event_bus = event_bus or event_bus_factory()
 
         async with backend_authenticated_cmds_factory(
@@ -89,15 +96,19 @@ def user_fs_factory(data_base_dir, event_bus_factory):
     return _user_fs_factory
 
 
+UserFsFactory = Callable[..., AsyncContextManager[UserFS]]
+
+
 @pytest.fixture
 async def alice_user_fs(
     data_base_dir, fixtures_customization, initialize_local_user_manifest, user_fs_factory, alice
-):
+) -> AsyncIterator[UserFS]:
     initial_user_manifest = fixtures_customization.get("alice_initial_local_user_manifest", "v1")
     await initialize_local_user_manifest(
         data_base_dir, alice, initial_user_manifest=initial_user_manifest
     )
     async with user_fs_factory(alice) as user_fs:
+        user_fs: UserFS = user_fs
         yield user_fs
 
 
