@@ -32,4 +32,4 @@ tokio = { version = "1.20.1", features = ["rt", "time", "sync", "macros"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 tokio = { version = "1.20.1", features = ["full"] }
-simple_logger = "2.2.0"
+simple_logger = "2.3.0"
