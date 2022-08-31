@@ -5,19 +5,32 @@ from unittest.mock import ANY
 
 import pytest
 
-from parsec._parsec import CoreEvent, DateTime, UserRevokeRepOk
-from parsec.api.data import EntryName, RevokedUserCertificate, UserManifest, WorkspaceEntry
-from parsec.api.protocol import RealmID
-from parsec.backend.realm import RealmGrantedRole, RealmRole
+from parsec._parsec import (
+    CoreEvent,
+    DateTime,
+    EntryID,
+    EntryName,
+    LocalDevice,
+    LocalUserManifest,
+    RealmID,
+    RealmRole,
+    SecretKey,
+    UserManifest,
+    UserRevokeRepOk,
+    WorkspaceEntry,
+)
+from parsec.api.data import RevokedUserCertificate
+from parsec.backend.realm import RealmGrantedRole
 from parsec.core.fs import (
     FSBackendOfflineError,
     FSError,
     FSSharingNotAllowedError,
     FSWorkspaceNotFoundError,
+    UserFS,
 )
-from parsec.core.types import EntryID, LocalUserManifest, WorkspaceRole
-from parsec.crypto import SecretKey
+from parsec.core.types import WorkspaceRole
 from tests.common import create_shared_workspace, freeze_time
+from tests.common.backend import RunningBackend
 
 KEY = SecretKey.generate()
 
@@ -97,7 +110,14 @@ async def test_share_offline(running_backend, alice_user_fs, bob):
 
 @pytest.mark.trio
 @pytest.mark.parametrize("presynced", (True, False))
-async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob, presynced):
+async def test_share_ok(
+    running_backend: RunningBackend,
+    alice_user_fs: UserFS,
+    bob_user_fs: UserFS,
+    alice: LocalDevice,
+    bob: LocalDevice,
+    presynced: bool,
+):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
 
@@ -139,7 +159,11 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
 
 @pytest.mark.trio
 async def test_share_workspace_then_rename_it(
-    running_backend, alice_user_fs, bob_user_fs, alice, bob
+    running_backend,
+    alice_user_fs: UserFS,
+    bob_user_fs: UserFS,
+    alice: LocalDevice,
+    bob: LocalDevice,
 ):
     # Share a workspace between Alice and Bob
     with freeze_time("2000-01-02"):
@@ -172,7 +196,13 @@ async def test_share_workspace_then_rename_it(
 
 
 @pytest.mark.trio
-async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob):
+async def test_unshare_ok(
+    running_backend,
+    alice_user_fs: UserFS,
+    bob_user_fs: UserFS,
+    alice: LocalDevice,
+    bob: LocalDevice,
+):
     # Share a workspace...
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
@@ -225,7 +255,9 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
 
 
 @pytest.mark.trio
-async def test_unshare_not_shared(running_backend, alice_user_fs, bob_user_fs, alice, bob):
+async def test_unshare_not_shared(
+    running_backend, alice_user_fs: UserFS, bob_user_fs: UserFS, alice, bob: LocalDevice
+):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
     await alice_user_fs.workspace_share(wid, bob.user_id, None)
@@ -241,7 +273,12 @@ async def test_unshare_not_shared(running_backend, alice_user_fs, bob_user_fs, a
 @pytest.mark.trio
 @pytest.mark.parametrize("synced_workspace_manifest", (True, False))
 async def test_share_to_another_after_beeing_unshared(
-    running_backend, alice_user_fs, bob_user_fs, alice, bob, synced_workspace_manifest
+    running_backend,
+    alice_user_fs: UserFS,
+    bob_user_fs: UserFS,
+    alice: LocalDevice,
+    bob: LocalDevice,
+    synced_workspace_manifest: bool,
 ):
     # Share a workspace...
     with freeze_time("2000-01-02"):
@@ -268,7 +305,9 @@ async def test_share_to_another_after_beeing_unshared(
 
 
 @pytest.mark.trio
-async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, alice, bob):
+async def test_reshare_workspace(
+    running_backend, alice_user_fs: UserFS, bob_user_fs: UserFS, alice, bob: LocalDevice
+):
     # Share a workspace...
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
@@ -333,7 +372,9 @@ async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, al
 
 
 @pytest.mark.trio
-async def test_share_with_different_role(running_backend, alice_user_fs, bob_user_fs, alice, bob):
+async def test_share_with_different_role(
+    running_backend, alice_user_fs: UserFS, bob_user_fs: UserFS, alice, bob: LocalDevice
+):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
     aum = alice_user_fs.get_user_manifest()
@@ -369,7 +410,9 @@ async def test_share_with_different_role(running_backend, alice_user_fs, bob_use
 
 
 @pytest.mark.trio
-async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob):
+async def test_share_no_manager_right(
+    running_backend: RunningBackend, alice_user_fs: UserFS, alice: LocalDevice, bob: LocalDevice
+):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create(EntryName("w1"))
         await alice_user_fs.sync()
@@ -408,7 +451,7 @@ async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob
 
 @pytest.mark.trio
 async def test_share_with_sharing_name_already_taken(
-    running_backend, alice_user_fs, bob_user_fs, alice, bob
+    running_backend, alice_user_fs: UserFS, bob_user_fs: UserFS, alice, bob: LocalDevice
 ):
     # Bob and Alice both has a workspace with similar name
     with freeze_time("2000-01-01"):
@@ -490,7 +533,14 @@ async def test_share_with_sharing_name_already_taken(
 @pytest.mark.trio
 @pytest.mark.parametrize("first_to_sync", ("alice", "alice2"))
 async def test_share_workspace_then_conflict_on_rights(
-    running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, alice2, bob, first_to_sync
+    running_backend,
+    alice_user_fs: UserFS,
+    alice2_user_fs: UserFS,
+    bob_user_fs: UserFS,
+    alice: LocalDevice,
+    alice2: LocalDevice,
+    bob,
+    first_to_sync: str,
 ):
     # Bob shares a workspace with Alice...
     with freeze_time("2000-01-01"):
@@ -614,7 +664,12 @@ async def test_share_workspace_then_conflict_on_rights(
 
 @pytest.mark.trio
 async def test_sharing_events_triggered_on_sync(
-    running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, bob
+    running_backend,
+    alice_user_fs: UserFS,
+    alice2_user_fs: UserFS,
+    bob_user_fs: UserFS,
+    alice: LocalDevice,
+    bob,
 ):
     # Share a first workspace
     with freeze_time("2000-01-02"):
@@ -702,7 +757,12 @@ async def test_sharing_events_triggered_on_sync(
 
 @pytest.mark.trio
 async def test_no_sharing_event_on_sync_on_unknown_workspace(
-    running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, bob
+    running_backend,
+    alice_user_fs: UserFS,
+    alice2_user_fs: UserFS,
+    bob_user_fs: UserFS,
+    alice: LocalDevice,
+    bob,
 ):
     # Share a workspace...
     wid = await create_shared_workspace(EntryName("w"), bob_user_fs, alice_user_fs)
@@ -720,7 +780,12 @@ async def test_no_sharing_event_on_sync_on_unknown_workspace(
 
 @pytest.mark.trio
 async def test_sharing_event_on_sync_if_same_role(
-    running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, bob
+    running_backend,
+    alice_user_fs: UserFS,
+    alice2_user_fs: UserFS,
+    bob_user_fs: UserFS,
+    alice: LocalDevice,
+    bob,
 ):
     # Share a workspace, alice2 knows about it
     with freeze_time("2000-01-02"):

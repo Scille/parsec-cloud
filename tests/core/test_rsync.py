@@ -6,12 +6,16 @@ from unittest import mock
 import pytest
 import trio
 
-from parsec._parsec import WorkspaceEntry
-from parsec.api.data import EntryID, EntryName, FolderManifest
-from parsec.api.data.manifest import WorkspaceManifest
+from parsec._parsec import (
+    EntryID,
+    EntryName,
+    FolderManifest,
+    HashDigest,
+    WorkspaceEntry,
+    WorkspaceManifest,
+)
 from parsec.core.cli import rsync
-from parsec.core.fs import FsPath
-from parsec.crypto import HashDigest
+from parsec.core.fs import FsPath, UserFS, WorkspaceFS
 from tests.common import AsyncMock
 
 
@@ -30,7 +34,7 @@ class ReadSideEffect:
 
 @pytest.fixture
 @pytest.mark.trio
-async def alice_workspace(alice_user_fs, running_backend):
+async def alice_workspace(alice_user_fs: UserFS, running_backend) -> WorkspaceFS:
     wid = await alice_user_fs.workspace_create(EntryName("w"))
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.mkdir("/foo")
@@ -40,7 +44,7 @@ async def alice_workspace(alice_user_fs, running_backend):
 
 
 @pytest.mark.trio
-async def test_import_file(alice_workspace):
+async def test_import_file(alice_workspace: WorkspaceFS):
     with mock.patch(
         "parsec.core.cli.rsync._chunks_from_path",
         AsyncMock(spec=mock.Mock, side_effect=[[b"random", b" chunks"]]),
@@ -78,7 +82,7 @@ async def test_chunks_from_path():
 
 
 @pytest.mark.trio
-async def test_update_file(alice_workspace, monkeypatch):
+async def test_update_file(alice_workspace: WorkspaceFS, monkeypatch):
     block_mock1 = mock.Mock()
     block_mock1.digest = b"block1"
     block_mock2 = mock.Mock()
@@ -151,7 +155,7 @@ async def test_update_file(alice_workspace, monkeypatch):
 
 
 @pytest.mark.trio
-async def test_create_path(alice_workspace):
+async def test_create_path(alice_workspace: WorkspaceFS):
     mkdir_mock = AsyncMock(spec=mock.Mock)
     alice_workspace.mkdir = mkdir_mock
 
@@ -202,7 +206,7 @@ async def test_create_path(alice_workspace):
 
 
 @pytest.mark.trio
-async def test_clear_path(alice_workspace):
+async def test_clear_path(alice_workspace: UserFS):
     is_dir_mock = AsyncMock(spec=mock.Mock, side_effect=lambda x: True)
     alice_workspace.is_dir = is_dir_mock
 
@@ -236,7 +240,7 @@ async def test_clear_path(alice_workspace):
 
 
 @pytest.mark.trio
-async def test_clear_directory(alice_workspace):
+async def test_clear_directory(alice_workspace: UserFS):
     local_item1 = mock.Mock(spec=EntryName)
     local_item1.name = "item1"
     local_item2 = mock.Mock(spec=EntryName)
@@ -284,7 +288,7 @@ async def test_clear_directory(alice_workspace):
 
 
 @pytest.mark.trio
-async def test_get_or_create_directory(alice_workspace):
+async def test_get_or_create_directory(alice_workspace: UserFS):
     manifest1 = mock.Mock(spec=FolderManifest)
     manifest2 = mock.Mock(spec=FolderManifest)
 
@@ -315,7 +319,7 @@ async def test_get_or_create_directory(alice_workspace):
 
 
 @pytest.mark.trio
-async def test_upsert_file(alice_workspace):
+async def test_upsert_file(alice_workspace: UserFS):
 
     _update_file_mock = AsyncMock(spec=mock.Mock())
     _create_path_mock = AsyncMock(spec=mock.Mock())
@@ -343,7 +347,7 @@ async def test_upsert_file(alice_workspace):
 
 
 @pytest.mark.trio
-async def test_sync_directory(alice_workspace):
+async def test_sync_directory(alice_workspace: UserFS):
 
     _get_or_create_directory_mock = AsyncMock(
         spec=mock.Mock(), side_effect=lambda *x: "folder_manifest_mock"
@@ -395,7 +399,7 @@ async def test_sync_directory(alice_workspace):
 
 
 @pytest.mark.trio
-async def test_sync_directory_content(alice_workspace):
+async def test_sync_directory_content(alice_workspace: UserFS):
 
     path_dir1 = trio.Path("/test_dir1")
     path_dir1.is_dir = AsyncMock(spec=mock.Mock(), side_effect=lambda: True)
@@ -523,7 +527,7 @@ def test_parse_destination():
 
 
 @pytest.mark.trio
-async def test_root_manifest_parent(alice_workspace):
+async def test_root_manifest_parent(alice_workspace: UserFS):
     workspace_manifest = mock.Mock(spec=WorkspaceManifest)
 
     _get_or_create_directory_mock = AsyncMock(spec=mock.Mock)

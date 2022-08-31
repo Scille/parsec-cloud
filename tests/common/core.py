@@ -1,15 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
+from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
 from pathlib import Path
+from typing import Callable
 
 import pytest
 
-from parsec._parsec import CoreEvent
+from parsec._parsec import CoreEvent, LocalDevice
 from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.config import CoreConfig
-from parsec.core.logged_core import logged_core_factory
+from parsec.core.logged_core import LoggedCore, logged_core_factory
 from parsec.core.types import BackendAddr
 from tests.common.trio_clock import real_clock_timeout
 
@@ -30,9 +31,11 @@ def core_config(tmpdir, backend_addr, unused_tcp_port, fixtures_customization):
 
 
 @pytest.fixture
-def core_factory(request, running_backend_ready, event_bus_factory, core_config):
+def core_factory(
+    request, running_backend_ready, event_bus_factory, core_config
+) -> Callable[..., _AsyncGeneratorContextManager[LoggedCore]]:
     @asynccontextmanager
-    async def _core_factory(device, event_bus=None):
+    async def _core_factory(device, event_bus=None) -> _AsyncGeneratorContextManager[LoggedCore]:
         # Ensure test doesn't stay frozen if a bug in a fixture prevent the
         # backend from starting
         async with real_clock_timeout():
@@ -58,8 +61,12 @@ def core_factory(request, running_backend_ready, event_bus_factory, core_config)
 
 @pytest.fixture
 async def alice_core(
-    core_config, fixtures_customization, initialize_local_user_manifest, core_factory, alice
-):
+    core_config,
+    fixtures_customization,
+    initialize_local_user_manifest,
+    core_factory: Callable[..., _AsyncGeneratorContextManager[LoggedCore]],
+    alice: LocalDevice,
+) -> LoggedCore:
     initial_user_manifest = fixtures_customization.get("alice_initial_local_user_manifest", "v1")
     await initialize_local_user_manifest(
         core_config.data_base_dir, alice, initial_user_manifest=initial_user_manifest
