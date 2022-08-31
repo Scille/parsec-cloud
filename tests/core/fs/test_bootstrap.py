@@ -41,7 +41,7 @@ async def test_workspace_manifest_access_while_speculative(user_fs_factory, alic
     with freeze_time("2000-01-01"):
         async with user_fs_factory(alice) as user_fs:
             wksp_id = await user_fs.workspace_create(EntryName("wksp"))
-            # Retreive where the database is stored
+            # Retrieve where the database is stored
             wksp = user_fs.get_workspace(wksp_id)
             wksp_manifest_storage_db_path = wksp.local_storage.manifest_storage.path
 
