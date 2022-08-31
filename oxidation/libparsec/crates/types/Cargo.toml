@@ -41,7 +41,7 @@ email-address-parser = "2.0.0-rc1"
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
 pretty_assertions = "1.0.0"
-serde_test = "1.0.142"
+serde_test = "1.0.144"
 hex-literal = "0.3.3"
 rstest = "0.15.0"
 rstest_reuse = "0.4.0"
