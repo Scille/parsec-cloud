@@ -72,6 +72,10 @@ impl DateTime {
         ts_us as f64 / 1e6
     }
 
+    pub fn to_rfc3339(&self) -> String {
+        self.0.to_rfc3339()
+    }
+
     pub fn year(&self) -> u64 {
         self.0.year() as u64
     }

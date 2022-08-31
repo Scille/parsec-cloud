@@ -138,6 +138,11 @@ impl DateTime {
         Ok(LocalDateTime(self.0.to_local()))
     }
 
+    // Equivalent to ISO 8601
+    fn to_rfc3339(&self) -> PyResult<String> {
+        Ok(self.0.to_rfc3339())
+    }
+
     fn __sub__(&self, other: Self) -> PyResult<f64> {
         let us = match (self.0 - other.0).num_microseconds() {
             Some(us) => us,
