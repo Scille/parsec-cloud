@@ -482,3 +482,16 @@ def api_typed_msg_adapter(req_cls, rep_cls):  # type: ignore[no-untyped-def]
         return wrapper
 
     return _api_typed_msg_adapter
+
+
+class ApiCommandSerializer:
+    def __init__(self, req_schema: Any, rep_schema: Any) -> None:
+        self.req_schema = req_schema
+        self.rep_schema = rep_schema
+
+    def req_dumps(self, req: dict[str, Any]) -> bytes:
+        req.pop("cmd")
+        return self.req_schema(**req).dump()
+
+    def rep_loads(self, raw: bytes) -> Any:
+        return self.rep_schema.load(raw)
