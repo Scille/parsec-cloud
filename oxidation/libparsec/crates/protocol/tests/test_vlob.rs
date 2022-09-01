@@ -9,34 +9,73 @@ use libparsec_protocol::*;
 use libparsec_types::{Maybe, ReencryptionBatchEntry};
 
 #[rstest]
-fn serde_vlob_create_req() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   timestamp: ext(1, 946774800.0)
-    //   blob: hex!("666f6f626172")
-    //   cmd: "vlob_create"
-    //   encryption_revision: 8
-    //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
-    //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
-    let raw = hex!(
-        "86a4626c6f62c406666f6f626172a3636d64ab766c6f625f637265617465b3656e63727970"
-        "74696f6e5f7265766973696f6e08a87265616c6d5f6964d8021d3353157d7d4e95ad2fdea7"
-        "b3bd19c5a974696d657374616d70d70141cc375188000000a7766c6f625f6964d8022b5f31"
-        "4728134a12863da1ce49c112f6"
-    );
+#[case::base(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   timestamp: ext(1, 946774800.0)
+        //   blob: hex!("666f6f626172")
+        //   cmd: "vlob_create"
+        //   encryption_revision: 8
+        //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
+        //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
+        &hex!(
+            "86a4626c6f62c406666f6f626172a3636d64ab766c6f625f637265617465b3656e63727970"
+            "74696f6e5f7265766973696f6e08a87265616c6d5f6964d8021d3353157d7d4e95ad2fdea7"
+            "b3bd19c5a974696d657374616d70d70141cc375188000000a7766c6f625f6964d8022b5f31"
+            "4728134a12863da1ce49c112f6"
+        )[..],
+        authenticated_cmds::AnyCmdReq::VlobCreate(
+            authenticated_cmds::vlob_create::Req {
+                realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+                encryption_revision: 8,
+                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+                blob: b"foobar".to_vec(),
+                sequester_blob: Maybe::Absent,
+            }
+        )
+    )
+)]
+#[case::with_sequester_blob(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   timestamp: ext(1, 946774800.0)
+        //   blob: hex!("666f6f626172")
+        //   cmd: "vlob_create"
+        //   encryption_revision: 8
+        //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
+        //   sequester_blob: {
+        //     ExtType(code=2, data=b'\xb5\xebVSC\xc4B\xb3\xa2k\xe4Es\x81?\xf0'): hex!("666f6f626172")
+        //   }
+        //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
+        //
+        &hex!(
+            "87a4626c6f62c406666f6f626172a3636d64ab766c6f625f637265617465b3656e63727970"
+            "74696f6e5f7265766973696f6e08a87265616c6d5f6964d8021d3353157d7d4e95ad2fdea7"
+            "b3bd19c5ae7365717565737465725f626c6f6281d802b5eb565343c442b3a26be44573813f"
+            "f0c406666f6f626172a974696d657374616d70d70141cc375188000000a7766c6f625f6964"
+            "d8022b5f314728134a12863da1ce49c112f6"
+        )[..],
+        authenticated_cmds::AnyCmdReq::VlobCreate(
+            authenticated_cmds::vlob_create::Req {
+                realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+                encryption_revision: 8,
+                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+                blob: b"foobar".to_vec(),
+                sequester_blob: Maybe::Present(Some(
+                    HashMap::from([("b5eb565343c442b3a26be44573813ff0".parse().unwrap(), b"foobar".to_vec())])
+                )),
+            }
+        )
+    )
+)]
+fn serde_vlob_create_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmdReq)) {
+    let (raw, expected) = raw_expected;
 
-    let req = authenticated_cmds::vlob_create::Req {
-        realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
-        encryption_revision: 8,
-        vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
-        timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
-        blob: b"foobar".to_vec(),
-        sequester_blob: Maybe::Absent,
-    };
-
-    let expected = authenticated_cmds::AnyCmdReq::VlobCreate(req);
-
-    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
@@ -105,6 +144,81 @@ fn serde_vlob_create_req() {
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
         authenticated_cmds::vlob_create::Rep::InMaintenance
+    )
+)]
+#[case::require_greater_timestamp(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   status: "require_greater_timestamp"
+        //   strictly_greater_than: ext(1, 946774800.0)
+        //
+        &hex!(
+            "82a6737461747573b9726571756972655f677265617465725f74696d657374616d70b57374"
+            "726963746c795f677265617465725f7468616ed70141cc375188000000"
+        )[..],
+        authenticated_cmds::vlob_create::Rep::RequireGreaterTimestamp {
+            strictly_greater_than: "2000-1-2T01:00:00Z".parse().unwrap(),
+        }
+    )
+)]
+#[case::bad_timestamp(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   backend_timestamp: ext(1, 946774800.0)
+        //   ballpark_client_early_offset: 50.0
+        //   ballpark_client_late_offset: 70.0
+        //   client_timestamp: ext(1, 946774800.0)
+        //   status: "bad_timestamp"
+        //
+        &hex!(
+            "85b16261636b656e645f74696d657374616d70d70141cc375188000000bc62616c6c706172"
+            "6b5f636c69656e745f6561726c795f6f6666736574cb4049000000000000bb62616c6c7061"
+            "726b5f636c69656e745f6c6174655f6f6666736574cb4051800000000000b0636c69656e74"
+            "5f74696d657374616d70d70141cc375188000000a6737461747573ad6261645f74696d6573"
+            "74616d70"
+        )[..],
+        authenticated_cmds::vlob_create::Rep::BadTimestamp {
+            reason: None,
+            ballpark_client_early_offset: 50.,
+            ballpark_client_late_offset: 70.,
+            backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+            client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+        }
+    )
+)]
+#[case::not_a_sequestered_organization(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   status: "not_a_sequestered_organization"
+        //
+        &hex!(
+            "81a6737461747573be6e6f745f615f73657175657374657265645f6f7267616e697a617469"
+            "6f6e"
+        )[..],
+        authenticated_cmds::vlob_create::Rep::NotASequesteredOrganization,
+    )
+)]
+#[case::sequester_inconsistency(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   sequester_authority_certificate: hex!("666f6f626172")
+        //   sequester_services_certificates: [hex!("666f6f"), hex!("626172")]
+        //   status: "sequester_inconsistency"
+        //
+        &hex!(
+            "83bf7365717565737465725f617574686f726974795f6365727469666963617465c406666f"
+            "6f626172bf7365717565737465725f73657276696365735f63657274696669636174657392"
+            "c403666f6fc403626172a6737461747573b77365717565737465725f696e636f6e73697374"
+            "656e6379"
+        )[..],
+        authenticated_cmds::vlob_create::Rep::SequesterInconsistency {
+            sequester_authority_certificate: b"foobar".to_vec(),
+            sequester_services_certificates: vec![b"foo".to_vec(), b"bar".to_vec()],
+        },
     )
 )]
 fn serde_vlob_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_create::Rep)) {
@@ -257,33 +371,72 @@ fn serde_vlob_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_re
 }
 
 #[rstest]
-fn serde_vlob_update_req() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   timestamp: ext(1, 946774800.0)
-    //   version: 8
-    //   blob: hex!("666f6f626172")
-    //   cmd: "vlob_update"
-    //   encryption_revision: 8
-    //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
-    let raw = hex!(
-        "86a4626c6f62c406666f6f626172a3636d64ab766c6f625f757064617465b3656e63727970"
-        "74696f6e5f7265766973696f6e08a974696d657374616d70d70141cc375188000000a77665"
-        "7273696f6e08a7766c6f625f6964d8022b5f314728134a12863da1ce49c112f6"
-    );
+#[rstest]
+#[case::base(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   timestamp: ext(1, 946774800.0)
+        //   version: 8
+        //   blob: hex!("666f6f626172")
+        //   cmd: "vlob_update"
+        //   encryption_revision: 8
+        //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
+        &hex!(
+            "86a4626c6f62c406666f6f626172a3636d64ab766c6f625f757064617465b3656e63727970"
+            "74696f6e5f7265766973696f6e08a974696d657374616d70d70141cc375188000000a77665"
+            "7273696f6e08a7766c6f625f6964d8022b5f314728134a12863da1ce49c112f6"
+        )[..],
+        authenticated_cmds::AnyCmdReq::VlobUpdate(
+            authenticated_cmds::vlob_update::Req {
+                encryption_revision: 8,
+                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+                version: 8,
+                blob: b"foobar".to_vec(),
+                sequester_blob: Maybe::Absent,
+            }
+        )
+    )
+)]
+#[case::with_sequester_blob(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   timestamp: ext(1, 946774800.0)
+        //   version: 8
+        //   blob: hex!("666f6f626172")
+        //   cmd: "vlob_update"
+        //   encryption_revision: 8
+        //   sequester_blob: {
+        //     ExtType(code=2, data=b'\xb5\xebVSC\xc4B\xb3\xa2k\xe4Es\x81?\xf0'): hex!("666f6f626172")
+        //   }
+        //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
+        //
+        &hex!(
+            "87a4626c6f62c406666f6f626172a3636d64ab766c6f625f757064617465b3656e63727970"
+            "74696f6e5f7265766973696f6e08ae7365717565737465725f626c6f6281d802b5eb565343"
+            "c442b3a26be44573813ff0c406666f6f626172a974696d657374616d70d70141cc37518800"
+            "0000a776657273696f6e08a7766c6f625f6964d8022b5f314728134a12863da1ce49c112f6"
+        )[..],
+        authenticated_cmds::AnyCmdReq::VlobUpdate(
+            authenticated_cmds::vlob_update::Req {
+                encryption_revision: 8,
+                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+                version: 8,
+                blob: b"foobar".to_vec(),
+                sequester_blob: Maybe::Present(Some(
+                    HashMap::from([("b5eb565343c442b3a26be44573813ff0".parse().unwrap(), b"foobar".to_vec())])
+                )),
+            }
+        )
+    )
+)]
+fn serde_vlob_update_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmdReq)) {
+    let (raw, expected) = raw_expected;
 
-    let req = authenticated_cmds::vlob_update::Req {
-        encryption_revision: 8,
-        vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
-        timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
-        version: 8,
-        blob: b"foobar".to_vec(),
-        sequester_blob: Maybe::Absent,
-    };
-
-    let expected = authenticated_cmds::AnyCmdReq::VlobUpdate(req);
-
-    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
@@ -363,6 +516,81 @@ fn serde_vlob_update_req() {
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
         authenticated_cmds::vlob_update::Rep::InMaintenance
+    )
+)]
+#[case::require_greater_timestamp(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   status: "require_greater_timestamp"
+        //   strictly_greater_than: ext(1, 946774800.0)
+        //
+        &hex!(
+            "82a6737461747573b9726571756972655f677265617465725f74696d657374616d70b57374"
+            "726963746c795f677265617465725f7468616ed70141cc375188000000"
+        )[..],
+        authenticated_cmds::vlob_update::Rep::RequireGreaterTimestamp {
+            strictly_greater_than: "2000-1-2T01:00:00Z".parse().unwrap(),
+        }
+    )
+)]
+#[case::bad_timestamp(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   backend_timestamp: ext(1, 946774800.0)
+        //   ballpark_client_early_offset: 50.0
+        //   ballpark_client_late_offset: 70.0
+        //   client_timestamp: ext(1, 946774800.0)
+        //   status: "bad_timestamp"
+        //
+        &hex!(
+            "85b16261636b656e645f74696d657374616d70d70141cc375188000000bc62616c6c706172"
+            "6b5f636c69656e745f6561726c795f6f6666736574cb4049000000000000bb62616c6c7061"
+            "726b5f636c69656e745f6c6174655f6f6666736574cb4051800000000000b0636c69656e74"
+            "5f74696d657374616d70d70141cc375188000000a6737461747573ad6261645f74696d6573"
+            "74616d70"
+        )[..],
+        authenticated_cmds::vlob_update::Rep::BadTimestamp {
+            reason: None,
+            ballpark_client_early_offset: 50.,
+            ballpark_client_late_offset: 70.,
+            backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+            client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+        }
+    )
+)]
+#[case::not_a_sequestered_organization(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   status: "not_a_sequestered_organization"
+        //
+        &hex!(
+            "81a6737461747573be6e6f745f615f73657175657374657265645f6f7267616e697a617469"
+            "6f6e"
+        )[..],
+        authenticated_cmds::vlob_update::Rep::NotASequesteredOrganization,
+    )
+)]
+#[case::sequester_inconsistency(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   sequester_authority_certificate: hex!("666f6f626172")
+        //   sequester_services_certificates: [hex!("666f6f"), hex!("626172")]
+        //   status: "sequester_inconsistency"
+        //
+        &hex!(
+            "83bf7365717565737465725f617574686f726974795f6365727469666963617465c406666f"
+            "6f626172bf7365717565737465725f73657276696365735f63657274696669636174657392"
+            "c403666f6fc403626172a6737461747573b77365717565737465725f696e636f6e73697374"
+            "656e6379"
+        )[..],
+        authenticated_cmds::vlob_update::Rep::SequesterInconsistency {
+            sequester_authority_certificate: b"foobar".to_vec(),
+            sequester_services_certificates: vec![b"foo".to_vec(), b"bar".to_vec()],
+        },
     )
 )]
 fn serde_vlob_update_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_update::Rep)) {

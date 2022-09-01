@@ -96,7 +96,6 @@ __all__ = (
     "BlockIDField",
     "BlockAccess",
     "WorkspaceEntry",
-    "BaseManifest",
     "UserManifest",
     "WorkspaceManifest",
     "FolderManifest",
