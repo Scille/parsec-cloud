@@ -362,6 +362,10 @@ impl LocalDateTime {
         self.0.second() as u64
     }
 
+    pub fn to_utc(self) -> DateTime {
+        self.into()
+    }
+
     pub fn format(&self, fmt: &str) -> String {
         self.0.format(fmt).to_string()
     }
