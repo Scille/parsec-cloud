@@ -26,6 +26,7 @@ from parsec._parsec_pyi.ids import (
     DeviceName,
     UserID,
     RealmID,
+    SequesterServiceID,
 )
 
 from parsec._parsec_pyi.invite import (
@@ -127,6 +128,7 @@ from parsec._parsec_pyi.protocol import (
     VlobCreateRepSequesterInconsistency,
     VlobCreateRepUnknownStatus,
     VlobReadReq,
+    VlobReadRep,
     VlobReadRepOk,
     VlobReadRepNotFound,
     VlobReadRepNotAllowed,
@@ -207,6 +209,7 @@ __all__ = [
     "DeviceName",
     "UserID",
     "RealmID",
+    "SequesterServiceID",
     # Invite
     "InvitationToken",
     "SASCode",
@@ -295,6 +298,7 @@ __all__ = [
     "VlobCreateRepSequesterInconsistency",
     "VlobCreateRepUnknownStatus",
     "VlobReadReq",
+    "VlobReadRep",
     "VlobReadRepOk",
     "VlobReadRepNotFound",
     "VlobReadRepNotAllowed",

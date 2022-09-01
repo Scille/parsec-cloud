@@ -132,7 +132,7 @@ from parsec.api.protocol.pki import (
     pki_enrollment_reject_serializer,
     pki_enrollment_accept_serializer,
 )
-from parsec.api.protocol.sequester import SequesterServiceID, SequesterServiceIDField
+from parsec.api.protocol.sequester import SequesterServiceIDField
 from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS, APIV1_ANONYMOUS_CMDS
 from parsec._parsec import (
     AuthenticatedAnyCmdReq,
@@ -141,6 +141,7 @@ from parsec._parsec import (
     BlockReadRep,
     BlockCreateReq,
     BlockCreateRep,
+    SequesterServiceID,
 )
 
 __all__ = (

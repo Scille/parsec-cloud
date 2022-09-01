@@ -7,6 +7,12 @@ import trio
 from trio.lowlevel import current_clock
 from structlog import get_logger
 
+from parsec._parsec import (
+    VlobPollChangesRepOk,
+    VlobPollChangesRepInMaintenance,
+    VlobPollChangesRepNotAllowed,
+    VlobPollChangesRepNotFound,
+)
 from parsec.api.protocol import RealmID
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import EntryID, WorkspaceRole
@@ -122,17 +128,17 @@ class SyncContext:
             logger.warning("Unexpected backend response during sync bootstrap", exc_info=exc)
             return False
 
-        if rep["status"] == "not_found":
+        if isinstance(rep, VlobPollChangesRepNotFound):
             # Workspace not yet synchronized with backend
             new_checkpoint = 0
             changes = {}
-        elif rep["status"] in ("in_maintenance", "not_allowed"):
+        elif isinstance(rep, (VlobPollChangesRepInMaintenance, VlobPollChangesRepNotAllowed)):
             return False
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, VlobPollChangesRepOk):
             return False
         else:
-            new_checkpoint = rep["current_checkpoint"]
-            changes = rep["changes"]
+            new_checkpoint = rep.current_checkpoint
+            changes = rep.changes
 
         # 2) Store new checkpoint and changes
         await self._get_local_storage().update_realm_checkpoint(
