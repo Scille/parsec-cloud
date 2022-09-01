@@ -20,7 +20,7 @@ fancy-regex = "0.10.0"
 # This crate will never be compiled on platform `wasm32` but when we configure rust-analyzer to target `wasm32`
 # It will crash when it try to compile `pyo3` for wasm32
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies.pyo3]
-version = "0.17.1"
+version = "0.16.5"
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
 # "abi3-py37" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.7
 features = ["extension-module", "abi3-py37"]
