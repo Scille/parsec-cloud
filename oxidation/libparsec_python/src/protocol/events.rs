@@ -42,7 +42,7 @@ impl EventsListenReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct EventsListenRep(pub events_listen::Rep);
 
 #[pymethods]
@@ -195,7 +195,7 @@ impl EventsSubscribeReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct EventsSubscribeRep(pub events_subscribe::Rep);
 
 #[pymethods]

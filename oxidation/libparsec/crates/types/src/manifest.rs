@@ -132,7 +132,7 @@ macro_rules! impl_manifest_dump_load {
 }
 
 /*
- * EntryID, BlockID, RealmID, VlobID
+ * EntryID, BlockID, RealmID, VlobID, ChunkID, SequesterServiceID
  */
 
 new_uuid_type!(pub EntryID);
@@ -140,6 +140,7 @@ new_uuid_type!(pub BlockID);
 new_uuid_type!(pub RealmID);
 new_uuid_type!(pub VlobID);
 new_uuid_type!(pub ChunkID);
+new_uuid_type!(pub SequesterServiceID);
 impl_from_maybe!(std::collections::HashSet<EntryID>);
 
 /*

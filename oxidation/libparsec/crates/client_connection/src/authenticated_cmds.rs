@@ -37,8 +37,8 @@ use libparsec_protocol::authenticated_cmds::{
     self, invite_delete::InvitationDeletedReason, invite_new::UserOrDevice,
 };
 use libparsec_types::{
-    BackendOrganizationAddr, BlockID, DateTime, DeviceID, InvitationToken, RealmID,
-    ReencryptionBatchEntry, UserID, VlobID,
+    BackendOrganizationAddr, BlockID, DateTime, DeviceID, InvitationToken, Maybe, RealmID,
+    ReencryptionBatchEntry, SequesterServiceID, UserID, VlobID,
 };
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
@@ -297,7 +297,8 @@ impl AuthenticatedCmds {
             encryption_revision: u64,
             vlob_id: VlobID,
             timestamp: DateTime,
-            blob: Vec<u8>
+            blob: Vec<u8>,
+            sequester_blob: Maybe<Option<HashMap<SequesterServiceID, Vec<u8>>>>
         )
         /// List version of a vlob
         vlob_list_versions(vlob_id: VlobID)
@@ -328,7 +329,8 @@ impl AuthenticatedCmds {
             vlob_id: VlobID,
             timestamp: DateTime,
             version: u32,
-            blob: Vec<u8>
+            blob: Vec<u8>,
+            sequester_blob: Maybe<Option<HashMap<SequesterServiceID, Vec<u8>>>>
         )
     );
 }

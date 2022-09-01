@@ -45,7 +45,7 @@ impl RealmCreateReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct RealmCreateRep(pub realm_create::Rep);
 
 #[pymethods]
@@ -140,7 +140,7 @@ pub fn py_to_rs_maintenance_type(
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct RealmStatusRep(pub realm_status::Rep);
 
 #[pymethods]
@@ -230,7 +230,7 @@ impl RealmStatsReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct RealmStatsRep(pub realm_stats::Rep);
 
 #[pymethods]
@@ -305,7 +305,7 @@ impl RealmGetRoleCertificateReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct RealmGetRoleCertificateRep(pub realm_get_role_certificates::Rep);
 
 #[pymethods]
@@ -384,7 +384,7 @@ impl RealmUpdateRolesReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct RealmUpdateRolesRep(pub realm_update_roles::Rep);
 
 #[pymethods]
@@ -528,7 +528,7 @@ impl RealmStartReencryptionMaintenanceReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct RealmStartReencryptionMaintenanceRep(
     pub realm_start_reencryption_maintenance::Rep,
 );
@@ -646,7 +646,7 @@ impl RealmFinishReencryptionMaintenanceReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct RealmFinishReencryptionMaintenanceRep(
     pub realm_finish_reencryption_maintenance::Rep,
 );

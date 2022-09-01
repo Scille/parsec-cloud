@@ -31,6 +31,7 @@ fn serde_vlob_create_req() {
         vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
         timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
         blob: b"foobar".to_vec(),
+        sequester_blob: Maybe::Absent,
     };
 
     let expected = authenticated_cmds::AnyCmdReq::VlobCreate(req);
@@ -277,6 +278,7 @@ fn serde_vlob_update_req() {
         timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
         version: 8,
         blob: b"foobar".to_vec(),
+        sequester_blob: Maybe::Absent,
     };
 
     let expected = authenticated_cmds::AnyCmdReq::VlobUpdate(req);

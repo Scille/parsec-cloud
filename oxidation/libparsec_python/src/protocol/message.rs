@@ -41,7 +41,7 @@ impl MessageGetReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Message(pub message_get::Message);
 
 #[pymethods]
@@ -64,7 +64,7 @@ impl Message {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct MessageGetRep(pub message_get::Rep);
 
 #[pymethods]
