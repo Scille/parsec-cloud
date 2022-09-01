@@ -61,7 +61,7 @@ jobs:
         with:
           version: ${{ env.rust-version }}
           components: rustfmt, clippy
-          cache-key: ubuntu-20.04
+          cache-key: ${{ github.job }}-ubuntu-20.04
         timeout-minutes: 10
 
       - name: Debug installed tools
@@ -200,7 +200,7 @@ jobs:
         if: steps.python-changes.outputs.run == 'true'
         with:
           version: ${{ env.rust-version }}
-          cache-key: ${{ matrix.os }}
+          cache-key: ${{ github.job }}-${{ matrix.os }}
         timeout-minutes: 10
 
       - uses: ./.github/actions/setup-python-poetry
@@ -298,7 +298,7 @@ jobs:
         if: steps.rust-changes.outputs.run == 'true'
         with:
           version: ${{ env.rust-version }}
-          cache-key: ${{ matrix.os }}
+          cache-key: ${{ github.job }}-${{ matrix.os }}
         timeout-minutes: 10
 
       # Pyo3 need additional configuration on MacOS to be manually build
