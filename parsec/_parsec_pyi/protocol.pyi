@@ -140,7 +140,7 @@ class VlobCreateRepBadTimestamp(RepWithReason, VlobCreateRep):
 
 class VlobCreateRepSequesterInconsistency(VlobCreateRep):
     def __init__(
-        self, sequester_authority_certificate: bytes, sequester_services_certificates: Tuple[bytes]
+        self, sequester_authority_certificate: bytes, sequester_services_certificates: List[bytes]
     ) -> None: ...
     @property
     def sequester_authority_certificate(self) -> bytes: ...
@@ -271,7 +271,7 @@ class VlobUpdateRepBadTimestamp(RepWithReason, VlobUpdateRep):
 
 class VlobUpdateRepSequesterInconsistency(VlobUpdateRep):
     def __init__(
-        self, sequester_authority_certificate: bytes, sequester_services_certificates: Tuple[bytes]
+        self, sequester_authority_certificate: bytes, sequester_services_certificates: List[bytes]
     ) -> None: ...
     @property
     def sequester_authority_certificate(self) -> bytes: ...

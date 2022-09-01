@@ -133,7 +133,7 @@ class VlobSequesterDisabledError(VlobError):
 
 class VlobSequesterServiceInconsistencyError(VlobError):
     def __init__(
-        self, sequester_authority_certificate: bytes, sequester_services_certificates: Tuple[bytes]
+        self, sequester_authority_certificate: bytes, sequester_services_certificates: List[bytes]
     ):
         self.sequester_authority_certificate = sequester_authority_certificate
         self.sequester_services_certificates = sequester_services_certificates
