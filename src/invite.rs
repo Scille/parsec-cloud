@@ -310,7 +310,7 @@ impl InviteUserConfirmation {
         Python::with_gil(|py| -> PyResult<PyObject> {
             let cls = py.import("parsec.api.protocol")?.getattr("UserProfile")?;
             let name = self.0.profile.to_string();
-            let obj = cls.getattr(name)?;
+            let obj = cls.getattr(&name as &str)?;
             Ok(obj.into_py(py))
         })
     }
@@ -450,7 +450,7 @@ impl InviteDeviceConfirmation {
         Python::with_gil(|py| -> PyResult<PyObject> {
             let cls = py.import("parsec.api.protocol")?.getattr("UserProfile")?;
             let name = self.0.profile.to_string();
-            let obj = cls.getattr(name)?;
+            let obj = cls.getattr(&name as &str)?;
             Ok(obj.into_py(py))
         })
     }

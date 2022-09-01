@@ -736,7 +736,7 @@ impl BackendInvitationAddr {
                 .import("parsec.api.protocol")?
                 .getattr("InvitationType")?;
             let name = self.0.invitation_type().to_string();
-            let obj = cls.getattr(name)?;
+            let obj = cls.getattr(&name as &str)?;
             Ok(obj.into_py(py))
         })
     }
