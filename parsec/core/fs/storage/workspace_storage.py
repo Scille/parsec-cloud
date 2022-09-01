@@ -32,13 +32,11 @@ from parsec.core.types import (
     LocalWorkspaceManifest,
 )
 from parsec.core.fs.exceptions import FSError
-from parsec.core.fs.storage.local_database import LocalDatabase
-from parsec.core.fs.storage.manifest_storage import ManifestStorage
-from parsec.core.fs.storage.version import (
-    get_workspace_data_storage_db_path,
-)
 from parsec.core.types.manifest import AnyLocalManifest
-from parsec._parsec import WorkspaceStorage as _SyncWorkspaceStorage
+from parsec._parsec import (
+    WorkspaceStorage as _SyncWorkspaceStorage,
+    workspace_storage_non_speculative_init as _sync_workspace_storage_non_speculative_init,
+)
 
 
 logger = get_logger()
@@ -52,25 +50,25 @@ DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024
 
 AnyWorkspaceStorage = Union["WorkspaceStorage", "WorkspaceStorageTimestamped"]
 
-__all__ = ["WorkspaceStorage", "AnyWorkspaceStorage", "PseudoFileDescriptor"]
+__all__ = [
+    "WorkspaceStorage",
+    "AnyWorkspaceStorage",
+    "PseudoFileDescriptor",
+]
 
 
 async def workspace_storage_non_speculative_init(
-    data_base_dir: Path, device: LocalDevice, workspace_id: EntryID
+    data_base_dir: Path,
+    device: LocalDevice,
+    workspace_id: EntryID,
 ) -> None:
-    db_path = get_workspace_data_storage_db_path(data_base_dir, device, workspace_id)
-
-    # Local data storage service
-    async with LocalDatabase.run(db_path) as data_localdb:
-
-        # Manifest storage service
-        async with ManifestStorage.run(device, data_localdb, workspace_id) as manifest_storage:
-
-            timestamp = device.timestamp()
-            manifest = LocalWorkspaceManifest.new_placeholder(
-                author=device.device_id, id=workspace_id, timestamp=timestamp, speculative=False
-            )
-            await manifest_storage.set_manifest(workspace_id, manifest)
+    return await trio.to_thread.run_sync(
+        _sync_workspace_storage_non_speculative_init,
+        data_base_dir,
+        device,
+        workspace_id,
+        device.timestamp(),
+    )
 
 
 class WorkspaceStorage:
@@ -259,9 +257,6 @@ class WorkspaceStorage:
 
     async def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
         return await trio.to_thread.run_sync(self.sync_instance.get_need_sync_entries)
-
-    async def get_local_chunk_ids(self, chunk_ids: List[ChunkID]) -> Tuple[ChunkID, ...]:
-        return await trio.to_thread.run_sync(self.sync_instance.get_local_chunk_ids, chunk_ids)
 
     async def run_vacuum(self) -> None:
         return await trio.to_thread.run_sync(self.sync_instance.run_vacuum)

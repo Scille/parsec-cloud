@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
 use libparsec_client_types::{
     LocalDevice, LocalFileManifest, LocalManifest, LocalWorkspaceManifest,
 };
-use libparsec_types::{BlockID, ChunkID, EntryID, FileDescriptor};
+use libparsec_types::{BlockID, ChunkID, DateTime, EntryID, FileDescriptor};
 
 use super::chunk_storage::ChunkStorage;
 use super::manifest_storage::{ChunkOrBlockID, ManifestStorage};
@@ -375,6 +375,31 @@ impl WorkspaceStorage {
         // TODO: Add some condition
         self.chunk_storage.run_vacuum()
     }
+}
+
+pub fn workspace_storage_non_speculative_init(
+    data_base_dir: &Path,
+    device: LocalDevice,
+    workspace_id: EntryID,
+    timestamp: Option<DateTime>,
+) -> FSResult<()> {
+    let data_path = get_workspace_data_storage_db_path(data_base_dir, &device, workspace_id);
+    let data_pool = SqlitePool::new(
+        data_path
+            .to_str()
+            .expect("Non-Utf-8 character found in data_path"),
+    )?;
+    let conn = Mutex::new(data_pool.conn()?);
+    let manifest_storage = ManifestStorage::new(device.local_symkey.clone(), conn, workspace_id)?;
+    let timestamp = timestamp.unwrap_or_else(|| device.now());
+    let manifest =
+        LocalWorkspaceManifest::new(device.device_id, timestamp, Some(workspace_id), false);
+    manifest_storage.set_manifest(
+        workspace_id,
+        LocalManifest::Workspace(manifest),
+        false,
+        None,
+    )
 }
 
 #[cfg(test)]

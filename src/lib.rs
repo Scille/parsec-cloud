@@ -96,6 +96,10 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(manifest::manifest_verify_and_load, m)?)?;
 
     m.add_class::<storage::WorkspaceStorage>()?;
+    m.add_function(wrap_pyfunction!(
+        storage::workspace_storage_non_speculative_init,
+        m
+    )?)?;
 
     // Block
     m.add_class::<protocol::BlockCreateReq>()?;

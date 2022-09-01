@@ -13,6 +13,7 @@ use crate::{
     local_manifest::{
         LocalFileManifest, LocalFolderManifest, LocalUserManifest, LocalWorkspaceManifest,
     },
+    time::DateTime,
 };
 
 import_exception!(parsec.core.fs.exceptions, FSLocalMissError);
@@ -328,4 +329,23 @@ impl WorkspaceStorage {
     fn workspace_id(&self) -> PyResult<EntryID> {
         Ok(EntryID(self.0.workspace_id))
     }
+}
+
+#[pyfunction]
+pub(crate) fn workspace_storage_non_speculative_init(
+    py: Python,
+    data_base_dir: std::path::PathBuf,
+    device: LocalDevice,
+    workspace_id: EntryID,
+    timestamp: Option<DateTime>,
+) -> PyResult<()> {
+    py.allow_threads(|| {
+        libparsec::core_fs::workspace_storage_non_speculative_init(
+            &data_base_dir,
+            device.0,
+            workspace_id.0,
+            timestamp.map(|wrapped| wrapped.0),
+        )
+        .map_err(|e| PyValueError::new_err(e.to_string()))
+    })
 }

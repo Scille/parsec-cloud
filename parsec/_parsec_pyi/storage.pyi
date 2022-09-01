@@ -8,6 +8,7 @@ from parsec._parsec_pyi.local_manifest import (
     LocalWorkspaceManifest,
 )
 from parsec._parsec_pyi.ids import BlockID, ChunkID, EntryID
+from parsec._parsec_pyi.time import DateTime
 from parsec.core.types import FileDescriptor
 
 PseudoFileDescriptor = Union[int, FileDescriptor]
@@ -58,3 +59,10 @@ class WorkspaceStorage:
     def device(self) -> LocalDevice: ...
     @property
     def workspace_id(self) -> EntryID: ...
+
+def workspace_storage_non_speculative_init(
+    data_base_dir: Path,
+    device: LocalDevice,
+    workspace_id: EntryID,
+    timestamp: Optional[DateTime] = ...,
+) -> None: ...
