@@ -3,7 +3,7 @@
 use pyo3::basic::CompareOp;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyBytes, PyDict, PyList, PyString, PyTuple, PyType};
+use pyo3::types::{IntoPyDict, PyBytes, PyDict, PyString, PyType};
 use uuid::Uuid;
 
 use crate::api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
@@ -137,42 +137,6 @@ impl SASCode {
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
     }
-}
-
-#[pyfunction]
-pub fn generate_sas_codes<'p>(
-    py: Python<'p>,
-    claimer_nonce: &PyBytes,
-    greeter_nonce: &PyBytes,
-    shared_secret_key: &SecretKey,
-) -> PyResult<&'p PyTuple> {
-    let (claimer_sas, greeter_sas) = libparsec::types::SASCode::generate_sas_codes(
-        claimer_nonce.as_bytes(),
-        greeter_nonce.as_bytes(),
-        &shared_secret_key.0,
-    );
-    Ok(PyTuple::new(
-        py,
-        vec![
-            SASCode(claimer_sas).into_py(py),
-            SASCode(greeter_sas).into_py(py),
-        ],
-    ))
-}
-
-#[pyfunction]
-pub fn generate_sas_code_candidates<'p>(
-    py: Python<'p>,
-    valid_sas: &SASCode,
-    size: usize,
-) -> PyResult<&'p PyList> {
-    let candidates: Vec<libparsec::types::SASCode> = valid_sas.0.generate_sas_code_candidates(size);
-    let py_candidates: Vec<PyObject> = candidates
-        .iter()
-        .map(|v| SASCode::new(v.as_ref()).unwrap().into_py(py))
-        .collect();
-
-    Ok(PyList::new(py, py_candidates))
 }
 
 /*
