@@ -155,7 +155,7 @@ impl WorkspaceEntry {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType, name: &EntryName, timestamp: DateTime) -> PyResult<Self> {
+    fn class_new(_cls: &PyType, name: &EntryName, timestamp: DateTime) -> PyResult<Self> {
         Ok(Self(libparsec::types::WorkspaceEntry::generate(
             name.0.to_owned(),
             timestamp.0,

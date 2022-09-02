@@ -112,7 +112,7 @@ impl EntryID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::EntryID::default()))
     }
 
@@ -192,7 +192,7 @@ impl BlockID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::BlockID::default()))
     }
 
@@ -276,7 +276,7 @@ impl RealmID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::RealmID::default()))
     }
 
@@ -360,7 +360,7 @@ impl VlobID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::VlobID::default()))
     }
 
@@ -499,7 +499,7 @@ impl DeviceName {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::DeviceName::default()))
     }
 }
@@ -613,7 +613,7 @@ impl DeviceID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::DeviceID::default()))
     }
 }
@@ -692,7 +692,7 @@ impl ChunkID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::ChunkID::default()))
     }
 
@@ -786,7 +786,7 @@ impl SequesterServiceID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::SequesterServiceID::default()))
     }
 
