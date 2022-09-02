@@ -14,7 +14,7 @@ crate-type = ["cdylib"]
 libparsec = { version = "0.1.0", path = "../libparsec", features = ["mock-time"] }
 
 uuid = { version = "1.1.2", features = ["serde", "v4", "fast-rng"] }
-chrono = {version = "0.4.20", features = ["serde"]}
+chrono = {version = "0.4.22", features = ["serde"]}
 fancy-regex = "0.10.0"
 
 # This crate will never be compiled on platform `wasm32` but when we configure rust-analyzer to target `wasm32`
