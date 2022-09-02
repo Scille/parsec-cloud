@@ -12,7 +12,7 @@ futures = "0.3.21"
 log = "0.4.17"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = "0.2.80"
+wasm-bindgen = "0.2.82"
 wasm-bindgen-futures = "0.4.31"
 # Window feature is require for `Timer`.
 web-sys = { version = "0.3.58", features = ["Window"] }
