@@ -580,7 +580,7 @@ mod tests {
     #[rstest]
     fn manifest_storage(tmp_path: TmpPath, timestamp: DateTime) {
         let t1 = timestamp;
-        let t2 = t1 + 1;
+        let t2 = t1.add_us(1);
         let db_path = tmp_path.join("manifest_storage.sqlite");
         let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
         let conn = Mutex::new(pool.conn().unwrap());

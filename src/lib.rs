@@ -11,6 +11,7 @@ mod local_device;
 mod local_manifest;
 mod manifest;
 mod protocol;
+mod runtime;
 mod time;
 mod trustchain;
 

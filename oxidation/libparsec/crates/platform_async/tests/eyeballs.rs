@@ -3,7 +3,7 @@
 use instant::Instant;
 use libparsec_platform_async::{
     channel::{bounded, RecvError, Sender},
-    JoinSet, Notify, Timer,
+    JoinSet, Notify,
 };
 use std::{
     sync::{Arc, Mutex},
@@ -93,7 +93,7 @@ async fn attempt(
         let attempt_to_wait = which - 1;
         futures_lite::future::or(
             async {
-                Timer::after(Duration::from_millis(TIMEOUT)).await;
+                libparsec_platform_async::sleep(Duration::from_millis(TIMEOUT)).await;
                 log::info!("[#{which}] previous task timed out");
             },
             async {
@@ -131,7 +131,7 @@ async fn attempt(
 }
 
 async fn mock_load(load: &Load) -> Mode {
-    Timer::after(load.delay).await;
+    libparsec_platform_async::sleep(load.delay).await;
     load.result
 }
 

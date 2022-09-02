@@ -109,7 +109,7 @@ fn test_good_authenticated_handshake_client(alice: &Device) {
 #[rstest]
 fn test_good_authenticated_handshake(alice: &Device, timestamp: DateTime) {
     let t1 = timestamp;
-    let t2 = t1 + 1;
+    let t2 = t1.add_us(1);
     let sh = ServerHandshakeStalled::default()
         .build_challenge_req(t1)
         .unwrap();
@@ -298,7 +298,7 @@ fn test_good_invited_handshake_client(#[case] input: (&[u8], InvitationType, Inv
 #[case::device(InvitationType::Device)]
 fn test_good_invited_handshake(timestamp: DateTime, #[case] _invitation_type: InvitationType) {
     let t1 = timestamp;
-    let t2 = t1 + 1;
+    let t2 = t1.add_us(1);
     let _organization_id = OrganizationID::default();
     let _token = InvitationToken::default();
 
@@ -411,7 +411,7 @@ fn test_process_challenge_req_good_api_version(
 ) {
     let (client_version, backend_version, valid) = input;
     let t1 = timestamp;
-    let t2 = t1 + 1;
+    let t2 = t1.add_us(1);
 
     let req = Handshake::Challenge {
         challenge: hex!("58f7ec2bb24b81a57feee1bad250726a2f7588a3cdd0617a206687adf8fb1274f34b0aebf9fd27a5d29f56dce902ddcd"),
@@ -553,7 +553,7 @@ fn test_process_challenge_req_good_multiple_api_version(
     let (_client_versions, _backend_versions, expected_client_version, expected_backend_version) =
         input;
     let t1 = timestamp;
-    let t2 = t1 + 1;
+    let t2 = t1.add_us(1);
 
     let req = Handshake::Challenge {
         challenge: hex!("58f7ec2bb24b81a57feee1bad250726a2f7588a3cdd0617a206687adf8fb1274f34b0aebf9fd27a5d29f56dce902ddcd"),
