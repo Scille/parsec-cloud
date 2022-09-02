@@ -9,6 +9,13 @@ from contextlib import asynccontextmanager
 from parsec._parsec import (
     BlockCreateRepOk,
     BlockReadRepOk,
+    VlobCreateRepOk,
+    VlobReadRepOk,
+    VlobUpdateRepOk,
+    VlobPollChangesRepOk,
+    VlobListVersionsRepOk,
+    VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepOk,
 )
 from parsec.serde import packb
 from parsec.api.protocol import (
@@ -168,7 +175,20 @@ class CmdSock:
             if isinstance(rep, dict):
                 assert rep["status"] == "ok"  # Legacy rep schemas
             else:
-                assert isinstance(rep, (BlockCreateRepOk, BlockReadRepOk))  # Rust-based rep schemas
+                assert isinstance(
+                    rep,
+                    (
+                        BlockCreateRepOk,
+                        BlockReadRepOk,
+                        VlobCreateRepOk,
+                        VlobReadRepOk,
+                        VlobUpdateRepOk,
+                        VlobPollChangesRepOk,
+                        VlobListVersionsRepOk,
+                        VlobMaintenanceGetReencryptionBatchRepOk,
+                        VlobMaintenanceSaveReencryptionBatchRepOk,
+                    ),
+                )  # Rust-based rep schemas
 
         return rep
 
@@ -358,9 +378,8 @@ vlob_update = CmdSock(
 vlob_list_versions = CmdSock(
     "vlob_list_versions",
     vlob_list_versions_serializer,
-    parse_args=lambda self, vlob_id, encryption_revision=1: {
+    parse_args=lambda self, vlob_id: {
         "vlob_id": vlob_id,
-        "encryption_revision": encryption_revision,
     },
 )
 vlob_poll_changes = CmdSock(

@@ -40,7 +40,7 @@ impl InvitationToken {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::InvitationToken::default()))
     }
 

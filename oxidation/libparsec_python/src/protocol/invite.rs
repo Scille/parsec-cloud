@@ -74,7 +74,7 @@ fn py_to_rs_invitation_email_sent_status(
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct InviteNewRep(pub invite_new::Rep);
 
 #[pymethods]
@@ -165,7 +165,7 @@ impl InviteDeleteReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct InviteDeleteRep(pub invite_delete::Rep);
 
 #[pymethods]
@@ -280,7 +280,7 @@ impl InviteListItem {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct InviteListRep(pub invite_list::Rep);
 
 #[pymethods]
@@ -335,7 +335,7 @@ impl InviteInfoReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct InviteInfoRep(pub invite_info::Rep);
 
 #[pymethods]
@@ -420,7 +420,7 @@ impl Invite1ClaimerWaitPeerReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Invite1ClaimerWaitPeerRep(pub invite_1_claimer_wait_peer::Rep);
 
 #[pymethods]
@@ -494,7 +494,7 @@ impl Invite1GreeterWaitPeerReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Invite1GreeterWaitPeerRep(pub invite_1_greeter_wait_peer::Rep);
 
 #[pymethods]
@@ -574,7 +574,7 @@ impl Invite2aClaimerSendHashedNonceHashNonceReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Invite2aClaimerSendHashedNonceHashNonceRep(
     pub invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep,
 );
@@ -657,7 +657,7 @@ impl Invite2aGreeterGetHashedNonceReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Invite2aGreeterGetHashedNonceRep(pub invite_2a_greeter_get_hashed_nonce::Rep);
 
 #[pymethods]
@@ -734,7 +734,7 @@ impl Invite2bClaimerSendNonceReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Invite2bClaimerSendNonceRep(pub invite_2b_claimer_send_nonce::Rep);
 
 #[pymethods]
@@ -804,7 +804,7 @@ impl Invite2bGreeterSendNonceReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Invite2bGreeterSendNonceRep(pub invite_2b_greeter_send_nonce::Rep);
 
 #[pymethods]
@@ -878,7 +878,7 @@ impl Invite3aClaimerSignifyTrustReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Invite3aClaimerSignifyTrustRep(pub invite_3a_claimer_signify_trust::Rep);
 
 #[pymethods]
@@ -945,7 +945,7 @@ impl Invite3aGreeterWaitPeerTrustReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Invite3aGreeterWaitPeerTrustRep(pub invite_3a_greeter_wait_peer_trust::Rep);
 
 #[pymethods]
@@ -1017,7 +1017,7 @@ impl Invite3bClaimerWaitPeerTrustReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Invite3bClaimerWaitPeerTrustRep(pub invite_3b_claimer_wait_peer_trust::Rep);
 
 #[pymethods]
@@ -1084,7 +1084,7 @@ impl Invite3bGreeterSignifyTrustReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Invite3bGreeterSignifyTrustRep(pub invite_3b_greeter_signify_trust::Rep);
 
 #[pymethods]
@@ -1156,7 +1156,7 @@ impl Invite4ClaimerCommunicateReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Invite4ClaimerCommunicateRep(pub invite_4_claimer_communicate::Rep);
 
 #[pymethods]
@@ -1223,7 +1223,7 @@ impl Invite4GreeterCommunicateReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct Invite4GreeterCommunicateRep(pub invite_4_greeter_communicate::Rep);
 
 #[pymethods]

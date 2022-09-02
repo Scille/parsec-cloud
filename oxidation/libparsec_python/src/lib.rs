@@ -107,22 +107,6 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::HumanFindRep>()?;
     m.add_class::<protocol::Trustchain>()?;
     m.add_class::<protocol::HumanFindResultItem>()?;
-    // Vlob
-    m.add_class::<protocol::VlobCreateReq>()?;
-    m.add_class::<protocol::VlobCreateRep>()?;
-    m.add_class::<protocol::VlobReadReq>()?;
-    m.add_class::<protocol::VlobReadRep>()?;
-    m.add_class::<protocol::VlobUpdateReq>()?;
-    m.add_class::<protocol::VlobUpdateRep>()?;
-    m.add_class::<protocol::VlobPollChangesReq>()?;
-    m.add_class::<protocol::VlobPollChangesRep>()?;
-    m.add_class::<protocol::VlobListVersionsReq>()?;
-    m.add_class::<protocol::VlobListVersionsRep>()?;
-    m.add_class::<protocol::VlobMaintenanceGetReencryptionBatchReq>()?;
-    m.add_class::<protocol::VlobMaintenanceGetReencryptionBatchRep>()?;
-    m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchReq>()?;
-    m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchRep>()?;
-    m.add_class::<protocol::ReencryptionBatchEntry>()?;
     // Storage
     m.add_class::<storage::WorkspaceStorage>()?;
     Ok(())

@@ -38,7 +38,7 @@ impl InvitedPingReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct InvitedPingRep(pub invited_cmds::ping::Rep);
 
 #[pymethods]
@@ -97,7 +97,7 @@ impl AuthenticatedPingReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct AuthenticatedPingRep(pub authenticated_cmds::ping::Rep);
 
 #[pymethods]

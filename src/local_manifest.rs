@@ -173,7 +173,7 @@ impl Chunk {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType, start: u64, stop: u64) -> PyResult<Self> {
+    fn class_new(_cls: &PyType, start: u64, stop: u64) -> PyResult<Self> {
         Ok(Self(libparsec::client_types::Chunk::new(
             start,
             NonZeroU64::try_from(stop).map_err(PyValueError::new_err)?,

@@ -256,6 +256,10 @@ impl LocalDateTime {
         ))
     }
 
+    fn to_utc(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.to_utc()))
+    }
+
     fn format(&self, fmt: &str) -> PyResult<String> {
         Ok(self.0.format(fmt))
     }

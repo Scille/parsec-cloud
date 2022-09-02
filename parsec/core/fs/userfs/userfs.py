@@ -19,6 +19,28 @@ from typing import (
 from structlog import get_logger
 from contextlib import asynccontextmanager
 
+from parsec._parsec import (
+    VlobCreateRepOk,
+    VlobCreateRepAlreadyExists,
+    VlobCreateRepInMaintenance,
+    VlobCreateRepRequireGreaterTimestamp,
+    VlobCreateRepSequesterInconsistency,
+    VlobReadRepOk,
+    VlobReadRepInMaintenance,
+    VlobUpdateRepOk,
+    VlobUpdateRepBadVersion,
+    VlobUpdateRepInMaintenance,
+    VlobUpdateRepRequireGreaterTimestamp,
+    VlobUpdateRepSequesterInconsistency,
+    VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
+    VlobMaintenanceGetReencryptionBatchRepNotAllowed,
+    VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
+    VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
+    VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
+    VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
+)
 from parsec.utils import open_service_nursery
 from parsec.core.core_events import CoreEvent
 from parsec.event_bus import EventBus
@@ -110,38 +132,50 @@ class ReencryptionJob:
             rep = await self.backend_cmds.vlob_maintenance_get_reencryption_batch(
                 workspace_id, new_encryption_revision, size
             )
-            if rep["status"] in ("not_in_maintenance", "bad_encryption_revision"):
+            if isinstance(
+                rep,
+                (
+                    VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
+                    VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
+                ),
+            ):
                 raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
-            elif rep["status"] == "not_allowed":
+            elif isinstance(rep, VlobMaintenanceGetReencryptionBatchRepNotAllowed):
                 raise FSWorkspaceNoAccess(
                     f"Not allowed to do reencryption maintenance on workspace {workspace_id}: {rep}"
                 )
-            elif rep["status"] != "ok":
+            elif not isinstance(rep, VlobMaintenanceGetReencryptionBatchRepOk):
                 raise FSError(
                     f"Cannot do reencryption maintenance on workspace {workspace_id}: {rep}"
                 )
 
             done_batch = []
-            for item in rep["batch"]:
-                clear_text = self.old_workspace_entry.key.decrypt(item["blob"])
+            for item in rep.batch:
+                clear_text = self.old_workspace_entry.key.decrypt(item.blob)
                 new_ciphered = self.new_workspace_entry.key.encrypt(clear_text)
-                done_batch.append((item["vlob_id"], item["version"], new_ciphered))
+                done_batch.append((item.vlob_id, item.version, new_ciphered))
 
             rep = await self.backend_cmds.vlob_maintenance_save_reencryption_batch(
                 workspace_id, new_encryption_revision, done_batch
             )
-            if rep["status"] in ("not_in_maintenance", "bad_encryption_revision"):
+            if isinstance(
+                rep,
+                (
+                    VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
+                    VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
+                ),
+            ):
                 raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
-            elif rep["status"] == "not_allowed":
+            elif isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepNotAllowed):
                 raise FSWorkspaceNoAccess(
                     f"Not allowed to do reencryption maintenance on workspace {workspace_id}: {rep}"
                 )
-            elif rep["status"] != "ok":
+            elif not isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepOk):
                 raise FSError(
                     f"Cannot do reencryption maintenance on workspace {workspace_id}: {rep}"
                 )
-            total = rep["total"]
-            done = rep["done"]
+            total = rep.total
+            done = rep.done
 
             if total == done:
                 # Finish the maintenance
@@ -460,17 +494,17 @@ class UserFS:
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
 
-        if rep["status"] == "in_maintenance":
+        if isinstance(rep, VlobReadRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 "Cannot access workspace data while it is in maintenance"
             )
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, VlobReadRepOk):
             raise FSError(f"Cannot fetch user manifest from backend: {rep}")
 
-        expected_author = rep["author"]
-        expected_timestamp = rep["timestamp"]
-        expected_version = rep["version"]
-        blob = rep["blob"]
+        expected_author = rep.author
+        expected_timestamp = rep.timestamp
+        expected_version = rep.version
+        blob = rep.blob
 
         author = await self.remote_loader.get_device(expected_author)
 
@@ -687,26 +721,30 @@ class UserFS:
         except BackendConnectionError as exc:
             raise FSError(f"Cannot sync user manifest: {exc}") from exc
 
-        if rep["status"] in ("already_exists", "bad_version"):
+        if isinstance(rep, (VlobCreateRepAlreadyExists, VlobUpdateRepBadVersion)):
             # Concurrency error (handled by the caller)
             return None
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, (VlobCreateRepInMaintenance, VlobUpdateRepInMaintenance)):
             raise FSWorkspaceInMaintenance(
                 f"Cannot modify workspace data while it is in maintenance: {rep}"
             )
-        elif rep["status"] == "require_greater_timestamp":
+        elif isinstance(
+            rep, (VlobCreateRepRequireGreaterTimestamp, VlobUpdateRepRequireGreaterTimestamp)
+        ):
             return await self._upload_manifest(
-                base_um=base_um, timestamp_greater_than=rep["strictly_greater_than"]
+                base_um=base_um, timestamp_greater_than=rep.strictly_greater_than
             )
-        elif rep["status"] == "sequester_inconsistency":
+        elif isinstance(
+            rep, (VlobCreateRepSequesterInconsistency, VlobUpdateRepSequesterInconsistency)
+        ):
             # The backend notified us that we didn't encrypt the blob for the right sequester
             # services. This typically occurs for the first vlob update/create (since we lazily
             # fetch sequester config) or if a sequester service has been created/deleted.
             # Ensure the config send by the backend is valid
             _, sequester_services = _validate_sequester_config(
                 root_verify_key=self.device.root_verify_key,
-                sequester_authority_certificate=rep["sequester_authority_certificate"],
-                sequester_services_certificates=rep["sequester_services_certificates"],
+                sequester_authority_certificate=rep.sequester_authority_certificate,
+                sequester_services_certificates=rep.sequester_services_certificates,
             )
             # Update our cache and retry the request
             self._sequester_services_cache = sequester_services
@@ -714,7 +752,7 @@ class UserFS:
                 base_um=base_um, timestamp_greater_than=timestamp_greater_than
             )
 
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, (VlobCreateRepOk, VlobUpdateRepOk)):
             raise FSError(f"Cannot sync user manifest: {rep}")
 
         return to_sync_um
