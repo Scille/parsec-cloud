@@ -2,10 +2,8 @@
 
 mod events;
 mod invite;
-mod ping;
 mod user;
 
 pub use events::*;
 pub use invite::*;
-pub use ping::*;
 pub use user::*;
