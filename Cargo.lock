@@ -761,9 +761,9 @@ checksum = "3f107b87b6afc2a64fd13cac55fe06d6c8859f12d4b14cbcdd2c67d0976781be"
 
 [[package]]
 name = "email-address-parser"
-version = "2.0.0-rc1"
+version = "2.0.0-rc2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e63472c70b1904bac673fa921c83586539ba12408e8931c8deb5719eeb3faf7"
+checksum = "e903f37351d8e1163d782d08b6c0a542cf76efbbff2bcb5bcec123d11d9c04e3"
 dependencies = [
  "console_error_panic_hook",
  "pest",
