@@ -2,10 +2,12 @@
 
 mod block;
 mod cmds;
+mod message;
 mod vlob;
 
 pub use block::*;
 pub use cmds::*;
+pub use message::*;
 pub use vlob::*;
 
 // We use this type because we can't match Option<String> in macro_rules
@@ -21,12 +23,7 @@ macro_rules! rs_to_py {
         ::pyo3::types::PyBytes::new($py, $v)
     };
     ($v: ident, ListOfBytes, $py: ident) => {
-        ::pyo3::types::PyTuple::new(
-            $py,
-            $v.iter()
-                .map(|x| ::pyo3::types::PyBytes::new($py, x))
-                .collect::<Vec<_>>(),
-        )
+        ::pyo3::types::PyTuple::new($py, $v.iter().map(|x| ::pyo3::types::PyBytes::new($py, x)))
     };
     ($v: ident, DateTime, $py: ident) => {
         DateTime(*$v)
@@ -71,7 +68,7 @@ macro_rules! rs_to_py_ty {
 
 macro_rules! gen_rep {
     (
-        $mod: ident,
+        $mod: path,
         $base_class: ident
         $(, { $($tt: tt)+ })?
         $(, [$variant: ident $($(, $field: ident : $ty: ty)+)?])*
