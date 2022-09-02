@@ -13,7 +13,7 @@ cd ${SNAP}
 export PATH=${SNAP}/sbin:${SNAP}/bin:${SNAP}/usr/bin:${PATH}
 
 # Select the python provided by snap and set the right python path
-PYTHON=${SNAP}/usr/bin/python3.9
+PYTHON=${SNAP}/usr/bin/python3.10
 export PYTHONPATH=${SNAP}/site-packages
 
 # We can't rely on `ctypes.util.find_library` in classic snap environement,

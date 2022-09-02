@@ -4,7 +4,7 @@ from typing import Type
 from parsec._parsec import DateTime as RsDateTime
 from uuid import UUID as _UUID
 from enum import Enum
-from collections import Mapping
+from collections.abc import Mapping
 from marshmallow import ValidationError
 from marshmallow.fields import (
     # Republishing

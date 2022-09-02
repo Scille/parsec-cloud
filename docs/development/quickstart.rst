@@ -14,7 +14,7 @@ Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
 
 1. You need to have the following tools available:
     - `git <https://git-scm.com/>`_
-    - `python v3.9 <https://www.python.org/>`_
+    - `python v3.10 <https://www.python.org/>`_
     - `poetry >=1.2.0b3 <https://python-poetry.org/docs/#installation>`_
     - `Rust v1.63 <https://www.rust-lang.org/fr/learn/get-started>`_
 
@@ -32,9 +32,9 @@ Consider using `pyenv <https://github.com/pyenv/pyenv#installation>_` to install
     # Install Pyenv
     curl --proto '=https' --tlsv1.2 -sSL https://pyenv.run | bash
     # Compile Python
-    pyenv install 3.9.10
+    pyenv install 3.10.6
     # Create the project virtual with the correct version of Python
-    poetry env use `pyenv prefix 3.9.10`/bin/python
+    poetry env use `pyenv prefix 3.10.6`/bin/python
 
 2. You must first clone it with ``git`` and move to the project dir
 

@@ -53,8 +53,8 @@ parts:
       VENV=${SNAPCRAFT_PART_BUILD}/venv
 
       # Install Parsec & dependencies in a virtual env...
-      /usr/bin/python3.9 --version
-      /usr/bin/python3.9 -m venv ${VENV}  # must use absolute path here
+      /usr/bin/python3.10 --version
+      /usr/bin/python3.10 -m venv ${VENV}  # must use absolute path here
       ${VENV}/bin/python -m pip --version
       # Update pip given the one on the system is most likely too old...
       ${VENV}/bin/python -m pip install --upgrade pip wheel
@@ -182,27 +182,27 @@ parts:
       done
 
     build-packages:
-      - python3.9-venv
-      - python3.9
-      - python3.9-dev  # Needed by duckpy (itself required by pypac)
+      - python3.10-venv
+      - python3.10
+      - python3.10-dev  # Needed by duckpy (itself required by pypac)
     stage-packages:
       # Why so much packages ?
-      # Well because Python 3.9 is part of base image core20 so Snapcraft
+      # Well because Python 3.10 is part of base image core20 so Snapcraft
       # strips it out of the snap to save space, but this doesn't work for
       # classic mode (given host OS is used then !), so we have to manually
       # specify all the packages to force their inclusion.
       # This list has been generated doing (with a bit of manual tweaking):
-      # apt-cache depends --recurse  --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances python3.9
-      - python3.9
-      - python3.9-minimal
+      # apt-cache depends --recurse  --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances python3.10
+      - python3.10
+      - python3.10-minimal
       # Yes, we even package libc (otherwise it may cause issue when runnig on non-ubuntu OS)
       - libc6
       - libcrypt1
-      - libpython3.9-minimal
+      - libpython3.10-minimal
       - libssl1.1
       - libexpat1
       - zlib1g
-      - libpython3.9-stdlib
+      - libpython3.10-stdlib
       - mime-support
       - libbz2-1.0
       - libdb5.3

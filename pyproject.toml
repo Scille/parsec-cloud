@@ -14,7 +14,7 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
 ]
 packages = [
     { include = "parsec" },
@@ -37,7 +37,7 @@ include = [
 parsec = "parsec.cli:cli"
 
 [tool.poetry.dependencies]
-python = "~3.9.0"
+python = "~3.10.0"
 
 # Base requirements
 
@@ -47,9 +47,7 @@ click = "^8.0"
 msgpack = "^1.0"
 wsproto = "^1.0"
 h11 = "^0.13"
-# Can use marshmallow or the toasted flavour as you like ;-)
-# marshmallow = "2.14.0"
-toastedmarshmallow = "0.2.6" # updating causes consitency problem in test
+marshmallow = "2.20.4"
 PyNaCl = "^1.5"
 trio = ">=0.20,<0.22"
 trio_typing = "^0.5" # updating causes conflict with qtrio dependency
@@ -151,7 +149,7 @@ generate-setup-file = false
 script = "build.py"
 
 [tool.cibuildwheel]
-build = "cp39-{manylinux,macos,win}*"
+build = "cp310-{manylinux,macos,win}*"
 archs = ["auto64"]
 build-verbosity = 3
 before-all = "bash misc/setup-rust.sh"
