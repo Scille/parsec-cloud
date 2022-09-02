@@ -7,8 +7,9 @@ use pyo3::types::{PyBytes, PyType};
 use libparsec::protocol::{authenticated_cmds, invited_cmds};
 
 use crate::protocol::{
-    BlockCreateReq, BlockReadReq, MessageGetReq, OrganizationConfigReq, OrganizationStatsReq,
-    RealmCreateReq, RealmFinishReencryptionMaintenanceReq, RealmGetRoleCertificatesReq,
+    AuthenticatedPingReq, BlockCreateReq, BlockReadReq, InvitedPingReq, MessageGetReq,
+    OrganizationConfigReq, OrganizationStatsReq, RealmCreateReq,
+    RealmFinishReencryptionMaintenanceReq, RealmGetRoleCertificatesReq,
     RealmStartReencryptionMaintenanceReq, RealmStatsReq, RealmStatusReq, RealmUpdateRolesReq,
     VlobCreateReq, VlobListVersionsReq, VlobMaintenanceGetReencryptionBatchReq,
     VlobMaintenanceSaveReencryptionBatchReq, VlobPollChangesReq, VlobReadReq, VlobUpdateReq,
@@ -52,6 +53,7 @@ impl AuthenticatedAnyCmdReq {
                 AnyCmdReq::RealmFinishReencryptionMaintenance(x) => {
                     RealmFinishReencryptionMaintenanceReq(x).into_py(py)
                 }
+                AnyCmdReq::Ping(x) => AuthenticatedPingReq(x).into_py(py),
                 AnyCmdReq::VlobCreate(x) => VlobCreateReq(x).into_py(py),
                 AnyCmdReq::VlobRead(x) => VlobReadReq(x).into_py(py),
                 AnyCmdReq::VlobUpdate(x) => VlobUpdateReq(x).into_py(py),
@@ -83,9 +85,13 @@ impl InvitedAnyCmdReq {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, buf: Vec<u8>) -> PyResult<Self> {
-        Ok(Self(
-            invited_cmds::AnyCmdReq::load(&buf).map_err(ProtocolError::new_err)?,
-        ))
+    fn load(_cls: &PyType, buf: Vec<u8>, py: Python) -> PyResult<PyObject> {
+        use invited_cmds::AnyCmdReq;
+        Ok(
+            match AnyCmdReq::load(&buf).map_err(ProtocolError::new_err)? {
+                AnyCmdReq::Ping(x) => InvitedPingReq(x).into_py(py),
+                _ => unimplemented!(),
+            },
+        )
     }
 }
