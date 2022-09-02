@@ -10,6 +10,11 @@ futures = "0.3.24"
 
 [dev-dependencies]
 log = "0.4.17"
+# `std::time::Instant` is not available for wasm32, crate `instant` provides a
+# fallback based on `window.performance.now()`
+instant = "0.1.12"
+# Used for `futures_lite::future::or` and don't require `Unpin`
+futures-lite = "1.12.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.82"
@@ -22,10 +27,7 @@ js-sys = "0.3.58"
 wasm-bindgen-test = "0.3.31"
 # Used for binding `log` with `console.log*`
 console_log = "0.2.0"
-# Used for `futures_lite::future::or` and don't require `Unpin`
-futures-lite = "1.12.0"
-# Need to add the feature `Performance` to be able to estimate the time tasken during the tests.
-web-sys = { version = "0.3.58", features = ["Window", "Performance"]}
+instant = { version = "0.1.12", features = ["wasm-bindgen"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1.21.0", features = ["rt", "time", "sync", "macros"] }

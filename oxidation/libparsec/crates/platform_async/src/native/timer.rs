@@ -22,9 +22,9 @@ impl Timer {
     ///
     /// # #[tokio::main]
     /// # async fn main() {
-    /// let timer = Instant::now();
+    /// let instant = Instant::now();
     /// Timer::after(Duration::from_millis(100)).await;
-    /// assert!(timer.elapsed() < Duration::from_millis(120));
+    /// assert!(instant.elapsed() >= Duration::from_millis(100));
     /// # }
     /// ```
     pub fn after(duration: Duration) -> Timer {

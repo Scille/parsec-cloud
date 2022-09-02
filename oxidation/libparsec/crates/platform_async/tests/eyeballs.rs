@@ -1,13 +1,13 @@
-#![cfg(not(target_arch = "wasm32"))]
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use instant::Instant;
 use libparsec_platform_async::{
     channel::{bounded, RecvError, Sender},
     JoinSet, Notify, Timer,
 };
 use std::{
     sync::{Arc, Mutex},
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 const TIMEOUT: u64 = 250;
@@ -30,10 +30,7 @@ enum Mode {
     Success,
 }
 
-#[tokio::test]
 async fn test_eyeballs() -> Result<(), ()> {
-    simple_logger::init_with_level(log::Level::Debug).expect("cannot initialize simple logger");
-
     let targets = vec![
         Load::new(Duration::from_millis(2300), Mode::Fail),
         Load::new(Duration::from_millis(300), Mode::Fail),
@@ -94,14 +91,17 @@ async fn attempt(
     log::info!("[#{which}] starting task");
     if which > 0 {
         let attempt_to_wait = which - 1;
-        tokio::select! {
-            _ = Timer::after(Duration::from_millis(TIMEOUT)) => {
+        futures_lite::future::or(
+            async {
+                Timer::after(Duration::from_millis(TIMEOUT)).await;
                 log::info!("[#{which}] previous task timed out");
-            }
-            _ = failed_attempt[attempt_to_wait].notified() => {
+            },
+            async {
+                failed_attempt[attempt_to_wait].notified().await;
                 log::info!("[#{which}] previous task finished");
-            }
-        }
+            },
+        )
+        .await;
     }
 
     if which + 1 < targets.len() {
@@ -133,4 +133,28 @@ async fn attempt(
 async fn mock_load(load: &Load) -> Mode {
     Timer::after(load.delay).await;
     load.result
+}
+
+mod web {
+    #![cfg(target_arch = "wasm32")]
+
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    async fn test_eyeballs() {
+        console_log::init_with_level(log::Level::Debug).expect("cannot initialize console logger");
+        super::test_eyeballs().await.unwrap()
+    }
+}
+
+mod native {
+    #![cfg(not(target_arch = "wasm32"))]
+
+    #[tokio::test]
+    async fn test_eyeballs() -> Result<(), ()> {
+        simple_logger::init_with_level(log::Level::Debug).expect("cannot initialize simple logger");
+        super::test_eyeballs().await
+    }
 }
