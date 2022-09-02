@@ -2,9 +2,9 @@
 
 import trio
 import pytest
-from parsec._parsec import DateTime
 from functools import partial
 
+from parsec._parsec import DateTime, AuthenticatedPingRepOk
 from parsec.backend.utils import ClientType
 from parsec.api.transport import Transport, Ping, Pong
 from parsec.api.data import RevokedUserCertificate
@@ -57,7 +57,7 @@ async def test_ping(running_backend, alice):
         alice.organization_addr, alice.device_id, alice.signing_key
     ) as cmds:
         rep = await cmds.ping("Hello World !")
-        assert rep == {"status": "ok", "pong": "Hello World !"}
+        assert rep == AuthenticatedPingRepOk("Hello World !")
 
 
 @pytest.mark.trio

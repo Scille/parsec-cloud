@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec.backend.backend_events import BackendEvent
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime, AuthenticatedPingRepOk
+from parsec.backend.backend_events import BackendEvent
 from parsec.api.data import DeviceCertificate
 from parsec.api.protocol import UserProfile
 from parsec.backend.user import INVITATION_VALIDITY, Device
@@ -61,7 +61,7 @@ async def test_device_create_ok(
     # Make sure the new device can connect now
     async with backend_authenticated_ws_factory(backend_asgi_app, alice_nd) as sock:
         rep = await ping(sock, ping="Hello world !")
-        assert rep == {"status": "ok", "pong": "Hello world !"}
+        assert rep == AuthenticatedPingRepOk("Hello world !")
 
     # Check the resulting data in the backend
     _, backend_device = await backend_asgi_app.backend.user.get_user_with_device(
