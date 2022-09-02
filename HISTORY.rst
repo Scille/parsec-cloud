@@ -5,6 +5,38 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.12.0-rc1 (2022-09-02)
+-------------------------------
+
+Features
+~~~~~~~~
+
+* Added a new folder menu in the file explorer  (`#2672
+  <https://github.com/Scille/parsec-cloud/issues/2672>`__)
+* Use clipboard content as default URL when joining an org in the GUI  (`#1598
+  <https://github.com/Scille/parsec-cloud/issues/1598>`__)
+* Add authenticated api entrypoint to execute authenticated commands.  (`#2624
+  <https://github.com/Scille/parsec-cloud/issues/2624>`__)
+* Added a sort menu in the file explorer  (`#2673
+  <https://github.com/Scille/parsec-cloud/issues/2673>`__)
+* Added a show status/show history to the current directory in the explorer
+  (`#2674 <https://github.com/Scille/parsec-cloud/issues/2674>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Correct Content-Type and add User-Agent headers for client to server HTTP
+  request  (`#2979 <https://github.com/Scille/parsec-cloud/issues/2979>`__)
+* Fix an error that could occur when selecting a file  (`#2960
+  <https://github.com/Scille/parsec-cloud/issues/2960>`__)
+* Fix rare segfault in the GUI when an event occurs at the wrong time  (`#2839
+  <https://github.com/Scille/parsec-cloud/issues/2839>`__)
+* Update reencryption status when role is changed  (`#2699
+  <https://github.com/Scille/parsec-cloud/issues/2699>`__)
+* Fix an error that could happen when looking at a file status  (`#2779
+  <https://github.com/Scille/parsec-cloud/issues/2779>`__)
+
+
 Parsec v2.11.1 (2022-08-16)
 ---------------------------
 
