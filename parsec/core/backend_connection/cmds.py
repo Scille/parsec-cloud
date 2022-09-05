@@ -9,6 +9,8 @@ from parsec._parsec import (
     BlockCreateRepUnknownStatus,
     BlockReadRep,
     BlockReadRepUnknownStatus,
+    MessageGetRep,
+    MessageGetRepUnknownStatus,
     VlobCreateRep,
     VlobCreateRepBadTimestamp,
     VlobCreateRepUnknownStatus,
@@ -149,6 +151,7 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
         (
             BlockCreateRep,
             BlockReadRep,
+            MessageGetRep,
             VlobCreateRep,
             VlobReadRep,
             VlobUpdateRep,
@@ -163,6 +166,7 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
             (
                 BlockCreateRepUnknownStatus,
                 BlockReadRepUnknownStatus,
+                MessageGetRepUnknownStatus,
                 VlobCreateRepUnknownStatus,
                 VlobReadRepUnknownStatus,
                 VlobUpdateRepUnknownStatus,

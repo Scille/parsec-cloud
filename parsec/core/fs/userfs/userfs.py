@@ -3,7 +3,6 @@
 import trio
 from pathlib import Path
 from trio_typing import TaskStatus
-from parsec._parsec import DateTime
 from typing import (
     Tuple,
     Optional,
@@ -20,6 +19,8 @@ from structlog import get_logger
 from contextlib import asynccontextmanager
 
 from parsec._parsec import (
+    DateTime,
+    MessageGetRepOk,
     VlobCreateRepOk,
     VlobCreateRepAlreadyExists,
     VlobCreateRepInMaintenance,
@@ -914,23 +915,23 @@ class UserFS:
             except BackendConnectionError as exc:
                 raise FSError(f"Cannot retrieve user messages: {exc}") from exc
 
-            if rep["status"] != "ok":
+            if not isinstance(rep, MessageGetRepOk):
                 raise FSError(f"Cannot retrieve user messages: {rep}")
 
             new_last_processed_message = initial_last_processed_message
-            for msg in rep["messages"]:
+            for msg in rep.messages:
                 try:
-                    await self._process_message(msg["sender"], msg["timestamp"], msg["body"])
-                    new_last_processed_message = msg["count"]
+                    await self._process_message(msg.sender, msg.timestamp, msg.body)
+                    new_last_processed_message = msg.count
 
                 except FSBackendOfflineError:
                     raise
 
                 except FSError as exc:
                     logger.warning(
-                        "Invalid message", reason=exc, sender=msg["sender"], count=msg["count"]
+                        "Invalid message", reason=exc, sender=msg.sender, count=msg.count
                     )
-                    errors.append((msg["count"], exc))
+                    errors.append((msg.count, exc))
 
             # Update message offset in user manifest
             async with self._update_user_manifest_lock:

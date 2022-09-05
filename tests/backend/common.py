@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from parsec._parsec import (
     BlockCreateRepOk,
     BlockReadRepOk,
+    MessageGetRepOk,
     VlobCreateRepOk,
     VlobReadRepOk,
     VlobUpdateRepOk,
@@ -180,6 +181,7 @@ class CmdSock:
                     (
                         BlockCreateRepOk,
                         BlockReadRepOk,
+                        MessageGetRepOk,
                         VlobCreateRepOk,
                         VlobReadRepOk,
                         VlobUpdateRepOk,

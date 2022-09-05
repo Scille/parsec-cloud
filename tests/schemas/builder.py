@@ -270,6 +270,7 @@ def generate_api_protocol_specs():
                     assert cmd_name in [
                         "block_create",
                         "block_read",
+                        "message_get",
                         "vlob_create",
                         "vlob_read",
                         "vlob_update",

@@ -1,8 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import (
+    DateTime,
+    MessageGetRepOk,
+    Message,
+)
 from parsec.api.protocol import message_get_serializer, APIEvent
 from parsec.backend.asgi import app_factory
 from parsec.backend.backend_events import BackendEvent
@@ -29,12 +33,9 @@ async def test_message_from_bob_to_alice(backend, alice, bob, alice_ws):
     assert listen.rep == {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 1}
 
     rep = await message_get(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "messages": [
-            {"body": b"Hello from Bob !", "sender": bob.device_id, "timestamp": d1, "count": 1}
-        ],
-    }
+    assert rep == MessageGetRepOk(
+        messages=[Message(body=b"Hello from Bob !", sender=bob.device_id, timestamp=d1, count=1)],
+    )
 
 
 @pytest.mark.trio
@@ -46,13 +47,12 @@ async def test_message_get_with_offset(backend, alice, bob, alice_ws):
     await backend.message.send(bob.organization_id, bob.device_id, alice.user_id, d2, b"3")
 
     rep = await message_get(alice_ws, 1)
-    assert rep == {
-        "status": "ok",
-        "messages": [
-            {"body": b"2", "sender": bob.device_id, "timestamp": d1, "count": 2},
-            {"body": b"3", "sender": bob.device_id, "timestamp": d2, "count": 3},
+    assert rep == MessageGetRepOk(
+        messages=[
+            Message(body=b"2", sender=bob.device_id, timestamp=d1, count=2),
+            Message(body=b"3", sender=bob.device_id, timestamp=d2, count=3),
         ],
-    }
+    )
 
 
 @pytest.mark.trio
@@ -80,17 +80,16 @@ async def test_message_from_bob_to_alice_multi_backends(
             assert listen.rep == {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 1}
 
             rep = await message_get(alice_ws)
-            assert rep == {
-                "status": "ok",
-                "messages": [
-                    {
-                        "body": b"Hello from Bob !",
-                        "sender": bob.device_id,
-                        "timestamp": d1,
-                        "count": 1,
-                    }
+            assert rep == MessageGetRepOk(
+                messages=[
+                    Message(
+                        body=b"Hello from Bob !",
+                        sender=bob.device_id,
+                        timestamp=d1,
+                        count=1,
+                    )
                 ],
-            }
+            )
 
 
 @pytest.mark.trio

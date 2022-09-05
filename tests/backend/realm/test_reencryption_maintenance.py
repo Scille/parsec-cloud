@@ -6,6 +6,8 @@ from parsec._parsec import (
     DateTime,
     BlockReadRepOk,
     BlockCreateRepInMaintenance,
+    MessageGetRepOk,
+    Message,
     VlobCreateRepInMaintenance,
     VlobReadRepOk,
     VlobReadRepBadEncryptionRevision,
@@ -162,17 +164,16 @@ async def test_start_send_message_to_participants(backend, alice, bob, alice_ws,
     # Each participant should have received a message
     for user, sock in ((alice, alice_ws), (bob, bob_ws)):
         rep = await message_get(sock)
-        assert rep == {
-            "status": "ok",
-            "messages": [
-                {
-                    "count": 1,
-                    "body": f"{user.user_id} msg".encode(),
-                    "timestamp": DateTime(2000, 1, 2),
-                    "sender": alice.device_id,
-                }
+        assert rep == MessageGetRepOk(
+            messages=[
+                Message(
+                    count=1,
+                    body=f"{user.user_id} msg".encode(),
+                    timestamp=DateTime(2000, 1, 2),
+                    sender=alice.device_id,
+                )
             ],
-        }
+        )
 
 
 @pytest.mark.trio
@@ -451,17 +452,16 @@ async def test_reencryption(alice, alice_ws, realm, vlob_atoms):
 
     # Each participant should have received a message
     rep = await message_get(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "messages": [
-            {
-                "count": 1,
-                "body": b"foo",
-                "timestamp": DateTime(2000, 1, 2),
-                "sender": alice.device_id,
-            }
+    assert rep == MessageGetRepOk(
+        messages=[
+            Message(
+                count=1,
+                body=b"foo",
+                timestamp=DateTime(2000, 1, 2),
+                sender=alice.device_id,
+            )
         ],
-    }
+    )
 
     async def _reencrypt_with_batch_of_2(expected_size, expected_done):
         rep = await vlob_maintenance_get_reencryption_batch(alice_ws, realm, 2, size=2)

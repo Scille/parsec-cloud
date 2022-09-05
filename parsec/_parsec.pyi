@@ -114,6 +114,12 @@ from parsec._parsec_pyi.protocol import (
     BlockReadRepNotFound,
     BlockReadRepTimeout,
     BlockReadRepUnknownStatus,
+    # Message
+    MessageGetReq,
+    MessageGetRep,
+    MessageGetRepOk,
+    MessageGetRepUnknownStatus,
+    Message,
     # Vlob
     VlobCreateReq,
     VlobCreateRep,
@@ -284,6 +290,12 @@ __all__ = [
     "BlockReadRepNotFound",
     "BlockReadRepTimeout",
     "BlockReadRepUnknownStatus",
+    # Protocol Message
+    "MessageGetReq",
+    "MessageGetRep",
+    "MessageGetRepOk",
+    "MessageGetRepUnknownStatus",
+    "Message",
     # Protocol Vlob
     "VlobCreateReq",
     "VlobCreateRep",

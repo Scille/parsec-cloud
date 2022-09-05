@@ -1187,68 +1187,6 @@
                     "serializing": "msgpack"
                 }
             },
-            "message_get": {
-                "rep": {
-                    "fields": {
-                        "messages": {
-                            "allow_none": false,
-                            "container_type": {
-                                "allow_none": false,
-                                "required": false,
-                                "schema": {
-                                    "fields": {
-                                        "body": {
-                                            "allow_none": false,
-                                            "required": true,
-                                            "type": "bytesField"
-                                        },
-                                        "count": {
-                                            "allow_none": false,
-                                            "required": true,
-                                            "type": "Integer"
-                                        },
-                                        "sender": {
-                                            "allow_none": false,
-                                            "required": true,
-                                            "type": "DeviceIDField"
-                                        },
-                                        "timestamp": {
-                                            "allow_none": false,
-                                            "required": true,
-                                            "type": "DateTime"
-                                        }
-                                    }
-                                },
-                                "type": "Nested"
-                            },
-                            "required": true,
-                            "type": "List"
-                        },
-                        "status": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "CheckedConstant",
-                            "value": "ok"
-                        }
-                    },
-                    "serializing": "msgpack"
-                },
-                "req": {
-                    "fields": {
-                        "cmd": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "String"
-                        },
-                        "offset": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "Integer"
-                        }
-                    },
-                    "serializing": "msgpack"
-                }
-            },
             "organization_config": {
                 "rep": {
                     "fields": {

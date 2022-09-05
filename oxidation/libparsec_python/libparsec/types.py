@@ -86,10 +86,6 @@ try:
         Invite4GreeterCommunicateReq,
         Invite4GreeterCommunicateRep,
         InviteListItem,
-        # Message
-        MessageGetReq,
-        MessageGetRep,
-        Message,
         # Organization
         OrganizationStatsReq,
         OrganizationStatsRep,
@@ -307,10 +303,6 @@ __all__ = (
     "Invite4GreeterCommunicateReq",
     "Invite4GreeterCommunicateRep",
     "InviteListItem",
-    # Message
-    "MessageGetReq",
-    "MessageGetRep",
-    "Message",
     # Organization
     "OrganizationStatsReq",
     "OrganizationStatsRep",
