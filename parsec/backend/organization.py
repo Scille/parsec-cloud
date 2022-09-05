@@ -131,7 +131,7 @@ class BaseOrganizationComponent:
             sequester_services_certificates: Optional[List[bytes]] = (
                 list(organization.sequester_services_certificates)
                 if organization.sequester_services_certificates
-                else None
+                else []
             )
         else:
             sequester_authority_certificate = None
