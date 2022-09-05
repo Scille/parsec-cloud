@@ -146,6 +146,30 @@ fn serde_organization_config_req() {
         }
     )
 )]
+#[case::ok_with_sequester(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   active_users_limit: 1
+        //   sequester_authority_certificate: hex!("666f6f626172")
+        //   sequester_services_certificates: [hex!("666f6f"), hex!("626172")]
+        //   status: "ok"
+        //   user_profile_outsider_allowed: false
+        //
+        &hex!(
+        "85b26163746976655f75736572735f6c696d697401bf7365717565737465725f617574686f"
+        "726974795f6365727469666963617465c406666f6f626172bf7365717565737465725f7365"
+        "7276696365735f63657274696669636174657392c403666f6fc403626172a6737461747573"
+        "a26f6bbd757365725f70726f66696c655f6f757473696465725f616c6c6f776564c2"
+        )[..],
+        authenticated_cmds::organization_config::Rep::Ok {
+            user_profile_outsider_allowed: false,
+            active_users_limit: Some(1),
+            sequester_authority_certificate: Maybe::Present(Some(b"foobar".to_vec())),
+            sequester_services_certificates: Maybe::Present(Some(vec![b"foo".to_vec(), b"bar".to_vec()])),
+        }
+    )
+)]
 #[case::not_found(
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
