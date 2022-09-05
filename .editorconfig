@@ -29,7 +29,7 @@ indent_size = 2
 [*.java]
 indent_size = 2
 
-[*.{vue,css,js,ts}]
+[*.{vue,css,js,ts,html}]
 indent_size = 2
 
 [*.{rst,md}]
