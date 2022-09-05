@@ -3,9 +3,6 @@
 //! This crate implement binding for our python front, and those will never be compile on the arch `wasm32`.
 //! Trying to compile this crate on the target `wasm32-*` will result in a crash of the `pyo3` build script.
 #![cfg(not(target_arch = "wasm32"))]
-// Waiting for a fix from pyo3
-#![allow(clippy::borrow_deref_ref)]
-
 use pyo3::prelude::{pymodule, PyModule, PyResult, Python};
 
 mod addrs;
