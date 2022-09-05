@@ -105,3 +105,6 @@ target/
 
 # jetbrains file
 .idea
+
+# EditorConfig Checker
+.ecrc
