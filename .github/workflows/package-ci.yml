@@ -194,6 +194,9 @@ jobs:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
 
+      - name: Remove all non-wheel files from the `dist` directory
+        run: find . -type f ! -name '*.whl' -delete
+
       - name: Publish wheel on PyPI
         uses: pypa/gh-action-pypi-publish@37f50c210e3d2f9450da2cd423303d6a14a6e29f # pin v1.5.1
         with:
