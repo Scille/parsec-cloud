@@ -16,6 +16,16 @@
                     // `None` stands for "no limit" here
                     "name": "active_users_limit",
                     "type": "Option<Size>"
+                },
+                {
+                    "name": "sequester_authority_certificate",
+                    "type": "Option<Bytes>",
+                    "introduced_in_revision": 8
+                },
+                {
+                    "name": "sequester_services_certificates",
+                    "type": "Option<List<Bytes>>",
+                    "introduced_in_revision": 8
                 }
             ]
         },

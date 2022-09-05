@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use hex_literal::hex;
-use libparsec_types::UserProfile;
+use libparsec_types::{Maybe, UserProfile};
 use rstest::rstest;
 
 use libparsec_protocol::*;
@@ -141,6 +141,8 @@ fn serde_organization_config_req() {
         authenticated_cmds::organization_config::Rep::Ok {
             user_profile_outsider_allowed: false,
             active_users_limit: Some(1),
+            sequester_authority_certificate: Maybe::Absent,
+            sequester_services_certificates: Maybe::Absent,
         }
     )
 )]
