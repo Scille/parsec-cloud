@@ -3,8 +3,10 @@
 import pytest
 import trio
 from unittest.mock import ANY
-from parsec._parsec import DateTime
 
+from parsec._parsec import (
+    DateTime,
+)
 from parsec.api.protocol import UserProfile
 from parsec.core import logged_core_factory
 from parsec.core.types import UserInfo, DeviceInfo, OrganizationStats, UsersPerProfileDetailItem
@@ -167,17 +169,15 @@ async def test_get_organization_stats(running_backend, alice_core, bob_core):
         realms=3,
         users=3,
         active_users=3,
-        users_per_profile_detail=[
+        users_per_profile_detail=(
             UsersPerProfileDetailItem(active=2, profile=UserProfile.ADMIN, revoked=0),
             UsersPerProfileDetailItem(active=1, profile=UserProfile.STANDARD, revoked=0),
             UsersPerProfileDetailItem(active=0, profile=UserProfile.OUTSIDER, revoked=0),
-        ],
+        ),
     )
 
     # ...but not mere mortals !
     with pytest.raises(BackendConnectionError) as exc:
         await bob_core.get_organization_stats()
-    assert (
-        str(exc.value)
-        == "Backend error: {'reason': 'User `bob` is not admin', 'status': 'not_allowed'}"
-    )
+    # The reason is no longer generated
+    assert isinstance(exc.value, BackendConnectionError)

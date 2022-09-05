@@ -10,6 +10,7 @@ from structlog import get_logger
 from functools import partial
 from contextlib import asynccontextmanager
 
+from parsec._parsec import OrganizationStatsRepOk
 from parsec.event_bus import EventBus
 from parsec.api.protocol import (
     UserID,
@@ -23,7 +24,7 @@ from parsec.core.pki import accepter_list_submitted_from_backend
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
 from parsec.core.config import CoreConfig
-from parsec.core.types import OrganizationConfig, OrganizationStats, UsersPerProfileDetailItem
+from parsec.core.types import OrganizationConfig, OrganizationStats
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnectionError,
@@ -172,17 +173,15 @@ class LoggedCore:
         """
 
         rep = await self._backend_conn.cmds.organization_stats()
-        if rep["status"] != "ok":
+        if not isinstance(rep, OrganizationStatsRepOk):
             raise BackendConnectionError(f"Backend error: {rep}")
         return OrganizationStats(
-            data_size=rep["data_size"],
-            metadata_size=rep["metadata_size"],
-            realms=rep["realms"],
-            users=rep["users"],
-            active_users=rep["active_users"],
-            users_per_profile_detail=[
-                UsersPerProfileDetailItem(**x) for x in rep["users_per_profile_detail"]
-            ],
+            data_size=rep.data_size,
+            metadata_size=rep.metadata_size,
+            realms=rep.realms,
+            users=rep.users,
+            active_users=rep.active_users,
+            users_per_profile_detail=rep.users_per_profile_detail,
         )
 
     async def get_user_info(self, user_id: UserID) -> UserInfo:
