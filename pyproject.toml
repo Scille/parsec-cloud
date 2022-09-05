@@ -156,6 +156,8 @@ archs = ["auto64"]
 build-verbosity = 3
 before-all = "bash misc/setup-rust.sh"
 before-build = "python -m pip install -U pip"
+# Trigger an install of the package, but run nothing of note
+test-command = "echo Wheel installed"
 
 [tool.cibuildwheel.environment]
 # As it name suggests, `misc/setup-rust.sh` (run during cibuildwheel's before-all) will

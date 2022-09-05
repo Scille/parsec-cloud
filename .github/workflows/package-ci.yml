@@ -26,7 +26,7 @@ jobs:
           - name: 🐧 Linux
             os: ubuntu-22.04
           - name: 🍎 macOS
-            os: macos-10.15
+            os: macos-12
           - name: 🏁 Windows
             os: windows-2022
     name: '${{ matrix.name }}: 📦 Packaging (build Wheel)'
@@ -75,6 +75,30 @@ jobs:
 
       - name: Set file for wheel version
         run: echo ${{ steps.wheel-version.outputs.version }} > dist/version
+
+      - name: Hack the wheel macos version
+        if: startsWith(matrix.os, 'macos-')
+        shell: bash
+        run: |
+          set -eux
+          # Old wheel name
+          OLD_WHEEL_NAME=$(basename dist/parsec_cloud-*.whl)
+          # Unzip the wheel
+          mkdir temp
+          cd temp
+          unzip ../dist/$OLD_WHEEL_NAME
+          # Get platform new wheel name
+          python -m pip install wheel
+          PLATFORM=$(python -c "from wheel.bdist_wheel import get_platform; print(get_platform('.'))")
+          NEW_WHEEL_NAME=$(basename ../dist/parsec_cloud-*.whl | sed "s/macosx_.*_x86_64/$PLATFORM/")
+          # Update archive and zip back
+          sed -i "" "s/macosx_.*_x86_64/$PLATFORM/" parsec_cloud-*.dist-info/WHEEL
+          zip -r $NEW_WHEEL_NAME *
+          cd ..
+          # Replace old wheel with the new one
+          mv temp/$NEW_WHEEL_NAME dist/
+          rm dist/$OLD_WHEEL_NAME
+          rm -rf temp
 
       - name: Generate requirements & constraints infos
         run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
@@ -230,7 +254,7 @@ jobs:
       - name: Debug build directory
         run: Get-ChildItem -Path ${{ runner.temp }}\build
 
-      - name: Test start generated app
+      - name: Test start generated exe
         shell: bash
         run: ./build/parsec-*/parsec.exe --diagnose
         working-directory: ${{ runner.temp }}
@@ -253,7 +277,7 @@ jobs:
           path: ${{ runner.temp }}/dist/
 
   package-macos-build-app:
-    runs-on: macos-10.15
+    runs-on: macos-12
     name: '🍎 macOS: 📦 Packaging (build installer content)'
     needs: package-wheel
     env:
@@ -281,10 +305,6 @@ jobs:
       - name: Debug ${{ runner.temp }} dir
         run: ls -lR ${{ runner.temp }}
 
-      - name: Test open generated app
-        run: open build/pyinstaller_dist/parsec.app --args --diagnose
-        working-directory: ${{ runner.temp }}
-
       - name: Generate Parsec.app
         run: >
           tar --verbose --create --bzip2
@@ -296,6 +316,28 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-installer
           path: ${{ runner.temp }}/parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2
+
+  package-macos-test-app:
+    runs-on: macos-${{ matrix.macos-version }}
+    name: '🍎 macOS ${{ matrix.macos-version }}: 📦 Packaging (test app)'
+    needs: [ package-wheel, package-macos-build-app ]
+    env:
+      WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        macos-version: [ 11, 12 ]
+
+    steps:
+      - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # pin v3.0.0
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-installer
+          path: dist
+
+      - name: Test open app
+        run: |
+          tar -xzvf dist/parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2
+          open parsec.app --args --diagnose
 
   package-electron-app:
     runs-on: ubuntu-22.04
