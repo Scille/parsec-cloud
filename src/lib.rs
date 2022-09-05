@@ -1,6 +1,3 @@
-// Waiting for a fix from pyo3
-#![allow(clippy::borrow_deref_ref)]
-
 use pyo3::prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 
 mod addrs;
