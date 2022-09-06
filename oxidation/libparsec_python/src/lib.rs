@@ -28,19 +28,6 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::EventsSubscribeReq>()?;
     m.add_class::<protocol::EventsSubscribeRep>()?;
 
-    // User
-    m.add_class::<protocol::UserGetReq>()?;
-    m.add_class::<protocol::UserGetRep>()?;
-    m.add_class::<protocol::UserCreateReq>()?;
-    m.add_class::<protocol::UserCreateRep>()?;
-    m.add_class::<protocol::UserRevokeReq>()?;
-    m.add_class::<protocol::UserRevokeRep>()?;
-    m.add_class::<protocol::DeviceCreateReq>()?;
-    m.add_class::<protocol::DeviceCreateRep>()?;
-    m.add_class::<protocol::HumanFindReq>()?;
-    m.add_class::<protocol::HumanFindRep>()?;
-    m.add_class::<protocol::Trustchain>()?;
-    m.add_class::<protocol::HumanFindResultItem>()?;
     // Storage
     m.add_class::<storage::WorkspaceStorage>()?;
     Ok(())

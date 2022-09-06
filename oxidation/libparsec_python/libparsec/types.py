@@ -86,19 +86,6 @@ try:
         Invite4GreeterCommunicateReq,
         Invite4GreeterCommunicateRep,
         InviteListItem,
-        # User
-        UserGetReq,
-        UserGetRep,
-        UserCreateReq,
-        UserCreateRep,
-        UserRevokeReq,
-        UserRevokeRep,
-        DeviceCreateReq,
-        DeviceCreateRep,
-        HumanFindReq,
-        HumanFindRep,
-        Trustchain,
-        HumanFindResultItem,
         # LocalDevice
         LocalDevice,
         # Storage
@@ -272,19 +259,6 @@ __all__ = (
     "Invite4GreeterCommunicateReq",
     "Invite4GreeterCommunicateRep",
     "InviteListItem",
-    # User
-    "UserGetReq",
-    "UserGetRep",
-    "UserCreateReq",
-    "UserCreateRep",
-    "UserRevokeReq",
-    "UserRevokeRep",
-    "DeviceCreateReq",
-    "DeviceCreateRep",
-    "HumanFindReq",
-    "HumanFindRep",
-    "Trustchain",
-    "HumanFindResultItem",
     # LocalDevice
     "LocalDevice",
     # Storage
