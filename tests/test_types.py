@@ -1,11 +1,32 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
+import pickle
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import DeviceID, UserID, DeviceName, OrganizationID
 from parsec.api.protocol.types import DeviceLabel, HumanHandle
 from parsec.crypto import SigningKey, PrivateKey, SecretKey, export_root_verify_key
 from parsec.core.types import BackendAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
+
+
+def test_datetime_pickle():
+    fields = {
+        "year": 1999,
+        "month": 6,
+        "day": 7,
+        "hour": 12,
+        "minute": 30,
+        "second": 59,
+        "microsecond": 123456,
+    }
+    dt = DateTime(**fields)
+    dumped = pickle.dumps(dt)
+    dt2 = pickle.loads(dumped)
+    assert dt == dt2
+    for key, value in fields.items():
+        assert getattr(dt, key) == value
+        assert getattr(dt2, key) == value
 
 
 @pytest.mark.parametrize("raw", ["foo42", "FOO", "f", "f-o-o", "f_o_o", "x" * 32, "三国"])

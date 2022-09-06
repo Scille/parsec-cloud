@@ -16,9 +16,9 @@ pub(crate) struct DateTime(pub libparsec::types::DateTime);
 impl DateTime {
     #[new]
     #[args(hour = 0, minute = 0, second = 0)]
-    fn new(year: u64, month: u64, day: u64, hour: u64, minute: u64, second: u64) -> PyResult<Self> {
-        Ok(Self(libparsec::types::DateTime::from_ymd_and_hms(
-            year, month, day, hour, minute, second,
+    fn new(year: i32, month: u32, day: u32, hour: u32, minute: u32, second: u32) -> PyResult<Self> {
+        Ok(Self(libparsec::types::DateTime::from_ymd_and_hms_micro(
+            year, month, day, hour, minute, second, 0,
         )))
     }
 
@@ -42,32 +42,32 @@ impl DateTime {
     }
 
     #[getter]
-    fn year(&self) -> PyResult<u64> {
+    fn year(&self) -> PyResult<i32> {
         Ok(self.0.year())
     }
 
     #[getter]
-    fn month(&self) -> PyResult<u64> {
+    fn month(&self) -> PyResult<u32> {
         Ok(self.0.month())
     }
 
     #[getter]
-    fn day(&self) -> PyResult<u64> {
+    fn day(&self) -> PyResult<u32> {
         Ok(self.0.day())
     }
 
     #[getter]
-    fn hour(&self) -> PyResult<u64> {
+    fn hour(&self) -> PyResult<u32> {
         Ok(self.0.hour())
     }
 
     #[getter]
-    fn minute(&self) -> PyResult<u64> {
+    fn minute(&self) -> PyResult<u32> {
         Ok(self.0.minute())
     }
 
     #[getter]
-    fn second(&self) -> PyResult<u64> {
+    fn second(&self) -> PyResult<u32> {
         Ok(self.0.second())
     }
 
@@ -157,39 +157,41 @@ pub(crate) struct LocalDateTime(pub libparsec::types::LocalDateTime);
 impl LocalDateTime {
     #[new]
     #[args(hour = 0, minute = 0, second = 0)]
-    fn new(year: u64, month: u64, day: u64, hour: u64, minute: u64, second: u64) -> PyResult<Self> {
-        Ok(Self(libparsec::types::LocalDateTime::from_ymd_and_hms(
-            year, month, day, hour, minute, second,
-        )))
+    fn new(year: i32, month: u32, day: u32, hour: u32, minute: u32, second: u32) -> PyResult<Self> {
+        Ok(Self(
+            libparsec::types::LocalDateTime::from_ymd_and_hms_micro(
+                year, month, day, hour, minute, second, 0,
+            ),
+        ))
     }
 
     #[getter]
-    fn year(&self) -> PyResult<u64> {
+    fn year(&self) -> PyResult<i32> {
         Ok(self.0.year())
     }
 
     #[getter]
-    fn month(&self) -> PyResult<u64> {
+    fn month(&self) -> PyResult<u32> {
         Ok(self.0.month())
     }
 
     #[getter]
-    fn day(&self) -> PyResult<u64> {
+    fn day(&self) -> PyResult<u32> {
         Ok(self.0.day())
     }
 
     #[getter]
-    fn hour(&self) -> PyResult<u64> {
+    fn hour(&self) -> PyResult<u32> {
         Ok(self.0.hour())
     }
 
     #[getter]
-    fn minute(&self) -> PyResult<u64> {
+    fn minute(&self) -> PyResult<u32> {
         Ok(self.0.minute())
     }
 
     #[getter]
-    fn second(&self) -> PyResult<u64> {
+    fn second(&self) -> PyResult<u32> {
         Ok(self.0.second())
     }
 
