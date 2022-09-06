@@ -2,6 +2,7 @@ from typing import List, Optional, Sequence, Tuple
 
 from parsec._parsec_pyi.crypto import VerifyKey
 from parsec._parsec_pyi.ids import UserID, DeviceID
+from parsec._parsec_pyi.protocol import Trustchain
 from parsec._parsec_pyi.time import DateTime, TimeProvider
 from parsec._parsec_pyi.certif import (
     UserCertificate,
@@ -28,7 +29,7 @@ class TrustchainContext:
     ) -> Optional[DeviceCertificate]: ...
     def load_user_and_devices(
         self,
-        trustchain: dict,
+        trustchain: Trustchain,
         user_certif: bytes,
         revoked_user_certif: Optional[bytes] = None,
         devices_certifs: Sequence[bytes] = (),
