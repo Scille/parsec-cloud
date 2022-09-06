@@ -7,9 +7,9 @@ use pyo3::types::{PyBytes, PyType};
 use libparsec::protocol::{authenticated_cmds, invited_cmds};
 
 use crate::protocol::{
-    BlockCreateReq, BlockReadReq, MessageGetReq, VlobCreateReq, VlobListVersionsReq,
-    VlobMaintenanceGetReencryptionBatchReq, VlobMaintenanceSaveReencryptionBatchReq,
-    VlobPollChangesReq, VlobReadReq, VlobUpdateReq,
+    BlockCreateReq, BlockReadReq, MessageGetReq, OrganizationConfigReq, OrganizationStatsReq,
+    VlobCreateReq, VlobListVersionsReq, VlobMaintenanceGetReencryptionBatchReq,
+    VlobMaintenanceSaveReencryptionBatchReq, VlobPollChangesReq, VlobReadReq, VlobUpdateReq,
 };
 
 import_exception!(parsec.api.protocol, ProtocolError);
@@ -35,6 +35,8 @@ impl AuthenticatedAnyCmdReq {
                 AnyCmdReq::BlockRead(x) => BlockReadReq(x).into_py(py),
                 AnyCmdReq::BlockCreate(x) => BlockCreateReq(x).into_py(py),
                 AnyCmdReq::MessageGet(x) => MessageGetReq(x).into_py(py),
+                AnyCmdReq::OrganizationStats(x) => OrganizationStatsReq(x).into_py(py),
+                AnyCmdReq::OrganizationConfig(x) => OrganizationConfigReq(x).into_py(py),
                 AnyCmdReq::VlobCreate(x) => VlobCreateReq(x).into_py(py),
                 AnyCmdReq::VlobRead(x) => VlobReadReq(x).into_py(py),
                 AnyCmdReq::VlobUpdate(x) => VlobUpdateReq(x).into_py(py),

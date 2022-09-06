@@ -86,12 +86,6 @@ try:
         Invite4GreeterCommunicateReq,
         Invite4GreeterCommunicateRep,
         InviteListItem,
-        # Organization
-        OrganizationStatsReq,
-        OrganizationStatsRep,
-        OrganizationConfigReq,
-        OrganizationConfigRep,
-        UsersPerProfileDetailItem,
         # Ping
         AuthenticatedPingReq,
         AuthenticatedPingRep,
@@ -303,12 +297,6 @@ __all__ = (
     "Invite4GreeterCommunicateReq",
     "Invite4GreeterCommunicateRep",
     "InviteListItem",
-    # Organization
-    "OrganizationStatsReq",
-    "OrganizationStatsRep",
-    "OrganizationConfigReq",
-    "OrganizationConfigRep",
-    "UsersPerProfileDetailItem",
     # Ping
     "AuthenticatedPingReq",
     "AuthenticatedPingRep",

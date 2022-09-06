@@ -3,11 +3,13 @@
 mod block;
 mod cmds;
 mod message;
+mod organization;
 mod vlob;
 
 pub use block::*;
 pub use cmds::*;
 pub use message::*;
+pub use organization::*;
 pub use vlob::*;
 
 // We use this type because we can't match Option<String> in macro_rules
