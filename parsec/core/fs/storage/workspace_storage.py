@@ -31,7 +31,7 @@ from parsec.core.types import (
     LocalFileManifest,
     LocalWorkspaceManifest,
 )
-from parsec.core.fs.exceptions import FSError
+from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
 from parsec.core.types.manifest import AnyLocalManifest
 from parsec._parsec import (
     WorkspaceStorage as _SyncWorkspaceStorage,
@@ -280,15 +280,10 @@ class WorkspaceStorageTimestamped:
     def __init__(self, workspace_storage: WorkspaceStorage, timestamp: DateTime):
         self.workspace_storage = workspace_storage
 
-        # self._cache: Dict[EntryID, AnyLocalManifest] = {}
-        # self.workspace_storage = workspace_storage
+        self._cache: Dict[EntryID, AnyLocalManifest] = {}
+        self.open_fds: Dict[int, EntryID] = {}
         self.timestamp = timestamp
-        # self.manifest_storage = None
-
-        # self._prevent_sync_pattern = workspace_storage._prevent_sync_pattern
-        # self._prevent_sync_pattern_fully_applied = (
-        #     workspace_storage._prevent_sync_pattern_fully_applied
-        # )
+        self.fd_counter: int = 1
 
     @property
     def device(self) -> LocalDevice:
@@ -340,7 +335,11 @@ class WorkspaceStorageTimestamped:
 
     async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         """Raises: FSLocalMissError"""
-        return await self.workspace_storage.get_manifest(entry_id)
+        assert isinstance(entry_id, EntryID)
+        try:
+            return self._cache[entry_id]
+        except KeyError:
+            raise FSLocalMissError(entry_id)
 
     async def set_manifest(
         self,
@@ -350,11 +349,11 @@ class WorkspaceStorageTimestamped:
         check_lock_status: bool = True,
         removed_ids: Optional[Set[ChunkID]] = None,
     ) -> None:
+        assert isinstance(entry_id, EntryID)
         if manifest.need_sync:
             self._throw_permission_error()
-        return await self.workspace_storage.set_manifest(
-            entry_id, manifest, cache_only, check_lock_status, removed_ids
-        )
+        self.workspace_storage._check_lock_status(entry_id)
+        self._cache[entry_id] = manifest
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         pass
@@ -372,14 +371,29 @@ class WorkspaceStorageTimestamped:
 
     # File management interface
 
+    def _get_next_fd(self) -> FileDescriptor:
+        self.fd_counter += 1
+        return FileDescriptor(self.fd_counter)
+
     def create_file_descriptor(self, manifest: LocalFileManifest) -> FileDescriptor:
-        return self.workspace_storage.create_file_descriptor(manifest)
+        fd = self._get_next_fd()
+        self.open_fds[fd] = manifest.id
+        return fd
 
     async def load_file_descriptor(self, fd: FileDescriptor) -> LocalFileManifest:
-        return await self.workspace_storage.load_file_descriptor(fd)
+        try:
+            entry_id = self.open_fds[fd]
+        except KeyError:
+            raise FSInvalidFileDescriptor(fd)
+        manifest = await self.get_manifest(entry_id)
+        assert isinstance(manifest, LocalFileManifest)
+        return manifest
 
     def remove_file_descriptor(self, fd: FileDescriptor) -> None:
-        return self.workspace_storage.remove_file_descriptor(fd)
+        try:
+            self.open_fds.pop(fd)
+        except KeyError:
+            raise FSInvalidFileDescriptor(fd)
 
     # Locking helpers
 
