@@ -1,8 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::import_exception;
-use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyType};
+use pyo3::{
+    import_exception,
+    prelude::*,
+    types::{PyBytes, PyType},
+};
 
 use libparsec::protocol::{authenticated_cmds, invited_cmds};
 
@@ -30,11 +32,10 @@ impl AuthenticatedAnyCmdReq {
         Ok(match cmd {
             AnyCmdReq::BlockRead(x) => BlockReadReq(x).into_py(py),
             AnyCmdReq::BlockCreate(x) => BlockCreateReq(x).into_py(py),
+            AnyCmdReq::DeviceCreate(x) => DeviceCreateReq(x).into_py(py),
             AnyCmdReq::EventsListen(x) => EventsListenReq(x).into_py(py),
             AnyCmdReq::EventsSubscribe(x) => EventsSubscribeReq(x).into_py(py),
-            AnyCmdReq::MessageGet(x) => MessageGetReq(x).into_py(py),
-            AnyCmdReq::OrganizationStats(x) => OrganizationStatsReq(x).into_py(py),
-            AnyCmdReq::OrganizationConfig(x) => OrganizationConfigReq(x).into_py(py),
+            AnyCmdReq::HumanFind(x) => HumanFindReq(x).into_py(py),
             AnyCmdReq::InviteList(x) => InviteListReq(x).into_py(py),
             AnyCmdReq::Invite1GreeterWaitPeer(x) => Invite1GreeterWaitPeerReq(x).into_py(py),
             AnyCmdReq::Invite2aGreeterGetHashedNonce(x) => {
@@ -50,6 +51,10 @@ impl AuthenticatedAnyCmdReq {
             AnyCmdReq::Invite4GreeterCommunicate(x) => Invite4GreeterCommunicateReq(x).into_py(py),
             AnyCmdReq::InviteDelete(x) => InviteDeleteReq(x).into_py(py),
             AnyCmdReq::InviteNew(x) => InviteNewReq(x).into_py(py),
+            AnyCmdReq::MessageGet(x) => MessageGetReq(x).into_py(py),
+            AnyCmdReq::OrganizationStats(x) => OrganizationStatsReq(x).into_py(py),
+            AnyCmdReq::OrganizationConfig(x) => OrganizationConfigReq(x).into_py(py),
+            AnyCmdReq::Ping(x) => AuthenticatedPingReq(x).into_py(py),
             AnyCmdReq::RealmCreate(x) => RealmCreateReq(x).into_py(py),
             AnyCmdReq::RealmStatus(x) => RealmStatusReq(x).into_py(py),
             AnyCmdReq::RealmStats(x) => RealmStatsReq(x).into_py(py),
@@ -61,7 +66,9 @@ impl AuthenticatedAnyCmdReq {
             AnyCmdReq::RealmFinishReencryptionMaintenance(x) => {
                 RealmFinishReencryptionMaintenanceReq(x).into_py(py)
             }
-            AnyCmdReq::Ping(x) => AuthenticatedPingReq(x).into_py(py),
+            AnyCmdReq::UserGet(x) => UserGetReq(x).into_py(py),
+            AnyCmdReq::UserCreate(x) => UserCreateReq(x).into_py(py),
+            AnyCmdReq::UserRevoke(x) => UserRevokeReq(x).into_py(py),
             AnyCmdReq::VlobCreate(x) => VlobCreateReq(x).into_py(py),
             AnyCmdReq::VlobRead(x) => VlobReadReq(x).into_py(py),
             AnyCmdReq::VlobUpdate(x) => VlobUpdateReq(x).into_py(py),
@@ -73,7 +80,6 @@ impl AuthenticatedAnyCmdReq {
             AnyCmdReq::VlobMaintenanceSaveReencryptionBatch(x) => {
                 VlobMaintenanceSaveReencryptionBatchReq(x).into_py(py)
             }
-            _ => unimplemented!("{:?}", cmd),
         })
     }
 }
@@ -96,7 +102,6 @@ impl InvitedAnyCmdReq {
         use invited_cmds::AnyCmdReq;
         let cmd = AnyCmdReq::load(&buf).map_err(ProtocolError::new_err)?;
         Ok(match cmd {
-            AnyCmdReq::Ping(x) => InvitedPingReq(x).into_py(py),
             AnyCmdReq::Invite1ClaimerWaitPeer(x) => Invite1ClaimerWaitPeerReq(x).into_py(py),
             AnyCmdReq::Invite2aClaimerSendHashedNonce(x) => {
                 Invite2aClaimerSendHashedNonceReq(x).into_py(py)
@@ -110,6 +115,7 @@ impl InvitedAnyCmdReq {
             }
             AnyCmdReq::Invite4ClaimerCommunicate(x) => Invite4ClaimerCommunicateReq(x).into_py(py),
             AnyCmdReq::InviteInfo(x) => InviteInfoReq(x).into_py(py),
+            AnyCmdReq::Ping(x) => InvitedPingReq(x).into_py(py),
         })
     }
 }

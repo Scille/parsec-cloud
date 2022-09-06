@@ -220,6 +220,7 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::RealmFinishReencryptionMaintenanceRepMaintenanceError>()?;
     m.add_class::<protocol::RealmFinishReencryptionMaintenanceRepUnknownStatus>()?;
     m.add_class::<protocol::MaintenanceType>()?;
+
     // Ping
     m.add_class::<protocol::AuthenticatedPingReq>()?;
     m.add_class::<protocol::AuthenticatedPingRep>()?;
@@ -351,6 +352,45 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::InvitationStatus>()?;
     m.add_class::<protocol::InvitationEmailSentStatus>()?;
     m.add_class::<protocol::InvitationDeletedReason>()?;
+
+    // User
+    m.add_class::<protocol::UserGetReq>()?;
+    m.add_class::<protocol::UserGetRep>()?;
+    m.add_class::<protocol::UserGetRepOk>()?;
+    m.add_class::<protocol::UserGetRepNotFound>()?;
+    m.add_class::<protocol::UserGetRepUnknownStatus>()?;
+    m.add_class::<protocol::UserCreateReq>()?;
+    m.add_class::<protocol::UserCreateRep>()?;
+    m.add_class::<protocol::UserCreateRepOk>()?;
+    m.add_class::<protocol::UserCreateRepActiveUsersLimitReached>()?;
+    m.add_class::<protocol::UserCreateRepAlreadyExists>()?;
+    m.add_class::<protocol::UserCreateRepInvalidCertification>()?;
+    m.add_class::<protocol::UserCreateRepInvalidData>()?;
+    m.add_class::<protocol::UserCreateRepNotAllowed>()?;
+    m.add_class::<protocol::UserCreateRepUnknownStatus>()?;
+    m.add_class::<protocol::UserRevokeReq>()?;
+    m.add_class::<protocol::UserRevokeRep>()?;
+    m.add_class::<protocol::UserRevokeRepOk>()?;
+    m.add_class::<protocol::UserRevokeRepAlreadyRevoked>()?;
+    m.add_class::<protocol::UserRevokeRepNotFound>()?;
+    m.add_class::<protocol::UserRevokeRepInvalidCertification>()?;
+    m.add_class::<protocol::UserRevokeRepNotAllowed>()?;
+    m.add_class::<protocol::UserRevokeRepUnknownStatus>()?;
+    m.add_class::<protocol::DeviceCreateReq>()?;
+    m.add_class::<protocol::DeviceCreateRep>()?;
+    m.add_class::<protocol::DeviceCreateRepOk>()?;
+    m.add_class::<protocol::DeviceCreateRepAlreadyExists>()?;
+    m.add_class::<protocol::DeviceCreateRepBadUserId>()?;
+    m.add_class::<protocol::DeviceCreateRepInvalidCertification>()?;
+    m.add_class::<protocol::DeviceCreateRepInvalidData>()?;
+    m.add_class::<protocol::DeviceCreateRepUnknownStatus>()?;
+    m.add_class::<protocol::HumanFindReq>()?;
+    m.add_class::<protocol::HumanFindRep>()?;
+    m.add_class::<protocol::HumanFindRepOk>()?;
+    m.add_class::<protocol::HumanFindRepNotAllowed>()?;
+    m.add_class::<protocol::HumanFindRepUnknownStatus>()?;
+    m.add_class::<protocol::Trustchain>()?;
+    m.add_class::<protocol::HumanFindResultItem>()?;
 
     // Vlob
     m.add_class::<protocol::VlobCreateReq>()?;
