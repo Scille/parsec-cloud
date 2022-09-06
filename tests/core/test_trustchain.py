@@ -3,7 +3,7 @@
 import pytest
 from typing import Dict, Optional, Tuple
 
-from parsec._parsec import DateTime, TimeProvider, TrustchainContext
+from parsec._parsec import DateTime, TimeProvider, TrustchainContext, Trustchain
 from parsec.api.data import UserCertificate, DeviceCertificate, RevokedUserCertificate
 from parsec.api.protocol import UserID, UserProfile
 from parsec.api.protocol.types import DeviceID
@@ -23,11 +23,11 @@ class TrustchainData:
     def run_trustchain_load_user_and_devices(self, user: UserID):
         ctx = self.trustchain_ctx_factory()
         return ctx.load_user_and_devices(
-            trustchain={
-                "users": [certif for _, certif in self.users_certifs.values()],
-                "revoked_users": [certif for _, certif in self.revoked_users_certifs.values()],
-                "devices": [certif for _, certif in self.devices_certifs.values()],
-            },
+            trustchain=Trustchain(
+                users=[certif for _, certif in self.users_certifs.values()],
+                revoked_users=[certif for _, certif in self.revoked_users_certifs.values()],
+                devices=[certif for _, certif in self.devices_certifs.values()],
+            ),
             user_certif=self.get_user_certif(user),
             revoked_user_certif=self.get_revoked_user_certif(user),
             devices_certifs=self.get_devices_certifs(user),
@@ -193,7 +193,7 @@ def test_bad_expected_user(trustchain_data_factory):
     ctx = data.trustchain_ctx_factory()
     with pytest.raises(TrustchainError) as exc:
         ctx.load_user_and_devices(
-            trustchain={"users": [], "revoked_users": [], "devices": []},
+            trustchain=Trustchain(users=[], revoked_users=[], devices=[]),
             user_certif=data.get_user_certif("alice"),
             revoked_user_certif=None,
             devices_certifs=[data.get_device_certif("alice@dev1")],

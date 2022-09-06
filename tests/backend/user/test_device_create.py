@@ -2,10 +2,18 @@
 
 import pytest
 
-from parsec._parsec import DateTime, AuthenticatedPingRepOk
-from parsec.backend.backend_events import BackendEvent
+from parsec._parsec import (
+    DateTime,
+    AuthenticatedPingRepOk,
+    DeviceCreateRepOk,
+    DeviceCreateRepAlreadyExists,
+    DeviceCreateRepBadUserId,
+    DeviceCreateRepInvalidCertification,
+    DeviceCreateRepInvalidData,
+)
 from parsec.api.data import DeviceCertificate
 from parsec.api.protocol import UserProfile
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import INVITATION_VALIDITY, Device
 
 from tests.common import freeze_time, customize_fixtures
@@ -45,7 +53,7 @@ async def test_device_create_ok(
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        assert rep == {"status": "ok"}
+        assert isinstance(rep, DeviceCreateRepOk)
 
         # No guarantees this event occurs before the command's return
         await spy.wait_with_timeout(
@@ -100,10 +108,8 @@ async def test_device_create_invalid_certified(alice_ws, alice, bob, alice_nd):
         device_certificate=bad_device_certificate,
         redacted_device_certificate=good_device_certificate,
     )
-    assert rep == {
-        "status": "invalid_certification",
-        "reason": "Invalid certification data (Signature was forged or corrupt).",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, DeviceCreateRepInvalidCertification)
 
     # Same for the redacted part
 
@@ -112,10 +118,8 @@ async def test_device_create_invalid_certified(alice_ws, alice, bob, alice_nd):
         device_certificate=good_device_certificate,
         redacted_device_certificate=bad_device_certificate,
     )
-    assert rep == {
-        "status": "invalid_certification",
-        "reason": "Invalid certification data (Signature was forged or corrupt).",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, DeviceCreateRepInvalidCertification)
 
 
 @pytest.mark.trio
@@ -134,10 +138,8 @@ async def test_device_create_already_exists(alice_ws, alice, alice2):
         device_certificate=device_certificate,
         redacted_device_certificate=device_certificate,
     )
-    assert rep == {
-        "status": "already_exists",
-        "reason": f"Device `{alice2.device_id.str}` already exists",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, DeviceCreateRepAlreadyExists)
 
 
 @pytest.mark.trio
@@ -156,7 +158,8 @@ async def test_device_create_not_own_user(bob_ws, bob, alice_nd):
         device_certificate=device_certificate,
         redacted_device_certificate=device_certificate,
     )
-    assert rep == {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
+    # The reason is no longer generated
+    assert isinstance(rep, DeviceCreateRepBadUserId)
 
 
 @pytest.mark.trio
@@ -176,10 +179,8 @@ async def test_device_create_certify_too_old(alice_ws, alice, alice_nd):
             device_certificate=device_certificate,
             redacted_device_certificate=device_certificate,
         )
-        assert rep == {
-            "status": "invalid_certification",
-            "reason": "Invalid timestamp in certification.",
-        }
+        # The reason is no longer generated
+        assert isinstance(rep, DeviceCreateRepInvalidCertification)
 
 
 @pytest.mark.trio
@@ -206,10 +207,8 @@ async def test_device_create_bad_redacted_device_certificate(alice_ws, alice, al
                 alice.signing_key
             ),
         )
-        assert rep == {
-            "status": "invalid_data",
-            "reason": "Redacted Device certificate differs from Device certificate.",
-        }
+        # The reason is no longer generated
+        assert isinstance(rep, DeviceCreateRepInvalidData)
 
     # Finally just make sure good was really good
     rep = await device_create(
@@ -219,7 +218,7 @@ async def test_device_create_bad_redacted_device_certificate(alice_ws, alice, al
             alice.signing_key
         ),
     )
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, DeviceCreateRepOk)
 
 
 @pytest.mark.trio
@@ -239,7 +238,5 @@ async def test_redacted_certificates_cannot_contain_sensitive_data(alice_ws, ali
             device_certificate=device_certificate,
             redacted_device_certificate=device_certificate,
         )
-        assert rep == {
-            "status": "invalid_data",
-            "reason": "Redacted Device certificate must not contain a device_label field.",
-        }
+        # The reason is no longer generated
+        assert isinstance(rep, DeviceCreateRepInvalidData)

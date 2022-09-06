@@ -3,7 +3,7 @@
 from uuid import uuid4
 import pytest
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, UserRevokeRepOk
 from parsec.api.data import PkiEnrollmentSubmitPayload, RevokedUserCertificate
 from parsec.api.data.pki import PkiEnrollmentAcceptPayload
 from parsec.api.protocol.pki import PkiEnrollmentStatus
@@ -377,7 +377,7 @@ async def test_pki_accept_user_already_exist(anonymous_backend_ws, bob, alice, a
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_revoke(alice_ws, revoked_user_certificate=bob_revocation)
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, UserRevokeRepOk)
 
     # Accept revoked user
     rep = await pki_enrollment_accept(alice_ws, enrollment_id=request_id, **kwargs)
@@ -484,7 +484,7 @@ async def test_pki_submit_already_accepted(anonymous_backend_ws, mallory, alice,
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_revoke(alice_ws, revoked_user_certificate=revocation)
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, UserRevokeRepOk)
 
     # Pki enrollment is accepted and user revoked
     rep = await pki_enrollment_submit(
@@ -581,7 +581,7 @@ async def test_pki_complete_sequence(anonymous_backend_ws, mallory, alice_ws, al
         ).dump_and_sign(alice.signing_key)
 
         rep = await user_revoke(alice_ws, revoked_user_certificate=revocation)
-        assert rep == {"status": "ok"}
+        assert isinstance(rep, UserRevokeRepOk)
 
     for _ in range(2):
         await _cancel()

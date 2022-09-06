@@ -49,6 +49,7 @@ def _check_rep(rep, step_name):
         NOT_FOUND_TYPES,
         ALREADY_DELETED_TYPES,
         INVALID_STATE_TYPES,
+        ACTIVE_USERS_LIMIT_REACHED_TYPES,
         OK_TYPES,
     )
 
@@ -58,9 +59,9 @@ def _check_rep(rep, step_name):
         raise InviteAlreadyUsedError
     elif isinstance(rep, INVALID_STATE_TYPES):
         raise InvitePeerResetError
-    elif isinstance(rep, dict) and rep["status"] == "active_users_limit_reached":
+    elif isinstance(rep, ACTIVE_USERS_LIMIT_REACHED_TYPES):
         raise InviteActiveUsersLimitReachedError
-    elif not isinstance(rep, OK_TYPES) and rep != {"status": "ok"}:
+    elif not isinstance(rep, OK_TYPES):
         raise InviteError(f"Backend error during {step_name}: {rep}")
 
 

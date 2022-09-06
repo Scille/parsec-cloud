@@ -1,12 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec.backend.backend_events import BackendEvent
 import pytest
 import trio
-from parsec._parsec import DateTime
-
 from quart.testing.connections import WebsocketDisconnectError
 
+from parsec._parsec import (
+    DateTime,
+    UserRevokeRepOk,
+    UserRevokeRepAlreadyRevoked,
+    UserRevokeRepInvalidCertification,
+    UserRevokeRepNotAllowed,
+    UserRevokeRepNotFound,
+)
+from parsec.backend.backend_events import BackendEvent
 from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.data import RevokedUserCertificate
 from parsec.api.protocol import HandshakeRevokedDevice, UserProfile
@@ -27,7 +33,7 @@ async def test_backend_close_on_user_revoke(
     async with backend_authenticated_ws_factory(backend_asgi_app, bob) as bob_ws:
         with backend_asgi_app.backend.event_bus.listen() as spy:
             rep = await user_revoke(alice_ws, revoked_user_certificate=bob_revocation)
-            assert rep == {"status": "ok"}
+            assert isinstance(rep, UserRevokeRepOk)
             await spy.wait_with_timeout(
                 BackendEvent.USER_REVOKED,
                 {"organization_id": bob.organization_id, "user_id": bob.user_id},
@@ -51,7 +57,7 @@ async def test_user_revoke_ok(
 
     with backend_asgi_app.backend.event_bus.listen() as spy:
         rep = await user_revoke(adam_ws, revoked_user_certificate=alice_revocation)
-        assert rep == {"status": "ok"}
+        assert isinstance(rep, UserRevokeRepOk)
         await spy.wait_with_timeout(
             BackendEvent.USER_REVOKED,
             {"organization_id": alice.organization_id, "user_id": alice.user_id},
@@ -73,7 +79,8 @@ async def test_user_revoke_not_admin(
     ).dump_and_sign(bob.signing_key)
 
     rep = await user_revoke(bob_ws, revoked_user_certificate=alice_revocation)
-    assert rep == {"status": "not_allowed", "reason": "User `bob` is not admin"}
+    # The reason is no longer generated
+    assert isinstance(rep, UserRevokeRepNotAllowed)
 
 
 @pytest.mark.trio
@@ -86,7 +93,8 @@ async def test_cannot_self_revoke(
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_revoke(alice_ws, revoked_user_certificate=alice_revocation)
-    assert rep == {"status": "not_allowed", "reason": "Cannot do self-revocation"}
+    # The reason is no longer generated
+    assert isinstance(rep, UserRevokeRepNotAllowed)
 
 
 @pytest.mark.trio
@@ -96,7 +104,7 @@ async def test_user_revoke_unknown(backend_asgi_app, alice_ws, alice, mallory):
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_revoke(alice_ws, revoked_user_certificate=revoked_user_certificate)
-    assert rep == {"status": "not_found"}
+    assert isinstance(rep, UserRevokeRepNotFound)
 
 
 @pytest.mark.trio
@@ -107,13 +115,11 @@ async def test_user_revoke_already_revoked(backend_asgi_app, alice_ws, bob, alic
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_revoke(alice_ws, revoked_user_certificate=bob_revocation)
-    assert rep["status"] == "ok"
+    assert isinstance(rep, UserRevokeRepOk)
 
     rep = await user_revoke(alice_ws, revoked_user_certificate=bob_revocation)
-    assert rep == {
-        "status": "already_revoked",
-        "reason": f"User `{bob.user_id.str}` already revoked",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, UserRevokeRepAlreadyRevoked)
 
 
 @pytest.mark.trio
@@ -123,10 +129,8 @@ async def test_user_revoke_invalid_certified(backend_asgi_app, alice_ws, alice2,
     ).dump_and_sign(alice2.signing_key)
 
     rep = await user_revoke(alice_ws, revoked_user_certificate=revoked_user_certificate)
-    assert rep == {
-        "status": "invalid_certification",
-        "reason": "Invalid certification data (Signature was forged or corrupt).",
-    }
+    # The Reason is no longer generated
+    assert isinstance(rep, UserRevokeRepInvalidCertification)
 
 
 @pytest.mark.trio
@@ -138,10 +142,8 @@ async def test_user_revoke_certify_too_old(backend_asgi_app, alice_ws, alice, bo
 
     with freeze_time(now.add(seconds=INVITATION_VALIDITY + 1)):
         rep = await user_revoke(alice_ws, revoked_user_certificate=revoked_user_certificate)
-        assert rep == {
-            "status": "invalid_certification",
-            "reason": "Invalid timestamp in certification.",
-        }
+        # The reason is no longer generated
+        assert isinstance(rep, UserRevokeRepInvalidCertification)
 
 
 @pytest.mark.trio
@@ -162,7 +164,7 @@ async def test_user_revoke_other_organization(
         ).dump_and_sign(sock.device.signing_key)
 
         rep = await user_revoke(sock, revoked_user_certificate=revocation)
-        assert rep == {"status": "not_found"}
+        assert isinstance(rep, UserRevokeRepNotFound)
 
     # Make sure bob still works
     async with backend_authenticated_ws_factory(backend_asgi_app, bob):

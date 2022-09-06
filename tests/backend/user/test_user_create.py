@@ -1,8 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from parsec._parsec import DateTime
-
+from parsec._parsec import (
+    DateTime,
+    UserGetRepOk,
+    UserCreateRepOk,
+    UserCreateRepAlreadyExists,
+    UserCreateRepActiveUsersLimitReached,
+    UserCreateRepInvalidCertification,
+    UserCreateRepInvalidData,
+    UserCreateRepNotAllowed,
+)
 from parsec.backend.user import INVITATION_VALIDITY, User, Device
 from parsec.api.data import UserCertificate, DeviceCertificate
 from parsec.api.protocol import DeviceID, DeviceLabel, UserProfile
@@ -58,12 +66,12 @@ async def test_user_create_ok(
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, UserCreateRepOk)
 
     # Make sure mallory can connect now
     async with backend_authenticated_ws_factory(backend_asgi_app, mallory) as sock:
         rep = await user_get(sock, user_id=mallory.user_id)
-        assert rep["status"] == "ok"
+        assert isinstance(rep, UserGetRepOk)
 
     # Check the resulting data in the backend
     backend_user, backend_device = await backend_asgi_app.backend.user.get_user_with_device(
@@ -137,7 +145,7 @@ async def test_user_create_nok_active_users_limit_reached(
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        assert rep == {"status": "active_users_limit_reached"}
+        assert isinstance(rep, UserCreateRepActiveUsersLimitReached)
 
         # Now correct the limit, and ensure the user can be created
 
@@ -152,7 +160,7 @@ async def test_user_create_nok_active_users_limit_reached(
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        assert rep == {"status": "ok"}
+        assert isinstance(rep, UserCreateRepOk)
 
 
 @pytest.mark.trio
@@ -201,10 +209,8 @@ async def test_user_create_invalid_certificate(alice_ws, alice, bob, mallory):
             redacted_user_certificate=good_user_certificate,
             redacted_device_certificate=good_device_certificate,
         )
-        assert rep == {
-            "status": "invalid_certification",
-            "reason": "Invalid certification data (Signature was forged or corrupt).",
-        }
+        # The reason is no longer generated
+        assert isinstance(rep, UserCreateRepInvalidCertification)
 
     # Same thing for the redacted part
     for cu, cd in [
@@ -219,10 +225,8 @@ async def test_user_create_invalid_certificate(alice_ws, alice, bob, mallory):
             redacted_user_certificate=cu,
             redacted_device_certificate=cd,
         )
-        assert rep == {
-            "status": "invalid_certification",
-            "reason": "Invalid certification data (Signature was forged or corrupt).",
-        }
+        # The reason is no longer generated
+        assert isinstance(rep, UserCreateRepInvalidCertification)
 
 
 @pytest.mark.trio
@@ -251,10 +255,8 @@ async def test_user_create_not_matching_user_device(alice_ws, alice, bob, mallor
         redacted_user_certificate=user_certificate,
         redacted_device_certificate=device_certificate,
     )
-    assert rep == {
-        "status": "invalid_data",
-        "reason": "Device and User must have the same user ID.",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, UserCreateRepInvalidData)
 
 
 @pytest.mark.trio
@@ -291,10 +293,8 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
                 alice.signing_key
             ),
         )
-        assert rep == {
-            "status": "invalid_data",
-            "reason": "Redacted Device certificate differs from Device certificate.",
-        }
+        # The reason is no longer generated
+        assert isinstance(rep, UserCreateRepInvalidData)
 
     # Missing redacted certificate is not allowed as well
     rep = await user_create(
@@ -304,11 +304,8 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
         redacted_user_certificate=user_certificate,
         redacted_device_certificate=None,
     )
-    assert rep == {
-        "status": "bad_message",
-        "reason": "Invalid message.",
-        "errors": {"redacted_device_certificate": ["Missing data for required field."]},
-    }
+    assert rep.status == "bad_message"
+    assert rep.reason == "Invalid message."
 
     # Finally just make sure good was really good
     rep = await user_create(
@@ -320,7 +317,8 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
             alice.signing_key
         ),
     )
-    assert rep == {"status": "ok"}
+    # The reason is no longer generated
+    assert isinstance(rep, UserCreateRepOk)
 
 
 @pytest.mark.trio
@@ -358,10 +356,8 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
             ),
             redacted_device_certificate=device_certificate,
         )
-        assert rep == {
-            "status": "invalid_data",
-            "reason": "Redacted User certificate differs from User certificate.",
-        }
+        # The reason is no longer generated
+        assert isinstance(rep, UserCreateRepInvalidData)
 
     # Missing redacted certificate is not allowed as well
     rep = await user_create(
@@ -371,11 +367,8 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
         redacted_user_certificate=None,
         redacted_device_certificate=device_certificate,
     )
-    assert rep == {
-        "status": "bad_message",
-        "reason": "Invalid message.",
-        "errors": {"redacted_user_certificate": ["Missing data for required field."]},
-    }
+    assert rep.status == "bad_message"
+    assert rep.reason == "Invalid message"
 
     # Finally just make sure good was really good
     rep = await user_create(
@@ -385,7 +378,8 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
         redacted_user_certificate=good_redacted_user_certificate.dump_and_sign(alice.signing_key),
         redacted_device_certificate=device_certificate,
     )
-    assert rep == {"status": "ok"}
+    # The reason is no longer generated
+    assert isinstance(rep, UserCreateRepOk)
 
 
 @pytest.mark.trio
@@ -414,7 +408,8 @@ async def test_user_create_already_exists(alice_ws, alice, bob):
         redacted_user_certificate=user_certificate,
         redacted_device_certificate=device_certificate,
     )
-    assert rep == {"status": "already_exists", "reason": f"User `{bob.user_id.str}` already exists"}
+    # The reason is no longer generated
+    assert isinstance(rep, UserCreateRepAlreadyExists)
 
 
 @pytest.mark.trio
@@ -451,10 +446,8 @@ async def test_user_create_human_handle_already_exists(alice_ws, alice, bob):
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert rep == {
-        "status": "already_exists",
-        "reason": f"Human handle `{bob.human_handle.str}` already corresponds to a non-revoked user",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, UserCreateRepAlreadyExists)
 
 
 @pytest.mark.trio
@@ -497,7 +490,8 @@ async def test_user_create_human_handle_with_revoked_previous_one(
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert rep == {"status": "ok"}
+    # The reason is no longer generated
+    assert isinstance(rep, UserCreateRepOk)
 
 
 @pytest.mark.trio
@@ -527,10 +521,8 @@ async def test_user_create_not_matching_certified_on(alice_ws, alice, mallory):
             redacted_user_certificate=user_certificate,
             redacted_device_certificate=device_certificate,
         )
-        assert rep == {
-            "status": "invalid_data",
-            "reason": "Device and User certificates must have the same timestamp.",
-        }
+        # The reason is no longer generated
+        assert isinstance(rep, UserCreateRepInvalidData)
 
 
 @pytest.mark.trio
@@ -561,10 +553,8 @@ async def test_user_create_certificate_too_old(alice_ws, alice, mallory):
             redacted_user_certificate=user_certificate,
             redacted_device_certificate=device_certificate,
         )
-        assert rep == {
-            "status": "invalid_certification",
-            "reason": "Invalid timestamp in certificate.",
-        }
+        # The reason is no longer generated
+        assert isinstance(rep, UserCreateRepInvalidCertification)
 
 
 @pytest.mark.trio
@@ -578,7 +568,8 @@ async def test_user_create_author_not_admin(backend_asgi_app, bob_ws):
         redacted_user_certificate=b"<redacted_user_certificate>",
         redacted_device_certificate=b"<redacted_device_certificate>",
     )
-    assert rep == {"status": "not_allowed", "reason": "User `bob` is not admin"}
+    # The reason is no longer generated
+    assert isinstance(rep, UserCreateRepNotAllowed)
 
 
 @pytest.mark.trio
@@ -615,10 +606,8 @@ async def test_redacted_certificates_cannot_contain_sensitive_data(alice_ws, ali
             redacted_user_certificate=user_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        assert rep == {
-            "status": "invalid_data",
-            "reason": "Redacted User certificate must not contain a human_handle field.",
-        }
+        # The reason is no longer generated
+        assert isinstance(rep, UserCreateRepInvalidData)
 
         rep = await user_create(
             alice_ws,
@@ -627,7 +616,5 @@ async def test_redacted_certificates_cannot_contain_sensitive_data(alice_ws, ali
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=device_certificate,
         )
-        assert rep == {
-            "status": "invalid_data",
-            "reason": "Redacted Device certificate must not contain a device_label field.",
-        }
+        # The reason is no longer generated
+        assert isinstance(rep, UserCreateRepInvalidData)

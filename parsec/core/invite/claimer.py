@@ -83,6 +83,9 @@ from parsec._parsec import (
     InviteInfoRepOk,
     InviteListRepOk,
     InviteNewRepOk,
+    DeviceCreateRepOk,
+    UserCreateRepOk,
+    UserCreateRepActiveUsersLimitReached,
 )
 
 NOT_FOUND_TYPES = (
@@ -127,7 +130,12 @@ INVALID_STATE_TYPES = (
     Invite1ClaimerWaitPeerRepInvalidState,
 )
 
+ACTIVE_USERS_LIMIT_REACHED_TYPES = (
+    UserCreateRepActiveUsersLimitReached,
+)
+
 OK_TYPES = (
+    DeviceCreateRepOk,
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
     Invite2aClaimerSendHashedNonceRepOk,
@@ -144,6 +152,7 @@ OK_TYPES = (
     InviteInfoRepOk,
     InviteListRepOk,
     InviteNewRepOk,
+    UserCreateRepOk,
 )
 
 
