@@ -375,6 +375,120 @@ impl WorkspaceStorage {
         // TODO: Add some condition
         self.chunk_storage.run_vacuum()
     }
+
+    /// Take a snapshot of the current [WorkspaceStorage]
+    pub fn snapshot(self, _timestamp: DateTime) -> WorkspaceStorageSnapshot {
+        WorkspaceStorageSnapshot::from(self)
+    }
+}
+
+
+/// Snapshot of a [WorkspaceStorage] at a given time.
+pub struct WorkspaceStorageSnapshot {
+    cache: Mutex<HashMap<EntryID, LocalManifest>>,
+    pub workspace_storage: WorkspaceStorage,
+}
+
+impl From<WorkspaceStorage> for WorkspaceStorageSnapshot {
+    fn from(workspace_storage: WorkspaceStorage) -> Self {
+        Self {
+            cache: Mutex::new(HashMap::default()),
+            workspace_storage,
+        }
+    }
+}
+impl WorkspaceStorageSnapshot {
+    /// Return a chunk identified by `chunk_id`.
+    /// Will look for the chunk in the [ChunkStorage] & [BlockStorage].
+    pub fn get_chunk(&self, chunk_id: ChunkID) -> FSResult<Vec<u8>> {
+        self.workspace_storage.get_chunk(chunk_id)
+    }
+
+    /// Return the [LocalWorkspaceManifest] of the current [WorkspaceStorageTimestamped].
+    pub fn get_workspace_manifest(&self) -> FSResult<LocalWorkspaceManifest> {
+        self.workspace_storage.get_workspace_manifest()
+    }
+
+    pub fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
+        self.cache
+            .lock()
+            .expect("Mutex is poisoned")
+            .get(&entry_id)
+            .cloned()
+            .ok_or(FSError::LocalMiss(*entry_id))
+    }
+
+    pub fn set_manifest(&self, entry_id: EntryID, manifest: LocalManifest) -> FSResult<()> {
+        if manifest.need_sync() {
+            Err(FSError::WorkspaceStorageTimestamped)
+        } else {
+            self.check_lock_status(entry_id)?;
+            self.cache
+                .lock()
+                .expect("Mutex is poisoned")
+                .insert(entry_id, manifest);
+            Ok(())
+        }
+    }
+
+    /// Check if an `entry_id` is locked.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the given `entry_id` is not locked.
+    pub fn check_lock_status(&self, entry_id: EntryID) -> FSResult<()> {
+        self.workspace_storage.check_lock_status(entry_id)
+    }
+
+    pub fn get_prevent_sync_pattern(&self) -> Regex {
+        self.workspace_storage.get_prevent_sync_pattern()
+    }
+
+    pub fn get_prevent_sync_pattern_fully_applied(&self) -> bool {
+        self.workspace_storage
+            .get_prevent_sync_pattern_fully_applied()
+    }
+
+    // Block interface.
+
+    pub fn set_clean_block(&self, block_id: BlockID, block: &[u8]) -> FSResult<()> {
+        self.workspace_storage.set_clean_block(block_id, block)
+    }
+
+    pub fn clear_clean_block(&self, block_id: BlockID) {
+        self.workspace_storage.clear_clean_block(block_id)
+    }
+
+    pub fn get_dirty_block(&self, block_id: BlockID) -> FSResult<Vec<u8>> {
+        self.workspace_storage.get_dirty_block(block_id)
+    }
+
+    // File management interface.
+
+    pub fn create_file_descriptor(&self, manifest: LocalFileManifest) -> FileDescriptor {
+        self.workspace_storage.create_file_descriptor(manifest)
+    }
+
+    pub fn load_file_descriptor(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
+        self.workspace_storage.load_file_descriptor(fd)
+    }
+
+    pub fn remove_file_descriptor(&self, fd: FileDescriptor) -> Option<EntryID> {
+        self.workspace_storage.remove_file_descriptor(fd)
+    }
+
+    pub fn lock_entry_id(&self, entry_id: EntryID) -> Arc<Mutex<()>> {
+        self.workspace_storage.lock_entry_id(entry_id)
+    }
+
+    pub fn release_entry_id(&self, entry_id: EntryID, guard: MutexGuard<()>) {
+        self.workspace_storage.release_entry_id(entry_id, guard)
+    }
+
+    /// Take a snapshot of the current `workspace storage`
+    pub fn snapshot(self) -> Self {
+        Self::from(self.workspace_storage)
+    }
 }
 
 pub fn workspace_storage_non_speculative_init(

@@ -65,6 +65,11 @@ pub enum FSError {
 
     #[error("VacuumError: {0}")]
     Vacuum(String),
+
+    /// Error returned by [crate::storage::WorkspaceStorageTimestamped]
+    /// when requiring more features than it's able to provide.
+    #[error("Not implemented: WorkspaceStorage is timestamped")]
+    WorkspaceStorageTimestamped,
 }
 
 pub type FSResult<T> = Result<T, FSError>;
