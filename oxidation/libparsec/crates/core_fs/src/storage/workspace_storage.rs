@@ -147,6 +147,11 @@ impl WorkspaceStorage {
         self.entry_locks.release(entry_id, guard)
     }
 
+    /// Check if an `entry_id` is locked.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the given `entry_id` is not locked.
     fn check_lock_status(&self, entry_id: EntryID) -> FSResult<()> {
         if let Status::Released = self.entry_locks.check(entry_id) {
             return Err(FSError::Runtime(entry_id));
