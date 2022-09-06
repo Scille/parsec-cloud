@@ -17,13 +17,13 @@ from parsec.api.protocol import (
     HandshakeBadAdministrationToken,
     HandshakeRVKMismatch,
     HandshakeRevokedDevice,
-    HandshakeAPIVersionError,
     HandshakeType,
     ServerHandshake,
     BaseClientHandshake,
     AuthenticatedClientHandshake,
     InvitedClientHandshake,
     HandshakeOrganizationExpired,
+    IncompatibleAPIVersionsError,
 )
 from parsec.api.protocol.handshake import answer_serializer
 
@@ -162,7 +162,7 @@ def test_process_challenge_req_good_api_version(
 
     if not valid:
         # Invalid versioning
-        with pytest.raises(HandshakeAPIVersionError) as context:
+        with pytest.raises(IncompatibleAPIVersionsError) as context:
             ch.process_challenge_req(packb(req))
         assert context.value.client_versions == [client_version]
         assert context.value.backend_versions == [backend_version]
@@ -226,7 +226,7 @@ def test_process_challenge_req_good_multiple_api_version(
 
     if expected_client_version is None:
         # Invalid versioning
-        with pytest.raises(HandshakeAPIVersionError) as context:
+        with pytest.raises(IncompatibleAPIVersionsError) as context:
             ch.process_challenge_req(packb(req))
         assert context.value.client_versions == client_versions
         assert context.value.backend_versions == backend_versions

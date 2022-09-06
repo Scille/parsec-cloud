@@ -80,8 +80,17 @@ impl SigningKey {
         Ok(Self(libparsec::crypto::SigningKey::generate()))
     }
 
+    /// Return the signature + the signed data
     fn sign<'p>(&self, py: Python<'p>, data: &[u8]) -> PyResult<&'p PyBytes> {
         Ok(PyBytes::new(py, self.0.sign(data).as_slice()))
+    }
+
+    /// Return only the signature of the data
+    fn sign_only_signature<'p>(&self, py: Python<'p>, data: &[u8]) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            self.0.sign_only_signature(data).as_slice(),
+        ))
     }
 
     fn encode<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
@@ -115,8 +124,23 @@ impl VerifyKey {
         }
     }
 
+    /// Verify a message using the given `VerifyKey` and `signed` data
+    /// `signed` data is the concatenation of the `signature` + `data`
     fn verify<'p>(&self, py: Python<'p>, signed: &[u8]) -> PyResult<&'p PyBytes> {
         match self.0.verify(signed) {
+            Ok(v) => Ok(PyBytes::new(py, &v)),
+            Err(_) => Err(CryptoError::new_err("Signature was forged or corrupt")),
+        }
+    }
+
+    /// Verify a message using the given `VerifyKey`, `Signature` and `message`
+    fn verify_with_signature<'p>(
+        &self,
+        py: Python<'p>,
+        signature: &[u8],
+        message: &[u8],
+    ) -> PyResult<&'p PyBytes> {
+        match self.0.verify_with_signature(signature, message) {
             Ok(v) => Ok(PyBytes::new(py, &v)),
             Err(_) => Err(CryptoError::new_err("Signature was forged or corrupt")),
         }

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, VlobCreateRepOk
 from unittest.mock import ANY
 
 from parsec.api.protocol import VlobID, RealmID, RealmRole, UserProfile
@@ -484,7 +484,7 @@ async def test_update_roles_causality_checks(
     rep = await vlob_create(
         bob_ws, realm, VLOB_ID, blob=b"ciphered", timestamp=ref, check_rep=False
     )
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, VlobCreateRepOk)
 
     # Now try to remove bob's write rights with the same timestamp or lower: this should fail
     for timestamp in (ref, ref.subtract(seconds=1)):

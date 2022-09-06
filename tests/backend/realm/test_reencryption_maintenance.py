@@ -2,7 +2,27 @@
 
 import pytest
 
-from parsec._parsec import DateTime, BlockReadRepOk, BlockCreateRepInMaintenance
+from parsec._parsec import (
+    DateTime,
+    BlockReadRepOk,
+    BlockCreateRepInMaintenance,
+    MessageGetRepOk,
+    Message,
+    VlobCreateRepInMaintenance,
+    VlobReadRepOk,
+    VlobReadRepBadEncryptionRevision,
+    VlobReadRepInMaintenance,
+    VlobUpdateRepInMaintenance,
+    VlobPollChangesRepOk,
+    VlobListVersionsRepOk,
+    VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
+    VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
+    VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
+    VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
+    ReencryptionBatchEntry,
+)
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import UserID, VlobID, BlockID, RealmRole, MaintenanceType, APIEvent
 from parsec.backend.realm import RealmGrantedRole
@@ -144,17 +164,16 @@ async def test_start_send_message_to_participants(backend, alice, bob, alice_ws,
     # Each participant should have received a message
     for user, sock in ((alice, alice_ws), (bob, bob_ws)):
         rep = await message_get(sock)
-        assert rep == {
-            "status": "ok",
-            "messages": [
-                {
-                    "count": 1,
-                    "body": f"{user.user_id.str} msg".encode(),
-                    "timestamp": DateTime(2000, 1, 2),
-                    "sender": alice.device_id,
-                }
+        assert rep == MessageGetRepOk(
+            messages=[
+                Message(
+                    count=1,
+                    body=f"{user.user_id.str} msg".encode(),
+                    timestamp=DateTime(2000, 1, 2),
+                    sender=alice.device_id,
+                )
             ],
-        }
+        )
 
 
 @pytest.mark.trio
@@ -284,11 +303,19 @@ async def test_finish_while_reencryption_not_done(alice_ws, realm, alice, vlobs)
 
     # Also try with part of the job done
     rep = await vlob_maintenance_get_reencryption_batch(alice_ws, realm, 2, size=2)
-    assert rep["status"] == "ok"
-    assert len(rep["batch"]) == 2
-    for entry in rep["batch"]:
-        entry["blob"] = f"{entry['vlob_id'].str}::{entry['version']} reencrypted".encode()
-    await vlob_maintenance_save_reencryption_batch(alice_ws, realm, 2, rep["batch"])
+    assert isinstance(rep, VlobMaintenanceGetReencryptionBatchRepOk)
+    assert len(rep.batch) == 2
+
+    batch = []
+    for entry in rep.batch:
+        batch.append(
+            ReencryptionBatchEntry(
+                entry.vlob_id,
+                entry.version,
+                f"{entry.vlob_id.str}::{entry.version} reencrypted".encode(),
+            )
+        )
+    await vlob_maintenance_save_reencryption_batch(alice_ws, realm, 2, batch)
 
     rep = await realm_finish_reencryption_maintenance(alice_ws, realm, 2, check_rep=False)
     assert rep == {"status": "maintenance_error", "reason": "Reencryption operations are not over"}
@@ -313,11 +340,11 @@ async def test_reencrypt_and_finish_check_access_rights(
             alice_ws, realm, encryption_revision, DateTime.now(), reencryption_msgs
         )
         updated_batch = [
-            {
-                "vlob_id": vlob_id,
-                "version": version,
-                "blob": f"{vlob_id.str}::{version}::{encryption_revision}".encode(),
-            }
+            ReencryptionBatchEntry(
+                vlob_id=vlob_id,
+                version=version,
+                blob=f"{vlob_id.str}::{version}::{encryption_revision}".encode(),
+            )
             for vlob_id, version in {(vlobs[0], 1), (vlobs[0], 2), (vlobs[1], 1)}
         ]
         await vlob_maintenance_save_reencryption_batch(
@@ -335,7 +362,14 @@ async def test_reencrypt_and_finish_check_access_rights(
         rep = await vlob_maintenance_save_reencryption_batch(
             bob_ws, realm, encryption_revision, [], check_rep=False
         )
-        assert rep["status"] == expected_status
+        if isinstance(rep, dict):
+            assert rep["status"] == expected_status
+        else:
+            if allowed:
+                assert isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepOk)
+            else:
+                assert isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepNotAllowed)
+
         rep = await realm_finish_reencryption_maintenance(
             bob_ws, realm, encryption_revision, check_rep=False
         )
@@ -382,16 +416,12 @@ async def test_reencrypt_and_finish_check_access_rights(
 @pytest.mark.trio
 async def test_reencryption_batch_not_during_maintenance(alice_ws, realm):
     rep = await vlob_maintenance_get_reencryption_batch(alice_ws, realm, 1)
-    assert rep == {
-        "status": "not_in_maintenance",
-        "reason": "Realm `a0000000000000000000000000000000` not under maintenance",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, VlobMaintenanceGetReencryptionBatchRepNotInMaintenance)
 
     rep = await vlob_maintenance_save_reencryption_batch(alice_ws, realm, 1, [], check_rep=False)
-    assert rep == {
-        "status": "not_in_maintenance",
-        "reason": "Realm `a0000000000000000000000000000000` not under maintenance",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance)
 
     rep = await realm_finish_reencryption_maintenance(alice_ws, realm, 1, check_rep=False)
     assert rep == {
@@ -407,7 +437,7 @@ async def test_reencryption_batch_bad_revisison(alice_ws, realm, alice):
     )
 
     rep = await vlob_maintenance_get_reencryption_batch(alice_ws, realm, 1)
-    assert rep == {"status": "bad_encryption_revision"}
+    assert isinstance(rep, VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision)
 
     rep = await realm_finish_reencryption_maintenance(alice_ws, realm, 1, check_rep=False)
     assert rep == {"status": "bad_encryption_revision"}
@@ -422,26 +452,33 @@ async def test_reencryption(alice, alice_ws, realm, vlob_atoms):
 
     # Each participant should have received a message
     rep = await message_get(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "messages": [
-            {
-                "count": 1,
-                "body": b"foo",
-                "timestamp": DateTime(2000, 1, 2),
-                "sender": alice.device_id,
-            }
+    assert rep == MessageGetRepOk(
+        messages=[
+            Message(
+                count=1,
+                body=b"foo",
+                timestamp=DateTime(2000, 1, 2),
+                sender=alice.device_id,
+            )
         ],
-    }
+    )
 
     async def _reencrypt_with_batch_of_2(expected_size, expected_done):
         rep = await vlob_maintenance_get_reencryption_batch(alice_ws, realm, 2, size=2)
-        assert rep["status"] == "ok"
-        assert len(rep["batch"]) == expected_size
-        for entry in rep["batch"]:
-            entry["blob"] = f"{entry['vlob_id'].str}::{entry['version']} reencrypted".encode()
-        rep = await vlob_maintenance_save_reencryption_batch(alice_ws, realm, 2, rep["batch"])
-        assert rep == {"status": "ok", "total": 3, "done": expected_done}
+        assert isinstance(rep, VlobMaintenanceGetReencryptionBatchRepOk)
+        assert len(rep.batch) == expected_size
+
+        batch = []
+        for entry in rep.batch:
+            batch.append(
+                ReencryptionBatchEntry(
+                    entry.vlob_id,
+                    entry.version,
+                    f"{entry.vlob_id.str}::{entry.version} reencrypted".encode(),
+                )
+            )
+        rep = await vlob_maintenance_save_reencryption_batch(alice_ws, realm, 2, batch)
+        assert rep == VlobMaintenanceSaveReencryptionBatchRepOk(total=3, done=expected_done)
 
     # Should have 2 batch to reencrypt
     await _reencrypt_with_batch_of_2(expected_size=2, expected_done=2)
@@ -454,7 +491,7 @@ async def test_reencryption(alice, alice_ws, realm, vlob_atoms):
     # Check the vlob have changed
     for vlob_id, version in vlob_atoms:
         rep = await vlob_read(alice_ws, vlob_id, version, encryption_revision=2)
-        assert rep["blob"] == f"{vlob_id.str}::{version} reencrypted".encode()
+        assert rep.blob == f"{vlob_id.str}::{version} reencrypted".encode()
 
 
 @pytest.mark.trio
@@ -465,28 +502,28 @@ async def test_reencryption_provide_unknown_vlob_atom_and_duplications(
         alice_ws, realm, 2, DateTime.now(), {alice.user_id: b"foo"}
     )
     rep = await vlob_maintenance_get_reencryption_batch(alice_ws, realm, 2)
-    assert rep["status"] == "ok"
-    assert len(rep["batch"]) == 3
+    assert isinstance(rep, VlobMaintenanceGetReencryptionBatchRepOk)
+    assert len(rep.batch) == 3
 
     unknown_vlob_id = VlobID.new()
-    duplicated_vlob_id = rep["batch"][0]["vlob_id"]
-    duplicated_version = rep["batch"][0]["version"]
-    duplicated_expected_blob = rep["batch"][0]["blob"]
+    duplicated_vlob_id = rep.batch[0].vlob_id
+    duplicated_version = rep.batch[0].version
+    duplicated_expected_blob = rep.batch[0].blob
     reencrypted_batch = [
         # Reencryption as identity
-        *rep["batch"],
+        *rep.batch,
         # Add an unknown vlob
-        {"vlob_id": unknown_vlob_id, "version": 1, "blob": b"ignored"},
+        ReencryptionBatchEntry(unknown_vlob_id, 1, b"ignored"),
         # Valid vlob ID with invalid version
-        {"vlob_id": duplicated_vlob_id, "version": 99, "blob": b"ignored"},
+        ReencryptionBatchEntry(duplicated_vlob_id, 99, b"ignored"),
         # Duplicate a vlob atom, should be ignored given the reencryption has already be done for it
-        {"vlob_id": duplicated_vlob_id, "version": duplicated_version, "blob": b"ignored"},
+        ReencryptionBatchEntry(duplicated_vlob_id, duplicated_version, b"ignored"),
     ]
 
     # Another level of duplication !
     for i in range(2):
         rep = await vlob_maintenance_save_reencryption_batch(alice_ws, realm, 2, reencrypted_batch)
-        assert rep == {"status": "ok", "total": 3, "done": 3}
+        assert rep == VlobMaintenanceSaveReencryptionBatchRepOk(total=3, done=3)
 
     # Finish the reencryption
     await realm_finish_reencryption_maintenance(alice_ws, realm, 2)
@@ -549,7 +586,7 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
             encryption_revision=encryption_revision,
             check_rep=False,
         )
-        assert rep == {"status": "in_maintenance"}
+        assert isinstance(rep, VlobCreateRepInMaintenance)
         rep = await vlob_update(
             alice_ws,
             vlob_id,
@@ -558,7 +595,7 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
             encryption_revision=encryption_revision,
             check_rep=False,
         )
-        assert rep == {"status": "in_maintenance"}
+        assert isinstance(rep, VlobUpdateRepInMaintenance)
         rep = await block_create(
             alice_ws, block_id=block_id, realm_id=realm_id, block=b"data", check_rep=False
         )
@@ -568,8 +605,8 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
         rep = await vlob_read(
             alice_ws, vlob_id=vlob_id, version=1, encryption_revision=encryption_revision
         )
-        assert rep["status"] == "ok"
-        assert rep["blob"] == expected_blob
+        assert isinstance(rep, VlobReadRepOk)
+        assert rep.blob == expected_blob
 
         rep = await block_read(alice_ws, block_id=block_id)
         assert rep == BlockReadRepOk(b"<block_data>")
@@ -577,15 +614,15 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
         # For good measure, also try those read-only commands even if they
         # are encryption-revision agnostic
         rep = await vlob_list_versions(alice_ws, vlob_id=vlob_id)
-        assert rep["status"] == "ok"
+        assert isinstance(rep, VlobListVersionsRepOk)
         rep = await vlob_poll_changes(alice_ws, realm_id=realm_id, last_checkpoint=0)
-        assert rep["status"] == "ok"
+        assert isinstance(rep, VlobPollChangesRepOk)
 
     async def _assert_read_access_bad_encryption_revision(encryption_revision, expected_status):
         rep = await vlob_read(
             alice_ws, vlob_id=vlob_id, version=1, encryption_revision=encryption_revision
         )
-        assert rep == {"status": expected_status}
+        assert isinstance(rep, expected_status)
 
     # Sanity check just to make we can access the data with initial encryption revision
     await _assert_read_access_allowed(1)
@@ -602,7 +639,7 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
 
     # Only read with old encryption revision is now allowed
     await _assert_read_access_allowed(1)
-    await _assert_read_access_bad_encryption_revision(2, expected_status="in_maintenance")
+    await _assert_read_access_bad_encryption_revision(2, expected_status=VlobReadRepInMaintenance)
     await _assert_write_access_disallowed(1)
     await _assert_write_access_disallowed(2)
 
@@ -617,7 +654,7 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
     )
 
     await _assert_read_access_allowed(1)
-    await _assert_read_access_bad_encryption_revision(2, expected_status="in_maintenance")
+    await _assert_read_access_bad_encryption_revision(2, expected_status=VlobReadRepInMaintenance)
     await _assert_write_access_disallowed(1)
     await _assert_write_access_disallowed(2)
 
@@ -631,7 +668,9 @@ async def test_access_during_reencryption(backend, alice_ws, alice, realm_factor
 
     # Now only the new encryption revision is allowed
     await _assert_read_access_allowed(2, expected_blob=b"v2")
-    await _assert_read_access_bad_encryption_revision(1, expected_status="bad_encryption_revision")
+    await _assert_read_access_bad_encryption_revision(
+        1, expected_status=VlobReadRepBadEncryptionRevision
+    )
 
 
 @pytest.mark.trio
@@ -664,7 +703,7 @@ async def test_reencryption_events(backend, alice_ws, alice2_ws, realm, alice, v
 
         # Do the reencryption
         rep = await vlob_maintenance_get_reencryption_batch(alice_ws, realm, 2, size=100)
-        await vlob_maintenance_save_reencryption_batch(alice_ws, realm, 2, rep["batch"])
+        await vlob_maintenance_save_reencryption_batch(alice_ws, realm, 2, rep.batch)
 
         # Finish maintenance and check for events
         await realm_finish_reencryption_maintenance(alice2_ws, realm, 2)

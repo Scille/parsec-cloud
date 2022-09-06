@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+import pytest
+from unittest.mock import ANY
+
+from parsec._parsec import DateTime, VlobUpdateRepBadTimestamp
 from parsec.core.backend_connection.exceptions import BackendOutOfBallparkError
 from parsec.core.core_events import CoreEvent
-import pytest
-from parsec._parsec import DateTime
-from unittest.mock import ANY
 from parsec.core.fs.remote_loader import MANIFEST_STAMP_AHEAD_US
 from parsec.crypto import SecretKey
 from parsec.api.data import EntryName
@@ -432,13 +433,13 @@ async def test_update_invalid_timestamp(running_backend, alice_user_fs, alice2_u
         cause = context.value.__cause__
         assert isinstance(cause, BackendOutOfBallparkError)
         (rep,) = cause.args
-        assert rep == {
-            "status": "bad_timestamp",
-            "client_timestamp": t3.add(microseconds=MANIFEST_STAMP_AHEAD_US),
-            "backend_timestamp": t2,
-            "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
-            "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
-        }
+        assert rep == VlobUpdateRepBadTimestamp(
+            reason=None,
+            client_timestamp=t3.add(microseconds=MANIFEST_STAMP_AHEAD_US),
+            backend_timestamp=t2,
+            ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+            ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+        )
 
 
 @pytest.mark.trio

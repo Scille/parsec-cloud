@@ -6,7 +6,11 @@ use pyo3::types::{PyBytes, PyType};
 
 use libparsec::protocol::{authenticated_cmds, invited_cmds};
 
-use crate::protocol::{BlockCreateReq, BlockReadReq};
+use crate::protocol::{
+    BlockCreateReq, BlockReadReq, MessageGetReq, VlobCreateReq, VlobListVersionsReq,
+    VlobMaintenanceGetReencryptionBatchReq, VlobMaintenanceSaveReencryptionBatchReq,
+    VlobPollChangesReq, VlobReadReq, VlobUpdateReq,
+};
 
 import_exception!(parsec.api.protocol, ProtocolError);
 
@@ -30,6 +34,18 @@ impl AuthenticatedAnyCmdReq {
             match AnyCmdReq::load(&buf).map_err(ProtocolError::new_err)? {
                 AnyCmdReq::BlockRead(x) => BlockReadReq(x).into_py(py),
                 AnyCmdReq::BlockCreate(x) => BlockCreateReq(x).into_py(py),
+                AnyCmdReq::MessageGet(x) => MessageGetReq(x).into_py(py),
+                AnyCmdReq::VlobCreate(x) => VlobCreateReq(x).into_py(py),
+                AnyCmdReq::VlobRead(x) => VlobReadReq(x).into_py(py),
+                AnyCmdReq::VlobUpdate(x) => VlobUpdateReq(x).into_py(py),
+                AnyCmdReq::VlobPollChanges(x) => VlobPollChangesReq(x).into_py(py),
+                AnyCmdReq::VlobListVersions(x) => VlobListVersionsReq(x).into_py(py),
+                AnyCmdReq::VlobMaintenanceGetReencryptionBatch(x) => {
+                    VlobMaintenanceGetReencryptionBatchReq(x).into_py(py)
+                }
+                AnyCmdReq::VlobMaintenanceSaveReencryptionBatch(x) => {
+                    VlobMaintenanceSaveReencryptionBatchReq(x).into_py(py)
+                }
                 _ => unimplemented!(),
             },
         )

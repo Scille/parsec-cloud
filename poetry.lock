@@ -298,6 +298,14 @@ testing = ["mock", "pytest", "pytest-cov"]
 webassets = ["webassets"]
 
 [[package]]
+name = "editorconfig-checker"
+version = "2.4.0"
+description = "Python wrapper around invoking editorconfig-checker (https://github.com/editorconfig-checker/editorconfig-checker)"
+category = "dev"
+optional = false
+python-versions = ">=2.7"
+
+[[package]]
 name = "exceptiongroup"
 version = "1.0.0rc8"
 description = "Backport of PEP 654 (exception groups)"
@@ -1455,7 +1463,7 @@ core = ["packaging", "PyQt5", "pyqt5-sip", "qtrio", "qrcode", "fusepy", "winfspy
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9.0"
-content-hash = "0c7b784c5fc12b6ea29cbf613449b60095a3a3cf6e5f776d4e1a4d29aa99e941"
+content-hash = "20c2473d5e193ccadfdc00f863ae7dc172203935e11921cecb642ab810f10226"
 
 [metadata.files]
 aiofiles = [
@@ -1756,6 +1764,9 @@ dukpy = [
     {file = "dukpy-0.2.3-cp38-cp38-win32.whl", hash = "sha256:ff245b01239fbb25b4a0b9bf30d3b4499648ce52bba981fe2cbac868052354fe"},
     {file = "dukpy-0.2.3-cp38-cp38-win_amd64.whl", hash = "sha256:770c0795cbe5c41b604b12f372d2905587035f2f83489d2e1c36b88d50f9b175"},
     {file = "dukpy-0.2.3.tar.gz", hash = "sha256:cc8dd158326f95231d320da80be6e6a1d72bbaad9de2569eaffb6af736f45e6b"},
+]
+editorconfig-checker = [
+    {file = "editorconfig-checker-2.4.0.tar.gz", hash = "sha256:1f7839df7d967d95f0cf2ed6a42a0f456c65072d2ffcff1fedc0eac62ed236ea"},
 ]
 exceptiongroup = [
     {file = "exceptiongroup-1.0.0rc8-py3-none-any.whl", hash = "sha256:ab0a968e1ef769e55d9a596f4a89f7be9ffedbc9fdefdb77cc68cf5c33ce1035"},

@@ -1,0 +1,1 @@
+Correct Content-Type and add User-Agent headers for client to server HTTP request

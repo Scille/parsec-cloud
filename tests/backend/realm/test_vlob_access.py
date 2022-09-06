@@ -1,8 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import (
+    DateTime,
+    VlobCreateRepOk,
+    VlobCreateRepAlreadyExists,
+    VlobCreateRepBadEncryptionRevision,
+    VlobCreateRepInMaintenance,
+    VlobCreateRepNotAllowed,
+    VlobCreateRepRequireGreaterTimestamp,
+    VlobCreateRepBadTimestamp,
+    VlobReadRepOk,
+    VlobReadRepBadEncryptionRevision,
+    VlobReadRepBadVersion,
+    VlobReadRepInMaintenance,
+    VlobReadRepNotAllowed,
+    VlobReadRepNotFound,
+    VlobUpdateRepOk,
+    VlobUpdateRepBadEncryptionRevision,
+    VlobUpdateRepBadVersion,
+    VlobUpdateRepInMaintenance,
+    VlobUpdateRepNotAllowed,
+    VlobUpdateRepNotFound,
+    VlobUpdateRepRequireGreaterTimestamp,
+    VlobUpdateRepBadTimestamp,
+    VlobListVersionsRepOk,
+    VlobListVersionsRepNotFound,
+    VlobListVersionsRepNotAllowed,
+)
 from parsec.api.protocol import (
     packb,
     RealmID,
@@ -33,14 +59,13 @@ async def test_create_and_read(alice, alice_ws, alice2_ws, realm):
         await vlob_create(alice_ws, realm, VLOB_ID, blob)
 
     rep = await vlob_read(alice2_ws, VLOB_ID)
-    assert rep == {
-        "status": "ok",
-        "version": 1,
-        "blob": blob,
-        "author": alice.device_id,
-        "timestamp": DateTime(2000, 1, 3),
-        "author_last_role_granted_on": DateTime(2000, 1, 2),
-    }
+    assert rep == VlobReadRepOk(
+        version=1,
+        blob=blob,
+        author=alice.device_id,
+        timestamp=DateTime(2000, 1, 3),
+        author_last_role_granted_on=DateTime(2000, 1, 2),
+    )
 
 
 @pytest.mark.trio
@@ -50,13 +75,13 @@ async def test_create_bad_timestamp(alice_ws, realm):
     with freeze_time(d1):
         d2 = d1.add(seconds=3600)
         rep = await vlob_create(alice_ws, realm, VLOB_ID, blob, timestamp=d2, check_rep=False)
-    assert rep == {
-        "status": "bad_timestamp",
-        "backend_timestamp": d1,
-        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
-        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
-        "client_timestamp": d2,
-    }
+    assert rep == VlobCreateRepBadTimestamp(
+        reason=None,
+        backend_timestamp=d1,
+        ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+        ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+        client_timestamp=d2,
+    )
 
 
 @pytest.mark.parametrize(
@@ -74,7 +99,7 @@ async def test_create_bad_msg(alice_ws, bad_msg):
     await alice_ws.send(packb({"cmd": "vlob_create", **bad_msg}))
     raw_rep = await alice_ws.receive()
     rep = vlob_create_serializer.rep_loads(raw_rep)
-    assert rep["status"] == "bad_message"
+    assert rep.status == "bad_message"
 
 
 @pytest.mark.trio
@@ -84,7 +109,7 @@ async def test_create_but_already_exists(alice_ws, realm):
     await vlob_create(alice_ws, realm, VLOB_ID, blob)
 
     rep = await vlob_create(alice_ws, realm, VLOB_ID, blob, check_rep=False)
-    assert rep["status"] == "already_exists"
+    assert isinstance(rep, VlobCreateRepAlreadyExists)
 
 
 @pytest.mark.trio
@@ -93,7 +118,7 @@ async def test_create_but_unknown_realm(alice_ws):
     blob = b"Initial commit."
 
     rep = await vlob_create(alice_ws, bad_realm_id, VLOB_ID, blob, check_rep=False)
-    assert rep["status"] == "not_allowed"
+    assert isinstance(rep, VlobCreateRepNotAllowed)
 
 
 @pytest.mark.trio
@@ -104,7 +129,7 @@ async def test_create_check_access_rights(backend, alice, bob, bob_ws, realm, ne
     rep = await vlob_create(
         bob_ws, realm, vlob_id, b"Initial version.", next_timestamp(), check_rep=False
     )
-    assert rep == {"status": "not_allowed"}
+    assert isinstance(rep, VlobCreateRepNotAllowed)
 
     # User part of the realm with various role
     for role, access_granted in [
@@ -129,10 +154,10 @@ async def test_create_check_access_rights(backend, alice, bob, bob_ws, realm, ne
             bob_ws, realm, vlob_id, b"Initial version.", next_timestamp(), check_rep=False
         )
         if access_granted:
-            assert rep == {"status": "ok"}
+            isinstance(rep, VlobCreateRepOk)
 
         else:
-            assert rep == {"status": "not_allowed"}
+            isinstance(rep, VlobCreateRepNotAllowed)
 
     # Ensure user that used to be part of the realm have no longer access
     await backend.realm.update_roles(
@@ -149,107 +174,99 @@ async def test_create_check_access_rights(backend, alice, bob, bob_ws, realm, ne
     rep = await vlob_create(
         bob_ws, realm, vlob_id, b"Initial version.", next_timestamp(), check_rep=False
     )
-    assert rep == {"status": "not_allowed"}
+    assert isinstance(rep, VlobCreateRepNotAllowed)
 
 
 @pytest.mark.trio
 async def test_read_not_found(alice_ws):
     rep = await vlob_read(alice_ws, VLOB_ID)
-    assert rep == {
-        "status": "not_found",
-        "reason": "Vlob `00000000000000000000000000000001` doesn't exist",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, VlobReadRepNotFound)
 
 
 @pytest.mark.trio
 async def test_read_ok(alice, alice_ws, vlobs):
     rep = await vlob_read(alice_ws, vlobs[0])
-    assert rep == {
-        "status": "ok",
-        "blob": b"r:A b:1 v:2",
-        "version": 2,
-        "author": alice.device_id,
-        "timestamp": DateTime(2000, 1, 3),
-        "author_last_role_granted_on": DateTime(2000, 1, 2),
-    }
+    assert rep == VlobReadRepOk(
+        blob=b"r:A b:1 v:2",
+        version=2,
+        author=alice.device_id,
+        timestamp=DateTime(2000, 1, 3),
+        author_last_role_granted_on=DateTime(2000, 1, 2),
+    )
 
 
 @pytest.mark.trio
 async def test_read_ok_v1(alice, alice_ws, vlobs):
     rep = await vlob_read(alice_ws, vlobs[0], version=1)
-    assert rep == {
-        "status": "ok",
-        "blob": b"r:A b:1 v:1",
-        "version": 1,
-        "author": alice.device_id,
-        "timestamp": DateTime(2000, 1, 2, 1),
-        "author_last_role_granted_on": DateTime(2000, 1, 2),
-    }
+    assert rep == VlobReadRepOk(
+        blob=b"r:A b:1 v:1",
+        version=1,
+        author=alice.device_id,
+        timestamp=DateTime(2000, 1, 2, 1),
+        author_last_role_granted_on=DateTime(2000, 1, 2),
+    )
 
 
 @pytest.mark.trio
 async def test_read_ok_timestamp_after_v2(alice, alice_ws, vlobs):
     rep = await vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 4))
-    assert rep == {
-        "status": "ok",
-        "blob": b"r:A b:1 v:2",
-        "version": 2,
-        "author": alice.device_id,
-        "timestamp": DateTime(2000, 1, 3),
-        "author_last_role_granted_on": DateTime(2000, 1, 2),
-    }
+    assert rep == VlobReadRepOk(
+        blob=b"r:A b:1 v:2",
+        version=2,
+        author=alice.device_id,
+        timestamp=DateTime(2000, 1, 3),
+        author_last_role_granted_on=DateTime(2000, 1, 2),
+    )
 
 
 @pytest.mark.trio
 async def test_read_ok_timestamp_is_v2(alice, alice_ws, vlobs):
     rep = await vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 3))
-    assert rep == {
-        "status": "ok",
-        "blob": b"r:A b:1 v:2",
-        "version": 2,
-        "author": alice.device_id,
-        "timestamp": DateTime(2000, 1, 3),
-        "author_last_role_granted_on": DateTime(2000, 1, 2),
-    }
+    assert rep == VlobReadRepOk(
+        blob=b"r:A b:1 v:2",
+        version=2,
+        author=alice.device_id,
+        timestamp=DateTime(2000, 1, 3),
+        author_last_role_granted_on=DateTime(2000, 1, 2),
+    )
 
 
 @pytest.mark.trio
 async def test_read_ok_timestamp_between_v1_and_v2(alice, alice_ws, vlobs):
     rep = await vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 2, 10))
-    assert rep == {
-        "status": "ok",
-        "blob": b"r:A b:1 v:1",
-        "version": 1,
-        "author": alice.device_id,
-        "timestamp": DateTime(2000, 1, 2, 1),
-        "author_last_role_granted_on": DateTime(2000, 1, 2),
-    }
+    assert rep == VlobReadRepOk(
+        blob=b"r:A b:1 v:1",
+        version=1,
+        author=alice.device_id,
+        timestamp=DateTime(2000, 1, 2, 1),
+        author_last_role_granted_on=DateTime(2000, 1, 2),
+    )
 
 
 @pytest.mark.trio
 async def test_read_ok_timestamp_is_v1(alice, alice_ws, vlobs):
     rep = await vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 2, 1))
-    assert rep == {
-        "status": "ok",
-        "blob": b"r:A b:1 v:1",
-        "version": 1,
-        "author": alice.device_id,
-        "timestamp": DateTime(2000, 1, 2, 1),
-        "author_last_role_granted_on": DateTime(2000, 1, 2),
-    }
+    assert rep == VlobReadRepOk(
+        blob=b"r:A b:1 v:1",
+        version=1,
+        author=alice.device_id,
+        timestamp=DateTime(2000, 1, 2, 1),
+        author_last_role_granted_on=DateTime(2000, 1, 2),
+    )
 
 
 @pytest.mark.trio
 async def test_read_before_v1(alice_ws, vlobs):
     rep = await vlob_read(alice_ws, vlobs[0], timestamp=DateTime(2000, 1, 1))
-    assert rep == {"status": "bad_version"}
+    assert isinstance(rep, VlobReadRepBadVersion)
 
 
 @pytest.mark.trio
 async def test_read_check_access_rights(backend, alice, bob, bob_ws, realm, vlobs, next_timestamp):
     # Not part of the realm
     rep = await vlob_read(bob_ws, vlobs[0])
-    assert rep == {"status": "not_allowed"}
+    assert isinstance(rep, VlobReadRepNotAllowed)
 
     for role in RealmRole:
         await backend.realm.update_roles(
@@ -264,7 +281,7 @@ async def test_read_check_access_rights(backend, alice, bob, bob_ws, realm, vlob
             ),
         )
         rep = await vlob_read(bob_ws, vlobs[0])
-        assert rep["status"] == "ok"
+        assert isinstance(rep, VlobReadRepOk)
 
     # Ensure user that used to be part of the realm have no longer access
     await backend.realm.update_roles(
@@ -279,17 +296,15 @@ async def test_read_check_access_rights(backend, alice, bob, bob_ws, realm, vlob
         ),
     )
     rep = await vlob_read(bob_ws, vlobs[0])
-    assert rep == {"status": "not_allowed"}
+    assert isinstance(rep, VlobReadRepNotAllowed)
 
 
 @pytest.mark.trio
 async def test_read_other_organization(backend_asgi_app, ws_from_other_organization_factory, vlobs):
     async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await vlob_read(sock, vlobs[0])
-    assert rep == {
-        "status": "not_found",
-        "reason": "Vlob `10000000000000000000000000000000` doesn't exist",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, VlobReadRepNotFound)
 
 
 @pytest.mark.parametrize(
@@ -312,13 +327,13 @@ async def test_read_bad_msg(alice_ws, bad_msg):
     rep = vlob_read_serializer.rep_loads(raw_rep)
     # Id and trust_seed are invalid anyway, but here we test another layer
     # so it's not important as long as we get our `bad_message` status
-    assert rep["status"] == "bad_message"
+    assert rep.status == "bad_message"
 
 
 @pytest.mark.trio
 async def test_read_bad_version(alice_ws, vlobs):
     rep = await vlob_read(alice_ws, vlobs[0], version=3)
-    assert rep == {"status": "bad_version"}
+    assert isinstance(rep, VlobReadRepBadVersion)
 
 
 @pytest.mark.trio
@@ -335,22 +350,20 @@ async def test_update_bad_timestamp(alice_ws, vlobs):
         rep = await vlob_update(
             alice_ws, vlobs[0], version=3, blob=blob, timestamp=d2, check_rep=False
         )
-    assert rep == {
-        "status": "bad_timestamp",
-        "backend_timestamp": d1,
-        "ballpark_client_early_offset": BALLPARK_CLIENT_EARLY_OFFSET,
-        "ballpark_client_late_offset": BALLPARK_CLIENT_LATE_OFFSET,
-        "client_timestamp": d2,
-    }
+    assert rep == VlobUpdateRepBadTimestamp(
+        reason=None,
+        backend_timestamp=d1,
+        ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+        ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+        client_timestamp=d2,
+    )
 
 
 @pytest.mark.trio
 async def test_update_not_found(alice_ws):
     rep = await vlob_update(alice_ws, VLOB_ID, version=2, blob=b"Next version.", check_rep=False)
-    assert rep == {
-        "status": "not_found",
-        "reason": "Vlob `00000000000000000000000000000001` doesn't exist",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, VlobUpdateRepNotFound)
 
 
 @pytest.mark.trio
@@ -366,7 +379,7 @@ async def test_update_check_access_rights(
         timestamp=next_timestamp(),
         check_rep=False,
     )
-    assert rep == {"status": "not_allowed"}
+    assert isinstance(rep, VlobUpdateRepNotAllowed)
 
     # User part of the realm with various role
     next_version = 3
@@ -396,11 +409,11 @@ async def test_update_check_access_rights(
             check_rep=False,
         )
         if access_granted:
-            assert rep == {"status": "ok"}
+            assert isinstance(rep, VlobUpdateRepOk)
             next_version += 1
 
         else:
-            assert rep == {"status": "not_allowed"}
+            assert isinstance(rep, VlobUpdateRepNotAllowed)
 
     # Ensure user that used to be part of the realm have no longer access
     await backend.realm.update_roles(
@@ -422,7 +435,7 @@ async def test_update_check_access_rights(
         timestamp=next_timestamp(),
         check_rep=False,
     )
-    assert rep == {"status": "not_allowed"}
+    assert isinstance(rep, VlobUpdateRepNotAllowed)
 
 
 @pytest.mark.trio
@@ -431,10 +444,8 @@ async def test_update_other_organization(
 ):
     async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await vlob_update(sock, vlobs[0], version=3, blob=b"Next version.", check_rep=False)
-    assert rep == {
-        "status": "not_found",
-        "reason": "Vlob `10000000000000000000000000000000` doesn't exist",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, VlobUpdateRepNotFound)
 
 
 @pytest.mark.parametrize(
@@ -459,13 +470,13 @@ async def test_update_bad_msg(alice_ws, bad_msg):
     rep = vlob_update_serializer.rep_loads(raw_rep)
     # Id and version are invalid anyway, but here we test another layer
     # so it's not important as long as we get our `bad_message` status
-    assert rep["status"] == "bad_message"
+    assert rep.status == "bad_message"
 
 
 @pytest.mark.trio
 async def test_update_bad_version(alice_ws, vlobs):
     rep = await vlob_update(alice_ws, vlobs[0], version=4, blob=b"Next version.", check_rep=False)
-    assert rep == {"status": "bad_version"}
+    assert isinstance(rep, VlobUpdateRepBadVersion)
 
 
 @pytest.mark.trio
@@ -473,10 +484,10 @@ async def test_bad_encryption_revision(alice_ws, realm, vlobs):
     rep = await vlob_create(
         alice_ws, realm, VLOB_ID, blob=b"First version.", encryption_revision=42, check_rep=False
     )
-    assert rep == {"status": "bad_encryption_revision"}
+    assert isinstance(rep, VlobCreateRepBadEncryptionRevision)
 
     rep = await vlob_read(alice_ws, vlobs[0], encryption_revision=42)
-    assert rep == {"status": "bad_encryption_revision"}
+    assert isinstance(rep, VlobReadRepBadEncryptionRevision)
 
     rep = await vlob_update(
         alice_ws,
@@ -486,28 +497,25 @@ async def test_bad_encryption_revision(alice_ws, realm, vlobs):
         encryption_revision=42,
         check_rep=False,
     )
-    assert rep == {"status": "bad_encryption_revision"}
+    assert isinstance(rep, VlobUpdateRepBadEncryptionRevision)
 
 
 @pytest.mark.trio
 async def test_list_versions_ok(alice, alice_ws, vlobs):
     rep = await vlob_list_versions(alice_ws, vlobs[0])
-    assert rep == {
-        "status": "ok",
-        "versions": {
+    assert rep == VlobListVersionsRepOk(
+        {
             1: (DateTime(2000, 1, 2, 1, 0, 0), alice.device_id),
             2: (DateTime(2000, 1, 3, 0, 0, 0), alice.device_id),
         },
-    }
+    )
 
 
 @pytest.mark.trio
 async def test_list_versions_not_found(alice_ws):
     rep = await vlob_list_versions(alice_ws, VLOB_ID)
-    assert rep == {
-        "status": "not_found",
-        "reason": "Vlob `00000000000000000000000000000001` doesn't exist",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, VlobListVersionsRepNotFound)
 
 
 @pytest.mark.trio
@@ -516,7 +524,7 @@ async def test_list_versions_check_access_rights(
 ):
     # Not part of the realm
     rep = await vlob_list_versions(bob_ws, vlobs[0])
-    assert rep == {"status": "not_allowed"}
+    assert isinstance(rep, VlobListVersionsRepNotAllowed)
 
     for role in RealmRole:
         await backend.realm.update_roles(
@@ -531,7 +539,7 @@ async def test_list_versions_check_access_rights(
             ),
         )
         rep = await vlob_list_versions(bob_ws, vlobs[0])
-        assert rep["status"] == "ok"
+        assert isinstance(rep, VlobListVersionsRepOk)
 
     # Ensure user that used to be part of the realm have no longer access
     await backend.realm.update_roles(
@@ -546,7 +554,7 @@ async def test_list_versions_check_access_rights(
         ),
     )
     rep = await vlob_list_versions(bob_ws, vlobs[0])
-    assert rep == {"status": "not_allowed"}
+    assert isinstance(rep, VlobListVersionsRepNotAllowed)
 
 
 @pytest.mark.trio
@@ -555,10 +563,8 @@ async def test_list_versions_other_organization(
 ):
     async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await vlob_list_versions(sock, vlobs[0])
-    assert rep == {
-        "status": "not_found",
-        "reason": "Vlob `10000000000000000000000000000000` doesn't exist",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, VlobListVersionsRepNotFound)
 
 
 @pytest.mark.parametrize(
@@ -580,7 +586,7 @@ async def test_list_versions_bad_msg(alice_ws, bad_msg):
     rep = vlob_list_versions_serializer.rep_loads(raw_rep)
     # Id and trust_seed are invalid anyway, but here we test another layer
     # so it's not important as long as we get our `bad_message` status
-    assert rep["status"] == "bad_message"
+    assert rep.status == "bad_message"
 
 
 @pytest.mark.trio
@@ -597,15 +603,15 @@ async def test_access_during_maintenance(backend, alice, alice_ws, realm, vlobs)
     rep = await vlob_create(
         alice_ws, realm, VLOB_ID, blob=b"First version.", encryption_revision=2, check_rep=False
     )
-    assert rep == {"status": "in_maintenance"}
+    assert isinstance(rep, VlobCreateRepInMaintenance)
 
     rep = await vlob_read(alice_ws, vlobs[0], encryption_revision=2)
-    assert rep == {"status": "in_maintenance"}
+    assert isinstance(rep, VlobReadRepInMaintenance)
 
     rep = await vlob_update(
         alice_ws, vlobs[0], version=3, blob=b"Next version.", encryption_revision=2, check_rep=False
     )
-    assert rep == {"status": "in_maintenance"}
+    assert isinstance(rep, VlobUpdateRepInMaintenance)
 
 
 @pytest.mark.trio
@@ -634,7 +640,7 @@ async def test_vlob_updates_causality_checks(
         rep = await vlob_create(
             bob_ws, realm, VLOB_ID, blob=b"ciphered", timestamp=timestamp, check_rep=False
         )
-        assert rep == {"status": "require_greater_timestamp", "strictly_greater_than": ref}
+        assert rep == VlobCreateRepRequireGreaterTimestamp(ref)
 
     # Advance ref
     ref = ref.add(seconds=10)
@@ -643,7 +649,7 @@ async def test_vlob_updates_causality_checks(
     rep = await vlob_create(
         bob_ws, realm, VLOB_ID, blob=b"ciphered", timestamp=ref, check_rep=False
     )
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, VlobCreateRepOk)
 
     # Now bob writes to the corresponding vlob with a lower timestamp: this should fail
     rep = await vlob_update(
@@ -654,4 +660,4 @@ async def test_vlob_updates_causality_checks(
         timestamp=ref.subtract(seconds=1),
         check_rep=False,
     )
-    assert rep == {"status": "require_greater_timestamp", "strictly_greater_than": ref}
+    assert rep == VlobUpdateRepRequireGreaterTimestamp(ref)

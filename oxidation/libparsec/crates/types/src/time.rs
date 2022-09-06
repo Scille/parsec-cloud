@@ -72,10 +72,6 @@ impl DateTime {
         ts_us as f64 / 1e6
     }
 
-    pub fn to_rfc3339(&self) -> String {
-        self.0.to_rfc3339()
-    }
-
     pub fn year(&self) -> u64 {
         self.0.year() as u64
     }
@@ -110,6 +106,12 @@ impl DateTime {
     pub fn now_legacy() -> Self {
         let now = chrono::Utc::now();
         now.into()
+    }
+
+    /// Return a date-time formatted string in the rfc3339 format with a precision update to milliseconds.
+    /// Equivalent to ISO-8601
+    pub fn to_rfc3339(&self) -> String {
+        self.0.to_rfc3339_opts(chrono::SecondsFormat::Millis, false)
     }
 }
 
@@ -360,6 +362,10 @@ impl LocalDateTime {
 
     pub fn second(&self) -> u64 {
         self.0.second() as u64
+    }
+
+    pub fn to_utc(self) -> DateTime {
+        self.into()
     }
 
     pub fn format(&self, fmt: &str) -> String {

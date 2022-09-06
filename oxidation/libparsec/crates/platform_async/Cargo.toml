@@ -6,13 +6,13 @@ edition = "2021"
 [dependencies]
 flume = "0.10.14"
 # futures is used for its macros `select_all` and `join_all`
-futures = "0.3.21"
+futures = "0.3.24"
 
 [dev-dependencies]
 log = "0.4.17"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = "0.2.80"
+wasm-bindgen = "0.2.82"
 wasm-bindgen-futures = "0.4.31"
 # Window feature is require for `Timer`.
 web-sys = { version = "0.3.58", features = ["Window"] }
@@ -28,8 +28,8 @@ futures-lite = "1.12.0"
 web-sys = { version = "0.3.58", features = ["Window", "Performance"]}
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.20.1", features = ["rt", "time", "sync", "macros"] }
+tokio = { version = "1.21.0", features = ["rt", "time", "sync", "macros"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-tokio = { version = "1.20.1", features = ["full"] }
+tokio = { version = "1.21.0", features = ["full"] }
 simple_logger = "2.3.0"

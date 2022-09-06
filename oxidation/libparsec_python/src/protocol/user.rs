@@ -68,7 +68,7 @@ impl Trustchain {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct UserGetRep(pub user_get::Rep);
 
 #[pymethods]
@@ -170,7 +170,7 @@ impl UserCreateReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct UserCreateRep(pub user_create::Rep);
 
 #[pymethods]
@@ -261,7 +261,7 @@ impl UserRevokeReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct UserRevokeRep(pub user_revoke::Rep);
 
 #[pymethods]
@@ -346,7 +346,7 @@ impl DeviceCreateReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct DeviceCreateRep(pub device_create::Rep);
 
 #[pymethods]
@@ -500,7 +500,7 @@ impl HumanFindResultItem {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct HumanFindRep(pub human_find::Rep);
 
 #[pymethods]

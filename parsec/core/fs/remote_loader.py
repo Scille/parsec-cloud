@@ -16,12 +16,36 @@ from parsec._parsec import (
     BlockReadRepNotFound,
     BlockReadRepInMaintenance,
     BlockReadRepNotAllowed,
+    VlobCreateRepOk,
+    VlobCreateRepSequesterInconsistency,
+    VlobCreateRepAlreadyExists,
+    VlobCreateRepBadEncryptionRevision,
+    VlobCreateRepInMaintenance,
+    VlobCreateRepNotAllowed,
+    VlobCreateRepRequireGreaterTimestamp,
+    VlobReadRepOk,
+    VlobReadRepNotAllowed,
+    VlobReadRepBadEncryptionRevision,
+    VlobReadRepBadVersion,
+    VlobReadRepInMaintenance,
+    VlobReadRepNotFound,
+    VlobUpdateRepOk,
+    VlobUpdateRepBadEncryptionRevision,
+    VlobUpdateRepBadVersion,
+    VlobUpdateRepInMaintenance,
+    VlobUpdateRepNotAllowed,
+    VlobUpdateRepNotFound,
+    VlobUpdateRepRequireGreaterTimestamp,
+    VlobUpdateRepSequesterInconsistency,
+    VlobListVersionsRepOk,
+    VlobListVersionsRepInMaintenance,
+    VlobListVersionsRepNotAllowed,
+    VlobListVersionsRepNotFound,
 )
-from parsec.api.protocol.sequester import SequesterServiceID
 
 from parsec.crypto import HashDigest, CryptoError, VerifyKey
 from parsec.utils import open_service_nursery
-from parsec.api.protocol import UserID, DeviceID, RealmID, RealmRole, VlobID
+from parsec.api.protocol import UserID, DeviceID, RealmID, RealmRole, VlobID, SequesterServiceID
 from parsec.api.data import (
     DataError,
     BlockAccess,
@@ -90,8 +114,8 @@ class VlobRequireGreaterTimestampError(Exception):
 class VlobSequesterInconsistencyError(Exception):
     def __init__(
         self,
-        sequester_authority_certificate: Optional[bytes],
-        sequester_services_certificates: Optional[List[bytes]],
+        sequester_authority_certificate: bytes,
+        sequester_services_certificates: Tuple[bytes],
     ):
         self.sequester_authority_certificate = sequester_authority_certificate
         self.sequester_services_certificates = sequester_services_certificates
@@ -352,19 +376,19 @@ class UserRemoteLoader:
         """
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.vlob_list_versions(VlobID(entry_id.uuid))
-        if rep["status"] == "not_allowed":
+        if isinstance(rep, VlobListVersionsRepNotAllowed):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
-        elif rep["status"] == "not_found":
+        elif isinstance(rep, VlobListVersionsRepNotFound):
             raise FSRemoteManifestNotFound(entry_id)
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, VlobListVersionsRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 "Cannot download vlob while the workspace is in maintenance"
             )
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot fetch vlob {entry_id.str}: `{rep['status']}`")
+        elif not isinstance(rep, VlobListVersionsRepOk):
+            raise FSError(f"Cannot fetch vlob {entry_id.str}: {rep}")
 
-        return rep["versions"]
+        return rep.versions
 
     async def create_realm(self, realm_id: EntryID) -> None:
         """
@@ -587,7 +611,7 @@ class RemoteLoader(UserRemoteLoader):
         # If the workspace is in maintenance for another reason (such as garbage collection),
         # the recursive call to load manifest will simply also fail with an FSWorkspaceInMaintenance.
         if (
-            rep["status"] == "in_maintenance"
+            isinstance(rep, VlobReadRepInMaintenance)
             and workspace_entry.encryption_revision == current_workspace_entry.encryption_revision
         ):
             # Getting the last workspace entry with the previous encryption revision
@@ -612,27 +636,27 @@ class RemoteLoader(UserRemoteLoader):
                     workspace_entry=previous_workspace_entry,
                 )
 
-        if rep["status"] == "not_found":
+        if isinstance(rep, VlobReadRepNotFound):
             raise FSRemoteManifestNotFound(entry_id)
-        elif rep["status"] == "not_allowed":
+        elif isinstance(rep, VlobReadRepNotAllowed):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
-        elif rep["status"] == "bad_version":
+        elif isinstance(rep, VlobReadRepBadVersion):
             raise FSRemoteManifestNotFoundBadVersion(entry_id)
-        elif rep["status"] == "bad_encryption_revision":
+        elif isinstance(rep, VlobReadRepBadEncryptionRevision):
             raise FSBadEncryptionRevision(
                 f"Cannot fetch vlob {entry_id.str}: Bad encryption revision provided"
             )
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, VlobReadRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 "Cannot download vlob while the workspace is in maintenance"
             )
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot fetch vlob {entry_id.str}: `{rep['status']}`")
+        elif not isinstance(rep, VlobReadRepOk):
+            raise FSError(f"Cannot fetch vlob {entry_id.str}: {rep}")
 
-        expected_version = rep["version"]
-        expected_author = rep["author"]
-        expected_timestamp = rep["timestamp"]
+        expected_version = rep.version
+        expected_author = rep.author
+        expected_timestamp = rep.timestamp
         if version not in (None, expected_version):
             raise FSError(
                 f"Backend returned invalid version for vlob {entry_id.str} (expecting {version}, "
@@ -650,7 +674,7 @@ class RemoteLoader(UserRemoteLoader):
 
         try:
             remote_manifest = manifest_decrypt_verify_and_load(
-                rep["blob"],
+                rep.blob,
                 key=workspace_entry.key,
                 author_verify_key=author.verify_key,
                 expected_author=expected_author,
@@ -662,7 +686,7 @@ class RemoteLoader(UserRemoteLoader):
             raise FSError(f"Cannot decrypt vlob: {exc}") from exc
 
         # Get the timestamp of the last role for this particular user
-        author_last_role_granted_on = rep["author_last_role_granted_on"]
+        author_last_role_granted_on = rep.author_last_role_granted_on
         # Compatibility with older backends (best effort strategy)
         if author_last_role_granted_on is None:
             author_last_role_granted_on = self.device.timestamp()
@@ -802,28 +826,28 @@ class RemoteLoader(UserRemoteLoader):
                 ciphered,
                 sequester_blob,
             )
-        if rep["status"] == "already_exists":
+        if isinstance(rep, VlobCreateRepAlreadyExists):
             raise FSRemoteSyncError(entry_id)
-        elif rep["status"] == "not_allowed":
+        elif isinstance(rep, VlobCreateRepNotAllowed):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access")
-        elif rep["status"] == "require_greater_timestamp":
-            raise VlobRequireGreaterTimestampError(rep["strictly_greater_than"])
-        elif rep["status"] == "bad_encryption_revision":
+        elif isinstance(rep, VlobCreateRepRequireGreaterTimestamp):
+            raise VlobRequireGreaterTimestampError(rep.strictly_greater_than)
+        elif isinstance(rep, VlobCreateRepBadEncryptionRevision):
             raise FSBadEncryptionRevision(
                 f"Cannot create vlob {entry_id.str}: Bad encryption revision provided"
             )
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, VlobCreateRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 "Cannot create vlob while the workspace is in maintenance"
             )
-        elif rep["status"] == "sequester_inconsistency":
+        elif isinstance(rep, VlobCreateRepSequesterInconsistency):
             raise VlobSequesterInconsistencyError(
-                sequester_authority_certificate=rep["sequester_authority_certificate"],
-                sequester_services_certificates=rep["sequester_services_certificates"],
+                sequester_authority_certificate=rep.sequester_authority_certificate,
+                sequester_services_certificates=rep.sequester_services_certificates,
             )
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot create vlob {entry_id.str}: `{rep['status']}`")
+        elif not isinstance(rep, VlobCreateRepOk):
+            raise FSError(f"Cannot create vlob {entry_id.str}: {rep}")
 
     async def _vlob_update(
         self,
@@ -850,30 +874,30 @@ class RemoteLoader(UserRemoteLoader):
                 encryption_revision, VlobID(entry_id.uuid), version, now, ciphered, sequester_blob
             )
 
-        if rep["status"] == "not_found":
+        if isinstance(rep, VlobUpdateRepNotFound):
             raise FSRemoteSyncError(entry_id)
-        elif rep["status"] == "not_allowed":
+        elif isinstance(rep, VlobUpdateRepNotAllowed):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access")
-        elif rep["status"] == "require_greater_timestamp":
-            raise VlobRequireGreaterTimestampError(rep["strictly_greater_than"])
-        elif rep["status"] == "bad_version":
+        elif isinstance(rep, VlobUpdateRepRequireGreaterTimestamp):
+            raise VlobRequireGreaterTimestampError(rep.strictly_greater_than)
+        elif isinstance(rep, VlobUpdateRepBadVersion):
             raise FSRemoteSyncError(entry_id)
-        elif rep["status"] == "bad_encryption_revision":
+        elif isinstance(rep, VlobUpdateRepBadEncryptionRevision):
             raise FSBadEncryptionRevision(
                 f"Cannot update vlob {entry_id.str}: Bad encryption revision provided"
             )
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, VlobUpdateRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 "Cannot create vlob while the workspace is in maintenance"
             )
-        elif rep["status"] == "sequester_inconsistency":
+        elif isinstance(rep, VlobUpdateRepSequesterInconsistency):
             raise VlobSequesterInconsistencyError(
-                sequester_authority_certificate=rep["sequester_authority_certificate"],
-                sequester_services_certificates=rep["sequester_services_certificates"],
+                sequester_authority_certificate=rep.sequester_authority_certificate,
+                sequester_services_certificates=rep.sequester_services_certificates,
             )
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot update vlob {entry_id.str}: `{rep['status']}`")
+        elif not isinstance(rep, VlobUpdateRepOk):
+            raise FSError(f"Cannot update vlob {entry_id.str}: {rep}")
 
     def to_timestamped(self, timestamp: DateTime) -> "RemoteLoaderTimestamped":
         return RemoteLoaderTimestamped(self, timestamp)

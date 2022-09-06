@@ -282,8 +282,10 @@ impl Cmds {
                         }
                     }
 
+                    // Can't derive Eq because some Rep have f64 field
+                    #[allow(clippy::derive_partial_eq_without_eq)]
                     #[::serde_with::serde_as]
-                    #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+                    #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq)]
                     #[serde(tag = "status")]
                     pub enum Rep {
                         #variants_rep

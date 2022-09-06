@@ -59,6 +59,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "UserID" => "libparsec_types::UserID",
                 "RealmID" => "libparsec_types::RealmID",
                 "VlobID" => "libparsec_types::VlobID",
+                "SequesterServiceID" => "libparsec_types::SequesterServiceID",
                 "DeviceLabel" => "libparsec_types::DeviceLabel",
                 "HumanHandle" => "libparsec_types::HumanHandle",
                 "UserProfile" => "libparsec_types::UserProfile",

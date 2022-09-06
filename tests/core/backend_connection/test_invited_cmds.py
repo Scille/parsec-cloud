@@ -3,7 +3,13 @@
 import pytest
 import trio
 
-from parsec.api.protocol import INVITED_CMDS, InvitationToken, InvitationType
+from parsec._parsec import DateTime
+from parsec.api.protocol import (
+    INVITED_CMDS,
+    InvitationToken,
+    InvitationType,
+    InvitationDeletedReason,
+)
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import (
     BackendNotAvailable,
@@ -62,7 +68,6 @@ async def test_ping(running_backend, invitation_addr):
 
 @pytest.mark.trio
 async def test_handshake_organization_expired(running_backend, expiredorg, expiredorgalice):
-    print("===============")
     invitation = await running_backend.backend.invite.new_for_device(
         organization_id=expiredorgalice.organization_id, greeter_user_id=expiredorgalice.user_id
     )
@@ -93,10 +98,6 @@ async def test_handshake_unknown_organization(running_backend, coolorg):
         async with backend_invited_cmds_factory(invitation_addr) as cmds:
             await cmds.ping()
     assert str(exc.value) == "Invalid handshake: Invitation not found"
-
-
-from parsec.api.protocol import InvitationDeletedReason
-from parsec._parsec import DateTime
 
 
 @pytest.mark.trio

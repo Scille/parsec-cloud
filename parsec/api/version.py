@@ -1,16 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from collections import namedtuple
+from typing import NamedTuple
 
 
-class ApiVersion(namedtuple("ApiVersion", "version revision")):
+class ApiVersion(NamedTuple):
+    version: int
+    revision: int
+
     def __str__(self) -> str:
         return f"{self.version}.{self.revision}"
+
+    @classmethod
+    def from_str(cls, value: str) -> "ApiVersion":
+        """
+        Raises: ValueError
+        """
+        raw_version, raw_revision = value.split(".")
+        version, revision = int(raw_version), int(raw_revision)
+        return cls(version, revision)
 
 
 # API major versions:
 # v1: Original API
-# v2 (Parsec 1.14+): Incompatible hanshake with system with SAS-based authentication
+# v2 (Parsec 1.14+): Incompatible handshake with system with SAS-based authentication
 # - v2.7 (Parsec +2.9): Add `organization_bootstrap` to anonymous commands
 # - v2.8 (Parsec 2.11+): Sequester API
 # v3 (Parsec 2.9+): Incompatible handshake challenge answer format

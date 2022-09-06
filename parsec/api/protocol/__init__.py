@@ -7,6 +7,8 @@ from parsec.api.protocol.base import (
     packb,
     unpackb,
     api_typed_msg_adapter,
+    settle_compatible_versions,
+    IncompatibleAPIVersionsError,
 )
 from parsec.api.protocol.types import (
     UserID,
@@ -34,7 +36,6 @@ from parsec.api.protocol.handshake import (
     HandshakeRVKMismatch,
     HandshakeRevokedDevice,
     HandshakeOutOfBallparkError,
-    HandshakeAPIVersionError,
     ServerHandshake,
     HandshakeType,
     BaseClientHandshake,
@@ -132,7 +133,7 @@ from parsec.api.protocol.pki import (
     pki_enrollment_reject_serializer,
     pki_enrollment_accept_serializer,
 )
-from parsec.api.protocol.sequester import SequesterServiceID, SequesterServiceIDField
+from parsec.api.protocol.sequester import SequesterServiceIDField
 from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS, APIV1_ANONYMOUS_CMDS
 from parsec._parsec import (
     AuthenticatedAnyCmdReq,
@@ -141,6 +142,7 @@ from parsec._parsec import (
     BlockReadRep,
     BlockCreateReq,
     BlockCreateRep,
+    SequesterServiceID,
 )
 
 __all__ = (
@@ -158,7 +160,8 @@ __all__ = (
     "HandshakeRVKMismatch",
     "HandshakeRevokedDevice",
     "HandshakeOutOfBallparkError",
-    "HandshakeAPIVersionError",
+    "IncompatibleAPIVersionsError",
+    "settle_compatible_versions",
     "ServerHandshake",
     "HandshakeType",
     "BaseClientHandshake",

@@ -2,18 +2,14 @@
 
 mod events;
 mod invite;
-mod message;
 mod organization;
 mod ping;
 mod realm;
 mod user;
-mod vlob;
 
 pub use events::*;
 pub use invite::*;
-pub use message::*;
 pub use organization::*;
 pub use ping::*;
 pub use realm::*;
 pub use user::*;
-pub use vlob::*;

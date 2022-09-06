@@ -86,10 +86,6 @@ try:
         Invite4GreeterCommunicateReq,
         Invite4GreeterCommunicateRep,
         InviteListItem,
-        # Message
-        MessageGetReq,
-        MessageGetRep,
-        Message,
         # Organization
         OrganizationStatsReq,
         OrganizationStatsRep,
@@ -129,22 +125,6 @@ try:
         HumanFindRep,
         Trustchain,
         HumanFindResultItem,
-        # Vlob
-        VlobCreateReq,
-        VlobCreateRep,
-        VlobReadReq,
-        VlobReadRep,
-        VlobUpdateReq,
-        VlobUpdateRep,
-        VlobPollChangesReq,
-        VlobPollChangesRep,
-        VlobListVersionsReq,
-        VlobListVersionsRep,
-        VlobMaintenanceGetReencryptionBatchReq,
-        VlobMaintenanceGetReencryptionBatchRep,
-        VlobMaintenanceSaveReencryptionBatchReq,
-        VlobMaintenanceSaveReencryptionBatchRep,
-        ReencryptionBatchEntry,
         # LocalDevice
         LocalDevice,
         # Storage
@@ -323,10 +303,6 @@ __all__ = (
     "Invite4GreeterCommunicateReq",
     "Invite4GreeterCommunicateRep",
     "InviteListItem",
-    # Message
-    "MessageGetReq",
-    "MessageGetRep",
-    "Message",
     # Organization
     "OrganizationStatsReq",
     "OrganizationStatsRep",
@@ -366,22 +342,6 @@ __all__ = (
     "HumanFindRep",
     "Trustchain",
     "HumanFindResultItem",
-    # Vlob
-    "VlobCreateReq",
-    "VlobCreateRep",
-    "VlobReadReq",
-    "VlobReadRep",
-    "VlobUpdateReq",
-    "VlobUpdateRep",
-    "VlobPollChangesReq",
-    "VlobPollChangesRep",
-    "VlobListVersionsReq",
-    "VlobListVersionsRep",
-    "VlobMaintenanceGetReencryptionBatchReq",
-    "VlobMaintenanceGetReencryptionBatchRep",
-    "VlobMaintenanceSaveReencryptionBatchReq",
-    "VlobMaintenanceSaveReencryptionBatchRep",
-    "ReencryptionBatchEntry",
     # LocalDevice
     "LocalDevice",
     # Storage

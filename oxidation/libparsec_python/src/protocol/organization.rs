@@ -35,7 +35,7 @@ impl OrganizationStatsReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct UsersPerProfileDetailItem(pub organization_stats::UsersPerProfileDetailItem);
 
 #[pymethods]
@@ -56,7 +56,7 @@ impl UsersPerProfileDetailItem {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct OrganizationStatsRep(pub organization_stats::Rep);
 
 #[pymethods]
@@ -141,7 +141,7 @@ impl OrganizationConfigReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct OrganizationConfigRep(pub organization_config::Rep);
 
 #[pymethods]

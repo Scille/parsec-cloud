@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import Tuple, Optional, cast, Dict, Sequence, Union, Any
+from typing import Optional, cast, Dict, Sequence, Union, Any
 from enum import Enum
 from secrets import token_bytes
 
@@ -14,7 +14,12 @@ from parsec.utils import (
     BALLPARK_CLIENT_TOLERANCE,
     timestamps_in_the_ballpark,
 )
-from parsec.api.protocol.base import ProtocolError, InvalidMessageError, serializer_factory
+from parsec.api.protocol.base import (
+    ProtocolError,
+    InvalidMessageError,
+    serializer_factory,
+    settle_compatible_versions,
+)
 from parsec.api.protocol.types import OrganizationID, DeviceID, OrganizationIDField, DeviceIDField
 from parsec.api.protocol.invite import (
     InvitationToken,
@@ -22,7 +27,12 @@ from parsec.api.protocol.invite import (
     InvitationType,
     InvitationTypeField,
 )
-from parsec.api.version import ApiVersion, API_V1_VERSION, API_V2_VERSION, API_V3_VERSION
+from parsec.api.version import (
+    ApiVersion,
+    API_V1_VERSION,
+    API_V2_VERSION,
+    API_V3_VERSION,
+)
 
 
 class HandshakeError(ProtocolError):
@@ -57,23 +67,6 @@ class HandshakeOutOfBallparkError(HandshakeError):
     pass
 
 
-class HandshakeAPIVersionError(HandshakeError):
-    def __init__(
-        self, backend_versions: Sequence[ApiVersion], client_versions: Sequence[ApiVersion] = []
-    ):
-        self.client_versions = client_versions
-        self.backend_versions = backend_versions
-        client_versions_str = "{" + ", ".join(map(str, client_versions)) + "}"
-        backend_versions_str = "{" + ", ".join(map(str, backend_versions)) + "}"
-        self.message = (
-            f"No overlap between client API versions {client_versions_str} "
-            f"and backend API versions {backend_versions_str}"
-        )
-
-    def __str__(self) -> str:
-        return self.message
-
-
 class HandshakeType(Enum):
     AUTHENTICATED = "AUTHENTICATED"
     INVITED = "INVITED"
@@ -88,18 +81,6 @@ class APIV1_HandshakeType(Enum):
 
 
 APIV1_HandshakeTypeField = fields.enum_field_factory(APIV1_HandshakeType)
-
-
-def _settle_compatible_versions(
-    backend_versions: Sequence[ApiVersion], client_versions: Sequence[ApiVersion]
-) -> Tuple[ApiVersion, ApiVersion]:
-    # Try to use the newest version first
-    for cv in reversed(sorted(client_versions)):
-        # No need to compare `revision` because only `version` field breaks compatibility
-        bv = next((bv for bv in backend_versions if bv.version == cv.version), None)
-        if bv:
-            return bv, cv
-    raise HandshakeAPIVersionError(backend_versions, client_versions)
 
 
 class ApiVersionField(fields.Tuple):
@@ -265,7 +246,7 @@ class ServerHandshake:
         client_api_version = data["client_api_version"]
 
         # API version matching
-        self.backend_api_version, self.client_api_version = _settle_compatible_versions(
+        self.backend_api_version, self.client_api_version = settle_compatible_versions(
             self.SUPPORTED_API_VERSIONS, [client_api_version]
         )
 
@@ -308,7 +289,7 @@ class ServerHandshake:
     def build_bad_identity_result_req(self, help: str = "Invalid handshake information") -> bytes:
         """
         We should keep the help for this result voluntarily broad otherwise
-        an attacker could use it to brute force informations.
+        an attacker could use it to brute force information.
         """
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
@@ -404,7 +385,7 @@ class BaseClientHandshake:
         supported_api_version = cast(
             Sequence[ApiVersion], self.challenge_data["supported_api_versions"]
         )
-        self.backend_api_version, self.client_api_version = _settle_compatible_versions(
+        self.backend_api_version, self.client_api_version = settle_compatible_versions(
             supported_api_version, self.SUPPORTED_API_VERSIONS
         )
 
@@ -425,7 +406,7 @@ class BaseClientHandshake:
         ):
 
             # Add `client_timestamp` to challenge data
-            # so the dictionnary exposes the same fields as `TimestampOutOfBallparkRepSchema`
+            # so the dictionary exposes the same fields as `TimestampOutOfBallparkRepSchema`
             self.challenge_data["client_timestamp"] = self.client_timestamp
 
             # The client is a bit less tolerant than the backend

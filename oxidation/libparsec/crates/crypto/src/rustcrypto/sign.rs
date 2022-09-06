@@ -120,14 +120,31 @@ impl VerifyKey {
         signed.get(SigningKey::SIGNATURE_SIZE..)
     }
 
+    /// Verify a message using the given [VerifyKey].
+    /// `signed` value is the concatenation of the `signature` + the signed `data`
     pub fn verify(&self, signed: &[u8]) -> Result<Vec<u8>, CryptoError> {
         // Signature::try_from expects a [u8;64] and I have no idea how to get
         // one except by slicing, so we make sure the array is large enough before slicing.
-        if signed.len() < SigningKey::SIGNATURE_SIZE {
+        if signed.len() < Signature::BYTE_SIZE {
             return Err(CryptoError::Signature);
         }
-        let signature = Signature::try_from(&signed[..SigningKey::SIGNATURE_SIZE]).unwrap();
-        let message = &signed[SigningKey::SIGNATURE_SIZE..];
+        self.verify_with_signature(
+            &signed[..Signature::BYTE_SIZE],
+            &signed[Signature::BYTE_SIZE..],
+        )
+    }
+
+    /// Verify a signature using the given [VerifyKey], `signature` and `message`
+    pub fn verify_with_signature(
+        &self,
+        raw_signature: &[u8],
+        message: &[u8],
+    ) -> Result<Vec<u8>, CryptoError> {
+        if raw_signature.len() != Signature::BYTE_SIZE {
+            return Err(CryptoError::Signature);
+        }
+        let signature = Signature::try_from(raw_signature)
+            .expect("Precondition already checked for the signature size");
         self.0
             .verify(message, &signature)
             .map_err(|_| CryptoError::SignatureVerification)?;
