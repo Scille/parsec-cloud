@@ -101,6 +101,7 @@ class PkiEnrollmentSubmitterInitialCtx:
             public_key=self.private_key.public_key,
             requested_device_label=requested_device_label,
         )
+
         raw_submit_payload = cooked_submit_payload.dump()
         payload_signature = await pki_enrollment_sign_payload(
             payload=raw_submit_payload, x509_certificate=self.x509_certificate

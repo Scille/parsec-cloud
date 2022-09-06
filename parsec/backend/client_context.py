@@ -96,11 +96,11 @@ class AuthenticatedClientContext(BaseClientContext):
 
     @property
     def user_display(self) -> str:
-        return str(self.human_handle or self.device_id.user_id)
+        return self.human_handle.str if self.human_handle else self.device_id.user_id.str
 
     @property
     def device_display(self) -> str:
-        return str(self.device_label or self.device_id.device_name)
+        return self.device_label.str if self.device_label else self.device_id.device_name.str
 
     @property
     def send_events_channel(self):
@@ -132,7 +132,7 @@ class InvitedClientContext(BaseClientContext):
         self.invitation = invitation
 
     def __repr__(self):
-        return f"InvitedClientContext(org={self.organization_id}, invitation={self.invitation})"
+        return f"InvitedClientContext(org={self.organization_id.str}, invitation={self.invitation})"
 
 
 class AnonymousClientContext(BaseClientContext):
@@ -149,7 +149,7 @@ class AnonymousClientContext(BaseClientContext):
         self.organization_id = organization_id
 
     def __repr__(self):
-        return f"InvitedClientContext(org={self.organization_id}, invitation={self.invitation})"
+        return f"InvitedClientContext(org={self.organization_id.str}, invitation={self.invitation})"
 
 
 class APIV1_AnonymousClientContext(BaseClientContext):
@@ -164,7 +164,7 @@ class APIV1_AnonymousClientContext(BaseClientContext):
         self.organization_id = organization_id
 
     def __repr__(self):
-        return f"APIV1_AnonymousClientContext(org={self.organization_id})"
+        return f"APIV1_AnonymousClientContext(org={self.organization_id.str})"
 
 
 class APIV1_AdministrationClientContext(BaseClientContext):

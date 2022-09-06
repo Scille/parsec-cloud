@@ -200,15 +200,15 @@ class AvailableDevice:
 
     @property
     def user_display(self) -> str:
-        return str(self.human_handle or self.device_id.user_id)
+        return self.human_handle.str if self.human_handle else self.device_id.user_id.str
 
     @property
     def short_user_display(self) -> str:
-        return str(self.human_handle.label if self.human_handle else self.device_id.user_id)
+        return self.human_handle.label if self.human_handle else self.device_id.user_id.str
 
     @property
     def device_display(self) -> str:
-        return str(self.device_label if self.device_label else self.device_id.device_name)
+        return self.device_label.str if self.device_label else self.device_id.device_name.str
 
     @property
     def slughash(self) -> str:
@@ -236,7 +236,7 @@ def get_default_key_file(config_dir: Path, device: LocalDevice) -> Path:
 
 
 def get_recovery_device_file_name(recovery_device: LocalDevice) -> str:
-    return f"parsec-recovery-{recovery_device.organization_id}-{recovery_device.short_user_display}{RECOVERY_DEVICE_FILE_SUFFIX}"
+    return f"parsec-recovery-{recovery_device.organization_id.str}-{recovery_device.short_user_display}{RECOVERY_DEVICE_FILE_SUFFIX}"
 
 
 def get_devices_dir(config_dir: Path) -> Path:

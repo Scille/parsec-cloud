@@ -11,15 +11,15 @@ from parsec.core.types import BackendAddr, BackendOrganizationAddr, BackendOrgan
 @pytest.mark.parametrize("raw", ["foo42", "FOO", "f", "f-o-o", "f_o_o", "x" * 32, "三国"])
 def test_organization_id_user_id_and_device_name(raw):
     organization_id = OrganizationID(raw)
-    assert str(organization_id) == raw
+    assert organization_id.str == raw
     assert organization_id == OrganizationID(raw)
 
     user_id = UserID(raw)
-    assert str(user_id) == raw
+    assert user_id.str == raw
     assert user_id == UserID(raw)
 
     device_name = DeviceName(raw)
-    assert str(device_name) == raw
+    assert device_name.str == raw
     assert device_name == DeviceName(raw)
 
 
@@ -245,7 +245,7 @@ def test_backend_organization_bootstrap_addr_good(base_url, expected, verify_key
     assert addr.organization_id == org
     assert addr.token == "token-123"
 
-    addr2 = BackendOrganizationBootstrapAddr.from_url(str(addr))
+    addr2 = BackendOrganizationBootstrapAddr.from_url(addr.to_url())
     assert addr == addr2
 
     org_addr = addr.generate_organization_addr(verify_key)

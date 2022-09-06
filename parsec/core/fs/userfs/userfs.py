@@ -114,11 +114,11 @@ class ReencryptionJob:
                 raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
             elif rep["status"] == "not_allowed":
                 raise FSWorkspaceNoAccess(
-                    f"Not allowed to do reencryption maintenance on workspace {workspace_id}: {rep}"
+                    f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep}"
                 )
             elif rep["status"] != "ok":
                 raise FSError(
-                    f"Cannot do reencryption maintenance on workspace {workspace_id}: {rep}"
+                    f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep}"
                 )
 
             done_batch = []
@@ -134,11 +134,11 @@ class ReencryptionJob:
                 raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
             elif rep["status"] == "not_allowed":
                 raise FSWorkspaceNoAccess(
-                    f"Not allowed to do reencryption maintenance on workspace {workspace_id}: {rep}"
+                    f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep}"
                 )
             elif rep["status"] != "ok":
                 raise FSError(
-                    f"Cannot do reencryption maintenance on workspace {workspace_id}: {rep}"
+                    f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep}"
                 )
             total = rep["total"]
             done = rep["done"]
@@ -152,11 +152,11 @@ class ReencryptionJob:
                     raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
                 elif rep["status"] == "not_allowed":
                     raise FSWorkspaceNoAccess(
-                        f"Not allowed to do reencryption maintenance on workspace {workspace_id}: {rep}"
+                        f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep}"
                     )
                 elif rep["status"] != "ok":
                     raise FSError(
-                        f"Cannot do reencryption maintenance on workspace {workspace_id}: {rep}"
+                        f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep}"
                     )
 
         except BackendNotAvailable as exc:
@@ -164,7 +164,7 @@ class ReencryptionJob:
 
         except BackendConnectionError as exc:
             raise FSError(
-                f"Cannot do reencryption maintenance on workspace {workspace_id}: {exc}"
+                f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {exc}"
             ) from exc
 
         return total, done
@@ -310,7 +310,7 @@ class UserFS:
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
-                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
             return workspace_entry
 
         async def get_previous_workspace_entry() -> Optional[WorkspaceEntry]:
@@ -382,7 +382,7 @@ class UserFS:
         try:
             workspace = self._workspaces[workspace_id]
         except KeyError:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
 
         # Sanity check to make sure workspace_id is valid
         workspace.get_workspace_entry()
@@ -435,7 +435,7 @@ class UserFS:
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
-                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
 
             timestamp = self.device.timestamp()
             updated_workspace_entry = workspace_entry.evolve(name=new_name)
@@ -765,7 +765,7 @@ class UserFS:
         user_manifest = self.get_user_manifest()
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
 
         # Make sure the workspace is not a placeholder
         await self._workspace_minimal_sync(workspace_entry)
@@ -774,7 +774,7 @@ class UserFS:
         recipient_user, revoked_recipient_user = await self.remote_loader.get_user(recipient)
 
         if revoked_recipient_user:
-            raise FSSharingNotAllowedError(f"The user `{recipient}` is revoked")
+            raise FSSharingNotAllowedError(f"The user `{recipient.str}` is revoked")
 
         # Note we don't bother to check workspace's access roles given they
         # could be outdated (and backend will do the check anyway)
@@ -810,7 +810,7 @@ class UserFS:
             )
 
         except DataError as exc:
-            raise FSError(f"Cannot create sharing message for `{recipient}`: {exc}") from exc
+            raise FSError(f"Cannot create sharing message for `{recipient.str}`: {exc}") from exc
 
         # Build role certificate
         role_certificate = RealmRoleCertificate(
@@ -840,7 +840,7 @@ class UserFS:
         elif rep["status"] == "user_revoked":
             # That cache is probably not up-to-date if we get this error code
             self.remote_devices_manager.invalidate_user_cache(recipient)
-            raise FSSharingNotAllowedError(f"The user `{recipient}` is revoked: {rep}")
+            raise FSSharingNotAllowedError(f"The user `{recipient.str}` is revoked: {rep}")
         elif rep["status"] == "require_greater_timestamp":
             return await self.workspace_share(
                 workspace_id, recipient, role, rep["strictly_greater_than"]
@@ -930,7 +930,7 @@ class UserFS:
             )
 
         except DataError as exc:
-            raise FSError(f"Cannot decrypt&validate message from `{sender_id}`: {exc}") from exc
+            raise FSError(f"Cannot decrypt&validate message from `{sender_id.str}`: {exc}") from exc
 
         if isinstance(msg, (SharingGrantedMessageContent, SharingReencryptedMessageContent)):
             await self._process_message_sharing_granted(msg)
@@ -965,7 +965,7 @@ class UserFS:
 
         if roles.get(msg.author.user_id, None) not in (WorkspaceRole.OWNER, WorkspaceRole.MANAGER):
             raise FSSharingNotAllowedError(
-                f"User {msg.author.user_id} cannot share workspace `{msg.id}`"
+                f"User {msg.author.user_id.str} cannot share workspace `{msg.id}`"
                 " with us (requires owner or manager right)"
             )
 
@@ -1111,7 +1111,7 @@ class UserFS:
                 per_user_ciphered_msgs[user.user_id] = ciphered
             except DataError as exc:
                 raise FSError(
-                    f"Cannot create reencryption message for `{user.user_id}`: {exc}"
+                    f"Cannot create reencryption message for `{user.user_id.str}`: {exc}"
                 ) from exc
 
         return per_user_ciphered_msgs
@@ -1140,21 +1140,23 @@ class UserFS:
             raise FSBackendOfflineError(str(exc)) from exc
 
         except BackendConnectionError as exc:
-            raise FSError(f"Cannot start maintenance on workspace {workspace_id}: {exc}") from exc
+            raise FSError(
+                f"Cannot start maintenance on workspace {workspace_id.str}: {exc}"
+            ) from exc
 
         if rep["status"] == "participants_mismatch":
             # Catched by caller
             return False
         elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
-                f"Workspace {workspace_id} already in maintenance: {rep}"
+                f"Workspace {workspace_id.str} already in maintenance: {rep}"
             )
         elif rep["status"] == "not_allowed":
             raise FSWorkspaceNoAccess(
-                f"Not allowed to start maintenance on workspace {workspace_id}: {rep}"
+                f"Not allowed to start maintenance on workspace {workspace_id.str}: {rep}"
             )
         elif rep["status"] != "ok":
-            raise FSError(f"Cannot start maintenance on workspace {workspace_id}: {rep}")
+            raise FSError(f"Cannot start maintenance on workspace {workspace_id.str}: {rep}")
         return True
 
     async def workspace_start_reencryption(self, workspace_id: EntryID) -> ReencryptionJob:
@@ -1168,7 +1170,7 @@ class UserFS:
         user_manifest = self.get_user_manifest()
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
 
         timestamp = self.device.timestamp()
         new_workspace_entry = workspace_entry.evolve(
@@ -1215,7 +1217,7 @@ class UserFS:
         user_manifest = self.get_user_manifest()
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
 
         # First make sure the workspace is under maintenance
         try:
@@ -1226,13 +1228,13 @@ class UserFS:
 
         except BackendConnectionError as exc:
             raise FSError(
-                f"Cannot continue maintenance on workspace {workspace_id}: {exc}"
+                f"Cannot continue maintenance on workspace {workspace_id.str}: {exc}"
             ) from exc
 
         if rep["status"] == "not_allowed":
-            raise FSWorkspaceNoAccess(f"Not allowed to access workspace {workspace_id}: {rep}")
+            raise FSWorkspaceNoAccess(f"Not allowed to access workspace {workspace_id.str}: {rep}")
         elif rep["status"] != "ok":
-            raise FSError(f"Error while getting status for workspace {workspace_id}: {rep}")
+            raise FSError(f"Error while getting status for workspace {workspace_id.str}: {rep}")
 
         if not rep["in_maintenance"] or rep["maintenance_type"] != MaintenanceType.REENCRYPTION:
             raise FSWorkspaceNotInMaintenance("Not in reencryption maintenance")

@@ -143,7 +143,7 @@ class BaseOrganizationComponent:
         if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+                "reason": f"User `{client_ctx.device_id.user_id.str}` is not admin",
             }
         # Get organization of the user
         organization_id = client_ctx.organization_id

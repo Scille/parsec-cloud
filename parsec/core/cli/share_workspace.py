@@ -37,7 +37,7 @@ async def _share_workspace(
                 raise RuntimeError("Unknown recipiant")
             if nb != 1:
                 for user in user_info_tab:
-                    click.echo(f"{user.human_handle} - UserID: {user.user_id}")
+                    click.echo(f"{user.human_handle} - UserID: {user.user_id.str}")
                 raise RuntimeError("Specify the user more precisely or use the --user-id option")
             user_id = user_info_tab[0].user_id
         await core.user_fs.workspace_share(workspace.id, user_id, user_role)

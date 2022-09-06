@@ -98,8 +98,8 @@ def test_handshake_challenge_schema_for_client_server_api_compatibility(
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
         "client_api_version": client_version,
-        "organization_id": str(alice.organization_id),
-        "device_id": str(alice.device_id),
+        "organization_id": alice.organization_id.str,
+        "device_id": alice.device_id.str,
         "rvk": alice.root_verify_key.encode(),
         "answer": alice.signing_key.sign(challenge),
     }

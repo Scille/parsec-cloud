@@ -145,7 +145,7 @@ class AccountButton(QWidget, Ui_AccountButton):
         self.device = device
         self.label_device.setText(self.device.device_display)
         self.label_name.setText(self.device.short_user_display)
-        self.label_organization.setText(str(self.device.organization_id))
+        self.label_organization.setText(self.device.organization_id.str)
 
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
@@ -200,7 +200,7 @@ class LoginSmartcardInputWidget(QWidget, Ui_LoginSmartcardInputWidget):
         self.button_login.clicked.connect(self._on_log_in_clicked)
         self.label_instructions.setText(
             _("TEXT_LOGIN_SELECT_SMARTCARD_INSTRUCTIONS_organization-device-user").format(
-                organization=self.device.organization_id,
+                organization=self.device.organization_id.str,
                 user=self.device.short_user_display,
                 device=self.device.device_display,
             )
@@ -235,7 +235,7 @@ class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
         self.button_login.clicked.connect(self._on_log_in_clicked)
         self.label_instructions.setText(
             _("TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user").format(
-                organization=self.device.organization_id,
+                organization=self.device.organization_id.str,
                 user=self.device.short_user_display,
                 device=self.device.device_display,
             )

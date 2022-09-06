@@ -138,6 +138,8 @@ def str_based_field_factory(value_type: Type) -> Type[Field]:
             return None
 
         assert isinstance(value, value_type)
+        if hasattr(value, "str"):
+            return value.str
         return str(value)
 
     def _deserialize(self, value, attr, data):

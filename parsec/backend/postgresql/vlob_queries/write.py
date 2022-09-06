@@ -174,7 +174,7 @@ async def query_update(
         *_q_get_vlob_version(organization_id=organization_id.str, vlob_id=vlob_id.uuid)
     )
     if not previous:
-        raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
+        raise VlobNotFoundError(f"Vlob `{vlob_id.str}` doesn't exist")
 
     elif previous["version"] != version - 1:
         raise VlobVersionError()

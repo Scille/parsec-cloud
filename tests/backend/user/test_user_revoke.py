@@ -110,7 +110,10 @@ async def test_user_revoke_already_revoked(backend_asgi_app, alice_ws, bob, alic
     assert rep["status"] == "ok"
 
     rep = await user_revoke(alice_ws, revoked_user_certificate=bob_revocation)
-    assert rep == {"status": "already_revoked", "reason": f"User `{bob.user_id}` already revoked"}
+    assert rep == {
+        "status": "already_revoked",
+        "reason": f"User `{bob.user_id.str}` already revoked",
+    }
 
 
 @pytest.mark.trio

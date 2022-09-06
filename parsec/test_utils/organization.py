@@ -314,9 +314,10 @@ async def _register_new_user(
 async def _register_new_device(
     cmds: BackendAuthenticatedCmds, author: LocalDevice, device_label: Optional[DeviceLabel]
 ):
+
     new_device = LocalDevice(
         organization_addr=author.organization_addr,
-        device_id=DeviceID(f"{author.user_id}@{DeviceName.new()}"),
+        device_id=DeviceID(f"{author.user_id.str}@{DeviceName.new().str}"),
         device_label=device_label,
         human_handle=author.human_handle,
         profile=author.profile,

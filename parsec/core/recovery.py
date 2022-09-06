@@ -22,7 +22,7 @@ async def _create_new_device_for_self(
     """
     new_device = LocalDevice(
         organization_addr=original_device.organization_addr,
-        device_id=DeviceID(f"{original_device.user_id}@{DeviceName.new()}"),
+        device_id=DeviceID(f"{original_device.user_id.str}@{DeviceName.new().str}"),
         device_label=new_device_label,
         human_handle=original_device.human_handle,
         profile=original_device.profile,

@@ -369,7 +369,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         w = cls(user_fs=user_fs, workspace_fs=workspace_fs, core=core, jobs_ctx=jobs_ctx)
         d = GreyedDialog(
             w,
-            title=_("TEXT_WORKSPACE_SHARING_TITLE_workspace").format(workspace=workspace_name),
+            title=_("TEXT_WORKSPACE_SHARING_TITLE_workspace").format(workspace=workspace_name.str),
             parent=parent,
             width=1000,
         )

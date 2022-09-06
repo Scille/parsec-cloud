@@ -173,7 +173,7 @@ async def test_raid1_block_create_partial_failure(caplog, alice_ws, backend, rea
 
     log = caplog.assert_occured_once("[warning  ] Block create error: A node have failed")
     assert f"organization_id=CoolOrg" in log
-    assert f"block_id={BLOCK_ID}" in log
+    assert f"block_id={BLOCK_ID.str}" in log
 
 
 @pytest.mark.trio
@@ -242,7 +242,7 @@ async def test_raid5_block_create_single_failure(
 
     log = caplog.assert_occured_once("[warning  ] Block create error: A node have failed")
     assert f"organization_id=CoolOrg" in log
-    assert f"block_id={BLOCK_ID}" in log
+    assert f"block_id={BLOCK_ID.str}" in log
 
 
 @pytest.mark.trio
@@ -285,7 +285,7 @@ async def test_raid5_partial_create_ok_block_create_too_many_failures(
         "[warning  ] Block create error: More than 1 nodes have failed"
     )
     assert f"organization_id=CoolOrg" in log
-    assert f"block_id={BLOCK_ID}" in log
+    assert f"block_id={BLOCK_ID.str}" in log
 
 
 @pytest.mark.trio
@@ -345,19 +345,19 @@ async def test_raid5_block_read_multiple_failure(
 
     log = caplog.assert_occured_once("[warning  ] Block read error: More than 1 nodes have failed")
     assert f"organization_id=CoolOrg" in log
-    assert f"block_id={block}" in log
+    assert f"block_id={block.str}" in log
 
 
 @pytest.mark.parametrize(
     "bad_msg",
     [
         {},
-        {"id": str(BLOCK_ID), "block": BLOCK_DATA, "bad_field": "foo"},
+        {"id": BLOCK_ID.str, "block": BLOCK_DATA, "bad_field": "foo"},
         {"id": "not an uuid", "block": BLOCK_DATA},
         {"id": 42, "block": BLOCK_DATA},
         {"id": None, "block": BLOCK_DATA},
-        {"id": str(BLOCK_ID), "block": 42},
-        {"id": str(BLOCK_ID), "block": None},
+        {"id": BLOCK_ID.str, "block": 42},
+        {"id": BLOCK_ID.str, "block": None},
         {"block": BLOCK_DATA},
     ],
 )
@@ -378,7 +378,7 @@ async def test_block_read_not_found(alice_ws):
 @pytest.mark.parametrize(
     "bad_msg",
     [
-        {"id": str(BLOCK_ID), "bad_field": "foo"},
+        {"id": BLOCK_ID.str, "bad_field": "foo"},
         {"id": "not_an_uuid"},
         {"id": 42},
         {"id": None},

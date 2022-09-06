@@ -214,7 +214,7 @@ async def _do_create_user_with_human_handle(
         )
 
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
+        raise UserAlreadyExistsError(f"User `{user.user_id.str}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")
@@ -252,7 +252,7 @@ async def _do_create_user_without_human_handle(
         )
 
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
+        raise UserAlreadyExistsError(f"User `{user.user_id.str}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")
@@ -308,10 +308,10 @@ async def _create_device(
             *_q_get_user_devices(organization_id=organization_id.str, user_id=device.user_id.str)
         )
         if not existing_devices:
-            raise UserNotFoundError(f"User `{device.user_id}` doesn't exists")
+            raise UserNotFoundError(f"User `{device.user_id.str}` doesn't exists")
 
         if device.device_id in itertools.chain(*existing_devices):
-            raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
+            raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
 
     try:
         result = await conn.execute(
@@ -327,7 +327,7 @@ async def _create_device(
             )
         )
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
+        raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")

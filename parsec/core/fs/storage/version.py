@@ -18,10 +18,10 @@ def get_user_data_storage_db_path(data_base_dir: Path, device: LocalDevice) -> P
 def get_workspace_data_storage_db_path(
     data_base_dir: Path, device: LocalDevice, workspace_id: EntryID
 ) -> Path:
-    return data_base_dir / device.slug / str(workspace_id) / WORKSPACE_DATA_STORAGE_NAME
+    return data_base_dir / device.slug / workspace_id.str / WORKSPACE_DATA_STORAGE_NAME
 
 
 def get_workspace_cache_storage_db_path(
     data_base_dir: Path, device: LocalDevice, workspace_id: EntryID
 ) -> Path:
-    return data_base_dir / device.slug / str(workspace_id) / WORKSPACE_CACHE_STORAGE_NAME
+    return data_base_dir / device.slug / workspace_id.str / WORKSPACE_CACHE_STORAGE_NAME

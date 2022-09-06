@@ -195,20 +195,20 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
                     self,
                     _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),
                     _("TEXT_INVITE_DEVICE_EMAIL_BAD_RECIPIENT_directlink").format(
-                        directlink=self.invite_addr
+                        directlink=self.invite_addr.to_url()
                     ),
                     _("ACTION_COPY_ADDR"),
-                    str(self.invite_addr),
+                    self.invite_addr.to_url(),
                 )
             else:
                 show_info_copy_link(
                     self,
                     _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),
                     _("TEXT_INVITE_DEVICE_EMAIL_NOT_AVAILABLE_directlink").format(
-                        directlink=self.invite_addr
+                        directlink=self.invite_addr.to_url()
                     ),
                     _("ACTION_COPY_ADDR"),
-                    str(self.invite_addr),
+                    self.invite_addr.to_url(),
                 )
             self.button_send_email.setDisabled(False)
 

@@ -458,7 +458,7 @@ async def test_create_organization_already_bootstrapped(
     )
 
     monkeypatch.setattr(
-        "parsec.core.gui.main_window.get_text_input", lambda *args, **kwargs: (str(org_bs_addr))
+        "parsec.core.gui.main_window.get_text_input", lambda *args, **kwargs: (org_bs_addr.to_url())
     )
 
     # The org bootstrap window is usually opened using a sub-menu.
@@ -476,7 +476,7 @@ async def test_create_organization_already_bootstrapped(
     await aqtbot.key_clicks(co_w.current_widget.line_edit_device, "HEV")
 
     def _user_widget_ready():
-        assert co_w.current_widget.line_edit_org_name.text() == str(org.organization_id)
+        assert co_w.current_widget.line_edit_org_name.text() == org.organization_id.str
         assert co_w.current_widget.line_edit_org_name.isReadOnly() is True
 
     await aqtbot.wait_until(_user_widget_ready)
@@ -715,7 +715,7 @@ async def test_create_organization_with_bootstrap_token(
                     (
                         translate("TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"),
                         translate("TEXT_BOOTSTRAP_ORG_SUCCESS_organization").format(
-                            organization=str(organization_id)
+                            organization=organization_id.str
                         ),
                     )
                 ]

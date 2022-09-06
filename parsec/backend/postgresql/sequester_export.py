@@ -120,14 +120,14 @@ async def _init_output_db(
         organization_id.str,
     )
     if not row:
-        raise RealmExporterInputError(f"Organization `{organization_id}` doesn't exists")
+        raise RealmExporterInputError(f"Organization `{organization_id.str}` doesn't exists")
     organization_internal_id = row["_id"]
     root_verify_key = row["root_verify_key"]
     if root_verify_key is None:
-        raise RealmExporterInputError(f"Organization `{organization_id}` is not boostrapped")
+        raise RealmExporterInputError(f"Organization `{organization_id.str}` is not boostrapped")
     if not row["sequester_authority_certificate"]:
         raise RealmExporterInputError(
-            f"Organization `{organization_id}` is not a sequestered organization"
+            f"Organization `{organization_id.str}` is not a sequestered organization"
         )
 
     row = await input_conn.fetchrow(
@@ -137,7 +137,7 @@ async def _init_output_db(
     )
     if not row:
         raise RealmExporterInputError(
-            f"Realm `{realm_id}` doesn't exist in organization `{organization_id}`"
+            f"Realm `{realm_id.str}` doesn't exist in organization `{organization_id.str}`"
         )
 
     row = await input_conn.fetchrow(
@@ -147,7 +147,7 @@ async def _init_output_db(
     )
     if not row:
         raise RealmExporterInputError(
-            f"Sequester service `{service_id}` doesn't exist in organization `{organization_id}`"
+            f"Sequester service `{service_id}` doesn't exist in organization `{organization_id.str}`"
         )
 
     # 1) Check the output database and create it if needed

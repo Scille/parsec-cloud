@@ -214,7 +214,7 @@ async def query_list_versions(
     assert rows
 
     if not rows:
-        raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
+        raise VlobNotFoundError(f"Vlob `{vlob_id.str}` doesn't exist")
 
     return {
         row["version"]: (

@@ -61,11 +61,11 @@ class MemoryUserComponent(BaseUserComponent):
             raise UserActiveUsersLimitReached()
 
         if user.user_id in org.users:
-            raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
+            raise UserAlreadyExistsError(f"User `{user.user_id.str}` already exists")
 
         if user.human_handle and user.human_handle in org.human_handle_to_user_id:
             raise UserAlreadyExistsError(
-                f"Human handle `{user.human_handle}` already corresponds to a non-revoked user"
+                f"Human handle `{user.human_handle.str}` already corresponds to a non-revoked user"
             )
 
         org.users[user.user_id] = user
@@ -88,11 +88,11 @@ class MemoryUserComponent(BaseUserComponent):
         org = self._organizations[organization_id]
 
         if device.user_id not in org.users:
-            raise UserNotFoundError(f"User `{device.user_id}` doesn't exists")
+            raise UserNotFoundError(f"User `{device.user_id.str}` doesn't exists")
 
         user_devices = org.devices[device.user_id]
         if device.device_name in user_devices:
-            raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
+            raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
 
         user_devices[device.device_name] = device
         await self._send_event(
@@ -243,8 +243,8 @@ class MemoryUserComponent(BaseUserComponent):
             for user in org.users.values():
                 if not user.human_handle:
                     continue
-                lemail = str(user.human_handle.email).lower()
-                llabel = str(user.human_handle.label).lower()
+                lemail = user.human_handle.email.lower()
+                llabel = user.human_handle.label.lower()
                 if all([part in lemail for part in query_parts]) or all(
                     [part in llabel for part in query_parts]
                 ):

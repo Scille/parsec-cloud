@@ -387,7 +387,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self,
                 _("TEXT_BOOTSTRAP_ORG_SUCCESS_TITLE"),
                 _("TEXT_BOOTSTRAP_ORG_SUCCESS_organization").format(
-                    organization=device.organization_id
+                    organization=device.organization_id.str
                 ),
                 [_("ACTION_CREATE_RECOVERY_DEVICE"), _("ACTION_NO")],
                 oriented_question=True,
@@ -652,9 +652,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     log_widget.reload_devices()
         elif state == "connected":
             device = tab.current_device
-            tab_name = (
-                f"{device.organization_id} - {device.short_user_display} - {device.device_display}"
-            )
+            tab_name = f"{device.organization_id.str} - {device.short_user_display} - {device.device_display}"
             self.tab_center.setTabToolTip(idx, tab_name)
             self.tab_center.setTabText(
                 idx, ensure_string_size(tab_name, 150, self.tab_center.tabBar().font())
@@ -723,7 +721,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(
                 self,
                 _("TEXT_FILE_LINK_NOT_IN_ORG_organization").format(
-                    organization=file_link_addr.organization_id
+                    organization=file_link_addr.organization_id.str
                 ),
             )
             return
@@ -739,7 +737,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Prompt the user for the need to log in first
         SnackbarManager.inform(
             _("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
-                organization=file_link_addr.organization_id
+                organization=file_link_addr.organization_id.str
             )
         )
 
@@ -772,7 +770,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 show_error(
                     self,
                     _("TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization").format(
-                        organization=addr.organization_id
+                        organization=addr.organization_id.str
                     ),
                 )
                 return

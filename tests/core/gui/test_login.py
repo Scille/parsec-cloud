@@ -59,7 +59,8 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice, 
     central_widget = gui.test_get_central_widget()
     assert central_widget is not None
     assert (
-        central_widget.button_user.text() == f"{alice.organization_id}\n{alice.short_user_display}"
+        central_widget.button_user.text()
+        == f"{alice.organization_id.str}\n{alice.short_user_display}"
     )
     assert gui.tab_center.tabText(0) == "CoolOrg - Alicey..."
 

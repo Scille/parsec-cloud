@@ -61,7 +61,7 @@ display("local device no device_label/human_handle", ld_no_device_label_no_human
 
 ld_legagacy_admin = {
     "organization_addr": ALICE.organization_addr.to_url(),
-    "device_id": str(ALICE.device_id),
+    "device_id": ALICE.device_id.str,
     "signing_key": ALICE.signing_key.encode(),
     "private_key": ALICE.private_key.encode(),
     "is_admin": True,
@@ -74,7 +74,7 @@ display("local device legacy is_admin_field (ADMIN)", ld_legagacy_admin, [KEY])
 
 ld_legagacy_not_admin = {
     "organization_addr": ALICE.organization_addr.to_url(),
-    "device_id": str(ALICE.device_id),
+    "device_id": ALICE.device_id.str,
     "signing_key": ALICE.signing_key.encode(),
     "private_key": ALICE.private_key.encode(),
     "is_admin": False,

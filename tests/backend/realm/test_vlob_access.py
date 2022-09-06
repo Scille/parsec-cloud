@@ -295,13 +295,13 @@ async def test_read_other_organization(backend_asgi_app, ws_from_other_organizat
 @pytest.mark.parametrize(
     "bad_msg",
     [
-        {"id": str(VLOB_ID), "bad_field": "foo"},
+        {"id": VLOB_ID.str, "bad_field": "foo"},
         {"id": "<not an uuid>"},
-        {"id": str(VLOB_ID)},  # TODO: really bad ?
+        {"id": VLOB_ID.str},  # TODO: really bad ?
         {"id": 42},
         {"id": None},
-        {"id": str(VLOB_ID), "version": 0},
-        {"id": str(VLOB_ID), "version": "foo"},
+        {"id": VLOB_ID.str, "version": 0},
+        {"id": VLOB_ID.str, "version": "foo"},
         {},
     ],
 )
@@ -440,12 +440,12 @@ async def test_update_other_organization(
 @pytest.mark.parametrize(
     "bad_msg",
     [
-        {"id": str(VLOB_ID), "version": 42, "blob": b"...", "bad_field": "foo"},
-        {"id": str(VLOB_ID), "version": 42, "blob": None},
-        {"id": str(VLOB_ID), "version": 42, "blob": 42},
-        {"id": str(VLOB_ID), "version": 42},
-        {"id": str(VLOB_ID), "version": None, "blob": b"..."},
-        {"id": str(VLOB_ID), "version": -1, "blob": b"..."},
+        {"id": VLOB_ID.str, "version": 42, "blob": b"...", "bad_field": "foo"},
+        {"id": VLOB_ID.str, "version": 42, "blob": None},
+        {"id": VLOB_ID.str, "version": 42, "blob": 42},
+        {"id": VLOB_ID.str, "version": 42},
+        {"id": VLOB_ID.str, "version": None, "blob": b"..."},
+        {"id": VLOB_ID.str, "version": -1, "blob": b"..."},
         {"id": 42, "version": 42, "blob": b"..."},
         {"id": None, "version": 42, "blob": b"..."},
         {"version": 42, "blob": b"..."},
@@ -564,12 +564,12 @@ async def test_list_versions_other_organization(
 @pytest.mark.parametrize(
     "bad_msg",
     [
-        {"id": str(VLOB_ID), "bad_field": "foo"},
+        {"id": VLOB_ID.str, "bad_field": "foo"},
         {"id": "<not an uuid>"},
-        {"id": str(VLOB_ID)},  # TODO: really bad ?
+        {"id": VLOB_ID.str},  # TODO: really bad ?
         {"id": 42},
         {"id": None},
-        {"id": str(VLOB_ID), "version": 1},
+        {"id": VLOB_ID.str, "version": 1},
         {},
     ],
 )

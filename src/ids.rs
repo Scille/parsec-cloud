@@ -39,10 +39,6 @@ impl OrganizationID {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<OrganizationID {}>", self.0))
     }
@@ -78,6 +74,11 @@ impl EntryID {
             }
             Err(_) => Err(PyValueError::new_err("Not a UUID")),
         }
+    }
+
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -130,10 +131,6 @@ impl EntryID {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
         comp_op(op, h1, h2)
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
@@ -212,12 +209,13 @@ impl BlockID {
         comp_op(op, h1, h2)
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<BlockID {}>", self.0))
+    }
+
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
@@ -296,12 +294,13 @@ impl RealmID {
         comp_op(op, h1, h2)
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<RealmID {}>", self.0))
+    }
+
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
@@ -380,12 +379,13 @@ impl VlobID {
         comp_op(op, h1, h2)
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<VlobID {}>", self.0))
+    }
+
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
@@ -422,10 +422,6 @@ impl UserID {
             CompareOp::Le => self.0 <= other.0,
             CompareOp::Ge => self.0 >= other.0,
         }
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -480,9 +476,6 @@ impl DeviceName {
             CompareOp::Ge => self.0 >= other.0,
         }
     }
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
 
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<DeviceName {}>", self.0))
@@ -535,10 +528,6 @@ impl DeviceLabel {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<DeviceLabel {}>", self.0))
     }
@@ -573,7 +562,8 @@ impl DeviceID {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
+    #[getter]
+    fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
     }
 
@@ -594,11 +584,6 @@ impl DeviceID {
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
         hash_generic(&self.0.to_string(), py)
-    }
-
-    #[getter]
-    fn str(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
     }
 
     #[getter]
@@ -678,10 +663,6 @@ impl ChunkID {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<ChunkID {}>", self.0))
     }
@@ -726,12 +707,13 @@ impl HumanHandle {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<HumanHandle {} >", self.0))
+    }
+
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
     }
 
     fn __richcmp__(&self, other: &HumanHandle, op: CompareOp) -> bool {

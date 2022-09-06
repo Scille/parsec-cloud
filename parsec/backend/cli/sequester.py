@@ -222,7 +222,7 @@ async def _human_accesses(
             filter_split = user_filter.split()
             filtered_users = []
             for user in users:
-                txt = f"{user.human_handle if user.human_handle else ''} {user.user_id}".lower()
+                txt = f"{user.human_handle.str if user.human_handle else ''} {user.user_id.str}".lower()
                 if len([True for sq in filter_split if sq in txt]) == len(filter_split):
                     filtered_users.append(user)
             users = filtered_users
@@ -334,7 +334,7 @@ async def _export_realm(
 ) -> None:
     if output.is_dir():
         # Output is pointing to a directory, use a default name for the database extract
-        output_db_path = output / f"parsec-sequester-export-realm-{realm_id}.sqlite"
+        output_db_path = output / f"parsec-sequester-export-realm-{realm_id.str}.sqlite"
     else:
         output_db_path = output
 

@@ -158,7 +158,7 @@ class BaseWorkspaceStorage:
     def _check_lock_status(self, entry_id: EntryID) -> None:
         task = self.locking_tasks.get(entry_id)
         if task != lowlevel.current_task():
-            raise RuntimeError(f"Entry `{entry_id}` modified without being locked")
+            raise RuntimeError(f"Entry `{entry_id.str}` modified without being locked")
 
     # File management interface
 

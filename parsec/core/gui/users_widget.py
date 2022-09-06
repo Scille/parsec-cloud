@@ -49,8 +49,8 @@ class UserInvitationButton(QWidget, Ui_UserInvitationButton):
         self.setupUi(self)
         self.addr = addr
         self.email = email
-        self.label_addr.setText(ensure_string_size(str(self.addr), 160, self.label_addr.font()))
-        self.label_addr.setToolTip(str(self.addr))
+        self.label_addr.setText(ensure_string_size(self.addr.to_url(), 160, self.label_addr.font()))
+        self.label_addr.setToolTip(self.addr.to_url())
         self.label_email.setText(ensure_string_size(self.email, 160, self.label_email.font()))
         self.label_email.setToolTip(self.email)
 
@@ -76,7 +76,7 @@ class UserInvitationButton(QWidget, Ui_UserInvitationButton):
         menu.exec_(global_pos)
 
     def copy_addr(self):
-        desktop.copy_to_clipboard(str(self.addr))
+        desktop.copy_to_clipboard(self.addr.to_url())
         SnackbarManager.inform(_("TEXT_GREET_USER_ADDR_COPIED_TO_CLIPBOARD"))
 
     def copy_email(self):
@@ -534,7 +534,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 self,
                 _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),
                 _("TEXT_INVITE_USER_EMAIL_BAD_RECIPIENT_directlink").format(
-                    directlink=invitation_addr
+                    directlink=invitation_addr.to_url()
                 ),
                 _("ACTION_COPY_ADDR"),
                 invitation_addr.to_url(),
@@ -544,7 +544,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 self,
                 _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),
                 _("TEXT_INVITE_USER_EMAIL_NOT_AVAILABLE_directlink").format(
-                    directlink=invitation_addr
+                    directlink=invitation_addr.to_url()
                 ),
                 _("ACTION_COPY_ADDR"),
                 invitation_addr.to_url(),
