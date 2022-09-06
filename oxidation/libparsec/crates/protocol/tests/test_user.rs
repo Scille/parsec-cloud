@@ -59,7 +59,7 @@ fn serde_user_get_req() {
         )[..],
         authenticated_cmds::user_get::Rep::Ok {
             user_certificate: b"foobar".to_vec(),
-            revoked_user_certificate: b"foobar".to_vec(),
+            revoked_user_certificate: Some(b"foobar".to_vec()),
             device_certificates: vec![b"foobar".to_vec()],
             trustchain: authenticated_cmds::user_get::Trustchain {
                 users: vec![b"foobar".to_vec()],
