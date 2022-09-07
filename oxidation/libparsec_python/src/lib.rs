@@ -61,12 +61,6 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::Invite4GreeterCommunicateReq>()?;
     m.add_class::<protocol::Invite4GreeterCommunicateRep>()?;
     m.add_class::<protocol::InviteListItem>()?;
-    // Organization
-    m.add_class::<protocol::OrganizationStatsReq>()?;
-    m.add_class::<protocol::OrganizationStatsRep>()?;
-    m.add_class::<protocol::OrganizationConfigReq>()?;
-    m.add_class::<protocol::OrganizationConfigRep>()?;
-    m.add_class::<protocol::UsersPerProfileDetailItem>()?;
     // Ping
     m.add_class::<protocol::AuthenticatedPingReq>()?;
     m.add_class::<protocol::AuthenticatedPingRep>()?;

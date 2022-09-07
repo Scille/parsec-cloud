@@ -1,11 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from parsec._parsec import (
+    OrganizationStatsReq,
+    OrganizationStatsRep,
+    OrganizationConfigReq,
+    OrganizationConfigRep,
+)
 from parsec.serde import fields, BaseSchema, JSONSerializer
-from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.api.protocol.base import (
+    ApiCommandSerializer,
+    BaseReqSchema,
+    BaseRepSchema,
+    CmdSerializer,
+)
 from parsec.api.protocol.types import (
     OrganizationIDField,
     DeviceIDField,
-    UserProfileField,
     DeviceLabelField,
 )
 
@@ -72,50 +82,6 @@ class OrganizationBootstrapWebhookSchema(BaseSchema):
 organization_bootstrap_webhook_serializer = JSONSerializer(OrganizationBootstrapWebhookSchema)
 
 
-class UsersPerProfileDetailItemSchema(BaseSchema):
-    profile = UserProfileField(required=True)
-    active = fields.Integer(required=True)
-    revoked = fields.Integer(required=True)
+organization_stats_serializer = ApiCommandSerializer(OrganizationStatsReq, OrganizationStatsRep)
 
-
-class OrganizationStatsReqSchema(BaseReqSchema):
-    pass
-
-
-class OrganizationStatsRepSchema(BaseRepSchema):
-    data_size = fields.Integer(required=True)
-    metadata_size = fields.Integer(required=True)
-    realms = fields.Integer(required=True)
-    users = fields.Integer(required=True)
-    active_users = fields.Integer(required=True)
-    users_per_profile_detail = fields.List(
-        fields.Nested(UsersPerProfileDetailItemSchema), required=True
-    )
-
-
-organization_stats_serializer = CmdSerializer(
-    OrganizationStatsReqSchema, OrganizationStatsRepSchema
-)
-
-
-class OrganizationConfigReqSchema(BaseReqSchema):
-    pass
-
-
-class OrganizationConfigRepSchema(BaseRepSchema):
-    user_profile_outsider_allowed = fields.Boolean(required=True)
-    # `None` stands for "no limit" here
-    active_users_limit = fields.Integer(allow_none=True, required=True)
-    # Field set to `None` if sequester is disabled for the organization
-    # New in API version 2.8/3.2 (Parsec 2.11.0)
-    sequester_authority_certificate = fields.Bytes(allow_none=True, required=False, missing=None)
-    # Field set to `None` if sequester is disabled for the organization
-    # New in API version 2.8/3.2 (Parsec 2.11.0)
-    sequester_services_certificates = fields.List(
-        fields.Bytes(), allow_none=True, required=False, missing=None
-    )
-
-
-organization_config_serializer = CmdSerializer(
-    OrganizationConfigReqSchema, OrganizationConfigRepSchema
-)
+organization_config_serializer = ApiCommandSerializer(OrganizationConfigReq, OrganizationConfigRep)

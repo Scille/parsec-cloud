@@ -271,6 +271,8 @@ def generate_api_protocol_specs():
                         "block_create",
                         "block_read",
                         "message_get",
+                        "organization_stats",
+                        "organization_config",
                         "vlob_create",
                         "vlob_read",
                         "vlob_update",

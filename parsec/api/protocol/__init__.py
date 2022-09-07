@@ -50,7 +50,6 @@ from parsec.api.protocol.organization import (
     organization_bootstrap_webhook_serializer,
     organization_stats_serializer,
     organization_config_serializer,
-    UsersPerProfileDetailItemSchema,
 )
 from parsec.api.protocol.events import (
     events_subscribe_serializer,
@@ -191,7 +190,6 @@ __all__ = (
     "organization_bootstrap_webhook_serializer",
     "organization_stats_serializer",
     "organization_config_serializer",
-    "UsersPerProfileDetailItemSchema",
     # Events
     "events_subscribe_serializer",
     "events_listen_serializer",

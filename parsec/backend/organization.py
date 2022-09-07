@@ -1,10 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 import attr
-from parsec._parsec import DateTime
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 from secrets import token_hex
 
+from parsec._parsec import (
+    DateTime,
+    OrganizationStatsReq,
+    OrganizationStatsRep,
+    OrganizationStatsRepOk,
+    OrganizationStatsRepNotAllowed,
+    OrganizationStatsRepNotFound,
+    OrganizationConfigReq,
+    OrganizationConfigRep,
+    OrganizationConfigRepOk,
+    OrganizationConfigRepNotFound,
+    UsersPerProfileDetailItem,
+)
+from parsec.api.protocol.base import api_typed_msg_adapter
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
@@ -17,10 +30,8 @@ from parsec.api.data import (
 from parsec.api.protocol import (
     OrganizationID,
     UserProfile,
-    organization_stats_serializer,
     organization_bootstrap_serializer,
     apiv1_organization_bootstrap_serializer,
-    organization_config_serializer,
 )
 from parsec.backend.utils import ClientType, catch_protocol_errors, api, Unset, UnsetType
 from parsec.backend.user import User, Device
@@ -82,13 +93,6 @@ class Organization:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class UsersPerProfileDetailItem:
-    profile: UserProfile
-    active: int
-    revoked: int
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
 class OrganizationStats:
     data_size: int
     metadata_size: int
@@ -109,60 +113,60 @@ class BaseOrganizationComponent:
 
     @api("organization_config")
     @catch_protocol_errors
-    async def api_authenticated_organization_config(self, client_ctx, msg):
-        msg = organization_config_serializer.req_load(msg)
+    @api_typed_msg_adapter(OrganizationConfigReq, OrganizationConfigRep)
+    async def api_authenticated_organization_config(
+        self, client_ctx, req: OrganizationConfigReq
+    ) -> OrganizationConfigRep:
         organization_id = client_ctx.organization_id
         try:
             organization = await self.get(organization_id)
 
         except OrganizationNotFoundError:
-            return {"status": "not_found"}
+            return OrganizationConfigRepNotFound()
 
         if organization.sequester_authority:
-            sequester_authority_certificate = organization.sequester_authority.certificate
-            sequester_services_certificates = organization.sequester_services_certificates
+            sequester_authority_certificate: Optional[
+                bytes
+            ] = organization.sequester_authority.certificate
+            sequester_services_certificates: Optional[List[bytes]] = (
+                list(organization.sequester_services_certificates)
+                if organization.sequester_services_certificates
+                else []
+            )
         else:
             sequester_authority_certificate = None
             sequester_services_certificates = None
 
-        rep = {
-            "status": "ok",
-            "user_profile_outsider_allowed": organization.user_profile_outsider_allowed,
-            "active_users_limit": organization.active_users_limit,
-            "sequester_authority_certificate": sequester_authority_certificate,
-            "sequester_services_certificates": sequester_services_certificates,
-        }
-
-        return organization_config_serializer.rep_dump(rep)
+        return OrganizationConfigRepOk(
+            user_profile_outsider_allowed=organization.user_profile_outsider_allowed,
+            active_users_limit=organization.active_users_limit,
+            sequester_authority_certificate=sequester_authority_certificate,
+            sequester_services_certificates=sequester_services_certificates,
+        )
 
     @api("organization_stats")
     @catch_protocol_errors
-    async def api_authenticated_organization_stats(self, client_ctx, msg):
-        msg = organization_stats_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(OrganizationStatsReq, OrganizationStatsRep)
+    async def api_authenticated_organization_stats(
+        self, client_ctx, req: OrganizationStatsReq
+    ) -> OrganizationStatsRep:
         if client_ctx.profile != UserProfile.ADMIN:
-            return {
-                "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id.str}` is not admin",
-            }
+            return OrganizationStatsRepNotAllowed(None)
         # Get organization of the user
         organization_id = client_ctx.organization_id
         try:
             stats = await self.stats(organization_id)
 
         except OrganizationNotFoundError:
-            return {"status": "not_found"}
+            return OrganizationStatsRepNotFound()
 
-        return organization_stats_serializer.rep_dump(
-            {
-                "status": "ok",
-                "data_size": stats.data_size,
-                "metadata_size": stats.metadata_size,
-                "realms": stats.realms,
-                "users": stats.users,
-                "active_users": stats.active_users,
-                "users_per_profile_detail": stats.users_per_profile_detail,
-            }
+        return OrganizationStatsRepOk(
+            data_size=stats.data_size,
+            metadata_size=stats.metadata_size,
+            realms=stats.realms,
+            users=stats.users,
+            active_users=stats.active_users,
+            users_per_profile_detail=list(stats.users_per_profile_detail),
         )
 
     @api("organization_bootstrap", client_types=[ClientType.APIV1_ANONYMOUS, ClientType.ANONYMOUS])

@@ -119,6 +119,20 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::MessageGetRepUnknownStatus>()?;
     m.add_class::<protocol::Message>()?;
 
+    // Organization
+    m.add_class::<protocol::OrganizationStatsReq>()?;
+    m.add_class::<protocol::OrganizationStatsRep>()?;
+    m.add_class::<protocol::OrganizationStatsRepOk>()?;
+    m.add_class::<protocol::OrganizationStatsRepNotAllowed>()?;
+    m.add_class::<protocol::OrganizationStatsRepNotFound>()?;
+    m.add_class::<protocol::OrganizationStatsRepUnknownStatus>()?;
+    m.add_class::<protocol::OrganizationConfigReq>()?;
+    m.add_class::<protocol::OrganizationConfigRep>()?;
+    m.add_class::<protocol::OrganizationConfigRepOk>()?;
+    m.add_class::<protocol::OrganizationConfigRepNotFound>()?;
+    m.add_class::<protocol::OrganizationConfigRepUnknownStatus>()?;
+    m.add_class::<protocol::UsersPerProfileDetailItem>()?;
+
     // Vlob
     m.add_class::<protocol::VlobCreateReq>()?;
     m.add_class::<protocol::VlobCreateRep>()?;
