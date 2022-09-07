@@ -8,7 +8,7 @@ from parsec.core.fs.storage.workspace_storage import (
     workspace_storage_non_speculative_init,
     AnyWorkspaceStorage,
     WorkspaceStorage,
-    WorkspaceStorageTimestamped,
+    WorkspaceStorageSnapshot,
 )
 
 __all__ = (
@@ -21,5 +21,5 @@ __all__ = (
     "workspace_storage_non_speculative_init",
     "AnyWorkspaceStorage",
     "WorkspaceStorage",
-    "WorkspaceStorageTimestamped",
+    "WorkspaceStorageSnapshot",
 )

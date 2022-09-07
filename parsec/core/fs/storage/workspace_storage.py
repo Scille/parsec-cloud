@@ -48,7 +48,7 @@ else:
 
 DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024
 
-AnyWorkspaceStorage = Union["WorkspaceStorage", "WorkspaceStorageTimestamped"]
+AnyWorkspaceStorage = Union["WorkspaceStorage", "WorkspaceStorageSnapshot"]
 
 __all__ = [
     "WorkspaceStorage",
@@ -263,11 +263,11 @@ class WorkspaceStorage:
 
     # Timestamped workspace
 
-    def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
-        return WorkspaceStorageTimestamped(self, timestamp)
+    def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageSnapshot":
+        return WorkspaceStorageSnapshot(self, timestamp)
 
 
-class WorkspaceStorageTimestamped:
+class WorkspaceStorageSnapshot:
     """Timestamped version to access a local storage as it was at a given timestamp
 
     That includes:
@@ -427,5 +427,5 @@ class WorkspaceStorageTimestamped:
     def get_prevent_sync_pattern_fully_applied(self) -> bool:
         return self.workspace_storage.get_prevent_sync_pattern_fully_applied()
 
-    def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageTimestamped":
-        return WorkspaceStorageTimestamped(self.workspace_storage, timestamp)
+    def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageSnapshot":
+        return WorkspaceStorageSnapshot(self.workspace_storage, timestamp)
