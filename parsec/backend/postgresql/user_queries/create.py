@@ -231,7 +231,7 @@ async def _do_create_user_with_human_handle(
     if len(not_revoked_users) != 1 or not_revoked_users[0]["user_id"] != user.user_id.str:
         # Exception cancels the transaction so the user insertion is automatically cancelled
         raise UserAlreadyExistsError(
-            f"Human handle `{user.human_handle}` already corresponds to a non-revoked user"
+            f"Human handle `{user.human_handle.str}` already corresponds to a non-revoked user"
         )
 
 

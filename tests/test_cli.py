@@ -31,6 +31,7 @@ from click.testing import CliRunner
 from parsec import __version__ as parsec_version
 from parsec.cli import cli
 from parsec.backend.postgresql import MigrationItem
+from parsec.api.protocol import RealmID
 from parsec.core.types import BackendAddr, EntryID
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.types import (
@@ -665,17 +666,17 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         stdout = p.stdout.decode()
         assert alice1_slughash[:3] in stdout
         assert (
-            f"{org}: {alice_human_handle_label} <{alice_human_handle_email}> @ {alice1_device_label}"
+            f"{org.str}: {alice_human_handle_label} <{alice_human_handle_email}> @ {alice1_device_label}"
             in stdout
         )
         assert alice2_slughash[:3] in stdout
         assert (
-            f"{org}: {alice_human_handle_label} <{alice_human_handle_email}> @ {alice2_device_label}"
+            f"{org.str}: {alice_human_handle_label} <{alice_human_handle_email}> @ {alice2_device_label}"
             in stdout
         )
         assert bob1_slughash[:3] in stdout
         assert (
-            f"{org}: {bob_human_handle_label} <{bob_human_handle_email}> @ {bob_device_label}"
+            f"{org.str}: {bob_human_handle_label} <{bob_human_handle_email}> @ {bob_device_label}"
             in stdout
         )
 
@@ -1090,10 +1091,10 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
                 f"backend sequester update_service {common_args} --enable --service {service_id}",
             )
 
-        async def export_service(service_id: str, realm: str, path: str):
+        async def export_service(service_id: str, realm: RealmID, path: str):
             return await _cli_invoke_in_thread(
                 runner,
-                f"backend sequester export_realm {common_args} --service {service_id} --realm {realm} --output {path} -b MOCKED",
+                f"backend sequester export_realm {common_args} --service {service_id} --realm {realm.str} --output {path} -b MOCKED",
             )
 
         # Assert no service configured

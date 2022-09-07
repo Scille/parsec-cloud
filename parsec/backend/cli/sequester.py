@@ -286,7 +286,7 @@ async def _human_accesses(
                 user_info += f", revoked on {user.revoked_on}"
             print(base_indent + f"User {display_user} ({user_info})")
             for realm_id, granted_roles in per_realm_granted_role.items():
-                display_realm = click.style(str(realm_id), fg="yellow")
+                display_realm = click.style(realm_id.str, fg="yellow")
                 print(base_indent + f"\tRealm {display_realm}")
                 for granted_role in granted_roles:
                     if granted_role.role is None:

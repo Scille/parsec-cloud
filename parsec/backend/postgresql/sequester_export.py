@@ -274,7 +274,7 @@ AND organization = (SELECT _id FROM organization WHERE organization_id = $1)
 )
 """,
         organization_id.str,
-        realm_id,
+        realm_id.uuid,
     )
 
     def _sqlite_save_realm_role_certifs():
@@ -366,7 +366,7 @@ WHERE
             AND organization = (SELECT _id FROM organization WHERE organization_id = $2)
     )
 """,
-                self.realm_id,
+                self.realm_id.uuid,
                 self.organization_id.str,
             )
             to_export_count = rows[0][0]
@@ -407,7 +407,7 @@ WHERE
     AND sequester_service_vlob_atom.service = (SELECT _id FROM sequester_service WHERE service_id = $4)
 LIMIT $5
 """,
-                self.realm_id,
+                self.realm_id.uuid,
                 self.organization_id.str,
                 batch_offset_marker,
                 self.service_id,
@@ -474,7 +474,7 @@ WHERE
             AND organization = (SELECT _id FROM organization WHERE organization_id = $2)
     )
 """,
-                self.realm_id,
+                self.realm_id.uuid,
                 self.organization_id.str,
             )
             to_export_count = rows[0][0]
@@ -506,7 +506,7 @@ WHERE
     AND _id >= $3
 LIMIT $4
 """,
-                self.realm_id,
+                self.realm_id.uuid,
                 self.organization_id.str,
                 batch_offset_marker,
                 batch_size,
