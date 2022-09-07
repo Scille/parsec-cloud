@@ -319,7 +319,7 @@ jobs:
 
   package-macos-test-app:
     runs-on: macos-${{ matrix.macos-version }}
-    name: '🍎 macOS ${{ matrix.macos-version }}: 📦 Packaging (test app)'
+    name: '🍎 macOS: 📦 Packaging (test app on macOS-${{ matrix.macos-version }})'
     needs: [ package-wheel, package-macos-build-app ]
     env:
       WHEEL_VERSION: ${{ needs.package-wheel.outputs.wheel-version }}
@@ -334,9 +334,13 @@ jobs:
           name: ${{ runner.os }}-${{ runner.arch }}-installer
           path: dist
 
+      # The lsregister call forces the app's entry in the Launch Services database. Otherwise the error
+      # 'kLSNoExecutableErr: The executable is missing' might be raised.
       - name: Test open app
         run: |
+          set -eux
           tar -xzvf dist/parsec-${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2
+          /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f parsec.app
           open parsec.app --args --diagnose
 
   package-electron-app:
