@@ -31,10 +31,11 @@ from parsec.core.types import (
     LocalFileManifest,
     LocalWorkspaceManifest,
 )
-from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
+from parsec.core.fs.exceptions import FSError
 from parsec.core.types.manifest import AnyLocalManifest
 from parsec._parsec import (
     WorkspaceStorage as _SyncWorkspaceStorage,
+    WorkspaceStorageSnapshot as _SyncWorkspaceStorageSnapshot,
     workspace_storage_non_speculative_init as _sync_workspace_storage_non_speculative_init,
 )
 
@@ -264,7 +265,7 @@ class WorkspaceStorage:
     # Timestamped workspace
 
     def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageSnapshot":
-        return WorkspaceStorageSnapshot(self, timestamp)
+        return WorkspaceStorageSnapshot(self.sync_instance, timestamp)
 
 
 class WorkspaceStorageSnapshot:
@@ -277,24 +278,34 @@ class WorkspaceStorageSnapshot:
     - the same lock mechanism to protect against race conditions, although it is useless there
     """
 
-    def __init__(self, workspace_storage: WorkspaceStorage, timestamp: DateTime):
-        self.workspace_storage = workspace_storage
+    def __init__(
+        self,
+        workspace_storage: Union[_SyncWorkspaceStorage, _SyncWorkspaceStorageSnapshot],
+        timestamp: DateTime,
+    ):
+        assert isinstance(workspace_storage, (_SyncWorkspaceStorage, _SyncWorkspaceStorageSnapshot))
 
-        self._cache: Dict[EntryID, AnyLocalManifest] = {}
-        self.open_fds: Dict[int, EntryID] = {}
+        if isinstance(workspace_storage, _SyncWorkspaceStorage):
+            sync_instance = _SyncWorkspaceStorageSnapshot(workspace_storage)
+        elif isinstance(workspace_storage, _SyncWorkspaceStorageSnapshot):
+            sync_instance = workspace_storage
+
         self.timestamp = timestamp
-        self.fd_counter: int = 1
+        self.sync_instance: _SyncWorkspaceStorageSnapshot = sync_instance
+        # Locking structures
+        self.locking_tasks: Dict[EntryID, trio.lowlevel.Task] = {}
+        self.entry_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
 
     @property
     def device(self) -> LocalDevice:
-        return self.workspace_storage.device
+        return self.sync_instance.device
 
     @property
     def workspace_id(self) -> EntryID:
-        return self.workspace_storage.workspace_id
+        return self.sync_instance.workspace_id
 
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:
-        return await self.workspace_storage.get_chunk(chunk_id)
+        return await trio.to_thread.run_sync(self.sync_instance.get_chunk, chunk_id)
 
     async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> NoReturn:
         self._throw_permission_error()
@@ -331,15 +342,12 @@ class WorkspaceStorageSnapshot:
         """
         Raises nothing, workspace manifest is guaranteed to be always available
         """
-        return self.workspace_storage.get_workspace_manifest()
+        return self.sync_instance.get_workspace_manifest()
 
     async def get_manifest(self, entry_id: EntryID) -> AnyLocalManifest:
         """Raises: FSLocalMissError"""
-        assert isinstance(entry_id, EntryID)
-        try:
-            return self._cache[entry_id]
-        except KeyError:
-            raise FSLocalMissError(entry_id)
+        manifest = await trio.to_thread.run_sync(self.sync_instance.get_manifest, entry_id)
+        return manifest
 
     async def set_manifest(
         self,
@@ -352,8 +360,8 @@ class WorkspaceStorageSnapshot:
         assert isinstance(entry_id, EntryID)
         if manifest.need_sync:
             self._throw_permission_error()
-        self.workspace_storage._check_lock_status(entry_id)
-        self._cache[entry_id] = manifest
+        self._check_lock_status(entry_id)
+        return await trio.to_thread.run_sync(self.sync_instance.set_manifest, entry_id, manifest)
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         pass
@@ -361,51 +369,46 @@ class WorkspaceStorageSnapshot:
     # Block interface
 
     async def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
-        return await self.workspace_storage.set_clean_block(block_id, block)
+        return await trio.to_thread.run_sync(self.sync_instance.set_clean_block, block_id, block)
 
     async def clear_clean_block(self, block_id: BlockID) -> None:
-        return await self.workspace_storage.clear_clean_block(block_id)
+        return await trio.to_thread.run_sync(self.sync_instance.clear_clean_block, block_id)
 
     async def get_dirty_block(self, block_id: BlockID) -> bytes:
-        return await self.workspace_storage.get_dirty_block(block_id)
+        return await trio.to_thread.run_sync(self.sync_instance.get_dirty_block, block_id)
 
     # File management interface
 
-    def _get_next_fd(self) -> FileDescriptor:
-        self.fd_counter += 1
-        return FileDescriptor(self.fd_counter)
-
     def create_file_descriptor(self, manifest: LocalFileManifest) -> FileDescriptor:
-        fd = self._get_next_fd()
-        self.open_fds[fd] = manifest.id
-        return fd
+        return cast(FileDescriptor, self.sync_instance.create_file_descriptor(manifest))
 
     async def load_file_descriptor(self, fd: FileDescriptor) -> LocalFileManifest:
-        try:
-            entry_id = self.open_fds[fd]
-        except KeyError:
-            raise FSInvalidFileDescriptor(fd)
-        manifest = await self.get_manifest(entry_id)
-        assert isinstance(manifest, LocalFileManifest)
+        manifest = await trio.to_thread.run_sync(self.sync_instance.load_file_descriptor, fd)
         return manifest
 
     def remove_file_descriptor(self, fd: FileDescriptor) -> None:
-        try:
-            self.open_fds.pop(fd)
-        except KeyError:
-            raise FSInvalidFileDescriptor(fd)
+        return self.sync_instance.remove_file_descriptor(fd)
 
     # Locking helpers
 
     @asynccontextmanager
     async def lock_entry_id(self, entry_id: EntryID) -> AsyncIterator[EntryID]:
-        async with self.workspace_storage.lock_entry_id(entry_id):
-            yield entry_id
+        async with self.entry_locks[entry_id]:
+            try:
+                self.locking_tasks[entry_id] = trio.lowlevel.current_task()
+                yield entry_id
+            finally:
+                del self.locking_tasks[entry_id]
 
     @asynccontextmanager
     async def lock_manifest(self, entry_id: EntryID) -> AsyncIterator[AnyLocalManifest]:
-        async with self.workspace_storage.lock_manifest(entry_id) as manifest:
-            yield manifest
+        async with self.lock_entry_id(entry_id):
+            yield await self.get_manifest(entry_id)
+
+    def _check_lock_status(self, entry_id: EntryID) -> None:
+        task = self.locking_tasks.get(entry_id)
+        if task != trio.lowlevel.current_task():
+            raise RuntimeError(f"Entry `{entry_id}` modified without being locked")
 
     # Prevent sync pattern interface
 
@@ -422,10 +425,11 @@ class WorkspaceStorageSnapshot:
         raise NotImplementedError
 
     def get_prevent_sync_pattern(self) -> Pattern[str]:
-        return self.workspace_storage.get_prevent_sync_pattern()
+        return self.sync_instance.get_prevent_sync_pattern()
 
     def get_prevent_sync_pattern_fully_applied(self) -> bool:
-        return self.workspace_storage.get_prevent_sync_pattern_fully_applied()
+        return self.sync_instance.get_prevent_sync_pattern_fully_applied()
 
     def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageSnapshot":
-        return WorkspaceStorageSnapshot(self.workspace_storage, timestamp)
+        wss = WorkspaceStorageSnapshot(self.sync_instance.to_timestamp(), timestamp)
+        return wss

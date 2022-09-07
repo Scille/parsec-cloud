@@ -87,6 +87,7 @@ from parsec._parsec_pyi.local_device import LocalDevice, UserInfo, DeviceInfo
 
 from parsec._parsec_pyi.storage import (
     WorkspaceStorage,
+    WorkspaceStorageSnapshot,
     PseudoFileDescriptor,
     workspace_storage_non_speculative_init,
 )
@@ -285,6 +286,7 @@ __all__ = [
     "DeviceInfo",
     # Storage
     "WorkspaceStorage",
+    "WorkspaceStorageSnapshot",
     "PseudoFileDescriptor",
     "workspace_storage_non_speculative_init",
     # File Operations

@@ -385,25 +385,64 @@ impl WorkspaceStorage {
     }
 
     /// Take a snapshot of the current [WorkspaceStorage]
-    pub fn snapshot(self, _timestamp: DateTime) -> WorkspaceStorageSnapshot {
+    pub fn to_timestamp(self, _timestamp: DateTime) -> WorkspaceStorageSnapshot {
         WorkspaceStorageSnapshot::from(self)
     }
 }
 
 /// Snapshot of a [WorkspaceStorage] at a given time.
+#[derive(Clone)]
 pub struct WorkspaceStorageSnapshot {
-    cache: Mutex<HashMap<EntryID, LocalManifest>>,
+    cache: Arc<Mutex<HashMap<EntryID, LocalManifest>>>,
+    open_fds: Arc<Mutex<HashMap<FileDescriptor, EntryID>>>,
+    fd_counter: Arc<Mutex<u32>>,
     pub workspace_storage: WorkspaceStorage,
 }
 
 impl From<WorkspaceStorage> for WorkspaceStorageSnapshot {
     fn from(workspace_storage: WorkspaceStorage) -> Self {
         Self {
-            cache: Mutex::new(HashMap::default()),
+            cache: Arc::new(Mutex::new(HashMap::default())),
             workspace_storage,
+            fd_counter: Arc::new(Mutex::new(0)),
+            open_fds: Arc::new(Mutex::new(HashMap::default())),
         }
     }
 }
+
+// File management interface.
+
+impl WorkspaceStorageSnapshot {
+    fn get_next_fd(&self) -> FileDescriptor {
+        let mut counter = self.fd_counter.lock().expect("Mutex is poisoned");
+        *counter += 1;
+        FileDescriptor(*counter)
+    }
+
+    pub fn create_file_descriptor(&self, manifest: LocalFileManifest) -> FileDescriptor {
+        let fd = self.get_next_fd();
+        self.open_fds
+            .lock()
+            .expect("Mutex is poisoned")
+            .insert(fd, manifest.base.id);
+        fd
+    }
+
+    pub fn load_file_descriptor(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
+        match self.open_fds.lock().expect("Mutex is poisoned").get(&fd) {
+            Some(&entry_id) => match self.get_manifest(entry_id) {
+                Ok(LocalManifest::File(manifest)) => Ok(manifest),
+                _ => Err(FSError::LocalMiss(*entry_id)),
+            },
+            None => Err(FSError::InvalidFileDescriptor(fd)),
+        }
+    }
+
+    pub fn remove_file_descriptor(&self, fd: FileDescriptor) -> Option<EntryID> {
+        self.open_fds.lock().expect("Mutex is poisoned").remove(&fd)
+    }
+}
+
 impl WorkspaceStorageSnapshot {
     /// Return a chunk identified by `chunk_id`.
     /// Will look for the chunk in the [ChunkStorage] & [BlockStorage].
@@ -425,11 +464,18 @@ impl WorkspaceStorageSnapshot {
             .ok_or(FSError::LocalMiss(*entry_id))
     }
 
-    pub fn set_manifest(&self, entry_id: EntryID, manifest: LocalManifest) -> FSResult<()> {
+    pub fn set_manifest(
+        &self,
+        entry_id: EntryID,
+        manifest: LocalManifest,
+        check_lock_status: bool,
+    ) -> FSResult<()> {
         if manifest.need_sync() {
             Err(FSError::WorkspaceStorageTimestamped)
         } else {
-            self.check_lock_status(entry_id)?;
+            if check_lock_status {
+                self.check_lock_status(entry_id)?;
+            }
             self.cache
                 .lock()
                 .expect("Mutex is poisoned")
@@ -470,20 +516,6 @@ impl WorkspaceStorageSnapshot {
         self.workspace_storage.get_dirty_block(block_id)
     }
 
-    // File management interface.
-
-    pub fn create_file_descriptor(&self, manifest: LocalFileManifest) -> FileDescriptor {
-        self.workspace_storage.create_file_descriptor(manifest)
-    }
-
-    pub fn load_file_descriptor(&self, fd: FileDescriptor) -> FSResult<LocalFileManifest> {
-        self.workspace_storage.load_file_descriptor(fd)
-    }
-
-    pub fn remove_file_descriptor(&self, fd: FileDescriptor) -> Option<EntryID> {
-        self.workspace_storage.remove_file_descriptor(fd)
-    }
-
     pub fn lock_entry_id(&self, entry_id: EntryID) -> Arc<Mutex<()>> {
         self.workspace_storage.lock_entry_id(entry_id)
     }
@@ -493,8 +525,8 @@ impl WorkspaceStorageSnapshot {
     }
 
     /// Take a snapshot of the current `workspace storage`
-    pub fn snapshot(self) -> Self {
-        Self::from(self.workspace_storage)
+    pub fn to_timestamp(&self) -> Self {
+        Self::from(self.workspace_storage.clone())
     }
 }
 

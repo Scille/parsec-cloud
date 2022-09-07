@@ -21,7 +21,7 @@ import_exception!(parsec.core.fs.exceptions, FSInvalidFileDescriptor);
 
 /// WorkspaceStorage's binding is implemented with allow_threads because its
 /// methods are called in trio.to_thread to connect the sync and async world
-#[pyclass]
+#[pyclass(module = "parsec._parsec")]
 #[derive(Clone)]
 pub(crate) struct WorkspaceStorage(
     pub libparsec::core_fs::WorkspaceStorage,
@@ -321,6 +321,10 @@ impl WorkspaceStorage {
         })
     }
 
+    fn to_timestamp(&self) -> PyResult<WorkspaceStorageSnapshot> {
+        WorkspaceStorageSnapshot::new(self.clone())
+    }
+
     #[getter]
     fn device(&self) -> PyResult<LocalDevice> {
         Ok(LocalDevice(self.0.device.clone()))
@@ -329,6 +333,154 @@ impl WorkspaceStorage {
     #[getter]
     fn workspace_id(&self) -> PyResult<EntryID> {
         Ok(EntryID(self.0.workspace_id))
+    }
+}
+
+#[pyclass(module = "parsec._parsec")]
+#[derive(Clone)]
+pub(crate) struct WorkspaceStorageSnapshot(
+    pub libparsec::core_fs::WorkspaceStorageSnapshot,
+    pub Option<PyObject>,
+);
+
+#[pymethods]
+impl WorkspaceStorageSnapshot {
+    #[new]
+    fn new(workspace_storage: WorkspaceStorage) -> PyResult<Self> {
+        Ok(Self(
+            libparsec::core_fs::WorkspaceStorageSnapshot::from(workspace_storage.0),
+            workspace_storage.1,
+        ))
+    }
+
+    fn create_file_descriptor(&self, py: Python, manifest: LocalFileManifest) -> PyResult<u32> {
+        py.allow_threads(|| Ok(self.0.create_file_descriptor(manifest.0).0))
+    }
+
+    fn load_file_descriptor(&self, py: Python, fd: u32) -> PyResult<LocalFileManifest> {
+        py.allow_threads(|| {
+            Ok(LocalFileManifest(
+                self.0
+                    .load_file_descriptor(libparsec::types::FileDescriptor(fd))
+                    .map_err(|e| FSInvalidFileDescriptor::new_err(e.to_string()))?,
+            ))
+        })
+    }
+
+    fn remove_file_descriptor(&self, py: Python, fd: u32) -> PyResult<()> {
+        py.allow_threads(|| {
+            self.0
+                .remove_file_descriptor(libparsec::types::FileDescriptor(fd))
+                .map(|_| ())
+                .ok_or_else(|| FSInvalidFileDescriptor::new_err(""))
+        })
+    }
+
+    fn get_chunk<'py>(&self, py: Python<'py>, chunk_id: ChunkID) -> PyResult<&'py PyBytes> {
+        let chunk = py
+            .allow_threads(|| self.0.get_chunk(chunk_id.0))
+            .map_err(|_| FSLocalMissError::new_err(chunk_id))?;
+        Ok(PyBytes::new(py, &chunk))
+    }
+
+    fn get_workspace_manifest(&self, py: Python) -> PyResult<LocalWorkspaceManifest> {
+        py.allow_threads(|| {
+            Ok(LocalWorkspaceManifest(
+                self.0
+                    .get_workspace_manifest()
+                    .map_err(|e| PyValueError::new_err(e.to_string()))?,
+            ))
+        })
+    }
+
+    fn get_manifest(&self, py: Python, entry_id: EntryID) -> PyResult<PyObject> {
+        let manifest = py
+            .allow_threads(|| self.0.get_manifest(entry_id.0))
+            .map_err(|_| FSLocalMissError::new_err(entry_id))?;
+        Ok(match manifest {
+            libparsec::client_types::LocalManifest::File(manifest) => {
+                LocalFileManifest(manifest).into_py(py)
+            }
+            libparsec::client_types::LocalManifest::Folder(manifest) => {
+                LocalFolderManifest(manifest).into_py(py)
+            }
+            libparsec::client_types::LocalManifest::Workspace(manifest) => {
+                LocalWorkspaceManifest(manifest).into_py(py)
+            }
+            libparsec::client_types::LocalManifest::User(manifest) => {
+                LocalUserManifest(manifest).into_py(py)
+            }
+        })
+    }
+
+    fn set_manifest(&self, py: Python, entry_id: EntryID, manifest: PyObject) -> PyResult<()> {
+        let manifest = if let Ok(manifest) = manifest.extract::<LocalFileManifest>(py) {
+            libparsec::client_types::LocalManifest::File(manifest.0)
+        } else if let Ok(manifest) = manifest.extract::<LocalFolderManifest>(py) {
+            libparsec::client_types::LocalManifest::Folder(manifest.0)
+        } else if let Ok(manifest) = manifest.extract::<LocalWorkspaceManifest>(py) {
+            libparsec::client_types::LocalManifest::Workspace(manifest.0)
+        } else {
+            libparsec::client_types::LocalManifest::User(
+                manifest.extract::<LocalUserManifest>(py)?.0,
+            )
+        };
+        py.allow_threads(|| {
+            self.0
+                .set_manifest(entry_id.0, manifest, false)
+                .map_err(|e| PyValueError::new_err(e.to_string()))
+        })
+    }
+
+    fn get_prevent_sync_pattern<'py>(&'py self, py: Python<'py>) -> PyResult<&'py PyAny> {
+        if let Some(regex) = &self.1 {
+            regex
+                .cast_as::<PyAny>(py)
+                .map_err(|_| PyValueError::new_err("Impossible to fail"))
+        } else {
+            let prevent_sync_pattern = py.allow_threads(|| self.0.get_prevent_sync_pattern());
+            rs_to_py_regex(py, &prevent_sync_pattern)
+        }
+    }
+
+    fn get_prevent_sync_pattern_fully_applied(&self, py: Python) -> PyResult<bool> {
+        py.allow_threads(|| Ok(self.0.get_prevent_sync_pattern_fully_applied()))
+    }
+
+    fn set_clean_block(&self, py: Python, block_id: BlockID, block: &[u8]) -> PyResult<()> {
+        py.allow_threads(|| {
+            self.0
+                .set_clean_block(block_id.0, block)
+                .map_err(|e| PyValueError::new_err(e.to_string()))
+        })
+    }
+
+    fn clear_clean_block(&self, py: Python, block_id: BlockID) -> PyResult<()> {
+        py.allow_threads(|| {
+            self.0.clear_clean_block(block_id.0);
+            Ok(())
+        })
+    }
+
+    fn get_dirty_block<'py>(&self, py: Python<'py>, block_id: BlockID) -> PyResult<&'py PyBytes> {
+        let block = py
+            .allow_threads(|| self.0.get_dirty_block(block_id.0))
+            .map_err(|_| FSLocalMissError::new_err(block_id))?;
+        Ok(PyBytes::new(py, &block))
+    }
+
+    fn to_timestamp(&self) -> PyResult<Self> {
+        Ok(Self(self.0.to_timestamp(), self.1.clone()))
+    }
+
+    #[getter]
+    fn device(&self) -> PyResult<LocalDevice> {
+        Ok(LocalDevice(self.0.workspace_storage.device.clone()))
+    }
+
+    #[getter]
+    fn workspace_id(&self) -> PyResult<EntryID> {
+        Ok(EntryID(self.0.workspace_storage.workspace_id))
     }
 }
 
