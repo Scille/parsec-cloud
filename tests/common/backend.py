@@ -23,7 +23,11 @@ from parsec.core.types import BackendAddr, LocalDevice
 from parsec.backend.app import BackendApp
 from parsec.backend import backend_app_factory
 from parsec.backend.asgi import app_factory
-from parsec.backend.config import BackendConfig, MockedEmailConfig, MockedBlockStoreConfig
+from parsec.backend.config import (
+    BackendConfig,
+    MockedEmailConfig,
+    MockedBlockStoreConfig,
+)
 
 from tests.common.freeze_time import freeze_time
 from tests.common.trio_clock import real_clock_timeout
@@ -85,7 +89,11 @@ async def server_factory(handle_client: Callable):
 
         listeners = await nursery.start(
             partial(
-                trio.serve_tcp, handle_client, port=0, host="127.0.0.1", handler_nursery=nursery
+                trio.serve_tcp,
+                handle_client,
+                port=0,
+                host="127.0.0.1",
+                handler_nursery=nursery,
             )
         )
         yield listeners[0].socket.getsockname()[1]

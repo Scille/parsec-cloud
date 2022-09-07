@@ -17,7 +17,11 @@ from parsec.backend.utils import catch_protocol_errors, api, ClientType
 class BasePingComponent:
     @api(
         "ping",
-        client_types=[ClientType.AUTHENTICATED, ClientType.INVITED],
+        client_types=[
+            ClientType.AUTHENTICATED,
+            ClientType.INVITED,
+            ClientType.APIV1_ANONYMOUS,
+        ],
     )
     @catch_protocol_errors
     @api_typed_msg_adapter(
