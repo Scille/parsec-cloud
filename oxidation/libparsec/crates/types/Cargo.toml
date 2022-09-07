@@ -35,7 +35,7 @@ unicode-normalization = "0.1.21"
 paste = "1.0.9"
 flate2 = "1.0.24"
 rand = "0.8.4"
-thiserror = "1.0.33"
+thiserror = "1.0.34"
 email-address-parser = "2.0.0-rc2"
 
 [dev-dependencies]
