@@ -1,15 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use diesel::dsl::count_star;
-use diesel::{sql_query, table, AsChangeset, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
-use std::sync::Mutex;
+use diesel::{
+    dsl::count_star, sql_query, table, AsChangeset, ExpressionMethods, Insertable, QueryDsl,
+    RunQueryDsl,
+};
+use std::sync::{Arc, Mutex};
 
 use libparsec_crypto::SecretKey;
 use libparsec_types::{ChunkID, TimeProvider, DEFAULT_BLOCK_SIZE};
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
-use crate::error::{FSError, FSResult};
-use crate::extensions::CoalesceTotalSize;
+use crate::{
+    error::{FSError, FSResult},
+    extensions::CoalesceTotalSize,
+};
 
 table! {
     chunks (chunk_id) {
@@ -280,8 +284,9 @@ pub(crate) trait BlockStorageTrait: ChunkStorageTrait {
 }
 
 // Interface to access the local chunks of data
+#[derive(Clone)]
 pub(crate) struct ChunkStorage {
-    conn: Mutex<SqliteConn>,
+    conn: Arc<Mutex<SqliteConn>>,
     local_symkey: SecretKey,
     time_provider: TimeProvider,
 }
@@ -301,7 +306,7 @@ impl ChunkStorageTrait for ChunkStorage {
 impl ChunkStorage {
     pub fn new(
         local_symkey: SecretKey,
-        conn: Mutex<SqliteConn>,
+        conn: Arc<Mutex<SqliteConn>>,
         time_provider: TimeProvider,
     ) -> FSResult<Self> {
         let instance = Self {
@@ -315,8 +320,9 @@ impl ChunkStorage {
 }
 
 // Interface for caching the data blocks.
+#[derive(Clone)]
 pub(crate) struct BlockStorage {
-    conn: Mutex<SqliteConn>,
+    conn: Arc<Mutex<SqliteConn>>,
     local_symkey: SecretKey,
     cache_size: u64,
     time_provider: TimeProvider,
@@ -343,7 +349,7 @@ impl BlockStorageTrait for BlockStorage {
 impl BlockStorage {
     pub fn new(
         local_symkey: SecretKey,
-        conn: Mutex<SqliteConn>,
+        conn: Arc<Mutex<SqliteConn>>,
         cache_size: u64,
         time_provider: TimeProvider,
     ) -> FSResult<Self> {
@@ -374,7 +380,7 @@ mod tests {
     fn chunk_storage(tmp_path: TmpPath) {
         let db_path = tmp_path.join("chunk_storage.sqlite");
         let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
-        let conn = Mutex::new(pool.conn().unwrap());
+        let conn = Arc::new(Mutex::new(pool.conn().unwrap()));
         let local_symkey = SecretKey::generate();
 
         let chunk_storage = ChunkStorage::new(local_symkey, conn, TimeProvider::default()).unwrap();
@@ -420,7 +426,7 @@ mod tests {
         assert_eq!(chunk_storage.get_nb_blocks().unwrap(), N as i64);
         assert_eq!(chunk_storage.get_total_size().unwrap(), N as i64 * 44);
 
-        let new_conn = Mutex::new(pool.conn().unwrap());
+        let new_conn = Arc::new(Mutex::new(pool.conn().unwrap()));
         let local_symkey = SecretKey::generate();
         let cache_size = *DEFAULT_BLOCK_SIZE * 1024;
 

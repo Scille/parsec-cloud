@@ -22,6 +22,7 @@ import_exception!(parsec.core.fs.exceptions, FSInvalidFileDescriptor);
 /// WorkspaceStorage's binding is implemented with allow_threads because its
 /// methods are called in trio.to_thread to connect the sync and async world
 #[pyclass]
+#[derive(Clone)]
 pub(crate) struct WorkspaceStorage(
     pub libparsec::core_fs::WorkspaceStorage,
     pub Option<PyObject>,

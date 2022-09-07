@@ -95,7 +95,7 @@ impl UserStorage {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Mutex;
+    use std::sync::{Arc, Mutex};
 
     use libparsec_crypto::SecretKey;
     use libparsec_types::{DateTime, UserManifest};
@@ -110,7 +110,7 @@ mod tests {
     fn user_storage(alice: &Device, timestamp: DateTime, tmp_path: TmpPath) {
         let db_path = tmp_path.join("user_storage.sqlite");
         let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
-        let conn = Mutex::new(pool.conn().unwrap());
+        let conn = Arc::new(Mutex::new(pool.conn().unwrap()));
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();
         let user_manifest_id = alice.user_manifest_id;

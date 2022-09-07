@@ -6,16 +6,19 @@ use diesel::{
 };
 use fancy_regex::Regex;
 use libparsec_crypto::{CryptoError, SecretKey};
-use std::collections::hash_map::RandomState;
-use std::collections::{HashMap, HashSet};
-use std::sync::Mutex;
+use std::{
+    collections::{hash_map::RandomState, HashMap, HashSet},
+    sync::{Arc, Mutex},
+};
 
 use libparsec_client_types::LocalManifest;
 use libparsec_types::{BlockID, ChunkID, EntryID};
 
 use super::local_database::{SqliteConn, SQLITE_MAX_VARIABLE_NUMBER};
-use crate::error::{FSError, FSResult};
-use crate::storage::chunk_storage::chunks;
+use crate::{
+    error::{FSError, FSResult},
+    storage::chunk_storage::chunks,
+};
 
 table! {
     prevent_sync_pattern (_id) {
@@ -84,20 +87,21 @@ struct NewPreventSyncPattern<'a> {
     fully_applied: bool,
 }
 
+#[derive(Clone)]
 pub struct ManifestStorage {
     local_symkey: SecretKey,
-    conn: Mutex<SqliteConn>,
+    conn: Arc<Mutex<SqliteConn>>,
     pub realm_id: EntryID,
     /// This cache contains all the manifests that have been set or accessed
     /// since the last call to `clear_memory_cache`
-    pub(crate) cache: Mutex<HashMap<EntryID, LocalManifest>>,
+    pub(crate) cache: Arc<Mutex<HashMap<EntryID, LocalManifest>>>,
     /// This dictionary keeps track of all the entry ids of the manifests
     /// that have been added to the cache but still needs to be written to
     /// the conn. The corresponding value is a set with the ids of all
     /// the chunks that needs to be removed from the conn after the
     /// manifest is written. Note: this set might be empty but the manifest
     /// still requires to be flushed.
-    cache_ahead_of_localdb: Mutex<HashMap<EntryID, HashSet<ChunkOrBlockID>>>,
+    cache_ahead_of_localdb: Arc<Mutex<HashMap<EntryID, HashSet<ChunkOrBlockID>>>>,
 }
 
 impl Drop for ManifestStorage {
@@ -110,15 +114,15 @@ impl Drop for ManifestStorage {
 impl ManifestStorage {
     pub fn new(
         local_symkey: SecretKey,
-        conn: Mutex<SqliteConn>,
+        conn: Arc<Mutex<SqliteConn>>,
         realm_id: EntryID,
     ) -> FSResult<Self> {
         let instance = Self {
             local_symkey,
             conn,
             realm_id,
-            cache: Mutex::new(HashMap::new()),
-            cache_ahead_of_localdb: Mutex::new(HashMap::new()),
+            cache: Arc::new(Mutex::new(HashMap::new())),
+            cache_ahead_of_localdb: Arc::new(Mutex::new(HashMap::new())),
         };
         instance.create_db()?;
         Ok(instance)
@@ -583,7 +587,7 @@ mod tests {
         let t2 = t1.add_us(1);
         let db_path = tmp_path.join("manifest_storage.sqlite");
         let pool = SqlitePool::new(db_path.to_str().unwrap()).unwrap();
-        let conn = Mutex::new(pool.conn().unwrap());
+        let conn = Arc::new(Mutex::new(pool.conn().unwrap()));
         let local_symkey = SecretKey::generate();
         let realm_id = EntryID::default();
 

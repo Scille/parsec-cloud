@@ -22,8 +22,8 @@ use crate::storage::version::{
 
 pub const DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE: u64 = 512 * 1024 * 1024;
 
-#[derive(Default)]
-struct Locker<T: Eq + Hash>(Mutex<HashMap<T, Arc<Mutex<()>>>>);
+#[derive(Default, Clone)]
+struct Locker<T: Eq + Hash>(Arc<Mutex<HashMap<T, Arc<Mutex<()>>>>>);
 
 enum Status {
     Locked,
@@ -53,16 +53,17 @@ impl<T: Eq + Hash + Copy> Locker<T> {
 
 /// WorkspaceStorage is implemented with interior mutability because
 /// we want some parallelism between its fields (e.g entry_locks)
+#[derive(Clone)]
 pub struct WorkspaceStorage {
     pub device: LocalDevice,
     pub workspace_id: EntryID,
-    open_fds: Mutex<HashMap<FileDescriptor, EntryID>>,
-    fd_counter: Mutex<u32>,
+    open_fds: Arc<Mutex<HashMap<FileDescriptor, EntryID>>>,
+    fd_counter: Arc<Mutex<u32>>,
     block_storage: BlockStorage,
     chunk_storage: ChunkStorage,
     manifest_storage: ManifestStorage,
-    prevent_sync_pattern: Mutex<Regex>,
-    prevent_sync_pattern_fully_applied: Mutex<bool>,
+    prevent_sync_pattern: Arc<Mutex<Regex>>,
+    prevent_sync_pattern_fully_applied: Arc<Mutex<bool>>,
     entry_locks: Locker<EntryID>,
 }
 
@@ -92,20 +93,20 @@ impl WorkspaceStorage {
 
         let block_storage = BlockStorage::new(
             device.local_symkey.clone(),
-            Mutex::new(cache_pool.conn()?),
+            Arc::new(Mutex::new(cache_pool.conn()?)),
             cache_size,
             device.time_provider.clone(),
         )?;
 
         let manifest_storage = ManifestStorage::new(
             device.local_symkey.clone(),
-            Mutex::new(data_pool.conn()?),
+            Arc::new(Mutex::new(data_pool.conn()?)),
             workspace_id,
         )?;
 
         let chunk_storage = ChunkStorage::new(
             device.local_symkey.clone(),
-            Mutex::new(data_pool.conn()?),
+            Arc::new(Mutex::new(data_pool.conn()?)),
             device.time_provider.clone(),
         )?;
 
@@ -117,15 +118,17 @@ impl WorkspaceStorage {
             device,
             workspace_id,
             // File descriptors
-            open_fds: Mutex::new(HashMap::new()),
-            fd_counter: Mutex::new(0),
+            open_fds: Arc::new(Mutex::new(HashMap::new())),
+            fd_counter: Arc::new(Mutex::new(0)),
             // Manifest and block storage
             block_storage,
             chunk_storage,
             manifest_storage,
             // Pattern attributes
-            prevent_sync_pattern: Mutex::new(prevent_sync_pattern),
-            prevent_sync_pattern_fully_applied: Mutex::new(prevent_sync_pattern_fully_applied),
+            prevent_sync_pattern: Arc::new(Mutex::new(prevent_sync_pattern)),
+            prevent_sync_pattern_fully_applied: Arc::new(Mutex::new(
+                prevent_sync_pattern_fully_applied,
+            )),
             // Locking structure
             entry_locks: Locker::default(),
         };
@@ -387,7 +390,6 @@ impl WorkspaceStorage {
     }
 }
 
-
 /// Snapshot of a [WorkspaceStorage] at a given time.
 pub struct WorkspaceStorageSnapshot {
     cache: Mutex<HashMap<EntryID, LocalManifest>>,
@@ -508,7 +510,7 @@ pub fn workspace_storage_non_speculative_init(
             .to_str()
             .expect("Non-Utf-8 character found in data_path"),
     )?;
-    let conn = Mutex::new(data_pool.conn()?);
+    let conn = Arc::new(Mutex::new(data_pool.conn()?));
     let manifest_storage = ManifestStorage::new(device.local_symkey.clone(), conn, workspace_id)?;
     let timestamp = timestamp.unwrap_or_else(|| device.now());
     let manifest =
