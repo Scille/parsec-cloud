@@ -535,13 +535,15 @@ impl RealmStartReencryptionMaintenanceReq {
     }
 
     #[getter]
-    fn per_participant_message(&self) -> PyResult<HashMap<UserID, Vec<u8>>> {
+    fn per_participant_message<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<HashMap<UserID, &'py PyBytes>> {
         Ok(self
             .0
             .per_participant_message
-            .clone()
-            .into_iter()
-            .map(|(k, v)| (UserID(k), v))
+            .iter()
+            .map(|(k, v)| (UserID(k.clone()), PyBytes::new(py, v)))
             .collect())
     }
 }
