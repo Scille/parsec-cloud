@@ -524,6 +524,11 @@ impl WorkspaceStorageSnapshot {
         self.workspace_storage.release_entry_id(entry_id, guard)
     }
 
+    /// Clear the local manifest cache
+    pub fn clear_local_cache(&self) {
+        self.cache.lock().expect("Mutex is poisoned").clear()
+    }
+
     /// Take a snapshot of the current `workspace storage`
     pub fn to_timestamp(&self) -> Self {
         Self::from(self.workspace_storage.clone())

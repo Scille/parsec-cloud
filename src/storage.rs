@@ -473,6 +473,10 @@ impl WorkspaceStorageSnapshot {
         Ok(Self(self.0.to_timestamp(), self.1.clone()))
     }
 
+    fn clear_local_cache(&self, py: Python) {
+        py.allow_threads(|| self.0.clear_local_cache())
+    }
+
     #[getter]
     fn device(&self) -> PyResult<LocalDevice> {
         Ok(LocalDevice(self.0.workspace_storage.device.clone()))

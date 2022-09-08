@@ -424,6 +424,9 @@ class WorkspaceStorageSnapshot:
     async def get_local_block_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
         raise NotImplementedError
 
+    async def clear_local_cache(self) -> None:
+        return await trio.to_thread.run_sync(self.sync_instance.clear_local_cache)
+
     def get_prevent_sync_pattern(self) -> Pattern[str]:
         return self.sync_instance.get_prevent_sync_pattern()
 
