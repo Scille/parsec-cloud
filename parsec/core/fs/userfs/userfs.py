@@ -21,6 +21,24 @@ from contextlib import asynccontextmanager
 from parsec._parsec import (
     DateTime,
     MessageGetRepOk,
+    RealmCreateRepOk,
+    RealmCreateRepAlreadyExists,
+    RealmStatusRepOk,
+    RealmStatusRepNotAllowed,
+    RealmUpdateRolesRepOk,
+    RealmUpdateRolesRepAlreadyGranted,
+    RealmUpdateRolesRepInMaintenance,
+    RealmUpdateRolesRepNotAllowed,
+    RealmUpdateRolesRepRequireGreaterTimestamp,
+    RealmUpdateRolesRepUserRevoked,
+    RealmStartReencryptionMaintenanceRepOk,
+    RealmStartReencryptionMaintenanceRepNotAllowed,
+    RealmStartReencryptionMaintenanceRepInMaintenance,
+    RealmStartReencryptionMaintenanceRepParticipantMismatch,
+    RealmFinishReencryptionMaintenanceRepOk,
+    RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
+    RealmFinishReencryptionMaintenanceRepNotAllowed,
+    RealmFinishReencryptionMaintenanceRepNotInMaintenance,
     VlobCreateRepOk,
     VlobCreateRepAlreadyExists,
     VlobCreateRepInMaintenance,
@@ -183,13 +201,19 @@ class ReencryptionJob:
                 rep = await self.backend_cmds.realm_finish_reencryption_maintenance(
                     workspace_id, new_encryption_revision
                 )
-                if rep["status"] in ("not_in_maintenance", "bad_encryption_revision"):
+                if isinstance(
+                    rep,
+                    (
+                        RealmFinishReencryptionMaintenanceRepNotInMaintenance,
+                        RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
+                    ),
+                ):
                     raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
-                elif rep["status"] == "not_allowed":
+                elif isinstance(rep, RealmFinishReencryptionMaintenanceRepNotAllowed):
                     raise FSWorkspaceNoAccess(
                         f"Not allowed to do reencryption maintenance on workspace {workspace_id}: {rep}"
                     )
-                elif rep["status"] != "ok":
+                elif not isinstance(rep, RealmFinishReencryptionMaintenanceRepOk):
                     raise FSError(
                         f"Cannot do reencryption maintenance on workspace {workspace_id}: {rep}"
                     )
@@ -629,12 +653,12 @@ class UserFS:
             except BackendConnectionError as exc:
                 raise FSError(f"Cannot create user manifest's realm in backend: {exc}") from exc
 
-            if rep["status"] == "already_exists":
+            if isinstance(rep, RealmCreateRepAlreadyExists):
                 # It's possible a previous attempt to create this realm
                 # succeeded but we didn't receive the confirmation, hence
                 # we play idempotent here.
                 pass
-            elif rep["status"] != "ok":
+            elif not isinstance(rep, RealmCreateRepOk):
                 raise FSError(f"Cannot create user manifest's realm in backend: {rep}")
 
         # Sync placeholders
@@ -872,26 +896,26 @@ class UserFS:
         except BackendConnectionError as exc:
             raise FSError(f"Error while trying to set vlob group roles in backend: {exc}") from exc
 
-        if rep["status"] == "not_allowed":
+        if isinstance(rep, RealmUpdateRolesRepNotAllowed):
             raise FSSharingNotAllowedError(
                 f"Must be Owner or Manager on the workspace is mandatory to share it: {rep}"
             )
-        elif rep["status"] == "user_revoked":
+        elif isinstance(rep, RealmUpdateRolesRepUserRevoked):
             # That cache is probably not up-to-date if we get this error code
             self.remote_devices_manager.invalidate_user_cache(recipient)
             raise FSSharingNotAllowedError(f"The user `{recipient}` is revoked: {rep}")
-        elif rep["status"] == "require_greater_timestamp":
+        elif isinstance(rep, RealmUpdateRolesRepRequireGreaterTimestamp):
             return await self.workspace_share(
-                workspace_id, recipient, role, rep["strictly_greater_than"]
+                workspace_id, recipient, role, rep.strictly_greater_than
             )
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, RealmUpdateRolesRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 f"Cannot share workspace while it is in maintenance: {rep}"
             )
-        elif rep["status"] == "already_granted":
+        elif isinstance(rep, RealmUpdateRolesRepAlreadyGranted):
             # Stay idempotent
             return
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, RealmUpdateRolesRepOk):
             raise FSError(f"Error while trying to set vlob group roles in backend: {rep}")
 
     async def process_last_messages(self) -> Sequence[Tuple[int, Exception]]:
@@ -1181,18 +1205,18 @@ class UserFS:
         except BackendConnectionError as exc:
             raise FSError(f"Cannot start maintenance on workspace {workspace_id}: {exc}") from exc
 
-        if rep["status"] == "participants_mismatch":
+        if isinstance(rep, RealmStartReencryptionMaintenanceRepParticipantMismatch):
             # Catched by caller
             return False
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, RealmStartReencryptionMaintenanceRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 f"Workspace {workspace_id} already in maintenance: {rep}"
             )
-        elif rep["status"] == "not_allowed":
+        elif isinstance(rep, RealmStartReencryptionMaintenanceRepNotAllowed):
             raise FSWorkspaceNoAccess(
                 f"Not allowed to start maintenance on workspace {workspace_id}: {rep}"
             )
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, RealmStartReencryptionMaintenanceRepOk):
             raise FSError(f"Cannot start maintenance on workspace {workspace_id}: {rep}")
         return True
 
@@ -1268,14 +1292,14 @@ class UserFS:
                 f"Cannot continue maintenance on workspace {workspace_id}: {exc}"
             ) from exc
 
-        if rep["status"] == "not_allowed":
+        if isinstance(rep, RealmStatusRepNotAllowed):
             raise FSWorkspaceNoAccess(f"Not allowed to access workspace {workspace_id}: {rep}")
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, RealmStatusRepOk):
             raise FSError(f"Error while getting status for workspace {workspace_id}: {rep}")
 
-        if not rep["in_maintenance"] or rep["maintenance_type"] != MaintenanceType.REENCRYPTION:
+        if not rep.in_maintenance or rep.maintenance_type != MaintenanceType.REENCRYPTION():
             raise FSWorkspaceNotInMaintenance("Not in reencryption maintenance")
-        if rep["encryption_revision"] != workspace_entry.encryption_revision:
+        if rep.encryption_revision != workspace_entry.encryption_revision:
             raise FSError("Bad encryption revision")
 
         previous_workspace_entry = await self._get_previous_workspace_entry(workspace_entry)

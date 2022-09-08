@@ -15,6 +15,23 @@ from parsec._parsec import (
     OrganizationStatsRepUnknownStatus,
     OrganizationConfigRep,
     OrganizationConfigRepUnknownStatus,
+    RealmCreateRep,
+    RealmCreateRepBadTimestamp,
+    RealmCreateRepUnknownStatus,
+    RealmStatusRep,
+    RealmStatusRepUnknownStatus,
+    RealmStatsRep,
+    RealmStatsRepUnknownStatus,
+    RealmGetRoleCertificatesRep,
+    RealmGetRoleCertificatesRepUnknownStatus,
+    RealmUpdateRolesRep,
+    RealmUpdateRolesRepBadTimestamp,
+    RealmUpdateRolesRepUnknownStatus,
+    RealmStartReencryptionMaintenanceRep,
+    RealmStartReencryptionMaintenanceRepRepBadTimestamp,
+    RealmStartReencryptionMaintenanceRepUnknownStatus,
+    RealmFinishReencryptionMaintenanceRep,
+    RealmFinishReencryptionMaintenanceRepUnknownStatus,
     VlobCreateRep,
     VlobCreateRepBadTimestamp,
     VlobCreateRepUnknownStatus,
@@ -158,6 +175,13 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
             MessageGetRep,
             OrganizationStatsRep,
             OrganizationConfigRep,
+            RealmCreateRep,
+            RealmStatusRep,
+            RealmStatsRep,
+            RealmGetRoleCertificatesRep,
+            RealmUpdateRolesRep,
+            RealmStartReencryptionMaintenanceRep,
+            RealmFinishReencryptionMaintenanceRep,
             VlobCreateRep,
             VlobReadRep,
             VlobUpdateRep,
@@ -175,6 +199,13 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
                 MessageGetRepUnknownStatus,
                 OrganizationStatsRepUnknownStatus,
                 OrganizationConfigRepUnknownStatus,
+                RealmCreateRepUnknownStatus,
+                RealmStatusRepUnknownStatus,
+                RealmStatsRepUnknownStatus,
+                RealmGetRoleCertificatesRepUnknownStatus,
+                RealmUpdateRolesRepUnknownStatus,
+                RealmStartReencryptionMaintenanceRepUnknownStatus,
+                RealmFinishReencryptionMaintenanceRepUnknownStatus,
                 VlobCreateRepUnknownStatus,
                 VlobReadRepUnknownStatus,
                 VlobUpdateRepUnknownStatus,
@@ -193,7 +224,16 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
             # Backward compatibility with older backends (<= v2.3)
             if rep.status == "invalid_certification" and "timestamp" in rep.reason:
                 raise BackendOutOfBallparkError(rep)
-        elif isinstance(rep, (VlobCreateRepBadTimestamp, VlobUpdateRepBadTimestamp)):
+        elif isinstance(
+            rep,
+            (
+                RealmCreateRepBadTimestamp,
+                RealmUpdateRolesRepBadTimestamp,
+                RealmStartReencryptionMaintenanceRepRepBadTimestamp,
+                VlobCreateRepBadTimestamp,
+                VlobUpdateRepBadTimestamp,
+            ),
+        ):
             raise BackendOutOfBallparkError(rep)
 
     else:
