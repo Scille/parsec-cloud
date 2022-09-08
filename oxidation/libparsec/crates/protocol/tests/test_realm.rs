@@ -101,6 +101,48 @@ fn serde_realm_create_req() {
         authenticated_cmds::realm_create::Rep::AlreadyExists
     )
 )]
+#[case::bad_timestamp_legacy(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   status: "bad_timestamp"
+        //
+        &hex!("81a6737461747573ad6261645f74696d657374616d70")[..],
+        authenticated_cmds::realm_create::Rep::BadTimestamp {
+            reason: None,
+            ballpark_client_early_offset: None,
+            ballpark_client_late_offset: None,
+            backend_timestamp: None,
+            client_timestamp: None,
+        }
+    )
+)]
+#[case::bad_timestamp(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   backend_timestamp: ext(1, 946774800.0)
+        //   ballpark_client_early_offset: 50.0
+        //   ballpark_client_late_offset: 70.0
+        //   client_timestamp: ext(1, 946774800.0)
+        //   status: "bad_timestamp"
+        //
+        &hex!(
+            "85b16261636b656e645f74696d657374616d70d70141cc375188000000bc62616c6c706172"
+            "6b5f636c69656e745f6561726c795f6f6666736574cb4049000000000000bb62616c6c7061"
+            "726b5f636c69656e745f6c6174655f6f6666736574cb4051800000000000b0636c69656e74"
+            "5f74696d657374616d70d70141cc375188000000a6737461747573ad6261645f74696d6573"
+            "74616d70"
+        )[..],
+        authenticated_cmds::realm_create::Rep::BadTimestamp {
+            reason: None,
+            ballpark_client_early_offset: Some(50.),
+            ballpark_client_late_offset: Some(70.),
+            backend_timestamp: Some("2000-1-2T01:00:00Z".parse().unwrap()),
+            client_timestamp: Some("2000-1-2T01:00:00Z".parse().unwrap()),
+        }
+    )
+)]
 fn serde_realm_create_rep(#[case] raw_expected: (&[u8], authenticated_cmds::realm_create::Rep)) {
     let (raw, expected) = raw_expected;
 
@@ -522,6 +564,58 @@ fn serde_realm_update_roles_req() {
         authenticated_cmds::realm_update_roles::Rep::InMaintenance
     )
 )]
+#[case::user_revoked(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   status: "user_revoked"
+        //
+        &hex!("81a6737461747573ac757365725f7265766f6b6564")[..],
+        authenticated_cmds::realm_update_roles::Rep::UserRevoked
+    )
+)]
+#[case::require_greater_timestamp(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   status: "require_greater_timestamp"
+        //   strictly_greater_than: ext(1, 946774800.0)
+        //
+        &hex!(
+            "82a6737461747573b9726571756972655f677265617465725f74696d657374616d70b57374"
+            "726963746c795f677265617465725f7468616ed70141cc375188000000"
+        )[..],
+        authenticated_cmds::realm_update_roles::Rep::RequireGreaterTimestamp {
+            strictly_greater_than: "2000-1-2T01:00:00Z".parse().unwrap(),
+        }
+    )
+)]
+#[case::bad_timestamp(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   backend_timestamp: ext(1, 946774800.0)
+        //   ballpark_client_early_offset: 50.0
+        //   ballpark_client_late_offset: 70.0
+        //   client_timestamp: ext(1, 946774800.0)
+        //   status: "bad_timestamp"
+        //
+        &hex!(
+            "85b16261636b656e645f74696d657374616d70d70141cc375188000000bc62616c6c706172"
+            "6b5f636c69656e745f6561726c795f6f6666736574cb4049000000000000bb62616c6c7061"
+            "726b5f636c69656e745f6c6174655f6f6666736574cb4051800000000000b0636c69656e74"
+            "5f74696d657374616d70d70141cc375188000000a6737461747573ad6261645f74696d6573"
+            "74616d70"
+        )[..],
+        authenticated_cmds::realm_update_roles::Rep::BadTimestamp {
+            reason: None,
+            ballpark_client_early_offset: 50.,
+            ballpark_client_late_offset: 70.,
+            backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+            client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+        }
+    )
+)]
 fn serde_realm_update_roles_rep(
     #[case] raw_expected: (&[u8], authenticated_cmds::realm_update_roles::Rep),
 ) {
@@ -667,6 +761,32 @@ fn serde_realm_start_reencryption_maintenance_req() {
             "81a6737461747573ae696e5f6d61696e74656e616e6365"
         )[..],
         authenticated_cmds::realm_start_reencryption_maintenance::Rep::InMaintenance
+    )
+)]
+#[case::bad_timestamp(
+    (
+        // Generated from Python implementation (Parsec v2.11.1+dev)
+        // Content:
+        //   backend_timestamp: ext(1, 946774800.0)
+        //   ballpark_client_early_offset: 50.0
+        //   ballpark_client_late_offset: 70.0
+        //   client_timestamp: ext(1, 946774800.0)
+        //   status: "bad_timestamp"
+        //
+        &hex!(
+            "85b16261636b656e645f74696d657374616d70d70141cc375188000000bc62616c6c706172"
+            "6b5f636c69656e745f6561726c795f6f6666736574cb4049000000000000bb62616c6c7061"
+            "726b5f636c69656e745f6c6174655f6f6666736574cb4051800000000000b0636c69656e74"
+            "5f74696d657374616d70d70141cc375188000000a6737461747573ad6261645f74696d6573"
+            "74616d70"
+        )[..],
+        authenticated_cmds::realm_start_reencryption_maintenance::Rep::BadTimestamp {
+            reason: None,
+            ballpark_client_early_offset: 50.,
+            ballpark_client_late_offset: 70.,
+            backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+            client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+        }
     )
 )]
 fn serde_realm_start_reencryption_maintenance_rep(
