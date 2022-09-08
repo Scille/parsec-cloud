@@ -10,8 +10,7 @@ env:
   python-version: "3.9"
   rust-version: 1.63.0
   node-version: "16"
-  # Need feature from poetry 1.2.x that aren't present in 1.1.x
-  poetry-version: 1.2.0b3
+  poetry-version: 1.2.0
   # TODO: We stick to PostgreSQL 12 for the moment given later versions are
   # much slower (postgresql tests runs in ~9mn on 12 vs ~36mn on 14 !)
   postgresql-version: 12
