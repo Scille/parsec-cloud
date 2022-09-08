@@ -33,7 +33,7 @@ class ParsecLogger(Logger):
     def _find_author_header(self, headers: Iterable[Tuple[bytes, bytes]]) -> Optional[bytes]:
         for (name, value) in headers:
             # latin1 (ISO-8859-1) is standard http charset
-            if name.decode("latin1").lower() == "author":
+            if name.decode("latin1") == "Author":
                 return value
 
         return None
