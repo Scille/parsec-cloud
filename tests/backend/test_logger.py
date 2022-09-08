@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import Mapping
+from typing import Mapping, Optional
 from hypercorn.config import Config as HyperConfig
 
 import base64
@@ -10,14 +10,14 @@ from hypercorn.typing import ResponseSummary, HTTPScope
 from parsec.backend.asgi.logger import ParsecLogger
 
 
-def _create_http_scope(author: bytes = bytes(), add_author: bool = True) -> HTTPScope:
+def _create_http_scope(author: Optional[bytes] = None) -> HTTPScope:
     scope = HTTPScope()
     scope["type"] = "http"
     scope["method"] = "GET"
     scope["query_string"] = b"/"
     scope["path"] = ""
     scope["scheme"] = ""
-    scope["headers"] = [(b"Author", author)] if add_author else []
+    scope["headers"] = [(b"Author", author)] if author is not None else []
 
     return scope
 
@@ -60,6 +60,6 @@ def test_bad_base64_author():
 
 def test_no_author_header():
     logger = ParsecLogger(HyperConfig())
-    mapped = logger.atoms(_create_http_scope(add_author=False), _create_empty_response(), 0.0)
+    mapped = logger.atoms(_create_http_scope(), _create_empty_response(), 0.0)
 
     _assert_anonymous_or_invalid(mapped)
