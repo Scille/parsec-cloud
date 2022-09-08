@@ -1,0 +1,1 @@
+Extended Logger to show device id when a client is authenticated
