@@ -28,7 +28,7 @@ from parsec._parsec import (
     RealmUpdateRolesRepBadTimestamp,
     RealmUpdateRolesRepUnknownStatus,
     RealmStartReencryptionMaintenanceRep,
-    RealmStartReencryptionMaintenanceRepRepBadTimestamp,
+    RealmStartReencryptionMaintenanceRepBadTimestamp,
     RealmStartReencryptionMaintenanceRepUnknownStatus,
     RealmFinishReencryptionMaintenanceRep,
     RealmFinishReencryptionMaintenanceRepUnknownStatus,
@@ -229,7 +229,7 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
             (
                 RealmCreateRepBadTimestamp,
                 RealmUpdateRolesRepBadTimestamp,
-                RealmStartReencryptionMaintenanceRepRepBadTimestamp,
+                RealmStartReencryptionMaintenanceRepBadTimestamp,
                 VlobCreateRepBadTimestamp,
                 VlobUpdateRepBadTimestamp,
             ),
