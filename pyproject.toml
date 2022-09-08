@@ -135,7 +135,7 @@ PyQt5_stubs = "^5.15"
 # PyInstaller is only needed for packaging, but it must be installed in the same
 # venv the code to package is installed. Hence it's simpler to have it here so
 # it dependencies won't clash with the rest of the project.
-pyinstaller = "^4.7"
+pyinstaller = "^5.3"
 
 flake8 = "5.0.4"
 black = "^22.6.0"
