@@ -5,20 +5,8 @@ History
 .. towncrier release notes start
 
 
-Parsec v2.12.0-rc3 (2022-09-05)
--------------------------------
-
-No significant changes.
-
-
-Parsec v2.12.0-rc2 (2022-09-05)
--------------------------------
-
-No significant changes.
-
-
-Parsec v2.12.0-rc1 (2022-09-02)
--------------------------------
+Parsec v2.12.0 (2022-09-08)
+---------------------------
 
 Features
 ~~~~~~~~
@@ -33,6 +21,8 @@ Features
   <https://github.com/Scille/parsec-cloud/issues/2673>`__)
 * Added a show status/show history to the current directory in the explorer
   (`#2674 <https://github.com/Scille/parsec-cloud/issues/2674>`__)
+* Fixed links in About window not opening  (`#3023
+  <https://github.com/Scille/parsec-cloud/issues/3023>`__)
 
 Bugfixes
 ~~~~~~~~
