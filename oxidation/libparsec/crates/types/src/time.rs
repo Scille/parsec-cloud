@@ -251,8 +251,8 @@ mod time_provider {
         }
     }
 
-    /// Wrap the TimeProviderAgent into TimeProvider to hide the Arc stuff
-    /// and provide the same simple API as the non-test TimeProvider
+    /// Wrap the `TimeProviderAgent` into `TimeProvider` to hide the sync stuff
+    /// and provide the same simple API as the non-test `TimeProvider`
     #[derive(Debug, Clone)]
     pub struct TimeProvider(Arc<Mutex<TimeProviderAgent>>);
 
