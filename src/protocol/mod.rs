@@ -4,18 +4,22 @@ mod block;
 mod cmds;
 mod message;
 mod organization;
+mod realm;
 mod vlob;
 
 pub use block::*;
 pub use cmds::*;
 pub use message::*;
 pub use organization::*;
+pub use realm::*;
 pub use vlob::*;
 
 // We use this type because we can't match Option<String> in macro_rules
 pub(crate) type Reason = Option<String>;
 pub(crate) type Bytes = Vec<u8>;
 pub(crate) type ListOfBytes = Vec<Vec<u8>>;
+pub(crate) type OptionalFloat = Option<f64>;
+pub(crate) type OptionalDateTime = Option<crate::time::DateTime>;
 
 macro_rules! rs_to_py {
     ($v: ident, Reason, $py: ident) => {
@@ -29,6 +33,9 @@ macro_rules! rs_to_py {
     };
     ($v: ident, DateTime, $py: ident) => {
         DateTime(*$v)
+    };
+    ($v: ident, OptionalDateTime, $py: ident) => {
+        $v.map(DateTime)
     };
     ($v: ident, $ty: ty, $py: ident) => {
         *$v
@@ -47,6 +54,12 @@ macro_rules! py_to_rs {
     };
     ($v: ident, f64) => {
         $v
+    };
+    ($v: ident, OptionalFloat) => {
+        $v
+    };
+    ($v: ident, OptionalDateTime) => {
+        $v.map(|x| x.0)
     };
     ($v: ident, $ty: ty) => {
         $v.0
@@ -73,7 +86,7 @@ macro_rules! gen_rep {
         $mod: path,
         $base_class: ident
         $(, { $($tt: tt)+ })?
-        $(, [$variant: ident $($(, $field: ident : $ty: ty)+)?])*
+        $(, [$variant: ident $($(, $field: ident : $ty: ty)+)? $(,)?])*
         $(,)?
     ) => {
         paste::paste! {
