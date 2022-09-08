@@ -39,3 +39,7 @@ impl Future for Timer {
         self.0.as_mut().poll(cx).map(|_| ())
     }
 }
+
+pub async fn sleep(duration: Duration) {
+    Timer::after(duration).await
+}

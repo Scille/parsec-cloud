@@ -1143,8 +1143,8 @@ fn local_file_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
 #[rstest]
 fn local_file_manifest_to_remote(timestamp: DateTime) {
     let t1 = timestamp;
-    let t2 = t1 + 1;
-    let t3 = t2 + 1;
+    let t2 = t1.add_us(1);
+    let t3 = t2.add_us(1);
     let author = DeviceID::default();
     let parent = EntryID::default();
     let blocksize = Blocksize::try_from(512).unwrap();
@@ -1399,7 +1399,7 @@ fn local_folder_manifest_from_remote_with_local_context(
 #[rstest]
 fn local_folder_manifest_to_remote(timestamp: DateTime) {
     let t1 = timestamp;
-    let t2 = t1 + 1;
+    let t2 = t1.add_us(1);
     let author = DeviceID::default();
     let parent = EntryID::default();
     let mut lfm = LocalFolderManifest::new(author, parent, t1);
@@ -1732,7 +1732,7 @@ fn local_workspace_manifest_from_remote_with_local_context(
 #[rstest]
 fn local_workspace_manifest_to_remote(timestamp: DateTime) {
     let t1 = timestamp;
-    let t2 = t1 + 1;
+    let t2 = t1.add_us(1);
     let author = DeviceID::default();
     let id = EntryID::default();
     let speculative = false;
@@ -1929,8 +1929,8 @@ fn local_user_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
 #[rstest]
 fn local_user_manifest_to_remote(timestamp: DateTime) {
     let t1 = timestamp;
-    let t2 = t1 + 1;
-    let t3 = t2 + 1;
+    let t2 = t1.add_us(1);
+    let t3 = t2.add_us(1);
     let author = DeviceID::default();
     let id = EntryID::default();
     let speculative = false;
