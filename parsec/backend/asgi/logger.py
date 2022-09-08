@@ -39,11 +39,13 @@ class ParsecLogger(Logger):
         return None
 
     def _try_decode_base64(self, value: Union[bytes, None]) -> Optional[str]:
+        DEFAULT_MESSAGE = "anonymous or invalid"
         if value is None:
-            return "anonymous or invalid"
+            return DEFAULT_MESSAGE
 
         try:
             return base64.b64decode(value.decode(), validate=True).decode()
-        except binascii.Error as e:
-            print(e)
-            return None
+        except binascii.Error:
+            return DEFAULT_MESSAGE
+        except UnicodeDecodeError:
+            return DEFAULT_MESSAGE
