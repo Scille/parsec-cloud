@@ -150,7 +150,7 @@ class BaseUserComponent:
             return user_create_serializer.rep_dump(
                 {
                     "status": "not_allowed",
-                    "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+                    "reason": f"User `{client_ctx.device_id.user_id.str}` is not admin",
                 }
             )
         msg = user_create_serializer.req_load(msg)
@@ -184,7 +184,7 @@ class BaseUserComponent:
         if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+                "reason": f"User `{client_ctx.device_id.user_id.str}` is not admin",
             }
 
         msg = user_revoke_serializer.req_load(msg)
@@ -224,7 +224,10 @@ class BaseUserComponent:
             return {"status": "not_found"}
 
         except UserAlreadyRevokedError:
-            return {"status": "already_revoked", "reason": f"User `{data.user_id}` already revoked"}
+            return {
+                "status": "already_revoked",
+                "reason": f"User `{data.user_id.str}` already revoked",
+            }
 
         return user_revoke_serializer.rep_dump({"status": "ok"})
 

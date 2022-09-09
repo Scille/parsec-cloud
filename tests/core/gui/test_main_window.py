@@ -168,7 +168,7 @@ async def test_link_file(aqtbot, logged_gui_with_files):
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
 
-    logged_gui.add_instance(str(url))
+    logged_gui.add_instance(url.to_url())
 
     def _folder_ready():
         assert f_w.isVisible()
@@ -190,7 +190,7 @@ async def test_link_file_unmounted(aqtbot, logged_gui_with_files):
     core = logged_gui.test_get_core()
     url = f_w.workspace_fs.generate_file_link(f_w.current_directory)
 
-    logged_gui.add_instance(str(url))
+    logged_gui.add_instance(url.to_url())
 
     def _folder_ready():
         assert f_w.isVisible()
@@ -214,7 +214,7 @@ async def test_link_file_unmounted(aqtbot, logged_gui_with_files):
 
     await aqtbot.wait_until(_unmounted)
 
-    logged_gui.add_instance(str(url))
+    logged_gui.add_instance(url.to_url())
 
     await aqtbot.wait_until(_mounted)
 
@@ -225,7 +225,7 @@ async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_
     logged_gui, w_w, f_w = logged_gui_with_files
     url = f_w.workspace_fs.generate_file_link("/unknown")
 
-    logged_gui.add_instance(str(url))
+    logged_gui.add_instance(url.to_url())
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
@@ -243,9 +243,9 @@ async def test_link_file_invalid_url(aqtbot, autoclose_dialog, logged_gui_with_f
     logged_gui, w_w, f_w = logged_gui_with_files
     org_addr = f_w.core.device.organization_addr
     if kind == "bad_workspace_id":
-        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id}?action=file_link&workspace_id=not_a_uuid&path=HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs"
+        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id.str}?action=file_link&workspace_id=not_a_uuid&path=HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs"
     elif kind == "legacy_url_format":
-        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id}?action=file_link&workspace_id=449977b2-889a-4a62-bc54-f89c26175e90&path=%2Fbar.txt&no_ssl=true&rvk=ZY3JDUOCOKTLCXWS6CJTAELDZSMZYFK5QLNJAVY6LFJV5IRJWAIAssss"
+        url = f"parsec://{org_addr.netloc}/{org_addr.organization_id.str}?action=file_link&workspace_id=449977b2-889a-4a62-bc54-f89c26175e90&path=%2Fbar.txt&no_ssl=true&rvk=ZY3JDUOCOKTLCXWS6CJTAELDZSMZYFK5QLNJAVY6LFJV5IRJWAIAssss"
     else:
         assert False
 
@@ -289,7 +289,7 @@ async def test_link_file_disconnected(
             (
                 "INFO",
                 translate("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
-                    organization=bob.organization_id
+                    organization=bob.organization_id.str
                 ),
             )
         ]
@@ -355,7 +355,7 @@ async def test_link_file_disconnected_cancel_login(
 
     # Log out and send link
     await gui.test_logout_and_switch_to_login_widget()
-    gui.add_instance(str(url))
+    gui.add_instance(url.to_url())
 
     def _assert_snackbars():
         assert len(snackbar_catcher.snackbars) == 1
@@ -363,7 +363,7 @@ async def test_link_file_disconnected_cancel_login(
             (
                 "INFO",
                 translate("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
-                    organization=bob.organization_id
+                    organization=bob.organization_id.str
                 ),
             )
         ]

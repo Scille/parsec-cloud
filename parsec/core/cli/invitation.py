@@ -122,7 +122,7 @@ def invite_user(
 
 
 async def ask_info_new_user(
-    default_device_label: str, default_user_label: str, default_user_email: str
+    default_device_label: DeviceLabel, default_user_label: str, default_user_email: str
 ) -> Tuple[DeviceLabel, HumanHandle, UserProfile]:
     while True:
         granted_label = await aprompt("New user label", default=default_user_label)
@@ -137,7 +137,7 @@ async def ask_info_new_user(
     while True:
         try:
             granted_device_label = DeviceLabel(
-                await aprompt("New user device label", default=default_device_label)
+                await aprompt("New user device label", default=default_device_label.str)
             )
             break
         except ValueError:
@@ -222,7 +222,7 @@ async def _do_greet_device(device: LocalDevice, initial_ctx: DeviceGreetInitialC
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
     granted_device_label = await aprompt(
-        "New device label", default=in_progress_ctx.requested_device_label
+        "New device label", default=in_progress_ctx.requested_device_label.str
     )
     async with spinner("Creating the device in the backend"):
         await in_progress_ctx.do_create_new_device(

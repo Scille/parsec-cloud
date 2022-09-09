@@ -322,8 +322,8 @@ def test_process_challenge_req_good_multiple_api_version(
 )
 def test_process_answer_req_bad_format(req, alice):
     for key, good_value in [
-        ("organization_id", str(alice.organization_id)),
-        ("device_id", str(alice.device_id)),
+        ("organization_id", alice.organization_id.str),
+        ("device_id", alice.device_id.str),
         ("rvk", alice.root_verify_key.encode()),
         ("token", uuid4()),
     ]:
@@ -346,8 +346,8 @@ def test_build_result_req_bad_key(alice, bob):
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
         "client_api_version": API_VERSION,
-        "organization_id": str(alice.organization_id),
-        "device_id": str(alice.device_id),
+        "organization_id": alice.organization_id.str,
+        "device_id": alice.device_id.str,
         "rvk": alice.root_verify_key.encode(),
         "answer": alice.signing_key.sign(answer_serializer.dumps({"answer": sh.challenge})),
     }
@@ -363,8 +363,8 @@ def test_build_result_req_bad_challenge(alice):
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
         "client_api_version": API_VERSION,
-        "organization_id": str(alice.organization_id),
-        "device_id": str(alice.device_id),
+        "organization_id": alice.organization_id.str,
+        "device_id": alice.device_id.str,
         "rvk": alice.root_verify_key.encode(),
         "answer": alice.signing_key.sign(
             answer_serializer.dumps({"answer": sh.challenge + b"-dummy"})
@@ -393,8 +393,8 @@ def test_build_bad_outcomes(alice, method, expected_result):
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
         "client_api_version": API_VERSION,
-        "organization_id": str(alice.organization_id),
-        "device_id": str(alice.device_id),
+        "organization_id": alice.organization_id.str,
+        "device_id": alice.device_id.str,
         "rvk": alice.root_verify_key.encode(),
         "answer": alice.signing_key.sign(answer_serializer.dumps({"answer": sh.challenge})),
     }

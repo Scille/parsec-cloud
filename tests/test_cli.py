@@ -31,7 +31,8 @@ from click.testing import CliRunner
 from parsec import __version__ as parsec_version
 from parsec.cli import cli
 from parsec.backend.postgresql import MigrationItem
-from parsec.core.types import BackendAddr
+from parsec.api.protocol import RealmID
+from parsec.core.types import BackendAddr, EntryID
 from parsec.core.local_device import save_device_with_password_in_config
 from parsec.core.types import (
     LocalDevice,
@@ -89,10 +90,12 @@ def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
     def _run_cli_share_workspace_test(args, expected_error_code, use_recipiant):
         factory_mock.reset_mock()
 
+        workspace_id = EntryID.new()
+
         factory_mock.return_value.user_fs.workspace_share.is_async = True
         factory_mock.return_value.find_humans.is_async = True
         factory_mock.return_value.find_humans.return_value = (alice_info, 1)
-        factory_mock.return_value.find_workspace_from_name.return_value.id = "ws1_id"
+        factory_mock.return_value.find_workspace_from_name.return_value.id = workspace_id
 
         monkeypatch.setattr(
             "parsec.core.cli.share_workspace.logged_core_factory", logged_core_factory
@@ -103,7 +106,7 @@ def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
         assert result.exit_code == expected_error_code
         factory_mock.assert_called_once_with(ANY, bob)
         factory_mock.return_value.user_fs.workspace_share.assert_called_once_with(
-            "ws1_id", alice.user_id, expected_workspace_role
+            workspace_id, alice.user_id, expected_workspace_role
         )
         if use_recipiant:
             factory_mock.return_value.find_humans.assert_called_once()
@@ -118,7 +121,7 @@ def test_share_workspace(tmp_path, monkeypatch, alice, bob, cli_workspace_role):
     )
 
     # Test with user-id
-    args = default_args + f"--user-id={alice.user_id}"
+    args = default_args + f"--user-id={alice.user_id.str}"
     _run_cli_share_workspace_test(args, 0, False)
     # Test with recipiant
     args = default_args + f"--recipiant=alice@example.com"
@@ -129,6 +132,8 @@ def test_reencrypt_workspace(tmp_path, monkeypatch, alice, bob):
     config_dir = tmp_path / "config"
     # Mocking
     factory_mock = AsyncMock()
+
+    workspace_id = EntryID.new()
 
     @asynccontextmanager
     async def logged_core_factory(*args, **kwargs):
@@ -161,7 +166,7 @@ def test_reencrypt_workspace(tmp_path, monkeypatch, alice, bob):
                 job_mock
             )
             factory_mock.return_value.user_fs.workspace_continue_reencryption.is_async = True
-        factory_mock.return_value.find_workspace_from_name.return_value.id = "ws1_id"
+        factory_mock.return_value.find_workspace_from_name.return_value.id = workspace_id
 
         monkeypatch.setattr(
             "parsec.core.cli.reencrypt_workspace.logged_core_factory", logged_core_factory
@@ -171,15 +176,15 @@ def test_reencrypt_workspace(tmp_path, monkeypatch, alice, bob):
 
         assert result.exit_code == expected_error_code
         factory_mock.assert_called_once_with(ANY, bob)
-        factory_mock.return_value.user_fs.get_workspace.assert_called_once_with("ws1_id")
+        factory_mock.return_value.user_fs.get_workspace.assert_called_once_with(workspace_id)
         workspace_fs_mock.get_reencryption_need.assert_called_once()
         if from_beginning:
             factory_mock.return_value.user_fs.workspace_start_reencryption.assert_called_once_with(
-                "ws1_id"
+                workspace_id
             )
         else:
             factory_mock.return_value.user_fs.workspace_continue_reencryption.assert_called_once_with(
-                "ws1_id"
+                workspace_id
             )
         job_mock.do_one_batch.assert_called_once()
 
@@ -419,7 +424,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
 
         p = _run(
             "core create_organization "
-            f"{org} --addr={backend_url} "
+            f"{org.str} --addr={backend_url} "
             f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
         )
@@ -453,7 +458,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         print("####### Stats organization #######")
         _run(
             "core stats_organization "
-            f"{org} --addr={backend_url} "
+            f"{org.str} --addr={backend_url} "
             f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
         )
@@ -461,7 +466,7 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         print("####### Status organization #######")
         _run(
             "core status_organization "
-            f"{org} --addr={backend_url} "
+            f"{org.str} --addr={backend_url} "
             f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
         )
@@ -661,17 +666,17 @@ def test_full_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
         stdout = p.stdout.decode()
         assert alice1_slughash[:3] in stdout
         assert (
-            f"{org}: {alice_human_handle_label} <{alice_human_handle_email}> @ {alice1_device_label}"
+            f"{org.str}: {alice_human_handle_label} <{alice_human_handle_email}> @ {alice1_device_label}"
             in stdout
         )
         assert alice2_slughash[:3] in stdout
         assert (
-            f"{org}: {alice_human_handle_label} <{alice_human_handle_email}> @ {alice2_device_label}"
+            f"{org.str}: {alice_human_handle_label} <{alice_human_handle_email}> @ {alice2_device_label}"
             in stdout
         )
         assert bob1_slughash[:3] in stdout
         assert (
-            f"{org}: {bob_human_handle_label} <{bob_human_handle_email}> @ {bob_device_label}"
+            f"{org.str}: {bob_human_handle_label} <{bob_human_handle_email}> @ {bob_device_label}"
             in stdout
         )
 
@@ -838,6 +843,11 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend_asg
                     lambda: runner.invoke(cli, cmd, env={"DEBUG": "1"})
                 )
 
+        # Now we should have a new local device !
+        result = await _cli_invoke_in_thread(
+            f"core list_devices --config-dir={config_dir.as_posix()}"
+        )
+
         async def run_review_pendings(extra_args: str = "", check_result: bool = True):
             result = await _cli_invoke_in_thread(
                 f"core pki_enrollment_review_pendings --config-dir={config_dir.as_posix()} --device {alice.slughash} --password {alice_password} {extra_args}"
@@ -869,7 +879,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend_asg
 
         async def run_submit(extra_args: str = "", check_result: bool = True):
             result = await _cli_invoke_in_thread(
-                f"core pki_enrollment_submit --config-dir={config_dir.as_posix()} {addr} --device-label PC1 {extra_args}"
+                f"core pki_enrollment_submit --config-dir={config_dir.as_posix()} {addr.to_url()} --device-label PC1 {extra_args}"
             )
             if not check_result:
                 return result
@@ -990,6 +1000,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend_asg
         result = await _cli_invoke_in_thread(
             f"core list_devices --config-dir={config_dir.as_posix()}"
         )
+        print(result.output)
         assert result.exit_code == 0
         assert result.output.startswith("Found 2 device(s)")
         assert "CoolOrg: John Doe <john@example.com> @ PC1" in result.output
@@ -1031,7 +1042,7 @@ async def test_human_accesses(backend, alice, postgresql_url):
     async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
         runner = CliRunner()
 
-        cmd = f"backend human_accesses --db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id}"
+        cmd = f"backend human_accesses --db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id.str}"
 
         result = await _cli_invoke_in_thread(runner, cmd)
         assert result.exit_code == 0
@@ -1051,7 +1062,7 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
     async with cli_with_running_backend_testbed(backend, alice) as (backend_addr, alice):
         runner = CliRunner()
 
-        common_args = f"--db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id}"
+        common_args = f"--db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id.str}"
 
         async def run_list_services():
             result = await _cli_invoke_in_thread(
@@ -1080,10 +1091,10 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
                 f"backend sequester update_service {common_args} --enable --service {service_id}",
             )
 
-        async def export_service(service_id: str, realm: str, path: str):
+        async def export_service(service_id: str, realm: RealmID, path: str):
             return await _cli_invoke_in_thread(
                 runner,
-                f"backend sequester export_realm {common_args} --service {service_id} --realm {realm} --output {path} -b MOCKED",
+                f"backend sequester export_realm {common_args} --service {service_id} --realm {realm.str} --output {path} -b MOCKED",
             )
 
         # Assert no service configured
@@ -1138,7 +1149,7 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         result = await export_service(service_id, realm_id, output_dir)
         files = list(output_dir.iterdir())
         assert len(files) == 1
-        assert files[0].name.endswith(f"parsec-sequester-export-realm-{realm_id}.sqlite")
+        assert files[0].name.endswith(f"parsec-sequester-export-realm-{realm_id.str}.sqlite")
 
 
 @pytest.mark.trio
@@ -1161,7 +1172,7 @@ async def test_bootstrap_sequester(coolorg, tmp_path, backend, running_backend):
     async def create_organization():
         result = await _cli_invoke_in_thread(
             runner,
-            f"core create_organization {org} --addr={running_backend.addr}  --administration-token={backend.config.administration_token}",
+            f"core create_organization {org} --addr={running_backend.addr.to_url()}  --administration-token={backend.config.administration_token}",
         )
         assert result.exit_code == 0
         url = re.search(r"^Bootstrap organization url: (.*)$", result.output, re.MULTILINE).group(1)

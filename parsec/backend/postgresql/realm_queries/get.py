@@ -129,7 +129,7 @@ async def query_get_status(
         )
     )
     if not ret:
-        raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
 
     if not ret["has_access"]:
         raise RealmAccessError()
@@ -156,7 +156,7 @@ async def query_get_stats(
         )
     )
     if not ret:
-        raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
 
     if not ret["has_access"]:
         raise RealmAccessError()
@@ -183,7 +183,7 @@ async def query_get_current_roles(
 
     if not ret:
         # Existing group must have at least one owner user
-        raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
 
     return {UserID(user_id): RealmRole(role) for user_id, role in ret if role is not None}
 
@@ -198,7 +198,7 @@ async def query_get_role_certificates(
 
     if not ret:
         # Existing group must have at least one owner user
-        raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
 
     out = []
     author_current_role = None

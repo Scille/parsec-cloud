@@ -118,7 +118,7 @@ def backend_disable_vlob_checks(backend):
         try:
             return backend.vlob._realm_component._get_realm(organization_id, realm_id)
         except RealmNotFoundError:
-            raise VlobRealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+            raise VlobRealmNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
 
     assert isinstance(backend.vlob, MemoryVlobComponent)
     backend.vlob._check_realm_access = patched_check_realm_access

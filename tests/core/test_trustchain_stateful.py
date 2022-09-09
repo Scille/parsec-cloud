@@ -85,7 +85,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             device_id = self.new_user_and_device(
                 is_admin=True, certifier_id=None, certifier_key=coolorg.root_signing_key
             )
-            note(f"new device: {device_id}")
+            note(f"new device: {device_id.str}")
             return device_id.user_id
 
         def get_device(self, user_id, device_rand):
@@ -106,7 +106,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             device_id = self.new_user_and_device(
                 is_admin=True, certifier_id=author.device_id, certifier_key=author.signing_key
             )
-            note(f"new device: {device_id} (author: {author.device_id})")
+            note(f"new device: {device_id.str} (author: {author.device_id.str})")
             return device_id.user_id
 
         @rule(
@@ -119,7 +119,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             device_id = self.new_user_and_device(
                 is_admin=False, certifier_id=author.device_id, certifier_key=author.signing_key
             )
-            note(f"new device: {device_id} (author: {author.device_id})")
+            note(f"new device: {device_id.str} (author: {author.device_id.str})")
             return device_id.user_id
 
         @precondition(lambda self: len([d for d in self.local_devices.values() if d.is_admin]) > 1)
@@ -135,7 +135,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
                 if device_id.user_id != user and device.profile == UserProfile.ADMIN
             ]
             author = possible_authors[author_rand % len(possible_authors)]
-            note(f"revoke user: {user} (author: {author.device_id})")
+            note(f"revoke user: {user} (author: {author.device_id.str})")
             revoked_user = RevokedUserCertificate(
                 author=author.device_id, timestamp=time_provider.now(), user_id=user
             )
@@ -151,7 +151,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
         def new_device(self, user, author_user, author_device_rand):
             author = self.get_device(author_user, author_device_rand)
             device_id = self.next_device_id(user)
-            note(f"new device: {device_id} (author: {author.device_id})")
+            note(f"new device: {device_id.str} (author: {author.device_id.str})")
             local_device = local_device_factory(device_id, org=coolorg)
             device = DeviceCertificate(
                 author=author.device_id,

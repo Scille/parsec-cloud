@@ -120,7 +120,9 @@ def trustchain_data_factory(local_device_factory, coolorg):
             else:
                 certifier_ld = data.get_local_device(certifier)
                 if not certifier_ld:
-                    raise RuntimeError(f"Missing `{certifier}` to sign creation of `{todo_device}`")
+                    raise RuntimeError(
+                        f"Missing `{certifier}` to sign creation of `{todo_device.str}`"
+                    )
                 certifier_id = certifier_ld.device_id
                 certifier_key = certifier_ld.signing_key
             return certifier_id, certifier_key
@@ -146,7 +148,7 @@ def trustchain_data_factory(local_device_factory, coolorg):
         # Now deal with the users
         for todo_user in todo_users:
             local_user = next(
-                (u for u in data.local_devices.values() if str(u.user_id) == todo_user["id"]), None
+                (u for u in data.local_devices.values() if u.user_id.str == todo_user["id"]), None
             )
             if not local_user:
                 raise RuntimeError(f"Missing device for user `{todo_user['id']}`")

@@ -178,7 +178,7 @@ async def test_import_recovery_device(
     await aqtbot.wait_until(lambda: not imp_w.current_page.label_passphrase_error.isVisible())
     assert not imp_w.button_validate.isEnabled()
 
-    await aqtbot.key_clicks(imp_w.current_page.line_edit_device, str(NEW_DEVICE_LABEL))
+    await aqtbot.key_clicks(imp_w.current_page.line_edit_device, NEW_DEVICE_LABEL.str)
     await aqtbot.wait_until(imp_w.button_validate.isEnabled)
 
     if kind == "ok":
@@ -219,7 +219,7 @@ async def test_import_recovery_device(
         assert any(
             accounts_w.accounts_widget.layout().itemAt(i).widget() is not None
             and accounts_w.accounts_widget.layout().itemAt(i).widget().label_device.text()
-            == str(NEW_DEVICE_LABEL)
+            == NEW_DEVICE_LABEL.str
             for i in range(accounts_w.accounts_widget.layout().count())
         )
 

@@ -162,7 +162,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             self.current_widget.line_edit_org_name.setReadOnly(True)
             self.label_instructions.setText(
                 _("TEXT_BOOTSTRAP_ORGANIZATION_INSTRUCTIONS_organization").format(
-                    organization=self.start_addr.organization_id
+                    organization=self.start_addr.organization_id.str
                 )
             )
             # Not creating on the default server

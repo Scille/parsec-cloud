@@ -328,7 +328,7 @@ async def test_find_with_query_ignore_non_human(alice_ws, alice, bob, adam):
         {"user_id": bob.user_id, "revoked": False, "human_handle": None},
     ]
 
-    rep = await human_find(alice_ws, query=alice.user_id)
+    rep = await human_find(alice_ws, query=alice.user_id.str)
     assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
     rep = await human_find(alice_ws, query="alice")
     assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}

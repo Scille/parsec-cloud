@@ -159,7 +159,7 @@ class RealmStats:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmGrantedRole:
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.user_id} {self.role})"
+        return f"{self.__class__.__name__}({self.user_id.str} {self.role})"
 
     def evolve(self, **kwargs) -> "RealmGrantedRole":
         return attr.evolve(self, **kwargs)

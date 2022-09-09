@@ -14,7 +14,7 @@ from tests.backend.common import device_create, ping
 
 @pytest.fixture
 def alice_nd(local_device_factory, alice):
-    return local_device_factory(f"{alice.user_id}@new_device")
+    return local_device_factory(f"{alice.user_id.str}@new_device")
 
 
 @pytest.mark.trio
@@ -136,7 +136,7 @@ async def test_device_create_already_exists(alice_ws, alice, alice2):
     )
     assert rep == {
         "status": "already_exists",
-        "reason": f"Device `{alice2.device_id}` already exists",
+        "reason": f"Device `{alice2.device_id.str}` already exists",
     }
 
 

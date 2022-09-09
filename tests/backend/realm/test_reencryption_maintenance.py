@@ -179,7 +179,7 @@ async def test_start_send_message_to_participants(backend, alice, bob, alice_ws,
             messages=[
                 Message(
                     count=1,
-                    body=f"{user.user_id} msg".encode(),
+                    body=f"{user.user_id.str} msg".encode(),
                     timestamp=DateTime(2000, 1, 2),
                     sender=alice.device_id,
                 )
@@ -319,7 +319,7 @@ async def test_finish_while_reencryption_not_done(alice_ws, realm, alice, vlobs)
             ReencryptionBatchEntry(
                 entry.vlob_id,
                 entry.version,
-                f"{entry.vlob_id}::{entry.version} reencrypted".encode(),
+                f"{entry.vlob_id.str}::{entry.version} reencrypted".encode(),
             )
         )
     await vlob_maintenance_save_reencryption_batch(alice_ws, realm, 2, batch)
@@ -351,7 +351,7 @@ async def test_reencrypt_and_finish_check_access_rights(
             ReencryptionBatchEntry(
                 vlob_id=vlob_id,
                 version=version,
-                blob=f"{vlob_id}::{version}::{encryption_revision}".encode(),
+                blob=f"{vlob_id.str}::{version}::{encryption_revision}".encode(),
             )
             for vlob_id, version in {(vlobs[0], 1), (vlobs[0], 2), (vlobs[1], 1)}
         ]
@@ -486,7 +486,7 @@ async def test_reencryption(alice, alice_ws, realm, vlob_atoms):
                 ReencryptionBatchEntry(
                     entry.vlob_id,
                     entry.version,
-                    f"{entry.vlob_id}::{entry.version} reencrypted".encode(),
+                    f"{entry.vlob_id.str}::{entry.version} reencrypted".encode(),
                 )
             )
         rep = await vlob_maintenance_save_reencryption_batch(alice_ws, realm, 2, batch)
@@ -503,7 +503,7 @@ async def test_reencryption(alice, alice_ws, realm, vlob_atoms):
     # Check the vlob have changed
     for vlob_id, version in vlob_atoms:
         rep = await vlob_read(alice_ws, vlob_id, version, encryption_revision=2)
-        assert rep.blob == f"{vlob_id}::{version} reencrypted".encode()
+        assert rep.blob == f"{vlob_id.str}::{version} reencrypted".encode()
 
 
 @pytest.mark.trio

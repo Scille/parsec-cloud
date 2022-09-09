@@ -53,7 +53,7 @@ class AuthenticatedRpcApiClient:
                 headers[k] = v
 
         args = {
-            "path": f"/authenticated/{self.device.organization_id}",
+            "path": f"/authenticated/{self.device.organization_id.str}",
             "headers": headers,
             "data": body,
         }
@@ -106,7 +106,7 @@ class AnonymousRpcApiClient:
             else:
                 headers[k] = v
 
-        args = {"path": f"/anonymous/{self.organization_id}", "headers": headers, "data": body}
+        args = {"path": f"/anonymous/{self.organization_id.str}", "headers": headers, "data": body}
         # Last chance to customize the request !
         if before_send_hook:
             # Passing as dict allow the hook to event modify the path param

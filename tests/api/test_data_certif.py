@@ -96,9 +96,9 @@ def test_user_certificate_supports_legacy_is_admin_field(alice, bob):
     # Manually craft a certificate in legacy format
     raw_legacy_certif = {
         "type": "user_certificate",
-        "author": str(bob.device_id),
+        "author": bob.device_id.str,
         "timestamp": now,
-        "user_id": str(alice.user_id),
+        "user_id": alice.user_id.str,
         "public_key": alice.public_key.encode(),
         "is_admin": True,
     }

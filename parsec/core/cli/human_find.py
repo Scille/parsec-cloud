@@ -25,7 +25,7 @@ async def _human_find(
         )
     for user in user_info_tab:
         is_revoked = " (revoked)" if user.revoked_on is not None else ""
-        click.echo(f"{user.human_handle} - UserID: {user.user_id}{is_revoked}")
+        click.echo(f"{user.human_handle.str} - UserID: {user.user_id.str}{is_revoked}")
     if not nb:
         click.echo("No human found!")
 

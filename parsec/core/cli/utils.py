@@ -108,7 +108,7 @@ def format_available_devices(devices: List[AvailableDevice]) -> str:
     for device in devices:
         display_slughash = click.style(device.slughash[:slughash_len], fg="yellow")
         out.append(
-            f"{display_slughash} - {device.organization_id}: {device.user_display} @ {device.device_display}"
+            f"{display_slughash} - {device.organization_id.str}: {device.user_display} @ {device.device_display}"
         )
     return "\n".join(out)
 

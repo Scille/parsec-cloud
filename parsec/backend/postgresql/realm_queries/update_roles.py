@@ -135,7 +135,7 @@ async def query_update_roles(
         *_q_get_user_profile(organization_id=organization_id.str, user_id=new_role.user_id.str)
     )
     if not rep:
-        raise RealmNotFoundError(f"User `{new_role.user_id}` doesn't exist")
+        raise RealmNotFoundError(f"User `{new_role.user_id.str}` doesn't exist")
     if rep["profile"] == UserProfile.OUTSIDER.value and new_role.role in (
         RealmRole.MANAGER,
         RealmRole.OWNER,
@@ -144,14 +144,14 @@ async def query_update_roles(
 
     # Make the user is not revoked
     if rep["revoked_on"]:
-        raise UserAlreadyRevokedError(f"User `{new_role.user_id}` is revoked")
+        raise UserAlreadyRevokedError(f"User `{new_role.user_id.str}` is revoked")
 
     # Retrieve realm and make sure it is not under maintenance
     rep = await conn.fetchrow(
         *_q_get_realm_status(organization_id=organization_id.str, realm_id=new_role.realm_id.uuid)
     )
     if not rep:
-        raise RealmNotFoundError(f"Realm `{new_role.realm_id}` doesn't exist")
+        raise RealmNotFoundError(f"Realm `{new_role.realm_id.str}` doesn't exist")
     if rep["maintenance_type"]:
         raise RealmInMaintenanceError("Data realm is currently under maintenance")
 

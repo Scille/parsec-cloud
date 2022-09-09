@@ -14,7 +14,9 @@ from parsec.core.cli.utils import cli_command_base_options
 async def _stats_organization(
     organization_id: OrganizationID, backend_addr: BackendAddr, administration_token: str
 ) -> None:
-    url = backend_addr.to_http_domain_url(f"/administration/organizations/{organization_id}/stats")
+    url = backend_addr.to_http_domain_url(
+        f"/administration/organizations/{organization_id.str}/stats"
+    )
 
     rep_data = await http_request(
         url=url, method="GET", headers={"authorization": f"Bearer {administration_token}"}

@@ -30,9 +30,9 @@ display("redacted user certificate", redacted_uc, [ALICE.verify_key, "zip"])
 
 raw_legacy_certif = {
     "type": "user_certificate",
-    "author": str(ALICE.device_id),
+    "author": ALICE.device_id.str,
     "timestamp": NOW,
-    "user_id": str(BOB.user_id),
+    "user_id": BOB.user_id.str,
     "public_key": BOB.public_key.encode(),
     "is_admin": True,
 }
@@ -70,9 +70,9 @@ display("redacted device certificate", redacted_dc, [ALICE.verify_key, "zip"])
 
 raw_legacy_certif = {
     "type": "device_certificate",
-    "author": str(ALICE.device_id),
+    "author": ALICE.device_id.str,
     "timestamp": NOW,
-    "device_id": str(BOB.device_id),
+    "device_id": BOB.device_id.str,
     "verify_key": BOB.verify_key.encode(),
 }
 dc_old = ALICE.signing_key.sign(zlib.compress(packb(raw_legacy_certif)))

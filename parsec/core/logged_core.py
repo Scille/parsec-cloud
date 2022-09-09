@@ -135,7 +135,7 @@ class LoggedCore:
         for workspace in self.user_fs.get_user_manifest().workspaces:
             if workspace_name == workspace.name:
                 return workspace
-        raise FSWorkspaceNotFoundError(f"Unknown workspace {workspace_name}")
+        raise FSWorkspaceNotFoundError(f"Unknown workspace {workspace_name.str}")
 
     async def find_humans(
         self,
@@ -198,7 +198,7 @@ class LoggedCore:
         except RemoteDevicesManagerError as exc:
             # TODO: we should be using our own kind of exception instead of borowing BackendConnectionError...
             raise BackendConnectionError(
-                f"Error while fetching user {user_id} certificates"
+                f"Error while fetching user {user_id.str} certificates"
             ) from exc
         return UserInfo(
             user_id=user_certif.user_id,
@@ -227,7 +227,7 @@ class LoggedCore:
         except RemoteDevicesManagerError as exc:
             # TODO: we should be using our own kind of exception instead of borowing BackendConnectionError...
             raise BackendConnectionError(
-                f"Error while fetching user {user_id} certificates"
+                f"Error while fetching user {user_id.str} certificates"
             ) from exc
         results = []
         for device_certif in device_certifs:
@@ -254,7 +254,7 @@ class LoggedCore:
             revoked_user_certificate=revoked_user_certificate
         )
         if rep["status"] != "ok":
-            raise BackendConnectionError(f"Error while trying to revoke user {user_id}: {rep}")
+            raise BackendConnectionError(f"Error while trying to revoke user {user_id.str}: {rep}")
 
         # Invalidate potential cache to avoid displaying the user as not-revoked
         self._remote_devices_manager.invalidate_user_cache(user_id)

@@ -70,8 +70,8 @@ async def test_authenticated_handshake_no_longer_supported(backend_asgi_app, ali
             "handshake": "answer",
             "client_api_version": ApiVersion(1, 3),
             "type": "AUTHENTICATED",
-            "organization_id": str(alice.organization_id),
-            "device_id": str(alice.device_id),
+            "organization_id": alice.organization_id.str,
+            "device_id": alice.device_id.str,
             "rvk": alice.root_verify_key.encode(),
             "answer": answer,
         }

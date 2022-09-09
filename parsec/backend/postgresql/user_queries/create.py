@@ -214,7 +214,7 @@ async def _do_create_user_with_human_handle(
         )
 
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
+        raise UserAlreadyExistsError(f"User `{user.user_id.str}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")
@@ -231,7 +231,7 @@ async def _do_create_user_with_human_handle(
     if len(not_revoked_users) != 1 or not_revoked_users[0]["user_id"] != user.user_id.str:
         # Exception cancels the transaction so the user insertion is automatically cancelled
         raise UserAlreadyExistsError(
-            f"Human handle `{user.human_handle}` already corresponds to a non-revoked user"
+            f"Human handle `{user.human_handle.str}` already corresponds to a non-revoked user"
         )
 
 
@@ -252,7 +252,7 @@ async def _do_create_user_without_human_handle(
         )
 
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
+        raise UserAlreadyExistsError(f"User `{user.user_id.str}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")
@@ -308,10 +308,10 @@ async def _create_device(
             *_q_get_user_devices(organization_id=organization_id.str, user_id=device.user_id.str)
         )
         if not existing_devices:
-            raise UserNotFoundError(f"User `{device.user_id}` doesn't exists")
+            raise UserNotFoundError(f"User `{device.user_id.str}` doesn't exists")
 
         if device.device_id in itertools.chain(*existing_devices):
-            raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
+            raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
 
     try:
         result = await conn.execute(
@@ -327,7 +327,7 @@ async def _create_device(
             )
         )
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
+        raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")

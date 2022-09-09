@@ -86,7 +86,9 @@ async def _get_available_drive(index, length) -> PurePath:
 
 
 def _generate_volume_serial_number(device, workspace_id):
-    return adler32(f"{device.organization_id}-{device.device_id}-{workspace_id}".encode())
+    return adler32(
+        f"{device.organization_id.str}-{device.device_id.str}-{workspace_id.str}".encode()
+    )
 
 
 async def _wait_for_winfsp_ready(mountpoint_path, timeout=1.0):

@@ -154,7 +154,7 @@ def local_device_factory(coolorg):
         elif not base_human_handle:
             name = str(device_id.user_id).capitalize()
             human_handle = HumanHandle(
-                email=f"{device_id.user_id}@example.com", label=f"{name}y Mc{name}Face"
+                email=f"{device_id.user_id.str}@example.com", label=f"{name}y Mc{name}Face"
             )
         elif isinstance(base_human_handle, HumanHandle):
             human_handle = base_human_handle
@@ -164,7 +164,7 @@ def local_device_factory(coolorg):
                 label, email = match.groups()
             else:
                 label = base_human_handle
-                email = f"{device_id.user_id}@example.com"
+                email = f"{device_id.user_id.str}@example.com"
             human_handle = HumanHandle(email=email, label=label)
 
         parent_device = None
@@ -490,19 +490,19 @@ class CertificatesStore:
     def translate_certif(self, needle):
         for (_, user_id), (certif, redacted_certif) in self._user_certificates.items():
             if needle == certif:
-                return f"<{user_id} user certif>"
+                return f"<{user_id.str} user certif>"
             if needle == redacted_certif:
-                return f"<{user_id} redacted user certif>"
+                return f"<{user_id.str} redacted user certif>"
 
         for (_, device_id), (certif, redacted_certif) in self._device_certificates.items():
             if needle == certif:
-                return f"<{device_id} device certif>"
+                return f"<{device_id.str} device certif>"
             if needle == redacted_certif:
-                return f"<{device_id} redacted device certif>"
+                return f"<{device_id.str} redacted device certif>"
 
         for (_, user_id), certif in self._revoked_user_certificates.items():
             if needle == certif:
-                return f"<{user_id} revoked user certif>"
+                return f"<{user_id.str} revoked user certif>"
 
         raise RuntimeError("Unknown certificate !")
 
@@ -653,7 +653,9 @@ def backend_data_binder_factory(initial_user_manifest_state):
                         if d.organization_id == device.organization_id
                     )
                 except StopIteration:
-                    raise RuntimeError(f"Organization `{device.organization_id}` not bootstrapped")
+                    raise RuntimeError(
+                        f"Organization `{device.organization_id.str}` not bootstrapped"
+                    )
 
             backend_user, backend_device = local_device_to_backend_user(device, certifier)
 

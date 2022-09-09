@@ -20,7 +20,7 @@ class CertificateValidationError(Exception):
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class Device:
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.device_id})"
+        return f"{self.__class__.__name__}({self.device_id.str})"
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -48,7 +48,7 @@ class Device:
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class User:
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.user_id})"
+        return f"{self.__class__.__name__}({self.user_id.str})"
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)

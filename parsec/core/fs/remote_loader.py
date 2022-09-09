@@ -296,7 +296,7 @@ class UserRemoteLoader:
                     raise FSError(
                         f"Invalid realm role certificates: "
                         f"{unsecure_certif.author} has not right to give "
-                        f"{unsecure_certif.role} role to {unsecure_certif.user_id} "
+                        f"{unsecure_certif.role} role to {unsecure_certif.user_id.str} "
                         f"on {unsecure_certif.timestamp}"
                     )
 
@@ -390,7 +390,7 @@ class UserRemoteLoader:
                 "Cannot download vlob while the workspace is in maintenance"
             )
         elif not isinstance(rep, VlobListVersionsRepOk):
-            raise FSError(f"Cannot fetch vlob {entry_id}: {rep}")
+            raise FSError(f"Cannot fetch vlob {entry_id.str}: {rep}")
 
         return rep.versions
 
@@ -415,7 +415,7 @@ class UserRemoteLoader:
             # we play idempotent here.
             return
         elif not isinstance(rep, RealmCreateRepOk):
-            raise FSError(f"Cannot create realm {realm_id}: {rep}")
+            raise FSError(f"Cannot create realm {realm_id.str}: {rep}")
 
 
 class RemoteLoader(UserRemoteLoader):
@@ -649,27 +649,27 @@ class RemoteLoader(UserRemoteLoader):
             raise FSRemoteManifestNotFoundBadVersion(entry_id)
         elif isinstance(rep, VlobReadRepBadEncryptionRevision):
             raise FSBadEncryptionRevision(
-                f"Cannot fetch vlob {entry_id}: Bad encryption revision provided"
+                f"Cannot fetch vlob {entry_id.str}: Bad encryption revision provided"
             )
         elif isinstance(rep, VlobReadRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 "Cannot download vlob while the workspace is in maintenance"
             )
         elif not isinstance(rep, VlobReadRepOk):
-            raise FSError(f"Cannot fetch vlob {entry_id}: {rep}")
+            raise FSError(f"Cannot fetch vlob {entry_id.str}: {rep}")
 
         expected_version = rep.version
         expected_author = rep.author
         expected_timestamp = rep.timestamp
         if version not in (None, expected_version):
             raise FSError(
-                f"Backend returned invalid version for vlob {entry_id} (expecting {version}, "
+                f"Backend returned invalid version for vlob {entry_id.str} (expecting {version}, "
                 f"got {expected_version})"
             )
 
         if expected_backend_timestamp and expected_backend_timestamp != expected_timestamp:
             raise FSError(
-                f"Backend returned invalid expected timestamp for vlob {entry_id} at version "
+                f"Backend returned invalid expected timestamp for vlob {entry_id.str} at version "
                 f"{version} (expecting {expected_backend_timestamp}, got {expected_timestamp})"
             )
 
@@ -701,12 +701,12 @@ class RemoteLoader(UserRemoteLoader):
         )
         if role_at_timestamp is None:
             raise FSError(
-                f"Manifest was created at {expected_timestamp} by `{expected_author}` "
+                f"Manifest was created at {expected_timestamp} by `{expected_author.str}` "
                 "which had no right to access the workspace at that time"
             )
         elif role_at_timestamp == RealmRole.READER:
             raise FSError(
-                f"Manifest was created at {expected_timestamp} by `{expected_author}` "
+                f"Manifest was created at {expected_timestamp} by `{expected_author.str}` "
                 "which had no right to write on the workspace at that time"
             )
 
@@ -839,7 +839,7 @@ class RemoteLoader(UserRemoteLoader):
             raise VlobRequireGreaterTimestampError(rep.strictly_greater_than)
         elif isinstance(rep, VlobCreateRepBadEncryptionRevision):
             raise FSBadEncryptionRevision(
-                f"Cannot create vlob {entry_id}: Bad encryption revision provided"
+                f"Cannot create vlob {entry_id.str}: Bad encryption revision provided"
             )
         elif isinstance(rep, VlobCreateRepInMaintenance):
             raise FSWorkspaceInMaintenance(
@@ -851,7 +851,7 @@ class RemoteLoader(UserRemoteLoader):
                 sequester_services_certificates=rep.sequester_services_certificates,
             )
         elif not isinstance(rep, VlobCreateRepOk):
-            raise FSError(f"Cannot create vlob {entry_id}: {rep}")
+            raise FSError(f"Cannot create vlob {entry_id.str}: {rep}")
 
     async def _vlob_update(
         self,
@@ -889,7 +889,7 @@ class RemoteLoader(UserRemoteLoader):
             raise FSRemoteSyncError(entry_id)
         elif isinstance(rep, VlobUpdateRepBadEncryptionRevision):
             raise FSBadEncryptionRevision(
-                f"Cannot update vlob {entry_id}: Bad encryption revision provided"
+                f"Cannot update vlob {entry_id.str}: Bad encryption revision provided"
             )
         elif isinstance(rep, VlobUpdateRepInMaintenance):
             raise FSWorkspaceInMaintenance(
@@ -901,7 +901,7 @@ class RemoteLoader(UserRemoteLoader):
                 sequester_services_certificates=rep.sequester_services_certificates,
             )
         elif not isinstance(rep, VlobUpdateRepOk):
-            raise FSError(f"Cannot update vlob {entry_id}: {rep}")
+            raise FSError(f"Cannot update vlob {entry_id.str}: {rep}")
 
     def to_timestamped(self, timestamp: DateTime) -> "RemoteLoaderTimestamped":
         return RemoteLoaderTimestamped(self, timestamp)

@@ -51,7 +51,7 @@ async def _anonymous_cmd(
         logger.exception("Invalid request data", cmd=req["cmd"], error=exc)
         raise BackendProtocolError("Invalid request data") from exc
 
-    url = addr.to_http_domain_url(f"/anonymous/{organization_id}")
+    url = addr.to_http_domain_url(f"/anonymous/{organization_id.str}")
     try:
         raw_rep = await http_request(url=url, method="POST", headers=REQUEST_HEADERS, data=raw_req)
     except OSError as exc:
