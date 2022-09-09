@@ -70,6 +70,45 @@
         {
             "status": "in_maintenance",
             "other_fields": []
+        },
+        {
+            "status": "user_revoked",
+            "other_fields": []
+        },
+        {
+            "status": "require_greater_timestamp",
+            "other_fields": [
+                {
+                    "name": "strictly_greater_than",
+                    "type": "DateTime"
+                }
+            ]
+        },
+        {
+            "status": "bad_timestamp",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                },
+                {
+                    "name": "ballpark_client_early_offset",
+                    "type": "Float"
+
+                },
+                {
+                    "name": "ballpark_client_late_offset",
+                    "type": "Float"
+                },
+                {
+                    "name": "backend_timestamp",
+                    "type": "DateTime"
+                },
+                {
+                    "name": "client_timestamp",
+                    "type": "DateTime"
+                }
+            ]
         }
     ]
 }

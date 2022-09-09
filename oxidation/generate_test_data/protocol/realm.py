@@ -36,6 +36,22 @@ serialized = serializer.rep_dumps({"status": "already_exists"})
 serializer.rep_loads(serialized)
 display("realm_create_rep_already_exists", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "bad_timestamp"})
+serializer.rep_loads(serialized)
+display("realm_create_rep_bad_timestamp_legacy", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "status": "bad_timestamp",
+        "ballpark_client_early_offset": 50.0,
+        "ballpark_client_late_offset": 70.0,
+        "backend_timestamp": DateTime(2000, 1, 2, 1),
+        "client_timestamp": DateTime(2000, 1, 2, 1),
+    }
+)
+serializer.rep_loads(serialized)
+display("realm_create_rep_bad_timestamp", serialized, [])
+
 ################### RealmStatus ##################
 
 serializer = realm_status_serializer
@@ -155,6 +171,28 @@ serialized = serializer.rep_dumps({"status": "in_maintenance"})
 serializer.rep_loads(serialized)
 display("realm_update_roles_rep_in_maintenance", serialized, [])
 
+serialized = serializer.rep_dumps({"status": "user_revoked"})
+serializer.rep_loads(serialized)
+display("realm_update_roles_rep_user_revoked", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {"status": "require_greater_timestamp", "strictly_greater_than": DateTime(2000, 1, 2, 1)}
+)
+serializer.rep_loads(serialized)
+display("realm_update_roles_rep_require_greater_timestamp", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "status": "bad_timestamp",
+        "ballpark_client_early_offset": 50.0,
+        "ballpark_client_late_offset": 70.0,
+        "backend_timestamp": DateTime(2000, 1, 2, 1),
+        "client_timestamp": DateTime(2000, 1, 2, 1),
+    }
+)
+serializer.rep_loads(serialized)
+display("realm_update_roles_rep_bad_timestamp", serialized, [])
+
 ################### RealmStartReencryptionMaintenance ##################
 
 serializer = realm_start_reencryption_maintenance_serializer
@@ -198,6 +236,18 @@ display("realm_start_reencryption_maintenance_rep_maintenance_error", serialized
 serialized = serializer.rep_dumps({"status": "in_maintenance"})
 serializer.rep_loads(serialized)
 display("realm_start_reencryption_maintenance_rep_in_maintenance", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "status": "bad_timestamp",
+        "ballpark_client_early_offset": 50.0,
+        "ballpark_client_late_offset": 70.0,
+        "backend_timestamp": DateTime(2000, 1, 2, 1),
+        "client_timestamp": DateTime(2000, 1, 2, 1),
+    }
+)
+serializer.rep_loads(serialized)
+display("realm_start_reencryption_maintenance_rep_bad_timestamp", serialized, [])
 
 ################### RealmFinishReecryptionMaintenance ##################
 

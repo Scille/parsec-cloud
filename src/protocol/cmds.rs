@@ -8,6 +8,8 @@ use libparsec::protocol::{authenticated_cmds, invited_cmds};
 
 use crate::protocol::{
     BlockCreateReq, BlockReadReq, MessageGetReq, OrganizationConfigReq, OrganizationStatsReq,
+    RealmCreateReq, RealmFinishReencryptionMaintenanceReq, RealmGetRoleCertificatesReq,
+    RealmStartReencryptionMaintenanceReq, RealmStatsReq, RealmStatusReq, RealmUpdateRolesReq,
     VlobCreateReq, VlobListVersionsReq, VlobMaintenanceGetReencryptionBatchReq,
     VlobMaintenanceSaveReencryptionBatchReq, VlobPollChangesReq, VlobReadReq, VlobUpdateReq,
 };
@@ -37,6 +39,19 @@ impl AuthenticatedAnyCmdReq {
                 AnyCmdReq::MessageGet(x) => MessageGetReq(x).into_py(py),
                 AnyCmdReq::OrganizationStats(x) => OrganizationStatsReq(x).into_py(py),
                 AnyCmdReq::OrganizationConfig(x) => OrganizationConfigReq(x).into_py(py),
+                AnyCmdReq::RealmCreate(x) => RealmCreateReq(x).into_py(py),
+                AnyCmdReq::RealmStatus(x) => RealmStatusReq(x).into_py(py),
+                AnyCmdReq::RealmStats(x) => RealmStatsReq(x).into_py(py),
+                AnyCmdReq::RealmGetRoleCertificates(x) => {
+                    RealmGetRoleCertificatesReq(x).into_py(py)
+                }
+                AnyCmdReq::RealmUpdateRoles(x) => RealmUpdateRolesReq(x).into_py(py),
+                AnyCmdReq::RealmStartReencryptionMaintenance(x) => {
+                    RealmStartReencryptionMaintenanceReq(x).into_py(py)
+                }
+                AnyCmdReq::RealmFinishReencryptionMaintenance(x) => {
+                    RealmFinishReencryptionMaintenanceReq(x).into_py(py)
+                }
                 AnyCmdReq::VlobCreate(x) => VlobCreateReq(x).into_py(py),
                 AnyCmdReq::VlobRead(x) => VlobReadReq(x).into_py(py),
                 AnyCmdReq::VlobUpdate(x) => VlobUpdateReq(x).into_py(py),

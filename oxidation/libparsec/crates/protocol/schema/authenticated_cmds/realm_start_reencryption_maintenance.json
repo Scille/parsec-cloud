@@ -53,15 +53,6 @@
             ]
         },
         {
-            "status": "invalid_data",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
             "status": "maintenance_error",
             "other_fields": [
                 {
@@ -73,6 +64,32 @@
         {
             "status": "in_maintenance",
             "other_fields": []
+        },
+        {
+            "status": "bad_timestamp",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                },
+                {
+                    "name": "ballpark_client_early_offset",
+                    "type": "Float"
+
+                },
+                {
+                    "name": "ballpark_client_late_offset",
+                    "type": "Float"
+                },
+                {
+                    "name": "backend_timestamp",
+                    "type": "DateTime"
+                },
+                {
+                    "name": "client_timestamp",
+                    "type": "DateTime"
+                }
+            ]
         }
     ]
 }

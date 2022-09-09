@@ -4,6 +4,7 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
+    RealmUpdateRolesRepOk,
     VlobUpdateRepOk,
     VlobUpdateRepNotAllowed,
     VlobPollChangesRepOk,
@@ -127,7 +128,7 @@ async def test_vlob_poll_changes(
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_ws, alice, realm, bob.user_id, RealmRole.CONTRIBUTOR
     )
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, RealmUpdateRolesRepOk)
 
     rep = await vlob_update(bob_ws, VLOB_ID, 2, b"v2", next_timestamp())
     assert isinstance(rep, VlobUpdateRepOk)
@@ -140,7 +141,7 @@ async def test_vlob_poll_changes(
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_ws, alice, realm, bob.user_id, RealmRole.READER
     )
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, RealmUpdateRolesRepOk)
 
     rep = await vlob_update(bob_ws, VLOB_ID, 3, b"v3", next_timestamp(), check_rep=False)
     assert isinstance(rep, VlobUpdateRepNotAllowed)
@@ -153,7 +154,7 @@ async def test_vlob_poll_changes(
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_ws, alice, realm, bob.user_id, None
     )
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, RealmUpdateRolesRepOk)
 
     rep = await vlob_poll_changes(bob_ws, realm, 2)
     assert isinstance(rep, VlobPollChangesRepNotAllowed)

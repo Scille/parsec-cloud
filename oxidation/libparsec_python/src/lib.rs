@@ -66,21 +66,6 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::AuthenticatedPingRep>()?;
     m.add_class::<protocol::InvitedPingReq>()?;
     m.add_class::<protocol::InvitedPingRep>()?;
-    // Realm
-    m.add_class::<protocol::RealmCreateReq>()?;
-    m.add_class::<protocol::RealmCreateRep>()?;
-    m.add_class::<protocol::RealmStatusReq>()?;
-    m.add_class::<protocol::RealmStatusRep>()?;
-    m.add_class::<protocol::RealmStatsReq>()?;
-    m.add_class::<protocol::RealmStatsRep>()?;
-    m.add_class::<protocol::RealmGetRoleCertificateReq>()?;
-    m.add_class::<protocol::RealmGetRoleCertificateRep>()?;
-    m.add_class::<protocol::RealmUpdateRolesReq>()?;
-    m.add_class::<protocol::RealmUpdateRolesRep>()?;
-    m.add_class::<protocol::RealmStartReencryptionMaintenanceReq>()?;
-    m.add_class::<protocol::RealmStartReencryptionMaintenanceRep>()?;
-    m.add_class::<protocol::RealmFinishReencryptionMaintenanceReq>()?;
-    m.add_class::<protocol::RealmFinishReencryptionMaintenanceRep>()?;
     // User
     m.add_class::<protocol::UserGetReq>()?;
     m.add_class::<protocol::UserGetRep>()?;
