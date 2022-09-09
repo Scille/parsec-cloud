@@ -2,9 +2,26 @@
 
 from typing import Type
 from enum import Enum
+
+from parsec._parsec import (
+    RealmCreateReq,
+    RealmCreateRep,
+    RealmStatusReq,
+    RealmStatusRep,
+    RealmStatsReq,
+    RealmStatsRep,
+    RealmGetRoleCertificatesReq,
+    RealmGetRoleCertificatesRep,
+    RealmUpdateRolesReq,
+    RealmUpdateRolesRep,
+    RealmStartReencryptionMaintenanceReq,
+    RealmStartReencryptionMaintenanceRep,
+    RealmFinishReencryptionMaintenanceReq,
+    RealmFinishReencryptionMaintenanceRep,
+    MaintenanceType,
+)
 from parsec.serde import fields
-from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
-from parsec.api.protocol.types import UserIDField, DeviceIDField
+from parsec.api.protocol.base import ApiCommandSerializer
 from parsec._parsec import RealmID
 
 __all__ = (
@@ -13,7 +30,6 @@ __all__ = (
     "RealmRole",
     "RealmRoleField",
     "MaintenanceType",
-    "MaintenanceTypeField",
     "realm_create_serializer",
     "realm_status_serializer",
     "realm_stats_serializer",
@@ -24,11 +40,6 @@ __all__ = (
 )
 
 
-class MaintenanceType(Enum):
-    GARBAGE_COLLECTION = "GARBAGE_COLLECTION"
-    REENCRYPTION = "REENCRYPTION"
-
-
 class RealmRole(Enum):
     OWNER = "OWNER"
     MANAGER = "MANAGER"
@@ -37,98 +48,18 @@ class RealmRole(Enum):
 
 
 RealmRoleField: Type[fields.BaseEnumField] = fields.enum_field_factory(RealmRole)
-MaintenanceTypeField: Type[fields.BaseEnumField] = fields.enum_field_factory(MaintenanceType)
 RealmIDField: Type[fields.Field] = fields.uuid_based_field_factory(RealmID)
 
-
-class RealmCreateReqSchema(BaseReqSchema):
-    role_certificate = fields.Bytes(required=True)
-
-
-class RealmCreateRepSchema(BaseRepSchema):
-    pass
-
-
-realm_create_serializer = CmdSerializer(RealmCreateReqSchema, RealmCreateRepSchema)
-
-
-class RealmStatusReqSchema(BaseReqSchema):
-    realm_id = RealmIDField(required=True)
-
-
-class RealmStatusRepSchema(BaseRepSchema):
-    in_maintenance = fields.Boolean(required=True)
-    maintenance_type = MaintenanceTypeField(required=True, allow_none=True)
-    maintenance_started_on = fields.DateTime(required=True, allow_none=True)
-    maintenance_started_by = DeviceIDField(required=True, allow_none=True)
-    encryption_revision = fields.Integer(required=True)
-
-
-realm_status_serializer = CmdSerializer(RealmStatusReqSchema, RealmStatusRepSchema)
-
-
-class RealmStatsReqSchema(BaseReqSchema):
-    realm_id = RealmIDField(required=True)
-
-
-class RealmStatsRepSchema(BaseRepSchema):
-    blocks_size = fields.Integer(required=True)
-    vlobs_size = fields.Integer(required=True)
-
-
-realm_stats_serializer = CmdSerializer(RealmStatsReqSchema, RealmStatsRepSchema)
-
-
-class RealmGetRoleCertificatesReqSchema(BaseReqSchema):
-    realm_id = RealmIDField(required=True)
-
-
-class RealmGetRoleCertificatesRepSchema(BaseRepSchema):
-    certificates = fields.List(fields.Bytes(required=True), required=True)
-
-
-realm_get_role_certificates_serializer = CmdSerializer(
-    RealmGetRoleCertificatesReqSchema, RealmGetRoleCertificatesRepSchema
+realm_create_serializer = ApiCommandSerializer(RealmCreateReq, RealmCreateRep)
+realm_status_serializer = ApiCommandSerializer(RealmStatusReq, RealmStatusRep)
+realm_stats_serializer = ApiCommandSerializer(RealmStatsReq, RealmStatsRep)
+realm_get_role_certificates_serializer = ApiCommandSerializer(
+    RealmGetRoleCertificatesReq, RealmGetRoleCertificatesRep
 )
-
-
-class RealmUpdateRolesReqSchema(BaseReqSchema):
-    role_certificate = fields.Bytes(required=True)
-    recipient_message = fields.Bytes(required=True, allow_none=True)
-
-
-class RealmUpdateRolesRepSchema(BaseRepSchema):
-    pass
-
-
-realm_update_roles_serializer = CmdSerializer(RealmUpdateRolesReqSchema, RealmUpdateRolesRepSchema)
-
-
-class RealmStartReencryptionMaintenanceReqSchema(BaseReqSchema):
-    realm_id = RealmIDField(required=True)
-    encryption_revision = fields.Integer(required=True)
-    timestamp = fields.DateTime(required=True)
-    per_participant_message = fields.Map(UserIDField(), fields.Bytes(required=True), required=True)
-
-
-class RealmStartReencryptionMaintenanceRepSchema(BaseRepSchema):
-    pass
-
-
-realm_start_reencryption_maintenance_serializer = CmdSerializer(
-    RealmStartReencryptionMaintenanceReqSchema, RealmStartReencryptionMaintenanceRepSchema
+realm_update_roles_serializer = ApiCommandSerializer(RealmUpdateRolesReq, RealmUpdateRolesRep)
+realm_start_reencryption_maintenance_serializer = ApiCommandSerializer(
+    RealmStartReencryptionMaintenanceReq, RealmStartReencryptionMaintenanceRep
 )
-
-
-class RealmFinishReencryptionMaintenanceReqSchema(BaseReqSchema):
-    realm_id = RealmIDField(required=True)
-    encryption_revision = fields.Integer(required=True)
-
-
-class RealmFinishReencryptionMaintenanceRepSchema(BaseRepSchema):
-    pass
-
-
-realm_finish_reencryption_maintenance_serializer = CmdSerializer(
-    RealmFinishReencryptionMaintenanceReqSchema, RealmFinishReencryptionMaintenanceRepSchema
+realm_finish_reencryption_maintenance_serializer = ApiCommandSerializer(
+    RealmFinishReencryptionMaintenanceReq, RealmFinishReencryptionMaintenanceRep
 )

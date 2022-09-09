@@ -119,11 +119,9 @@ impl DateTime {
         seconds: f64,
         microseconds: f64,
     ) -> PyResult<Self> {
-        Ok(Self(
-            self.0
-                - ((((days * 24. + hours) * 60. + minutes) * 60. + seconds) * 1e6 + microseconds)
-                    as i64,
-        ))
+        let us =
+            -((((days * 24. + hours) * 60. + minutes) * 60. + seconds) * 1e6 + microseconds) as i64;
+        Ok(Self(self.0.add_us(us)))
     }
 
     #[args(
@@ -141,11 +139,9 @@ impl DateTime {
         seconds: f64,
         microseconds: f64,
     ) -> PyResult<Self> {
-        Ok(Self(
-            self.0
-                + ((((days * 24. + hours) * 60. + minutes) * 60. + seconds) * 1e6 + microseconds)
-                    as i64,
-        ))
+        let us =
+            ((((days * 24. + hours) * 60. + minutes) * 60. + seconds) * 1e6 + microseconds) as i64;
+        Ok(Self(self.0.add_us(us)))
     }
 }
 

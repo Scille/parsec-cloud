@@ -16,6 +16,10 @@ from parsec._parsec import (
     BlockReadRepNotFound,
     BlockReadRepInMaintenance,
     BlockReadRepNotAllowed,
+    RealmCreateRepOk,
+    RealmCreateRepAlreadyExists,
+    RealmGetRoleCertificatesRepOk,
+    RealmGetRoleCertificatesRepNotAllowed,
     VlobCreateRepOk,
     VlobCreateRepSequesterInconsistency,
     VlobCreateRepAlreadyExists,
@@ -240,18 +244,18 @@ class UserRemoteLoader:
             rep = await self.backend_cmds.realm_get_role_certificates(
                 RealmID((realm_id or self.workspace_id).uuid)
             )
-        if rep["status"] == "not_allowed":
+        if isinstance(rep, RealmGetRoleCertificatesRepNotAllowed):
             # Seems we lost the access to the realm
             raise FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access")
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot retrieve workspace roles: `{rep['status']}`")
+        elif not isinstance(rep, RealmGetRoleCertificatesRepOk):
+            raise FSError(f"Cannot retrieve workspace roles: {rep}")
 
         try:
             # Must read unverified certificates to access metadata
             unsecure_certifs = sorted(
                 [
                     (RealmRoleCertificate.unsecure_load(uv_role), uv_role)
-                    for uv_role in rep["certificates"]
+                    for uv_role in rep.certificates
                 ],
                 key=lambda x: x[0].timestamp,
             )
@@ -405,13 +409,13 @@ class UserRemoteLoader:
         with translate_backend_cmds_errors():
             rep = await self.backend_cmds.realm_create(certif)
 
-        if rep["status"] == "already_exists":
+        if isinstance(rep, RealmCreateRepAlreadyExists):
             # It's possible a previous attempt to create this realm
             # succeeded but we didn't receive the confirmation, hence
             # we play idempotent here.
             return
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot create realm {realm_id.str}: `{rep['status']}`")
+        elif not isinstance(rep, RealmCreateRepOk):
+            raise FSError(f"Cannot create realm {realm_id.str}: {rep}")
 
 
 class RemoteLoader(UserRemoteLoader):

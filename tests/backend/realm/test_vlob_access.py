@@ -4,6 +4,7 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
+    RealmUpdateRolesRepOk,
     VlobCreateRepOk,
     VlobCreateRepAlreadyExists,
     VlobCreateRepBadEncryptionRevision,
@@ -633,7 +634,7 @@ async def test_vlob_updates_causality_checks(
     rep = await realm_generate_certif_and_update_roles_or_fail(
         alice_ws, alice, realm, bob.user_id, RealmRole.MANAGER, ref
     )
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, RealmUpdateRolesRepOk)
 
     # Now bob writes to the corresponding realm with the same timestamp or lower: this should fail
     for timestamp in (ref, ref.subtract(seconds=1)):
