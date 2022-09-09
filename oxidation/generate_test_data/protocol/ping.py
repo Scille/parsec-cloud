@@ -9,7 +9,7 @@ from parsec.api.data import *
 
 ################### Ping ##################
 
-serializer = ping_serializer
+serializer = authenticated_ping_serializer
 
 serialized = serializer.req_dumps({"cmd": "ping", "ping": "ping"})
 serializer.req_loads(serialized)

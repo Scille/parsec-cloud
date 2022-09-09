@@ -5,6 +5,7 @@ import trio
 
 from quart.testing.connections import WebsocketDisconnectError
 
+from parsec._parsec import AuthenticatedPingRepOk
 from parsec.api.protocol import APIEvent
 from parsec.backend.asgi import app_factory
 from parsec.backend.backend_events import BackendEvent
@@ -14,7 +15,7 @@ from tests.backend.common import (
     events_listen,
     events_listen_wait,
     events_listen_nowait,
-    ping,
+    authenticated_ping,
     real_clock_timeout,
 )
 
@@ -61,8 +62,8 @@ async def test_events_subscribe(backend, alice_ws, alice2_ws):
 
     # Should ignore our own events
     with backend.event_bus.listen() as spy:
-        await ping(alice_ws, "bar")
-        await ping(alice2_ws, "foo")
+        await authenticated_ping(alice_ws, "bar")
+        await authenticated_ping(alice2_ws, "foo")
 
         # No guarantees those events occur before the commands' return
         await spy.wait_multiple_with_timeout([BackendEvent.PINGED, BackendEvent.PINGED])
@@ -78,7 +79,7 @@ async def test_event_resubscribe(backend, alice_ws, alice2_ws):
     await events_subscribe(alice_ws)
 
     with backend.event_bus.listen() as spy:
-        await ping(alice2_ws, "foo")
+        await authenticated_ping(alice2_ws, "foo")
 
         # No guarantees those events occur before the commands' return
         await spy.wait_with_timeout(BackendEvent.PINGED)
@@ -87,8 +88,8 @@ async def test_event_resubscribe(backend, alice_ws, alice2_ws):
     await events_subscribe(alice_ws)
 
     with backend.event_bus.listen() as spy:
-        await ping(alice2_ws, "bar")
-        await ping(alice2_ws, "spam")
+        await authenticated_ping(alice2_ws, "bar")
+        await authenticated_ping(alice2_ws, "spam")
 
         # No guarantees those events occur before the commands' return
         await spy.wait_multiple_with_timeout([BackendEvent.PINGED, BackendEvent.PINGED])
@@ -117,10 +118,10 @@ async def test_cross_backend_event(backend_factory, backend_authenticated_ws_fac
             await events_subscribe(alice_ws)
 
             async with events_listen(alice_ws) as listen:
-                await ping(bob_ws, "foo")
+                await authenticated_ping(bob_ws, "foo")
             assert listen.rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "foo"}
 
-            await ping(bob_ws, "foo")
+            await authenticated_ping(bob_ws, "foo")
 
             # There is no guarantee an event is ready to be received once
             # the sender got it answer
@@ -140,8 +141,8 @@ async def test_cross_backend_event(backend_factory, backend_authenticated_ws_fac
 async def test_events_listen_wait_cancelled(backend_asgi_app, alice_ws):
     async with events_listen(alice_ws) as listen:
         # Cancel `events_listen` by sending another command
-        rep = await ping(alice_ws, ping="foo")
-        assert rep == {"status": "ok", "pong": "foo"}
+        rep = await authenticated_ping(alice_ws, ping="foo")
+        assert rep == AuthenticatedPingRepOk("foo")
 
         listen.rep_done = True
 

@@ -9,7 +9,7 @@ from parsec.api.protocol import UserProfile
 from parsec.backend.user import INVITATION_VALIDITY, Device
 
 from tests.common import freeze_time, customize_fixtures
-from tests.backend.common import device_create, ping
+from tests.backend.common import device_create, authenticated_ping
 
 
 @pytest.fixture
@@ -60,7 +60,7 @@ async def test_device_create_ok(
 
     # Make sure the new device can connect now
     async with backend_authenticated_ws_factory(backend_asgi_app, alice_nd) as sock:
-        rep = await ping(sock, ping="Hello world !")
+        rep = await authenticated_ping(sock, ping="Hello world !")
         assert rep == AuthenticatedPingRepOk("Hello world !")
 
     # Check the resulting data in the backend

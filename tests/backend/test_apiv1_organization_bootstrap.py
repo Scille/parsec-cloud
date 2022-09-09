@@ -10,7 +10,7 @@ from parsec.api.protocol import UserID, apiv1_organization_bootstrap_serializer,
 from parsec.api.protocol.handshake import HandshakeOrganizationExpired
 
 from tests.common import customize_fixtures, local_device_to_backend_user
-from tests.backend.common import ping
+from tests.backend.common import authenticated_ping
 
 
 _missing = object()
@@ -95,12 +95,12 @@ async def test_organization_bootstrap(
     # 2) Now our new device can connect the backend
 
     async with backend_authenticated_ws_factory(backend_asgi_app, newalice) as sock:
-        await ping(sock)
+        await authenticated_ping(sock)
 
     # 3) Make sure alice from the other organization is still working
 
     async with backend_authenticated_ws_factory(backend_asgi_app, alice) as sock:
-        await ping(sock)
+        await authenticated_ping(sock)
 
     # 4) Finally, check the resulting data in the backend
     backend_user, backend_device = await backend_asgi_app.backend.user.get_user_with_device(

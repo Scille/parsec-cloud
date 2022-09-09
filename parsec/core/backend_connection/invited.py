@@ -17,7 +17,7 @@ class BackendInvitedCmds:
         self.addr = addr
         self.acquire_transport = acquire_transport
 
-    ping = expose_cmds_with_retrier(cmds.ping)
+    ping = expose_cmds_with_retrier(cmds.invited_ping)
     invite_info = expose_cmds_with_retrier(cmds.invite_info)
     invite_1_claimer_wait_peer = expose_cmds_with_retrier(cmds.invite_1_claimer_wait_peer)
     invite_2a_claimer_send_hashed_nonce = expose_cmds_with_retrier(

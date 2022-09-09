@@ -13,8 +13,13 @@ pub use cmds::*;
 pub use message::*;
 pub use organization::*;
 pub use ping::*;
+pub use realm::*;
+pub use vlob::*;
 
+// We use this type because we can't match Option<String> in macro_rules
+pub(crate) type Reason = Option<String>;
 pub(crate) type Bytes = Vec<u8>;
+pub(crate) type ListOfBytes = Vec<Vec<u8>>;
 pub(crate) type OptionalFloat = Option<f64>;
 pub(crate) type OptionalDateTime = Option<crate::time::DateTime>;
 
