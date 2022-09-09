@@ -418,6 +418,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if f.type != FileType.Folder and f.type != FileType.File:
                 continue
             files_to_copy.append((self.current_directory / f.name, f.type))
+
+        if self.clipboard and self.clipboard.status == Clipboard.Status.Cut:
+            if (
+                len(self.clipboard.files)
+                and self.clipboard.files[0][0].parent == self.current_directory
+            ):
+                self.table_files.reset_cut_status([f[0].name.str for f in self.clipboard.files])
+
         self.clipboard = Clipboard(
             files=files_to_copy, status=Clipboard.Status.Copied, source_workspace=self.workspace_fs
         )
