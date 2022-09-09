@@ -457,13 +457,12 @@ impl ManifestStorage {
     }
 
     pub fn ensure_manifest_persistent(&self, entry_id: EntryID) -> FSResult<()> {
-        match (
-            self.cache_ahead_of_localdb
-                .lock()
-                .expect("Mutex is poisoned")
-                .get(&entry_id),
-            self.cache.lock().expect("Mutex is poisoned").get(&entry_id),
-        ) {
+        let mut cache_ahead_of_localdb = self
+            .cache_ahead_of_localdb
+            .lock()
+            .expect("Mutex is poisoned");
+        let cache = self.cache.lock().expect("Mutex is poisoned");
+        match (cache_ahead_of_localdb.get(&entry_id), cache.get(&entry_id)) {
             (Some(pending_chunk_ids), Some(manifest)) => {
                 let ciphered = manifest.dump_and_encrypt(&self.local_symkey);
                 let pending_chunk_ids = pending_chunk_ids
@@ -499,7 +498,7 @@ impl ManifestStorage {
                     .execute(conn)
                     .map_err(|e| FSError::DeleteTable(format!("chunks: clear_manifest {e}")))?;
                 }
-
+                cache_ahead_of_localdb.remove(&entry_id);
                 Ok(())
             }
             _ => Ok(()),
@@ -566,6 +565,18 @@ impl ManifestStorage {
         }
 
         Ok(())
+    }
+
+    /// Return `true` is the given manifest identified by `entry_id` is present in the cache
+    /// waiting to be written onto the database.
+    ///
+    /// For more information see [ManifestStorage::cache_ahead_of_localdb].
+    pub fn is_manifest_cache_ahead_of_persistance(&self, entry_id: &EntryID) -> bool {
+        self.cache_ahead_of_localdb
+            .lock()
+            .expect("Mutex is poisoned")
+            .keys()
+            .any(|cached_entry_id| cached_entry_id == entry_id)
     }
 }
 

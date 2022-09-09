@@ -34,7 +34,7 @@ class File:
             assert getattr(manifest, k) == v
 
     async def is_cache_ahead_of_persistance(self) -> bool:
-        return self.entry_id in self.local_storage.manifest_storage._cache_ahead_of_localdb
+        return await self.local_storage.is_manifest_cache_ahead_of_persistance(self.entry_id)
 
     async def get_manifest(self) -> AnyLocalManifest:
         return await self.local_storage.get_manifest(self.entry_id)
@@ -79,7 +79,7 @@ async def test_operations_on_file(alice_file_transactions: FileTransactions, foo
         await file_transactions.fd_write(fd, b"world !", -1)
         await file_transactions.fd_write(fd, b"H", 0)
         await file_transactions.fd_write(fd, b"", 0)
-        assert foo_txt.is_cache_ahead_of_persistance()
+        assert await foo_txt.is_cache_ahead_of_persistance()
 
         fd2 = foo_txt.open()
 
@@ -101,7 +101,7 @@ async def test_operations_on_file(alice_file_transactions: FileTransactions, foo
     assert data == b"world"
 
     await file_transactions.fd_close(fd)
-    assert not foo_txt.is_cache_ahead_of_persistance()
+    assert not await foo_txt.is_cache_ahead_of_persistance()
 
     fd2 = foo_txt.open()
 
@@ -110,7 +110,7 @@ async def test_operations_on_file(alice_file_transactions: FileTransactions, foo
 
     await file_transactions.fd_close(fd2)
 
-    assert not foo_txt.is_cache_ahead_of_persistance()
+    assert not await foo_txt.is_cache_ahead_of_persistance()
     await foo_txt.ensure_manifest(
         size=16,
         is_placeholder=False,
@@ -140,7 +140,7 @@ async def test_flush_file(alice_file_transactions: FileTransactions, foo_txt: Fi
         await file_transactions.fd_write(fd, b"hello ", 0)
         await file_transactions.fd_write(fd, b"world !", -1)
 
-    assert foo_txt.is_cache_ahead_of_persistance()
+    assert await foo_txt.is_cache_ahead_of_persistance()
     await foo_txt.ensure_manifest(
         size=13,
         is_placeholder=False,
@@ -151,10 +151,10 @@ async def test_flush_file(alice_file_transactions: FileTransactions, foo_txt: Fi
     )
 
     await file_transactions.fd_flush(fd)
-    assert not foo_txt.is_cache_ahead_of_persistance()
+    assert not await foo_txt.is_cache_ahead_of_persistance()
 
     await file_transactions.fd_close(fd)
-    assert not foo_txt.is_cache_ahead_of_persistance()
+    assert not await foo_txt.is_cache_ahead_of_persistance()
     await foo_txt.ensure_manifest(
         size=13,
         is_placeholder=False,

@@ -334,6 +334,14 @@ impl WorkspaceStorage {
     fn workspace_id(&self) -> PyResult<EntryID> {
         Ok(EntryID(self.0.workspace_id))
     }
+
+    fn is_manifest_cache_ahead_of_persistance(
+        &self,
+        py: Python,
+        entry_id: EntryID,
+    ) -> PyResult<bool> {
+        Ok(py.allow_threads(|| self.0.is_manifest_cache_ahead_of_persistance(&entry_id.0)))
+    }
 }
 
 #[pyclass(module = "parsec._parsec")]

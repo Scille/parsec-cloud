@@ -262,6 +262,11 @@ class WorkspaceStorage:
     async def run_vacuum(self) -> None:
         return await trio.to_thread.run_sync(self.sync_instance.run_vacuum)
 
+    async def is_manifest_cache_ahead_of_persistance(self, entry_id: EntryID) -> bool:
+        return await trio.to_thread.run_sync(
+            self.sync_instance.is_manifest_cache_ahead_of_persistance, entry_id
+        )
+
     # Timestamped workspace
 
     def to_timestamped(self, timestamp: DateTime) -> "WorkspaceStorageSnapshot":

@@ -384,6 +384,12 @@ impl WorkspaceStorage {
         self.chunk_storage.run_vacuum()
     }
 
+    /// Return `true` when the given manifest identified by `entry_id` is cached.
+    pub fn is_manifest_cache_ahead_of_persistance(&self, entry_id: &EntryID) -> bool {
+        self.manifest_storage
+            .is_manifest_cache_ahead_of_persistance(entry_id)
+    }
+
     /// Take a snapshot of the current [WorkspaceStorage]
     pub fn to_timestamp(self, _timestamp: DateTime) -> WorkspaceStorageSnapshot {
         WorkspaceStorageSnapshot::from(self)
