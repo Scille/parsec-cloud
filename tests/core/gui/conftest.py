@@ -380,6 +380,7 @@ def testing_main_window_cls(aqtbot):
 
         def test_get_workspaces_widget(self):
             mount_widget = self.test_get_mount_widget()
+            mount_widget.workspaces_widget.check_hide_unmounted.setChecked(False)
             return mount_widget.workspaces_widget
 
         def test_get_files_widget(self):
