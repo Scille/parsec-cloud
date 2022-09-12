@@ -513,3 +513,51 @@ fn test_file_manifest_verify(
         expected_result
     );
 }
+
+#[rstest]
+fn file_manifest_unverified_load() {
+    // Test the unverified_load() function on a file manifest.
+    // File manifest has been generated with Parsec 1.12, it is provided raw as it is a bit hard
+    // to generate (would need to create keys and all that). We're only interested in the
+    // deserialization of raw unciphered data to a FileManifest.
+
+    let serialized_manifest = hex!(
+        "af080459a4924e3934f2cfcbe90ce658ef42954f2abe9dab2524a417bfd833959a9c4de3c9abe34
+        c1447152be9398944b6a1c4dca7609ce47e0782f881a1c209789c015d01a2fe8ba474797065ad666
+        96c655f6d616e6966657374a6617574686f72d941623365306562343134623063343466316239363
+        33337373232633135366563364030613239373331356163366634633766613538333962303031633
+        93530623233a974696d657374616d70d70141d8c7d36e7af26fa26964d80269f15a0d48c040bf884
+        a5d41eb8b528fa6706172656e74d80224a5fac2b57a4be2b88550e077ee524ca776657273696f6e0
+        1a763726561746564d70141d8c7bcaada06eaa775706461746564d70141d8c7bcaadb9e3da473697
+        a6505a9626c6f636b73697a65ce00080000a6626c6f636b739185a26964d802e53a7750ed014b67b
+        c7683abb0801d95a36b6579c4205c0ab829952db2b6f9d2a8dfcbaafa356290e6b0555a0ca8804b4
+        a665f86cb00a66f666673657400a473697a6505a6646967657374c420f2ca1bb6c7e907d06dafe46
+        87e579fce76b37e4e93b7605022da52e6ccc26fd2e5299be8"
+    );
+
+    let manifest = Manifest::unverified_load(&serialized_manifest).unwrap();
+
+    let file_manifest = match manifest {
+        Manifest::File(fm) => fm,
+        _ => panic!("Should be a file manifest"),
+    };
+
+    assert_eq!(
+        file_manifest.author,
+        DeviceID {
+            user_id: UserID::from_str("b3e0eb414b0c44f1b96337722c156ec6").unwrap(),
+            device_name: DeviceName::from_str("0a297315ac6f4c7fa5839b001c950b23").unwrap()
+        }
+    );
+    assert_eq!(
+        file_manifest.id,
+        EntryID::from_str("69f15a0d48c040bf884a5d41eb8b528f").unwrap()
+    );
+    assert_eq!(
+        file_manifest.parent,
+        EntryID::from_str("24a5fac2b57a4be2b88550e077ee524c").unwrap()
+    );
+    assert_eq!(file_manifest.version, 1);
+    assert_eq!(file_manifest.size, 5);
+    assert_eq!(file_manifest.blocks.len(), 1);
+}

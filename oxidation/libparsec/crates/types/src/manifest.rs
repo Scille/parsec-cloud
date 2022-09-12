@@ -590,4 +590,16 @@ impl Manifest {
         }
         Ok(obj)
     }
+
+    pub fn unverified_load(data: &[u8]) -> Result<Self, DataError> {
+        let compressed = VerifyKey::unsecure_unwrap(data).unwrap();
+
+        let mut deserialized = Vec::new();
+
+        ZlibDecoder::new(compressed)
+            .read_to_end(&mut deserialized)
+            .map_err(|_| DataError::Compression)?;
+
+        Ok(rmp_serde::from_slice(&deserialized).unwrap())
+    }
 }
