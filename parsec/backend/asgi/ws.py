@@ -216,7 +216,7 @@ async def _handle_client_websocket_loop(
                     raw_req = exc.new_raw_req
                     continue
 
-            client_ctx.logger.info("Request", cmd=cmd, status=rep)
+            client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
 
         raw_rep = packb(rep)
         await websocket.send(raw_rep)
