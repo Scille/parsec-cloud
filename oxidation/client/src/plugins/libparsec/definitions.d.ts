@@ -4,23 +4,22 @@
  * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
  */
 
-
 export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E };
 
-
 // HelloError
 export interface HelloErrorEmptySubject {
-    tag: "EmptySubject"
+    tag: 'EmptySubject'
 }
 export interface HelloErrorYouAreADog {
-    tag: "YouAreADog"
+    tag: 'YouAreADog'
     hello: string;
 }
 export type HelloError =
   | HelloErrorEmptySubject
   | HelloErrorYouAreADog
 
-
-export function helloWorld(subject: string): Promise<Result<string, HelloError>>;
+export interface LibParsecPlugin {
+    helloWorld(subject: string): Promise<Result<string, HelloError>>;
+}

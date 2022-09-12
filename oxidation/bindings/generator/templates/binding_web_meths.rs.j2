@@ -1,0 +1,34 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
+{# Macros -#}
+
+{#-
+ # Types conversions macros
+ #}
+
+
+{#- End of macros #}
+
+/*
+ * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
+ */
+{% if api.rust_code_to_inject is not none %}
+{{ api.rust_code_to_inject }}
+{% endif %}
+
+#[allow(unused_imports)]
+use js_sys::*;
+#[allow(unused_imports)]
+use wasm_bindgen_futures::*;
+#[allow(unused_imports)]
+use wasm_bindgen::prelude::*;
+{% for meth in api.meths %}
+
+// {{ meth.name }}
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn {{ meth.pascalName }}() -> Promise {
+    future_to_promise(async {
+        Err("not implemented :'(".into())
+    })
+}
+{% endfor %}

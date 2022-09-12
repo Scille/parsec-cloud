@@ -449,5 +449,5 @@ jobs:
       # Then move this step to package-ci.yml
       - name: Build WebApp
         if: steps.web-change.outputs.run == 'true'
-        run: npm run build
+        run: npm run web:release
         working-directory: oxidation/client

@@ -1,6 +1,6 @@
 [package]
 name = "libparsec_bindings_electron"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2021"
 exclude = ["index.node"]
 
@@ -8,8 +8,9 @@ exclude = ["index.node"]
 crate-type = ["cdylib"]
 
 [dependencies]
-libparsec_bindings_common = { path = "../common" }
+libparsec = { path = "../../libparsec" }
 lazy_static = "1.4.0"
+tokio = { version = "1.20", features = ["rt-multi-thread"] }
 
 [dependencies.neon]
 version = "0.10"

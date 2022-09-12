@@ -23,7 +23,7 @@
         "libparsec:release": "npm run libparsec:build -- --release && npm run libparsec:copy",
         "electron:start-live": "npm run libparsec && node ./live-runner.js",
         "electron:start": "npm run build && electron --inspect=5858 ./",
-        "electron:dist": "npm run build:release --release && electron-builder build --config ./electron-builder.config.json --publish never"
+        "electron:release": "npm run build:release --release && electron-builder build --config ./electron-builder.config.json --publish never"
     },
     "dependencies": {
         "@capacitor-community/electron": "^4.1.0",
