@@ -49,15 +49,21 @@ impl UserStorage {
     // User manifest
 
     pub fn get_user_manifest(&self) -> FSResult<LocalUserManifest> {
-        let cache = self
-            .manifest_storage
-            .cache
+        self.manifest_storage
+            .caches
             .lock()
-            .expect("Mutex is poisoned");
-        match cache.get(&self.user_manifest_id) {
-            Some(LocalManifest::User(manifest)) => Ok(manifest.clone()),
-            _ => Err(FSError::UserManifestMissing),
-        }
+            .expect("Mutex is poisoned")
+            .get(&self.user_manifest_id)
+            .and_then(|cache| {
+                if let LocalManifest::User(ref manifest) =
+                    cache.lock().expect("Mutex is poisoned").manifest
+                {
+                    Some(manifest.clone())
+                } else {
+                    None
+                }
+            })
+            .ok_or(FSError::UserManifestMissing)
     }
 
     fn load_user_manifest(&self) -> FSResult<()> {
