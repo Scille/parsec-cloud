@@ -15,10 +15,10 @@
     "scripts": {
         "build": "npm run libparsec && tsc && electron-rebuild",
         "build:release": "npm run libparsec:release && tsc && electron-rebuild",
-        "libparsec:copy-lib": "mkdir -p build/src/libparsec || md build\\src\\libparsec && cp ../../bindings/neon/dist/libparsec/index.node build/src/libparsec || copy ..\\..\\bindings\\neon\\dist\\libparsec\\index.node build\\src\\libparsec",
-        "libparsec:copy-typing": "mkdir -p build/generated-ts/src || md build\\generated-ts\\src && cp ../../bindings/neon/dist/libparsec/index.d.ts build/generated-ts/src/libparsec.d.ts || copy ..\\..\\bindings\\neon\\dist\\libparsec\\index.d.ts build\\generated-ts\\src\\libparsec.d.ts",
+        "libparsec:copy-lib": "mkdir -p build/src/libparsec || md build\\src\\libparsec && cp ../../bindings/electron/dist/libparsec/index.node build/src/libparsec || copy ..\\..\\bindings\\electron\\dist\\libparsec\\index.node build\\src\\libparsec",
+        "libparsec:copy-typing": "mkdir -p build/generated-ts/src || md build\\generated-ts\\src && cp ../../bindings/electron/dist/libparsec/index.d.ts build/generated-ts/src/libparsec.d.ts || copy ..\\..\\bindings\\electron\\dist\\libparsec\\index.d.ts build\\generated-ts\\src\\libparsec.d.ts",
         "libparsec:copy": "npm run libparsec:copy-lib && npm run libparsec:copy-typing",
-        "libparsec:build": "cd ../../bindings/neon/ && npm run build",
+        "libparsec:build": "cd ../../bindings/electron/ && npm run build",
         "libparsec": "npm run libparsec:build && npm run libparsec:copy",
         "libparsec:release": "npm run libparsec:build -- --release && npm run libparsec:copy",
         "electron:start-live": "npm run libparsec && node ./live-runner.js",

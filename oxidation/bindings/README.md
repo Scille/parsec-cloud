@@ -1,16 +1,16 @@
 # LibParsec bindings
 
-## 1. Desktop (neon)
+## 1. Desktop (electron)
 
 - NPM scripts using LibParsec needs cargo to work : <https://doc.rust-lang.org/cargo/getting-started/installation.html>
 - To develop on Windows, you need to install VS BuildTools 2019 :
     - Download the installer here : <https://visualstudio.microsoft.com/fr/thank-you-downloading-visual-studio/?sku=BuildTools&rel=16>
     - Select in the individual modules : *"MSVC v142 - VS 2019 C++ x64/x86 Build Tools"*
 
-Install neon dependencies and build:
+Install electron dependencies and build:
 
 ```bash
-# In /bindings/neon
+# In /bindings/electron
 npm install
 npm run build  # Generate index.node (basically a .so that node can load)
 ```

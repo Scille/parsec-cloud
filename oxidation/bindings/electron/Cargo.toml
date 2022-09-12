@@ -1,5 +1,5 @@
 [package]
-name = "libparsec_bindings_neon"
+name = "libparsec_bindings_electron"
 version = "0.1.0"
 edition = "2021"
 exclude = ["index.node"]

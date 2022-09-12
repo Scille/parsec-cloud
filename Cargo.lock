@@ -1339,6 +1339,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_bindings_electron"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "libparsec_bindings_common",
+ "neon",
+]
+
+[[package]]
 name = "libparsec_bindings_jni"
 version = "0.1.0"
 dependencies = [
@@ -1347,15 +1356,6 @@ dependencies = [
  "lazy_static",
  "libparsec_bindings_common",
  "log",
-]
-
-[[package]]
-name = "libparsec_bindings_neon"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "libparsec_bindings_common",
- "neon",
 ]
 
 [[package]]
