@@ -52,7 +52,7 @@ class BackendAuthenticatedCmds:
 
     events_subscribe = expose_cmds_with_retrier(cmds.events_subscribe)
     events_listen = expose_cmds_with_retrier(cmds.events_listen)
-    ping = expose_cmds_with_retrier(cmds.ping)
+    ping = expose_cmds_with_retrier(cmds.authenticated_ping)
     message_get = expose_cmds_with_retrier(cmds.message_get)
     user_get = expose_cmds_with_retrier(cmds.user_get)
     user_create = expose_cmds_with_retrier(cmds.user_create)

@@ -9,7 +9,7 @@ from werkzeug.datastructures import Headers
 from parsec._parsec import DateTime, OrganizationID
 from parsec.api.version import API_VERSION
 from parsec.core.types import LocalDevice
-from parsec.api.protocol.ping import ping_serializer
+from parsec.api.protocol import authenticated_ping_serializer, invited_ping_serializer
 
 from tests.common import RunningBackend, OrganizationFullData
 
@@ -28,7 +28,9 @@ class AuthenticatedRpcApiClient:
         )
 
     async def send_ping(self, ping: str = "foo", **kwargs):
-        return await self.send({"cmd": "ping", "ping": ping}, ping_serializer, **kwargs)
+        return await self.send(
+            {"cmd": "ping", "ping": ping}, authenticated_ping_serializer, **kwargs
+        )
 
     async def send(
         self,
@@ -84,7 +86,7 @@ class AnonymousRpcApiClient:
         )
 
     async def send_ping(self, ping: str = "foo", **kwargs):
-        return await self.send({"cmd": "ping", "ping": ping}, ping_serializer, **kwargs)
+        return await self.send({"cmd": "ping", "ping": ping}, invited_ping_serializer, **kwargs)
 
     async def send(
         self,

@@ -32,6 +32,10 @@ from parsec._parsec import (
     RealmStartReencryptionMaintenanceRepUnknownStatus,
     RealmFinishReencryptionMaintenanceRep,
     RealmFinishReencryptionMaintenanceRepUnknownStatus,
+    AuthenticatedPingRep,
+    AuthenticatedPingRepUnknownStatus,
+    InvitedPingRep,
+    InvitedPingRepUnknownStatus,
     VlobCreateRep,
     VlobCreateRepBadTimestamp,
     VlobCreateRepUnknownStatus,
@@ -79,7 +83,8 @@ from parsec.api.protocol import (
     invite_3a_claimer_signify_trust_serializer,
     invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
-    ping_serializer,
+    authenticated_ping_serializer,
+    invited_ping_serializer,
     organization_stats_serializer,
     organization_config_serializer,
     apiv1_organization_bootstrap_serializer,
@@ -182,6 +187,8 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
             RealmUpdateRolesRep,
             RealmStartReencryptionMaintenanceRep,
             RealmFinishReencryptionMaintenanceRep,
+            AuthenticatedPingRep,
+            InvitedPingRep,
             VlobCreateRep,
             VlobReadRep,
             VlobUpdateRep,
@@ -206,6 +213,8 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
                 RealmUpdateRolesRepUnknownStatus,
                 RealmStartReencryptionMaintenanceRepUnknownStatus,
                 RealmFinishReencryptionMaintenanceRepUnknownStatus,
+                AuthenticatedPingRepUnknownStatus,
+                InvitedPingRepUnknownStatus,
                 VlobCreateRepUnknownStatus,
                 VlobReadRepUnknownStatus,
                 VlobUpdateRepUnknownStatus,
@@ -258,8 +267,12 @@ async def organization_config(transport: Transport) -> dict:
 ### Events&misc API ###
 
 
-async def ping(transport: Transport, ping: str = "") -> dict:
-    return await _send_cmd(transport, ping_serializer, cmd="ping", ping=ping)
+async def authenticated_ping(transport: Transport, ping: str = "") -> dict:
+    return await _send_cmd(transport, authenticated_ping_serializer, cmd="ping", ping=ping)
+
+
+async def invited_ping(transport: Transport, ping: str = "") -> dict:
+    return await _send_cmd(transport, invited_ping_serializer, cmd="ping", ping=ping)
 
 
 async def events_subscribe(

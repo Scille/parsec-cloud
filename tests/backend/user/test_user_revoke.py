@@ -12,7 +12,7 @@ from parsec.api.data import RevokedUserCertificate
 from parsec.api.protocol import HandshakeRevokedDevice, UserProfile
 
 from tests.common import freeze_time
-from tests.backend.common import user_revoke, ping
+from tests.backend.common import user_revoke, authenticated_ping
 
 
 @pytest.mark.trio
@@ -37,7 +37,7 @@ async def test_backend_close_on_user_revoke(
             await trio.testing.wait_all_tasks_blocked()
         # Bob cannot send new command
         with pytest.raises(WebsocketDisconnectError):
-            await ping(bob_ws)
+            await authenticated_ping(bob_ws)
 
 
 @pytest.mark.trio

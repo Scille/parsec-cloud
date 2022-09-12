@@ -19,6 +19,7 @@ from parsec._parsec import (
     RealmUpdateRolesRepOk,
     RealmStartReencryptionMaintenanceRepOk,
     RealmFinishReencryptionMaintenanceRepOk,
+    AuthenticatedPingRepOk,
     VlobCreateRepOk,
     VlobReadRepOk,
     VlobUpdateRepOk,
@@ -29,7 +30,8 @@ from parsec._parsec import (
 )
 from parsec.serde import packb
 from parsec.api.protocol import (
-    ping_serializer,
+    authenticated_ping_serializer,
+    invited_ping_serializer,
     organization_stats_serializer,
     organization_config_serializer,
     organization_bootstrap_serializer,
@@ -200,6 +202,7 @@ class CmdSock:
                         RealmUpdateRolesRepOk,
                         RealmStartReencryptionMaintenanceRepOk,
                         RealmFinishReencryptionMaintenanceRepOk,
+                        AuthenticatedPingRepOk,
                         VlobCreateRepOk,
                         VlobReadRepOk,
                         VlobUpdateRepOk,
@@ -249,9 +252,16 @@ class CmdSock:
 ### Ping ###
 
 
-ping = CmdSock(
+authenticated_ping = CmdSock(
     "ping",
-    ping_serializer,
+    authenticated_ping_serializer,
+    parse_args=lambda self, ping="foo": {"ping": ping},
+    check_rep_by_default=True,
+)
+
+invited_ping = CmdSock(
+    "ping",
+    invited_ping_serializer,
     parse_args=lambda self, ping="foo": {"ping": ping},
     check_rep_by_default=True,
 )

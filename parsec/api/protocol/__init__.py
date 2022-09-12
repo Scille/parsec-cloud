@@ -56,7 +56,10 @@ from parsec.api.protocol.events import (
     events_listen_serializer,
     APIEvent,
 )
-from parsec.api.protocol.ping import ping_serializer
+from parsec.api.protocol.ping import (
+    authenticated_ping_serializer,
+    invited_ping_serializer,
+)
 from parsec.api.protocol.user import (
     user_get_serializer,
     user_create_serializer,
@@ -194,7 +197,8 @@ __all__ = (
     "events_listen_serializer",
     "APIEvent",
     # Ping
-    "ping_serializer",
+    "authenticated_ping_serializer",
+    "invited_ping_serializer",
     # User
     "user_get_serializer",
     "user_create_serializer",

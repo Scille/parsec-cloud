@@ -86,11 +86,6 @@ try:
         Invite4GreeterCommunicateReq,
         Invite4GreeterCommunicateRep,
         InviteListItem,
-        # Ping
-        AuthenticatedPingReq,
-        AuthenticatedPingRep,
-        InvitedPingReq,
-        InvitedPingRep,
         # User
         UserGetReq,
         UserGetRep,
@@ -277,11 +272,6 @@ __all__ = (
     "Invite4GreeterCommunicateReq",
     "Invite4GreeterCommunicateRep",
     "InviteListItem",
-    # Ping
-    "AuthenticatedPingReq",
-    "AuthenticatedPingRep",
-    "InvitedPingReq",
-    "InvitedPingRep",
     # User
     "UserGetReq",
     "UserGetRep",

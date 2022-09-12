@@ -53,39 +53,6 @@
                     },
                     "serializing": "msgpack"
                 }
-            },
-            "ping": {
-                "rep": {
-                    "fields": {
-                        "pong": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "String"
-                        },
-                        "status": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "CheckedConstant",
-                            "value": "ok"
-                        }
-                    },
-                    "serializing": "msgpack"
-                },
-                "req": {
-                    "fields": {
-                        "cmd": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "String"
-                        },
-                        "ping": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "String"
-                        }
-                    },
-                    "serializing": "msgpack"
-                }
             }
         }
     },
@@ -1187,39 +1154,6 @@
                     "serializing": "msgpack"
                 }
             },
-            "ping": {
-                "rep": {
-                    "fields": {
-                        "pong": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "String"
-                        },
-                        "status": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "CheckedConstant",
-                            "value": "ok"
-                        }
-                    },
-                    "serializing": "msgpack"
-                },
-                "req": {
-                    "fields": {
-                        "cmd": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "String"
-                        },
-                        "ping": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "String"
-                        }
-                    },
-                    "serializing": "msgpack"
-                }
-            },
             "pki_enrollment_accept": {
                 "rep": {
                     "fields": {
@@ -1800,39 +1734,6 @@
                 "req": {
                     "fields": {
                         "cmd": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "String"
-                        }
-                    },
-                    "serializing": "msgpack"
-                }
-            },
-            "ping": {
-                "rep": {
-                    "fields": {
-                        "pong": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "String"
-                        },
-                        "status": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "CheckedConstant",
-                            "value": "ok"
-                        }
-                    },
-                    "serializing": "msgpack"
-                },
-                "req": {
-                    "fields": {
-                        "cmd": {
-                            "allow_none": false,
-                            "required": true,
-                            "type": "String"
-                        },
-                        "ping": {
                             "allow_none": false,
                             "required": true,
                             "type": "String"

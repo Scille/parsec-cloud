@@ -196,6 +196,15 @@ from parsec._parsec_pyi.protocol import (
     RealmFinishReencryptionMaintenanceRepMaintenanceError,
     RealmFinishReencryptionMaintenanceRepUnknownStatus,
     MaintenanceType,
+    # Ping
+    AuthenticatedPingReq,
+    AuthenticatedPingRep,
+    AuthenticatedPingRepOk,
+    AuthenticatedPingRepUnknownStatus,
+    InvitedPingReq,
+    InvitedPingRep,
+    InvitedPingRepOk,
+    InvitedPingRepUnknownStatus,
     # Vlob
     VlobCreateReq,
     VlobCreateRep,
@@ -448,6 +457,15 @@ __all__ = [
     "RealmFinishReencryptionMaintenanceRepMaintenanceError",
     "RealmFinishReencryptionMaintenanceRepUnknownStatus",
     "MaintenanceType",
+    # Protocol Ping
+    "AuthenticatedPingReq",
+    "AuthenticatedPingRep",
+    "AuthenticatedPingRepOk",
+    "AuthenticatedPingRepUnknownStatus",
+    "InvitedPingReq",
+    "InvitedPingRep",
+    "InvitedPingRepOk",
+    "InvitedPingRepUnknownStatus",
     # Protocol Vlob
     "VlobCreateReq",
     "VlobCreateRep",

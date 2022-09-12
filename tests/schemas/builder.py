@@ -280,6 +280,7 @@ def generate_api_protocol_specs():
                         "realm_update_roles",
                         "realm_start_reencryption_maintenance",
                         "realm_finish_reencryption_maintenance",
+                        "ping",
                         "vlob_create",
                         "vlob_read",
                         "vlob_update",

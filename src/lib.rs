@@ -197,6 +197,15 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::RealmFinishReencryptionMaintenanceRepMaintenanceError>()?;
     m.add_class::<protocol::RealmFinishReencryptionMaintenanceRepUnknownStatus>()?;
     m.add_class::<protocol::MaintenanceType>()?;
+    // Ping
+    m.add_class::<protocol::AuthenticatedPingReq>()?;
+    m.add_class::<protocol::AuthenticatedPingRep>()?;
+    m.add_class::<protocol::AuthenticatedPingRepOk>()?;
+    m.add_class::<protocol::AuthenticatedPingRepUnknownStatus>()?;
+    m.add_class::<protocol::InvitedPingReq>()?;
+    m.add_class::<protocol::InvitedPingRep>()?;
+    m.add_class::<protocol::InvitedPingRepOk>()?;
+    m.add_class::<protocol::InvitedPingRepUnknownStatus>()?;
 
     // Vlob
     m.add_class::<protocol::VlobCreateReq>()?;

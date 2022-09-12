@@ -3,7 +3,7 @@
 import pytest
 import trio
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, InvitedPingRepOk
 from parsec.api.protocol import (
     INVITED_CMDS,
     InvitationToken,
@@ -63,7 +63,7 @@ async def test_backend_closed_cmds(running_backend, invitation_addr):
 async def test_ping(running_backend, invitation_addr):
     async with backend_invited_cmds_factory(invitation_addr) as cmds:
         rep = await cmds.ping("Hello World !")
-        assert rep == {"status": "ok", "pong": "Hello World !"}
+        assert rep == InvitedPingRepOk("Hello World !")
 
 
 @pytest.mark.trio

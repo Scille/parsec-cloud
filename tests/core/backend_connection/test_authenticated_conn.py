@@ -3,6 +3,7 @@
 import pytest
 import trio
 
+from parsec._parsec import AuthenticatedPingRepOk
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmRole
 from parsec.backend.backend_events import BackendEvent
@@ -117,7 +118,7 @@ async def test_init_with_backend_online(
 
             # Test command
             rep = await conn.cmds.ping("foo")
-            assert rep == {"status": "ok", "pong": "foo"}
+            assert rep == AuthenticatedPingRepOk("foo")
 
             # Test events
             running_backend.backend.event_bus.send(
@@ -244,7 +245,7 @@ async def test_concurrency_sends(running_backend, alice, event_bus):
     async def sender(cmds, x):
         nonlocal work_done_counter
         rep = await cmds.ping(x)
-        assert rep == {"status": "ok", "pong": str(x)}
+        assert rep == AuthenticatedPingRepOk(str(x))
         work_done_counter += 1
         if work_done_counter == CONCURRENCY:
             work_all_done.set()
