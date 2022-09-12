@@ -183,8 +183,9 @@ fn test_list_devices(tmp_path: TmpPath, alice: &Device, bob: &Device, mallory: &
     let mallory_device = device_file_factory(mallory.clone());
 
     let alice_file_path = get_default_key_file(&tmp_path, &alice);
-    let bob_file_path = get_default_key_file(&tmp_path, &bob);
-    let mallory_file_path = get_default_key_file(&tmp_path, &mallory);
+    // Device must have a .keys extension, but can be in nested directories with a random name
+    let bob_file_path = tmp_path.join("devices/foo/whatever.keys");
+    let mallory_file_path = tmp_path.join("devices/foo/bar/spam/whatever.keys");
 
     alice_device.save(&alice_file_path).unwrap();
     bob_device.save(&bob_file_path).unwrap();
