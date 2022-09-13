@@ -179,22 +179,17 @@ async def test_search_multiple_user_same_human_handle(access_testbed, local_devi
     await binder.bind_device(nick3, certifier=godfrey1)
 
     rep = await human_find(sock, query="Guzman Huerta")
-    assert rep == HumanFindRepOk(
-        results=[
-            HumanFindResultItem(
-                user_id=nick1.user_id, human_handle=nick1.human_handle, revoked=True
-            ),
-            HumanFindResultItem(
-                user_id=nick2.user_id, human_handle=nick2.human_handle, revoked=True
-            ),
-            HumanFindResultItem(
-                user_id=nick3.user_id, human_handle=nick3.human_handle, revoked=False
-            ),
-        ],
-        per_page=100,
-        page=1,
-        total=3,
-    )
+
+    # Users have same label, the sort will have an nondeterminated ordered result.
+    assert isinstance(rep, HumanFindRepOk)
+    assert rep.per_page == 100
+    assert rep.page == 1
+    assert rep.total == 3
+    assert sorted(rep.results, key=lambda x: x.user_id) == [
+        HumanFindResultItem(user_id=nick2.user_id, human_handle=nick2.human_handle, revoked=True),
+        HumanFindResultItem(user_id=nick1.user_id, human_handle=nick1.human_handle, revoked=True),
+        HumanFindResultItem(user_id=nick3.user_id, human_handle=nick3.human_handle, revoked=False),
+    ]
 
     rep = await human_find(sock, query="Guzman Huerta", omit_revoked=True)
     assert rep == HumanFindRepOk(
@@ -422,16 +417,16 @@ async def test_bad_query(access_testbed):
 async def test_find_with_query_ignore_non_human(alice_ws, alice, bob, adam):
     # Find all first
     rep = await human_find(alice_ws)
-    assert rep == HumanFindRepOk(
-        results=[
-            HumanFindResultItem(user_id=alice.user_id, revoked=False, human_handle=None),
-            HumanFindResultItem(user_id=adam.user_id, revoked=False, human_handle=None),
-            HumanFindResultItem(user_id=bob.user_id, revoked=False, human_handle=None),
-        ],
-        per_page=100,
-        page=1,
-        total=3,
-    )
+
+    assert isinstance(rep, HumanFindRepOk)
+    assert rep.per_page == 100
+    assert rep.page == 1
+    assert rep.total == 3
+    assert sorted(rep.results, key=lambda x: x.user_id) == [
+        HumanFindResultItem(user_id=adam.user_id, revoked=False, human_handle=None),
+        HumanFindResultItem(user_id=alice.user_id, revoked=False, human_handle=None),
+        HumanFindResultItem(user_id=bob.user_id, revoked=False, human_handle=None),
+    ]
 
     rep = await human_find(alice_ws, query=str(alice.user_id))
     assert rep == HumanFindRepOk(results=[], per_page=100, page=1, total=0)
@@ -477,33 +472,34 @@ async def test_no_query_users_with_and_without_human_label(access_testbed, local
 
     # Users with human label should be sorted but for now non_human users create a NonDeterministicOrder
     rep = await human_find(sock, per_page=11, page=1)
-    assert rep == HumanFindRepOk(
-        results=[
-            HumanFindResultItem(
-                user_id=blacky.user_id, revoked=False, human_handle=blacky.human_handle
-            ),
-            HumanFindResultItem(
-                user_id=blacky3.user_id, revoked=False, human_handle=blacky3.human_handle
-            ),
-            HumanFindResultItem(
-                user_id=godfrey1.user_id, revoked=False, human_handle=godfrey1.human_handle
-            ),
-            HumanFindResultItem(user_id=ice.user_id, revoked=False, human_handle=ice.human_handle),
-            HumanFindResultItem(
-                user_id=ninja.user_id, revoked=False, human_handle=ninja.human_handle
-            ),
-            HumanFindResultItem(
-                user_id=richard.user_id, revoked=False, human_handle=richard.human_handle
-            ),
-            HumanFindResultItem(
-                user_id=roger.user_id, revoked=False, human_handle=roger.human_handle
-            ),
-            HumanFindResultItem(user_id=zoe.user_id, revoked=False, human_handle=zoe.human_handle),
-            HumanFindResultItem(user_id=mike.user_id, revoked=False, human_handle=None),
-            HumanFindResultItem(user_id=easy.user_id, revoked=False, human_handle=None),
-            HumanFindResultItem(user_id=titeuf.user_id, revoked=False, human_handle=None),
-        ],
-        per_page=11,
-        page=1,
-        total=11,
+    assert isinstance(rep, HumanFindRepOk)
+    assert rep.per_page == 11
+    assert rep.page == 1
+    assert rep.total == 11
+
+    # Items with human handle come first in a deterministic order
+    assert rep.results[:8] == (
+        HumanFindResultItem(
+            user_id=blacky.user_id, revoked=False, human_handle=blacky.human_handle
+        ),
+        HumanFindResultItem(
+            user_id=blacky3.user_id, revoked=False, human_handle=blacky3.human_handle
+        ),
+        HumanFindResultItem(
+            user_id=godfrey1.user_id, revoked=False, human_handle=godfrey1.human_handle
+        ),
+        HumanFindResultItem(user_id=ice.user_id, revoked=False, human_handle=ice.human_handle),
+        HumanFindResultItem(user_id=ninja.user_id, revoked=False, human_handle=ninja.human_handle),
+        HumanFindResultItem(
+            user_id=richard.user_id, revoked=False, human_handle=richard.human_handle
+        ),
+        HumanFindResultItem(user_id=roger.user_id, revoked=False, human_handle=roger.human_handle),
+        HumanFindResultItem(user_id=zoe.user_id, revoked=False, human_handle=zoe.human_handle),
     )
+
+    # Items with no human handle come last with no order guarantee
+    assert sorted(rep.results[8:], key=lambda x: x.user_id) == [
+        HumanFindResultItem(user_id=titeuf.user_id, revoked=False, human_handle=None),
+        HumanFindResultItem(user_id=mike.user_id, revoked=False, human_handle=None),
+        HumanFindResultItem(user_id=easy.user_id, revoked=False, human_handle=None),
+    ]
