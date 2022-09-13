@@ -26,6 +26,13 @@ logger = get_logger()
 CREATE_MIGRATION_TABLE_ID = 2
 MIGRATION_FILE_PATTERN = r"^(?P<id>\d{4})_(?P<name>\w*).sql$"
 
+# The duration between 1970 and 2000 in microseconds.
+#
+# Internally, PostgreSQL stores timestamps as 4bytes floating number representing the number of seconds since
+# 2000-01-01T00:00:00Z, hence we need to do back-and-forth conversion with the regular 1970-based POSIX epoch
+# > We use int to avoid float error
+MICRO_SECONDS_BETWEEN_1970_AND_2000: int = 946684800 * 1000000
+
 
 @attr.s(slots=True, auto_attribs=True)
 class MigrationItem:
@@ -147,6 +154,18 @@ def retry_on_unique_violation(fn):
     return wrapper
 
 
+async def handle_datetime(conn):
+    await conn.set_type_codec(
+        "timestamptz",
+        encoder=lambda x: (int(x.timestamp() * 1000000) - MICRO_SECONDS_BETWEEN_1970_AND_2000,),
+        decoder=lambda x: DateTime.from_timestamp(
+            (x[0] + MICRO_SECONDS_BETWEEN_1970_AND_2000) / 1000000
+        ),
+        schema="pg_catalog",
+        format="tuple",
+    )
+
+
 # TODO: replace by a fonction
 class PGHandler:
     def __init__(self, url: str, min_connections: int, max_connections: int, event_bus: EventBus):
@@ -168,20 +187,7 @@ class PGHandler:
         # for timestamp types, here we override this behavior to uses our own custom
         # DateTime type
         async def _init_connection(conn):
-            await conn.set_type_codec(
-                "timestamptz",
-                encoder=lambda x: (int(x.timestamp() * 1000000),),
-                decoder=lambda x: DateTime.from_timestamp(x[0] / 1000000),
-                schema="pg_catalog",
-                format="tuple",
-            )
-            await conn.set_type_codec(
-                "timestamp",
-                encoder=lambda x: (int(x.timestamp() * 1000000),),
-                decoder=lambda x: DateTime.from_timestamp(x[0] / 1000000),
-                schema="pg_catalog",
-                format="tuple",
-            )
+            await handle_datetime(conn)
 
         async with triopg.create_pool(
             self.url,
