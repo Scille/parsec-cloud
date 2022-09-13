@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    exceptions::{PyNotImplementedError, PyValueError},
+    exceptions::PyNotImplementedError,
     import_exception,
     prelude::*,
     pyclass::CompareOp,
@@ -9,8 +9,9 @@ use pyo3::{
 };
 use std::num::NonZeroU64;
 
-use libparsec::protocol::authenticated_cmds::{
-    device_create, human_find, user_create, user_get, user_revoke,
+use libparsec::protocol::{
+    authenticated_cmds::{device_create, human_find, user_create, user_get, user_revoke},
+    PerPage,
 };
 
 use crate::{
@@ -19,6 +20,7 @@ use crate::{
 };
 
 import_exception!(parsec.api.protocol, ProtocolError);
+import_exception!(parsec.api.protocol, InvalidMessageError);
 
 #[pyclass]
 #[derive(Clone)]
@@ -405,8 +407,8 @@ impl HumanFindReq {
         page: u64,
         per_page: u64,
     ) -> PyResult<Self> {
-        let page = NonZeroU64::try_from(page).map_err(ProtocolError::new_err)?;
-        let per_page = NonZeroU64::try_from(per_page).map_err(ProtocolError::new_err)?;
+        let page = NonZeroU64::try_from(page).map_err(InvalidMessageError::new_err)?;
+        let per_page = PerPage::try_from(per_page).map_err(InvalidMessageError::new_err)?;
         Ok(Self(human_find::Req {
             query,
             omit_revoked,
@@ -529,10 +531,8 @@ impl HumanFindRepOk {
             Self,
             HumanFindRep(human_find::Rep::Ok {
                 results: results.into_iter().map(|x| x.0).collect(),
-                page: NonZeroU64::try_from(page)
-                    .map_err(|_| PyValueError::new_err("page should be greater than 0"))?,
-                per_page: NonZeroU64::try_from(per_page)
-                    .map_err(|_| PyValueError::new_err("per_page should be greater than 0"))?,
+                page: NonZeroU64::try_from(page).map_err(InvalidMessageError::new_err)?,
+                per_page: PerPage::try_from(per_page).map_err(InvalidMessageError::new_err)?,
                 total,
             }),
         ))

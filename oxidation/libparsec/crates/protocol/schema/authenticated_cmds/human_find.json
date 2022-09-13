@@ -22,7 +22,7 @@
             },
             {
                 "name": "per_page",
-                "type": "NonZeroInteger"
+                "type": "PerPage"
             }
         ]
     },
@@ -40,7 +40,7 @@
                 },
                 {
                     "name": "per_page",
-                    "type": "NonZeroInteger"
+                    "type": "PerPage"
                 },
                 {
                     "name": "total",
