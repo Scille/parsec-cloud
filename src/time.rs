@@ -246,6 +246,10 @@ impl LocalDateTime {
         )))
     }
 
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
+    }
+
     #[getter]
     fn year(&self) -> PyResult<u64> {
         Ok(self.0.year())

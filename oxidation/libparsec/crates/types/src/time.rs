@@ -484,6 +484,25 @@ impl LocalDateTime {
     }
 }
 
+impl std::fmt::Debug for LocalDateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("LocalDateTime")
+            .field(&self.to_string())
+            .field(&self.0.nanosecond())
+            .finish()
+    }
+}
+
+impl std::fmt::Display for LocalDateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, false)
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::Timelike;
