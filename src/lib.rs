@@ -93,6 +93,7 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
         m
     )?)?;
     m.add_function(wrap_pyfunction!(manifest::manifest_verify_and_load, m)?)?;
+    m.add_function(wrap_pyfunction!(manifest::manifest_unverified_load, m)?)?;
 
     // Block
     m.add_class::<protocol::BlockCreateReq>()?;

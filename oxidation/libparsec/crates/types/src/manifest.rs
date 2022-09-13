@@ -558,14 +558,8 @@ impl Manifest {
         expected_version: Option<u32>,
     ) -> Result<Self, DataError> {
         let compressed = author_verify_key.verify(signed)?;
-        let mut deserialized = Vec::new();
 
-        ZlibDecoder::new(&compressed[..])
-            .read_to_end(&mut deserialized)
-            .map_err(|_| DataError::Compression)?;
-
-        let obj: Self =
-            rmp_serde::from_slice(&deserialized).map_err(|_| DataError::Serialization)?;
+        let obj = Manifest::deserialize_data(&compressed)?;
 
         macro_rules! internal_verify {
             ($obj:ident) => {{
@@ -589,5 +583,24 @@ impl Manifest {
             Manifest::User(user) => internal_verify!(user),
         }
         Ok(obj)
+    }
+
+    /// Load the manifest without checking the signature header.
+    pub fn unverified_load(data: &[u8]) -> Result<Self, DataError> {
+        let compressed = VerifyKey::unsecure_unwrap(data).unwrap();
+
+        Manifest::deserialize_data(compressed)
+    }
+
+    fn deserialize_data(data: &[u8]) -> Result<Self, DataError> {
+        let mut deserialized = Vec::new();
+
+        ZlibDecoder::new(data)
+            .read_to_end(&mut deserialized)
+            .map_err(|_| DataError::Compression)?;
+
+        Ok(rmp_serde::from_slice(&deserialized)
+            .map_err(|_| DataError::Serialization)
+            .unwrap())
     }
 }

@@ -292,3 +292,6 @@ def manifest_verify_and_load(
     expected_id: Optional[EntryID] = None,
     expected_version: Optional[int] = None,
 ) -> AnyRemoteManifest: ...
+def manifest_unverified_load(
+    data: bytes,
+) -> AnyRemoteManifest: ...

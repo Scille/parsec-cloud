@@ -14,6 +14,7 @@ from parsec._parsec import (
     manifest_decrypt_and_load,
     manifest_verify_and_load,
     manifest_decrypt_verify_and_load,
+    manifest_unverified_load,
 )
 
 if TYPE_CHECKING:
@@ -36,6 +37,7 @@ __all__ = [
     "manifest_decrypt_and_load",
     "manifest_decrypt_verify_and_load",
     "manifest_verify_and_load",
+    "manifest_unverified_load",
 ]
 
 

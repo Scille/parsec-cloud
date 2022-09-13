@@ -1189,6 +1189,16 @@ pub(crate) fn manifest_verify_and_load<'py>(
     unwrap_manifest(py, blob)
 }
 
+#[pyfunction]
+pub(crate) fn manifest_unverified_load(py: Python, data: &[u8]) -> PyResult<PyObject> {
+    let blob = match Manifest::unverified_load(data) {
+        Ok(value) => value,
+        Err(err) => return Err(DataError::new_err(err.to_string())),
+    };
+
+    unwrap_manifest(py, blob)
+}
+
 fn unwrap_manifest(py: Python, manifest: Manifest) -> PyResult<PyObject> {
     match manifest {
         Manifest::File(file) => Ok(FileManifest(file).into_py(py)),
