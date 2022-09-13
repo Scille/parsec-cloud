@@ -8,10 +8,11 @@ from parsec._parsec import (
     HumanFindResultItem,
 )
 from parsec.api.protocol import UserProfile
+from parsec.api.protocol.user import human_find_serializer
 from parsec.backend.asgi import app_factory
 
 from tests.common import freeze_time, customize_fixtures
-from tests.backend.common import human_find
+from tests.backend.common import CmdSock, human_find
 
 
 @pytest.fixture
@@ -332,9 +333,65 @@ async def test_pagination(access_testbed, local_device_factory):
 @pytest.mark.trio
 async def test_bad_args(access_testbed, local_device_factory):
     binder, org, godfrey1, sock = access_testbed
+    cmd = CmdSock(
+        "human_find",
+        human_find_serializer,
+        parse_args=lambda self, query=None, omit_revoked=False, omit_non_human=False, page=1, per_page=100: {
+            "query": query,
+            "omit_revoked": omit_revoked,
+            "omit_non_human": omit_non_human,
+            "page": page,
+            "per_page": per_page,
+        },
+    )
     # Test bad params
-    for bad in [{"page": 0}, {"per_page": 0}, {"per_page": 101}]:
-        rep = await human_find(sock, **bad)
+    # We should not be able to build an invalid request
+    for raw_req in [
+        # Generated from Python implementation (Parsec v2.11.1+dev)
+        # Content:
+        #   cmd: "human_find"
+        #   omit_non_human: false
+        #   omit_revoked: false
+        #   page: 0
+        #   per_page: 8
+        #   query: "foobar"
+        #
+        bytes.fromhex(
+            "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+            "5f7265766f6b6564c2a47061676500a87065725f7061676508a57175657279a6666f6f6261"
+            "72"
+        ),
+        # Generated from Python implementation (Parsec v2.11.1+dev)
+        # Content:
+        #   cmd: "human_find"
+        #   omit_non_human: false
+        #   omit_revoked: false
+        #   page: 8
+        #   per_page: 0
+        #   query: "foobar"
+        #
+        bytes.fromhex(
+            "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+            "5f7265766f6b6564c2a47061676508a87065725f7061676500a57175657279a6666f6f6261"
+            "72"
+        ),
+        # Generated from Python implementation (Parsec v2.11.1+dev)
+        # Content:
+        #   cmd: "human_find"
+        #   omit_non_human: false
+        #   omit_revoked: false
+        #   page: 0
+        #   per_page: 101
+        #   query: "foobar"
+        #
+        bytes.fromhex(
+            "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+            "5f7265766f6b6564c2a47061676500a87065725f7061676565a57175657279a6666f6f6261"
+            "72"
+        ),
+    ]:
+        await sock.send(raw_req)
+        rep = await cmd._do_recv(sock, False)
         assert rep.status == "bad_message"
 
 

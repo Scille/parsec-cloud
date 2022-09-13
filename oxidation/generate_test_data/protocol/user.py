@@ -52,6 +52,28 @@ serialized = serializer.req_dumps(
 serializer.req_loads(serialized)
 display("user_create_req", serialized, [])
 
+serialized = serializer.req_dumps(
+    {
+        "cmd": "user_create",
+        "user_certificate": b"foobar",
+        "device_certificate": b"foobar",
+        "redacted_user_certificate": b"foobar",
+        "redacted_device_certificate": None,
+    }
+)
+display("user_create_req_redacted_device_certificate_none", serialized, [])
+
+serialized = serializer.req_dumps(
+    {
+        "cmd": "user_create",
+        "user_certificate": b"foobar",
+        "device_certificate": b"foobar",
+        "redacted_user_certificate": None,
+        "redacted_device_certificate": b"foobar",
+    }
+)
+display("user_create_req_redacted_user_certificate_none", serialized, [])
+
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("user_create_rep", serialized, [])
@@ -153,6 +175,45 @@ serialized = serializer.req_dumps(
 )
 serializer.req_loads(serialized)
 display("human_find_req", serialized, [])
+
+serializer = human_find_serializer
+serialized = serializer.req_dumps(
+    {
+        "cmd": "human_find",
+        "query": "foobar",
+        "omit_revoked": False,
+        "omit_non_human": False,
+        "page": 0,
+        "per_page": 8,
+    }
+)
+display("human_find_req_page_0", serialized, [])
+
+serializer = human_find_serializer
+serialized = serializer.req_dumps(
+    {
+        "cmd": "human_find",
+        "query": "foobar",
+        "omit_revoked": False,
+        "omit_non_human": False,
+        "page": 8,
+        "per_page": 0,
+    }
+)
+display("human_find_req_per_page_0", serialized, [])
+
+serializer = human_find_serializer
+serialized = serializer.req_dumps(
+    {
+        "cmd": "human_find",
+        "query": "foobar",
+        "omit_revoked": False,
+        "omit_non_human": False,
+        "page": 0,
+        "per_page": 101,
+    }
+)
+display("human_find_req_per_page_101", serialized, [])
 
 serialized = serializer.rep_dumps(
     {

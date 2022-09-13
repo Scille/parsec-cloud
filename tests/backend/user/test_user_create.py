@@ -11,12 +11,13 @@ from parsec._parsec import (
     UserCreateRepInvalidData,
     UserCreateRepNotAllowed,
 )
+from parsec.api.protocol.user import user_create_serializer
 from parsec.backend.user import INVITATION_VALIDITY, User, Device
 from parsec.api.data import UserCertificate, DeviceCertificate
 from parsec.api.protocol import DeviceID, DeviceLabel, UserProfile
 
 from tests.common import customize_fixtures, freeze_time
-from tests.backend.common import user_get, user_create
+from tests.backend.common import CmdSock, user_get, user_create
 
 
 @pytest.mark.trio
@@ -297,15 +298,38 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
         assert isinstance(rep, UserCreateRepInvalidData)
 
     # Missing redacted certificate is not allowed as well
-    rep = await user_create(
-        alice_ws,
-        user_certificate=user_certificate,
-        device_certificate=device_certificate,
-        redacted_user_certificate=user_certificate,
-        redacted_device_certificate=None,
+    # We should not be able to build an invalid request
+    cmd = CmdSock(
+        "user_create",
+        user_create_serializer,
+        parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
+            k: v
+            for k, v in {
+                "user_certificate": user_certificate,
+                "device_certificate": device_certificate,
+                "redacted_user_certificate": redacted_user_certificate,
+                "redacted_device_certificate": redacted_device_certificate,
+            }.items()
+            if v is not None
+        },
     )
+    # Generated from Python implementation (Parsec v2.11.1+dev)
+    # Content:
+    #   cmd: "user_create"
+    #   device_certificate: hex!("666f6f626172")
+    #   redacted_device_certificate: None
+    #   redacted_user_certificate: hex!("666f6f626172")
+    #   user_certificate: hex!("666f6f626172")
+    #
+    raw_req = bytes.fromhex(
+        "85a3636d64ab757365725f637265617465b26465766963655f6365727469666963617465c4"
+        "06666f6f626172bb72656461637465645f6465766963655f6365727469666963617465c0b9"
+        "72656461637465645f757365725f6365727469666963617465c406666f6f626172b0757365"
+        "725f6365727469666963617465c406666f6f626172"
+    )
+    await alice_ws.send(raw_req)
+    rep = await cmd._do_recv(alice_ws, False)
     assert rep.status == "bad_message"
-    assert rep.reason == "Invalid message."
 
     # Finally just make sure good was really good
     rep = await user_create(
@@ -360,15 +384,38 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
         assert isinstance(rep, UserCreateRepInvalidData)
 
     # Missing redacted certificate is not allowed as well
-    rep = await user_create(
-        alice_ws,
-        user_certificate=user_certificate,
-        device_certificate=device_certificate,
-        redacted_user_certificate=None,
-        redacted_device_certificate=device_certificate,
+    # We should not be able to build an invalid request
+    cmd = CmdSock(
+        "user_create",
+        user_create_serializer,
+        parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
+            k: v
+            for k, v in {
+                "user_certificate": user_certificate,
+                "device_certificate": device_certificate,
+                "redacted_user_certificate": redacted_user_certificate,
+                "redacted_device_certificate": redacted_device_certificate,
+            }.items()
+            if v is not None
+        },
     )
+    # Generated from Python implementation (Parsec v2.11.1+dev)
+    # Content:
+    #   cmd: "user_create"
+    #   device_certificate: hex!("666f6f626172")
+    #   redacted_device_certificate: hex!("666f6f626172")
+    #   redacted_user_certificate: None
+    #   user_certificate: hex!("666f6f626172")
+    #
+    raw_req = bytes.fromhex(
+        "85a3636d64ab757365725f637265617465b26465766963655f6365727469666963617465c4"
+        "06666f6f626172bb72656461637465645f6465766963655f6365727469666963617465c406"
+        "666f6f626172b972656461637465645f757365725f6365727469666963617465c0b0757365"
+        "725f6365727469666963617465c406666f6f626172"
+    )
+    await alice_ws.send(raw_req)
+    rep = await cmd._do_recv(alice_ws, False)
     assert rep.status == "bad_message"
-    assert rep.reason == "Invalid message"
 
     # Finally just make sure good was really good
     rep = await user_create(
