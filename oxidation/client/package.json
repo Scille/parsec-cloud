@@ -10,6 +10,7 @@
         "lint": "vue-cli-service lint",
         "postinstall": "npm run wasm:build && npm run wasm:copy && cd electron && npm install",
         "android:copy": "npx ionic build && npx cap copy android",
+        "android:prod-copy": "npx ionic build --prod && npx cap copy android",
         "android:open": "npm run android:copy && npx cap open android",
         "ios:copy": "npx ionic build && npx cap copy ios",
         "ios:open": "npm run ios:copy && npx cap open ios",
