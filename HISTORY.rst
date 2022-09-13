@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.12.1 (2022-09-13)
+---------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix an error that desync postgresql timestamptz type  (`#3071
+  <https://github.com/Scille/parsec-cloud/issues/3071>`__)
+
+
 Parsec v2.12.0 (2022-09-08)
 ---------------------------
 
