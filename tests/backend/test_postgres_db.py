@@ -1,12 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import pytest
-import trio
 import sys
+from datetime import datetime, timezone
+
+import trio
+import pytest
 import triopg
 
+from parsec._parsec import DateTime
 from parsec.backend.cli.run import _run_backend, RetryPolicy
 from parsec.backend.config import BackendConfig, PostgreSQLBlockStoreConfig
+from parsec.backend.postgresql.handler import handle_datetime
 
 from tests.common import real_clock_timeout
 
@@ -158,3 +162,61 @@ async def test_retry_policy_allow_retry(postgresql_url, asyncio_loop):
 
             # Cancel the backend nursery
             nursery.cancel_scope.cancel()
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
+async def test_rust_datetime_correctly_serialized(postgresql_url, backend_factory):
+    now_py = datetime.now(timezone.utc)
+    now_rs = DateTime.from_timestamp(now_py.timestamp())
+
+    async with triopg.connect(postgresql_url) as vanilla_conn:
+        async with triopg.connect(postgresql_url) as patched_conn:
+            await handle_datetime(patched_conn)
+
+            await vanilla_conn.execute(
+                f"""
+                DROP TABLE IF EXISTS datetime;
+                CREATE TABLE IF NOT EXISTS datetime (
+                    _id SERIAL PRIMARY KEY,
+                    timestamp TIMESTAMPTZ
+                )"""
+            )
+
+            # Insert DateTime
+            await vanilla_conn.execute(
+                "INSERT INTO datetime (_id, timestamp) VALUES (0, $1)",
+                now_py,
+            )
+            await patched_conn.execute(
+                "INSERT INTO datetime (_id, timestamp) VALUES (1, $1)",
+                now_rs,
+            )
+
+            # Retrieve datetime inserted by vanilla
+            from_vanilla_to_py = await vanilla_conn.fetchval(
+                "SELECT timestamp FROM datetime WHERE _id = 0"
+            )
+            # Retrieve datetime inserted by patched
+            from_patched_to_py = await vanilla_conn.fetchval(
+                "SELECT timestamp FROM datetime WHERE _id = 1"
+            )
+            # Retrieve Datetime inserted by vanilla
+            from_vanilla_to_rs = await patched_conn.fetchval(
+                "SELECT timestamp FROM datetime WHERE _id = 0"
+            )
+            # Retrieve Datetime inserted by patched
+            from_patched_to_rs = await patched_conn.fetchval(
+                "SELECT timestamp FROM datetime WHERE _id = 1"
+            )
+
+            assert from_vanilla_to_py == from_patched_to_py
+            assert from_vanilla_to_rs == from_patched_to_rs
+            assert (
+                from_vanilla_to_py.timestamp()
+                == from_patched_to_py.timestamp()
+                == from_vanilla_to_rs.timestamp()
+                == from_patched_to_rs.timestamp()
+                == now_py.timestamp()
+                == now_rs.timestamp()
+            )
