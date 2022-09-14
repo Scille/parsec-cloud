@@ -1,39 +1,46 @@
-{
-    "label": "Invite2bGreeterSendNonce",
-    "req": {
-        "cmd": "invite_2b_greeter_send_nonce",
-        "other_fields": [
-            {
-                "name": "token",
-                "type": "InvitationToken"
-            },
-            {
-                "name": "greeter_nonce",
-                "type": "Bytes"
-            }
-        ]
-    },
-    "reps": [
-        {
-            "status": "ok",
+[
+    {
+        "label": "Invite2bGreeterSendNonce",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_2b_greeter_send_nonce",
             "other_fields": [
                 {
-                    "name": "claimer_nonce",
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    "name": "greeter_nonce",
                     "type": "Bytes"
                 }
             ]
         },
-        {
-            "status": "not_found",
-            "other_fields": []
-        },
-        {
-            "status": "already_deleted",
-            "other_fields": []
-        },
-        {
-            "status": "invalid_state",
-            "other_fields": []
-        }
-    ]
-}
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": [
+                    {
+                        "name": "claimer_nonce",
+                        "type": "Bytes"
+                    }
+                ]
+            },
+            {
+                "status": "not_found",
+                "other_fields": []
+            },
+            {
+                "status": "already_deleted",
+                "other_fields": []
+            },
+            {
+                "status": "invalid_state",
+                "other_fields": []
+            }
+        ]
+    }
+]
