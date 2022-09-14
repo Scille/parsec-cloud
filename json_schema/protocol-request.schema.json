@@ -1,0 +1,26 @@
+{
+    "title": "Protocol request",
+    "description": "A protocol request",
+    "type": "object",
+    "required": [
+        "cmd",
+        "other_fields"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "cmd": {
+            "type": "string",
+            "description": "The name of the command"
+        },
+        "unit": {
+            "type": "string"
+        },
+        "other_fields": {
+            "type": "array",
+            "description": "Additional fields to send alongside the command",
+            "items": {
+                "$ref": "./field.schema.json"
+            }
+        }
+    }
+}

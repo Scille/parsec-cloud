@@ -1,0 +1,24 @@
+{
+    "title": "Field schema",
+    "type": "object",
+    "required": [
+        "name",
+        "type"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Name of the field"
+        },
+        "type": {
+            "type": "string",
+            "description": "Can be a specific type or a custom one defined in `nested-types`"
+        },
+        "introduced_in": {
+            "type": "string",
+            "description": "In which MINOR version this field was introduced in",
+            "pattern": "^\\d+.\\d+$"
+        }
+    }
+}
