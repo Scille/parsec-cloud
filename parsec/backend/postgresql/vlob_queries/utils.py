@@ -49,7 +49,7 @@ async def _check_realm(
 
         # The vlob is not available yet for the current revision
         if encryption_revision is not None and encryption_revision == status.encryption_revision:
-            raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
+            raise VlobInMaintenanceError(f"Realm `{realm_id.str}` is currently under maintenance")
 
         # The vlob is only available at the previous revision
         if (
@@ -67,7 +67,7 @@ async def _check_realm(
 
         # A maintenance state was expected
         if operation_kind == OperationKind.MAINTENANCE and not status.in_maintenance:
-            raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+            raise VlobNotInMaintenanceError(f"Realm `{realm_id.str}` not under maintenance")
 
         # Otherwise simply check that the revisions match
         if encryption_revision is not None and status.encryption_revision != encryption_revision:
@@ -105,7 +105,7 @@ async def _check_realm_access(
     )
 
     if not rep:
-        raise VlobNotFoundError(f"User `{author.user_id}` doesn't exist")
+        raise VlobNotFoundError(f"User `{author.user_id.str}` doesn't exist")
 
     role = RealmRole(rep[0]) if rep[0] is not None else None
     if role not in allowed_roles:
@@ -178,7 +178,7 @@ async def _get_realm_id_from_vlob_id(
         *_q_get_realm_id_from_vlob_id(organization_id=organization_id.str, vlob_id=vlob_id.uuid)
     )
     if not realm_id_uuid:
-        raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
+        raise VlobNotFoundError(f"Vlob `{vlob_id.str}` doesn't exist")
     return RealmID(realm_id_uuid)
 
 

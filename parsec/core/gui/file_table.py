@@ -158,6 +158,18 @@ class FileTable(QTableWidget):
                 item = self.item(row, col)
                 item.setData(COPY_STATUS_DATA_INDEX, row in rows)
 
+    def reset_cut_status(self, files):
+        for row in range(self.rowCount()):
+            item = self.item(row, Column.NAME)
+            file_name = item.data(NAME_DATA_INDEX)
+            if file_name in files:
+                for col in Column:
+                    item = self.item(row, col)
+                    item.setData(COPY_STATUS_DATA_INDEX, False)
+                files.remove(file_name)
+            if not len(files):
+                return
+
     def keyReleaseEvent(self, event):
         if not self.is_read_only():
             if event.matches(QKeySequence.Copy):
@@ -175,10 +187,15 @@ class FileTable(QTableWidget):
         rows = {row for r in self.selectedRanges() for row in range(r.topRow(), r.bottomRow() + 1)}
         for row in sorted(rows):
             item = self.item(row, Column.NAME)
+
+            item_type = item.data(TYPE_DATA_INDEX)
+            if not item_type or (item_type != FileType.Folder and item_type != FileType.File):
+                continue
+
             files.append(
                 SelectedFile(
                     row,
-                    item.data(TYPE_DATA_INDEX),
+                    item_type,
                     item.data(NAME_DATA_INDEX),
                     EntryID.from_hex(item.data(ENTRY_ID_DATA_INDEX)),
                 )

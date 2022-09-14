@@ -1,8 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use chrono::{Datelike, Duration, TimeZone, Timelike};
+use chrono::{Datelike, TimeZone, Timelike};
 use core::ops::Sub;
-use std::ops::Add;
+
+pub use chrono::Duration; // Reexported
 
 /*
  * DateTime
@@ -72,6 +73,10 @@ impl DateTime {
         ts_us as f64 / 1e6
     }
 
+    pub fn add_us(&self, us: i64) -> Self {
+        Self(self.0 + Duration::microseconds(us))
+    }
+
     pub fn year(&self) -> u64 {
         self.0.year() as u64
     }
@@ -107,13 +112,19 @@ impl DateTime {
         let now = chrono::Utc::now();
         now.into()
     }
+
+    /// Return a date-time formatted string in the rfc3339 format with a precision update to milliseconds.
+    /// Equivalent to ISO-8601
+    pub fn to_rfc3339(&self) -> String {
+        self.0.to_rfc3339_opts(chrono::SecondsFormat::Millis, false)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MockedTime {
     RealTime,
     FrozenTime(DateTime),
-    ShiftedTime(i64),
+    ShiftedTime { microseconds: i64 },
 }
 
 // TODO: remove me and only rely on TimeProvider instead !
@@ -131,7 +142,9 @@ mod mock_time {
             MOCK_TIME.with(|cell| match *cell.borrow() {
                 MockedTime::RealTime => chrono::Utc::now().into(),
                 MockedTime::FrozenTime(dt) => dt,
-                MockedTime::ShiftedTime(dt) => DateTime::from(chrono::Utc::now()) + dt,
+                MockedTime::ShiftedTime { microseconds: us } => {
+                    DateTime::from(chrono::Utc::now()).add_us(us)
+                }
             })
         }
 
@@ -140,6 +153,10 @@ mod mock_time {
         }
     }
 }
+
+/*
+ * TimeProvider
+ */
 
 // Taking the current time constitutes a side effect, on top of that we want to be able
 // to simulate in our tests complex behavior where different Parsec client/server have
@@ -158,6 +175,10 @@ mod time_provider {
             let now = chrono::Utc::now();
             now.into()
         }
+
+        pub async fn sleep(&self, time: std::time::Duration) {
+            libparsec_platform_async::native::sleep(time).await
+        }
     }
 }
 
@@ -165,11 +186,75 @@ mod time_provider {
 mod time_provider {
     use std::sync::{Arc, Mutex};
 
+    use libparsec_platform_async::future::FutureExt;
+
     use super::DateTime;
     use super::MockedTime;
 
+    // For simplicity we only keep as single global event that will be triggered for any
+    // instead of giving each
+    // In theory each TimeProviderAgent should have it own event triggered when it
+    // mock config has been changed.
+    // However it is much simpler to have instead a single global event. This way any change
+    // in mock config will wake up all the TimeProviderAgent currently sleeping, but it's
+    // not a big deal given:
+    // 1) this is only for test where it's most likely they will be only one thing to wakeup anyway
+    // 2) Any wrongly waked up coroutine will just realized it is too soon and go back to sleep
+    lazy_static! {
+        static ref MOCK_CONFIG_HAS_CHANGED: libparsec_platform_async::Notify =
+            libparsec_platform_async::Notify::new();
+    }
+
+    /// Time provider system consist of a hierarchy of agents, each one able to mock it
+    /// time while taking into account it parent's mock time:
+    /// - RealTime agent will use it parent's time if it has one or the actual real time otherwise
+    /// - FrozenTime agent will always use the same time configured for it
+    /// - ShiftedTime agent work as the RealTime agent but add it configured shifted value on top
+    #[derive(Debug)]
+    struct TimeProviderAgent {
+        parent: Option<Arc<Mutex<TimeProviderAgent>>>,
+        time: MockedTime,
+        sleeping_stats: u64,
+    }
+
+    impl TimeProviderAgent {
+        pub fn new(parent: Option<Arc<Mutex<TimeProviderAgent>>>) -> Self {
+            Self {
+                parent,
+                time: MockedTime::RealTime,
+                sleeping_stats: 0,
+            }
+        }
+
+        pub fn mock_time(&mut self, time: MockedTime) {
+            self.time = time;
+            // Broadcast the config change given it impact everybody waiting
+            MOCK_CONFIG_HAS_CHANGED.notify_waiters();
+        }
+
+        fn parent_now_or_realtime(&self) -> DateTime {
+            match &self.parent {
+                // TODO: remove me and only rely on `chrono::Utc::now().into()` instead !
+                None => DateTime::now_legacy(),
+                Some(parent) => parent.lock().expect("Mutex is poisoned").now(),
+            }
+        }
+
+        pub fn now(&self) -> DateTime {
+            match self.time {
+                MockedTime::RealTime => self.parent_now_or_realtime(),
+                MockedTime::FrozenTime(dt) => dt,
+                MockedTime::ShiftedTime { microseconds: us } => {
+                    self.parent_now_or_realtime().add_us(us)
+                }
+            }
+        }
+    }
+
+    /// Wrap the `TimeProviderAgent` into `TimeProvider` to hide the sync stuff
+    /// and provide the same simple API as the non-test `TimeProvider`
     #[derive(Debug, Clone)]
-    pub struct TimeProvider(Arc<Mutex<MockedTime>>);
+    pub struct TimeProvider(Arc<Mutex<TimeProviderAgent>>);
 
     // Implement Eq&PartialEq as noop to keep the same behavior than in prod
     // where TimeProvider is an empty structure
@@ -182,34 +267,80 @@ mod time_provider {
 
     impl Default for TimeProvider {
         fn default() -> Self {
-            Self(Arc::new(Mutex::new(MockedTime::RealTime)))
+            Self(Arc::new(Mutex::new(TimeProviderAgent::new(None))))
+        }
+    }
+
+    /// Ensure the sleep
+    struct SleepingStatPlusOne(Arc<Mutex<TimeProviderAgent>>);
+    impl SleepingStatPlusOne {
+        pub fn new(time_provider: Arc<Mutex<TimeProviderAgent>>) -> Self {
+            time_provider
+                .lock()
+                .expect("Mutex is poisoned")
+                .sleeping_stats += 1;
+            Self(time_provider)
+        }
+    }
+    impl Drop for SleepingStatPlusOne {
+        fn drop(&mut self) {
+            self.0.lock().expect("Mutex is poisoned").sleeping_stats -= 1;
         }
     }
 
     impl TimeProvider {
         pub fn now(&self) -> DateTime {
-            match *self.0.lock().expect("Mutex is poisoned") {
-                MockedTime::RealTime => {
-                    // TODO: remove me and only rely on `chrono::Utc::now().into()` instead !
-                    DateTime::now_legacy()
-                }
-                MockedTime::FrozenTime(dt) => dt,
-                MockedTime::ShiftedTime(dt) => DateTime::from(chrono::Utc::now()) + dt,
+            self.0.lock().expect("Mutex is poisoned").now()
+        }
+
+        /// When we call sleep, there is no guarantee when the starting time will be taken.
+        /// Hence it is possible this time is taken after we have call the mock_time (this
+        /// is typically the case when calling sleep from Python where the actual sleep is
+        /// scheduled on a tokio thread while directly returning a fake coroutine).
+        /// So the solution is to use a busyloop in the testing code that watch over the
+        /// number of tasks currently sleeping on our time provider.
+        pub fn sleeping_stats(&self) -> u64 {
+            self.0.lock().expect("Mutex is poisoned").sleeping_stats
+        }
+
+        pub async fn sleep(&self, time: super::Duration) {
+            // Increase the `TimeProvider.sleeping_stats` counter and ensure
+            // it will be correctly decreased even if the future is aborted
+            let _updated_stats = SleepingStatPlusOne::new(self.0.clone());
+
+            let mut remaining_time = time;
+            // Err is `to_sleep` gets negative, if such we are done with sleeping !
+            while let Ok(to_sleep) = remaining_time.to_std() {
+                let sleep_started_at = self.now();
+                libparsec_platform_async::select!(
+                    _ = libparsec_platform_async::native::sleep(to_sleep).fuse() => break,
+                    _ = MOCK_CONFIG_HAS_CHANGED.notified().fuse() => {
+                        // Recompute the time we still have to sleep
+                        remaining_time = remaining_time - (self.now() - sleep_started_at);
+                    }
+                );
             }
         }
 
-        #[cfg(feature = "mock-time")]
+        // Following methods are only implemented for testing purpose
+
+        pub fn new_child(&self) -> Self {
+            Self(Arc::new(Mutex::new(TimeProviderAgent::new(Some(
+                self.0.clone(),
+            )))))
+        }
+
         pub fn mock_time(&mut self, time: MockedTime) {
-            *self.0.lock().expect("Mutex is poisoned") = time;
+            self.0.lock().expect("Mutex is poisoned").mock_time(time);
         }
     }
 }
 
-/*
- * TimeProvider
- */
-
 pub use time_provider::TimeProvider;
+
+/*
+ * DateTime
+ */
 
 impl std::convert::AsRef<chrono::DateTime<chrono::Utc>> for DateTime {
     #[inline]
@@ -232,7 +363,7 @@ impl std::fmt::Display for DateTime {
         write!(
             f,
             "{}",
-            self.0.to_rfc3339_opts(chrono::SecondsFormat::Secs, false)
+            self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, false)
         )
     }
 }
@@ -267,20 +398,6 @@ impl Sub for DateTime {
     type Output = Duration;
     fn sub(self, rhs: Self) -> Self::Output {
         self.0 - rhs.0
-    }
-}
-
-impl Add<i64> for DateTime {
-    type Output = Self;
-    fn add(self, rhs: i64) -> Self::Output {
-        Self(self.0 + Duration::microseconds(rhs))
-    }
-}
-
-impl Sub<i64> for DateTime {
-    type Output = Self;
-    fn sub(self, rhs: i64) -> Self::Output {
-        Self(self.0 - Duration::microseconds(rhs))
     }
 }
 
@@ -356,6 +473,10 @@ impl LocalDateTime {
 
     pub fn second(&self) -> u64 {
         self.0.second() as u64
+    }
+
+    pub fn to_utc(self) -> DateTime {
+        self.into()
     }
 
     pub fn format(&self, fmt: &str) -> String {

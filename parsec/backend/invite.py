@@ -165,13 +165,13 @@ def generate_invite_email(
         backend_url = backend_url[:-1]
     html = get_template("invitation_mail.html").render(
         greeter=greeter_name,
-        organization_id=organization_id,
+        organization_id=organization_id.str,
         invitation_url=invitation_url,
         backend_url=backend_url,
     )
     text = get_template("invitation_mail.txt").render(
         greeter=greeter_name,
-        organization_id=organization_id,
+        organization_id=organization_id.str,
         invitation_url=invitation_url,
         backend_url=backend_url,
     )
@@ -179,9 +179,9 @@ def generate_invite_email(
     # mail settings
     message = MIMEMultipart("alternative")
     if greeter_name:
-        message["Subject"] = f"[Parsec] { greeter_name } invited you to { organization_id }"
+        message["Subject"] = f"[Parsec] { greeter_name } invited you to { organization_id.str }"
     else:
-        message["Subject"] = f"[Parsec] New device invitation to { organization_id }"
+        message["Subject"] = f"[Parsec] New device invitation to { organization_id.str }"
     message["From"] = from_addr
     message["To"] = to_addr
     if reply_to:
@@ -323,7 +323,7 @@ class BaseInviteComponent:
                     greeter_name = client_ctx.human_handle.label
                     reply_to = f"{client_ctx.human_handle.label} <{client_ctx.human_handle.email}>"
                 else:
-                    greeter_name = str(client_ctx.user_id)
+                    greeter_name = client_ctx.user_id.str
                     reply_to = None
                 message = generate_invite_email(
                     from_addr=self._config.email_config.sender,

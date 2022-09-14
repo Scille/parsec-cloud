@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>636</width>
-    <height>428</height>
+    <width>928</width>
+    <height>655</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -66,6 +66,9 @@
    </property>
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_5">
+     <property name="spacing">
+      <number>10</number>
+     </property>
      <property name="topMargin">
       <number>0</number>
      </property>
@@ -164,6 +167,20 @@
           </size>
          </property>
         </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <item>
+        <widget class="QCheckBox" name="check_hide_unmounted">
+         <property name="text">
+          <string>TEXT_WORKSPACES_HIDE_UNMOUNTED</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
@@ -384,8 +401,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>636</width>
-        <height>91</height>
+        <width>928</width>
+        <height>279</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">

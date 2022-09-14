@@ -42,8 +42,8 @@ class TimestampedWorkspaceWidget(QWidget, Ui_TimestampedWorkspaceWidget):
         self.get_creation_timestamp_success.connect(self.on_success)
         self.get_creation_timestamp_error.connect(self.on_error)
         self.limits_job = self.jobs_ctx.submit_job(
-            self.get_creation_timestamp_success,
-            self.get_creation_timestamp_error,
+            (self, "get_creation_timestamp_success"),
+            (self, "get_creation_timestamp_error"),
             _do_workspace_get_creation_timestamp,
             workspace_fs=workspace_fs,
         )

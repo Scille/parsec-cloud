@@ -34,7 +34,7 @@ def build_swift_slug(organization_id: OrganizationID, id: BlockID):
     # The slug uses the UUID canonical textual representation (eg.
     # `CoolOrg/3b917792-35ac-409f-9af1-fe6de8d2b905`) where `BlockID.__str__`
     # uses the short textual representation (eg. `3b91779235ac409f9af1fe6de8d2b905`)
-    return f"{organization_id}/{id.uuid}"
+    return f"{organization_id.str}/{id.uuid}"
 
 
 class SwiftBlockStoreComponent(BaseBlockStoreComponent):
@@ -56,8 +56,8 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
         except ClientException as exc:
             self._logger.warning(
                 "Block read error",
-                organization_id=str(organization_id),
-                block_id=str(block_id),
+                organization_id=organization_id.str,
+                block_id=block_id.str,
                 exc_info=exc,
             )
             raise BlockStoreError(exc) from exc
@@ -76,8 +76,8 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
         except ClientException as exc:
             self._logger.warning(
                 "Block create error",
-                organization_id=str(organization_id),
-                block_id=str(block_id),
+                organization_id=organization_id.str,
+                block_id=block_id.str,
                 exc_info=exc,
             )
             raise BlockStoreError(exc) from exc

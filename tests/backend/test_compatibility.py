@@ -1,10 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec._parsec import DateTime
-
+from parsec._parsec import DateTime, RealmCreateRepBadTimestamp
 from parsec.serde import BaseSchema, fields
-from parsec.api.protocol.base import ErrorRepSchema, packb
-from parsec.api.protocol import realm_create_serializer
+from parsec.api.protocol.base import packb
 from parsec.api.protocol.handshake import (
     AuthenticatedClientHandshake,
     ServerHandshake,
@@ -25,24 +23,22 @@ def test_timestamp_out_of_ballpark_rep_schema_compatibility():
     backend_timestamp = DateTime.now().add(minutes=5)
 
     # Backend API >= 2.4 with older clients
-    data = realm_create_serializer.timestamp_out_of_ballpark_rep_dump(
-        backend_timestamp=backend_timestamp, client_timestamp=client_timestamp
+    RealmCreateRepBadTimestamp(
+        reason=None,
+        ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+        ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+        backend_timestamp=backend_timestamp,
+        client_timestamp=client_timestamp,
     )
-    assert ErrorRepSchema().load(data).data == {"status": "bad_timestamp"}
 
     # Backend API < 2.4 with newer clients
-    data = (
-        ErrorRepSchema()
-        .dump({"status": "bad_timestamp", "reason": "Timestamp is out of date."})
-        .data
+    RealmCreateRepBadTimestamp(
+        reason=None,
+        ballpark_client_early_offset=None,
+        ballpark_client_late_offset=None,
+        backend_timestamp=None,
+        client_timestamp=None,
     )
-    assert realm_create_serializer.rep_load(data) == {
-        "status": "bad_timestamp",
-        "client_timestamp": None,
-        "backend_timestamp": None,
-        "ballpark_client_early_offset": None,
-        "ballpark_client_late_offset": None,
-    }
 
 
 def test_handshake_challenge_schema_compatibility():
@@ -98,8 +94,8 @@ def test_handshake_challenge_schema_for_client_server_api_compatibility(
         "handshake": "answer",
         "type": HandshakeType.AUTHENTICATED.value,
         "client_api_version": client_version,
-        "organization_id": str(alice.organization_id),
-        "device_id": str(alice.device_id),
+        "organization_id": alice.organization_id.str,
+        "device_id": alice.device_id.str,
         "rvk": alice.root_verify_key.encode(),
         "answer": alice.signing_key.sign(challenge),
     }

@@ -72,7 +72,10 @@ class FSOperationError(OSError, FSError):
         if arg is None and self.ERRNO is not None:
             self.message = os.strerror(self.ERRNO)
         else:
-            self.message = str(arg)
+            if hasattr(arg, "str"):
+                self.message = arg.str  # type: ignore[attr-defined]
+            else:
+                self.message = str(arg)
 
         # Error with no standard errno
         if self.ERRNO is None:

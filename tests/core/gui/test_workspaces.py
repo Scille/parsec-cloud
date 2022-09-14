@@ -528,3 +528,47 @@ async def test_display_timestamped_workspace_in_workspaces_list(
             assert isinstance(wk_button, WorkspaceButton)
 
         await aqtbot.wait_until(_timestamped_workspace_delete)
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_hide_unmounted_workspaces(logged_gui, aqtbot):
+    w_w = logged_gui.test_get_workspaces_widget()
+    core = logged_gui.test_get_core()
+
+    w_w.check_hide_unmounted.setChecked(False)
+
+    workspace_name = EntryName("wksp1")
+
+    # Create the workspace
+    user_fs = logged_gui.test_get_core().user_fs
+    wid = await user_fs.workspace_create(workspace_name)
+
+    # Now wait for GUI to take it into account
+    def _workspace_visible(visible):
+        print(w_w.layout_workspaces.count(), visible)
+        count = 1 if visible else 0
+        assert w_w.layout_workspaces.count() == count
+
+    await aqtbot.wait_until(lambda: _workspace_visible(True))
+
+    wk_button = w_w.layout_workspaces.itemAt(0).widget()
+
+    def _mountstate_is(status):
+        assert wk_button.switch_button.isChecked() is status
+        assert core.mountpoint_manager.is_workspace_mounted(wid) is status
+
+    await aqtbot.wait_until(lambda: _mountstate_is(True))
+
+    # Hide unmounted False, workspace mounted True, workspace should be visible
+    await aqtbot.wait_until(lambda: _workspace_visible(True))
+
+    # Hide unmounted False, workspace mounted False, workspace should be visible
+    aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
+    await aqtbot.wait_until(lambda: _mountstate_is(False))
+    await aqtbot.wait_until(lambda: _workspace_visible(True))
+
+    # Hide unmounted True, workspace mounted False, workspace should not be visible
+    w_w.check_hide_unmounted.setChecked(True)
+    aqtbot.mouse_click(wk_button.switch_button, QtCore.Qt.LeftButton)
+    await aqtbot.wait_until(lambda: _workspace_visible(False))

@@ -4,13 +4,17 @@ from parsec._parsec import DateTime
 import pytest
 from unittest.mock import ANY
 
-from parsec.api.protocol.base import packb, unpackb, InvalidMessageError
+from parsec.api.protocol.base import (
+    packb,
+    unpackb,
+    InvalidMessageError,
+    IncompatibleAPIVersionsError,
+)
 from parsec.api.protocol.handshake import (
     HandshakeBadIdentity,
     HandshakeBadAdministrationToken,
     HandshakeRVKMismatch,
     HandshakeRevokedDevice,
-    HandshakeAPIVersionError,
     ServerHandshake,
     BaseClientHandshake,
     APIV1_AnonymousClientHandshake,
@@ -126,7 +130,7 @@ def test_process_challenge_req_good_api_version(
 
     # Invalid versioning
     if not valid:
-        with pytest.raises(HandshakeAPIVersionError) as context:
+        with pytest.raises(IncompatibleAPIVersionsError) as context:
             ch.process_challenge_req(packb(req))
         assert context.value.client_versions == [client_version]
         assert context.value.backend_versions == [backend_version]
@@ -189,7 +193,7 @@ def test_process_challenge_req_good_multiple_api_version(
 
     # Invalid versioning
     if expected_client_version is None:
-        with pytest.raises(HandshakeAPIVersionError) as context:
+        with pytest.raises(IncompatibleAPIVersionsError) as context:
             ch.process_challenge_req(packb(req))
         assert context.value.client_versions == client_versions
         assert context.value.backend_versions == backend_versions
@@ -239,8 +243,8 @@ def test_process_challenge_req_good_multiple_api_version(
 )
 def test_process_answer_req_bad_format(req, alice):
     for key, good_value in [
-        ("organization_id", str(alice.organization_id)),
-        ("device_id", str(alice.device_id)),
+        ("organization_id", alice.organization_id.str),
+        ("device_id", alice.device_id.str),
         ("rvk", alice.root_verify_key.encode()),
     ]:
         if req.get(key) == "<good>":
@@ -273,7 +277,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
         "handshake": "answer",
         "type": APIV1_HandshakeType.ANONYMOUS.value,
         "client_api_version": API_V1_VERSION,
-        "organization_id": str(alice.organization_id),
+        "organization_id": alice.organization_id.str,
         "answer": alice.signing_key.sign(sh.challenge),
     }
     sh.process_answer_req(packb(answer))

@@ -72,15 +72,15 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
             if not at_least_one_success:
                 self._logger.warning(
                     "Block create error: All nodes have failed",
-                    organization_id=str(organization_id),
-                    block_id=str(block_id),
+                    organization_id=organization_id.str,
+                    block_id=block_id.str,
                 )
                 raise BlockStoreError("All RAID1 nodes have failed")
         else:
             if at_least_one_error:
                 self._logger.warning(
                     "Block create error: A node have failed",
-                    organization_id=str(organization_id),
-                    block_id=str(block_id),
+                    organization_id=organization_id.str,
+                    block_id=block_id.str,
                 )
                 raise BlockStoreError("A RAID1 node have failed")

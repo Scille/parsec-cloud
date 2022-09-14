@@ -119,19 +119,19 @@ def test_invite_user_data():
     )
 
     assert rs_iud.requested_device_label.str == py_iud.requested_device_label.str
-    assert str(rs_iud.requested_human_handle) == str(py_iud.requested_human_handle)
+    assert rs_iud.requested_human_handle.str == py_iud.requested_human_handle.str
     rs_encrypted = rs_iud.dump_and_encrypt(key=sek)
     py_encrypted = py_iud.dump_and_encrypt(key=sek)
 
     # Decrypt Rust-encrypted with Rust
     rs_iud2 = InviteUserData.decrypt_and_load(rs_encrypted, sek)
     assert rs_iud.requested_device_label.str == rs_iud2.requested_device_label.str
-    assert str(rs_iud.requested_human_handle) == str(rs_iud2.requested_human_handle)
+    assert rs_iud.requested_human_handle.str == rs_iud2.requested_human_handle.str
 
     # Decrypt Python-encrypted with Python
     rs_iud3 = InviteUserData.decrypt_and_load(py_encrypted, sek)
     assert rs_iud.requested_device_label.str == rs_iud3.requested_device_label.str
-    assert str(rs_iud.requested_human_handle) == str(rs_iud3.requested_human_handle)
+    assert rs_iud.requested_human_handle.str == rs_iud3.requested_human_handle.str
 
     # Decrypt Rust-encrypted with Python
     py_iud2 = _PyInviteUserData.decrypt_and_load(rs_encrypted, sek)

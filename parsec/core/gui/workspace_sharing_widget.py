@@ -255,8 +255,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         if sharing_widget:
             sharing_widget.set_status_updating()
         self.jobs_ctx.submit_job(
-            self.share_success,
-            self.share_error,
+            (self, "share_success"),
+            (self, "share_error"),
             _do_share_workspace,
             user_fs=self.user_fs,
             workspace_fs=self.workspace_fs,
@@ -355,8 +355,8 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.spinner.show()
         self.widget_users.hide()
         self.jobs_ctx.submit_job(
-            self.get_users_success,
-            self.get_users_error,
+            (self, "get_users_success"),
+            (self, "get_users_error"),
             _do_get_users,
             core=self.core,
             workspace_fs=self.workspace_fs,
@@ -369,7 +369,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         w = cls(user_fs=user_fs, workspace_fs=workspace_fs, core=core, jobs_ctx=jobs_ctx)
         d = GreyedDialog(
             w,
-            title=_("TEXT_WORKSPACE_SHARING_TITLE_workspace").format(workspace=workspace_name),
+            title=_("TEXT_WORKSPACE_SHARING_TITLE_workspace").format(workspace=workspace_name.str),
             parent=parent,
             width=1000,
         )

@@ -78,7 +78,7 @@ async def test_share_revoked_recipient(running_backend, alice_user_fs, alice, ma
     # Share with Bob, this perform a backend request and fail
     with pytest.raises(FSSharingNotAllowedError) as exc:
         await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
-    assert str(exc.value) == "The user `bob` is revoked: {'status': 'user_revoked'}"
+    assert str(exc.value) == "The user `bob` is revoked: UserRevoked"
 
     # Share with Bob, this should fail before the backend request as the cache has been invalidated
     with pytest.raises(FSSharingNotAllowedError) as exc:
@@ -403,7 +403,7 @@ async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob
         await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
     assert (
         exc.value.message
-        == "Must be Owner or Manager on the workspace is mandatory to share it: {'status': 'not_allowed'}"
+        == "Must be Owner or Manager on the workspace is mandatory to share it: NotAllowed { reason: None }"
     )
 
 

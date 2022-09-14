@@ -48,6 +48,17 @@ serialized = serializer.rep_dumps({"user_profile_outsider_allowed": False, "acti
 serializer.rep_loads(serialized)
 display("organization_config_rep", serialized, [])
 
+serialized = serializer.rep_dumps(
+    {
+        "user_profile_outsider_allowed": False,
+        "active_users_limit": 1,
+        "sequester_authority_certificate": b"foobar",
+        "sequester_services_certificates": [b"foo", b"bar"],
+    }
+)
+serializer.rep_loads(serialized)
+display("organization_config_rep_with_sequester", serialized, [])
+
 serialized = serializer.rep_dumps({"status": "not_found"})
 serializer.rep_loads(serialized)
 display("organization_config_rep_not_found", serialized, [])

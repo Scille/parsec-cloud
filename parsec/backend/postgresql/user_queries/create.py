@@ -162,16 +162,16 @@ VALUES (
 
 _q_lock = Q(
     # Use 55 as magic number to represent user/device creation lock
-    # (note this is not stricly needed right now given there is no other
+    # (note this is not strictly needed right now given there is no other
     # advisory lock in the application, but may avoid weird error if we
-    # introduce a new avisory lock while forgetting about this one)
+    # introduce a new advisory lock while forgetting about this one)
     "SELECT pg_advisory_xact_lock(55, _id) FROM organization WHERE organization_id = $organization_id"
 )
 
 
 async def q_take_user_device_write_lock(conn, organization_id: OrganizationID):
     """
-    User/device creation is a complexe procedure given it contains checks that
+    User/device creation is a complex procedure given it contains checks that
     cannot be enforced by PostgreSQL, e.g.:
     - `user_` table can contain multiple row with the same `human` value, but
       only one of them can be non-revoked
@@ -214,7 +214,7 @@ async def _do_create_user_with_human_handle(
         )
 
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
+        raise UserAlreadyExistsError(f"User `{user.user_id.str}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")
@@ -231,7 +231,7 @@ async def _do_create_user_with_human_handle(
     if len(not_revoked_users) != 1 or not_revoked_users[0]["user_id"] != user.user_id.str:
         # Exception cancels the transaction so the user insertion is automatically cancelled
         raise UserAlreadyExistsError(
-            f"Human handle `{user.human_handle}` already corresponds to a non-revoked user"
+            f"Human handle `{user.human_handle.str}` already corresponds to a non-revoked user"
         )
 
 
@@ -252,7 +252,7 @@ async def _do_create_user_without_human_handle(
         )
 
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
+        raise UserAlreadyExistsError(f"User `{user.user_id.str}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")
@@ -308,10 +308,10 @@ async def _create_device(
             *_q_get_user_devices(organization_id=organization_id.str, user_id=device.user_id.str)
         )
         if not existing_devices:
-            raise UserNotFoundError(f"User `{device.user_id}` doesn't exists")
+            raise UserNotFoundError(f"User `{device.user_id.str}` doesn't exists")
 
         if device.device_id in itertools.chain(*existing_devices):
-            raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
+            raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
 
     try:
         result = await conn.execute(
@@ -327,7 +327,7 @@ async def _create_device(
             )
         )
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
+        raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")

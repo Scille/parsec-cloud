@@ -39,7 +39,7 @@ async def do_handshake(
         handshake = ServerHandshake()
         challenge_req = handshake.build_challenge_req()
         await websocket.send(challenge_req)
-        # Wesocket can return both bytes or utf8-string messages, we only accept the former
+        # Websocket can return both bytes or utf8-string messages, we only accept the former
         answer_req: Union[bytes, str] = await websocket.receive()
         if not isinstance(answer_req, bytes):
             raise ProtocolError("Expected bytes message in websocket")

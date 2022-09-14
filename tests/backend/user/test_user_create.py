@@ -414,7 +414,7 @@ async def test_user_create_already_exists(alice_ws, alice, bob):
         redacted_user_certificate=user_certificate,
         redacted_device_certificate=device_certificate,
     )
-    assert rep == {"status": "already_exists", "reason": f"User `{bob.user_id}` already exists"}
+    assert rep == {"status": "already_exists", "reason": f"User `{bob.user_id.str}` already exists"}
 
 
 @pytest.mark.trio
@@ -453,7 +453,7 @@ async def test_user_create_human_handle_already_exists(alice_ws, alice, bob):
     )
     assert rep == {
         "status": "already_exists",
-        "reason": f"Human handle `{bob.human_handle}` already corresponds to a non-revoked user",
+        "reason": f"Human handle `{bob.human_handle.str}` already corresponds to a non-revoked user",
     }
 
 

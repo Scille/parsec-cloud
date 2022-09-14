@@ -25,6 +25,22 @@ serialized = serializer.req_dumps(
 serializer.req_loads(serialized)
 display("vlob_create_req", serialized, [])
 
+serialized = serializer.req_dumps(
+    {
+        "cmd": "vlob_create",
+        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+        "encryption_revision": 8,
+        "vlob_id": VlobID.from_hex("2b5f314728134a12863da1ce49c112f6"),
+        "timestamp": DateTime(2000, 1, 2, 1),
+        "blob": b"foobar",
+        "sequester_blob": {
+            SequesterServiceID.from_hex("b5eb565343c442b3a26be44573813ff0"): b"foobar"
+        },
+    }
+)
+serializer.req_loads(serialized)
+display("vlob_create_req_with_sequester_blob", serialized, [])
+
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("vlob_create_rep", serialized, [])
@@ -44,6 +60,38 @@ display("vlob_create_rep_bad_encryption_revision", serialized, [])
 serialized = serializer.rep_dumps({"status": "in_maintenance"})
 serializer.rep_loads(serialized)
 display("vlob_create_rep_in_maintenance", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {"status": "require_greater_timestamp", "strictly_greater_than": DateTime(2000, 1, 2, 1)}
+)
+serializer.rep_loads(serialized)
+display("vlob_create_rep_require_greater_timestamp", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "status": "bad_timestamp",
+        "ballpark_client_early_offset": 50.0,
+        "ballpark_client_late_offset": 70.0,
+        "backend_timestamp": DateTime(2000, 1, 2, 1),
+        "client_timestamp": DateTime(2000, 1, 2, 1),
+    }
+)
+serializer.rep_loads(serialized)
+display("vlob_create_rep_bad_timestamp", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_a_sequestered_organization"})
+serializer.rep_loads(serialized)
+display("vlob_create_rep_not_a_sequestered_organization", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "status": "sequester_inconsistency",
+        "sequester_authority_certificate": b"foobar",
+        "sequester_services_certificates": [b"foo", b"bar"],
+    }
+)
+serializer.rep_loads(serialized)
+display("vlob_create_rep_sequester_inconsistency", serialized, [])
 
 ################### VlobRead ##################
 
@@ -110,6 +158,22 @@ serialized = serializer.req_dumps(
 serializer.req_loads(serialized)
 display("vlob_update_req", serialized, [])
 
+serialized = serializer.req_dumps(
+    {
+        "cmd": "vlob_update",
+        "encryption_revision": 8,
+        "vlob_id": VlobID.from_hex("2b5f314728134a12863da1ce49c112f6"),
+        "timestamp": DateTime(2000, 1, 2, 1),
+        "version": 8,
+        "blob": b"foobar",
+        "sequester_blob": {
+            SequesterServiceID.from_hex("b5eb565343c442b3a26be44573813ff0"): b"foobar"
+        },
+    }
+)
+serializer.req_loads(serialized)
+display("vlob_update_req_with_sequester_blob", serialized, [])
+
 serialized = serializer.rep_dumps({})
 serializer.rep_loads(serialized)
 display("vlob_update_rep", serialized, [])
@@ -133,6 +197,38 @@ display("vlob_update_rep_bad_encryption_revision", serialized, [])
 serialized = serializer.rep_dumps({"status": "in_maintenance"})
 serializer.rep_loads(serialized)
 display("vlob_update_rep_in_maintenance", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {"status": "require_greater_timestamp", "strictly_greater_than": DateTime(2000, 1, 2, 1)}
+)
+serializer.rep_loads(serialized)
+display("vlob_update_rep_require_greater_timestamp", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "status": "bad_timestamp",
+        "ballpark_client_early_offset": 50.0,
+        "ballpark_client_late_offset": 70.0,
+        "backend_timestamp": DateTime(2000, 1, 2, 1),
+        "client_timestamp": DateTime(2000, 1, 2, 1),
+    }
+)
+serializer.rep_loads(serialized)
+display("vlob_update_rep_bad_timestamp", serialized, [])
+
+serialized = serializer.rep_dumps({"status": "not_a_sequestered_organization"})
+serializer.rep_loads(serialized)
+display("vlob_update_rep_not_a_sequestered_organization", serialized, [])
+
+serialized = serializer.rep_dumps(
+    {
+        "status": "sequester_inconsistency",
+        "sequester_authority_certificate": b"foobar",
+        "sequester_services_certificates": [b"foo", b"bar"],
+    }
+)
+serializer.rep_loads(serialized)
+display("vlob_update_rep_sequester_inconsistency", serialized, [])
 
 ################### VlobPollChanges ##################
 

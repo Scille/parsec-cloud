@@ -3,7 +3,6 @@
 import trio
 from pathlib import Path
 from trio_typing import TaskStatus
-from parsec._parsec import DateTime
 from typing import (
     Tuple,
     Optional,
@@ -19,6 +18,48 @@ from typing import (
 from structlog import get_logger
 from contextlib import asynccontextmanager
 
+from parsec._parsec import (
+    DateTime,
+    MessageGetRepOk,
+    RealmCreateRepOk,
+    RealmCreateRepAlreadyExists,
+    RealmStatusRepOk,
+    RealmStatusRepNotAllowed,
+    RealmUpdateRolesRepOk,
+    RealmUpdateRolesRepAlreadyGranted,
+    RealmUpdateRolesRepInMaintenance,
+    RealmUpdateRolesRepNotAllowed,
+    RealmUpdateRolesRepRequireGreaterTimestamp,
+    RealmUpdateRolesRepUserRevoked,
+    RealmStartReencryptionMaintenanceRepOk,
+    RealmStartReencryptionMaintenanceRepNotAllowed,
+    RealmStartReencryptionMaintenanceRepInMaintenance,
+    RealmStartReencryptionMaintenanceRepParticipantMismatch,
+    RealmFinishReencryptionMaintenanceRepOk,
+    RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
+    RealmFinishReencryptionMaintenanceRepNotAllowed,
+    RealmFinishReencryptionMaintenanceRepNotInMaintenance,
+    VlobCreateRepOk,
+    VlobCreateRepAlreadyExists,
+    VlobCreateRepInMaintenance,
+    VlobCreateRepRequireGreaterTimestamp,
+    VlobCreateRepSequesterInconsistency,
+    VlobReadRepOk,
+    VlobReadRepInMaintenance,
+    VlobUpdateRepOk,
+    VlobUpdateRepBadVersion,
+    VlobUpdateRepInMaintenance,
+    VlobUpdateRepRequireGreaterTimestamp,
+    VlobUpdateRepSequesterInconsistency,
+    VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
+    VlobMaintenanceGetReencryptionBatchRepNotAllowed,
+    VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
+    VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
+    VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
+    VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
+)
 from parsec.utils import open_service_nursery
 from parsec.core.core_events import CoreEvent
 from parsec.event_bus import EventBus
@@ -110,53 +151,71 @@ class ReencryptionJob:
             rep = await self.backend_cmds.vlob_maintenance_get_reencryption_batch(
                 workspace_id, new_encryption_revision, size
             )
-            if rep["status"] in ("not_in_maintenance", "bad_encryption_revision"):
+            if isinstance(
+                rep,
+                (
+                    VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
+                    VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
+                ),
+            ):
                 raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
-            elif rep["status"] == "not_allowed":
+            elif isinstance(rep, VlobMaintenanceGetReencryptionBatchRepNotAllowed):
                 raise FSWorkspaceNoAccess(
-                    f"Not allowed to do reencryption maintenance on workspace {workspace_id}: {rep}"
+                    f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep}"
                 )
-            elif rep["status"] != "ok":
+            elif not isinstance(rep, VlobMaintenanceGetReencryptionBatchRepOk):
                 raise FSError(
-                    f"Cannot do reencryption maintenance on workspace {workspace_id}: {rep}"
+                    f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep}"
                 )
 
             done_batch = []
-            for item in rep["batch"]:
-                clear_text = self.old_workspace_entry.key.decrypt(item["blob"])
+            for item in rep.batch:
+                clear_text = self.old_workspace_entry.key.decrypt(item.blob)
                 new_ciphered = self.new_workspace_entry.key.encrypt(clear_text)
-                done_batch.append((item["vlob_id"], item["version"], new_ciphered))
+                done_batch.append((item.vlob_id, item.version, new_ciphered))
 
             rep = await self.backend_cmds.vlob_maintenance_save_reencryption_batch(
                 workspace_id, new_encryption_revision, done_batch
             )
-            if rep["status"] in ("not_in_maintenance", "bad_encryption_revision"):
+            if isinstance(
+                rep,
+                (
+                    VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
+                    VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
+                ),
+            ):
                 raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
-            elif rep["status"] == "not_allowed":
+            elif isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepNotAllowed):
                 raise FSWorkspaceNoAccess(
-                    f"Not allowed to do reencryption maintenance on workspace {workspace_id}: {rep}"
+                    f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep}"
                 )
-            elif rep["status"] != "ok":
+            elif not isinstance(rep, VlobMaintenanceSaveReencryptionBatchRepOk):
                 raise FSError(
-                    f"Cannot do reencryption maintenance on workspace {workspace_id}: {rep}"
+                    f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep}"
                 )
-            total = rep["total"]
-            done = rep["done"]
+            total = rep.total
+            done = rep.done
 
             if total == done:
                 # Finish the maintenance
                 rep = await self.backend_cmds.realm_finish_reencryption_maintenance(
                     workspace_id, new_encryption_revision
                 )
-                if rep["status"] in ("not_in_maintenance", "bad_encryption_revision"):
+                if isinstance(
+                    rep,
+                    (
+                        RealmFinishReencryptionMaintenanceRepNotInMaintenance,
+                        RealmFinishReencryptionMaintenanceRepBadEncryptionRevision,
+                    ),
+                ):
                     raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
-                elif rep["status"] == "not_allowed":
+                elif isinstance(rep, RealmFinishReencryptionMaintenanceRepNotAllowed):
                     raise FSWorkspaceNoAccess(
-                        f"Not allowed to do reencryption maintenance on workspace {workspace_id}: {rep}"
+                        f"Not allowed to do reencryption maintenance on workspace {workspace_id.str}: {rep}"
                     )
-                elif rep["status"] != "ok":
+                elif not isinstance(rep, RealmFinishReencryptionMaintenanceRepOk):
                     raise FSError(
-                        f"Cannot do reencryption maintenance on workspace {workspace_id}: {rep}"
+                        f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {rep}"
                     )
 
         except BackendNotAvailable as exc:
@@ -164,7 +223,7 @@ class ReencryptionJob:
 
         except BackendConnectionError as exc:
             raise FSError(
-                f"Cannot do reencryption maintenance on workspace {workspace_id}: {exc}"
+                f"Cannot do reencryption maintenance on workspace {workspace_id.str}: {exc}"
             ) from exc
 
         return total, done
@@ -310,7 +369,7 @@ class UserFS:
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
-                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
             return workspace_entry
 
         async def get_previous_workspace_entry() -> Optional[WorkspaceEntry]:
@@ -382,7 +441,7 @@ class UserFS:
         try:
             workspace = self._workspaces[workspace_id]
         except KeyError:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
 
         # Sanity check to make sure workspace_id is valid
         workspace.get_workspace_entry()
@@ -435,7 +494,7 @@ class UserFS:
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
-                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
 
             timestamp = self.device.timestamp()
             updated_workspace_entry = workspace_entry.evolve(name=new_name)
@@ -460,17 +519,17 @@ class UserFS:
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
 
-        if rep["status"] == "in_maintenance":
+        if isinstance(rep, VlobReadRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 "Cannot access workspace data while it is in maintenance"
             )
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, VlobReadRepOk):
             raise FSError(f"Cannot fetch user manifest from backend: {rep}")
 
-        expected_author = rep["author"]
-        expected_timestamp = rep["timestamp"]
-        expected_version = rep["version"]
-        blob = rep["blob"]
+        expected_author = rep.author
+        expected_timestamp = rep.timestamp
+        expected_version = rep.version
+        blob = rep.blob
 
         author = await self.remote_loader.get_device(expected_author)
 
@@ -594,12 +653,12 @@ class UserFS:
             except BackendConnectionError as exc:
                 raise FSError(f"Cannot create user manifest's realm in backend: {exc}") from exc
 
-            if rep["status"] == "already_exists":
+            if isinstance(rep, RealmCreateRepAlreadyExists):
                 # It's possible a previous attempt to create this realm
                 # succeeded but we didn't receive the confirmation, hence
                 # we play idempotent here.
                 pass
-            elif rep["status"] != "ok":
+            elif not isinstance(rep, RealmCreateRepOk):
                 raise FSError(f"Cannot create user manifest's realm in backend: {rep}")
 
         # Sync placeholders
@@ -687,26 +746,30 @@ class UserFS:
         except BackendConnectionError as exc:
             raise FSError(f"Cannot sync user manifest: {exc}") from exc
 
-        if rep["status"] in ("already_exists", "bad_version"):
+        if isinstance(rep, (VlobCreateRepAlreadyExists, VlobUpdateRepBadVersion)):
             # Concurrency error (handled by the caller)
             return None
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, (VlobCreateRepInMaintenance, VlobUpdateRepInMaintenance)):
             raise FSWorkspaceInMaintenance(
                 f"Cannot modify workspace data while it is in maintenance: {rep}"
             )
-        elif rep["status"] == "require_greater_timestamp":
+        elif isinstance(
+            rep, (VlobCreateRepRequireGreaterTimestamp, VlobUpdateRepRequireGreaterTimestamp)
+        ):
             return await self._upload_manifest(
-                base_um=base_um, timestamp_greater_than=rep["strictly_greater_than"]
+                base_um=base_um, timestamp_greater_than=rep.strictly_greater_than
             )
-        elif rep["status"] == "sequester_inconsistency":
+        elif isinstance(
+            rep, (VlobCreateRepSequesterInconsistency, VlobUpdateRepSequesterInconsistency)
+        ):
             # The backend notified us that we didn't encrypt the blob for the right sequester
             # services. This typically occurs for the first vlob update/create (since we lazily
             # fetch sequester config) or if a sequester service has been created/deleted.
             # Ensure the config send by the backend is valid
             _, sequester_services = _validate_sequester_config(
                 root_verify_key=self.device.root_verify_key,
-                sequester_authority_certificate=rep["sequester_authority_certificate"],
-                sequester_services_certificates=rep["sequester_services_certificates"],
+                sequester_authority_certificate=rep.sequester_authority_certificate,
+                sequester_services_certificates=rep.sequester_services_certificates,
             )
             # Update our cache and retry the request
             self._sequester_services_cache = sequester_services
@@ -714,7 +777,7 @@ class UserFS:
                 base_um=base_um, timestamp_greater_than=timestamp_greater_than
             )
 
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, (VlobCreateRepOk, VlobUpdateRepOk)):
             raise FSError(f"Cannot sync user manifest: {rep}")
 
         return to_sync_um
@@ -765,7 +828,7 @@ class UserFS:
         user_manifest = self.get_user_manifest()
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
 
         # Make sure the workspace is not a placeholder
         await self._workspace_minimal_sync(workspace_entry)
@@ -774,7 +837,7 @@ class UserFS:
         recipient_user, revoked_recipient_user = await self.remote_loader.get_user(recipient)
 
         if revoked_recipient_user:
-            raise FSSharingNotAllowedError(f"The user `{recipient}` is revoked")
+            raise FSSharingNotAllowedError(f"The user `{recipient.str}` is revoked")
 
         # Note we don't bother to check workspace's access roles given they
         # could be outdated (and backend will do the check anyway)
@@ -810,7 +873,7 @@ class UserFS:
             )
 
         except DataError as exc:
-            raise FSError(f"Cannot create sharing message for `{recipient}`: {exc}") from exc
+            raise FSError(f"Cannot create sharing message for `{recipient.str}`: {exc}") from exc
 
         # Build role certificate
         role_certificate = RealmRoleCertificate(
@@ -833,26 +896,26 @@ class UserFS:
         except BackendConnectionError as exc:
             raise FSError(f"Error while trying to set vlob group roles in backend: {exc}") from exc
 
-        if rep["status"] == "not_allowed":
+        if isinstance(rep, RealmUpdateRolesRepNotAllowed):
             raise FSSharingNotAllowedError(
                 f"Must be Owner or Manager on the workspace is mandatory to share it: {rep}"
             )
-        elif rep["status"] == "user_revoked":
+        elif isinstance(rep, RealmUpdateRolesRepUserRevoked):
             # That cache is probably not up-to-date if we get this error code
             self.remote_devices_manager.invalidate_user_cache(recipient)
-            raise FSSharingNotAllowedError(f"The user `{recipient}` is revoked: {rep}")
-        elif rep["status"] == "require_greater_timestamp":
+            raise FSSharingNotAllowedError(f"The user `{recipient.str}` is revoked: {rep}")
+        elif isinstance(rep, RealmUpdateRolesRepRequireGreaterTimestamp):
             return await self.workspace_share(
-                workspace_id, recipient, role, rep["strictly_greater_than"]
+                workspace_id, recipient, role, rep.strictly_greater_than
             )
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, RealmUpdateRolesRepInMaintenance):
             raise FSWorkspaceInMaintenance(
                 f"Cannot share workspace while it is in maintenance: {rep}"
             )
-        elif rep["status"] == "already_granted":
+        elif isinstance(rep, RealmUpdateRolesRepAlreadyGranted):
             # Stay idempotent
             return
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, RealmUpdateRolesRepOk):
             raise FSError(f"Error while trying to set vlob group roles in backend: {rep}")
 
     async def process_last_messages(self) -> Sequence[Tuple[int, Exception]]:
@@ -876,23 +939,23 @@ class UserFS:
             except BackendConnectionError as exc:
                 raise FSError(f"Cannot retrieve user messages: {exc}") from exc
 
-            if rep["status"] != "ok":
+            if not isinstance(rep, MessageGetRepOk):
                 raise FSError(f"Cannot retrieve user messages: {rep}")
 
             new_last_processed_message = initial_last_processed_message
-            for msg in rep["messages"]:
+            for msg in rep.messages:
                 try:
-                    await self._process_message(msg["sender"], msg["timestamp"], msg["body"])
-                    new_last_processed_message = msg["count"]
+                    await self._process_message(msg.sender, msg.timestamp, msg.body)
+                    new_last_processed_message = msg.count
 
                 except FSBackendOfflineError:
                     raise
 
                 except FSError as exc:
                     logger.warning(
-                        "Invalid message", reason=exc, sender=msg["sender"], count=msg["count"]
+                        "Invalid message", reason=exc, sender=msg.sender, count=msg.count
                     )
-                    errors.append((msg["count"], exc))
+                    errors.append((msg.count, exc))
 
             # Update message offset in user manifest
             async with self._update_user_manifest_lock:
@@ -930,7 +993,7 @@ class UserFS:
             )
 
         except DataError as exc:
-            raise FSError(f"Cannot decrypt&validate message from `{sender_id}`: {exc}") from exc
+            raise FSError(f"Cannot decrypt&validate message from `{sender_id.str}`: {exc}") from exc
 
         if isinstance(msg, (SharingGrantedMessageContent, SharingReencryptedMessageContent)):
             await self._process_message_sharing_granted(msg)
@@ -965,7 +1028,7 @@ class UserFS:
 
         if roles.get(msg.author.user_id, None) not in (WorkspaceRole.OWNER, WorkspaceRole.MANAGER):
             raise FSSharingNotAllowedError(
-                f"User {msg.author.user_id} cannot share workspace `{msg.id}`"
+                f"User {msg.author.user_id.str} cannot share workspace `{msg.id}`"
                 " with us (requires owner or manager right)"
             )
 
@@ -1111,7 +1174,7 @@ class UserFS:
                 per_user_ciphered_msgs[user.user_id] = ciphered
             except DataError as exc:
                 raise FSError(
-                    f"Cannot create reencryption message for `{user.user_id}`: {exc}"
+                    f"Cannot create reencryption message for `{user.user_id.str}`: {exc}"
                 ) from exc
 
         return per_user_ciphered_msgs
@@ -1140,21 +1203,23 @@ class UserFS:
             raise FSBackendOfflineError(str(exc)) from exc
 
         except BackendConnectionError as exc:
-            raise FSError(f"Cannot start maintenance on workspace {workspace_id}: {exc}") from exc
+            raise FSError(
+                f"Cannot start maintenance on workspace {workspace_id.str}: {exc}"
+            ) from exc
 
-        if rep["status"] == "participants_mismatch":
+        if isinstance(rep, RealmStartReencryptionMaintenanceRepParticipantMismatch):
             # Catched by caller
             return False
-        elif rep["status"] == "in_maintenance":
+        elif isinstance(rep, RealmStartReencryptionMaintenanceRepInMaintenance):
             raise FSWorkspaceInMaintenance(
-                f"Workspace {workspace_id} already in maintenance: {rep}"
+                f"Workspace {workspace_id.str} already in maintenance: {rep}"
             )
-        elif rep["status"] == "not_allowed":
+        elif isinstance(rep, RealmStartReencryptionMaintenanceRepNotAllowed):
             raise FSWorkspaceNoAccess(
-                f"Not allowed to start maintenance on workspace {workspace_id}: {rep}"
+                f"Not allowed to start maintenance on workspace {workspace_id.str}: {rep}"
             )
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot start maintenance on workspace {workspace_id}: {rep}")
+        elif not isinstance(rep, RealmStartReencryptionMaintenanceRepOk):
+            raise FSError(f"Cannot start maintenance on workspace {workspace_id.str}: {rep}")
         return True
 
     async def workspace_start_reencryption(self, workspace_id: EntryID) -> ReencryptionJob:
@@ -1168,7 +1233,7 @@ class UserFS:
         user_manifest = self.get_user_manifest()
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
 
         timestamp = self.device.timestamp()
         new_workspace_entry = workspace_entry.evolve(
@@ -1215,7 +1280,7 @@ class UserFS:
         user_manifest = self.get_user_manifest()
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id.str}`")
 
         # First make sure the workspace is under maintenance
         try:
@@ -1226,17 +1291,17 @@ class UserFS:
 
         except BackendConnectionError as exc:
             raise FSError(
-                f"Cannot continue maintenance on workspace {workspace_id}: {exc}"
+                f"Cannot continue maintenance on workspace {workspace_id.str}: {exc}"
             ) from exc
 
-        if rep["status"] == "not_allowed":
-            raise FSWorkspaceNoAccess(f"Not allowed to access workspace {workspace_id}: {rep}")
-        elif rep["status"] != "ok":
-            raise FSError(f"Error while getting status for workspace {workspace_id}: {rep}")
+        if isinstance(rep, RealmStatusRepNotAllowed):
+            raise FSWorkspaceNoAccess(f"Not allowed to access workspace {workspace_id.str}: {rep}")
+        elif not isinstance(rep, RealmStatusRepOk):
+            raise FSError(f"Error while getting status for workspace {workspace_id.str}: {rep}")
 
-        if not rep["in_maintenance"] or rep["maintenance_type"] != MaintenanceType.REENCRYPTION:
+        if not rep.in_maintenance or rep.maintenance_type != MaintenanceType.REENCRYPTION():
             raise FSWorkspaceNotInMaintenance("Not in reencryption maintenance")
-        if rep["encryption_revision"] != workspace_entry.encryption_revision:
+        if rep.encryption_revision != workspace_entry.encryption_revision:
             raise FSError("Bad encryption revision")
 
         previous_workspace_entry = await self._get_previous_workspace_entry(workspace_entry)

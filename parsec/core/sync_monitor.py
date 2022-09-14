@@ -7,6 +7,12 @@ import trio
 from trio.lowlevel import current_clock
 from structlog import get_logger
 
+from parsec._parsec import (
+    VlobPollChangesRepOk,
+    VlobPollChangesRepInMaintenance,
+    VlobPollChangesRepNotAllowed,
+    VlobPollChangesRepNotFound,
+)
 from parsec.api.protocol import RealmID
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import EntryID, WorkspaceRole
@@ -122,17 +128,17 @@ class SyncContext:
             logger.warning("Unexpected backend response during sync bootstrap", exc_info=exc)
             return False
 
-        if rep["status"] == "not_found":
+        if isinstance(rep, VlobPollChangesRepNotFound):
             # Workspace not yet synchronized with backend
             new_checkpoint = 0
             changes = {}
-        elif rep["status"] in ("in_maintenance", "not_allowed"):
+        elif isinstance(rep, (VlobPollChangesRepInMaintenance, VlobPollChangesRepNotAllowed)):
             return False
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, VlobPollChangesRepOk):
             return False
         else:
-            new_checkpoint = rep["current_checkpoint"]
-            changes = rep["changes"]
+            new_checkpoint = rep.current_checkpoint
+            changes = rep.changes
 
         # 2) Store new checkpoint and changes
         await self._get_local_storage().update_realm_checkpoint(
@@ -167,7 +173,7 @@ class SyncContext:
             if self.set_local_change(confined_entry):
                 wake_up = True
 
-        # Update local_changes dictionnary
+        # Update local_changes dictionary
         now = current_time()
         try:
             new_due_time = self._local_changes[entry_id].changed(now)
@@ -234,7 +240,7 @@ class SyncContext:
                 # We've just lost the read access to the workspace.
                 # This likely means a `sharing.updated` event we soon arrive
                 # and destroy this sync context.
-                # Until then just pretent nothing happened.
+                # Until then just pretend nothing happened.
                 min_due_time = now + MIN_WAIT
                 self._remote_changes.add(entry_id)
             except FSWorkspaceNoWriteAccess:
@@ -270,7 +276,7 @@ class SyncContext:
                     # the corresponding `sharing.updated` event hasn't updated
                     # the `read_only` flag yet.
                     # We keep track of the change (given we may be given back
-                    # the write access in the future) but pretent it just accured
+                    # the write access in the future) but pretend it just occurred
                     # to avoid a busy sync loop until `read_only` flag is updated.
                     self._local_changes[entry_id] = LocalChange(now)
                 except (FSWorkspaceInMaintenance, FSBadEncryptionRevision):
@@ -389,7 +395,7 @@ async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status):
         if new_entry.role is not None:
             ctx = ctxs.get(new_entry.id)
             if ctx:
-                # Change the due_time so the context understants the early
+                # Change the due_time so the context understands the early
                 # wakeup is for him
                 ctx.due_time = current_time()
                 _trigger_early_wakeup()

@@ -21,6 +21,10 @@ inputs:
     required: false
     default: cache
 
+  target:
+    description: Additional target to install (ex. `wasm32-unknown-unknown`)
+    required: false
+
 outputs:
   cache-hit:
     description: A boolean value to indicate an exact match was found for the key.
@@ -46,7 +50,6 @@ runs:
       uses: actions/cache@c3f1317a9e7b1ef106c153ac8c0f00fed3ddbc0d # pin v3.0.4
       with:
         key: ${{ runner.os }}-rust-${{ inputs.version }}-${{ inputs.cache-key }}-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: ${{ runner.os }}-rust-${{ inputs.version }}-${{ inputs.cache-key }}
         path: |
           target
           ~/.cargo/bin
@@ -60,4 +63,5 @@ runs:
       with:
         toolchain: ${{ inputs.version }}
         components: ${{ inputs.components }}
+        target: ${{ inputs.target }}
         override: true

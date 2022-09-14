@@ -85,7 +85,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
 
     def invite_device(self):
         self.jobs_ctx.submit_job(
-            self.invite_success, self.invite_error, _do_invite_device, core=self.core
+            (self, "invite_success"), (self, "invite_error"), _do_invite_device, core=self.core
         )
 
     def _on_invite_success(self, job):
@@ -145,5 +145,5 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.layout_devices.clear()
         self.spinner.show()
         self.jobs_ctx.submit_job(
-            self.list_success, self.list_error, _do_list_devices, core=self.core
+            (self, "list_success"), (self, "list_error"), _do_list_devices, core=self.core
         )

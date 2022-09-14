@@ -7,6 +7,10 @@ from typing import Optional, List, AsyncGenerator, Callable, TypeVar
 from structlog import get_logger
 from functools import partial
 
+from parsec._parsec import (
+    OrganizationConfigRepOk,
+    OrganizationConfigRepUnknownStatus,
+)
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
 from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
@@ -48,7 +52,7 @@ class BackendAuthenticatedCmds:
 
     events_subscribe = expose_cmds_with_retrier(cmds.events_subscribe)
     events_listen = expose_cmds_with_retrier(cmds.events_listen)
-    ping = expose_cmds_with_retrier(cmds.ping)
+    ping = expose_cmds_with_retrier(cmds.authenticated_ping)
     message_get = expose_cmds_with_retrier(cmds.message_get)
     user_get = expose_cmds_with_retrier(cmds.user_get)
     user_create = expose_cmds_with_retrier(cmds.user_create)
@@ -318,11 +322,14 @@ class BackendAuthenticatedConn:
             logger.info("Backend online")
 
             rep = await cmds.organization_config(transport)
-            if rep["status"] != "ok":
+            if not isinstance(rep, OrganizationConfigRepOk):
                 # Authenticated's organization_config command has been introduced in API v2.2
                 # So a cheap trick to keep backward compatibility here is to
                 # stick with the pre-populated organization config cached value.
-                if rep["status"] != "unknown_command":
+                if (
+                    isinstance(rep, OrganizationConfigRepUnknownStatus)
+                    and rep.status != "unknown_command"
+                ):
                     raise BackendConnectionRefused(
                         f"Error while fetching organization config: {rep}"
                     )
@@ -332,11 +339,11 @@ class BackendAuthenticatedConn:
                 # we just ignore it (the remote_loader will lazily load the config
                 # the first time it tries a manifest upload with the wrong config)
                 self._organization_config = OrganizationConfig(
-                    user_profile_outsider_allowed=rep["user_profile_outsider_allowed"],
-                    active_users_limit=rep["active_users_limit"],
+                    user_profile_outsider_allowed=rep.user_profile_outsider_allowed,
+                    active_users_limit=rep.active_users_limit,
                     # Sequester introduced in APIv2.8/3.2
-                    sequester_authority=rep.get("sequester_authority_certificate"),
-                    sequester_services=rep.get("sequester_services_certificates"),
+                    sequester_authority=rep.sequester_authority_certificate,
+                    sequester_services=rep.sequester_services_certificates,
                 )
 
             rep = await cmds.events_subscribe(transport)

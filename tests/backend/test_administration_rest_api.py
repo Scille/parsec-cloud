@@ -32,13 +32,13 @@ async def test_administration_api_auth(backend_asgi_app, coolorg, bad_auth_reaso
     client = backend_asgi_app.test_client()
 
     response = await client.get(
-        f"/administration/organizations/{coolorg.organization_id}", headers=headers
+        f"/administration/organizations/{coolorg.organization_id.str}", headers=headers
     )
     assert response.status_code == 403
     assert await response.get_json() == {"error": "not_allowed"}
 
     response = await client.patch(
-        f"/administration/organizations/{coolorg.organization_id}", json={}, headers=headers
+        f"/administration/organizations/{coolorg.organization_id.str}", json={}, headers=headers
     )
     assert response.status_code == 403
     assert await response.get_json() == {"error": "not_allowed"}
@@ -222,7 +222,7 @@ async def test_organization_create_with_custom_initial_config(backend_asgi_app):
     # Default initial config should also be used if org is recreated without custom config
     response = await client.post(
         f"/administration/organizations",
-        json={"organization_id": str(organization_id)},
+        json={"organization_id": organization_id.str},
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
     assert response.status_code == 200
@@ -272,7 +272,7 @@ async def test_organization_config_ok(backend_asgi_app, coolorg, bootstrapped):
     client = backend_asgi_app.test_client()
 
     response = await client.get(
-        f"/administration/organizations/{organization_id}",
+        f"/administration/organizations/{organization_id.str}",
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
     assert response.status_code == 200
@@ -288,7 +288,7 @@ async def test_organization_config_ok(backend_asgi_app, coolorg, bootstrapped):
         id=organization_id, active_users_limit=42, is_expired=True
     )
     response = await client.get(
-        f"/administration/organizations/{organization_id}",
+        f"/administration/organizations/{organization_id.str}",
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
     assert response.status_code == 200
@@ -341,7 +341,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
 
     with backend_asgi_app.backend.event_bus.listen() as spy:
         response = await client.patch(
-            f"/administration/organizations/{organization_id}",
+            f"/administration/organizations/{organization_id.str}",
             json={"user_profile_outsider_allowed": False, "active_users_limit": 10},
             headers={
                 "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
@@ -356,7 +356,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
 
         # Partial update
         response = await client.patch(
-            f"/administration/organizations/{organization_id}",
+            f"/administration/organizations/{organization_id.str}",
             json={"active_users_limit": None},
             headers={
                 "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
@@ -371,7 +371,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
 
         # Partial update with unknown field
         response = await client.patch(
-            f"/administration/organizations/{organization_id}",
+            f"/administration/organizations/{organization_id.str}",
             json={"dummy": "whatever"},
             headers={
                 "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
@@ -382,7 +382,7 @@ async def test_organization_update_ok(backend_asgi_app, coolorg, bootstrapped):
 
         # Empty update
         response = await client.patch(
-            f"/administration/organizations/{organization_id}",
+            f"/administration/organizations/{organization_id.str}",
             json={},
             headers={
                 "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
@@ -410,7 +410,7 @@ async def test_organization_update_expired_field(
 
     with backend_asgi_app.backend.event_bus.listen() as spy:
         response = await client.patch(
-            f"/administration/organizations/{organization_id}",
+            f"/administration/organizations/{organization_id.str}",
             json={"is_expired": True},
             headers={
                 "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
@@ -432,7 +432,7 @@ async def test_organization_update_expired_field(
 
     # Re-enable the organization
     response = await client.patch(
-        f"/administration/organizations/{organization_id}",
+        f"/administration/organizations/{organization_id.str}",
         json={"is_expired": False},
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
@@ -462,7 +462,7 @@ async def test_organization_update_bad_data(backend_asgi_app, coolorg):
         {"user_profile_outsider_allowed": "foo"},
     ]:
         response = await client.patch(
-            f"/administration/organizations/{coolorg.organization_id}",
+            f"/administration/organizations/{coolorg.organization_id.str}",
             json=bad_body,
             headers={
                 "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
@@ -494,7 +494,7 @@ async def test_organization_stats_data(backend_asgi_app, realm, realm_factory, a
 
     async def organization_stats():
         response = await client.get(
-            f"/administration/organizations/{alice.organization_id}/stats",
+            f"/administration/organizations/{alice.organization_id.str}/stats",
             headers={
                 "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
             },
@@ -593,7 +593,7 @@ async def test_organization_stats_users(
 
     async def organization_stats(organization_id):
         response = await client.get(
-            f"/administration/organizations/{organization_id}/stats",
+            f"/administration/organizations/{organization_id.str}/stats",
             headers={
                 "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
             },
@@ -691,7 +691,7 @@ async def test_handles_escaped_path(backend_asgi_app):
     # Now create the org
     response = await client.post(
         f"/administration/organizations",
-        json={"organization_id": str(organization_id)},
+        json={"organization_id": organization_id},
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
     )
     assert response.status_code == 200

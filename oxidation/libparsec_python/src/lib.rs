@@ -3,9 +3,6 @@
 //! This crate implement binding for our python front, and those will never be compile on the arch `wasm32`.
 //! Trying to compile this crate on the target `wasm32-*` will result in a crash of the `pyo3` build script.
 #![cfg(not(target_arch = "wasm32"))]
-// Waiting for a fix from pyo3
-#![allow(clippy::borrow_deref_ref)]
-
 use pyo3::prelude::{pymodule, PyModule, PyResult, Python};
 
 mod addrs;
@@ -64,36 +61,6 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::Invite4GreeterCommunicateReq>()?;
     m.add_class::<protocol::Invite4GreeterCommunicateRep>()?;
     m.add_class::<protocol::InviteListItem>()?;
-    // Message
-    m.add_class::<protocol::MessageGetReq>()?;
-    m.add_class::<protocol::MessageGetRep>()?;
-    m.add_class::<protocol::Message>()?;
-    // Organization
-    m.add_class::<protocol::OrganizationStatsReq>()?;
-    m.add_class::<protocol::OrganizationStatsRep>()?;
-    m.add_class::<protocol::OrganizationConfigReq>()?;
-    m.add_class::<protocol::OrganizationConfigRep>()?;
-    m.add_class::<protocol::UsersPerProfileDetailItem>()?;
-    // Ping
-    m.add_class::<protocol::AuthenticatedPingReq>()?;
-    m.add_class::<protocol::AuthenticatedPingRep>()?;
-    m.add_class::<protocol::InvitedPingReq>()?;
-    m.add_class::<protocol::InvitedPingRep>()?;
-    // Realm
-    m.add_class::<protocol::RealmCreateReq>()?;
-    m.add_class::<protocol::RealmCreateRep>()?;
-    m.add_class::<protocol::RealmStatusReq>()?;
-    m.add_class::<protocol::RealmStatusRep>()?;
-    m.add_class::<protocol::RealmStatsReq>()?;
-    m.add_class::<protocol::RealmStatsRep>()?;
-    m.add_class::<protocol::RealmGetRoleCertificateReq>()?;
-    m.add_class::<protocol::RealmGetRoleCertificateRep>()?;
-    m.add_class::<protocol::RealmUpdateRolesReq>()?;
-    m.add_class::<protocol::RealmUpdateRolesRep>()?;
-    m.add_class::<protocol::RealmStartReencryptionMaintenanceReq>()?;
-    m.add_class::<protocol::RealmStartReencryptionMaintenanceRep>()?;
-    m.add_class::<protocol::RealmFinishReencryptionMaintenanceReq>()?;
-    m.add_class::<protocol::RealmFinishReencryptionMaintenanceRep>()?;
     // User
     m.add_class::<protocol::UserGetReq>()?;
     m.add_class::<protocol::UserGetRep>()?;
@@ -107,22 +74,6 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::HumanFindRep>()?;
     m.add_class::<protocol::Trustchain>()?;
     m.add_class::<protocol::HumanFindResultItem>()?;
-    // Vlob
-    m.add_class::<protocol::VlobCreateReq>()?;
-    m.add_class::<protocol::VlobCreateRep>()?;
-    m.add_class::<protocol::VlobReadReq>()?;
-    m.add_class::<protocol::VlobReadRep>()?;
-    m.add_class::<protocol::VlobUpdateReq>()?;
-    m.add_class::<protocol::VlobUpdateRep>()?;
-    m.add_class::<protocol::VlobPollChangesReq>()?;
-    m.add_class::<protocol::VlobPollChangesRep>()?;
-    m.add_class::<protocol::VlobListVersionsReq>()?;
-    m.add_class::<protocol::VlobListVersionsRep>()?;
-    m.add_class::<protocol::VlobMaintenanceGetReencryptionBatchReq>()?;
-    m.add_class::<protocol::VlobMaintenanceGetReencryptionBatchRep>()?;
-    m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchReq>()?;
-    m.add_class::<protocol::VlobMaintenanceSaveReencryptionBatchRep>()?;
-    m.add_class::<protocol::ReencryptionBatchEntry>()?;
     // Storage
     m.add_class::<storage::WorkspaceStorage>()?;
     Ok(())

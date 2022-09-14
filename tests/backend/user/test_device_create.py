@@ -1,20 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from parsec.backend.backend_events import BackendEvent
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime, AuthenticatedPingRepOk
+from parsec.backend.backend_events import BackendEvent
 from parsec.api.data import DeviceCertificate
 from parsec.api.protocol import UserProfile
 from parsec.backend.user import INVITATION_VALIDITY, Device
 
 from tests.common import freeze_time, customize_fixtures
-from tests.backend.common import device_create, ping
+from tests.backend.common import device_create, authenticated_ping
 
 
 @pytest.fixture
 def alice_nd(local_device_factory, alice):
-    return local_device_factory(f"{alice.user_id}@new_device")
+    return local_device_factory(f"{alice.user_id.str}@new_device")
 
 
 @pytest.mark.trio
@@ -60,8 +60,8 @@ async def test_device_create_ok(
 
     # Make sure the new device can connect now
     async with backend_authenticated_ws_factory(backend_asgi_app, alice_nd) as sock:
-        rep = await ping(sock, ping="Hello world !")
-        assert rep == {"status": "ok", "pong": "Hello world !"}
+        rep = await authenticated_ping(sock, ping="Hello world !")
+        assert rep == AuthenticatedPingRepOk("Hello world !")
 
     # Check the resulting data in the backend
     _, backend_device = await backend_asgi_app.backend.user.get_user_with_device(
@@ -136,7 +136,7 @@ async def test_device_create_already_exists(alice_ws, alice, alice2):
     )
     assert rep == {
         "status": "already_exists",
-        "reason": f"Device `{alice2.device_id}` already exists",
+        "reason": f"Device `{alice2.device_id.str}` already exists",
     }
 
 

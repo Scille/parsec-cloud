@@ -199,6 +199,9 @@ def create_files_widget_testbed(monkeypatch, aqtbot, logged_gui, user_fs, wfs, f
 async def files_widget_testbed(monkeypatch, aqtbot, logged_gui):
     c_w = logged_gui.test_get_central_widget()
     w_w = logged_gui.test_get_workspaces_widget()
+
+    w_w.check_hide_unmounted.setChecked(False)
+
     workspace_name = EntryName("wksp1")
 
     # Create the workspace
@@ -773,7 +776,7 @@ async def test_use_file_link(aqtbot, autoclose_dialog, files_widget_testbed):
 
     # Create and use file link
     url = f_w.workspace_fs.generate_file_link("/foo/bar.txt")
-    tb.logged_gui.add_instance(str(url))
+    tb.logged_gui.add_instance(url.to_url())
 
     def _selection_on_file():
         assert tb.pwd() == "/foo"

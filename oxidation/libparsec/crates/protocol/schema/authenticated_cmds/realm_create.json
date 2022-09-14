@@ -44,6 +44,32 @@
         {
             "status": "already_exists",
             "other_fields": []
+        },
+        {
+            "status": "bad_timestamp",
+            "other_fields": [
+                {
+                    "name": "reason",
+                    "type": "Option<String>"
+                },
+                {
+                    "name": "ballpark_client_early_offset",
+                    "type": "Option<Float>"
+
+                },
+                {
+                    "name": "ballpark_client_late_offset",
+                    "type": "Option<Float>"
+                },
+                {
+                    "name": "backend_timestamp",
+                    "type": "Option<DateTime>"
+                },
+                {
+                    "name": "client_timestamp",
+                    "type": "Option<DateTime>"
+                }
+            ]
         }
     ]
 }

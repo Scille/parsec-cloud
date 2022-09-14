@@ -7,6 +7,8 @@ from parsec.api.protocol.base import (
     packb,
     unpackb,
     api_typed_msg_adapter,
+    settle_compatible_versions,
+    IncompatibleAPIVersionsError,
 )
 from parsec.api.protocol.types import (
     UserID,
@@ -34,7 +36,6 @@ from parsec.api.protocol.handshake import (
     HandshakeRVKMismatch,
     HandshakeRevokedDevice,
     HandshakeOutOfBallparkError,
-    HandshakeAPIVersionError,
     ServerHandshake,
     HandshakeType,
     BaseClientHandshake,
@@ -49,14 +50,16 @@ from parsec.api.protocol.organization import (
     organization_bootstrap_webhook_serializer,
     organization_stats_serializer,
     organization_config_serializer,
-    UsersPerProfileDetailItemSchema,
 )
 from parsec.api.protocol.events import (
     events_subscribe_serializer,
     events_listen_serializer,
     APIEvent,
 )
-from parsec.api.protocol.ping import ping_serializer
+from parsec.api.protocol.ping import (
+    authenticated_ping_serializer,
+    invited_ping_serializer,
+)
 from parsec.api.protocol.user import (
     user_get_serializer,
     user_create_serializer,
@@ -97,7 +100,6 @@ from parsec.api.protocol.realm import (
     RealmRole,
     RealmRoleField,
     MaintenanceType,
-    MaintenanceTypeField,
     realm_create_serializer,
     realm_status_serializer,
     realm_stats_serializer,
@@ -132,7 +134,7 @@ from parsec.api.protocol.pki import (
     pki_enrollment_reject_serializer,
     pki_enrollment_accept_serializer,
 )
-from parsec.api.protocol.sequester import SequesterServiceID, SequesterServiceIDField
+from parsec.api.protocol.sequester import SequesterServiceIDField
 from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, INVITED_CMDS, APIV1_ANONYMOUS_CMDS
 from parsec._parsec import (
     AuthenticatedAnyCmdReq,
@@ -141,6 +143,7 @@ from parsec._parsec import (
     BlockReadRep,
     BlockCreateReq,
     BlockCreateRep,
+    SequesterServiceID,
 )
 
 __all__ = (
@@ -158,7 +161,8 @@ __all__ = (
     "HandshakeRVKMismatch",
     "HandshakeRevokedDevice",
     "HandshakeOutOfBallparkError",
-    "HandshakeAPIVersionError",
+    "IncompatibleAPIVersionsError",
+    "settle_compatible_versions",
     "ServerHandshake",
     "HandshakeType",
     "BaseClientHandshake",
@@ -188,13 +192,13 @@ __all__ = (
     "organization_bootstrap_webhook_serializer",
     "organization_stats_serializer",
     "organization_config_serializer",
-    "UsersPerProfileDetailItemSchema",
     # Events
     "events_subscribe_serializer",
     "events_listen_serializer",
     "APIEvent",
     # Ping
-    "ping_serializer",
+    "authenticated_ping_serializer",
+    "invited_ping_serializer",
     # User
     "user_get_serializer",
     "user_create_serializer",
@@ -234,7 +238,6 @@ __all__ = (
     "RealmRole",
     "RealmRoleField",
     "MaintenanceType",
-    "MaintenanceTypeField",
     "realm_create_serializer",
     "realm_status_serializer",
     "realm_stats_serializer",

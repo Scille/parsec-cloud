@@ -10,6 +10,7 @@ from .helpers import *  # noqa
 from .oracles import *  # noqa
 from .population import *  # noqa
 from .postgresql import *  # noqa
+from .rpc_api import *  # noqa
 from .sequester import *  # noqa
 from .smartcard import *  # noqa
 from .trio_clock import *  # noqa

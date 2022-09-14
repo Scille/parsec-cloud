@@ -358,7 +358,9 @@ class PGPSequesterComponent(BaseSequesterComponent):
             # Exctract sequester blobs
             raw_sequester_data = await conn.fetch(
                 *_get_sequester_blob(
-                    organization_id=organization_id.str, service_id=service_id, realm_id=realm_id
+                    organization_id=organization_id.str,
+                    service_id=service_id,
+                    realm_id=realm_id.uuid,
                 )
             )
 

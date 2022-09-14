@@ -14,14 +14,15 @@ path = "tests/mod.rs"
 [dependencies]
 serialization_format = { path = "../serialization_format" }
 libparsec_crypto = { path = "../crypto" }
+libparsec_platform_async = { path = "../platform_async" }
 
 lazy_static = "1.4.0"
-serde = { version = "1.0.142", features = ["derive"] }
+serde = { version = "1.0.144", features = ["derive"] }
 serde_with = "2.0.0"
 serde_repr = "0.1.9"
 rmp-serde = "1.0.0"
 serde_bytes = { version = "0.11.7"}
-chrono = { version = "0.4.20", features = ["serde"] }
+chrono = { version = "0.4.22", features = ["serde"] }
 # By default uuid crate uses `getrandom` directly instead of `rand`, however
 # the latter is much faster (see. https://github.com/uuid-rs/uuid/pull/545,
 # tl;dr: `rand` uses `getrandom` as seed then applies a fast chacha algo on it)
@@ -32,16 +33,16 @@ url = "2.2.2"
 percent-encoding = "2.1.0"
 fancy-regex = "0.10.0"
 unicode-normalization = "0.1.21"
-paste = "1.0.8"
+paste = "1.0.9"
 flate2 = "1.0.24"
 rand = "0.8.4"
-thiserror = "1.0.32"
-email-address-parser = "2.0.0-rc1"
+thiserror = "1.0.34"
+email-address-parser = "2.0.0-rc2"
 
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
-pretty_assertions = "1.0.0"
-serde_test = "1.0.142"
+pretty_assertions = "1.3.0"
+serde_test = "1.0.144"
 hex-literal = "0.3.3"
 rstest = "0.15.0"
 rstest_reuse = "0.4.0"

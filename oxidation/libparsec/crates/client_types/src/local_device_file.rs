@@ -210,6 +210,24 @@ pub fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf 
     devices_dir.join(device.slughash() + ".keys")
 }
 
+fn read_key_file_paths(path: PathBuf) -> LocalDeviceResult<Vec<PathBuf>> {
+    let mut key_file_paths = vec![];
+
+    for path in std::fs::read_dir(&path)
+        .map_err(|_| LocalDeviceError::Access(path))?
+        .filter_map(|path| path.ok())
+        .map(|entry| entry.path())
+    {
+        if path.extension() == Some(OsStr::new("keys")) {
+            key_file_paths.push(path)
+        } else if path.is_dir() {
+            key_file_paths.append(&mut read_key_file_paths(path)?)
+        }
+    }
+
+    Ok(key_file_paths)
+}
+
 pub fn list_available_devices(config_dir: &Path) -> LocalDeviceResult<Vec<AvailableDevice>> {
     let mut list = vec![];
     // Set of seen slugs
@@ -218,12 +236,7 @@ pub fn list_available_devices(config_dir: &Path) -> LocalDeviceResult<Vec<Availa
     let key_file_paths = PathBuf::from(config_dir).join("devices");
 
     // Consider `.keys` files in devices directory
-    let mut key_file_paths = std::fs::read_dir(&key_file_paths)
-        .map_err(|_| LocalDeviceError::Access(key_file_paths))?
-        .filter_map(|path| path.ok())
-        .map(|entry| entry.path())
-        .filter(|path| path.extension() == Some(OsStr::new("keys")))
-        .collect::<Vec<_>>();
+    let mut key_file_paths = read_key_file_paths(key_file_paths)?;
 
     // Sort paths so the discovery order is deterministic
     // In the case of duplicate files, that means only the first discovered device is considered

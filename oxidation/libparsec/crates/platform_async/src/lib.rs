@@ -11,7 +11,9 @@ pub mod wasm32;
 pub use wasm32 as platform;
 
 pub use flume as channel;
+pub use futures::prelude::*;
+pub use futures::select;
 pub use platform::join_set::JoinSet;
+pub use platform::sleep;
 pub use platform::sync::Notify;
 pub use platform::task::{spawn, Task};
-pub use platform::timer::Timer;

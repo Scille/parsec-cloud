@@ -8,4 +8,4 @@ pub mod timer;
 pub use join_set::JoinSet;
 pub use sync::Notify;
 pub use task::{spawn, Task};
-pub use timer::Timer;
+pub use timer::sleep;

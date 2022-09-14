@@ -30,7 +30,7 @@ class EnrollmentQueryWidget(QWidget, Ui_EnrollmentQueryWidget):
         self.addr = addr
         self.label_instructions.setText(
             translate("TEXT_ENROLLMENT_INSTRUCTIONS_organization").format(
-                organization=self.addr.organization_id
+                organization=self.addr.organization_id.str
             )
         )
         self.label_cert_error.setVisible(False)

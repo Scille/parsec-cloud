@@ -123,7 +123,7 @@ pytest-xdist = "^2.5"
 pytest-trio = "^0.7"
 pytest-qt = "^4.0"
 pytest-rerunfailures =  "^10.2"
-hypothesis = "^6.31"
+hypothesis = "^6.54"
 hypothesis-trio = "^0.6"
 trustme = "^0.9"
 winfspy = { version="^0.8", extras=["test"], markers="platform_system=='Windows'" }
@@ -135,9 +135,9 @@ PyQt5_stubs = "^5.15"
 # PyInstaller is only needed for packaging, but it must be installed in the same
 # venv the code to package is installed. Hence it's simpler to have it here so
 # it dependencies won't clash with the rest of the project.
-pyinstaller = "^4.7"
+pyinstaller = "^5.3"
 
-flake8 = "3.8.4"
+flake8 = "5.0.4"
 black = "^22.6.0"
 # Latest version compatible with `trio_typing~=0.5`, required by qtrio
 mypy = "v0.910"
@@ -145,6 +145,7 @@ mypy = "v0.910"
 setuptools = "^63.1.0"
 maturin = "~=0.13"
 cibuildwheel = "2.8.1"
+editorconfig-checker = "2.4.0"
 
 [tool.poetry.build]
 generate-setup-file = false
@@ -156,6 +157,8 @@ archs = ["auto64"]
 build-verbosity = 3
 before-all = "bash misc/setup-rust.sh"
 before-build = "python -m pip install -U pip"
+# Trigger an install of the package, but run nothing of note
+test-command = "echo Wheel installed"
 
 [tool.cibuildwheel.environment]
 # As it name suggests, `misc/setup-rust.sh` (run during cibuildwheel's before-all) will

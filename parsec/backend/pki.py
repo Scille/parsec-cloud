@@ -210,7 +210,7 @@ class BasePkiEnrollmentComponent:
         if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+                "reason": f"User `{client_ctx.device_id.user_id.str}` is not admin",
             }
         msg = pki_enrollment_list_serializer.req_load(msg)
         enrollments = await self.list(organization_id=client_ctx.organization_id)
@@ -237,7 +237,7 @@ class BasePkiEnrollmentComponent:
         if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+                "reason": f"User `{client_ctx.device_id.user_id.str}` is not admin",
             }
         msg = pki_enrollment_reject_serializer.req_load(msg)
         try:
@@ -264,7 +264,7 @@ class BasePkiEnrollmentComponent:
         if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+                "reason": f"User `{client_ctx.device_id.user_id.str}` is not admin",
             }
         msg = pki_enrollment_accept_serializer.req_load(msg)
 

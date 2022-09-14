@@ -47,6 +47,7 @@ def recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=False):
             recursive_compare_fs_dumps(alice_value, bob_value, ignore_need_sync=ignore_need_sync)
 
 
+@pytest.mark.flaky(rerun=1)
 @pytest.mark.slow
 def test_sync_monitor_stateful(
     hypothesis_settings,

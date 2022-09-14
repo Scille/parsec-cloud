@@ -1,15 +1,59 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from typing import Tuple, List, Dict, Optional
+from uuid import UUID
+
 from parsec._parsec import (
     DateTime,
     BlockCreateRep,
     BlockCreateRepUnknownStatus,
     BlockReadRep,
     BlockReadRepUnknownStatus,
+    MessageGetRep,
+    MessageGetRepUnknownStatus,
+    OrganizationStatsRep,
+    OrganizationStatsRepUnknownStatus,
+    OrganizationConfigRep,
+    OrganizationConfigRepUnknownStatus,
+    RealmCreateRep,
+    RealmCreateRepBadTimestamp,
+    RealmCreateRepUnknownStatus,
+    RealmStatusRep,
+    RealmStatusRepUnknownStatus,
+    RealmStatsRep,
+    RealmStatsRepUnknownStatus,
+    RealmGetRoleCertificatesRep,
+    RealmGetRoleCertificatesRepUnknownStatus,
+    RealmUpdateRolesRep,
+    RealmUpdateRolesRepBadTimestamp,
+    RealmUpdateRolesRepUnknownStatus,
+    RealmStartReencryptionMaintenanceRep,
+    RealmStartReencryptionMaintenanceRepBadTimestamp,
+    RealmStartReencryptionMaintenanceRepUnknownStatus,
+    RealmFinishReencryptionMaintenanceRep,
+    RealmFinishReencryptionMaintenanceRepUnknownStatus,
+    AuthenticatedPingRep,
+    AuthenticatedPingRepUnknownStatus,
+    InvitedPingRep,
+    InvitedPingRepUnknownStatus,
+    VlobCreateRep,
+    VlobCreateRepBadTimestamp,
+    VlobCreateRepUnknownStatus,
+    VlobReadRep,
+    VlobReadRepUnknownStatus,
+    VlobUpdateRep,
+    VlobUpdateRepBadTimestamp,
+    VlobUpdateRepUnknownStatus,
+    VlobPollChangesRep,
+    VlobPollChangesRepUnknownStatus,
+    VlobListVersionsRep,
+    VlobListVersionsRepUnknownStatus,
+    VlobMaintenanceGetReencryptionBatchRep,
+    VlobMaintenanceGetReencryptionBatchRepUnknownStatus,
+    VlobMaintenanceSaveReencryptionBatchRep,
+    VlobMaintenanceSaveReencryptionBatchRepUnknownStatus,
+    ReencryptionBatchEntry,
 )
-from uuid import UUID
-
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.api.transport import Transport, TransportError
 from parsec.api.protocol import (
@@ -39,7 +83,8 @@ from parsec.api.protocol import (
     invite_3a_claimer_signify_trust_serializer,
     invite_4_greeter_communicate_serializer,
     invite_4_claimer_communicate_serializer,
-    ping_serializer,
+    authenticated_ping_serializer,
+    invited_ping_serializer,
     organization_stats_serializer,
     organization_config_serializer,
     apiv1_organization_bootstrap_serializer,
@@ -127,20 +172,79 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
             raise BackendOutOfBallparkError(rep)
 
     # New shinnny stuff
-    elif isinstance(rep, (BlockCreateRep, BlockReadRep)):
-        if isinstance(rep, (BlockCreateRepUnknownStatus, BlockReadRepUnknownStatus)):
+    elif isinstance(
+        rep,
+        (
+            BlockCreateRep,
+            BlockReadRep,
+            MessageGetRep,
+            OrganizationStatsRep,
+            OrganizationConfigRep,
+            RealmCreateRep,
+            RealmStatusRep,
+            RealmStatsRep,
+            RealmGetRoleCertificatesRep,
+            RealmUpdateRolesRep,
+            RealmStartReencryptionMaintenanceRep,
+            RealmFinishReencryptionMaintenanceRep,
+            AuthenticatedPingRep,
+            InvitedPingRep,
+            VlobCreateRep,
+            VlobReadRep,
+            VlobUpdateRep,
+            VlobPollChangesRep,
+            VlobListVersionsRep,
+            VlobMaintenanceGetReencryptionBatchRep,
+            VlobMaintenanceSaveReencryptionBatchRep,
+        ),
+    ):
+        if isinstance(
+            rep,
+            (
+                BlockCreateRepUnknownStatus,
+                BlockReadRepUnknownStatus,
+                MessageGetRepUnknownStatus,
+                OrganizationStatsRepUnknownStatus,
+                OrganizationConfigRepUnknownStatus,
+                RealmCreateRepUnknownStatus,
+                RealmStatusRepUnknownStatus,
+                RealmStatsRepUnknownStatus,
+                RealmGetRoleCertificatesRepUnknownStatus,
+                RealmUpdateRolesRepUnknownStatus,
+                RealmStartReencryptionMaintenanceRepUnknownStatus,
+                RealmFinishReencryptionMaintenanceRepUnknownStatus,
+                AuthenticatedPingRepUnknownStatus,
+                InvitedPingRepUnknownStatus,
+                VlobCreateRepUnknownStatus,
+                VlobReadRepUnknownStatus,
+                VlobUpdateRepUnknownStatus,
+                VlobPollChangesRepUnknownStatus,
+                VlobListVersionsRepUnknownStatus,
+                VlobMaintenanceGetReencryptionBatchRepUnknownStatus,
+                VlobMaintenanceSaveReencryptionBatchRepUnknownStatus,
+            ),
+        ):
             if rep.status == "invalid_msg_format":
                 transport.logger.error(
                     "Invalid request data according to backend", cmd=cmd, rep=rep
                 )
                 raise BackendProtocolError("Invalid request data according to backend")
 
-            if rep.status == "bad_timestamp":
-                raise BackendOutOfBallparkError(rep)
-
             # Backward compatibility with older backends (<= v2.3)
             if rep.status == "invalid_certification" and "timestamp" in rep.reason:
                 raise BackendOutOfBallparkError(rep)
+        elif isinstance(
+            rep,
+            (
+                RealmCreateRepBadTimestamp,
+                RealmUpdateRolesRepBadTimestamp,
+                RealmStartReencryptionMaintenanceRepBadTimestamp,
+                VlobCreateRepBadTimestamp,
+                VlobUpdateRepBadTimestamp,
+            ),
+        ):
+            raise BackendOutOfBallparkError(rep)
+
     else:
         raise ProtocolError("Your protocol is not handled")
 
@@ -163,8 +267,12 @@ async def organization_config(transport: Transport) -> dict:
 ### Events&misc API ###
 
 
-async def ping(transport: Transport, ping: str = "") -> dict:
-    return await _send_cmd(transport, ping_serializer, cmd="ping", ping=ping)
+async def authenticated_ping(transport: Transport, ping: str = "") -> dict:
+    return await _send_cmd(transport, authenticated_ping_serializer, cmd="ping", ping=ping)
+
+
+async def invited_ping(transport: Transport, ping: str = "") -> dict:
+    return await _send_cmd(transport, invited_ping_serializer, cmd="ping", ping=ping)
 
 
 async def events_subscribe(
@@ -290,7 +398,7 @@ async def vlob_maintenance_save_reencryption_batch(
         cmd="vlob_maintenance_save_reencryption_batch",
         realm_id=realm_id,
         encryption_revision=encryption_revision,
-        batch=[{"vlob_id": x[0], "version": x[1], "blob": x[2]} for x in batch],
+        batch=[ReencryptionBatchEntry(vlob_id=x[0], version=x[1], blob=x[2]) for x in batch],
     )
 
 

@@ -155,7 +155,7 @@ impl WorkspaceEntry {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType, name: &EntryName, timestamp: DateTime) -> PyResult<Self> {
+    fn class_new(_cls: &PyType, name: &EntryName, timestamp: DateTime) -> PyResult<Self> {
         Ok(Self(libparsec::types::WorkspaceEntry::generate(
             name.0.to_owned(),
             timestamp.0,
@@ -1182,6 +1182,16 @@ pub(crate) fn manifest_verify_and_load<'py>(
         expected_id.map(|id| id.0),
         expected_version,
     ) {
+        Ok(value) => value,
+        Err(err) => return Err(DataError::new_err(err.to_string())),
+    };
+
+    unwrap_manifest(py, blob)
+}
+
+#[pyfunction]
+pub(crate) fn manifest_unverified_load(py: Python, data: &[u8]) -> PyResult<PyObject> {
+    let blob = match Manifest::unverified_load(data) {
         Ok(value) => value,
         Err(err) => return Err(DataError::new_err(err.to_string())),
     };

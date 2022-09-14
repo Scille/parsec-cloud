@@ -10,8 +10,7 @@ env:
   python-version: "3.9"
   rust-version: 1.63.0
   node-version: "16"
-  # Need feature from poetry 1.2.x that aren't present in 1.1.x
-  poetry-version: 1.2.0b3
+  poetry-version: 1.2.0
   # TODO: We stick to PostgreSQL 12 for the moment given later versions are
   # much slower (postgresql tests runs in ~9mn on 12 vs ~36mn on 14 !)
   postgresql-version: 12
@@ -34,6 +33,7 @@ jobs:
       - test-python-matrix
       - test-rust-matrix
       - test-web-app
+      - test-wasm
     runs-on: ubuntu-latest
     steps:
       - run: echo "My job here is done !"
@@ -62,7 +62,7 @@ jobs:
         with:
           version: ${{ env.rust-version }}
           components: rustfmt, clippy
-          cache-key: ubuntu-20.04
+          cache-key: ${{ github.job }}-ubuntu-20.04
         timeout-minutes: 10
 
       - name: Debug installed tools
@@ -90,6 +90,7 @@ jobs:
             startsWith(github.head_ref, 'dependabot')
             || startsWith(github.head_ref, 'yolo')
             || startsWith(github.head_ref, 'release')
+            || startsWith(github.head_ref, 'revert')
             )
         run: |
           whereis git
@@ -200,7 +201,7 @@ jobs:
         if: steps.python-changes.outputs.run == 'true'
         with:
           version: ${{ env.rust-version }}
-          cache-key: ${{ matrix.os }}
+          cache-key: ${{ github.job }}-${{ matrix.os }}
         timeout-minutes: 10
 
       - uses: ./.github/actions/setup-python-poetry
@@ -298,7 +299,7 @@ jobs:
         if: steps.rust-changes.outputs.run == 'true'
         with:
           version: ${{ env.rust-version }}
-          cache-key: ${{ matrix.os }}
+          cache-key: ${{ github.job }}-${{ matrix.os }}
         timeout-minutes: 10
 
       # Pyo3 need additional configuration on MacOS to be manually build
@@ -338,8 +339,88 @@ jobs:
           cargo test --workspace --features mock-time --exclude libparsec_crypto
 
   ##############################################################################
+  #                            🐜 Wasm tests                                   #
+  ##############################################################################
+
+  test-wasm:
+    runs-on: ubuntu-20.04
+    # We're using a matrix, because we need to have a list to configure:
+    # - The job `Check changed files` (To watch if the specified crate we're changed).
+    # - The job `Run WasmPack test` (where we run the test on each specified crate).
+    # So it's simpler to have only 1 list to maintain (DRY).
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - crate_to_test:
+              - oxidation/libparsec/crates/platform_async
+              - oxidation/libparsec/crates/platform_web
+    name: 🐜 Wasm tests
+    env:
+      WASM_PACK_VERSION: 0.10.3
+      NAVIGATORS: >-
+        firefox
+        chrome
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # pin v3.0.2
+
+      - name: Check changed files
+        uses: dorny/paths-filter@b2feaf19c27470162a626bd6fa8438ae5b263721  # pin v2.10.2
+        id: changes
+        with:
+          filters: |
+            wasm: ${{ toJSON(matrix.crate_to_test) }}
+            github:
+              - .github/**
+
+      - name: Check modified path that require wasm-pack-ci run
+        id: wasm-pack-changes
+        if: >-
+          steps.changes.outputs.wasm == 'true'
+          || steps.changes.outputs.github == 'true'
+          || github.ref == 'refs/head/master'
+        run: echo "::set-output name=run::true"
+
+      - uses: ./.github/actions/setup-rust
+        if: steps.wasm-pack-changes.outputs.run == 'true'
+        with:
+          version: ${{ env.rust-version }}
+          target: wasm32-unknown-unknown
+          cache-key: wasm32
+
+      - name: Install Wasm-Pack
+        if: steps.wasm-pack-changes.outputs.run == 'true'
+        run: |
+          set -eux
+          mkdir -p ~/.local/bin
+          cd ~/.local/bin
+          wget https://github.com/rustwasm/wasm-pack/releases/download/v${{ env.WASM_PACK_VERSION }}/wasm-pack-v${{ env.WASM_PACK_VERSION }}-x86_64-unknown-linux-musl.tar.gz -O ~/wasm-pack.tar.gz
+          tar xzf ~/wasm-pack.tar.gz --directory ~/.local/bin --strip-components=1
+          chmod +x ~/.local/bin/wasm-pack
+          echo ~/.local/bin >> "$GITHUB_PATH"
+          ~/.local/bin/wasm-pack --version
+
+      - name: Run WasmPack test
+        if: steps.wasm-pack-changes.outputs.run == 'true'
+        run: |
+          set -eu
+          for crate_to_test in ${{ join(matrix.crate_to_test.*, ' ') }}; do
+            for navigator in ${{ env.NAVIGATORS }}; do
+              echo "###################################"
+              echo "# Running WASM test"
+              echo "#   navigator: $navigator"
+              echo "#   crate: $crate_to_test"
+              echo "###################################"
+
+              (set -x; wasm-pack test --headless --$navigator $crate_to_test)
+            done
+          done
+
+
+  ##############################################################################
   #                            🌐 Web tests                                    #
   ##############################################################################
+
   test-web-app:
     runs-on: ubuntu-22.04
     name: 🌐 Web tests

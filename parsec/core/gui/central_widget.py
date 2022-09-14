@@ -8,9 +8,9 @@ from pathlib import PurePath
 
 from parsec.event_bus import EventBus, EventCallback
 from parsec.api.protocol import (
-    HandshakeAPIVersionError,
     HandshakeRevokedDevice,
     HandshakeOrganizationExpired,
+    IncompatibleAPIVersionsError,
 )
 from parsec.api.data import EntryName
 from parsec.api.data.manifest import WorkspaceEntry
@@ -171,7 +171,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 show_error(
                     self,
                     _("TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization").format(
-                        organization=file_link_addr.organization_id
+                        organization=file_link_addr.organization_id.str
                     ),
                 )
                 self.show_mount_widget()
@@ -182,7 +182,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 show_error(
                     self,
                     _("TEXT_FILE_LINK_NOT_IN_ORG_organization").format(
-                        organization=file_link_addr.organization_id
+                        organization=file_link_addr.organization_id.str
                     ),
                 )
                 self.show_mount_widget()
@@ -217,7 +217,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         )
 
     def set_user_info(self) -> None:
-        org = self.core.device.organization_id
+        org = self.core.device.organization_id.str
         username = self.core.device.short_user_display
         user_text = f"{org}\n{username}"
         self.button_user.setText(user_text)
@@ -307,20 +307,21 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 self.new_notification.emit(
                     "INFO",
                     _("TEXT_NOTIF_INFO_WORKSPACE_SHARED_workspace").format(
-                        workspace=new_entry.name
+                        workspace=new_entry.name.str
                     ),
                 )
             elif new_role is not None and previous_role is not None and new_role != previous_role:
                 self.new_notification.emit(
                     "INFO",
                     _("TEXT_NOTIF_INFO_WORKSPACE_ROLE_UPDATED_workspace").format(
-                        workspace=new_entry.name
+                        workspace=new_entry.name.str
                     ),
                 )
             elif new_role is None and previous_role is not None:
                 name = previous_entry.name  # type: ignore
                 self.new_notification.emit(
-                    "INFO", _("TEXT_NOTIF_INFO_WORKSPACE_UNSHARED_workspace").format(workspace=name)
+                    "INFO",
+                    _("TEXT_NOTIF_INFO_WORKSPACE_UNSHARED_workspace").format(workspace=name.str),
                 )
 
     def _on_connection_state_changed(
@@ -347,7 +348,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             icon = QPixmap(":/icons/images/material/cloud_off.svg")
             assert isinstance(status_exc, Exception)
             cause = status_exc.__cause__
-            if isinstance(cause, HandshakeAPIVersionError):
+            if isinstance(cause, IncompatibleAPIVersionsError):
                 tooltip = text = _("TEXT_BACKEND_STATE_API_MISMATCH_versions").format(
                     versions=", ".join([str(v.version) for v in cause.backend_versions])
                 )
@@ -394,7 +395,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.systray_notification.emit(
                 "Parsec",
                 _("TEXT_SYSTRAY_BACKEND_DISCONNECT_organization").format(
-                    organization=self.core.device.organization_id
+                    organization=self.core.device.organization_id.str
                 ),
                 5000,
             )

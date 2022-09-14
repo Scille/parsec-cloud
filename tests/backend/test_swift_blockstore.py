@@ -17,8 +17,8 @@ async def test_swift_get(caplog):
 
     def _assert_log():
         log = caplog.assert_occured_once("[warning  ] Block read error")
-        assert f"organization_id={org_id}" in log
-        assert f"block_id={block_id}" in log
+        assert f"organization_id={org_id.str}" in log
+        assert f"block_id={block_id.str}" in log
         assert len(caplog.messages) == 1
         caplog.clear()
 
@@ -56,8 +56,8 @@ async def test_swift_create(caplog):
 
     def _assert_log():
         log = caplog.assert_occured_once("[warning  ] Block create error")
-        assert f"organization_id={org_id}" in log
-        assert f"block_id={block_id}" in log
+        assert f"organization_id={org_id.str}" in log
+        assert f"block_id={block_id.str}" in log
         assert len(caplog.messages) == 1
         caplog.clear()
 

@@ -86,7 +86,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         try:
             return self._realms[(organization_id, realm_id)]
         except KeyError:
-            raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+            raise RealmNotFoundError(f"Realm `{realm_id.str}` doesn't exist")
 
     async def create(
         self, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
@@ -171,10 +171,10 @@ class MemoryRealmComponent(BaseRealmComponent):
         try:
             user = self._user_component._get_user(organization_id, new_role.user_id)
         except UserNotFoundError:
-            raise RealmNotFoundError(f"User `{new_role.user_id}` doesn't exist")
+            raise RealmNotFoundError(f"User `{new_role.user_id.str}` doesn't exist")
 
         if user.is_revoked():
-            raise UserAlreadyRevokedError(f"User `{new_role.user_id}` is revoked")
+            raise UserAlreadyRevokedError(f"User `{new_role.user_id.str}` is revoked")
 
         if user.profile == UserProfile.OUTSIDER and new_role.role in (
             RealmRole.MANAGER,
@@ -269,7 +269,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
         if realm.status.in_maintenance:
-            raise RealmInMaintenanceError(f"Realm `{realm_id}` alrealy in maintenance")
+            raise RealmInMaintenanceError(f"Realm `{realm_id.str}` alrealy in maintenance")
         if encryption_revision != realm.status.encryption_revision + 1:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
         now = DateTime.now()
@@ -284,7 +284,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             )
 
         realm.status = RealmStatus(
-            maintenance_type=MaintenanceType.REENCRYPTION,
+            maintenance_type=MaintenanceType.REENCRYPTION(),
             maintenance_started_on=timestamp,
             maintenance_started_by=author,
             encryption_revision=encryption_revision,
@@ -317,7 +317,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
         if not realm.status.in_maintenance:
-            raise RealmNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+            raise RealmNotInMaintenanceError(f"Realm `{realm_id.str}` not under maintenance")
         if encryption_revision != realm.status.encryption_revision:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
         if not self._vlob_component._maintenance_reencryption_is_finished_hook(

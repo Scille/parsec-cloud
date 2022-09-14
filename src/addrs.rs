@@ -52,10 +52,6 @@ impl BackendAddr {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        self.to_url()
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("BackendAddr(url={})", self.to_url().unwrap()))
     }
@@ -182,10 +178,6 @@ impl BackendOrganizationAddr {
     fn root_verify_key(&self) -> PyResult<VerifyKey> {
         let data = self.0.root_verify_key().as_ref();
         Ok(VerifyKey::new(data).unwrap())
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        self.to_url()
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -381,10 +373,6 @@ impl BackendOrganizationBootstrapAddr {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        self.to_url()
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!(
             "BackendOrganizationBootstrapAddr(url={})",
@@ -575,10 +563,6 @@ impl BackendOrganizationFileLinkAddr {
         Ok(PyBytes::new(py, self.0.encrypted_path().as_slice()))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        self.to_url()
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!(
             "BackendOrganizationFileLinkAddr(url={})",
@@ -736,7 +720,7 @@ impl BackendInvitationAddr {
                 .import("parsec.api.protocol")?
                 .getattr("InvitationType")?;
             let name = self.0.invitation_type().to_string();
-            let obj = cls.getattr(name)?;
+            let obj = cls.getattr(&name as &str)?;
             Ok(obj.into_py(py))
         })
     }
@@ -744,10 +728,6 @@ impl BackendInvitationAddr {
     #[getter]
     fn token(&self) -> PyResult<InvitationToken> {
         Ok(InvitationToken(self.0.token()))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        self.to_url()
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -916,10 +896,6 @@ impl BackendPkiEnrollmentAddr {
     #[getter]
     fn organization_id(&self) -> PyResult<OrganizationID> {
         Ok(OrganizationID(self.0.organization_id().clone()))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        self.to_url()
     }
 
     fn __repr__(&self) -> PyResult<String> {

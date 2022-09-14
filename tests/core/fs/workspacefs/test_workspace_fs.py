@@ -12,6 +12,7 @@ from parsec._parsec import (
     FolderManifest,
     UserManifest,
     WorkspaceManifest,
+    VlobReadRepOk,
 )
 
 from parsec.api.protocol import DeviceID, RealmID, RealmRole
@@ -417,7 +418,13 @@ async def test_path_info_remote_loader_exceptions(
             raw_modified_remote_manifest = modified_remote_manifest.dump_sign_and_encrypt(
                 author_signkey=alice.signing_key, key=workspace_entry.key
             )
-            ret["blob"] = raw_modified_remote_manifest
+            ret = VlobReadRepOk(
+                ret.version,
+                raw_modified_remote_manifest,
+                ret.author,
+                ret.timestamp,
+                ret.author_last_role_granted_on,
+            )
         return ret
 
     monkeypatch.setattr(
@@ -429,7 +436,7 @@ async def test_path_info_remote_loader_exceptions(
     with pytest.raises(FSError) as exc:
         await alice_workspace.path_info(FsPath("/foo/bar"))
     assert (
-        f"Cannot decrypt vlob: Invalid entry ID: expected `{manifest.id}`, got `{manifest_modifiers['id']}`"
+        f"Cannot decrypt vlob: Invalid entry ID: expected `{manifest.id.str}`, got `{manifest_modifiers['id'].str}`"
         in str(exc.value)
     )
 

@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime, RealmCreateRepOk, RealmUpdateRolesRepOk
 from parsec.api.data import RealmRoleCertificate
 from parsec.api.protocol import RealmID, RealmRole, APIEvent
 from parsec.backend.backend_events import BackendEvent
@@ -21,7 +21,7 @@ async def test_realm_create(backend, alice, alice_ws):
     ).dump_and_sign(alice.signing_key)
     with backend.event_bus.listen() as spy:
         rep = await realm_create(alice_ws, certif)
-        assert rep == {"status": "ok"}
+        assert isinstance(rep, RealmCreateRepOk)
         await spy.wait_with_timeout(BackendEvent.REALM_ROLES_UPDATED)
 
 
@@ -40,7 +40,7 @@ async def test_roles_updated_for_participant(
                 role=role,
             ).dump_and_sign(alice.signing_key)
             rep = await realm_update_roles(alice_ws, certif, check_rep=False)
-            assert rep == {"status": "ok"}
+            assert isinstance(rep, RealmUpdateRolesRepOk)
 
             await spy.wait_with_timeout(
                 BackendEvent.REALM_ROLES_UPDATED,

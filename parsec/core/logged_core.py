@@ -10,6 +10,7 @@ from structlog import get_logger
 from functools import partial
 from contextlib import asynccontextmanager
 
+from parsec._parsec import OrganizationStatsRepOk
 from parsec.event_bus import EventBus
 from parsec.api.protocol import (
     UserID,
@@ -23,7 +24,7 @@ from parsec.core.pki import accepter_list_submitted_from_backend
 from parsec.core.types import LocalDevice, UserInfo, DeviceInfo, BackendInvitationAddr
 from parsec.core import resources as core_resources
 from parsec.core.config import CoreConfig
-from parsec.core.types import OrganizationConfig, OrganizationStats, UsersPerProfileDetailItem
+from parsec.core.types import OrganizationConfig, OrganizationStats
 from parsec.core.backend_connection import (
     BackendAuthenticatedConn,
     BackendConnectionError,
@@ -134,7 +135,7 @@ class LoggedCore:
         for workspace in self.user_fs.get_user_manifest().workspaces:
             if workspace_name == workspace.name:
                 return workspace
-        raise FSWorkspaceNotFoundError(f"Unknown workspace {workspace_name}")
+        raise FSWorkspaceNotFoundError(f"Unknown workspace {workspace_name.str}")
 
     async def find_humans(
         self,
@@ -172,17 +173,15 @@ class LoggedCore:
         """
 
         rep = await self._backend_conn.cmds.organization_stats()
-        if rep["status"] != "ok":
+        if not isinstance(rep, OrganizationStatsRepOk):
             raise BackendConnectionError(f"Backend error: {rep}")
         return OrganizationStats(
-            data_size=rep["data_size"],
-            metadata_size=rep["metadata_size"],
-            realms=rep["realms"],
-            users=rep["users"],
-            active_users=rep["active_users"],
-            users_per_profile_detail=[
-                UsersPerProfileDetailItem(**x) for x in rep["users_per_profile_detail"]
-            ],
+            data_size=rep.data_size,
+            metadata_size=rep.metadata_size,
+            realms=rep.realms,
+            users=rep.users,
+            active_users=rep.active_users,
+            users_per_profile_detail=rep.users_per_profile_detail,
         )
 
     async def get_user_info(self, user_id: UserID) -> UserInfo:
@@ -199,7 +198,7 @@ class LoggedCore:
         except RemoteDevicesManagerError as exc:
             # TODO: we should be using our own kind of exception instead of borowing BackendConnectionError...
             raise BackendConnectionError(
-                f"Error while fetching user {user_id} certificates"
+                f"Error while fetching user {user_id.str} certificates"
             ) from exc
         return UserInfo(
             user_id=user_certif.user_id,
@@ -228,7 +227,7 @@ class LoggedCore:
         except RemoteDevicesManagerError as exc:
             # TODO: we should be using our own kind of exception instead of borowing BackendConnectionError...
             raise BackendConnectionError(
-                f"Error while fetching user {user_id} certificates"
+                f"Error while fetching user {user_id.str} certificates"
             ) from exc
         results = []
         for device_certif in device_certifs:
@@ -255,7 +254,7 @@ class LoggedCore:
             revoked_user_certificate=revoked_user_certificate
         )
         if rep["status"] != "ok":
-            raise BackendConnectionError(f"Error while trying to revoke user {user_id}: {rep}")
+            raise BackendConnectionError(f"Error while trying to revoke user {user_id.str}: {rep}")
 
         # Invalidate potential cache to avoid displaying the user as not-revoked
         self._remote_devices_manager.invalidate_user_cache(user_id)

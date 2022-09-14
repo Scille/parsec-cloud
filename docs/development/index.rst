@@ -7,8 +7,8 @@ Hack on Parsec
 ==============
 
 .. toctree::
-   :maxdepth: 1
-   :name: toc-development
+    :maxdepth: 1
+    :name: toc-development
 
-   quickstart
-   release
+    quickstart
+    release

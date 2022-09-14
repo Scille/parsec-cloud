@@ -22,12 +22,12 @@ libparsec_protocol = { path = "../protocol" }
 libparsec_crypto = { path = "../crypto" }
 # Used to encoded binary data.
 base64 = "0.13.0"
-chrono = "0.4.20"
+chrono = "0.4.22"
 
 [dev-dependencies]
-anyhow = "1.0.59"
+anyhow = "1.0.64"
 env_logger = "0.9.0"
 http-body = "0.4.5"
 hyper = { version = "0.14.20", features = ["server"] }
 log = "0.4.17"
-tokio = { version = "1.20", features = ["rt", "macros", "sync"] }
+tokio = { version = "1.21", features = ["rt", "macros", "sync"] }

@@ -137,7 +137,7 @@ async def _pki_enrollment_poll(
         )
         display = f"Pending enrollment {enrollment_id_display}"
         display += f"\n  Submitted on: " + click.style(pending.submitted_on, fg="yellow")
-        display += f"\n  Organization URL: " + click.style(pending.addr, fg="yellow")
+        display += f"\n  Organization URL: " + click.style(pending.addr.to_url(), fg="yellow")
         display += f"\n  Certificate SHA1 Fingerprint: " + click.style(
             pending.x509_certificate.certificate_sha1.hex(), fg="yellow"
         )
@@ -151,7 +151,7 @@ async def _pki_enrollment_poll(
             pending.x509_certificate.subject_email_address, fg="yellow"
         )
         display += "\n  Requested Device Label: " + click.style(
-            pending.submit_payload.requested_device_label, fg="yellow"
+            pending.submit_payload.requested_device_label.str, fg="yellow"
         )
         return display
 
@@ -329,7 +329,7 @@ async def _pki_enrollment_review_pendings(
                     pending.submitter_x509_certificate.subject_email_address, fg="yellow"
                 )
                 display += "\n  Requested Device Label: " + click.style(
-                    pending.submit_payload.requested_device_label, fg="yellow"
+                    pending.submit_payload.requested_device_label.str, fg="yellow"
                 )
             return display
 

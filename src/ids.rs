@@ -39,10 +39,6 @@ impl OrganizationID {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<OrganizationID {}>", self.0))
     }
@@ -80,6 +76,11 @@ impl EntryID {
         }
     }
 
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
+    }
+
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<EntryID {}>", self.0))
     }
@@ -112,7 +113,7 @@ impl EntryID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::EntryID::default()))
     }
 
@@ -130,10 +131,6 @@ impl EntryID {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
         comp_op(op, h1, h2)
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
@@ -192,7 +189,7 @@ impl BlockID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::BlockID::default()))
     }
 
@@ -212,12 +209,13 @@ impl BlockID {
         comp_op(op, h1, h2)
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<BlockID {}>", self.0))
+    }
+
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
@@ -276,7 +274,7 @@ impl RealmID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::RealmID::default()))
     }
 
@@ -296,12 +294,13 @@ impl RealmID {
         comp_op(op, h1, h2)
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<RealmID {}>", self.0))
+    }
+
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
@@ -360,7 +359,7 @@ impl VlobID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::VlobID::default()))
     }
 
@@ -380,12 +379,13 @@ impl VlobID {
         comp_op(op, h1, h2)
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<VlobID {}>", self.0))
+    }
+
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
@@ -422,10 +422,6 @@ impl UserID {
             CompareOp::Le => self.0 <= other.0,
             CompareOp::Ge => self.0 >= other.0,
         }
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -480,9 +476,6 @@ impl DeviceName {
             CompareOp::Ge => self.0 >= other.0,
         }
     }
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
 
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<DeviceName {}>", self.0))
@@ -499,7 +492,7 @@ impl DeviceName {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::DeviceName::default()))
     }
 }
@@ -533,10 +526,6 @@ impl DeviceLabel {
             CompareOp::Le => self.0 <= other.0,
             CompareOp::Ge => self.0 >= other.0,
         }
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -573,7 +562,8 @@ impl DeviceID {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
+    #[getter]
+    fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
     }
 
@@ -597,11 +587,6 @@ impl DeviceID {
     }
 
     #[getter]
-    fn str(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    #[getter]
     fn user_id(&self) -> PyResult<UserID> {
         Ok(UserID(self.0.user_id.clone()))
     }
@@ -613,7 +598,7 @@ impl DeviceID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::DeviceID::default()))
     }
 }
@@ -678,10 +663,6 @@ impl ChunkID {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<ChunkID {}>", self.0))
     }
@@ -692,8 +673,102 @@ impl ChunkID {
 
     #[classmethod]
     #[pyo3(name = "new")]
-    fn _class_new(_cls: &PyType) -> PyResult<Self> {
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
         Ok(Self(libparsec::types::ChunkID::default()))
+    }
+
+    #[getter]
+    fn bytes(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.as_bytes()[..])
+    }
+
+    #[getter]
+    fn hex(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
+    }
+
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
+    }
+}
+
+#[pyclass]
+#[derive(PartialEq, Eq, Clone, Hash)]
+pub(crate) struct SequesterServiceID(pub libparsec::types::SequesterServiceID);
+
+#[pymethods]
+impl SequesterServiceID {
+    #[new]
+    pub fn new(uuid: &PyAny) -> PyResult<Self> {
+        // Check if the PyAny as a hex parameter (meaning it's probably a uuid.UUID)
+        match uuid.getattr("hex") {
+            Ok(as_hex) => {
+                // Convert to string
+                let u = as_hex.extract::<&str>()?;
+                // Parse it as a Rust Uuid
+                match Uuid::parse_str(u) {
+                    Ok(as_uuid) => Ok(Self(libparsec::types::SequesterServiceID::from(as_uuid))),
+                    Err(_) => Err(PyValueError::new_err("Not a UUID")),
+                }
+            }
+            Err(_) => Err(PyValueError::new_err("Not a UUID")),
+        }
+    }
+
+    #[getter]
+    fn uuid<'p>(&self, py: Python<'p>) -> PyResult<&'p PyAny> {
+        let uuid = PyModule::import(py, "uuid")?;
+        let kwargs = vec![("hex", self.hex().unwrap())].into_py_dict(py);
+        match uuid.getattr("UUID")?.call((), Some(kwargs)) {
+            Ok(any) => Ok(any),
+            Err(err) => Err(PyValueError::new_err(err)),
+        }
+    }
+
+    #[classmethod]
+    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
+        match uuid::Uuid::from_slice(bytes) {
+            Ok(uuid) => Ok(Self(libparsec::types::SequesterServiceID::from(uuid))),
+            Err(_) => Err(PyValueError::new_err("Invalid UUID")),
+        }
+    }
+
+    #[classmethod]
+    fn from_hex(_cls: &PyType, hex: &str) -> PyResult<Self> {
+        match hex.parse::<libparsec::types::SequesterServiceID>() {
+            Ok(entry_id) => Ok(Self(entry_id)),
+            Err(err) => Err(PyValueError::new_err(err)),
+        }
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
+        match op {
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
+            CompareOp::Lt => self.0 < other.0,
+            CompareOp::Gt => self.0 > other.0,
+            CompareOp::Le => self.0 <= other.0,
+            CompareOp::Ge => self.0 >= other.0,
+        }
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("<SequesterServiceID {}>", self.0))
+    }
+
+    fn __hash__(&self, py: Python) -> PyResult<isize> {
+        hash_generic(&self.0.to_string(), py)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "new")]
+    fn class_new(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(libparsec::types::SequesterServiceID::default()))
     }
 
     #[getter]
@@ -726,12 +801,13 @@ impl HumanHandle {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!("<HumanHandle {} >", self.0))
+    }
+
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
     }
 
     fn __richcmp__(&self, other: &HumanHandle, op: CompareOp) -> bool {

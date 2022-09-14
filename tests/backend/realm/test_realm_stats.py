@@ -2,6 +2,11 @@
 
 import pytest
 
+from parsec._parsec import (
+    RealmStatsRepOk,
+    RealmStatsRepNotAllowed,
+    RealmStatsRepNotFound,
+)
 from parsec.api.protocol import RealmID, VlobID, BlockID
 
 from tests.backend.common import realm_stats
@@ -17,12 +22,12 @@ async def test_realm_stats_ok(alice_ws, realm):
     # Create new data
     await block_create(alice_ws, realm_id=realm, block_id=BlockID.new(), block=b"1234")
     rep = await realm_stats(alice_ws, realm_id=realm)
-    assert rep == {"status": "ok", "blocks_size": 4, "vlobs_size": 0}
+    assert rep == RealmStatsRepOk(blocks_size=4, vlobs_size=0)
 
     # Create new metadata
     await vlob_create(alice_ws, realm_id=realm, vlob_id=VlobID.new(), blob=b"1234")
     rep = await realm_stats(alice_ws, realm_id=realm)
-    assert rep == {"status": "ok", "blocks_size": 4, "vlobs_size": 4}
+    assert rep == RealmStatsRepOk(blocks_size=4, vlobs_size=4)
 
 
 @pytest.mark.trio
@@ -31,23 +36,19 @@ async def test_realm_stats_ko(
 ):
     # test with no access to the realm
     rep = await realm_stats(bob_ws, realm_id=realm)
-    assert rep == {"status": "not_allowed"}
+    assert isinstance(rep, RealmStatsRepNotAllowed)
 
     # test with non existant realm
     rep = await realm_stats(alice_ws, realm_id=REALM_ID_FAKE)
-    assert rep == {
-        "status": "not_found",
-        "reason": "Realm `00000000000000000000000000000001` doesn't exist",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, RealmStatsRepNotFound)
 
     # test with no access to the realm
     rep = await realm_stats(bob_ws, realm_id=realm)
-    assert rep == {"status": "not_allowed"}
+    assert isinstance(rep, RealmStatsRepNotAllowed)
 
     # test with device_id but wrong organization
     async with ws_from_other_organization_factory(backend_asgi_app) as sock:
         rep = await realm_stats(sock, realm_id=realm)
-    assert rep == {
-        "status": "not_found",
-        "reason": "Realm `a0000000000000000000000000000000` doesn't exist",
-    }
+    # The reason is no longer generated
+    assert isinstance(rep, RealmStatsRepNotFound)

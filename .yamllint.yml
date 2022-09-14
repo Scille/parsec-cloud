@@ -5,6 +5,7 @@ yaml-files:
 
 ignore: |
   venv
+  node_modules
 
 extends: default
 

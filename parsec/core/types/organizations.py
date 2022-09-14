@@ -3,15 +3,8 @@
 import attr
 from typing import Optional, List, Tuple
 
-from parsec.api.protocol import UserProfile
+from parsec._parsec import UsersPerProfileDetailItem
 from parsec.api.data import SequesterAuthorityCertificate, SequesterServiceCertificate
-
-
-@attr.s(frozen=True, slots=True, auto_attribs=True)
-class UsersPerProfileDetailItem:
-    profile: UserProfile
-    active: int
-    revoked: int
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)

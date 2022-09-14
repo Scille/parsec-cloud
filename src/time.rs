@@ -7,6 +7,7 @@ use pyo3::types::PyType;
 use pyo3::{PyAny, PyResult};
 
 use crate::binding_utils::hash_generic;
+use crate::runtime::spawn_future_into_trio_coroutine;
 
 #[pyfunction]
 /// mock_time takes as argument a DateTime (for FrozenTime), an int (for ShiftedTime) or None (for RealTime)
@@ -14,8 +15,8 @@ pub(crate) fn mock_time(time: &PyAny) -> PyResult<()> {
     use libparsec::types::MockedTime;
     libparsec::types::DateTime::mock_time(if let Ok(dt) = time.extract::<DateTime>() {
         MockedTime::FrozenTime(dt.0)
-    } else if let Ok(dt) = time.extract::<i64>() {
-        MockedTime::ShiftedTime(dt)
+    } else if let Ok(us) = time.extract::<i64>() {
+        MockedTime::ShiftedTime { microseconds: us }
     } else if time.is_none() {
         MockedTime::RealTime
     } else {
@@ -39,18 +40,48 @@ impl TimeProvider {
         Ok(DateTime(self.0.now()))
     }
 
-    pub fn mock_time(&mut self, time: &PyAny) -> PyResult<()> {
+    pub fn sleeping_stats(&self) -> PyResult<u64> {
+        Ok(self.0.sleeping_stats())
+    }
+
+    // Booyakasha !
+    pub fn sleep<'py>(&self, py: Python<'py>, time: f64) -> PyResult<&'py PyAny> {
+        let time_provider = self.0.clone();
+        spawn_future_into_trio_coroutine(py, async move {
+            time_provider
+                .sleep(libparsec::types::Duration::microseconds(
+                    (time * 1e6) as i64,
+                ))
+                .await;
+            Ok(())
+        })
+    }
+
+    pub fn new_child(&self) -> PyResult<TimeProvider> {
+        Ok(TimeProvider(self.0.new_child()))
+    }
+
+    #[args(freeze = "None", shift = "None", realtime = "false")]
+    pub fn mock_time(
+        &mut self,
+        freeze: Option<DateTime>,
+        shift: Option<f64>,
+        realtime: bool,
+    ) -> PyResult<()> {
         use libparsec::types::MockedTime;
-        self.0
-            .mock_time(if let Ok(dt) = time.extract::<DateTime>() {
-                MockedTime::FrozenTime(dt.0)
-            } else if let Ok(dt) = time.extract::<i64>() {
-                MockedTime::ShiftedTime(dt)
-            } else if time.is_none() {
-                MockedTime::RealTime
-            } else {
-                return Err(PyTypeError::new_err("Invalid field time"));
-            });
+        let mock_config = match (freeze, shift, realtime) {
+            (None, None, true) => MockedTime::RealTime,
+            (Some(dt), None, false) => MockedTime::FrozenTime(dt.0),
+            (None, Some(shift_in_seconds), false) => MockedTime::ShiftedTime {
+                microseconds: (shift_in_seconds * 1e6) as i64,
+            },
+            _ => {
+                return Err(PyValueError::new_err(
+                    "Must only provide one of `freeze`, `shift` and `realtime`",
+                ))
+            }
+        };
+        self.0.mock_time(mock_config);
         Ok(())
     }
 }
@@ -70,6 +101,10 @@ impl DateTime {
     }
 
     fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("DateTime({})", self.0))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
         Ok(self.0.to_string())
     }
 
@@ -138,6 +173,11 @@ impl DateTime {
         Ok(LocalDateTime(self.0.to_local()))
     }
 
+    // Equivalent to ISO 8601
+    fn to_rfc3339(&self) -> PyResult<String> {
+        Ok(self.0.to_rfc3339())
+    }
+
     fn __sub__(&self, other: Self) -> PyResult<f64> {
         let us = match (self.0 - other.0).num_microseconds() {
             Some(us) => us,
@@ -166,11 +206,9 @@ impl DateTime {
         seconds: f64,
         microseconds: f64,
     ) -> PyResult<Self> {
-        Ok(Self(
-            self.0
-                - ((((days * 24. + hours) * 60. + minutes) * 60. + seconds) * 1e6 + microseconds)
-                    as i64,
-        ))
+        let us =
+            -((((days * 24. + hours) * 60. + minutes) * 60. + seconds) * 1e6 + microseconds) as i64;
+        Ok(Self(self.0.add_us(us)))
     }
 
     #[args(
@@ -188,11 +226,9 @@ impl DateTime {
         seconds: f64,
         microseconds: f64,
     ) -> PyResult<Self> {
-        Ok(Self(
-            self.0
-                + ((((days * 24. + hours) * 60. + minutes) * 60. + seconds) * 1e6 + microseconds)
-                    as i64,
-        ))
+        let us =
+            ((((days * 24. + hours) * 60. + minutes) * 60. + seconds) * 1e6 + microseconds) as i64;
+        Ok(Self(self.0.add_us(us)))
     }
 }
 
@@ -249,6 +285,10 @@ impl LocalDateTime {
         Ok(Self(
             libparsec::types::LocalDateTime::from_f64_with_us_precision(ts),
         ))
+    }
+
+    fn to_utc(&self) -> PyResult<DateTime> {
+        Ok(DateTime(self.0.to_utc()))
     }
 
     fn format(&self, fmt: &str) -> PyResult<String> {

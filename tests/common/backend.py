@@ -8,9 +8,9 @@ import trio
 import ssl
 import trustme
 import socket
+import tempfile
 from inspect import iscoroutine
 from contextlib import contextmanager, asynccontextmanager
-import tempfile
 from functools import partial
 from typing import Optional, Callable, Union
 from quart_trio import QuartTrio
@@ -18,7 +18,7 @@ from hypercorn.config import Config as HyperConfig
 from hypercorn.trio.run import worker_serve
 from hypercorn.trio.tcp_server import TCPServer
 from hypercorn.trio.worker_context import WorkerContext
-
+from quart.typing import TestClientProtocol
 from parsec.core.types import BackendAddr, LocalDevice
 from parsec.backend.app import BackendApp
 from parsec.backend import backend_app_factory
@@ -554,6 +554,10 @@ class RunningBackend:
 
     async def connection_factory(self) -> trio.abc.Stream:
         return await trio.open_tcp_stream(self.addr.hostname, self.addr.port)
+
+    def test_client(self, use_cookies: bool = True) -> TestClientProtocol:
+        """Creates and returns a test client"""
+        return self.asgi_app.test_client(use_cookies)
 
 
 @pytest.fixture

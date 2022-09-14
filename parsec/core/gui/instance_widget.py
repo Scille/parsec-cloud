@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import trio
-from typing import Optional
+from typing import Optional, Tuple
 from structlog import get_logger
-from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtBoundSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
 from packaging.version import Version
 
@@ -39,7 +39,8 @@ logger = get_logger()
 MIN_MACFUSE_VERSION = Version("4.4.0")
 
 
-async def _do_run_core(config, device, qt_on_ready):
+async def _do_run_core(config, device, qt_on_ready: Tuple[QObject, str]):
+    qt_on_ready: pyqtBoundSignal = getattr(qt_on_ready[0], qt_on_ready[1])  # Retreive the signal
     # Quick fix to avoid MultiError<Cancelled, ...> exception bubbling up
     # TODO: replace this by a proper generic MultiError handling
     with trio.MultiError.catch(lambda exc: None if isinstance(exc, trio.Cancelled) else exc):
@@ -163,12 +164,12 @@ class InstanceWidget(QWidget):
         self.config = ParsecApp.get_main_window().config
 
         self.running_core_job = self.jobs_ctx.submit_job(
-            self.run_core_success,
-            self.run_core_error,
+            (self, "run_core_success"),
+            (self, "run_core_error"),
             _do_run_core,
             self.config,
             device,
-            self.run_core_ready,
+            (self, "run_core_ready"),
         )
 
     def on_run_core_ready(self, core, core_jobs_ctx):

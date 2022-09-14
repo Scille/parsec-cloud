@@ -98,7 +98,9 @@ class MountpointManager:
         try:
             return self.user_fs.get_workspace(workspace_id)
         except FSWorkspaceNotFoundError as exc:
-            raise MountpointConfigurationError(f"Workspace `{workspace_id}` doesn't exist") from exc
+            raise MountpointConfigurationError(
+                f"Workspace `{workspace_id.str}` doesn't exist"
+            ) from exc
 
     def _get_workspace_timestamped(self, workspace_id: EntryID, timestamp: DateTime):
         try:
@@ -107,11 +109,11 @@ class MountpointManager:
             try:
                 self.user_fs.get_workspace(workspace_id)
                 raise MountpointNotMounted(
-                    f"Workspace `{workspace_id}` not mounted at timestamped `{timestamp}`"
+                    f"Workspace `{workspace_id.str}` not mounted at timestamped `{timestamp}`"
                 )
             except FSWorkspaceNotFoundError as exc:
                 raise MountpointConfigurationError(
-                    f"Workspace `{workspace_id}` doesn't exist"
+                    f"Workspace `{workspace_id.str}` doesn't exist"
                 ) from exc
 
     async def _load_workspace_timestamped(
@@ -131,7 +133,7 @@ class MountpointManager:
             new_workspace = await source_workspace.to_timestamped(timestamp)
         except FSWorkspaceTimestampedTooEarly as exc:
             raise MountpointConfigurationWorkspaceFSTimestampedError(
-                f"Workspace `{workspace_id}` didn't exist at `{timestamp}`",
+                f"Workspace `{workspace_id.str}` didn't exist at `{timestamp}`",
                 workspace_id,
                 timestamp,
                 source_workspace.get_workspace_name(),
@@ -161,7 +163,7 @@ class MountpointManager:
                     # Another runner started before us
                     if key in self._mountpoint_tasks:
                         raise MountpointAlreadyMounted(
-                            f"Workspace `{workspace_id}` already mounted."
+                            f"Workspace `{workspace_id.str}` already mounted."
                         )
 
                     # Prepare kwargs for both started and stopped events
@@ -205,11 +207,11 @@ class MountpointManager:
             return self._build_mountpoint_path(runner_task.value, path.parts)
 
         except KeyError:
-            raise MountpointNotMounted(f"Workspace `{workspace_id}` is not mounted")
+            raise MountpointNotMounted(f"Workspace `{workspace_id.str}` is not mounted")
 
     async def mount_workspace(self, workspace_id: EntryID, timestamp: DateTime = None) -> PurePath:
         if (workspace_id, timestamp) in self._mountpoint_tasks:
-            raise MountpointAlreadyMounted(f"Workspace `{workspace_id}` already mounted.")
+            raise MountpointAlreadyMounted(f"Workspace `{workspace_id.str}` already mounted.")
 
         if timestamp is not None:
             return await self.remount_workspace_new_timestamp(workspace_id, None, timestamp)
@@ -220,7 +222,7 @@ class MountpointManager:
 
     async def unmount_workspace(self, workspace_id: EntryID, timestamp: DateTime = None):
         if (workspace_id, timestamp) not in self._mountpoint_tasks:
-            raise MountpointNotMounted(f"Workspace `{workspace_id}` not mounted.")
+            raise MountpointNotMounted(f"Workspace `{workspace_id.str}` not mounted.")
 
         await self._mountpoint_tasks[(workspace_id, timestamp)].cancel_and_join()
 
@@ -242,7 +244,7 @@ class MountpointManager:
         runner_task = await self._mount_workspace_helper(new_workspace, target_timestamp)
         if original_timestamp is not None:
             if (workspace_id, original_timestamp) not in self._mountpoint_tasks:
-                raise MountpointNotMounted(f"Workspace `{workspace_id}` not mounted.")
+                raise MountpointNotMounted(f"Workspace `{workspace_id.str}` not mounted.")
 
             await self._mountpoint_tasks[(workspace_id, original_timestamp)].cancel_and_join()
         return runner_task.value

@@ -131,7 +131,9 @@ a new github release without any installer.
 If you were dealing with a final release (e.g. ``v2.9.0``), you can merge the branch in master call it a day ;-)
 
 However if you just release a RC release:
+
 - for quickfix you can commit directly on the version branch
+
 - for bigger fix, open a PR targeting master. Once merged you can then merge back master
   on your version branch to get the changes. Alternatively, if the master contains other
   changes you don't want, you can cherry-pick the merge commit.

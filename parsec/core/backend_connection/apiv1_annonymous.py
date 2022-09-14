@@ -17,7 +17,6 @@ class APIV1_BackendAnonymousCmds:
         self.addr = addr
         self.acquire_transport = acquire_transport
 
-    ping = expose_cmds(cmds.ping)
     organization_bootstrap = expose_cmds(cmds.organization_bootstrap)
 
 

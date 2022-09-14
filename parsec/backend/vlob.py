@@ -9,20 +9,82 @@ import urllib
 from parsec.backend.http_utils import http_request
 from parsec.backend.sequester import SequesterService, SequesterServiceType
 
-from parsec.utils import timestamps_in_the_ballpark
+
+from parsec._parsec import (
+    DateTime,
+    VlobCreateReq,
+    VlobCreateRep,
+    VlobCreateRepOk,
+    VlobCreateRepAlreadyExists,
+    VlobCreateRepBadEncryptionRevision,
+    VlobCreateRepInMaintenance,
+    VlobCreateRepNotAllowed,
+    VlobCreateRepRequireGreaterTimestamp,
+    VlobCreateRepBadTimestamp,
+    VlobCreateRepNotASequesteredOrganization,
+    VlobCreateRepSequesterInconsistency,
+    VlobReadReq,
+    VlobReadRep,
+    VlobReadRepOk,
+    VlobReadRepNotFound,
+    VlobReadRepNotAllowed,
+    VlobReadRepBadVersion,
+    VlobReadRepBadEncryptionRevision,
+    VlobReadRepInMaintenance,
+    VlobUpdateReq,
+    VlobUpdateRep,
+    VlobUpdateRepOk,
+    VlobUpdateRepBadEncryptionRevision,
+    VlobUpdateRepBadVersion,
+    VlobUpdateRepInMaintenance,
+    VlobUpdateRepNotFound,
+    VlobUpdateRepNotAllowed,
+    VlobUpdateRepRequireGreaterTimestamp,
+    VlobUpdateRepBadTimestamp,
+    VlobUpdateRepNotASequesteredOrganization,
+    VlobUpdateRepSequesterInconsistency,
+    VlobPollChangesReq,
+    VlobPollChangesRep,
+    VlobPollChangesRepOk,
+    VlobPollChangesRepNotFound,
+    VlobPollChangesRepInMaintenance,
+    VlobPollChangesRepNotAllowed,
+    VlobListVersionsReq,
+    VlobListVersionsRep,
+    VlobListVersionsRepOk,
+    VlobListVersionsRepInMaintenance,
+    VlobListVersionsRepNotAllowed,
+    VlobListVersionsRepNotFound,
+    VlobMaintenanceGetReencryptionBatchReq,
+    VlobMaintenanceGetReencryptionBatchRep,
+    VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceGetReencryptionBatchRepNotInMaintenance,
+    VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
+    VlobMaintenanceGetReencryptionBatchRepMaintenanceError,
+    VlobMaintenanceGetReencryptionBatchRepNotAllowed,
+    VlobMaintenanceGetReencryptionBatchRepNotFound,
+    VlobMaintenanceSaveReencryptionBatchReq,
+    VlobMaintenanceSaveReencryptionBatchRep,
+    VlobMaintenanceSaveReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance,
+    VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision,
+    VlobMaintenanceSaveReencryptionBatchRepMaintenanceError,
+    VlobMaintenanceSaveReencryptionBatchRepNotAllowed,
+    VlobMaintenanceSaveReencryptionBatchRepNotFound,
+    ReencryptionBatchEntry,
+)
+from parsec.api.protocol.base import api_typed_msg_adapter
+from parsec.utils import (
+    BALLPARK_CLIENT_EARLY_OFFSET,
+    BALLPARK_CLIENT_LATE_OFFSET,
+    timestamps_in_the_ballpark,
+)
 from parsec.api.protocol import (
     RealmID,
     VlobID,
     DeviceID,
     OrganizationID,
     SequesterServiceID,
-    vlob_create_serializer,
-    vlob_read_serializer,
-    vlob_update_serializer,
-    vlob_poll_changes_serializer,
-    vlob_list_versions_serializer,
-    vlob_maintenance_get_reencryption_batch_serializer,
-    vlob_maintenance_save_reencryption_batch_serializer,
 )
 from parsec.backend.utils import catch_protocol_errors, api
 
@@ -177,7 +239,8 @@ async def extract_sequestered_data_and_proceed_webhook(
 class BaseVlobComponent:
     @api("vlob_create")
     @catch_protocol_errors
-    async def api_vlob_create(self, client_ctx, msg):
+    @api_typed_msg_adapter(VlobCreateReq, VlobCreateRep)
+    async def api_vlob_create(self, client_ctx, req: VlobCreateReq) -> VlobCreateRep:
         """
         This API call, when successful, performs the writing of a new vlob version to the database.
         Before adding new entries, extra care should be taken in order to guarantee the consistency in
@@ -186,46 +249,53 @@ class BaseVlobComponent:
         See the `api_vlob_update` docstring for more information about the checks performed and the
         error returned in case those checks failed.
         """
-        msg = vlob_create_serializer.req_load(msg)
-
         now = DateTime.now()
-        if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return vlob_create_serializer.timestamp_out_of_ballpark_rep_dump(
-                backend_timestamp=now, client_timestamp=msg["timestamp"]
+        if not timestamps_in_the_ballpark(req.timestamp, now):
+            return VlobCreateRepBadTimestamp(
+                reason=None,
+                ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+                ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+                backend_timestamp=now,
+                client_timestamp=req.timestamp,
             )
 
         try:
-            await self.create(client_ctx.organization_id, client_ctx.device_id, **msg)
+            await self.create(
+                client_ctx.organization_id,
+                client_ctx.device_id,
+                realm_id=req.realm_id,
+                encryption_revision=req.encryption_revision,
+                vlob_id=req.vlob_id,
+                timestamp=req.timestamp,
+                blob=req.blob,
+                sequester_blob=req.sequester_blob,
+            )
 
-        except VlobAlreadyExistsError as exc:
-            return vlob_create_serializer.rep_dump({"status": "already_exists", "reason": str(exc)})
+        except VlobAlreadyExistsError:
+            return VlobCreateRepAlreadyExists(None)
 
         except (VlobAccessError, VlobRealmNotFoundError):
-            return vlob_create_serializer.rep_dump({"status": "not_allowed"})
+            return VlobCreateRepNotAllowed()
 
         except VlobRequireGreaterTimestampError as exc:
-            return vlob_create_serializer.require_greater_timestamp_rep_dump(
-                exc.strictly_greater_than
-            )
+            return VlobCreateRepRequireGreaterTimestamp(exc.strictly_greater_than)
 
         except VlobEncryptionRevisionError:
-            return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
+            return VlobCreateRepBadEncryptionRevision()
 
         except VlobInMaintenanceError:
-            return vlob_create_serializer.rep_dump({"status": "in_maintenance"})
+            return VlobCreateRepInMaintenance()
 
         except VlobSequesterDisabledError:
-            return vlob_create_serializer.rep_dump({"status": "not_a_sequestered_organization"})
+            return VlobCreateRepNotASequesteredOrganization()
 
         except VlobSequesterServiceInconsistencyError as exc:
-            return vlob_create_serializer.rep_dump(
-                {
-                    "status": "sequester_inconsistency",
-                    "sequester_authority_certificate": exc.sequester_authority_certificate,
-                    "sequester_services_certificates": exc.sequester_services_certificates,
-                }
+            return VlobCreateRepSequesterInconsistency(
+                sequester_authority_certificate=exc.sequester_authority_certificate,
+                sequester_services_certificates=exc.sequester_services_certificates,
             )
 
+        # TODO: Change return values
         except VlobSequesterWebhookServiceRejectedError as exc:
             return vlob_create_serializer.rep_dump(
                 {
@@ -248,47 +318,52 @@ class BaseVlobComponent:
                 }
             )
 
-        return vlob_create_serializer.rep_dump({"status": "ok"})
+        
+
+        return VlobCreateRepOk()
+
 
     @api("vlob_read")
     @catch_protocol_errors
-    async def api_vlob_read(self, client_ctx, msg):
-        msg = vlob_read_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(VlobReadReq, VlobReadRep)
+    async def api_vlob_read(self, client_ctx, req: VlobReadReq) -> VlobReadRep:
         try:
             version, blob, author, created_on, author_last_role_granted_on = await self.read(
-                client_ctx.organization_id, client_ctx.device_id, **msg
+                client_ctx.organization_id,
+                client_ctx.device_id,
+                encryption_revision=req.encryption_revision,
+                vlob_id=req.vlob_id,
+                version=req.version,
+                timestamp=req.timestamp,
             )
 
-        except VlobNotFoundError as exc:
-            return vlob_read_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
+        except VlobNotFoundError:
+            return VlobReadRepNotFound(None)
 
         except VlobAccessError:
-            return vlob_read_serializer.rep_dump({"status": "not_allowed"})
+            return VlobReadRepNotAllowed()
 
         except VlobVersionError:
-            return vlob_read_serializer.rep_dump({"status": "bad_version"})
+            return VlobReadRepBadVersion()
 
         except VlobEncryptionRevisionError:
-            return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
+            return VlobReadRepBadEncryptionRevision()
 
         except VlobInMaintenanceError:
-            return vlob_read_serializer.rep_dump({"status": "in_maintenance"})
+            return VlobReadRepInMaintenance()
 
-        return vlob_read_serializer.rep_dump(
-            {
-                "status": "ok",
-                "blob": blob,
-                "version": version,
-                "author": author,
-                "timestamp": created_on,
-                "author_last_role_granted_on": author_last_role_granted_on,
-            }
+        return VlobReadRepOk(
+            version,
+            blob,
+            author,
+            created_on,
+            author_last_role_granted_on,
         )
 
     @api("vlob_update")
     @catch_protocol_errors
-    async def api_vlob_update(self, client_ctx, msg):
+    @api_typed_msg_adapter(VlobUpdateReq, VlobUpdateRep)
+    async def api_vlob_update(self, client_ctx, req: VlobUpdateReq) -> VlobUpdateRep:
         """
         This API call, when successful, performs the writing of a new vlob version to the database.
         Before adding new entries, extra care should be taken in order to guarantee the consistency in
@@ -306,49 +381,56 @@ class BaseVlobComponent:
 
         The `api_realm_update_roles` and `api_vlob_create` calls also perform similar checks.
         """
-        msg = vlob_update_serializer.req_load(msg)
-
         now = DateTime.now()
-        if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return vlob_update_serializer.timestamp_out_of_ballpark_rep_dump(
-                backend_timestamp=now, client_timestamp=msg["timestamp"]
+        if not timestamps_in_the_ballpark(req.timestamp, now):
+            return VlobUpdateRepBadTimestamp(
+                reason=None,
+                ballpark_client_early_offset=BALLPARK_CLIENT_EARLY_OFFSET,
+                ballpark_client_late_offset=BALLPARK_CLIENT_LATE_OFFSET,
+                backend_timestamp=now,
+                client_timestamp=req.timestamp,
             )
 
         try:
-            await self.update(client_ctx.organization_id, client_ctx.device_id, **msg)
+            await self.update(
+                client_ctx.organization_id,
+                client_ctx.device_id,
+                encryption_revision=req.encryption_revision,
+                vlob_id=req.vlob_id,
+                version=req.version,
+                timestamp=req.timestamp,
+                blob=req.blob,
+                sequester_blob=req.sequester_blob,
+            )
 
-        except VlobNotFoundError as exc:
-            return vlob_update_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
+        except VlobNotFoundError:
+            return VlobUpdateRepNotFound(None)
 
         except VlobAccessError:
-            return vlob_update_serializer.rep_dump({"status": "not_allowed"})
+            return VlobUpdateRepNotAllowed()
 
         except VlobRequireGreaterTimestampError as exc:
-            return vlob_update_serializer.require_greater_timestamp_rep_dump(
-                exc.strictly_greater_than
-            )
+            return VlobUpdateRepRequireGreaterTimestamp(exc.strictly_greater_than)
 
         except VlobVersionError:
-            return vlob_update_serializer.rep_dump({"status": "bad_version"})
+            return VlobUpdateRepBadVersion()
 
         except VlobEncryptionRevisionError:
-            return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
+            return VlobUpdateRepBadEncryptionRevision()
 
         except VlobInMaintenanceError:
-            return vlob_update_serializer.rep_dump({"status": "in_maintenance"})
+            return VlobUpdateRepInMaintenance()
 
         except VlobSequesterDisabledError:
-            return vlob_create_serializer.rep_dump({"status": "not_a_sequestered_organization"})
+            return VlobUpdateRepNotASequesteredOrganization()
 
         except VlobSequesterServiceInconsistencyError as exc:
-            return vlob_create_serializer.rep_dump(
-                {
-                    "status": "sequester_inconsistency",
-                    "sequester_authority_certificate": exc.sequester_authority_certificate,
-                    "sequester_services_certificates": exc.sequester_services_certificates,
-                }
+            return VlobUpdateRepSequesterInconsistency(
+                sequester_authority_certificate=exc.sequester_authority_certificate,
+                sequester_services_certificates=exc.sequester_services_certificates,
             )
 
+        # TODO Change return value
         except VlobSequesterWebhookServiceRejectedError as exc:
             return vlob_create_serializer.rep_dump(
                 {
@@ -371,144 +453,126 @@ class BaseVlobComponent:
                 }
             )
 
-        return vlob_update_serializer.rep_dump({"status": "ok"})
+        return VlobUpdateRepOk()
 
     @api("vlob_poll_changes")
     @catch_protocol_errors
-    async def api_vlob_poll_changes(self, client_ctx, msg):
-        msg = vlob_poll_changes_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(VlobPollChangesReq, VlobPollChangesRep)
+    async def api_vlob_poll_changes(
+        self, client_ctx, req: VlobPollChangesReq
+    ) -> VlobPollChangesRep:
         # TODO: raise error if too many events since offset ?
         try:
             checkpoint, changes = await self.poll_changes(
                 client_ctx.organization_id,
                 client_ctx.device_id,
-                msg["realm_id"],
-                msg["last_checkpoint"],
+                realm_id=req.realm_id,
+                checkpoint=req.last_checkpoint,
             )
 
         except VlobAccessError:
-            return vlob_poll_changes_serializer.rep_dump({"status": "not_allowed"})
+            return VlobPollChangesRepNotAllowed()
 
-        except VlobRealmNotFoundError as exc:
-            return vlob_poll_changes_serializer.rep_dump(
-                {"status": "not_found", "reason": str(exc)}
-            )
+        except VlobRealmNotFoundError:
+            return VlobPollChangesRepNotFound(None)
 
         except VlobInMaintenanceError:
-            return vlob_poll_changes_serializer.rep_dump({"status": "in_maintenance"})
+            return VlobPollChangesRepInMaintenance()
 
-        return vlob_poll_changes_serializer.rep_dump(
-            {"status": "ok", "current_checkpoint": checkpoint, "changes": changes}
-        )
+        return VlobPollChangesRepOk(changes, checkpoint)
 
     @api("vlob_list_versions")
     @catch_protocol_errors
-    async def api_vlob_list_versions(self, client_ctx, msg):
-        msg = vlob_list_versions_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(VlobListVersionsReq, VlobListVersionsRep)
+    async def api_vlob_list_versions(
+        self, client_ctx, req: VlobListVersionsReq
+    ) -> VlobListVersionsRep:
         try:
             versions_dict = await self.list_versions(
-                client_ctx.organization_id, client_ctx.device_id, msg["vlob_id"]
+                client_ctx.organization_id, client_ctx.device_id, vlob_id=req.vlob_id
             )
 
         except VlobAccessError:
-            return vlob_list_versions_serializer.rep_dump({"status": "not_allowed"})
+            return VlobListVersionsRepNotAllowed()
 
-        except VlobNotFoundError as exc:
-            return vlob_list_versions_serializer.rep_dump(
-                {"status": "not_found", "reason": str(exc)}
-            )
+        except VlobNotFoundError:
+            return VlobListVersionsRepNotFound(None)
 
         except VlobInMaintenanceError:
-            return vlob_list_versions_serializer.rep_dump({"status": "in_maintenance"})
+            return VlobListVersionsRepInMaintenance()
 
-        return vlob_list_versions_serializer.rep_dump({"status": "ok", "versions": versions_dict})
+        return VlobListVersionsRepOk(versions_dict)
 
     @api("vlob_maintenance_get_reencryption_batch")
     @catch_protocol_errors
-    async def api_vlob_maintenance_get_reencryption_batch(self, client_ctx, msg):
-        msg = vlob_maintenance_get_reencryption_batch_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(
+        VlobMaintenanceGetReencryptionBatchReq, VlobMaintenanceGetReencryptionBatchRep
+    )
+    async def api_vlob_maintenance_get_reencryption_batch(
+        self, client_ctx, req: VlobMaintenanceGetReencryptionBatchReq
+    ) -> VlobMaintenanceGetReencryptionBatchRep:
         try:
             batch = await self.maintenance_get_reencryption_batch(
-                client_ctx.organization_id, client_ctx.device_id, **msg
+                client_ctx.organization_id,
+                client_ctx.device_id,
+                realm_id=req.realm_id,
+                encryption_revision=req.encryption_revision,
+                size=req.size,
             )
 
         except VlobAccessError:
-            return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
-                {"status": "not_allowed"}
-            )
+            return VlobMaintenanceGetReencryptionBatchRepNotAllowed()
 
-        except VlobRealmNotFoundError as exc:
-            return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
-                {"status": "not_found", "reason": str(exc)}
-            )
+        except VlobRealmNotFoundError:
+            return VlobMaintenanceGetReencryptionBatchRepNotFound(None)
 
-        except VlobNotInMaintenanceError as exc:
-            return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
-                {"status": "not_in_maintenance", "reason": str(exc)}
-            )
+        except VlobNotInMaintenanceError:
+            return VlobMaintenanceGetReencryptionBatchRepNotInMaintenance(None)
 
         except VlobEncryptionRevisionError:
-            return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
+            return VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision()
 
-        except VlobMaintenanceError as exc:
-            return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
-                {"status": "maintenance_error", "reason": str(exc)}
-            )
+        except VlobMaintenanceError:
+            return VlobMaintenanceGetReencryptionBatchRepMaintenanceError(None)
 
-        return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
-            {
-                "status": "ok",
-                "batch": [
-                    {"vlob_id": vlob_id, "version": version, "blob": blob}
-                    for vlob_id, version, blob in batch
-                ],
-            }
+        return VlobMaintenanceGetReencryptionBatchRepOk(
+            [ReencryptionBatchEntry(vlob_id, version, blob) for vlob_id, version, blob in batch]
         )
 
     @api("vlob_maintenance_save_reencryption_batch")
     @catch_protocol_errors
-    async def api_vlob_maintenance_save_reencryption_batch(self, client_ctx, msg):
-        msg = vlob_maintenance_save_reencryption_batch_serializer.req_load(msg)
-
+    @api_typed_msg_adapter(
+        VlobMaintenanceSaveReencryptionBatchReq, VlobMaintenanceSaveReencryptionBatchRep
+    )
+    async def api_vlob_maintenance_save_reencryption_batch(
+        self, client_ctx, req: VlobMaintenanceSaveReencryptionBatchReq
+    ) -> VlobMaintenanceSaveReencryptionBatchRep:
         try:
             total, done = await self.maintenance_save_reencryption_batch(
                 client_ctx.organization_id,
                 client_ctx.device_id,
-                realm_id=msg["realm_id"],
-                encryption_revision=msg["encryption_revision"],
-                batch=[(x["vlob_id"], x["version"], x["blob"]) for x in msg["batch"]],
+                realm_id=req.realm_id,
+                encryption_revision=req.encryption_revision,
+                batch=[(x.vlob_id, x.version, x.blob) for x in req.batch],
             )
 
         except VlobAccessError:
-            return vlob_maintenance_save_reencryption_batch_serializer.rep_dump(
-                {"status": "not_allowed"}
-            )
+            return VlobMaintenanceSaveReencryptionBatchRepNotAllowed()
 
         # No need to catch VlobNotFoundError given unknown vlob/version in batch are ignored
-        except VlobRealmNotFoundError as exc:
-            return vlob_maintenance_save_reencryption_batch_serializer.rep_dump(
-                {"status": "not_found", "reason": str(exc)}
-            )
+        except VlobRealmNotFoundError:
+            return VlobMaintenanceSaveReencryptionBatchRepNotFound(None)
 
-        except VlobNotInMaintenanceError as exc:
-            return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
-                {"status": "not_in_maintenance", "reason": str(exc)}
-            )
+        except VlobNotInMaintenanceError:
+            return VlobMaintenanceSaveReencryptionBatchRepNotInMaintenance(None)
 
         except VlobEncryptionRevisionError:
-            return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
+            return VlobMaintenanceSaveReencryptionBatchRepBadEncryptionRevision()
 
-        except VlobMaintenanceError as exc:
-            return vlob_maintenance_save_reencryption_batch_serializer.rep_dump(
-                {"status": "maintenance_error", "reason": str(exc)}
-            )
+        except VlobMaintenanceError:
+            return VlobMaintenanceSaveReencryptionBatchRepMaintenanceError(None)
 
-        return vlob_maintenance_save_reencryption_batch_serializer.rep_dump(
-            {"status": "ok", "total": total, "done": done}
-        )
+        return VlobMaintenanceSaveReencryptionBatchRepOk(total, done)
 
     async def create(
         self,

@@ -223,7 +223,7 @@ class EnrollmentWidget(QWidget, Ui_EnrollmentWidget):
         if self.current_job is not None and not self.current_job.is_finished():
             return
         self.current_job = self.jobs_ctx.submit_job(
-            self.list_success, self.list_failure, self.list_pending_enrollments
+            (self, "list_success"), (self, "list_failure"), self.list_pending_enrollments
         )
 
     def clear_layout(self):

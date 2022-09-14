@@ -78,7 +78,7 @@ class DeviceRecoveryExportPage1Widget(QWidget, Ui_DeviceRecoveryExportPage1Widge
             # We consider it's unlikely to have multiple devices for the same user
             # so we don't show the device label for better readability
             self.combo_devices.addItem(
-                f"{device.organization_id} - {device.user_display}", device.slug
+                f"{device.organization_id.str} - {device.user_display}", device.slug
             )
 
     def _on_select_file_clicked(self):
@@ -205,8 +205,8 @@ class DeviceRecoveryExportWidget(QWidget, Ui_DeviceRecoveryExportWidget):
                     self.button_validate.setEnabled(True)
                     return
             self.jobs_ctx.submit_job(
-                self.export_success,
-                self.export_failure,
+                (self, "export_success"),
+                (self, "export_failure"),
                 self._export_recovery_device,
                 config_dir=self.config.config_dir,
                 device=device,

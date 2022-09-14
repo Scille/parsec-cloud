@@ -162,7 +162,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             self.current_widget.line_edit_org_name.setReadOnly(True)
             self.label_instructions.setText(
                 _("TEXT_BOOTSTRAP_ORGANIZATION_INSTRUCTIONS_organization").format(
-                    organization=self.start_addr.organization_id
+                    organization=self.start_addr.organization_id.str
                 )
             )
             # Not creating on the default server
@@ -218,8 +218,8 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
 
             # TODO: call `await _do_create_org` directly since the context is now async
             self.create_job = self.jobs_ctx.submit_job(
-                self.req_success,
-                self.req_error,
+                (self, "req_success"),
+                (self, "req_error"),
                 _do_create_org,
                 config=self.config,
                 human_handle=human_handle,

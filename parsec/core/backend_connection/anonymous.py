@@ -3,6 +3,7 @@
 from uuid import UUID
 from structlog import get_logger
 
+from parsec._version import __version__
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import (
     OrganizationID,
@@ -23,7 +24,14 @@ from parsec.core.backend_connection.exceptions import (
     BackendOutOfBallparkError,
 )
 
+
 logger = get_logger()
+
+
+REQUEST_HEADERS = {
+    "Content-Type": "application/msgpack",
+    "User-Agent": f"parsec/{__version__}",
+}
 
 
 async def _anonymous_cmd(
@@ -43,9 +51,9 @@ async def _anonymous_cmd(
         logger.exception("Invalid request data", cmd=req["cmd"], error=exc)
         raise BackendProtocolError("Invalid request data") from exc
 
-    url = addr.to_http_domain_url(f"/anonymous/{organization_id}")
+    url = addr.to_http_domain_url(f"/anonymous/{organization_id.str}")
     try:
-        raw_rep = await http_request(url=url, method="POST", data=raw_req)
+        raw_rep = await http_request(url=url, method="POST", headers=REQUEST_HEADERS, data=raw_req)
     except OSError as exc:
         logger.debug("Request failed (backend not available)", cmd=req["cmd"], exc_info=exc)
         raise BackendNotAvailable(exc) from exc

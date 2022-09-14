@@ -224,11 +224,11 @@ class WorkspaceFS:
 
         except BackendConnectionError as exc:
             raise FSError(
-                f"Cannot retrieve remote status for workspace {self.workspace_id}: {exc}"
+                f"Cannot retrieve remote status for workspace {self.workspace_id.str}: {exc}"
             ) from exc
 
         reencryption_already_in_progress = (
-            rep["in_maintenance"] and rep["maintenance_type"] == MaintenanceType.REENCRYPTION
+            rep.in_maintenance and rep.maintenance_type == MaintenanceType.REENCRYPTION()
         )
 
         certificates = await self.remote_loader.load_realm_role_certificates()

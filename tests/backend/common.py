@@ -9,10 +9,29 @@ from contextlib import asynccontextmanager
 from parsec._parsec import (
     BlockCreateRepOk,
     BlockReadRepOk,
+    MessageGetRepOk,
+    OrganizationStatsRepOk,
+    OrganizationConfigRepOk,
+    RealmCreateRepOk,
+    RealmStatusRepOk,
+    RealmStatsRepOk,
+    RealmGetRoleCertificatesRepOk,
+    RealmUpdateRolesRepOk,
+    RealmStartReencryptionMaintenanceRepOk,
+    RealmFinishReencryptionMaintenanceRepOk,
+    AuthenticatedPingRepOk,
+    VlobCreateRepOk,
+    VlobReadRepOk,
+    VlobUpdateRepOk,
+    VlobPollChangesRepOk,
+    VlobListVersionsRepOk,
+    VlobMaintenanceGetReencryptionBatchRepOk,
+    VlobMaintenanceSaveReencryptionBatchRepOk,
 )
 from parsec.serde import packb
 from parsec.api.protocol import (
-    ping_serializer,
+    authenticated_ping_serializer,
+    invited_ping_serializer,
     organization_stats_serializer,
     organization_config_serializer,
     organization_bootstrap_serializer,
@@ -168,7 +187,31 @@ class CmdSock:
             if isinstance(rep, dict):
                 assert rep["status"] == "ok"  # Legacy rep schemas
             else:
-                assert isinstance(rep, (BlockCreateRepOk, BlockReadRepOk))  # Rust-based rep schemas
+                assert isinstance(
+                    rep,
+                    (
+                        BlockCreateRepOk,
+                        BlockReadRepOk,
+                        MessageGetRepOk,
+                        OrganizationStatsRepOk,
+                        OrganizationConfigRepOk,
+                        RealmCreateRepOk,
+                        RealmStatusRepOk,
+                        RealmStatsRepOk,
+                        RealmGetRoleCertificatesRepOk,
+                        RealmUpdateRolesRepOk,
+                        RealmStartReencryptionMaintenanceRepOk,
+                        RealmFinishReencryptionMaintenanceRepOk,
+                        AuthenticatedPingRepOk,
+                        VlobCreateRepOk,
+                        VlobReadRepOk,
+                        VlobUpdateRepOk,
+                        VlobPollChangesRepOk,
+                        VlobListVersionsRepOk,
+                        VlobMaintenanceGetReencryptionBatchRepOk,
+                        VlobMaintenanceSaveReencryptionBatchRepOk,
+                    ),
+                )  # Rust-based rep schemas
 
         return rep
 
@@ -209,9 +252,16 @@ class CmdSock:
 ### Ping ###
 
 
-ping = CmdSock(
+authenticated_ping = CmdSock(
     "ping",
-    ping_serializer,
+    authenticated_ping_serializer,
+    parse_args=lambda self, ping="foo": {"ping": ping},
+    check_rep_by_default=True,
+)
+
+invited_ping = CmdSock(
+    "ping",
+    invited_ping_serializer,
     parse_args=lambda self, ping="foo": {"ping": ping},
     check_rep_by_default=True,
 )
@@ -358,9 +408,8 @@ vlob_update = CmdSock(
 vlob_list_versions = CmdSock(
     "vlob_list_versions",
     vlob_list_versions_serializer,
-    parse_args=lambda self, vlob_id, encryption_revision=1: {
+    parse_args=lambda self, vlob_id: {
         "vlob_id": vlob_id,
-        "encryption_revision": encryption_revision,
     },
 )
 vlob_poll_changes = CmdSock(
