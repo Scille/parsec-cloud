@@ -13,24 +13,26 @@ FIELDS_TEMPLATE = """
 
 
 def replace_type(typename):
+    KEYWORD_REPLACEMENT = [("Bytes", "bytes"), ("Float", "float")]
+    for kw, value in KEYWORD_REPLACEMENT:
+        if typename == kw:
+            return value
+
+
+def replace__wrapped_type(typename):
     REGEX_REPLACEMENTS = [
         (r"Option<(.*)>", "Optional[{type}]"),
         (r"List<(.*)>", "List[{type}]"),
     ]
-
-    KEYWORD_REPLACEMENT = [("Bytes", "bytes"), ("Float", "float")]
 
     for (reg, format) in REGEX_REPLACEMENTS:
         match = re.match(reg, typename)
 
         if match:
             value = match.group(1)
-            return format.format(type=value)
+            return format.format(type=replace_type(value))
 
-    for kw, value in KEYWORD_REPLACEMENT:
-        if typename == kw:
-            return value
-
+    replace_type(typename)
     return typename
 
 
