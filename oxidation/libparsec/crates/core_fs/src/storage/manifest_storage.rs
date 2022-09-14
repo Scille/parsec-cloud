@@ -457,8 +457,6 @@ impl ManifestStorage {
 
         // Cleanup
         if let Some(removed_ids) = &removed_ids {
-            // let temp: &_ = pending_chunk_ids;
-            // *pending_chunk_ids = temp | removed_ids;
             *pending_chunk_ids = (pending_chunk_ids as &HashSet<ChunkOrBlockID>) | removed_ids;
         }
 
