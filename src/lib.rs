@@ -220,6 +220,7 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::VlobCreateRepBadTimestamp>()?;
     m.add_class::<protocol::VlobCreateRepNotASequesteredOrganization>()?;
     m.add_class::<protocol::VlobCreateRepSequesterInconsistency>()?;
+    m.add_class::<protocol::VlobCreateRepSequesterRejected>()?;
     m.add_class::<protocol::VlobCreateRepUnknownStatus>()?;
     m.add_class::<protocol::VlobReadReq>()?;
     m.add_class::<protocol::VlobReadRep>()?;

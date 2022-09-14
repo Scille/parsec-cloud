@@ -2,8 +2,7 @@
     "label": "VlobUpdate",
     "req": {
         "cmd": "vlob_update",
-        "other_fields": [
-            {
+        "other_fields": [{
                 "name": "encryption_revision",
                 "type": "Index"
             },
@@ -33,19 +32,16 @@
             }
         ]
     },
-    "reps": [
-        {
+    "reps": [{
             "status": "ok",
             "other_fields": []
         },
         {
             "status": "not_found",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
+            "other_fields": [{
+                "name": "reason",
+                "type": "Option<String>"
+            }]
         },
         {
             "status": "not_allowed",
@@ -65,17 +61,14 @@
         },
         {
             "status": "require_greater_timestamp",
-            "other_fields": [
-                {
-                    "name": "strictly_greater_than",
-                    "type": "DateTime"
-                }
-            ]
+            "other_fields": [{
+                "name": "strictly_greater_than",
+                "type": "DateTime"
+            }]
         },
         {
             "status": "bad_timestamp",
-            "other_fields": [
-                {
+            "other_fields": [{
                     "name": "reason",
                     "type": "Option<String>"
                 },
@@ -104,14 +97,29 @@
         },
         {
             "status": "sequester_inconsistency",
-            "other_fields": [
-                {
+            "other_fields": [{
                     "name": "sequester_authority_certificate",
                     "type": "Bytes"
                 },
                 {
                     "name": "sequester_services_certificates",
                     "type": "List<Bytes>"
+                }
+            ]
+        },
+        {
+            "status": "sequester_rejected",
+            "other_fields": [{
+                    "name": "service_id",
+                    "type": "SequesterServiceID"
+                },
+                {
+                    "name": "service_label",
+                    "type": "String"
+                },
+                {
+                    "name": "service_error",
+                    "type": "String"
                 }
             ]
         }
