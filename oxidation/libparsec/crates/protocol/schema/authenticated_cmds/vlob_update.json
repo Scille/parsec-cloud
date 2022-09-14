@@ -1,119 +1,125 @@
-{
-    "label": "VlobUpdate",
-    "req": {
-        "cmd": "vlob_update",
-        "other_fields": [
-            {
-                "name": "encryption_revision",
-                "type": "Index"
-            },
-            {
-                "name": "vlob_id",
-                "type": "VlobID"
-            },
-            {
-                "name": "timestamp",
-                "type": "DateTime"
-            },
-            {
-                "name": "version",
-                "type": "Version"
-            },
-            {
-                "name": "blob",
-                "type": "Bytes"
-            },
-            {
-                // Field set to `None` if sequester is disabled for the organization
-                // Key is sequester service ID, value is blob encrypted with the service key
-                // New in API version 2.8/3.2 (Parsec 2.11.0)
-                "name": "sequester_blob",
-                "type": "Option<Map<SequesterServiceID, Bytes>>",
-                "introduced_in_revision": 8
-            }
-        ]
-    },
-    "reps": [
-        {
-            "status": "ok",
-            "other_fields": []
-        },
-        {
-            "status": "not_found",
+[
+    {
+        "label": "VlobUpdate",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "vlob_update",
             "other_fields": [
                 {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
-            "status": "not_allowed",
-            "other_fields": []
-        },
-        {
-            "status": "bad_version",
-            "other_fields": []
-        },
-        {
-            "status": "bad_encryption_revision",
-            "other_fields": []
-        },
-        {
-            "status": "in_maintenance",
-            "other_fields": []
-        },
-        {
-            "status": "require_greater_timestamp",
-            "other_fields": [
-                {
-                    "name": "strictly_greater_than",
-                    "type": "DateTime"
-                }
-            ]
-        },
-        {
-            "status": "bad_timestamp",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
+                    "name": "encryption_revision",
+                    "type": "Index"
                 },
                 {
-                    "name": "ballpark_client_early_offset",
-                    "type": "Float"
-
+                    "name": "vlob_id",
+                    "type": "VlobID"
                 },
                 {
-                    "name": "ballpark_client_late_offset",
-                    "type": "Float"
-                },
-                {
-                    "name": "backend_timestamp",
+                    "name": "timestamp",
                     "type": "DateTime"
                 },
                 {
-                    "name": "client_timestamp",
-                    "type": "DateTime"
-                }
-            ]
-        },
-        {
-            "status": "not_a_sequestered_organization",
-            "other_fields": []
-        },
-        {
-            "status": "sequester_inconsistency",
-            "other_fields": [
+                    "name": "version",
+                    "type": "Version"
+                },
                 {
-                    "name": "sequester_authority_certificate",
+                    "name": "blob",
                     "type": "Bytes"
                 },
                 {
-                    "name": "sequester_services_certificates",
-                    "type": "List<Bytes>"
+                    // Field set to `None` if sequester is disabled for the organization
+                    // Key is sequester service ID, value is blob encrypted with the service key
+                    // New in API version 2.8/3.2 (Parsec 2.11.0)
+                    "name": "sequester_blob",
+                    "type": "Option<Map<SequesterServiceID, Bytes>>",
+                    "introduced_in": "2.8"
                 }
             ]
-        }
-    ]
-}
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": []
+            },
+            {
+                "status": "not_found",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
+            },
+            {
+                "status": "not_allowed",
+                "other_fields": []
+            },
+            {
+                "status": "bad_version",
+                "other_fields": []
+            },
+            {
+                "status": "bad_encryption_revision",
+                "other_fields": []
+            },
+            {
+                "status": "in_maintenance",
+                "other_fields": []
+            },
+            {
+                "status": "require_greater_timestamp",
+                "other_fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "bad_timestamp",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    },
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "backend_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "not_a_sequestered_organization",
+                "other_fields": []
+            },
+            {
+                "status": "sequester_inconsistency",
+                "other_fields": [
+                    {
+                        "name": "sequester_authority_certificate",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "sequester_services_certificates",
+                        "type": "List<Bytes>"
+                    }
+                ]
+            }
+        ]
+    }
+]

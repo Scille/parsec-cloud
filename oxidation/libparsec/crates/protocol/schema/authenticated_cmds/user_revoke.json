@@ -1,49 +1,56 @@
-{
-    "label": "UserRevoke",
-    "req": {
-        "cmd": "user_revoke",
-        "other_fields": [
+[
+    {
+        "label": "UserRevoke",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "user_revoke",
+            "other_fields": [
+                {
+                    "name": "revoked_user_certificate",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
             {
-                "name": "revoked_user_certificate",
-                "type": "Bytes"
+                "status": "ok",
+                "other_fields": []
+            },
+            {
+                "status": "not_allowed",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_certification",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
+            },
+            {
+                "status": "not_found",
+                "other_fields": []
+            },
+            {
+                "status": "already_revoked",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
             }
         ]
-    },
-    "reps": [
-        {
-            "status": "ok",
-            "other_fields": []
-        },
-        {
-            "status": "not_allowed",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
-            "status": "invalid_certification",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
-            "status": "not_found",
-            "other_fields": []
-        },
-        {
-            "status": "already_revoked",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        }
-    ]
-}
+    }
+]

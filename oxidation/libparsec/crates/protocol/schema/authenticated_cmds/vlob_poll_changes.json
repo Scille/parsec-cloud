@@ -1,48 +1,55 @@
-{
-    "label": "VlobPollChanges",
-    "req": {
-        "cmd": "vlob_poll_changes",
-        "other_fields": [
-            {
-                "name": "realm_id",
-                "type": "RealmID"
-            },
-            {
-                "name": "last_checkpoint",
-                "type": "Index"
-            }
-        ]
-    },
-    "reps": [
-        {
-            "status": "ok",
+[
+    {
+        "label": "VlobPollChanges",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "vlob_poll_changes",
             "other_fields": [
                 {
-                    "name": "changes",
-                    "type": "Map<VlobID, Index>"
+                    "name": "realm_id",
+                    "type": "RealmID"
                 },
                 {
-                    "name": "current_checkpoint",
+                    "name": "last_checkpoint",
                     "type": "Index"
                 }
             ]
         },
-        {
-            "status": "not_allowed",
-            "other_fields": []
-        },
-        {
-            "status": "not_found",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
-            "status": "in_maintenance",
-            "other_fields": []
-        }
-    ]
-}
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": [
+                    {
+                        "name": "changes",
+                        "type": "Map<VlobID, Index>"
+                    },
+                    {
+                        "name": "current_checkpoint",
+                        "type": "Index"
+                    }
+                ]
+            },
+            {
+                "status": "not_allowed",
+                "other_fields": []
+            },
+            {
+                "status": "not_found",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
+            },
+            {
+                "status": "in_maintenance",
+                "other_fields": []
+            }
+        ]
+    }
+]

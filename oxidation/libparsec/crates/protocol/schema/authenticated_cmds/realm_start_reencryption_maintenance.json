@@ -1,95 +1,101 @@
-{
-    "label": "RealmStartReencryptionMaintenance",
-    "req": {
-        "cmd": "realm_start_reencryption_maintenance",
-        "other_fields": [
+[
+    {
+        "label": "RealmStartReencryptionMaintenance",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "realm_start_reencryption_maintenance",
+            "other_fields": [
+                {
+                    "name": "realm_id",
+                    "type": "RealmID"
+                },
+                {
+                    "name": "encryption_revision",
+                    "type": "Index"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "DateTime"
+                },
+                {
+                    "name": "per_participant_message",
+                    "type": "Map<UserID, Bytes>"
+                }
+            ]
+        },
+        "reps": [
             {
-                "name": "realm_id",
-                "type": "RealmID"
+                "status": "ok",
+                "other_fields": []
             },
             {
-                "name": "encryption_revision",
-                "type": "Index"
+                "status": "not_allowed",
+                "other_fields": []
             },
             {
-                "name": "timestamp",
-                "type": "DateTime"
+                "status": "not_found",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
             },
             {
-                "name": "per_participant_message",
-                "type": "Map<UserID, Bytes>"
+                "status": "bad_encryption_revision",
+                "other_fields": []
+            },
+            {
+                "status": "participant_mismatch",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
+            },
+            {
+                "status": "maintenance_error",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
+            },
+            {
+                "status": "in_maintenance",
+                "other_fields": []
+            },
+            {
+                "status": "bad_timestamp",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    },
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "backend_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
             }
         ]
-    },
-    "reps": [
-        {
-            "status": "ok",
-            "other_fields": []
-        },
-        {
-            "status": "not_allowed",
-            "other_fields": []
-        },
-        {
-            "status": "not_found",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
-            "status": "bad_encryption_revision",
-            "other_fields": []
-        },
-        {
-            "status": "participant_mismatch",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
-            "status": "maintenance_error",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
-            "status": "in_maintenance",
-            "other_fields": []
-        },
-        {
-            "status": "bad_timestamp",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                },
-                {
-                    "name": "ballpark_client_early_offset",
-                    "type": "Float"
-
-                },
-                {
-                    "name": "ballpark_client_late_offset",
-                    "type": "Float"
-                },
-                {
-                    "name": "backend_timestamp",
-                    "type": "DateTime"
-                },
-                {
-                    "name": "client_timestamp",
-                    "type": "DateTime"
-                }
-            ]
-        }
-    ]
-}
+    }
+]

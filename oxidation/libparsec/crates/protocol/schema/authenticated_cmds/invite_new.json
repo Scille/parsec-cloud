@@ -1,90 +1,97 @@
-{
-    "label": "InviteNew",
-    "req": {
-        "cmd": "invite_new",
-        "unit": "UserOrDevice",
-        "other_fields": []
-    },
-    "reps": [
-        {
-            "status": "ok",
-            "other_fields": [
-                {
-                    "name": "token",
-                    "type": "InvitationToken"
-                },
-                {
-                    // Added in API 2.3 (Parsec v2.6.0)
-                    // Field used when the invitation is correctly created but the invitation email cannot be sent
-                    "name": "email_sent",
-                    "type": "Option<InvitationEmailSentStatus>",
-                    "introduced_in_revision": 3
-                }
-            ]
-        },
-        {
-            "status": "not_allowed",
+[
+    {
+        "label": "InviteNew",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_new",
+            "unit": "UserOrDevice",
             "other_fields": []
         },
-        {
-            "status": "already_member",
-            "other_fields": []
-        },
-        {
-            "status": "not_available",
-            "other_fields": []
-        }
-    ],
-    "nested_types": [
-        {
-            "label": "UserOrDevice",
-            "discriminant_field": "type",
-            "variants": [
-                {
-                    "name": "User",
-                    "discriminant_value": "USER",
-                    "fields": [
-                        {
-                            "name": "claimer_email",
-                            "type": "String"
-                        },
-                        {
-                            "name": "send_email",
-                            "type": "Boolean"
-                        }
-                    ]
-                },
-                {
-                    "name": "Device",
-                    "discriminant_value": "DEVICE",
-                    "fields": [
-                        {
-                            "name": "send_email",
-                            "type": "Boolean"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "label": "InvitationEmailSentStatus",
-            "variants": [
-                {
-                    "name": "Success",
-                    "discriminant_value": "SUCCESS",
-                    "fields": []
-                },
-                {
-                    "name": "NotAvailable",
-                    "discriminant_value": "NOT_AVAILABLE",
-                    "fields": []
-                },
-                {
-                    "name": "BadRecipient",
-                    "discriminant_value": "BAD_RECIPIENT",
-                    "fields": []
-                }
-            ]
-        }
-    ]
-}
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": [
+                    {
+                        "name": "token",
+                        "type": "InvitationToken"
+                    },
+                    {
+                        // Added in API 2.3 (Parsec v2.6.0)
+                        // Field used when the invitation is correctly created but the invitation email cannot be sent
+                        "name": "email_sent",
+                        "type": "Option<InvitationEmailSentStatus>",
+                        "introduced_in": "2.3"
+                    }
+                ]
+            },
+            {
+                "status": "not_allowed",
+                "other_fields": []
+            },
+            {
+                "status": "already_member",
+                "other_fields": []
+            },
+            {
+                "status": "not_available",
+                "other_fields": []
+            }
+        ],
+        "nested_types": [
+            {
+                "label": "UserOrDevice",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "User",
+                        "discriminant_value": "USER",
+                        "fields": [
+                            {
+                                "name": "claimer_email",
+                                "type": "String"
+                            },
+                            {
+                                "name": "send_email",
+                                "type": "Boolean"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Device",
+                        "discriminant_value": "DEVICE",
+                        "fields": [
+                            {
+                                "name": "send_email",
+                                "type": "Boolean"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "label": "InvitationEmailSentStatus",
+                "variants": [
+                    {
+                        "name": "Success",
+                        "discriminant_value": "SUCCESS",
+                        "fields": []
+                    },
+                    {
+                        "name": "NotAvailable",
+                        "discriminant_value": "NOT_AVAILABLE",
+                        "fields": []
+                    },
+                    {
+                        "name": "BadRecipient",
+                        "discriminant_value": "BAD_RECIPIENT",
+                        "fields": []
+                    }
+                ]
+            }
+        ]
+    }
+]
