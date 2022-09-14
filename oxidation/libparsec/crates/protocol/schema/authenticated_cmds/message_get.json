@@ -1,46 +1,53 @@
-{
-    "label": "MessageGet",
-    "req": {
-        "cmd": "message_get",
-        "other_fields": [
-            {
-                "name": "offset",
-                "type": "Index"
-            }
-        ]
-    },
-    "reps": [
-        {
-            "status": "ok",
+[
+    {
+        "label": "MessageGet",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "message_get",
             "other_fields": [
                 {
-                    "name": "messages",
-                    "type": "List<Message>"
+                    "name": "offset",
+                    "type": "Index"
                 }
             ]
-        }
-    ],
-    "nested_types": [
-        {
-            "label": "Message",
-            "fields": [
-                {
-                    "name": "count",
-                    "type": "Size"
-                },
-                {
-                    "name": "sender",
-                    "type": "DeviceID"
-                },
-                {
-                    "name": "timestamp",
-                    "type": "DateTime"
-                },
-                {
-                    "name": "body",
-                    "type": "Bytes"
-                }
-            ]
-        }
-    ]
-}
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": [
+                    {
+                        "name": "messages",
+                        "type": "List<Message>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "label": "Message",
+                "fields": [
+                    {
+                        "name": "count",
+                        "type": "Size"
+                    },
+                    {
+                        "name": "sender",
+                        "type": "DeviceID"
+                    },
+                    {
+                        "name": "timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "body",
+                        "type": "Bytes"
+                    }
+                ]
+            }
+        ]
+    }
+]
