@@ -8,9 +8,10 @@ use pyo3::{
 };
 use uuid::Uuid;
 
+#[allow(deprecated)]
 use crate::{
     api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey},
-    binding_utils::{comp_op, hash_generic, py_to_rs_user_profile},
+    binding_utils::{comp_ord, hash_generic_legacy, py_to_rs_user_profile},
     ids::{DeviceID, DeviceLabel, EntryID, HumanHandle},
 };
 
@@ -57,7 +58,7 @@ impl InvitationToken {
     fn __richcmp__(&self, py: Python, other: &InvitationToken, op: CompareOp) -> PyResult<bool> {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
+        comp_ord(op, h1, h2)
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -69,7 +70,8 @@ impl InvitationToken {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.as_hyphenated(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.0.as_hyphenated(), py)
     }
 
     #[classmethod]
@@ -126,7 +128,8 @@ impl SASCode {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(self.0.as_ref(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(self.0.as_ref(), py)
     }
 
     fn __str__(&self) -> PyResult<String> {

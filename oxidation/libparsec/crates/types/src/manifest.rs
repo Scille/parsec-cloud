@@ -173,7 +173,7 @@ pub enum RealmRole {
  * EntryName
  */
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Hash)]
 #[serde(try_from = "&str", into = "String")]
 pub struct EntryName(String);
 

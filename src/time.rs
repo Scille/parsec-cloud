@@ -1,13 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::exceptions::{PyTypeError, PyValueError};
-use pyo3::prelude::*;
-use pyo3::pyclass::CompareOp;
-use pyo3::types::PyType;
-use pyo3::{PyAny, PyResult};
+use pyo3::{
+    exceptions::{PyTypeError, PyValueError},
+    prelude::*,
+    pyclass::CompareOp,
+    types::PyType,
+    PyAny, PyResult,
+};
 
-use crate::binding_utils::hash_generic;
-use crate::runtime::spawn_future_into_trio_coroutine;
+#[allow(deprecated)]
+use crate::{binding_utils::hash_generic_legacy, runtime::spawn_future_into_trio_coroutine};
 
 #[pyfunction]
 /// mock_time takes as argument a DateTime (for FrozenTime), an int (for ShiftedTime) or None (for RealTime)
@@ -120,7 +122,8 @@ impl DateTime {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.0.to_string(), py)
     }
 
     #[getter]

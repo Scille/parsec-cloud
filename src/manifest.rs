@@ -1,28 +1,25 @@
-use std::{collections::HashMap, num::NonZeroU64};
-
-use libparsec::types::Manifest;
 use pyo3::{
     exceptions::PyValueError,
-    import_exception, pyclass,
-    pyclass::CompareOp,
-    pyfunction, pymethods,
-    types::{PyBool, PyBytes, PyDict, PyTuple, PyType},
+    import_exception, pyclass, pyfunction, pymethods,
+    types::{PyBytes, PyDict, PyTuple, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
+use std::{collections::HashMap, num::NonZeroU64};
 
 use crate::{
     api_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey},
-    binding_utils::{hash_generic, py_to_rs_realm_role, rs_to_py_realm_role},
+    binding_utils::{py_to_rs_realm_role, rs_to_py_realm_role},
     ids::{BlockID, DeviceID, EntryID},
     time::DateTime,
 };
+use libparsec::types::Manifest;
 
 import_exception!(parsec.api.data, EntryNameTooLongError);
 import_exception!(parsec.api.data, DataError);
 import_exception!(parsec.api.data, DataValidationError);
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub(crate) struct EntryName(pub libparsec::types::EntryName);
 
 #[pymethods]
@@ -44,24 +41,9 @@ impl EntryName {
         Ok(format!("<EntryName {}>", self.0))
     }
 
-    fn __richcmp__(&self, other: &EntryName, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0.as_ref() == other.0.as_ref(),
-            CompareOp::Ne => self.0.as_ref() != other.0.as_ref(),
-            CompareOp::Lt => self.0.as_ref() < other.0.as_ref(),
-            CompareOp::Gt => self.0.as_ref() > other.0.as_ref(),
-            CompareOp::Le => self.0.as_ref() <= other.0.as_ref(),
-            CompareOp::Ge => self.0.as_ref() >= other.0.as_ref(),
-        }
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(self.0.as_ref(), py)
-    }
+    crate::binding_utils::impl_richcmp_ord!();
+    crate::binding_utils::impl_str!();
+    crate::binding_utils::impl_hash!();
 
     #[getter]
     fn str(&self) -> PyResult<String> {
@@ -70,17 +52,8 @@ impl EntryName {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct WorkspaceEntry(pub libparsec::types::WorkspaceEntry);
-
-impl WorkspaceEntry {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.id == other.0.id
-            && self.0.name == other.0.name
-            && self.0.encryption_revision == other.0.encryption_revision
-            && self.0.role == other.0.role
-    }
-}
 
 #[pymethods]
 impl WorkspaceEntry {
@@ -109,9 +82,8 @@ impl WorkspaceEntry {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
+    crate::binding_utils::impl_repr!();
+    crate::binding_utils::impl_richcmp_eq!();
 
     #[args(py_kwargs = "**")]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
@@ -166,14 +138,6 @@ impl WorkspaceEntry {
         self.0.is_revoked()
     }
 
-    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
-            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
-            _ => py.NotImplemented(),
-        }
-    }
-
     #[getter]
     fn id(&self) -> PyResult<EntryID> {
         Ok(EntryID(self.0.id))
@@ -214,14 +178,8 @@ impl WorkspaceEntry {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct BlockAccess(pub libparsec::types::BlockAccess);
-
-impl BlockAccess {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.id == other.0.id && self.0.offset == other.0.offset && self.0.size == other.0.size
-    }
-}
 
 #[pymethods]
 impl BlockAccess {
@@ -247,9 +205,8 @@ impl BlockAccess {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
+    crate::binding_utils::impl_repr!();
+    crate::binding_utils::impl_richcmp_eq!();
 
     #[args(py_kwargs = "**")]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
@@ -283,14 +240,6 @@ impl BlockAccess {
         Ok(Self(r))
     }
 
-    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
-            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
-            _ => py.NotImplemented(),
-        }
-    }
-
     #[getter]
     fn id(&self) -> PyResult<BlockID> {
         Ok(BlockID(self.0.id))
@@ -318,21 +267,8 @@ impl BlockAccess {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct FileManifest(pub libparsec::types::FileManifest);
-
-impl FileManifest {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.author == other.0.author
-            && self.0.id == other.0.id
-            && self.0.version == other.0.version
-            && self.0.parent == other.0.parent
-            && self.0.timestamp == other.0.timestamp
-            && self.0.created == other.0.created
-            && self.0.updated == other.0.updated
-            && self.0.blocks == other.0.blocks
-    }
-}
 
 #[pymethods]
 impl FileManifest {
@@ -368,9 +304,8 @@ impl FileManifest {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
+    crate::binding_utils::impl_repr!();
+    crate::binding_utils::impl_richcmp_eq!();
 
     fn dump_and_sign<'p>(
         &self,
@@ -470,14 +405,6 @@ impl FileManifest {
         Ok(Self(r))
     }
 
-    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
-            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
-            _ => py.NotImplemented(),
-        }
-    }
-
     #[getter]
     fn author(&self) -> PyResult<DeviceID> {
         Ok(DeviceID(self.0.author.clone()))
@@ -536,21 +463,8 @@ impl FileManifest {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct FolderManifest(pub libparsec::types::FolderManifest);
-
-impl FolderManifest {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.author == other.0.author
-            && self.0.id == other.0.id
-            && self.0.version == other.0.version
-            && self.0.parent == other.0.parent
-            && self.0.timestamp == other.0.timestamp
-            && self.0.created == other.0.created
-            && self.0.updated == other.0.updated
-            && self.0.children == other.0.children
-    }
-}
 
 #[pymethods]
 impl FolderManifest {
@@ -584,9 +498,8 @@ impl FolderManifest {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
+    crate::binding_utils::impl_repr!();
+    crate::binding_utils::impl_richcmp_eq!();
 
     fn dump_and_sign<'p>(
         &self,
@@ -677,14 +590,6 @@ impl FolderManifest {
         Ok(Self(r))
     }
 
-    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
-            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
-            _ => py.NotImplemented(),
-        }
-    }
-
     #[getter]
     fn author(&self) -> PyResult<DeviceID> {
         Ok(DeviceID(self.0.author.clone()))
@@ -734,20 +639,8 @@ impl FolderManifest {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct WorkspaceManifest(pub libparsec::types::WorkspaceManifest);
-
-impl WorkspaceManifest {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.author == other.0.author
-            && self.0.id == other.0.id
-            && self.0.version == other.0.version
-            && self.0.timestamp == other.0.timestamp
-            && self.0.created == other.0.created
-            && self.0.updated == other.0.updated
-            && self.0.children == other.0.children
-    }
-}
 
 #[pymethods]
 impl WorkspaceManifest {
@@ -779,9 +672,8 @@ impl WorkspaceManifest {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
+    crate::binding_utils::impl_repr!();
+    crate::binding_utils::impl_richcmp_eq!();
 
     fn dump_and_sign<'p>(
         &self,
@@ -868,14 +760,6 @@ impl WorkspaceManifest {
         Ok(Self(r))
     }
 
-    fn __richcmp__(&self, py: Python, other: &WorkspaceManifest, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
-            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
-            _ => py.NotImplemented(),
-        }
-    }
-
     #[getter]
     fn author(&self) -> PyResult<DeviceID> {
         Ok(DeviceID(self.0.author.clone()))
@@ -920,21 +804,8 @@ impl WorkspaceManifest {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct UserManifest(pub libparsec::types::UserManifest);
-
-impl UserManifest {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.author == other.0.author
-            && self.0.id == other.0.id
-            && self.0.version == other.0.version
-            && self.0.timestamp == other.0.timestamp
-            && self.0.created == other.0.created
-            && self.0.updated == other.0.updated
-            && self.0.last_processed_message == other.0.last_processed_message
-            && self.0.workspaces == other.0.workspaces
-    }
-}
 
 #[pymethods]
 impl UserManifest {
@@ -965,9 +836,8 @@ impl UserManifest {
         }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
+    crate::binding_utils::impl_repr!();
+    crate::binding_utils::impl_richcmp_eq!();
 
     fn dump_and_sign<'p>(
         &self,
@@ -1064,14 +934,6 @@ impl UserManifest {
             .get_workspace_entry(workspace_id.0)
             .cloned()
             .map(WorkspaceEntry))
-    }
-
-    fn __richcmp__(&self, py: Python, other: &Self, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => PyBool::new(py, self.eq(other)).into_py(py),
-            CompareOp::Ne => PyBool::new(py, !self.eq(other)).into_py(py),
-            _ => py.NotImplemented(),
-        }
     }
 
     #[getter]

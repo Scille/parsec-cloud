@@ -8,9 +8,10 @@ use pyo3::{
 };
 use std::str::FromStr;
 
+#[allow(deprecated)]
 use crate::{
     api_crypto::VerifyKey,
-    binding_utils::{comp_op, hash_generic},
+    binding_utils::{comp_ord, hash_generic_legacy},
     ids::{EntryID, OrganizationID},
     invite::InvitationToken,
 };
@@ -57,13 +58,14 @@ impl BackendAddr {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.to_url().unwrap(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.to_url().unwrap(), py)
     }
 
     fn __richcmp__(&self, py: Python, other: &BackendAddr, op: CompareOp) -> PyResult<bool> {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
+        comp_ord(op, h1, h2)
     }
 
     fn to_url(&self) -> PyResult<String> {
@@ -188,7 +190,8 @@ impl BackendOrganizationAddr {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.to_url().unwrap(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.to_url().unwrap(), py)
     }
 
     fn __richcmp__(
@@ -199,7 +202,7 @@ impl BackendOrganizationAddr {
     ) -> PyResult<bool> {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
+        comp_ord(op, h1, h2)
     }
 
     fn to_url(&self) -> PyResult<String> {
@@ -388,11 +391,12 @@ impl BackendOrganizationBootstrapAddr {
     ) -> PyResult<bool> {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
+        comp_ord(op, h1, h2)
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.to_url().unwrap(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.to_url().unwrap(), py)
     }
 
     fn to_url(&self) -> PyResult<String> {
@@ -571,7 +575,8 @@ impl BackendOrganizationFileLinkAddr {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.to_url().unwrap(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.to_url().unwrap(), py)
     }
 
     fn __richcmp__(
@@ -582,7 +587,7 @@ impl BackendOrganizationFileLinkAddr {
     ) -> PyResult<bool> {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
+        comp_ord(op, h1, h2)
     }
 
     fn get_backend_addr(&self) -> BackendAddr {
@@ -738,7 +743,8 @@ impl BackendInvitationAddr {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.to_url().unwrap(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.to_url().unwrap(), py)
     }
 
     fn __richcmp__(
@@ -749,7 +755,7 @@ impl BackendInvitationAddr {
     ) -> PyResult<bool> {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
+        comp_ord(op, h1, h2)
     }
 
     fn to_url(&self) -> PyResult<String> {
@@ -913,11 +919,12 @@ impl BackendPkiEnrollmentAddr {
     ) -> PyResult<bool> {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
+        comp_ord(op, h1, h2)
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.to_url().unwrap(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.to_url().unwrap(), py)
     }
 
     fn to_url(&self) -> PyResult<String> {
