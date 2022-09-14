@@ -1,10 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import Mapping, Optional
-from hypercorn.config import Config as HyperConfig
-
+from typing import Optional
 import base64
-
+from hypercorn.config import Config as HyperConfig
 from hypercorn.typing import ResponseSummary, HTTPScope
 
 from parsec.backend.asgi.logger import ParsecLogger
@@ -28,11 +26,6 @@ def _create_empty_response() -> ResponseSummary:
     return resp
 
 
-def _assert_anonymous_or_invalid(mapped: Mapping[str, str]):
-    assert "author" in mapped
-    assert mapped["author"] == "anonymous or invalid"
-
-
 def test_base64_author():
     logger = ParsecLogger(HyperConfig())
 
@@ -44,22 +37,17 @@ def test_base64_author():
 
 
 def test_bad_base64_author():
-    import secrets
-
     logger = ParsecLogger(HyperConfig())
 
-    # We use a sequence of 10 random bytes to simulate a bad base64 encoded author name
-    author_bytes = secrets.token_bytes(10)
+    # Invalid base64 sequence
+    author_bytes = b"<dummy>"
     mapped = logger.atoms(_create_http_scope(author_bytes), _create_empty_response(), 0.0)
 
-    _assert_anonymous_or_invalid(mapped)
-
-    assert "author" in mapped
-    assert mapped["author"] == "anonymous or invalid"
+    assert "author" not in mapped
 
 
 def test_no_author_header():
     logger = ParsecLogger(HyperConfig())
     mapped = logger.atoms(_create_http_scope(), _create_empty_response(), 0.0)
 
-    _assert_anonymous_or_invalid(mapped)
+    assert "author" not in mapped
