@@ -1,36 +1,43 @@
-{
-    "label": "RealmGetRoleCertificates",
-    "req": {
-        "cmd": "realm_get_role_certificates",
-        "other_fields": [
+[
+    {
+        "label": "RealmGetRoleCertificates",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "realm_get_role_certificates",
+            "other_fields": [
+                {
+                    "name": "realm_id",
+                    "type": "RealmID"
+                }
+            ]
+        },
+        "reps": [
             {
-                "name": "realm_id",
-                "type": "RealmID"
+                "status": "ok",
+                "other_fields": [
+                    {
+                        "name": "certificates",
+                        "type": "List<Bytes>"
+                    }
+                ]
+            },
+            {
+                "status": "not_allowed",
+                "other_fields": []
+            },
+            {
+                "status": "not_found",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
             }
         ]
-    },
-    "reps": [
-        {
-            "status": "ok",
-            "other_fields": [
-                {
-                    "name": "certificates",
-                    "type": "List<Bytes>"
-                }
-            ]
-        },
-        {
-            "status": "not_allowed",
-            "other_fields": []
-        },
-        {
-            "status": "not_found",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        }
-    ]
-}
+    }
+]

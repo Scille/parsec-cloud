@@ -1,17 +1,13 @@
-{
-    "label": "Invite4ClaimerCommunicate",
-    "req": {
-        "cmd": "invite_4_claimer_communicate",
-        "other_fields": [
-            {
-                "name": "payload",
-                "type": "Bytes"
-            }
-        ]
-    },
-    "reps": [
-        {
-            "status": "ok",
+[
+    {
+        "label": "Invite4ClaimerCommunicate",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_4_claimer_communicate",
             "other_fields": [
                 {
                     "name": "payload",
@@ -19,13 +15,24 @@
                 }
             ]
         },
-        {
-            "status": "not_found",
-            "other_fields": []
-        },
-        {
-            "status": "invalid_state",
-            "other_fields": []
-        }
-    ]
-}
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": [
+                    {
+                        "name": "payload",
+                        "type": "Bytes"
+                    }
+                ]
+            },
+            {
+                "status": "not_found",
+                "other_fields": []
+            },
+            {
+                "status": "invalid_state",
+                "other_fields": []
+            }
+        ]
+    }
+]

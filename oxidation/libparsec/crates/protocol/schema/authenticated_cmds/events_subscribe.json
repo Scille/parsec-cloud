@@ -1,13 +1,20 @@
-{
-    "label": "EventsSubscribe",
-    "req": {
-        "cmd": "events_subscribe",
-        "other_fields": []
-    },
-    "reps": [
-        {
-            "status": "ok",
+[
+    {
+        "label": "EventsSubscribe",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "events_subscribe",
             "other_fields": []
-        }
-    ]
-}
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": []
+            }
+        ]
+    }
+]
