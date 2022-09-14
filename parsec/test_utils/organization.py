@@ -5,8 +5,8 @@ import random
 from typing import Tuple, Optional
 from pathlib import Path
 from uuid import uuid4
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime, DeviceCreateRepOk, UserCreateRepOk
 from parsec.api.data import UserCertificate, DeviceCertificate, EntryID, EntryName
 from parsec.api.protocol import (
     OrganizationID,
@@ -308,7 +308,7 @@ async def _register_new_user(
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    if rep["status"] != "ok":
+    if not isinstance(rep, UserCreateRepOk):
         raise RuntimeError(f"Cannot create user: {rep}")
 
     return new_device
@@ -351,7 +351,7 @@ async def _register_new_device(
         redacted_device_certificate=redacted_device_certificate,
     )
 
-    if rep["status"] != "ok":
+    if not isinstance(rep, DeviceCreateRepOk):
         raise RuntimeError(f"Cannot create device: {rep}")
 
     return new_device
