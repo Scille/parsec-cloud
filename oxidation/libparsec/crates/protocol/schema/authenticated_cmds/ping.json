@@ -1,23 +1,30 @@
-{
-    "label": "Ping",
-    "req": {
-        "cmd": "ping",
-        "other_fields": [
-            {
-                "name": "ping",
-                "type": "String"
-            }
-        ]
-    },
-    "reps": [
-        {
-            "status": "ok",
+[
+    {
+        "label": "Ping",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "ping",
             "other_fields": [
                 {
-                    "name": "pong",
+                    "name": "ping",
                     "type": "String"
                 }
             ]
-        }
-    ]
-}
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": [
+                    {
+                        "name": "pong",
+                        "type": "String"
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -1,46 +1,53 @@
-{
-    "label": "BlockCreate",
-    "req": {
-        "cmd": "block_create",
-        "other_fields": [
+[
+    {
+        "label": "BlockCreate",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "block_create",
+            "other_fields": [
+                {
+                    "name": "block_id",
+                    "type": "BlockID"
+                },
+                {
+                    "name": "realm_id",
+                    "type": "RealmID"
+                },
+                {
+                    "name": "block",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
             {
-                "name": "block_id",
-                "type": "BlockID"
+                "status": "ok",
+                "other_fields": []
             },
             {
-                "name": "realm_id",
-                "type": "RealmID"
+                "status": "already_exists",
+                "other_fields": []
             },
             {
-                "name": "block",
-                "type": "Bytes"
+                "status": "not_found",
+                "other_fields": []
+            },
+            {
+                "status": "timeout",
+                "other_fields": []
+            },
+            {
+                "status": "not_allowed",
+                "other_fields": []
+            },
+            {
+                "status": "in_maintenance",
+                "other_fields": []
             }
         ]
-    },
-    "reps": [
-        {
-            "status": "ok",
-            "other_fields": []
-        },
-        {
-            "status": "already_exists",
-            "other_fields": []
-        },
-        {
-            "status": "not_found",
-            "other_fields": []
-        },
-        {
-            "status": "timeout",
-            "other_fields": []
-        },
-        {
-            "status": "not_allowed",
-            "other_fields": []
-        },
-        {
-            "status": "in_maintenance",
-            "other_fields": []
-        }
-    ]
-}
+    }
+]
