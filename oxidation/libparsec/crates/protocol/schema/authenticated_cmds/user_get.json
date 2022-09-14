@@ -1,58 +1,65 @@
-{
-    "label": "UserGet",
-    "req": {
-        "cmd": "user_get",
-        "other_fields": [
-            {
-                "name": "user_id",
-                "type": "UserID"
-            }
-        ]
-    },
-    "reps": [
-        {
-            "status": "ok",
+[
+    {
+        "label": "UserGet",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "user_get",
             "other_fields": [
                 {
-                    "name": "user_certificate",
-                    "type": "Bytes"
-                },
-                {
-                    "name": "revoked_user_certificate",
-                    "type": "Option<Bytes>"
-                },
-                {
-                    "name": "device_certificates",
-                    "type": "List<Bytes>"
-                },
-                {
-                    "name": "trustchain",
-                    "type": "Trustchain"
+                    "name": "user_id",
+                    "type": "UserID"
                 }
             ]
         },
-        {
-            "status": "not_found",
-            "other_fields": []
-        }
-    ],
-    "nested_types": [
-        {
-            "label": "Trustchain",
-            "fields": [
-                {
-                    "name": "devices",
-                    "type": "List<Bytes>"
-                },
-                {
-                    "name": "users",
-                    "type": "List<Bytes>"
-                },
-                {
-                    "name": "revoked_users",
-                    "type": "List<Bytes>"
-                }
-            ]
-        }
-    ]
-}
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": [
+                    {
+                        "name": "user_certificate",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "revoked_user_certificate",
+                        "type": "Option<Bytes>"
+                    },
+                    {
+                        "name": "device_certificates",
+                        "type": "List<Bytes>"
+                    },
+                    {
+                        "name": "trustchain",
+                        "type": "Trustchain"
+                    }
+                ]
+            },
+            {
+                "status": "not_found",
+                "other_fields": []
+            }
+        ],
+        "nested_types": [
+            {
+                "label": "Trustchain",
+                "fields": [
+                    {
+                        "name": "devices",
+                        "type": "List<Bytes>"
+                    },
+                    {
+                        "name": "users",
+                        "type": "List<Bytes>"
+                    },
+                    {
+                        "name": "revoked_users",
+                        "type": "List<Bytes>"
+                    }
+                ]
+            }
+        ]
+    }
+]

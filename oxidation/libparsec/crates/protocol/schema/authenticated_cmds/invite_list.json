@@ -1,66 +1,73 @@
-{
-    "label": "InviteList",
-    "req": {
-        "cmd": "invite_list",
-        "other_fields": []
-    },
-    "reps": [
-        {
-            "status": "ok",
-            "other_fields": [
-                {
-                    "name": "invitations",
-                    "type": "List<InviteListItem>"
-                }
-            ]
-        }
-    ],
-    "nested_types": [
-        {
-            "label": "InviteListItem",
-            "discriminant_field": "type",
-            "variants": [
-                {
-                    "name": "User",
-                    "discriminant_value": "USER",
-                    "fields": [
-                        {
-                            "name": "token",
-                            "type": "InvitationToken"
-                        },
-                        {
-                            "name": "created_on",
-                            "type": "DateTime"
-                        },
-                        {
-                            "name": "claimer_email",
-                            "type": "String"
-                        },
-                        {
-                            "name": "status",
-                            "type": "InvitationStatus"
-                        }
-                    ]
-                },
-                {
-                    "name": "Device",
-                    "discriminant_value": "DEVICE",
-                    "fields": [
-                        {
-                            "name": "token",
-                            "type": "InvitationToken"
-                        },
-                        {
-                            "name": "created_on",
-                            "type": "DateTime"
-                        },
-                        {
-                            "name": "status",
-                            "type": "InvitationStatus"
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
-}
+[
+    {
+        "label": "InviteList",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_list",
+            "other_fields": []
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": [
+                    {
+                        "name": "invitations",
+                        "type": "List<InviteListItem>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "label": "InviteListItem",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "User",
+                        "discriminant_value": "USER",
+                        "fields": [
+                            {
+                                "name": "token",
+                                "type": "InvitationToken"
+                            },
+                            {
+                                "name": "created_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "claimer_email",
+                                "type": "String"
+                            },
+                            {
+                                "name": "status",
+                                "type": "InvitationStatus"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Device",
+                        "discriminant_value": "DEVICE",
+                        "fields": [
+                            {
+                                "name": "token",
+                                "type": "InvitationToken"
+                            },
+                            {
+                                "name": "created_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "status",
+                                "type": "InvitationStatus"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

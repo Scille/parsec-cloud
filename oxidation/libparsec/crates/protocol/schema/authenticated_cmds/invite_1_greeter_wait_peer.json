@@ -1,39 +1,46 @@
-{
-    "label": "Invite1GreeterWaitPeer",
-    "req": {
-        "cmd": "invite_1_greeter_wait_peer",
-        "other_fields": [
-            {
-                "name": "token",
-                "type": "InvitationToken"
-            },
-            {
-                "name": "greeter_public_key",
-                "type": "PublicKey"
-            }
-        ]
-    },
-    "reps": [
-        {
-            "status": "ok",
+[
+    {
+        "label": "Invite1GreeterWaitPeer",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "invite_1_greeter_wait_peer",
             "other_fields": [
                 {
-                    "name": "claimer_public_key",
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    "name": "greeter_public_key",
                     "type": "PublicKey"
                 }
             ]
         },
-        {
-            "status": "not_found",
-            "other_fields": []
-        },
-        {
-            "status": "already_deleted",
-            "other_fields": []
-        },
-        {
-            "status": "invalid_state",
-            "other_fields": []
-        }
-    ]
-}
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": [
+                    {
+                        "name": "claimer_public_key",
+                        "type": "PublicKey"
+                    }
+                ]
+            },
+            {
+                "status": "not_found",
+                "other_fields": []
+            },
+            {
+                "status": "already_deleted",
+                "other_fields": []
+            },
+            {
+                "status": "invalid_state",
+                "other_fields": []
+            }
+        ]
+    }
+]

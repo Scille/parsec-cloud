@@ -1,59 +1,66 @@
-{
-    "label": "DeviceCreate",
-    "req": {
-        "cmd": "device_create",
-        "other_fields": [
+[
+    {
+        "label": "DeviceCreate",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "device_create",
+            "other_fields": [
+                {
+                    "name": "device_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    // Same certificate than above, but expunged of device_label
+                    "name": "redacted_device_certificate",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
             {
-                "name": "device_certificate",
-                "type": "Bytes"
+                "status": "ok",
+                "other_fields": []
             },
             {
-                // Same certificate than above, but expunged of device_label
-                "name": "redacted_device_certificate",
-                "type": "Bytes"
+                "status": "invalid_certification",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
+            },
+            {
+                "status": "bad_user_id",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_data",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
+            },
+            {
+                "status": "already_exists",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
             }
         ]
-    },
-    "reps": [
-        {
-            "status": "ok",
-            "other_fields": []
-        },
-        {
-            "status": "invalid_certification",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
-            "status": "bad_user_id",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
-            "status": "invalid_data",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
-            "status": "already_exists",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        }
-    ]
-}
+    }
+]
