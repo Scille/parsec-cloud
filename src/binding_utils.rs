@@ -7,10 +7,10 @@
 
 use fancy_regex::Regex;
 use pyo3::{
-    basic::CompareOp,
     conversion::IntoPy,
     exceptions::{PyNotImplementedError, PyValueError},
     prelude::PyModule,
+    pyclass::CompareOp,
     types::{PyFrozenSet, PyTuple},
     FromPyObject, {PyAny, PyObject, PyResult, Python},
 };
@@ -174,5 +174,57 @@ macro_rules! parse_kwargs {
     };
 }
 
+macro_rules! gen_proto {
+    ($class: ident, __repr__) => {
+        #[pymethods]
+        impl $class {
+            fn __repr__(&self) -> ::pyo3::PyResult<String> {
+                Ok(format!("{:?}", self.0))
+            }
+        }
+    };
+    ($class: ident, __str__) => {
+        #[pymethods]
+        impl $class {
+            fn __str__(&self) -> ::pyo3::PyResult<String> {
+                Ok(self.0.to_string())
+            }
+        }
+    };
+    ($class: ident, __richcmp__, eq) => {
+        #[pymethods]
+        impl $class {
+            fn __richcmp__(
+                &self,
+                other: &Self,
+                op: ::pyo3::pyclass::CompareOp,
+            ) -> ::pyo3::PyResult<bool> {
+                crate::binding_utils::comp_eq(op, &self.0, &other.0)
+            }
+        }
+    };
+    ($class: ident, __richcmp__, ord) => {
+        #[pymethods]
+        impl $class {
+            fn __richcmp__(
+                &self,
+                other: &Self,
+                op: ::pyo3::pyclass::CompareOp,
+            ) -> ::pyo3::PyResult<bool> {
+                crate::binding_utils::comp_ord(op, &self.0, &other.0)
+            }
+        }
+    };
+    ($class: ident, __hash__) => {
+        #[pymethods]
+        impl $class {
+            fn __hash__(&self) -> ::pyo3::PyResult<u64> {
+                crate::binding_utils::hash_generic(&self.0)
+            }
+        }
+    };
+}
+
+pub(crate) use gen_proto;
 pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;

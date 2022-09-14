@@ -1,8 +1,6 @@
 use pyo3::{
     exceptions::PyValueError,
-    import_exception, pyclass,
-    pyclass::CompareOp,
-    pyfunction, pymethods,
+    import_exception, pyclass, pyfunction, pymethods,
     types::{PyBytes, PyDict, PyTuple, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
@@ -24,6 +22,10 @@ import_exception!(parsec.api.data, DataValidationError);
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub(crate) struct EntryName(pub libparsec::types::EntryName);
 
+crate::binding_utils::gen_proto!(EntryName, __str__);
+crate::binding_utils::gen_proto!(EntryName, __richcmp__, ord);
+crate::binding_utils::gen_proto!(EntryName, __hash__);
+
 #[pymethods]
 impl EntryName {
     #[new]
@@ -43,18 +45,6 @@ impl EntryName {
         Ok(format!("<EntryName {}>", self.0))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
-        crate::binding_utils::comp_ord(op, &self.0, &other.0)
-    }
-
-    fn __hash__(&self) -> PyResult<u64> {
-        crate::binding_utils::hash_generic(&self.0)
-    }
-
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
@@ -64,6 +54,9 @@ impl EntryName {
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct WorkspaceEntry(pub libparsec::types::WorkspaceEntry);
+
+crate::binding_utils::gen_proto!(WorkspaceEntry, __repr__);
+crate::binding_utils::gen_proto!(WorkspaceEntry, __richcmp__, eq);
 
 #[pymethods]
 impl WorkspaceEntry {
@@ -90,14 +83,6 @@ impl WorkspaceEntry {
             role_cached_on: role_cached_on.0,
             role,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
-        crate::binding_utils::comp_eq(op, &self.0, &other.0)
     }
 
     #[args(py_kwargs = "**")]
@@ -196,6 +181,9 @@ impl WorkspaceEntry {
 #[derive(Clone)]
 pub(crate) struct BlockAccess(pub libparsec::types::BlockAccess);
 
+crate::binding_utils::gen_proto!(BlockAccess, __repr__);
+crate::binding_utils::gen_proto!(BlockAccess, __richcmp__, eq);
+
 #[pymethods]
 impl BlockAccess {
     #[new]
@@ -218,14 +206,6 @@ impl BlockAccess {
                 .map_err(|_| PyValueError::new_err("Invalid `size` field"))?,
             digest: digest.0,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
-        crate::binding_utils::comp_eq(op, &self.0, &other.0)
     }
 
     #[args(py_kwargs = "**")]
@@ -290,6 +270,9 @@ impl BlockAccess {
 #[derive(Clone)]
 pub(crate) struct FileManifest(pub libparsec::types::FileManifest);
 
+crate::binding_utils::gen_proto!(FileManifest, __repr__);
+crate::binding_utils::gen_proto!(FileManifest, __richcmp__, eq);
+
 #[pymethods]
 impl FileManifest {
     #[new]
@@ -322,14 +305,6 @@ impl FileManifest {
                 .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?,
             blocks: blocks.into_iter().map(|b| b.0).collect(),
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
-        crate::binding_utils::comp_eq(op, &self.0, &other.0)
     }
 
     fn dump_and_sign<'p>(
@@ -491,6 +466,9 @@ impl FileManifest {
 #[derive(Clone)]
 pub(crate) struct FolderManifest(pub libparsec::types::FolderManifest);
 
+crate::binding_utils::gen_proto!(FolderManifest, __repr__);
+crate::binding_utils::gen_proto!(FolderManifest, __richcmp__, eq);
+
 #[pymethods]
 impl FolderManifest {
     #[new]
@@ -521,14 +499,6 @@ impl FolderManifest {
                 .map(|(name, id)| (name.0, id.0))
                 .collect(),
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
-        crate::binding_utils::comp_eq(op, &self.0, &other.0)
     }
 
     fn dump_and_sign<'p>(
@@ -672,6 +642,9 @@ impl FolderManifest {
 #[derive(Clone)]
 pub(crate) struct WorkspaceManifest(pub libparsec::types::WorkspaceManifest);
 
+crate::binding_utils::gen_proto!(WorkspaceManifest, __repr__);
+crate::binding_utils::gen_proto!(WorkspaceManifest, __richcmp__, eq);
+
 #[pymethods]
 impl WorkspaceManifest {
     #[new]
@@ -700,14 +673,6 @@ impl WorkspaceManifest {
                 .map(|(name, id)| (name.0, id.0))
                 .collect(),
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
-        crate::binding_utils::comp_eq(op, &self.0, &other.0)
     }
 
     fn dump_and_sign<'p>(
@@ -842,6 +807,9 @@ impl WorkspaceManifest {
 #[derive(Clone)]
 pub(crate) struct UserManifest(pub libparsec::types::UserManifest);
 
+crate::binding_utils::gen_proto!(UserManifest, __repr__);
+crate::binding_utils::gen_proto!(UserManifest, __richcmp__, eq);
+
 #[pymethods]
 impl UserManifest {
     #[new]
@@ -869,14 +837,6 @@ impl UserManifest {
             last_processed_message,
             workspaces: workspaces.into_iter().map(|w| w.0).collect(),
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
-        crate::binding_utils::comp_eq(op, &self.0, &other.0)
     }
 
     fn dump_and_sign<'p>(
