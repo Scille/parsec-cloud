@@ -95,19 +95,18 @@ pub struct ManifestStorage {
     local_symkey: SecretKey,
     conn: Arc<Mutex<SqliteConn>>,
     pub realm_id: EntryID,
+    /// This cache contains all the manifests that have been set or accessed
+    /// since the last call to `clear_memory_cache`
     pub(crate) caches: Arc<Mutex<HashMap<EntryID, Arc<Mutex<Cache>>>>>,
 }
 
 pub(crate) struct Cache {
-    /// This cache contains all the manifests that have been set or accessed
-    /// since the last call to `clear_memory_cache`
+    /// The current manifest for the cache.
     pub(crate) manifest: LocalManifest,
-    /// This dictionary keeps track of all the entry ids of the manifests
-    /// that have been added to the cache but still needs to be written to
-    /// the conn. The corresponding value is a set with the ids of all
-    /// the chunks that needs to be removed from the conn after the
-    /// manifest is written. Note: this set might be empty but the manifest
-    /// still requires to be flushed.
+    /// The set of entries ids that are pending to be written.
+    ///
+    /// > Note: this set might be empty but the manifest
+    /// > still requires to be flushed.
     pending_chunk_ids: Option<HashSet<ChunkOrBlockID>>,
 }
 
