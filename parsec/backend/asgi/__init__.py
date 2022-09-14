@@ -130,7 +130,7 @@ async def serve_backend_with_asgi(
             # here we configure peer address + req line + rep status + rep body size + time
             # (e.g. "GET 88.0.12.52:54160 /foo 1.1 404 823o 12343ms")
             "logger_class": ParsecLogger,
-            "access_log_format": "%(h)s %(r)s %(s)s %(b)so %(D)sus (author: %(author)s)",
+            "access_log_format": "%(h)s %(r)s %(s)s %(b)so %(D)sus %(author)s",
             "errorlog": logging.getLogger("hypercorn.error"),
             "certfile": str(ssl_certfile) if ssl_certfile else None,
             "keyfile": str(ssl_keyfile) if ssl_certfile else None,
