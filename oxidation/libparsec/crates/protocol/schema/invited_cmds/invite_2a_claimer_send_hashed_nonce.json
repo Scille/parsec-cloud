@@ -1,6 +1,6 @@
 [
     {
-        "label": "Invite2aClaimerSendHashedNonc",
+        "label": "Invite2aClaimerSendHashedNonce",
         "major_versions": [
             1,
             2,
