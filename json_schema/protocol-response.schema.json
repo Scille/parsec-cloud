@@ -1,0 +1,30 @@
+{
+    "title": "Protocol response",
+    "description": "The list of possible response for a protocol request",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "required": [
+            "status",
+            "other_fields"
+        ],
+        "additionalProperties": false,
+        "properties": {
+            "status": {
+                "type": "string",
+                "description": "The response status"
+            },
+            "unit": {
+                "type": "string",
+                "description": "The name of an `nested-types`"
+            },
+            "other_fields": {
+                "type": "array",
+                "description": "Additional fields to send alongside the commands",
+                "items": {
+                    "$ref": "./field.schema.json"
+                }
+            }
+        }
+    }
+}
