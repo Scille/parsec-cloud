@@ -4,7 +4,7 @@ use pyo3::{
     basic::CompareOp,
     exceptions::PyValueError,
     prelude::{pyclass, pymethods, IntoPy, PyObject, PyResult, Python, ToPyObject},
-    types::{PyAny, PyBytes, PyDict, PyType},
+    types::{PyBytes, PyDict, PyType},
 };
 use std::str::FromStr;
 
@@ -13,6 +13,7 @@ use crate::{
     binding_utils::{comp_op, hash_generic},
     ids::{EntryID, OrganizationID},
     invite::InvitationToken,
+    protocol::InvitationType,
 };
 
 #[pyclass]
@@ -649,16 +650,10 @@ impl BackendInvitationAddr {
     #[args(py_kwargs = "**")]
     fn new(
         organization_id: OrganizationID,
-        invitation_type: &PyAny,
+        invitation_type: &InvitationType,
         token: InvitationToken,
         py_kwargs: Option<&PyDict>,
     ) -> PyResult<Self> {
-        let inv_type = match libparsec::types::InvitationType::from_str(
-            invitation_type.getattr("name")?.extract::<&str>()?,
-        ) {
-            Ok(iv) => iv,
-            Err(err) => return Err(PyValueError::new_err(err)),
-        };
         let addr = match py_kwargs {
             Some(dict) => BackendAddr::new(
                 match dict.get_item("hostname") {
@@ -679,7 +674,7 @@ impl BackendInvitationAddr {
         Ok(Self(libparsec::types::BackendInvitationAddr::new(
             addr.unwrap().0,
             organization_id.0,
-            inv_type,
+            invitation_type.0,
             token.0,
         )))
     }
@@ -714,15 +709,8 @@ impl BackendInvitationAddr {
     }
 
     #[getter]
-    fn invitation_type(&self) -> PyResult<PyObject> {
-        Python::with_gil(|py| -> PyResult<PyObject> {
-            let cls = py
-                .import("parsec.api.protocol")?
-                .getattr("InvitationType")?;
-            let name = self.0.invitation_type().to_string();
-            let obj = cls.getattr(&name as &str)?;
-            Ok(obj.into_py(py))
-        })
+    fn invitation_type(&self) -> InvitationType {
+        InvitationType(self.0.invitation_type())
     }
 
     #[getter]
@@ -818,20 +806,13 @@ impl BackendInvitationAddr {
         _cls: &PyType,
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
-        invitation_type: &PyAny,
+        invitation_type: InvitationType,
         token: InvitationToken,
     ) -> PyResult<Self> {
-        let inv_type = match libparsec::types::InvitationType::from_str(
-            invitation_type.getattr("name")?.extract::<&str>()?,
-        ) {
-            Ok(iv) => iv,
-            Err(err) => return Err(PyValueError::new_err(err)),
-        };
-
         Ok(Self(libparsec::types::BackendInvitationAddr::new(
             backend_addr.0,
             organization_id.0,
-            inv_type,
+            invitation_type.0,
             token.0,
         )))
     }

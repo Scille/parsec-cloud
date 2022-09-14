@@ -95,7 +95,10 @@ class Transport:
 
     @classmethod
     async def init_for_client(
-        cls: Type["Transport"], stream: Stream, host: str, keepalive: Optional[int] = None
+        cls: Type["Transport"],
+        stream: Stream,
+        host: str,
+        keepalive: Optional[int] = None,
     ) -> "Transport":
         ws = WSConnection(ConnectionType.CLIENT)
         transport = cls(stream, ws, keepalive)
@@ -125,7 +128,9 @@ class Transport:
 
     @classmethod
     async def init_for_server(
-        cls: Type["Transport"], stream: Stream, upgrade_request: Optional[H11Request] = None
+        cls: Type["Transport"],
+        stream: Stream,
+        upgrade_request: Optional[H11Request] = None,
     ) -> "Transport":
         ws = WSConnection(ConnectionType.SERVER)
         if upgrade_request:

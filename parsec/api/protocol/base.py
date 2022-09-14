@@ -16,6 +16,8 @@ from typing import (
     Tuple,
     Sequence,
 )
+
+# from parsec.api.protocol.invite import InvitationType
 from parsec.api.version import ApiVersion
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.serde import (
@@ -53,7 +55,9 @@ class MessageSerializationError(SerdePackingError, ProtocolError):
 
 class IncompatibleAPIVersionsError(ProtocolError):
     def __init__(
-        self, backend_versions: Sequence[ApiVersion], client_versions: Sequence[ApiVersion] = []
+        self,
+        backend_versions: Sequence[ApiVersion],
+        client_versions: Sequence[ApiVersion] = [],
     ):
         self.client_versions = client_versions
         self.backend_versions = backend_versions
@@ -304,7 +308,10 @@ class CmdSerializer:
         self, strictly_greater_than: DateTime
     ) -> Dict[str, object]:
         return self.rep_dump(
-            {"status": "require_greater_timestamp", "strictly_greater_than": strictly_greater_than}
+            {
+                "status": "require_greater_timestamp",
+                "strictly_greater_than": strictly_greater_than,
+            }
         )
 
     def timestamp_out_of_ballpark_rep_dump(

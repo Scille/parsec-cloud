@@ -7,7 +7,6 @@ from parsec._parsec import DateTime
 from parsec.api.protocol import (
     DeviceLabel,
     HumanHandle,
-    InvitationType,
     InvitationDeletedReason,
     InvitationStatus,
     UserProfile,
@@ -31,6 +30,7 @@ from parsec.core.invite import (
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUsed
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
+from parsec._parsec import InvitationType, InviteListRepOk
 
 from tests.common import real_clock_timeout
 
@@ -46,7 +46,7 @@ async def test_good_device_claim(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE(),
         token=invitation.token,
     )
 
@@ -132,7 +132,7 @@ async def test_good_device_claim(
 
     # Now invitation should have been deleted
     rep = await alice_backend_cmds.invite_list()
-    assert rep == {"status": "ok", "invitations": []}
+    assert rep == InviteListRepOk([])
 
     # Verify user&device data in backend
     _, device = await backend.user.get_user_with_device(
@@ -184,10 +184,11 @@ async def test_good_user_claim(
         greeter_user_id=alice.user_id,
         claimer_email=claimer_email,
     )
+
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER,
+        invitation_type=InvitationType.USER(),
         token=invitation.token,
     )
 
@@ -292,7 +293,7 @@ async def test_good_user_claim(
 
     # Now invitation should have been deleted
     rep = await alice_backend_cmds.invite_list()
-    assert rep == {"status": "ok", "invitations": []}
+    assert rep == InviteListRepOk([])
 
     # Verify user&device data in backend
     user, device = await backend.user.get_user_with_device(
@@ -345,7 +346,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE(),
         token=invitation.token,
     )
 
@@ -417,7 +418,7 @@ async def test_claimer_handle_cancel_event(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE(),
         token=invitation.token,
     )
 
@@ -524,7 +525,7 @@ async def test_claimer_handle_command_failure(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE(),
         token=invitation.token,
     )
 
@@ -621,7 +622,7 @@ async def test_user_claim_but_active_users_limit_reached(backend, running_backen
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER,
+        invitation_type=InvitationType.USER(),
         token=invitation.token,
     )
 

@@ -45,15 +45,22 @@ from parsec.core.invite.exceptions import (
 
 
 def _check_rep(rep, step_name):
-    if rep["status"] == "not_found":
+    from parsec.core.invite.claimer import (
+        NOT_FOUND_TYPES,
+        ALREADY_DELETED_TYPES,
+        INVALID_STATE_TYPES,
+        OK_TYPES,
+    )
+
+    if type(rep) in NOT_FOUND_TYPES:
         raise InviteNotFoundError
-    elif rep["status"] == "already_deleted":
+    elif type(rep) in ALREADY_DELETED_TYPES:
         raise InviteAlreadyUsedError
-    elif rep["status"] == "invalid_state":
+    elif type(rep) in INVALID_STATE_TYPES:
         raise InvitePeerResetError
-    elif rep["status"] == "active_users_limit_reached":
+    elif type(rep) == dict and rep["status"] == "active_users_limit_reached":
         raise InviteActiveUsersLimitReachedError
-    elif rep["status"] != "ok":
+    elif type(rep) not in OK_TYPES and rep != {"status": "ok"}:
         raise InviteError(f"Backend error during {step_name}: {rep}")
 
 
@@ -67,33 +74,42 @@ class BaseGreetInitialCtx:
         rep = await self._cmds.invite_1_greeter_wait_peer(
             token=self.token, greeter_public_key=greeter_private_key.public_key
         )
-        if rep["status"] == "not_found":
+        from parsec.core.invite.claimer import (
+            NOT_FOUND_TYPES,
+            ALREADY_DELETED_TYPES,
+            INVALID_STATE_TYPES,
+            OK_TYPES,
+        )
+
+        if type(rep) in NOT_FOUND_TYPES:
             raise InviteNotFoundError
-        elif rep["status"] == "already_deleted":
-            raise InviteAlreadyUsedError()
-        elif rep["status"] != "ok":
+        elif type(rep) in ALREADY_DELETED_TYPES:
+            raise InviteAlreadyUsedError
+        elif type(rep) in INVALID_STATE_TYPES:
+            raise InvitePeerResetError
+        elif type(rep) not in OK_TYPES:
             raise InviteError(f"Backend error during step 1: {rep}")
 
         shared_secret_key = generate_shared_secret_key(
-            our_private_key=greeter_private_key, peer_public_key=rep["claimer_public_key"]
+            our_private_key=greeter_private_key, peer_public_key=rep.claimer_public_key
         )
         greeter_nonce = generate_nonce()
 
         rep = await self._cmds.invite_2a_greeter_get_hashed_nonce(token=self.token)
         _check_rep(rep, step_name="step 2a")
 
-        claimer_hashed_nonce = rep["claimer_hashed_nonce"]
+        claimer_hashed_nonce = rep.claimer_hashed_nonce
 
         rep = await self._cmds.invite_2b_greeter_send_nonce(
             token=self.token, greeter_nonce=greeter_nonce
         )
         _check_rep(rep, step_name="step 2b")
 
-        if HashDigest.from_data(rep["claimer_nonce"]) != claimer_hashed_nonce:
+        if HashDigest.from_data(rep.claimer_nonce) != claimer_hashed_nonce:
             raise InviteError("Invitee nonce and hashed nonce doesn't match")
 
         claimer_sas, greeter_sas = generate_sas_codes(
-            claimer_nonce=rep["claimer_nonce"],
+            claimer_nonce=rep.claimer_nonce,
             greeter_nonce=greeter_nonce,
             shared_secret_key=shared_secret_key,
         )
@@ -216,11 +232,11 @@ class UserGreetInProgress3Ctx:
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=b"")
         _check_rep(rep, step_name="step 4 (data exchange)")
 
-        if rep["payload"] is None:
+        if rep.payload is None:
             raise InviteError("Missing InviteUserData payload")
 
         try:
-            data = InviteUserData.decrypt_and_load(rep["payload"], key=self._shared_secret_key)
+            data = InviteUserData.decrypt_and_load(rep.payload, key=self._shared_secret_key)
         except DataError as exc:
             raise InviteError("Invalid InviteUserData payload provided by peer") from exc
 
@@ -246,11 +262,11 @@ class DeviceGreetInProgress3Ctx:
         rep = await self._cmds.invite_4_greeter_communicate(token=self.token, payload=b"")
         _check_rep(rep, step_name="step 4 (data exchange)")
 
-        if rep["payload"] is None:
+        if rep.payload is None:
             raise InviteError("Missing InviteDeviceData payload")
 
         try:
-            data = InviteDeviceData.decrypt_and_load(rep["payload"], key=self._shared_secret_key)
+            data = InviteDeviceData.decrypt_and_load(rep.payload, key=self._shared_secret_key)
         except DataError as exc:
             raise InviteError("Invalid InviteDeviceData payload provided by peer") from exc
 
@@ -346,7 +362,12 @@ class UserGreetInProgress4Ctx:
             redacted_device_certificate,
             invite_user_confirmation,
         ) = _create_new_user_certificates(
-            author, device_label, human_handle, profile, self._public_key, self._verify_key
+            author,
+            device_label,
+            human_handle,
+            profile,
+            self._public_key,
+            self._verify_key,
         )
 
         rep = await self._cmds.user_create(
