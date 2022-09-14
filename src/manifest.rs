@@ -1,6 +1,8 @@
 use pyo3::{
     exceptions::PyValueError,
-    import_exception, pyclass, pyfunction, pymethods,
+    import_exception, pyclass,
+    pyclass::CompareOp,
+    pyfunction, pymethods,
     types::{PyBytes, PyDict, PyTuple, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
@@ -41,9 +43,17 @@ impl EntryName {
         Ok(format!("<EntryName {}>", self.0))
     }
 
-    crate::binding_utils::impl_richcmp_ord!();
-    crate::binding_utils::impl_str!();
-    crate::binding_utils::impl_hash!();
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        crate::binding_utils::comp_ord(op, &self.0, &other.0)
+    }
+
+    fn __hash__(&self) -> PyResult<u64> {
+        crate::binding_utils::hash_generic(&self.0)
+    }
 
     #[getter]
     fn str(&self) -> PyResult<String> {
@@ -82,8 +92,13 @@ impl WorkspaceEntry {
         }))
     }
 
-    crate::binding_utils::impl_repr!();
-    crate::binding_utils::impl_richcmp_eq!();
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        crate::binding_utils::comp_eq(op, &self.0, &other.0)
+    }
 
     #[args(py_kwargs = "**")]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
@@ -205,8 +220,13 @@ impl BlockAccess {
         }))
     }
 
-    crate::binding_utils::impl_repr!();
-    crate::binding_utils::impl_richcmp_eq!();
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        crate::binding_utils::comp_eq(op, &self.0, &other.0)
+    }
 
     #[args(py_kwargs = "**")]
     fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
@@ -304,8 +324,13 @@ impl FileManifest {
         }))
     }
 
-    crate::binding_utils::impl_repr!();
-    crate::binding_utils::impl_richcmp_eq!();
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        crate::binding_utils::comp_eq(op, &self.0, &other.0)
+    }
 
     fn dump_and_sign<'p>(
         &self,
@@ -498,8 +523,13 @@ impl FolderManifest {
         }))
     }
 
-    crate::binding_utils::impl_repr!();
-    crate::binding_utils::impl_richcmp_eq!();
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        crate::binding_utils::comp_eq(op, &self.0, &other.0)
+    }
 
     fn dump_and_sign<'p>(
         &self,
@@ -672,8 +702,13 @@ impl WorkspaceManifest {
         }))
     }
 
-    crate::binding_utils::impl_repr!();
-    crate::binding_utils::impl_richcmp_eq!();
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        crate::binding_utils::comp_eq(op, &self.0, &other.0)
+    }
 
     fn dump_and_sign<'p>(
         &self,
@@ -836,8 +871,13 @@ impl UserManifest {
         }))
     }
 
-    crate::binding_utils::impl_repr!();
-    crate::binding_utils::impl_richcmp_eq!();
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.0))
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        crate::binding_utils::comp_eq(op, &self.0, &other.0)
+    }
 
     fn dump_and_sign<'p>(
         &self,

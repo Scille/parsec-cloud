@@ -174,58 +174,5 @@ macro_rules! parse_kwargs {
     };
 }
 
-macro_rules! impl_repr {
-    () => {
-        fn __repr__(&self) -> ::pyo3::PyResult<String> {
-            Ok(format!("{:?}", self.0))
-        }
-    };
-}
-
-macro_rules! impl_str {
-    () => {
-        fn __str__(&self) -> PyResult<String> {
-            Ok(self.0.to_string())
-        }
-    };
-}
-
-macro_rules! impl_richcmp_eq {
-    () => {
-        fn __richcmp__(
-            &self,
-            other: &Self,
-            op: ::pyo3::basic::CompareOp,
-        ) -> ::pyo3::PyResult<bool> {
-            crate::binding_utils::comp_eq(op, &self.0, &other.0)
-        }
-    };
-}
-
-macro_rules! impl_richcmp_ord {
-    () => {
-        fn __richcmp__(
-            &self,
-            other: &Self,
-            op: ::pyo3::basic::CompareOp,
-        ) -> ::pyo3::PyResult<bool> {
-            crate::binding_utils::comp_ord(op, &self.0, &other.0)
-        }
-    };
-}
-
-macro_rules! impl_hash {
-    () => {
-        fn __hash__(&self) -> ::pyo3::PyResult<u64> {
-            crate::binding_utils::hash_generic(&self.0)
-        }
-    };
-}
-
-pub(crate) use impl_hash;
-pub(crate) use impl_repr;
-pub(crate) use impl_richcmp_eq;
-pub(crate) use impl_richcmp_ord;
-pub(crate) use impl_str;
 pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;
