@@ -244,6 +244,7 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::VlobUpdateRepBadTimestamp>()?;
     m.add_class::<protocol::VlobUpdateRepNotASequesteredOrganization>()?;
     m.add_class::<protocol::VlobUpdateRepSequesterInconsistency>()?;
+    m.add_class::<protocol::VlobUpdateRepSequesterRejected>()?;
     m.add_class::<protocol::VlobUpdateRepUnknownStatus>()?;
     m.add_class::<protocol::VlobPollChangesReq>()?;
     m.add_class::<protocol::VlobPollChangesRep>()?;
