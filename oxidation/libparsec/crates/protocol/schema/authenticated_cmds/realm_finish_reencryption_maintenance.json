@@ -1,57 +1,64 @@
-{
-    "label": "RealmFinishReencryptionMaintenance",
-    "req": {
-        "cmd": "realm_finish_reencryption_maintenance",
-        "other_fields": [
+[
+    {
+        "label": "RealmFinishReencryptionMaintenance",
+        "major_versions": [
+            1,
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "realm_finish_reencryption_maintenance",
+            "other_fields": [
+                {
+                    "name": "realm_id",
+                    "type": "RealmID"
+                },
+                {
+                    "name": "encryption_revision",
+                    "type": "Index"
+                }
+            ]
+        },
+        "reps": [
             {
-                "name": "realm_id",
-                "type": "RealmID"
+                "status": "ok",
+                "other_fields": []
             },
             {
-                "name": "encryption_revision",
-                "type": "Index"
+                "status": "not_allowed",
+                "other_fields": []
+            },
+            {
+                "status": "not_found",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
+            },
+            {
+                "status": "bad_encryption_revision",
+                "other_fields": []
+            },
+            {
+                "status": "not_in_maintenance",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
+            },
+            {
+                "status": "maintenance_error",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "Option<String>"
+                    }
+                ]
             }
         ]
-    },
-    "reps": [
-        {
-            "status": "ok",
-            "other_fields": []
-        },
-        {
-            "status": "not_allowed",
-            "other_fields": []
-        },
-        {
-            "status": "not_found",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
-            "status": "bad_encryption_revision",
-            "other_fields": []
-        },
-        {
-            "status": "not_in_maintenance",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        },
-        {
-            "status": "maintenance_error",
-            "other_fields": [
-                {
-                    "name": "reason",
-                    "type": "Option<String>"
-                }
-            ]
-        }
-    ]
-}
+    }
+]
