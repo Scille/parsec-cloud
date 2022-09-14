@@ -202,11 +202,11 @@ jobs:
 
       - name: Install Snapcraft
         uses: samuelmeuli/action-snapcraft@10d7d0a84d9d86098b19f872257df314b0bd8e2d # pin v1.2.0
-        with:
-          snapcraft_token: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
 
       - name: Upload Snap
         run: snapcraft upload --release=edge dist/parsec*.snap
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
 
   package-linux-release-pypi:
     name: '🐧 Linux: 📦 Packaging (release Pypi)'
@@ -218,6 +218,9 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: dist
+
+      - name: Remove all non-wheel files from the `dist` directory
+        run: find . -type f ! -name '*.whl' -delete
 
       - name: Publish wheel on PyPI
         uses: pypa/gh-action-pypi-publish@37f50c210e3d2f9450da2cd423303d6a14a6e29f # pin v1.5.1
