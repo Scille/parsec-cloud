@@ -10,8 +10,10 @@ import urllib
 from parsec._parsec import (
     VlobCreateRepOk,
     VlobCreateRepSequesterInconsistency,
+    VlobCreateRepSequesterRejected,
     VlobUpdateRepOk,
     VlobUpdateRepSequesterInconsistency,
+    VlobUpdateRepSequesterRejected,
 )
 from parsec.api.protocol import OrganizationID, VlobID, SequesterServiceID
 from parsec.backend.sequester import (
@@ -87,7 +89,6 @@ async def test_vlob_create_update_and_sequester_access(
         assert rep.sequester_authority_certificate == coolorg.sequester_authority.certif
         assert rep.sequester_services_certificates == (s1.certif, s2.certif, s4.certif)
 
-
         # 2) Try with sequester blob missing for one service
         rep = await vlob_cmd(
             alice_ws, **cmd_kwargs, sequester_blob={s1.service_id: b1}, check_rep=False
@@ -98,7 +99,6 @@ async def test_vlob_create_update_and_sequester_access(
         )
         assert rep.sequester_authority_certificate == coolorg.sequester_authority.certif
         assert rep.sequester_services_certificates == (s1.certif, s2.certif, s4.certif)
-
 
         # 3) Try with unknown additional sequester blob
         rep = await vlob_cmd(
@@ -113,7 +113,6 @@ async def test_vlob_create_update_and_sequester_access(
         )
         assert rep.sequester_authority_certificate == coolorg.sequester_authority.certif
         assert rep.sequester_services_certificates == (s1.certif, s2.certif, s4.certif)
-
 
         # 4) Try with blob for a removed sequester service
         rep = await vlob_cmd(
@@ -132,8 +131,7 @@ async def test_vlob_create_update_and_sequester_access(
             rep, (VlobCreateRepSequesterInconsistency, VlobUpdateRepSequesterInconsistency)
         )
         assert rep.sequester_authority_certificate == coolorg.sequester_authority.certif
-        assert rep.sequester_services_certificates == (s1.certif, s2.certif, S4.certif)
-
+        assert rep.sequester_services_certificates == (s1.certif, s2.certif, s4.certif)
 
         # 5) Finally the valid operation
         rep = await vlob_cmd(
@@ -210,7 +208,7 @@ async def _register_service_and_create_vlob(
         check_rep=False,
     )
 
-    assert rep == {"status": "ok"}
+    assert isinstance(rep, VlobCreateRepOk)
 
     return service
 
@@ -262,7 +260,7 @@ async def test_webhook_vlob_create_update(
             check_rep=False,
         )
 
-        assert rep == {"status": "ok"}
+        assert isinstance(rep, VlobUpdateRepOk)
         _assert_webhook_posted(sequester_blob)
 
 
@@ -295,7 +293,8 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert rep["status"] == "sequester_webhook_failed"
+        assert isinstance(rep, VlobCreateRepSequesterRejected)
+        assert rep.service_error.startswith("Webhook service failed:")
 
         rep = await vlob_update(
             alice_ws,
@@ -305,7 +304,8 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert rep["status"] == "sequester_webhook_failed"
+        assert isinstance(rep, VlobUpdateRepSequesterRejected)
+        assert rep.service_error.startswith("Webhook service failed:")
 
         # Test httperror
         def raise_httperror(*args, **kwargs):
@@ -320,10 +320,10 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert rep["status"] == "sequester_rejected"
-        assert rep["service_label"] == service.backend_service.service_label
-        assert rep["service_id"] == service.service_id
-        assert rep["service_error"] == "405:METHOD NOT ALLOWED"
+        assert isinstance(rep, VlobCreateRepSequesterRejected)
+        assert rep.service_label == service.backend_service.service_label
+        assert rep.service_id == service.service_id
+        assert rep.service_error == "405:METHOD NOT ALLOWED"
 
         rep = await vlob_update(
             alice_ws,
@@ -333,10 +333,10 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert rep["status"] == "sequester_rejected"
-        assert rep["service_label"] == service.backend_service.service_label
-        assert rep["service_id"] == service.service_id
-        assert rep["service_error"] == "405:METHOD NOT ALLOWED"
+        assert isinstance(rep, VlobUpdateRepSequesterRejected)
+        assert rep.service_label == service.backend_service.service_label
+        assert rep.service_id == service.service_id
+        assert rep.service_error == "405:METHOD NOT ALLOWED"
 
         # Test error from service
 
@@ -354,10 +354,11 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert rep["status"] == "sequester_rejected"
-        assert rep["service_label"] == service.backend_service.service_label
-        assert rep["service_id"] == service.service_id
-        assert rep["service_error"] == "some_error_from_service"
+
+        assert isinstance(rep, VlobCreateRepSequesterRejected)
+        assert rep.service_label == service.backend_service.service_label
+        assert rep.service_id == service.service_id
+        assert rep.service_error == "some_error_from_service"
 
         rep = await vlob_update(
             alice_ws,
@@ -367,10 +368,10 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert rep["status"] == "sequester_rejected"
-        assert rep["service_label"] == service.backend_service.service_label
-        assert rep["service_id"] == service.service_id
-        assert rep["service_error"] == "some_error_from_service"
+        assert isinstance(rep, VlobUpdateRepSequesterRejected)
+        assert rep.service_label == service.backend_service.service_label
+        assert rep.service_id == service.service_id
+        assert rep.service_error == "some_error_from_service"
 
 
 @customize_fixtures(coolorg_is_sequestered_organization=True)
@@ -403,7 +404,8 @@ async def test_missing_webhook_url(coolorg: OrganizationFullData, alice_ws, real
                 broken_service.service_id: sequester_blob,
             },
         )
-        assert rep["status"] == "sequester_webhook_failed"
+
+        assert isinstance(rep, VlobCreateRepSequesterRejected)
 
 
 @customize_fixtures(coolorg_is_sequestered_organization=True)
