@@ -24,7 +24,7 @@ from parsec._parsec import (
     Invite4GreeterCommunicateRepInvalidState,
 )
 
-INVALID_STATES_TYPES = [
+INVALID_STATES_TYPES = (
     Invite1ClaimerWaitPeerRepInvalidState,
     Invite1GreeterWaitPeerRepInvalidState,
     Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
@@ -37,7 +37,7 @@ INVALID_STATES_TYPES = [
     Invite3bGreeterSignifyTrustRepInvalidState,
     Invite4ClaimerCommunicateRepInvalidState,
     Invite4GreeterCommunicateRepInvalidState,
-]
+)
 
 
 @pytest.mark.trio
@@ -169,12 +169,12 @@ async def test_conduit_exchange_reset(exchange_testbed):
 
         if reset_actor == "greeter":
             claimer_rep = await tb.get_result("claimer")
-            assert type(claimer_rep) in INVALID_STATES_TYPES
+            assert isinstance(claimer_rep, INVALID_STATES_TYPES)
             await tb.send_order("claimer", "1_wait_peer")
         else:
             assert reset_actor == "claimer"
             greeter_rep = await tb.get_result("greeter")
-            assert type(greeter_rep) in INVALID_STATES_TYPES
+            assert isinstance(greeter_rep, INVALID_STATES_TYPES)
             await tb.send_order("greeter", "1_wait_peer")
 
         await tb.assert_ok_rep("greeter")
@@ -184,12 +184,12 @@ async def test_conduit_exchange_reset(exchange_testbed):
         await tb.send_order(reset_actor, "1_wait_peer")
         if reset_actor == "greeter":
             claimer_rep = await tb.get_result("claimer")
-            assert type(claimer_rep) in INVALID_STATES_TYPES
+            assert isinstance(claimer_rep, INVALID_STATES_TYPES)
             await tb.send_order("claimer", "1_wait_peer")
         else:
             assert reset_actor == "claimer"
             greeter_rep = await tb.get_result("greeter")
-            assert type(greeter_rep) in INVALID_STATES_TYPES
+            assert isinstance(greeter_rep, INVALID_STATES_TYPES)
             await tb.send_order("greeter", "1_wait_peer")
 
         await tb.assert_ok_rep("greeter")
