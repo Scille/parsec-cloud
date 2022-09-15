@@ -4,7 +4,6 @@ import base64
 import json
 from typing import List, Tuple, Dict, Optional
 
-from parsec._parsec import DateTime
 import urllib
 from parsec.backend.http_utils import http_request
 from parsec.backend.sequester import SequesterService, SequesterServiceType
@@ -23,6 +22,7 @@ from parsec._parsec import (
     VlobCreateRepBadTimestamp,
     VlobCreateRepNotASequesteredOrganization,
     VlobCreateRepSequesterInconsistency,
+    VlobCreateRepSequesterRejected,
     VlobReadReq,
     VlobReadRep,
     VlobReadRepOk,
@@ -43,6 +43,7 @@ from parsec._parsec import (
     VlobUpdateRepBadTimestamp,
     VlobUpdateRepNotASequesteredOrganization,
     VlobUpdateRepSequesterInconsistency,
+    VlobUpdateRepSequesterRejected,
     VlobPollChangesReq,
     VlobPollChangesRep,
     VlobPollChangesRepOk,
@@ -199,11 +200,11 @@ async def extract_sequestered_data_and_proceed_webhook(
 
         to_webhook_data = {
             "sequester_blob": base64.urlsafe_b64encode(sequester_data),
-            "author": author,
+            "author": author.str,
             "encryption_revision": encryption_revision,
             "vlob_id": vlob_id,
             "timestamp": timestamp,
-            "organization_id": organization_id,
+            "organization_id": organization_id.str,
         }
         to_webhook_data = urllib.parse.urlencode(to_webhook_data).encode()
         try:
@@ -295,33 +296,21 @@ class BaseVlobComponent:
                 sequester_services_certificates=exc.sequester_services_certificates,
             )
 
-        # TODO: Change return values
         except VlobSequesterWebhookServiceRejectedError as exc:
-            return vlob_create_serializer.rep_dump(
-                {
-                    "status": "sequester_rejected",
-                    "service_id": exc.service_id,
-                    "service_label": exc.service_label,
-                    "service_error": exc.error,
-                }
+            return VlobCreateRepSequesterRejected(
+                service_id=exc.service_id, service_label=exc.service_label, service_error=exc.error
             )
-
         except (
             VlobSequesterServiceMissingWebhookError,
             VlobSequesterServiceWebhookUrlError,
         ) as exc:
-            return vlob_create_serializer.rep_dump(
-                {
-                    "status": "sequester_webhook_failed",
-                    "service_id": exc.service_id,
-                    "service_label": exc.service_label,
-                }
+            return VlobCreateRepSequesterRejected(
+                service_id=exc.service_id,
+                service_label=exc.service_label,
+                service_error=f"Webhook service failed: {exc}",
             )
 
-        
-
         return VlobCreateRepOk()
-
 
     @api("vlob_read")
     @catch_protocol_errors
@@ -432,27 +421,18 @@ class BaseVlobComponent:
 
         # TODO Change return value
         except VlobSequesterWebhookServiceRejectedError as exc:
-            return vlob_create_serializer.rep_dump(
-                {
-                    "status": "sequester_rejected",
-                    "service_id": exc.service_id,
-                    "service_label": exc.service_label,
-                    "service_error": exc.error,
-                }
+            return VlobUpdateRepSequesterRejected(
+                service_id=exc.service_id, service_label=exc.service_label, service_error=exc.error
             )
-
         except (
             VlobSequesterServiceMissingWebhookError,
             VlobSequesterServiceWebhookUrlError,
         ) as exc:
-            return vlob_create_serializer.rep_dump(
-                {
-                    "status": "sequester_webhook_failed",
-                    "service_id": exc.service_id,
-                    "service_label": exc.service_label,
-                }
+            return VlobUpdateRepSequesterRejected(
+                service_id=exc.service_id,
+                service_label=exc.service_label,
+                service_error=f"Webhook service failed: {exc}",
             )
-
         return VlobUpdateRepOk()
 
     @api("vlob_poll_changes")
