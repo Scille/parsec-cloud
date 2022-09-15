@@ -108,7 +108,6 @@ async def test_device_create_invalid_certified(alice_ws, alice, bob, alice_nd):
         device_certificate=bad_device_certificate,
         redacted_device_certificate=good_device_certificate,
     )
-    # The reason is no longer generated
     assert isinstance(rep, DeviceCreateRepInvalidCertification)
 
     # Same for the redacted part
@@ -118,7 +117,6 @@ async def test_device_create_invalid_certified(alice_ws, alice, bob, alice_nd):
         device_certificate=good_device_certificate,
         redacted_device_certificate=bad_device_certificate,
     )
-    # The reason is no longer generated
     assert isinstance(rep, DeviceCreateRepInvalidCertification)
 
 
@@ -138,7 +136,7 @@ async def test_device_create_already_exists(alice_ws, alice, alice2):
         device_certificate=device_certificate,
         redacted_device_certificate=device_certificate,
     )
-    # The reason is no longer generated
+
     assert isinstance(rep, DeviceCreateRepAlreadyExists)
 
 
@@ -158,7 +156,6 @@ async def test_device_create_not_own_user(bob_ws, bob, alice_nd):
         device_certificate=device_certificate,
         redacted_device_certificate=device_certificate,
     )
-    # The reason is no longer generated
     assert isinstance(rep, DeviceCreateRepBadUserId)
 
 
@@ -179,7 +176,6 @@ async def test_device_create_certify_too_old(alice_ws, alice, alice_nd):
             device_certificate=device_certificate,
             redacted_device_certificate=device_certificate,
         )
-        # The reason is no longer generated
         assert isinstance(rep, DeviceCreateRepInvalidCertification)
 
 
@@ -207,7 +203,6 @@ async def test_device_create_bad_redacted_device_certificate(alice_ws, alice, al
                 alice.signing_key
             ),
         )
-        # The reason is no longer generated
         assert isinstance(rep, DeviceCreateRepInvalidData)
 
     # Finally just make sure good was really good
@@ -238,5 +233,4 @@ async def test_redacted_certificates_cannot_contain_sensitive_data(alice_ws, ali
             device_certificate=device_certificate,
             redacted_device_certificate=device_certificate,
         )
-        # The reason is no longer generated
         assert isinstance(rep, DeviceCreateRepInvalidData)

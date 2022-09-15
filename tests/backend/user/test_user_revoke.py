@@ -79,7 +79,6 @@ async def test_user_revoke_not_admin(
     ).dump_and_sign(bob.signing_key)
 
     rep = await user_revoke(bob_ws, revoked_user_certificate=alice_revocation)
-    # The reason is no longer generated
     assert isinstance(rep, UserRevokeRepNotAllowed)
 
 
@@ -93,7 +92,6 @@ async def test_cannot_self_revoke(
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_revoke(alice_ws, revoked_user_certificate=alice_revocation)
-    # The reason is no longer generated
     assert isinstance(rep, UserRevokeRepNotAllowed)
 
 
@@ -118,7 +116,6 @@ async def test_user_revoke_already_revoked(backend_asgi_app, alice_ws, bob, alic
     assert isinstance(rep, UserRevokeRepOk)
 
     rep = await user_revoke(alice_ws, revoked_user_certificate=bob_revocation)
-    # The reason is no longer generated
     assert isinstance(rep, UserRevokeRepAlreadyRevoked)
 
 
@@ -129,7 +126,6 @@ async def test_user_revoke_invalid_certified(backend_asgi_app, alice_ws, alice2,
     ).dump_and_sign(alice2.signing_key)
 
     rep = await user_revoke(alice_ws, revoked_user_certificate=revoked_user_certificate)
-    # The Reason is no longer generated
     assert isinstance(rep, UserRevokeRepInvalidCertification)
 
 
@@ -142,7 +138,6 @@ async def test_user_revoke_certify_too_old(backend_asgi_app, alice_ws, alice, bo
 
     with freeze_time(now.add(seconds=INVITATION_VALIDITY + 1)):
         rep = await user_revoke(alice_ws, revoked_user_certificate=revoked_user_certificate)
-        # The reason is no longer generated
         assert isinstance(rep, UserRevokeRepInvalidCertification)
 
 

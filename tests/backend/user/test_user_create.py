@@ -210,7 +210,6 @@ async def test_user_create_invalid_certificate(alice_ws, alice, bob, mallory):
             redacted_user_certificate=good_user_certificate,
             redacted_device_certificate=good_device_certificate,
         )
-        # The reason is no longer generated
         assert isinstance(rep, UserCreateRepInvalidCertification)
 
     # Same thing for the redacted part
@@ -226,7 +225,6 @@ async def test_user_create_invalid_certificate(alice_ws, alice, bob, mallory):
             redacted_user_certificate=cu,
             redacted_device_certificate=cd,
         )
-        # The reason is no longer generated
         assert isinstance(rep, UserCreateRepInvalidCertification)
 
 
@@ -256,7 +254,6 @@ async def test_user_create_not_matching_user_device(alice_ws, alice, bob, mallor
         redacted_user_certificate=user_certificate,
         redacted_device_certificate=device_certificate,
     )
-    # The reason is no longer generated
     assert isinstance(rep, UserCreateRepInvalidData)
 
 
@@ -294,7 +291,6 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
                 alice.signing_key
             ),
         )
-        # The reason is no longer generated
         assert isinstance(rep, UserCreateRepInvalidData)
 
     # Missing redacted certificate is not allowed as well
@@ -341,7 +337,6 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
             alice.signing_key
         ),
     )
-    # The reason is no longer generated
     assert isinstance(rep, UserCreateRepOk)
 
 
@@ -380,7 +375,6 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
             ),
             redacted_device_certificate=device_certificate,
         )
-        # The reason is no longer generated
         assert isinstance(rep, UserCreateRepInvalidData)
 
     # Missing redacted certificate is not allowed as well
@@ -425,7 +419,6 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
         redacted_user_certificate=good_redacted_user_certificate.dump_and_sign(alice.signing_key),
         redacted_device_certificate=device_certificate,
     )
-    # The reason is no longer generated
     assert isinstance(rep, UserCreateRepOk)
 
 
@@ -455,7 +448,6 @@ async def test_user_create_already_exists(alice_ws, alice, bob):
         redacted_user_certificate=user_certificate,
         redacted_device_certificate=device_certificate,
     )
-    # The reason is no longer generated
     assert isinstance(rep, UserCreateRepAlreadyExists)
 
 
@@ -493,7 +485,6 @@ async def test_user_create_human_handle_already_exists(alice_ws, alice, bob):
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    # The reason is no longer generated
     assert isinstance(rep, UserCreateRepAlreadyExists)
 
 
@@ -537,7 +528,6 @@ async def test_user_create_human_handle_with_revoked_previous_one(
         redacted_user_certificate=redacted_user_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    # The reason is no longer generated
     assert isinstance(rep, UserCreateRepOk)
 
 
@@ -568,7 +558,6 @@ async def test_user_create_not_matching_certified_on(alice_ws, alice, mallory):
             redacted_user_certificate=user_certificate,
             redacted_device_certificate=device_certificate,
         )
-        # The reason is no longer generated
         assert isinstance(rep, UserCreateRepInvalidData)
 
 
@@ -600,7 +589,6 @@ async def test_user_create_certificate_too_old(alice_ws, alice, mallory):
             redacted_user_certificate=user_certificate,
             redacted_device_certificate=device_certificate,
         )
-        # The reason is no longer generated
         assert isinstance(rep, UserCreateRepInvalidCertification)
 
 
@@ -615,7 +603,6 @@ async def test_user_create_author_not_admin(backend_asgi_app, bob_ws):
         redacted_user_certificate=b"<redacted_user_certificate>",
         redacted_device_certificate=b"<redacted_device_certificate>",
     )
-    # The reason is no longer generated
     assert isinstance(rep, UserCreateRepNotAllowed)
 
 
@@ -653,7 +640,6 @@ async def test_redacted_certificates_cannot_contain_sensitive_data(alice_ws, ali
             redacted_user_certificate=user_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        # The reason is no longer generated
         assert isinstance(rep, UserCreateRepInvalidData)
 
         rep = await user_create(
@@ -663,5 +649,4 @@ async def test_redacted_certificates_cannot_contain_sensitive_data(alice_ws, ali
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=device_certificate,
         )
-        # The reason is no longer generated
         assert isinstance(rep, UserCreateRepInvalidData)

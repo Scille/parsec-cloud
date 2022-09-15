@@ -58,7 +58,6 @@ async def test_isolation_from_other_organization(
 @customize_fixtures(alice_profile=UserProfile.OUTSIDER)
 async def test_not_allowed_for_outsider(alice_ws):
     rep = await human_find(alice_ws, query="whatever")
-    # The reason is no longer generated
     assert isinstance(rep, HumanFindRepNotAllowed)
 
 
