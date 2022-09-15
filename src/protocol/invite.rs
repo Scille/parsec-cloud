@@ -1,11 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::exceptions::PyAttributeError;
-use pyo3::exceptions::PyNotImplementedError;
-use pyo3::import_exception;
-use pyo3::prelude::*;
-use pyo3::pyclass::CompareOp;
-use pyo3::types::{PyBytes, PyType};
+use pyo3::{
+    exceptions::{PyAttributeError, PyNotImplementedError},
+    import_exception,
+    prelude::*,
+    pyclass::CompareOp,
+    types::{PyBytes, PyType},
+};
 
 use libparsec::protocol::authenticated_cmds::{
     invite_1_greeter_wait_peer, invite_2a_greeter_get_hashed_nonce, invite_2b_greeter_send_nonce,
@@ -18,14 +19,16 @@ use libparsec::protocol::invited_cmds::{
     invite_3b_claimer_wait_peer_trust, invite_4_claimer_communicate, invite_info,
 };
 
-use crate::api_crypto;
-use crate::api_crypto::{HashDigest, PublicKey};
-use crate::binding_utils::py_to_rs_invitation_status;
-use crate::ids::{HumanHandle, UserID};
-use crate::invite;
-use crate::invite::InvitationToken;
-use crate::protocol::gen_rep;
-use crate::time::DateTime;
+use crate::{
+    api_crypto,
+    api_crypto::{HashDigest, PublicKey},
+    binding_utils::py_to_rs_invitation_status,
+    ids::{HumanHandle, UserID},
+    invite,
+    invite::InvitationToken,
+    protocol::gen_rep,
+    time::DateTime,
+};
 
 import_exception!(parsec.api.protocol, ProtocolError);
 
@@ -114,23 +117,21 @@ impl InviteNewReq {
     #[pyo3(name = "r#type")]
     fn invitation_type(&self) -> InvitationType {
         match self.0 {
-            invite_new::Req(invite_new::UserOrDevice::Device { send_email: _ }) => {
+            invite_new::Req(invite_new::UserOrDevice::Device { .. }) => {
                 InvitationType(libparsec::types::InvitationType::Device)
             }
-            invite_new::Req(invite_new::UserOrDevice::User {
-                claimer_email: _,
-                send_email: _,
-            }) => InvitationType(libparsec::types::InvitationType::User),
+            invite_new::Req(invite_new::UserOrDevice::User { .. }) => {
+                InvitationType(libparsec::types::InvitationType::User)
+            }
         }
     }
 
     #[getter]
     fn claimer_email(&'_ self) -> PyResult<&'_ String> {
         match &self.0 {
-            invite_new::Req(invite_new::UserOrDevice::User {
-                claimer_email,
-                send_email: _,
-            }) => Ok(claimer_email),
+            invite_new::Req(invite_new::UserOrDevice::User { claimer_email, .. }) => {
+                Ok(claimer_email)
+            }
             _ => Err(PyAttributeError::new_err("No claimer_email attribute")),
         }
     }
@@ -138,10 +139,7 @@ impl InviteNewReq {
     #[getter]
     fn send_email(&self) -> bool {
         match &self.0 {
-            invite_new::Req(invite_new::UserOrDevice::User {
-                claimer_email: _,
-                send_email,
-            }) => *send_email,
+            invite_new::Req(invite_new::UserOrDevice::User { send_email, .. }) => *send_email,
             invite_new::Req(invite_new::UserOrDevice::Device { send_email }) => *send_email,
         }
     }
@@ -200,10 +198,7 @@ impl InviteNewRepOk {
     #[getter]
     fn token(_self: PyRef<'_, Self>) -> PyResult<InvitationToken> {
         match &_self.as_ref().0 {
-            invite_new::Rep::Ok {
-                token,
-                email_sent: _,
-            } => Ok(invite::InvitationToken(*token)),
+            invite_new::Rep::Ok { token, .. } => Ok(invite::InvitationToken(*token)),
             _ => Err(PyAttributeError::new_err("No attribute token")),
         }
     }
@@ -211,10 +206,7 @@ impl InviteNewRepOk {
     #[getter]
     fn email_sent(_self: PyRef<'_, Self>) -> PyResult<&'static str> {
         match &_self.as_ref().0 {
-            invite_new::Rep::Ok {
-                token: _,
-                email_sent,
-            } => match email_sent {
+            invite_new::Rep::Ok { email_sent, .. } => match email_sent {
                 libparsec::types::Maybe::Present(p) => {
                     if let Some(status) = p {
                         match status {
@@ -331,7 +323,7 @@ impl InviteListReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Eq, Clone)]
 pub(crate) struct InviteListItem(pub invite_list::InviteListItem);
 
 #[pymethods]
@@ -380,70 +372,8 @@ impl InviteListItem {
 
     fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
         match op {
-            CompareOp::Eq => match (&self.0, &other.0) {
-                (
-                    invite_list::InviteListItem::Device {
-                        token,
-                        created_on,
-                        status,
-                    },
-                    invite_list::InviteListItem::Device {
-                        token: rtoken,
-                        created_on: rcreated_on,
-                        status: rstatus,
-                    },
-                ) => Ok(token == rtoken && created_on == rcreated_on && status == rstatus),
-                (
-                    invite_list::InviteListItem::User {
-                        token,
-                        created_on,
-                        claimer_email,
-                        status,
-                    },
-                    invite_list::InviteListItem::User {
-                        token: rtoken,
-                        created_on: rcreated_on,
-                        claimer_email: rclaimer_email,
-                        status: rstatus,
-                    },
-                ) => Ok(token == rtoken
-                    && created_on == rcreated_on
-                    && status == rstatus
-                    && claimer_email == rclaimer_email),
-                _ => Ok(false),
-            },
-            CompareOp::Ne => match (&self.0, &other.0) {
-                (
-                    invite_list::InviteListItem::Device {
-                        token,
-                        created_on,
-                        status,
-                    },
-                    invite_list::InviteListItem::Device {
-                        token: rtoken,
-                        created_on: rcreated_on,
-                        status: rstatus,
-                    },
-                ) => Ok(token != rtoken && created_on != rcreated_on && status != rstatus),
-                (
-                    invite_list::InviteListItem::User {
-                        token,
-                        created_on,
-                        claimer_email,
-                        status,
-                    },
-                    invite_list::InviteListItem::User {
-                        token: rtoken,
-                        created_on: rcreated_on,
-                        claimer_email: rclaimer_email,
-                        status: rstatus,
-                    },
-                ) => Ok(token != rtoken
-                    && created_on != rcreated_on
-                    && status != rstatus
-                    && claimer_email != rclaimer_email),
-                _ => Ok(false),
-            },
+            CompareOp::Eq => Ok(self.0 == other.0),
+            CompareOp::Ne => Ok(self.0 != other.0),
             _ => Err(PyNotImplementedError::new_err("")),
         }
     }
@@ -452,6 +382,7 @@ impl InviteListItem {
 gen_rep!(invite_list, InviteListRep, { .. });
 
 #[pyclass(extends=InviteListRep)]
+#[derive(Eq, PartialEq)]
 pub(crate) struct InviteListRepOk;
 
 #[pymethods]
@@ -468,24 +399,8 @@ impl InviteListRepOk {
         op: CompareOp,
     ) -> PyResult<bool> {
         match op {
-            CompareOp::Eq => match &_self.as_ref().0 {
-                invite_list::Rep::Ok { invitations } => match &other.as_ref().0 {
-                    invite_list::Rep::Ok {
-                        invitations: rinvitations,
-                    } => Ok(invitations == rinvitations),
-                    _ => Err(PyNotImplementedError::new_err("")),
-                },
-                _ => Err(PyNotImplementedError::new_err("")),
-            },
-            CompareOp::Ne => match &_self.as_ref().0 {
-                invite_list::Rep::Ok { invitations } => match &other.as_ref().0 {
-                    invite_list::Rep::Ok {
-                        invitations: rinvitations,
-                    } => Ok(invitations != rinvitations),
-                    _ => Err(PyNotImplementedError::new_err("")),
-                },
-                _ => Err(PyNotImplementedError::new_err("")),
-            },
+            CompareOp::Eq => Ok(_self.as_ref().0 == other.as_ref().0),
+            CompareOp::Ne => Ok(_self.as_ref().0 != other.as_ref().0),
             _ => Err(PyNotImplementedError::new_err("")),
         }
     }
@@ -517,6 +432,7 @@ impl InviteInfoReq {
 gen_rep!(invite_info, InviteInfoRep, { .. });
 
 #[pyclass(extends=InviteInfoRep)]
+#[derive(Eq, PartialEq)]
 pub(crate) struct InviteInfoRepOk;
 
 #[pymethods]
@@ -558,44 +474,21 @@ impl InviteInfoRepOk {
     ) -> PyResult<bool> {
         let o = match &other.as_ref().0 {
             invite_info::Rep::Ok(o) => o,
-            invite_info::Rep::UnknownStatus { _status, reason: _ } => {
+            invite_info::Rep::UnknownStatus { _status, .. } => {
                 return Err(PyNotImplementedError::new_err(""))
             }
         };
 
         let s = match &_self.as_ref().0 {
             invite_info::Rep::Ok(o) => o,
-            invite_info::Rep::UnknownStatus { _status, reason: _ } => {
+            invite_info::Rep::UnknownStatus { _status, .. } => {
                 return Err(PyNotImplementedError::new_err(""))
             }
         };
 
         match op {
-            CompareOp::Eq => match (s, o) {
-                (
-                    invite_info::UserOrDevice::Device {
-                        greeter_user_id: lguid,
-                        greeter_human_handle: lghh,
-                    },
-                    invite_info::UserOrDevice::Device {
-                        greeter_user_id: rguid,
-                        greeter_human_handle: rghh,
-                    },
-                ) => Ok(lguid == rguid && lghh == rghh),
-                (
-                    invite_info::UserOrDevice::User {
-                        greeter_user_id: lguid,
-                        greeter_human_handle: lghh,
-                        claimer_email: lce,
-                    },
-                    invite_info::UserOrDevice::User {
-                        greeter_user_id: rguid,
-                        greeter_human_handle: rghh,
-                        claimer_email: rce,
-                    },
-                ) => Ok(lguid == rguid && lghh == rghh && lce == rce),
-                _ => Ok(false),
-            },
+            CompareOp::Eq => Ok(s == o),
+            CompareOp::Ne => Ok(s != o),
             _ => Err(PyNotImplementedError::new_err("")),
         }
     }
@@ -846,7 +739,7 @@ impl Invite2aClaimerSendHashedNonceHashNonceRepOk {
     }
 
     #[getter]
-    fn greeter_nonce<'py>(_self: PyRef<'py, Self>, python: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn greeter_nonce<'py>(_self: PyRef<'py, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
         let greeter_nonce = match &_self.as_ref().0 {
             invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::Ok { greeter_nonce } => {
                 greeter_nonce
@@ -854,7 +747,7 @@ impl Invite2aClaimerSendHashedNonceHashNonceRepOk {
             _ => return Err(PyNotImplementedError::new_err("")),
         };
 
-        Ok(unsafe { PyBytes::from_ptr(python, greeter_nonce.as_ptr(), greeter_nonce.len()) })
+        Ok(PyBytes::new(py, greeter_nonce))
     }
 }
 
@@ -946,9 +839,9 @@ impl Invite2bClaimerSendNonceReq {
     }
 
     #[getter]
-    fn claimer_nonce<'py>(_self: PyRef<'_, Self>, python: Python<'py>) -> &'py PyBytes {
+    fn claimer_nonce<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> &'py PyBytes {
         let greeter_nonce = &_self.0.claimer_nonce;
-        unsafe { PyBytes::from_ptr(python, greeter_nonce.as_ptr(), greeter_nonce.len()) }
+        PyBytes::new(py, greeter_nonce)
     }
 }
 
@@ -1006,14 +899,8 @@ impl Invite2bGreeterSendNonceReq {
     }
 
     #[getter]
-    fn greeter_nonce<'py>(_self: PyRef<'py, Self>, python: Python<'py>) -> &'py PyBytes {
-        unsafe {
-            PyBytes::from_ptr(
-                python,
-                _self.0.greeter_nonce.as_ptr(),
-                _self.0.greeter_nonce.len(),
-            )
-        }
+    fn greeter_nonce<'py>(_self: PyRef<'py, Self>, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &_self.0.greeter_nonce)
     }
 }
 
@@ -1040,13 +927,13 @@ impl Invite2bGreeterSendNonceRepOk {
     }
 
     #[getter]
-    fn claimer_nonce<'py>(_self: PyRef<'_, Self>, python: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn claimer_nonce<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
         let claimer_nonce = match &_self.as_ref().0 {
             invite_2b_greeter_send_nonce::Rep::Ok { claimer_nonce } => claimer_nonce,
             _ => return Err(PyNotImplementedError::new_err("")),
         };
 
-        Ok(unsafe { PyBytes::from_ptr(python, claimer_nonce.as_ptr(), claimer_nonce.len()) })
+        Ok(PyBytes::new(py, claimer_nonce))
     }
 }
 
@@ -1267,9 +1154,8 @@ impl Invite4ClaimerCommunicateReq {
     }
 
     #[getter]
-    fn payload<'py>(_self: PyRef<'_, Self>, python: Python<'py>) -> &'py PyBytes {
-        let payload = &_self.0.payload;
-        unsafe { PyBytes::from_ptr(python, payload.as_ptr(), payload.len()) }
+    fn payload<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &_self.0.payload)
     }
 }
 
@@ -1295,13 +1181,13 @@ impl Invite4ClaimerCommunicateRepActiveUserLimitReached {
     }
 
     #[getter]
-    fn payload<'py>(_self: PyRef<'_, Self>, python: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn payload<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
         let payload = match &_self.as_ref().0 {
             invite_4_claimer_communicate::Rep::Ok { payload } => payload,
             _ => return Err(PyNotImplementedError::new_err("")),
         };
 
-        Ok(unsafe { PyBytes::from_ptr(python, payload.as_ptr(), payload.len()) })
+        Ok(PyBytes::new(py, payload))
     }
 }
 
@@ -1319,13 +1205,13 @@ impl Invite4ClaimerCommunicateRepOk {
     }
 
     #[getter]
-    fn payload<'py>(_self: PyRef<'_, Self>, python: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn payload<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
         let payload = match &_self.as_ref().0 {
             invite_4_claimer_communicate::Rep::Ok { payload } => payload,
             _ => return Err(PyNotImplementedError::new_err("")),
         };
 
-        Ok(unsafe { PyBytes::from_ptr(python, payload.as_ptr(), payload.len()) })
+        Ok(PyBytes::new(py, payload))
     }
 }
 
@@ -1358,9 +1244,9 @@ impl Invite4GreeterCommunicateReq {
     }
 
     #[getter]
-    fn payload<'py>(_self: PyRef<'_, Self>, python: Python<'py>) -> &'py PyBytes {
+    fn payload<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> &'py PyBytes {
         let payload = &_self.0.payload;
-        unsafe { PyBytes::from_ptr(python, payload.as_ptr(), payload.len()) }
+        PyBytes::new(py, payload)
     }
 }
 
@@ -1387,12 +1273,12 @@ impl Invite4GreeterCommunicateRepOk {
     }
 
     #[getter]
-    fn payload<'py>(_self: PyRef<'_, Self>, python: Python<'py>) -> PyResult<&'py PyBytes> {
+    fn payload<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
         let payload = match &_self.as_ref().0 {
             invite_4_greeter_communicate::Rep::Ok { payload } => payload,
             _ => return Err(PyNotImplementedError::new_err("")),
         };
 
-        Ok(unsafe { PyBytes::from_ptr(python, payload.as_ptr(), payload.len()) })
+        Ok(PyBytes::new(py, payload))
     }
 }
