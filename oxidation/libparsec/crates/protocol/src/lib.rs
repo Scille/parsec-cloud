@@ -33,7 +33,7 @@ impl TryFrom<u64> for IntegerBetween1And100 {
     type Error = &'static str;
     fn try_from(data: u64) -> Result<Self, Self::Error> {
         if data == 0 || data > 100 {
-            return Err("Invalid IntegerBetween1And100 value (between 1 and 100)");
+            return Err("Invalid IntegerBetween1And100 value");
         }
 
         Ok(Self(NonZeroU8::new(data as u8).unwrap()))
