@@ -426,6 +426,35 @@ impl InviteListItem {
             _ => Err(PyNotImplementedError::new_err("")),
         }
     }
+
+    #[getter]
+    #[pyo3(name = "r#type")]
+    fn r#type(&self) -> InvitationType {
+        match self.0 {
+            invite_list::InviteListItem::User { .. } => {
+                InvitationType(libparsec::types::InvitationType::User)
+            }
+            invite_list::InviteListItem::Device { .. } => {
+                InvitationType(libparsec::types::InvitationType::Device)
+            }
+        }
+    }
+
+    #[getter]
+    fn token(&self) -> InvitationToken {
+        match self.0 {
+            invite_list::InviteListItem::User { token, .. } => InvitationToken(token),
+            invite_list::InviteListItem::Device { token, .. } => InvitationToken(token),
+        }
+    }
+
+    #[getter]
+    fn claimer_email(&self) -> PyResult<String> {
+        match &self.0 {
+            invite_list::InviteListItem::User { claimer_email, .. } => Ok(claimer_email.clone()),
+            _ => Err(PyAttributeError::new_err("")),
+        }
+    }
 }
 
 gen_rep!(invite_list, InviteListRep, { .. });
@@ -451,6 +480,17 @@ impl InviteListRepOk {
             CompareOp::Eq => Ok(_self.as_ref().0 == other.as_ref().0),
             CompareOp::Ne => Ok(_self.as_ref().0 != other.as_ref().0),
             _ => Err(PyNotImplementedError::new_err("")),
+        }
+    }
+
+    #[getter]
+    fn invitations(_self: PyRef<'_, Self>) -> PyResult<Vec<InviteListItem>> {
+        match &_self.as_ref().0 {
+            invite_list::Rep::Ok { invitations } => Ok(invitations
+                .iter()
+                .map(|f| InviteListItem(f.clone()))
+                .collect()),
+            _ => Err(PyAttributeError::new_err("")),
         }
     }
 }

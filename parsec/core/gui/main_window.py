@@ -13,7 +13,7 @@ from parsec import __version__ as PARSEC_VERSION
 from parsec.core.gui.enrollment_query_widget import EnrollmentQueryWidget
 from parsec.core.types.backend_address import BackendPkiEnrollmentAddr
 from parsec.event_bus import EventBus, EventCallback
-from parsec.api.protocol import InvitationType
+from parsec._parsec import InvitationType
 from parsec.core.types import (
     LocalDevice,
     BackendActionAddr,
@@ -432,9 +432,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if isinstance(action_addr, BackendOrganizationBootstrapAddr):
             self._on_create_org_clicked(action_addr)
         elif isinstance(action_addr, BackendInvitationAddr):
-            if action_addr.invitation_type == InvitationType.USER:
+            if action_addr.invitation_type == InvitationType.USER():
                 self._on_claim_user_clicked(action_addr)
-            elif action_addr.invitation_type == InvitationType.DEVICE:
+            elif action_addr.invitation_type == InvitationType.DEVICE():
                 self._on_claim_device_clicked(action_addr)
         elif isinstance(action_addr, BackendPkiEnrollmentAddr):
             if not is_pki_enrollment_available():
@@ -820,12 +820,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_create_org_widget(action_addr)
         elif (
             isinstance(action_addr, BackendInvitationAddr)
-            and action_addr.invitation_type == InvitationType.USER
+            and action_addr.invitation_type == InvitationType.USER()
         ):
             self.show_claim_user_widget(action_addr)
         elif (
             isinstance(action_addr, BackendInvitationAddr)
-            and action_addr.invitation_type == InvitationType.DEVICE
+            and action_addr.invitation_type == InvitationType.DEVICE()
         ):
             self.show_claim_device_widget(action_addr)
         elif isinstance(action_addr, BackendPkiEnrollmentAddr):

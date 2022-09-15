@@ -4,7 +4,8 @@ import pytest
 from unittest.mock import patch
 from PyQt5 import QtCore, QtWidgets, QtGui
 
-from parsec.api.protocol import InvitationType, OrganizationID, UserProfile
+from parsec._parsec import InvitationType
+from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
@@ -68,7 +69,7 @@ async def device_invitation_addr(backend, bob):
     return BackendInvitationAddr.build(
         backend_addr=bob.organization_addr.get_backend_addr(),
         organization_id=bob.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE(),
         token=invitation.token,
     )
 
@@ -83,7 +84,7 @@ async def user_invitation_addr(backend, bob):
     return BackendInvitationAddr.build(
         backend_addr=bob.organization_addr.get_backend_addr(),
         organization_id=bob.organization_id,
-        invitation_type=InvitationType.USER,
+        invitation_type=InvitationType.USER(),
         token=invitation.token,
     )
 

@@ -546,6 +546,17 @@ class ApiCommandSerializer:
 
     def req_dumps(self, req: dict[str, Any]) -> bytes:
         req.pop("cmd")
+        # TODO: Use rust enum InvitationType instead of legacy PyInvitation type (see issue: )
+        # for now this is a quick and dirty fix
+        from parsec.api.protocol.invite import InvitationType as PyInvitationType
+        from parsec._parsec import InvitationType
+
+        if "type" in req and isinstance(req["type"], PyInvitationType):
+            if req["type"] == PyInvitationType.DEVICE:
+                req["type"] = InvitationType.DEVICE()
+            else:
+                req["type"] = InvitationType.USER()
+
         return self.req_schema(**req).dump()
 
     def rep_loads(self, raw: bytes) -> Any:
