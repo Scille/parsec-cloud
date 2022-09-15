@@ -328,6 +328,7 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::InviteListItem>()?;
     m.add_class::<protocol::InvitationStatus>()?;
     m.add_class::<protocol::InvitationEmailSentStatus>()?;
+    m.add_class::<protocol::InvitationDeletedReason>()?;
 
     // Vlob
     m.add_class::<protocol::VlobCreateReq>()?;

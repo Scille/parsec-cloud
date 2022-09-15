@@ -77,7 +77,7 @@ async def test_greeter_exchange_bad_access(alice, backend, alice_ws, reason):
             rep = await command(alice_ws, **params)
 
             if status == "already_deleted":
-                status_types = [
+                status_types = (
                     Invite1GreeterWaitPeerRepAlreadyDeleted,
                     Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted,
                     Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
@@ -86,9 +86,9 @@ async def test_greeter_exchange_bad_access(alice, backend, alice_ws, reason):
                     Invite3bGreeterSignifyTrustRepAlreadyDeleted,
                     Invite4GreeterCommunicateRepAlreadyDeleted,
                     InviteDeleteRepAlreadyDeleted,
-                ]
+                )
             else:
-                status_types = [
+                status_types = (
                     Invite1ClaimerWaitPeerRepNotFound,
                     Invite1GreeterWaitPeerRepNotFound,
                     Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
@@ -102,6 +102,6 @@ async def test_greeter_exchange_bad_access(alice, backend, alice_ws, reason):
                     Invite4ClaimerCommunicateRepNotFound,
                     Invite4GreeterCommunicateRepNotFound,
                     InviteDeleteRepNotFound,
-                ]
+                )
 
-        assert type(rep) in status_types
+            assert isinstance(rep, status_types)

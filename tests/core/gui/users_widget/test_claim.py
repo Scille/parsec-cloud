@@ -4,10 +4,9 @@ import pytest
 import trio
 from PyQt5 import QtCore
 from contextlib import asynccontextmanager
-from parsec._parsec import DateTime
 from functools import partial
 
-from parsec._parsec import InvitationType
+from parsec._parsec import DateTime, InvitationType
 from parsec.api.protocol import (
     DeviceLabel,
     InvitationToken,

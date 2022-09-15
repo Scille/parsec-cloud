@@ -85,7 +85,7 @@ from parsec._parsec import (
     InviteNewRepOk,
 )
 
-NOT_FOUND_TYPES = [
+NOT_FOUND_TYPES = (
     Invite1ClaimerWaitPeerRepNotFound,
     Invite1GreeterWaitPeerRepNotFound,
     Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
@@ -99,9 +99,9 @@ NOT_FOUND_TYPES = [
     Invite4ClaimerCommunicateRepNotFound,
     Invite4GreeterCommunicateRepNotFound,
     InviteDeleteRepNotFound,
-]
+)
 
-ALREADY_DELETED_TYPES = [
+ALREADY_DELETED_TYPES = (
     Invite1GreeterWaitPeerRepAlreadyDeleted,
     Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted,
     Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
@@ -110,9 +110,9 @@ ALREADY_DELETED_TYPES = [
     Invite3bGreeterSignifyTrustRepAlreadyDeleted,
     Invite4GreeterCommunicateRepAlreadyDeleted,
     InviteDeleteRepAlreadyDeleted,
-]
+)
 
-INVALID_STATE_TYPES = [
+INVALID_STATE_TYPES = (
     Invite1GreeterWaitPeerRepInvalidState,
     Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
     Invite2aGreeterGetHashedNonceRepInvalidState,
@@ -125,9 +125,9 @@ INVALID_STATE_TYPES = [
     Invite4ClaimerCommunicateRepInvalidState,
     Invite4GreeterCommunicateRepInvalidState,
     Invite1ClaimerWaitPeerRepInvalidState,
-]
+)
 
-OK_TYPES = [
+OK_TYPES = (
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
     Invite2aClaimerSendHashedNonceHashNonceRepOk,
@@ -144,17 +144,17 @@ OK_TYPES = [
     InviteInfoRepOk,
     InviteListRepOk,
     InviteNewRepOk,
-]
+)
 
 
 def _check_rep(rep, step_name):
-    if type(rep) in NOT_FOUND_TYPES:
+    if isinstance(rep, NOT_FOUND_TYPES):
         raise InviteNotFoundError
-    elif type(rep) in ALREADY_DELETED_TYPES:
+    elif isinstance(rep, ALREADY_DELETED_TYPES):
         raise InviteAlreadyUsedError
-    elif type(rep) in INVALID_STATE_TYPES:
+    elif isinstance(rep, INVALID_STATE_TYPES):
         raise InvitePeerResetError
-    elif type(rep) not in OK_TYPES:
+    elif not isinstance(rep, OK_TYPES):
         raise InviteError(f"Backend error during {step_name}: {rep}")
 
 

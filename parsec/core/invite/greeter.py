@@ -3,6 +3,7 @@
 import attr
 from typing import Optional, List, Tuple
 
+from parsec._parsec import InvitationDeletedReason
 from parsec.crypto import (
     generate_shared_secret_key,
     generate_nonce,
@@ -29,7 +30,6 @@ from parsec.api.protocol import (
     DeviceID,
     HumanHandle,
     InvitationToken,
-    InvitationDeletedReason,
     DeviceLabel,
     UserProfile,
 )
@@ -52,15 +52,15 @@ def _check_rep(rep, step_name):
         OK_TYPES,
     )
 
-    if type(rep) in NOT_FOUND_TYPES:
+    if isinstance(rep, NOT_FOUND_TYPES):
         raise InviteNotFoundError
-    elif type(rep) in ALREADY_DELETED_TYPES:
+    elif isinstance(rep, ALREADY_DELETED_TYPES):
         raise InviteAlreadyUsedError
-    elif type(rep) in INVALID_STATE_TYPES:
+    elif isinstance(rep, INVALID_STATE_TYPES):
         raise InvitePeerResetError
-    elif type(rep) == dict and rep["status"] == "active_users_limit_reached":
+    elif isinstance(rep, dict) and rep["status"] == "active_users_limit_reached":
         raise InviteActiveUsersLimitReachedError
-    elif type(rep) not in OK_TYPES and rep != {"status": "ok"}:
+    elif not isinstance(rep, OK_TYPES) and rep != {"status": "ok"}:
         raise InviteError(f"Backend error during {step_name}: {rep}")
 
 
@@ -81,13 +81,13 @@ class BaseGreetInitialCtx:
             OK_TYPES,
         )
 
-        if type(rep) in NOT_FOUND_TYPES:
+        if isinstance(rep, NOT_FOUND_TYPES):
             raise InviteNotFoundError
-        elif type(rep) in ALREADY_DELETED_TYPES:
+        elif isinstance(rep, ALREADY_DELETED_TYPES):
             raise InviteAlreadyUsedError
-        elif type(rep) in INVALID_STATE_TYPES:
+        elif isinstance(rep, INVALID_STATE_TYPES):
             raise InvitePeerResetError
-        elif type(rep) not in OK_TYPES:
+        elif not isinstance(rep, OK_TYPES):
             raise InviteError(f"Backend error during step 1: {rep}")
 
         shared_secret_key = generate_shared_secret_key(
@@ -396,7 +396,7 @@ class UserGreetInProgress4Ctx:
         # Invitation deletion is not strictly necessary (enrollment has succeeded
         # anyway) so it's no big deal if something goes wrong before it can be
         # done (and it can be manually deleted from invitation list).
-        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)
+        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED())
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -465,4 +465,4 @@ class DeviceGreetInProgress4Ctx:
         # Invitation deletion is not strictly necessary (enrollment has succeeded
         # anyway) so it's no big deal if something goes wrong before it can be
         # done (and it can be manually deleted from invitation list).
-        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)
+        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED())

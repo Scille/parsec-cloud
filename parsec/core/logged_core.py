@@ -11,6 +11,7 @@ from functools import partial
 from contextlib import asynccontextmanager
 
 from parsec._parsec import (
+    InvitationDeletedReason,
     InvitationEmailSentStatus,
     InvitationType,
     InviteDeleteRepAlreadyDeleted,
@@ -26,7 +27,6 @@ from parsec.event_bus import EventBus
 from parsec.api.protocol import (
     UserID,
     InvitationToken,
-    InvitationDeletedReason,
 )
 from parsec.api.data import RevokedUserCertificate, EntryName
 from parsec.core.pki import accepter_list_submitted_from_backend
@@ -330,7 +330,7 @@ class LoggedCore:
     async def delete_invitation(
         self,
         token: InvitationToken,
-        reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED,
+        reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED(),
     ) -> None:
         """
         Raises:

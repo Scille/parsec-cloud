@@ -253,16 +253,38 @@ impl InviteNewRepOk {
     }
 }
 
-fn py_to_rs_invitation_deleted_reason(
-    reason: &PyAny,
-) -> PyResult<invite_delete::InvitationDeletedReason> {
-    use invite_delete::InvitationDeletedReason::*;
-    Ok(match reason.getattr("name")?.extract::<&str>()? {
-        "FINISHED" => Finished,
-        "CANCELLED" => Cancelled,
-        "ROTTEN" => Rotten,
-        _ => unreachable!(),
-    })
+#[pyclass]
+#[derive(Clone, Eq, PartialEq)]
+pub(crate) struct InvitationDeletedReason(pub invite_delete::InvitationDeletedReason);
+
+#[pymethods]
+impl InvitationDeletedReason {
+    #[classmethod]
+    #[pyo3(name = "FINISHED")]
+    fn finished(_cls: &PyType) -> Self {
+        Self(invite_delete::InvitationDeletedReason::Finished)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "CANCELLED")]
+    fn cancelled(_cls: &PyType) -> Self {
+        Self(invite_delete::InvitationDeletedReason::Cancelled)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "ROTTEN")]
+    fn rotten(_cls: &PyType) -> Self {
+        Self(invite_delete::InvitationDeletedReason::Rotten)
+    }
+
+    #[getter]
+    fn value(&self) -> &'static str {
+        match self.0 {
+            invite_delete::InvitationDeletedReason::Finished => "FINISHED",
+            invite_delete::InvitationDeletedReason::Cancelled => "CANCELLED",
+            invite_delete::InvitationDeletedReason::Rotten => "ROTTEN",
+        }
+    }
 }
 
 #[pyclass]
@@ -272,10 +294,12 @@ pub(crate) struct InviteDeleteReq(pub invite_delete::Req);
 #[pymethods]
 impl InviteDeleteReq {
     #[new]
-    fn new(token: InvitationToken, reason: &PyAny) -> PyResult<Self> {
+    fn new(token: InvitationToken, reason: InvitationDeletedReason) -> PyResult<Self> {
         let token = token.0;
-        let reason = py_to_rs_invitation_deleted_reason(reason)?;
-        Ok(Self(invite_delete::Req { token, reason }))
+        Ok(Self(invite_delete::Req {
+            token,
+            reason: reason.0,
+        }))
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -295,12 +319,8 @@ impl InviteDeleteReq {
     }
 
     #[getter]
-    fn reason(&self) -> &'static str {
-        match &self.0.reason {
-            invite_delete::InvitationDeletedReason::Finished => "FINISH",
-            invite_delete::InvitationDeletedReason::Cancelled => "CANCELLED",
-            invite_delete::InvitationDeletedReason::Rotten => "ROTTEN",
-        }
+    fn reason(&self) -> InvitationDeletedReason {
+        InvitationDeletedReason(self.0.reason.clone())
     }
 }
 
@@ -368,6 +388,15 @@ impl InvitationStatus {
     #[pyo3(name = "DELETED")]
     fn deleted(_cls: &PyType) -> Self {
         Self(libparsec::types::InvitationStatus::Deleted)
+    }
+
+    #[getter]
+    fn name(&self) -> &'static str {
+        match self.0 {
+            libparsec::types::InvitationStatus::Idle => "IDLE",
+            libparsec::types::InvitationStatus::Ready => "READY",
+            libparsec::types::InvitationStatus::Deleted => "DELETED",
+        }
     }
 }
 
@@ -453,6 +482,14 @@ impl InviteListItem {
         match &self.0 {
             invite_list::InviteListItem::User { claimer_email, .. } => Ok(claimer_email.clone()),
             _ => Err(PyAttributeError::new_err("")),
+        }
+    }
+
+    #[getter]
+    fn status(&self) -> InvitationStatus {
+        match &self.0 {
+            invite_list::InviteListItem::User { status, .. } => InvitationStatus(status.clone()),
+            invite_list::InviteListItem::Device { status, .. } => InvitationStatus(status.clone()),
         }
     }
 }

@@ -3,7 +3,7 @@
 import pytest
 import trio
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, InvitationType, InviteListRepOk
 from parsec.api.protocol import (
     DeviceLabel,
     HumanHandle,
@@ -30,7 +30,6 @@ from parsec.core.invite import (
 from parsec.backend.backend_events import BackendEvent
 from parsec.core.backend_connection.exceptions import BackendInvitationAlreadyUsed
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec._parsec import InvitationType, InviteListRepOk
 
 from tests.common import real_clock_timeout
 

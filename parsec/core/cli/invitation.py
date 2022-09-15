@@ -5,16 +5,21 @@ import platform
 from functools import partial
 from typing import Union, Callable, Tuple
 
+from parsec._parsec import (
+    InvitationDeletedReason,
+    InvitationEmailSentStatus,
+    InvitationStatus,
+    InvitationType,
+    InviteDeleteRepOk,
+    InviteListRepOk,
+    InviteNewRepOk,
+)
 from parsec.utils import trio_run
 from parsec.cli_utils import cli_exception_handler, spinner, aprompt
 from parsec.api.protocol import (
     DeviceLabel,
     HumanHandle,
-    InvitationStatus,
     InvitationToken,
-    InvitationType,
-    InvitationEmailSentStatus,
-    InvitationDeletedReason,
     UserProfile,
 )
 from parsec.core.types import BackendInvitationAddr, LocalDevice
@@ -49,18 +54,20 @@ async def _invite_device(config: CoreConfig, device: LocalDevice) -> None:
             signing_key=device.signing_key,
             keepalive=config.backend_connection_keepalive,
         ) as cmds:
-            rep = await cmds.invite_new(type=InvitationType.DEVICE)
-            if rep["status"] != "ok":
+            rep = await cmds.invite_new(type=InvitationType.DEVICE())
+            if not isinstance(rep, InviteNewRepOk):
                 raise RuntimeError(f"Backend refused to create device invitation: {rep}")
-            if "email_sent" in rep:
-                if rep["email_sent"] != InvitationEmailSentStatus.SUCCESS:
+            try:
+                if rep.email_sent and rep.email_sent != InvitationEmailSentStatus.SUCCESS():
                     click.secho("Email could not be sent", fg="red")
+            except AttributeError:
+                pass
 
     action_addr = BackendInvitationAddr.build(
         backend_addr=device.organization_addr.get_backend_addr(),
         organization_id=device.organization_id,
-        invitation_type=InvitationType.DEVICE,
-        token=rep["token"],
+        invitation_type=InvitationType.DEVICE(),
+        token=rep.token,
     )
     action_addr_display = click.style(action_addr.to_url(), fg="yellow")
     click.echo(f"url: {action_addr_display}")
@@ -88,19 +95,22 @@ async def _invite_user(
             keepalive=config.backend_connection_keepalive,
         ) as cmds:
             rep = await cmds.invite_new(
-                type=InvitationType.USER, claimer_email=email, send_email=send_email
+                type=InvitationType.USER(), claimer_email=email, send_email=send_email
             )
-            if rep["status"] != "ok":
+            if not isinstance(rep, InviteNewRepOk):
                 raise RuntimeError(f"Backend refused to create user invitation: {rep}")
-            if send_email and "email_sent" in rep:
-                if rep["email_sent"] != InvitationEmailSentStatus.SUCCESS:
+
+            try:
+                if rep.email_sent and rep.email_sent != InvitationEmailSentStatus.SUCCESS():
                     click.secho("Email could not be sent", fg="red")
+            except AttributeError:
+                pass
 
     action_addr = BackendInvitationAddr.build(
         backend_addr=device.organization_addr.get_backend_addr(),
         organization_id=device.organization_id,
-        invitation_type=InvitationType.USER,
-        token=rep["token"],
+        invitation_type=InvitationType.USER(),
+        token=rep.token,
     )
     action_addr_display = click.style(action_addr.to_url(), fg="yellow")
     click.echo(f"url: {action_addr_display}")
@@ -243,19 +253,19 @@ async def _greet_invitation(
     ) as cmds:
         async with spinner("Retrieving invitation info"):
             rep = await cmds.invite_list()
-            if rep["status"] != "ok":
+            if not isinstance(rep, InviteListRepOk):
                 raise RuntimeError(f"Backend error: {rep}")
-        for invitation in rep["invitations"]:
-            if invitation["token"] == token:
+        for invitation in rep.invitations:
+            if invitation.token == token:
                 break
         else:
             raise RuntimeError(f"Invitation not found")
 
-        if invitation["type"] == InvitationType.USER:
+        if invitation.type == InvitationType.USER():
             initial_ctx = UserGreetInitialCtx(cmds=cmds, token=token)
             do_greet = partial(_do_greet_user, device, initial_ctx)
         else:
-            assert invitation["type"] == InvitationType.DEVICE
+            assert invitation.type == InvitationType.DEVICE()
             initial_ctx = DeviceGreetInitialCtx(cmds=cmds, token=token)
             do_greet = partial(_do_greet_device, device, initial_ctx)
 
@@ -407,7 +417,7 @@ async def _claim_invitation(
 
         # Claiming a user means we are it first device, hence we know there
         # is no existing user manifest (hence our placeholder is non-speculative)
-        if addr.invitation_type == InvitationType.USER:
+        if addr.invitation_type == InvitationType.USER():
             await user_storage_non_speculative_init(
                 data_base_dir=config.data_base_dir, device=new_device
             )
@@ -441,22 +451,22 @@ async def _list_invitations(config: CoreConfig, device: LocalDevice) -> None:
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
         rep = await cmds.invite_list()
-        if rep["status"] != "ok":
+        if not isinstance(rep, InviteListRepOk):
             raise RuntimeError(f"Backend error while listing invitations: {rep}")
         display_statuses = {
-            InvitationStatus.READY: click.style("ready", fg="green"),
-            InvitationStatus.IDLE: click.style("idle", fg="yellow"),
-            InvitationStatus.DELETED: click.style("deleted", fg="red"),
+            InvitationStatus.READY().name: click.style("ready", fg="green"),
+            InvitationStatus.IDLE().name: click.style("idle", fg="yellow"),
+            InvitationStatus.DELETED().name: click.style("deleted", fg="red"),
         }
-        for invitation in rep["invitations"]:
-            display_status = display_statuses[invitation["status"]]
-            display_token = invitation["token"].hex
-            if invitation["type"] == InvitationType.USER:
-                display_type = f"user (email={invitation['claimer_email']})"
+        for invitation in rep.invitations:
+            display_status = display_statuses[invitation.status.name]
+            display_token = invitation.token.hex
+            if invitation.type == InvitationType.USER():
+                display_type = f"user (email={invitation.claimer_email})"
             else:  # Device
                 display_type = f"device"
             click.echo(f"{display_token}\t{display_status}\t{display_type}")
-        if not rep["invitations"]:
+        if not rep.invitations:
             click.echo("No invitations.")
 
 
@@ -480,8 +490,8 @@ async def _cancel_invitation(
         signing_key=device.signing_key,
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
-        rep = await cmds.invite_delete(token=token, reason=InvitationDeletedReason.CANCELLED)
-        if rep["status"] != "ok":
+        rep = await cmds.invite_delete(token=token, reason=InvitationDeletedReason.CANCELLED())
+        if not isinstance(rep, InviteDeleteRepOk):
             raise RuntimeError(f"Backend error while cancelling invitation: {rep}")
         click.echo("Invitation deleted.")
 

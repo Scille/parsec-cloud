@@ -4,7 +4,6 @@ import pytest
 import re
 
 from parsec._parsec import InvitationType
-
 from parsec.crypto import SigningKey
 from parsec.api.protocol import OrganizationID, InvitationToken
 from parsec.core.types import (

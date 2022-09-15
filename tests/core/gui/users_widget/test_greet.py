@@ -2,14 +2,13 @@
 
 import pytest
 import trio
-from parsec._parsec import DateTime
 from PyQt5 import QtCore
 from contextlib import asynccontextmanager
 from functools import partial
 
 from parsec.utils import start_task
 from parsec.core.gui.lang import translate
-from parsec._parsec import InvitationType
+from parsec._parsec import DateTime, InvitationType
 from parsec.api.protocol import (
     DeviceLabel,
     InvitationDeletedReason,

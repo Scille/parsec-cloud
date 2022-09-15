@@ -120,9 +120,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     for file in args.input:
-        # print(f"Reading {file}")
-        # TODO: handle comments
-        # data = json.loads(file.read_text().iterlines)
         data = json.loads(
             "\n".join([x for x in file.read_text().splitlines() if not x.strip().startswith("//")])
         )

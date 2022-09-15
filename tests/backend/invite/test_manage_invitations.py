@@ -4,6 +4,8 @@ import pytest
 from unittest.mock import ANY
 from parsec._parsec import (
     DateTime,
+    InvitationDeletedReason,
+    InvitationEmailSentStatus,
     InvitationType,
     InviteDeleteRepAlreadyDeleted,
     InviteDeleteRepNotFound,
@@ -15,7 +17,6 @@ from parsec._parsec import (
     InviteNewRepNotAllowed,
     InviteNewRepNotAvailable,
     InviteNewRepOk,
-    InvitationEmailSentStatus,
 )
 
 # TODO: Remove python InvitationType enum, for now we keep it for legacy reasons
@@ -24,7 +25,6 @@ from parsec.api.protocol.invite import InvitationType as PyInvitationType
 from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import (
     InvitationStatus,
-    InvitationDeletedReason,
     HandshakeBadIdentity,
     APIEvent,
     UserProfile,
@@ -359,7 +359,7 @@ async def test_delete_invitation(
     with backend_asgi_app.backend.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
             rep = await invite_delete(
-                alice_ws, token=invitation.token, reason=InvitationDeletedReason.CANCELLED
+                alice_ws, token=invitation.token, reason=InvitationDeletedReason.CANCELLED()
             )
 
         assert isinstance(rep, InviteDeleteRepOk)
@@ -475,7 +475,7 @@ async def test_new_user_invitation_after_invitation_deleted(alice, backend, alic
         greeter=invitation.greeter_user_id,
         token=invitation.token,
         on=DateTime(2000, 1, 3),
-        reason=InvitationDeletedReason.FINISHED,
+        reason=InvitationDeletedReason.FINISHED(),
     )
 
     # Deleted invitation shoudn't prevent from creating a new one
@@ -504,7 +504,7 @@ async def test_new_device_invitation_after_invitation_deleted(alice, backend, al
         greeter=invitation.greeter_user_id,
         token=invitation.token,
         on=DateTime(2000, 1, 3),
-        reason=InvitationDeletedReason.FINISHED,
+        reason=InvitationDeletedReason.FINISHED(),
     )
 
     # Deleted invitation shoudn't prevent from creating a new one
@@ -532,11 +532,11 @@ async def test_delete_already_deleted_invitation(alice, backend, alice_ws):
         greeter=alice.user_id,
         token=invitation.token,
         on=DateTime(2000, 1, 2),
-        reason=InvitationDeletedReason.ROTTEN,
+        reason=InvitationDeletedReason.ROTTEN(),
     )
 
     rep = await invite_delete(
-        alice_ws, token=invitation.token, reason=InvitationDeletedReason.CANCELLED
+        alice_ws, token=invitation.token, reason=InvitationDeletedReason.CANCELLED()
     )
 
     assert isinstance(rep, InviteDeleteRepAlreadyDeleted)
@@ -552,7 +552,7 @@ async def test_invitation_deletion_isolated_between_users(bob, backend, alice_ws
     assert isinstance(rep, InviteListRepOk)
 
     rep = await invite_delete(
-        alice_ws, token=invitation.token, reason=InvitationDeletedReason.CANCELLED
+        alice_ws, token=invitation.token, reason=InvitationDeletedReason.CANCELLED()
     )
 
     assert isinstance(rep, InviteDeleteRepNotFound)
@@ -570,7 +570,7 @@ async def test_invitation_deletion_isolated_between_organizations(
     assert isinstance(rep, InviteListRepOk)
 
     rep = await invite_delete(
-        alice_ws, token=invitation.token, reason=InvitationDeletedReason.CANCELLED
+        alice_ws, token=invitation.token, reason=InvitationDeletedReason.CANCELLED()
     )
 
     assert isinstance(rep, InviteDeleteRepNotFound)

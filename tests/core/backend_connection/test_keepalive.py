@@ -3,8 +3,8 @@
 import pytest
 import trio
 
-from parsec.api.transport import Transport, BytesMessage, Ping, Pong
 from parsec._parsec import InvitationType
+from parsec.api.transport import Transport, BytesMessage, Ping, Pong
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
