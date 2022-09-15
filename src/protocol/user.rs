@@ -11,7 +11,7 @@ use std::num::NonZeroU64;
 
 use libparsec::protocol::{
     authenticated_cmds::{device_create, human_find, user_create, user_get, user_revoke},
-    PerPage,
+    IntegerBetween1And100,
 };
 
 use crate::{
@@ -408,7 +408,8 @@ impl HumanFindReq {
         per_page: u64,
     ) -> PyResult<Self> {
         let page = NonZeroU64::try_from(page).map_err(InvalidMessageError::new_err)?;
-        let per_page = PerPage::try_from(per_page).map_err(InvalidMessageError::new_err)?;
+        let per_page =
+            IntegerBetween1And100::try_from(per_page).map_err(InvalidMessageError::new_err)?;
         Ok(Self(human_find::Req {
             query,
             omit_revoked,
@@ -532,7 +533,8 @@ impl HumanFindRepOk {
             HumanFindRep(human_find::Rep::Ok {
                 results: results.into_iter().map(|x| x.0).collect(),
                 page: NonZeroU64::try_from(page).map_err(InvalidMessageError::new_err)?,
-                per_page: PerPage::try_from(per_page).map_err(InvalidMessageError::new_err)?,
+                per_page: IntegerBetween1And100::try_from(per_page)
+                    .map_err(InvalidMessageError::new_err)?,
                 total,
             }),
         ))

@@ -78,7 +78,7 @@ pub(crate) fn _inspect_type(ty: &Type, types: &HashMap<String, String>) -> Strin
                 "Chunk" => "libparsec_client_types::Chunk",
                 "BackendOrganizationAddr" => "libparsec_types::BackendOrganizationAddr",
                 // Used only in protocol
-                "PerPage" => "crate::PerPage",
+                "IntegerBetween1And100" => "crate::IntegerBetween1And100",
                 ident if types.get(ident).is_some() => {
                     types.get(ident).unwrap_or_else(|| unreachable!())
                 }

@@ -27,21 +27,21 @@ macro_rules! impl_dump_load {
 pub(crate) use impl_dump_load;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-pub struct PerPage(NonZeroU8);
+pub struct IntegerBetween1And100(NonZeroU8);
 
-impl TryFrom<u64> for PerPage {
+impl TryFrom<u64> for IntegerBetween1And100 {
     type Error = &'static str;
     fn try_from(data: u64) -> Result<Self, Self::Error> {
         if data == 0 || data > 100 {
-            return Err("Invalid PerPage value (between 1 and 100)");
+            return Err("Invalid IntegerBetween1And100 value (between 1 and 100)");
         }
 
         Ok(Self(NonZeroU8::new(data as u8).unwrap()))
     }
 }
 
-impl From<PerPage> for u64 {
-    fn from(data: PerPage) -> Self {
+impl From<IntegerBetween1And100> for u64 {
+    fn from(data: IntegerBetween1And100) -> Self {
         u8::from(data.0) as u64
     }
 }

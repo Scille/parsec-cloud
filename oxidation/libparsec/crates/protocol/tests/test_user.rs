@@ -479,7 +479,7 @@ fn serde_human_find_req() {
         omit_revoked: false,
         omit_non_human: false,
         page: NonZeroU64::new(8).unwrap(),
-        per_page: PerPage::try_from(8).unwrap(),
+        per_page: IntegerBetween1And100::try_from(8).unwrap(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::HumanFind(req);
@@ -525,7 +525,7 @@ fn serde_human_find_req() {
                 revoked: false,
             }],
             page: NonZeroU64::new(8).unwrap(),
-            per_page: PerPage::try_from(8).unwrap(),
+            per_page: IntegerBetween1And100::try_from(8).unwrap(),
             total: 8,
         }
     )

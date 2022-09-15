@@ -22,7 +22,7 @@
             },
             {
                 "name": "per_page",
-                "type": "PerPage"
+                "type": "IntegerBetween1And100"
             }
         ]
     },
@@ -40,7 +40,7 @@
                 },
                 {
                     "name": "per_page",
-                    "type": "PerPage"
+                    "type": "IntegerBetween1And100"
                 },
                 {
                     "name": "total",
