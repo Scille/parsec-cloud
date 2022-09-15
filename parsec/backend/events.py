@@ -132,8 +132,7 @@ class EventsComponent:
             except trio.WouldBlock:
                 client_ctx.logger.warning("dropping event (queue is full)")
 
-        def _on_pki_enrollment_updated(event: APIEvent, backend_event: BackendEvent, organization_id: OrganizationID,
-        ) -> None:
+        def _on_pki_enrollment_updated(event: APIEvent, backend_event: BackendEvent, organization_id: OrganizationID) -> None:
             if (
                 organization_id != client_ctx.organization_id
                 and client_ctx.profile != UserProfile.ADMIN
