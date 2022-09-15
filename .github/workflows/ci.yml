@@ -449,9 +449,3 @@ jobs:
         if: steps.web-change.outputs.run == 'true'
         run: npm run test
         working-directory: oxidation/client
-
-      # Then move this step to package-ci.yml when these is stable.
-      - name: Build WebApp
-        if: steps.web-change.outputs.run == 'true'
-        run: npm run web:release
-        working-directory: oxidation/client
