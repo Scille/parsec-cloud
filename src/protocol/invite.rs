@@ -177,6 +177,38 @@ gen_rep!(
     [NotAvailable]
 );
 
+#[pyclass]
+pub(crate) struct InvitationEmailSentStatus(invite_new::InvitationEmailSentStatus);
+
+#[pymethods]
+impl InvitationEmailSentStatus {
+    #[classmethod]
+    #[pyo3(name = "SUCCESS")]
+    fn success(_cls: &PyType) -> Self {
+        Self(invite_new::InvitationEmailSentStatus::Success)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "NOT_AVAILABLE")]
+    fn not_available(_cls: &PyType) -> Self {
+        Self(invite_new::InvitationEmailSentStatus::NotAvailable)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "BAD_RECIPIENT")]
+    fn bad_recipient(_cls: &PyType) -> Self {
+        Self(invite_new::InvitationEmailSentStatus::BadRecipient)
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.0 == other.0),
+            CompareOp::Ne => Ok(self.0 != other.0),
+            _ => Err(PyNotImplementedError::new_err("")),
+        }
+    }
+}
+
 #[pyclass(extends=InviteNewRep)]
 pub(crate) struct InviteNewRepOk;
 
@@ -204,20 +236,12 @@ impl InviteNewRepOk {
     }
 
     #[getter]
-    fn email_sent(_self: PyRef<'_, Self>) -> PyResult<&'static str> {
+    fn email_sent(_self: PyRef<'_, Self>) -> PyResult<InvitationEmailSentStatus> {
         match &_self.as_ref().0 {
             invite_new::Rep::Ok { email_sent, .. } => match email_sent {
                 libparsec::types::Maybe::Present(p) => {
                     if let Some(status) = p {
-                        match status {
-                            invite_new::InvitationEmailSentStatus::Success => Ok("SUCCESS"),
-                            invite_new::InvitationEmailSentStatus::NotAvailable => {
-                                Ok("NOT_AVAILABLE")
-                            }
-                            invite_new::InvitationEmailSentStatus::BadRecipient => {
-                                Ok("BAD_RECIPIENT")
-                            }
-                        }
+                        Ok(InvitationEmailSentStatus(status.clone()))
                     } else {
                         Err(PyAttributeError::new_err(""))
                     }
@@ -319,6 +343,31 @@ impl InviteListReq {
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct InvitationStatus(libparsec::types::InvitationStatus);
+
+#[pymethods]
+impl InvitationStatus {
+    #[classmethod]
+    #[pyo3(name = "IDLE")]
+    fn idle(_cls: &PyType) -> Self {
+        Self(libparsec::types::InvitationStatus::Idle)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "READY")]
+    fn ready(_cls: &PyType) -> Self {
+        Self(libparsec::types::InvitationStatus::Ready)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "DELETED")]
+    fn deleted(_cls: &PyType) -> Self {
+        Self(libparsec::types::InvitationStatus::Deleted)
     }
 }
 

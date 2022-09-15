@@ -115,6 +115,7 @@ from parsec._parsec_pyi.protocol import (
     BlockReadRepTimeout,
     BlockReadRepUnknownStatus,
     # Invite
+    InvitationEmailSentStatus,
     InvitationType,
     Invite1ClaimerWaitPeerRep,
     Invite1ClaimerWaitPeerRepInvalidState,
@@ -218,6 +219,7 @@ from parsec._parsec_pyi.protocol import (
     InviteNewRepOk,
     InviteNewRepUnknownStatus,
     InviteNewReq,
+    InviteStatus,
     # Message
     MessageGetReq,
     MessageGetRep,
@@ -480,6 +482,8 @@ __all__ = [
     "BlockReadRepTimeout",
     "BlockReadRepUnknownStatus",
     # Invite protocol
+    "InvitationEmailSentStatus",
+    "InvitationType",
     "Invite1ClaimerWaitPeerRep",
     "Invite1ClaimerWaitPeerRepInvalidState",
     "Invite1ClaimerWaitPeerRepNotFound",
@@ -582,7 +586,7 @@ __all__ = [
     "InviteNewRepOk",
     "InviteNewRepUnknownStatus",
     "InviteNewReq",
-    "InvitationType",
+    "InviteStatus",
     # Protocol Message
     "MessageGetReq",
     "MessageGetRep",

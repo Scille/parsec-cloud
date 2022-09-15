@@ -326,6 +326,8 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::Invite4GreeterCommunicateRepUnknownStatus>()?;
     m.add_class::<protocol::Invite4GreeterCommunicateRepOk>()?;
     m.add_class::<protocol::InviteListItem>()?;
+    m.add_class::<protocol::InvitationStatus>()?;
+    m.add_class::<protocol::InvitationEmailSentStatus>()?;
 
     // Vlob
     m.add_class::<protocol::VlobCreateReq>()?;

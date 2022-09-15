@@ -16,11 +16,11 @@ from parsec._parsec_pyi.time import DateTime
 from parsec.api.protocol import InvitationDeletedReason
 from parsec.api.protocol.types import UserProfile
 
-class InvitedAnyCmdReq:
+class AuthenticatedAnyCmdReq:
     def dump(self) -> bytes: ...
     def load(buf: bytes) -> Any: ...
 
-class AuthenticatedAnyCmdReq:
+class InvitedAnyCmdReq:
     def dump(self) -> bytes: ...
     def load(buf: bytes) -> Any: ...
 
@@ -245,6 +245,14 @@ class InviteListRep:
 class InviteListRepUnknownStatus(InviteListRep):
     def __init__(self) -> None: ...
 
+class InviteStatus:
+    @classmethod
+    def IDLE(cls) -> InviteStatus: ...
+    @classmethod
+    def READY(cls) -> InviteStatus: ...
+    @classmethod
+    def DELETED(cls) -> InviteStatus: ...
+
 class InviteListItem:
     @classmethod
     def User(
@@ -252,7 +260,7 @@ class InviteListItem:
         token: InvitationToken,
         created_on: DateTime,
         claimer_email: str,
-        status: Any,
+        status: InviteStatus,
     ) -> InviteListItem: ...
     @classmethod
     def Device(
@@ -273,6 +281,14 @@ class InviteNewRep:
     def __init__(self) -> None: ...
     def dump(self) -> bytes: ...
     def load(buf: bytes) -> InviteNewRep: ...
+
+class InvitationEmailSentStatus:
+    @classmethod
+    def SUCCESS(cls) -> InvitationEmailSentStatus: ...
+    @classmethod
+    def NOT_AVAILABLE(cls) -> InvitationEmailSentStatus: ...
+    @classmethod
+    def BAD_RECIPIENT(cls) -> InvitationEmailSentStatus: ...
 
 class InviteNewRepOk(InviteNewRep):
     def __init__(
