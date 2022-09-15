@@ -1543,17 +1543,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libparsec_python"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "fancy-regex",
- "libparsec",
- "pyo3",
- "uuid",
-]
-
-[[package]]
 name = "libparsec_types"
 version = "0.0.0"
 dependencies = [

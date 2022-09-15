@@ -31,10 +31,9 @@ mock-time = ["libparsec/mock-time"]
 members = [
     "oxidation/libparsec",
     "oxidation/libparsec/crates/*",
-    "oxidation/libparsec_python",
     "oxidation/bindings/web",
     "oxidation/bindings/neon",
     "oxidation/bindings/android/libparsec/rust",
 ]
 # Ignore bindings stuff given they are special snowflakes that require exotic toolchain and dependencies
-default-members = ["oxidation/libparsec_python", "oxidation/libparsec"]
+default-members = ["oxidation/libparsec"]
