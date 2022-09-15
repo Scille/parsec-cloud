@@ -115,9 +115,7 @@ def gen_code(data):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate code from templates")
     parser.add_argument(
-        "--input",
-        "-i",
-        required=True,
+        "input",
         metavar="EXTENSION_API_PATH",
         type=Path,
         help="Path to Godot extension_api.json file",
