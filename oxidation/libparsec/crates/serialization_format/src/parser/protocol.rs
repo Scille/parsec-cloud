@@ -343,7 +343,6 @@ impl Cmds {
 
                     pub fn load(buf: &[u8]) -> Result<Self, &'static str> {
                         ::rmp_serde::from_slice(buf).map_err(|e| {
-                            println!("{:?}", e);
                             "Deserialization failed"
                         } )
                     }

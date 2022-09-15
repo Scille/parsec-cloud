@@ -17,7 +17,6 @@ from typing import (
     Sequence,
 )
 
-# from parsec.api.protocol.invite import InvitationType
 from parsec.api.version import ApiVersion
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.serde import (
