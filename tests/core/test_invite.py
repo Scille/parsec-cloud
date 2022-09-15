@@ -184,7 +184,6 @@ async def test_good_user_claim(
         greeter_user_id=alice.user_id,
         claimer_email=claimer_email,
     )
-
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,

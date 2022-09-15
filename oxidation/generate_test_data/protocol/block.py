@@ -51,10 +51,7 @@ display("block_create_rep_in_maintenance", serialized, [])
 serializer = block_read_serializer
 
 serialized = serializer.req_dumps(
-    {
-        "cmd": "block_read",
-        "block_id": BlockID.from_hex("57c629b69d6c4abbaf651cafa46dbc93"),
-    }
+    {"cmd": "block_read", "block_id": BlockID.from_hex("57c629b69d6c4abbaf651cafa46dbc93")}
 )
 serializer.req_loads(serialized)
 display("block_read_req", serialized, [])

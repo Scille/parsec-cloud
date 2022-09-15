@@ -15,8 +15,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from structlog import get_logger
 from parsec.api.protocol import (
+    # TODO: Remove legacy InvitationType see issue(#3105)
+    # https://github.com/Scille/parsec-cloud/issues/3105
     InvitationType as PyInvitationType,
-)  # TODO: Remove legacy InvitationType
+)
 from parsec._parsec import (
     InvitationType,
     Invite1ClaimerWaitPeerRep,
@@ -375,7 +377,8 @@ class BaseInviteComponent:
     async def api_invite_new(self, client_ctx, req):
         # TODO: Use builtin Invitation type, this function is here to convert
         # types when needed because BackendInvitationAddr::build() has been
-        # modified to take the builtin version of InvitationType
+        # modified to take the builtin version of InvitationType (see issue #3105)
+        # https://github.com/Scille/parsec-cloud/issues/3105
         def _to_builtin_invitation_type(invit_type: PyInvitationType):
             if type(invit_type) == PyInvitationType:
                 if invit_type == PyInvitationType.DEVICE:

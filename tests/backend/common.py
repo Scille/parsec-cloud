@@ -192,7 +192,6 @@ class CmdSock:
             raw_req = packb(req_post_processing(self.serializer.req_dump(req)))
         else:
             raw_req = self.serializer.req_dumps(req)
-        print("raw_req", raw_req)
         await ws.send(raw_req)
 
     async def _do_recv(self, ws, check_rep):

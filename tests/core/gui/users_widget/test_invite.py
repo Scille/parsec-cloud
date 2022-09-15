@@ -32,7 +32,6 @@ async def test_invite_user(
     online,
     snackbar_catcher,
 ):
-    print("test-switch-to-users-widget")
     u_w = await logged_gui.test_switch_to_users_widget()
 
     assert u_w.layout_users.count() == 3
@@ -43,9 +42,7 @@ async def test_invite_user(
     )
 
     if online:
-        print("mouse-click-button-add-user")
         aqtbot.mouse_click(u_w.button_add_user, QtCore.Qt.LeftButton)
-        print("mouse-click-button-add-user-ok")
 
         def _new_invitation_displayed():
             assert u_w.layout_users.count() == 4

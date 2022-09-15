@@ -39,9 +39,7 @@ class DeviceButton(QWidget, Ui_DeviceButton):
 
 async def _do_invite_device(core):
     try:
-        print("do-invite-device")
         addr, email_sent_status = await core.new_device_invitation(send_email=False)
-        print("do-invite-device-ok")
         return addr, email_sent_status
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
@@ -86,7 +84,6 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         super().show()
 
     def invite_device(self):
-        print("init-devices")
         self.jobs_ctx.submit_job(
             (self, "invite_success"), (self, "invite_error"), _do_invite_device, core=self.core
         )
@@ -96,7 +93,6 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         assert job.status == "ok"
 
         invite_addr, email_sent_status = job.ret
-        print("invite-device-success", invite_addr, email_sent_status)
         GreetDeviceWidget.show_modal(
             core=self.core,
             jobs_ctx=self.jobs_ctx,
@@ -119,7 +115,6 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
 
     def add_device(self, device_info, is_current_device):
         button = DeviceButton(device_info, is_current_device)
-        print("add_device", device_info, is_current_device)
         self.layout_devices.addWidget(button)
         button.show()
 

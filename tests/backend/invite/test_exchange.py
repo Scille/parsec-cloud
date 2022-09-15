@@ -375,7 +375,6 @@ async def test_conduit_exchange_reset(exchange_testbed):
     # Claimer reset after retrieving greeter nonce
     await claimer_ctlr.send_order("1_wait_peer")
     greeter_rep = await greeter_ctlr.get_result()
-    print(type(greeter_rep))
     assert isinstance(greeter_rep, Invite2bGreeterSendNonceRepInvalidState)
     await greeter_ctlr.send_order("1_wait_peer")
     await greeter_ctlr.assert_ok_rep()
@@ -453,7 +452,6 @@ async def test_conduit_exchange_reset(exchange_testbed):
             await greeter_ctlr.send_order("1_wait_peer")
             await claimer_ctlr.send_order("3b_wait_peer_trust")
         claimer_rep = await claimer_ctlr.get_result()
-        print(type(claimer_rep))
         assert isinstance(claimer_rep, Invite3bClaimerWaitPeerTrustRepInvalidState)
         await claimer_ctlr.send_order("1_wait_peer")
         await claimer_ctlr.assert_ok_rep()
