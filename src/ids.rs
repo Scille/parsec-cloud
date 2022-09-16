@@ -1,12 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::basic::CompareOp;
-use pyo3::exceptions::PyValueError;
-use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyType};
+use pyo3::{
+    basic::CompareOp,
+    exceptions::PyValueError,
+    prelude::*,
+    types::{IntoPyDict, PyType},
+};
 use uuid::Uuid;
 
-use crate::binding_utils::{comp_op, hash_generic};
+#[allow(deprecated)]
+use crate::binding_utils::{comp_ord, hash_generic_legacy};
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
@@ -44,7 +47,8 @@ impl OrganizationID {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(self.0.as_ref(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(self.0.as_ref(), py)
     }
 
     #[getter]
@@ -130,11 +134,12 @@ impl EntryID {
     fn __richcmp__(&self, py: Python, other: &EntryID, op: CompareOp) -> PyResult<bool> {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
+        comp_ord(op, h1, h2)
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.as_hyphenated(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.0.as_hyphenated(), py)
     }
 }
 
@@ -206,7 +211,7 @@ impl BlockID {
     fn __richcmp__(&self, py: Python, other: &BlockID, op: CompareOp) -> PyResult<bool> {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
+        comp_ord(op, h1, h2)
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -219,7 +224,8 @@ impl BlockID {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.as_hyphenated(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.0.as_hyphenated(), py)
     }
 }
 
@@ -291,7 +297,7 @@ impl RealmID {
     fn __richcmp__(&self, py: Python, other: &RealmID, op: CompareOp) -> PyResult<bool> {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
+        comp_ord(op, h1, h2)
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -304,7 +310,8 @@ impl RealmID {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.as_hyphenated(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.0.as_hyphenated(), py)
     }
 }
 
@@ -376,7 +383,7 @@ impl VlobID {
     fn __richcmp__(&self, py: Python, other: &VlobID, op: CompareOp) -> PyResult<bool> {
         let h1 = self.__hash__(py).unwrap();
         let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
+        comp_ord(op, h1, h2)
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -389,7 +396,8 @@ impl VlobID {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.as_hyphenated(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.0.as_hyphenated(), py)
     }
 }
 
@@ -429,7 +437,8 @@ impl UserID {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(self.0.as_ref(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(self.0.as_ref(), py)
     }
 
     fn capitalize(&self) -> PyResult<String> {
@@ -482,7 +491,8 @@ impl DeviceName {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(self.0.as_ref(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(self.0.as_ref(), py)
     }
 
     #[getter]
@@ -533,7 +543,8 @@ impl DeviceLabel {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(self.0.as_ref(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(self.0.as_ref(), py)
     }
 
     #[getter]
@@ -583,7 +594,8 @@ impl DeviceID {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.0.to_string(), py)
     }
 
     #[getter]
@@ -668,7 +680,8 @@ impl ChunkID {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.0.to_string(), py)
     }
 
     #[classmethod]
@@ -762,7 +775,8 @@ impl SequesterServiceID {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.0.to_string(), py)
     }
 
     #[classmethod]
@@ -822,7 +836,8 @@ impl HumanHandle {
     }
 
     fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.email, py)
+        #[allow(deprecated)]
+        hash_generic_legacy(&self.0.email, py)
     }
 
     #[getter]

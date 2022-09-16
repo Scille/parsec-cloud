@@ -59,9 +59,11 @@ def build():
 
         wheel_path = outputs[0]
         if sys.platform == "win32":
-            in_wheel_so_path = "parsec/_parsec.pyd"
+            in_wheel_so_path = "parsec/_parsec.cp39-win_amd64.pyd"
+        elif sys.platform == "darwin":
+            in_wheel_so_path = "parsec/_parsec.cpython-39-darwin.so"
         else:
-            in_wheel_so_path = "parsec/_parsec.abi3.so"
+            in_wheel_so_path = "parsec/_parsec.cpython-39-x86_64-linux-gnu.so"
 
         display(f"extracting {wheel_path}:{in_wheel_so_path} -> {BASEDIR / in_wheel_so_path}")
         with zipfile.ZipFile(wheel_path) as wheel:
