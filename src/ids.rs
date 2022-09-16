@@ -1,19 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    basic::CompareOp,
     exceptions::PyValueError,
     prelude::*,
     types::{IntoPyDict, PyType},
 };
 use uuid::Uuid;
 
-#[allow(deprecated)]
-use crate::binding_utils::{comp_ord, hash_generic_legacy};
-
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct OrganizationID(pub libparsec::types::OrganizationID);
+
+crate::binding_utils::gen_proto!(OrganizationID, __repr__);
+crate::binding_utils::gen_proto!(OrganizationID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(OrganizationID, __hash__);
 
 #[pymethods]
 impl OrganizationID {
@@ -31,26 +31,6 @@ impl OrganizationID {
         }
     }
 
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<OrganizationID {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(self.0.as_ref(), py)
-    }
-
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
@@ -60,6 +40,10 @@ impl OrganizationID {
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct EntryID(pub libparsec::types::EntryID);
+
+crate::binding_utils::gen_proto!(EntryID, __repr__);
+crate::binding_utils::gen_proto!(EntryID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(EntryID, __hash__);
 
 #[pymethods]
 impl EntryID {
@@ -78,15 +62,6 @@ impl EntryID {
             }
             Err(_) => Err(PyValueError::new_err("Not a UUID")),
         }
-    }
-
-    #[getter]
-    fn str(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<EntryID {}>", self.0))
     }
 
     #[getter]
@@ -131,21 +106,19 @@ impl EntryID {
         Ok(self.0.to_string())
     }
 
-    fn __richcmp__(&self, py: Python, other: &EntryID, op: CompareOp) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_ord(op, h1, h2)
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(&self.0.as_hyphenated(), py)
+    #[getter]
+    fn str(&self) -> PyResult<String> {
+        Ok(self.0.to_string())
     }
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct BlockID(pub libparsec::types::BlockID);
+
+crate::binding_utils::gen_proto!(BlockID, __repr__);
+crate::binding_utils::gen_proto!(BlockID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(BlockID, __hash__);
 
 #[pymethods]
 impl BlockID {
@@ -208,30 +181,19 @@ impl BlockID {
         Ok(self.0.to_string())
     }
 
-    fn __richcmp__(&self, py: Python, other: &BlockID, op: CompareOp) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_ord(op, h1, h2)
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<BlockID {}>", self.0))
-    }
-
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
     }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(&self.0.as_hyphenated(), py)
-    }
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct RealmID(pub libparsec::types::RealmID);
+
+crate::binding_utils::gen_proto!(RealmID, __repr__);
+crate::binding_utils::gen_proto!(RealmID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(RealmID, __hash__);
 
 #[pymethods]
 impl RealmID {
@@ -294,30 +256,19 @@ impl RealmID {
         Ok(self.0.to_string())
     }
 
-    fn __richcmp__(&self, py: Python, other: &RealmID, op: CompareOp) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_ord(op, h1, h2)
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<RealmID {}>", self.0))
-    }
-
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(&self.0.as_hyphenated(), py)
     }
 }
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct VlobID(pub libparsec::types::VlobID);
+
+crate::binding_utils::gen_proto!(VlobID, __repr__);
+crate::binding_utils::gen_proto!(VlobID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(VlobID, __hash__);
 
 #[pymethods]
 impl VlobID {
@@ -380,30 +331,19 @@ impl VlobID {
         Ok(self.0.to_string())
     }
 
-    fn __richcmp__(&self, py: Python, other: &VlobID, op: CompareOp) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_ord(op, h1, h2)
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<VlobID {}>", self.0))
-    }
-
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(&self.0.as_hyphenated(), py)
     }
 }
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct UserID(pub libparsec::types::UserID);
+
+crate::binding_utils::gen_proto!(UserID, __repr__);
+crate::binding_utils::gen_proto!(UserID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(UserID, __hash__);
 
 #[pymethods]
 impl UserID {
@@ -421,26 +361,6 @@ impl UserID {
         }
     }
 
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<UserID {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(self.0.as_ref(), py)
-    }
-
     fn capitalize(&self) -> PyResult<String> {
         Ok(self.0.to_string().to_uppercase())
     }
@@ -456,8 +376,12 @@ impl UserID {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct DeviceName(pub libparsec::types::DeviceName);
+
+crate::binding_utils::gen_proto!(DeviceName, __repr__);
+crate::binding_utils::gen_proto!(DeviceName, __richcmp__, ord);
+crate::binding_utils::gen_proto!(DeviceName, __hash__);
 
 #[pymethods]
 impl DeviceName {
@@ -475,26 +399,6 @@ impl DeviceName {
         }
     }
 
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<DeviceName {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(self.0.as_ref(), py)
-    }
-
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
@@ -508,8 +412,12 @@ impl DeviceName {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct DeviceLabel(pub libparsec::types::DeviceLabel);
+
+crate::binding_utils::gen_proto!(DeviceLabel, __repr__);
+crate::binding_utils::gen_proto!(DeviceLabel, __richcmp__, ord);
+crate::binding_utils::gen_proto!(DeviceLabel, __hash__);
 
 #[pymethods]
 impl DeviceLabel {
@@ -527,26 +435,6 @@ impl DeviceLabel {
         }
     }
 
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<DeviceLabel {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(self.0.as_ref(), py)
-    }
-
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
@@ -554,8 +442,12 @@ impl DeviceLabel {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct DeviceID(pub libparsec::types::DeviceID);
+
+crate::binding_utils::gen_proto!(DeviceID, __repr__);
+crate::binding_utils::gen_proto!(DeviceID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(DeviceID, __hash__);
 
 #[pymethods]
 impl DeviceID {
@@ -578,26 +470,6 @@ impl DeviceID {
         Ok(self.0.to_string())
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<DeviceID {}>", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(&self.0.to_string(), py)
-    }
-
     #[getter]
     fn user_id(&self) -> PyResult<UserID> {
         Ok(UserID(self.0.user_id.clone()))
@@ -618,6 +490,10 @@ impl DeviceID {
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct ChunkID(pub libparsec::types::ChunkID);
+
+crate::binding_utils::gen_proto!(ChunkID, __repr__);
+crate::binding_utils::gen_proto!(ChunkID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(ChunkID, __hash__);
 
 #[pymethods]
 impl ChunkID {
@@ -664,26 +540,6 @@ impl ChunkID {
         }
     }
 
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<ChunkID {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(&self.0.to_string(), py)
-    }
-
     #[classmethod]
     #[pyo3(name = "new")]
     fn class_new(_cls: &PyType) -> PyResult<Self> {
@@ -709,6 +565,11 @@ impl ChunkID {
 #[pyclass]
 #[derive(PartialEq, Eq, Clone, Hash)]
 pub(crate) struct SequesterServiceID(pub libparsec::types::SequesterServiceID);
+
+crate::binding_utils::gen_proto!(SequesterServiceID, __repr__);
+crate::binding_utils::gen_proto!(SequesterServiceID, __str__);
+crate::binding_utils::gen_proto!(SequesterServiceID, __richcmp__, ord);
+crate::binding_utils::gen_proto!(SequesterServiceID, __hash__);
 
 #[pymethods]
 impl SequesterServiceID {
@@ -755,30 +616,6 @@ impl SequesterServiceID {
         }
     }
 
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<SequesterServiceID {}>", self.0))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(&self.0.to_string(), py)
-    }
-
     #[classmethod]
     #[pyo3(name = "new")]
     fn class_new(_cls: &PyType) -> PyResult<Self> {
@@ -802,8 +639,12 @@ impl SequesterServiceID {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct HumanHandle(pub libparsec::types::HumanHandle);
+
+crate::binding_utils::gen_proto!(HumanHandle, __repr__);
+crate::binding_utils::gen_proto!(HumanHandle, __richcmp__, ord);
+crate::binding_utils::gen_proto!(HumanHandle, __hash__);
 
 #[pymethods]
 impl HumanHandle {
@@ -815,29 +656,9 @@ impl HumanHandle {
         }
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<HumanHandle {} >", self.0))
-    }
-
     #[getter]
     fn str(&self) -> PyResult<String> {
         Ok(self.0.to_string())
-    }
-
-    fn __richcmp__(&self, other: &HumanHandle, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0.email == other.0.email,
-            CompareOp::Ne => self.0.email != other.0.email,
-            CompareOp::Lt => self.0.email < other.0.email,
-            CompareOp::Gt => self.0.email > other.0.email,
-            CompareOp::Le => self.0.email <= other.0.email,
-            CompareOp::Ge => self.0.email >= other.0.email,
-        }
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(&self.0.email, py)
     }
 
     #[getter]
