@@ -13,14 +13,25 @@ FIELDS_TEMPLATE = """
 
 
 def replace_type(typename):
-    KEYWORD_REPLACEMENT = {"Bytes": "bytes", "Float": "float"}
+    KEYWORD_REPLACEMENT = {
+        "Bytes": "bytes",
+        "Float": "float",
+        "String": "str",
+        "Boolean": "bool",
+        "NonZeroInteger": "int",
+        "IntegerBetween1And100": "int",
+        "Size": "int",
+        "Index": "int",
+        "Version": "int",
+    }
     return KEYWORD_REPLACEMENT.get(typename, typename)
 
 
 def replace_wrapped_type(typename):
     REGEX_REPLACEMENTS = [
         (r"Option<(.*)>", "Optional[{type}]"),
-        (r"List<(.*)>", "List[{type}]"),
+        (r"List<(.*)>", "Tuple[{type}]"),
+        (r"Map<(.*), (.*)>", "dict[{type}, {type2}]"),
     ]
 
     for (reg, format) in REGEX_REPLACEMENTS:
@@ -28,7 +39,37 @@ def replace_wrapped_type(typename):
 
         if match:
             value = match.group(1)
-            return format.format(type=replace_type(value))
+            try:
+                value2 = match.group(2)
+                return format.format(
+                    type=replace_wrapped_type(value), type2=replace_wrapped_type(value2)
+                )
+            except IndexError:
+                return format.format(type=replace_wrapped_type(value))
+
+    return replace_type(typename)
+
+
+def replace_wrapped_type_signature(typename):
+    REGEX_REPLACEMENTS = [
+        (r"Option<(.*)>", "Optional[{type}]"),
+        (r"List<(.*)>", "Iterable[{type}]"),
+        (r"Map<(.*), (.*)>", "dict[{type}, {type2}]"),
+    ]
+
+    for (reg, format) in REGEX_REPLACEMENTS:
+        match = re.match(reg, typename)
+
+        if match:
+            value = match.group(1)
+            try:
+                value2 = match.group(2)
+                return format.format(
+                    type=replace_wrapped_type_signature(value),
+                    type2=replace_wrapped_type_signature(value2),
+                )
+            except IndexError:
+                return format.format(type=replace_wrapped_type_signature(value))
 
     return replace_type(typename)
 
@@ -37,7 +78,10 @@ def init_parameters(other_fields):
     if not other_fields:
         return ""
 
-    properties = [f"{field['name']}: {replace_type(field['type'])}" for field in other_fields]
+    properties = [
+        f"{field['name']}: {replace_wrapped_type_signature(field['type'])}"
+        for field in other_fields
+    ]
 
     result = ", "
     for i, var_name in enumerate(properties):
@@ -52,13 +96,12 @@ def init_parameters(other_fields):
 def gen_req(cmd_name, other_fields):
     result = f"""class {cmd_name}Req:
     def __init__(self{init_parameters(other_fields)}) -> None: ...
-    def __repr__(self) -> str: ...
 
     def dump(self) -> bytes: ...
 """
     for r in other_fields:
-        name, type = r.values()
-        type = replace_type(type)
+        name, type, *_ = r.values()
+        type = replace_wrapped_type(type)
         result += FIELDS_TEMPLATE.format(name=name, type=type)
 
     return result
@@ -82,11 +125,25 @@ class {cmd_name}Rep{status_name}({cmd_name}Rep):
         if rep["other_fields"]:
             for field in rep["other_fields"]:
                 name, type, *_ = field.values()
-                type = replace_type(type)
+                type = replace_wrapped_type(type)
                 rep_result += FIELDS_TEMPLATE.format(name=name, type=type)
 
         result += rep_result
 
+    result += gen_unknown_status_rep(cmd_name)
+
+    return result
+
+
+def gen_unknown_status_rep(cmd_name):
+    result = f"""
+class {cmd_name}RepUnknownStatus({cmd_name}Rep):
+    def __init__(self, status: str, reason: Optional[str]) -> None: ...
+    @property
+    def status(self) -> str: ...
+    @property
+    def reason(self) -> Optional[str]: ...
+"""
     return result
 
 
@@ -115,7 +172,7 @@ if __name__ == "__main__":
         "input",
         metavar="EXTENSION_API_PATH",
         type=Path,
-        help="Path to Godot extension_api.json file",
+        help="Path to protocol.json file",
         nargs="+",
     )
     args = parser.parse_args()

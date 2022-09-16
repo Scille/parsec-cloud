@@ -32,6 +32,17 @@ serialized = serializer.rep_dumps(
 serializer.rep_loads(serialized)
 display("user_get_rep", serialized, [])
 
+serialized = serializer.rep_dumps(
+    {
+        "user_certificate": b"foobar",
+        "revoked_user_certificate": None,
+        "device_certificates": [b"foobar"],
+        "trustchain": {"devices": [b"foobar"], "users": [b"foobar"], "revoked_users": [b"foobar"]},
+    }
+)
+serializer.rep_loads(serialized)
+display("user_get_rep_without_revoked_user_certificate", serialized, [])
+
 serialized = serializer.rep_dumps({"status": "not_found"})
 serializer.rep_loads(serialized)
 display("user_get_rep", serialized, [])
@@ -214,6 +225,20 @@ serialized = serializer.req_dumps(
     }
 )
 display("human_find_req_per_page_101", serialized, [])
+
+serializer = human_find_serializer
+serialized = serializer.req_dumps(
+    {
+        "cmd": "human_find",
+        "query": None,
+        "omit_revoked": False,
+        "omit_non_human": False,
+        "page": 8,
+        "per_page": 8,
+    }
+)
+serializer.req_loads(serialized)
+display("human_find_req_without_query", serialized, [])
 
 serialized = serializer.rep_dumps(
     {
