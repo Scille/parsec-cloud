@@ -9,7 +9,13 @@ autotests = false
 proc-macro = true
 
 [dependencies]
-proc-macro2 = "1.0"
-quote = "1.0"
-syn = "1.0"
-miniserde = "0.1"
+anyhow = "1.0.65"
+miniserde = "0.1.27"
+proc-macro2 = "1.0.43"
+quote = "1.0.21"
+serde = { version = "1.0.144", features = ["derive"] }
+serde_json = "1.0.85"
+syn = "1.0.99"
+
+[dev-dependencies]
+rstest = "0.15.0"

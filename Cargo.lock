@@ -2554,9 +2554,13 @@ dependencies = [
 name = "serialization_format"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "miniserde",
  "proc-macro2",
  "quote",
+ "rstest",
+ "serde",
+ "serde_json",
  "syn",
 ]
 
