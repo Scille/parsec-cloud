@@ -157,7 +157,7 @@ def create_service(
     db: str,
     db_max_connections: int,
     db_min_connections: int,
-    service_type: SequesterServiceType,
+    service_type: str,
     webhook_url: str,
 ):
     service_type = SERVICE_TYPE_CHOICES[service_type]
