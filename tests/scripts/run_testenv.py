@@ -47,7 +47,7 @@ DEFAULT_BLOCKSTORE = "MOCKED"
 
 async def new_environment(source_file=None):
     export_lines = []
-    tempdir = tempfile.mkdtemp()
+    tempdir = tempfile.mkdtemp(prefix="parsec-testenv-")
     if sys.platform == "win32":
         export = "set"
         env = {"APPDATA": tempdir}
