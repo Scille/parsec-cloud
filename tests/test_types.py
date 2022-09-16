@@ -324,7 +324,7 @@ def organization_addr(exported_verify_key):
 @pytest.mark.parametrize("key_type", (SigningKey, PrivateKey, SecretKey))
 def test_keys_dont_leak_on_repr(key_type):
     key = key_type.generate()
-    assert repr(key).startswith(f"{key_type.__qualname__}(<redacted>)")
+    assert repr(key).startswith(f"{key_type.__qualname__}(****)")
 
 
 def test_device_label_bad_size():
