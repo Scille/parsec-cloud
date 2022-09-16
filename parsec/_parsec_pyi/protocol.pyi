@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple
+from typing import Any, Iterable, List, Optional, Tuple
 
 from parsec._parsec_pyi.ids import (
     BlockID,
@@ -12,6 +12,7 @@ from parsec._parsec_pyi.ids import (
 
 from parsec._parsec import PublicKey, InvitationToken
 
+from parsec._parsec_pyi.crypto import HashDigest
 from parsec._parsec_pyi.invite import InvitationToken
 from parsec._parsec_pyi.time import DateTime
 from parsec.api.protocol.types import UserProfile
@@ -643,7 +644,7 @@ class MessageGetRep:
     def load(buf: bytes) -> MessageGetRep: ...
 
 class MessageGetRepOk(MessageGetRep):
-    def __init__(self, messages: List[Message]) -> None: ...
+    def __init__(self, messages: Iterable[Message]) -> None: ...
     @property
     def messages(self) -> Tuple[Message]: ...
 
@@ -688,7 +689,7 @@ class OrganizationStatsRepOk(OrganizationStatsRep):
         realms: int,
         users: int,
         active_users: int,
-        users_per_profile_detail: List[UsersPerProfileDetailItem],
+        users_per_profile_detail: Iterable[UsersPerProfileDetailItem],
     ) -> None: ...
     @property
     def data_size(self) -> int: ...
@@ -701,7 +702,7 @@ class OrganizationStatsRepOk(OrganizationStatsRep):
     @property
     def active_users(self) -> int: ...
     @property
-    def users_per_profile_detail(self) -> List[UsersPerProfileDetailItem]: ...
+    def users_per_profile_detail(self) -> Tuple[UsersPerProfileDetailItem]: ...
 
 class OrganizationStatsRepNotAllowed(RepWithReason, OrganizationStatsRep):
     def __init__(self, arg: Reason) -> None: ...
@@ -730,7 +731,7 @@ class OrganizationConfigRepOk(OrganizationConfigRep):
         user_profile_outsider_allowed: bool,
         active_users_limit: Optional[int],
         sequester_authority_certificate: Optional[bytes],
-        sequester_services_certificates: Optional[List[bytes]],
+        sequester_services_certificates: Optional[Iterable[bytes]],
     ) -> None: ...
     @property
     def user_profile_outsider_allowed(self) -> bool: ...
@@ -739,7 +740,7 @@ class OrganizationConfigRepOk(OrganizationConfigRep):
     @property
     def sequester_authority_certificate(self) -> Optional[bytes]: ...
     @property
-    def sequester_services_certificates(self) -> Optional[List[bytes]]: ...
+    def sequester_services_certificates(self) -> Optional[Tuple[bytes]]: ...
 
 class OrganizationConfigRepNotFound(OrganizationConfigRep): ...
 class OrganizationConfigRepUnknownStatus(UnknownStatus, OrganizationConfigRep): ...
@@ -900,7 +901,7 @@ class RealmGetRoleCertificatesRep:
     def load(buf: bytes) -> RealmGetRoleCertificatesRep: ...
 
 class RealmGetRoleCertificatesRepOk(RealmGetRoleCertificatesRep):
-    def __init__(self, certificates: List[bytes]) -> None: ...
+    def __init__(self, certificates: Iterable[bytes]) -> None: ...
     @property
     def certificates(self) -> Tuple[bytes]: ...
 
@@ -1177,7 +1178,7 @@ class UserGetRepOk(UserGetRep):
         self,
         user_certificate: bytes,
         revoked_user_certificate: Optional[bytes],
-        device_certificates: List[bytes],
+        device_certificates: Iterable[bytes],
         trustchain: Trustchain,
     ) -> None: ...
     @property
@@ -1289,7 +1290,7 @@ class HumanFindRep:
 
 class HumanFindRepOk(HumanFindRep):
     def __init__(
-        self, results: List[HumanFindResultItem], page: int, per_page: int, total: int
+        self, results: Iterable[HumanFindResultItem], page: int, per_page: int, total: int
     ) -> None: ...
     @property
     def results(self) -> Tuple[HumanFindResultItem]: ...
@@ -1305,7 +1306,7 @@ class HumanFindRepUnknownStatus(UnknownStatus, HumanFindRep): ...
 
 class Trustchain:
     def __init__(
-        self, devices: List[bytes], users: List[bytes], revoked_users: List[bytes]
+        self, devices: Iterable[bytes], users: Iterable[bytes], revoked_users: Iterable[bytes]
     ) -> None: ...
     @property
     def devices(self) -> Tuple[bytes]: ...
@@ -1389,7 +1390,7 @@ class VlobCreateRepSequesterInconsistency(VlobCreateRep):
     def __init__(
         self,
         sequester_authority_certificate: bytes,
-        sequester_services_certificates: List[bytes],
+        sequester_services_certificates: Iterable[bytes],
     ) -> None: ...
     @property
     def sequester_authority_certificate(self) -> bytes: ...
@@ -1546,7 +1547,7 @@ class VlobUpdateRepSequesterInconsistency(VlobUpdateRep):
     def __init__(
         self,
         sequester_authority_certificate: bytes,
-        sequester_services_certificates: List[bytes],
+        sequester_services_certificates: Iterable[bytes],
     ) -> None: ...
     @property
     def sequester_authority_certificate(self) -> bytes: ...
@@ -1682,7 +1683,7 @@ class VlobMaintenanceGetReencryptionBatchRep:
 class VlobMaintenanceGetReencryptionBatchRepOk(VlobMaintenanceGetReencryptionBatchRep):
     def __init__(
         self,
-        batch: List[ReencryptionBatchEntry],
+        batch: Iterable[ReencryptionBatchEntry],
     ) -> None: ...
     @property
     def batch(self) -> Tuple[ReencryptionBatchEntry]: ...

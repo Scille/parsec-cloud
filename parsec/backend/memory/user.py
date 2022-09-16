@@ -132,9 +132,9 @@ class MemoryUserComponent(BaseUserComponent):
             await _recursive_extract_creators(device_id)
 
         return Trustchain(
-            devices=list(trustchain_devices),
-            users=list(trustchain_users),
-            revoked_users=list(trustchain_revoked_users),
+            devices=tuple(trustchain_devices),
+            users=tuple(trustchain_users),
+            revoked_users=tuple(trustchain_revoked_users),
         )
 
     def _get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
