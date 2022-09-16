@@ -6,7 +6,7 @@ mod handshake;
 use serde::{Deserialize, Serialize};
 use std::num::NonZeroU8;
 
-use serialization_format::parsec_cmds;
+use serialization_format::parsec_protocol;
 
 pub use error::*;
 pub use handshake::*;
@@ -51,10 +51,10 @@ impl From<IntegerBetween1And100> for u64 {
 // It also provides a way to use commands by specifying status, command and type.
 // For example:
 // Server side
-// authenticated_cmds::AnyCmdReq::load(..)
-// authenticated_cmds::block_create::Rep::Ok.dump()
+// authenticated_cmds::v2::AnyCmdReq::load(..)
+// authenticated_cmds::v2::block_create::Rep::Ok.dump()
 // Client side
-// authenticated_cmds::block_create::Req { .. }.dump()
-// authenticated_cmds::block_create::Rep::load(..)
-parsec_cmds!("schema/invited_cmds");
-parsec_cmds!("schema/authenticated_cmds");
+// authenticated_cmds::v2::block_create::Req { .. }.dump()
+// authenticated_cmds::v2::block_create::Rep::load(..)
+parsec_protocol!("schema/invited_cmds");
+parsec_protocol!("schema/authenticated_cmds");

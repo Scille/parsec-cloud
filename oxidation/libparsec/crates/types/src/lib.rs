@@ -24,3 +24,6 @@ pub use invite::*;
 pub use manifest::*;
 pub use message::*;
 pub use time::*;
+
+/// Re-export `uuid` module.
+pub use uuid;
