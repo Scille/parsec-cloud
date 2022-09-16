@@ -3,12 +3,7 @@
 use pyo3::{
     exceptions::PyValueError,
     prelude::*,
-    pyclass::CompareOp,
     types::{PyBytes, PyDict, PyType},
-};
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
 };
 
 use crate::{
@@ -22,6 +17,9 @@ use crate::{
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct LocalDevice(pub libparsec::client_types::LocalDevice);
+
+crate::binding_utils::gen_proto!(LocalDevice, __repr__);
+crate::binding_utils::gen_proto!(LocalDevice, __richcmp__, eq);
 
 #[pymethods]
 impl LocalDevice {
@@ -113,18 +111,6 @@ impl LocalDevice {
         }
 
         Ok(Self(r))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => unimplemented!(),
-        }
     }
 
     #[getter]
@@ -291,6 +277,10 @@ impl LocalDevice {
 #[derive(Clone)]
 pub(crate) struct UserInfo(pub libparsec::client_types::UserInfo);
 
+crate::binding_utils::gen_proto!(UserInfo, __repr__);
+crate::binding_utils::gen_proto!(UserInfo, __richcmp__, ord);
+crate::binding_utils::gen_proto!(UserInfo, __hash__);
+
 #[pymethods]
 impl UserInfo {
     #[new]
@@ -312,27 +302,6 @@ impl UserInfo {
             created_on: created_on.0,
             revoked_on: revoked_on.map(|x| x.0),
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __hash__(&self) -> PyResult<u64> {
-        let mut s = DefaultHasher::new();
-        self.0.hash(&mut s);
-        Ok(s.finish())
     }
 
     #[getter]
@@ -380,6 +349,10 @@ impl UserInfo {
 #[derive(Clone)]
 pub(crate) struct DeviceInfo(pub libparsec::client_types::DeviceInfo);
 
+crate::binding_utils::gen_proto!(DeviceInfo, __repr__);
+crate::binding_utils::gen_proto!(DeviceInfo, __richcmp__, ord);
+crate::binding_utils::gen_proto!(DeviceInfo, __hash__);
+
 #[pymethods]
 impl DeviceInfo {
     #[new]
@@ -397,27 +370,6 @@ impl DeviceInfo {
             device_label: device_label.map(|x| x.0),
             created_on: created_on.0,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __hash__(&self) -> PyResult<u64> {
-        let mut s = DefaultHasher::new();
-        self.0.hash(&mut s);
-        Ok(s.finish())
     }
 
     #[getter]
