@@ -6,7 +6,9 @@ use libparsec::{
 };
 use pyo3::{
     basic::CompareOp,
-    exceptions::{PyAssertionError, PyIndexError, PyTypeError, PyValueError},
+    exceptions::{
+        PyAssertionError, PyIndexError, PyNotImplementedError, PyTypeError, PyValueError,
+    },
     import_exception,
     prelude::*,
     types::{IntoPyDict, PyByteArray, PyBytes, PyDict, PyTuple, PyType},
@@ -31,8 +33,10 @@ use crate::{
 };
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Chunk(pub libparsec::client_types::Chunk);
+
+crate::binding_utils::gen_proto!(Chunk, __repr__);
 
 #[pymethods]
 impl Chunk {
@@ -105,12 +109,8 @@ impl Chunk {
         Ok(Self(r))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> bool {
-        match (other.extract::<u64>(), op) {
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
+        Ok(match (other.extract::<u64>(), op) {
             (Ok(other), CompareOp::Eq) => self.0 == other,
             (Ok(other), CompareOp::Ne) => self.0 != other,
             (Ok(other), CompareOp::Lt) => self.0 < other,
@@ -120,9 +120,9 @@ impl Chunk {
             _ => match (other.extract::<Chunk>(), op) {
                 (Ok(other), CompareOp::Eq) => self.0 == other.0,
                 (Ok(other), CompareOp::Ne) => self.0 != other.0,
-                _ => unimplemented!(),
+                _ => return Err(PyNotImplementedError::new_err("")),
             },
-        }
+        })
     }
 
     #[classmethod]
@@ -212,8 +212,11 @@ impl Chunk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct LocalFileManifest(pub libparsec::client_types::LocalFileManifest);
+
+crate::binding_utils::gen_proto!(LocalFileManifest, __repr__);
+crate::binding_utils::gen_proto!(LocalFileManifest, __richcmp__, eq);
 
 #[pymethods]
 impl LocalFileManifest {
@@ -290,18 +293,6 @@ impl LocalFileManifest {
             .set_single_block(block, new_chunk.0)
             .map_err(PyIndexError::new_err)?;
         Ok(Self(new_manifest))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self == other,
-            CompareOp::Ne => self != other,
-            _ => unimplemented!(),
-        }
     }
 
     fn get_chunks<'p>(&self, py: Python<'p>, block: usize) -> PyResult<&'p PyTuple> {
@@ -527,8 +518,11 @@ impl LocalFileManifest {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct LocalFolderManifest(pub libparsec::client_types::LocalFolderManifest);
+
+crate::binding_utils::gen_proto!(LocalFolderManifest, __repr__);
+crate::binding_utils::gen_proto!(LocalFolderManifest, __richcmp__, eq);
 
 #[pymethods]
 impl LocalFolderManifest {
@@ -600,18 +594,6 @@ impl LocalFolderManifest {
         }
 
         Ok(Self(r))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self == other,
-            CompareOp::Ne => self != other,
-            _ => unimplemented!(),
-        }
     }
 
     /*
@@ -897,8 +879,11 @@ impl LocalFolderManifest {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct LocalWorkspaceManifest(pub libparsec::client_types::LocalWorkspaceManifest);
+
+crate::binding_utils::gen_proto!(LocalWorkspaceManifest, __repr__);
+crate::binding_utils::gen_proto!(LocalWorkspaceManifest, __richcmp__, eq);
 
 #[pymethods]
 impl LocalWorkspaceManifest {
@@ -968,18 +953,6 @@ impl LocalWorkspaceManifest {
         }
 
         Ok(Self(r))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self == other,
-            CompareOp::Ne => self != other,
-            _ => unimplemented!(),
-        }
     }
 
     /*
@@ -1272,8 +1245,11 @@ impl LocalWorkspaceManifest {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct LocalUserManifest(pub libparsec::client_types::LocalUserManifest);
+
+crate::binding_utils::gen_proto!(LocalUserManifest, __repr__);
+crate::binding_utils::gen_proto!(LocalUserManifest, __richcmp__, eq);
 
 #[pymethods]
 impl LocalUserManifest {
@@ -1334,18 +1310,6 @@ impl LocalUserManifest {
         }
 
         Ok(Self(r))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self == other,
-            CompareOp::Ne => self != other,
-            _ => unimplemented!(),
-        }
     }
 
     /*
