@@ -76,7 +76,7 @@ async def test_lock_required(alice_workspace_storage: WorkspaceStorage):
 
 @pytest.mark.trio
 @customize_fixtures(real_data_storage=True)
-async def test_basic_set_get_clear(data_base_dir, alice_workspace_storage):
+async def test_basic_set_get_clear(data_base_dir, alice_workspace_storage: WorkspaceStorage):
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device)
     async with aws.lock_entry_id(manifest.id):
