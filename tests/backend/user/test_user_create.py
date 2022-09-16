@@ -11,13 +11,12 @@ from parsec._parsec import (
     UserCreateRepInvalidData,
     UserCreateRepNotAllowed,
 )
-from parsec.api.protocol.user import user_create_serializer
 from parsec.backend.user import INVITATION_VALIDITY, User, Device
 from parsec.api.data import UserCertificate, DeviceCertificate
 from parsec.api.protocol import DeviceID, DeviceLabel, UserProfile
 
 from tests.common import customize_fixtures, freeze_time
-from tests.backend.common import CmdSock, user_get, user_create
+from tests.backend.common import user_get, user_create
 
 
 @pytest.mark.trio
@@ -295,20 +294,7 @@ async def test_user_create_bad_redacted_device_certificate(alice_ws, alice, mall
 
     # Missing redacted certificate is not allowed as well
     # We should not be able to build an invalid request
-    cmd = CmdSock(
-        "user_create",
-        user_create_serializer,
-        parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
-            k: v
-            for k, v in {
-                "user_certificate": user_certificate,
-                "device_certificate": device_certificate,
-                "redacted_user_certificate": redacted_user_certificate,
-                "redacted_device_certificate": redacted_device_certificate,
-            }.items()
-            if v is not None
-        },
-    )
+    cmd = user_create
     # Generated from Python implementation (Parsec v2.11.1+dev)
     # Content:
     #   cmd: "user_create"
@@ -379,20 +365,7 @@ async def test_user_create_bad_redacted_user_certificate(alice_ws, alice, mallor
 
     # Missing redacted certificate is not allowed as well
     # We should not be able to build an invalid request
-    cmd = CmdSock(
-        "user_create",
-        user_create_serializer,
-        parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
-            k: v
-            for k, v in {
-                "user_certificate": user_certificate,
-                "device_certificate": device_certificate,
-                "redacted_user_certificate": redacted_user_certificate,
-                "redacted_device_certificate": redacted_device_certificate,
-            }.items()
-            if v is not None
-        },
-    )
+    cmd = user_create
     # Generated from Python implementation (Parsec v2.11.1+dev)
     # Content:
     #   cmd: "user_create"

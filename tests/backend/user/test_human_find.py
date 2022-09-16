@@ -8,11 +8,10 @@ from parsec._parsec import (
     HumanFindResultItem,
 )
 from parsec.api.protocol import UserProfile
-from parsec.api.protocol.user import human_find_serializer
 from parsec.backend.asgi import app_factory
 
 from tests.common import freeze_time, customize_fixtures
-from tests.backend.common import CmdSock, human_find
+from tests.backend.common import human_find
 
 
 @pytest.fixture
@@ -327,17 +326,7 @@ async def test_pagination(access_testbed, local_device_factory):
 @pytest.mark.trio
 async def test_bad_args(access_testbed, local_device_factory):
     binder, org, godfrey1, sock = access_testbed
-    cmd = CmdSock(
-        "human_find",
-        human_find_serializer,
-        parse_args=lambda self, query=None, omit_revoked=False, omit_non_human=False, page=1, per_page=100: {
-            "query": query,
-            "omit_revoked": omit_revoked,
-            "omit_non_human": omit_non_human,
-            "page": page,
-            "per_page": per_page,
-        },
-    )
+    cmd = human_find
     # Test bad params
     # We should not be able to build an invalid request
     for raw_req in [
