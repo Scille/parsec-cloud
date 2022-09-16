@@ -6,6 +6,8 @@ on:
     paths:
       - .github/workflows/package-ci.yml
       - packaging
+      - build.py
+      - pyproject.toml
   push:
     branches:
       - master
