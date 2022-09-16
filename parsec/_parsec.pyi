@@ -222,6 +222,15 @@ from parsec._parsec_pyi.protocol import (
     InviteNewRepOk,
     InviteNewRepUnknownStatus,
     InviteNewReq,
+    # Events
+    EventsListenReq,
+    EventsListenRep,
+    EventsListenRepOk,
+    EventsListenRepUnknownStatus,
+    EventsSubscribeReq,
+    EventsSubscribeRep,
+    EventsSubscribeRepOk,
+    EventsSubscribeRepUnknownStatus,
     # Message
     MessageGetReq,
     MessageGetRep,
@@ -591,6 +600,15 @@ __all__ = [
     "InviteNewRepOk",
     "InviteNewRepUnknownStatus",
     "InviteNewReq",
+    # Events
+    "EventsListenReq",
+    "EventsListenRep",
+    "EventsListenRepOk",
+    "EventsListenRepUnknownStatus",
+    "EventsSubscribeReq",
+    "EventsSubscribeRep",
+    "EventsSubscribeRepOk",
+    "EventsSubscribeRepUnknownStatus",
     # Protocol Message
     "MessageGetReq",
     "MessageGetRep",

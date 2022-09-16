@@ -114,6 +114,15 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::BlockReadRepInMaintenance>()?;
     m.add_class::<protocol::BlockReadRepUnknownStatus>()?;
 
+    // Events
+    m.add_class::<protocol::EventsListenReq>()?;
+    m.add_class::<protocol::EventsListenRep>()?;
+    m.add_class::<protocol::EventsListenRepOk>()?;
+    m.add_class::<protocol::EventsListenRepUnknownStatus>()?;
+    m.add_class::<protocol::EventsSubscribeRep>()?;
+    m.add_class::<protocol::EventsSubscribeRepOk>()?;
+    m.add_class::<protocol::EventsSubscribeRepUnknownStatus>()?;
+
     // Message
     m.add_class::<protocol::MessageGetReq>()?;
     m.add_class::<protocol::MessageGetRep>()?;

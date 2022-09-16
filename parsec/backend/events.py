@@ -2,6 +2,14 @@
 
 import trio
 
+from parsec._parsec import (
+    EventsListenRep,
+    EventsListenRepOk,
+    EventsListenReq,
+    EventsSubscribeRep,
+    EventsSubscribeRepOk,
+    EventsSubscribeReq,
+)
 from parsec.api.protocol import (
     OrganizationID,
     DeviceID,
@@ -11,9 +19,9 @@ from parsec.api.protocol import (
     InvitationStatus,
     InvitationToken,
     events_subscribe_serializer,
-    events_listen_serializer,
     APIEvent,
 )
+from parsec.api.protocol.base import api_typed_msg_adapter
 from parsec.api.protocol.types import UserProfile
 from parsec.backend.utils import catch_protocol_errors, api
 from parsec.backend.realm import BaseRealmComponent
@@ -29,6 +37,7 @@ class EventsComponent:
 
     @api("events_subscribe")
     @catch_protocol_errors
+    @api_typed_msg_adapter(EventsSubscribeReq, EventsSubscribeRep)
     async def api_events_subscribe(self, client_ctx, msg):
         msg = events_subscribe_serializer.req_load(msg)
 
@@ -56,7 +65,7 @@ class EventsComponent:
             #    `realm.vlobs_updated` events on this realm (especially useful during tests)
             try:
                 client_ctx.send_events_channel.send_nowait(
-                    {"event": event, "realm_id": realm_id, "role": role}
+                    EventsListenRep.OkRealmRolesUpdated(realm_id, role)
                 )
             except trio.WouldBlock:
                 client_ctx.logger.warning("dropping event (queue is full)")
@@ -72,7 +81,7 @@ class EventsComponent:
                 return
 
             try:
-                client_ctx.send_events_channel.send_nowait({"event": event, "ping": ping})
+                client_ctx.send_events_channel.send_nowait(EventsListenRep.OkPinged(ping))
             except trio.WouldBlock:
                 client_ctx.logger.warning("dropping event (queue is full)")
 
@@ -110,7 +119,7 @@ class EventsComponent:
                 return
 
             try:
-                client_ctx.send_events_channel.send_nowait({"event": event, "index": index})
+                client_ctx.send_events_channel.send_nowait(EventsListenRep.OkMessageReveived(index))
             except trio.WouldBlock:
                 client_ctx.logger.warning("dropping event (queue is full)")
 
@@ -127,13 +136,15 @@ class EventsComponent:
 
             try:
                 client_ctx.send_events_channel.send_nowait(
-                    {"event": event, "token": token, "invitation_status": status}
+                    EventsListenRep.OkInviteStatusChanged(token, status)
                 )
             except trio.WouldBlock:
                 client_ctx.logger.warning("dropping event (queue is full)")
 
         def _on_pki_enrollment_updated(
-            event: APIEvent, backend_event: BackendEvent, organization_id: OrganizationID
+            event: APIEvent,
+            backend_event: BackendEvent,
+            organization_id: OrganizationID,
         ) -> None:
             if (
                 organization_id != client_ctx.organization_id
@@ -190,20 +201,19 @@ class EventsComponent:
             client_ctx.realms = set(realms_for_user.keys())
             client_ctx.events_subscribed = True
 
-        return events_subscribe_serializer.rep_dump({"status": "ok"})
+        return EventsSubscribeRepOk()
 
     @api("events_listen", cancel_on_client_sending_new_cmd=True)
     @catch_protocol_errors
-    async def api_events_listen(self, client_ctx, msg):
-        msg = events_listen_serializer.req_load(msg)
-
-        if msg["wait"]:
+    @api_typed_msg_adapter(EventsListenReq, EventsListenRep)
+    async def api_events_listen(self, client_ctx, msg: EventsListenReq):
+        if msg.wait:
             event_data = await client_ctx.receive_events_channel.receive()
 
         else:
             try:
                 event_data = client_ctx.receive_events_channel.receive_nowait()
             except trio.WouldBlock:
-                return {"status": "no_events"}
+                return EventsListenRep.NoEvents()
 
-        return events_listen_serializer.rep_dump({"status": "ok", **event_data})
+        return EventsListenRepOk()
