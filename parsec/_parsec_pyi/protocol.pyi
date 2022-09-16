@@ -638,8 +638,8 @@ class VlobCreateRepSequesterInconsistency(VlobCreateRep):
     @property
     def sequester_services_certificates(self) -> Tuple[bytes]: ...
 
-class VlobCreateRepSequesterRejected(VlobUpdateRep):
-    def __ini__(
+class VlobCreateRepSequesterRejected(VlobCreateRep):
+    def __init__(
         self, service_id: SequesterServiceID, service_label: str, service_error: str
     ) -> None: ...
     @property
@@ -781,7 +781,7 @@ class VlobUpdateRepSequesterInconsistency(VlobUpdateRep):
     def sequester_services_certificates(self) -> Tuple[bytes]: ...
 
 class VlobUpdateRepSequesterRejected(VlobUpdateRep):
-    def __ini__(
+    def __init__(
         self, service_id: SequesterServiceID, service_label: str, service_error: str
     ) -> None: ...
     @property
