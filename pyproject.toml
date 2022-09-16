@@ -52,7 +52,7 @@ h11 = "^0.13"
 toastedmarshmallow = "0.2.6" # updating causes consitency problem in test
 PyNaCl = "^1.5"
 trio = ">=0.20,<0.22"
-trio_typing = "^0.5" # updating causes conflict with qtrio dependency
+trio_typing = "^0.7"
 sentry-sdk = "^1.5"
 structlog = ">=21.5,<23.0"
 # colorama = "^0.4.4  # structlog colored output"
@@ -82,7 +82,7 @@ pbr = { version="^5.9", optional=true }
 packaging = "^21.3"
 PyQt5 = { version="^5.15", optional=true }
 pyqt5-sip = { version="^12.9", optional=true }
-qtrio = { version="^0.5", optional=true }
+qtrio = { version="^0.5.1", optional=true }
 qrcode = { version="^7.3", optional=true }
 fusepy = { version="^3.0", markers="platform_system=='Linux' or platform_system=='Darwin'", optional=true }
 winfspy = { version="^0.8", markers="platform_system=='Windows'", optional=true }
@@ -139,8 +139,7 @@ pyinstaller = "^5.3"
 
 flake8 = "5.0.4"
 black = "^22.6.0"
-# Latest version compatible with `trio_typing~=0.5`, required by qtrio
-mypy = "v0.910"
+mypy = "^0.971"
 
 setuptools = "^63.1.0"
 maturin = "~=0.13"

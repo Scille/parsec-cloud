@@ -365,8 +365,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         async def wrapper(instance: "MainWindow") -> None:
             return await callback()
 
-        # TODO: remove type ignore comment when using a newer mypy version
-        return wrapper.__get__(self)  # type: ignore[attr-defined]
+        return wrapper.__get__(self)
 
     def _on_create_org_clicked(
         self, addr: Optional[BackendOrganizationBootstrapAddr] = None

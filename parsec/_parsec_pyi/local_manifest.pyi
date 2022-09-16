@@ -1,8 +1,7 @@
 from __future__ import annotations
 from typing import Any, Dict, FrozenSet, Optional, Set, Tuple, Union
 
-from ..core.fs.workspacefs.file_operations import Chunks
-from .crypto import SecretKey
+from parsec.crypto import SecretKey
 from parsec._parsec_pyi.ids import ChunkID, DeviceID, EntryID
 from parsec._parsec_pyi.manifest import (
     BlockAccess,
@@ -66,6 +65,8 @@ class Chunk:
     def from_block_access(cls, block_access: BlockAccess) -> Chunk: ...
     @classmethod
     def new(cls, start: int, stop: int) -> Chunk: ...
+
+Chunks = Tuple[Chunk, ...]
 
 class LocalFileManifest:
     def __init__(
