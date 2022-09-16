@@ -298,20 +298,20 @@ impl WorkspaceStorage {
     }
 
     pub fn get_workspace_manifest(&self) -> FSResult<LocalWorkspaceManifest> {
-        let cache = self
-            .manifest_storage
-            .caches
+        self.manifest_storage
+            .get_cache_entry(self.workspace_id)
             .lock()
-            .expect("Mutex is poisoned");
-
-        let workspace_entry = cache
-            .get(&self.workspace_id)
-            .map(|cache| cache.lock().expect("Mutex is poisoned"));
-
-        match workspace_entry.as_ref().map(|entry| &entry.manifest) {
-            Some(LocalManifest::Workspace(manifest)) => Ok(manifest.clone()),
-            _ => Err(FSError::LocalMiss(*self.workspace_id)),
-        }
+            .expect("Mutex is poisoned")
+            .manifest
+            .as_ref()
+            .and_then(|manifest| {
+                if let LocalManifest::Workspace(manifest) = manifest {
+                    Some(manifest.clone())
+                } else {
+                    None
+                }
+            })
+            .ok_or(FSError::LocalMiss(*self.workspace_id))
     }
 
     pub fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
@@ -595,7 +595,10 @@ mod tests {
     }
 
     fn clear_cache(storage: &WorkspaceStorage) {
-        storage.manifest_storage.caches.lock().unwrap().clear();
+        storage
+            .manifest_storage
+            .clear_memory_cache(false)
+            .expect("Failed to flush cache");
     }
 
     #[rstest]

@@ -50,14 +50,13 @@ impl UserStorage {
 
     pub fn get_user_manifest(&self) -> FSResult<LocalUserManifest> {
         self.manifest_storage
-            .caches
+            .get_cache_entry(self.user_manifest_id)
             .lock()
             .expect("Mutex is poisoned")
-            .get(&self.user_manifest_id)
-            .and_then(|cache| {
-                if let LocalManifest::User(ref manifest) =
-                    cache.lock().expect("Mutex is poisoned").manifest
-                {
+            .manifest
+            .as_ref()
+            .and_then(|manifest| {
+                if let LocalManifest::User(manifest) = manifest {
                     Some(manifest.clone())
                 } else {
                     None
