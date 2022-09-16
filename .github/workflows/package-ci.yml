@@ -361,9 +361,7 @@ jobs:
         working-directory: oxidation/client
 
       - name: Build Electron App
-        run: |
-          npm run electron:copy
-          npm run electron:dist
+        run: npm run electron:dist
         working-directory: oxidation/client
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
