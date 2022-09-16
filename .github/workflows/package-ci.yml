@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/package-ci.yml
       - packaging
+      - build.py
   push:
     branches:
       - master
