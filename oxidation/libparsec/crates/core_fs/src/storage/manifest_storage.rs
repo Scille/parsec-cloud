@@ -94,11 +94,12 @@ pub struct ManifestStorage {
     pub realm_id: EntryID,
     /// This cache contains all the manifests that have been set or accessed
     /// since the last call to `clear_memory_cache`
-    caches: Arc<Mutex<HashMap<EntryID, Arc<Mutex<Cache>>>>>,
+    caches: Arc<Mutex<HashMap<EntryID, Arc<Mutex<CacheEntry>>>>>,
 }
 
+/// A cache entry that may contain a manifest and its pending chunk.
 #[derive(Default)]
-pub(crate) struct Cache {
+pub(crate) struct CacheEntry {
     /// The current manifest for the cache.
     pub(crate) manifest: Option<LocalManifest>,
     /// The set of entries ids that are pending to be written.
@@ -106,6 +107,13 @@ pub(crate) struct Cache {
     /// > Note: this set might be empty but the manifest
     /// > still requires to be flushed.
     pending_chunk_ids: Option<HashSet<ChunkOrBlockID>>,
+}
+
+impl CacheEntry {
+    /// Return `true` if the entry has pending chunk to be pushed to the database.
+    pub fn has_pending_chunk(&self) -> bool {
+        self.pending_chunk_ids.is_some()
+    }
 }
 
 impl Drop for ManifestStorage {
@@ -203,7 +211,7 @@ impl ManifestStorage {
         if flush {
             let items = drained
                 .map(|(entry_id, entry)| (entry_id, entry))
-                .collect::<Vec<(EntryID, Arc<Mutex<Cache>>)>>();
+                .collect::<Vec<(EntryID, Arc<Mutex<CacheEntry>>)>>();
 
             drop(caches_lock);
             for (entry_id, lock) in items {
@@ -393,7 +401,7 @@ impl ManifestStorage {
         Ok((local_changes, remote_changes))
     }
 
-    pub(crate) fn get_cache_entry(&self, entry_id: EntryID) -> Arc<Mutex<Cache>> {
+    pub(crate) fn get_cache_entry(&self, entry_id: EntryID) -> Arc<Mutex<CacheEntry>> {
         self.caches
             .lock()
             .expect("Mutex is poisoned")
@@ -469,7 +477,7 @@ impl ManifestStorage {
     fn ensure_manifest_persistent_lock(
         &self,
         entry_id: EntryID,
-        cache_lock: Arc<Mutex<Cache>>,
+        cache_lock: Arc<Mutex<CacheEntry>>,
     ) -> FSResult<()> {
         self.ensure_manifest_persistent_unlock(
             entry_id,
@@ -480,7 +488,7 @@ impl ManifestStorage {
     fn ensure_manifest_persistent_unlock(
         &self,
         entry_id: EntryID,
-        cache: &mut Cache,
+        cache: &mut CacheEntry,
     ) -> FSResult<()> {
         if let (Some(manifest), Some(ref pending_chunk_ids)) =
             (&mut cache.manifest, &mut cache.pending_chunk_ids)
@@ -530,7 +538,7 @@ impl ManifestStorage {
             .expect("Mutes is poisoned")
             .iter()
             .map(|(entry_id, entry)| (*entry_id, entry.clone()))
-            .collect::<Vec<(EntryID, Arc<Mutex<Cache>>)>>();
+            .collect::<Vec<(EntryID, Arc<Mutex<CacheEntry>>)>>();
         for (entry_id, lock) in items {
             self.ensure_manifest_persistent_lock(entry_id, lock)?;
         }
@@ -587,13 +595,7 @@ impl ManifestStorage {
             .lock()
             .expect("Mutex is poisoned")
             .get(entry_id)
-            .map(|entry| {
-                entry
-                    .lock()
-                    .expect("Mutex is poisoned")
-                    .pending_chunk_ids
-                    .is_some()
-            })
+            .map(|entry| entry.lock().expect("Mutex is poisoned").has_pending_chunk())
             .unwrap_or(false)
     }
 }
