@@ -215,6 +215,7 @@ mod time_provider {
         parent: Option<Arc<Mutex<TimeProviderAgent>>>,
         time: MockedTime,
         sleeping_stats: u64,
+        autojump: Option<u64>,
     }
 
     impl TimeProviderAgent {
@@ -223,13 +224,40 @@ mod time_provider {
                 parent,
                 time: MockedTime::RealTime,
                 sleeping_stats: 0,
+                autojump: None,
             }
+        }
+
+        pub fn get_autojump(&self) -> Option<u64> {
+            match (&self.parent, self.autojump) {
+                (None, None) => None,
+                (_, result @ Some(_)) => result,
+                (Some(parent), None) => parent.lock().expect("Mutex is poisoned").get_autojump(),
+            }
+        }
+
+        pub fn set_autojump(&mut self, autojump: Option<u64>) {
+            self.autojump = autojump;
+            // Broadcast the config change given it impact everybody waiting
+            MOCK_CONFIG_HAS_CHANGED.notify_waiters();
         }
 
         pub fn mock_time(&mut self, time: MockedTime) {
             self.time = time;
             // Broadcast the config change given it impact everybody waiting
             MOCK_CONFIG_HAS_CHANGED.notify_waiters();
+        }
+
+        pub fn shift_time(&mut self, delta_us: i64) {
+            self.time = match self.time {
+                MockedTime::RealTime => MockedTime::ShiftedTime {
+                    microseconds: delta_us,
+                },
+                MockedTime::FrozenTime(dt) => MockedTime::FrozenTime(dt.add_us(delta_us)),
+                MockedTime::ShiftedTime { microseconds: us } => MockedTime::ShiftedTime {
+                    microseconds: us + delta_us,
+                },
+            };
         }
 
         fn parent_now_or_realtime(&self) -> DateTime {
@@ -308,17 +336,33 @@ mod time_provider {
             // it will be correctly decreased even if the future is aborted
             let _updated_stats = SleepingStatPlusOne::new(self.0.clone());
 
+            // Sleep forever
+            if time.num_days() >= 106751991 {
+                libparsec_platform_async::native::sleep(time.to_std().unwrap()).await;
+                return;
+            }
+
             let mut remaining_time = time;
             // Err is `to_sleep` gets negative, if such we are done with sleeping !
             while let Ok(to_sleep) = remaining_time.to_std() {
                 let sleep_started_at = self.now();
-                libparsec_platform_async::select!(
-                    _ = libparsec_platform_async::native::sleep(to_sleep).fuse() => break,
-                    _ = MOCK_CONFIG_HAS_CHANGED.notified().fuse() => {
-                        // Recompute the time we still have to sleep
-                        remaining_time = remaining_time - (self.now() - sleep_started_at);
+                let autojumped = {
+                    let mut agent = self.0.lock().expect("Mutex is poisoned");
+                    if let Some(delta_us) = agent.get_autojump() {
+                        agent.shift_time(delta_us as i64);
+                        true
+                    } else {
+                        false
                     }
-                );
+                };
+                if !autojumped {
+                    libparsec_platform_async::select!(
+                        _ = libparsec_platform_async::native::sleep(to_sleep).fuse() => break,
+                        _ = MOCK_CONFIG_HAS_CHANGED.notified().fuse() => (),
+                    );
+                }
+                // Recompute the time we still have to sleep
+                remaining_time = remaining_time - (self.now() - sleep_started_at);
             }
         }
 
@@ -332,6 +376,13 @@ mod time_provider {
 
         pub fn mock_time(&mut self, time: MockedTime) {
             self.0.lock().expect("Mutex is poisoned").mock_time(time);
+        }
+
+        pub fn set_autojump(&mut self, autojump: Option<u64>) {
+            self.0
+                .lock()
+                .expect("Mutex is poisoned")
+                .set_autojump(autojump);
         }
     }
 }

@@ -87,6 +87,12 @@ impl TimeProvider {
         self.0.mock_time(mock_config);
         Ok(())
     }
+
+    pub fn set_autojump(&mut self, autojump: Option<f64>) -> PyResult<()> {
+        self.0
+            .set_autojump(autojump.map(|x| (x * 1000000.0) as u64));
+        Ok(())
+    }
 }
 
 #[pyclass]
