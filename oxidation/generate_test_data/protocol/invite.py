@@ -13,7 +13,12 @@ from parsec.api.data import *
 serializer = invite_new_serializer
 
 serialized = serializer.req_dumps(
-    {"type": "USER", "cmd": "invite_new", "claimer_email": "alice@dev1", "send_email": True}
+    {
+        "type": "USER",
+        "cmd": "invite_new",
+        "claimer_email": "alice@dev1",
+        "send_email": True,
+    }
 )
 serializer.req_loads(serialized)
 display("invite_new_req_user", serialized, [])

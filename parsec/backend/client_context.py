@@ -67,7 +67,9 @@ class AuthenticatedClientContext(BaseClientContext):
         super().__init__(api_version)
 
         self.logger = logger.bind(
-            conn_id=self.conn_id, organization_id=organization_id.str, device_id=device_id.str
+            conn_id=self.conn_id,
+            organization_id=organization_id.str,
+            device_id=device_id.str,
         )
 
         self.organization_id = organization_id
@@ -118,7 +120,10 @@ class InvitedClientContext(BaseClientContext):
     TYPE = ClientType.INVITED
 
     def __init__(
-        self, api_version: ApiVersion, organization_id: OrganizationID, invitation: Invitation
+        self,
+        api_version: ApiVersion,
+        organization_id: OrganizationID,
+        invitation: Invitation,
     ):
         super().__init__(api_version)
 

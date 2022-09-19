@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, InviteListItem, InviteListRepOk
 
 from parsec.api.protocol import InvitationType, InvitationStatus, APIEvent
 
@@ -54,21 +54,14 @@ async def test_greeter_event_on_claimer_join_and_leave(
         assert rep == {"status": "no_events"}
 
         rep = await invite_list(alice_ws)
-        assert rep == {
-            "status": "ok",
-            "invitations": [
-                {
-                    "type": InvitationType.DEVICE,
-                    "token": invitation.token,
-                    "created_on": DateTime(2000, 1, 2),
-                    "status": InvitationStatus.READY,
-                }
-            ],
-        }
+        assert rep == InviteListRepOk(
+            [InviteListItem.Device(invitation.token, DateTime(2000, 1, 2), InvitationStatus.READY)]
+        )
 
     # Now claimer has left, greeter should be again notified
     async with real_clock_timeout():
         rep = await events_listen_wait(alice_ws)
+
     assert rep == {
         "status": "ok",
         "event": APIEvent.INVITE_STATUS_CHANGED,
@@ -77,14 +70,6 @@ async def test_greeter_event_on_claimer_join_and_leave(
     }
 
     rep = await invite_list(alice_ws)
-    assert rep == {
-        "status": "ok",
-        "invitations": [
-            {
-                "type": InvitationType.DEVICE,
-                "token": invitation.token,
-                "created_on": DateTime(2000, 1, 2),
-                "status": InvitationStatus.IDLE,
-            }
-        ],
-    }
+    assert rep == InviteListRepOk(
+        [InviteListItem.Device(invitation.token, DateTime(2000, 1, 2), InvitationStatus.IDLE)]
+    )

@@ -22,7 +22,11 @@ serialized = serializer.rep_dumps(
         "user_certificate": b"foobar",
         "revoked_user_certificate": b"foobar",
         "device_certificates": [b"foobar"],
-        "trustchain": {"devices": [b"foobar"], "users": [b"foobar"], "revoked_users": [b"foobar"]},
+        "trustchain": {
+            "devices": [b"foobar"],
+            "users": [b"foobar"],
+            "revoked_users": [b"foobar"],
+        },
     }
 )
 serializer.rep_loads(serialized)

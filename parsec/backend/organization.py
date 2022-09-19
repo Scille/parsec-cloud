@@ -33,11 +33,20 @@ from parsec.api.protocol import (
     organization_bootstrap_serializer,
     apiv1_organization_bootstrap_serializer,
 )
-from parsec.backend.utils import ClientType, catch_protocol_errors, api, Unset, UnsetType
+from parsec.backend.utils import (
+    ClientType,
+    catch_protocol_errors,
+    api,
+    Unset,
+    UnsetType,
+)
 from parsec.backend.user import User, Device
 from parsec.backend.webhooks import WebhooksComponent
 from parsec.backend.config import BackendConfig
-from parsec.backend.client_context import AnonymousClientContext, APIV1_AnonymousClientContext
+from parsec.backend.client_context import (
+    AnonymousClientContext,
+    APIV1_AnonymousClientContext,
+)
 
 
 class OrganizationError(Exception):
@@ -169,10 +178,15 @@ class BaseOrganizationComponent:
             users_per_profile_detail=list(stats.users_per_profile_detail),
         )
 
-    @api("organization_bootstrap", client_types=[ClientType.APIV1_ANONYMOUS, ClientType.ANONYMOUS])
+    @api(
+        "organization_bootstrap",
+        client_types=[ClientType.APIV1_ANONYMOUS, ClientType.ANONYMOUS],
+    )
     @catch_protocol_errors
     async def api_organization_bootstrap(
-        self, client_ctx: Union[APIV1_AnonymousClientContext, AnonymousClientContext], msg: dict
+        self,
+        client_ctx: Union[APIV1_AnonymousClientContext, AnonymousClientContext],
+        msg: dict,
     ):
         # Use the correct serializer depending on the API
         if isinstance(client_ctx, APIV1_AnonymousClientContext):
@@ -188,10 +202,14 @@ class BaseOrganizationComponent:
 
         try:
             u_data = UserCertificate.verify_and_load(
-                msg["user_certificate"], author_verify_key=root_verify_key, expected_author=None
+                msg["user_certificate"],
+                author_verify_key=root_verify_key,
+                expected_author=None,
             )
             d_data = DeviceCertificate.verify_and_load(
-                msg["device_certificate"], author_verify_key=root_verify_key, expected_author=None
+                msg["device_certificate"],
+                author_verify_key=root_verify_key,
+                expected_author=None,
             )
 
             ru_data = rd_data = None

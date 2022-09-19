@@ -208,6 +208,129 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::InvitedPingRepOk>()?;
     m.add_class::<protocol::InvitedPingRepUnknownStatus>()?;
 
+    // Invite
+    m.add_class::<protocol::InvitationType>()?;
+    m.add_class::<protocol::InviteNewReq>()?;
+    m.add_class::<protocol::InviteNewRep>()?;
+    m.add_class::<protocol::InviteNewRepNotAllowed>()?;
+    m.add_class::<protocol::InviteNewRepAlreadyMember>()?;
+    m.add_class::<protocol::InviteNewRepNotAvailable>()?;
+    m.add_class::<protocol::InviteNewRepUnknownStatus>()?;
+    m.add_class::<protocol::InviteNewRepOk>()?;
+
+    m.add_class::<protocol::InviteDeleteReq>()?;
+    m.add_class::<protocol::InviteDeleteRep>()?;
+    m.add_class::<protocol::InviteDeleteRepAlreadyDeleted>()?;
+    m.add_class::<protocol::InviteDeleteRepNotFound>()?;
+    m.add_class::<protocol::InviteDeleteRepUnknownStatus>()?;
+    m.add_class::<protocol::InviteDeleteRepOk>()?;
+
+    m.add_class::<protocol::InviteListReq>()?;
+    m.add_class::<protocol::InviteListRep>()?;
+    m.add_class::<protocol::InviteListRepUnknownStatus>()?;
+    m.add_class::<protocol::InviteListRepOk>()?;
+
+    m.add_class::<protocol::InviteInfoReq>()?;
+    m.add_class::<protocol::InviteInfoRep>()?;
+    m.add_class::<protocol::InviteInfoRepOk>()?;
+    m.add_class::<protocol::InviteInfoRepUnknownStatus>()?;
+
+    m.add_class::<protocol::Invite1ClaimerWaitPeerReq>()?;
+    m.add_class::<protocol::Invite1ClaimerWaitPeerRep>()?;
+    m.add_class::<protocol::Invite1ClaimerWaitPeerRepInvalidState>()?;
+    m.add_class::<protocol::Invite1ClaimerWaitPeerRepNotFound>()?;
+    m.add_class::<protocol::Invite1ClaimerWaitPeerRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite1ClaimerWaitPeerRepOk>()?;
+
+    m.add_class::<protocol::Invite1GreeterWaitPeerReq>()?;
+    m.add_class::<protocol::Invite1GreeterWaitPeerRep>()?;
+    m.add_class::<protocol::Invite1GreeterWaitPeerRepNotFound>()?;
+    m.add_class::<protocol::Invite1GreeterWaitPeerRepAlreadyDeleted>()?;
+    m.add_class::<protocol::Invite1GreeterWaitPeerRepInvalidState>()?;
+    m.add_class::<protocol::Invite1GreeterWaitPeerRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite1GreeterWaitPeerRepOk>()?;
+
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceReq>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRep>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRepNotFound>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRepInvalidState>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRepOk>()?;
+
+    m.add_class::<protocol::Invite2aGreeterGetHashedNonceReq>()?;
+    m.add_class::<protocol::Invite2aGreeterGetHashedNonceRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite2aGreeterGetHashedNonceRep>()?;
+    m.add_class::<protocol::Invite2aGreeterGetHashedNonceRepNotFound>()?;
+    m.add_class::<protocol::Invite2aGreeterGetHashedNonceRepAlreadyDeleted>()?;
+    m.add_class::<protocol::Invite2aGreeterGetHashedNonceRepInvalidState>()?;
+    m.add_class::<protocol::Invite2aGreeterGetHashedNonceRepOk>()?;
+
+    m.add_class::<protocol::Invite2bClaimerSendNonceReq>()?;
+    m.add_class::<protocol::Invite2bClaimerSendNonceRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite2bClaimerSendNonceRep>()?;
+    m.add_class::<protocol::Invite2bClaimerSendNonceRepNotFound>()?;
+    m.add_class::<protocol::Invite2bClaimerSendNonceRepInvalidState>()?;
+    m.add_class::<protocol::Invite2bClaimerSendNonceRepOk>()?;
+
+    m.add_class::<protocol::Invite2bGreeterSendNonceReq>()?;
+    m.add_class::<protocol::Invite2bGreeterSendNonceRep>()?;
+    m.add_class::<protocol::Invite2bGreeterSendNonceRepNotFound>()?;
+    m.add_class::<protocol::Invite2bGreeterSendNonceRepAlreadyDeleted>()?;
+    m.add_class::<protocol::Invite2bGreeterSendNonceRepInvalidState>()?;
+    m.add_class::<protocol::Invite2bGreeterSendNonceRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite2bGreeterSendNonceRepOk>()?;
+
+    m.add_class::<protocol::Invite3aClaimerSignifyTrustReq>()?;
+    m.add_class::<protocol::Invite3aClaimerSignifyTrustRep>()?;
+    m.add_class::<protocol::Invite3aClaimerSignifyTrustRepNotFound>()?;
+    m.add_class::<protocol::Invite3aClaimerSignifyTrustRepInvalidState>()?;
+    m.add_class::<protocol::Invite3aClaimerSignifyTrustRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite3aClaimerSignifyTrustRepOk>()?;
+
+    m.add_class::<protocol::Invite3aGreeterWaitPeerTrustReq>()?;
+    m.add_class::<protocol::Invite3aGreeterWaitPeerTrustRep>()?;
+    m.add_class::<protocol::Invite3aGreeterWaitPeerTrustRepNotFound>()?;
+    m.add_class::<protocol::Invite3aGreeterWaitPeerTrustRepAlreadyDeleted>()?;
+    m.add_class::<protocol::Invite3aGreeterWaitPeerTrustRepInvalidState>()?;
+    m.add_class::<protocol::Invite3aGreeterWaitPeerTrustRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite3aGreeterWaitPeerTrustRepOk>()?;
+
+    m.add_class::<protocol::Invite3bClaimerWaitPeerTrustReq>()?;
+    m.add_class::<protocol::Invite3bClaimerWaitPeerTrustRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite3bClaimerWaitPeerTrustRepOk>()?;
+    m.add_class::<protocol::Invite3bClaimerWaitPeerTrustRep>()?;
+    m.add_class::<protocol::Invite3bClaimerWaitPeerTrustRepNotFound>()?;
+    m.add_class::<protocol::Invite3bClaimerWaitPeerTrustRepInvalidState>()?;
+
+    m.add_class::<protocol::Invite3bGreeterSignifyTrustReq>()?;
+    m.add_class::<protocol::Invite3bGreeterSignifyTrustRep>()?;
+    m.add_class::<protocol::Invite3bGreeterSignifyTrustRepNotFound>()?;
+    m.add_class::<protocol::Invite3bGreeterSignifyTrustRepAlreadyDeleted>()?;
+    m.add_class::<protocol::Invite3bGreeterSignifyTrustRepInvalidState>()?;
+    m.add_class::<protocol::Invite3bGreeterSignifyTrustRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite3bGreeterSignifyTrustRepOk>()?;
+
+    m.add_class::<protocol::Invite4ClaimerCommunicateReq>()?;
+    m.add_class::<protocol::Invite4ClaimerCommunicateRep>()?;
+    m.add_class::<protocol::Invite4ClaimerCommunicateRepNotFound>()?;
+    m.add_class::<protocol::Invite4ClaimerCommunicateRepInvalidState>()?;
+    m.add_class::<protocol::Invite4ClaimerCommunicateRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite4ClaimerCommunicateRepActiveUserLimitReached>()?;
+    m.add_class::<protocol::Invite4ClaimerCommunicateRepOk>()?;
+
+    m.add_class::<protocol::Invite4GreeterCommunicateReq>()?;
+    m.add_class::<protocol::Invite4GreeterCommunicateRep>()?;
+    m.add_class::<protocol::Invite4GreeterCommunicateRepNotFound>()?;
+    m.add_class::<protocol::Invite4GreeterCommunicateRepAlreadyDeleted>()?;
+    m.add_class::<protocol::Invite4GreeterCommunicateRepInvalidState>()?;
+    m.add_class::<protocol::Invite4GreeterCommunicateRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite4GreeterCommunicateRepOk>()?;
+    m.add_class::<protocol::InviteListItem>()?;
+    m.add_class::<protocol::InvitationStatus>()?;
+    m.add_class::<protocol::InvitationEmailSentStatus>()?;
+    m.add_class::<protocol::InvitationDeletedReason>()?;
+
     // Vlob
     m.add_class::<protocol::VlobCreateReq>()?;
     m.add_class::<protocol::VlobCreateRep>()?;

@@ -12,7 +12,12 @@ from parsec._parsec import (
 from parsec.api.protocol.base import ApiCommandSerializer
 from parsec.serde import fields
 
-__all__ = ("BlockID", "BlockIDField", "block_create_serializer", "block_read_serializer")
+__all__ = (
+    "BlockID",
+    "BlockIDField",
+    "block_create_serializer",
+    "block_read_serializer",
+)
 
 BlockIDField: Type[fields.Field] = fields.uuid_based_field_factory(BlockID)
 

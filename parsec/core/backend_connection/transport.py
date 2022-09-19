@@ -34,7 +34,10 @@ from parsec.core.backend_connection.exceptions import (
     BackendOutOfBallparkError,
     BackendProtocolError,
 )
-from parsec.core.backend_connection.proxy import maybe_connect_through_proxy, blocking_io_get_proxy
+from parsec.core.backend_connection.proxy import (
+    maybe_connect_through_proxy,
+    blocking_io_get_proxy,
+)
 
 
 logger = get_logger()
@@ -55,7 +58,9 @@ async def connect_as_invited(
     addr: BackendInvitationAddr, keepalive: Optional[int] = None
 ) -> Transport:
     handshake = InvitedClientHandshake(
-        organization_id=addr.organization_id, invitation_type=addr.invitation_type, token=addr.token
+        organization_id=addr.organization_id,
+        invitation_type=addr.invitation_type,
+        token=addr.token,
     )
     return await _connect(addr.hostname, addr.port, addr.use_ssl, keepalive, handshake)
 
@@ -91,7 +96,10 @@ async def _connect(
 
         except OSError as exc:
             logger.debug(
-                "Impossible to connect to backend", hostname=hostname, port=port, exc_info=exc
+                "Impossible to connect to backend",
+                hostname=hostname,
+                port=port,
+                exc_info=exc,
             )
             raise BackendNotAvailable(exc) from exc
 

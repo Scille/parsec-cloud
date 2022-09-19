@@ -21,7 +21,8 @@ class BasePingComponent:
     )
     @catch_protocol_errors
     @api_typed_msg_adapter(
-        (AuthenticatedPingReq, InvitedPingReq), Union[AuthenticatedPingRep, InvitedPingRep]
+        (AuthenticatedPingReq, InvitedPingReq),
+        Union[AuthenticatedPingRep, InvitedPingRep],
     )
     async def api_ping(self, client_ctx, req) -> Union[AuthenticatedPingRep, InvitedPingRep]:
         if client_ctx.TYPE == ClientType.AUTHENTICATED:

@@ -10,14 +10,23 @@ from structlog import get_logger
 from functools import partial
 from contextlib import asynccontextmanager
 
-from parsec._parsec import OrganizationStatsRepOk
+from parsec._parsec import (
+    InvitationDeletedReason,
+    InvitationEmailSentStatus,
+    InvitationType,
+    InviteDeleteRepAlreadyDeleted,
+    InviteDeleteRepNotFound,
+    InviteDeleteRepOk,
+    InviteListItem,
+    InviteListRepOk,
+    InviteNewRepAlreadyMember,
+    InviteNewRepOk,
+    OrganizationStatsRepOk,
+)
 from parsec.event_bus import EventBus
 from parsec.api.protocol import (
     UserID,
-    InvitationType,
     InvitationToken,
-    InvitationDeletedReason,
-    InvitationEmailSentStatus,
 )
 from parsec.api.data import RevokedUserCertificate, EntryName
 from parsec.core.pki import accepter_list_submitted_from_backend
@@ -267,24 +276,24 @@ class LoggedCore:
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_new(
-            type=InvitationType.USER, claimer_email=email, send_email=send_email
+            type=InvitationType.USER(), claimer_email=email, send_email=send_email
         )
-        if rep["status"] == "already_member":
+        if isinstance(rep, InviteNewRepAlreadyMember):
             raise BackendInvitationOnExistingMember("An user already exist with this email")
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, InviteNewRepOk):
             raise BackendConnectionError(f"Backend error: {rep}")
 
-        if not ("email_sent" in rep):
+        try:
+            email_sent = rep.email_sent
+        except AttributeError:
             email_sent = InvitationEmailSentStatus.SUCCESS
-        else:
-            email_sent = rep["email_sent"]
 
         return (
             BackendInvitationAddr.build(
                 backend_addr=self.device.organization_addr.get_backend_addr(),
                 organization_id=self.device.organization_id,
-                invitation_type=InvitationType.USER,
-                token=rep["token"],
+                invitation_type=InvitationType.USER(),
+                token=rep.token,
             ),
             email_sent,
         )
@@ -297,22 +306,23 @@ class LoggedCore:
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_new(
-            type=InvitationType.DEVICE, send_email=send_email
+            type=InvitationType.DEVICE(), send_email=send_email
         )
-        if rep["status"] != "ok":
+        if not isinstance(rep, InviteNewRepOk):
             raise BackendConnectionError(f"Backend error: {rep}")
 
-        if not ("email_sent" in rep):
-            email_sent = InvitationEmailSentStatus.SUCCESS
-        else:
-            email_sent = rep["email_sent"]
+        try:
+            if rep.email_sent:
+                email_sent = rep.email_sent
+        except AttributeError:
+            email_sent = InvitationEmailSentStatus.SUCCESS()
 
         return (
             BackendInvitationAddr.build(
                 backend_addr=self.device.organization_addr.get_backend_addr(),
                 organization_id=self.device.organization_id,
-                invitation_type=InvitationType.DEVICE,
-                token=rep["token"],
+                invitation_type=InvitationType.DEVICE(),
+                token=rep.token,
             ),
             email_sent,
         )
@@ -320,29 +330,29 @@ class LoggedCore:
     async def delete_invitation(
         self,
         token: InvitationToken,
-        reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED,
+        reason: InvitationDeletedReason = InvitationDeletedReason.CANCELLED(),
     ) -> None:
         """
         Raises:
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_delete(token=token, reason=reason)
-        if rep["status"] == "not_found":
+        if isinstance(rep, InviteDeleteRepNotFound):
             raise BackendInvitationNotFound("Invitation not found")
-        elif rep["status"] == "already_deleted":
+        elif isinstance(rep, InviteDeleteRepAlreadyDeleted):
             raise BackendInvitationAlreadyUsed("Invitation already used")
-        elif rep["status"] != "ok":
+        elif not isinstance(rep, InviteDeleteRepOk):
             raise BackendConnectionError(f"Backend error: {rep}")
 
-    async def list_invitations(self) -> List[dict]:  # TODO: better return type
+    async def list_invitations(self) -> List[InviteListItem]:
         """
         Raises:
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_list()
-        if rep["status"] != "ok":
+        if not isinstance(rep, InviteListRepOk):
             raise BackendConnectionError(f"Backend error: {rep}")
-        return rep["invitations"]
+        return rep.invitations
 
     async def start_greeting_user(self, token: InvitationToken) -> UserGreetInProgress1Ctx:
         """

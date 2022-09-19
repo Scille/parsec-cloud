@@ -1,6 +1,38 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+from parsec._parsec import (
+    Invite1ClaimerWaitPeerRepOk,
+    Invite1GreeterWaitPeerRepOk,
+    Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
+    Invite2aClaimerSendHashedNonceHashNonceRepOk,
+    Invite2aGreeterGetHashedNonceRepInvalidState,
+    Invite2aGreeterGetHashedNonceRepOk,
+    Invite2bClaimerSendNonceRepOk,
+    Invite2bGreeterSendNonceRepInvalidState,
+    Invite2bGreeterSendNonceRepOk,
+    Invite3aClaimerSignifyTrustRepInvalidState,
+    Invite3aClaimerSignifyTrustRepOk,
+    Invite3aGreeterWaitPeerTrustRepInvalidState,
+    Invite3aGreeterWaitPeerTrustRepOk,
+    Invite3bClaimerWaitPeerTrustRepInvalidState,
+    Invite3bClaimerWaitPeerTrustRepOk,
+    Invite3bClaimerWaitPeerTrustRepUnknownStatus,
+    Invite3bGreeterSignifyTrustRepInvalidState,
+    Invite3bGreeterSignifyTrustRepOk,
+    Invite4ClaimerCommunicateRepInvalidState,
+    Invite4ClaimerCommunicateRepOk,
+    Invite4GreeterCommunicateRepInvalidState,
+    Invite4GreeterCommunicateRepOk,
+    InviteDeleteRepOk,
+    InviteInfoRepOk,
+    InviteListRepOk,
+    InviteNewRepOk,
+)
+
 from parsec.backend.backend_events import BackendEvent
+from parsec.api.protocol import (
+    InvitationType as PyInvitationType,
+)  # TODO: Remove legacy invitation type
 import pytest
 import trio
 from parsec._parsec import DateTime
@@ -40,7 +72,7 @@ async def invited_ws(backend_asgi_app, backend_invited_ws_factory, alice, invita
     async with backend_invited_ws_factory(
         backend_asgi_app,
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=PyInvitationType.DEVICE,
         token=invitation.token,
     ) as invited_ws:
         yield invited_ws
@@ -62,7 +94,25 @@ class PeerControler:
 
     async def assert_ok_rep(self):
         rep = await self.get_result()
-        assert rep["status"] == "ok"
+        assert type(rep) in [
+            Invite1ClaimerWaitPeerRepOk,
+            Invite1GreeterWaitPeerRepOk,
+            Invite2aClaimerSendHashedNonceHashNonceRepOk,
+            Invite2aGreeterGetHashedNonceRepOk,
+            Invite2bClaimerSendNonceRepOk,
+            Invite2bGreeterSendNonceRepOk,
+            Invite3aClaimerSignifyTrustRepOk,
+            Invite3aGreeterWaitPeerTrustRepOk,
+            Invite3bClaimerWaitPeerTrustRepOk,
+            Invite3bClaimerWaitPeerTrustRepUnknownStatus,
+            Invite3bGreeterSignifyTrustRepOk,
+            Invite4ClaimerCommunicateRepOk,
+            Invite4GreeterCommunicateRepOk,
+            InviteDeleteRepOk,
+            InviteInfoRepOk,
+            InviteListRepOk,
+            InviteNewRepOk,
+        ]
 
     async def peer_do(self, action, *args, **kwargs):
         print("START", action.cmd)
@@ -189,10 +239,12 @@ async def test_conduit_exchange_good(exchange_testbed, leader):
     else:
         await claimer_ctlr.send_order("1_wait_peer")
         await greeter_ctlr.send_order("1_wait_peer")
+
     greeter_rep = await greeter_ctlr.get_result()
     claimer_rep = await claimer_ctlr.get_result()
-    assert greeter_rep == {"status": "ok", "claimer_public_key": claimer_privkey.public_key}
-    assert claimer_rep == {"status": "ok", "greeter_public_key": greeter_privkey.public_key}
+
+    assert greeter_rep.claimer_public_key == claimer_privkey.public_key
+    assert claimer_rep.greeter_public_key == greeter_privkey.public_key
 
     # Step 2
     if leader == "greeter":
@@ -203,20 +255,16 @@ async def test_conduit_exchange_good(exchange_testbed, leader):
         await greeter_ctlr.send_order("2a_get_hashed_nonce")
 
     greeter_rep = await greeter_ctlr.get_result()
-    assert greeter_rep == {
-        "status": "ok",
-        "claimer_hashed_nonce": HashDigest.from_data(b"<claimer_nonce>"),
-    }
+    assert greeter_rep.claimer_hashed_nonce == HashDigest.from_data(b"<claimer_nonce>")
     await greeter_ctlr.send_order("2b_send_nonce")
 
     claimer_rep = await claimer_ctlr.get_result()
-    assert claimer_rep == {"status": "ok", "greeter_nonce": b"<greeter_nonce>"}
+    assert claimer_rep.greeter_nonce == b"<greeter_nonce>"
     await claimer_ctlr.send_order("2b_send_nonce")
 
     greeter_rep = await greeter_ctlr.get_result()
-    assert greeter_rep == {"status": "ok", "claimer_nonce": b"<claimer_nonce>"}
+    assert greeter_rep.claimer_nonce == b"<claimer_nonce>"
     claimer_rep = await claimer_ctlr.get_result()
-    assert claimer_rep == {"status": "ok"}
 
     # Step 3a
     if leader == "greeter":
@@ -226,9 +274,9 @@ async def test_conduit_exchange_good(exchange_testbed, leader):
         await claimer_ctlr.send_order("3a_signify_trust")
         await greeter_ctlr.send_order("3a_wait_peer_trust")
     greeter_rep = await greeter_ctlr.get_result()
-    assert greeter_rep == {"status": "ok"}
+    assert isinstance(greeter_rep, Invite3aGreeterWaitPeerTrustRepOk)
     claimer_rep = await claimer_ctlr.get_result()
-    assert claimer_rep == {"status": "ok"}
+    assert isinstance(claimer_rep, Invite3aClaimerSignifyTrustRepOk)
 
     # Step 3b
     if leader == "greeter":
@@ -238,9 +286,9 @@ async def test_conduit_exchange_good(exchange_testbed, leader):
         await claimer_ctlr.send_order("3b_wait_peer_trust")
         await greeter_ctlr.send_order("3b_signify_trust")
     greeter_rep = await greeter_ctlr.get_result()
-    assert greeter_rep == {"status": "ok"}
+    assert isinstance(greeter_rep, Invite3bGreeterSignifyTrustRepOk)
     claimer_rep = await claimer_ctlr.get_result()
-    assert claimer_rep == {"status": "ok"}
+    assert isinstance(claimer_rep, Invite3bClaimerWaitPeerTrustRepOk)
 
     # Step 4
     if leader == "greeter":
@@ -250,9 +298,9 @@ async def test_conduit_exchange_good(exchange_testbed, leader):
         await claimer_ctlr.send_order("4_communicate", b"hello from claimer")
         await greeter_ctlr.send_order("4_communicate", b"hello from greeter")
     greeter_rep = await greeter_ctlr.get_result()
-    assert greeter_rep == {"status": "ok", "payload": b"hello from claimer"}
+    assert greeter_rep.payload == b"hello from claimer"
     claimer_rep = await claimer_ctlr.get_result()
-    assert claimer_rep == {"status": "ok", "payload": b"hello from greeter"}
+    assert claimer_rep.payload == b"hello from greeter"
 
     if leader == "greeter":
         await greeter_ctlr.send_order("4_communicate", b"")
@@ -260,10 +308,11 @@ async def test_conduit_exchange_good(exchange_testbed, leader):
     else:
         await claimer_ctlr.send_order("4_communicate", b"")
         await greeter_ctlr.send_order("4_communicate", b"")
+
     greeter_rep = await greeter_ctlr.get_result()
-    assert greeter_rep == {"status": "ok", "payload": b""}
+    assert greeter_rep.payload == b""
     claimer_rep = await claimer_ctlr.get_result()
-    assert claimer_rep == {"status": "ok", "payload": b""}
+    assert claimer_rep.payload == b""
 
 
 @pytest.mark.trio
@@ -285,7 +334,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
             await greeter_ctlr.send_order("2a_get_hashed_nonce")
             await claimer_ctlr.send_order("1_wait_peer")
         greeter_rep = await greeter_ctlr.get_result()
-        assert greeter_rep == {"status": "invalid_state"}
+        assert isinstance(greeter_rep, Invite2aGreeterGetHashedNonceRepInvalidState)
         await greeter_ctlr.send_order("1_wait_peer")
         await greeter_ctlr.assert_ok_rep()
         await claimer_ctlr.assert_ok_rep()
@@ -299,7 +348,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
             await greeter_ctlr.send_order("1_wait_peer")
             await claimer_ctlr.send_order("2a_send_hashed_nonce")
         claimer_rep = await claimer_ctlr.get_result()
-        assert claimer_rep == {"status": "invalid_state"}
+        assert isinstance(claimer_rep, Invite2aClaimerSendHashedNonceHashNonceRepInvalidState)
         await claimer_ctlr.send_order("1_wait_peer")
         await claimer_ctlr.assert_ok_rep()
         await greeter_ctlr.assert_ok_rep()
@@ -311,7 +360,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
     # Greeter reset after retrieving claimer hashed nonce
     await greeter_ctlr.send_order("1_wait_peer")
     claimer_rep = await claimer_ctlr.get_result()
-    assert claimer_rep == {"status": "invalid_state"}
+    assert isinstance(claimer_rep, Invite2aClaimerSendHashedNonceHashNonceRepInvalidState)
     await claimer_ctlr.send_order("1_wait_peer")
     await claimer_ctlr.assert_ok_rep()
     await greeter_ctlr.assert_ok_rep()
@@ -326,7 +375,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
     # Claimer reset after retrieving greeter nonce
     await claimer_ctlr.send_order("1_wait_peer")
     greeter_rep = await greeter_ctlr.get_result()
-    assert greeter_rep == {"status": "invalid_state"}
+    assert isinstance(greeter_rep, Invite2bGreeterSendNonceRepInvalidState)
     await greeter_ctlr.send_order("1_wait_peer")
     await greeter_ctlr.assert_ok_rep()
     await claimer_ctlr.assert_ok_rep()
@@ -350,7 +399,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
             await greeter_ctlr.send_order("1_wait_peer")
             await claimer_ctlr.send_order("3a_signify_trust")
         claimer_rep = await claimer_ctlr.get_result()
-        assert claimer_rep == {"status": "invalid_state"}
+        assert isinstance(claimer_rep, Invite3aClaimerSignifyTrustRepInvalidState)
         await claimer_ctlr.send_order("1_wait_peer")
         await claimer_ctlr.assert_ok_rep()
         await greeter_ctlr.assert_ok_rep()
@@ -374,7 +423,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
             await greeter_ctlr.send_order("3a_wait_peer_trust")
             await claimer_ctlr.send_order("1_wait_peer")
         greeter_rep = await greeter_ctlr.get_result()
-        assert greeter_rep == {"status": "invalid_state"}
+        assert isinstance(greeter_rep, Invite3aGreeterWaitPeerTrustRepInvalidState)
         await greeter_ctlr.send_order("1_wait_peer")
         await greeter_ctlr.assert_ok_rep()
         await claimer_ctlr.assert_ok_rep()
@@ -403,7 +452,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
             await greeter_ctlr.send_order("1_wait_peer")
             await claimer_ctlr.send_order("3b_wait_peer_trust")
         claimer_rep = await claimer_ctlr.get_result()
-        assert claimer_rep == {"status": "invalid_state"}
+        assert isinstance(claimer_rep, Invite3bClaimerWaitPeerTrustRepInvalidState)
         await claimer_ctlr.send_order("1_wait_peer")
         await claimer_ctlr.assert_ok_rep()
         await greeter_ctlr.assert_ok_rep()
@@ -432,7 +481,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
             await greeter_ctlr.send_order("3b_signify_trust")
             await claimer_ctlr.send_order("1_wait_peer")
         greeter_rep = await greeter_ctlr.get_result()
-        assert greeter_rep == {"status": "invalid_state"}
+        assert isinstance(greeter_rep, Invite3bGreeterSignifyTrustRepInvalidState)
         await greeter_ctlr.send_order("1_wait_peer")
         await greeter_ctlr.assert_ok_rep()
         await claimer_ctlr.assert_ok_rep()
@@ -466,7 +515,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
             await greeter_ctlr.send_order("1_wait_peer")
             await claimer_ctlr.send_order("4_communicate", b"")
         claimer_rep = await claimer_ctlr.get_result()
-        assert claimer_rep == {"status": "invalid_state"}
+        assert isinstance(claimer_rep, Invite4ClaimerCommunicateRepInvalidState)
         await claimer_ctlr.send_order("1_wait_peer")
         await claimer_ctlr.assert_ok_rep()
         await greeter_ctlr.assert_ok_rep()
@@ -500,7 +549,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
             await greeter_ctlr.send_order("4_communicate", b"")
             await claimer_ctlr.send_order("1_wait_peer")
         greeter_rep = await greeter_ctlr.get_result()
-        assert greeter_rep == {"status": "invalid_state"}
+        assert isinstance(greeter_rep, Invite4GreeterCommunicateRepInvalidState)
         await greeter_ctlr.send_order("1_wait_peer")
         await greeter_ctlr.assert_ok_rep()
         await claimer_ctlr.assert_ok_rep()
@@ -561,14 +610,9 @@ async def test_claimer_step_1_retry(
                         token=invitation.token,
                         greeter_public_key=greeter_privkey.public_key,
                     )
-                assert greeter_rep == {
-                    "status": "ok",
-                    "claimer_public_key": claimer_privkey.public_key,
-                }
-            assert claimer_async_rep.rep == {
-                "status": "ok",
-                "greeter_public_key": greeter_privkey.public_key,
-            }
+
+                assert greeter_rep.claimer_public_key == claimer_privkey.public_key
+            assert claimer_async_rep.rep.greeter_public_key == greeter_privkey.public_key
 
 
 @pytest.mark.trio
@@ -588,11 +632,8 @@ async def test_claimer_step_2_retry(
             claimer_rep = await invite_1_claimer_wait_peer(
                 invited_ws, claimer_public_key=claimer_privkey.public_key
             )
-            assert claimer_rep == {"status": "ok", "greeter_public_key": greeter_privkey.public_key}
-        assert greeter_async_rep.rep == {
-            "status": "ok",
-            "claimer_public_key": claimer_privkey.public_key,
-        }
+            assert claimer_rep.greeter_public_key == greeter_privkey.public_key
+        assert greeter_async_rep.rep.claimer_public_key == claimer_privkey.public_key
 
     # Greeter initiates step 2a...
     async with real_clock_timeout():
@@ -616,49 +657,48 @@ async def test_claimer_step_2_retry(
 
                         # First connection should be notified of the reset
                         await greeter_2a_async_rep.do_recv()
-                        assert greeter_2a_async_rep.rep == {"status": "invalid_state"}
+                        assert isinstance(
+                            greeter_2a_async_rep.rep, Invite2aGreeterGetHashedNonceRepInvalidState
+                        )
 
                         # Claimer now arrives and try to do step 2a
                         rep = await invite_2a_claimer_send_hashed_nonce(
                             invited_ws,
                             claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                         )
-                        assert rep == {"status": "invalid_state"}
+
+                        assert isinstance(
+                            rep, Invite2aClaimerSendHashedNonceHashNonceRepInvalidState
+                        )
 
                         # So claimer returns to step 1
                         rep = await invite_1_claimer_wait_peer(
                             invited_ws, claimer_public_key=claimer_retry_privkey.public_key
                         )
-                        assert rep == {
-                            "status": "ok",
-                            "greeter_public_key": greeter_retry_privkey.public_key,
-                        }
+                        assert rep.greeter_public_key == greeter_retry_privkey.public_key
 
-                    assert greeter_retry_1_async_rep.rep == {
-                        "status": "ok",
-                        "claimer_public_key": claimer_retry_privkey.public_key,
-                    }
+                    assert (
+                        greeter_retry_1_async_rep.rep.claimer_public_key
+                        == claimer_retry_privkey.public_key
+                    )
 
             # Finally retry and achieve step 2
 
             async def _claimer_step_2():
                 rep = await invite_2a_greeter_get_hashed_nonce(alice_ws, token=invitation.token)
-                assert rep == {
-                    "status": "ok",
-                    "claimer_hashed_nonce": HashDigest.from_data(b"<retry_nonce>"),
-                }
+                assert rep.claimer_hashed_nonce == HashDigest.from_data(b"<retry_nonce>")
                 rep = await invite_2b_greeter_send_nonce(
                     alice_ws, token=invitation.token, greeter_nonce=b"greeter nonce"
                 )
-                assert rep == {"status": "ok", "claimer_nonce": b"claimer nonce"}
+                assert rep.claimer_nonce == b"claimer nonce"
 
             async def _greeter_step_2():
                 rep = await invite_2a_claimer_send_hashed_nonce(
                     invited_ws, claimer_hashed_nonce=HashDigest.from_data(b"<retry_nonce>")
                 )
-                assert rep == {"status": "ok", "greeter_nonce": b"greeter nonce"}
+                assert rep.greeter_nonce == b"greeter nonce"
                 rep = await invite_2b_claimer_send_nonce(invited_ws, claimer_nonce=b"claimer nonce")
-                assert rep == {"status": "ok"}
+                assert isinstance(rep, Invite2bClaimerSendNonceRepOk)
 
             async with real_clock_timeout():
                 async with trio.open_nursery() as nursery:

@@ -2,7 +2,27 @@
 
 import pytest
 import trio
-from parsec._parsec import DateTime
+
+from parsec._parsec import (
+    DateTime,
+    Invite1ClaimerWaitPeerRepOk,
+    Invite1GreeterWaitPeerRepOk,
+    Invite2aClaimerSendHashedNonceHashNonceRepOk,
+    Invite2aGreeterGetHashedNonceRepOk,
+    Invite2bClaimerSendNonceRepOk,
+    Invite2bGreeterSendNonceRepOk,
+    Invite3aClaimerSignifyTrustRepOk,
+    Invite3aGreeterWaitPeerTrustRepOk,
+    Invite3bClaimerWaitPeerTrustRepOk,
+    Invite3bClaimerWaitPeerTrustRepUnknownStatus,
+    Invite3bGreeterSignifyTrustRepOk,
+    Invite4ClaimerCommunicateRepOk,
+    Invite4GreeterCommunicateRepOk,
+    InviteDeleteRepOk,
+    InviteInfoRepOk,
+    InviteListRepOk,
+    InviteNewRepOk,
+)
 
 from parsec.crypto import PrivateKey, HashDigest
 
@@ -45,7 +65,28 @@ class PeerControler:
 
     async def assert_ok_rep(self):
         rep = await self.get_result()
-        assert rep["status"] == "ok"
+        assert isinstance(
+            rep,
+            (
+                Invite1ClaimerWaitPeerRepOk,
+                Invite1GreeterWaitPeerRepOk,
+                Invite2aClaimerSendHashedNonceHashNonceRepOk,
+                Invite2aGreeterGetHashedNonceRepOk,
+                Invite2bClaimerSendNonceRepOk,
+                Invite2bGreeterSendNonceRepOk,
+                Invite3aClaimerSignifyTrustRepOk,
+                Invite3aGreeterWaitPeerTrustRepOk,
+                Invite3bClaimerWaitPeerTrustRepOk,
+                Invite3bClaimerWaitPeerTrustRepUnknownStatus,
+                Invite3bGreeterSignifyTrustRepOk,
+                Invite4ClaimerCommunicateRepOk,
+                Invite4GreeterCommunicateRepOk,
+                InviteDeleteRepOk,
+                InviteInfoRepOk,
+                InviteListRepOk,
+                InviteNewRepOk,
+            ),
+        )
 
     # Methods used by the peer
 

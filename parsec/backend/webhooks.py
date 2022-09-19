@@ -18,13 +18,19 @@ logger = get_logger()
 
 def _do_urllib_request(url: str, data: bytes) -> None:
     req = Request(
-        url, method="POST", headers={"content-type": "application/json; charset=utf-8"}, data=data
+        url,
+        method="POST",
+        headers={"content-type": "application/json; charset=utf-8"},
+        data=data,
     )
     try:
         with urlopen(req, timeout=30) as rep:
             if not 200 <= rep.status < 300:
                 logger.warning(
-                    "webhook bad return status", url=url, data=data, return_status=rep.status
+                    "webhook bad return status",
+                    url=url,
+                    data=data,
+                    return_status=rep.status,
                 )
 
     except OSError as exc:

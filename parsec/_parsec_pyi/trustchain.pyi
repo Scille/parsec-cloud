@@ -3,11 +3,18 @@ from typing import List, Optional, Sequence, Tuple
 from parsec._parsec_pyi.crypto import VerifyKey
 from parsec._parsec_pyi.ids import UserID, DeviceID
 from parsec._parsec_pyi.time import DateTime, TimeProvider
-from parsec._parsec_pyi.certif import UserCertificate, RevokedUserCertificate, DeviceCertificate
+from parsec._parsec_pyi.certif import (
+    UserCertificate,
+    RevokedUserCertificate,
+    DeviceCertificate,
+)
 
 class TrustchainContext:
     def __init__(
-        self, root_verify_key: VerifyKey, time_provider: TimeProvider, cache_validity: int
+        self,
+        root_verify_key: VerifyKey,
+        time_provider: TimeProvider,
+        cache_validity: int,
     ) -> None: ...
     @property
     def cache_validity(self) -> int: ...

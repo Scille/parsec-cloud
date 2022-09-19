@@ -4,7 +4,7 @@ from typing import Optional, cast, Dict, Sequence, Union, Any
 from enum import Enum
 from secrets import token_bytes
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, InvitationType
 
 from parsec.crypto import SigningKey, VerifyKey, CryptoError
 from parsec.serde import BaseSchema, OneOfSchema, fields, validate, post_load
@@ -20,11 +20,16 @@ from parsec.api.protocol.base import (
     serializer_factory,
     settle_compatible_versions,
 )
-from parsec.api.protocol.types import OrganizationID, DeviceID, OrganizationIDField, DeviceIDField
+from parsec.api.protocol.types import (
+    OrganizationID,
+    DeviceID,
+    OrganizationIDField,
+    DeviceIDField,
+)
 from parsec.api.protocol.invite import (
     InvitationToken,
     InvitationTokenField,
-    InvitationType,
+    InvitationType as PyInvitationType,
     InvitationTypeField,
 )
 from parsec.api.version import (
@@ -500,7 +505,7 @@ class InvitedClientHandshake(BaseClientHandshake):
     def __init__(
         self,
         organization_id: OrganizationID,
-        invitation_type: InvitationType,
+        invitation_type: PyInvitationType,
         token: InvitationToken,
     ):
         super().__init__()
@@ -510,13 +515,23 @@ class InvitedClientHandshake(BaseClientHandshake):
 
     def process_challenge_req(self, req: bytes) -> bytes:
         self.load_challenge_req(req)
+
+        def _to_legacy_invitation_type(invite_type: Any) -> PyInvitationType:
+            if isinstance(invite_type, InvitationType):
+                if invite_type == InvitationType.DEVICE():
+                    return PyInvitationType.DEVICE
+                else:
+                    return PyInvitationType.USER
+
+            return invite_type
+
         return handshake_answer_serializer.dumps(
             {
                 "handshake": "answer",
                 "type": HandshakeType.INVITED,
                 "client_api_version": self.client_api_version,
                 "organization_id": self.organization_id,
-                "invitation_type": self.invitation_type,
+                "invitation_type": _to_legacy_invitation_type(self.invitation_type),
                 "token": self.token,
             }
         )
@@ -526,7 +541,9 @@ class APIV1_AnonymousClientHandshake(BaseClientHandshake):
     SUPPORTED_API_VERSIONS = (API_V1_VERSION,)
 
     def __init__(
-        self, organization_id: OrganizationID, root_verify_key: Optional[VerifyKey] = None
+        self,
+        organization_id: OrganizationID,
+        root_verify_key: Optional[VerifyKey] = None,
     ):
         super().__init__()
         self.organization_id = organization_id

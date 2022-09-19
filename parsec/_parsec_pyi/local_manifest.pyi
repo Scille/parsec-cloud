@@ -145,7 +145,11 @@ class LocalFileManifest:
     ) -> LocalFileManifest: ...
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, parent: EntryID, timestamp: DateTime, blocksize: int = 512 * 1024
+        cls,
+        author: DeviceID,
+        parent: EntryID,
+        timestamp: DateTime,
+        blocksize: int = 512 * 1024,
     ) -> LocalFileManifest: ...
 
 class LocalFolderManifest:
@@ -392,7 +396,11 @@ class LocalUserManifest:
     def decrypt_and_load(cls, encrypted: bytes, key: SecretKey) -> LocalUserManifest: ...
     @classmethod
     def new_placeholder(
-        cls, author: DeviceID, timestamp: DateTime, id: Optional[EntryID], speculative: bool
+        cls,
+        author: DeviceID,
+        timestamp: DateTime,
+        id: Optional[EntryID],
+        speculative: bool,
     ) -> LocalUserManifest: ...
     @classmethod
     def from_remote(cls, remote: UserManifest) -> LocalUserManifest: ...

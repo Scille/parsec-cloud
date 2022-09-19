@@ -133,7 +133,9 @@ class VlobSequesterDisabledError(VlobError):
 
 class VlobSequesterServiceInconsistencyError(VlobError):
     def __init__(
-        self, sequester_authority_certificate: bytes, sequester_services_certificates: List[bytes]
+        self,
+        sequester_authority_certificate: bytes,
+        sequester_services_certificates: List[bytes],
     ):
         self.sequester_authority_certificate = sequester_authority_certificate
         self.sequester_services_certificates = sequester_services_certificates
@@ -205,7 +207,7 @@ class BaseVlobComponent:
     @api_typed_msg_adapter(VlobReadReq, VlobReadRep)
     async def api_vlob_read(self, client_ctx, req: VlobReadReq) -> VlobReadRep:
         try:
-            version, blob, author, created_on, author_last_role_granted_on = await self.read(
+            (version, blob, author, created_on, author_last_role_granted_on,) = await self.read(
                 client_ctx.organization_id,
                 client_ctx.device_id,
                 encryption_revision=req.encryption_revision,
@@ -494,7 +496,11 @@ class BaseVlobComponent:
         raise NotImplementedError()
 
     async def poll_changes(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: RealmID, checkpoint: int
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: RealmID,
+        checkpoint: int,
     ) -> Tuple[int, Dict[VlobID, int]]:
         """
         Raises:

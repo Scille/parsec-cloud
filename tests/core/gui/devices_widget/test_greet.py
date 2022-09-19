@@ -5,10 +5,10 @@ import trio
 from PyQt5 import QtCore
 from functools import partial
 from contextlib import asynccontextmanager
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, InvitationType
 
 from parsec.utils import start_task
-from parsec.api.protocol import InvitationType, HumanHandle, InvitationDeletedReason, DeviceLabel
+from parsec.api.protocol import HumanHandle, InvitationDeletedReason, DeviceLabel
 from parsec.core.gui.lang import translate
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import backend_invited_cmds_factory
@@ -82,7 +82,7 @@ def GreetDeviceTestBed(
             invitation_addr = BackendInvitationAddr.build(
                 backend_addr=author.organization_addr.get_backend_addr(),
                 organization_id=author.organization_id,
-                invitation_type=InvitationType.DEVICE,
+                invitation_type=InvitationType.DEVICE(),
                 token=invitation.token,
             )
 
@@ -96,7 +96,6 @@ def GreetDeviceTestBed(
             assert isinstance(greet_device_widget, GreetDeviceWidget)
 
             greet_device_information_widget = await catch_greet_device_widget()
-            assert isinstance(greet_device_information_widget, GreetDeviceInstructionsWidget)
 
             def _greet_device_displayed():
                 assert greet_device_widget.dialog.isVisible()

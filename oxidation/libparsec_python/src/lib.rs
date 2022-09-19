@@ -27,40 +27,7 @@ fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::EventsListenRep>()?;
     m.add_class::<protocol::EventsSubscribeReq>()?;
     m.add_class::<protocol::EventsSubscribeRep>()?;
-    // Invite
-    m.add_class::<protocol::InviteNewReq>()?;
-    m.add_class::<protocol::InviteNewRep>()?;
-    m.add_class::<protocol::InviteDeleteReq>()?;
-    m.add_class::<protocol::InviteDeleteRep>()?;
-    m.add_class::<protocol::InviteListReq>()?;
-    m.add_class::<protocol::InviteListRep>()?;
-    m.add_class::<protocol::InviteInfoReq>()?;
-    m.add_class::<protocol::InviteInfoRep>()?;
-    m.add_class::<protocol::Invite1ClaimerWaitPeerReq>()?;
-    m.add_class::<protocol::Invite1ClaimerWaitPeerRep>()?;
-    m.add_class::<protocol::Invite1GreeterWaitPeerReq>()?;
-    m.add_class::<protocol::Invite1GreeterWaitPeerRep>()?;
-    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceReq>()?;
-    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRep>()?;
-    m.add_class::<protocol::Invite2aGreeterGetHashedNonceReq>()?;
-    m.add_class::<protocol::Invite2aGreeterGetHashedNonceRep>()?;
-    m.add_class::<protocol::Invite2bClaimerSendNonceReq>()?;
-    m.add_class::<protocol::Invite2bClaimerSendNonceRep>()?;
-    m.add_class::<protocol::Invite2bGreeterSendNonceReq>()?;
-    m.add_class::<protocol::Invite2bGreeterSendNonceRep>()?;
-    m.add_class::<protocol::Invite3aClaimerSignifyTrustReq>()?;
-    m.add_class::<protocol::Invite3aClaimerSignifyTrustRep>()?;
-    m.add_class::<protocol::Invite3aGreeterWaitPeerTrustReq>()?;
-    m.add_class::<protocol::Invite3aGreeterWaitPeerTrustRep>()?;
-    m.add_class::<protocol::Invite3bClaimerWaitPeerTrustReq>()?;
-    m.add_class::<protocol::Invite3bClaimerWaitPeerTrustRep>()?;
-    m.add_class::<protocol::Invite3bGreeterSignifyTrustReq>()?;
-    m.add_class::<protocol::Invite3bGreeterSignifyTrustRep>()?;
-    m.add_class::<protocol::Invite4ClaimerCommunicateReq>()?;
-    m.add_class::<protocol::Invite4ClaimerCommunicateRep>()?;
-    m.add_class::<protocol::Invite4GreeterCommunicateReq>()?;
-    m.add_class::<protocol::Invite4GreeterCommunicateRep>()?;
-    m.add_class::<protocol::InviteListItem>()?;
+
     // User
     m.add_class::<protocol::UserGetReq>()?;
     m.add_class::<protocol::UserGetRep>()?;
