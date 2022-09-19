@@ -5,12 +5,12 @@ from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 from math import ceil
 
+from parsec._parsec import InvitationType, InvitationEmailSentStatus
 from parsec.api.protocol import (
     InvitationToken,
     UserProfile,
 )
 
-from parsec._parsec import InvitationType, InvitationEmailSentStatus
 from parsec.core.types import BackendInvitationAddr, UserInfo
 
 from parsec.core.backend_connection import (

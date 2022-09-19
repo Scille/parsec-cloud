@@ -2,6 +2,7 @@
 
 import pytest
 import trio
+
 from parsec._parsec import (
     DateTime,
     Invite1ClaimerWaitPeerRepOk,
