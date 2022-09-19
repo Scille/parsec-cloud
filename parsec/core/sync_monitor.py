@@ -4,7 +4,6 @@ import math
 from collections import defaultdict
 from typing import Optional, Union, Dict, Sequence
 import trio
-from trio.lowlevel import current_clock
 from structlog import get_logger
 
 from parsec._parsec import (
@@ -52,11 +51,6 @@ async def freeze_sync_monitor_mockpoint():
     pass
 
 
-def current_time():
-    # Use time from trio clock to easily mock it
-    return current_clock().current_time()
-
-
 class LocalChange:
     __slots__ = ("first_changed_on", "last_changed_on", "due_time")
 
@@ -86,6 +80,7 @@ class SyncContext:
 
     def __init__(self, user_fs: UserFS, id: EntryID, read_only: bool = False):
         self.user_fs = user_fs
+        self.device = user_fs.device
         self.id = id
         self.read_only = read_only
         self.due_time = math.inf
@@ -149,7 +144,7 @@ class SyncContext:
 
         # 3) Compute local and remote changes that need to be synced
         need_sync_local, need_sync_remote = await self._get_local_storage().get_need_sync_entries()
-        now = current_time()
+        now = self.device.timestamp().timestamp()
         # Ignore local changes in read only mode
         if not self.read_only:
             self._local_changes = {entry_id: LocalChange(now) for entry_id in need_sync_local}
@@ -176,7 +171,7 @@ class SyncContext:
                 wake_up = True
 
         # Update local_changes dictionary
-        now = current_time()
+        now = self.device.timestamp().timestamp()
         try:
             new_due_time = self._local_changes[entry_id].changed(now)
         except KeyError:
@@ -193,7 +188,7 @@ class SyncContext:
 
     def set_remote_change(self, entry_id: EntryID) -> bool:
         self._remote_changes.add(entry_id)
-        self.due_time = current_time()
+        self.due_time = self.device.timestamp().timestamp()
         return True
 
     def set_confined_entry(self, entry_id: EntryID, cause_id: EntryID) -> None:
@@ -201,7 +196,7 @@ class SyncContext:
 
     def _compute_due_time(self, now: Optional[float] = None, min_due_time: Optional[float] = None):
         if self._remote_changes:
-            self.due_time = now or current_time()
+            self.due_time = now or self.device.timestamp().timestamp()
         elif self._local_changes:
             # TODO: index changes by due_time to avoid this O(n) operation
             self.due_time = min(
@@ -220,7 +215,7 @@ class SyncContext:
         return self.due_time
 
     async def tick(self) -> float:
-        now = current_time()
+        now = self.device.timestamp().timestamp()
         if self.due_time > now:
             return self.due_time
 
@@ -399,7 +394,7 @@ async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status):
             if ctx:
                 # Change the due_time so the context understands the early
                 # wakeup is for him
-                ctx.due_time = current_time()
+                ctx.due_time = user_fs.device.timestamp().timestamp()
                 _trigger_early_wakeup()
 
     def _on_entry_confined(event, entry_id, cause_id, workspace_id):
@@ -428,7 +423,7 @@ async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status):
         ctx = ctxs.get(ctx.id)
         if ctx:
             # Add small cooldown just to be sure not end up in a crazy busy error loop
-            ctx.due_time = current_time() + delay
+            ctx.due_time = user_fs.device.timestamp().timestamp() + delay
             return ctx.due_time
         else:
             return math.inf
@@ -456,13 +451,22 @@ async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status):
             next_due_time = min(due_times)
             if next_due_time == math.inf:
                 task_status.idle()
-            with trio.move_on_at(next_due_time) as cancel_scope:
-                await early_wakeup.wait()
-                early_wakeup = trio.Event()
-            # In case of early wakeup, `_trigger_early_wakeup` is responsible
-            # for calling `task_status.awake()`
-            if cancel_scope.cancelled_caught:
+            async with trio.open_nursery() as nursery:
+
+                async def wait_for_early_wakup():
+                    await early_wakeup.wait()
+                    nursery.cancel_scope.cancel()
+
+                nursery.start_soon(wait_for_early_wakup)
+                to_sleep = next_due_time - user_fs.device.time_provider.now().timestamp()
+                await user_fs.device.time_provider.sleep(to_sleep)
+                nursery.cancel_scope.cancel()
+                # In case of early wakeup, `_trigger_early_wakeup` is responsible
+                # for calling `task_status.awake()`
                 task_status.awake()
+            # Reset early wakeup event
+            early_wakeup = trio.Event()
+
             due_times.clear()
             await freeze_sync_monitor_mockpoint()
             for ctx in ctxs.iter():
