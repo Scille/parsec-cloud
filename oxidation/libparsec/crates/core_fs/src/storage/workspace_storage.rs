@@ -299,14 +299,10 @@ impl WorkspaceStorage {
 
     pub fn get_workspace_manifest(&self) -> FSResult<LocalWorkspaceManifest> {
         self.manifest_storage
-            .get_cache_entry(self.workspace_id)
-            .lock()
-            .expect("Mutex is poisoned")
-            .manifest
-            .as_ref()
+            .get_cached_manifest(self.workspace_id)
             .and_then(|manifest| {
                 if let LocalManifest::Workspace(manifest) = manifest {
-                    Some(manifest.clone())
+                    Some(manifest)
                 } else {
                     None
                 }

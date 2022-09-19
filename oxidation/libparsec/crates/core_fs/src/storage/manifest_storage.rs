@@ -430,6 +430,21 @@ impl ManifestStorage {
         Ok(manifest)
     }
 
+    /// Get a cached manifest.
+    pub fn get_cached_manifest(&self, entry_id: EntryID) -> Option<LocalManifest> {
+        let cache_entry = {
+            self.caches
+                .lock()
+                .expect("Mutex is poisoned")
+                .get(&entry_id)
+                .cloned()
+        };
+        cache_entry.and_then(|entry| {
+            let unlock = entry.lock().expect("Mutex is poisoned");
+            unlock.manifest.clone()
+        })
+    }
+
     pub fn set_manifest(
         &self,
         entry_id: EntryID,
