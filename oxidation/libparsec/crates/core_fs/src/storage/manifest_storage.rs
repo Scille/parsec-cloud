@@ -574,12 +574,12 @@ impl ManifestStorage {
                 .map_err(|e| FSError::DeleteTable(format!("chunks: clear_manifest {e}")))?;
             }
         }
-        let cached_manifest = cache_unlock.manifest.is_some();
+        let is_manifest_cached = cache_unlock.manifest.is_some();
 
         cache_unlock.manifest = None;
         cache_unlock.pending_chunk_ids = None;
 
-        if !deleted && !cached_manifest {
+        if !deleted && !is_manifest_cached {
             return Err(FSError::LocalMiss(*entry_id));
         }
 
