@@ -530,7 +530,7 @@ impl ManifestStorage {
         let items = self
             .caches
             .lock()
-            .expect("Mutes is poisoned")
+            .expect("Mutex is poisoned")
             .iter()
             .map(|(entry_id, entry)| (*entry_id, entry.clone()))
             .collect::<Vec<(EntryID, Arc<Mutex<CacheEntry>>)>>();
