@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
+import trio
 import pytest
 from parsec._parsec import DateTime
 
@@ -39,13 +40,8 @@ async def _send_msg(backend, author, recipient, ping="ping"):
     )
 
 
-# This test has been detected as flaky.
-# Using re-runs is a valid temporary solutions but the problem should be investigated in the future.
 @pytest.mark.trio
-@pytest.mark.flaky(reruns=3)
-async def test_process_while_offline(
-    frozen_clock, running_backend, alice_core, bob_user_fs, alice, bob
-):
+async def test_process_while_offline(running_backend, alice_core, bob_user_fs, alice, bob):
     assert alice_core.backend_status == BackendConnStatus.READY
 
     with running_backend.offline():
@@ -55,7 +51,7 @@ async def test_process_while_offline(
 
             assert not alice_core.are_monitors_idle()
 
-            async with frozen_clock.real_clock_timeout():
+            with trio.fail_after(1.0):
                 await spy.wait(
                     CoreEvent.BACKEND_CONNECTION_CHANGED,
                     {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
@@ -70,13 +66,14 @@ async def test_process_while_offline(
 
     with alice_core.event_bus.listen() as spy:
         # Alice is back online, should retrieve Bob's message fine
-        await frozen_clock.sleep_with_autojump(30)
-        async with frozen_clock.real_clock_timeout():
+        alice.time_provider.set_autojump(0.010)
+        with trio.fail_after(1.0):
             await spy.wait(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.READY, "status_exc": None},
             )
             await alice_core.wait_idle_monitors()
+        alice.time_provider.set_autojump(None)
         assert alice_core.backend_status == BackendConnStatus.READY
         spy.assert_event_occured(CoreEvent.MESSAGE_PINGED, {"ping": "hello from Bob !"})
 
