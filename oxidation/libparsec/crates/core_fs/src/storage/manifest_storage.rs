@@ -346,27 +346,22 @@ impl ManifestStorage {
 
     pub fn get_need_sync_entries(&self) -> FSResult<(HashSet<EntryID>, HashSet<EntryID>)> {
         let mut remote_changes = HashSet::new();
-        let mut local_changes = HashSet::<_, RandomState>::from_iter(
-            // TODO: Copy the caches then filter_map on the cloned values.
-            self.caches
-                .lock()
-                .expect("Mutex is poisoned")
-                .iter()
-                .filter_map(|(id, cache)| {
-                    if cache
-                        .lock()
-                        .expect("Mutex is poisoned")
-                        .manifest
-                        .as_ref()
-                        .map(|manifest| manifest.need_sync())
-                        .unwrap_or_default()
-                    {
-                        Some(*id)
-                    } else {
-                        None
-                    }
-                }),
-        );
+        let caches = self.caches.lock().expect("Mutex is poisoned").clone();
+        let mut local_changes =
+            HashSet::<_, RandomState>::from_iter(caches.iter().filter_map(|(id, cache)| {
+                if cache
+                    .lock()
+                    .expect("Mutex is poisoned")
+                    .manifest
+                    .as_ref()
+                    .map(|manifest| manifest.need_sync())
+                    .unwrap_or_default()
+                {
+                    Some(*id)
+                } else {
+                    None
+                }
+            }));
 
         let conn = &mut *self.conn.lock().expect("Mutex is poisoned");
         for (manifest_id, need_sync, bv, rv) in vlobs::table
