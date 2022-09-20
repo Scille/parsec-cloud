@@ -1087,7 +1087,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if self.line_edit_search.text():
             self.filter_files(self.line_edit_search.text())
         if default_selection and not file_found:
-            show_error(self, _("TEXT_FILE_GOTO_LINK_NOT_FOUND"))
+            show_error(self, _("TEXT_FILE_GOTO_LINK_NOT_FOUND_file").format(file=default_selection))
         workspace_name = self.workspace_fs.get_workspace_name()
         self.spinner.hide()
         self.table_files.setEnabled(True)
