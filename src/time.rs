@@ -3,13 +3,12 @@
 use pyo3::{
     exceptions::{PyTypeError, PyValueError},
     prelude::*,
-    pyclass::CompareOp,
     types::PyType,
     PyAny, PyResult,
 };
 
 #[allow(deprecated)]
-use crate::{binding_utils::hash_generic_legacy, runtime::spawn_future_into_trio_coroutine};
+use crate::runtime::spawn_future_into_trio_coroutine;
 
 #[pyfunction]
 /// mock_time takes as argument a DateTime (for FrozenTime), an int (for ShiftedTime) or None (for RealTime)
@@ -28,7 +27,7 @@ pub(crate) fn mock_time(time: &PyAny) -> PyResult<()> {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct TimeProvider(pub libparsec::types::TimeProvider);
 
 #[pymethods]
@@ -89,8 +88,13 @@ impl TimeProvider {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct DateTime(pub libparsec::types::DateTime);
+
+crate::binding_utils::gen_proto!(DateTime, __repr__);
+crate::binding_utils::gen_proto!(DateTime, __str__);
+crate::binding_utils::gen_proto!(DateTime, __richcmp__, ord);
+crate::binding_utils::gen_proto!(DateTime, __hash__);
 
 #[pymethods]
 impl DateTime {
@@ -100,30 +104,6 @@ impl DateTime {
         Ok(Self(libparsec::types::DateTime::from_ymd_and_hms(
             year, month, day, hour, minute, second,
         )))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("DateTime({})", self.0))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        #[allow(deprecated)]
-        hash_generic_legacy(&self.0.to_string(), py)
     }
 
     #[getter]
@@ -236,8 +216,10 @@ impl DateTime {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct LocalDateTime(pub libparsec::types::LocalDateTime);
+
+crate::binding_utils::gen_proto!(LocalDateTime, __repr__);
 
 #[pymethods]
 impl LocalDateTime {
@@ -247,10 +229,6 @@ impl LocalDateTime {
         Ok(Self(libparsec::types::LocalDateTime::from_ymd_and_hms(
             year, month, day, hour, minute, second,
         )))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
     }
 
     #[getter]
