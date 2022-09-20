@@ -230,7 +230,9 @@ async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_
 
     def _assert_dialogs():
         assert len(autoclose_dialog.dialogs) == 1
-        assert autoclose_dialog.dialogs == [("Error", translate("TEXT_FILE_GOTO_LINK_NOT_FOUND"))]
+        assert autoclose_dialog.dialogs == [
+            ("Error", translate("TEXT_FILE_GOTO_LINK_NOT_FOUND_file").format(file="unknown"))
+        ]
 
     await aqtbot.wait_until(_assert_dialogs)
 
