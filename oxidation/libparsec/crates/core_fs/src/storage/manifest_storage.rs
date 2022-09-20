@@ -110,8 +110,8 @@ pub(crate) struct CacheEntry {
 }
 
 impl CacheEntry {
-    /// Return `true` if the entry has pending chunk to be pushed to the database.
-    pub fn has_pending_chunk(&self) -> bool {
+    /// Return `true` if we have chunk that need to be push to the local database.
+    pub fn has_chunk_to_be_flush(&self) -> bool {
         self.pending_chunk_ids.is_some()
     }
 }
@@ -610,7 +610,12 @@ impl ManifestStorage {
             .lock()
             .expect("Mutex is poisoned")
             .get(entry_id)
-            .map(|entry| entry.lock().expect("Mutex is poisoned").has_pending_chunk())
+            .map(|entry| {
+                entry
+                    .lock()
+                    .expect("Mutex is poisoned")
+                    .has_chunk_to_be_flush()
+            })
             .unwrap_or(false)
     }
 }
