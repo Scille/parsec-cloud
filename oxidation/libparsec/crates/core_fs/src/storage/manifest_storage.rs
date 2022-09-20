@@ -396,7 +396,12 @@ impl ManifestStorage {
         Ok((local_changes, remote_changes))
     }
 
-    pub(crate) fn get_cache_entry(&self, entry_id: EntryID) -> Arc<Mutex<CacheEntry>> {
+    /// Get a cache entry identified by `entry_id`.
+    /// If the cache is not present it will insert it then return it (see `or_default`).
+    pub(crate) fn get_or_insert_default_cache_entry(
+        &self,
+        entry_id: EntryID,
+    ) -> Arc<Mutex<CacheEntry>> {
         self.caches
             .lock()
             .expect("Mutex is poisoned")
@@ -408,7 +413,7 @@ impl ManifestStorage {
 
     pub fn get_manifest(&self, entry_id: EntryID) -> FSResult<LocalManifest> {
         // Look in cache first
-        let cache_entry = self.get_cache_entry(entry_id);
+        let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
         let mut cache_unlock = cache_entry.lock().expect("Mutex is poisoned");
         if let Some(manifest) = cache_unlock.manifest.clone() {
             return Ok(manifest);
@@ -452,7 +457,7 @@ impl ManifestStorage {
         cache_only: bool,
         removed_ids: Option<HashSet<ChunkOrBlockID>>,
     ) -> FSResult<()> {
-        let cache_entry = self.get_cache_entry(entry_id);
+        let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
         let mut cache_unlock = cache_entry.lock().expect("Mutex is poisoned");
 
         cache_unlock.manifest = Some(manifest);
@@ -560,7 +565,7 @@ impl ManifestStorage {
     #[deprecated]
     pub fn clear_manifest(&self, entry_id: EntryID) -> FSResult<()> {
         // Remove from cache
-        let cache_entry = self.get_cache_entry(entry_id);
+        let cache_entry = self.get_or_insert_default_cache_entry(entry_id);
         let mut cache_unlock = cache_entry.lock().expect("Mutex is poisoned");
 
         // Remove from local database
