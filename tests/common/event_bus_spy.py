@@ -179,15 +179,12 @@ class EventBusSpy:
 
     async def wait_multiple_with_timeout(self, events, in_order=True):
         async with real_clock_timeout():
-            print("begin")
             await self.wait_multiple(events, in_order=in_order)
-            print("end")
 
     async def wait_multiple(self, events, in_order=True):
         expected_events = self._cook_events_params(events)
         try:
             self.assert_events_occured(expected_events, in_order=in_order)
-            print("Return!")
             return
         except AssertionError:
             pass

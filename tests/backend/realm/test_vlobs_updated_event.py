@@ -91,7 +91,7 @@ async def test_vlobs_updated_event_ok(backend, alice_ws, alice, alice2, realm, o
         await events_listen_nowait(alice_ws),
         await events_listen_nowait(alice_ws),
     ]
-    print([type(e) for e in reps])
+
     assert reps == [
         EventsListenRepOk(EventsListenRepOkVlobsUpdated(other_realm, 1, OTHER_VLOB_ID, 1)),
         EventsListenRepOk(EventsListenRepOkVlobsUpdated(realm, 2, VLOB_ID, 2)),

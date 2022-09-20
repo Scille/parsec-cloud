@@ -127,6 +127,7 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::EventsListenRepOkRealmMaintenanceFinished>()?;
     m.add_class::<protocol::EventsListenRepOkRealmMaintenanceStarted>()?;
     m.add_class::<protocol::EventsListenRepOkVlobsUpdated>()?;
+    m.add_class::<protocol::EventsListenRepOkPkiEnrollment>()?;
     m.add_class::<protocol::EventsListenRepOkRealmRolesUpdated>()?;
     m.add_class::<protocol::EventsSubscribeReq>()?;
     m.add_class::<protocol::EventsSubscribeRep>()?;

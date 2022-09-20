@@ -8,6 +8,7 @@ from parsec._parsec import (
     EventsListenRepOkInviteStatusChanged,
     EventsListenRepOkMessageReceived,
     EventsListenRepOkPinged,
+    EventsListenRepOkPkiEnrollment,
     EventsListenRepOkRealmMaintenanceFinished,
     EventsListenRepOkRealmMaintenanceStarted,
     EventsListenRepOkRealmRolesUpdated,
@@ -172,7 +173,7 @@ class EventsComponent:
             ):
                 return
             try:
-                client_ctx.send_events_channel.send_nowait({"event": event})
+                client_ctx.send_events_channel.send_nowait(EventsListenRepOkPkiEnrollment())
             except trio.WouldBlock:
                 client_ctx.logger.warning("dropping event (queue is full)")
 
@@ -236,5 +237,5 @@ class EventsComponent:
             except trio.WouldBlock:
                 return EventsListenRepNoEvents()
 
-        assert isinstance(event_data, EventsListenRep)
+        assert isinstance(event_data, EventsListenRep), f"got type:{type(event_data)} {event_data}"
         return event_data

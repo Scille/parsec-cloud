@@ -267,7 +267,6 @@ def generate_api_protocol_specs():
                     cmd_serializer = cmd_serializers[cmd_name]
                 except KeyError:
                     # Due to oxidation, there is no more schema
-                    print(cmd_name)
                     assert cmd_name in [
                         "block_create",
                         "block_read",

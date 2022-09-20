@@ -9,6 +9,7 @@ from functools import partial
 
 from parsec._parsec import (
     BackendEvent,
+    EventsListenRepOkPkiEnrollment,
     EventsListenRep,
     EventsListenRepOk,
     EventsListenRepOkMessageReceived,
@@ -155,7 +156,7 @@ def _handle_event_listen_ok(event_bus: EventBus, rep: EventsListenRepOk) -> None
             realm_id=EntryID(rep.realm_id.uuid),
             encryption_revision=rep.encryption_revision,
         )
-    else:
+    elif rep.event == BackendEvent.PkiEnrollmentsUpdated:
         event_bus.send(CoreEvent.PKI_ENROLLMENTS_UPDATED)
 
 
@@ -214,7 +215,7 @@ def _handle_event(event_bus: EventBus, rep: EventsListenRep) -> None:
     elif isinstance(rep, EventsListenRepOk):
         _handle_event_listen_ok(event_bus, rep)
 
-    else:
+    elif isinstance(rep, EventsListenRepOkPkiEnrollment):
         event_bus.send(CoreEvent.PKI_ENROLLMENTS_UPDATED)
 
 

@@ -708,10 +708,8 @@ async def test_reencryption_events(backend, alice_ws, alice2_ws, realm, alice, v
             )
 
         rep = await events_listen_nowait(alice_ws)
-        print(type(rep))
         assert rep == EventsListenRepOkRealmMaintenanceStarted(realm, 2)
         rep = await events_listen_nowait(alice_ws)
-        print(type(rep))
         assert rep == EventsListenRepOkMessageReceived(1)
 
         # Do the reencryption

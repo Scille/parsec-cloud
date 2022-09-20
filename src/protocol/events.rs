@@ -76,7 +76,7 @@ pub(crate) enum BackendEvent {
     RealmMaintenanceFinished,
     RealmVlobsUpdated,
     RealmRolesUpdated,
-    PkiEnrollementsUpdated,
+    PkiEnrollmentsUpdated,
 }
 
 #[pymethods]
@@ -600,6 +600,23 @@ impl EventsListenRepOkRealmRolesUpdated {
             }
             _ => Err(PyAttributeError::new_err("")),
         }
+    }
+}
+
+#[pyclass(extends = EventsListenRep)]
+#[derive(Clone, PartialEq)]
+pub(crate) struct EventsListenRepOkPkiEnrollment;
+
+#[pymethods]
+impl EventsListenRepOkPkiEnrollment {
+    #[new]
+    fn new() -> PyResult<(Self, EventsListenRep)> {
+        Ok((
+            Self,
+            EventsListenRep(events_listen::Rep::Ok(APIEvent::Pinged {
+                ping: String::new(),
+            })),
+        ))
     }
 }
 
