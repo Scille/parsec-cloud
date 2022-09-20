@@ -4,11 +4,11 @@ import trio
 import pytest
 from functools import partial
 
-from parsec._parsec import DateTime, AuthenticatedPingRepOk
+from parsec._parsec import DateTime, AuthenticatedPingRepOk, EventsListenRepOkPinged
 from parsec.backend.utils import ClientType
 from parsec.api.transport import Transport, Ping, Pong
 from parsec.api.data import RevokedUserCertificate
-from parsec.api.protocol import ServerHandshake, AUTHENTICATED_CMDS, APIEvent, OrganizationID
+from parsec.api.protocol import ServerHandshake, AUTHENTICATED_CMDS, OrganizationID
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import (
     BackendNotAvailable,
@@ -239,11 +239,9 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, frozen_clock, runnin
                 assert isinstance(event, Pong)
                 assert client_transport is client_transport2
 
-            await backend_client_ctx.send_events_channel.send(
-                {"event": APIEvent.PINGED, "ping": "foo"}
-            )
+            await backend_client_ctx.send_events_channel.send(EventsListenRepOkPinged("foo"))
 
-    assert events_listen_rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "foo"}
+    assert events_listen_rep == EventsListenRepOkPinged("foo")
 
 
 @pytest.mark.trio

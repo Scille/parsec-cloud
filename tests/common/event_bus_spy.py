@@ -3,11 +3,12 @@
 import pytest
 import trio
 import attr
-from parsec._parsec import DateTime
+
 from contextlib import contextmanager
 from unittest.mock import ANY
 from enum import Enum
 
+from parsec._parsec import DateTime, EventsListenRep
 from parsec.event_bus import EventBus
 
 from tests.common import real_clock_timeout
@@ -70,6 +71,25 @@ class SpiedEvent:
     # ANY.__eq__(self, EntryID) instead.
     def __eq__(self, other):
         ret = True
+
+        # This is a dirty way of overloading __eq__ for new EventsListenRep based
+        # class. Instead we should use the native __eq__ overload. This is impossible
+        # because of the nature of the class `SpiedEvent`
+        if isinstance(other, EventsListenRep):
+            for (name, value) in self.kwargs.items():
+                try:
+                    other_value = getattr(other, name)
+                    # Some tests compare objects like `EntryID` and `RealmID`.
+                    # When the inner IDs are the same, it is expected to be True
+                    # but because of oxidation it will be False because types are
+                    # differents. Some we only compare bytes when possible.
+                    if hasattr(value, "bytes") and hasattr(other_value, "bytes"):
+                        ret &= other_value.bytes == value.bytes
+                    else:
+                        ret &= other_value == value
+                except AttributeError:
+                    pass
+            return ret
 
         if other.event is ANY:
             ret &= other.event == self.event
@@ -159,12 +179,15 @@ class EventBusSpy:
 
     async def wait_multiple_with_timeout(self, events, in_order=True):
         async with real_clock_timeout():
+            print("begin")
             await self.wait_multiple(events, in_order=in_order)
+            print("end")
 
     async def wait_multiple(self, events, in_order=True):
         expected_events = self._cook_events_params(events)
         try:
             self.assert_events_occured(expected_events, in_order=in_order)
+            print("Return!")
             return
         except AssertionError:
             pass
@@ -188,6 +211,8 @@ class EventBusSpy:
 
     def _cook_event_params(self, event):
         if isinstance(event, SpiedEvent):
+            return event
+        elif isinstance(event, EventsListenRep):
             return event
         elif event is ANY:
             return event

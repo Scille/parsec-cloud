@@ -8,12 +8,22 @@ from structlog import get_logger
 from functools import partial
 
 from parsec._parsec import (
+    BackendEvent,
+    EventsListenRep,
+    EventsListenRepOk,
+    EventsListenRepOkMessageReceived,
+    EventsListenRepOkPinged,
+    EventsListenRepOkRealmMaintenanceFinished,
+    EventsListenRepOkRealmMaintenanceStarted,
+    EventsListenRepOkRealmRolesUpdated,
+    EventsListenRepOkVlobsUpdated,
+    EventsSubscribeRepOk,
     OrganizationConfigRepOk,
     OrganizationConfigRepUnknownStatus,
 )
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
-from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
+from parsec.api.protocol import DeviceID, AUTHENTICATED_CMDS
 from parsec.core.types import EntryID, BackendOrganizationAddr, OrganizationConfig
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import (
@@ -109,48 +119,102 @@ for cmd in AUTHENTICATED_CMDS:
     assert hasattr(BackendAuthenticatedCmds, cmd)
 
 
-def _handle_event(event_bus: EventBus, rep: dict) -> None:
-    if rep["status"] != "ok":
+def _handle_event_listen_ok(event_bus: EventBus, rep: EventsListenRepOk) -> None:
+    if rep.event == BackendEvent.MessageReceived:
+        event_bus.send(CoreEvent.BACKEND_MESSAGE_RECEIVED, index=rep.index)
+
+    elif rep.event == BackendEvent.Pinged:
+        event_bus.send(CoreEvent.BACKEND_PINGED, ping=rep.ping)
+
+    elif rep.event == BackendEvent.RealmRolesUpdated:
+        event_bus.send(
+            CoreEvent.BACKEND_REALM_ROLES_UPDATED,
+            realm_id=EntryID(rep.realm_id.uuid),
+            role=rep.role,
+        )
+
+    elif rep.event == BackendEvent.RealmVlobsUpdated:
+        event_bus.send(
+            CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
+            realm_id=EntryID(rep.realm_id.uuid),
+            checkpoint=rep.checkpoint,
+            src_id=EntryID(rep.src_id.uuid),
+            src_version=rep.src_version,
+        )
+
+    elif rep.event == BackendEvent.RealmMaintenanceStarted:
+        event_bus.send(
+            CoreEvent.BACKEND_REALM_MAINTENANCE_STARTED,
+            realm_id=EntryID(rep.realm_id.uuid),
+            encryption_revision=rep.encryption_revision,
+        )
+
+    elif rep.event == BackendEvent.RealmMaintenanceFinished:
+        event_bus.send(
+            CoreEvent.BACKEND_REALM_MAINTENANCE_FINISHED,
+            realm_id=EntryID(rep.realm_id.uuid),
+            encryption_revision=rep.encryption_revision,
+        )
+    else:
+        event_bus.send(CoreEvent.PKI_ENROLLMENTS_UPDATED)
+
+
+def _handle_event(event_bus: EventBus, rep: EventsListenRep) -> None:
+    if not isinstance(
+        rep,
+        (
+            EventsListenRepOk,
+            EventsListenRepOkMessageReceived,
+            EventsListenRepOkPinged,
+            EventsListenRepOkRealmMaintenanceFinished,
+            EventsListenRepOkRealmMaintenanceStarted,
+            EventsListenRepOkRealmRolesUpdated,
+            EventsListenRepOkVlobsUpdated,
+        ),
+    ):
         logger.warning("Bad response to `events_listen` command", rep=rep)
         return
 
-    if rep["event"] == APIEvent.MESSAGE_RECEIVED:
-        event_bus.send(CoreEvent.BACKEND_MESSAGE_RECEIVED, index=rep["index"])
+    if isinstance(rep, EventsListenRepOkMessageReceived):
+        event_bus.send(CoreEvent.BACKEND_MESSAGE_RECEIVED, index=rep.index)
 
-    elif rep["event"] == APIEvent.PINGED:
-        event_bus.send(CoreEvent.BACKEND_PINGED, ping=rep["ping"])
+    elif isinstance(rep, EventsListenRepOkPinged):
+        event_bus.send(CoreEvent.BACKEND_PINGED, ping=rep.ping)
 
-    elif rep["event"] == APIEvent.REALM_ROLES_UPDATED:
+    elif isinstance(rep, EventsListenRepOkRealmRolesUpdated):
         event_bus.send(
             CoreEvent.BACKEND_REALM_ROLES_UPDATED,
-            realm_id=EntryID(rep["realm_id"].uuid),
-            role=rep["role"],
+            realm_id=EntryID(rep.realm_id.uuid),
+            role=rep.role,
         )
 
-    elif rep["event"] == APIEvent.REALM_VLOBS_UPDATED:
+    elif isinstance(rep, EventsListenRepOkVlobsUpdated):
         event_bus.send(
             CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
-            realm_id=EntryID(rep["realm_id"].uuid),
-            checkpoint=rep["checkpoint"],
-            src_id=EntryID(rep["src_id"].uuid),
-            src_version=rep["src_version"],
+            realm_id=EntryID(rep.realm_id.uuid),
+            checkpoint=rep.checkpoint,
+            src_id=EntryID(rep.src_id.uuid),
+            src_version=rep.src_version,
         )
 
-    elif rep["event"] == APIEvent.REALM_MAINTENANCE_STARTED:
+    elif isinstance(rep, EventsListenRepOkRealmMaintenanceStarted):
         event_bus.send(
             CoreEvent.BACKEND_REALM_MAINTENANCE_STARTED,
-            realm_id=EntryID(rep["realm_id"].uuid),
-            encryption_revision=rep["encryption_revision"],
+            realm_id=EntryID(rep.realm_id.uuid),
+            encryption_revision=rep.encryption_revision,
         )
 
-    elif rep["event"] == APIEvent.REALM_MAINTENANCE_FINISHED:
+    elif isinstance(rep, EventsListenRepOkRealmMaintenanceFinished):
         event_bus.send(
             CoreEvent.BACKEND_REALM_MAINTENANCE_FINISHED,
-            realm_id=EntryID(rep["realm_id"].uuid),
-            encryption_revision=rep["encryption_revision"],
+            realm_id=EntryID(rep.realm_id.uuid),
+            encryption_revision=rep.encryption_revision,
         )
 
-    elif rep["event"] == APIEvent.PKI_ENROLLMENTS_UPDATED:
+    elif isinstance(rep, EventsListenRepOk):
+        _handle_event_listen_ok(event_bus, rep)
+
+    else:
         event_bus.send(CoreEvent.PKI_ENROLLMENTS_UPDATED)
 
 
@@ -353,7 +417,7 @@ class BackendAuthenticatedConn:
                 )
 
             rep = await cmds.events_subscribe(transport)
-            if rep["status"] != "ok":
+            if not isinstance(rep, EventsSubscribeRepOk):
                 raise BackendConnectionRefused(f"Error while events subscribing : {rep}")
 
             # Quis custodiet ipsos custodes?

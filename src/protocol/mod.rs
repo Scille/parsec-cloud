@@ -12,8 +12,8 @@ mod vlob;
 
 pub use block::*;
 pub use cmds::*;
-pub use invite::*;
 pub use events::*;
+pub use invite::*;
 pub use message::*;
 pub use organization::*;
 pub use ping::*;

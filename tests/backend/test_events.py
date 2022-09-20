@@ -5,8 +5,7 @@ import trio
 
 from quart.testing.connections import WebsocketDisconnectError
 
-from parsec._parsec import AuthenticatedPingRepOk
-from parsec.api.protocol import APIEvent
+from parsec._parsec import AuthenticatedPingRepOk, EventsListenRepNoEvents, EventsListenRepOkPinged
 from parsec.backend.asgi import app_factory
 from parsec.backend.backend_events import BackendEvent
 
@@ -69,9 +68,9 @@ async def test_events_subscribe(backend, alice_ws, alice2_ws):
         await spy.wait_multiple_with_timeout([BackendEvent.PINGED, BackendEvent.PINGED])
 
     rep = await events_listen_nowait(alice_ws)
-    assert rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "foo"}
+    assert rep == EventsListenRepOkPinged("foo")
     rep = await events_listen_nowait(alice_ws)
-    assert rep == {"status": "no_events"}
+    assert isinstance(rep, EventsListenRepNoEvents)
 
 
 @pytest.mark.trio
@@ -95,13 +94,13 @@ async def test_event_resubscribe(backend, alice_ws, alice2_ws):
         await spy.wait_multiple_with_timeout([BackendEvent.PINGED, BackendEvent.PINGED])
 
     rep = await events_listen_nowait(alice_ws)
-    assert rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "foo"}
+    assert rep == EventsListenRepOkPinged("foo")
     rep = await events_listen_nowait(alice_ws)
-    assert rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "bar"}
+    assert rep == EventsListenRepOkPinged("bar")
     rep = await events_listen_nowait(alice_ws)
-    assert rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "spam"}
+    assert rep == EventsListenRepOkPinged("spam")
     rep = await events_listen_nowait(alice_ws)
-    assert rep == {"status": "no_events"}
+    assert isinstance(rep, EventsListenRepNoEvents)
 
 
 @pytest.mark.trio
@@ -119,7 +118,7 @@ async def test_cross_backend_event(backend_factory, backend_authenticated_ws_fac
 
             async with events_listen(alice_ws) as listen:
                 await authenticated_ping(bob_ws, "foo")
-            assert listen.rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "foo"}
+            assert listen.rep == EventsListenRepOkPinged("foo")
 
             await authenticated_ping(bob_ws, "foo")
 
@@ -128,13 +127,13 @@ async def test_cross_backend_event(backend_factory, backend_authenticated_ws_fac
             async with real_clock_timeout():
                 while True:
                     rep = await events_listen_nowait(alice_ws)
-                    if rep["status"] != "no_events":
+                    if not isinstance(rep, EventsListenRepNoEvents):
                         break
                     await trio.sleep(0.1)
-            assert rep == {"status": "ok", "event": APIEvent.PINGED, "ping": "foo"}
+            assert rep == EventsListenRepOkPinged("foo")
 
             rep = await events_listen_nowait(alice_ws)
-            assert rep == {"status": "no_events"}
+            assert isinstance(rep, EventsListenRepNoEvents)
 
 
 @pytest.mark.trio

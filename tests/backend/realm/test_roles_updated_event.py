@@ -2,9 +2,15 @@
 
 import pytest
 
-from parsec._parsec import DateTime, RealmCreateRepOk, RealmUpdateRolesRepOk
+from parsec._parsec import (
+    DateTime,
+    RealmCreateRepOk,
+    RealmUpdateRolesRepOk,
+    EventsListenRepNoEvents,
+    EventsListenRepOkRealmRolesUpdated,
+)
 from parsec.api.data import RealmRoleCertificate
-from parsec.api.protocol import RealmID, RealmRole, APIEvent
+from parsec.api.protocol import RealmID, RealmRole
 from parsec.backend.backend_events import BackendEvent
 
 from tests.backend.test_events import events_subscribe, events_listen_nowait
@@ -55,14 +61,9 @@ async def test_roles_updated_for_participant(
 
         # Check events propagated to the client
         rep = await events_listen_nowait(bob_ws)
-        assert rep == {
-            "status": "ok",
-            "event": APIEvent.REALM_ROLES_UPDATED,
-            "realm_id": realm,
-            "role": role,
-        }
+        assert rep == EventsListenRepOkRealmRolesUpdated(realm, role)
         rep = await events_listen_nowait(bob_ws)
-        assert rep == {"status": "no_events"}
+        assert isinstance(rep, EventsListenRepNoEvents)
 
     # 0) Init event listening on the socket
     await events_subscribe(bob_ws)

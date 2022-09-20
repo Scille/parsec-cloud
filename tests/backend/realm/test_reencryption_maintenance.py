@@ -6,6 +6,10 @@ from parsec._parsec import (
     DateTime,
     BlockReadRepOk,
     BlockCreateRepInMaintenance,
+    EventsListenRepNoEvents,
+    EventsListenRepOkMessageReceived,
+    EventsListenRepOkRealmMaintenanceFinished,
+    EventsListenRepOkRealmMaintenanceStarted,
     MessageGetRepOk,
     Message,
     RealmStatusRepOk,
@@ -37,7 +41,7 @@ from parsec._parsec import (
     ReencryptionBatchEntry,
 )
 from parsec.backend.backend_events import BackendEvent
-from parsec.api.protocol import UserID, VlobID, BlockID, RealmRole, MaintenanceType, APIEvent
+from parsec.api.protocol import UserID, VlobID, BlockID, RealmRole, MaintenanceType
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.vlob import VlobNotFoundError, VlobVersionError
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
@@ -704,14 +708,11 @@ async def test_reencryption_events(backend, alice_ws, alice2_ws, realm, alice, v
             )
 
         rep = await events_listen_nowait(alice_ws)
-        assert rep == {
-            "status": "ok",
-            "event": APIEvent.REALM_MAINTENANCE_STARTED,
-            "realm_id": realm,
-            "encryption_revision": 2,
-        }
+        print(type(rep))
+        assert rep == EventsListenRepOkRealmMaintenanceStarted(realm, 2)
         rep = await events_listen_nowait(alice_ws)
-        assert rep == {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 1}
+        print(type(rep))
+        assert rep == EventsListenRepOkMessageReceived(1)
 
         # Do the reencryption
         rep = await vlob_maintenance_get_reencryption_batch(alice_ws, realm, 2, size=100)
@@ -724,13 +725,8 @@ async def test_reencryption_events(backend, alice_ws, alice2_ws, realm, alice, v
         await spy.wait_with_timeout(BackendEvent.REALM_MAINTENANCE_FINISHED)
 
         rep = await events_listen_nowait(alice_ws)
-        assert rep == {
-            "status": "ok",
-            "event": APIEvent.REALM_MAINTENANCE_FINISHED,
-            "realm_id": realm,
-            "encryption_revision": 2,
-        }
+        assert rep == EventsListenRepOkRealmMaintenanceFinished(realm, 2)
 
     # Sanity check
     rep = await events_listen_nowait(alice_ws)
-    assert rep == {"status": "no_events"}
+    assert rep == EventsListenRepNoEvents()

@@ -128,7 +128,7 @@
                         },
                         {
                             "name": "role",
-                            "type": "RealmRole"
+                            "type": "Option<RealmRole>"
                         }
                     ]
                 }
