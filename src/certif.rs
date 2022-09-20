@@ -3,7 +3,6 @@
 use libparsec::types::{CertificateSignerOwned, CertificateSignerRef, UserProfile};
 use pyo3::import_exception;
 use pyo3::prelude::*;
-use pyo3::pyclass::CompareOp;
 use pyo3::types::{PyBytes, PyDict, PyType};
 
 use crate::api_crypto::{PublicKey, SigningKey, VerifyKey};
@@ -17,6 +16,9 @@ import_exception!(parsec.api.data, DataError);
 
 #[pyclass]
 pub(crate) struct UserCertificate(pub libparsec::types::UserCertificate);
+
+crate::binding_utils::gen_proto!(UserCertificate, __repr__);
+crate::binding_utils::gen_proto!(UserCertificate, __richcmp__, eq);
 
 #[pymethods]
 impl UserCertificate {
@@ -83,18 +85,6 @@ impl UserCertificate {
         }
 
         Ok(Self(r))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => unimplemented!(),
-        }
     }
 
     #[classmethod]
@@ -192,6 +182,9 @@ impl UserCertificate {
 #[pyclass]
 pub(crate) struct DeviceCertificate(pub libparsec::types::DeviceCertificate);
 
+crate::binding_utils::gen_proto!(DeviceCertificate, __repr__);
+crate::binding_utils::gen_proto!(DeviceCertificate, __richcmp__, eq);
+
 #[pymethods]
 impl DeviceCertificate {
     #[new]
@@ -251,18 +244,6 @@ impl DeviceCertificate {
         }
 
         Ok(Self(r))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => unimplemented!(),
-        }
     }
 
     #[classmethod]
@@ -345,6 +326,9 @@ impl DeviceCertificate {
 #[pyclass]
 pub(crate) struct RevokedUserCertificate(pub libparsec::types::RevokedUserCertificate);
 
+crate::binding_utils::gen_proto!(RevokedUserCertificate, __repr__);
+crate::binding_utils::gen_proto!(RevokedUserCertificate, __richcmp__, eq);
+
 #[pymethods]
 impl RevokedUserCertificate {
     #[new]
@@ -386,18 +370,6 @@ impl RevokedUserCertificate {
         }
 
         Ok(Self(r))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => unimplemented!(),
-        }
     }
 
     #[classmethod]
@@ -464,6 +436,9 @@ impl RevokedUserCertificate {
 #[pyclass]
 pub(crate) struct RealmRoleCertificate(pub libparsec::types::RealmRoleCertificate);
 
+crate::binding_utils::gen_proto!(RealmRoleCertificate, __repr__);
+crate::binding_utils::gen_proto!(RealmRoleCertificate, __richcmp__, eq);
+
 #[pymethods]
 impl RealmRoleCertificate {
     #[new]
@@ -523,18 +498,6 @@ impl RealmRoleCertificate {
         }
 
         Ok(Self(r))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => unimplemented!(),
-        }
     }
 
     #[classmethod]
