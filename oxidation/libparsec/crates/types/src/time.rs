@@ -405,7 +405,7 @@ impl Sub for DateTime {
  * LocalDateTime
  */
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Hash)]
 pub struct LocalDateTime(chrono::DateTime<chrono::Local>);
 
 impl From<DateTime> for LocalDateTime {

@@ -220,6 +220,9 @@ impl DateTime {
 pub(crate) struct LocalDateTime(pub libparsec::types::LocalDateTime);
 
 crate::binding_utils::gen_proto!(LocalDateTime, __repr__);
+crate::binding_utils::gen_proto!(LocalDateTime, __str__);
+crate::binding_utils::gen_proto!(LocalDateTime, __richcmp__, ord);
+crate::binding_utils::gen_proto!(LocalDateTime, __hash__);
 
 #[pymethods]
 impl LocalDateTime {
