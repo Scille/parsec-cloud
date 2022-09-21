@@ -9,6 +9,7 @@ import pytest
 from trio import open_nursery
 
 from parsec._parsec import (
+    ChunkID,
     DeviceID,
     EntryID,
     EntryName,
@@ -548,7 +549,9 @@ async def test_backend_block_data_online(
 
     data_dict = {}
     for block in local_blocks:
-        data_dict[block.id] = await alice_workspace.local_storage.chunk_storage.get_chunk(block.id)
+        data_dict[block.id] = await alice_workspace.local_storage.get_chunk(
+            ChunkID.from_hex(block.id.hex)
+        )
 
     await alice_workspace.sync()
     (
@@ -595,7 +598,9 @@ async def test_backend_block_data_online(
 
     for i in range(6):
         try:
-            await alice2_workspace.local_storage.block_storage.get_chunk(remote_blocks[i].id)
+            await alice2_workspace.local_storage.get_chunk(
+                ChunkID.from_hex(remote_blocks[i].id.hex)
+            )
         except FSLocalMissError:
             continue
         assert False
@@ -626,7 +631,7 @@ async def test_backend_block_data_online(
     block = remote_blocks[3]
     await alice2_workspace.load_block(block)
     assert (
-        await alice2_workspace.local_storage.block_storage.get_chunk(block.id)
+        await alice2_workspace.local_storage.get_chunk(ChunkID.from_hex(block.id.hex))
         == data_dict[block.id]
     )
 
