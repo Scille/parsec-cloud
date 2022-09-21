@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::str::FromStr;
+
 use pyo3::{
     exceptions::{PyTypeError, PyValueError},
     prelude::*,
@@ -150,6 +152,13 @@ impl DateTime {
         Ok(Self(
             libparsec::types::DateTime::from_f64_with_us_precision(ts),
         ))
+    }
+
+    #[classmethod]
+    fn from_rfc3339(_cls: &PyType, value: &str) -> PyResult<Self> {
+        libparsec::types::DateTime::from_str(value)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(format!("Invalid rfc3339 date `{}`: {}", value, e)))
     }
 
     fn to_local(&self) -> PyResult<LocalDateTime> {
