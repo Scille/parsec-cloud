@@ -171,6 +171,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             users_per_profile_detail=users_per_profile_detail,
         )
 
+    async def server_stats(self):
+        return [await self.stats(id) for id in self._organizations]
+
     async def update(
         self,
         id: OrganizationID,

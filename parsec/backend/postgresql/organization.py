@@ -160,6 +160,30 @@ SELECT
 """
 )
 
+_q_get_server_stats = Q(
+    f"""
+SELECT
+    (
+        SELECT ARRAY(
+            SELECT (revoked_on, profile::text), organization
+            FROM user_
+        )
+    ) users,
+    (
+        SELECT COUNT(*), organization
+        FROM realm
+    ) realms,
+    (
+        SELECT COALESCE(SUM(size), 0), organization
+        FROM vlob_atom
+    ) metadata_size,
+    (
+        SELECT COALESCE(SUM(size), 0), organization
+        FROM block
+    ) data_size
+"""
+)
+
 
 @lru_cache()
 def _q_update_factory(
@@ -335,6 +359,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             active_users=active_users,
             users_per_profile_detail=users_per_profile_detail,
         )
+
+    async def server_stats(self):
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            result = await conn.fetchrow(*_q_get_server_stats())
+            # TODO
+        return result
 
     async def update(
         self,

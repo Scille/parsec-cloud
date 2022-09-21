@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
+import re
 from typing import NoReturn, TYPE_CHECKING
 from functools import wraps
 from quart import current_app, Response, Blueprint, abort, request, jsonify, make_response, g
 
+from parsec._parsec import DateTime
 from parsec.serde import SerdeValidationError, SerdePackingError
 from parsec.api.protocol import OrganizationID
 from parsec.api.rest import (
@@ -150,3 +152,41 @@ async def administration_organization_stat(raw_organization_id: str):
         },
         status=200,
     )
+
+
+@administration_bp.route("/administration/stats", methods=["GET"])
+@administration_authenticated
+async def administration_server_stats():
+    backend: "BackendApp" = g.backend
+
+    def _date_from_str(input: str) -> DateTime:
+        regex = re.compile(r"(\d{4})[-/](\d{1,2})[-/](\d{1,2})")
+        matched = regex.match(input)
+
+        if not matched:
+            raise ValueError(f"Provided date is not a valid timestamp {input}")
+
+        return DateTime(
+            int(matched.group(1)),
+            int(matched.group(2)),
+            int(matched.group(3)),
+            hour=0,
+            minute=0,
+            second=0,
+        )
+
+    for arg in ["format", "from"]:
+        if arg not in request.args:
+            return await json_abort({"error": f"missing query argument '{arg}'"}, 400)
+
+    try:
+        from_date = _date_from_str(request.args["from"])
+        to_date = _date_from_str(request.args["to"]) if "to" in request.args else DateTime.now()
+        assert from_date < to_date
+        results = await backend.organization.server_stats()
+    except ValueError as e:
+        return await json_abort({"error": "".join(e)}, 400)
+    except AssertionError:
+        return await json_abort({"error": f"{from_date} to {to_date} is not a valid range"}, 400)
+
+    return {"stats": results}
