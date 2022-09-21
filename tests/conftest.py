@@ -4,9 +4,13 @@ from __future__ import annotations
 import logging
 import os
 import re
+import shutil
 import sqlite3
 import sys
+import time
 from contextlib import contextmanager
+from pathlib import Path
+from typing import Callable
 from unittest.mock import patch
 
 import attr
@@ -489,12 +493,54 @@ def persistent_mockup(monkeypatch, fixtures_customization):
 
 
 @pytest.fixture
-def reset_testbed(request, caplog, persistent_mockup):
+def data_base_dir(tmp_path: Path) -> Path:
+    return tmp_path / "local_data"
+
+
+@pytest.fixture
+def clear_database_dir(data_base_dir: Path) -> Callable[[bool], None]:
+    MAX_RETRY = 5
+    RETRY_AFTER = 2
+    db_dir = data_base_dir
+
+    def _clear_database_dir(allow_missing_path: bool):
+        print(f"Clearing database dir at `{db_dir}`")
+        if not db_dir.exists():
+            if allow_missing_path:
+                print(f"    database path `{db_dir}` does not exist")
+                return
+            else:
+                raise RuntimeError(f"database path `{db_dir}` does not exist")
+        if db_dir.is_file():
+            os.remove(db_dir)
+        elif db_dir.is_dir():
+            for _ in range(MAX_RETRY):
+                try:
+                    shutil.rmtree(db_dir)
+                except PermissionError as e:
+                    print(f"Failed to delete directory {db_dir}: {e}")
+                else:
+                    break
+                finally:
+                    print("Waiting some time before retrying to delete the folder")
+                    time.sleep(RETRY_AFTER)
+
+        else:
+            raise RuntimeError(
+                f"database path `{db_dir}` not a file nor a directory ({{}})".format(db_dir.stat())
+            )
+
+    return _clear_database_dir
+
+
+@pytest.fixture
+def reset_testbed(request, caplog, persistent_mockup, clear_database_dir: Callable[[bool], None]):
     async def _reset_testbed(keep_logs=False):
         if request.config.getoption("--postgresql"):
             await trio_asyncio.aio_as_trio(asyncio_reset_postgresql_testbed)
         if persistent_mockup is not None:
             persistent_mockup.clear()
+            clear_database_dir(True)
         if not keep_logs:
             caplog.clear()
 

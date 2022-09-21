@@ -17,11 +17,6 @@ from tests.common.event_bus_spy import SpiedEventBus
 
 
 @pytest.fixture
-def data_base_dir(tmp_path: Path) -> Path:
-    return tmp_path / "local_data"
-
-
-@pytest.fixture
 def remote_devices_manager_factory():
     @asynccontextmanager
     async def _remote_devices_manager_factory(device):

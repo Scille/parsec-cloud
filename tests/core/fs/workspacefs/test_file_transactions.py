@@ -22,8 +22,8 @@ class File:
         self.entry_id = manifest.id
         self.local_storage = local_storage
 
-    def ensure_manifest(self, **kwargs):
-        manifest = self.local_storage.manifest_storage._cache[self.entry_id]
+    async def ensure_manifest(self, **kwargs):
+        manifest = await self.local_storage.get_manifest(self.entry_id)
         for k, v in kwargs.items():
             assert getattr(manifest, k) == v
 
@@ -82,7 +82,7 @@ async def test_operations_on_file(alice_file_transactions: FileTransactions, foo
         assert data == b"H"
 
         await file_transactions.fd_close(fd2)
-    foo_txt.ensure_manifest(
+    await foo_txt.ensure_manifest(
         size=16,
         is_placeholder=False,
         need_sync=True,
@@ -121,7 +121,7 @@ async def test_flush_file(alice_file_transactions: FileTransactions, foo_txt: Fi
 
     fd = foo_txt.open()
 
-    foo_txt.ensure_manifest(
+    await foo_txt.ensure_manifest(
         size=0,
         is_placeholder=False,
         need_sync=False,
