@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional, Union, Dict
 import trio
 from collections import defaultdict
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.crypto import VerifyKey
 from parsec.backend.user import UserError, User, Device
@@ -171,8 +172,57 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             users_per_profile_detail=users_per_profile_detail,
         )
 
-    async def server_stats(self):
-        return [await self.stats(id) for id in self._organizations]
+    async def server_stats(self, from_date: DateTime, to_date: DateTime = DateTime.now()):
+        result = list()
+        for id in self._organizations:
+            metadata_size = 0
+            for (vlob_organization_id, _), vlob in self._vlob_component._vlobs.items():
+                if vlob_organization_id == id:
+                    metadata_size += sum(
+                        len(blob)
+                        for (blob, _, ts) in vlob.data
+                        if ts >= from_date and ts <= to_date
+                    )
+
+            data_size = 0
+            for (vlob_organization_id, _), blockmeta in self._block_component._blockmetas.items():
+                if vlob_organization_id == id:
+                    data_size += blockmeta.size
+
+            users = 0
+            active_users = 0
+            users_per_profile_detail = {p.value: {"active": 0, "revoked": 0} for p in UserProfile}
+            for user in self._user_component._organizations[id].users.values():
+                # User is created after the time range
+                if user.created_on > to_date:
+                    continue
+                users += 1
+                if user.revoked_on:
+                    users_per_profile_detail[user.profile.value]["revoked"] += 1
+                else:
+                    users_per_profile_detail[user.profile.value]["active"] += 1
+                    active_users += 1
+
+            realms = len(
+                [
+                    realm_id
+                    for organization_id, realm_id in self._realm_component._realms.keys()
+                    if organization_id == id
+                ]
+            )
+
+            result.append(
+                {
+                    "id": id.str,
+                    "data_size": data_size,
+                    "metadata_size": metadata_size,
+                    "realms": realms,
+                    "users": users,
+                    "user_per_profiles": users_per_profile_detail,
+                }
+            )
+
+        return result
 
     async def update(
         self,

@@ -183,7 +183,7 @@ async def administration_server_stats():
         from_date = _date_from_str(request.args["from"])
         to_date = _date_from_str(request.args["to"]) if "to" in request.args else DateTime.now()
         assert from_date < to_date
-        results = await backend.organization.server_stats()
+        results = await backend.organization.server_stats(from_date, to_date)
     except ValueError as e:
         return await json_abort({"error": "".join(e)}, 400)
     except AssertionError:
