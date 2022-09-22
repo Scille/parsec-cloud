@@ -240,6 +240,7 @@ async def test_workspace_reencryption_access_error(
 
     def _role_changed(expected_role):
         user_id = wk_button.workspace_fs.device.user_id
+        assert user_id in wk_button.users_roles
         role, _ = wk_button.users_roles[user_id]
         assert role == expected_role
 

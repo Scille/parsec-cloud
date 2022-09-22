@@ -434,7 +434,6 @@ async def test_link_file_unknown_workspace(
 
     def _error_shown():
         assert len(autoclose_dialog.dialogs) == 1
-        print(autoclose_dialog.dialogs)
         assert autoclose_dialog.dialogs[0] == (
             "Error",
             "You do not have access to the workspace containing the file. It may not have been shared with you.",
