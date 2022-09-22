@@ -120,11 +120,18 @@ impl DateTime {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum MockedTime {
     RealTime,
     FrozenTime(DateTime),
-    ShiftedTime { microseconds: i64 },
+    ShiftedTime {
+        microseconds: i64,
+    },
+    FasterTime {
+        reference: DateTime,
+        microseconds: i64,
+        speed_factor: f64,
+    },
 }
 
 // TODO: remove me and only rely on TimeProvider instead !
@@ -144,6 +151,18 @@ mod mock_time {
                 MockedTime::FrozenTime(dt) => dt,
                 MockedTime::ShiftedTime { microseconds: us } => {
                     DateTime::from(chrono::Utc::now()).add_us(us)
+                }
+                MockedTime::FasterTime {
+                    reference,
+                    microseconds: us,
+                    speed_factor,
+                } => {
+                    let delta = DateTime::from(chrono::Utc::now()) - reference;
+                    let delta_us = delta
+                        .num_microseconds()
+                        .expect("No reason to get an overflow");
+                    let speed_shift = speed_factor * delta_us as f64;
+                    reference.add_us(us + speed_shift as i64)
                 }
             })
         }
@@ -228,6 +247,36 @@ mod time_provider {
             }
         }
 
+        pub fn get_speed_factor(&self) -> Option<f64> {
+            match (&self.parent, &self.time) {
+                (
+                    None,
+                    MockedTime::FasterTime {
+                        reference: _,
+                        microseconds: _,
+                        speed_factor,
+                    },
+                ) => Some(*speed_factor),
+                (None, _) => None,
+                (
+                    Some(parent),
+                    MockedTime::FasterTime {
+                        reference: _,
+                        microseconds: _,
+                        speed_factor,
+                    },
+                ) => Some(
+                    speed_factor
+                        * parent
+                            .lock()
+                            .expect("Mutex is poisoned")
+                            .get_speed_factor()
+                            .unwrap_or(1.0),
+                ),
+                (Some(parent), _) => parent.lock().expect("Mutex is poisoned").get_speed_factor(),
+            }
+        }
+
         pub fn get_autojump(&self) -> Option<u64> {
             match (&self.parent, self.autojump) {
                 (None, None) => None,
@@ -257,10 +306,19 @@ mod time_provider {
                 MockedTime::ShiftedTime { microseconds: us } => MockedTime::ShiftedTime {
                     microseconds: us + delta_us,
                 },
+                MockedTime::FasterTime {
+                    reference,
+                    microseconds: us,
+                    speed_factor,
+                } => MockedTime::FasterTime {
+                    reference,
+                    microseconds: us + delta_us,
+                    speed_factor,
+                },
             };
         }
 
-        fn parent_now_or_realtime(&self) -> DateTime {
+        pub fn parent_now_or_realtime(&self) -> DateTime {
             match &self.parent {
                 // TODO: remove me and only rely on `chrono::Utc::now().into()` instead !
                 None => DateTime::now_legacy(),
@@ -274,6 +332,18 @@ mod time_provider {
                 MockedTime::FrozenTime(dt) => dt,
                 MockedTime::ShiftedTime { microseconds: us } => {
                     self.parent_now_or_realtime().add_us(us)
+                }
+                MockedTime::FasterTime {
+                    reference,
+                    microseconds: us,
+                    speed_factor,
+                } => {
+                    let delta = DateTime::from(chrono::Utc::now()) - reference;
+                    let delta_us = delta
+                        .num_microseconds()
+                        .expect("No reason to get an overflow");
+                    let speed_shift = speed_factor * delta_us as f64;
+                    reference.add_us(us + speed_shift as i64)
                 }
             }
         }
@@ -321,6 +391,13 @@ mod time_provider {
             self.0.lock().expect("Mutex is poisoned").now()
         }
 
+        pub fn parent_now_or_realtime(&self) -> DateTime {
+            self.0
+                .lock()
+                .expect("Mutex is poisoned")
+                .parent_now_or_realtime()
+        }
+
         /// When we call sleep, there is no guarantee when the starting time will be taken.
         /// Hence it is possible this time is taken after we have call the mock_time (this
         /// is typically the case when calling sleep from Python where the actual sleep is
@@ -344,7 +421,12 @@ mod time_provider {
 
             let mut remaining_time = time;
             // Err is `to_sleep` gets negative, if such we are done with sleeping !
-            while let Ok(to_sleep) = remaining_time.to_std() {
+            while let Ok(mut to_sleep) = remaining_time.to_std() {
+                if let Some(speed_factor) =
+                    self.0.lock().expect("Mutex is poisoned").get_speed_factor()
+                {
+                    to_sleep = to_sleep.div_f64(speed_factor);
+                }
                 let sleep_started_at = self.now();
                 let autojumped = {
                     let mut agent = self.0.lock().expect("Mutex is poisoned");

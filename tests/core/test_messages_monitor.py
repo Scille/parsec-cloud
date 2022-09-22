@@ -66,14 +66,14 @@ async def test_process_while_offline(running_backend, alice_core, bob_user_fs, a
 
     with alice_core.event_bus.listen() as spy:
         # Alice is back online, should retrieve Bob's message fine
-        alice.time_provider.set_autojump(0.010)
+        alice.time_provider.mock_time(speed=100.0)
         with trio.fail_after(1.0):
             await spy.wait(
                 CoreEvent.BACKEND_CONNECTION_CHANGED,
                 {"status": BackendConnStatus.READY, "status_exc": None},
             )
             await alice_core.wait_idle_monitors()
-        alice.time_provider.set_autojump(None)
+        alice.time_provider.mock_time(speed=1.0)
         assert alice_core.backend_status == BackendConnStatus.READY
         spy.assert_event_occured(CoreEvent.MESSAGE_PINGED, {"ping": "hello from Bob !"})
 

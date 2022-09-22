@@ -69,18 +69,29 @@ impl TimeProvider {
         &mut self,
         freeze: Option<DateTime>,
         shift: Option<f64>,
+        speed: Option<f64>,
         realtime: bool,
     ) -> PyResult<()> {
         use libparsec::types::MockedTime;
-        let mock_config = match (freeze, shift, realtime) {
-            (None, None, true) => MockedTime::RealTime,
-            (Some(dt), None, false) => MockedTime::FrozenTime(dt.0),
-            (None, Some(shift_in_seconds), false) => MockedTime::ShiftedTime {
+        let mock_config = match (freeze, shift, speed, realtime) {
+            (None, None, None, true) => MockedTime::RealTime,
+            (Some(dt), None, None, false) => MockedTime::FrozenTime(dt.0),
+            (None, Some(shift_in_seconds), None, false) => MockedTime::ShiftedTime {
                 microseconds: (shift_in_seconds * 1e6) as i64,
             },
+            (None, None, Some(speed_factor), false) => {
+                let reference = self.0.parent_now_or_realtime();
+                MockedTime::FasterTime {
+                    reference,
+                    microseconds: (self.0.now() - reference)
+                        .num_microseconds()
+                        .expect("No reason to overflow"),
+                    speed_factor,
+                }
+            }
             _ => {
                 return Err(PyValueError::new_err(
-                    "Must only provide one of `freeze`, `shift` and `realtime`",
+                    "Must only provide one of `freeze`, `shift`, `speed_factor` and `realtime`",
                 ))
             }
         };
