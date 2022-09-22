@@ -180,12 +180,12 @@ _q_get_server_stats = Q(
         LEFT JOIN (
             SELECT
                 o1._id AS userid,
-                sum(case when u.profile = 'ADMIN'    AND revoked_on IS NULL then 1 else 0 end) AS admin_count_active,
-                sum(case when u.profile = 'STANDARD' AND revoked_on IS NULL then 1 else 0 end) AS standard_count_active,
-                sum(case when u.profile = 'OUTSIDER' AND revoked_on IS NULL then 1 else 0 end) AS outsider_count_active,
-                sum(case when u.profile = 'ADMIN'    AND revoked_on IS NOT NULL then 1 else 0 end)     AS admin_count_revoked,
-                sum(case when u.profile = 'STANDARD' AND revoked_on IS NOT NULL then 1 else 0 end)     AS standard_count_revoked,
-                sum(case when u.profile = 'OUTSIDER' AND revoked_on IS NOT NULL then 1 else 0 end)     AS outsider_count_revoked,
+                sum(case when u.profile = 'ADMIN'    AND revoked_on IS NULL then 1 else 0 end)      AS admin_count_active,
+                sum(case when u.profile = 'STANDARD' AND revoked_on IS NULL then 1 else 0 end)      AS standard_count_active,
+                sum(case when u.profile = 'OUTSIDER' AND revoked_on IS NULL then 1 else 0 end)      AS outsider_count_active,
+                sum(case when u.profile = 'ADMIN'    AND revoked_on IS NOT NULL then 1 else 0 end)  AS admin_count_revoked,
+                sum(case when u.profile = 'STANDARD' AND revoked_on IS NOT NULL then 1 else 0 end)  AS standard_count_revoked,
+                sum(case when u.profile = 'OUTSIDER' AND revoked_on IS NOT NULL then 1 else 0 end)  AS outsider_count_revoked,
                 COUNT(*) AS total_users
             FROM
                 organization AS o1 JOIN user_ AS u ON o1._id = u.organization

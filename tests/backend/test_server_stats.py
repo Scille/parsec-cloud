@@ -30,15 +30,22 @@ async def test_bad_requests(backend_asgi_app):
     # No arguments in query string
     rep = await client.get("/administration/stats", headers=HEADERS)
     assert rep.status == "400 BAD REQUEST"
+    assert await rep.get_json() == {"error": "missing query argument 'format'"}
 
     # Missing format
     rep = await client.get("/administration/stats?from=2020-01-01&to=2021-01-01", headers=HEADERS)
     assert rep.status == "400 BAD REQUEST"
+    assert await rep.get_json() == {"error": "missing query argument 'format'"}
 
     # Missing from
     rep = await client.get("/administration/stats?format=csv&to=2021-01-01", headers=HEADERS)
-
     assert rep.status == "400 BAD REQUEST"
+    assert await rep.get_json() == {"error": "missing query argument 'from'"}
+
+    # Bad format
+    rep = await client.get("/administration/stats?format=mp3&from=2021-01-01", headers=HEADERS)
+    assert rep.status == "400 BAD REQUEST"
+    assert await rep.get_json() == {"error": "bad format 'mp3' expected one of ['json', 'csv']"}
 
 
 @pytest.mark.trio
@@ -65,6 +72,7 @@ async def test_json_server_stats(backend_asgi_app, realm, alice):
         client, HEADERS, from_date="1900-01-01", to_date="3000-01-01", format="json"
     )
     first_size, second_size, third_size = (org["metadata_size"] for org in rep["stats"])
+    print(first_size, second_size, third_size)
     expected = {
         "stats": [
             {
@@ -220,3 +228,23 @@ async def test_json_server_stats_add_workspace(backend_asgi_app, backend, alice,
     expected["stats"][0]["realms"] += 1  # New realm
     rep = await server_stats(client, HEADERS, from_date="2021-01-01", to_date="2021-12-31")
     assert rep == expected
+
+
+@pytest.mark.trio
+async def test_json_server_stats_csv(backend_asgi_app, realm, alice):
+    client = backend_asgi_app.test_client()
+    HEADERS = {"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"}
+    json_rep = await server_stats(client, HEADERS, from_date="1900-01-01", to_date="3000-01-01")
+    first_size, second_size, third_size = (org["metadata_size"] for org in json_rep["stats"])
+    rep = await server_stats(
+        client, HEADERS, from_date="1900-01-01", to_date="3000-01-01", format="csv"
+    )
+    # We use Excel like CSV that use carriage returns '\r\n'
+    assert (
+        rep
+        == f"""id,data_size,metadata_size,realms,users,admin_count_active,standard_count_active,outsider_count_active,admin_count_revoked,standard_count_revoked,outsider_count_revoked\r
+CoolOrg,0,{first_size},4,3,2,0,1,0,0,0\r
+ExpiredOrg,0,{second_size},1,1,1,0,0,0,0,0\r
+OtherOrg,0,{third_size},1,1,1,0,0,0,0,0\r
+"""
+    )
