@@ -113,7 +113,7 @@ jobs:
 
   test-python-matrix:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - name: 🐧 Linux
@@ -269,7 +269,7 @@ jobs:
 
   test-rust-matrix:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - name: 🐧 Linux
@@ -351,7 +351,7 @@ jobs:
     # - The job `Run WasmPack test` (where we run the test on each specified crate).
     # So it's simpler to have only 1 list to maintain (DRY).
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - crate_to_test:
