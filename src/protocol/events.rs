@@ -9,12 +9,8 @@ use libparsec::protocol::authenticated_cmds::{
     events_subscribe,
 };
 use pyo3::{
-    exceptions::{PyAttributeError, PyNotImplementedError},
-    import_exception,
-    prelude::*,
-    pyclass::CompareOp,
-    types::PyBytes,
-    PyObject, PyResult, Python,
+    exceptions::PyAttributeError, import_exception, prelude::*, types::PyBytes, PyObject, PyResult,
+    Python,
 };
 
 use super::gen_rep;
@@ -87,18 +83,6 @@ impl EventsListenRepOk {
             Err(PyAttributeError::new_err(
                 "Can't create EventsListenRepOk from a response != Rep::Ok",
             ))
-        }
-    }
-
-    fn __richcmp__(
-        _self: PyRef<'_, Self>,
-        other: PyRef<'_, Self>,
-        op: CompareOp,
-    ) -> PyResult<bool> {
-        match op {
-            CompareOp::Eq => Ok(_self.as_ref().0 == other.as_ref().0),
-            CompareOp::Ne => Ok(_self.as_ref().0 != other.as_ref().0),
-            _ => Err(PyNotImplementedError::new_err("")),
         }
     }
 
@@ -248,6 +232,9 @@ impl EventsListenRepOk {
         }
     }
 }
+
+gen_proto!(EventsListenRepOk, __repr__, pyref);
+gen_proto!(EventsListenRepOk, __richcmp__, eq_pyref);
 
 #[pyclass(extends = EventsListenRep)]
 #[derive(Clone, PartialEq)]
