@@ -395,7 +395,6 @@ async def logged_core_factory(
     event_bus = event_bus or EventBus()
     prevent_sync_pattern = get_prevent_sync_pattern(config.prevent_sync_pattern_path)
     backend_conn = BackendAuthenticatedConn(
-        addr=device.organization_addr,
         device=device,
         event_bus=event_bus,
         max_cooldown=config.backend_max_cooldown,

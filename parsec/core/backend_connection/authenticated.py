@@ -233,7 +233,6 @@ def _transport_pool_factory(addr, device_id, signing_key, max_pool, keepalive):
 class BackendAuthenticatedConn:
     def __init__(
         self,
-        addr: BackendOrganizationAddr,
         device: LocalDevice,
         event_bus: EventBus,
         max_cooldown: int = 30,
@@ -243,6 +242,7 @@ class BackendAuthenticatedConn:
         if max_pool < 2:
             raise ValueError("max_pool must be at least 2 (for event listener + query sender)")
 
+        addr = device.organization_addr
         self._device = device
         self._started = False
         self._transport_pool = _transport_pool_factory(
