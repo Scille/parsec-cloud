@@ -207,3 +207,16 @@ async def test_json_server_stats_revoked_user(backend_asgi_app, alice_ws, alice,
     expected["stats"][0]["user_per_profiles"]["STANDARD"]["revoked"] += 1
     expected["stats"][0]["user_per_profiles"]["STANDARD"]["active"] -= 1
     assert rep == expected
+
+
+@pytest.mark.trio
+async def test_json_server_stats_add_workspace(backend_asgi_app, backend, alice, realm_factory):
+    client = backend_asgi_app.test_client()
+    HEADERS = {"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"}
+    rep = await server_stats(client, HEADERS, from_date="2021-01-01", to_date="2021-12-31")
+    expected = rep
+
+    await realm_factory(backend, alice)
+    expected["stats"][0]["realms"] += 1  # New realm
+    rep = await server_stats(client, HEADERS, from_date="2021-01-01", to_date="2021-12-31")
+    assert rep == expected

@@ -4,7 +4,9 @@ from __future__ import annotations
 from typing import Optional, Union
 from functools import lru_cache
 from triopg import UniqueViolationError
+from datetime import datetime as PyDateTime
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.crypto import VerifyKey
 from parsec.sequester_crypto import SequesterVerifyKeyDer
@@ -161,26 +163,63 @@ SELECT
 )
 
 _q_get_server_stats = Q(
-    f"""
-SELECT
-    (
-        SELECT ARRAY(
-            SELECT (revoked_on, profile::text), organization
-            FROM user_
-        )
-    ) users,
-    (
-        SELECT COUNT(*), organization
-        FROM realm
-    ) realms,
-    (
-        SELECT COALESCE(SUM(size), 0), organization
-        FROM vlob_atom
-    ) metadata_size,
-    (
-        SELECT COALESCE(SUM(size), 0), organization
-        FROM block
-    ) data_size
+    """
+    SELECT
+        organization_id,
+        admin_count_active,
+        standard_count_active,
+        outsider_count_active,
+        admin_count_revoked,
+        standard_count_revoked,
+        outsider_count_revoked,
+        total_users,
+        realms.realm_count,
+        COALESCE(vlobs.metadata_size, 0) AS metadata_size,
+        COALESCE(datas.data_size, 0) AS data_size
+    FROM organization AS o
+        LEFT JOIN (
+            SELECT
+                o1._id AS userid,
+                sum(case when u.profile = 'ADMIN'    AND revoked_on IS NULL then 1 else 0 end) AS admin_count_active,
+                sum(case when u.profile = 'STANDARD' AND revoked_on IS NULL then 1 else 0 end) AS standard_count_active,
+                sum(case when u.profile = 'OUTSIDER' AND revoked_on IS NULL then 1 else 0 end) AS outsider_count_active,
+                sum(case when u.profile = 'ADMIN'    AND revoked_on IS NOT NULL then 1 else 0 end)     AS admin_count_revoked,
+                sum(case when u.profile = 'STANDARD' AND revoked_on IS NOT NULL then 1 else 0 end)     AS standard_count_revoked,
+                sum(case when u.profile = 'OUTSIDER' AND revoked_on IS NOT NULL then 1 else 0 end)     AS outsider_count_revoked,
+                COUNT(*) AS total_users
+            FROM
+                organization AS o1 JOIN user_ AS u ON o1._id = u.organization
+            WHERE
+                u.created_on < $to_date
+            GROUP BY
+                o1._id
+
+        ) users ON o._id = userid
+        LEFT JOIN (
+            SELECT COUNT(*) AS realm_count, o1._id AS id
+            FROM organization AS o1 JOIN realm ON o1._id = realm.organization
+            GROUP BY o1._id
+        ) realms ON realms.id = o._id
+        LEFT JOIN (
+            SELECT
+            o1._id AS vlobid,
+            COALESCE(SUM(size), 0) AS metadata_size
+            FROM organization AS o1 JOIN vlob_atom AS va ON o1._id = va.organization
+            WHERE
+                va.created_on BETWEEN $from_date AND $to_date
+                AND (deleted_on IS NULL or deleted_on > $to_date)
+            GROUP BY o1._id
+        ) vlobs ON o._id = vlobid
+        LEFT JOIN (
+            SELECT
+            o1._id AS dataid,
+            COALESCE(SUM(size), 0) AS data_size
+            FROM organization AS o1 JOIN block AS b ON o1._id = b.organization
+            WHERE
+                created_on BETWEEN $from_date AND $to_date
+                AND (deleted_on IS NULL OR deleted_on > $to_date)
+            GROUP BY o1._id
+        ) datas ON o._id = datas.dataid
 """
 )
 
@@ -360,11 +399,55 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             users_per_profile_detail=users_per_profile_detail,
         )
 
-    async def server_stats(self):
+    async def server_stats(self, from_date: DateTime, to_date: DateTime):
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            result = await conn.fetchrow(*_q_get_server_stats())
-            # TODO
-        return result
+            query_lines = await conn.fetch(
+                *_q_get_server_stats(
+                    from_date=PyDateTime(
+                        from_date.year,
+                        from_date.month,
+                        from_date.day,
+                        from_date.hour,
+                        from_date.minute,
+                        from_date.second,
+                    ),
+                    to_date=PyDateTime(
+                        to_date.year,
+                        to_date.month,
+                        to_date.day,
+                        to_date.hour,
+                        to_date.minute,
+                        to_date.second,
+                    ),
+                )
+            )
+
+            return [
+                {
+                    "id": line["organization_id"],
+                    "data_size": line["data_size"],
+                    "metadata_size": line["metadata_size"],
+                    "realms": line["realm_count"],
+                    "users": sum(
+                        [line[u] for u in dict(line) if "_count_" in u]
+                    ),  # Match *_count_* columns
+                    "user_per_profiles": {
+                        "ADMIN": {
+                            "active": line["admin_count_active"],
+                            "revoked": line["admin_count_revoked"],
+                        },
+                        "STANDARD": {
+                            "active": line["standard_count_active"],
+                            "revoked": line["standard_count_revoked"],
+                        },
+                        "OUTSIDER": {
+                            "active": line["outsider_count_active"],
+                            "revoked": line["outsider_count_revoked"],
+                        },
+                    },
+                }
+                for line in query_lines
+            ]
 
     async def update(
         self,
