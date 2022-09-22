@@ -47,6 +47,12 @@ mod libparsec {
         }
     }
 
+    impl std::convert::AsRef<str> for OrganizationID {
+        fn as_ref(&self) -> &str {
+            &self.0
+        }
+    }
+
     pub fn f_r1(o: OrganizationID) -> OrganizationID { o }
     pub fn f_r2() -> bool {true}
     pub fn f_r3() -> i64 {42}
