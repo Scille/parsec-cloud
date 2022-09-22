@@ -1,5 +1,5 @@
 use crate::{
-    binding_utils::{py_to_rs_invitation_status, py_to_rs_realm_role},
+    binding_utils::{gen_proto, py_to_rs_invitation_status, py_to_rs_realm_role},
     ids::{self, RealmID, VlobID},
     invite::InvitationToken,
     protocol::Reason,
@@ -32,10 +32,6 @@ impl EventsListenReq {
         Ok(Self(events_listen::Req { wait }))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
@@ -48,6 +44,8 @@ impl EventsListenReq {
         Ok(self.0.wait)
     }
 }
+
+gen_proto!(EventsListenReq, __repr__);
 
 gen_rep!(
     events_listen,
@@ -83,11 +81,13 @@ pub(crate) enum BackendEvent {
 impl EventsListenRepOk {
     #[new]
     fn new(event_data: EventsListenRep) -> PyResult<(Self, EventsListenRep)> {
-        Ok((Self, event_data))
-    }
-
-    fn __repr__(_self: PyRef<'_, Self>) -> String {
-        format!("{:?}", _self.as_ref().0)
+        if let events_listen::Rep::Ok(_) = event_data.0 {
+            Ok((Self, event_data))
+        } else {
+            Err(PyAttributeError::new_err(
+                "Can't create EventsListenRepOk from a response != Rep::Ok",
+            ))
+        }
     }
 
     fn __richcmp__(
@@ -133,20 +133,13 @@ impl EventsListenRepOk {
     #[getter]
     fn invitation_status(_self: PyRef<'_, Self>) -> PyResult<&'static str> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(x) => {
-                if let APIEvent::InviteStatusChanged {
-                    invitation_status, ..
-                } = x
-                {
-                    match invitation_status {
-                        libparsec::types::InvitationStatus::Idle => Ok("IDLE"),
-                        libparsec::types::InvitationStatus::Ready => Ok("READY"),
-                        libparsec::types::InvitationStatus::Deleted => Ok("DELETED"),
-                    }
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
-            }
+            events_listen::Rep::Ok(APIEvent::InviteStatusChanged {
+                invitation_status, ..
+            }) => match invitation_status {
+                libparsec::types::InvitationStatus::Idle => Ok("IDLE"),
+                libparsec::types::InvitationStatus::Ready => Ok("READY"),
+                libparsec::types::InvitationStatus::Deleted => Ok("DELETED"),
+            },
             _ => Err(PyAttributeError::new_err("")),
         }
     }
@@ -275,13 +268,7 @@ impl EventsListenRepOkPinged {
     #[getter]
     fn ping(_self: PyRef<'_, Self>) -> PyResult<String> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(rep) => {
-                if let APIEvent::Pinged { ping } = rep {
-                    Ok(ping.clone())
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
-            }
+            events_listen::Rep::Ok(APIEvent::Pinged { ping }) => Ok(ping.clone()),
             _ => Err(PyAttributeError::new_err("")),
         }
     }
@@ -304,13 +291,7 @@ impl EventsListenRepOkMessageReceived {
     #[getter]
     fn index(_self: PyRef<'_, Self>) -> PyResult<u64> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(x) => {
-                if let APIEvent::MessageReceived { index } = x {
-                    Ok(*index)
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
-            }
+            events_listen::Rep::Ok(APIEvent::MessageReceived { index }) => Ok(*index),
             _ => Err(PyAttributeError::new_err("")),
         }
     }
@@ -336,12 +317,8 @@ impl EventsListenRepOkInviteStatusChanged {
     #[getter]
     fn token(_self: PyRef<'_, Self>) -> PyResult<InvitationToken> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(x) => {
-                if let APIEvent::InviteStatusChanged { token, .. } = x {
-                    Ok(InvitationToken(*token))
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
+            events_listen::Rep::Ok(APIEvent::InviteStatusChanged { token, .. }) => {
+                Ok(InvitationToken(*token))
             }
             _ => Err(PyAttributeError::new_err("")),
         }
@@ -350,20 +327,13 @@ impl EventsListenRepOkInviteStatusChanged {
     #[getter]
     fn invitation_status(_self: PyRef<'_, Self>) -> PyResult<&'static str> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(x) => {
-                if let APIEvent::InviteStatusChanged {
-                    invitation_status, ..
-                } = x
-                {
-                    match invitation_status {
-                        libparsec::types::InvitationStatus::Idle => Ok("IDLE"),
-                        libparsec::types::InvitationStatus::Ready => Ok("READY"),
-                        libparsec::types::InvitationStatus::Deleted => Ok("DELETED"),
-                    }
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
-            }
+            events_listen::Rep::Ok(APIEvent::InviteStatusChanged {
+                invitation_status, ..
+            }) => match invitation_status {
+                libparsec::types::InvitationStatus::Idle => Ok("IDLE"),
+                libparsec::types::InvitationStatus::Ready => Ok("READY"),
+                libparsec::types::InvitationStatus::Deleted => Ok("DELETED"),
+            },
             _ => Err(PyAttributeError::new_err("")),
         }
     }
@@ -389,12 +359,8 @@ impl EventsListenRepOkRealmMaintenanceFinished {
     #[getter]
     fn realm_id(_self: PyRef<'_, Self>) -> PyResult<RealmID> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(rep) => {
-                if let APIEvent::RealmMaintenanceFinished { realm_id, .. } = rep {
-                    Ok(ids::RealmID(*realm_id))
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
+            events_listen::Rep::Ok(APIEvent::RealmMaintenanceFinished { realm_id, .. }) => {
+                Ok(ids::RealmID(*realm_id))
             }
             _ => Err(PyAttributeError::new_err("")),
         }
@@ -403,17 +369,10 @@ impl EventsListenRepOkRealmMaintenanceFinished {
     #[getter]
     fn encryption_revision(_self: PyRef<'_, Self>) -> PyResult<u64> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(rep) => {
-                if let APIEvent::RealmMaintenanceFinished {
-                    encryption_revision,
-                    ..
-                } = rep
-                {
-                    Ok(*encryption_revision)
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
-            }
+            events_listen::Rep::Ok(APIEvent::RealmMaintenanceFinished {
+                encryption_revision,
+                ..
+            }) => Ok(*encryption_revision),
             _ => Err(PyAttributeError::new_err("")),
         }
     }
@@ -439,12 +398,8 @@ impl EventsListenRepOkRealmMaintenanceStarted {
     #[getter]
     fn realm_id(_self: PyRef<'_, Self>) -> PyResult<RealmID> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(rep) => {
-                if let APIEvent::RealmMaintenanceFinished { realm_id, .. } = rep {
-                    Ok(ids::RealmID(*realm_id))
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
+            events_listen::Rep::Ok(APIEvent::RealmMaintenanceFinished { realm_id, .. }) => {
+                Ok(ids::RealmID(*realm_id))
             }
             _ => Err(PyAttributeError::new_err("")),
         }
@@ -453,17 +408,10 @@ impl EventsListenRepOkRealmMaintenanceStarted {
     #[getter]
     fn encryption_revision(_self: PyRef<'_, Self>) -> PyResult<u64> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(rep) => {
-                if let APIEvent::RealmMaintenanceFinished {
-                    encryption_revision,
-                    ..
-                } = rep
-                {
-                    Ok(*encryption_revision)
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
-            }
+            events_listen::Rep::Ok(APIEvent::RealmMaintenanceFinished {
+                encryption_revision,
+                ..
+            }) => Ok(*encryption_revision),
             _ => Err(PyAttributeError::new_err("")),
         }
     }
@@ -496,12 +444,8 @@ impl EventsListenRepOkVlobsUpdated {
     #[getter]
     fn realm_id(_self: PyRef<'_, Self>) -> PyResult<RealmID> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(rep) => {
-                if let APIEvent::RealmVlobsUpdated { realm_id, .. } = rep {
-                    Ok(RealmID(*realm_id))
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
+            events_listen::Rep::Ok(APIEvent::RealmVlobsUpdated { realm_id, .. }) => {
+                Ok(RealmID(*realm_id))
             }
             _ => Err(PyAttributeError::new_err("")),
         }
@@ -510,12 +454,8 @@ impl EventsListenRepOkVlobsUpdated {
     #[getter]
     fn checkpoint(_self: PyRef<'_, Self>) -> PyResult<u64> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(rep) => {
-                if let APIEvent::RealmVlobsUpdated { checkpoint, .. } = rep {
-                    Ok(*checkpoint)
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
+            events_listen::Rep::Ok(APIEvent::RealmVlobsUpdated { checkpoint, .. }) => {
+                Ok(*checkpoint)
             }
             _ => Err(PyAttributeError::new_err("")),
         }
@@ -524,12 +464,8 @@ impl EventsListenRepOkVlobsUpdated {
     #[getter]
     fn src_id(_self: PyRef<'_, Self>) -> PyResult<VlobID> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(rep) => {
-                if let APIEvent::RealmVlobsUpdated { src_id, .. } = rep {
-                    Ok(VlobID(*src_id))
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
+            events_listen::Rep::Ok(APIEvent::RealmVlobsUpdated { src_id, .. }) => {
+                Ok(VlobID(*src_id))
             }
             _ => Err(PyAttributeError::new_err("")),
         }
@@ -538,12 +474,8 @@ impl EventsListenRepOkVlobsUpdated {
     #[getter]
     fn src_version(_self: PyRef<'_, Self>) -> PyResult<u64> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(rep) => {
-                if let APIEvent::RealmVlobsUpdated { src_version, .. } = rep {
-                    Ok(*src_version)
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
+            events_listen::Rep::Ok(APIEvent::RealmVlobsUpdated { src_version, .. }) => {
+                Ok(*src_version)
             }
             _ => Err(PyAttributeError::new_err("")),
         }
@@ -571,12 +503,8 @@ impl EventsListenRepOkRealmRolesUpdated {
     #[getter]
     fn realm_id(_self: PyRef<'_, Self>) -> PyResult<RealmID> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(rep) => {
-                if let APIEvent::RealmRolesUpdated { realm_id, .. } = rep {
-                    Ok(RealmID(*realm_id))
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
+            events_listen::Rep::Ok(APIEvent::RealmRolesUpdated { realm_id, .. }) => {
+                Ok(RealmID(*realm_id))
             }
             _ => Err(PyAttributeError::new_err("")),
         }
@@ -585,19 +513,13 @@ impl EventsListenRepOkRealmRolesUpdated {
     #[getter]
     fn role(_self: PyRef<'_, Self>) -> PyResult<Option<&'static str>> {
         match &_self.as_ref().0 {
-            events_listen::Rep::Ok(rep) => {
-                if let APIEvent::RealmRolesUpdated { role, .. } = rep {
-                    match role {
-                        Some(libparsec::types::RealmRole::Owner) => Ok(Some("OWNER")),
-                        Some(libparsec::types::RealmRole::Manager) => Ok(Some("MANAGER")),
-                        Some(libparsec::types::RealmRole::Contributor) => Ok(Some("CONTRIBUTOR")),
-                        Some(libparsec::types::RealmRole::Reader) => Ok(Some("READER")),
-                        None => Ok(None),
-                    }
-                } else {
-                    Err(PyAttributeError::new_err(""))
-                }
-            }
+            events_listen::Rep::Ok(APIEvent::RealmRolesUpdated { role, .. }) => match role {
+                Some(libparsec::types::RealmRole::Owner) => Ok(Some("OWNER")),
+                Some(libparsec::types::RealmRole::Manager) => Ok(Some("MANAGER")),
+                Some(libparsec::types::RealmRole::Contributor) => Ok(Some("CONTRIBUTOR")),
+                Some(libparsec::types::RealmRole::Reader) => Ok(Some("READER")),
+                None => Ok(None),
+            },
             _ => Err(PyAttributeError::new_err("")),
         }
     }
@@ -631,10 +553,6 @@ impl EventsSubscribeReq {
         Ok(Self(events_subscribe::Req))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
@@ -642,6 +560,8 @@ impl EventsSubscribeReq {
         ))
     }
 }
+
+gen_proto!(EventsSubscribeReq, __repr__);
 
 gen_rep!(events_subscribe, EventsSubscribeRep, { .. });
 
