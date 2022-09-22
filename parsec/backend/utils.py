@@ -17,9 +17,7 @@ ALLOWED_API_VERSIONS = {API_V1_VERSION.version, API_V2_VERSION.version}
 # Enumeration used to check access rights for a given kind of operation
 OperationKind = Enum("OperationKind", "DATA_READ DATA_WRITE MAINTENANCE")
 
-ClientType = Enum(
-    "ClientType", "AUTHENTICATED INVITED ANONYMOUS APIV1_ANONYMOUS APIV1_ADMINISTRATION"
-)
+from parsec.api.protocol.base import ClientType
 
 
 def api(
@@ -65,7 +63,11 @@ def catch_protocol_errors(fn):
             return await fn(*args, **kwargs)
 
         except InvalidMessageError as exc:
-            return {"status": "bad_message", "errors": exc.errors, "reason": "Invalid message."}
+            return {
+                "status": "bad_message",
+                "errors": exc.errors,
+                "reason": "Invalid message.",
+            }
 
         except ProtocolError as exc:
             return {"status": "bad_message", "reason": str(exc)}

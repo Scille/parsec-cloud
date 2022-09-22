@@ -853,6 +853,7 @@ async def test_pki_enrollment(tmp_path, mocked_parsec_ext_smartcard, backend_asg
             result = await _cli_invoke_in_thread(
                 f"core pki_enrollment_review_pendings --config-dir={config_dir.as_posix()} --device {alice.slughash} --password {alice_password} {extra_args}"
             )
+
             if not check_result:
                 return result
             if result.exception:

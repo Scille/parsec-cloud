@@ -14,6 +14,95 @@ from email.message import Message
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from structlog import get_logger
+from parsec.api.protocol import (
+    # TODO: Remove legacy InvitationType see issue(#3105)
+    # https://github.com/Scille/parsec-cloud/issues/3105
+    InvitationType as PyInvitationType,
+)
+from parsec._parsec import (
+    InvitationType,
+    Invite1ClaimerWaitPeerRep,
+    Invite1ClaimerWaitPeerRepInvalidState,
+    Invite1ClaimerWaitPeerRepNotFound,
+    Invite1ClaimerWaitPeerRepOk,
+    Invite1ClaimerWaitPeerReq,
+    Invite1GreeterWaitPeerRep,
+    Invite1GreeterWaitPeerRepAlreadyDeleted,
+    Invite1GreeterWaitPeerRepInvalidState,
+    Invite1GreeterWaitPeerRepNotFound,
+    Invite1GreeterWaitPeerRepOk,
+    Invite1GreeterWaitPeerReq,
+    Invite2aClaimerSendHashedNonceHashNonceRep,
+    Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
+    Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
+    Invite2aClaimerSendHashedNonceHashNonceRepOk,
+    Invite2aClaimerSendHashedNonceHashNonceReq,
+    Invite2aGreeterGetHashedNonceRep,
+    Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
+    Invite2aGreeterGetHashedNonceRepInvalidState,
+    Invite2aGreeterGetHashedNonceRepNotFound,
+    Invite2aGreeterGetHashedNonceRepOk,
+    Invite2aGreeterGetHashedNonceReq,
+    Invite2bClaimerSendNonceRepOk,
+    Invite2bClaimerSendNonceReq,
+    Invite2bGreeterSendNonceRep,
+    Invite2bGreeterSendNonceRepAlreadyDeleted,
+    Invite2bGreeterSendNonceRepInvalidState,
+    Invite2bGreeterSendNonceRepNotFound,
+    Invite2bGreeterSendNonceRepOk,
+    Invite2bGreeterSendNonceReq,
+    Invite3aClaimerSignifyTrustRep,
+    Invite3aClaimerSignifyTrustRepInvalidState,
+    Invite3aClaimerSignifyTrustRepNotFound,
+    Invite3aClaimerSignifyTrustRepOk,
+    Invite3aClaimerSignifyTrustReq,
+    Invite3aGreeterWaitPeerTrustRep,
+    Invite3aGreeterWaitPeerTrustRepAlreadyDeleted,
+    Invite3aGreeterWaitPeerTrustRepInvalidState,
+    Invite3aGreeterWaitPeerTrustRepNotFound,
+    Invite3aGreeterWaitPeerTrustRepOk,
+    Invite3aGreeterWaitPeerTrustReq,
+    Invite3bClaimerWaitPeerTrustRep,
+    Invite3bClaimerWaitPeerTrustRepInvalidState,
+    Invite3bClaimerWaitPeerTrustRepNotFound,
+    Invite3bClaimerWaitPeerTrustRepOk,
+    Invite3bClaimerWaitPeerTrustReq,
+    Invite3bGreeterSignifyTrustRep,
+    Invite3bGreeterSignifyTrustRepAlreadyDeleted,
+    Invite3bGreeterSignifyTrustRepInvalidState,
+    Invite3bGreeterSignifyTrustRepNotFound,
+    Invite3bGreeterSignifyTrustRepOk,
+    Invite3bGreeterSignifyTrustReq,
+    Invite4ClaimerCommunicateRep,
+    Invite4ClaimerCommunicateRepInvalidState,
+    Invite4ClaimerCommunicateRepNotFound,
+    Invite4ClaimerCommunicateRepOk,
+    Invite4ClaimerCommunicateReq,
+    Invite4GreeterCommunicateRep,
+    Invite4GreeterCommunicateRepAlreadyDeleted,
+    Invite4GreeterCommunicateRepInvalidState,
+    Invite4GreeterCommunicateRepNotFound,
+    Invite4GreeterCommunicateRepOk,
+    Invite4GreeterCommunicateReq,
+    InviteDeleteRep,
+    InviteDeleteRepAlreadyDeleted,
+    InviteDeleteRepNotFound,
+    InviteDeleteRepOk,
+    InviteDeleteReq,
+    InviteInfoRep,
+    InviteInfoRepOk,
+    InviteInfoReq,
+    InviteListItem,
+    InviteListRep,
+    InviteListRepOk,
+    InviteListReq,
+    InviteNewRep,
+    InviteNewRepAlreadyMember,
+    InviteNewRepNotAllowed,
+    InviteNewRepNotAvailable,
+    InviteNewRepOk,
+    InviteNewReq,
+)
 
 from parsec.crypto import PublicKey, HashDigest
 from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
@@ -22,32 +111,21 @@ from parsec.api.protocol import (
     UserID,
     HumanHandle,
     InvitationToken,
-    InvitationType,
     InvitationDeletedReason,
     InvitationStatus,
     InvitationEmailSentStatus,
     UserProfile,
-    invite_new_serializer,
-    invite_delete_serializer,
-    invite_list_serializer,
-    invite_info_serializer,
-    invite_1_claimer_wait_peer_serializer,
-    invite_1_greeter_wait_peer_serializer,
-    invite_2a_claimer_send_hashed_nonce_serializer,
-    invite_2a_greeter_get_hashed_nonce_serializer,
-    invite_2b_greeter_send_nonce_serializer,
-    invite_2b_claimer_send_nonce_serializer,
-    invite_3a_greeter_wait_peer_trust_serializer,
-    invite_3a_claimer_signify_trust_serializer,
-    invite_3b_claimer_wait_peer_trust_serializer,
-    invite_3b_greeter_signify_trust_serializer,
-    invite_4_greeter_communicate_serializer,
-    invite_4_claimer_communicate_serializer,
 )
+from parsec.api.protocol.base import api_typed_msg_adapter
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.templates import get_template
 from parsec.backend.utils import catch_protocol_errors, api, ClientType
-from parsec.backend.config import BackendConfig, EmailConfig, SmtpEmailConfig, MockedEmailConfig
+from parsec.backend.config import (
+    BackendConfig,
+    EmailConfig,
+    SmtpEmailConfig,
+    MockedEmailConfig,
+)
 from parsec.core.types import BackendInvitationAddr
 
 
@@ -123,7 +201,7 @@ class ConduitListenCtx:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserInvitation:
-    TYPE = InvitationType.USER
+    TYPE = PyInvitationType.USER
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     claimer_email: str
@@ -137,7 +215,7 @@ class UserInvitation:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceInvitation:
-    TYPE = InvitationType.DEVICE
+    TYPE = PyInvitationType.DEVICE
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
@@ -295,30 +373,42 @@ class BaseInviteComponent:
 
     @api("invite_new")
     @catch_protocol_errors
-    async def api_invite_new(self, client_ctx, msg):
-        msg = invite_new_serializer.req_load(msg)
+    @api_typed_msg_adapter(InviteNewReq, InviteNewRep)
+    async def api_invite_new(self, client_ctx, req):
+        # TODO: Use builtin Invitation type, this function is here to convert
+        # types when needed because BackendInvitationAddr::build() has been
+        # modified to take the builtin version of InvitationType (see issue #3105)
+        # https://github.com/Scille/parsec-cloud/issues/3105
+        def _to_builtin_invitation_type(invit_type: PyInvitationType):
+            if type(invit_type) == PyInvitationType:
+                if invit_type == PyInvitationType.DEVICE:
+                    return InvitationType.DEVICE()
+                elif invit_type == PyInvitationType.USER:
+                    return InvitationType.USER()
+
+            return invit_type
 
         def _to_http_redirection_url(client_ctx, invitation):
             return BackendInvitationAddr.build(
                 backend_addr=self._config.backend_addr,
                 organization_id=client_ctx.organization_id,
-                invitation_type=invitation.TYPE,
+                invitation_type=_to_builtin_invitation_type(invitation.TYPE),
                 token=invitation.token,
             ).to_http_redirection_url()
 
-        if msg["type"] == InvitationType.USER:
+        if req.type == InvitationType.USER():
             if client_ctx.profile != UserProfile.ADMIN:
-                return invite_new_serializer.rep_dump({"status": "not_allowed"})
+                return InviteNewRepNotAllowed()
             try:
                 invitation = await self.new_for_user(
                     organization_id=client_ctx.organization_id,
                     greeter_user_id=client_ctx.user_id,
-                    claimer_email=msg["claimer_email"],
+                    claimer_email=req.claimer_email,
                 )
             except InvitationAlreadyMemberError:
-                return invite_new_serializer.rep_dump({"status": "already_member"})
+                return InviteNewRepAlreadyMember()
 
-            if msg["send_email"]:
+            if req.send_email:
                 if client_ctx.human_handle:
                     greeter_name = client_ctx.human_handle.label
                     reply_to = f"{client_ctx.human_handle.label} <{client_ctx.human_handle.email}>"
@@ -348,19 +438,18 @@ class BaseInviteComponent:
                 else:
                     email_sent_status = InvitationEmailSentStatus.SUCCESS
                 finally:
-                    return invite_new_serializer.rep_dump(
-                        {"status": "ok", "token": invitation.token, "email_sent": email_sent_status}
-                    )
+                    return InviteNewRepOk(invitation.token, email_sent_status)
 
         else:  # Device
-            if msg["send_email"] and not client_ctx.human_handle:
-                return invite_new_serializer.rep_dump({"status": "not_available"})
+            if req.send_email and not client_ctx.human_handle:
+                return InviteNewRepNotAvailable()
 
             invitation = await self.new_for_device(
-                organization_id=client_ctx.organization_id, greeter_user_id=client_ctx.user_id
+                organization_id=client_ctx.organization_id,
+                greeter_user_id=client_ctx.user_id,
             )
 
-            if msg["send_email"]:
+            if req.send_email:
                 message = generate_invite_email(
                     from_addr=self._config.email_config.sender,
                     to_addr=client_ctx.human_handle.email,
@@ -384,63 +473,52 @@ class BaseInviteComponent:
                 else:
                     email_sent_status = InvitationEmailSentStatus.SUCCESS
                 finally:
-                    return invite_new_serializer.rep_dump(
-                        {"status": "ok", "token": invitation.token, "email_sent": email_sent_status}
-                    )
+                    return InviteNewRepOk(invitation.token, email_sent_status)
 
-        return invite_new_serializer.rep_dump({"status": "ok", "token": invitation.token})
+        return InviteNewRepOk(invitation.token, None)
 
     @api("invite_delete")
     @catch_protocol_errors
+    @api_typed_msg_adapter(InviteDeleteReq, InviteDeleteRep)
     async def api_invite_delete(self, client_ctx, msg):
-        msg = invite_delete_serializer.req_load(msg)
         try:
             await self.delete(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg["token"],
+                token=msg.token,
                 on=DateTime.now(),
-                reason=msg["reason"],
+                reason=msg.reason,
             )
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return InviteDeleteRepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
+            return InviteDeleteRepAlreadyDeleted()
 
-        return invite_delete_serializer.rep_dump({"status": "ok"})
+        return InviteDeleteRepOk()
 
     @api("invite_list")
     @catch_protocol_errors
-    async def api_invite_list(self, client_ctx, msg):
-        msg = invite_list_serializer.req_load(msg)
+    @api_typed_msg_adapter(InviteListReq, InviteListRep)
+    async def api_invite_list(self, client_ctx, _):
         invitations = await self.list(
             organization_id=client_ctx.organization_id, greeter=client_ctx.user_id
         )
-        return invite_list_serializer.rep_dump(
-            {
-                "invitations": [
-                    {
-                        "type": InvitationType.USER
-                        if isinstance(item, UserInvitation)
-                        else InvitationType.DEVICE,
-                        "token": item.token,
-                        "created_on": item.created_on,
-                        "claimer_email": getattr(
-                            item, "claimer_email", None
-                        ),  # Only available for user
-                        "status": item.status,
-                    }
-                    for item in invitations
-                ]
-            }
+
+        return InviteListRepOk(
+            [
+                InviteListItem.User(item.token, item.created_on, item.claimer_email, item.status)
+                if isinstance(item, UserInvitation)
+                else InviteListItem.Device(item.token, item.created_on, item.status)
+                for item in invitations
+            ]
         )
 
     @api("invite_info", client_types=[ClientType.INVITED])
     @catch_protocol_errors
-    async def api_invite_info(self, client_ctx, msg):
-        invite_info_serializer.req_load(msg)
+    @api_typed_msg_adapter(InviteInfoReq, InviteInfoRep)
+    async def api_invite_info(self, client_ctx, _):
         # Invitation has already been fetched during handshake, this
         # means we don't have to access the database at all here.
         # Not accessing the database also means we cannot detect if invitation
@@ -448,19 +526,19 @@ class BaseInviteComponent:
         # (and the connection will eventually be closed by backend event anyway)
         invitation = client_ctx.invitation
         if isinstance(invitation, UserInvitation):
-            rep = {
-                "type": InvitationType.USER,
-                "claimer_email": invitation.claimer_email,
-                "greeter_user_id": invitation.greeter_user_id,
-                "greeter_human_handle": invitation.greeter_human_handle,
-            }
+            return InviteInfoRepOk(
+                InvitationType.USER(),
+                invitation.claimer_email,
+                invitation.greeter_user_id,
+                invitation.greeter_human_handle,
+            )
         else:  # DeviceInvitation
-            rep = {
-                "type": InvitationType.DEVICE,
-                "greeter_user_id": invitation.greeter_user_id,
-                "greeter_human_handle": invitation.greeter_human_handle,
-            }
-        return invite_info_serializer.rep_dump(rep)
+            return InviteInfoRepOk(
+                InvitationType.DEVICE(),
+                claimer_email=None,
+                greeter_user_id=invitation.greeter_user_id,
+                greeter_human_handle=invitation.greeter_human_handle,
+            )
 
     @api(
         "invite_1_claimer_wait_peer",
@@ -468,19 +546,19 @@ class BaseInviteComponent:
         client_types=[ClientType.INVITED],
     )
     @catch_protocol_errors
+    @api_typed_msg_adapter(Invite1ClaimerWaitPeerReq, Invite1ClaimerWaitPeerRep)
     async def api_invite_1_claimer_wait_peer(self, client_ctx, msg):
         """
         Raises:
             CloseInviteConnection
         """
-        msg = invite_1_claimer_wait_peer_serializer.req_load(msg)
         try:
             greeter_public_key = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=None,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_1_WAIT_PEERS,
-                payload=msg["claimer_public_key"].encode(),
+                payload=msg.claimer_public_key.encode(),
             )
 
         except InvitationAlreadyDeletedError as exc:
@@ -488,58 +566,58 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return Invite1ClaimerWaitPeerRepNotFound()
 
         except InvitationInvalidStateError:
-            return {"status": "invalid_state"}
+            return Invite1ClaimerWaitPeerRepInvalidState()
 
-        return invite_1_claimer_wait_peer_serializer.rep_dump(
-            {"status": "ok", "greeter_public_key": PublicKey(greeter_public_key)}
-        )
+        return Invite1ClaimerWaitPeerRepOk(PublicKey(greeter_public_key))
 
     @api("invite_1_greeter_wait_peer")
     @catch_protocol_errors
+    @api_typed_msg_adapter(Invite1GreeterWaitPeerReq, Invite1GreeterWaitPeerRep)
     async def api_invite_1_greeter_wait_peer(self, client_ctx, msg):
-        msg = invite_1_greeter_wait_peer_serializer.req_load(msg)
-
         try:
             claimer_public_key_raw = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg["token"],
+                token=msg.token,
                 state=ConduitState.STATE_1_WAIT_PEERS,
-                payload=msg["greeter_public_key"].encode(),
+                payload=msg.greeter_public_key.encode(),
             )
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return Invite1GreeterWaitPeerRepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
+            return Invite1GreeterWaitPeerRepAlreadyDeleted()
 
         except InvitationInvalidStateError:
-            return {"status": "invalid_state"}
+            return Invite1GreeterWaitPeerRepInvalidState()
 
-        return invite_1_greeter_wait_peer_serializer.rep_dump(
-            {"status": "ok", "claimer_public_key": PublicKey(claimer_public_key_raw)}
-        )
+        return Invite1GreeterWaitPeerRepOk(PublicKey(claimer_public_key_raw))
 
-    @api("invite_2a_claimer_send_hashed_nonce", client_types=[ClientType.INVITED])
+    @api(
+        "invite_2a_claimer_send_hashed_nonce_hash_nonce",
+        client_types=[ClientType.INVITED],
+    )
     @catch_protocol_errors
-    async def api_invite_2a_claimer_send_hashed_nonce(self, client_ctx, msg):
+    @api_typed_msg_adapter(
+        Invite2aClaimerSendHashedNonceHashNonceReq,
+        Invite2aClaimerSendHashedNonceHashNonceRep,
+    )
+    async def api_invite_2a_claimer_send_hash_nonce(self, client_ctx, msg):
         """
         Raises:
             CloseInviteConnection
         """
-        msg = invite_2a_claimer_send_hashed_nonce_serializer.req_load(msg)
-
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=None,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
-                payload=msg["claimer_hashed_nonce"].digest,
+                payload=msg.claimer_hashed_nonce.digest,
             )
 
             greeter_nonce = await self.conduit_exchange(
@@ -555,25 +633,22 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return Invite2aClaimerSendHashedNonceHashNonceRepNotFound()
 
         except InvitationInvalidStateError:
-            return {"status": "invalid_state"}
+            return Invite2aClaimerSendHashedNonceHashNonceRepInvalidState()
 
-        return invite_2a_claimer_send_hashed_nonce_serializer.rep_dump(
-            {"status": "ok", "greeter_nonce": greeter_nonce}
-        )
+        return Invite2aClaimerSendHashedNonceHashNonceRepOk(greeter_nonce)
 
     @api("invite_2a_greeter_get_hashed_nonce")
     @catch_protocol_errors
+    @api_typed_msg_adapter(Invite2aGreeterGetHashedNonceReq, Invite2aGreeterGetHashedNonceRep)
     async def api_invite_2a_greeter_get_hashed_nonce(self, client_ctx, msg):
-        msg = invite_2a_greeter_get_hashed_nonce_serializer.req_load(msg)
-
         try:
             claimer_hashed_nonce = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg["token"],
+                token=msg.token,
                 state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
                 payload=b"",
             )
@@ -581,69 +656,63 @@ class BaseInviteComponent:
             claimer_hashed_nonce = HashDigest(claimer_hashed_nonce)
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return Invite2aGreeterGetHashedNonceRepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
+            return Invite2aGreeterGetHashedNonceRepAlreadyDeleted()
 
         except InvitationInvalidStateError:
-            return {"status": "invalid_state"}
+            return Invite2aGreeterGetHashedNonceRepInvalidState()
 
-        return invite_2a_greeter_get_hashed_nonce_serializer.rep_dump(
-            {"status": "ok", "claimer_hashed_nonce": claimer_hashed_nonce}
-        )
+        return Invite2aGreeterGetHashedNonceRepOk(claimer_hashed_nonce)
 
     @api("invite_2b_greeter_send_nonce")
     @catch_protocol_errors
+    @api_typed_msg_adapter(Invite2bGreeterSendNonceReq, Invite2bGreeterSendNonceRep)
     async def api_invite_2b_greeter_send_nonce(self, client_ctx, msg):
-        msg = invite_2b_greeter_send_nonce_serializer.req_load(msg)
-
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg["token"],
+                token=msg.token,
                 state=ConduitState.STATE_2_2_GREETER_NONCE,
-                payload=msg["greeter_nonce"],
+                payload=msg.greeter_nonce,
             )
 
             claimer_nonce = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg["token"],
+                token=msg.token,
                 state=ConduitState.STATE_2_3_CLAIMER_NONCE,
                 payload=b"",
             )
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return Invite2bGreeterSendNonceRepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
+            return Invite2bGreeterSendNonceRepAlreadyDeleted()
 
         except InvitationInvalidStateError:
-            return {"status": "invalid_state"}
+            return Invite2bGreeterSendNonceRepInvalidState()
 
-        return invite_2b_greeter_send_nonce_serializer.rep_dump(
-            {"status": "ok", "claimer_nonce": claimer_nonce}
-        )
+        return Invite2bGreeterSendNonceRepOk(claimer_nonce)
 
     @api("invite_2b_claimer_send_nonce", client_types=[ClientType.INVITED])
     @catch_protocol_errors
+    @api_typed_msg_adapter(Invite2bClaimerSendNonceReq, Invite2bGreeterSendNonceRep)
     async def api_invite_2b_claimer_send_nonce(self, client_ctx, msg):
         """
         Raises:
             CloseInviteConnection
         """
-        msg = invite_2b_claimer_send_nonce_serializer.req_load(msg)
-
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=None,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_2_3_CLAIMER_NONCE,
-                payload=msg["claimer_nonce"],
+                payload=msg.claimer_nonce,
             )
 
         except InvitationAlreadyDeletedError as exc:
@@ -651,47 +720,45 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return Invite2bGreeterSendNonceRepNotFound()
 
         except InvitationInvalidStateError:
-            return {"status": "invalid_state"}
+            return Invite2bGreeterSendNonceRepInvalidState()
 
-        return invite_2b_claimer_send_nonce_serializer.rep_dump({"status": "ok"})
+        return Invite2bClaimerSendNonceRepOk()
 
     @api("invite_3a_greeter_wait_peer_trust")
     @catch_protocol_errors
+    @api_typed_msg_adapter(Invite3aGreeterWaitPeerTrustReq, Invite3aGreeterWaitPeerTrustRep)
     async def api_invite_3a_greeter_wait_peer_trust(self, client_ctx, msg):
-        msg = invite_3a_greeter_wait_peer_trust_serializer.req_load(msg)
-
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg["token"],
+                token=msg.token,
                 state=ConduitState.STATE_3_1_CLAIMER_TRUST,
                 payload=b"",
             )
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return Invite3aGreeterWaitPeerTrustRepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
+            return Invite3aGreeterWaitPeerTrustRepAlreadyDeleted()
 
         except InvitationInvalidStateError:
-            return {"status": "invalid_state"}
+            return Invite3aGreeterWaitPeerTrustRepInvalidState()
 
-        return invite_3a_greeter_wait_peer_trust_serializer.rep_dump({"status": "ok"})
+        return Invite3aGreeterWaitPeerTrustRepOk()
 
     @api("invite_3b_claimer_wait_peer_trust", client_types=[ClientType.INVITED])
     @catch_protocol_errors
+    @api_typed_msg_adapter(Invite3bClaimerWaitPeerTrustReq, Invite3bClaimerWaitPeerTrustRep)
     async def api_invite_3b_claimer_wait_peer_trust(self, client_ctx, msg):
         """
         Raises:
             CloseInviteConnection
         """
-        msg = invite_3b_claimer_wait_peer_trust_serializer.req_load(msg)
-
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
@@ -706,47 +773,45 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return Invite3bClaimerWaitPeerTrustRepNotFound()
 
         except InvitationInvalidStateError:
-            return {"status": "invalid_state"}
+            return Invite3bClaimerWaitPeerTrustRepInvalidState()
 
-        return invite_3b_claimer_wait_peer_trust_serializer.rep_dump({"status": "ok"})
+        return Invite3bClaimerWaitPeerTrustRepOk()
 
     @api("invite_3b_greeter_signify_trust")
     @catch_protocol_errors
+    @api_typed_msg_adapter(Invite3bGreeterSignifyTrustReq, Invite3bGreeterSignifyTrustRep)
     async def api_invite_3b_greeter_signify_trust(self, client_ctx, msg):
-        msg = invite_3b_greeter_signify_trust_serializer.req_load(msg)
-
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg["token"],
+                token=msg.token,
                 state=ConduitState.STATE_3_2_GREETER_TRUST,
                 payload=b"",
             )
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return Invite3bGreeterSignifyTrustRepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
+            return Invite3bGreeterSignifyTrustRepAlreadyDeleted()
 
         except InvitationInvalidStateError:
-            return {"status": "invalid_state"}
+            return Invite3bGreeterSignifyTrustRepInvalidState()
 
-        return invite_3b_greeter_signify_trust_serializer.rep_dump({"status": "ok"})
+        return Invite3bGreeterSignifyTrustRepOk()
 
     @api("invite_3a_claimer_signify_trust", client_types=[ClientType.INVITED])
     @catch_protocol_errors
+    @api_typed_msg_adapter(Invite3aClaimerSignifyTrustReq, Invite3aClaimerSignifyTrustRep)
     async def api_invite_3a_claimer_signify_trust(self, client_ctx, msg):
         """
         Raises:
             CloseInviteConnection
         """
-        msg = invite_3a_claimer_signify_trust_serializer.req_load(msg)
-
         try:
             await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
@@ -761,56 +826,52 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return Invite3aClaimerSignifyTrustRepNotFound()
 
         except InvitationInvalidStateError:
-            return {"status": "invalid_state"}
+            return Invite3aClaimerSignifyTrustRepInvalidState()
 
-        return invite_3a_claimer_signify_trust_serializer.rep_dump({"status": "ok"})
+        return Invite3aClaimerSignifyTrustRepOk()
 
     @api("invite_4_greeter_communicate")
     @catch_protocol_errors
+    @api_typed_msg_adapter(Invite4GreeterCommunicateReq, Invite4GreeterCommunicateRep)
     async def api_invite_4_greeter_communicate(self, client_ctx, msg):
-        msg = invite_4_greeter_communicate_serializer.req_load(msg)
-
         try:
             answer_payload = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=client_ctx.user_id,
-                token=msg["token"],
+                token=msg.token,
                 state=ConduitState.STATE_4_COMMUNICATE,
-                payload=msg["payload"],
+                payload=msg.payload,
             )
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return Invite4GreeterCommunicateRepNotFound()
 
         except InvitationAlreadyDeletedError:
-            return {"status": "already_deleted"}
+            return Invite4GreeterCommunicateRepAlreadyDeleted()
 
         except InvitationInvalidStateError:
-            return {"status": "invalid_state"}
+            return Invite4GreeterCommunicateRepInvalidState()
 
-        return invite_4_greeter_communicate_serializer.rep_dump(
-            {"status": "ok", "payload": answer_payload}
-        )
+        return Invite4GreeterCommunicateRepOk(answer_payload)
 
     @api("invite_4_claimer_communicate", client_types=[ClientType.INVITED])
     @catch_protocol_errors
+    @api_typed_msg_adapter(Invite4ClaimerCommunicateReq, Invite4ClaimerCommunicateRep)
     async def api_invite_4_claimer_communicate(self, client_ctx, msg):
         """
         Raises:
             CloseInviteConnection
         """
-        msg = invite_4_claimer_communicate_serializer.req_load(msg)
-
         try:
             answer_payload = await self.conduit_exchange(
                 organization_id=client_ctx.organization_id,
                 greeter=None,
                 token=client_ctx.invitation.token,
                 state=ConduitState.STATE_4_COMMUNICATE,
-                payload=msg["payload"],
+                payload=msg.payload,
             )
 
         except InvitationAlreadyDeletedError as exc:
@@ -818,14 +879,12 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return {"status": "not_found"}
+            return Invite4ClaimerCommunicateRepNotFound()
 
         except InvitationInvalidStateError:
-            return {"status": "invalid_state"}
+            return Invite4ClaimerCommunicateRepInvalidState()
 
-        return invite_4_claimer_communicate_serializer.rep_dump(
-            {"status": "ok", "payload": answer_payload}
-        )
+        return Invite4ClaimerCommunicateRepOk(answer_payload)
 
     async def conduit_exchange(
         self,
@@ -845,7 +904,10 @@ class BaseInviteComponent:
         filter_token = token
 
         def _event_filter(
-            event: Enum, organization_id: OrganizationID, token: InvitationToken, **kwargs
+            event: Enum,
+            organization_id: OrganizationID,
+            token: InvitationToken,
+            **kwargs,
         ):
             return organization_id == filter_organization_id and token == filter_token
 

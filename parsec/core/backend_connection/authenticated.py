@@ -16,7 +16,10 @@ from parsec.event_bus import EventBus
 from parsec.api.protocol import DeviceID, APIEvent, AUTHENTICATED_CMDS
 from parsec.core.types import EntryID, BackendOrganizationAddr, OrganizationConfig
 from parsec.core.backend_connection import cmds
-from parsec.core.backend_connection.transport import connect_as_authenticated, TransportPool
+from parsec.core.backend_connection.transport import (
+    connect_as_authenticated,
+    TransportPool,
+)
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
     BackendConnectionRefused,
@@ -280,7 +283,10 @@ class BackendAuthenticatedConn:
             finally:
                 self._manager_connect_cancel_scope = None
 
-            assert self.status not in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING)
+            assert self.status not in (
+                BackendConnStatus.READY,
+                BackendConnStatus.INITIALIZING,
+            )
             if self.status == BackendConnStatus.LOST:
                 # Start with a 0s cooldown and increase by power of 2 until
                 # max cooldown every time the connection trial fails
@@ -374,7 +380,8 @@ class BackendAuthenticatedConn:
                     async with trio.open_service_nursery() as monitors_bootstrap_nursery:
                         for idx, monitor_cb in enumerate(self._monitors_cbs):
                             monitors_bootstrap_nursery.start_soon(
-                                monitors_nursery.start, partial(_wrap_monitor_cb, monitor_cb, idx)
+                                monitors_nursery.start,
+                                partial(_wrap_monitor_cb, monitor_cb, idx),
                             )
 
                     await self.set_status(BackendConnStatus.READY)

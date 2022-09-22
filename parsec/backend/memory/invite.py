@@ -113,7 +113,9 @@ class MemoryInviteComponent(BaseInviteComponent):
         # Note that in case of conduit reset, this signal will lure the peer into
         # thinking we have answered so he will wakeup and take into account the reset
         await self._send_event(
-            BackendEvent.INVITE_CONDUIT_UPDATED, organization_id=organization_id, token=token
+            BackendEvent.INVITE_CONDUIT_UPDATED,
+            organization_id=organization_id,
+            token=token,
         )
 
         return ConduitListenCtx(
@@ -210,7 +212,9 @@ class MemoryInviteComponent(BaseInviteComponent):
         created_on: Optional[DateTime] = None,
     ) -> DeviceInvitation:
         result = await self._new(
-            organization_id=organization_id, greeter_user_id=greeter_user_id, created_on=created_on
+            organization_id=organization_id,
+            greeter_user_id=greeter_user_id,
+            created_on=created_on,
         )
         assert isinstance(result, DeviceInvitation)
         return result

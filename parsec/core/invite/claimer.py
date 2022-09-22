@@ -21,7 +21,7 @@ from parsec.api.data import (
     InviteDeviceData,
     InviteDeviceConfirmation,
 )
-from parsec.api.protocol import UserID, HumanHandle, InvitationType, DeviceLabel
+from parsec.api.protocol import UserID, HumanHandle, DeviceLabel
 from parsec.core.local_device import generate_new_device
 from parsec.core.backend_connection import BackendInvitedCmds
 from parsec.core.types import LocalDevice, BackendOrganizationAddr
@@ -32,15 +32,129 @@ from parsec.core.invite.exceptions import (
     InvitePeerResetError,
 )
 
+from parsec._parsec import (
+    InvitationType,
+    Invite1ClaimerWaitPeerRepInvalidState,
+    Invite1ClaimerWaitPeerRepNotFound,
+    Invite1ClaimerWaitPeerRepOk,
+    Invite1GreeterWaitPeerRepAlreadyDeleted,
+    Invite1GreeterWaitPeerRepInvalidState,
+    Invite1GreeterWaitPeerRepNotFound,
+    Invite1GreeterWaitPeerRepOk,
+    Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted,
+    Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
+    Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
+    Invite2aClaimerSendHashedNonceHashNonceRepOk,
+    Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
+    Invite2aGreeterGetHashedNonceRepInvalidState,
+    Invite2aGreeterGetHashedNonceRepNotFound,
+    Invite2aGreeterGetHashedNonceRepOk,
+    Invite2bClaimerSendNonceRepInvalidState,
+    Invite2bClaimerSendNonceRepNotFound,
+    Invite2bClaimerSendNonceRepOk,
+    Invite2bGreeterSendNonceRepAlreadyDeleted,
+    Invite2bGreeterSendNonceRepInvalidState,
+    Invite2bGreeterSendNonceRepNotFound,
+    Invite2bGreeterSendNonceRepOk,
+    Invite3aClaimerSignifyTrustRepInvalidState,
+    Invite3aClaimerSignifyTrustRepNotFound,
+    Invite3aClaimerSignifyTrustRepOk,
+    Invite3aGreeterWaitPeerTrustRepAlreadyDeleted,
+    Invite3aGreeterWaitPeerTrustRepInvalidState,
+    Invite3aGreeterWaitPeerTrustRepNotFound,
+    Invite3aGreeterWaitPeerTrustRepOk,
+    Invite3bClaimerWaitPeerTrustRepInvalidState,
+    Invite3bClaimerWaitPeerTrustRepNotFound,
+    Invite3bClaimerWaitPeerTrustRepOk,
+    Invite3bGreeterSignifyTrustRepAlreadyDeleted,
+    Invite3bGreeterSignifyTrustRepInvalidState,
+    Invite3bGreeterSignifyTrustRepNotFound,
+    Invite3bGreeterSignifyTrustRepOk,
+    Invite4ClaimerCommunicateRepInvalidState,
+    Invite4ClaimerCommunicateRepNotFound,
+    Invite4ClaimerCommunicateRepOk,
+    Invite4GreeterCommunicateRepAlreadyDeleted,
+    Invite4GreeterCommunicateRepInvalidState,
+    Invite4GreeterCommunicateRepNotFound,
+    Invite4GreeterCommunicateRepOk,
+    InviteDeleteRepAlreadyDeleted,
+    InviteDeleteRepNotFound,
+    InviteDeleteRepOk,
+    InviteInfoRepOk,
+    InviteListRepOk,
+    InviteNewRepOk,
+)
+
+NOT_FOUND_TYPES = (
+    Invite1ClaimerWaitPeerRepNotFound,
+    Invite1GreeterWaitPeerRepNotFound,
+    Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
+    Invite2aGreeterGetHashedNonceRepNotFound,
+    Invite2bClaimerSendNonceRepNotFound,
+    Invite2bGreeterSendNonceRepNotFound,
+    Invite3aClaimerSignifyTrustRepNotFound,
+    Invite3aGreeterWaitPeerTrustRepNotFound,
+    Invite3bClaimerWaitPeerTrustRepNotFound,
+    Invite3bGreeterSignifyTrustRepNotFound,
+    Invite4ClaimerCommunicateRepNotFound,
+    Invite4GreeterCommunicateRepNotFound,
+    InviteDeleteRepNotFound,
+)
+
+ALREADY_DELETED_TYPES = (
+    Invite1GreeterWaitPeerRepAlreadyDeleted,
+    Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted,
+    Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
+    Invite2bGreeterSendNonceRepAlreadyDeleted,
+    Invite3aGreeterWaitPeerTrustRepAlreadyDeleted,
+    Invite3bGreeterSignifyTrustRepAlreadyDeleted,
+    Invite4GreeterCommunicateRepAlreadyDeleted,
+    InviteDeleteRepAlreadyDeleted,
+)
+
+INVALID_STATE_TYPES = (
+    Invite1GreeterWaitPeerRepInvalidState,
+    Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
+    Invite2aGreeterGetHashedNonceRepInvalidState,
+    Invite2bClaimerSendNonceRepInvalidState,
+    Invite2bGreeterSendNonceRepInvalidState,
+    Invite3aClaimerSignifyTrustRepInvalidState,
+    Invite3aGreeterWaitPeerTrustRepInvalidState,
+    Invite3bClaimerWaitPeerTrustRepInvalidState,
+    Invite3bGreeterSignifyTrustRepInvalidState,
+    Invite4ClaimerCommunicateRepInvalidState,
+    Invite4GreeterCommunicateRepInvalidState,
+    Invite1ClaimerWaitPeerRepInvalidState,
+)
+
+OK_TYPES = (
+    Invite1ClaimerWaitPeerRepOk,
+    Invite1GreeterWaitPeerRepOk,
+    Invite2aClaimerSendHashedNonceHashNonceRepOk,
+    Invite2aGreeterGetHashedNonceRepOk,
+    Invite2bClaimerSendNonceRepOk,
+    Invite2bGreeterSendNonceRepOk,
+    Invite3aClaimerSignifyTrustRepOk,
+    Invite3aGreeterWaitPeerTrustRepOk,
+    Invite3bClaimerWaitPeerTrustRepOk,
+    Invite3bGreeterSignifyTrustRepOk,
+    Invite4ClaimerCommunicateRepOk,
+    Invite4GreeterCommunicateRepOk,
+    InviteDeleteRepOk,
+    InviteInfoRepOk,
+    InviteListRepOk,
+    InviteNewRepOk,
+)
+
 
 def _check_rep(rep, step_name):
-    if rep["status"] == "not_found":
+    if isinstance(rep, NOT_FOUND_TYPES):
         raise InviteNotFoundError
-    elif rep["status"] == "already_deleted":
+    elif isinstance(rep, ALREADY_DELETED_TYPES):
         raise InviteAlreadyUsedError
-    elif rep["status"] == "invalid_state":
+    elif isinstance(rep, INVALID_STATE_TYPES):
         raise InvitePeerResetError
-    elif rep["status"] != "ok":
+    elif not isinstance(rep, OK_TYPES):
         raise InviteError(f"Backend error during {step_name}: {rep}")
 
 
@@ -50,17 +164,17 @@ async def claimer_retrieve_info(
     rep = await cmds.invite_info()
     _check_rep(rep, step_name="invitation retrieval")
 
-    if rep["type"] == InvitationType.USER:
+    if rep.type == InvitationType.USER():
         return UserClaimInitialCtx(
-            claimer_email=rep["claimer_email"],
-            greeter_user_id=rep["greeter_user_id"],
-            greeter_human_handle=rep["greeter_human_handle"],
+            claimer_email=rep.claimer_email,
+            greeter_user_id=rep.greeter_user_id,
+            greeter_human_handle=rep.greeter_human_handle,
             cmds=cmds,
         )
     else:
         return DeviceClaimInitialCtx(
-            greeter_user_id=rep["greeter_user_id"],
-            greeter_human_handle=rep["greeter_human_handle"],
+            greeter_user_id=rep.greeter_user_id,
+            greeter_human_handle=rep.greeter_human_handle,
             cmds=cmds,
         )
 
@@ -80,18 +194,18 @@ class BaseClaimInitialCtx:
         _check_rep(rep, step_name="step 1")
 
         shared_secret_key = generate_shared_secret_key(
-            our_private_key=claimer_private_key, peer_public_key=rep["greeter_public_key"]
+            our_private_key=claimer_private_key, peer_public_key=rep.greeter_public_key
         )
         claimer_nonce = generate_nonce()
 
-        rep = await self._cmds.invite_2a_claimer_send_hashed_nonce(
+        rep = await self._cmds.invite_2a_claimer_send_hashed_nonce_hash_nonce(
             claimer_hashed_nonce=HashDigest.from_data(claimer_nonce)
         )
         _check_rep(rep, step_name="step 2a")
 
         claimer_sas, greeter_sas = generate_sas_codes(
             claimer_nonce=claimer_nonce,
-            greeter_nonce=rep["greeter_nonce"],
+            greeter_nonce=rep.greeter_nonce,
             shared_secret_key=shared_secret_key,
         )
 
@@ -230,7 +344,7 @@ class UserClaimInProgress3Ctx:
 
         try:
             confirmation = InviteUserConfirmation.decrypt_and_load(
-                rep["payload"], key=self._shared_secret_key
+                rep.payload, key=self._shared_secret_key
             )
         except DataError as exc:
             raise InviteError("Invalid InviteUserConfirmation payload provided by peer") from exc
@@ -272,7 +386,8 @@ class DeviceClaimInProgress3Ctx:
 
         try:
             payload = InviteDeviceData(
-                requested_device_label=requested_device_label, verify_key=signing_key.verify_key
+                requested_device_label=requested_device_label,
+                verify_key=signing_key.verify_key,
             ).dump_and_encrypt(key=self._shared_secret_key)
         except DataError as exc:
             raise InviteError("Cannot generate InviteDeviceData payload") from exc
@@ -285,7 +400,7 @@ class DeviceClaimInProgress3Ctx:
 
         try:
             confirmation = InviteDeviceConfirmation.decrypt_and_load(
-                rep["payload"], key=self._shared_secret_key
+                rep.payload, key=self._shared_secret_key
             )
         except DataError as exc:
             raise InviteError("Invalid InviteDeviceConfirmation payload provided by peer") from exc

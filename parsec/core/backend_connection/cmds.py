@@ -4,55 +4,87 @@ from typing import Tuple, List, Dict, Optional
 from uuid import UUID
 
 from parsec._parsec import (
-    DateTime,
+    AuthenticatedPingRep,
+    AuthenticatedPingRepUnknownStatus,
     BlockCreateRep,
     BlockCreateRepUnknownStatus,
     BlockReadRep,
     BlockReadRepUnknownStatus,
+    DateTime,
+    Invite1ClaimerWaitPeerRep,
+    Invite1ClaimerWaitPeerRepUnknownStatus,
+    Invite1GreeterWaitPeerRep,
+    Invite1GreeterWaitPeerRepUnknownStatus,
+    Invite2aClaimerSendHashedNonceHashNonceRep,
+    Invite2aClaimerSendHashedNonceHashNonceRepUnknownStatus,
+    Invite2aGreeterGetHashedNonceRep,
+    Invite2aGreeterGetHashedNonceRepUnknownStatus,
+    Invite2bClaimerSendNonceRep,
+    Invite2bClaimerSendNonceRepUnknownStatus,
+    Invite2bGreeterSendNonceRep,
+    Invite2bGreeterSendNonceRepUnknownStatus,
+    Invite3aClaimerSignifyTrustRep,
+    Invite3aClaimerSignifyTrustRepUnknownStatus,
+    Invite3aGreeterWaitPeerTrustRep,
+    Invite3aGreeterWaitPeerTrustRepUnknownStatus,
+    Invite3bClaimerWaitPeerTrustRep,
+    Invite3bClaimerWaitPeerTrustRepUnknownStatus,
+    Invite3bGreeterSignifyTrustRep,
+    Invite3bGreeterSignifyTrustRepUnknownStatus,
+    Invite4ClaimerCommunicateRep,
+    Invite4ClaimerCommunicateRepUnknownStatus,
+    Invite4GreeterCommunicateRep,
+    Invite4GreeterCommunicateRepUnknownStatus,
+    InviteDeleteRep,
+    InviteDeleteRepUnknownStatus,
+    InviteInfoRep,
+    InviteInfoRepUnknownStatus,
+    InviteListRep,
+    InviteListRepUnknownStatus,
+    InviteNewRep,
+    InviteNewRepUnknownStatus,
+    InvitedPingRep,
+    InvitedPingRepUnknownStatus,
     MessageGetRep,
     MessageGetRepUnknownStatus,
-    OrganizationStatsRep,
-    OrganizationStatsRepUnknownStatus,
     OrganizationConfigRep,
     OrganizationConfigRepUnknownStatus,
+    OrganizationStatsRep,
+    OrganizationStatsRepUnknownStatus,
     RealmCreateRep,
     RealmCreateRepBadTimestamp,
     RealmCreateRepUnknownStatus,
-    RealmStatusRep,
-    RealmStatusRepUnknownStatus,
-    RealmStatsRep,
-    RealmStatsRepUnknownStatus,
+    RealmFinishReencryptionMaintenanceRep,
+    RealmFinishReencryptionMaintenanceRepUnknownStatus,
     RealmGetRoleCertificatesRep,
     RealmGetRoleCertificatesRepUnknownStatus,
-    RealmUpdateRolesRep,
-    RealmUpdateRolesRepBadTimestamp,
-    RealmUpdateRolesRepUnknownStatus,
     RealmStartReencryptionMaintenanceRep,
     RealmStartReencryptionMaintenanceRepBadTimestamp,
     RealmStartReencryptionMaintenanceRepUnknownStatus,
-    RealmFinishReencryptionMaintenanceRep,
-    RealmFinishReencryptionMaintenanceRepUnknownStatus,
-    AuthenticatedPingRep,
-    AuthenticatedPingRepUnknownStatus,
-    InvitedPingRep,
-    InvitedPingRepUnknownStatus,
+    RealmStatsRep,
+    RealmStatsRepUnknownStatus,
+    RealmStatusRep,
+    RealmStatusRepUnknownStatus,
+    RealmUpdateRolesRep,
+    RealmUpdateRolesRepBadTimestamp,
+    RealmUpdateRolesRepUnknownStatus,
+    ReencryptionBatchEntry,
     VlobCreateRep,
     VlobCreateRepBadTimestamp,
     VlobCreateRepUnknownStatus,
-    VlobReadRep,
-    VlobReadRepUnknownStatus,
-    VlobUpdateRep,
-    VlobUpdateRepBadTimestamp,
-    VlobUpdateRepUnknownStatus,
-    VlobPollChangesRep,
-    VlobPollChangesRepUnknownStatus,
     VlobListVersionsRep,
     VlobListVersionsRepUnknownStatus,
     VlobMaintenanceGetReencryptionBatchRep,
     VlobMaintenanceGetReencryptionBatchRepUnknownStatus,
     VlobMaintenanceSaveReencryptionBatchRep,
     VlobMaintenanceSaveReencryptionBatchRepUnknownStatus,
-    ReencryptionBatchEntry,
+    VlobPollChangesRep,
+    VlobPollChangesRepUnknownStatus,
+    VlobReadRep,
+    VlobReadRepUnknownStatus,
+    VlobUpdateRep,
+    VlobUpdateRepBadTimestamp,
+    VlobUpdateRepUnknownStatus,
 )
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.api.transport import Transport, TransportError
@@ -117,8 +149,8 @@ from parsec.api.protocol import (
 )
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
-    BackendProtocolError,
     BackendOutOfBallparkError,
+    BackendProtocolError,
 )
 
 
@@ -175,53 +207,86 @@ async def _send_cmd(transport: Transport, serializer, **req) -> dict:
     elif isinstance(
         rep,
         (
+            AuthenticatedPingRep,
             BlockCreateRep,
             BlockReadRep,
-            MessageGetRep,
-            OrganizationStatsRep,
-            OrganizationConfigRep,
-            RealmCreateRep,
-            RealmStatusRep,
-            RealmStatsRep,
-            RealmGetRoleCertificatesRep,
-            RealmUpdateRolesRep,
-            RealmStartReencryptionMaintenanceRep,
-            RealmFinishReencryptionMaintenanceRep,
-            AuthenticatedPingRep,
+            Invite1ClaimerWaitPeerRep,
+            Invite1GreeterWaitPeerRep,
+            Invite2aClaimerSendHashedNonceHashNonceRep,
+            Invite2aGreeterGetHashedNonceRep,
+            Invite2aGreeterGetHashedNonceRep,
+            Invite2bClaimerSendNonceRep,
+            Invite2bGreeterSendNonceRep,
+            Invite3aClaimerSignifyTrustRep,
+            Invite3aGreeterWaitPeerTrustRep,
+            Invite3bClaimerWaitPeerTrustRep,
+            Invite3bGreeterSignifyTrustRep,
+            Invite4ClaimerCommunicateRep,
+            Invite4GreeterCommunicateRep,
+            InviteDeleteRep,
+            InviteInfoRep,
+            InviteListRep,
+            InviteNewRep,
             InvitedPingRep,
+            MessageGetRep,
+            OrganizationConfigRep,
+            OrganizationStatsRep,
+            RealmCreateRep,
+            RealmFinishReencryptionMaintenanceRep,
+            RealmGetRoleCertificatesRep,
+            RealmStartReencryptionMaintenanceRep,
+            RealmStatsRep,
+            RealmStatusRep,
+            RealmUpdateRolesRep,
             VlobCreateRep,
-            VlobReadRep,
-            VlobUpdateRep,
-            VlobPollChangesRep,
             VlobListVersionsRep,
             VlobMaintenanceGetReencryptionBatchRep,
             VlobMaintenanceSaveReencryptionBatchRep,
+            VlobPollChangesRep,
+            VlobReadRep,
+            VlobUpdateRep,
         ),
     ):
         if isinstance(
             rep,
             (
+                AuthenticatedPingRepUnknownStatus,
                 BlockCreateRepUnknownStatus,
                 BlockReadRepUnknownStatus,
-                MessageGetRepUnknownStatus,
-                OrganizationStatsRepUnknownStatus,
-                OrganizationConfigRepUnknownStatus,
-                RealmCreateRepUnknownStatus,
-                RealmStatusRepUnknownStatus,
-                RealmStatsRepUnknownStatus,
-                RealmGetRoleCertificatesRepUnknownStatus,
-                RealmUpdateRolesRepUnknownStatus,
-                RealmStartReencryptionMaintenanceRepUnknownStatus,
-                RealmFinishReencryptionMaintenanceRepUnknownStatus,
-                AuthenticatedPingRepUnknownStatus,
+                Invite1ClaimerWaitPeerRepUnknownStatus,
+                Invite1GreeterWaitPeerRepUnknownStatus,
+                Invite2aClaimerSendHashedNonceHashNonceRepUnknownStatus,
+                Invite2aGreeterGetHashedNonceRepUnknownStatus,
+                Invite2bClaimerSendNonceRepUnknownStatus,
+                Invite2bGreeterSendNonceRepUnknownStatus,
+                Invite3aClaimerSignifyTrustRepUnknownStatus,
+                Invite3aGreeterWaitPeerTrustRepUnknownStatus,
+                Invite3bClaimerWaitPeerTrustRepUnknownStatus,
+                Invite3bGreeterSignifyTrustRepUnknownStatus,
+                Invite4ClaimerCommunicateRepUnknownStatus,
+                Invite4GreeterCommunicateRepUnknownStatus,
+                InviteDeleteRepUnknownStatus,
+                InviteInfoRepUnknownStatus,
+                InviteListRepUnknownStatus,
+                InviteNewRepUnknownStatus,
                 InvitedPingRepUnknownStatus,
+                MessageGetRepUnknownStatus,
+                OrganizationConfigRepUnknownStatus,
+                OrganizationStatsRepUnknownStatus,
+                RealmCreateRepUnknownStatus,
+                RealmFinishReencryptionMaintenanceRepUnknownStatus,
+                RealmGetRoleCertificatesRepUnknownStatus,
+                RealmStartReencryptionMaintenanceRepUnknownStatus,
+                RealmStatsRepUnknownStatus,
+                RealmStatusRepUnknownStatus,
+                RealmUpdateRolesRepUnknownStatus,
                 VlobCreateRepUnknownStatus,
-                VlobReadRepUnknownStatus,
-                VlobUpdateRepUnknownStatus,
-                VlobPollChangesRepUnknownStatus,
                 VlobListVersionsRepUnknownStatus,
                 VlobMaintenanceGetReencryptionBatchRepUnknownStatus,
                 VlobMaintenanceSaveReencryptionBatchRepUnknownStatus,
+                VlobPollChangesRepUnknownStatus,
+                VlobReadRepUnknownStatus,
+                VlobUpdateRepUnknownStatus,
             ),
         ):
             if rep.status == "invalid_msg_format":
@@ -369,7 +434,10 @@ async def vlob_poll_changes(transport: Transport, realm_id: RealmID, last_checkp
 
 async def vlob_list_versions(transport: Transport, vlob_id: VlobID) -> dict:
     return await _send_cmd(
-        transport, vlob_list_versions_serializer, cmd="vlob_list_versions", vlob_id=vlob_id
+        transport,
+        vlob_list_versions_serializer,
+        cmd="vlob_list_versions",
+        vlob_id=vlob_id,
     )
 
 
@@ -407,7 +475,10 @@ async def vlob_maintenance_save_reencryption_batch(
 
 async def realm_create(transport: Transport, role_certificate: bytes) -> dict:
     return await _send_cmd(
-        transport, realm_create_serializer, cmd="realm_create", role_certificate=role_certificate
+        transport,
+        realm_create_serializer,
+        cmd="realm_create",
+        role_certificate=role_certificate,
     )
 
 
@@ -492,7 +563,10 @@ async def block_read(transport: Transport, block_id: BlockID) -> dict:
 
 
 async def invite_new(
-    transport: Transport, type: InvitationType, send_email: bool = False, claimer_email: str = None
+    transport: Transport,
+    type: InvitationType,
+    send_email: bool = False,
+    claimer_email: str = None,
 ):
     return await _send_cmd(
         transport,
@@ -512,7 +586,11 @@ async def invite_delete(
     transport: Transport, token: InvitationToken, reason: InvitationDeletedReason
 ):
     return await _send_cmd(
-        transport, invite_delete_serializer, cmd="invite_delete", token=token, reason=reason
+        transport,
+        invite_delete_serializer,
+        cmd="invite_delete",
+        token=token,
+        reason=reason,
     )
 
 
@@ -591,7 +669,9 @@ async def invite_3a_greeter_wait_peer_trust(transport: Transport, token: Invitat
 
 async def invite_3a_claimer_signify_trust(transport: Transport):
     return await _send_cmd(
-        transport, invite_3a_claimer_signify_trust_serializer, cmd="invite_3a_claimer_signify_trust"
+        transport,
+        invite_3a_claimer_signify_trust_serializer,
+        cmd="invite_3a_claimer_signify_trust",
     )
 
 

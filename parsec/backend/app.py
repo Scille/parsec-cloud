@@ -9,7 +9,9 @@ from parsec.event_bus import EventBus
 from parsec.backend.utils import collect_apis, ClientType
 from parsec.backend.config import BackendConfig
 from parsec.backend.memory import components_factory as mocked_components_factory
-from parsec.backend.postgresql import components_factory as postgresql_components_factory
+from parsec.backend.postgresql import (
+    components_factory as postgresql_components_factory,
+)
 from parsec.backend.events import EventsComponent
 from parsec.backend.webhooks import WebhooksComponent
 from parsec.backend.user import BaseUserComponent

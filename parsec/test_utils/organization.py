@@ -31,7 +31,10 @@ from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
 )
 from parsec.core.fs.storage.user_storage import user_storage_non_speculative_init
-from parsec.core.local_device import generate_new_device, save_device_with_password_in_config
+from parsec.core.local_device import (
+    generate_new_device,
+    save_device_with_password_in_config,
+)
 from parsec.core.invite import (
     bootstrap_organization,
     DeviceGreetInitialCtx,
@@ -312,7 +315,9 @@ async def _register_new_user(
 
 
 async def _register_new_device(
-    cmds: BackendAuthenticatedCmds, author: LocalDevice, device_label: Optional[DeviceLabel]
+    cmds: BackendAuthenticatedCmds,
+    author: LocalDevice,
+    device_label: Optional[DeviceLabel],
 ):
 
     new_device = LocalDevice(

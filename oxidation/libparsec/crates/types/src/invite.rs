@@ -19,7 +19,7 @@ use crate::{DeviceID, DeviceLabel, EntryID, HumanHandle, UserProfile};
  * InvitationType
  */
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum InvitationType {
     User,
@@ -80,7 +80,7 @@ const SAS_CODE_PATTERN: &str = concat!("^[", SAS_CODE_CHARS!(), "]{4}$");
 const SAS_CODE_LEN: usize = 4;
 const SAS_CODE_BITS: u32 = 20;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Hash)]
 pub struct SASCode(String);
 
 impl std::fmt::Display for SASCode {

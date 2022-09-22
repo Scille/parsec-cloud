@@ -266,7 +266,10 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def create_device(
-        self, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""
+        self,
+        organization_id: OrganizationID,
+        device: Device,
+        encrypted_answer: bytes = b"",
     ) -> None:
         """
         Raises:

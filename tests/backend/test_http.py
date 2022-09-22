@@ -5,9 +5,11 @@ import trio
 from urllib.request import urlopen, Request, HTTPError
 
 from parsec import __version__ as parsec_version
-from parsec.api.protocol import OrganizationID, InvitationToken, InvitationType
+from parsec.api.protocol import OrganizationID, InvitationToken
 from parsec.core.types.backend_address import BackendInvitationAddr
 from parsec.backend.asgi import MAX_CONTENT_LENGTH, serve_backend_with_asgi
+
+from parsec._parsec import InvitationType
 
 from tests.common import customize_fixtures
 
@@ -202,7 +204,7 @@ async def test_get_redirect_invitation(backend_asgi_app, backend_addr):
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=backend_addr,
         organization_id=OrganizationID("Org"),
-        invitation_type=InvitationType.USER,
+        invitation_type=InvitationType.USER(),
         token=InvitationToken.new(),
     )
     # TODO: should use invitation_addr.to_redirection_url() when available !

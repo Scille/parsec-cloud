@@ -22,7 +22,10 @@ from parsec.backend.client_context import (
     APIV1_AnonymousClientContext,
 )
 from parsec.backend.user import UserNotFoundError
-from parsec.backend.organization import OrganizationNotFoundError, OrganizationAlreadyExistsError
+from parsec.backend.organization import (
+    OrganizationNotFoundError,
+    OrganizationAlreadyExistsError,
+)
 from parsec.backend.invite import (
     InvitationError,
     UserInvitation,

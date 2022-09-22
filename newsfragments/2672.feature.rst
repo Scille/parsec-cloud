@@ -1,1 +1,0 @@
-Added a new folder menu in the file explorer

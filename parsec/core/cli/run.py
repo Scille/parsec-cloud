@@ -24,7 +24,7 @@ try:
     from parsec.core.gui import run_gui as _run_gui
 
 except ImportError as exc:
-    run_gui = generate_not_available_cmd(exc)
+    _run_gui = generate_not_available_cmd(exc)
 
 else:
 
@@ -74,7 +74,7 @@ async def _run_mountpoint(
 
 @click.command(short_help="run parsec mountpoint")
 @click.option("--mountpoint", "-m", type=click.Path(exists=False))
-@click.option("--timestamp", "-t", type=lambda t: DateTime.from_timestamp(float(t)).to_local())
+@click.option("--timestamp", "-t", type=DateTime.from_rfc3339)
 @core_config_and_device_options
 @cli_command_base_options
 def run_mountpoint(

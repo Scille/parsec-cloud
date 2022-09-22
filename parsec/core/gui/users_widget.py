@@ -5,12 +5,12 @@ from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 from math import ceil
 
+from parsec._parsec import InvitationType, InvitationEmailSentStatus
 from parsec.api.protocol import (
     InvitationToken,
-    InvitationType,
-    InvitationEmailSentStatus,
     UserProfile,
 )
+
 from parsec.core.types import BackendInvitationAddr, UserInfo
 
 from parsec.core.backend_connection import (
@@ -212,7 +212,7 @@ async def _do_list_users_and_invitations(
                 page=page, per_page=USERS_PER_PAGE, omit_revoked=omit_revoked
             )
             invitations = [] if omit_invitation else await core.list_invitations()
-            return total, users, [inv for inv in invitations if inv["type"] == InvitationType.USER]
+            return total, users, [inv for inv in invitations if inv.type == InvitationType.USER()]
         else:
             users, total = await core.find_humans(
                 page=page, per_page=USERS_PER_PAGE, query=pattern, omit_revoked=omit_revoked
@@ -481,10 +481,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             addr = BackendInvitationAddr.build(
                 backend_addr=self.core.device.organization_addr.get_backend_addr(),
                 organization_id=self.core.device.organization_id,
-                invitation_type=InvitationType.USER,
-                token=invitation["token"],
+                invitation_type=InvitationType.USER(),
+                token=invitation.token,
             )
-            self.add_user_invitation(invitation["claimer_email"], addr)
+            self.add_user_invitation(invitation.claimer_email, addr)
         for user_info in users:
             self.add_user(user_info=user_info, is_current_user=current_user == user_info.user_id)
         self.spinner.hide()
@@ -527,9 +527,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         assert job.status == "ok"
 
         email, invitation_addr, email_sent_status = job.ret
-        if email_sent_status == InvitationEmailSentStatus.SUCCESS:
+        if email_sent_status == InvitationEmailSentStatus.SUCCESS():
             SnackbarManager.inform(_("TEXT_USER_INVITE_SUCCESS_email").format(email=email))
-        elif email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
+        elif email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT():
             show_info_copy_link(
                 self,
                 _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),

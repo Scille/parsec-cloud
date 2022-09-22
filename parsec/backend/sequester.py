@@ -149,7 +149,10 @@ class BaseSequesterComponent:
         raise NotImplementedError()
 
     async def dump_realm(
-        self, organization_id: OrganizationID, service_id: SequesterServiceID, realm_id: RealmID
+        self,
+        organization_id: OrganizationID,
+        service_id: SequesterServiceID,
+        realm_id: RealmID,
     ) -> List[Tuple[VlobID, int, bytes]]:
         """
         Dump all vlobs in a given realm.

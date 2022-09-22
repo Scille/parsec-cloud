@@ -151,7 +151,11 @@ lum_legacy_no_speculative_field = KEY.encrypt(packb(raw_legacy_no_speculative_fi
 LocalUserManifest.decrypt_and_load(
     lum_legacy_no_speculative_field, key=KEY
 )  # Make sure data is valid
-display("local user manifest legacy no speculative field", lum_legacy_no_speculative_field, [KEY])
+display(
+    "local user manifest legacy no speculative field",
+    lum_legacy_no_speculative_field,
+    [KEY],
+)
 
 
 ################### LocalWorkspaceManifest ##################

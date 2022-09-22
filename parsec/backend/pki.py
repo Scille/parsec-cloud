@@ -5,7 +5,11 @@ from typing import List
 from uuid import UUID
 from parsec._parsec import DateTime
 
-from parsec.api.data import DataError, PkiEnrollmentSubmitPayload, PkiEnrollmentAcceptPayload
+from parsec.api.data import (
+    DataError,
+    PkiEnrollmentSubmitPayload,
+    PkiEnrollmentAcceptPayload,
+)
 from parsec.api.protocol import (
     OrganizationID,
     UserProfile,
@@ -22,7 +26,10 @@ from parsec.backend.user_type import (
     validate_new_user_certificates,
     CertificateValidationError,
 )
-from parsec.backend.client_context import AuthenticatedClientContext, AnonymousClientContext
+from parsec.backend.client_context import (
+    AuthenticatedClientContext,
+    AnonymousClientContext,
+)
 from parsec.backend.utils import api, catch_protocol_errors, ClientType
 from parsec.event_bus import EventBus
 
@@ -166,7 +173,8 @@ class BasePkiEnrollmentComponent:
         msg = pki_enrollment_info_serializer.req_load(msg)
         try:
             info = await self.info(
-                organization_id=client_ctx.organization_id, enrollment_id=msg["enrollment_id"]
+                organization_id=client_ctx.organization_id,
+                enrollment_id=msg["enrollment_id"],
             )
             if isinstance(info, PkiEnrollmentInfoSubmitted):
                 rep = {
@@ -350,7 +358,10 @@ class BasePkiEnrollmentComponent:
         raise NotImplementedError()
 
     async def reject(
-        self, organization_id: OrganizationID, enrollment_id: UUID, rejected_on: DateTime
+        self,
+        organization_id: OrganizationID,
+        enrollment_id: UUID,
+        rejected_on: DateTime,
     ) -> None:
         """
         Raises:

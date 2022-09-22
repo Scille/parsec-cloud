@@ -2,6 +2,7 @@
 
 mod block;
 mod cmds;
+mod invite;
 mod message;
 mod organization;
 mod ping;
@@ -9,7 +10,8 @@ mod realm;
 mod vlob;
 
 pub use block::*;
-pub use cmds::*;
+pub use cmds::{AuthenticatedAnyCmdReq, InvitedAnyCmdReq};
+pub use invite::*;
 pub use message::*;
 pub use organization::*;
 pub use ping::*;
@@ -135,6 +137,7 @@ macro_rules! gen_rep {
                     use pyo3::{pyclass_init::PyObjectInit, PyTypeInfo};
 
                     let rep = $mod::Rep::load(&buf).map_err(|e| ProtocolError::new_err(e.to_string()))?;
+
                     Ok(unsafe {
                         match rep {
                             rep @ $mod::Rep::Ok $({ $($tt)+ })? => {

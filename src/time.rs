@@ -1,12 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::exceptions::{PyTypeError, PyValueError};
-use pyo3::prelude::*;
-use pyo3::pyclass::CompareOp;
-use pyo3::types::PyType;
-use pyo3::{PyAny, PyResult};
+use std::str::FromStr;
 
-use crate::binding_utils::hash_generic;
+use pyo3::{
+    exceptions::{PyTypeError, PyValueError},
+    prelude::*,
+    types::PyType,
+    PyAny, PyResult,
+};
+
+#[allow(deprecated)]
 use crate::runtime::spawn_future_into_trio_coroutine;
 
 #[pyfunction]
@@ -26,7 +29,7 @@ pub(crate) fn mock_time(time: &PyAny) -> PyResult<()> {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct TimeProvider(pub libparsec::types::TimeProvider);
 
 #[pymethods]
@@ -87,8 +90,13 @@ impl TimeProvider {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct DateTime(pub libparsec::types::DateTime);
+
+crate::binding_utils::gen_proto!(DateTime, __repr__);
+crate::binding_utils::gen_proto!(DateTime, __str__);
+crate::binding_utils::gen_proto!(DateTime, __richcmp__, ord);
+crate::binding_utils::gen_proto!(DateTime, __hash__);
 
 #[pymethods]
 impl DateTime {
@@ -98,29 +106,6 @@ impl DateTime {
         Ok(Self(libparsec::types::DateTime::from_ymd_and_hms(
             year, month, day, hour, minute, second,
         )))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("DateTime({})", self.0))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            CompareOp::Lt => self.0 < other.0,
-            CompareOp::Gt => self.0 > other.0,
-            CompareOp::Le => self.0 <= other.0,
-            CompareOp::Ge => self.0 >= other.0,
-        }
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.to_string(), py)
     }
 
     #[getter]
@@ -167,6 +152,13 @@ impl DateTime {
         Ok(Self(
             libparsec::types::DateTime::from_f64_with_us_precision(ts),
         ))
+    }
+
+    #[classmethod]
+    fn from_rfc3339(_cls: &PyType, value: &str) -> PyResult<Self> {
+        libparsec::types::DateTime::from_str(value)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(format!("Invalid rfc3339 date `{}`: {}", value, e)))
     }
 
     fn to_local(&self) -> PyResult<LocalDateTime> {
@@ -233,8 +225,13 @@ impl DateTime {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct LocalDateTime(pub libparsec::types::LocalDateTime);
+
+crate::binding_utils::gen_proto!(LocalDateTime, __repr__);
+crate::binding_utils::gen_proto!(LocalDateTime, __str__);
+crate::binding_utils::gen_proto!(LocalDateTime, __richcmp__, ord);
+crate::binding_utils::gen_proto!(LocalDateTime, __hash__);
 
 #[pymethods]
 impl LocalDateTime {

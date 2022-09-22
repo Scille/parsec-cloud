@@ -405,7 +405,7 @@ impl Sub for DateTime {
  * LocalDateTime
  */
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Hash)]
 pub struct LocalDateTime(chrono::DateTime<chrono::Local>);
 
 impl From<DateTime> for LocalDateTime {
@@ -481,6 +481,25 @@ impl LocalDateTime {
 
     pub fn format(&self, fmt: &str) -> String {
         self.0.format(fmt).to_string()
+    }
+}
+
+impl std::fmt::Debug for LocalDateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("LocalDateTime")
+            .field(&self.to_string())
+            .field(&self.0.nanosecond())
+            .finish()
+    }
+}
+
+impl std::fmt::Display for LocalDateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, false)
+        )
     }
 }
 

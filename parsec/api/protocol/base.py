@@ -16,6 +16,7 @@ from typing import (
     Tuple,
     Sequence,
 )
+
 from parsec.api.version import ApiVersion
 from parsec.utils import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.serde import (
@@ -53,7 +54,9 @@ class MessageSerializationError(SerdePackingError, ProtocolError):
 
 class IncompatibleAPIVersionsError(ProtocolError):
     def __init__(
-        self, backend_versions: Sequence[ApiVersion], client_versions: Sequence[ApiVersion] = []
+        self,
+        backend_versions: Sequence[ApiVersion],
+        client_versions: Sequence[ApiVersion] = [],
     ):
         self.client_versions = client_versions
         self.backend_versions = backend_versions
@@ -304,7 +307,10 @@ class CmdSerializer:
         self, strictly_greater_than: DateTime
     ) -> Dict[str, object]:
         return self.rep_dump(
-            {"status": "require_greater_timestamp", "strictly_greater_than": strictly_greater_than}
+            {
+                "status": "require_greater_timestamp",
+                "strictly_greater_than": strictly_greater_than,
+            }
         )
 
     def timestamp_out_of_ballpark_rep_dump(
@@ -540,6 +546,17 @@ class ApiCommandSerializer:
 
     def req_dumps(self, req: dict[str, Any]) -> bytes:
         req.pop("cmd")
+        # TODO: Use rust enum InvitationType instead of legacy PyInvitation type (see issue: #3105)
+        # for now this is a quick and dirty fix
+        from parsec.api.protocol.invite import InvitationType as PyInvitationType
+        from parsec._parsec import InvitationType
+
+        if "type" in req and isinstance(req["type"], PyInvitationType):
+            if req["type"] == PyInvitationType.DEVICE:
+                req["type"] = InvitationType.DEVICE()
+            else:
+                req["type"] = InvitationType.USER()
+
         return self.req_schema(**req).dump()
 
     def rep_loads(self, raw: bytes) -> Any:

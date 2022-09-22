@@ -13,7 +13,11 @@ logger = get_logger()
 
 
 class RAID1BlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, blockstores: List[BaseBlockStoreComponent], partial_create_ok: bool = False):
+    def __init__(
+        self,
+        blockstores: List[BaseBlockStoreComponent],
+        partial_create_ok: bool = False,
+    ):
         self.blockstores = blockstores
         self._partial_create_ok = partial_create_ok
         self._logger = logger.bind(blockstore_type="RAID1", partial_create_ok=partial_create_ok)
