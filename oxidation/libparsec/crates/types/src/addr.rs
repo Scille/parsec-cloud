@@ -7,7 +7,7 @@ use std::convert::TryFrom;
 use std::str::FromStr;
 use url::Url;
 
-use crate::InvitationType;
+use crate::{DateTime, InvitationType};
 
 use libparsec_crypto::VerifyKey;
 
@@ -583,6 +583,7 @@ pub struct BackendOrganizationFileLinkAddr {
     organization_id: OrganizationID,
     workspace_id: EntryID,
     encrypted_path: Vec<u8>,
+    timestamp: Option<DateTime>,
 }
 
 impl_common_stuff!(BackendOrganizationFileLinkAddr);
@@ -593,12 +594,14 @@ impl BackendOrganizationFileLinkAddr {
         organization_id: OrganizationID,
         workspace_id: EntryID,
         encrypted_path: Vec<u8>,
+        timestamp: Option<DateTime>,
     ) -> Self {
         Self {
             base: backend_addr.base,
             organization_id,
             workspace_id,
             encrypted_path,
+            timestamp,
         }
     }
 
@@ -632,11 +635,19 @@ impl BackendOrganizationFileLinkAddr {
             return Err("Multiple values for param `path`");
         }
 
+        let mut ts_range = pairs.filter(|(k, _)| k == "timestamp");
+        let timestamp = if let Some((_, value)) = ts_range.next() {
+            Some(DateTime::from_str(&value).map_err(|_| "Invalid `timestamp` param value")?)
+        } else {
+            None
+        };
+
         Ok(Self {
             base,
             organization_id,
             workspace_id,
             encrypted_path,
+            timestamp,
         })
     }
 
@@ -650,7 +661,16 @@ impl BackendOrganizationFileLinkAddr {
             .append_pair("action", "file_link")
             .append_pair("workspace_id", &self.workspace_id.to_string())
             .append_pair("path", &binary_urlsafe_encode(&self.encrypted_path));
+        if let Some(ts) = self.timestamp {
+            url.query_pairs_mut()
+                .append_pair("timestamp", &ts.to_rfc3339());
+        }
+
         url
+    }
+
+    pub fn timestamp(&self) -> &Option<DateTime> {
+        &self.timestamp
     }
 
     pub fn organization_id(&self) -> &OrganizationID {

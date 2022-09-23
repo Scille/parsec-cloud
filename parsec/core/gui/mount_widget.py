@@ -5,6 +5,7 @@ from typing import Optional
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
+from parsec._parsec import DateTime
 from parsec.core.fs import FsPath
 
 from parsec.core.gui.files_widget import FilesWidget, Clipboard
@@ -46,8 +47,21 @@ class MountWidget(QWidget, Ui_MountWidget):
             return
         self.files_widget.load(FsPath(str(path)))
 
-    def show_files_widget(self, workspace_fs, default_path, selected=False, mount_it=False):
+    def show_files_widget(
+        self,
+        workspace_fs,
+        default_path,
+        selected=False,
+        mount_it=False,
+        timestamp: Optional[DateTime] = None,
+    ):
         self.workspaces_widget.hide()
+
+        if mount_it and not self.workspaces_widget.is_workspace_mounted(
+            workspace_fs.workspace_id, timestamp
+        ):
+            self.workspaces_widget.mount_workspace(workspace_fs.workspace_id, timestamp)
+
         self.files_widget.set_workspace_fs(
             workspace_fs,
             current_directory=default_path.parent,
@@ -56,11 +70,6 @@ class MountWidget(QWidget, Ui_MountWidget):
             else None,
             clipboard=self.global_clipboard,
         )
-        if mount_it and not self.workspaces_widget.is_workspace_mounted(
-            workspace_fs.workspace_id, None
-        ):
-            self.workspaces_widget.mount_workspace(workspace_fs.workspace_id)
-
         self.files_widget.show()
 
     def show_workspaces_widget(self):

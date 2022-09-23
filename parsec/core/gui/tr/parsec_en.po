@@ -622,6 +622,9 @@ msgstr "Show status"
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Get a link to the file"
 
+msgid "ACTION_FILE_MENU_GET_FILE_LINK_TIMESTAMP"
+msgstr "Get a link to this version of the file"
+
 msgid "TEXT_FILE_TREE_PARENT_FOLDER"
 msgstr "Parent folder"
 

@@ -4,9 +4,10 @@ import pytest
 from unittest.mock import patch
 from PyQt5 import QtCore, QtWidgets, QtGui
 
-from parsec._parsec import InvitationType
+from parsec._parsec import DateTime, InvitationType
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.api.data import EntryName
+from parsec.core.fs.workspacefs import WorkspaceFSTimestamped
 from parsec.core.gui.lang import translate
 from parsec.core.gui.login_widget import LoginPasswordInputWidget
 from parsec.core.local_device import (
@@ -24,6 +25,7 @@ from parsec.core.types import (
     WorkspaceRole,
 )
 from parsec.core.gui import desktop
+from parsec.core.gui.workspace_roles import get_role_translation as _
 
 from tests.common import customize_fixtures
 
@@ -177,6 +179,25 @@ async def test_link_file(aqtbot, logged_gui_with_files):
         folder = f_w.table_files.item(1, 1)
         assert folder
         assert folder.text() == "dir1"
+
+    await aqtbot.wait_until(_folder_ready)
+
+    assert logged_gui.tab_center.count() == 1
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_link_file_with_timestamp(aqtbot, logged_gui_with_files):
+    logged_gui, w_w, f_w = logged_gui_with_files
+    url = f_w.workspace_fs.generate_file_link(f_w.current_directory, DateTime.now())
+
+    logged_gui.add_instance(url.to_url())
+
+    def _folder_ready():
+        assert f_w.isVisible()
+        # A timestamped workspace is readonly
+        assert f_w.label_role.text() == _(WorkspaceRole.READER)
+        assert isinstance(f_w.workspace_fs, WorkspaceFSTimestamped)
 
     await aqtbot.wait_until(_folder_ready)
 

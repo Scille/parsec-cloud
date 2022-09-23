@@ -244,10 +244,20 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if button is not None:
             try:
                 path = button.workspace_fs.decrypt_file_link_path(addr)
+
+                # Mount workspace at the link's creation time
+                if addr.timestamp is not None:
+                    self.mount_workspace(addr.workspace_id, addr.timestamp)
             except ValueError as exc:
                 show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_INVALID_LINK"), exception=exc)
                 return
-            self.load_workspace(button.workspace_fs, path=path, selected=True)
+            self.load_workspace(
+                WorkspaceFSTimestamped(button.workspace_fs, addr.timestamp)
+                if addr.timestamp is not None
+                else button.workspace_fs,
+                path=path,
+                selected=True,
+            )
             return
 
         show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_WORKSPACE_NOT_FOUND"))

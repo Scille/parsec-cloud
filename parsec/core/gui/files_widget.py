@@ -304,6 +304,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.copy_clicked.connect(self.on_copy_clicked)
         self.table_files.cut_clicked.connect(self.on_cut_clicked)
         self.table_files.file_path_clicked.connect(self.on_get_file_path_clicked)
+        self.table_files.file_path_timestamp_clicked.connect(
+            self.on_get_file_path_timestamp_clicked
+        )
         self.table_files.open_current_dir_clicked.connect(self.on_open_current_dir_clicked)
         self.table_files.itemSelectionChanged.connect(self._on_selection_changed)
         self.table_files.new_folder_clicked.connect(self.create_folder_clicked)
@@ -409,6 +412,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         path = self.current_directory / files[0].name
         addr = self.workspace_fs.generate_file_link(path)
         desktop.copy_to_clipboard(addr.to_url())
+        SnackbarManager.inform(_("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
+
+    def on_get_file_path_timestamp_clicked(self):
+        files = self.table_files.selected_files()
+        if len(files) != 1:
+            return
+        path = self.current_directory / files[0].name
+        ts_addr = self.workspace_fs.generate_file_link(path, timestamp=DateTime.now())
+        desktop.copy_to_clipboard(ts_addr.to_url())
         SnackbarManager.inform(_("TEXT_FILE_LINK_COPIED_TO_CLIPBOARD"))
 
     def on_copy_clicked(self):

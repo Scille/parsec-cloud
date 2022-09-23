@@ -92,6 +92,7 @@ class FileTable(QTableWidget):
     cut_clicked = pyqtSignal()
     copy_clicked = pyqtSignal()
     file_path_clicked = pyqtSignal()
+    file_path_timestamp_clicked = pyqtSignal()
     open_current_dir_clicked = pyqtSignal()
     new_folder_clicked = pyqtSignal()
     sort_clicked = pyqtSignal(Column)
@@ -270,6 +271,8 @@ class FileTable(QTableWidget):
             action.triggered.connect(self.show_status_clicked.emit)
             action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
             action.triggered.connect(self.file_path_clicked.emit)
+            action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK_TIMESTAMP"))
+            action.triggered.connect(self.file_path_timestamp_clicked.emit)
         menu.exec_(global_pos)
 
     def item_double_clicked(self, row, column):
