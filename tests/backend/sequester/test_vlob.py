@@ -11,9 +11,11 @@ from parsec._parsec import (
     VlobCreateRepOk,
     VlobCreateRepSequesterInconsistency,
     VlobCreateRepSequesterRejected,
+    VlobCreateRepSequesterWebhookFailed,
     VlobUpdateRepOk,
     VlobUpdateRepSequesterInconsistency,
     VlobUpdateRepSequesterRejected,
+    VlobUpdateRepSequesterWebhookFailed,
 )
 from parsec.api.protocol import OrganizationID, VlobID, SequesterServiceID
 from parsec.backend.sequester import (
@@ -293,7 +295,7 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert isinstance(rep, VlobCreateRepSequesterRejected)
+        assert isinstance(rep, VlobCreateRepSequesterWebhookFailed)
         assert rep.service_error.startswith("Webhook service failed:")
 
         rep = await vlob_update(
@@ -304,7 +306,7 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert isinstance(rep, VlobUpdateRepSequesterRejected)
+        assert isinstance(rep, VlobUpdateRepSequesterWebhookFailed)
         assert rep.service_error.startswith("Webhook service failed:")
 
         # Test httperror
@@ -320,7 +322,7 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert isinstance(rep, VlobCreateRepSequesterRejected)
+        assert isinstance(rep, VlobCreateRepSequesterWebhookFailed)
         assert rep.service_label == service.backend_service.service_label
         assert rep.service_id == service.service_id
         assert rep.service_error == "405:METHOD NOT ALLOWED"
@@ -333,7 +335,7 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert isinstance(rep, VlobUpdateRepSequesterRejected)
+        assert isinstance(rep, VlobUpdateRepSequesterWebhookFailed)
         assert rep.service_label == service.backend_service.service_label
         assert rep.service_id == service.service_id
         assert rep.service_error == "405:METHOD NOT ALLOWED"
@@ -405,7 +407,7 @@ async def test_missing_webhook_url(coolorg: OrganizationFullData, alice_ws, real
             },
         )
 
-        assert isinstance(rep, VlobCreateRepSequesterRejected)
+        assert isinstance(rep, VlobCreateRepSequesterWebhookFailed)
 
 
 @customize_fixtures(coolorg_is_sequestered_organization=True)

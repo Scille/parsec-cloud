@@ -169,7 +169,7 @@ def create_service(
         raise SequesterBackendCliError(
             f"Incompatible service type {service_type} with webhook_url option\nwebhook_url can only be used with {SequesterServiceType.WEBHOOK}."
         )
-    if SequesterServiceType.WEBHOOK and not webhook_url:
+    if service_type == SequesterServiceType.WEBHOOK and not webhook_url:
         raise SequesterBackendCliError("Webhook sequester service requires webhook_url argument")
     # Load key files
     service_key = SequesterEncryptionKeyDer(service_public_key.read_bytes())

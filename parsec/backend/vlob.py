@@ -23,6 +23,7 @@ from parsec._parsec import (
     VlobCreateRepNotASequesteredOrganization,
     VlobCreateRepSequesterInconsistency,
     VlobCreateRepSequesterRejected,
+    VlobCreateRepSequesterWebhookFailed,
     VlobReadReq,
     VlobReadRep,
     VlobReadRepOk,
@@ -44,6 +45,7 @@ from parsec._parsec import (
     VlobUpdateRepNotASequesteredOrganization,
     VlobUpdateRepSequesterInconsistency,
     VlobUpdateRepSequesterRejected,
+    VlobUpdateRepSequesterWebhookFailed,
     VlobPollChangesReq,
     VlobPollChangesRep,
     VlobPollChangesRepOk,
@@ -148,6 +150,14 @@ class VlobSequesterWebhookServiceRejectedError(VlobError):
         VlobError.__init__(self, *args, **kwargs)
 
 
+class VlobSequesterWebhookServiceWebhookHTTPError(VlobError):
+    def __init__(self, service_id, service_label, error, *args, **kwargs):
+        self.service_id = service_id
+        self.service_label = service_label
+        self.error = error
+        VlobError.__init__(self, *args, **kwargs)
+
+
 class VlobSequesterServiceMissingWebhookError(VlobError):
     def __init__(self, service_id, service_label, *args, **kwargs):
         self.service_id = service_id
@@ -220,7 +230,7 @@ async def extract_sequestered_data_and_proceed_webhook(
                     error=body.get("error", ""),
                 ) from exc
             else:
-                raise VlobSequesterWebhookServiceRejectedError(
+                raise VlobSequesterWebhookServiceWebhookHTTPError(
                     service_id=service.service_id,
                     service_label=service.service_label,
                     error=f"{exc.code}:{exc.reason}",
@@ -306,12 +316,15 @@ class BaseVlobComponent:
             VlobSequesterServiceMissingWebhookError,
             VlobSequesterServiceWebhookUrlError,
         ) as exc:
-            return VlobCreateRepSequesterRejected(
+            return VlobCreateRepSequesterWebhookFailed(
                 service_id=exc.service_id,
                 service_label=exc.service_label,
                 service_error=f"Webhook service failed: {exc}",
             )
-
+        except VlobSequesterWebhookServiceWebhookHTTPError as exc:
+            return VlobCreateRepSequesterWebhookFailed(
+                service_id=exc.service_id, service_label=exc.service_label, service_error=exc.error
+            )
         return VlobCreateRepOk()
 
     @api("vlob_read")
@@ -430,11 +443,16 @@ class BaseVlobComponent:
             VlobSequesterServiceMissingWebhookError,
             VlobSequesterServiceWebhookUrlError,
         ) as exc:
-            return VlobUpdateRepSequesterRejected(
+            return VlobUpdateRepSequesterWebhookFailed(
                 service_id=exc.service_id,
                 service_label=exc.service_label,
                 service_error=f"Webhook service failed: {exc}",
             )
+        except VlobSequesterWebhookServiceWebhookHTTPError as exc:
+            return VlobUpdateRepSequesterWebhookFailed(
+                service_id=exc.service_id, service_label=exc.service_label, service_error=exc.error
+            )
+
         return VlobUpdateRepOk()
 
     @api("vlob_poll_changes")
