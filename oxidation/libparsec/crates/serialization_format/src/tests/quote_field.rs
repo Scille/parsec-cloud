@@ -92,8 +92,9 @@ use crate::protocol::parser::{field::Vis, Field, MajorMinorVersion};
     }
 )]
 fn quote(#[case] vis: Vis, #[case] field: Field, #[case] expected: TokenStream) {
-    assert_eq!(
-        field.quote(vis, &HashMap::new()).to_string(),
-        expected.to_string()
-    )
+    todo!()
+    // assert_eq!(
+    //     field.quote(vis, &HashMap::new()).to_string(),
+    //     expected.to_string()
+    // )
 }

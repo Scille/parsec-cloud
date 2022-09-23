@@ -33,3 +33,16 @@ impl Display for MajorMinorVersion {
         write!(f, "{}.{}", self.major, self.minor)
     }
 }
+
+#[cfg(test)]
+#[rstest::rstest]
+#[case("0.0", Ok(MajorMinorVersion { major: 0, minor: 0 }))]
+#[case("4.2", Ok(MajorMinorVersion { major: 4, minor: 2 }))]
+#[case::invalid_sep("1,2", Err("Invalid major minor version format: `1,2`".to_string()))]
+#[case::major_not_number("a.2", Err("Invalid major value `a`: invalid digit found in string".to_string()))]
+#[case::minor_not_number("1.b", Err("Invalid minor value `b`: invalid digit found in string".to_string()))]
+#[case::empty_major(".2", Err("Invalid major value ``: cannot parse integer from empty string".to_string()))]
+#[case::empty_minor("1.", Err("Invalid minor value ``: cannot parse integer from empty string".to_string()))]
+fn major_minor_version(#[case] raw: &str, #[case] expected: Result<MajorMinorVersion, String>) {
+    assert_eq!(MajorMinorVersion::try_from(raw), expected);
+}

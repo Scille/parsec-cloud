@@ -28,3 +28,18 @@ pub struct Field {
     #[serde(default)]
     pub default: Option<String>,
 }
+
+#[cfg(test)]
+#[rstest::rstest]
+#[case::basic_field(
+    r#"{"name": "Foo", "type": "String"}"#,
+    Field { name: "Foo".to_string() , ty: "String".to_string(), introduced_in: None, default: None }
+)]
+#[case::field_introduced_in(
+    r#"{"name": "Bar", "type": "Boolean", "introduced_in": "5.2"}"#,
+    Field { name: "Bar".to_string(), ty: "Boolean".to_string(), introduced_in: Some("5.2".try_into().unwrap()), default: None}
+)]
+fn field(#[case] input: &str, #[case] expected: Field) {
+    let field = serde_json::from_str::<Field>(input).expect("Got error on valid data");
+    assert_eq!(field, expected)
+}
