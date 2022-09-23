@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-import re
 import csv
 from io import StringIO
 from typing import NoReturn, TYPE_CHECKING
@@ -161,22 +160,6 @@ async def administration_organization_stat(raw_organization_id: str):
 async def administration_server_stats():
     backend: "BackendApp" = g.backend
 
-    def _date_from_str(input: str) -> DateTime:
-        regex = re.compile(r"(\d{4})[-/](\d{1,2})[-/](\d{1,2})")
-        matched = regex.match(input)
-
-        if not matched:
-            raise ValueError(f"Provided date is not a valid timestamp {input}")
-
-        return DateTime(
-            int(matched.group(1)),
-            int(matched.group(2)),
-            int(matched.group(3)),
-            hour=0,
-            minute=0,
-            second=0,
-        )
-
     for arg in ["format", "from"]:
         if arg not in request.args:
             return await json_abort({"error": f"missing query argument '{arg}'"}, 400)
@@ -187,17 +170,19 @@ async def administration_server_stats():
         )
 
     try:
-        from_date = _date_from_str(request.args["from"])
-        to_date = _date_from_str(request.args["to"]) if "to" in request.args else DateTime.now()
+        from_date = DateTime.from_rfc3339(request.args["from"])
+        to_date = (
+            DateTime.from_rfc3339(request.args["to"]) if "to" in request.args else DateTime.now()
+        )
         assert from_date < to_date
         results = await backend.organization.server_stats(from_date, to_date)
-    except ValueError:
+    except ValueError as e:
+        print(e)
         return await json_abort({"error": "bad timestamp"}, 400)
     except AssertionError:
         return await json_abort({"error": f"{from_date} to {to_date} is not a valid range"}, 400)
 
     if request.args["format"] == "csv":
-        print(results)
         with StringIO(newline="") as memory_file:
             writer = csv.writer(memory_file)
             # Header

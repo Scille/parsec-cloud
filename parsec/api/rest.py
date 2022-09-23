@@ -95,10 +95,6 @@ organization_stats_req_serializer = JSONSerializer(OrganizationStatsReqSchema)
 organization_stats_rep_serializer = JSONSerializer(OrganizationStatsRepSchema)
 
 
-# server_stats_req_serializer = JSONSerializer(ServerStatsReqSchema)
-# server_stats_rep_serializer = JSONSerializer(ServerStatsRepSchema)
-
-
 # PATCH /administration/organizations/<organization_id>
 
 
