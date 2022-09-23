@@ -57,7 +57,10 @@ display("realm_create_rep_bad_timestamp", serialized, [])
 serializer = realm_status_serializer
 
 serialized = serializer.req_dumps(
-    {"cmd": "realm_status", "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5")}
+    {
+        "cmd": "realm_status",
+        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+    }
 )
 serializer.req_loads(serialized)
 display("realm_status_req", serialized, [])
@@ -87,7 +90,10 @@ display("realm_status_rep_not_found", serialized, [])
 serializer = realm_stats_serializer
 
 serialized = serializer.req_dumps(
-    {"cmd": "realm_stats", "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5")}
+    {
+        "cmd": "realm_stats",
+        "realm_id": RealmID.from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5"),
+    }
 )
 serializer.req_loads(serialized)
 display("realm_stats_req", serialized, [])
@@ -134,7 +140,11 @@ display("realm_get_role_certificates_rep_not_found", serialized, [])
 serializer = realm_update_roles_serializer
 
 serialized = serializer.req_dumps(
-    {"cmd": "realm_update_roles", "role_certificate": b"foobar", "recipient_message": b"foobar"}
+    {
+        "cmd": "realm_update_roles",
+        "role_certificate": b"foobar",
+        "recipient_message": b"foobar",
+    }
 )
 serializer.req_loads(serialized)
 display("realm_update_roles_req", serialized, [])
@@ -176,7 +186,10 @@ serializer.rep_loads(serialized)
 display("realm_update_roles_rep_user_revoked", serialized, [])
 
 serialized = serializer.rep_dumps(
-    {"status": "require_greater_timestamp", "strictly_greater_than": DateTime(2000, 1, 2, 1)}
+    {
+        "status": "require_greater_timestamp",
+        "strictly_greater_than": DateTime(2000, 1, 2, 1),
+    }
 )
 serializer.rep_loads(serialized)
 display("realm_update_roles_rep_require_greater_timestamp", serialized, [])

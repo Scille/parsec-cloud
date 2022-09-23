@@ -58,7 +58,11 @@ def rebuild_block_from_chunks(
 
 
 class RAID5BlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, blockstores: List[BaseBlockStoreComponent], partial_create_ok: bool = False):
+    def __init__(
+        self,
+        blockstores: List[BaseBlockStoreComponent],
+        partial_create_ok: bool = False,
+    ):
         self.blockstores = blockstores
         self._partial_create_ok = partial_create_ok
         self._logger = logger.bind(blockstore_type="RAID5", partial_create_ok=partial_create_ok)

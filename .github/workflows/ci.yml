@@ -113,7 +113,7 @@ jobs:
 
   test-python-matrix:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - name: 🐧 Linux
@@ -269,7 +269,7 @@ jobs:
 
   test-rust-matrix:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - name: 🐧 Linux
@@ -321,13 +321,15 @@ jobs:
           ]
           EOF
 
+      # Pyo3 can't build for test with `multiple-pymethods` feature
+      # see https://github.com/PyO3/pyo3/issues/2623
       - name: Build rust codebase
         if: steps.rust-changes.outputs.run == 'true'
         shell: bash
         run: |
           set -ex
           cargo build --workspace
-          cargo test --workspace --no-run
+          cargo test --workspace --no-run --exclude parsec
 
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
@@ -336,7 +338,7 @@ jobs:
           set -ex
           cargo test --package libparsec_crypto --features use-sodiumoxide
           cargo test --package libparsec_crypto --features use-rustcrypto
-          cargo test --workspace --features mock-time --exclude libparsec_crypto
+          cargo test --workspace --features mock-time --exclude libparsec_crypto --exclude parsec
 
   ##############################################################################
   #                            🐜 Wasm tests                                   #
@@ -349,7 +351,7 @@ jobs:
     # - The job `Run WasmPack test` (where we run the test on each specified crate).
     # So it's simpler to have only 1 list to maintain (DRY).
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - crate_to_test:

@@ -7,7 +7,6 @@ from parsec._parsec import DateTime, InvitedPingRepOk
 from parsec.api.protocol import (
     INVITED_CMDS,
     InvitationToken,
-    InvitationType,
     InvitationDeletedReason,
 )
 from parsec.core.types import BackendInvitationAddr
@@ -20,6 +19,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.backend.backend_events import BackendEvent
 from tests.core.backend_connection.common import ALL_CMDS
+from parsec._parsec import InvitationType
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ async def invitation_addr(backend, alice):
     return BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE(),
         token=invitation.token,
     )
 
@@ -74,7 +74,7 @@ async def test_handshake_organization_expired(running_backend, expiredorg, expir
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=running_backend.addr,
         organization_id=expiredorgalice.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE(),
         token=invitation.token,
     )
 
@@ -91,7 +91,7 @@ async def test_handshake_unknown_organization(running_backend, coolorg):
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=running_backend.addr,
         organization_id=coolorg.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE(),
         token=InvitationToken.new(),
     )
     with pytest.raises(BackendInvitationNotFound) as exc:

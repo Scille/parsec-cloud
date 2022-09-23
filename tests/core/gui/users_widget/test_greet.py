@@ -2,16 +2,15 @@
 
 import pytest
 import trio
-from parsec._parsec import DateTime
 from PyQt5 import QtCore
 from contextlib import asynccontextmanager
 from functools import partial
 
 from parsec.utils import start_task
 from parsec.core.gui.lang import translate
+from parsec._parsec import DateTime, InvitationType
 from parsec.api.protocol import (
     DeviceLabel,
-    InvitationType,
     InvitationDeletedReason,
     HumanHandle,
     UserProfile,
@@ -100,7 +99,7 @@ def GreetUserTestBed(
             invitation_addr = BackendInvitationAddr.build(
                 backend_addr=author.organization_addr.get_backend_addr(),
                 organization_id=author.organization_id,
-                invitation_type=InvitationType.USER,
+                invitation_type=InvitationType.USER(),
                 token=invitation.token,
             )
 

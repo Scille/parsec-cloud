@@ -159,7 +159,10 @@ class MemorySequesterComponent(BaseSequesterComponent):
         return list(self._services[organization_id].values())
 
     async def dump_realm(
-        self, organization_id: OrganizationID, service_id: SequesterServiceID, realm_id: RealmID
+        self,
+        organization_id: OrganizationID,
+        service_id: SequesterServiceID,
+        realm_id: RealmID,
     ) -> List[Tuple[VlobID, int, bytes]]:
         dump: List[Tuple[VlobID, int, bytes]] = []
         # Check orga and service exists

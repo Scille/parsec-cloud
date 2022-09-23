@@ -62,7 +62,10 @@ serializer.rep_loads(serialized)
 display("vlob_create_rep_in_maintenance", serialized, [])
 
 serialized = serializer.rep_dumps(
-    {"status": "require_greater_timestamp", "strictly_greater_than": DateTime(2000, 1, 2, 1)}
+    {
+        "status": "require_greater_timestamp",
+        "strictly_greater_than": DateTime(2000, 1, 2, 1),
+    }
 )
 serializer.rep_loads(serialized)
 display("vlob_create_rep_require_greater_timestamp", serialized, [])
@@ -199,7 +202,10 @@ serializer.rep_loads(serialized)
 display("vlob_update_rep_in_maintenance", serialized, [])
 
 serialized = serializer.rep_dumps(
-    {"status": "require_greater_timestamp", "strictly_greater_than": DateTime(2000, 1, 2, 1)}
+    {
+        "status": "require_greater_timestamp",
+        "strictly_greater_than": DateTime(2000, 1, 2, 1),
+    }
 )
 serializer.rep_loads(serialized)
 display("vlob_update_rep_require_greater_timestamp", serialized, [])
@@ -245,7 +251,10 @@ serializer.req_loads(serialized)
 display("vlob_poll_changes_req", serialized, [])
 
 serialized = serializer.rep_dumps(
-    {"changes": {VlobID.from_hex("2b5f314728134a12863da1ce49c112f6"): 8}, "current_checkpoint": 8}
+    {
+        "changes": {VlobID.from_hex("2b5f314728134a12863da1ce49c112f6"): 8},
+        "current_checkpoint": 8,
+    }
 )
 serializer.rep_loads(serialized)
 display("vlob_poll_changes_rep", serialized, [])
@@ -267,7 +276,10 @@ display("vlob_poll_changes_rep_in_maintenance", serialized, [])
 serializer = vlob_list_versions_serializer
 
 serialized = serializer.req_dumps(
-    {"cmd": "vlob_list_versions", "vlob_id": VlobID.from_hex("2b5f314728134a12863da1ce49c112f6")}
+    {
+        "cmd": "vlob_list_versions",
+        "vlob_id": VlobID.from_hex("2b5f314728134a12863da1ce49c112f6"),
+    }
 )
 serializer.req_loads(serialized)
 display("vlob_list_versions_req", serialized, [])
@@ -331,7 +343,11 @@ display("vlob_maintenance_get_reencryption_batch_rep_not_in_maintenance", serial
 
 serialized = serializer.rep_dumps({"status": "bad_encryption_revision"})
 serializer.rep_loads(serialized)
-display("vlob_maintenance_get_reencryption_batch_rep_bad_encryption_revision", serialized, [])
+display(
+    "vlob_maintenance_get_reencryption_batch_rep_bad_encryption_revision",
+    serialized,
+    [],
+)
 
 serialized = serializer.rep_dumps({"status": "maintenance_error", "reason": "foobar"})
 serializer.rep_loads(serialized)
@@ -374,7 +390,11 @@ display("vlob_maintenance_save_reencryption_batch_rep_not_in_maintenance", seria
 
 serialized = serializer.rep_dumps({"status": "bad_encryption_revision"})
 serializer.rep_loads(serialized)
-display("vlob_maintenance_save_reencryption_batch_rep_bad_encryption_revision", serialized, [])
+display(
+    "vlob_maintenance_save_reencryption_batch_rep_bad_encryption_revision",
+    serialized,
+    [],
+)
 
 serialized = serializer.rep_dumps({"status": "maintenance_error", "reason": "foobar"})
 serializer.rep_loads(serialized)

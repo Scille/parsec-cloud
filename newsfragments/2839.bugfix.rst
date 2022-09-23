@@ -1,1 +1,0 @@
-Fix rare segfault in the GUI when an event occurs at the wrong time

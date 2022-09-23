@@ -6,7 +6,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
-from parsec.api.protocol import InvitationEmailSentStatus
+from parsec._parsec import InvitationEmailSentStatus
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.invite import InviteError, InvitePeerResetError, InviteAlreadyUsedError
 from parsec.core.gui.trio_jobs import JobResultError, QtToTrioJob
@@ -181,7 +181,7 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
 
         self.invite_addr, email_sent_status = job.ret
 
-        if email_sent_status == InvitationEmailSentStatus.SUCCESS:
+        if email_sent_status == InvitationEmailSentStatus.SUCCESS():
             self.button_send_email.setText(_("TEXT_GREET_DEVICE_EMAIL_SENT"))
             self.button_send_email.setDisabled(True)
             SnackbarManager.inform(
@@ -190,7 +190,7 @@ class GreetDeviceInstructionsWidget(QWidget, Ui_GreetDeviceInstructionsWidget):
                 )
             )
         else:
-            if email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT:
+            if email_sent_status == InvitationEmailSentStatus.BAD_RECIPIENT():
                 show_info_copy_link(
                     self,
                     _("TEXT_EMAIL_FAILED_TO_SEND_TITLE"),

@@ -1,23 +1,27 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    basic::CompareOp,
     exceptions::PyValueError,
     prelude::{pyclass, pymethods, IntoPy, PyObject, PyResult, Python, ToPyObject},
-    types::{PyAny, PyBytes, PyDict, PyType},
+    types::{PyBytes, PyDict, PyType},
 };
 use std::str::FromStr;
 
+#[allow(deprecated)]
 use crate::{
     api_crypto::VerifyKey,
-    binding_utils::{comp_op, hash_generic},
     ids::{EntryID, OrganizationID},
     invite::InvitationToken,
+    protocol::InvitationType,
 };
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct BackendAddr(libparsec::types::BackendAddr);
+
+crate::binding_utils::gen_proto!(BackendAddr, __repr__);
+crate::binding_utils::gen_proto!(BackendAddr, __richcmp__, eq);
+crate::binding_utils::gen_proto!(BackendAddr, __hash__);
 
 #[pymethods]
 impl BackendAddr {
@@ -52,20 +56,6 @@ impl BackendAddr {
         }
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("BackendAddr(url={})", self.to_url().unwrap()))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.to_url().unwrap(), py)
-    }
-
-    fn __richcmp__(&self, py: Python, other: &BackendAddr, op: CompareOp) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
-    }
-
     fn to_url(&self) -> PyResult<String> {
         Ok(self.0.to_url().to_string())
     }
@@ -96,8 +86,11 @@ impl BackendAddr {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct BackendOrganizationAddr(pub libparsec::types::BackendOrganizationAddr);
+
+crate::binding_utils::gen_proto!(BackendOrganizationAddr, __repr__);
+crate::binding_utils::gen_proto!(BackendOrganizationAddr, __richcmp__, eq);
 
 #[pymethods]
 impl BackendOrganizationAddr {
@@ -180,28 +173,6 @@ impl BackendOrganizationAddr {
         Ok(VerifyKey::new(data).unwrap())
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!(
-            "BackendOrganizationAddr(url={})",
-            self.to_url().unwrap()
-        ))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.to_url().unwrap(), py)
-    }
-
-    fn __richcmp__(
-        &self,
-        py: Python,
-        other: &BackendOrganizationAddr,
-        op: CompareOp,
-    ) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
-    }
-
     fn to_url(&self) -> PyResult<String> {
         Ok(self.0.to_url().to_string())
     }
@@ -241,8 +212,7 @@ impl BackendOrganizationAddr {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
-pub(crate) struct BackendActionAddr();
+pub(crate) struct BackendActionAddr;
 
 #[pymethods]
 impl BackendActionAddr {
@@ -298,8 +268,11 @@ impl BackendActionAddr {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
 pub struct BackendOrganizationBootstrapAddr(libparsec::types::BackendOrganizationBootstrapAddr);
+
+crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __repr__);
+crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __richcmp__, eq);
+crate::binding_utils::gen_proto!(BackendOrganizationBootstrapAddr, __hash__);
 
 #[pymethods]
 impl BackendOrganizationBootstrapAddr {
@@ -371,28 +344,6 @@ impl BackendOrganizationBootstrapAddr {
             Some(token) => Ok(token.to_string()),
             None => Ok(String::from("")),
         }
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!(
-            "BackendOrganizationBootstrapAddr(url={})",
-            self.to_url().unwrap()
-        ))
-    }
-
-    fn __richcmp__(
-        &self,
-        py: Python,
-        other: &BackendOrganizationBootstrapAddr,
-        op: CompareOp,
-    ) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.to_url().unwrap(), py)
     }
 
     fn to_url(&self) -> PyResult<String> {
@@ -479,8 +430,12 @@ impl BackendOrganizationBootstrapAddr {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub struct BackendOrganizationFileLinkAddr(libparsec::types::BackendOrganizationFileLinkAddr);
+
+crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __repr__);
+crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __richcmp__, eq);
+crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __hash__);
 
 #[pymethods]
 impl BackendOrganizationFileLinkAddr {
@@ -563,28 +518,6 @@ impl BackendOrganizationFileLinkAddr {
         Ok(PyBytes::new(py, self.0.encrypted_path().as_slice()))
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!(
-            "BackendOrganizationFileLinkAddr(url={})",
-            self.to_url().unwrap()
-        ))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.to_url().unwrap(), py)
-    }
-
-    fn __richcmp__(
-        &self,
-        py: Python,
-        other: &BackendOrganizationFileLinkAddr,
-        op: CompareOp,
-    ) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
-    }
-
     fn get_backend_addr(&self) -> BackendAddr {
         BackendAddr::new(
             String::from(self.0.hostname()),
@@ -640,8 +573,12 @@ impl BackendOrganizationFileLinkAddr {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub struct BackendInvitationAddr(libparsec::types::BackendInvitationAddr);
+
+crate::binding_utils::gen_proto!(BackendInvitationAddr, __repr__);
+crate::binding_utils::gen_proto!(BackendInvitationAddr, __richcmp__, eq);
+crate::binding_utils::gen_proto!(BackendInvitationAddr, __hash__);
 
 #[pymethods]
 impl BackendInvitationAddr {
@@ -649,16 +586,10 @@ impl BackendInvitationAddr {
     #[args(py_kwargs = "**")]
     fn new(
         organization_id: OrganizationID,
-        invitation_type: &PyAny,
+        invitation_type: &InvitationType,
         token: InvitationToken,
         py_kwargs: Option<&PyDict>,
     ) -> PyResult<Self> {
-        let inv_type = match libparsec::types::InvitationType::from_str(
-            invitation_type.getattr("name")?.extract::<&str>()?,
-        ) {
-            Ok(iv) => iv,
-            Err(err) => return Err(PyValueError::new_err(err)),
-        };
         let addr = match py_kwargs {
             Some(dict) => BackendAddr::new(
                 match dict.get_item("hostname") {
@@ -679,7 +610,7 @@ impl BackendInvitationAddr {
         Ok(Self(libparsec::types::BackendInvitationAddr::new(
             addr.unwrap().0,
             organization_id.0,
-            inv_type,
+            invitation_type.0,
             token.0,
         )))
     }
@@ -714,42 +645,13 @@ impl BackendInvitationAddr {
     }
 
     #[getter]
-    fn invitation_type(&self) -> PyResult<PyObject> {
-        Python::with_gil(|py| -> PyResult<PyObject> {
-            let cls = py
-                .import("parsec.api.protocol")?
-                .getattr("InvitationType")?;
-            let name = self.0.invitation_type().to_string();
-            let obj = cls.getattr(&name as &str)?;
-            Ok(obj.into_py(py))
-        })
+    fn invitation_type(&self) -> InvitationType {
+        InvitationType(self.0.invitation_type())
     }
 
     #[getter]
     fn token(&self) -> PyResult<InvitationToken> {
         Ok(InvitationToken(self.0.token()))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!(
-            "BackendInvitationAddr(url={})",
-            self.to_url().unwrap()
-        ))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.to_url().unwrap(), py)
-    }
-
-    fn __richcmp__(
-        &self,
-        py: Python,
-        other: &BackendInvitationAddr,
-        op: CompareOp,
-    ) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
     }
 
     fn to_url(&self) -> PyResult<String> {
@@ -818,28 +720,24 @@ impl BackendInvitationAddr {
         _cls: &PyType,
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
-        invitation_type: &PyAny,
+        invitation_type: InvitationType,
         token: InvitationToken,
     ) -> PyResult<Self> {
-        let inv_type = match libparsec::types::InvitationType::from_str(
-            invitation_type.getattr("name")?.extract::<&str>()?,
-        ) {
-            Ok(iv) => iv,
-            Err(err) => return Err(PyValueError::new_err(err)),
-        };
-
         Ok(Self(libparsec::types::BackendInvitationAddr::new(
             backend_addr.0,
             organization_id.0,
-            inv_type,
+            invitation_type.0,
             token.0,
         )))
     }
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
 pub struct BackendPkiEnrollmentAddr(libparsec::types::BackendPkiEnrollmentAddr);
+
+crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __repr__);
+crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __richcmp__, eq);
+crate::binding_utils::gen_proto!(BackendPkiEnrollmentAddr, __hash__);
 
 #[pymethods]
 impl BackendPkiEnrollmentAddr {
@@ -896,28 +794,6 @@ impl BackendPkiEnrollmentAddr {
     #[getter]
     fn organization_id(&self) -> PyResult<OrganizationID> {
         Ok(OrganizationID(self.0.organization_id().clone()))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!(
-            "BackendPkiEnrollmentAddr(url={})",
-            self.to_url().unwrap()
-        ))
-    }
-
-    fn __richcmp__(
-        &self,
-        py: Python,
-        other: &BackendPkiEnrollmentAddr,
-        op: CompareOp,
-    ) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.to_url().unwrap(), py)
     }
 
     fn to_url(&self) -> PyResult<String> {

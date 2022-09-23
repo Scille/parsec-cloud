@@ -7,16 +7,27 @@
 
 use fancy_regex::Regex;
 use pyo3::{
-    basic::CompareOp,
     conversion::IntoPy,
-    exceptions::PyValueError,
+    exceptions::{PyNotImplementedError, PyValueError},
     prelude::PyModule,
+    pyclass::CompareOp,
     types::{PyFrozenSet, PyTuple},
     FromPyObject, {PyAny, PyObject, PyResult, Python},
 };
-use std::{collections::HashSet, hash::Hash};
+use std::{
+    collections::{hash_map::DefaultHasher, HashSet},
+    hash::{Hash, Hasher},
+};
 
-pub fn comp_op<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult<bool> {
+pub fn comp_eq<T: std::cmp::PartialEq>(op: CompareOp, h1: T, h2: T) -> PyResult<bool> {
+    Ok(match op {
+        CompareOp::Eq => h1 == h2,
+        CompareOp::Ne => h1 != h2,
+        _ => return Err(PyNotImplementedError::new_err("")),
+    })
+}
+
+pub fn comp_ord<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult<bool> {
     Ok(match op {
         CompareOp::Eq => h1 == h2,
         CompareOp::Ne => h1 != h2,
@@ -27,7 +38,14 @@ pub fn comp_op<T: std::cmp::PartialOrd>(op: CompareOp, h1: T, h2: T) -> PyResult
     })
 }
 
-pub(crate) fn hash_generic(value_to_hash: &str, py: Python) -> PyResult<isize> {
+pub(crate) fn hash_generic<T: Hash>(value_to_hash: T) -> PyResult<u64> {
+    let mut s = DefaultHasher::new();
+    value_to_hash.hash(&mut s);
+    Ok(s.finish())
+}
+
+#[deprecated]
+pub(crate) fn hash_generic_legacy(value_to_hash: &str, py: Python) -> PyResult<isize> {
     let builtins = PyModule::import(py, "builtins")?;
     let hash = builtins
         .getattr("hash")?
@@ -156,5 +174,57 @@ macro_rules! parse_kwargs {
     };
 }
 
+macro_rules! gen_proto {
+    ($class: ident, __repr__) => {
+        #[pymethods]
+        impl $class {
+            fn __repr__(&self) -> ::pyo3::PyResult<String> {
+                Ok(format!("{:?}", self.0))
+            }
+        }
+    };
+    ($class: ident, __str__) => {
+        #[pymethods]
+        impl $class {
+            fn __str__(&self) -> ::pyo3::PyResult<String> {
+                Ok(self.0.to_string())
+            }
+        }
+    };
+    ($class: ident, __richcmp__, eq) => {
+        #[pymethods]
+        impl $class {
+            fn __richcmp__(
+                &self,
+                other: &Self,
+                op: ::pyo3::pyclass::CompareOp,
+            ) -> ::pyo3::PyResult<bool> {
+                crate::binding_utils::comp_eq(op, &self.0, &other.0)
+            }
+        }
+    };
+    ($class: ident, __richcmp__, ord) => {
+        #[pymethods]
+        impl $class {
+            fn __richcmp__(
+                &self,
+                other: &Self,
+                op: ::pyo3::pyclass::CompareOp,
+            ) -> ::pyo3::PyResult<bool> {
+                crate::binding_utils::comp_ord(op, &self.0, &other.0)
+            }
+        }
+    };
+    ($class: ident, __hash__) => {
+        #[pymethods]
+        impl $class {
+            fn __hash__(&self) -> ::pyo3::PyResult<u64> {
+                crate::binding_utils::hash_generic(&self.0)
+            }
+        }
+    };
+}
+
+pub(crate) use gen_proto;
 pub(crate) use parse_kwargs;
 pub(crate) use parse_kwargs_optional;

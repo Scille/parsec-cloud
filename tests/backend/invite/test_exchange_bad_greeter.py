@@ -1,7 +1,30 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
-from parsec._parsec import DateTime
+from parsec._parsec import (
+    DateTime,
+    Invite1ClaimerWaitPeerRepNotFound,
+    Invite1GreeterWaitPeerRepAlreadyDeleted,
+    Invite1GreeterWaitPeerRepNotFound,
+    Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted,
+    Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
+    Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
+    Invite2aGreeterGetHashedNonceRepNotFound,
+    Invite2bClaimerSendNonceRepNotFound,
+    Invite2bGreeterSendNonceRepAlreadyDeleted,
+    Invite2bGreeterSendNonceRepNotFound,
+    Invite3aClaimerSignifyTrustRepNotFound,
+    Invite3aGreeterWaitPeerTrustRepAlreadyDeleted,
+    Invite3aGreeterWaitPeerTrustRepNotFound,
+    Invite3bClaimerWaitPeerTrustRepNotFound,
+    Invite3bGreeterSignifyTrustRepAlreadyDeleted,
+    Invite3bGreeterSignifyTrustRepNotFound,
+    Invite4ClaimerCommunicateRepNotFound,
+    Invite4GreeterCommunicateRepAlreadyDeleted,
+    Invite4GreeterCommunicateRepNotFound,
+    InviteDeleteRepAlreadyDeleted,
+    InviteDeleteRepNotFound,
+)
 
 from parsec.crypto import PrivateKey
 from parsec.api.protocol import InvitationDeletedReason, InvitationToken
@@ -52,4 +75,33 @@ async def test_greeter_exchange_bad_access(alice, backend, alice_ws, reason):
     ]:
         async with real_clock_timeout():
             rep = await command(alice_ws, **params)
-        assert rep == {"status": status}
+
+            if status == "already_deleted":
+                status_types = (
+                    Invite1GreeterWaitPeerRepAlreadyDeleted,
+                    Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted,
+                    Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
+                    Invite2bGreeterSendNonceRepAlreadyDeleted,
+                    Invite3aGreeterWaitPeerTrustRepAlreadyDeleted,
+                    Invite3bGreeterSignifyTrustRepAlreadyDeleted,
+                    Invite4GreeterCommunicateRepAlreadyDeleted,
+                    InviteDeleteRepAlreadyDeleted,
+                )
+            else:
+                status_types = (
+                    Invite1ClaimerWaitPeerRepNotFound,
+                    Invite1GreeterWaitPeerRepNotFound,
+                    Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
+                    Invite2aGreeterGetHashedNonceRepNotFound,
+                    Invite2bClaimerSendNonceRepNotFound,
+                    Invite2bGreeterSendNonceRepNotFound,
+                    Invite3aClaimerSignifyTrustRepNotFound,
+                    Invite3aGreeterWaitPeerTrustRepNotFound,
+                    Invite3bClaimerWaitPeerTrustRepNotFound,
+                    Invite3bGreeterSignifyTrustRepNotFound,
+                    Invite4ClaimerCommunicateRepNotFound,
+                    Invite4GreeterCommunicateRepNotFound,
+                    InviteDeleteRepNotFound,
+                )
+
+            assert isinstance(rep, status_types)

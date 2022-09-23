@@ -145,7 +145,9 @@ def blocking_io_get_proxy(target_url: str, hostname: str) -> Optional[str]:
         return None
     elif proxy_url_from_pac is not None:
         logger.debug(
-            "Got proxy from .PAC config", proxy_url=proxy_url_from_pac, target_url=target_url
+            "Got proxy from .PAC config",
+            proxy_url=proxy_url_from_pac,
+            target_url=target_url,
         )
         return proxy_url_from_pac
 
@@ -153,17 +155,23 @@ def blocking_io_get_proxy(target_url: str, hostname: str) -> Optional[str]:
     assert proxy_url_from_pac is None
     proxy_url_from_env = _get_proxy_from_environ_or_os_config(target_url, hostname)
     if proxy_url_from_env == "":
-        logger.debug("Got OS env config explicitly specifying direct access", target_url=target_url)
+        logger.debug(
+            "Got OS env config explicitly specifying direct access",
+            target_url=target_url,
+        )
         return None
     elif proxy_url_from_env is not None:
         logger.debug(
-            "Got proxy from OS env config", proxy_url=proxy_url_from_env, target_url=target_url
+            "Got proxy from OS env config",
+            proxy_url=proxy_url_from_env,
+            target_url=target_url,
         )
         return proxy_url_from_env
 
     assert proxy_url_from_env is None
     logger.debug(
-        "No proxy configuration found for target URL, using direct access", target_url=target_url
+        "No proxy configuration found for target URL, using direct access",
+        target_url=target_url,
     )
     return None
 
@@ -210,7 +218,10 @@ async def maybe_connect_through_proxy(
     if proxy.username is not None and proxy.password is not None:
         logger.debug("Using `Proxy-Authorization` header with proxy", username=proxy.username)
         proxy_headers.append(
-            ("Proxy-Authorization", cook_basic_auth_header(proxy.username, proxy.password))
+            (
+                "Proxy-Authorization",
+                cook_basic_auth_header(proxy.username, proxy.password),
+            )
         )
 
     # Connect to the proxy

@@ -17,6 +17,7 @@ from hypercorn.trio import serve
 
 from parsec import __version__ as parsec_version
 from parsec.backend.app import BackendApp
+from parsec.backend.asgi.logger import ParsecLogger
 from parsec.backend.config import BackendConfig
 from parsec.backend.asgi.administration import administration_bp
 from parsec.backend.asgi.redirect import redirect_bp
@@ -45,7 +46,10 @@ def app_factory(
     backend: BackendApp, app_cls: Type[BackendQuartTrio] = BackendQuartTrio
 ) -> BackendQuartTrio:
     app = app_cls(
-        __name__, static_folder="../static", static_url_path="/static", template_folder="templates"
+        __name__,
+        static_folder="../static",
+        static_url_path="/static",
+        template_folder="templates",
     )
     app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
     app.jinja_options = JINJA_ENV_CONFIG  # Overload config
@@ -97,7 +101,9 @@ def _patch_server_header(backend_config: BackendConfig, hyper_config: HyperConfi
     # ...then patch `response_headers()` to add our custom server header
     vanilla_response_headers = hyper_config.response_headers
 
-    def response_headers_with_parsec_server_header(protocol: str) -> List[Tuple[bytes, bytes]]:
+    def response_headers_with_parsec_server_header(
+        protocol: str,
+    ) -> List[Tuple[bytes, bytes]]:
         headers = vanilla_response_headers(protocol)
         headers.append(server_header_tuple)
         return headers
@@ -123,7 +129,8 @@ async def serve_backend_with_asgi(
             # Timestamp is added by the log processor configured in `parsec.logging`,
             # here we configure peer address + req line + rep status + rep body size + time
             # (e.g. "GET 88.0.12.52:54160 /foo 1.1 404 823o 12343ms")
-            "access_log_format": "%(h)s %(r)s %(s)s %(b)so %(D)sus",
+            "logger_class": ParsecLogger,
+            "access_log_format": "%(h)s %(r)s %(s)s %(b)so %(D)sus %(author)s",
             "errorlog": logging.getLogger("hypercorn.error"),
             "certfile": str(ssl_certfile) if ssl_certfile else None,
             "keyfile": str(ssl_keyfile) if ssl_certfile else None,

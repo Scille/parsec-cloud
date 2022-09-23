@@ -57,7 +57,11 @@ ld_no_device_label_no_human_handle = LocalDevice(
     local_symkey=ALICE.local_symkey,
 )
 ld_no_device_label_no_human_handle = KEY.encrypt(ld_no_device_label_no_human_handle.dump())
-display("local device no device_label/human_handle", ld_no_device_label_no_human_handle, [KEY])
+display(
+    "local device no device_label/human_handle",
+    ld_no_device_label_no_human_handle,
+    [KEY],
+)
 
 ld_legagacy_admin = {
     "organization_addr": ALICE.organization_addr.to_url(),

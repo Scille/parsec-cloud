@@ -210,7 +210,10 @@ def configure_logging(log_level: str, log_format: str, log_stream: TextIO) -> No
     structlog.configure(**config)
     root_stdlib_logger = logging.getLogger()
     configure_stdlib_logger(
-        root_stdlib_logger, log_level=log_level, log_format=log_format, log_stream=log_stream
+        root_stdlib_logger,
+        log_level=log_level,
+        log_format=log_format,
+        log_stream=log_stream,
     )
 
 

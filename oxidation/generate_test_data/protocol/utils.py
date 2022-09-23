@@ -68,7 +68,16 @@ BOB = generate_BOB_local_device()
 KEY = SecretKey(unhexlify("b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"))
 
 
-KEYS_PRIORITY = ("type", "author", "timestamp", "name", "id", "version", "created", "updated")
+KEYS_PRIORITY = (
+    "type",
+    "author",
+    "timestamp",
+    "name",
+    "id",
+    "version",
+    "created",
+    "updated",
+)
 
 
 def custom_order_iter(d):
@@ -123,7 +132,8 @@ def _format_item(value, max_width):
             item_repr = " " * INDENT_SIZE
             item_repr += f"{item_key}: "
             item_repr += _indent(
-                _format_item(item_value, max_width=max_width - INDENT_SIZE), indent_first_line=False
+                _format_item(item_value, max_width=max_width - INDENT_SIZE),
+                indent_first_line=False,
             )
             output += item_repr
             output += "\n"

@@ -1,6 +1,12 @@
 from typing import Optional, Tuple
 from parsec._parsec_pyi.addrs import BackendOrganizationAddr
-from parsec._parsec_pyi.crypto import PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey
+from parsec._parsec_pyi.crypto import (
+    PrivateKey,
+    PublicKey,
+    SecretKey,
+    SigningKey,
+    VerifyKey,
+)
 from parsec._parsec_pyi.ids import (
     DeviceID,
     DeviceLabel,

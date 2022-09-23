@@ -1,22 +1,27 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use pyo3::{
-    basic::CompareOp,
     exceptions::PyValueError,
     prelude::{pyclass, pyfunction, pymethods, IntoPy, PyModule, PyObject, PyResult, Python},
     types::{IntoPyDict, PyAny, PyBytes, PyDict, PyList, PyString, PyTuple, PyType},
 };
 use uuid::Uuid;
 
+#[allow(deprecated)]
 use crate::{
     api_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey},
-    binding_utils::{comp_op, hash_generic, py_to_rs_user_profile},
+    binding_utils::py_to_rs_user_profile,
     ids::{DeviceID, DeviceLabel, EntryID, HumanHandle},
 };
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub(crate) struct InvitationToken(pub libparsec::types::InvitationToken);
+
+crate::binding_utils::gen_proto!(InvitationToken, __repr__);
+crate::binding_utils::gen_proto!(InvitationToken, __str__);
+crate::binding_utils::gen_proto!(InvitationToken, __richcmp__, eq);
+crate::binding_utils::gen_proto!(InvitationToken, __hash__);
 
 #[pymethods]
 impl InvitationToken {
@@ -54,24 +59,6 @@ impl InvitationToken {
         Ok(self.0.to_string())
     }
 
-    fn __richcmp__(&self, py: Python, other: &InvitationToken, op: CompareOp) -> PyResult<bool> {
-        let h1 = self.__hash__(py).unwrap();
-        let h2 = other.__hash__(py).unwrap();
-        comp_op(op, h1, h2)
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.as_hyphenated())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<EntryID '{}'>", self.0.as_hyphenated()))
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(&self.0.as_hyphenated(), py)
-    }
-
     #[classmethod]
     fn from_bytes(_cls: &PyType, bytes: &PyBytes) -> PyResult<Self> {
         let b = bytes.as_bytes();
@@ -95,8 +82,12 @@ impl InvitationToken {
 */
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
 pub struct SASCode(pub libparsec::types::SASCode);
+
+crate::binding_utils::gen_proto!(SASCode, __repr__);
+crate::binding_utils::gen_proto!(SASCode, __str__);
+crate::binding_utils::gen_proto!(SASCode, __richcmp__, ord);
+crate::binding_utils::gen_proto!(SASCode, __hash__);
 
 #[pymethods]
 impl SASCode {
@@ -114,27 +105,6 @@ impl SASCode {
             Ok(sas) => Ok(Self(sas)),
             Err(err) => Err(PyValueError::new_err(err)),
         }
-    }
-
-    fn __richcmp__(&self, py: Python, other: &SASCode, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => (self.0 == other.0).into_py(py),
-            CompareOp::Ne => (self.0 != other.0).into_py(py),
-            CompareOp::Lt => (self.0 < other.0).into_py(py),
-            _ => py.NotImplemented(),
-        }
-    }
-
-    fn __hash__(&self, py: Python) -> PyResult<isize> {
-        hash_generic(self.0.as_ref(), py)
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("<SASCode {}>", self.0))
     }
 
     #[getter]
@@ -184,8 +154,9 @@ pub fn generate_sas_code_candidates<'p>(
 */
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
 pub struct InviteUserData(pub libparsec::types::InviteUserData);
+
+crate::binding_utils::gen_proto!(InviteUserData, __repr__);
 
 #[pymethods]
 impl InviteUserData {
@@ -258,8 +229,9 @@ impl InviteUserData {
 */
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
 pub struct InviteUserConfirmation(pub libparsec::types::InviteUserConfirmation);
+
+crate::binding_utils::gen_proto!(InviteUserConfirmation, __repr__);
 
 #[pymethods]
 impl InviteUserConfirmation {
@@ -338,8 +310,9 @@ impl InviteUserConfirmation {
 */
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
 pub struct InviteDeviceData(pub libparsec::types::InviteDeviceData);
+
+crate::binding_utils::gen_proto!(InviteDeviceData, __repr__);
 
 #[pymethods]
 impl InviteDeviceData {
@@ -392,8 +365,9 @@ impl InviteDeviceData {
 */
 
 #[pyclass]
-#[derive(PartialEq, Eq)]
 pub struct InviteDeviceConfirmation(pub libparsec::types::InviteDeviceConfirmation);
+
+crate::binding_utils::gen_proto!(InviteDeviceConfirmation, __repr__);
 
 #[pymethods]
 impl InviteDeviceConfirmation {

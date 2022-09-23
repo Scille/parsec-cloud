@@ -11,7 +11,11 @@ from parsec.api.data import (
 )
 from parsec.api.protocol import HumanHandle, DeviceLabel, UserProfile
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
-from parsec.core.types import LocalDevice, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
+from parsec.core.types import (
+    LocalDevice,
+    BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr,
+)
 from parsec.core.local_device import generate_new_device
 from parsec.core.backend_connection import (
     apiv1_backend_anonymous_cmds_factory,
@@ -84,7 +88,9 @@ async def bootstrap_organization(
 
     if sequester_authority_verify_key:
         sequester_authority_certificate = SequesterAuthorityCertificate(
-            author=None, timestamp=timestamp, verify_key_der=sequester_authority_verify_key
+            author=None,
+            timestamp=timestamp,
+            verify_key_der=sequester_authority_verify_key,
         )
         sequester_authority_certificate = sequester_authority_certificate.dump_and_sign(
             root_signing_key

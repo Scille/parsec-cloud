@@ -3,11 +3,10 @@
 import pytest
 import trio
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, InvitationType, InviteListRepOk
 from parsec.api.protocol import (
     DeviceLabel,
     HumanHandle,
-    InvitationType,
     InvitationDeletedReason,
     InvitationStatus,
     UserProfile,
@@ -46,7 +45,7 @@ async def test_good_device_claim(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE(),
         token=invitation.token,
     )
 
@@ -132,7 +131,7 @@ async def test_good_device_claim(
 
     # Now invitation should have been deleted
     rep = await alice_backend_cmds.invite_list()
-    assert rep == {"status": "ok", "invitations": []}
+    assert rep == InviteListRepOk([])
 
     # Verify user&device data in backend
     _, device = await backend.user.get_user_with_device(
@@ -187,7 +186,7 @@ async def test_good_user_claim(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER,
+        invitation_type=InvitationType.USER(),
         token=invitation.token,
     )
 
@@ -292,7 +291,7 @@ async def test_good_user_claim(
 
     # Now invitation should have been deleted
     rep = await alice_backend_cmds.invite_list()
-    assert rep == {"status": "ok", "invitations": []}
+    assert rep == InviteListRepOk([])
 
     # Verify user&device data in backend
     user, device = await backend.user.get_user_with_device(
@@ -345,7 +344,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE(),
         token=invitation.token,
     )
 
@@ -417,7 +416,7 @@ async def test_claimer_handle_cancel_event(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE(),
         token=invitation.token,
     )
 
@@ -524,7 +523,7 @@ async def test_claimer_handle_command_failure(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.DEVICE(),
         token=invitation.token,
     )
 
@@ -621,7 +620,7 @@ async def test_user_claim_but_active_users_limit_reached(backend, running_backen
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER,
+        invitation_type=InvitationType.USER(),
         token=invitation.token,
     )
 
