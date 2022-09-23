@@ -2,8 +2,6 @@ pub mod collection;
 pub mod custom_type;
 pub mod field;
 pub mod major_minor_version;
-#[cfg(test)]
-mod tests;
 
 pub use collection::ProtocolCollection;
 pub use custom_type::{CustomEnum, CustomStruct, CustomType, Variant};
