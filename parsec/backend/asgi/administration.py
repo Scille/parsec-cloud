@@ -30,6 +30,38 @@ if TYPE_CHECKING:
 administration_bp = Blueprint("administration_api", __name__)
 
 
+def _convert_server_stats_results_as_csv(results) -> str:
+    with StringIO(newline="") as memory_file:
+        writer = csv.writer(memory_file)
+        # Header
+        writer.writerow(
+            [
+                "id",
+                "data_size",
+                "metadata_size",
+                "realms",
+                "users",
+                "admin_count_active",
+                "standard_count_active",
+                "outsider_count_active",
+                "admin_count_revoked",
+                "standard_count_revoked",
+                "outsider_count_revoked",
+            ]
+        )
+
+        for row in results:
+            user_values = list()
+            for value in row["user_per_profiles"].values():
+                user_values.extend(value.values())
+            row.pop("user_per_profiles")
+            writer.writerow(
+                [row["id"], row["data_size"], row["metadata_size"], row["realms"], row["users"]]
+                + user_values
+            )
+        return memory_file.getvalue()
+
+
 def administration_authenticated(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs):
@@ -160,9 +192,8 @@ async def administration_organization_stat(raw_organization_id: str):
 async def administration_server_stats():
     backend: "BackendApp" = g.backend
 
-    for arg in ["format", "from"]:
-        if arg not in request.args:
-            return await json_abort({"error": f"missing query argument '{arg}'"}, 400)
+    if "format" not in request.args:
+        return await json_abort({"error": f"missing query argument 'format'"}, 400)
 
     if request.args["format"] not in {"csv", "json"}:
         return await json_abort(
@@ -170,47 +201,22 @@ async def administration_server_stats():
         )
 
     try:
-        from_date = DateTime.from_rfc3339(request.args["from"])
+        from_date = (
+            DateTime.from_rfc3339(request.args["from"])
+            if "from" in request.args
+            else DateTime(1900, 1, 1, 0, 0, 0)
+        )
         to_date = (
             DateTime.from_rfc3339(request.args["to"]) if "to" in request.args else DateTime.now()
         )
         assert from_date < to_date
         results = await backend.organization.server_stats(from_date, to_date)
-    except ValueError as e:
-        print(e)
+    except ValueError:
         return await json_abort({"error": "bad timestamp"}, 400)
     except AssertionError:
         return await json_abort({"error": f"{from_date} to {to_date} is not a valid range"}, 400)
 
     if request.args["format"] == "csv":
-        with StringIO(newline="") as memory_file:
-            writer = csv.writer(memory_file)
-            # Header
-            writer.writerow(
-                [
-                    "id",
-                    "data_size",
-                    "metadata_size",
-                    "realms",
-                    "users",
-                    "admin_count_active",
-                    "standard_count_active",
-                    "outsider_count_active",
-                    "admin_count_revoked",
-                    "standard_count_revoked",
-                    "outsider_count_revoked",
-                ]
-            )
-
-            for row in results:
-                user_values = list()
-                for value in row["user_per_profiles"].values():
-                    user_values.extend(value.values())
-                row.pop("user_per_profiles")
-                writer.writerow(
-                    [row["id"], row["data_size"], row["metadata_size"], row["realms"], row["users"]]
-                    + user_values
-                )
-            return memory_file.getvalue()
+        return _convert_server_stats_results_as_csv(results)
 
     return {"stats": results}

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Optional
 import click
+import urllib.parse
 
 from parsec.utils import DateTime, trio_run
 from parsec.api.protocol import OrganizationID
@@ -32,14 +33,19 @@ async def _stats_organization(
 async def _stats_server(
     backend_addr: BackendAddr,
     administration_token: str,
-    from_date: DateTime,
-    to_date: DateTime,
+    from_date: Optional[DateTime],
+    to_date: Optional[DateTime],
     output: Optional[str],
     format: str,
 ) -> None:
-    url = backend_addr.to_http_domain_url(
-        f"/administration/stats?format={format}&from={from_date.to_rfc3339()}&to={to_date.to_rfc3339()}"
-    )
+    query_args = {"format": format}
+    if from_date is not None:
+        query_args["from"] = from_date.to_rfc3339()
+    if to_date is not None:
+        query_args["to"] = to_date.to_rfc3339()
+
+    url = backend_addr.to_http_domain_url("/administration/stats")
+    url += f"?{urllib.parse.urlencode(query_args)}"
     rep = await http_request(
         url=url, method="GET", headers={"authorization": f"Bearer {administration_token}"}
     )
@@ -53,6 +59,9 @@ async def _stats_server(
 
 
 def _validate_date(ctx, param, value):
+    if value is None:
+        return
+
     try:
         return DateTime.from_rfc3339(value)
     except ValueError as e:
@@ -77,29 +86,33 @@ def stats_organization(
 
 @click.command(short_help="Get a per-organization report of server usage within a period of time")
 @click.option("--addr", "-B", required=True, type=BackendAddr.from_url, envvar="PARSEC_ADDR")
-@click.option("--admin-token", "-T", required=True, envvar="PARSEC_ADMINISTRATION_TOKEN")
+@click.option(
+    "--admin-token",
+    "-T",
+    required=True,
+    envvar="PARSEC_ADMINISTRATION_TOKEN",
+    help="Passing the admin token as an argument represents a security risk, prefer using the environment variable for that.",
+)
 @click.option(
     "--date-from",
-    required=True,
     type=click.UNPROCESSED,
     callback=_validate_date,
     help="A RFC 3339 compliant timestamp eg. (2020-12-09 16:09:53+00:00).",
 )
 @click.option(
     "--date-to",
-    default=DateTime.now().to_rfc3339(),
     type=click.UNPROCESSED,
     callback=_validate_date,
     help="A RFC 3339 compliant timestamp eg. (2020-12-09 16:09:53+00:00)",
 )
 @click.option("--output", type=str)
-@click.option("--format", default="json")
+@click.option("--format", default="json", type=click.Choice(["json", "csv"]))
 @cli_command_base_options
 def stats_server(
     addr: BackendAddr,
     admin_token: str,
-    date_from: DateTime,
-    date_to: DateTime,
+    date_from: Optional[DateTime],
+    date_to: Optional[DateTime],
     output: str,
     format: str,
     debug: bool,

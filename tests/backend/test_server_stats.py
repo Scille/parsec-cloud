@@ -89,18 +89,6 @@ async def test_bad_requests(backend_asgi_app):
     assert rep.status == "400 BAD REQUEST"
     assert await rep.get_json() == {"error": "missing query argument 'format'"}
 
-    # Missing from
-    rep = await client.get(
-        "/administration/stats",
-        headers=HEADERS,
-        query_string={
-            "format": "csv",
-            "to": DateTime(2021, 1, 1, 1, 1, 1).to_rfc3339(),
-        },
-    )
-    assert rep.status == "400 BAD REQUEST"
-    assert await rep.get_json() == {"error": "missing query argument 'from'"}
-
     # Bad format
     rep = await client.get(
         "/administration/stats",
@@ -134,7 +122,7 @@ async def test_json_server_no_to_date(backend_asgi_app, realm, alice):
     rep = await client.get(
         "/administration/stats",
         headers=HEADERS,
-        query_string={"format": "json", "from": DateTime(2021, 1, 1, 0, 0, 0).to_rfc3339()},
+        query_string={"format": "json", "from": DateTime(1900, 1, 1, 0, 0, 0).to_rfc3339()},
     )
     assert rep.status_code == 200
     content = await rep.get_json()
@@ -311,7 +299,7 @@ async def test_json_server_stats_csv(backend_asgi_app, realm, alice):
     json_rep = await server_stats(client, HEADERS, from_date=FROM_DATE, to_date=TO_DATE)
     first_size, second_size, third_size = (org["metadata_size"] for org in json_rep["stats"])
     rep = await server_stats(client, HEADERS, from_date=FROM_DATE, to_date=TO_DATE, format="csv")
-    # We use Excel like CSV that use carriage returns '\r\n'
+    # We use Excel like CSV that use carriage return and line feed ('\r\n') as line separator
     assert (
         rep
         == f"""id,data_size,metadata_size,realms,users,admin_count_active,standard_count_active,outsider_count_active,admin_count_revoked,standard_count_revoked,outsider_count_revoked\r
