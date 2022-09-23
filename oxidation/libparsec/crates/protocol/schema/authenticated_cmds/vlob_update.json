@@ -122,6 +122,22 @@
                     "type": "String"
                 }
             ]
+        },
+        {
+            "status": "sequester_webhook_failed",
+            "other_fields": [{
+                    "name": "service_id",
+                    "type": "SequesterServiceID"
+                },
+                {
+                    "name": "service_label",
+                    "type": "String"
+                },
+                {
+                    "name": "service_error",
+                    "type": "String"
+                }
+            ]
         }
     ]
 }

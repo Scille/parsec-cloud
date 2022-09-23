@@ -143,6 +143,12 @@ gen_rep!(
         service_label: String,
         service_error: String
     ],
+    [
+        SequesterWebhookFailed,
+        service_id: SequesterServiceID,
+        service_label: String,
+        service_error: String
+    ],
 );
 
 #[pyclass(extends=VlobCreateRep)]
@@ -419,6 +425,12 @@ gen_rep!(
     ],
     [
         SequesterRejected,
+        service_id: SequesterServiceID,
+        service_label: String,
+        service_error: String
+    ],
+    [
+        SequesterWebhookFailed,
         service_id: SequesterServiceID,
         service_label: String,
         service_error: String
