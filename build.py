@@ -51,7 +51,7 @@ def build():
 
     release = "--release" if in_cibuildwheel() or force_maturin_release() else ""
     with tempfile.TemporaryDirectory() as distdir:
-        run(f"maturin build {release} --out {distdir}")
+        run(f"maturin build {release} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}")
 
         outputs = list(pathlib.Path(distdir).iterdir())
         if len(outputs) != 1:
