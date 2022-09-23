@@ -1,16 +1,61 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
+import trio
+import resource
+import structlog
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import initialize, rule
 
 from parsec.api.data import EntryName
+from parsec._parsec import LocalDevice
 
 from tests.common import FileOracle
 
 
 BLOCK_SIZE = 16
 PLAYGROUND_SIZE = BLOCK_SIZE * 10
+
+
+@pytest.mark.trio
+@pytest.mark.slow
+async def test_leak_opened_file(user_fs_online_state_machine, alice: LocalDevice):
+    LOGGER = structlog.getLogger(test_leak_opened_file.__name__)
+
+    class FSOnlineRwFileAndAsync(user_fs_online_state_machine):
+        async def init(self):
+            await self.reset_all()
+            await self.start_backend()
+            self.device = self.correct_addr(alice)
+            await self.restart_user_fs(self.device)
+            self.wid = await self.user_fs.workspace_create(EntryName("w"))
+
+        async def restart(self):
+            await self.restart_user_fs(self.device)
+
+        def get_root_nursery(self):
+            return nursery
+
+        @rule()
+        async def ignore(self):
+            pass
+
+    m = n = 100
+
+    PREVIOUS_LIMIT = resource.getrlimit(resource.RLIMIT_NOFILE)
+    resource.setrlimit(resource.RLIMIT_NOFILE, (1024, PREVIOUS_LIMIT[1]))
+    try:
+        async with trio.open_nursery() as nursery:
+            instance = FSOnlineRwFileAndAsync()
+            for i in range(m):
+                LOGGER.debug(f"Loop init", i=i)
+                await instance.init()
+                for j in range(n):
+                    LOGGER.debug("Loop rest", i=i, j=j)
+                    await instance.restart()
+            nursery.cancel_scope.cancel()
+    finally:
+        resource.setrlimit(resource.RLIMIT_NOFILE, PREVIOUS_LIMIT)
 
 
 @pytest.mark.slow
