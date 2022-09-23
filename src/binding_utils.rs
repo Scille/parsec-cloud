@@ -183,6 +183,14 @@ macro_rules! gen_proto {
             }
         }
     };
+    ($class: ident, __repr__, pyref) => {
+        #[pymethods]
+        impl $class {
+            fn __repr__(_self: PyRef<'_, Self>) -> ::pyo3::PyResult<String> {
+                Ok(format!("{:?}", _self.as_ref().0))
+            }
+        }
+    };
     ($class: ident, __str__) => {
         #[pymethods]
         impl $class {
@@ -212,6 +220,18 @@ macro_rules! gen_proto {
                 op: ::pyo3::pyclass::CompareOp,
             ) -> ::pyo3::PyResult<bool> {
                 crate::binding_utils::comp_ord(op, &self.0, &other.0)
+            }
+        }
+    };
+    ($class: ident, __richcmp__, eq_pyref) => {
+        #[pymethods]
+        impl $class {
+            fn __richcmp__(
+                _self: PyRef<'_, Self>,
+                other: PyRef<'_, Self>,
+                op: ::pyo3::pyclass::CompareOp,
+            ) -> ::pyo3::PyResult<bool> {
+                crate::binding_utils::comp_eq(op, &_self.as_ref().0, &other.as_ref().0)
             }
         }
     };

@@ -33,6 +33,8 @@ impl AuthenticatedAnyCmdReq {
         Ok(match cmd {
             AnyCmdReq::BlockRead(x) => BlockReadReq(x).into_py(py),
             AnyCmdReq::BlockCreate(x) => BlockCreateReq(x).into_py(py),
+            AnyCmdReq::EventsListen(x) => EventsListenReq(x).into_py(py),
+            AnyCmdReq::EventsSubscribe(x) => EventsSubscribeReq(x).into_py(py),
             AnyCmdReq::MessageGet(x) => MessageGetReq(x).into_py(py),
             AnyCmdReq::OrganizationStats(x) => OrganizationStatsReq(x).into_py(py),
             AnyCmdReq::OrganizationConfig(x) => OrganizationConfigReq(x).into_py(py),

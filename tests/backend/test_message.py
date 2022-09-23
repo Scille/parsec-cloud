@@ -6,8 +6,11 @@ from parsec._parsec import (
     DateTime,
     MessageGetRepOk,
     Message,
+    EventsListenRepOkMessageReceived,
+    EventsListenRepOk,
+    EventsListenRepNoEvents,
 )
-from parsec.api.protocol import message_get_serializer, APIEvent
+from parsec.api.protocol import message_get_serializer
 from parsec.backend.asgi import app_factory
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.config import PostgreSQLBlockStoreConfig
@@ -30,7 +33,7 @@ async def test_message_from_bob_to_alice(backend, alice, bob, alice_ws):
             bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from Bob !"
         )
 
-    assert listen.rep == {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 1}
+    assert listen.rep == EventsListenRepOk(EventsListenRepOkMessageReceived(1))
 
     rep = await message_get(alice_ws)
     assert rep == MessageGetRepOk(
@@ -77,7 +80,7 @@ async def test_message_from_bob_to_alice_multi_backends(
                     bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from Bob !"
                 )
 
-            assert listen.rep == {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 1}
+            assert listen.rep == EventsListenRepOkMessageReceived(1)
 
             rep = await message_get(alice_ws)
             assert rep == MessageGetRepOk(
@@ -117,9 +120,9 @@ async def test_message_received_event(backend, alice_ws, alice, bob):
         await events_listen_nowait(alice_ws),
     ]
     assert reps == [
-        {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 1},
-        {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 2},
-        {"status": "no_events"},
+        EventsListenRepOk(EventsListenRepOkMessageReceived(1)),
+        EventsListenRepOk(EventsListenRepOkMessageReceived(2)),
+        EventsListenRepNoEvents(),
     ]
 
     # Message to self also trigger event (not as silly as at sound: see workspace reencryption)
@@ -133,6 +136,6 @@ async def test_message_received_event(backend, alice_ws, alice, bob):
 
     reps = [await events_listen_nowait(alice_ws), await events_listen_nowait(alice_ws)]
     assert reps == [
-        {"status": "ok", "event": APIEvent.MESSAGE_RECEIVED, "index": 3},
-        {"status": "no_events"},
+        EventsListenRepOk(EventsListenRepOkMessageReceived(3)),
+        EventsListenRepNoEvents(),
     ]

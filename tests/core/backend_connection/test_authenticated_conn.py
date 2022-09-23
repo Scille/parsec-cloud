@@ -3,9 +3,14 @@
 import pytest
 import trio
 
-from parsec._parsec import AuthenticatedPingRepOk
+from parsec._parsec import (
+    AuthenticatedPingRepOk,
+    EventsListenRepOkRealmRolesUpdated,
+    EventsListenRepOkVlobsUpdated,
+    RealmID,
+)
 from parsec.api.data import EntryName
-from parsec.api.protocol import RealmRole
+from parsec.api.protocol import RealmRole, VlobID
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.utils import ClientType
 from parsec.core.types import OrganizationConfig
@@ -305,16 +310,12 @@ async def test_realm_notif_on_new_workspace_sync(
         await spy.wait_multiple_with_timeout(
             [
                 # Access to newly created realm
-                (CoreEvent.BACKEND_REALM_ROLES_UPDATED, {"realm_id": wid, "role": RealmRole.OWNER}),
-                # New realm workspace manifest created
-                (
-                    CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
-                    {"realm_id": wid, "checkpoint": 1, "src_id": wid, "src_version": 1},
+                EventsListenRepOkRealmRolesUpdated(RealmID.from_bytes(wid.bytes), RealmRole.OWNER),
+                EventsListenRepOkVlobsUpdated(
+                    RealmID.from_bytes(wid.bytes), 1, VlobID.from_bytes(wid.bytes), 1
                 ),
-                # User manifest updated
-                (
-                    CoreEvent.BACKEND_REALM_VLOBS_UPDATED,
-                    {"realm_id": uid, "checkpoint": 2, "src_id": uid, "src_version": 2},
+                EventsListenRepOkVlobsUpdated(
+                    RealmID.from_bytes(uid.bytes), 2, VlobID.from_bytes(uid.bytes), 2
                 ),
             ]
         )

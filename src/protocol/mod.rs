@@ -2,6 +2,7 @@
 
 mod block;
 mod cmds;
+mod events;
 mod invite;
 mod message;
 mod organization;
@@ -10,7 +11,8 @@ mod realm;
 mod vlob;
 
 pub use block::*;
-pub use cmds::{AuthenticatedAnyCmdReq, InvitedAnyCmdReq};
+pub use cmds::*;
+pub use events::*;
 pub use invite::*;
 pub use message::*;
 pub use organization::*;

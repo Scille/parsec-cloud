@@ -4,6 +4,7 @@ import pytest
 from unittest.mock import ANY
 from parsec._parsec import (
     DateTime,
+    EventsListenRepOkInviteStatusChanged,
     InvitationDeletedReason,
     InvitationEmailSentStatus,
     InvitationType,
@@ -26,7 +27,6 @@ from parsec.backend.backend_events import BackendEvent
 from parsec.api.protocol import (
     InvitationStatus,
     HandshakeBadIdentity,
-    APIEvent,
     UserProfile,
 )
 
@@ -74,12 +74,7 @@ async def test_user_new_invitation_and_info(
 
     async with real_clock_timeout():
         rep = await events_listen_wait(alice2_ws)
-    assert rep == {
-        "status": "ok",
-        "event": APIEvent.INVITE_STATUS_CHANGED,
-        "invitation_status": InvitationStatus.IDLE,
-        "token": token,
-    }
+    assert rep == EventsListenRepOkInviteStatusChanged(token, InvitationStatus.IDLE)
 
     rep = await invite_list(alice_ws)
 
@@ -137,12 +132,7 @@ async def test_device_new_invitation_and_info(
 
     async with real_clock_timeout():
         rep = await events_listen_wait(alice2_ws)
-    assert rep == {
-        "status": "ok",
-        "event": APIEvent.INVITE_STATUS_CHANGED,
-        "invitation_status": InvitationStatus.IDLE,
-        "token": token,
-    }
+    assert rep == EventsListenRepOkInviteStatusChanged(token, InvitationStatus.IDLE)
 
     rep = await invite_list(alice_ws)
     assert rep == InviteListRepOk(
@@ -367,12 +357,7 @@ async def test_delete_invitation(
 
     async with real_clock_timeout():
         rep = await events_listen_wait(alice2_ws)
-    assert rep == {
-        "status": "ok",
-        "event": APIEvent.INVITE_STATUS_CHANGED,
-        "invitation_status": InvitationStatus.DELETED,
-        "token": invitation.token,
-    }
+    assert rep == EventsListenRepOkInviteStatusChanged(invitation.token, InvitationStatus.DELETED)
 
     # Deleted invitation are no longer visible
     rep = await invite_list(alice_ws)
