@@ -32,7 +32,7 @@ members = [
     "oxidation/libparsec",
     "oxidation/libparsec/crates/*",
     "oxidation/bindings/web",
-    "oxidation/bindings/neon",
+    "oxidation/bindings/electron",
     "oxidation/bindings/android/libparsec/rust",
 ]
 # Ignore bindings stuff given they are special snowflakes that require exotic toolchain and dependencies

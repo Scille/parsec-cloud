@@ -1,4 +1,4 @@
-# libparsec-neon-bindings
+# libparsec-electron-bindings
 
 ```shell
 npm install

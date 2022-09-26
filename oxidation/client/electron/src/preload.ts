@@ -1,9 +1,8 @@
 require('./rt/electron-rt');
 
+// User Defined Preload scripts below
+
 import { contextBridge } from 'electron';
+import libparsec from './libparsec';
 
-import libparsec = require('./libparsec');
-
-contextBridge.exposeInMainWorld('libparsec_plugin', {
-  submitJob: libparsec.submitJob
-});
+contextBridge.exposeInMainWorld('libparsec_plugin', libparsec);

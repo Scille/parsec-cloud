@@ -22,12 +22,13 @@
       <div id="container">
         <strong>Ready to create Parsec?</strong>
         <div>
+          <ion-input v-model="name" placeholder="Your name"></ion-input>,
           <ion-button @click="onSubmit">
             Let's go!
           </ion-button>
         </div>
         <div>
-          status: {{ status }}
+          {{ message }}
         </div>
       </div>
     </ion-content>
@@ -42,63 +43,34 @@ import {
   IonTitle,
   IonToolbar,
   IonButton,
+  IonInput,
   toastController
 } from '@ionic/vue';
 import { ref } from 'vue';
 import { libparsec } from '../plugins/libparsec';
-import { Buffer } from 'buffer';
 
-const status = ref('uninitialized');
-const key = ref(Uint8Array.from([213, 68, 246, 110, 206, 156, 133, 213, 184, 2, 117, 219, 145, 36,
-  181, 240, 75, 176, 56, 8, 22, 34, 190, 209, 57, 193, 231, 137, 197, 33, 116, 0]));
+const name = ref('Scruffy');
 const message = ref('bonyour!');
-const configDir = ref('/home/<user>/.config/parsec');
 
-async function onSubmit(): Promise<any> {
-  console.log('onSubmit !');
-  // Avoid concurrency modification
-  const keyValue = key.value;
-  const messageValue = message.value;
-  let encrypted = Uint8Array.from([]);
-  const configDirValue = configDir.value;
-
-  try {
-    const version = await libparsec.version();
-    console.log(version);
-
-    console.log('calling encrypt...');
-    encrypted = await libparsec.encrypt(keyValue, messageValue);
-
-    console.log('calling decrypt...');
-    const decrypted = await libparsec.decrypt(keyValue, encrypted);
-
-    if (decrypted !== messageValue) {
-      throw `Decrypted data differs from original data !\nDecrypted: ${decrypted}\nEncrypted: ${encrypted}`;
+async function onSubmit(): Promise<void> {
+  console.log(`calling helloWorld(${name.value})`);
+  const rep = await libparsec.helloWorld(name.value);
+  console.log('helloWorld returned', rep);
+  switch (rep.ok) {
+  case true:
+    message.value = rep.value;
+    break;
+  case false:
+    switch (rep.error.tag) {
+    case 'EmptySubject':
+      message.value = 'Where is your name ?';
+      break;
+    case 'YouAreADog':
+      message.value = `Who's a good boy ? ${rep.error.hello} ! You are !`;
+      break;
     }
-
-    console.log('calling list_availables_devices...');
-    const devices = await libparsec.listAvailableDevices(configDirValue);
-    console.log(devices);
-  } catch (error) {
-    console.log(error);
-    const errmsg = `Error: ${error.value}`;
-    status.value = errmsg;
-    console.log(errmsg);
-    const errtoast = await toastController.create({
-      message: 'Encryption/decryption error :\'-(',
-      duration: 2000
-    });
-    errtoast.present();
-    return;
+    break;
   }
-
-  const okmsg = `Encrypted message: ${Buffer.from(encrypted).toString('base64')}`;
-  status.value = okmsg;
-  const oktoast = await toastController.create({
-    message: 'All good ;-)',
-    duration: 2000
-  });
-  oktoast.present();
 }
 </script>
 
