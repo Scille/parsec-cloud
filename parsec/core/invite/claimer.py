@@ -130,9 +130,7 @@ INVALID_STATE_TYPES = (
     Invite1ClaimerWaitPeerRepInvalidState,
 )
 
-ACTIVE_USERS_LIMIT_REACHED_TYPES = (
-    UserCreateRepActiveUsersLimitReached,
-)
+ACTIVE_USERS_LIMIT_REACHED_TYPES = (UserCreateRepActiveUsersLimitReached,)
 
 OK_TYPES = (
     DeviceCreateRepOk,
