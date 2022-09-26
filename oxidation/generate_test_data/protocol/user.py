@@ -187,7 +187,6 @@ serialized = serializer.req_dumps(
 serializer.req_loads(serialized)
 display("human_find_req", serialized, [])
 
-serializer = human_find_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "human_find",
@@ -200,7 +199,18 @@ serialized = serializer.req_dumps(
 )
 display("human_find_req_page_0", serialized, [])
 
-serializer = human_find_serializer
+serialized = serializer.req_dumps(
+    {
+        "cmd": "human_find",
+        "query": "foobar",
+        "omit_revoked": False,
+        "omit_non_human": False,
+        "page": -1,
+        "per_page": 8,
+    }
+)
+display("human_find_req_page_-1", serialized, [])
+
 serialized = serializer.req_dumps(
     {
         "cmd": "human_find",
@@ -213,7 +223,6 @@ serialized = serializer.req_dumps(
 )
 display("human_find_req_per_page_0", serialized, [])
 
-serializer = human_find_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "human_find",
@@ -226,7 +235,6 @@ serialized = serializer.req_dumps(
 )
 display("human_find_req_per_page_101", serialized, [])
 
-serializer = human_find_serializer
 serialized = serializer.req_dumps(
     {
         "cmd": "human_find",

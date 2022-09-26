@@ -344,6 +344,20 @@ async def test_bad_args(access_testbed, local_device_factory):
             "5f7265766f6b6564c2a47061676500a87065725f7061676508a57175657279a6666f6f6261"
             "72"
         ),
+        # Generated from Python implementation (Parsec v2.12.1+dev)
+        # Content:
+        #   cmd: "human_find"
+        #   omit_non_human: false
+        #   omit_revoked: false
+        #   page: -1
+        #   per_page: 8
+        #   query: "foobar"
+        #
+        bytes.fromhex(
+            "86a3636d64aa68756d616e5f66696e64ae6f6d69745f6e6f6e5f68756d616ec2ac6f6d6974"
+            "5f7265766f6b6564c2a470616765ffa87065725f7061676508a57175657279a6666f6f6261"
+            "72"
+        ),
         # Generated from Python implementation (Parsec v2.11.1+dev)
         # Content:
         #   cmd: "human_find"
