@@ -30,6 +30,18 @@ pub struct Field {
 }
 
 #[cfg(test)]
+impl Default for Field {
+    fn default() -> Self {
+        Self {
+            name: "foo_type".to_string(),
+            ty: "String".to_string(),
+            introduced_in: None,
+            default: None,
+        }
+    }
+}
+
+#[cfg(test)]
 #[rstest::rstest]
 #[case::basic_field(
     r#"{"name": "Foo", "type": "String"}"#,

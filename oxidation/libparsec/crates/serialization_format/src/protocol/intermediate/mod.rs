@@ -106,6 +106,18 @@ impl Cmd {
 }
 
 #[cfg(test)]
+impl Default for Cmd {
+    fn default() -> Self {
+        Self {
+            label: "FooCmd".to_string(),
+            nested_types: vec![],
+            possible_responses: vec![],
+            req: parser::Request::default(),
+        }
+    }
+}
+
+#[cfg(test)]
 mod test {
     use std::collections::HashMap;
 
@@ -115,80 +127,6 @@ mod test {
 
     use pretty_assertions::assert_eq;
     use rstest::rstest;
-
-    impl Default for parser::Request {
-        fn default() -> Self {
-            Self {
-                cmd: "foo_cmd".to_string(),
-                unit: None,
-                other_fields: vec![],
-            }
-        }
-    }
-
-    impl Default for parser::Response {
-        fn default() -> Self {
-            Self {
-                status: "foo_response".to_string(),
-                unit: None,
-                other_fields: vec![],
-            }
-        }
-    }
-
-    impl Default for parser::CustomEnum {
-        fn default() -> Self {
-            Self {
-                discriminant_field: None,
-                label: "FooEnum".to_string(),
-                variants: vec![],
-            }
-        }
-    }
-
-    impl Default for parser::Variant {
-        fn default() -> Self {
-            Self {
-                discriminant_value: "type".to_string(),
-                fields: vec![],
-                name: "FooVariant".to_string(),
-            }
-        }
-    }
-
-    impl Default for parser::Field {
-        fn default() -> Self {
-            Self {
-                name: "foo_type".to_string(),
-                ty: "String".to_string(),
-                introduced_in: None,
-                default: None,
-            }
-        }
-    }
-
-    impl Default for parser::Cmd {
-        fn default() -> Self {
-            Self {
-                label: "FooCmd".to_string(),
-                major_versions: vec![],
-                req: parser::Request::default(),
-                nested_types: vec![],
-                possible_responses: vec![],
-            }
-        }
-    }
-
-    impl Default for Cmd {
-        fn default() -> Self {
-            Self {
-                label: "FooCmd".to_string(),
-                nested_types: vec![],
-                possible_responses: vec![],
-                req: parser::Request::default(),
-            }
-        }
-    }
 
     #[rstest]
     #[case::basic(parser::Cmd::default(), Cmd::default())]
