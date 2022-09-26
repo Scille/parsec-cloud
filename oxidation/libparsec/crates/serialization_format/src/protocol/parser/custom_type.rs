@@ -26,12 +26,34 @@ pub struct CustomEnum {
     pub variants: Vec<Variant>,
 }
 
+#[cfg(test)]
+impl Default for CustomEnum {
+    fn default() -> Self {
+        Self {
+            discriminant_field: None,
+            label: "FooEnum".to_string(),
+            variants: vec![],
+        }
+    }
+}
+
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]
 pub struct Variant {
     pub name: String,
     pub discriminant_value: String,
     pub fields: Vec<Field>,
+}
+
+#[cfg(test)]
+impl Default for Variant {
+    fn default() -> Self {
+        Self {
+            discriminant_value: "type".to_string(),
+            fields: vec![],
+            name: "FooVariant".to_string(),
+        }
+    }
 }
 
 #[cfg(test)]

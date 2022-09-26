@@ -26,12 +26,36 @@ pub struct Cmd {
     pub nested_types: Vec<CustomType>,
 }
 
+#[cfg(test)]
+impl Default for Cmd {
+    fn default() -> Self {
+        Self {
+            label: "FooCmd".to_string(),
+            major_versions: vec![],
+            req: Request::default(),
+            nested_types: vec![],
+            possible_responses: vec![],
+        }
+    }
+}
+
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]
 pub struct Request {
     pub cmd: String,
     pub unit: Option<String>,
     pub other_fields: Vec<Field>,
+}
+
+#[cfg(test)]
+impl Default for Request {
+    fn default() -> Self {
+        Self {
+            cmd: "foo_cmd".to_string(),
+            unit: None,
+            other_fields: vec![],
+        }
+    }
 }
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
@@ -41,4 +65,15 @@ pub struct Response {
     #[serde(default)]
     pub unit: Option<String>,
     pub other_fields: Vec<Field>,
+}
+
+#[cfg(test)]
+impl Default for Response {
+    fn default() -> Self {
+        Self {
+            status: "foo_response".to_string(),
+            unit: None,
+            other_fields: vec![],
+        }
+    }
 }
