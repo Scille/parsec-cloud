@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::basic::CompareOp;
 use pyo3::exceptions::PyValueError;
 use pyo3::import_exception;
 use pyo3::prelude::*;
@@ -11,6 +10,9 @@ import_exception!(nacl.exceptions, CryptoError);
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
 pub(crate) struct HashDigest(pub libparsec::crypto::HashDigest);
+
+crate::binding_utils::gen_proto!(HashDigest, __repr__);
+crate::binding_utils::gen_proto!(HashDigest, __richcmp__, eq);
 
 #[pymethods]
 impl HashDigest {
@@ -42,23 +44,14 @@ impl HashDigest {
     fn hexdigest(&self) -> PyResult<String> {
         Ok(self.0.hexdigest())
     }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("HashDigest({})", self.0.hexdigest()))
-    }
-
-    fn __richcmp__(&self, py: Python, value: &HashDigest, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => (self == value).into_py(py),
-            CompareOp::Ne => (self != value).into_py(py),
-            _ => py.NotImplemented(),
-        }
-    }
 }
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
 pub(crate) struct SigningKey(pub libparsec::crypto::SigningKey);
+
+crate::binding_utils::gen_proto!(SigningKey, __repr__);
+crate::binding_utils::gen_proto!(SigningKey, __richcmp__, eq);
 
 #[pymethods]
 impl SigningKey {
@@ -96,23 +89,14 @@ impl SigningKey {
     fn encode<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
         Ok(PyBytes::new(py, self.0.as_ref()))
     }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(String::from("SigningKey(<redacted>)"))
-    }
-
-    fn __richcmp__(&self, py: Python, value: &SigningKey, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => (self == value).into_py(py),
-            CompareOp::Ne => (self != value).into_py(py),
-            _ => py.NotImplemented(),
-        }
-    }
 }
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
 pub(crate) struct VerifyKey(pub libparsec::crypto::VerifyKey);
+
+crate::binding_utils::gen_proto!(VerifyKey, __repr__);
+crate::binding_utils::gen_proto!(VerifyKey, __richcmp__, eq);
 
 #[pymethods]
 impl VerifyKey {
@@ -158,18 +142,6 @@ impl VerifyKey {
         }
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(String::from("VerifyKey"))
-    }
-
-    fn __richcmp__(&self, py: Python, value: &VerifyKey, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => (self == value).into_py(py),
-            CompareOp::Ne => (self != value).into_py(py),
-            _ => py.NotImplemented(),
-        }
-    }
-
     fn encode<'p>(&self, py: Python<'p>) -> PyResult<&'p PyBytes> {
         Ok(PyBytes::new(py, self.0.as_ref()))
     }
@@ -182,6 +154,9 @@ impl VerifyKey {
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
 pub struct SecretKey(pub libparsec::crypto::SecretKey);
+
+crate::binding_utils::gen_proto!(SecretKey, __repr__);
+crate::binding_utils::gen_proto!(SecretKey, __richcmp__, eq);
 
 #[pymethods]
 impl SecretKey {
@@ -229,23 +204,14 @@ impl SecretKey {
     ) -> PyResult<&'p PyBytes> {
         Ok(PyBytes::new(py, &self.0.hmac(data, digest_size)))
     }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(String::from("SecretKey(<redacted>)"))
-    }
-
-    fn __richcmp__(&self, py: Python, value: &SecretKey, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => (self == value).into_py(py),
-            CompareOp::Ne => (self != value).into_py(py),
-            _ => py.NotImplemented(),
-        }
-    }
 }
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
 pub(crate) struct PrivateKey(pub libparsec::crypto::PrivateKey);
+
+crate::binding_utils::gen_proto!(PrivateKey, __repr__);
+crate::binding_utils::gen_proto!(PrivateKey, __richcmp__, eq);
 
 #[pymethods]
 impl PrivateKey {
@@ -277,23 +243,14 @@ impl PrivateKey {
     fn encode(&self) -> &[u8] {
         self.0.as_ref()
     }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(String::from("PrivateKey(<redacted>)"))
-    }
-
-    fn __richcmp__(&self, py: Python, value: &PrivateKey, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => (self == value).into_py(py),
-            CompareOp::Ne => (self != value).into_py(py),
-            _ => py.NotImplemented(),
-        }
-    }
 }
 
 #[pyclass]
 #[derive(PartialEq, Eq, Clone)]
 pub(crate) struct PublicKey(pub libparsec::crypto::PublicKey);
+
+crate::binding_utils::gen_proto!(PublicKey, __repr__);
+crate::binding_utils::gen_proto!(PublicKey, __richcmp__, eq);
 
 #[pymethods]
 impl PublicKey {
@@ -318,17 +275,5 @@ impl PublicKey {
 
     fn encode(&self) -> &[u8] {
         self.0.as_ref()
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(String::from("PublicKey(<redacted>)"))
-    }
-
-    fn __richcmp__(&self, py: Python, value: &PublicKey, op: CompareOp) -> PyObject {
-        match op {
-            CompareOp::Eq => (self == value).into_py(py),
-            CompareOp::Ne => (self != value).into_py(py),
-            _ => py.NotImplemented(),
-        }
     }
 }
