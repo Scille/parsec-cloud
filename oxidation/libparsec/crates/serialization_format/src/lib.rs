@@ -11,9 +11,10 @@ use std::{
 };
 
 use proc_macro::TokenStream;
+use quote::ToTokens;
 use syn::{parse_macro_input, LitStr};
 
-use protocol::parser::{Protocol, ProtocolCollection};
+use protocol::{intermediate, parser};
 
 /// Procedural macro that take a directory or a file path.
 ///
@@ -27,14 +28,14 @@ pub fn parsec_protocol(path: TokenStream) -> TokenStream {
     let collection = if path.is_dir() {
         let content = content_from_dir(&path)
             .unwrap_or_else(|_| panic!("Failed to get content from directory `{pathname}`",));
-        ProtocolCollection::with_protocols("foo", content)
+        parser::ProtocolCollection::with_protocols("foo", content)
     } else {
         let content = content_from_file(&path)
             .unwrap_or_else(|_| panic!("Failed to get content from file `{pathname}`"));
-        ProtocolCollection::with_protocol("foo", content)
+        parser::ProtocolCollection::with_protocol("foo", content)
     };
-    todo!();
-    // collection.quote().into()
+    let collection = intermediate::ProtocolCollection::from(collection);
+    collection.quote().into_token_stream().into()
 }
 
 pub(crate) fn path_from_str(path: &str) -> PathBuf {
@@ -45,14 +46,14 @@ pub(crate) fn path_from_str(path: &str) -> PathBuf {
     manifest_dir_path.join(path)
 }
 
-pub(crate) fn content_from_dir(path: &PathBuf) -> anyhow::Result<Vec<Protocol>> {
+pub(crate) fn content_from_dir(path: &PathBuf) -> anyhow::Result<Vec<parser::Protocol>> {
     let dir = std::fs::read_dir(path).expect("Cannot read the directory");
     dir.filter_map(|entry| entry.ok())
         .map(|entry| content_from_file(&entry.path()))
         .collect()
 }
 
-pub(crate) fn content_from_file(path: &PathBuf) -> anyhow::Result<Protocol> {
+pub(crate) fn content_from_file(path: &PathBuf) -> anyhow::Result<parser::Protocol> {
     let filename = path.to_string_lossy();
     let file = File::open(path)?;
     let buf = BufReader::new(file);
@@ -69,7 +70,10 @@ pub(crate) fn content_from_file(path: &PathBuf) -> anyhow::Result<Protocol> {
     content_from_str(&content, &filename)
 }
 
-pub(crate) fn content_from_str(content: &str, origin: &str) -> Result<Protocol, anyhow::Error> {
+pub(crate) fn content_from_str(
+    content: &str,
+    origin: &str,
+) -> Result<parser::Protocol, anyhow::Error> {
     serde_json::from_str(content)
         .map_err(|e| anyhow::Error::msg(e.to_string()).context(format!("current file `{origin}`")))
 }
