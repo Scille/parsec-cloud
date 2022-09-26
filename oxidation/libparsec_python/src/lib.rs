@@ -13,7 +13,6 @@ mod invite;
 mod local_device;
 mod local_manifest;
 mod manifest;
-mod protocol;
 mod storage;
 mod time;
 
@@ -22,12 +21,6 @@ mod time;
 /// import the module.
 #[pymodule]
 fn _libparsec(_py: Python, m: &PyModule) -> PyResult<()> {
-    // Events
-    m.add_class::<protocol::EventsListenReq>()?;
-    m.add_class::<protocol::EventsListenRep>()?;
-    m.add_class::<protocol::EventsSubscribeReq>()?;
-    m.add_class::<protocol::EventsSubscribeRep>()?;
-
     // Storage
     m.add_class::<storage::WorkspaceStorage>()?;
     Ok(())
