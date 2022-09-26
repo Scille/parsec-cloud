@@ -3,6 +3,7 @@
 import re
 import attr
 import fnmatch
+import itertools
 from pathlib import Path
 import importlib.resources
 from typing import Optional, Tuple, List, Pattern
@@ -80,6 +81,11 @@ def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Patte
         )
         return None
     try:
+        # We need to reset `fnmatch._nextgroupnum` in order to make the pattern
+        # of the form `*a*` stable.
+        # Note: the `_nextgroupnum` counter has been removed in python 3.11
+        if hasattr(fnmatch, "_nextgroupnum"):
+            fnmatch._nextgroupnum = itertools.count().__next__
         regex = []
         for line in data.splitlines():
             line = line.strip()
