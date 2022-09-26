@@ -28,6 +28,18 @@ pub struct Cmd {
     pub nested_types: Vec<CustomType>,
 }
 
+#[cfg(test)]
+impl Default for Cmd {
+    fn default() -> Self {
+        Self {
+            label: "FooCmd".to_string(),
+            nested_types: vec![],
+            possible_responses: vec![],
+            req: parser::Request::default(),
+        }
+    }
+}
+
 impl Cmd {
     pub fn from_parsed_cmd(cmd: parser::Cmd, version: u32) -> Self {
         let possible_responses = cmd
@@ -68,17 +80,25 @@ impl Cmd {
             nested_types,
         }
     }
+
+    pub fn command_name(&self) -> &str {
+        &self.req.cmd
+    }
 }
 
-#[cfg(test)]
-impl Default for Cmd {
-    fn default() -> Self {
-        Self {
-            label: "FooCmd".to_string(),
-            nested_types: vec![],
-            possible_responses: vec![],
-            req: parser::Request::default(),
+impl Cmd {
+    pub fn quote(&self) -> syn::ItemMod {
+        let module = self.req.quote_name();
+
+        syn::parse_quote! {
+            pub mod #module {
+                use super::AnyCmdReq;
+            }
         }
+    }
+
+    pub fn quote_label(&self) -> syn::Ident {
+        syn::parse_str(&self.label).expect("A valid command label")
     }
 }
 
