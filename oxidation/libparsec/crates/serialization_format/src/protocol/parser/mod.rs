@@ -58,6 +58,12 @@ impl Default for Request {
     }
 }
 
+impl Request {
+    pub fn quote_name(&self) -> syn::Ident {
+        syn::parse_str(&self.cmd).expect("A valid request cmd name")
+    }
+}
+
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]
 pub struct Response {
