@@ -22,7 +22,7 @@ pub struct Cmd {
     pub label: String,
     pub major_versions: Vec<u32>,
     pub req: Request,
-    pub possible_response: Vec<Response>,
+    pub possible_responses: Vec<Response>,
     pub nested_types: Vec<CustomType>,
 }
 
