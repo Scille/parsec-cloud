@@ -275,13 +275,13 @@ async def amain(
         )
         click.echo(
             f"""\
-A fresh backend server is now running: {backend_address}
+A fresh backend server is now running: {backend_address.to_url()}
 """
         )
     else:
         click.echo(
             f"""\
-Using existing backend: {backend_address}
+Using existing backend: {backend_address.to_url()}
 """
         )
 
