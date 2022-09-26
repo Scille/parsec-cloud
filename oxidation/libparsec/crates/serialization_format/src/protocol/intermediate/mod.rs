@@ -121,7 +121,7 @@ impl Default for Cmd {
 mod test {
     use std::collections::HashMap;
 
-    use crate::protocol::parser::{Field, MajorMinorVersion};
+    use crate::protocol::parser::Field;
 
     use super::{parser, Cmd, ProtocolCollection};
 
@@ -135,7 +135,7 @@ mod test {
             req: parser::Request {
                 other_fields: vec![
                     Field {
-                        introduced_in: Some(MajorMinorVersion { major: 0, minor: 4 }),
+                        introduced_in: Some("0.4".try_into().unwrap()),
                         ..Default::default()
                     }
                 ],
@@ -147,7 +147,7 @@ mod test {
             req: parser::Request {
                 other_fields: vec![
                     Field {
-                        introduced_in: Some(MajorMinorVersion { major: 0, minor: 4 }),
+                        introduced_in: Some("0.4".try_into().unwrap()),
                         ..Default::default()
                     }
                 ],
@@ -161,7 +161,7 @@ mod test {
             req: parser::Request {
                 other_fields: vec![
                     Field {
-                        introduced_in: Some(MajorMinorVersion { major: 2, minor: 4 }),
+                        introduced_in: Some("2.4".try_into().unwrap()),
                         ..Default::default()
                     }
                 ],
@@ -183,7 +183,7 @@ mod test {
                 parser::Response {
                     other_fields: vec![
                         Field {
-                            introduced_in: Some(MajorMinorVersion { major: 0, minor: 5 }),
+                            introduced_in: Some("0.5".try_into().unwrap()),
                             ..Default::default()
                         }
                     ],
@@ -197,7 +197,7 @@ mod test {
                 parser::Response {
                     other_fields: vec![
                         Field {
-                            introduced_in: Some(MajorMinorVersion { major: 0, minor: 5 }),
+                            introduced_in: Some("0.5".try_into().unwrap()),
                             ..Default::default()
                         }
                     ],
@@ -213,7 +213,7 @@ mod test {
                 parser::Response {
                     other_fields: vec![
                         Field {
-                            introduced_in: Some(MajorMinorVersion { major: 2, minor: 5 }),
+                            introduced_in: Some("2.5".try_into().unwrap()),
                             ..Default::default()
                         }
                     ],
@@ -240,7 +240,7 @@ mod test {
                         parser::Variant {
                             fields: vec![
                                 parser::Field {
-                                    introduced_in: Some(MajorMinorVersion { major: 0, minor: 2 }),
+                                    introduced_in: Some("0.2".try_into().unwrap()),
                                     ..Default::default()
                                 }
                             ],
@@ -259,7 +259,7 @@ mod test {
                         parser::Variant {
                             fields: vec![
                                 parser::Field {
-                                    introduced_in: Some(MajorMinorVersion { major: 0, minor: 2 }),
+                                    introduced_in: Some("0.2".try_into().unwrap()),
                                     ..Default::default()
                                 }
                             ],
@@ -280,7 +280,7 @@ mod test {
                         parser::Variant {
                             fields: vec![
                                 parser::Field {
-                                    introduced_in: Some(MajorMinorVersion { major: 6, minor: 2 }),
+                                    introduced_in: Some("6.2".try_into().unwrap()),
                                     ..Default::default()
                                 }
                             ],
@@ -314,7 +314,7 @@ mod test {
                     label: "Data".to_string(),
                     fields: vec![
                         parser::Field {
-                            introduced_in: Some(MajorMinorVersion { major: 0, minor: 1 }),
+                            introduced_in: Some("0.1".try_into().unwrap()),
                             ..Default::default()
                         }
                     ]
@@ -328,7 +328,7 @@ mod test {
                     label: "Data".to_string(),
                     fields: vec![
                         parser::Field {
-                            introduced_in: Some(MajorMinorVersion { major: 0, minor: 1 }),
+                            introduced_in: Some("0.1".try_into().unwrap()),
                             ..Default::default()
                         }
                     ]
@@ -344,7 +344,7 @@ mod test {
                     label: "Data".to_string(),
                     fields: vec![
                         parser::Field {
-                            introduced_in: Some(MajorMinorVersion { major: 3, minor: 1 }),
+                            introduced_in: Some("3.1".try_into().unwrap()),
                             ..Default::default()
                         }
                     ]
