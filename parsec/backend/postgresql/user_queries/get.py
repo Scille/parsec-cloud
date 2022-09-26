@@ -277,9 +277,9 @@ async def _get_trustchain(
         devices[row["_did"]] = row[device_certif_field]
 
     return Trustchain(
-        users=list(users.values()),
-        revoked_users=list(revoked_users.values()),
-        devices=list(devices.values()),
+        users=tuple(users.values()),
+        revoked_users=tuple(revoked_users.values()),
+        devices=tuple(devices.values()),
     )
 
 
