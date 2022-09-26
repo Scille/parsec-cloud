@@ -1,7 +1,8 @@
 #[cfg(test)]
 use pretty_assertions::assert_eq;
 
-use crate::protocol::parser::{self, CustomType, Request, Response};
+use super::{CustomType, Request, Response};
+use crate::protocol::parser;
 
 macro_rules! filter_out_future_fields {
     ($current_version:expr, $fields:expr) => {
