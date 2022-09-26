@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+// use std::collections::HashMap;
 
 use ::quote::quote;
 use proc_macro2::TokenStream;
