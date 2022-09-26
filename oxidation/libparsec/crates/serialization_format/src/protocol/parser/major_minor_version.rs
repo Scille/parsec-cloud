@@ -43,6 +43,6 @@ impl Display for MajorMinorVersion {
 #[case::minor_not_number("1.b", Err("Invalid minor value `b`: invalid digit found in string".to_string()))]
 #[case::empty_major(".2", Err("Invalid major value ``: cannot parse integer from empty string".to_string()))]
 #[case::empty_minor("1.", Err("Invalid minor value ``: cannot parse integer from empty string".to_string()))]
-fn major_minor_version(#[case] raw: &str, #[case] expected: Result<MajorMinorVersion, String>) {
+fn test_from_str(#[case] raw: &str, #[case] expected: Result<MajorMinorVersion, String>) {
     assert_eq!(MajorMinorVersion::try_from(raw), expected);
 }
