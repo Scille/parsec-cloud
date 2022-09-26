@@ -76,14 +76,21 @@ impl From<parser::ProtocolCollection> for ProtocolCollection {
         protocols: vec![
             parser::Protocol {
                 variants: vec![
-                    parser::Cmd::default()
+                    parser::Cmd {
+                        major_versions: vec![1,2,3],
+                        ..Default::default()
+                    }
                 ]
             }
         ]
     },
     ProtocolCollection {
         family: "FooCollection".to_string(),
-        versioned_cmds: HashMap::default(),
+        versioned_cmds: HashMap::from([
+            (1, vec![Cmd::default()]),
+            (2, vec![Cmd::default()]),
+            (3, vec![Cmd::default()])
+        ]),
     }
 )]
 fn test_protocol_conversion(
