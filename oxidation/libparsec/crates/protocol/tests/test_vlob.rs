@@ -9,7 +9,7 @@ use libparsec_protocol::*;
 use libparsec_types::{Maybe, ReencryptionBatchEntry};
 
 #[rstest]
-#[case::base(
+#[case::legacy(
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
@@ -37,7 +37,37 @@ use libparsec_types::{Maybe, ReencryptionBatchEntry};
         )
     )
 )]
-#[case::with_sequester_blob(
+#[case::without(
+    (
+        // Generated from Python implementation (Parsec v2.12.1+dev)
+        // Content:
+        //   timestamp: ext(1, 946774800.0)
+        //   blob: hex!("666f6f626172")
+        //   cmd: "vlob_create"
+        //   encryption_revision: 8
+        //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
+        //   sequester_blob: None
+        //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
+        //
+        &hex!(
+            "87a3636d64ab766c6f625f637265617465a87265616c6d5f6964d8021d3353157d7d4e95ad"
+            "2fdea7b3bd19c5b3656e6372797074696f6e5f7265766973696f6e08a7766c6f625f6964d8"
+            "022b5f314728134a12863da1ce49c112f6a974696d657374616d70d70141cc375188000000"
+            "a4626c6f62c406666f6f626172ae7365717565737465725f626c6f62c0"
+        )[..],
+        authenticated_cmds::AnyCmdReq::VlobCreate(
+            authenticated_cmds::vlob_create::Req {
+                realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+                encryption_revision: 8,
+                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+                blob: b"foobar".to_vec(),
+                sequester_blob: Maybe::Present(None),
+            }
+        )
+    )
+)]
+#[case::full(
     (
         // Generated from Python implementation (Parsec v2.11.1+dev)
         // Content:
@@ -372,7 +402,7 @@ fn serde_vlob_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_re
 
 #[rstest]
 #[rstest]
-#[case::base(
+#[case::legacy(
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
@@ -399,7 +429,37 @@ fn serde_vlob_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_re
         )
     )
 )]
-#[case::with_sequester_blob(
+#[case::without(
+    (
+        // Generated from Python implementation (Parsec v2.12.1+dev)
+        // Content:
+        //   timestamp: ext(1, 946774800.0)
+        //   version: 8
+        //   blob: hex!("666f6f626172")
+        //   cmd: "vlob_update"
+        //   encryption_revision: 8
+        //   sequester_blob: None
+        //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
+        //
+        &hex!(
+            "87a3636d64ab766c6f625f757064617465b3656e6372797074696f6e5f7265766973696f6e"
+            "08a7766c6f625f6964d8022b5f314728134a12863da1ce49c112f6a974696d657374616d70"
+            "d70141cc375188000000a776657273696f6e08a4626c6f62c406666f6f626172ae73657175"
+            "65737465725f626c6f62c0"
+        )[..],
+        authenticated_cmds::AnyCmdReq::VlobUpdate(
+            authenticated_cmds::vlob_update::Req {
+                encryption_revision: 8,
+                vlob_id: "2b5f314728134a12863da1ce49c112f6".parse().unwrap(),
+                timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+                version: 8,
+                blob: b"foobar".to_vec(),
+                sequester_blob: Maybe::Present(None),
+            }
+        )
+    )
+)]
+#[case::full(
     (
         // Generated from Python implementation (Parsec v2.11.1+dev)
         // Content:
