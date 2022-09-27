@@ -22,6 +22,8 @@ class CoreEvent(Enum):
     FS_ENTRY_UPDATED = "fs.entry.updated"
     FS_ENTRY_FILE_CONFLICT_RESOLVED = "fs.entry.file_conflict_resolved"
     FS_WORKSPACE_CREATED = "fs.workspace.created"
+    # Webhook
+    WEBHOOK_UPLOAD_REJECTED_ERROR = "webhook.upload_rejected_error"
     # Gui
     GUI_CONFIG_CHANGED = "gui.config.changed"
     # Mountpoint
