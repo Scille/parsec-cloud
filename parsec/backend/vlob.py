@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-import base64
 import json
 from typing import List, Tuple, Dict, Optional
 
@@ -210,17 +209,12 @@ async def extract_sequestered_data_and_proceed_webhook(
                 service_id=service.service_id, service_label=service.service_label
             )
 
-        to_webhook_data = {
-            "sequester_blob": base64.urlsafe_b64encode(sequester_data),
-            "author": author.str,
-            "encryption_revision": encryption_revision,
-            "vlob_id": vlob_id,
-            "timestamp": timestamp,
-            "organization_id": organization_id.str,
-        }
-        to_webhook_data = urllib.parse.urlencode(to_webhook_data).encode()
         try:
-            await http_request(url=service.webhook_url, method="POST", data=to_webhook_data)
+            await http_request(
+                url=f"{service.webhook_url}/{organization_id.str}",
+                method="POST",
+                data=sequester_data,
+            )
         except urllib.error.HTTPError as exc:
             if exc.code == 400:
                 body = json.loads(exc.read())
