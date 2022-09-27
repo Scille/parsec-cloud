@@ -564,14 +564,14 @@ fn serde_invite_1_greeter_wait_peer_rep(
 
 #[rstest]
 fn serde_invite_2a_claimer_send_hashed_nonce_req() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Python implementation (Parsec v2.10.0+dev)
     // Content:
     //   claimer_hashed_nonce: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
     //   cmd: "invite_2a_claimer_send_hashed_nonce"
     let raw = hex!(
         "82b4636c61696d65725f6861736865645f6e6f6e6365c420e37ce3b00a1f15b3de62029972"
-        "345420b76313a885c6ccc6e3b5547857b3ecc6a3636d64d92e696e766974655f32615f636c"
-        "61696d65725f73656e645f6861736865645f6e6f6e63655f686173685f6e6f6e6365"
+        "345420b76313a885c6ccc6e3b5547857b3ecc6a3636d64d923696e766974655f32615f636c"
+        "61696d65725f73656e645f6861736865645f6e6f6e6365"
     );
 
     let req = invited_cmds::invite_2a_claimer_send_hashed_nonce::Req {
