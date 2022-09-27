@@ -75,7 +75,10 @@ async def test_bad_requests(backend_asgi_app):
     # No arguments in query string
     rep = await client.get("/administration/stats", headers=HEADERS, query_string={})
     assert rep.status == "400 BAD REQUEST"
-    assert await rep.get_json() == {"error": "missing query argument 'format'"}
+    assert await rep.get_json() == {
+        "error": "bad_data",
+        "reason": f"Missing/invalid mandatory query argument 'format' expected one of ['csv', 'json']",
+    }
 
     # Missing format
     rep = await client.get(
@@ -87,7 +90,10 @@ async def test_bad_requests(backend_asgi_app):
         },
     )
     assert rep.status == "400 BAD REQUEST"
-    assert await rep.get_json() == {"error": "missing query argument 'format'"}
+    assert await rep.get_json() == {
+        "error": "bad_data",
+        "reason": f"Missing/invalid mandatory query argument 'format' expected one of ['csv', 'json']",
+    }
 
     # Bad format
     rep = await client.get(
@@ -96,7 +102,10 @@ async def test_bad_requests(backend_asgi_app):
         query_string={"format": "mp3", "from": DateTime(2021, 1, 1, 0, 0, 0).to_rfc3339()},
     )
     assert rep.status == "400 BAD REQUEST"
-    assert await rep.get_json() == {"error": "bad format 'mp3' expected one of ['json', 'csv']"}
+    assert await rep.get_json() == {
+        "error": "bad_data",
+        "reason": f"Missing/invalid mandatory query argument 'format' expected one of ['csv', 'json']",
+    }
 
 
 @pytest.mark.trio

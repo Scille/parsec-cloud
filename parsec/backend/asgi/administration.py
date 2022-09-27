@@ -192,12 +192,13 @@ async def administration_organization_stat(raw_organization_id: str):
 async def administration_server_stats():
     backend: "BackendApp" = g.backend
 
-    if "format" not in request.args:
-        return await json_abort({"error": f"missing query argument 'format'"}, 400)
-
-    if request.args["format"] not in {"csv", "json"}:
+    if "format" not in request.args or request.args["format"] not in {"csv", "json"}:
         return await json_abort(
-            {"error": f"bad format '{request.args['format']}' expected one of ['json', 'csv']"}, 400
+            {
+                "error": "bad_data",
+                "reason": f"Missing/invalid mandatory query argument 'format' expected one of ['csv', 'json']",
+            },
+            400,
         )
 
     try:
@@ -209,12 +210,9 @@ async def administration_server_stats():
         to_date = (
             DateTime.from_rfc3339(request.args["to"]) if "to" in request.args else DateTime.now()
         )
-        assert from_date < to_date
         results = await backend.organization.server_stats(from_date, to_date)
     except ValueError:
-        return await json_abort({"error": "bad timestamp"}, 400)
-    except AssertionError:
-        return await json_abort({"error": f"{from_date} to {to_date} is not a valid range"}, 400)
+        return await json_abort({"error": "bad_data", "reason": "bad timestamp"}, 400)
 
     if request.args["format"] == "csv":
         return _convert_server_stats_results_as_csv(results)
