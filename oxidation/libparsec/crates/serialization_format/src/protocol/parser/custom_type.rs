@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::protocol::parser::Field;
+use crate::protocol::{parser::Field, utils::quote_fields};
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]
@@ -39,8 +39,35 @@ pub struct CustomStruct {
 
 impl CustomStruct {
     pub fn quote(&self, types: &HashMap<String, String>) -> syn::ItemStruct {
-        todo!()
+        let name = self.quote_label();
+        let fields = quote_fields(&self.fields, types);
+        let attrs = shared_attribute();
+
+        if fields.is_empty() {
+            syn::parse_quote! {
+                #(#attrs)*
+                pub struct #name;
+            }
+        } else {
+            syn::parse_quote! {
+                #(#attrs)*
+                pub struct #name {
+                    #(#fields),*
+                }
+            }
+        }
     }
+
+    pub fn quote_label(&self) -> syn::Ident {
+        syn::parse_str(&self.label).expect("A valid label for Custom struct")
+    }
+}
+
+fn shared_attribute() -> Vec<syn::Attribute> {
+    vec![
+        syn::parse_quote!(#[::serde_with::serde_as]),
+        syn::parse_quote!(#[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]),
+    ]
 }
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
@@ -65,8 +92,33 @@ impl Default for CustomEnum {
 
 impl CustomEnum {
     pub fn quote(&self, types: &HashMap<String, String>) -> syn::ItemEnum {
-        todo!()
+        let name = self.quote_label();
+
+        let mut attrs = shared_attribute().to_vec();
+        if let Some(discriminant_field) = &self.discriminant_field {
+            attrs.push(syn::parse_quote!(#[serde(tag = #discriminant_field)]))
+        }
+
+        let variants = quote_variants(&self.variants, types);
+
+        syn::parse_quote! {
+            #(#attrs)*
+            pub enum #name {
+                #(#variants),*
+            }
+        }
     }
+
+    pub fn quote_label(&self) -> syn::Ident {
+        syn::parse_str(&self.label).expect("A valid label for Custom struct")
+    }
+}
+
+fn quote_variants(variants: &[Variant], types: &HashMap<String, String>) -> Vec<syn::Variant> {
+    variants
+        .iter()
+        .map(|variant| variant.quote(types))
+        .collect()
 }
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
@@ -84,6 +136,38 @@ impl Default for Variant {
             discriminant_value: "type".to_string(),
             fields: vec![],
             name: "FooVariant".to_string(),
+        }
+    }
+}
+
+impl Variant {
+    pub fn quote(&self, types: &HashMap<String, String>) -> syn::Variant {
+        let rename = match self.name.as_str() {
+            "type" => Some("ty"),
+            _ => None,
+        };
+        let name = syn::parse_str::<syn::Ident>(rename.unwrap_or(&self.name))
+            .expect("A valid variant name");
+
+        let mut attrs: Vec<syn::Attribute> = Vec::new();
+        if let Some(rename) = rename {
+            attrs.push(syn::parse_quote!(#[serde(rename = #rename)]))
+        }
+
+        let fields = quote_fields(&self.fields, types);
+
+        if fields.is_empty() {
+            syn::parse_quote! {
+                #(#attrs)*
+                #name
+            }
+        } else {
+            syn::parse_quote! {
+                #(#attrs)*
+                #name {
+                    #(#fields),*
+                }
+            }
         }
     }
 }
