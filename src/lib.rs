@@ -270,13 +270,13 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::Invite1GreeterWaitPeerRepUnknownStatus>()?;
     m.add_class::<protocol::Invite1GreeterWaitPeerRepOk>()?;
 
-    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceReq>()?;
-    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRep>()?;
-    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRepNotFound>()?;
-    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted>()?;
-    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRepInvalidState>()?;
-    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRepUnknownStatus>()?;
-    m.add_class::<protocol::Invite2aClaimerSendHashedNonceHashNonceRepOk>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceReq>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceRep>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceRepNotFound>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceRepAlreadyDeleted>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceRepInvalidState>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceRepUnknownStatus>()?;
+    m.add_class::<protocol::Invite2aClaimerSendHashedNonceRepOk>()?;
 
     m.add_class::<protocol::Invite2aGreeterGetHashedNonceReq>()?;
     m.add_class::<protocol::Invite2aGreeterGetHashedNonceRepUnknownStatus>()?;

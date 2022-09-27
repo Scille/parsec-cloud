@@ -7,7 +7,7 @@ from parsec._parsec import (
     DateTime,
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
-    Invite2aClaimerSendHashedNonceHashNonceRepOk,
+    Invite2aClaimerSendHashedNonceRepOk,
     Invite2aGreeterGetHashedNonceRepOk,
     Invite2bClaimerSendNonceRepOk,
     Invite2bGreeterSendNonceRepOk,
@@ -70,7 +70,7 @@ class PeerControler:
             (
                 Invite1ClaimerWaitPeerRepOk,
                 Invite1GreeterWaitPeerRepOk,
-                Invite2aClaimerSendHashedNonceHashNonceRepOk,
+                Invite2aClaimerSendHashedNonceRepOk,
                 Invite2aGreeterGetHashedNonceRepOk,
                 Invite2bClaimerSendNonceRepOk,
                 Invite2bGreeterSendNonceRepOk,

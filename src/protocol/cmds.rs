@@ -101,8 +101,8 @@ impl InvitedAnyCmdReq {
         Ok(match cmd {
             AnyCmdReq::Ping(x) => InvitedPingReq(x).into_py(py),
             AnyCmdReq::Invite1ClaimerWaitPeer(x) => Invite1ClaimerWaitPeerReq(x).into_py(py),
-            AnyCmdReq::Invite2aClaimerSendHashedNonceHashNonce(x) => {
-                Invite2aClaimerSendHashedNonceHashNonceReq(x).into_py(py)
+            AnyCmdReq::Invite2aClaimerSendHashedNonce(x) => {
+                Invite2aClaimerSendHashedNonceReq(x).into_py(py)
             }
             AnyCmdReq::Invite2bClaimerSendNonce(x) => Invite2bClaimerSendNonceReq(x).into_py(py),
             AnyCmdReq::Invite3aClaimerSignifyTrust(x) => {

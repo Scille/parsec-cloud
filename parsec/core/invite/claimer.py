@@ -41,10 +41,10 @@ from parsec._parsec import (
     Invite1GreeterWaitPeerRepInvalidState,
     Invite1GreeterWaitPeerRepNotFound,
     Invite1GreeterWaitPeerRepOk,
-    Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted,
-    Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
-    Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
-    Invite2aClaimerSendHashedNonceHashNonceRepOk,
+    Invite2aClaimerSendHashedNonceRepAlreadyDeleted,
+    Invite2aClaimerSendHashedNonceRepInvalidState,
+    Invite2aClaimerSendHashedNonceRepNotFound,
+    Invite2aClaimerSendHashedNonceRepOk,
     Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
     Invite2aGreeterGetHashedNonceRepInvalidState,
     Invite2aGreeterGetHashedNonceRepNotFound,
@@ -88,7 +88,7 @@ from parsec._parsec import (
 NOT_FOUND_TYPES = (
     Invite1ClaimerWaitPeerRepNotFound,
     Invite1GreeterWaitPeerRepNotFound,
-    Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
+    Invite2aClaimerSendHashedNonceRepNotFound,
     Invite2aGreeterGetHashedNonceRepNotFound,
     Invite2bClaimerSendNonceRepNotFound,
     Invite2bGreeterSendNonceRepNotFound,
@@ -103,7 +103,7 @@ NOT_FOUND_TYPES = (
 
 ALREADY_DELETED_TYPES = (
     Invite1GreeterWaitPeerRepAlreadyDeleted,
-    Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted,
+    Invite2aClaimerSendHashedNonceRepAlreadyDeleted,
     Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
     Invite2bGreeterSendNonceRepAlreadyDeleted,
     Invite3aGreeterWaitPeerTrustRepAlreadyDeleted,
@@ -114,7 +114,7 @@ ALREADY_DELETED_TYPES = (
 
 INVALID_STATE_TYPES = (
     Invite1GreeterWaitPeerRepInvalidState,
-    Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
+    Invite2aClaimerSendHashedNonceRepInvalidState,
     Invite2aGreeterGetHashedNonceRepInvalidState,
     Invite2bClaimerSendNonceRepInvalidState,
     Invite2bGreeterSendNonceRepInvalidState,
@@ -130,7 +130,7 @@ INVALID_STATE_TYPES = (
 OK_TYPES = (
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
-    Invite2aClaimerSendHashedNonceHashNonceRepOk,
+    Invite2aClaimerSendHashedNonceRepOk,
     Invite2aGreeterGetHashedNonceRepOk,
     Invite2bClaimerSendNonceRepOk,
     Invite2bGreeterSendNonceRepOk,
@@ -198,7 +198,7 @@ class BaseClaimInitialCtx:
         )
         claimer_nonce = generate_nonce()
 
-        rep = await self._cmds.invite_2a_claimer_send_hashed_nonce_hash_nonce(
+        rep = await self._cmds.invite_2a_claimer_send_hashed_nonce(
             claimer_hashed_nonce=HashDigest.from_data(claimer_nonce)
         )
         _check_rep(rep, step_name="step 2a")

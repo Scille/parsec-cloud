@@ -20,7 +20,7 @@ class BackendInvitedCmds:
     ping = expose_cmds_with_retrier(cmds.invited_ping)
     invite_info = expose_cmds_with_retrier(cmds.invite_info)
     invite_1_claimer_wait_peer = expose_cmds_with_retrier(cmds.invite_1_claimer_wait_peer)
-    invite_2a_claimer_send_hashed_nonce_hash_nonce = expose_cmds_with_retrier(
+    invite_2a_claimer_send_hashed_nonce = expose_cmds_with_retrier(
         cmds.invite_2a_claimer_send_hashed_nonce
     )
     invite_2b_claimer_send_nonce = expose_cmds_with_retrier(cmds.invite_2b_claimer_send_nonce)

@@ -3,8 +3,8 @@
 from parsec._parsec import (
     Invite1ClaimerWaitPeerRepOk,
     Invite1GreeterWaitPeerRepOk,
-    Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
-    Invite2aClaimerSendHashedNonceHashNonceRepOk,
+    Invite2aClaimerSendHashedNonceRepInvalidState,
+    Invite2aClaimerSendHashedNonceRepOk,
     Invite2aGreeterGetHashedNonceRepInvalidState,
     Invite2aGreeterGetHashedNonceRepOk,
     Invite2bClaimerSendNonceRepOk,
@@ -97,7 +97,7 @@ class PeerControler:
         assert type(rep) in [
             Invite1ClaimerWaitPeerRepOk,
             Invite1GreeterWaitPeerRepOk,
-            Invite2aClaimerSendHashedNonceHashNonceRepOk,
+            Invite2aClaimerSendHashedNonceRepOk,
             Invite2aGreeterGetHashedNonceRepOk,
             Invite2bClaimerSendNonceRepOk,
             Invite2bGreeterSendNonceRepOk,
@@ -348,7 +348,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
             await greeter_ctlr.send_order("1_wait_peer")
             await claimer_ctlr.send_order("2a_send_hashed_nonce")
         claimer_rep = await claimer_ctlr.get_result()
-        assert isinstance(claimer_rep, Invite2aClaimerSendHashedNonceHashNonceRepInvalidState)
+        assert isinstance(claimer_rep, Invite2aClaimerSendHashedNonceRepInvalidState)
         await claimer_ctlr.send_order("1_wait_peer")
         await claimer_ctlr.assert_ok_rep()
         await greeter_ctlr.assert_ok_rep()
@@ -360,7 +360,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
     # Greeter reset after retrieving claimer hashed nonce
     await greeter_ctlr.send_order("1_wait_peer")
     claimer_rep = await claimer_ctlr.get_result()
-    assert isinstance(claimer_rep, Invite2aClaimerSendHashedNonceHashNonceRepInvalidState)
+    assert isinstance(claimer_rep, Invite2aClaimerSendHashedNonceRepInvalidState)
     await claimer_ctlr.send_order("1_wait_peer")
     await claimer_ctlr.assert_ok_rep()
     await greeter_ctlr.assert_ok_rep()
@@ -667,9 +667,7 @@ async def test_claimer_step_2_retry(
                             claimer_hashed_nonce=HashDigest.from_data(b"<claimer_nonce>"),
                         )
 
-                        assert isinstance(
-                            rep, Invite2aClaimerSendHashedNonceHashNonceRepInvalidState
-                        )
+                        assert isinstance(rep, Invite2aClaimerSendHashedNonceRepInvalidState)
 
                         # So claimer returns to step 1
                         rep = await invite_1_claimer_wait_peer(

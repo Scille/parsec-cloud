@@ -14,9 +14,9 @@ use libparsec::protocol::authenticated_cmds::{
     invite_4_greeter_communicate, invite_delete, invite_list, invite_new,
 };
 use libparsec::protocol::invited_cmds::{
-    invite_1_claimer_wait_peer, invite_2a_claimer_send_hashed_nonce_hash_nonce,
-    invite_2b_claimer_send_nonce, invite_3a_claimer_signify_trust,
-    invite_3b_claimer_wait_peer_trust, invite_4_claimer_communicate, invite_info,
+    invite_1_claimer_wait_peer, invite_2a_claimer_send_hashed_nonce, invite_2b_claimer_send_nonce,
+    invite_3a_claimer_signify_trust, invite_3b_claimer_wait_peer_trust,
+    invite_4_claimer_communicate, invite_info,
 };
 
 use crate::{
@@ -809,16 +809,14 @@ impl Invite1GreeterWaitPeerRepOk {
 
 #[pyclass]
 #[derive(PartialEq, Clone)]
-pub(crate) struct Invite2aClaimerSendHashedNonceHashNonceReq(
-    pub invite_2a_claimer_send_hashed_nonce_hash_nonce::Req,
-);
+pub(crate) struct Invite2aClaimerSendHashedNonceReq(pub invite_2a_claimer_send_hashed_nonce::Req);
 
 #[pymethods]
-impl Invite2aClaimerSendHashedNonceHashNonceReq {
+impl Invite2aClaimerSendHashedNonceReq {
     #[new]
     fn new(claimer_hashed_nonce: HashDigest) -> PyResult<Self> {
         let claimer_hashed_nonce = claimer_hashed_nonce.0;
-        Ok(Self(invite_2a_claimer_send_hashed_nonce_hash_nonce::Req {
+        Ok(Self(invite_2a_claimer_send_hashed_nonce::Req {
             claimer_hashed_nonce,
         }))
     }
@@ -841,35 +839,33 @@ impl Invite2aClaimerSendHashedNonceHashNonceReq {
 }
 
 gen_rep!(
-    invite_2a_claimer_send_hashed_nonce_hash_nonce,
-    Invite2aClaimerSendHashedNonceHashNonceRep,
+    invite_2a_claimer_send_hashed_nonce,
+    Invite2aClaimerSendHashedNonceRep,
     { .. },
     [NotFound],
     [AlreadyDeleted],
     [InvalidState],
 );
 
-#[pyclass(extends=Invite2aClaimerSendHashedNonceHashNonceRep)]
-pub(crate) struct Invite2aClaimerSendHashedNonceHashNonceRepOk;
+#[pyclass(extends=Invite2aClaimerSendHashedNonceRep)]
+pub(crate) struct Invite2aClaimerSendHashedNonceRepOk;
 
 #[pymethods]
-impl Invite2aClaimerSendHashedNonceHashNonceRepOk {
+impl Invite2aClaimerSendHashedNonceRepOk {
     #[new]
-    fn new(greeter_nonce: Vec<u8>) -> PyResult<(Self, Invite2aClaimerSendHashedNonceHashNonceRep)> {
+    fn new(greeter_nonce: Vec<u8>) -> PyResult<(Self, Invite2aClaimerSendHashedNonceRep)> {
         Ok((
             Self,
-            Invite2aClaimerSendHashedNonceHashNonceRep(
-                invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::Ok { greeter_nonce },
-            ),
+            Invite2aClaimerSendHashedNonceRep(invite_2a_claimer_send_hashed_nonce::Rep::Ok {
+                greeter_nonce,
+            }),
         ))
     }
 
     #[getter]
     fn greeter_nonce<'py>(_self: PyRef<'py, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
         let greeter_nonce = match &_self.as_ref().0 {
-            invite_2a_claimer_send_hashed_nonce_hash_nonce::Rep::Ok { greeter_nonce } => {
-                greeter_nonce
-            }
+            invite_2a_claimer_send_hashed_nonce::Rep::Ok { greeter_nonce } => greeter_nonce,
             _ => return Err(PyNotImplementedError::new_err("")),
         };
 
