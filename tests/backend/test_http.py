@@ -204,7 +204,7 @@ async def test_get_redirect_invitation(backend_asgi_app, backend_addr):
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=backend_addr,
         organization_id=OrganizationID("Org"),
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=InvitationToken.new(),
     )
     # TODO: should use invitation_addr.to_redirection_url() when available !

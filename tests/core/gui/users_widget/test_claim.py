@@ -99,7 +99,7 @@ def ClaimUserTestBed(
             invitation_addr = BackendInvitationAddr.build(
                 backend_addr=self.author.organization_addr.get_backend_addr(),
                 organization_id=self.author.organization_id,
-                invitation_type=InvitationType.USER(),
+                invitation_type=InvitationType.USER,
                 token=invitation.token,
             )
 
@@ -632,7 +632,7 @@ async def test_claim_user_already_deleted(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=invitation.token,
     )
     await backend.invite.delete(
@@ -664,7 +664,7 @@ async def test_claim_user_offline_backend(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=invitation.token,
     )
     with running_backend.offline():
@@ -688,7 +688,7 @@ async def test_claim_user_unknown_invitation(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=InvitationToken.new(),
     )
 
@@ -730,7 +730,7 @@ async def test_claim_user_backend_desync(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=InvitationToken.new(),
     )
 

@@ -110,7 +110,7 @@ async def test_authenticated_handshake_bad_rvk(backend_asgi_app, alice, otherorg
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("invitation_type", InvitationType)
+@pytest.mark.parametrize("invitation_type", (InvitationType.USER, InvitationType.DEVICE))
 async def test_invited_handshake_good(backend_asgi_app, backend, alice, invitation_type):
     if invitation_type == InvitationType.USER:
         invitation = await backend.invite.new_for_user(
@@ -143,7 +143,7 @@ async def test_invited_handshake_good(backend_asgi_app, backend, alice, invitati
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("invitation_type", InvitationType)
+@pytest.mark.parametrize("invitation_type", (InvitationType.USER, InvitationType.DEVICE))
 async def test_invited_handshake_bad_token(backend_asgi_app, coolorg, invitation_type):
     ch = InvitedClientHandshake(
         organization_id=coolorg.organization_id,

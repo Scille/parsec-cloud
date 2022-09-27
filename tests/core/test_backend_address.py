@@ -308,7 +308,7 @@ def test_invitation_addr_invalid_token(addr_invitation_testbed, invalid_token):
 
 @pytest.mark.parametrize(
     "invitation_type,invitation_type_str",
-    [(InvitationType.USER(), "claim_user"), (InvitationType.DEVICE(), "claim_device")],
+    [(InvitationType.USER, "claim_user"), (InvitationType.DEVICE, "claim_device")],
 )
 def test_invitation_addr_types(addr_invitation_testbed, invitation_type, invitation_type_str):
     url = addr_invitation_testbed.generate_url(INVITATION_TYPE=invitation_type_str)
@@ -377,9 +377,9 @@ def test_build_addrs():
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=backend_addr,
         organization_id=organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=InvitationToken.from_hex("a0000000000000000000000000000001"),
     )
     assert invitation_addr.organization_id == organization_id
     assert invitation_addr.token == InvitationToken.from_hex("a0000000000000000000000000000001")
-    assert invitation_addr.invitation_type == InvitationType.USER()
+    assert invitation_addr.invitation_type == InvitationType.USER

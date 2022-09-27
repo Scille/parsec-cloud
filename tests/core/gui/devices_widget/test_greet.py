@@ -82,7 +82,7 @@ def GreetDeviceTestBed(
             invitation_addr = BackendInvitationAddr.build(
                 backend_addr=author.organization_addr.get_backend_addr(),
                 organization_id=author.organization_id,
-                invitation_type=InvitationType.DEVICE(),
+                invitation_type=InvitationType.DEVICE,
                 token=invitation.token,
             )
 

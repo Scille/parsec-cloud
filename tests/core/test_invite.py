@@ -45,7 +45,7 @@ async def test_good_device_claim(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
@@ -186,7 +186,7 @@ async def test_good_user_claim(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=invitation.token,
     )
 
@@ -344,7 +344,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
@@ -416,7 +416,7 @@ async def test_claimer_handle_cancel_event(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
@@ -523,7 +523,7 @@ async def test_claimer_handle_command_failure(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
@@ -620,7 +620,7 @@ async def test_user_claim_but_active_users_limit_reached(backend, running_backen
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr.get_backend_addr(),
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=invitation.token,
     )
 

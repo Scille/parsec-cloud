@@ -276,7 +276,7 @@ class LoggedCore:
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_new(
-            type=InvitationType.USER(), claimer_email=email, send_email=send_email
+            type=InvitationType.USER, claimer_email=email, send_email=send_email
         )
         if isinstance(rep, InviteNewRepAlreadyMember):
             raise BackendInvitationOnExistingMember("An user already exist with this email")
@@ -292,7 +292,7 @@ class LoggedCore:
             BackendInvitationAddr.build(
                 backend_addr=self.device.organization_addr.get_backend_addr(),
                 organization_id=self.device.organization_id,
-                invitation_type=InvitationType.USER(),
+                invitation_type=InvitationType.USER,
                 token=rep.token,
             ),
             email_sent,
@@ -306,7 +306,7 @@ class LoggedCore:
             BackendConnectionError
         """
         rep = await self._backend_conn.cmds.invite_new(
-            type=InvitationType.DEVICE(), send_email=send_email
+            type=InvitationType.DEVICE, send_email=send_email
         )
         if not isinstance(rep, InviteNewRepOk):
             raise BackendConnectionError(f"Backend error: {rep}")
@@ -321,7 +321,7 @@ class LoggedCore:
             BackendInvitationAddr.build(
                 backend_addr=self.device.organization_addr.get_backend_addr(),
                 organization_id=self.device.organization_id,
-                invitation_type=InvitationType.DEVICE(),
+                invitation_type=InvitationType.DEVICE,
                 token=rep.token,
             ),
             email_sent,

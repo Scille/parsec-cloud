@@ -54,7 +54,7 @@ async def _invite_device(config: CoreConfig, device: LocalDevice) -> None:
             signing_key=device.signing_key,
             keepalive=config.backend_connection_keepalive,
         ) as cmds:
-            rep = await cmds.invite_new(type=InvitationType.DEVICE())
+            rep = await cmds.invite_new(type=InvitationType.DEVICE)
             if not isinstance(rep, InviteNewRepOk):
                 raise RuntimeError(f"Backend refused to create device invitation: {rep}")
             try:
@@ -66,7 +66,7 @@ async def _invite_device(config: CoreConfig, device: LocalDevice) -> None:
     action_addr = BackendInvitationAddr.build(
         backend_addr=device.organization_addr.get_backend_addr(),
         organization_id=device.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=rep.token,
     )
     action_addr_display = click.style(action_addr.to_url(), fg="yellow")
@@ -95,7 +95,7 @@ async def _invite_user(
             keepalive=config.backend_connection_keepalive,
         ) as cmds:
             rep = await cmds.invite_new(
-                type=InvitationType.USER(), claimer_email=email, send_email=send_email
+                type=InvitationType.USER, claimer_email=email, send_email=send_email
             )
             if not isinstance(rep, InviteNewRepOk):
                 raise RuntimeError(f"Backend refused to create user invitation: {rep}")
@@ -109,7 +109,7 @@ async def _invite_user(
     action_addr = BackendInvitationAddr.build(
         backend_addr=device.organization_addr.get_backend_addr(),
         organization_id=device.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=rep.token,
     )
     action_addr_display = click.style(action_addr.to_url(), fg="yellow")
@@ -261,11 +261,11 @@ async def _greet_invitation(
         else:
             raise RuntimeError(f"Invitation not found")
 
-        if invitation.type == InvitationType.USER():
+        if invitation.type == InvitationType.USER:
             initial_ctx = UserGreetInitialCtx(cmds=cmds, token=token)
             do_greet = partial(_do_greet_user, device, initial_ctx)
         else:
-            assert invitation.type == InvitationType.DEVICE()
+            assert invitation.type == InvitationType.DEVICE
             initial_ctx = DeviceGreetInitialCtx(cmds=cmds, token=token)
             do_greet = partial(_do_greet_device, device, initial_ctx)
 
@@ -417,7 +417,7 @@ async def _claim_invitation(
 
         # Claiming a user means we are it first device, hence we know there
         # is no existing user manifest (hence our placeholder is non-speculative)
-        if addr.invitation_type == InvitationType.USER():
+        if addr.invitation_type == InvitationType.USER:
             await user_storage_non_speculative_init(
                 data_base_dir=config.data_base_dir, device=new_device
             )
@@ -461,7 +461,7 @@ async def _list_invitations(config: CoreConfig, device: LocalDevice) -> None:
         for invitation in rep.invitations:
             display_status = display_statuses[invitation.status.name]
             display_token = invitation.token.hex
-            if invitation.type == InvitationType.USER():
+            if invitation.type == InvitationType.USER:
                 display_type = f"user (email={invitation.claimer_email})"
             else:  # Device
                 display_type = f"device"

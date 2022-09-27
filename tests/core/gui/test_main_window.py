@@ -69,7 +69,7 @@ async def device_invitation_addr(backend, bob):
     return BackendInvitationAddr.build(
         backend_addr=bob.organization_addr.get_backend_addr(),
         organization_id=bob.organization_id,
-        invitation_type=InvitationType.DEVICE(),
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
@@ -84,7 +84,7 @@ async def user_invitation_addr(backend, bob):
     return BackendInvitationAddr.build(
         backend_addr=bob.organization_addr.get_backend_addr(),
         organization_id=bob.organization_id,
-        invitation_type=InvitationType.USER(),
+        invitation_type=InvitationType.USER,
         token=invitation.token,
     )
 

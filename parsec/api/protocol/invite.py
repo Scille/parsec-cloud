@@ -1,8 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from enum import Enum
-from typing import Type
+from typing import Optional, Type, Any
+from marshmallow import ValidationError
+from marshmallow.fields import Field
+
 from parsec._parsec import (
+    InvitationType,
+    InvitationToken,
     Invite1ClaimerWaitPeerRep,
     Invite1ClaimerWaitPeerReq,
     Invite1GreeterWaitPeerRep,
@@ -36,11 +41,8 @@ from parsec._parsec import (
     InviteNewRep,
     InviteNewReq,
 )
-
 from parsec.serde import fields
 from parsec.api.protocol.base import ApiCommandSerializer
-
-from parsec._parsec import InvitationToken
 
 
 __all__ = (
@@ -65,13 +67,31 @@ __all__ = (
 )
 
 
-class InvitationType(Enum):
-    USER = "USER"
-    DEVICE = "DEVICE"
-
-
 InvitationTokenField: Type[fields.Field] = fields.uuid_based_field_factory(InvitationToken)
-InvitationTypeField: Type[fields.BaseEnumField] = fields.enum_field_factory(InvitationType)
+
+
+class InvitationTypeField(Field):
+    def _serialize(self, value: Any, attr: Any, obj: Any) -> Optional[str]:
+        if value is None:
+            return None
+
+        if value == InvitationType.DEVICE:
+            return "DEVICE"
+        elif value == InvitationType.USER:
+            return "USER"
+        else:
+            raise ValidationError(f"Not a InvitationType")
+
+    def _deserialize(self, value: Any, attr: Any, data: Any) -> InvitationType:
+        if not isinstance(value, str):
+            raise ValidationError("Not string")
+
+        if value == "DEVICE":
+            return InvitationType.DEVICE
+        elif value == "USER":
+            return InvitationType.USER
+        else:
+            raise ValidationError(f"Invalid type `{value}`")
 
 
 class InvitationEmailSentStatus(Enum):

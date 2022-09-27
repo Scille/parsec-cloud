@@ -4,8 +4,7 @@ from typing import Optional, cast, Dict, Sequence, Union, Any
 from enum import Enum
 from secrets import token_bytes
 
-from parsec._parsec import DateTime, InvitationType
-
+from parsec._parsec import DateTime
 from parsec.crypto import SigningKey, VerifyKey, CryptoError
 from parsec.serde import BaseSchema, OneOfSchema, fields, validate, post_load
 from parsec.utils import (
@@ -515,23 +514,13 @@ class InvitedClientHandshake(BaseClientHandshake):
 
     def process_challenge_req(self, req: bytes) -> bytes:
         self.load_challenge_req(req)
-
-        def _to_legacy_invitation_type(invite_type: Any) -> PyInvitationType:
-            if isinstance(invite_type, InvitationType):
-                if invite_type == InvitationType.DEVICE():
-                    return PyInvitationType.DEVICE
-                else:
-                    return PyInvitationType.USER
-
-            return invite_type
-
         return handshake_answer_serializer.dumps(
             {
                 "handshake": "answer",
                 "type": HandshakeType.INVITED,
                 "client_api_version": self.client_api_version,
                 "organization_id": self.organization_id,
-                "invitation_type": _to_legacy_invitation_type(self.invitation_type),
+                "invitation_type": self.invitation_type,
                 "token": self.token,
             }
         )
