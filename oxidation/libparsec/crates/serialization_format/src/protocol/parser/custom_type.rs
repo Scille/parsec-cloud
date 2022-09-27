@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::Deserialize;
 
 use crate::protocol::parser::Field;
@@ -10,11 +12,35 @@ pub enum CustomType {
     Enum(CustomEnum),
 }
 
+impl CustomType {
+    pub fn label(&self) -> &str {
+        match self {
+            CustomType::Struct(custom_struct) => &custom_struct.label,
+            CustomType::Enum(custom_enum) => &custom_enum.label,
+        }
+    }
+}
+
+impl CustomType {
+    pub fn quote(&self, types: &HashMap<String, String>) -> syn::Item {
+        match self {
+            CustomType::Struct(custom_struct) => syn::Item::Struct(custom_struct.quote(types)),
+            CustomType::Enum(custom_enum) => syn::Item::Enum(custom_enum.quote(types)),
+        }
+    }
+}
+
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]
 pub struct CustomStruct {
     pub label: String,
     pub fields: Vec<Field>,
+}
+
+impl CustomStruct {
+    pub fn quote(&self, types: &HashMap<String, String>) -> syn::ItemStruct {
+        todo!()
+    }
 }
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
@@ -34,6 +60,12 @@ impl Default for CustomEnum {
             label: "FooEnum".to_string(),
             variants: vec![],
         }
+    }
+}
+
+impl CustomEnum {
+    pub fn quote(&self, types: &HashMap<String, String>) -> syn::ItemEnum {
+        todo!()
     }
 }
 
