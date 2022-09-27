@@ -1,0 +1,66 @@
+# git checkout v2.11.0
+# python ../parsec-cloud/py_to_rs_json.py ./tests/schemas/api_protocol.json api
+#  python ../parsec-cloud/compare_py_and_rs_json.py api/ ../parsec-cloud/oxidation/libparsec/crates/protocol/schema/
+
+
+<api1>/authenticated_cmds/realm_stats.json: missing item
+<api1>/invited_cmds/invite_2a_claimer_send_hashed_nonce_hash_nonce.json: missing item
+<api2>/authenticated_cmds/pki_enrollment_list.json: missing item
+<api2>/authenticated_cmds/pki_enrollment_reject.json: missing item
+<api2>/authenticated_cmds/pki_enrollment_accept.json: missing item
+<api2>/invited_cmds/invite_2a_claimer_send_hashed_nonce.json: missing item
+
+
+organization_stats: different nested types: {'UserProfile'}
+vlob_maintenance_save_reencryption_batch: different nested types: {'ReencryptionBatchEntry'}
+events_listen: different nested types: {'RealmRole', 'InvitationStatus'}
+events_listen: nested type APIEvent variants differs {'pki_enrollment.updated'}
+invite_list: different nested types: {'InvitationStatus'}
+vlob_maintenance_get_reencryption_batch: different nested types: {'ReencryptionBatchEntry'}
+
+
+organization_stats ok rep fields: field 'metadata_size' type differs 'Integer' vs 'Size'
+organization_stats ok rep fields: field 'active_users' type differs 'Integer' vs 'Size'
+organization_stats ok rep fields: field 'data_size' type differs 'Integer' vs 'Size'
+organization_stats ok rep fields: field 'users' type differs 'Integer' vs 'Size'
+organization_stats ok rep fields: field 'realms' type differs 'Integer' vs 'Size'
+organization_stats: field 'active' type differs 'Integer' vs 'Index'
+organization_stats: field 'revoked' type differs 'Integer' vs 'Index'
+vlob_poll_changes: req field 'last_checkpoint' type differs 'Integer' vs 'Index'
+vlob_poll_changes ok rep fields: field 'current_checkpoint' type differs 'Integer' vs 'Index'
+message_get: req field 'offset' type differs 'Integer' vs 'Index'
+message_get: field 'count' type differs 'Integer' vs 'Size'
+realm_start_reencryption_maintenance: req field 'encryption_revision' type differs 'Integer' vs 'Index'
+vlob_update: req field 'version' type differs 'Integer' vs 'Version'
+vlob_update: req field 'encryption_revision' type differs 'Integer' vs 'Index'
+realm_status ok rep fields: field 'encryption_revision' type differs 'Integer' vs 'Index'
+human_find: req field 'page' type differs 'Integer' vs 'NonZeroInteger'
+human_find: req field 'per_page' type differs 'Integer' vs 'NonZeroInteger'
+human_find ok rep fields: field 'page' type differs 'Integer' vs 'NonZeroInteger'
+human_find ok rep fields: field 'per_page' type differs 'Integer' vs 'NonZeroInteger'
+human_find ok rep fields: field 'total' type differs 'Integer' vs 'Size'
+vlob_create: req field 'encryption_revision' type differs 'Integer' vs 'Index'
+vlob_maintenance_save_reencryption_batch: req field 'encryption_revision' type differs 'Integer' vs 'Index'
+vlob_maintenance_save_reencryption_batch ok rep fields: field 'done' type differs 'Integer' vs 'Size'
+vlob_maintenance_save_reencryption_batch ok rep fields: field 'total' type differs 'Integer' vs 'Size'
+vlob_read: req field 'encryption_revision' type differs 'Integer' vs 'Index'
+vlob_read ok rep fields: field 'version' type differs 'Integer' vs 'Version'
+events_listen: nested type APIEvent variant realm.maintenance_finished: field 'encryption_revision' type differs 'Integer' vs 'Index'
+events_listen: nested type APIEvent variant realm.maintenance_started: field 'encryption_revision' type differs 'Integer' vs 'Index'
+events_listen: nested type APIEvent variant realm.vlobs_updated: field 'src_version' type differs 'Integer' vs 'Index'
+events_listen: nested type APIEvent variant realm.vlobs_updated: field 'checkpoint' type differs 'Integer' vs 'Index'
+events_listen: nested type APIEvent variant message.received: field 'index' type differs 'Integer' vs 'Index'
+vlob_maintenance_get_reencryption_batch: req field 'size' type differs 'Integer' vs 'Size'
+vlob_maintenance_get_reencryption_batch: req field 'encryption_revision' type differs 'Integer' vs 'Index'
+realm_finish_reencryption_maintenance: req field 'encryption_revision' type differs 'Integer' vs 'Index'
+
+
+vlob_poll_changes ok rep fields: field 'changes' type differs 'Map<VlobID, Integer>' vs 'Map<VlobID, Index>'
+organization_config ok rep fields: field 'active_users_limit' type differs 'Option<Integer>' vs 'Option<Size>'
+invite_new ok rep fields: field 'email_sent' type differs 'InvitationEmailSentStatus' vs 'Option<InvitationEmailSentStatus>'
+user_get ok rep fields: field 'revoked_user_certificate' type differs 'Option<Bytes>' vs 'Bytes'
+vlob_read: req field 'version' type differs 'Option<Integer>' vs 'Option<Version>'
+vlob_list_versions ok rep fields: field 'versions' type differs 'Map<Integer, (DateTime, DeviceID)>' vs 'Map<Index, (DateTime, DeviceID)>'
+events_listen: nested type APIEvent variant realm.roles_updated: field 'role' type differs 'Option<RealmRole>' vs 'RealmRole'
+invite_info: nested type UserOrDevice variant USER: field 'greeter_human_handle' type differs 'Option<HumanHandle>' vs 'HumanHandle'
+invite_info: nested type UserOrDevice variant DEVICE: field 'greeter_human_handle' type differs 'Option<HumanHandle>' vs 'HumanHandle'
