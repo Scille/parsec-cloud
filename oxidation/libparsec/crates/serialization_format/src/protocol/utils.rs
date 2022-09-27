@@ -1,16 +1,14 @@
 use std::collections::HashMap;
 
-use proc_macro2::TokenStream;
-use quote::quote;
 use syn::{GenericArgument, PathArguments, Type};
 
-pub fn validate_raw_type(
-    raw_type: &str,
-    types: &HashMap<String, String>,
-) -> Result<String, String> {
+use super::intermediate::{self};
+
+pub fn validate_raw_type(raw_type: &str, types: &HashMap<String, String>) -> Result<Type, String> {
     syn::parse_str(raw_type)
         .map_err(|e| format!("Invalid type value `{raw_type}`: {e}"))
         .and_then(|raw_type| inspect_type(&raw_type, types))
+        .and_then(|raw_type| syn::parse_str(&raw_type).map_err(|e| e.to_string()))
 }
 
 pub fn inspect_type(raw_type: &Type, types: &HashMap<String, String>) -> Result<String, String> {
@@ -103,11 +101,11 @@ pub fn inspect_type(raw_type: &Type, types: &HashMap<String, String>) -> Result<
     }
 }
 
-pub fn quote_serde_as(ty: &Type) -> TokenStream {
+pub fn quote_serde_as(ty: &Type) -> syn::Attribute {
     let serde_as = extract_serde_as(ty)
         .replace("Vec<u8>", "::serde_with::Bytes")
         .replace("u8", "_");
-    quote!(#[serde_as(as = #serde_as)])
+    syn::parse_quote!(#[serde_as(as = #serde_as)])
 }
 
 /// Extract the type recursively by changing all unit type except u8 by _
@@ -156,4 +154,18 @@ pub fn extract_serde_as(ty: &Type) -> String {
         }
         ty => panic!("{ty:?} encountered"),
     }
+}
+
+pub fn quote_fields(
+    fields: &[intermediate::Field],
+    types: &HashMap<String, String>,
+) -> Vec<syn::ExprType> {
+    fields
+        .iter()
+        .map(|field| field.quote(visibility_public(), types))
+        .collect()
+}
+
+fn visibility_public() -> syn::Visibility {
+    syn::parse_quote!(pub)
 }

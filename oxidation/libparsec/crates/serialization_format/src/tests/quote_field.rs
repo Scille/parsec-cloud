@@ -4,11 +4,11 @@ use ::quote::quote;
 use proc_macro2::TokenStream;
 use rstest::rstest;
 
-use crate::protocol::parser::{field::Vis, Field, MajorMinorVersion};
+use crate::protocol::parser::{Field, MajorMinorVersion};
 
 #[rstest]
 #[case::public(
-    Vis::Public,
+    syn::parse_quote!(pub),
     Field {
         name: "foo".to_string(),
         ty: "Integer".to_string(),
@@ -21,7 +21,7 @@ use crate::protocol::parser::{field::Vis, Field, MajorMinorVersion};
     }
 )]
 #[case::public_with_introduced(
-    Vis::Public,
+    syn::parse_quote!(pub),
     Field {
         name: "foo".to_string(),
         ty: "Integer".to_string(),
@@ -36,7 +36,7 @@ use crate::protocol::parser::{field::Vis, Field, MajorMinorVersion};
     }
 )]
 #[case::public_with_default(
-    Vis::Public,
+    syn::parse_quote!(pub),
     Field {
         name: "foo".to_string(),
         ty: "Integer".to_string(),
@@ -50,7 +50,7 @@ use crate::protocol::parser::{field::Vis, Field, MajorMinorVersion};
     }
 )]
 #[case::private(
-    Vis::Private,
+    syn::Visibility::Inherited,
     Field {
         name: "foo".to_string(),
         ty: "Integer".to_string(),
@@ -63,7 +63,7 @@ use crate::protocol::parser::{field::Vis, Field, MajorMinorVersion};
     }
 )]
 #[case::private_with_introduced(
-    Vis::Private,
+    syn::Visibility::Inherited,
     Field {
         name: "foo".to_string(),
         ty: "Integer".to_string(),
@@ -78,7 +78,7 @@ use crate::protocol::parser::{field::Vis, Field, MajorMinorVersion};
     }
 )]
 #[case::private_with_default(
-    Vis::Private,
+    syn::Visibility::Inherited,
     Field {
         name: "foo".to_string(),
         ty: "Integer".to_string(),
@@ -91,7 +91,7 @@ use crate::protocol::parser::{field::Vis, Field, MajorMinorVersion};
         foo: i64
     }
 )]
-fn quote(#[case] vis: Vis, #[case] field: Field, #[case] expected: TokenStream) {
+fn quote(#[case] vis: syn::Visibility, #[case] field: Field, #[case] expected: TokenStream) {
     todo!()
     // assert_eq!(
     //     field.quote(vis, &HashMap::new()).to_string(),
