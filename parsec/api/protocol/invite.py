@@ -7,8 +7,8 @@ from parsec._parsec import (
     Invite1ClaimerWaitPeerReq,
     Invite1GreeterWaitPeerRep,
     Invite1GreeterWaitPeerReq,
-    Invite2aClaimerSendHashedNonceHashNonceRep,
-    Invite2aClaimerSendHashedNonceHashNonceReq,
+    Invite2aClaimerSendHashedNonceRep,
+    Invite2aClaimerSendHashedNonceReq,
     Invite2aGreeterGetHashedNonceRep,
     Invite2aGreeterGetHashedNonceReq,
     Invite2bClaimerSendNonceRep,
@@ -128,8 +128,8 @@ invite_1_greeter_wait_peer_serializer = ApiCommandSerializer(
 
 
 invite_2a_claimer_send_hashed_nonce_serializer = ApiCommandSerializer(
-    Invite2aClaimerSendHashedNonceHashNonceReq,
-    Invite2aClaimerSendHashedNonceHashNonceRep,
+    Invite2aClaimerSendHashedNonceReq,
+    Invite2aClaimerSendHashedNonceRep,
 )
 
 invite_2a_greeter_get_hashed_nonce_serializer = ApiCommandSerializer(

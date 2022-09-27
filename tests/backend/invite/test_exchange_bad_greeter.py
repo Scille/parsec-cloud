@@ -6,8 +6,8 @@ from parsec._parsec import (
     Invite1ClaimerWaitPeerRepNotFound,
     Invite1GreeterWaitPeerRepAlreadyDeleted,
     Invite1GreeterWaitPeerRepNotFound,
-    Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted,
-    Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
+    Invite2aClaimerSendHashedNonceRepAlreadyDeleted,
+    Invite2aClaimerSendHashedNonceRepNotFound,
     Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
     Invite2aGreeterGetHashedNonceRepNotFound,
     Invite2bClaimerSendNonceRepNotFound,
@@ -79,7 +79,7 @@ async def test_greeter_exchange_bad_access(alice, backend, alice_ws, reason):
             if status == "already_deleted":
                 status_types = (
                     Invite1GreeterWaitPeerRepAlreadyDeleted,
-                    Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted,
+                    Invite2aClaimerSendHashedNonceRepAlreadyDeleted,
                     Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
                     Invite2bGreeterSendNonceRepAlreadyDeleted,
                     Invite3aGreeterWaitPeerTrustRepAlreadyDeleted,
@@ -91,7 +91,7 @@ async def test_greeter_exchange_bad_access(alice, backend, alice_ws, reason):
                 status_types = (
                     Invite1ClaimerWaitPeerRepNotFound,
                     Invite1GreeterWaitPeerRepNotFound,
-                    Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
+                    Invite2aClaimerSendHashedNonceRepNotFound,
                     Invite2aGreeterGetHashedNonceRepNotFound,
                     Invite2bClaimerSendNonceRepNotFound,
                     Invite2bGreeterSendNonceRepNotFound,

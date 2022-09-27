@@ -210,30 +210,30 @@ serializer = invite_2a_claimer_send_hashed_nonce_serializer
 
 serialized = serializer.req_dumps(
     {
-        "cmd": "invite_2a_claimer_send_hashed_nonce_hash_nonce",
+        "cmd": "invite_2a_claimer_send_hashed_nonce",
         "claimer_hashed_nonce": HashDigest(
             unhexlify("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
         ),
     }
 )
 serializer.req_loads(serialized)
-display("invite_2a_claimer_send_hashed_nonce_hash_nonce_req", serialized, [])
+display("invite_2a_claimer_send_hashed_nonce_req", serialized, [])
 
 serialized = serializer.rep_dumps({"greeter_nonce": b"foobar"})
 serializer.rep_loads(serialized)
-display("invite_2a_claimer_send_hashed_nonce_hash_nonce_rep", serialized, [])
+display("invite_2a_claimer_send_hashed_nonce_rep", serialized, [])
 
 serialized = serializer.rep_dumps({"status": "not_found"})
 serializer.rep_loads(serialized)
-display("invite_2a_claimer_send_hashed_nonce_hash_nonce_rep_not_found", serialized, [])
+display("invite_2a_claimer_send_hashed_nonce_rep_not_found", serialized, [])
 
 serialized = serializer.rep_dumps({"status": "already_deleted"})
 serializer.rep_loads(serialized)
-display("invite_2a_claimer_send_hashed_nonce_hash_nonce_rep_already_deleted", serialized, [])
+display("invite_2a_claimer_send_hashed_nonce_rep_already_deleted", serialized, [])
 
 serialized = serializer.rep_dumps({"status": "invalid_state"})
 serializer.rep_loads(serialized)
-display("invite_2a_claimer_send_hashed_nonce_hash_nonce_rep_invalid_state", serialized, [])
+display("invite_2a_claimer_send_hashed_nonce_rep_invalid_state", serialized, [])
 
 ################### Invite2aGreeterGetHashedNonce ##################
 

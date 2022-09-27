@@ -32,11 +32,11 @@ from parsec._parsec import (
     Invite1GreeterWaitPeerRepNotFound,
     Invite1GreeterWaitPeerRepOk,
     Invite1GreeterWaitPeerReq,
-    Invite2aClaimerSendHashedNonceHashNonceRep,
-    Invite2aClaimerSendHashedNonceHashNonceRepInvalidState,
-    Invite2aClaimerSendHashedNonceHashNonceRepNotFound,
-    Invite2aClaimerSendHashedNonceHashNonceRepOk,
-    Invite2aClaimerSendHashedNonceHashNonceReq,
+    Invite2aClaimerSendHashedNonceRep,
+    Invite2aClaimerSendHashedNonceRepInvalidState,
+    Invite2aClaimerSendHashedNonceRepNotFound,
+    Invite2aClaimerSendHashedNonceRepOk,
+    Invite2aClaimerSendHashedNonceReq,
     Invite2aGreeterGetHashedNonceRep,
     Invite2aGreeterGetHashedNonceRepAlreadyDeleted,
     Invite2aGreeterGetHashedNonceRepInvalidState,
@@ -598,13 +598,13 @@ class BaseInviteComponent:
         return Invite1GreeterWaitPeerRepOk(PublicKey(claimer_public_key_raw))
 
     @api(
-        "invite_2a_claimer_send_hashed_nonce_hash_nonce",
+        "invite_2a_claimer_send_hashed_nonce",
         client_types=[ClientType.INVITED],
     )
     @catch_protocol_errors
     @api_typed_msg_adapter(
-        Invite2aClaimerSendHashedNonceHashNonceReq,
-        Invite2aClaimerSendHashedNonceHashNonceRep,
+        Invite2aClaimerSendHashedNonceReq,
+        Invite2aClaimerSendHashedNonceRep,
     )
     async def api_invite_2a_claimer_send_hash_nonce(self, client_ctx, msg):
         """
@@ -633,12 +633,12 @@ class BaseInviteComponent:
             raise CloseInviteConnection from exc
 
         except InvitationNotFoundError:
-            return Invite2aClaimerSendHashedNonceHashNonceRepNotFound()
+            return Invite2aClaimerSendHashedNonceRepNotFound()
 
         except InvitationInvalidStateError:
-            return Invite2aClaimerSendHashedNonceHashNonceRepInvalidState()
+            return Invite2aClaimerSendHashedNonceRepInvalidState()
 
-        return Invite2aClaimerSendHashedNonceHashNonceRepOk(greeter_nonce)
+        return Invite2aClaimerSendHashedNonceRepOk(greeter_nonce)
 
     @api("invite_2a_greeter_get_hashed_nonce")
     @catch_protocol_errors

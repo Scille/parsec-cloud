@@ -274,7 +274,7 @@ def generate_api_protocol_specs():
                         "events_listen",
                         "invite_1_claimer_wait_peer",
                         "invite_1_greeter_wait_peer",
-                        "invite_2a_claimer_send_hashed_nonce_hash_nonce",
+                        "invite_2a_claimer_send_hashed_nonce",
                         "invite_2a_greeter_get_hashed_nonce",
                         "invite_2b_claimer_send_nonce",
                         "invite_2b_greeter_send_nonce",

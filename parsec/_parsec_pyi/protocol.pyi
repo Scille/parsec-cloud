@@ -88,9 +88,7 @@ class Invite2aGreeterGetHashedNonceRepAlreadyDeleted(Invite2aGreeterGetHashedNon
 class Invite2aGreeterGetHashedNonceRepInvalidState(Invite2aGreeterGetHashedNonceRep):
     def __init__(self) -> None: ...
 
-class Invite2aClaimerSendHashedNonceHashNonceRepUnknownStatus(
-    Invite2aClaimerSendHashedNonceHashNonceRep
-):
+class Invite2aClaimerSendHashedNonceRepUnknownStatus(Invite2aClaimerSendHashedNonceRep):
     def __init__(self) -> None: ...
 
 class Invite2aGreeterGetHashedNonceRepUnknownStatus(Invite2aGreeterGetHashedNonceRep):
@@ -353,36 +351,30 @@ class Invite1ClaimerWaitPeerRepInvalidState(Invite1ClaimerWaitPeerRep):
 class Invite1ClaimerWaitPeerRepUnknownStatus(Invite1ClaimerWaitPeerRep):
     def __init__(self) -> None: ...
 
-class Invite2aClaimerSendHashedNonceHashNonceReq:
+class Invite2aClaimerSendHashedNonceReq:
     def __init__(self, claimer_hashed_nonce: HashDigest) -> None: ...
     def __repr__(self) -> str: ...
     def dump(self) -> bytes: ...
     @property
     def claimer_hashed_nonce(self) -> HashDigest: ...
 
-class Invite2aClaimerSendHashedNonceHashNonceRep:
+class Invite2aClaimerSendHashedNonceRep:
     def __init__(self) -> None: ...
     def dump(self) -> bytes: ...
-    def load(buf: bytes) -> Invite2aClaimerSendHashedNonceHashNonceRep: ...
+    def load(buf: bytes) -> Invite2aClaimerSendHashedNonceRep: ...
 
-class Invite2aClaimerSendHashedNonceHashNonceRepOk(Invite2aClaimerSendHashedNonceHashNonceRep):
+class Invite2aClaimerSendHashedNonceRepOk(Invite2aClaimerSendHashedNonceRep):
     def __init__(self, greeter_nonce: bytes) -> None: ...
     @property
     def greeter_nonce(self) -> bytes: ...
 
-class Invite2aClaimerSendHashedNonceHashNonceRepNotFound(
-    Invite2aClaimerSendHashedNonceHashNonceRep
-):
+class Invite2aClaimerSendHashedNonceRepNotFound(Invite2aClaimerSendHashedNonceRep):
     def __init__(self) -> None: ...
 
-class Invite2aClaimerSendHashedNonceHashNonceRepAlreadyDeleted(
-    Invite2aClaimerSendHashedNonceHashNonceRep
-):
+class Invite2aClaimerSendHashedNonceRepAlreadyDeleted(Invite2aClaimerSendHashedNonceRep):
     def __init__(self) -> None: ...
 
-class Invite2aClaimerSendHashedNonceHashNonceRepInvalidState(
-    Invite2aClaimerSendHashedNonceHashNonceRep
-):
+class Invite2aClaimerSendHashedNonceRepInvalidState(Invite2aClaimerSendHashedNonceRep):
     def __init__(self) -> None: ...
 
 class Invite2bClaimerSendNonceReq:
