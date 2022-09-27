@@ -104,6 +104,7 @@ class FileTable(QTableWidget):
         self.previous_selection = []
         self.setColumnCount(len(Column))
         self.config = None
+        self.has_timestamped_file = False
 
         h_header = self.horizontalHeader()
         h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -270,8 +271,12 @@ class FileTable(QTableWidget):
             action = menu.addAction(_("ACTION_FILE_MENU_SHOW_FILE_STATUS"))
             action.triggered.connect(self.show_status_clicked.emit)
             action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
-            action.triggered.connect(self.file_path_clicked.emit)
-            action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK_TIMESTAMP"))
+
+            # Show the option to create a timestamped share link to the user is
+            # useless here because it has the same effect as creating a regular file link
+            if not self.has_timestamped_file:
+                action.triggered.connect(self.file_path_clicked.emit)
+                action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK_TIMESTAMP"))
             action.triggered.connect(self.file_path_timestamp_clicked.emit)
         menu.exec_(global_pos)
 

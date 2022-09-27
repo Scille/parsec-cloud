@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use chrono::{Datelike, NaiveDateTime, Timelike};
 use data_encoding::BASE32;
 use serde::de::{self, Deserialize, Deserializer, Visitor};
 use serde::ser::{Serialize, Serializer};
@@ -637,7 +638,17 @@ impl BackendOrganizationFileLinkAddr {
 
         let mut ts_range = pairs.filter(|(k, _)| k == "timestamp");
         let timestamp = if let Some((_, value)) = ts_range.next() {
-            Some(DateTime::from_str(&value).map_err(|_| "Invalid `timestamp` param value")?)
+            let time_since_epoch = value.parse::<i64>().map_err(|_| "Bad timestamp value")?;
+            let naive_date = NaiveDateTime::from_timestamp(time_since_epoch, 0);
+
+            Some(DateTime::from_ymd_and_hms(
+                naive_date.year() as u64,
+                naive_date.month() as u64,
+                naive_date.day() as u64,
+                naive_date.hour() as u64,
+                naive_date.minute() as u64,
+                naive_date.second() as u64,
+            ))
         } else {
             None
         };
@@ -663,7 +674,7 @@ impl BackendOrganizationFileLinkAddr {
             .append_pair("path", &binary_urlsafe_encode(&self.encrypted_path));
         if let Some(ts) = self.timestamp {
             url.query_pairs_mut()
-                .append_pair("timestamp", &ts.to_rfc3339());
+                .append_pair("timestamp", &ts.timestamp().to_string());
         }
 
         url

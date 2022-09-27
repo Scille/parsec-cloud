@@ -351,6 +351,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.workspace_fs = wk_fs
         self.load(current_directory)
 
+        self.table_files.has_timestamped_file = isinstance(wk_fs, WorkspaceFSTimestamped)
+
         ws_entry = self.workspace_fs.get_workspace_entry()
         self.current_user_role = ws_entry.role
         self.label_role.setText(get_role_translation(self.current_user_role))
