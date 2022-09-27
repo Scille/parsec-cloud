@@ -3,6 +3,8 @@ pub mod custom_type;
 pub mod field;
 pub mod major_minor_version;
 
+use std::collections::HashMap;
+
 pub use collection::ProtocolCollection;
 pub use custom_type::{CustomEnum, CustomStruct, CustomType, Variant};
 pub use field::Field;
@@ -23,6 +25,7 @@ pub struct Cmd {
     pub major_versions: Vec<u32>,
     pub req: Request,
     pub possible_responses: Vec<Response>,
+    // TODO: May need to be put in a option.
     pub nested_types: Vec<CustomType>,
 }
 
@@ -62,6 +65,44 @@ impl Request {
     pub fn quote_name(&self) -> syn::Ident {
         syn::parse_str(&self.cmd).expect("A valid request cmd name")
     }
+
+    pub fn quote(&self, types: &HashMap<String, String>) -> syn::ItemStruct {
+        if let Some(unit) = &self.unit {
+            self.quote_unit(unit)
+        } else if self.other_fields.is_empty() {
+            self.quote_empty()
+        } else {
+            self.quote_fields(types)
+        }
+    }
+
+    fn quote_unit(&self, unit: &str) -> syn::ItemStruct {
+        let unit = syn::parse_str::<syn::Ident>(unit).expect("A valid unit name");
+        let shared_attr = Request::shared_derive();
+
+        syn::parse_quote! {
+            #shared_attr
+            pub struct Req(pub #unit)
+
+            impl Req {
+                pub fn new(value: #unit) -> Self {
+                    Self(Value)
+                }
+            }
+        }
+    }
+
+    fn quote_empty(&self) -> syn::ItemStruct {
+        todo!()
+    }
+
+    fn quote_fields(&self, types: &HashMap<String, String>) -> syn::ItemStruct {
+        todo!()
+    }
+
+    fn shared_derive() -> syn::Attribute {
+        syn::parse_quote!(#[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)])
+    }
 }
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
@@ -81,5 +122,11 @@ impl Default for Response {
             unit: None,
             other_fields: vec![],
         }
+    }
+}
+
+impl Response {
+    pub fn quote(&self, types: &HashMap<String, String>) -> syn::Variant {
+        todo!()
     }
 }

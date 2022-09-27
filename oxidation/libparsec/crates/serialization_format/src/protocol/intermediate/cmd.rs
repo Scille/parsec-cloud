@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[cfg(test)]
 use pretty_assertions::assert_eq;
 
@@ -88,17 +90,95 @@ impl Cmd {
 
 impl Cmd {
     pub fn quote(&self) -> syn::ItemMod {
+        let name = self.quote_label();
         let module = self.req.quote_name();
+        // TODO: We may need to have the types passed as argument for subsecant custom type.
+        let mut types = HashMap::new();
+        self.nested_types.iter().for_each(|nested_type| {
+            let ty = nested_type.label().to_string();
+            types.insert(ty.clone(), ty);
+        });
+        let nested_types = self.quote_nested_types(&types);
+        let req = self.req.quote(&types);
+        let variants_rep = self.quote_reps(&types);
 
         syn::parse_quote! {
             pub mod #module {
                 use super::AnyCmdReq;
+
+                #(#nested_types)*
+
+                #req
+
+                impl Req {
+                    pub fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                        AnyCmdReq::#name(self).dump()
+                    }
+                }
+
+                // Can't derive Eq because some Rep have f64 field
+                #[allow(clippy::derive_partial_eq_without_eq)]
+                #[::serde_with::serde_as]
+                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq)]
+                #[serde(tag = "status")]
+                pub enum Rep {
+                    #(#variants_rep),*
+                    /// `UnknownStatus` covers the case the server returns a valid message but with
+                    /// an unknown status value (given change in error status only cause a minor bump in API version)
+                    /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
+                    // TODO: Test `serde(other)`
+                    #[serde(skip)]
+                    UnknownStatus {
+                        _status: String,
+                        reason: Option<String>,
+                    }
+                }
+
+                #[derive(::serde::Deserialize)]
+                struct UnknownStatus {
+                    status: String,
+                    reason: Option<String>,
+                }
+
+                impl Rep {
+                    pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                        ::rmp_serde::to_vec_named(self)
+                    }
+
+                    pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
+                        Ok(if let Ok(data) = ::rmp_serde::from_slice::<Self>(buf) {
+                            data
+                        } else {
+                            // Due to how Serde handles variant discriminant, we cannot express unknown status as a default case in the main schema
+                            // Instead we have this additional deserialization attempt fallback
+                            let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+                            Self::UnknownStatus {
+                                _status: data.status,
+                                reason: data.reason,
+                            }
+                        })
+                    }
+                }
             }
         }
     }
 
     pub fn quote_label(&self) -> syn::Ident {
         syn::parse_str(&self.label).expect("A valid command label")
+    }
+
+    pub fn quote_nested_types(&self, types: &HashMap<String, String>) -> Vec<syn::Item> {
+        self.nested_types
+            .iter()
+            .map(|nested_type| nested_type.quote(types))
+            .collect()
+    }
+
+    pub fn quote_reps(&self, types: &HashMap<String, String>) -> Vec<syn::Variant> {
+        self.possible_responses
+            .iter()
+            .map(|response| response.quote(types))
+            .collect()
     }
 }
 
