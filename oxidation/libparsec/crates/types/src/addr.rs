@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use chrono::{Datelike, NaiveDateTime, Timelike};
 use data_encoding::BASE32;
 use serde::de::{self, Deserialize, Deserializer, Visitor};
 use serde::ser::{Serialize, Serializer};
@@ -8,7 +7,7 @@ use std::convert::TryFrom;
 use std::str::FromStr;
 use url::Url;
 
-use crate::{DateTime, InvitationType};
+use crate::InvitationType;
 
 use libparsec_crypto::VerifyKey;
 
@@ -584,7 +583,7 @@ pub struct BackendOrganizationFileLinkAddr {
     organization_id: OrganizationID,
     workspace_id: EntryID,
     encrypted_path: Vec<u8>,
-    timestamp: Option<DateTime>,
+    encrypted_timestamp: Option<Vec<u8>>,
 }
 
 impl_common_stuff!(BackendOrganizationFileLinkAddr);
@@ -595,14 +594,14 @@ impl BackendOrganizationFileLinkAddr {
         organization_id: OrganizationID,
         workspace_id: EntryID,
         encrypted_path: Vec<u8>,
-        timestamp: Option<DateTime>,
+        encrypted_timestamp: Option<Vec<u8>>,
     ) -> Self {
         Self {
             base: backend_addr.base,
             organization_id,
             workspace_id,
             encrypted_path,
-            timestamp,
+            encrypted_timestamp,
         }
     }
 
@@ -637,18 +636,8 @@ impl BackendOrganizationFileLinkAddr {
         }
 
         let mut ts_range = pairs.filter(|(k, _)| k == "timestamp");
-        let timestamp = if let Some((_, value)) = ts_range.next() {
-            let time_since_epoch = value.parse::<i64>().map_err(|_| "Bad timestamp value")?;
-            let naive_date = NaiveDateTime::from_timestamp(time_since_epoch, 0);
-
-            Some(DateTime::from_ymd_and_hms(
-                naive_date.year() as u64,
-                naive_date.month() as u64,
-                naive_date.day() as u64,
-                naive_date.hour() as u64,
-                naive_date.minute() as u64,
-                naive_date.second() as u64,
-            ))
+        let encrypted_timestamp = if let Some((_, value)) = ts_range.next() {
+            Some(binary_urlsafe_decode(&value).or(Err("Invalid `timestamp` param value"))?)
         } else {
             None
         };
@@ -658,7 +647,7 @@ impl BackendOrganizationFileLinkAddr {
             organization_id,
             workspace_id,
             encrypted_path,
-            timestamp,
+            encrypted_timestamp,
         })
     }
 
@@ -672,16 +661,16 @@ impl BackendOrganizationFileLinkAddr {
             .append_pair("action", "file_link")
             .append_pair("workspace_id", &self.workspace_id.to_string())
             .append_pair("path", &binary_urlsafe_encode(&self.encrypted_path));
-        if let Some(ts) = self.timestamp {
+        if let Some(ts) = &self.encrypted_timestamp {
             url.query_pairs_mut()
-                .append_pair("timestamp", &ts.timestamp().to_string());
+                .append_pair("timestamp", &binary_urlsafe_encode(ts));
         }
 
         url
     }
 
-    pub fn timestamp(&self) -> &Option<DateTime> {
-        &self.timestamp
+    pub fn encrypted_timestamp(&self) -> &Option<Vec<u8>> {
+        &self.encrypted_timestamp
     }
 
     pub fn organization_id(&self) -> &OrganizationID {

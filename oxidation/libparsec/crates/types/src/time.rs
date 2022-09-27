@@ -105,10 +105,6 @@ impl DateTime {
         self.into()
     }
 
-    pub fn timestamp(&self) -> i64 {
-        self.0.timestamp()
-    }
-
     // TODO: remove me and only rely on TimeProvider instead !
     #[cfg(not(feature = "mock-time"))]
     #[inline]

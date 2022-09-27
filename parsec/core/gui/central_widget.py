@@ -423,18 +423,17 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             raise GoToFileLinkBadWorkspaceIDError from exc
         try:
             path = workspace.decrypt_file_link_path(addr)
+            ts = workspace.decrypt_timestamp(addr)
         except ValueError as exc:
             raise GoToFileLinkPathDecryptionError from exc
 
         self.show_mount_widget()
         self.mount_widget.show_files_widget(
-            WorkspaceFSTimestamped(workspace, addr.timestamp)
-            if addr.timestamp is not None
-            else workspace,
+            WorkspaceFSTimestamped(workspace, ts) if ts is not None else workspace,
             path,
             selected=True,
             mount_it=mount,
-            timestamp=addr.timestamp,
+            timestamp=ts,
         )
 
     def show_mount_widget(self, user_info: Optional[UserInfo] = None) -> None:

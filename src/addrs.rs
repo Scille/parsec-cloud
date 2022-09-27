@@ -7,7 +7,6 @@ use pyo3::{
 };
 use std::str::FromStr;
 
-use crate::time::DateTime;
 #[allow(deprecated)]
 use crate::{
     api_crypto::VerifyKey,
@@ -441,12 +440,12 @@ crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __hash__);
 #[pymethods]
 impl BackendOrganizationFileLinkAddr {
     #[new]
-    #[args(creation_time = "None", py_kwargs = "**")]
+    #[args(encrypted_timestamp = "None", py_kwargs = "**")]
     fn new(
         organization_id: OrganizationID,
         workspace_id: EntryID,
         encrypted_path: Vec<u8>,
-        creation_time: Option<DateTime>,
+        encrypted_timestamp: Option<Vec<u8>>,
         py_kwargs: Option<&PyDict>,
     ) -> PyResult<Self> {
         let addr = match py_kwargs {
@@ -472,14 +471,17 @@ impl BackendOrganizationFileLinkAddr {
                 organization_id.0,
                 workspace_id.0,
                 encrypted_path,
-                creation_time.map(|t| t.0),
+                encrypted_timestamp,
             ),
         ))
     }
 
     #[getter]
-    fn timestamp(&self) -> Option<DateTime> {
-        self.0.timestamp().map(DateTime)
+    fn encrypted_timestamp<'py>(&'py self, python: Python<'py>) -> Option<&'py PyBytes> {
+        self.0
+            .encrypted_timestamp()
+            .as_ref()
+            .map(|v| PyBytes::new(python, v.as_slice()))
     }
 
     #[getter]
@@ -563,13 +565,13 @@ impl BackendOrganizationFileLinkAddr {
     }
 
     #[classmethod]
-    #[args(creation_time = "None")]
+    #[args(encrypted_timestamp = "None")]
     fn build(
         _cls: &PyType,
         organization_addr: BackendOrganizationAddr,
         workspace_id: EntryID,
         encrypted_path: Vec<u8>,
-        timestamp: Option<DateTime>,
+        encrypted_timestamp: Option<Vec<u8>>,
     ) -> PyResult<Self> {
         Ok(Self(
             libparsec::types::BackendOrganizationFileLinkAddr::new(
@@ -577,7 +579,7 @@ impl BackendOrganizationFileLinkAddr {
                 organization_addr.organization_id().unwrap().0,
                 workspace_id.0,
                 encrypted_path,
-                timestamp.map(|t| t.0),
+                encrypted_timestamp,
             ),
         ))
     }

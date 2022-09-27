@@ -775,6 +775,11 @@ class WorkspaceFS:
         """
         workspace_entry = self.get_workspace_entry()
         encrypted_path = workspace_entry.key.encrypt(str(FsPath(path)).encode("utf-8"))
+        encrypted_ts = (
+            workspace_entry.key.encrypt(timestamp.to_rfc3339().encode("utf-8"))
+            if timestamp is not None
+            else None
+        )
 
         # If the workspace is Timestamped we want the generated link to include
         # its timestamp so it will be possible to have a link that specific version
@@ -783,14 +788,16 @@ class WorkspaceFS:
                 organization_addr=self.device.organization_addr,
                 workspace_id=workspace_entry.id,
                 encrypted_path=encrypted_path,
-                timestamp=self.timestamp,
+                encrypted_timestamp=workspace_entry.key.encrypt(
+                    self.timestamp.to_rfc3339().encode("utf-8")
+                ),
             )
 
         return BackendOrganizationFileLinkAddr.build(
             organization_addr=self.device.organization_addr,
             workspace_id=workspace_entry.id,
             encrypted_path=encrypted_path,
-            timestamp=timestamp,
+            encrypted_timestamp=encrypted_ts,
         )
 
     def decrypt_file_link_path(self, addr: BackendOrganizationFileLinkAddr) -> FsPath:
@@ -804,3 +811,19 @@ class WorkspaceFS:
             raise ValueError("Cannot decrypt path")
         # FsPath raises ValueError, decode() raises UnicodeDecodeError which is a subclass of ValueError
         return FsPath(raw_path.decode("utf-8"))
+
+    def decrypt_timestamp(self, addr: BackendOrganizationFileLinkAddr) -> Optional[DateTime]:
+        """
+        Raises: ValueError
+        """
+        workspace_entry = self.get_workspace_entry()
+        try:
+            raw_ts = (
+                workspace_entry.key.decrypt(addr.encrypted_timestamp)
+                if addr.encrypted_timestamp is not None
+                else None
+            )
+        except CryptoError:
+            raise ValueError("Cannot decrypt timestamp")
+        # DateTime.from_rfc3339 raise a `ValueError` if the timestamp is invalid
+        return DateTime.from_rfc3339(raw_ts.decode("utf-8")) if raw_ts is not None else None
