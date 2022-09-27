@@ -27,6 +27,7 @@ from parsec._parsec import (
     VlobCreateRepInMaintenance,
     VlobCreateRepNotAllowed,
     VlobCreateRepRequireGreaterTimestamp,
+    VlobCreateRepSequesterRejected,
     VlobReadRepOk,
     VlobReadRepNotAllowed,
     VlobReadRepBadEncryptionRevision,
@@ -41,6 +42,7 @@ from parsec._parsec import (
     VlobUpdateRepNotFound,
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
+    VlobUpdateRepSequesterRejected,
     VlobListVersionsRepOk,
     VlobListVersionsRepInMaintenance,
     VlobListVersionsRepNotAllowed,
@@ -92,6 +94,7 @@ from parsec.core.fs.exceptions import (
     FSDeviceNotFoundError,
     FSInvalidTrustchainError,
     FSLocalMissError,
+    VlobSequesterRejectedError,
 )
 from parsec.core.fs.storage import BaseWorkspaceStorage
 
@@ -850,6 +853,8 @@ class RemoteLoader(UserRemoteLoader):
                 sequester_authority_certificate=rep.sequester_authority_certificate,
                 sequester_services_certificates=rep.sequester_services_certificates,
             )
+        elif isinstance(rep, VlobCreateRepSequesterRejected):
+            raise VlobSequesterRejectedError()
         elif not isinstance(rep, VlobCreateRepOk):
             raise FSError(f"Cannot create vlob {entry_id.str}: {rep}")
 
@@ -900,6 +905,8 @@ class RemoteLoader(UserRemoteLoader):
                 sequester_authority_certificate=rep.sequester_authority_certificate,
                 sequester_services_certificates=rep.sequester_services_certificates,
             )
+        elif isinstance(rep, VlobUpdateRepSequesterRejected):
+            raise VlobSequesterRejectedError()
         elif not isinstance(rep, VlobUpdateRepOk):
             raise FSError(f"Cannot update vlob {entry_id.str}: {rep}")
 

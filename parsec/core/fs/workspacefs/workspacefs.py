@@ -5,6 +5,7 @@ import trio
 from collections import defaultdict
 from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
 from parsec._parsec import DateTime
+from parsec.core.core_events import CoreEvent
 
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
@@ -52,6 +53,7 @@ from parsec.core.fs.exceptions import (
     FSNotADirectoryError,
     FSBackendOfflineError,
     FSError,
+    VlobSequesterRejectedError,
 )
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 from parsec.core.fs.storage import BaseWorkspaceStorage
@@ -91,6 +93,7 @@ class WorkspaceFS:
         self.remote_devices_manager = remote_devices_manager
         self.preferred_language = preferred_language
         self.sync_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
+        self.black_list: List[EntryID] = []
 
         self.remote_loader = RemoteLoader(
             self.device,
@@ -669,13 +672,25 @@ class WorkspaceFS:
         Raises:
             FSError
         """
+        # Entry is blacklisted, skip it
+        if entry_id in self.black_list:
+            return
         # Make sure the corresponding realm exists
         await self._create_realm_if_needed()
 
         # Sync parent first
         try:
             async with self.sync_locks[entry_id]:
-                manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
+                try:
+                    manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
+
+                except VlobSequesterRejectedError as exc:
+                    self.event_bus.send(
+                        CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR,
+                        error_reason=str(exc),
+                        entry_id=entry_id,
+                    )
+                    self.black_list.append(entry_id)
 
         # Nothing to synchronize if the manifest does not exist locally
         except FSNoSynchronizationRequired:
@@ -697,7 +712,15 @@ class WorkspaceFS:
 
         # Synchronize children
         for name, entry_id in manifest.children.items():
-            await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=True)
+            try:
+                await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=True)
+            except VlobSequesterRejectedError as exc:
+                self.black_list.append(entry_id)
+                self.event_bus.send(
+                    CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR,
+                    error_reason=str(exc),
+                    entry_id=entry_id,
+                )
 
     async def sync(self, *, remote_changed: bool = True) -> None:
         """

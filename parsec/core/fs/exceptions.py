@@ -246,6 +246,10 @@ class FSBackendOfflineError(FSRemoteOperationError):
     NTSTATUS = ntstatus.STATUS_HOST_UNREACHABLE
 
 
+class VlobSequesterRejectedError(Exception):
+    pass
+
+
 class FSRemoteManifestNotFound(FSRemoteOperationError):
     pass
 
