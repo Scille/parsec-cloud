@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Union, Dict
+from typing import TYPE_CHECKING, List, Optional, Union, Dict
 import trio
 from collections import defaultdict
 
@@ -12,13 +12,15 @@ from parsec.backend.user import UserError, User, Device
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     Organization,
-    SequesterAuthority,
-    OrganizationStats,
-    OrganizationAlreadyExistsError,
-    OrganizationInvalidBootstrapTokenError,
     OrganizationAlreadyBootstrappedError,
-    OrganizationNotFoundError,
+    OrganizationAlreadyExistsError,
     OrganizationFirstUserCreationError,
+    OrganizationInvalidBootstrapTokenError,
+    OrganizationNotFoundError,
+    OrganizationStats,
+    SequesterAuthority,
+    ServerStatsItem,
+    ServerStatsRep,
     UsersPerProfileDetailItem,
 )
 from parsec.backend.utils import Unset, UnsetType
@@ -127,25 +129,37 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                     sequester_authority=sequester_authority, sequester_services_certificates=()
                 )
 
-    async def stats(self, id: OrganizationID) -> OrganizationStats:
+    async def stats(
+        self,
+        id: OrganizationID,
+        from_date: Optional[DateTime] = None,
+        to_date: Optional[DateTime] = None,
+    ) -> OrganizationStats:
         await self.get(id)
+        from_date = from_date or DateTime(1900, 1, 1, 0, 0, 0)
+        to_date = to_date or DateTime.now()
 
         metadata_size = 0
         for (vlob_organization_id, _), vlob in self._vlob_component._vlobs.items():
             if vlob_organization_id == id:
-                metadata_size += sum(len(blob) for (blob, _, _) in vlob.data)
+                metadata_size += sum(
+                    len(blob) for (blob, _, ts) in vlob.data if from_date <= ts <= to_date
+                )
 
         data_size = 0
         for (vlob_organization_id, _), blockmeta in self._block_component._blockmetas.items():
-            if vlob_organization_id == id:
+            if vlob_organization_id == id and (from_date <= blockmeta.created_on <= to_date):
                 data_size += blockmeta.size
 
         users = 0
         active_users = 0
         users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile}
         for user in self._user_component._organizations[id].users.values():
+            if user.created_on > to_date:
+                continue
             users += 1
-            if user.revoked_on:
+            # User must be revoked at the time we're looking for
+            if user.revoked_on and user.revoked_on >= from_date:
                 users_per_profile_detail[user.profile]["revoked"] += 1
             else:
                 users_per_profile_detail[user.profile]["active"] += 1
@@ -172,57 +186,27 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             users_per_profile_detail=users_per_profile_detail,
         )
 
-    async def server_stats(self, from_date: DateTime, to_date: DateTime = DateTime.now()):
-        result = list()
-        for id in self._organizations:
-            metadata_size = 0
-            for (vlob_organization_id, _), vlob in self._vlob_component._vlobs.items():
-                if vlob_organization_id == id:
-                    metadata_size += sum(
-                        len(blob)
-                        for (blob, _, ts) in vlob.data
-                        if ts >= from_date and ts <= to_date
-                    )
+    async def server_stats(
+        self, from_date: Optional[DateTime] = None, to_date: Optional[DateTime] = None
+    ) -> ServerStatsRep:
+        from_date = from_date or DateTime(1900, 1, 1, 0, 0, 0)
+        to_date = to_date or DateTime.now()
+        result: List[ServerStatsItem] = []
 
-            data_size = 0
-            for (vlob_organization_id, _), blockmeta in self._block_component._blockmetas.items():
-                if vlob_organization_id == id:
-                    data_size += blockmeta.size
-
-            users = 0
-            active_users = 0
-            users_per_profile_detail = {p.value: {"active": 0, "revoked": 0} for p in UserProfile}
-            for user in self._user_component._organizations[id].users.values():
-                # User is created after the time range
-                if user.created_on > to_date:
-                    continue
-                users += 1
-                if user.revoked_on:
-                    users_per_profile_detail[user.profile.value]["revoked"] += 1
-                else:
-                    users_per_profile_detail[user.profile.value]["active"] += 1
-                    active_users += 1
-
-            realms = len(
-                [
-                    realm_id
-                    for organization_id, realm_id in self._realm_component._realms.keys()
-                    if organization_id == id
-                ]
-            )
-
+        for org_id, _ in self._organizations.items():
+            stats = await self.stats(org_id, from_date, to_date)
             result.append(
-                {
-                    "id": id.str,
-                    "data_size": data_size,
-                    "metadata_size": metadata_size,
-                    "realms": realms,
-                    "users": users,
-                    "user_per_profiles": users_per_profile_detail,
-                }
+                ServerStatsItem(
+                    organization_id=org_id.str,
+                    data_size=stats.data_size,
+                    metadata_size=stats.metadata_size,
+                    realms_count=stats.realms,
+                    users_count=stats.users,
+                    users_per_profile_detail=stats.users_per_profile_detail,
+                )
             )
 
-        return result
+        return ServerStatsRep(stats=result)
 
     async def update(
         self,

@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import attr
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, DeviceID, UserID, RealmID, RealmRole, BlockID
 from parsec.backend.utils import OperationKind
 from parsec.backend.realm import RealmNotFoundError
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
 class BlockMeta:
     realm_id: RealmID
     size: int
+    created_on: DateTime
 
 
 class MemoryBlockComponent(BaseBlockComponent):
@@ -109,14 +111,16 @@ class MemoryBlockComponent(BaseBlockComponent):
         block_id: BlockID,
         realm_id: RealmID,
         block: bytes,
+        date: Optional[DateTime] = None,
     ) -> None:
+        date = date or DateTime.now()
         self._check_realm_write_access(organization_id, realm_id, author.user_id)
         if (organization_id, block_id) in self._blockmetas:
             raise BlockAlreadyExistsError()
 
         await self._blockstore_component.create(organization_id, block_id, block)
 
-        self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id, len(block))
+        self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id, len(block), date)
 
 
 class MemoryBlockStoreComponent(BaseBlockStoreComponent):

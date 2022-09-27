@@ -11,39 +11,39 @@ def _build_expected_return_value(first_size: int, second_size: int, third_size: 
         "stats": [
             {
                 "data_size": 0,
-                "id": "CoolOrg",
+                "organization_id": "CoolOrg",
                 "metadata_size": first_size,
-                "realms": 4,
-                "users": 3,
-                "user_per_profiles": {
-                    "ADMIN": {"active": 2, "revoked": 0},
-                    "OUTSIDER": {"active": 0, "revoked": 0},
-                    "STANDARD": {"active": 1, "revoked": 0},
-                },
+                "realms_count": 4,
+                "users_count": 3,
+                "users_per_profile_detail": [
+                    {"active": 2, "revoked": 0, "profile": "ADMIN"},
+                    {"active": 1, "revoked": 0, "profile": "STANDARD"},
+                    {"active": 0, "revoked": 0, "profile": "OUTSIDER"},
+                ],
             },
             {
                 "data_size": 0,
-                "id": "ExpiredOrg",
+                "organization_id": "ExpiredOrg",
                 "metadata_size": second_size,
-                "realms": 1,
-                "users": 1,
-                "user_per_profiles": {
-                    "ADMIN": {"active": 1, "revoked": 0},
-                    "OUTSIDER": {"active": 0, "revoked": 0},
-                    "STANDARD": {"active": 0, "revoked": 0},
-                },
+                "realms_count": 1,
+                "users_count": 1,
+                "users_per_profile_detail": [
+                    {"active": 1, "revoked": 0, "profile": "ADMIN"},
+                    {"active": 0, "revoked": 0, "profile": "STANDARD"},
+                    {"active": 0, "revoked": 0, "profile": "OUTSIDER"},
+                ],
             },
             {
                 "data_size": 0,
-                "id": "OtherOrg",
+                "organization_id": "OtherOrg",
                 "metadata_size": third_size,
-                "realms": 1,
-                "users": 1,
-                "user_per_profiles": {
-                    "ADMIN": {"active": 1, "revoked": 0},
-                    "OUTSIDER": {"active": 0, "revoked": 0},
-                    "STANDARD": {"active": 0, "revoked": 0},
-                },
+                "realms_count": 1,
+                "users_count": 1,
+                "users_per_profile_detail": [
+                    {"active": 1, "revoked": 0, "profile": "ADMIN"},
+                    {"active": 0, "revoked": 0, "profile": "STANDARD"},
+                    {"active": 0, "revoked": 0, "profile": "OUTSIDER"},
+                ],
             },
         ]
     }
@@ -178,7 +178,6 @@ async def test_json_server_stats(backend_asgi_app, realm, alice):
 
     rep = await server_stats(client, HEADERS, from_date=FROM_DATE, to_date=TO_DATE, format="json")
     first_size, second_size, third_size = (org["metadata_size"] for org in rep["stats"])
-    print(first_size, second_size, third_size)
     expected = _build_expected_return_value(first_size, second_size, third_size)
     assert rep == expected
 
@@ -279,8 +278,8 @@ async def test_json_server_stats_revoked_user(backend_asgi_app, alice_ws, alice,
     rep = await server_stats(client, HEADERS, from_date=FROM_DATE, to_date=TO_DATE)
 
     # Bob has been revoked
-    expected["stats"][0]["user_per_profiles"]["STANDARD"]["revoked"] += 1
-    expected["stats"][0]["user_per_profiles"]["STANDARD"]["active"] -= 1
+    expected["stats"][0]["users_per_profile_detail"][1]["revoked"] += 1
+    expected["stats"][0]["users_per_profile_detail"][1]["active"] -= 1
     assert rep == expected
 
 
@@ -289,13 +288,15 @@ async def test_json_server_stats_add_workspace(backend_asgi_app, backend, alice,
     client = backend_asgi_app.test_client()
     HEADERS = {"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"}
     FROM_DATE = DateTime(2021, 1, 1, 0, 0, 0).to_rfc3339()
-    TO_DATE = DateTime(2021, 12, 31, 0, 0, 0).to_rfc3339()
+    TO_DATE = DateTime.now().to_rfc3339()
     rep = await server_stats(client, HEADERS, from_date=FROM_DATE, to_date=TO_DATE)
     expected = rep
 
     await realm_factory(backend, alice)
-    expected["stats"][0]["realms"] += 1  # New realm
-    rep = await server_stats(client, HEADERS, from_date=FROM_DATE, to_date=TO_DATE)
+    expected["stats"][0]["realms_count"] += 1  # New realm
+    rep = await server_stats(
+        client, HEADERS, from_date=FROM_DATE, to_date=DateTime.now().to_rfc3339()
+    )
     assert rep == expected
 
 
@@ -304,15 +305,15 @@ async def test_json_server_stats_csv(backend_asgi_app, realm, alice):
     client = backend_asgi_app.test_client()
     HEADERS = {"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"}
     FROM_DATE = DateTime(1900, 1, 1, 0, 0, 0).to_rfc3339()
-    TO_DATE = DateTime(3000, 1, 1, 0, 0, 0).to_rfc3339()
+    TO_DATE = DateTime.now().to_rfc3339()
     json_rep = await server_stats(client, HEADERS, from_date=FROM_DATE, to_date=TO_DATE)
     first_size, second_size, third_size = (org["metadata_size"] for org in json_rep["stats"])
     rep = await server_stats(client, HEADERS, from_date=FROM_DATE, to_date=TO_DATE, format="csv")
     # We use Excel like CSV that use carriage return and line feed ('\r\n') as line separator
     assert (
         rep
-        == f"""id,data_size,metadata_size,realms,users,admin_count_active,standard_count_active,outsider_count_active,admin_count_revoked,standard_count_revoked,outsider_count_revoked\r
-CoolOrg,0,{first_size},4,3,2,0,1,0,0,0\r
+        == f"""organization_id,data_size,metadata_size,realms_count,users_count,admin_count_active,standard_count_active,outsider_count_active,admin_count_revoked,standard_count_revoked,outsider_count_revoked\r
+CoolOrg,0,{first_size},4,3,2,1,0,0,0,0\r
 ExpiredOrg,0,{second_size},1,1,1,0,0,0,0,0\r
 OtherOrg,0,{third_size},1,1,1,0,0,0,0,0\r
 """

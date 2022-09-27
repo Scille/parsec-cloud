@@ -16,10 +16,12 @@ from parsec.api.rest import (
     organization_create_rep_serializer,
     organization_update_req_serializer,
     organization_stats_rep_serializer,
+    server_stats_rep_serializer,
 )
 from parsec.backend.organization import (
     OrganizationAlreadyExistsError,
     OrganizationNotFoundError,
+    ServerStatsRep,
     generate_bootstrap_token,
 )
 
@@ -30,17 +32,17 @@ if TYPE_CHECKING:
 administration_bp = Blueprint("administration_api", __name__)
 
 
-def _convert_server_stats_results_as_csv(results) -> str:
+def _convert_server_stats_results_as_csv(results: ServerStatsRep) -> str:
     with StringIO(newline="") as memory_file:
         writer = csv.writer(memory_file)
         # Header
         writer.writerow(
             [
-                "id",
+                "organization_id",
                 "data_size",
                 "metadata_size",
-                "realms",
-                "users",
+                "realms_count",
+                "users_count",
                 "admin_count_active",
                 "standard_count_active",
                 "outsider_count_active",
@@ -50,15 +52,19 @@ def _convert_server_stats_results_as_csv(results) -> str:
             ]
         )
 
-        for row in results:
-            user_values = list()
-            for value in row["user_per_profiles"].values():
-                user_values.extend(value.values())
-            row.pop("user_per_profiles")
-            writer.writerow(
-                [row["id"], row["data_size"], row["metadata_size"], row["realms"], row["users"]]
-                + user_values
-            )
+        for row in results.stats:
+            csv_row = [
+                row.organization_id,
+                row.data_size,
+                row.metadata_size,
+                row.realms_count,
+                row.users_count,
+            ]
+            print(row.users_per_profile_detail)
+            csv_row.extend([row.users_per_profile_detail[i].active for i in range(3)])
+            csv_row.extend([row.users_per_profile_detail[i].revoked for i in range(3)])
+            writer.writerow(csv_row)
+
         return memory_file.getvalue()
 
 
@@ -202,11 +208,7 @@ async def administration_server_stats():
         )
 
     try:
-        from_date = (
-            DateTime.from_rfc3339(request.args["from"])
-            if "from" in request.args
-            else DateTime(1900, 1, 1, 0, 0, 0)
-        )
+        from_date = DateTime.from_rfc3339(request.args["from"]) if "from" in request.args else None
         to_date = (
             DateTime.from_rfc3339(request.args["to"]) if "to" in request.args else DateTime.now()
         )
@@ -217,4 +219,20 @@ async def administration_server_stats():
     if request.args["format"] == "csv":
         return _convert_server_stats_results_as_csv(results)
 
-    return {"stats": results}
+    return make_rep_response(
+        server_stats_rep_serializer,
+        data={
+            "stats": [
+                {
+                    "organization_id": stats.organization_id,
+                    "realms_count": stats.realms_count,
+                    "data_size": stats.data_size,
+                    "metadata_size": stats.metadata_size,
+                    "users_count": stats.users_count,
+                    "users_per_profile_detail": stats.users_per_profile_detail,
+                }
+                for stats in results.stats
+            ]
+        },
+        status=200,
+    )

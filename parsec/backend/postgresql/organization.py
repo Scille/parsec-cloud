@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import List, Optional, Union
 from functools import lru_cache
 from triopg import UniqueViolationError
-from datetime import datetime as PyDateTime
 
 from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, UserProfile
@@ -24,6 +23,8 @@ from parsec.backend.organization import (
     OrganizationAlreadyBootstrappedError,
     OrganizationNotFoundError,
     OrganizationFirstUserCreationError,
+    ServerStatsItem,
+    ServerStatsRep,
     UsersPerProfileDetailItem,
 )
 from parsec.backend.postgresql.handler import PGHandler
@@ -140,6 +141,7 @@ SELECT
             SELECT (revoked_on, profile::text)
             FROM user_
             WHERE organization = { q_organization_internal_id("$organization_id") }
+            AND created_on < $to_date
         )
     ) users,
     (
@@ -152,74 +154,32 @@ SELECT
         FROM vlob_atom
         WHERE
             organization = { q_organization_internal_id("$organization_id") }
+            AND created_on BETWEEN $from_date AND $to_date
+            AND (deleted_on IS NULL OR deleted_on > $to_date)
     ) metadata_size,
     (
         SELECT COALESCE(SUM(size), 0)
         FROM block
         WHERE
             organization = { q_organization_internal_id("$organization_id") }
+            AND created_on BETWEEN $from_date AND $to_date
+            AND (deleted_on IS NULL OR deleted_on > $to_date)
     ) data_size
 """
 )
 
-_q_get_server_stats = Q(
-    """
-    SELECT
-        organization_id,
-        admin_count_active,
-        standard_count_active,
-        outsider_count_active,
-        admin_count_revoked,
-        standard_count_revoked,
-        outsider_count_revoked,
-        total_users,
-        realms.realm_count,
-        COALESCE(vlobs.metadata_size, 0) AS metadata_size,
-        COALESCE(datas.data_size, 0) AS data_size
-    FROM organization AS o
-        LEFT JOIN (
-            SELECT
-                o1._id AS userid,
-                sum(case when u.profile = 'ADMIN'    AND revoked_on IS NULL then 1 else 0 end)      AS admin_count_active,
-                sum(case when u.profile = 'STANDARD' AND revoked_on IS NULL then 1 else 0 end)      AS standard_count_active,
-                sum(case when u.profile = 'OUTSIDER' AND revoked_on IS NULL then 1 else 0 end)      AS outsider_count_active,
-                sum(case when u.profile = 'ADMIN'    AND revoked_on IS NOT NULL then 1 else 0 end)  AS admin_count_revoked,
-                sum(case when u.profile = 'STANDARD' AND revoked_on IS NOT NULL then 1 else 0 end)  AS standard_count_revoked,
-                sum(case when u.profile = 'OUTSIDER' AND revoked_on IS NOT NULL then 1 else 0 end)  AS outsider_count_revoked,
-                COUNT(*) AS total_users
-            FROM
-                organization AS o1 JOIN user_ AS u ON o1._id = u.organization
-            WHERE
-                u.created_on < $to_date
-            GROUP BY
-                o1._id
+_q_get_server_stats = Q("SELECT DISTINCT organization_id AS id from organization ORDER BY id")
 
-        ) users ON o._id = userid
-        LEFT JOIN (
-            SELECT COUNT(*) AS realm_count, o1._id AS id
-            FROM organization AS o1 JOIN realm ON o1._id = realm.organization
-            GROUP BY o1._id
-        ) realms ON realms.id = o._id
-        LEFT JOIN (
-            SELECT
-            o1._id AS vlobid,
-            COALESCE(SUM(size), 0) AS metadata_size
-            FROM organization AS o1 JOIN vlob_atom AS va ON o1._id = va.organization
-            WHERE
-                va.created_on BETWEEN $from_date AND $to_date
-                AND (deleted_on IS NULL or deleted_on > $to_date)
-            GROUP BY o1._id
-        ) vlobs ON o._id = vlobid
-        LEFT JOIN (
-            SELECT
-            o1._id AS dataid,
-            COALESCE(SUM(size), 0) AS data_size
-            FROM organization AS o1 JOIN block AS b ON o1._id = b.organization
-            WHERE
-                created_on BETWEEN $from_date AND $to_date
-                AND (deleted_on IS NULL OR deleted_on > $to_date)
-            GROUP BY o1._id
-        ) datas ON o._id = datas.dataid
+# There's no `created_on` or similar field for realm. So we get an estimation by
+# taking the oldest certification in the `realm_user_role`
+_q_get_average_realm_creation_date = Q(
+    """
+    SELECT realm, MIN(certified_on) AS creation_date
+    FROM realm AS r
+        JOIN realm_user_role AS rur ON r._id = rur.realm
+        JOIN organization AS o ON o._id = r.organization
+    WHERE o.organization_id = $organization_id
+    GROUP BY realm
 """
 )
 
@@ -367,9 +327,18 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             if result != "UPDATE 1":
                 raise OrganizationError(f"Update error: {result}")
 
-    async def stats(self, id: OrganizationID) -> OrganizationStats:
+    async def stats(
+        self,
+        id: OrganizationID,
+        from_date: Optional[DateTime] = None,
+        to_date: Optional[DateTime] = None,
+    ) -> OrganizationStats:
+        from_date = from_date or DateTime(2000, 1, 1, 0, 0, 0)
+        to_date = to_date or DateTime.now()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            result = await conn.fetchrow(*_q_get_stats(organization_id=id.str))
+            result = await conn.fetchrow(
+                *_q_get_stats(organization_id=id.str, from_date=from_date, to_date=to_date)
+            )
             if not result["exist"]:
                 raise OrganizationNotFoundError()
 
@@ -399,55 +368,39 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             users_per_profile_detail=users_per_profile_detail,
         )
 
-    async def server_stats(self, from_date: DateTime, to_date: DateTime):
+    async def server_stats(
+        self, from_date: Optional[DateTime] = None, to_date: Optional[DateTime] = None
+    ) -> ServerStatsRep:
+        from_date = from_date or DateTime(1900, 1, 1, 0, 0, 0)
+        to_date = to_date or DateTime.now()
+        results: List[ServerStatsItem] = []
+
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            query_lines = await conn.fetch(
-                *_q_get_server_stats(
-                    from_date=PyDateTime(
-                        from_date.year,
-                        from_date.month,
-                        from_date.day,
-                        from_date.hour,
-                        from_date.minute,
-                        from_date.second,
-                    ),
-                    to_date=PyDateTime(
-                        to_date.year,
-                        to_date.month,
-                        to_date.day,
-                        to_date.hour,
-                        to_date.minute,
-                        to_date.second,
-                    ),
+            orgs = await conn.fetch(*_q_get_server_stats())
+
+        for org in orgs:
+            org_id = org["id"]
+            org_stats = await self.stats(OrganizationID(org_id), from_date, to_date)
+            realm_count = 0
+            realms_creation_date = await conn.fetch(
+                *_q_get_average_realm_creation_date(organization_id=org_id)
+            )
+            for _, date in realms_creation_date:
+                if from_date <= date <= to_date:
+                    realm_count += 1
+
+            results.append(
+                ServerStatsItem(
+                    organization_id=org_id,
+                    data_size=org_stats.data_size,
+                    metadata_size=org_stats.metadata_size,
+                    realms_count=realm_count,
+                    users_count=org_stats.users,
+                    users_per_profile_detail=org_stats.users_per_profile_detail,
                 )
             )
 
-            return [
-                {
-                    "id": line["organization_id"],
-                    "data_size": line["data_size"],
-                    "metadata_size": line["metadata_size"],
-                    "realms": line["realm_count"],
-                    "users": sum(
-                        [line[u] for u in dict(line) if "_count_" in u]
-                    ),  # Match *_count_* columns
-                    "user_per_profiles": {
-                        "ADMIN": {
-                            "active": line["admin_count_active"],
-                            "revoked": line["admin_count_revoked"],
-                        },
-                        "STANDARD": {
-                            "active": line["standard_count_active"],
-                            "revoked": line["standard_count_revoked"],
-                        },
-                        "OUTSIDER": {
-                            "active": line["outsider_count_active"],
-                            "revoked": line["outsider_count_revoked"],
-                        },
-                    },
-                }
-                for line in query_lines
-            ]
+        return ServerStatsRep(stats=results)
 
     async def update(
         self,

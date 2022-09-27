@@ -112,6 +112,21 @@ class OrganizationStats:
     users_per_profile_detail: Tuple[UsersPerProfileDetailItem, ...]
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class ServerStatsItem:
+    organization_id: str
+    data_size: int
+    metadata_size: int
+    realms_count: int
+    users_count: int
+    users_per_profile_detail: Tuple[UsersPerProfileDetailItem, ...]
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class ServerStatsRep:
+    stats: List[ServerStatsItem]
+
+
 def generate_bootstrap_token() -> str:
     return token_hex(32)
 
@@ -425,6 +440,11 @@ class BaseOrganizationComponent:
         Raises:
             OrganizationNotFoundError
         """
+        raise NotImplementedError()
+
+    async def server_stats(
+        self, from_date: Optional[DateTime] = None, to_date: Optional[DateTime] = None
+    ) -> ServerStatsRep:
         raise NotImplementedError()
 
     async def update(
