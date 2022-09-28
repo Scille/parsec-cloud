@@ -99,7 +99,7 @@ impl Cmd {
             types.insert(ty.clone(), ty);
         });
         let nested_types = self.quote_nested_types(&types);
-        let req = self.req.quote(&types);
+        let (req_def, req_impl) = self.req.quote(&types);
         let variants_rep = self.quote_reps(&types);
 
         syn::parse_quote! {
@@ -108,7 +108,9 @@ impl Cmd {
 
                 #(#nested_types)*
 
-                #req
+                #req_def
+
+                #req_impl
 
                 impl Req {
                     pub fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
