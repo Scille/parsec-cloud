@@ -4,6 +4,7 @@ import pytest
 
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID, VlobID
+from parsec.core.core_events import CoreEvent
 from parsec.sequester_crypto import sequester_service_decrypt
 
 from tests.common import customize_fixtures, sequester_service_factory
@@ -206,13 +207,18 @@ async def test_webhook_rejected_error(
         w1_id = await alice_user_fs.workspace_create(EntryName("w1"))
         w1 = alice_user_fs.get_workspace(w1_id)
 
-        # Create and sync file
-        assert not w1.black_list
-        await w1.touch("/w1f1")
-        await w1.sync()
-        # Assert entry is blacklisted
-        mock.build_opener.assert_called_once()
-        assert len(w1.black_list) == 1
+        with alice_user_fs.event_bus.listen() as spy:
+            # Create and sync file
+            assert not w1.black_list
+            await w1.touch("/w1f1")
+            await w1.sync()
+            # Assert entry is blacklisted
+            mock.build_opener.assert_called_once()
+            assert len(w1.black_list) == 1
+            spy.assert_event_occured(CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR)
+            for event in spy.events:
+                if event.event == CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR:
+                    assert event.kwargs["entry_id"] in w1.black_list
 
         # Assert blacklisted entry is ignored
         mock.build_opener.reset_mock()
