@@ -74,3 +74,53 @@ impl Response {
         syn::parse_str(&to_pascal_case(&self.status)).expect("A valid status")
     }
 }
+
+#[cfg(test)]
+#[rstest::rstest]
+#[case::empty(
+    Response::default(),
+    quote::quote! {
+        #[serde(rename = "foo_response")]
+        FooResponse
+    }
+)]
+#[case::with_unit(
+    Response {
+        unit: Some("String".to_string()),
+        ..Default::default()
+    },
+    quote::quote! {
+        #[serde(rename = "foo_response")]
+        FooResponse(String)
+    }
+)]
+#[case::with_fields(
+    Response {
+        other_fields: vec![
+            Field::default(),
+            Field::default()
+        ],
+        ..Default::default()
+    },
+    quote::quote! {
+        #[serde(rename = "foo_response")]
+        FooResponse {
+            #[serde_as(as = "_")]
+            foo_type: String,
+            #[serde_as(as = "_")]
+            foo_type: String
+        }
+    }
+)]
+fn test_quote(#[case] request: Response, #[case] expected: proc_macro2::TokenStream) {
+    use pretty_assertions::assert_eq;
+    use quote::ToTokens;
+
+    assert_eq!(
+        request
+            .quote(&HashMap::new())
+            .into_token_stream()
+            .to_string(),
+        expected.to_string()
+    );
+}
