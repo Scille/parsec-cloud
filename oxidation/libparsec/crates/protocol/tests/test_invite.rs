@@ -62,7 +62,25 @@ fn serde_invite_new_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmd
 }
 
 #[rstest]
-#[case::ok(
+#[case::ok_without(
+    (
+        // Generated from Rust implementation (Parsec v2.12.1+dev)
+        // Content:
+        //   email_sent: None
+        //   status: "ok"
+        //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
+        //
+        &hex!(
+            "83a6737461747573a26f6ba5746f6b656ed802d864b93ded264aae9ae583fd3d40c45aaa65"
+            "6d61696c5f73656e74c0"
+        )[..],
+        authenticated_cmds::invite_new::Rep::Ok {
+            token: "d864b93ded264aae9ae583fd3d40c45a".parse().unwrap(),
+            email_sent: Maybe::Present(None),
+        }
+    )
+)]
+#[case::ok_full(
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
