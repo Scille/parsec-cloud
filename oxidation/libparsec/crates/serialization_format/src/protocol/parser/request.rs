@@ -2,9 +2,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::protocol::utils::quote_fields;
-
-use super::Field;
+use crate::protocol::parser::field::{quote_fields, Field};
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]
