@@ -39,7 +39,7 @@ impl Variant {
             attrs.push(syn::parse_quote!(#[serde(rename = #name)]))
         }
 
-        let fields = quote_fields(&self.fields, types);
+        let fields = quote_fields(&self.fields, Some(syn::Visibility::Inherited), types);
 
         if fields.is_empty() {
             syn::parse_quote! {
@@ -84,7 +84,7 @@ pub fn quote_variants(variants: &[Variant], types: &HashMap<String, String>) -> 
     quote::quote! {
         FooVariant {
             #[serde_as(as = "_")]
-            pub foo_type: String
+            foo_type: String
         }
     }
 )]
@@ -99,9 +99,9 @@ pub fn quote_variants(variants: &[Variant], types: &HashMap<String, String>) -> 
     quote::quote! {
         FooVariant {
             #[serde_as(as = "_")]
-            pub foo_type: String,
+            foo_type: String,
             #[serde_as(as = "_")]
-            pub foo_type: String
+            foo_type: String
         }
     }
 )]

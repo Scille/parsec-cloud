@@ -16,7 +16,7 @@ pub struct CustomStruct {
 impl CustomStruct {
     pub fn quote(&self, types: &HashMap<String, String>) -> syn::ItemStruct {
         let name = self.quote_label();
-        let fields = quote_fields(&self.fields, types);
+        let fields = quote_fields(&self.fields, None, types);
         let attrs = shared_attribute();
 
         if fields.is_empty() {

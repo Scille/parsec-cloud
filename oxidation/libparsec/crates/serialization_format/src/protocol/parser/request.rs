@@ -69,7 +69,7 @@ impl Request {
 
     fn quote_fields(&self, types: &HashMap<String, String>) -> syn::ItemStruct {
         let shared_derive = Request::shared_derive();
-        let fields = quote_fields(&self.other_fields, types);
+        let fields = quote_fields(&self.other_fields, None, types);
 
         syn::parse_quote! {
             #[::serde_with::serde_as]
