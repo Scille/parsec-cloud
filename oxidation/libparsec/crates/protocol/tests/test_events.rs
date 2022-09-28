@@ -143,7 +143,26 @@ fn serde_events_listen_req() {
         })
     )
 )]
-#[case::realm_roles_updated(
+#[case::realm_roles_updated_without(
+    (
+        // Generated from Rust implementation (Parsec v2.12.1+dev)
+        // Content:
+        //   event: "realm.roles_updated"
+        //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
+        //   role: None
+        //   status: "ok"
+        //
+        &hex!(
+            "84a6737461747573a26f6ba56576656e74b37265616c6d2e726f6c65735f75706461746564"
+            "a87265616c6d5f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5a4726f6c65c0"
+        )[..],
+        authenticated_cmds::events_listen::Rep::Ok(authenticated_cmds::events_listen::APIEvent::RealmRolesUpdated {
+            realm_id: "1d3353157d7d4e95ad2fdea7b3bd19c5".parse().unwrap(),
+            role: None,
+        })
+    )
+)]
+#[case::realm_roles_updated_full(
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
@@ -162,7 +181,20 @@ fn serde_events_listen_req() {
         })
     )
 )]
-#[case::cancelled(
+#[case::cancelled_without(
+    (
+        // Generated from Rust implementation (Parsec v2.12.1+dev)
+        // Content:
+        //   reason: None
+        //   status: "cancelled"
+        //
+        &hex!("82a6737461747573a963616e63656c6c6564a6726561736f6ec0")[..],
+        authenticated_cmds::events_listen::Rep::Cancelled {
+            reason: None,
+        }
+    )
+)]
+#[case::cancelled_full(
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
