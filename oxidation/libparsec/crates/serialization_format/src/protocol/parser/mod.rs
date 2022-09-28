@@ -12,6 +12,8 @@ pub use major_minor_version::MajorMinorVersion;
 
 use serde::Deserialize;
 
+use super::utils::{quote_fields, to_pascal_case};
+
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Deserialize)]
 pub struct Protocol {
@@ -93,11 +95,37 @@ impl Request {
     }
 
     fn quote_empty(&self) -> syn::ItemStruct {
-        todo!()
+        let shared_attr = Request::shared_derive();
+
+        syn::parse_quote! {
+            #shared_attr
+            pub struct Req;
+
+            impl Req {
+                pub fn new() -> Self { Self }
+            }
+        }
     }
 
     fn quote_fields(&self, types: &HashMap<String, String>) -> syn::ItemStruct {
-        todo!()
+        let shared_derive = Request::shared_derive();
+        let fields = quote_fields(&self.other_fields, types);
+
+        syn::parse_quote! {
+            #[::serde_with::serde_as]
+            #shared_derive
+            pub struct Req {
+                #(#fields)*
+            }
+
+            impl Req {
+                pub fn new(#(#fields),*) -> Self {
+                    Self {
+                        #(#fields.name),*
+                    }
+                }
+            }
+        }
     }
 
     fn shared_derive() -> syn::Attribute {
@@ -127,6 +155,50 @@ impl Default for Response {
 
 impl Response {
     pub fn quote(&self, types: &HashMap<String, String>) -> syn::Variant {
-        todo!()
+        if let Some(unit) = &self.unit {
+            self.quote_unit(unit)
+        } else if self.other_fields.is_empty() {
+            self.quote_empty()
+        } else {
+            self.quote_fields(types)
+        }
+    }
+
+    fn quote_unit(&self, unit: &str) -> syn::Variant {
+        let name = self.quote_name();
+        let rename = &self.status;
+        let unit = syn::parse_str::<syn::Type>(unit).expect("A valid unit");
+
+        syn::parse_quote! {
+            #[serde(rename = #rename)]
+            #name(#unit)
+        }
+    }
+
+    fn quote_empty(&self) -> syn::Variant {
+        let name = self.quote_name();
+        let rename = &self.status;
+
+        syn::parse_quote! {
+            #[serde(rename = #rename)]
+            #name
+        }
+    }
+
+    fn quote_fields(&self, types: &HashMap<String, String>) -> syn::Variant {
+        let name = self.quote_name();
+        let rename = &self.status;
+        let fields = quote_fields(&self.other_fields, types);
+
+        syn::parse_quote! {
+            #[serde(rename = #rename)]
+            #name {
+                #(#fields),*
+            }
+        }
+    }
+
+    fn quote_name(&self) -> syn::Ident {
+        syn::parse_str(&to_pascal_case(&self.status)).expect("A valid status")
     }
 }
