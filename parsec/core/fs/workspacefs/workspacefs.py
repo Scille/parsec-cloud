@@ -753,15 +753,7 @@ class WorkspaceFS:
 
         # Synchronize children
         for name, entry_id in manifest.children.items():
-            try:
-                await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=True)
-            except VlobSequesterRejectedError as exc:
-                self.black_list.append(entry_id)
-                self.event_bus.send(
-                    CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR,
-                    error_reason=str(exc),
-                    entry_id=entry_id,
-                )
+            await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=True)
 
     async def sync(self, *, remote_changed: bool = True) -> None:
         """
