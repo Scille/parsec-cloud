@@ -413,7 +413,8 @@ jobs:
 
       - name: Build ionic for Android
         run: |
-          npm run android:prod-copy
+          npm run web:copy:release
+          npm run android:copy:release
         working-directory: oxidation/client
 
       - name: Build apk
