@@ -801,6 +801,8 @@ class RemoteLoader(UserRemoteLoader):
             # Update our cache and retry the request
             self._sequester_services_cache = sequester_services
             return await self.upload_manifest(entry_id, manifest)
+        except VlobSequesterRejectedError as exc:
+            raise VlobSequesterRejectedError(id=exc.id, manifest=manifest) from exc
         else:
             return manifest
 
@@ -854,7 +856,7 @@ class RemoteLoader(UserRemoteLoader):
                 sequester_services_certificates=rep.sequester_services_certificates,
             )
         elif isinstance(rep, VlobCreateRepSequesterRejected):
-            raise VlobSequesterRejectedError()
+            raise VlobSequesterRejectedError(id=entry_id)
         elif not isinstance(rep, VlobCreateRepOk):
             raise FSError(f"Cannot create vlob {entry_id.str}: {rep}")
 
@@ -906,7 +908,7 @@ class RemoteLoader(UserRemoteLoader):
                 sequester_services_certificates=rep.sequester_services_certificates,
             )
         elif isinstance(rep, VlobUpdateRepSequesterRejected):
-            raise VlobSequesterRejectedError()
+            raise VlobSequesterRejectedError(entry_id)
         elif not isinstance(rep, VlobUpdateRepOk):
             raise FSError(f"Cannot update vlob {entry_id.str}: {rep}")
 

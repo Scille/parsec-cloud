@@ -58,6 +58,8 @@ from parsec.core.fs.exceptions import (
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 from parsec.core.fs.storage import BaseWorkspaceStorage
 
+from parsec._parsec import FileManifest
+
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class ReencryptionNeed:
@@ -685,13 +687,15 @@ class WorkspaceFS:
                     manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
 
                 except VlobSequesterRejectedError as exc:
-                    self.event_bus.send(
-                        CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR,
-                        error_reason=str(exc),
-                        entry_id=entry_id,
-                    )
-                    self.black_list.append(entry_id)
-
+                    # Only blacklist file manifest
+                    if isinstance(exc.manifest, FileManifest):
+                        self.event_bus.send(
+                            CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR,
+                            error_reason=str(exc),
+                            entry_id=entry_id,
+                        )
+                        self.black_list.append(entry_id)
+                        return
         # Nothing to synchronize if the manifest does not exist locally
         except FSNoSynchronizationRequired:
             return

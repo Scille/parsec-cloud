@@ -16,9 +16,9 @@ from __future__ import annotations
 import os
 import errno
 import io
-
 from parsec.core.types import EntryID, ChunkID
 from parsec.core.fs.utils import ntstatus
+from parsec.api.data import AnyRemoteManifest
 
 from typing import Optional, Union, TYPE_CHECKING
 
@@ -247,7 +247,10 @@ class FSBackendOfflineError(FSRemoteOperationError):
 
 
 class VlobSequesterRejectedError(Exception):
-    pass
+    def __init__(self, id: EntryID, manifest: Optional[AnyRemoteManifest] = None):
+        super().__init__(id)
+        self.id = id
+        self.manifest = manifest
 
 
 class FSRemoteManifestNotFound(FSRemoteOperationError):
