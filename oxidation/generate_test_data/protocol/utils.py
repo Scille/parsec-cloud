@@ -223,7 +223,7 @@ def display(name, raw, get_content_pipeline, max_width=89):
         f"================================ {name} ==============================================\n"
     )
     output += "\n"
-    output += f"// Generated from Python implementation (Parsec {__version__})\n"
+    output += f"// Generated from Rust implementation (Parsec {__version__})\n"
     output += "// Content:\n"
     for line in _indent(_format_msgpack(content, max_width=max_width - 3 - INDENT_SIZE)).split(
         "\n"

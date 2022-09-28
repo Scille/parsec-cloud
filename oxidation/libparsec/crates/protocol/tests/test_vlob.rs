@@ -39,7 +39,7 @@ use libparsec_types::{Maybe, ReencryptionBatchEntry};
 )]
 #[case::without(
     (
-        // Generated from Python implementation (Parsec v2.12.1+dev)
+        // Generated from Rust implementation (Parsec v2.12.1+dev)
         // Content:
         //   timestamp: ext(1, 946774800.0)
         //   blob: hex!("666f6f626172")
@@ -431,7 +431,7 @@ fn serde_vlob_read_rep(#[case] raw_expected: (&[u8], authenticated_cmds::vlob_re
 )]
 #[case::without(
     (
-        // Generated from Python implementation (Parsec v2.12.1+dev)
+        // Generated from Rust implementation (Parsec v2.12.1+dev)
         // Content:
         //   timestamp: ext(1, 946774800.0)
         //   version: 8

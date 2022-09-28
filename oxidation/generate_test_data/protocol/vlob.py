@@ -72,7 +72,7 @@ serialized = serializer.req_dumps(
     }
 )
 serializer.req_loads(serialized)
-display("vlob_create_without", serialized, [])
+display("vlob_create_req_without", serialized, [])
 
 serialized = serializer.req_dumps(
     {
