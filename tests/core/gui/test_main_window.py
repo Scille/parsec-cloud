@@ -234,23 +234,23 @@ async def test_link_file_unmounted(aqtbot, logged_gui_with_files, timestamp, aut
 
         assert logged_gui.tab_center.count() == 1
 
-    def _mounted(ts):
-        assert autoclose_dialog.dialogs == []
-        assert core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id, ts)
+        def _mounted(ts):
+            assert autoclose_dialog.dialogs == []
+            assert core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id, ts)
 
-    await aqtbot.wait_until(lambda: _mounted(None))
-    await core.mountpoint_manager.unmount_workspace(f_w.workspace_fs.workspace_id, None)
+        await aqtbot.wait_until(lambda: _mounted(None))
+        await core.mountpoint_manager.unmount_workspace(f_w.workspace_fs.workspace_id, None)
 
-    def _unmounted(ts):
-        assert not core.mountpoint_manager.is_workspace_mounted(
-            f_w.workspace_fs.workspace_id, ts
-        )
+        def _unmounted(ts):
+            assert not core.mountpoint_manager.is_workspace_mounted(
+                f_w.workspace_fs.workspace_id, ts
+            )
 
-    await aqtbot.wait_until(lambda: _unmounted(None))
+        await aqtbot.wait_until(lambda: _unmounted(None))
 
-    logged_gui.add_instance(url.to_url())
+        logged_gui.add_instance(url.to_url())
 
-    await aqtbot.wait_until(lambda: _mounted(timestamp))
+        await aqtbot.wait_until(lambda: _mounted(timestamp))
 
 
 @pytest.mark.gui
