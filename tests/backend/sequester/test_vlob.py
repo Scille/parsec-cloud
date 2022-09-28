@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import base64
 import json
 import pytest
 from unittest.mock import patch, Mock
@@ -232,15 +231,11 @@ async def test_webhook_vlob_create_update(
             mock.Request.assert_called_once()
             # Extract args
             args, kwargs = mock.Request.call_args
-            assert url in args
+            assert args[0].startswith(url)
             assert kwargs["method"] == "POST"
             # Extract http data
-            row_data = kwargs["data"]
-            posted_data = urllib.parse.parse_qs(row_data.decode())
-            assert coolorg.organization_id.str == posted_data["organization_id"][0]
-            assert alice.device_id.str == posted_data["author"][0]
-            assert str(vlob_id) == posted_data["vlob_id"][0]
-            assert expected_sequester_data == base64.b64decode(posted_data["sequester_blob"][0])
+            assert coolorg.organization_id.str == args[0].split("/")[-1]
+            assert expected_sequester_data == kwargs["data"]
             # Reset
             mock.reset_mock()
 
