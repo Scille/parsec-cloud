@@ -477,11 +477,11 @@ impl BackendOrganizationFileLinkAddr {
     }
 
     #[getter]
-    fn encrypted_timestamp<'py>(&'py self, python: Python<'py>) -> Option<&'py PyBytes> {
+    fn encrypted_timestamp<'py>(&self, python: Python<'py>) -> Option<&'py PyBytes> {
         self.0
             .encrypted_timestamp()
             .as_ref()
-            .map(|v| PyBytes::new(python, v.as_slice()))
+            .map(|v| PyBytes::new(python, v))
     }
 
     #[getter]

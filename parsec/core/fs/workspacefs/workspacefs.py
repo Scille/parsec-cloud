@@ -775,29 +775,16 @@ class WorkspaceFS:
         """
         workspace_entry = self.get_workspace_entry()
         encrypted_path = workspace_entry.key.encrypt(str(FsPath(path)).encode("utf-8"))
-        encrypted_ts = (
-            workspace_entry.key.encrypt(timestamp.to_rfc3339().encode("utf-8"))
-            if timestamp is not None
-            else None
-        )
-
-        # If the workspace is Timestamped we want the generated link to include
-        # its timestamp so it will be possible to have a link that specific version
         if isinstance(self, workspacefs.WorkspaceFSTimestamped):
-            return BackendOrganizationFileLinkAddr.build(
-                organization_addr=self.device.organization_addr,
-                workspace_id=workspace_entry.id,
-                encrypted_path=encrypted_path,
-                encrypted_timestamp=workspace_entry.key.encrypt(
-                    self.timestamp.to_rfc3339().encode("utf-8")
-                ),
-            )
+            timestamp = self.timestamp
 
         return BackendOrganizationFileLinkAddr.build(
             organization_addr=self.device.organization_addr,
             workspace_id=workspace_entry.id,
             encrypted_path=encrypted_path,
-            encrypted_timestamp=encrypted_ts,
+            encrypted_timestamp=workspace_entry.key.encrypt(timestamp.to_rfc3339().encode("utf-8"))
+            if timestamp is not None
+            else None,
         )
 
     def decrypt_file_link_path(self, addr: BackendOrganizationFileLinkAddr) -> FsPath:

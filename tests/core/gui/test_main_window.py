@@ -206,15 +206,17 @@ async def test_link_file_with_timestamp(aqtbot, logged_gui_with_files):
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.parametrize("timestamp", [None, "timestamp"])
+@pytest.mark.parametrize("timestamp", [True, False])
 async def test_link_file_unmounted(aqtbot, logged_gui_with_files, timestamp, autoclose_dialog):
     logged_gui, w_w, f_w = logged_gui_with_files
     await f_w.workspace_fs.sync()
 
     with freeze_time(DateTime.now().add(seconds=1)):
-        core = logged_gui.test_get_core()
-        if timestamp == "timestamp":
+        if timestamp:
             timestamp = DateTime.now()
+        else:
+            timestamp = None
+        core = logged_gui.test_get_core()
         url = f_w.workspace_fs.generate_file_link(f_w.current_directory, timestamp)
 
         logged_gui.add_instance(url.to_url())
@@ -255,14 +257,16 @@ async def test_link_file_unmounted(aqtbot, logged_gui_with_files, timestamp, aut
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.parametrize("timestamp", [None, "timestamp"])
+@pytest.mark.parametrize("timestamp", [True, False])
 async def test_link_file_invalid_path(aqtbot, autoclose_dialog, logged_gui_with_files, timestamp):
     logged_gui, w_w, f_w = logged_gui_with_files
     await f_w.workspace_fs.sync()
 
     with freeze_time(DateTime.now().add(seconds=1)):
-        if timestamp == "timestamp":
+        if timestamp:
             timestamp = DateTime.now()
+        else:
+            timestamp = None
         url = f_w.workspace_fs.generate_file_link("/unknown", timestamp)
 
         logged_gui.add_instance(url.to_url())

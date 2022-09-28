@@ -247,7 +247,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 ts = button.workspace_fs.decrypt_timestamp(addr)
 
                 # Mount workspace at the link's creation time
-                if ts is not None:
+                if not self.core.mountpoint_manager.is_workspace_mounted(button.workspace_fs, ts):
                     self.mount_workspace(addr.workspace_id, ts)
             except ValueError as exc:
                 show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_INVALID_LINK"), exception=exc)
@@ -389,7 +389,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reset()
 
     def on_mount_error(self, job):
-        print("ERROR", job.exc)
         if isinstance(job.exc, MountpointError):
             workspace_id = job.arguments.get("workspace_id")
             timestamp = job.arguments.get("timestamp")
@@ -405,7 +404,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reset()
 
     def on_unmount_error(self, job):
-        print("UMOUNT_ERROR", job.exc)
         if isinstance(job.exc, MountpointError):
             show_error(self, _("TEXT_WORKSPACE_CANNOT_UNMOUNT"), exception=job.exc)
 
