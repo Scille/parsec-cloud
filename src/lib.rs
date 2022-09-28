@@ -122,6 +122,7 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::EventsListenRepNoEvents>()?;
     m.add_class::<protocol::EventsListenRepUnknownStatus>()?;
     m.add_class::<protocol::EventsListenRepOkPinged>()?;
+    m.add_class::<protocol::EventsListenRepCancelled>()?;
     m.add_class::<protocol::EventsListenRepOkMessageReceived>()?;
     m.add_class::<protocol::EventsListenRepOkInviteStatusChanged>()?;
     m.add_class::<protocol::EventsListenRepOkRealmMaintenanceFinished>()?;
