@@ -116,7 +116,7 @@ impl DateTime {
     /// Return a date-time formatted string in the rfc3339 format with a precision update to milliseconds.
     /// Equivalent to ISO-8601
     pub fn to_rfc3339(&self) -> String {
-        self.0.to_rfc3339_opts(chrono::SecondsFormat::Millis, false)
+        self.0.to_rfc3339_opts(chrono::SecondsFormat::Micros, false)
     }
 }
 
@@ -505,6 +505,8 @@ impl std::fmt::Display for LocalDateTime {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use chrono::Timelike;
     use hex_literal::hex;
 
@@ -534,6 +536,16 @@ mod tests {
         assert_eq!(dt1.0.nanosecond() % 1000, 0);
         assert_eq!(dt2.0.nanosecond() % 1000, 0);
         assert_eq!(dt3.0.nanosecond() % 1000, 0);
+    }
+
+    #[test]
+    fn test_rfc3339_parsing_idempotent() {
+        let time_provider = TimeProvider::default();
+        let now = time_provider.now();
+        let parsed_result = DateTime::from_str(&now.to_rfc3339());
+
+        assert!(parsed_result.is_ok());
+        assert_eq!(parsed_result.unwrap(), now);
     }
 
     #[test]
