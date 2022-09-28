@@ -188,7 +188,33 @@ fn serde_realm_status_req() {
 }
 
 #[rstest]
-#[case::ok(
+#[case::ok_without(
+    (
+        // Generated from Rust implementation (Parsec v2.12.1+dev)
+        // Content:
+        //   encryption_revision: 8
+        //   in_maintenance: true
+        //   maintenance_started_by: None
+        //   maintenance_started_on: None
+        //   maintenance_type: "REENCRYPTION"
+        //   status: "ok"
+        //
+        &hex!(
+            "86a6737461747573a26f6bae696e5f6d61696e74656e616e6365c3b06d61696e74656e616e"
+            "63655f74797065ac5245454e4352595054494f4eb66d61696e74656e616e63655f73746172"
+            "7465645f6f6ec0b66d61696e74656e616e63655f737461727465645f6279c0b3656e637279"
+            "7074696f6e5f7265766973696f6e08"
+        )[..],
+        authenticated_cmds::realm_status::Rep::Ok {
+            in_maintenance: true,
+            maintenance_type: Some(authenticated_cmds::realm_status::MaintenanceType::Reencryption),
+            maintenance_started_on: None,
+            maintenance_started_by: None,
+            encryption_revision: 8,
+        }
+    )
+)]
+#[case::ok_full(
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
@@ -427,26 +453,46 @@ fn serde_realm_get_role_certificates_rep(
 }
 
 #[rstest]
-fn serde_realm_update_roles_req() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   cmd: "realm_update_roles"
-    //   recipient_message: hex!("666f6f626172")
-    //   role_certificate: hex!("666f6f626172")
-    let raw = hex!(
-        "83a3636d64b27265616c6d5f7570646174655f726f6c6573b1726563697069656e745f6d65"
-        "7373616765c406666f6f626172b0726f6c655f6365727469666963617465c406666f6f6261"
-        "72"
-    );
+#[case::without(
+    (
+        // Generated from Rust implementation (Parsec v2.12.1+dev)
+        // Content:
+        //   cmd: "realm_update_roles"
+        //   recipient_message: None
+        //   role_certificate: hex!("666f6f626172")
+        //
+        &hex!(
+            "83a3636d64b27265616c6d5f7570646174655f726f6c6573b0726f6c655f63657274696669"
+            "63617465c406666f6f626172b1726563697069656e745f6d657373616765c0"
+        )[..],
+        authenticated_cmds::AnyCmdReq::RealmUpdateRoles(authenticated_cmds::realm_update_roles::Req {
+            role_certificate: b"foobar".to_vec(),
+            recipient_message: None,
+        })
+    )
+)]
+#[case::full(
+    (
+        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Content:
+        //   cmd: "realm_update_roles"
+        //   recipient_message: hex!("666f6f626172")
+        //   role_certificate: hex!("666f6f626172")
+        &hex!(
+            "83a3636d64b27265616c6d5f7570646174655f726f6c6573b1726563697069656e745f6d65"
+            "7373616765c406666f6f626172b0726f6c655f6365727469666963617465c406666f6f6261"
+            "72"
+        )[..],
+        authenticated_cmds::AnyCmdReq::RealmUpdateRoles(authenticated_cmds::realm_update_roles::Req {
+            role_certificate: b"foobar".to_vec(),
+            recipient_message: Some(b"foobar".to_vec()),
+        })
+    )
+)]
+fn serde_realm_update_roles_req(#[case] raw_expected: (&[u8], authenticated_cmds::AnyCmdReq)) {
+    let (raw, expected) = raw_expected;
 
-    let req = authenticated_cmds::realm_update_roles::Req {
-        role_certificate: b"foobar".to_vec(),
-        recipient_message: Some(b"foobar".to_vec()),
-    };
-
-    let expected = authenticated_cmds::AnyCmdReq::RealmUpdateRoles(req);
-
-    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(raw).unwrap();
 
     assert_eq!(data, expected);
 
