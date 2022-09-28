@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 pub(crate) mod protocol;
-#[cfg(test)]
-mod tests;
 
 use std::{
     fs::File,

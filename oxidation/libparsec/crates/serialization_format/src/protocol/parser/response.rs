@@ -2,9 +2,8 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::protocol::utils::{quote_fields, to_pascal_case};
-
-use super::Field;
+use crate::protocol::parser::field::{quote_fields, Field};
+use crate::protocol::utils::to_pascal_case;
 
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[derive(Debug, Deserialize, Clone)]

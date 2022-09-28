@@ -2,8 +2,6 @@ use std::collections::HashMap;
 
 use syn::{GenericArgument, PathArguments, Type};
 
-use super::intermediate::{self};
-
 pub(crate) fn to_pascal_case(s: &str) -> String {
     let mut out = s[..1].to_uppercase();
     let mut chars = s.chars().skip(1);
@@ -171,18 +169,4 @@ pub fn extract_serde_as(ty: &Type) -> String {
         }
         ty => panic!("{ty:?} encountered"),
     }
-}
-
-pub fn quote_fields(
-    fields: &[intermediate::Field],
-    types: &HashMap<String, String>,
-) -> Vec<syn::ExprType> {
-    fields
-        .iter()
-        .map(|field| field.quote(visibility_public(), types))
-        .collect()
-}
-
-fn visibility_public() -> syn::Visibility {
-    syn::parse_quote!(pub)
 }
