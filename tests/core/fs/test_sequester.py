@@ -8,6 +8,13 @@ from parsec.sequester_crypto import sequester_service_decrypt
 
 from tests.common import customize_fixtures, sequester_service_factory
 
+from unittest.mock import patch, Mock
+import urllib
+import json
+from parsec.backend.sequester import (
+    SequesterServiceType,
+)
+
 
 @pytest.mark.trio
 @customize_fixtures(
@@ -165,3 +172,49 @@ async def test_workspacefs_sequester_sync(running_backend, backend, alice_user_f
     # S1 is expected to contain only w1@v2
     await _assert_sequester_dump(service=s2, workspace=w1, expected_items={(w1_id, 2)})
     await _assert_sequester_dump(service=s2, workspace=w2, expected_items={})
+
+
+@pytest.mark.trio
+@customize_fixtures(coolorg_is_sequestered_organization=True)
+async def test_webhook_rejected_error(
+    running_backend, backend, alice_user_fs, coolorg, alice, monkeypatch
+):
+    url = "http://somewhere.post"
+
+    # Patch backend webhook
+    with patch("parsec.backend.http_utils.urllib.request") as mock:
+        # Create webhook service
+        service = sequester_service_factory(
+            "TestWebhookService",
+            coolorg.sequester_authority,
+            service_type=SequesterServiceType.WEBHOOK,
+            webhook_url=url,
+        )
+        await backend.sequester.create_service(
+            organization_id=coolorg.organization_id, service=service.backend_service
+        )
+
+        # Setup error in backend webhook
+        def raise_http_error(*args, **kwargs):
+            fp = Mock()
+            fp.read.return_value = json.dumps({"error": "some_error_from_service"})
+            raise urllib.error.HTTPError(url, 400, "", None, fp)
+
+        mock.build_opener.side_effect = raise_http_error
+
+        # Create workspace
+        w1_id = await alice_user_fs.workspace_create(EntryName("w1"))
+        w1 = alice_user_fs.get_workspace(w1_id)
+
+        # Create and sync file
+        assert not w1.black_list
+        await w1.touch("/w1f1")
+        await w1.sync()
+        # Assert entry is blacklisted
+        mock.build_opener.assert_called_once()
+        assert len(w1.black_list) == 1
+
+        # Assert blacklisted entry is ignored
+        mock.build_opener.reset_mock()
+        await w1.sync()
+        mock.build_opener.assert_not_called()
