@@ -3,7 +3,17 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
+from typing import (
+    List,
+    Dict,
+    Tuple,
+    AsyncIterator,
+    cast,
+    Pattern,
+    Callable,
+    Optional,
+    Awaitable,
+)
 from parsec._parsec import DateTime
 from parsec.core.core_events import CoreEvent
 
@@ -589,6 +599,25 @@ class WorkspaceFS:
         except FSLocalMissError:
             pass
 
+    async def entry_id_to_path(
+        self, needle_entry_id: EntryID
+    ) -> Optional[Tuple[FsPath, Dict[str, object]]]:
+        async def _recursive_search(
+            path: FsPath,
+        ) -> Optional[Tuple[FsPath, Dict[str, object]]]:
+            entry_info = await self.path_info(path=path)
+            if entry_info["id"] == needle_entry_id:
+                return path, entry_info
+            if entry_info["type"] == "folder":
+                children = cast(List[str], entry_info["children"])
+                for child_name in children:
+                    result = await _recursive_search(path=path / child_name)
+                    if result:
+                        return result
+            return None
+
+        return await _recursive_search(path=FsPath("/"))
+
     async def _sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True
     ) -> AnyRemoteManifest:
@@ -688,14 +717,22 @@ class WorkspaceFS:
 
                 except VlobSequesterRejectedError as exc:
                     # Only blacklist file manifest
-                    if isinstance(exc.manifest, FileManifest):
+                    if isinstance(exc.manifest, (FileManifest, LocalFileManifest)):
+                        path_info = await self.entry_id_to_path(exc.id)
+                        if path_info is None:
+                            path = FsPath("/")
+                        else:
+                            path, _ = path_info
                         self.event_bus.send(
                             CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR,
                             error_reason=str(exc),
                             entry_id=entry_id,
+                            file_path=path,
                         )
                         self.black_list.append(entry_id)
                         return
+                    else:
+                        return  # Should never append
         # Nothing to synchronize if the manifest does not exist locally
         except FSNoSynchronizationRequired:
             return

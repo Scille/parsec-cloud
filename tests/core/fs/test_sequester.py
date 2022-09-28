@@ -5,6 +5,7 @@ import pytest
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID, VlobID
 from parsec.core.core_events import CoreEvent
+from parsec.core.fs.path import FsPath
 from parsec.sequester_crypto import sequester_service_decrypt
 
 from tests.common import customize_fixtures, sequester_service_factory
@@ -219,6 +220,7 @@ async def test_webhook_rejected_error(
             for event in spy.events:
                 if event.event == CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR:
                     assert event.kwargs["entry_id"] in w1.black_list
+                    assert event.kwargs["file_path"] == FsPath("/w1f1")
 
         # Assert blacklisted entry is ignored
         mock.build_opener.reset_mock()
