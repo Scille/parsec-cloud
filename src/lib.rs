@@ -337,7 +337,6 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::Invite4ClaimerCommunicateRepNotFound>()?;
     m.add_class::<protocol::Invite4ClaimerCommunicateRepInvalidState>()?;
     m.add_class::<protocol::Invite4ClaimerCommunicateRepUnknownStatus>()?;
-    m.add_class::<protocol::Invite4ClaimerCommunicateRepActiveUserLimitReached>()?;
     m.add_class::<protocol::Invite4ClaimerCommunicateRepOk>()?;
 
     m.add_class::<protocol::Invite4GreeterCommunicateReq>()?;

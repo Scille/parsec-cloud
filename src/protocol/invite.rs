@@ -74,7 +74,6 @@ impl InvitationType {
 
 #[pymethods]
 impl InviteNewReq {
-    #[args(claimer_email = "None")]
     #[new]
     fn new(
         r#type: InvitationType,
@@ -219,7 +218,7 @@ impl InviteNewRepOk {
         let token = token.0;
         let email_sent = match py_to_rs_invitation_email_sent_status(email_sent) {
             Ok(email_sent) => libparsec::types::Maybe::Present(Some(email_sent)),
-            _ => libparsec::types::Maybe::Absent,
+            _ => libparsec::types::Maybe::Present(None),
         };
         Ok((
             Self,
@@ -564,7 +563,6 @@ pub(crate) struct InviteInfoRepOk;
 #[pymethods]
 impl InviteInfoRepOk {
     #[new]
-    #[args(claimer_email = "None")]
     fn new(
         r#type: InvitationType,
         claimer_email: Option<String>,
@@ -1288,30 +1286,6 @@ gen_rep!(
     [NotFound],
     [InvalidState],
 );
-
-#[pyclass(extends=Invite4ClaimerCommunicateRep)]
-pub(crate) struct Invite4ClaimerCommunicateRepActiveUserLimitReached;
-
-#[pymethods]
-impl Invite4ClaimerCommunicateRepActiveUserLimitReached {
-    #[new]
-    fn new(payload: Vec<u8>) -> PyResult<(Self, Invite4ClaimerCommunicateRep)> {
-        Ok((
-            Self {},
-            Invite4ClaimerCommunicateRep(invite_4_claimer_communicate::Rep::Ok { payload }),
-        ))
-    }
-
-    #[getter]
-    fn payload<'py>(_self: PyRef<'_, Self>, py: Python<'py>) -> PyResult<&'py PyBytes> {
-        let payload = match &_self.as_ref().0 {
-            invite_4_claimer_communicate::Rep::Ok { payload } => payload,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        };
-
-        Ok(PyBytes::new(py, payload))
-    }
-}
 
 #[pyclass(extends=Invite4ClaimerCommunicateRep)]
 pub(crate) struct Invite4ClaimerCommunicateRepOk;
