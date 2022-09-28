@@ -186,7 +186,7 @@ def create_service(
     certificate = sequester_authority_sign(signing_key=authority_key, data=certif_data.dump())
 
     # Removing the extra slash if present to avoid a useless redirection
-    if webhook_url.endswith("/"):
+    if webhook_url and webhook_url.endswith("/"):
         webhook_url = webhook_url[:-1]
 
     sequester_service = SequesterService(
