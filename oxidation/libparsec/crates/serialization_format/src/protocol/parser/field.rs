@@ -96,15 +96,18 @@ impl Field {
     }
 }
 
-pub fn quote_fields(fields: &[Field], types: &HashMap<String, String>) -> Vec<syn::Field> {
+/// Quote multiple fields.
+/// Can specify the visibility used by default it's public (`pub`)
+pub fn quote_fields(
+    fields: &[Field],
+    visibility: Option<syn::Visibility>,
+    types: &HashMap<String, String>,
+) -> Vec<syn::Field> {
+    let visibility = visibility.unwrap_or_else(|| syn::parse_quote!(pub));
     fields
         .iter()
-        .map(|field| field.quote(visibility_public(), types))
+        .map(|field| field.quote(visibility.clone(), types))
         .collect()
-}
-
-fn visibility_public() -> syn::Visibility {
-    syn::parse_quote!(pub)
 }
 
 #[cfg(test)]

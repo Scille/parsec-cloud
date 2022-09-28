@@ -60,7 +60,7 @@ impl Response {
     fn quote_fields(&self, types: &HashMap<String, String>) -> syn::Variant {
         let name = self.quote_name();
         let rename = &self.status;
-        let fields = quote_fields(&self.other_fields, types);
+        let fields = quote_fields(&self.other_fields, Some(syn::Visibility::Inherited), types);
 
         syn::parse_quote! {
             #[serde(rename = #rename)]
