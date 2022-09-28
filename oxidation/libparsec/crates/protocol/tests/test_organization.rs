@@ -127,7 +127,7 @@ fn serde_organization_config_req() {
 }
 
 #[rstest]
-#[case::ok(
+#[case::ok_legacy(
     (
         // Generated from Python implementation (Parsec v2.6.0+dev)
         // Content:
@@ -146,7 +146,31 @@ fn serde_organization_config_req() {
         }
     )
 )]
-#[case::ok_with_sequester(
+#[case::ok_without(
+    (
+        // Generated from Rust implementation (Parsec v2.12.1+dev)
+        // Content:
+        //   active_users_limit: None
+        //   sequester_authority_certificate: None
+        //   sequester_services_certificates: None
+        //   status: "ok"
+        //   user_profile_outsider_allowed: false
+        //
+        &hex!(
+            "85a6737461747573a26f6bbd757365725f70726f66696c655f6f757473696465725f616c6c"
+            "6f776564c2b26163746976655f75736572735f6c696d6974c0bf7365717565737465725f61"
+            "7574686f726974795f6365727469666963617465c0bf7365717565737465725f7365727669"
+            "6365735f636572746966696361746573c0"
+        )[..],
+        authenticated_cmds::organization_config::Rep::Ok {
+            user_profile_outsider_allowed: false,
+            active_users_limit: None,
+            sequester_authority_certificate: Maybe::Present(None),
+            sequester_services_certificates: Maybe::Present(None),
+        }
+    )
+)]
+#[case::ok_full(
     (
         // Generated from Python implementation (Parsec v2.11.1+dev)
         // Content:
