@@ -6,6 +6,7 @@ import pytest
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
 from tests.common import create_shared_workspace
+from parsec.core.logged_core import get_prevent_sync_pattern
 
 
 async def assert_path_info(workspace, path, **kwargs):
@@ -291,3 +292,15 @@ async def test_common_temporary_files(alice_workspace):
         await assert_path_info(
             alice_workspace, path, confinement_point=alice_workspace.workspace_id
         )
+
+
+def test_stable_prevent_sync_pattern():
+    """
+    Prevent sync pattern are compared in the local database
+    so we need to make they are stable.
+
+    See issue #3145 for more information.
+    """
+    a = get_prevent_sync_pattern()
+    b = get_prevent_sync_pattern()
+    assert a.pattern == b.pattern

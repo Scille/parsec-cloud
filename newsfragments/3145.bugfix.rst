@@ -1,0 +1,1 @@
+Fix a bug that caused the login time to be larger than expected for large organizations.
