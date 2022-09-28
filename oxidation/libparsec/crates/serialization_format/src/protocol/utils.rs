@@ -4,6 +4,23 @@ use syn::{GenericArgument, PathArguments, Type};
 
 use super::intermediate::{self};
 
+pub(crate) fn to_pascal_case(s: &str) -> String {
+    let mut out = s[..1].to_uppercase();
+    let mut chars = s.chars().skip(1);
+    while let Some(c) = chars.next() {
+        if c == '_' {
+            match chars.next().unwrap_or_else(|| unreachable!()) {
+                c @ 'a'..='z' => out.push((c as u8 - b'a' + b'A') as char),
+                c => out.push(c),
+            }
+        } else {
+            out.push(c);
+        }
+    }
+
+    out
+}
+
 pub fn validate_raw_type(raw_type: &str, types: &HashMap<String, String>) -> Result<Type, String> {
     syn::parse_str(raw_type)
         .map_err(|e| format!("Invalid type value `{raw_type}`: {e}"))
