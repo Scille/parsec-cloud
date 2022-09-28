@@ -3039,9 +3039,6 @@ msgstr "Masquer"
 msgid "TEXT_WORKSPACE_TEMPORARY_TITLE"
 msgstr "Vue instantanée"
 
-msgid "TEXT_WORKSPACE_TEMPORARY_DESCRIPTION"
-msgstr "Espace de travail tel qu'il apparaissait le :"
-
 msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_DATE"
 msgstr "Sélectionnez une date"
 

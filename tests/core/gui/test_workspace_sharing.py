@@ -35,8 +35,10 @@ async def gui_workspace_sharing(
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.name == EntryName("Workspace")
-        assert wk_button.label_title.toolTip() == "Workspace (private)"
-        assert wk_button.label_title.text() == "Workspace (private)"
+        assert wk_button.label_title.toolTip() == "Workspace"
+        assert wk_button.label_title.text() == "Workspace"
+        assert wk_button.label_shared_info.toolTip() == "private"
+        assert wk_button.label_shared_info.text() == "private"
         assert not autoclose_dialog.dialogs
 
     await aqtbot.wait_until(_workspace_added)
@@ -153,8 +155,10 @@ async def test_share_workspace(
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.name == EntryName("Workspace")
-        assert wk_button.label_title.toolTip() == "Workspace (shared with Adamy McAdamFace)"
-        assert wk_button.label_title.text() == "Workspace (share..."
+        assert wk_button.label_title.toolTip() == "Workspace"
+        assert wk_button.label_title.text() == "Workspace..."
+        assert wk_button.label_shared_info.toolTip() == "shared with Adamy McAdamFace"
+        assert wk_button.label_shared_info.text() == "shared with Adam..."
         assert not autoclose_dialog.dialogs
 
     await aqtbot.wait_until(_workspace_listed)
@@ -402,8 +406,10 @@ async def test_rename_workspace_when_revoked(
         assert w_w.layout_workspaces.count() == 1
         wk_button = w_w.layout_workspaces.itemAt(0).widget()
         assert isinstance(wk_button, WorkspaceButton)
-        assert wk_button.label_title.text() == "Workspace (private)"
-        assert wk_button.label_title.toolTip() == "Workspace (private)"
+        assert wk_button.label_title.text() == "Workspace"
+        assert wk_button.label_title.toolTip() == "Workspace"
+        assert wk_button.label_shared_info.tooltip() == "private"
+        assert wk_button.label_shared_info.text() == "private"
         assert not wk_button.is_shared
         assert wk_button.name == EntryName("Workspace")
 
@@ -419,8 +425,10 @@ async def test_rename_workspace_when_revoked(
         assert isinstance(wk_button, WorkspaceButton)
         assert wk_button.is_shared
         assert wk_button.name == EntryName("Workspace")
-        assert wk_button.label_title.toolTip() == "Workspace (shared with Boby McBobFace)"
-        assert wk_button.label_title.text() == "Workspace (shared ..."
+        assert wk_button.label_title.toolTip() == "Workspace"
+        assert wk_button.label_title.text() == "Workspace"
+        assert wk_button.label_shared_info.tooltip() == "shared with Boby McBobFace"
+        assert wk_button.label_shared_info.text() == "shared with Boby McBobyFace"
 
     await aqtbot.wait_until(_workspace_shared_listed)
 

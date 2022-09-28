@@ -448,8 +448,6 @@ async def test_display_timestamped_workspace_in_workspaces_list(
             wk_button = w_w.layout_workspaces.itemAt(0).widget()
             assert isinstance(wk_button, WorkspaceButton)
             assert wk_button.name == workspace_name
-            assert wk_button.file1_name.text() == "file1.txt"
-            assert wk_button.file2_name.text() == "file2.txt"
 
         await aqtbot.wait_until(_wait_workspace_refreshed)
 
@@ -493,8 +491,8 @@ async def test_display_timestamped_workspace_in_workspaces_list(
             ts_wk_button = w_w.layout_workspaces.itemAt(1).widget()
             assert isinstance(wk_button, WorkspaceButton)
             assert isinstance(ts_wk_button, WorkspaceButton)
-            assert not wk_button.timestamped
-            assert ts_wk_button.timestamped
+            assert not wk_button.is_timestamped
+            assert ts_wk_button.is_timestamped
 
         await aqtbot.wait_until(_new_workspace_listed)
 
@@ -546,7 +544,6 @@ async def test_hide_unmounted_workspaces(logged_gui, aqtbot):
 
     # Now wait for GUI to take it into account
     def _workspace_visible(visible):
-        print(w_w.layout_workspaces.count(), visible)
         count = 1 if visible else 0
         assert w_w.layout_workspaces.count() == count
 
