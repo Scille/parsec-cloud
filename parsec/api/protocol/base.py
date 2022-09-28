@@ -562,3 +562,15 @@ class ApiCommandSerializer:
 
     def rep_loads(self, raw: bytes) -> Any:
         return self.rep_schema.load(raw)
+
+    # Temporary Used for generate_data
+    def req_loads(self, raw: bytes) -> Any:
+        from parsec._parsec import AuthenticatedAnyCmdReq, InvitedAnyCmdReq
+
+        try:
+            return AuthenticatedAnyCmdReq.load(raw)
+        except ProtocolError:
+            return InvitedAnyCmdReq.load(raw)
+
+    def rep_dumps(self, rep: Any) -> bytes:
+        return rep.dump()
