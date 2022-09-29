@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+mod old_parser;
 pub(crate) mod protocol;
 
 use std::{
@@ -76,11 +77,34 @@ pub(crate) fn content_from_str(
         .map_err(|e| anyhow::Error::msg(e.to_string()).context(format!("current file `{origin}`")))
 }
 
-// #[proc_macro]
-// pub fn parsec_data(path: TokenStream) -> TokenStream {
-//     let path = parse_macro_input!(path as LitStr).value();
-//     let content = content_from_file(&path_from_str(&path));
+#[proc_macro]
+pub fn parsec_data(path: TokenStream) -> TokenStream {
+    let path = parse_macro_input!(path as LitStr).value();
+    let content = type_data::content_from_file(&path_from_str(&path));
 
-//     let data: parser::Data = miniserde::json::from_str(&content).expect("Data is not valid");
-//     TokenStream::from(data.quote())
-// }
+    let data: old_parser::Data = miniserde::json::from_str(&content).expect("Data is not valid");
+    TokenStream::from(data.quote())
+}
+
+mod type_data {
+    use std::{
+        fs::File,
+        io::{BufRead, BufReader},
+        path::PathBuf,
+    };
+
+    pub fn content_from_file(path: &PathBuf) -> String {
+        let file = File::open(path).expect("Cannot open the json file");
+        let buf = BufReader::new(file);
+        let mut content = String::new();
+        for (i, line) in buf.lines().enumerate() {
+            let line = line.unwrap_or_else(|_| panic!("Non-Utf-8 character found in line {i}"));
+            let line = match line.split_once("//") {
+                Some((line, _)) => line,
+                None => &line,
+            };
+            content.push_str(line)
+        }
+        content
+    }
+}

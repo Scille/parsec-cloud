@@ -5,23 +5,6 @@ use quote::quote;
 use std::collections::HashMap;
 use syn::{GenericArgument, PathArguments, Type};
 
-pub(crate) fn to_pascal_case(s: &str) -> String {
-    let mut out = s[..1].to_uppercase();
-    let mut chars = s.chars().skip(1);
-    while let Some(c) = chars.next() {
-        if c == '_' {
-            match chars.next().unwrap_or_else(|| unreachable!()) {
-                c @ 'a'..='z' => out.push((c as u8 - b'a' + b'A') as char),
-                c => out.push(c),
-            }
-        } else {
-            out.push(c);
-        }
-    }
-
-    out
-}
-
 pub(crate) fn inspect_type(ty: &str, types: &HashMap<String, String>) -> String {
     let raw_ty: Type =
         syn::parse_str(ty).unwrap_or_else(|e| panic!("Invalid type value `{ty}`: {e}"));
