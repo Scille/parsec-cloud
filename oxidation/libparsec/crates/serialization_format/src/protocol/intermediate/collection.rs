@@ -17,7 +17,7 @@ impl From<parser::ProtocolCollection> for ProtocolCollection {
         let mut clc = ProtocolCollection::new(collection.family);
 
         for protocol in collection.protocols {
-            for variant in protocol.variants {
+            for variant in protocol.0 {
                 for version in &variant.major_versions {
                     let entry = clc.get_or_insert_default_versioned_cmds(*version);
                     entry.push(Cmd::from_parsed_cmd(variant.clone(), *version))
@@ -124,11 +124,9 @@ fn quote_cmd(command: &Cmd) -> (syn::Variant, syn::ItemMod) {
     parser::ProtocolCollection {
         family: "FooCollection".to_string(),
         protocols: vec![
-            parser::Protocol {
-                variants: vec![
-                    parser::Cmd::default()
-                ]
-            }
+            parser::Protocol(vec![
+                parser::Cmd::default()
+            ])
         ]
     },
     ProtocolCollection {
@@ -140,14 +138,12 @@ fn quote_cmd(command: &Cmd) -> (syn::Variant, syn::ItemMod) {
     parser::ProtocolCollection {
         family: "FooCollection".to_string(),
         protocols: vec![
-            parser::Protocol {
-                variants: vec![
-                    parser::Cmd {
-                        major_versions: vec![1,2,3],
-                        ..Default::default()
-                    }
-                ]
-            }
+            parser::Protocol(vec![
+                parser::Cmd {
+                    major_versions: vec![1,2,3],
+                    ..Default::default()
+                }
+            ])
         ]
     },
     ProtocolCollection {
