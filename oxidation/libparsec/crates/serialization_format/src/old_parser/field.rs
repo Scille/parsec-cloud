@@ -7,13 +7,6 @@ use std::collections::HashMap;
 use syn::{Ident, Type};
 
 use super::utils::{inspect_type, quote_serde_as};
-use super::SerdeAttr;
-
-#[derive(Clone, Copy)]
-pub(crate) enum Vis {
-    Public,
-    Private,
-}
 
 #[derive(Deserialize)]
 pub(crate) struct Field {
@@ -25,11 +18,13 @@ pub(crate) struct Field {
 }
 
 impl Field {
-    pub(crate) fn quote(&self, vis: Vis, types: &HashMap<String, String>) -> TokenStream {
+    pub(crate) fn quote(&self, types: &HashMap<String, String>) -> TokenStream {
         let (rename, name) = self.quote_name();
 
         let (ty, serde_skip) = self.quote_type(types);
-        let rename = SerdeAttr::Rename.quote(rename.map(|_| &self.name));
+        let rename = rename
+            .map(|rename| quote::quote!(#[serde(rename = #rename)]))
+            .unwrap_or_default();
         let serde_as = quote_serde_as(&ty);
         let serde_default = if let Some(default) = &self.default {
             quote! { #[serde(default = #default)] }
@@ -37,21 +32,12 @@ impl Field {
             quote! {}
         };
 
-        match vis {
-            Vis::Public => quote! {
-                #rename
-                #serde_as
-                #serde_skip
-                #serde_default
-                pub #name: #ty
-            },
-            Vis::Private => quote! {
-                #rename
-                #serde_as
-                #serde_skip
-                #serde_default
-                #name: #ty
-            },
+        quote! {
+            #rename
+            #serde_as
+            #serde_skip
+            #serde_default
+            pub #name: #ty
         }
     }
 
@@ -83,15 +69,11 @@ impl Field {
     }
 }
 
-pub(crate) fn quote_fields(
-    _fields: &[Field],
-    vis: Vis,
-    types: &HashMap<String, String>,
-) -> TokenStream {
+pub(crate) fn quote_fields(_fields: &[Field], types: &HashMap<String, String>) -> TokenStream {
     let mut fields = quote! {};
 
     for field in _fields {
-        let field = field.quote(vis, types);
+        let field = field.quote(types);
         fields = quote! {
             #fields
             #field,
