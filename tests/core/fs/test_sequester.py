@@ -216,9 +216,9 @@ async def test_webhook_rejected_error(
             # Assert entry is blacklisted
             mock.urlopen.assert_called_once()
             assert len(w1.black_list) == 1
-            spy.assert_event_occured(CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR)
+            spy.assert_event_occured(CoreEvent.FS_ENTRY_SYNC_REFUSED_BY_SEQUESTER_SERVICE)
             for event in spy.events:
-                if event.event == CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR:
+                if event.event == CoreEvent.FS_ENTRY_SYNC_REFUSED_BY_SEQUESTER_SERVICE:
                     assert event.kwargs["entry_id"] in w1.black_list
                     assert event.kwargs["file_path"] == FsPath("/w1f1")
 

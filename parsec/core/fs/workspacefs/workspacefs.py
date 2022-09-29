@@ -724,7 +724,7 @@ class WorkspaceFS:
                         else:
                             path, _ = path_info
                         self.event_bus.send(
-                            CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR,
+                            CoreEvent.FS_ENTRY_SYNC_REFUSED_BY_SEQUESTER_SERVICE,
                             error_reason=str(exc),
                             entry_id=entry_id,
                             file_path=path,
