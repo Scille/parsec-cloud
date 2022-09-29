@@ -8,13 +8,10 @@ use libparsec::protocol::{authenticated_cmds, invited_cmds};
 
 use crate::protocol::*;
 
-use super::Invite3aClaimerSignifyTrustReq;
-use super::InviteListReq;
-
 import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub struct AuthenticatedAnyCmdReq(pub authenticated_cmds::AnyCmdReq);
 
 #[pymethods]
@@ -82,7 +79,7 @@ impl AuthenticatedAnyCmdReq {
 }
 
 #[pyclass]
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub struct InvitedAnyCmdReq(pub invited_cmds::AnyCmdReq);
 
 #[pymethods]

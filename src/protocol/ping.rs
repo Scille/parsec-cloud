@@ -14,18 +14,17 @@ use crate::protocol::gen_rep;
 import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct InvitedPingReq(pub invited_cmds::ping::Req);
+
+crate::binding_utils::gen_proto!(InvitedPingReq, __repr__);
+crate::binding_utils::gen_proto!(InvitedPingReq, __richcmp__, eq);
 
 #[pymethods]
 impl InvitedPingReq {
     #[new]
     fn new(ping: String) -> PyResult<Self> {
         Ok(Self(invited_cmds::ping::Req { ping }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -63,18 +62,17 @@ impl InvitedPingRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct AuthenticatedPingReq(pub authenticated_cmds::ping::Req);
+
+crate::binding_utils::gen_proto!(AuthenticatedPingReq, __repr__);
+crate::binding_utils::gen_proto!(AuthenticatedPingReq, __richcmp__, eq);
 
 #[pymethods]
 impl AuthenticatedPingReq {
     #[new]
     fn new(ping: String) -> PyResult<Self> {
         Ok(Self(authenticated_cmds::ping::Req { ping }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {

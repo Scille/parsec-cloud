@@ -1,5 +1,5 @@
 use crate::{
-    binding_utils::{gen_proto, py_to_rs_invitation_status, py_to_rs_realm_role},
+    binding_utils::{py_to_rs_invitation_status, py_to_rs_realm_role},
     ids::{self, RealmID, VlobID},
     invite::InvitationToken,
     protocol::Reason,
@@ -18,8 +18,11 @@ use super::gen_rep;
 import_exception!(parsec.api.protcol, ProtocolError);
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct EventsListenReq(pub events_listen::Req);
+
+crate::binding_utils::gen_proto!(EventsListenReq, __repr__);
+crate::binding_utils::gen_proto!(EventsListenReq, __richcmp__, eq);
 
 #[pymethods]
 impl EventsListenReq {
@@ -41,8 +44,6 @@ impl EventsListenReq {
     }
 }
 
-gen_proto!(EventsListenReq, __repr__);
-
 gen_rep!(
     events_listen,
     EventsListenRep,
@@ -56,7 +57,7 @@ gen_rep!(
 pub(crate) struct EventsListenRepOk;
 
 #[pyclass]
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub(crate) enum BackendEvent {
     DeviceCreated,
     InviteConduiteUpdated,
@@ -233,11 +234,8 @@ impl EventsListenRepOk {
     }
 }
 
-gen_proto!(EventsListenRepOk, __repr__, pyref);
-gen_proto!(EventsListenRepOk, __richcmp__, eq_pyref);
-
 #[pyclass(extends = EventsListenRep)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub(crate) struct EventsListenRepOkPinged;
 
 #[pymethods]
@@ -262,7 +260,7 @@ impl EventsListenRepOkPinged {
 }
 
 #[pyclass(extends = EventsListenRep)]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct EventsListenRepOkMessageReceived;
 
 #[pymethods]
@@ -285,7 +283,7 @@ impl EventsListenRepOkMessageReceived {
 }
 
 #[pyclass(extends = EventsListenRep)]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct EventsListenRepOkInviteStatusChanged;
 
 #[pymethods]
@@ -327,7 +325,7 @@ impl EventsListenRepOkInviteStatusChanged {
 }
 
 #[pyclass(extends = EventsListenRep)]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct EventsListenRepOkRealmMaintenanceFinished;
 
 #[pymethods]
@@ -366,7 +364,7 @@ impl EventsListenRepOkRealmMaintenanceFinished {
 }
 
 #[pyclass(extends = EventsListenRep)]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct EventsListenRepOkRealmMaintenanceStarted;
 
 #[pymethods]
@@ -405,7 +403,7 @@ impl EventsListenRepOkRealmMaintenanceStarted {
 }
 
 #[pyclass(extends = EventsListenRep)]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct EventsListenRepOkVlobsUpdated;
 
 #[pymethods]
@@ -470,7 +468,7 @@ impl EventsListenRepOkVlobsUpdated {
 }
 
 #[pyclass(extends = EventsListenRep)]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct EventsListenRepOkRealmRolesUpdated;
 
 #[pymethods]
@@ -513,7 +511,7 @@ impl EventsListenRepOkRealmRolesUpdated {
 }
 
 #[pyclass(extends = EventsListenRep)]
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub(crate) struct EventsListenRepOkPkiEnrollment;
 
 #[pymethods]
@@ -530,8 +528,11 @@ impl EventsListenRepOkPkiEnrollment {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct EventsSubscribeReq(pub events_subscribe::Req);
+
+crate::binding_utils::gen_proto!(EventsSubscribeReq, __repr__);
+crate::binding_utils::gen_proto!(EventsSubscribeReq, __richcmp__, eq);
 
 #[pymethods]
 impl EventsSubscribeReq {
@@ -547,8 +548,6 @@ impl EventsSubscribeReq {
         ))
     }
 }
-
-gen_proto!(EventsSubscribeReq, __repr__);
 
 gen_rep!(events_subscribe, EventsSubscribeRep, { .. });
 

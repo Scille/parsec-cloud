@@ -6,7 +6,6 @@ use pyo3::{
     exceptions::PyNotImplementedError,
     import_exception,
     prelude::*,
-    pyclass::CompareOp,
     types::{PyBytes, PyTuple},
 };
 
@@ -26,7 +25,45 @@ import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
 #[derive(Clone)]
+pub(crate) struct ReencryptionBatchEntry(pub libparsec::types::ReencryptionBatchEntry);
+
+crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __repr__);
+crate::binding_utils::gen_proto!(ReencryptionBatchEntry, __richcmp__, eq);
+
+#[pymethods]
+impl ReencryptionBatchEntry {
+    #[new]
+    fn new(vlob_id: VlobID, version: u64, blob: Vec<u8>) -> PyResult<Self> {
+        let vlob_id = vlob_id.0;
+        Ok(Self(libparsec::types::ReencryptionBatchEntry {
+            vlob_id,
+            version,
+            blob,
+        }))
+    }
+
+    #[getter]
+    fn vlob_id(&self) -> PyResult<VlobID> {
+        Ok(VlobID(self.0.vlob_id))
+    }
+
+    #[getter]
+    fn version(&self) -> PyResult<u64> {
+        Ok(self.0.version)
+    }
+
+    #[getter]
+    fn blob(&self) -> PyResult<&[u8]> {
+        Ok(&self.0.blob)
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
 pub(crate) struct VlobCreateReq(pub vlob_create::Req);
+
+crate::binding_utils::gen_proto!(VlobCreateReq, __repr__);
+crate::binding_utils::gen_proto!(VlobCreateReq, __richcmp__, eq);
 
 #[pymethods]
 impl VlobCreateReq {
@@ -53,18 +90,6 @@ impl VlobCreateReq {
             blob,
             sequester_blob,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -154,6 +179,9 @@ impl VlobCreateRepOk {
 #[derive(Clone)]
 pub(crate) struct VlobReadReq(pub vlob_read::Req);
 
+crate::binding_utils::gen_proto!(VlobReadReq, __repr__);
+crate::binding_utils::gen_proto!(VlobReadReq, __richcmp__, eq);
+
 #[pymethods]
 impl VlobReadReq {
     #[new]
@@ -171,18 +199,6 @@ impl VlobReadReq {
             version,
             timestamp,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -302,6 +318,9 @@ impl VlobReadRepOk {
 #[derive(Clone)]
 pub(crate) struct VlobUpdateReq(pub vlob_update::Req);
 
+crate::binding_utils::gen_proto!(VlobUpdateReq, __repr__);
+crate::binding_utils::gen_proto!(VlobUpdateReq, __richcmp__, eq);
+
 #[pymethods]
 impl VlobUpdateReq {
     #[new]
@@ -326,18 +345,6 @@ impl VlobUpdateReq {
             blob,
             sequester_blob,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -425,8 +432,11 @@ impl VlobUpdateRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct VlobPollChangesReq(pub vlob_poll_changes::Req);
+
+crate::binding_utils::gen_proto!(VlobPollChangesReq, __repr__);
+crate::binding_utils::gen_proto!(VlobPollChangesReq, __richcmp__, eq);
 
 #[pymethods]
 impl VlobPollChangesReq {
@@ -437,18 +447,6 @@ impl VlobPollChangesReq {
             realm_id,
             last_checkpoint,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -523,24 +521,15 @@ impl VlobPollChangesRepOk {
 #[derive(Clone)]
 pub(crate) struct VlobListVersionsReq(pub vlob_list_versions::Req);
 
+crate::binding_utils::gen_proto!(VlobListVersionsReq, __repr__);
+crate::binding_utils::gen_proto!(VlobListVersionsReq, __richcmp__, eq);
+
 #[pymethods]
 impl VlobListVersionsReq {
     #[new]
     fn new(vlob_id: VlobID) -> PyResult<Self> {
         let vlob_id = vlob_id.0;
         Ok(Self(vlob_list_versions::Req { vlob_id }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -600,6 +589,9 @@ pub(crate) struct VlobMaintenanceGetReencryptionBatchReq(
     pub vlob_maintenance_get_reencryption_batch::Req,
 );
 
+crate::binding_utils::gen_proto!(VlobMaintenanceGetReencryptionBatchReq, __repr__);
+crate::binding_utils::gen_proto!(VlobMaintenanceGetReencryptionBatchReq, __richcmp__, eq);
+
 #[pymethods]
 impl VlobMaintenanceGetReencryptionBatchReq {
     #[new]
@@ -610,18 +602,6 @@ impl VlobMaintenanceGetReencryptionBatchReq {
             encryption_revision,
             size,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -644,50 +624,6 @@ impl VlobMaintenanceGetReencryptionBatchReq {
     #[getter]
     fn size(&self) -> PyResult<u64> {
         Ok(self.0.size)
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct ReencryptionBatchEntry(pub libparsec::types::ReencryptionBatchEntry);
-
-#[pymethods]
-impl ReencryptionBatchEntry {
-    #[new]
-    fn new(vlob_id: VlobID, version: u64, blob: Vec<u8>) -> PyResult<Self> {
-        let vlob_id = vlob_id.0;
-        Ok(Self(libparsec::types::ReencryptionBatchEntry {
-            vlob_id,
-            version,
-            blob,
-        }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    #[getter]
-    fn vlob_id(&self) -> PyResult<VlobID> {
-        Ok(VlobID(self.0.vlob_id))
-    }
-
-    #[getter]
-    fn version(&self) -> PyResult<u64> {
-        Ok(self.0.version)
-    }
-
-    #[getter]
-    fn blob(&self) -> PyResult<&[u8]> {
-        Ok(&self.0.blob)
     }
 }
 
@@ -733,10 +669,13 @@ impl VlobMaintenanceGetReencryptionBatchRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct VlobMaintenanceSaveReencryptionBatchReq(
     pub vlob_maintenance_save_reencryption_batch::Req,
 );
+
+crate::binding_utils::gen_proto!(VlobMaintenanceSaveReencryptionBatchReq, __repr__);
+crate::binding_utils::gen_proto!(VlobMaintenanceSaveReencryptionBatchReq, __richcmp__, eq);
 
 #[pymethods]
 impl VlobMaintenanceSaveReencryptionBatchReq {
@@ -753,18 +692,6 @@ impl VlobMaintenanceSaveReencryptionBatchReq {
             encryption_revision,
             batch,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {

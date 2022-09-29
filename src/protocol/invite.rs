@@ -4,7 +4,6 @@ use pyo3::{
     exceptions::{PyAttributeError, PyNotImplementedError},
     import_exception,
     prelude::*,
-    pyclass::CompareOp,
     types::{PyBytes, PyType},
 };
 
@@ -22,7 +21,7 @@ use libparsec::protocol::invited_cmds::{
 use crate::{
     api_crypto,
     api_crypto::{HashDigest, PublicKey},
-    binding_utils::{gen_proto, py_to_rs_invitation_status},
+    binding_utils::py_to_rs_invitation_status,
     ids::{HumanHandle, UserID},
     invite,
     invite::InvitationToken,
@@ -33,12 +32,11 @@ use crate::{
 import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
-pub(crate) struct InviteNewReq(pub invite_new::Req);
-
-#[pyclass]
 #[derive(Clone)]
 pub(crate) struct InvitationType(pub libparsec::types::InvitationType);
+
+crate::binding_utils::gen_proto!(InvitationType, __repr__);
+crate::binding_utils::gen_proto!(InvitationType, __richcmp__, eq);
 
 #[pymethods]
 impl InvitationType {
@@ -77,7 +75,211 @@ impl InvitationType {
     }
 }
 
-gen_proto!(InvitationType, __richcmp__, eq);
+fn py_to_rs_invitation_email_sent_status(
+    email_sent: &PyAny,
+) -> PyResult<invite_new::InvitationEmailSentStatus> {
+    use invite_new::InvitationEmailSentStatus::*;
+    Ok(match email_sent.getattr("name")?.extract::<&str>()? {
+        "SUCCESS" => Success,
+        "NOT_AVAILABLE" => NotAvailable,
+        "BAD_RECIPIENT" => BadRecipient,
+        _ => unreachable!(),
+    })
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct InvitationEmailSentStatus(invite_new::InvitationEmailSentStatus);
+
+crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __repr__);
+crate::binding_utils::gen_proto!(InvitationEmailSentStatus, __richcmp__, eq);
+
+#[pymethods]
+impl InvitationEmailSentStatus {
+    #[classmethod]
+    #[pyo3(name = "SUCCESS")]
+    fn success(_cls: &PyType) -> Self {
+        Self(invite_new::InvitationEmailSentStatus::Success)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "NOT_AVAILABLE")]
+    fn not_available(_cls: &PyType) -> Self {
+        Self(invite_new::InvitationEmailSentStatus::NotAvailable)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "BAD_RECIPIENT")]
+    fn bad_recipient(_cls: &PyType) -> Self {
+        Self(invite_new::InvitationEmailSentStatus::BadRecipient)
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct InvitationDeletedReason(pub invite_delete::InvitationDeletedReason);
+
+crate::binding_utils::gen_proto!(InvitationDeletedReason, __repr__);
+crate::binding_utils::gen_proto!(InvitationDeletedReason, __richcmp__, eq);
+
+#[pymethods]
+impl InvitationDeletedReason {
+    #[classmethod]
+    #[pyo3(name = "FINISHED")]
+    fn finished(_cls: &PyType) -> Self {
+        Self(invite_delete::InvitationDeletedReason::Finished)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "CANCELLED")]
+    fn cancelled(_cls: &PyType) -> Self {
+        Self(invite_delete::InvitationDeletedReason::Cancelled)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "ROTTEN")]
+    fn rotten(_cls: &PyType) -> Self {
+        Self(invite_delete::InvitationDeletedReason::Rotten)
+    }
+
+    #[getter]
+    fn value(&self) -> &'static str {
+        match self.0 {
+            invite_delete::InvitationDeletedReason::Finished => "FINISHED",
+            invite_delete::InvitationDeletedReason::Cancelled => "CANCELLED",
+            invite_delete::InvitationDeletedReason::Rotten => "ROTTEN",
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct InvitationStatus(libparsec::types::InvitationStatus);
+
+crate::binding_utils::gen_proto!(InvitationStatus, __repr__);
+crate::binding_utils::gen_proto!(InvitationStatus, __richcmp__, eq);
+
+#[pymethods]
+impl InvitationStatus {
+    #[classmethod]
+    #[pyo3(name = "IDLE")]
+    fn idle(_cls: &PyType) -> Self {
+        Self(libparsec::types::InvitationStatus::Idle)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "READY")]
+    fn ready(_cls: &PyType) -> Self {
+        Self(libparsec::types::InvitationStatus::Ready)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "DELETED")]
+    fn deleted(_cls: &PyType) -> Self {
+        Self(libparsec::types::InvitationStatus::Deleted)
+    }
+
+    #[getter]
+    fn name(&self) -> &'static str {
+        match self.0 {
+            libparsec::types::InvitationStatus::Idle => "IDLE",
+            libparsec::types::InvitationStatus::Ready => "READY",
+            libparsec::types::InvitationStatus::Deleted => "DELETED",
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct InviteListItem(pub invite_list::InviteListItem);
+
+crate::binding_utils::gen_proto!(InviteListItem, __repr__);
+crate::binding_utils::gen_proto!(InviteListItem, __richcmp__, eq);
+
+#[pymethods]
+impl InviteListItem {
+    #[classmethod]
+    #[pyo3(name = "User")]
+    fn user(
+        _cls: &PyType,
+        token: InvitationToken,
+        created_on: DateTime,
+        claimer_email: String,
+        status: &PyAny,
+    ) -> PyResult<Self> {
+        let token = token.0;
+        let created_on = created_on.0;
+        let status = py_to_rs_invitation_status(status)?;
+        Ok(Self(invite_list::InviteListItem::User {
+            token,
+            created_on,
+            claimer_email,
+            status,
+        }))
+    }
+
+    #[classmethod]
+    #[pyo3(name = "Device")]
+    fn device(
+        _cls: &PyType,
+        token: InvitationToken,
+        created_on: DateTime,
+        status: &PyAny,
+    ) -> PyResult<Self> {
+        let token = token.0;
+        let created_on = created_on.0;
+        let status = py_to_rs_invitation_status(status)?;
+        Ok(Self(invite_list::InviteListItem::Device {
+            token,
+            created_on,
+            status,
+        }))
+    }
+
+    #[getter]
+    #[pyo3(name = "r#type")]
+    fn r#type(&self) -> InvitationType {
+        match self.0 {
+            invite_list::InviteListItem::User { .. } => {
+                InvitationType(libparsec::types::InvitationType::User)
+            }
+            invite_list::InviteListItem::Device { .. } => {
+                InvitationType(libparsec::types::InvitationType::Device)
+            }
+        }
+    }
+
+    #[getter]
+    fn token(&self) -> InvitationToken {
+        match self.0 {
+            invite_list::InviteListItem::User { token, .. } => InvitationToken(token),
+            invite_list::InviteListItem::Device { token, .. } => InvitationToken(token),
+        }
+    }
+
+    #[getter]
+    fn claimer_email(&self) -> PyResult<String> {
+        match &self.0 {
+            invite_list::InviteListItem::User { claimer_email, .. } => Ok(claimer_email.clone()),
+            _ => Err(PyAttributeError::new_err("")),
+        }
+    }
+
+    #[getter]
+    fn status(&self) -> InvitationStatus {
+        match &self.0 {
+            invite_list::InviteListItem::User { status, .. } => InvitationStatus(status.clone()),
+            invite_list::InviteListItem::Device { status, .. } => InvitationStatus(status.clone()),
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct InviteNewReq(pub invite_new::Req);
+
+crate::binding_utils::gen_proto!(InviteNewReq, __repr__);
+crate::binding_utils::gen_proto!(InviteNewReq, __richcmp__, eq);
 
 #[pymethods]
 impl InviteNewReq {
@@ -150,28 +352,12 @@ impl InviteNewReq {
         }
     }
 
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
             &self.0.clone().dump().map_err(ProtocolError::new_err)?,
         ))
     }
-}
-
-fn py_to_rs_invitation_email_sent_status(
-    email_sent: &PyAny,
-) -> PyResult<invite_new::InvitationEmailSentStatus> {
-    use invite_new::InvitationEmailSentStatus::*;
-    Ok(match email_sent.getattr("name")?.extract::<&str>()? {
-        "SUCCESS" => Success,
-        "NOT_AVAILABLE" => NotAvailable,
-        "BAD_RECIPIENT" => BadRecipient,
-        _ => unreachable!(),
-    })
 }
 
 gen_rep!(
@@ -182,38 +368,6 @@ gen_rep!(
     [AlreadyMember],
     [NotAvailable]
 );
-
-#[pyclass]
-pub(crate) struct InvitationEmailSentStatus(invite_new::InvitationEmailSentStatus);
-
-#[pymethods]
-impl InvitationEmailSentStatus {
-    #[classmethod]
-    #[pyo3(name = "SUCCESS")]
-    fn success(_cls: &PyType) -> Self {
-        Self(invite_new::InvitationEmailSentStatus::Success)
-    }
-
-    #[classmethod]
-    #[pyo3(name = "NOT_AVAILABLE")]
-    fn not_available(_cls: &PyType) -> Self {
-        Self(invite_new::InvitationEmailSentStatus::NotAvailable)
-    }
-
-    #[classmethod]
-    #[pyo3(name = "BAD_RECIPIENT")]
-    fn bad_recipient(_cls: &PyType) -> Self {
-        Self(invite_new::InvitationEmailSentStatus::BadRecipient)
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
-        match op {
-            CompareOp::Eq => Ok(self.0 == other.0),
-            CompareOp::Ne => Ok(self.0 != other.0),
-            _ => Err(PyNotImplementedError::new_err("")),
-        }
-    }
-}
 
 #[pyclass(extends=InviteNewRep)]
 pub(crate) struct InviteNewRepOk;
@@ -260,42 +414,11 @@ impl InviteNewRepOk {
 }
 
 #[pyclass]
-#[derive(Clone, Eq, PartialEq)]
-pub(crate) struct InvitationDeletedReason(pub invite_delete::InvitationDeletedReason);
-
-#[pymethods]
-impl InvitationDeletedReason {
-    #[classmethod]
-    #[pyo3(name = "FINISHED")]
-    fn finished(_cls: &PyType) -> Self {
-        Self(invite_delete::InvitationDeletedReason::Finished)
-    }
-
-    #[classmethod]
-    #[pyo3(name = "CANCELLED")]
-    fn cancelled(_cls: &PyType) -> Self {
-        Self(invite_delete::InvitationDeletedReason::Cancelled)
-    }
-
-    #[classmethod]
-    #[pyo3(name = "ROTTEN")]
-    fn rotten(_cls: &PyType) -> Self {
-        Self(invite_delete::InvitationDeletedReason::Rotten)
-    }
-
-    #[getter]
-    fn value(&self) -> &'static str {
-        match self.0 {
-            invite_delete::InvitationDeletedReason::Finished => "FINISHED",
-            invite_delete::InvitationDeletedReason::Cancelled => "CANCELLED",
-            invite_delete::InvitationDeletedReason::Rotten => "ROTTEN",
-        }
-    }
-}
-
-#[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct InviteDeleteReq(pub invite_delete::Req);
+
+crate::binding_utils::gen_proto!(InviteDeleteReq, __repr__);
+crate::binding_utils::gen_proto!(InviteDeleteReq, __richcmp__, eq);
 
 #[pymethods]
 impl InviteDeleteReq {
@@ -306,10 +429,6 @@ impl InviteDeleteReq {
             token,
             reason: reason.0,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -350,18 +469,17 @@ impl InviteDeleteRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct InviteListReq(pub invite_list::Req);
+
+crate::binding_utils::gen_proto!(InviteListReq, __repr__);
+crate::binding_utils::gen_proto!(InviteListReq, __richcmp__, eq);
 
 #[pymethods]
 impl InviteListReq {
     #[new]
     fn new() -> PyResult<Self> {
         Ok(Self(invite_list::Req))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -372,138 +490,9 @@ impl InviteListReq {
     }
 }
 
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct InvitationStatus(libparsec::types::InvitationStatus);
-
-#[pymethods]
-impl InvitationStatus {
-    #[classmethod]
-    #[pyo3(name = "IDLE")]
-    fn idle(_cls: &PyType) -> Self {
-        Self(libparsec::types::InvitationStatus::Idle)
-    }
-
-    #[classmethod]
-    #[pyo3(name = "READY")]
-    fn ready(_cls: &PyType) -> Self {
-        Self(libparsec::types::InvitationStatus::Ready)
-    }
-
-    #[classmethod]
-    #[pyo3(name = "DELETED")]
-    fn deleted(_cls: &PyType) -> Self {
-        Self(libparsec::types::InvitationStatus::Deleted)
-    }
-
-    #[getter]
-    fn name(&self) -> &'static str {
-        match self.0 {
-            libparsec::types::InvitationStatus::Idle => "IDLE",
-            libparsec::types::InvitationStatus::Ready => "READY",
-            libparsec::types::InvitationStatus::Deleted => "DELETED",
-        }
-    }
-}
-
-#[pyclass]
-#[derive(PartialEq, Eq, Clone)]
-pub(crate) struct InviteListItem(pub invite_list::InviteListItem);
-
-#[pymethods]
-impl InviteListItem {
-    #[classmethod]
-    #[pyo3(name = "User")]
-    fn user(
-        _cls: &PyType,
-        token: InvitationToken,
-        created_on: DateTime,
-        claimer_email: String,
-        status: &PyAny,
-    ) -> PyResult<Self> {
-        let token = token.0;
-        let created_on = created_on.0;
-        let status = py_to_rs_invitation_status(status)?;
-        Ok(Self(invite_list::InviteListItem::User {
-            token,
-            created_on,
-            claimer_email,
-            status,
-        }))
-    }
-
-    #[classmethod]
-    #[pyo3(name = "Device")]
-    fn device(
-        _cls: &PyType,
-        token: InvitationToken,
-        created_on: DateTime,
-        status: &PyAny,
-    ) -> PyResult<Self> {
-        let token = token.0;
-        let created_on = created_on.0;
-        let status = py_to_rs_invitation_status(status)?;
-        Ok(Self(invite_list::InviteListItem::Device {
-            token,
-            created_on,
-            status,
-        }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
-        match op {
-            CompareOp::Eq => Ok(self.0 == other.0),
-            CompareOp::Ne => Ok(self.0 != other.0),
-            _ => Err(PyNotImplementedError::new_err("")),
-        }
-    }
-
-    #[getter]
-    #[pyo3(name = "r#type")]
-    fn r#type(&self) -> InvitationType {
-        match self.0 {
-            invite_list::InviteListItem::User { .. } => {
-                InvitationType(libparsec::types::InvitationType::User)
-            }
-            invite_list::InviteListItem::Device { .. } => {
-                InvitationType(libparsec::types::InvitationType::Device)
-            }
-        }
-    }
-
-    #[getter]
-    fn token(&self) -> InvitationToken {
-        match self.0 {
-            invite_list::InviteListItem::User { token, .. } => InvitationToken(token),
-            invite_list::InviteListItem::Device { token, .. } => InvitationToken(token),
-        }
-    }
-
-    #[getter]
-    fn claimer_email(&self) -> PyResult<String> {
-        match &self.0 {
-            invite_list::InviteListItem::User { claimer_email, .. } => Ok(claimer_email.clone()),
-            _ => Err(PyAttributeError::new_err("")),
-        }
-    }
-
-    #[getter]
-    fn status(&self) -> InvitationStatus {
-        match &self.0 {
-            invite_list::InviteListItem::User { status, .. } => InvitationStatus(status.clone()),
-            invite_list::InviteListItem::Device { status, .. } => InvitationStatus(status.clone()),
-        }
-    }
-}
-
 gen_rep!(invite_list, InviteListRep, { .. });
 
 #[pyclass(extends=InviteListRep)]
-#[derive(Eq, PartialEq)]
 pub(crate) struct InviteListRepOk;
 
 #[pymethods]
@@ -512,18 +501,6 @@ impl InviteListRepOk {
     fn new(invitations: Vec<InviteListItem>) -> PyResult<(Self, InviteListRep)> {
         let invitations = invitations.into_iter().map(|inv| inv.0).collect();
         Ok((Self, InviteListRep(invite_list::Rep::Ok { invitations })))
-    }
-
-    fn __richcmp__(
-        _self: PyRef<'_, Self>,
-        other: PyRef<'_, Self>,
-        op: CompareOp,
-    ) -> PyResult<bool> {
-        match op {
-            CompareOp::Eq => Ok(_self.as_ref().0 == other.as_ref().0),
-            CompareOp::Ne => Ok(_self.as_ref().0 != other.as_ref().0),
-            _ => Err(PyNotImplementedError::new_err("")),
-        }
     }
 
     #[getter]
@@ -539,18 +516,17 @@ impl InviteListRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct InviteInfoReq(pub invite_info::Req);
+
+crate::binding_utils::gen_proto!(InviteInfoReq, __repr__);
+crate::binding_utils::gen_proto!(InviteInfoReq, __richcmp__, eq);
 
 #[pymethods]
 impl InviteInfoReq {
     #[new]
     fn new() -> PyResult<Self> {
         Ok(Self(invite_info::Req))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -564,7 +540,6 @@ impl InviteInfoReq {
 gen_rep!(invite_info, InviteInfoRep, { .. });
 
 #[pyclass(extends=InviteInfoRep)]
-#[derive(Eq, PartialEq)]
 pub(crate) struct InviteInfoRepOk;
 
 #[pymethods]
@@ -595,32 +570,6 @@ impl InviteInfoRepOk {
                     greeter_human_handle,
                 })),
             )),
-        }
-    }
-
-    fn __richcmp__(
-        _self: PyRef<'_, Self>,
-        other: PyRef<'_, Self>,
-        op: CompareOp,
-    ) -> PyResult<bool> {
-        let o = match &other.as_ref().0 {
-            invite_info::Rep::Ok(o) => o,
-            invite_info::Rep::UnknownStatus { _status, .. } => {
-                return Err(PyNotImplementedError::new_err(""))
-            }
-        };
-
-        let s = match &_self.as_ref().0 {
-            invite_info::Rep::Ok(o) => o,
-            invite_info::Rep::UnknownStatus { _status, .. } => {
-                return Err(PyNotImplementedError::new_err(""))
-            }
-        };
-
-        match op {
-            CompareOp::Eq => Ok(s == o),
-            CompareOp::Ne => Ok(s != o),
-            _ => Err(PyNotImplementedError::new_err("")),
         }
     }
 
@@ -679,8 +628,11 @@ impl InviteInfoRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Invite1ClaimerWaitPeerReq(pub invite_1_claimer_wait_peer::Req);
+
+crate::binding_utils::gen_proto!(Invite1ClaimerWaitPeerReq, __repr__);
+crate::binding_utils::gen_proto!(Invite1ClaimerWaitPeerReq, __richcmp__, eq);
 
 #[pymethods]
 impl Invite1ClaimerWaitPeerReq {
@@ -688,10 +640,6 @@ impl Invite1ClaimerWaitPeerReq {
     fn new(claimer_public_key: PublicKey) -> PyResult<Self> {
         let claimer_public_key = claimer_public_key.0;
         Ok(Self(invite_1_claimer_wait_peer::Req { claimer_public_key }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -741,8 +689,11 @@ impl Invite1ClaimerWaitPeerRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Invite1GreeterWaitPeerReq(pub invite_1_greeter_wait_peer::Req);
+
+crate::binding_utils::gen_proto!(Invite1GreeterWaitPeerReq, __repr__);
+crate::binding_utils::gen_proto!(Invite1GreeterWaitPeerReq, __richcmp__, eq);
 
 #[pymethods]
 impl Invite1GreeterWaitPeerReq {
@@ -754,10 +705,6 @@ impl Invite1GreeterWaitPeerReq {
             token,
             greeter_public_key,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -813,8 +760,11 @@ impl Invite1GreeterWaitPeerRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Invite2aClaimerSendHashedNonceReq(pub invite_2a_claimer_send_hashed_nonce::Req);
+
+crate::binding_utils::gen_proto!(Invite2aClaimerSendHashedNonceReq, __repr__);
+crate::binding_utils::gen_proto!(Invite2aClaimerSendHashedNonceReq, __richcmp__, eq);
 
 #[pymethods]
 impl Invite2aClaimerSendHashedNonceReq {
@@ -824,10 +774,6 @@ impl Invite2aClaimerSendHashedNonceReq {
         Ok(Self(invite_2a_claimer_send_hashed_nonce::Req {
             claimer_hashed_nonce,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -879,8 +825,11 @@ impl Invite2aClaimerSendHashedNonceRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Invite2aGreeterGetHashedNonceReq(pub invite_2a_greeter_get_hashed_nonce::Req);
+
+crate::binding_utils::gen_proto!(Invite2aGreeterGetHashedNonceReq, __repr__);
+crate::binding_utils::gen_proto!(Invite2aGreeterGetHashedNonceReq, __richcmp__, eq);
 
 #[pymethods]
 impl Invite2aGreeterGetHashedNonceReq {
@@ -888,10 +837,6 @@ impl Invite2aGreeterGetHashedNonceReq {
     fn new(token: InvitationToken) -> PyResult<Self> {
         let token = token.0;
         Ok(Self(invite_2a_greeter_get_hashed_nonce::Req { token }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -944,18 +889,17 @@ impl Invite2aGreeterGetHashedNonceRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Invite2bClaimerSendNonceReq(pub invite_2b_claimer_send_nonce::Req);
+
+crate::binding_utils::gen_proto!(Invite2bClaimerSendNonceReq, __repr__);
+crate::binding_utils::gen_proto!(Invite2bClaimerSendNonceReq, __richcmp__, eq);
 
 #[pymethods]
 impl Invite2bClaimerSendNonceReq {
     #[new]
     fn new(claimer_nonce: Vec<u8>) -> PyResult<Self> {
         Ok(Self(invite_2b_claimer_send_nonce::Req { claimer_nonce }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -995,8 +939,11 @@ impl Invite2bClaimerSendNonceRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Invite2bGreeterSendNonceReq(pub invite_2b_greeter_send_nonce::Req);
+
+crate::binding_utils::gen_proto!(Invite2bGreeterSendNonceReq, __repr__);
+crate::binding_utils::gen_proto!(Invite2bGreeterSendNonceReq, __richcmp__, eq);
 
 #[pymethods]
 impl Invite2bGreeterSendNonceReq {
@@ -1007,10 +954,6 @@ impl Invite2bGreeterSendNonceReq {
             token,
             greeter_nonce,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -1065,18 +1008,17 @@ impl Invite2bGreeterSendNonceRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Invite3aClaimerSignifyTrustReq(pub invite_3a_claimer_signify_trust::Req);
+
+crate::binding_utils::gen_proto!(Invite3aClaimerSignifyTrustReq, __repr__);
+crate::binding_utils::gen_proto!(Invite3aClaimerSignifyTrustReq, __richcmp__, eq);
 
 #[pymethods]
 impl Invite3aClaimerSignifyTrustReq {
     #[new]
     fn new() -> PyResult<Self> {
         Ok(Self(invite_3a_claimer_signify_trust::Req))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -1110,8 +1052,11 @@ impl Invite3aClaimerSignifyTrustRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Invite3aGreeterWaitPeerTrustReq(pub invite_3a_greeter_wait_peer_trust::Req);
+
+crate::binding_utils::gen_proto!(Invite3aGreeterWaitPeerTrustReq, __repr__);
+crate::binding_utils::gen_proto!(Invite3aGreeterWaitPeerTrustReq, __richcmp__, eq);
 
 #[pymethods]
 impl Invite3aGreeterWaitPeerTrustReq {
@@ -1119,10 +1064,6 @@ impl Invite3aGreeterWaitPeerTrustReq {
     fn new(token: InvitationToken) -> PyResult<Self> {
         let token = token.0;
         Ok(Self(invite_3a_greeter_wait_peer_trust::Req { token }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -1162,18 +1103,17 @@ impl Invite3aGreeterWaitPeerTrustRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Invite3bClaimerWaitPeerTrustReq(pub invite_3b_claimer_wait_peer_trust::Req);
+
+crate::binding_utils::gen_proto!(Invite3bClaimerWaitPeerTrustReq, __repr__);
+crate::binding_utils::gen_proto!(Invite3bClaimerWaitPeerTrustReq, __richcmp__, eq);
 
 #[pymethods]
 impl Invite3bClaimerWaitPeerTrustReq {
     #[new]
     fn new() -> PyResult<Self> {
         Ok(Self(invite_3b_claimer_wait_peer_trust::Req))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -1207,8 +1147,11 @@ impl Invite3bClaimerWaitPeerTrustRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Invite3bGreeterSignifyTrustReq(pub invite_3b_greeter_signify_trust::Req);
+
+crate::binding_utils::gen_proto!(Invite3bGreeterSignifyTrustReq, __repr__);
+crate::binding_utils::gen_proto!(Invite3bGreeterSignifyTrustReq, __richcmp__, eq);
 
 #[pymethods]
 impl Invite3bGreeterSignifyTrustReq {
@@ -1216,10 +1159,6 @@ impl Invite3bGreeterSignifyTrustReq {
     fn new(token: InvitationToken) -> PyResult<Self> {
         let token = token.0;
         Ok(Self(invite_3b_greeter_signify_trust::Req { token }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -1259,18 +1198,17 @@ impl Invite3bGreeterSignifyTrustRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Invite4ClaimerCommunicateReq(pub invite_4_claimer_communicate::Req);
+
+crate::binding_utils::gen_proto!(Invite4ClaimerCommunicateReq, __repr__);
+crate::binding_utils::gen_proto!(Invite4ClaimerCommunicateReq, __richcmp__, eq);
 
 #[pymethods]
 impl Invite4ClaimerCommunicateReq {
     #[new]
     fn new(payload: Vec<u8>) -> PyResult<Self> {
         Ok(Self(invite_4_claimer_communicate::Req { payload }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -1319,8 +1257,11 @@ impl Invite4ClaimerCommunicateRepOk {
 }
 
 #[pyclass]
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub(crate) struct Invite4GreeterCommunicateReq(pub invite_4_greeter_communicate::Req);
+
+crate::binding_utils::gen_proto!(Invite4GreeterCommunicateReq, __repr__);
+crate::binding_utils::gen_proto!(Invite4GreeterCommunicateReq, __richcmp__, eq);
 
 #[pymethods]
 impl Invite4GreeterCommunicateReq {
@@ -1328,10 +1269,6 @@ impl Invite4GreeterCommunicateReq {
     fn new(token: InvitationToken, payload: Vec<u8>) -> PyResult<Self> {
         let token = token.0;
         Ok(Self(invite_4_greeter_communicate::Req { token, payload }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
