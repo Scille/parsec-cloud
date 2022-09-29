@@ -27,13 +27,18 @@ logger = get_logger()
 
 
 class BaseClientContext:
-    __slots__ = ("conn_id", "api_version")
+    __slots__ = ("conn_id", "api_version", "cancel_scope")
     TYPE: ClientType
     logger: BoundLogger
 
     def __init__(self, api_version: ApiVersion):
         self.api_version = api_version
         self.conn_id = uuid4().hex
+        self.cancel_scope: Optional[trio.CancelScope] = None
+
+    def close_connection_asap(self) -> None:
+        if self.cancel_scope is not None:
+            self.cancel_scope.cancel()
 
 
 class AuthenticatedClientContext(BaseClientContext):

@@ -73,7 +73,7 @@ class EventsComponent:
                     EventsListenRepOkRealmRolesUpdated(realm_id, role)
                 )
             except trio.WouldBlock:
-                client_ctx.logger.warning("dropping event (queue is full)")
+                client_ctx.close_connection_asap()
 
         def _on_pinged(
             event: APIEvent,
@@ -88,7 +88,7 @@ class EventsComponent:
             try:
                 client_ctx.send_events_channel.send_nowait(EventsListenRepOkPinged(ping))
             except trio.WouldBlock:
-                client_ctx.logger.warning("dropping event (queue is full)")
+                client_ctx.close_connection_asap()
 
         def _on_realm_events(
             event: APIEvent,
@@ -126,7 +126,7 @@ class EventsComponent:
                         f"Tried to send non-realm event: '{event}' in function _on_realm_events!"
                     )
             except trio.WouldBlock:
-                client_ctx.logger.warning("dropping event (queue is full)")
+                client_ctx.close_connection_asap()
 
         def _on_message_received(
             event: APIEvent,
@@ -142,7 +142,7 @@ class EventsComponent:
             try:
                 client_ctx.send_events_channel.send_nowait(EventsListenRepOkMessageReceived(index))
             except trio.WouldBlock:
-                client_ctx.logger.warning("dropping event (queue is full)")
+                client_ctx.close_connection_asap()
 
         def _on_invite_status_changed(
             event: APIEvent,
@@ -160,7 +160,7 @@ class EventsComponent:
                     EventsListenRepOkInviteStatusChanged(token, status)
                 )
             except trio.WouldBlock:
-                client_ctx.logger.warning("dropping event (queue is full)")
+                client_ctx.close_connection_asap()
 
         def _on_pki_enrollment_updated(
             event: APIEvent,
@@ -175,7 +175,7 @@ class EventsComponent:
             try:
                 client_ctx.send_events_channel.send_nowait(EventsListenRepOkPkiEnrollment())
             except trio.WouldBlock:
-                client_ctx.logger.warning("dropping event (queue is full)")
+                client_ctx.close_connection_asap()
 
         # Command should be idempotent
         if not client_ctx.events_subscribed:
