@@ -146,4 +146,28 @@ async def test_events_listen_wait_cancelled(backend_asgi_app, alice_ws):
         listen.rep_done = True
 
 
+@pytest.mark.trio
+async def test_events_close_connection_on_backpressure(
+    backend_asgi_app, alice, bob_ws, monkeypatch, backend_authenticated_ws_factory
+):
+    # The channel has a queue of size 1, meaning it will be filled after a single command
+    monkeypatch.setattr("parsec.backend.client_context.AUTHENTICATED_CLIENT_CHANNEL_SIZE", 1)
+    # We need to manually initialize the websockets using the factory here to make
+    # sure the monkeypatch happens before the memory channel creation and thus
+    # give then a size of 1
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice) as alice_ws:
+        await events_subscribe(alice_ws)
+
+        await authenticated_ping(bob_ws, "foo")
+        await authenticated_ping(bob_ws, "foo")
+
+        # Alice should be disconnected at this point and exit the loop
+        with trio.fail_after(1):
+            while True:
+                try:
+                    await authenticated_ping(alice_ws, "poke")
+                except WebsocketDisconnectError:
+                    break
+
+
 # TODO: test message.received and beacon.updated events
