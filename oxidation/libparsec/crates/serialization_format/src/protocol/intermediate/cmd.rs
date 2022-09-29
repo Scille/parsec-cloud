@@ -153,10 +153,10 @@ impl Cmd {
                                 // Due to how Serde handles variant discriminant, we cannot express unknown status as a default case in the main schema
                                 // Instead we have this additional deserialization attempt fallback
                                 let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
-                                Self::UnknownStatus {
+                                Ok(Self::UnknownStatus {
                                     _status: data.status,
                                     reason: data.reason,
-                                }
+                                })
                             })
                     }
                 }
@@ -606,10 +606,10 @@ mod test {
                         ::rmp_serde::from_slice::<Self>(buf)
                         .or_else(|_error| {
                             let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
-                            Self::UnknownStatus {
+                            Ok(Self::UnknownStatus {
                                 _status: data.status,
                                 reason: data.reason,
-                            }
+                            })
                         })
                     }
                 }
@@ -675,10 +675,10 @@ mod test {
                         ::rmp_serde::from_slice::<Self>(buf)
                         .or_else(|_error| {
                             let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
-                            Self::UnknownStatus {
+                            Ok(Self::UnknownStatus {
                                 _status: data.status,
                                 reason: data.reason,
-                            }
+                            })
                         })
                     }
                 }

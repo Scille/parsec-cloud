@@ -305,10 +305,10 @@ mod test {
                                 ::rmp_serde::from_slice::<Self>(buf)
                                     .or_else(|_error| {
                                         let data =::rmp_serde::from_slice::<UnknownStatus>(buf)?;
-                                        Self::UnknownStatus {
+                                        Ok(Self::UnknownStatus {
                                             _status: data.status,
                                             reason: data.reason,
-                                        }
+                                        })
                                     })
                             }
                         }
@@ -360,10 +360,10 @@ mod test {
                                 ::rmp_serde::from_slice::<Self>(buf)
                                     .or_else(|_error| {
                                         let data =::rmp_serde::from_slice::<UnknownStatus>(buf)?;
-                                        Self::UnknownStatus {
+                                        Ok(Self::UnknownStatus {
                                             _status: data.status,
                                             reason: data.reason,
-                                        }
+                                        })
                                     })
                             }
                         }
