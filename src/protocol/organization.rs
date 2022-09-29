@@ -4,7 +4,6 @@ use pyo3::{
     exceptions::PyNotImplementedError,
     import_exception,
     prelude::*,
-    pyclass::CompareOp,
     types::{PyBytes, PyTuple},
 };
 
@@ -19,38 +18,10 @@ import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct OrganizationStatsReq(pub organization_stats::Req);
-
-#[pymethods]
-impl OrganizationStatsReq {
-    #[new]
-    fn new() -> PyResult<Self> {
-        Ok(Self(organization_stats::Req))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
-        Ok(PyBytes::new(
-            py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
-        ))
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
 pub(crate) struct UsersPerProfileDetailItem(pub organization_stats::UsersPerProfileDetailItem);
+
+crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __repr__);
+crate::binding_utils::gen_proto!(UsersPerProfileDetailItem, __richcmp__, eq);
 
 #[pymethods]
 impl UsersPerProfileDetailItem {
@@ -62,18 +33,6 @@ impl UsersPerProfileDetailItem {
             active,
             revoked,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     #[getter]
@@ -89,6 +48,28 @@ impl UsersPerProfileDetailItem {
     #[getter]
     fn revoked(&self) -> PyResult<u64> {
         Ok(self.0.revoked)
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct OrganizationStatsReq(pub organization_stats::Req);
+
+crate::binding_utils::gen_proto!(OrganizationStatsReq, __repr__);
+crate::binding_utils::gen_proto!(OrganizationStatsReq, __richcmp__, eq);
+
+#[pymethods]
+impl OrganizationStatsReq {
+    #[new]
+    fn new() -> PyResult<Self> {
+        Ok(Self(organization_stats::Req))
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+        ))
     }
 }
 
@@ -196,23 +177,14 @@ impl OrganizationStatsRepOk {
 #[derive(Clone)]
 pub(crate) struct OrganizationConfigReq(pub organization_config::Req);
 
+crate::binding_utils::gen_proto!(OrganizationConfigReq, __repr__);
+crate::binding_utils::gen_proto!(OrganizationConfigReq, __richcmp__, eq);
+
 #[pymethods]
 impl OrganizationConfigReq {
     #[new]
     fn new() -> PyResult<Self> {
         Ok(Self(organization_config::Req))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {

@@ -223,18 +223,6 @@ macro_rules! gen_proto {
             }
         }
     };
-    ($class: ident, __richcmp__, eq_pyref) => {
-        #[pymethods]
-        impl $class {
-            fn __richcmp__(
-                _self: PyRef<'_, Self>,
-                other: PyRef<'_, Self>,
-                op: ::pyo3::pyclass::CompareOp,
-            ) -> ::pyo3::PyResult<bool> {
-                crate::binding_utils::comp_eq(op, &_self.as_ref().0, &other.as_ref().0)
-            }
-        }
-    };
     ($class: ident, __hash__) => {
         #[pymethods]
         impl $class {

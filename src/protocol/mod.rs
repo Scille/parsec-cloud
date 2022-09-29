@@ -100,20 +100,11 @@ macro_rules! gen_rep {
             #[derive(Clone)]
             pub(crate) struct $base_class(pub $mod::Rep);
 
+            crate::binding_utils::gen_proto!($base_class, __repr__);
+            crate::binding_utils::gen_proto!($base_class, __richcmp__, eq);
+
             #[::pyo3::pymethods]
             impl $base_class {
-                fn __repr__(&self) -> ::pyo3::PyResult<String> {
-                    Ok(format!("{:?}", self.0))
-                }
-
-                fn __richcmp__(&self, other: Self, op: ::pyo3::pyclass::CompareOp) -> ::pyo3::PyResult<bool> {
-                    Ok(match op {
-                        ::pyo3::pyclass::CompareOp::Eq => self.0 == other.0,
-                        ::pyo3::pyclass::CompareOp::Ne => self.0 != other.0,
-                        _ => return  Err(::pyo3::exceptions::PyNotImplementedError::new_err("Not implemented")),
-                    })
-                }
-
                 fn dump<'py>(&self, py: ::pyo3::Python<'py>) -> ::pyo3::PyResult<&'py ::pyo3::types::PyBytes> {
                     Ok(::pyo3::types::PyBytes::new(
                         py,

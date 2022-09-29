@@ -4,7 +4,6 @@ use pyo3::{
     exceptions::PyNotImplementedError,
     import_exception,
     prelude::*,
-    pyclass::CompareOp,
     types::{PyBytes, PyTuple, PyType},
 };
 use std::collections::HashMap;
@@ -24,25 +23,47 @@ import_exception!(parsec.api.protocol, ProtocolError);
 
 #[pyclass]
 #[derive(Clone)]
+pub(crate) struct MaintenanceType(realm_status::MaintenanceType);
+
+crate::binding_utils::gen_proto!(MaintenanceType, __repr__);
+crate::binding_utils::gen_proto!(MaintenanceType, __richcmp__, eq);
+
+#[pymethods]
+impl MaintenanceType {
+    #[new]
+    fn new(maintenance_type: &str) -> PyResult<Self> {
+        Ok(Self(match maintenance_type {
+            "GARBAGE_COLLECTION" => realm_status::MaintenanceType::GarbageCollection,
+            "REENCRYPTION" => realm_status::MaintenanceType::Reencryption,
+            _ => return Err(PyNotImplementedError::new_err("")),
+        }))
+    }
+
+    #[classmethod]
+    #[pyo3(name = "GARBAGE_COLLECTION")]
+    fn garbage_collection(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(realm_status::MaintenanceType::GarbageCollection))
+    }
+
+    #[classmethod]
+    #[pyo3(name = "REENCRYPTION")]
+    fn reencryption(_cls: &PyType) -> PyResult<Self> {
+        Ok(Self(realm_status::MaintenanceType::Reencryption))
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
 pub(crate) struct RealmCreateReq(pub realm_create::Req);
+
+crate::binding_utils::gen_proto!(RealmCreateReq, __repr__);
+crate::binding_utils::gen_proto!(RealmCreateReq, __richcmp__, eq);
 
 #[pymethods]
 impl RealmCreateReq {
     #[new]
     fn new(role_certificate: Vec<u8>) -> PyResult<Self> {
         Ok(Self(realm_create::Req { role_certificate }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -90,24 +111,15 @@ impl RealmCreateRepOk {
 #[derive(Clone)]
 pub(crate) struct RealmStatusReq(pub realm_status::Req);
 
+crate::binding_utils::gen_proto!(RealmStatusReq, __repr__);
+crate::binding_utils::gen_proto!(RealmStatusReq, __richcmp__, eq);
+
 #[pymethods]
 impl RealmStatusReq {
     #[new]
     fn new(realm_id: RealmID) -> PyResult<Self> {
         let realm_id = realm_id.0;
         Ok(Self(realm_status::Req { realm_id }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -120,45 +132,6 @@ impl RealmStatusReq {
     #[getter]
     fn realm_id(&self) -> PyResult<RealmID> {
         Ok(RealmID(self.0.realm_id))
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct MaintenanceType(realm_status::MaintenanceType);
-
-#[pymethods]
-impl MaintenanceType {
-    #[new]
-    fn new(maintenance_type: &str) -> PyResult<Self> {
-        Ok(Self(match maintenance_type {
-            "GARBAGE_COLLECTION" => realm_status::MaintenanceType::GarbageCollection,
-            "REENCRYPTION" => realm_status::MaintenanceType::Reencryption,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        }))
-    }
-    fn __richcmp__(&self, other: Option<Self>, op: CompareOp) -> PyResult<bool> {
-        let other = match other {
-            Some(other) => other,
-            None => return Ok(false),
-        };
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    #[classmethod]
-    #[pyo3(name = "GARBAGE_COLLECTION")]
-    fn garbage_collection(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(realm_status::MaintenanceType::GarbageCollection))
-    }
-
-    #[classmethod]
-    #[pyo3(name = "REENCRYPTION")]
-    fn reencryption(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(realm_status::MaintenanceType::Reencryption))
     }
 }
 
@@ -251,24 +224,15 @@ impl RealmStatusRepOk {
 #[derive(Clone)]
 pub(crate) struct RealmStatsReq(pub realm_stats::Req);
 
+crate::binding_utils::gen_proto!(RealmStatsReq, __repr__);
+crate::binding_utils::gen_proto!(RealmStatsReq, __richcmp__, eq);
+
 #[pymethods]
 impl RealmStatsReq {
     #[new]
     fn new(realm_id: RealmID) -> PyResult<Self> {
         let realm_id = realm_id.0;
         Ok(Self(realm_stats::Req { realm_id }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -329,24 +293,15 @@ impl RealmStatsRepOk {
 #[derive(Clone)]
 pub(crate) struct RealmGetRoleCertificatesReq(pub realm_get_role_certificates::Req);
 
+crate::binding_utils::gen_proto!(RealmGetRoleCertificatesReq, __repr__);
+crate::binding_utils::gen_proto!(RealmGetRoleCertificatesReq, __richcmp__, eq);
+
 #[pymethods]
 impl RealmGetRoleCertificatesReq {
     #[new]
     fn new(realm_id: RealmID) -> PyResult<Self> {
         let realm_id = realm_id.0;
         Ok(Self(realm_get_role_certificates::Req { realm_id }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -398,6 +353,9 @@ impl RealmGetRoleCertificatesRepOk {
 #[derive(Clone)]
 pub(crate) struct RealmUpdateRolesReq(pub realm_update_roles::Req);
 
+crate::binding_utils::gen_proto!(RealmUpdateRolesReq, __repr__);
+crate::binding_utils::gen_proto!(RealmUpdateRolesReq, __richcmp__, eq);
+
 #[pymethods]
 impl RealmUpdateRolesReq {
     #[new]
@@ -406,18 +364,6 @@ impl RealmUpdateRolesReq {
             role_certificate,
             recipient_message,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -477,6 +423,9 @@ pub(crate) struct RealmStartReencryptionMaintenanceReq(
     pub realm_start_reencryption_maintenance::Req,
 );
 
+crate::binding_utils::gen_proto!(RealmStartReencryptionMaintenanceReq, __repr__);
+crate::binding_utils::gen_proto!(RealmStartReencryptionMaintenanceReq, __richcmp__, eq);
+
 #[pymethods]
 impl RealmStartReencryptionMaintenanceReq {
     #[new]
@@ -498,18 +447,6 @@ impl RealmStartReencryptionMaintenanceReq {
             timestamp,
             per_participant_message,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -587,6 +524,9 @@ pub(crate) struct RealmFinishReencryptionMaintenanceReq(
     pub realm_finish_reencryption_maintenance::Req,
 );
 
+crate::binding_utils::gen_proto!(RealmFinishReencryptionMaintenanceReq, __repr__);
+crate::binding_utils::gen_proto!(RealmFinishReencryptionMaintenanceReq, __richcmp__, eq);
+
 #[pymethods]
 impl RealmFinishReencryptionMaintenanceReq {
     #[new]
@@ -596,18 +536,6 @@ impl RealmFinishReencryptionMaintenanceReq {
             realm_id,
             encryption_revision,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {

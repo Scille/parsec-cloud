@@ -1,9 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use pyo3::{
-    exceptions::PyNotImplementedError, import_exception, prelude::*, pyclass::CompareOp,
-    types::PyBytes,
-};
+use pyo3::{exceptions::PyNotImplementedError, import_exception, prelude::*, types::PyBytes};
 
 use crate::ids::{BlockID, RealmID};
 use crate::protocol::gen_rep;
@@ -15,6 +12,9 @@ import_exception!(parsec.api.protocol, ProtocolError);
 #[derive(Clone)]
 pub(crate) struct BlockCreateReq(pub block_create::Req);
 
+crate::binding_utils::gen_proto!(BlockCreateReq, __repr__);
+crate::binding_utils::gen_proto!(BlockCreateReq, __richcmp__, eq);
+
 #[pymethods]
 impl BlockCreateReq {
     #[new]
@@ -24,18 +24,6 @@ impl BlockCreateReq {
             realm_id: realm_id.0,
             block,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -86,6 +74,9 @@ impl BlockCreateRepOk {
 #[derive(Clone)]
 pub(crate) struct BlockReadReq(pub block_read::Req);
 
+crate::binding_utils::gen_proto!(BlockReadReq, __repr__);
+crate::binding_utils::gen_proto!(BlockReadReq, __richcmp__, eq);
+
 #[pymethods]
 impl BlockReadReq {
     #[new]
@@ -93,18 +84,6 @@ impl BlockReadReq {
         Ok(Self(block_read::Req {
             block_id: block_id.0,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
