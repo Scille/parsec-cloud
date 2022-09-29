@@ -71,7 +71,7 @@ def _display_service(service: SequesterService) -> None:
     click.echo(f"\tCreated on: {service.created_on}")
     click.echo(f"\tService type: {service.service_type}")
     if service.service_type == SequesterServiceType.WEBHOOK:
-        click.echo(f"\tSequester service URL {service.webhook_url}")
+        click.echo(f"\tWebhook endpoint URL {service.webhook_url}")
     if not service.is_enabled:
         click.echo(f"\tDisabled on: {service.disabled_on}")
 
