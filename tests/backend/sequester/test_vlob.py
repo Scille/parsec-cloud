@@ -370,6 +370,41 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
         assert rep.service_id == service.service_id
         assert rep.service_error == "some_error_from_service"
 
+        # Test json error
+
+        def raise_jsonerror_400(*args, **kwargs):
+            fp = Mock()
+            fp.read.return_value = b"not a json"
+            raise urllib.error.HTTPError(url, 400, "", None, fp)
+
+        mock.urlopen.side_effect = raise_jsonerror_400
+        rep = await vlob_create(
+            alice_ws,
+            vlob_id=new_vlob_id,
+            realm_id=realm,
+            blob=blob,
+            sequester_blob={service.service_id: sequester_blob},
+            check_rep=False,
+        )
+
+        assert isinstance(rep, VlobCreateRepSequesterWebhookFailed)
+        assert rep.service_label == service.backend_service.service_label
+        assert rep.service_id == service.service_id
+        assert rep.service_error.startswith("Unreadable webhook response")
+
+        rep = await vlob_update(
+            alice_ws,
+            vlob_id=vlob_id,
+            version=2,
+            blob=blob,
+            sequester_blob={service.service_id: sequester_blob},
+            check_rep=False,
+        )
+        assert isinstance(rep, VlobUpdateRepSequesterWebhookFailed)
+        assert rep.service_label == service.backend_service.service_label
+        assert rep.service_id == service.service_id
+        assert rep.service_error.startswith("Unreadable webhook response")
+
 
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 @pytest.mark.trio

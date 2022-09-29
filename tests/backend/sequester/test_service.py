@@ -222,6 +222,6 @@ async def test_webhook_services(
         organization_id=coolorg.organization_id
     )
 
-    assert len(services) == 1
+    assert services == [service.backend_service]
     registered_service = services[0]
     assert service.backend_service == registered_service
