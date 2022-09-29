@@ -1,5 +1,4 @@
-#[cfg(test)]
-use pretty_assertions::assert_eq;
+use itertools::Itertools;
 use std::collections::HashMap;
 
 use super::Cmd;
@@ -61,6 +60,7 @@ impl ProtocolCollection {
     fn quote_versioned_collection_cmds(&self) -> Vec<syn::ItemMod> {
         self.versioned_cmds
             .iter()
+            .sorted_by_key(|(v, _)| *v)
             .map(|(version, cmds)| quote_versioned_cmds(*version, cmds))
             .collect()
     }
@@ -100,64 +100,282 @@ fn quote_cmd(command: &Cmd) -> (syn::Variant, syn::ItemMod) {
     let command_name = &command.command_name();
 
     let module = command.quote();
+    let module_ident = module.ident.clone();
     let variant = syn::parse_quote! {
         #[serde(rename = #command_name)]
-        #name(#(module.ident)::Req)
+        #name(#module_ident::Req)
     };
 
     (variant, module)
 }
 
 #[cfg(test)]
-#[rstest::rstest]
-#[case::no_protocol(
-    parser::ProtocolCollection {
-        family: "FooCollection".to_string(),
-        protocols: vec![],
-    },
-    ProtocolCollection {
-        family: "FooCollection".to_string(),
-        versioned_cmds: HashMap::default(),
+mod test {
+    use std::collections::HashMap;
+
+    use super::{parser, Cmd, ProtocolCollection};
+
+    use pretty_assertions::assert_eq;
+    use proc_macro2::TokenStream;
+    use quote::{quote, ToTokens};
+    use rstest::rstest;
+
+    #[rstest]
+    #[case::no_protocol(
+        parser::ProtocolCollection {
+            family: "FooCollection".to_string(),
+            protocols: vec![],
+        },
+        ProtocolCollection {
+            family: "FooCollection".to_string(),
+            versioned_cmds: HashMap::default(),
+        }
+    )]
+    #[case::no_version(
+        parser::ProtocolCollection {
+            family: "FooCollection".to_string(),
+            protocols: vec![
+                parser::Protocol(vec![
+                    parser::Cmd::default()
+                ])
+            ]
+        },
+        ProtocolCollection {
+            family: "FooCollection".to_string(),
+            versioned_cmds: HashMap::default(),
+        }
+    )]
+    #[case::multiple_major_version(
+        parser::ProtocolCollection {
+            family: "FooCollection".to_string(),
+            protocols: vec![
+                parser::Protocol(vec![
+                    parser::Cmd {
+                        major_versions: vec![1,2,3],
+                        ..Default::default()
+                    }
+                ])
+            ]
+        },
+        ProtocolCollection {
+            family: "FooCollection".to_string(),
+            versioned_cmds: HashMap::from([
+                (1, vec![Cmd::default()]),
+                (2, vec![Cmd::default()]),
+                (3, vec![Cmd::default()])
+            ]),
+        }
+    )]
+    fn test_protocol_conversion(
+        #[case] original: parser::ProtocolCollection,
+        #[case] expected: ProtocolCollection,
+    ) {
+        assert_eq!(ProtocolCollection::from(original), expected);
     }
-)]
-#[case::no_version(
-    parser::ProtocolCollection {
-        family: "FooCollection".to_string(),
-        protocols: vec![
-            parser::Protocol(vec![
-                parser::Cmd::default()
+
+    #[rstest]
+    #[case::basic(
+        ProtocolCollection {
+            family: "foo_collection".to_string(),
+            versioned_cmds: HashMap::default(),
+        },
+        quote! {
+            pub mod foo_collection {}
+        }
+    )]
+    #[case::with_versions(
+        ProtocolCollection {
+            family: "foo_collection".to_string(),
+            versioned_cmds: HashMap::from([
+                (2, vec![]),
+                (42, vec![])
             ])
-        ]
-    },
-    ProtocolCollection {
-        family: "FooCollection".to_string(),
-        versioned_cmds: HashMap::default(),
-    }
-)]
-#[case::multiple_major_version(
-    parser::ProtocolCollection {
-        family: "FooCollection".to_string(),
-        protocols: vec![
-            parser::Protocol(vec![
-                parser::Cmd {
-                    major_versions: vec![1,2,3],
-                    ..Default::default()
+        },
+        quote! {
+            pub mod foo_collection {
+                pub mod v2 {
+                    #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+                    #[serde(tag = "cmd")]
+                    pub enum AnyCmdReq {}
+
+                    impl AnyCmdReq {
+                        pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                            ::rmp_serde::to_vec_named(self)
+                        }
+
+                        pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
+                            ::rmp_serde::from_slice(buf)
+                        }
+                    }
                 }
+
+                pub mod v42 {
+                    #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+                    #[serde(tag = "cmd")]
+                    pub enum AnyCmdReq {}
+
+                    impl AnyCmdReq {
+                        pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                            ::rmp_serde::to_vec_named(self)
+                        }
+
+                        pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
+                            ::rmp_serde::from_slice(buf)
+                        }
+                    }
+                }
+            }
+        }
+    )]
+    #[case::with_cmds(
+        ProtocolCollection {
+            family: "foo_collection".to_string(),
+            versioned_cmds: HashMap::from([
+                (2, vec![
+                    Cmd::default(),
+                    Cmd::default()
+                ]),
             ])
-        ]
-    },
-    ProtocolCollection {
-        family: "FooCollection".to_string(),
-        versioned_cmds: HashMap::from([
-            (1, vec![Cmd::default()]),
-            (2, vec![Cmd::default()]),
-            (3, vec![Cmd::default()])
-        ]),
+        },
+        quote! {
+            pub mod foo_collection {
+                pub mod v2 {
+                    #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+                    #[serde(tag = "cmd")]
+                    pub enum AnyCmdReq {
+                        #[serde(rename = "foo_cmd")]
+                        FooCmd(foo_cmd::Req),
+                        #[serde(rename = "foo_cmd")]
+                        FooCmd(foo_cmd::Req)
+                    }
+
+                    impl AnyCmdReq {
+                        pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                            ::rmp_serde::to_vec_named(self)
+                        }
+
+                        pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
+                            ::rmp_serde::from_slice(buf)
+                        }
+                    }
+
+                    pub mod foo_cmd {
+                        use super::AnyCmdReq;
+
+                        #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize ,PartialEq ,Eq)]
+                        pub struct Req;
+
+                        impl Req {
+                            pub fn new () -> Self { Self }
+                        }
+
+                        impl Req {
+                            pub fn dump (self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                                AnyCmdReq::FooCmd(self).dump()
+                            }
+                        }
+
+                        #[allow(clippy::derive_partial_eq_without_eq)]
+                        #[::serde_with::serde_as]
+                        #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq)]
+                        #[serde(tag = "status")]
+                        pub enum Rep {
+                            /// `UnknownStatus` covers the case the server returns a valid message but with
+                            /// an unknown status value (given change in error status only cause a minor bump in API version)
+                            /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
+                            #[serde(skip)]
+                            UnknownStatus {
+                                _status: String,
+                                reason: Option<String>
+                            }
+                        }
+
+                        #[derive(::serde::Deserialize)]
+                        struct UnknownStatus {
+                            status: String,
+                            reason: Option<String>
+                        }
+
+                        impl Rep {
+                            pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                                ::rmp_serde::to_vec_named(self)
+                            }
+
+                            pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
+                                ::rmp_serde::from_slice::<Self>(buf)
+                                    .or_else(|_error| {
+                                        let data =::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+                                        Self::UnknownStatus {
+                                            _status: data.status,
+                                            reason: data.reason,
+                                        }
+                                    })
+                            }
+                        }
+                    }
+
+                    pub mod foo_cmd {
+                        use super::AnyCmdReq;
+
+                        #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize ,PartialEq ,Eq)]
+                        pub struct Req;
+
+                        impl Req {
+                            pub fn new () -> Self { Self }
+                        }
+
+                        impl Req {
+                            pub fn dump (self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                                AnyCmdReq::FooCmd(self).dump()
+                            }
+                        }
+
+                        #[allow(clippy::derive_partial_eq_without_eq)]
+                        #[::serde_with::serde_as]
+                        #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq)]
+                        #[serde(tag = "status")]
+                        pub enum Rep {
+                            /// `UnknownStatus` covers the case the server returns a valid message but with
+                            /// an unknown status value (given change in error status only cause a minor bump in API version)
+                            /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
+                            #[serde(skip)]
+                            UnknownStatus {
+                                _status: String,
+                                reason: Option<String>
+                            }
+                        }
+
+                        #[derive(::serde::Deserialize)]
+                        struct UnknownStatus {
+                            status: String,
+                            reason: Option<String>
+                        }
+
+                        impl Rep {
+                            pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                                ::rmp_serde::to_vec_named(self)
+                            }
+
+                            pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
+                                ::rmp_serde::from_slice::<Self>(buf)
+                                    .or_else(|_error| {
+                                        let data =::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+                                        Self::UnknownStatus {
+                                            _status: data.status,
+                                            reason: data.reason,
+                                        }
+                                    })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )]
+    fn test_quote(#[case] collection: ProtocolCollection, #[case] expected: TokenStream) {
+        assert_eq!(
+            collection.quote().into_token_stream().to_string(),
+            expected.to_string()
+        );
     }
-)]
-fn test_protocol_conversion(
-    #[case] original: parser::ProtocolCollection,
-    #[case] expected: ProtocolCollection,
-) {
-    assert_eq!(ProtocolCollection::from(original), expected);
 }
