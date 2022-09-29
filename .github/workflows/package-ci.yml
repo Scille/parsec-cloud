@@ -359,11 +359,13 @@ jobs:
         run: |
           npm clean-install
           (cd electron && npm clean-install)
-          (cd ../bindings/neon && npm clean-install)
+          (cd ../bindings/electron && npm clean-install)
         working-directory: oxidation/client
 
       - name: Build Electron App
-        run: npm run electron:dist
+        run: |
+          npm run web:copy:release
+          npm run electron:release
         working-directory: oxidation/client
 
       - uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # pin v3.1.0
@@ -411,7 +413,8 @@ jobs:
 
       - name: Build ionic for Android
         run: |
-          npm run android:prod-copy
+          npm run web:copy:release
+          npm run android:copy:release
         working-directory: oxidation/client
 
       - name: Build apk

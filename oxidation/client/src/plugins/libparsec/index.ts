@@ -20,6 +20,6 @@ export const libparsec = registerPlugin<LibParsecPlugin>(
 
 // Global exposition of libparsec for easier debugging with console
 declare global {
-    interface Window { libparsec: LibParsecPlugin; }
+  interface Window { libparsec: LibParsecPlugin; }
 }
 window.libparsec = libparsec;
