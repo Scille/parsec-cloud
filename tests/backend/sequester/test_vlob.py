@@ -281,7 +281,7 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
         def raise_urlerror(*args, **kwargs):
             raise urllib.error.URLError(reason="CONNECTION REFUSED")
 
-        mock.build_opener.side_effect = raise_urlerror
+        mock.urlopen.side_effect = raise_urlerror
         rep = await vlob_create(
             alice_ws,
             vlob_id=new_vlob_id,
@@ -308,7 +308,7 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
         def raise_httperror(*args, **kwargs):
             raise urllib.error.HTTPError(url, 405, "METHOD NOT ALLOWED", None, None)
 
-        mock.build_opener.side_effect = raise_httperror
+        mock.urlopen.side_effect = raise_httperror
         rep = await vlob_create(
             alice_ws,
             vlob_id=new_vlob_id,
@@ -342,7 +342,7 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             fp.read.return_value = json.dumps({"error": "some_error_from_service"})
             raise urllib.error.HTTPError(url, 400, "", None, fp)
 
-        mock.build_opener.side_effect = raise_httperror_400
+        mock.urlopen.side_effect = raise_httperror_400
         rep = await vlob_create(
             alice_ws,
             vlob_id=new_vlob_id,

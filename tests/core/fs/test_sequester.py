@@ -202,7 +202,7 @@ async def test_webhook_rejected_error(
             fp.read.return_value = json.dumps({"error": "some_error_from_service"})
             raise urllib.error.HTTPError(url, 400, "", None, fp)
 
-        mock.build_opener.side_effect = raise_http_error
+        mock.urlopen.side_effect = raise_http_error
 
         # Create workspace
         w1_id = await alice_user_fs.workspace_create(EntryName("w1"))
@@ -214,7 +214,7 @@ async def test_webhook_rejected_error(
             await w1.touch("/w1f1")
             await w1.sync()
             # Assert entry is blacklisted
-            mock.build_opener.assert_called_once()
+            mock.urlopen.assert_called_once()
             assert len(w1.black_list) == 1
             spy.assert_event_occured(CoreEvent.WEBHOOK_UPLOAD_REJECTED_ERROR)
             for event in spy.events:
@@ -223,6 +223,6 @@ async def test_webhook_rejected_error(
                     assert event.kwargs["file_path"] == FsPath("/w1f1")
 
         # Assert blacklisted entry is ignored
-        mock.build_opener.reset_mock()
+        mock.urlopen.reset_mock()
         await w1.sync()
-        mock.build_opener.assert_not_called()
+        mock.urlopen.assert_not_called()
