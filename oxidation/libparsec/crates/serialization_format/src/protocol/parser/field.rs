@@ -220,7 +220,11 @@ mod test {
             foo: i64
         }
     )]
-    fn quote(#[case] vis: syn::Visibility, #[case] field: Field, #[case] expected: TokenStream) {
+    fn test_quote(
+        #[case] vis: syn::Visibility,
+        #[case] field: Field,
+        #[case] expected: TokenStream,
+    ) {
         assert_eq!(
             field
                 .quote(vis, &HashMap::new())
