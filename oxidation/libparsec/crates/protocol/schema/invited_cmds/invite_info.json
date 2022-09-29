@@ -36,7 +36,7 @@
                             },
                             {
                                 "name": "greeter_human_handle",
-                                "type": "HumanHandle"
+                                "type": "Option<HumanHandle>"
                             }
                         ]
                     },
@@ -50,7 +50,7 @@
                             },
                             {
                                 "name": "greeter_human_handle",
-                                "type": "HumanHandle"
+                                "type": "Option<HumanHandle>"
                             }
                         ]
                     }

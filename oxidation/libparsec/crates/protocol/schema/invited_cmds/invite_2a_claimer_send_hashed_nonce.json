@@ -1,13 +1,13 @@
 [
     {
-        "label": "Invite2aClaimerSendHashedNonceHashNonce",
+        "label": "Invite2aClaimerSendHashedNonce",
         "major_versions": [
             1,
             2,
             3
         ],
         "req": {
-            "cmd": "invite_2a_claimer_send_hashed_nonce_hash_nonce",
+            "cmd": "invite_2a_claimer_send_hashed_nonce",
             "other_fields": [
                 {
                     "name": "claimer_hashed_nonce",

@@ -134,9 +134,14 @@
                             },
                             {
                                 "name": "role",
-                                "type": "RealmRole"
+                                "type": "Option<RealmRole>"
                             }
                         ]
+                    },
+                    {
+                        "name": "Pki_enrollment.updated",
+                        "discriminant_value": "pki_enrollment.updated",
+                        "fields": []
                     }
                 ]
             }

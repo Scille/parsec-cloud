@@ -1,0 +1,24 @@
+[
+    {
+        "label": "PkiEnrollmentReject",
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "pki_enrollment_reject",
+            "other_fields": [
+                {
+                    "name": "enrollment_id",
+                    "type": "UUID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": []
+            }
+        ]
+    }
+]

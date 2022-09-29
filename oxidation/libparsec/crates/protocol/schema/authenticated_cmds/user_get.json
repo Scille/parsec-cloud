@@ -25,7 +25,7 @@
                     },
                     {
                         "name": "revoked_user_certificate",
-                        "type": "Bytes"
+                        "type": "Option<Bytes>"
                     },
                     {
                         "name": "device_certificates",

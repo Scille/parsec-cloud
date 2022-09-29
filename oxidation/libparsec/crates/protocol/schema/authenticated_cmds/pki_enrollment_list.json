@@ -1,0 +1,51 @@
+[
+    {
+        "label": "PkiEnrollmentList",
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "pki_enrollment_list",
+            "other_fields": []
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": [
+                    {
+                        "name": "enrollments",
+                        "type": "List<Nested7>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "label": "Nested7",
+                "fields": [
+                    {
+                        "name": "enrollment_id",
+                        "type": "UUID"
+                    },
+                    {
+                        "name": "submit_payload",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "submit_payload_signature",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "submitted_on",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "submitter_der_x509_certificate",
+                        "type": "Bytes"
+                    }
+                ]
+            }
+        ]
+    }
+]

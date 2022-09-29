@@ -1,0 +1,52 @@
+[
+    {
+        "label": "PkiEnrollmentAccept",
+        "major_versions": [
+            2,
+            3
+        ],
+        "req": {
+            "cmd": "pki_enrollment_accept",
+            "other_fields": [
+                {
+                    "name": "accept_payload",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "accept_payload_signature",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "accepter_der_x509_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "device_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "enrollment_id",
+                    "type": "UUID"
+                },
+                {
+                    "name": "redacted_device_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "redacted_user_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "user_certificate",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "other_fields": []
+            }
+        ]
+    }
+]
