@@ -25,12 +25,16 @@ use protocol::{intermediate, parser};
 pub fn parsec_protocol(path: TokenStream) -> TokenStream {
     let pathname = parse_macro_input!(path as LitStr).value();
     let path = path_from_str(&pathname);
+    let family = path
+        .file_name()
+        .and_then(|os_str| os_str.to_str())
+        .expect("Invalid filename");
     let collection = if path.is_dir() {
         let content = content_from_dir(&path).expect("Failed to get content from directory");
-        parser::ProtocolCollection::with_protocols("foo", content)
+        parser::ProtocolCollection::with_protocols(family, content)
     } else {
         let content = content_from_file(&path).expect("Failed to get content from file");
-        parser::ProtocolCollection::with_protocol("foo", content)
+        parser::ProtocolCollection::with_protocol(family, content)
     };
     let collection = intermediate::ProtocolCollection::from(collection);
     collection.quote().into_token_stream().into()
