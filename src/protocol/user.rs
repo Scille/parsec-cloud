@@ -4,7 +4,6 @@ use pyo3::{
     exceptions::PyNotImplementedError,
     import_exception,
     prelude::*,
-    pyclass::CompareOp,
     types::{PyBytes, PyTuple},
 };
 use std::num::NonZeroU64;
@@ -24,44 +23,10 @@ import_exception!(parsec.api.protocol, InvalidMessageError);
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct UserGetReq(pub user_get::Req);
-
-#[pymethods]
-impl UserGetReq {
-    #[new]
-    fn new(user_id: UserID) -> PyResult<Self> {
-        let user_id = user_id.0;
-        Ok(Self(user_get::Req { user_id }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
-        Ok(PyBytes::new(
-            py,
-            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
-        ))
-    }
-
-    #[getter]
-    fn user_id(&self) -> PyResult<UserID> {
-        Ok(UserID(self.0.user_id.clone()))
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
 pub(crate) struct Trustchain(pub user_get::Trustchain);
+
+crate::binding_utils::gen_proto!(Trustchain, __repr__);
+crate::binding_utils::gen_proto!(Trustchain, __richcmp__, eq);
 
 #[pymethods]
 impl Trustchain {
@@ -76,18 +41,6 @@ impl Trustchain {
             users,
             revoked_users,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     #[getter]
@@ -112,6 +65,70 @@ impl Trustchain {
             py,
             self.0.revoked_users.iter().map(|x| PyBytes::new(py, x)),
         ))
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct HumanFindResultItem(pub human_find::HumanFindResultItem);
+
+crate::binding_utils::gen_proto!(HumanFindResultItem, __repr__);
+crate::binding_utils::gen_proto!(HumanFindResultItem, __richcmp__, eq);
+
+#[pymethods]
+impl HumanFindResultItem {
+    #[new]
+    fn new(user_id: UserID, human_handle: Option<HumanHandle>, revoked: bool) -> PyResult<Self> {
+        let user_id = user_id.0;
+        let human_handle = human_handle.map(|hh| hh.0);
+        Ok(Self(human_find::HumanFindResultItem {
+            user_id,
+            human_handle,
+            revoked,
+        }))
+    }
+
+    #[getter]
+    fn user_id(&self) -> PyResult<UserID> {
+        Ok(UserID(self.0.user_id.clone()))
+    }
+
+    #[getter]
+    fn human_handle(&self) -> PyResult<Option<HumanHandle>> {
+        Ok(self.0.human_handle.clone().map(HumanHandle))
+    }
+
+    #[getter]
+    fn revoked(&self) -> PyResult<bool> {
+        Ok(self.0.revoked)
+    }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct UserGetReq(pub user_get::Req);
+
+crate::binding_utils::gen_proto!(UserGetReq, __repr__);
+crate::binding_utils::gen_proto!(UserGetReq, __richcmp__, eq);
+
+#[pymethods]
+impl UserGetReq {
+    #[new]
+    fn new(user_id: UserID) -> PyResult<Self> {
+        let user_id = user_id.0;
+        Ok(Self(user_get::Req { user_id }))
+    }
+
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(
+            py,
+            &self.0.clone().dump().map_err(ProtocolError::new_err)?,
+        ))
+    }
+
+    #[getter]
+    fn user_id(&self) -> PyResult<UserID> {
+        Ok(UserID(self.0.user_id.clone()))
     }
 }
 
@@ -193,6 +210,9 @@ impl UserGetRepOk {
 #[derive(Clone)]
 pub(crate) struct UserCreateReq(pub user_create::Req);
 
+crate::binding_utils::gen_proto!(UserCreateReq, __repr__);
+crate::binding_utils::gen_proto!(UserCreateReq, __richcmp__, eq);
+
 #[pymethods]
 impl UserCreateReq {
     #[new]
@@ -208,18 +228,6 @@ impl UserCreateReq {
             redacted_user_certificate,
             redacted_device_certificate,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -275,6 +283,9 @@ impl UserCreateRepOk {
 #[derive(Clone)]
 pub(crate) struct UserRevokeReq(pub user_revoke::Req);
 
+crate::binding_utils::gen_proto!(UserRevokeReq, __repr__);
+crate::binding_utils::gen_proto!(UserRevokeReq, __richcmp__, eq);
+
 #[pymethods]
 impl UserRevokeReq {
     #[new]
@@ -282,18 +293,6 @@ impl UserRevokeReq {
         Ok(Self(user_revoke::Req {
             revoked_user_certificate,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -333,6 +332,9 @@ impl UserRevokeRepOk {
 #[derive(Clone)]
 pub(crate) struct DeviceCreateReq(pub device_create::Req);
 
+crate::binding_utils::gen_proto!(DeviceCreateReq, __repr__);
+crate::binding_utils::gen_proto!(DeviceCreateReq, __richcmp__, eq);
+
 #[pymethods]
 impl DeviceCreateReq {
     #[new]
@@ -341,18 +343,6 @@ impl DeviceCreateReq {
             device_certificate,
             redacted_device_certificate,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -397,6 +387,9 @@ impl DeviceCreateRepOk {
 #[derive(Clone)]
 pub(crate) struct HumanFindReq(pub human_find::Req);
 
+crate::binding_utils::gen_proto!(HumanFindReq, __repr__);
+crate::binding_utils::gen_proto!(HumanFindReq, __richcmp__, eq);
+
 #[pymethods]
 impl HumanFindReq {
     #[new]
@@ -417,18 +410,6 @@ impl HumanFindReq {
             page,
             per_page,
         }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
@@ -461,51 +442,6 @@ impl HumanFindReq {
     #[getter]
     fn per_page(&self) -> PyResult<u64> {
         Ok(self.0.per_page.into())
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct HumanFindResultItem(pub human_find::HumanFindResultItem);
-
-#[pymethods]
-impl HumanFindResultItem {
-    #[new]
-    fn new(user_id: UserID, human_handle: Option<HumanHandle>, revoked: bool) -> PyResult<Self> {
-        let user_id = user_id.0;
-        let human_handle = human_handle.map(|hh| hh.0);
-        Ok(Self(human_find::HumanFindResultItem {
-            user_id,
-            human_handle,
-            revoked,
-        }))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.0))
-    }
-
-    fn __richcmp__(&self, other: Self, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == other.0,
-            CompareOp::Ne => self.0 != other.0,
-            _ => return Err(PyNotImplementedError::new_err("")),
-        })
-    }
-
-    #[getter]
-    fn user_id(&self) -> PyResult<UserID> {
-        Ok(UserID(self.0.user_id.clone()))
-    }
-
-    #[getter]
-    fn human_handle(&self) -> PyResult<Option<HumanHandle>> {
-        Ok(self.0.human_handle.clone().map(HumanHandle))
-    }
-
-    #[getter]
-    fn revoked(&self) -> PyResult<bool> {
-        Ok(self.0.revoked)
     }
 }
 
