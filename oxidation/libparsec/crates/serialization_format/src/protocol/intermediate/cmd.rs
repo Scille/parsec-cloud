@@ -1,8 +1,5 @@
 use std::collections::HashMap;
 
-#[cfg(test)]
-use pretty_assertions::assert_eq;
-
 use super::{CustomType, Request, Response};
 use crate::protocol::parser;
 
@@ -100,7 +97,19 @@ impl Cmd {
         });
         let nested_types = self.quote_nested_types(&types);
         let (req_def, req_impl) = self.req.quote(&types);
-        let variants_rep = self.quote_reps(&types);
+        let mut variants_rep = self.quote_reps(&types);
+
+        variants_rep.push(syn::parse_quote! {
+            /// `UnknownStatus` covers the case the server returns a valid message but with
+            /// an unknown status value (given change in error status only cause a minor bump in API version)
+            /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
+            // TODO: Test `serde(other)`
+            #[serde(skip)]
+            UnknownStatus {
+                _status: String,
+                reason: Option<String>
+            }
+        });
 
         syn::parse_quote! {
             pub mod #module {
@@ -125,21 +134,12 @@ impl Cmd {
                 #[serde(tag = "status")]
                 pub enum Rep {
                     #(#variants_rep),*
-                    /// `UnknownStatus` covers the case the server returns a valid message but with
-                    /// an unknown status value (given change in error status only cause a minor bump in API version)
-                    /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
-                    // TODO: Test `serde(other)`
-                    #[serde(skip)]
-                    UnknownStatus {
-                        _status: String,
-                        reason: Option<String>,
-                    }
                 }
 
                 #[derive(::serde::Deserialize)]
                 struct UnknownStatus {
                     status: String,
-                    reason: Option<String>,
+                    reason: Option<String>
                 }
 
                 impl Rep {
@@ -148,17 +148,16 @@ impl Cmd {
                     }
 
                     pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
-                        Ok(if let Ok(data) = ::rmp_serde::from_slice::<Self>(buf) {
-                            data
-                        } else {
-                            // Due to how Serde handles variant discriminant, we cannot express unknown status as a default case in the main schema
-                            // Instead we have this additional deserialization attempt fallback
-                            let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
-                            Self::UnknownStatus {
-                                _status: data.status,
-                                reason: data.reason,
-                            }
-                        })
+                        ::rmp_serde::from_slice::<Self>(buf)
+                            .or_else(|_error| {
+                                // Due to how Serde handles variant discriminant, we cannot express unknown status as a default case in the main schema
+                                // Instead we have this additional deserialization attempt fallback
+                                let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+                                Self::UnknownStatus {
+                                    _status: data.status,
+                                    reason: data.reason,
+                                }
+                            })
                     }
                 }
             }
@@ -185,270 +184,251 @@ impl Cmd {
 }
 
 #[cfg(test)]
-#[rstest::rstest]
-#[case::basic(parser::Cmd::default(), Cmd::default())]
-#[case::request_with_previously_introduced_field(
-    parser::Cmd {
-        req: parser::Request {
-            other_fields: vec![
-                parser::Field {
-                    introduced_in: Some("0.4".try_into().unwrap()),
-                    ..Default::default()
-                }
-            ],
-            ..Default::default()
-        },
-        ..Default::default()
-    },
-    Cmd {
-        req: parser::Request {
-            other_fields: vec![
-                parser::Field {
-                    introduced_in: Some("0.4".try_into().unwrap()),
-                    ..Default::default()
-                }
-            ],
-            ..Default::default()
-        },
-        ..Default::default()
-    }
-)]
-#[case::request_with_not_yet_introduced_field(
-    parser::Cmd {
-        req: parser::Request {
-            other_fields: vec![
-                parser::Field {
-                    introduced_in: Some("2.4".try_into().unwrap()),
-                    ..Default::default()
-                }
-            ],
-            ..Default::default()
-        },
-        ..Default::default()
-    },
-    Cmd {
-        req: parser::Request {
-            other_fields: vec![],
-            ..Default::default()
-        },
-        ..Default::default()
-    }
-)]
-#[case::possible_response_with_introduced_field(
-    parser::Cmd {
-        possible_responses: vec![
-            parser::Response {
+mod test {
+    use pretty_assertions::assert_eq;
+    use proc_macro2::TokenStream;
+    use quote::{quote, ToTokens};
+    use rstest::rstest;
+
+    use super::{parser, Cmd, Response};
+
+    #[rstest]
+    #[case::basic(parser::Cmd::default(), Cmd::default())]
+    #[case::request_with_previously_introduced_field(
+        parser::Cmd {
+            req: parser::Request {
                 other_fields: vec![
                     parser::Field {
-                        introduced_in: Some("0.5".try_into().unwrap()),
+                        introduced_in: Some("0.4".try_into().unwrap()),
                         ..Default::default()
                     }
                 ],
                 ..Default::default()
-            }
-        ],
-        ..Default::default()
-    },
-    Cmd {
-        possible_responses: vec![
-            parser::Response {
+            },
+            ..Default::default()
+        },
+        Cmd {
+            req: parser::Request {
                 other_fields: vec![
                     parser::Field {
-                        introduced_in: Some("0.5".try_into().unwrap()),
+                        introduced_in: Some("0.4".try_into().unwrap()),
                         ..Default::default()
                     }
                 ],
                 ..Default::default()
-            }
-        ],
-        ..Default::default()
-    }
-)]
-#[case::possible_response_with_not_yet_introduced_field(
-    parser::Cmd {
-        possible_responses: vec![
-            parser::Response {
+            },
+            ..Default::default()
+        }
+    )]
+    #[case::request_with_not_yet_introduced_field(
+        parser::Cmd {
+            req: parser::Request {
                 other_fields: vec![
                     parser::Field {
-                        introduced_in: Some("2.5".try_into().unwrap()),
+                        introduced_in: Some("2.4".try_into().unwrap()),
                         ..Default::default()
                     }
                 ],
                 ..Default::default()
-            }
-        ],
-        ..Default::default()
-    },
-    Cmd {
-        possible_responses: vec![
-            parser::Response {
+            },
+            ..Default::default()
+        },
+        Cmd {
+            req: parser::Request {
                 other_fields: vec![],
                 ..Default::default()
-            }
-        ],
-        ..Default::default()
-    }
-)]
-#[case::nested_type_enum_with_introduced_field(
-    parser::Cmd {
-        nested_types: vec![
-            parser::CustomType::Enum(parser::CustomEnum {
-                variants: vec![
-                    parser::Variant {
-                        fields: vec![
-                            parser::Field {
-                                introduced_in: Some("0.2".try_into().unwrap()),
-                                ..Default::default()
-                            }
-                        ],
-                        ..Default::default()
-                    }
-                ],
-                ..Default::default()
-            })
-        ],
-        ..Default::default()
-    },
-    Cmd {
-        nested_types: vec![
-            parser::CustomType::Enum(parser::CustomEnum {
-                variants: vec![
-                    parser::Variant {
-                        fields: vec![
-                            parser::Field {
-                                introduced_in: Some("0.2".try_into().unwrap()),
-                                ..Default::default()
-                            }
-                        ],
-                        ..Default::default()
-                    }
-                ],
-                ..Default::default()
-            })
-        ],
-        ..Default::default()
-    }
-)]
-#[case::nested_type_enum_with_not_yet_introduced_field(
-    parser::Cmd {
-        nested_types: vec![
-            parser::CustomType::Enum(parser::CustomEnum {
-                variants: vec![
-                    parser::Variant {
-                        fields: vec![
-                            parser::Field {
-                                introduced_in: Some("6.2".try_into().unwrap()),
-                                ..Default::default()
-                            }
-                        ],
-                        ..Default::default()
-                    }
-                ],
-                ..Default::default()
-            })
-        ],
-        ..Default::default()
-    },
-    Cmd {
-        nested_types: vec![
-            parser::CustomType::Enum(parser::CustomEnum {
-                variants: vec![
-                    parser::Variant {
-                        fields: vec![],
-                        ..Default::default()
-                    }
-                ],
-                ..Default::default()
-            })
-        ],
-        ..Default::default()
-    }
-)]
-#[case::nested_type_struct_with_introduced_field(
-    parser::Cmd {
-        nested_types: vec![
-            parser::CustomType::Struct(parser::CustomStruct {
-                label: "Data".to_string(),
-                fields: vec![
-                    parser::Field {
-                        introduced_in: Some("0.1".try_into().unwrap()),
-                        ..Default::default()
-                    }
-                ]
-            })
-        ],
-        ..Default::default()
-    },
-    Cmd {
-        nested_types: vec![
-            parser::CustomType::Struct(parser::CustomStruct {
-                label: "Data".to_string(),
-                fields: vec![
-                    parser::Field {
-                        introduced_in: Some("0.1".try_into().unwrap()),
-                        ..Default::default()
-                    }
-                ]
-            })
-        ],
-        ..Default::default()
-    }
-)]
-#[case::nested_type_struct_with_not_yet_introduced_field(
-    parser::Cmd {
-        nested_types: vec![
-            parser::CustomType::Struct(parser::CustomStruct {
-                label: "Data".to_string(),
-                fields: vec![
-                    parser::Field {
-                        introduced_in: Some("3.1".try_into().unwrap()),
-                        ..Default::default()
-                    }
-                ]
-            })
-        ],
-        ..Default::default()
-    },
-    Cmd {
-        nested_types: vec![
-            parser::CustomType::Struct(parser::CustomStruct {
-                label: "Data".to_string(),
-                fields: vec![]
-            })
-        ],
-        ..Default::default()
-    }
-)]
-#[case::request_with_static_field(
-    parser::Cmd {
-        req: parser::Request {
-            other_fields: vec![
-                parser::Field {
-                    introduced_in: None,
+            },
+            ..Default::default()
+        }
+    )]
+    #[case::possible_response_with_introduced_field(
+        parser::Cmd {
+            possible_responses: vec![
+                parser::Response {
+                    other_fields: vec![
+                        parser::Field {
+                            introduced_in: Some("0.5".try_into().unwrap()),
+                            ..Default::default()
+                        }
+                    ],
                     ..Default::default()
                 }
             ],
             ..Default::default()
         },
-        ..Default::default()
-    },
-    Cmd {
-        req: parser::Request {
-            other_fields: vec![
-                parser::Field {
-                    introduced_in: None,
+        Cmd {
+            possible_responses: vec![
+                parser::Response {
+                    other_fields: vec![
+                        parser::Field {
+                            introduced_in: Some("0.5".try_into().unwrap()),
+                            ..Default::default()
+                        }
+                    ],
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        }
+    )]
+    #[case::possible_response_with_not_yet_introduced_field(
+        parser::Cmd {
+            possible_responses: vec![
+                parser::Response {
+                    other_fields: vec![
+                        parser::Field {
+                            introduced_in: Some("2.5".try_into().unwrap()),
+                            ..Default::default()
+                        }
+                    ],
                     ..Default::default()
                 }
             ],
             ..Default::default()
         },
-        ..Default::default()
-    }
-)]
-#[case::possible_response_with_static_field(
-    parser::Cmd {
-        possible_responses: vec![
-            parser::Response {
+        Cmd {
+            possible_responses: vec![
+                parser::Response {
+                    other_fields: vec![],
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        }
+    )]
+    #[case::nested_type_enum_with_introduced_field(
+        parser::Cmd {
+            nested_types: vec![
+                parser::CustomType::Enum(parser::CustomEnum {
+                    variants: vec![
+                        parser::Variant {
+                            fields: vec![
+                                parser::Field {
+                                    introduced_in: Some("0.2".try_into().unwrap()),
+                                    ..Default::default()
+                                }
+                            ],
+                            ..Default::default()
+                        }
+                    ],
+                    ..Default::default()
+                })
+            ],
+            ..Default::default()
+        },
+        Cmd {
+            nested_types: vec![
+                parser::CustomType::Enum(parser::CustomEnum {
+                    variants: vec![
+                        parser::Variant {
+                            fields: vec![
+                                parser::Field {
+                                    introduced_in: Some("0.2".try_into().unwrap()),
+                                    ..Default::default()
+                                }
+                            ],
+                            ..Default::default()
+                        }
+                    ],
+                    ..Default::default()
+                })
+            ],
+            ..Default::default()
+        }
+    )]
+    #[case::nested_type_enum_with_not_yet_introduced_field(
+        parser::Cmd {
+            nested_types: vec![
+                parser::CustomType::Enum(parser::CustomEnum {
+                    variants: vec![
+                        parser::Variant {
+                            fields: vec![
+                                parser::Field {
+                                    introduced_in: Some("6.2".try_into().unwrap()),
+                                    ..Default::default()
+                                }
+                            ],
+                            ..Default::default()
+                        }
+                    ],
+                    ..Default::default()
+                })
+            ],
+            ..Default::default()
+        },
+        Cmd {
+            nested_types: vec![
+                parser::CustomType::Enum(parser::CustomEnum {
+                    variants: vec![
+                        parser::Variant {
+                            fields: vec![],
+                            ..Default::default()
+                        }
+                    ],
+                    ..Default::default()
+                })
+            ],
+            ..Default::default()
+        }
+    )]
+    #[case::nested_type_struct_with_introduced_field(
+        parser::Cmd {
+            nested_types: vec![
+                parser::CustomType::Struct(parser::CustomStruct {
+                    label: "Data".to_string(),
+                    fields: vec![
+                        parser::Field {
+                            introduced_in: Some("0.1".try_into().unwrap()),
+                            ..Default::default()
+                        }
+                    ]
+                })
+            ],
+            ..Default::default()
+        },
+        Cmd {
+            nested_types: vec![
+                parser::CustomType::Struct(parser::CustomStruct {
+                    label: "Data".to_string(),
+                    fields: vec![
+                        parser::Field {
+                            introduced_in: Some("0.1".try_into().unwrap()),
+                            ..Default::default()
+                        }
+                    ]
+                })
+            ],
+            ..Default::default()
+        }
+    )]
+    #[case::nested_type_struct_with_not_yet_introduced_field(
+        parser::Cmd {
+            nested_types: vec![
+                parser::CustomType::Struct(parser::CustomStruct {
+                    label: "Data".to_string(),
+                    fields: vec![
+                        parser::Field {
+                            introduced_in: Some("3.1".try_into().unwrap()),
+                            ..Default::default()
+                        }
+                    ]
+                })
+            ],
+            ..Default::default()
+        },
+        Cmd {
+            nested_types: vec![
+                parser::CustomType::Struct(parser::CustomStruct {
+                    label: "Data".to_string(),
+                    fields: vec![]
+                })
+            ],
+            ..Default::default()
+        }
+    )]
+    #[case::request_with_static_field(
+        parser::Cmd {
+            req: parser::Request {
                 other_fields: vec![
                     parser::Field {
                         introduced_in: None,
@@ -456,13 +436,11 @@ impl Cmd {
                     }
                 ],
                 ..Default::default()
-            }
-        ],
-        ..Default::default()
-    },
-    Cmd {
-        possible_responses: vec![
-            parser::Response {
+            },
+            ..Default::default()
+        },
+        Cmd {
+            req: parser::Request {
                 other_fields: vec![
                     parser::Field {
                         introduced_in: None,
@@ -470,81 +448,247 @@ impl Cmd {
                     }
                 ],
                 ..Default::default()
+            },
+            ..Default::default()
+        }
+    )]
+    #[case::possible_response_with_static_field(
+        parser::Cmd {
+            possible_responses: vec![
+                parser::Response {
+                    other_fields: vec![
+                        parser::Field {
+                            introduced_in: None,
+                            ..Default::default()
+                        }
+                    ],
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        },
+        Cmd {
+            possible_responses: vec![
+                parser::Response {
+                    other_fields: vec![
+                        parser::Field {
+                            introduced_in: None,
+                            ..Default::default()
+                        }
+                    ],
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        }
+    )]
+    #[case::nested_type_enum_with_static_field(
+        parser::Cmd {
+            nested_types: vec![
+                parser::CustomType::Enum(parser::CustomEnum {
+                    variants: vec![
+                        parser::Variant {
+                            fields: vec![
+                                parser::Field {
+                                    introduced_in: None,
+                                    ..Default::default()
+                                }
+                            ],
+                            ..Default::default()
+                        }
+                    ],
+                    ..Default::default()
+                })
+            ],
+            ..Default::default()
+        },
+        Cmd {
+            nested_types: vec![
+                parser::CustomType::Enum(parser::CustomEnum {
+                    variants: vec![
+                        parser::Variant {
+                            fields: vec![
+                                parser::Field {
+                                    introduced_in: None,
+                                    ..Default::default()
+                                }
+                            ],
+                            ..Default::default()
+                        }
+                    ],
+                    ..Default::default()
+                })
+            ],
+            ..Default::default()
+        }
+    )]
+    #[case::nested_type_struct_with_static_field(
+        parser::Cmd {
+            nested_types: vec![
+                parser::CustomType::Struct(parser::CustomStruct {
+                    label: "Struct".to_string(),
+                    fields: vec![
+                        parser::Field {
+                            introduced_in: None,
+                            ..Default::default()
+                        }
+                    ]
+                })
+            ],
+            ..Default::default()
+        },
+        Cmd {
+            nested_types: vec![
+                parser::CustomType::Struct(parser::CustomStruct {
+                    label: "Struct".to_string(),
+                    fields: vec![
+                        parser::Field {
+                            introduced_in: None,
+                            ..Default::default()
+                        }
+                    ]
+                })
+            ],
+            ..Default::default()
+        }
+    )]
+    fn test_cmd_conversion(#[case] original: parser::Cmd, #[case] expected: Cmd) {
+        assert_eq!(Cmd::from_parsed_cmd(original, 1), expected)
+    }
+
+    #[rstest]
+    #[case::basic(
+        Cmd::default(),
+        quote! {
+            pub mod foo_cmd {
+                use super::AnyCmdReq;
+
+                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+                pub struct Req;
+
+                impl Req {
+                    pub fn new() -> Self { Self }
+                }
+
+                impl Req {
+                    pub fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                        AnyCmdReq::FooCmd(self).dump()
+                    }
+                }
+
+                #[allow(clippy::derive_partial_eq_without_eq)]
+                #[::serde_with::serde_as]
+                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq)]
+                #[serde(tag = "status")]
+                pub enum Rep {
+                    /// `UnknownStatus` covers the case the server returns a valid message but with
+                    /// an unknown status value (given change in error status only cause a minor bump in API version)
+                    /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
+                    #[serde(skip)]
+                    UnknownStatus {
+                        _status: String,
+                        reason: Option<String>
+                    }
+                }
+
+                #[derive(::serde::Deserialize)]
+                struct UnknownStatus {
+                    status: String,
+                    reason: Option<String>
+                }
+
+                impl Rep {
+                    pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                        ::rmp_serde::to_vec_named(self)
+                    }
+
+                    pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
+                        ::rmp_serde::from_slice::<Self>(buf)
+                        .or_else(|_error| {
+                            let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+                            Self::UnknownStatus {
+                                _status: data.status,
+                                reason: data.reason,
+                            }
+                        })
+                    }
+                }
             }
-        ],
-        ..Default::default()
-    }
-)]
-#[case::nested_type_enum_with_static_field(
-    parser::Cmd {
-        nested_types: vec![
-            parser::CustomType::Enum(parser::CustomEnum {
-                variants: vec![
-                    parser::Variant {
-                        fields: vec![
-                            parser::Field {
-                                introduced_in: None,
-                                ..Default::default()
+        }
+    )]
+    #[case::with_possible_responses(
+        Cmd {
+            possible_responses: vec![
+                Response::default(),
+                Response::default()
+            ],
+            ..Default::default()
+        },
+        quote! {
+            pub mod foo_cmd {
+                use super::AnyCmdReq;
+
+                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+                pub struct Req;
+
+                impl Req {
+                    pub fn new() -> Self { Self }
+                }
+
+                impl Req {
+                    pub fn dump(self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                        AnyCmdReq::FooCmd(self).dump()
+                    }
+                }
+
+                #[allow(clippy::derive_partial_eq_without_eq)]
+                #[::serde_with::serde_as]
+                #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq)]
+                #[serde(tag = "status")]
+                pub enum Rep {
+                    #[serde(rename = "foo_response")]
+                    FooResponse,
+                    #[serde(rename = "foo_response")]
+                    FooResponse,
+                    /// `UnknownStatus` covers the case the server returns a valid message but with
+                    /// an unknown status value (given change in error status only cause a minor bump in API version)
+                    /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
+                    #[serde(skip)]
+                    UnknownStatus {
+                        _status: String,
+                        reason: Option<String>
+                    }
+                }
+
+                #[derive(::serde::Deserialize)]
+                struct UnknownStatus {
+                    status: String,
+                    reason: Option<String>
+                }
+
+                impl Rep {
+                    pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
+                        ::rmp_serde::to_vec_named(self)
+                    }
+
+                    pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
+                        ::rmp_serde::from_slice::<Self>(buf)
+                        .or_else(|_error| {
+                            let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+                            Self::UnknownStatus {
+                                _status: data.status,
+                                reason: data.reason,
                             }
-                        ],
-                        ..Default::default()
+                        })
                     }
-                ],
-                ..Default::default()
-            })
-        ],
-        ..Default::default()
-    },
-    Cmd {
-        nested_types: vec![
-            parser::CustomType::Enum(parser::CustomEnum {
-                variants: vec![
-                    parser::Variant {
-                        fields: vec![
-                            parser::Field {
-                                introduced_in: None,
-                                ..Default::default()
-                            }
-                        ],
-                        ..Default::default()
-                    }
-                ],
-                ..Default::default()
-            })
-        ],
-        ..Default::default()
+                }
+            }
+        }
+    )]
+    fn test_quote(#[case] cmd: Cmd, #[case] expected: TokenStream) {
+        assert_eq!(
+            cmd.quote().into_token_stream().to_string(),
+            expected.to_string()
+        )
     }
-)]
-#[case::nested_type_struct_with_static_field(
-    parser::Cmd {
-        nested_types: vec![
-            parser::CustomType::Struct(parser::CustomStruct {
-                label: "Struct".to_string(),
-                fields: vec![
-                    parser::Field {
-                        introduced_in: None,
-                        ..Default::default()
-                    }
-                ]
-            })
-        ],
-        ..Default::default()
-    },
-    Cmd {
-        nested_types: vec![
-            parser::CustomType::Struct(parser::CustomStruct {
-                label: "Struct".to_string(),
-                fields: vec![
-                    parser::Field {
-                        introduced_in: None,
-                        ..Default::default()
-                    }
-                ]
-            })
-        ],
-        ..Default::default()
-    }
-)]
-fn test_cmd_conversion(#[case] original: parser::Cmd, #[case] expected: Cmd) {
-    assert_eq!(Cmd::from_parsed_cmd(original, 1), expected)
 }
