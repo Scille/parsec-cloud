@@ -6,7 +6,7 @@ mod handshake;
 use serde::{Deserialize, Serialize};
 use std::num::NonZeroU8;
 
-use serialization_format::parsec_cmds;
+use serialization_format::parsec_protocol;
 
 pub use error::*;
 pub use handshake::*;
@@ -56,5 +56,5 @@ impl From<IntegerBetween1And100> for u64 {
 // Client side
 // authenticated_cmds::block_create::Req { .. }.dump()
 // authenticated_cmds::block_create::Rep::load(..)
-parsec_cmds!("schema/invited_cmds");
-parsec_cmds!("schema/authenticated_cmds");
+parsec_protocol!("schema/invited_cmds");
+parsec_protocol!("schema/authenticated_cmds");
