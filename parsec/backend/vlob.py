@@ -146,7 +146,7 @@ class VlobSequesterWebhookServiceRejectedError(VlobError):
         self.service_id = service_id
         self.service_label = service_label
         self.error = error
-        VlobError.__init__(self, *args, **kwargs)
+        super().__init__(self, *args, **kwargs)
 
 
 class VlobSequesterWebhookServiceWebhookHTTPError(VlobError):
