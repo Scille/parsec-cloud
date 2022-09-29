@@ -1,0 +1,93 @@
+[
+    {
+        "label": "PkiEnrollmentList",
+        "major_versions": [
+            2,
+            3
+        ],
+        "introduced_in": "3.2",
+        "req": {
+            "cmd": "pki_enrollment_list"
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "enrollments": {
+                        "type": "List<PkiEnrollmentListItem>"
+                    }
+                }
+            },
+            "not_allowed": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            }
+        },
+        "nested_types": {
+            "PkiEnrollmentListItem": {
+                "fields": {
+                    "enrollment_id": {
+                        "type": "UUID"
+                    },
+                    // Signature should be checked before loading.
+                    "submit_payload": {
+                        "type": "Bytes"
+                    },
+                    "submit_payload_signature": {
+                        "type": "Bytes"
+                    },
+                    "submitted_on": {
+                        "type": "DateTime"
+                    },
+                    "submitter_der_x509_certificate": {
+                        "type": "Bytes"
+                    }
+                }
+            }
+        }
+    },
+    {
+        "label": "PkiEnrollmentList",
+        "major_versions": [
+            2,
+            3
+        ],
+        "introduced_in": "2.8",
+        "req": {
+            "cmd": "pki_enrollment_list"
+        },
+        "reps": {
+            "ok": {
+                "fields": {
+                    "enrollments": {
+                        "type": "List<PkiEnrollmentListItem>"
+                    }
+                }
+            }
+        },
+        "nested_types": {
+            "PkiEnrollmentListItem": {
+                "fields": {
+                    "enrollment_id": {
+                        "type": "UUID"
+                    },
+                    // Signature should be checked before loading.
+                    "submit_payload": {
+                        "type": "Bytes"
+                    },
+                    "submit_payload_signature": {
+                        "type": "Bytes"
+                    },
+                    "submitted_on": {
+                        "type": "DateTime"
+                    },
+                    "submitter_der_x509_certificate": {
+                        "type": "Bytes"
+                    }
+                }
+            }
+        }
+    }
+]

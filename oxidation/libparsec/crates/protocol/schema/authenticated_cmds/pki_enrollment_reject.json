@@ -1,0 +1,82 @@
+[
+    {
+        "label": "PkiEnrollmentReject",
+        "major_versions": [
+            2,
+            3
+        ],
+        "introduced_in": "3.2",
+        "req": {
+            "cmd": "pki_enrollment_reject",
+            "fields": {
+                "enrollment_id": {
+                    "type": "UUID"
+                }
+            }
+        },
+        "reps": {
+            "ok": {},
+            "not_allowed": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            },
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            },
+            "no_longer_available": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            }
+        }
+    },
+    {
+        "label": "PkiEnrollmentReject",
+        "major_versions": [
+            2,
+            3
+        ],
+        "introduced_in": "2.8",
+        "req": {
+            "cmd": "pki_enrollment_reject",
+            "fields": {
+                "enrollment_id": {
+                    "type": "UUID"
+                }
+            }
+        },
+        "reps": {
+            "ok": {},
+            "not_allowed": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            },
+            "not_found": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            },
+            "no_longer_available": {
+                "fields": {
+                    "reason": {
+                        "type": "Option<String>"
+                    }
+                }
+            }
+        }
+    }
+]
