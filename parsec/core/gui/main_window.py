@@ -432,9 +432,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if isinstance(action_addr, BackendOrganizationBootstrapAddr):
             self._on_create_org_clicked(action_addr)
         elif isinstance(action_addr, BackendInvitationAddr):
-            if action_addr.invitation_type == InvitationType.USER():
+            if action_addr.invitation_type == InvitationType.USER:
                 self._on_claim_user_clicked(action_addr)
-            elif action_addr.invitation_type == InvitationType.DEVICE():
+            elif action_addr.invitation_type == InvitationType.DEVICE:
                 self._on_claim_device_clicked(action_addr)
         elif isinstance(action_addr, BackendPkiEnrollmentAddr):
             if not is_pki_enrollment_available():
@@ -820,12 +820,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_create_org_widget(action_addr)
         elif (
             isinstance(action_addr, BackendInvitationAddr)
-            and action_addr.invitation_type == InvitationType.USER()
+            and action_addr.invitation_type == InvitationType.USER
         ):
             self.show_claim_user_widget(action_addr)
         elif (
             isinstance(action_addr, BackendInvitationAddr)
-            and action_addr.invitation_type == InvitationType.DEVICE()
+            and action_addr.invitation_type == InvitationType.DEVICE
         ):
             self.show_claim_device_widget(action_addr)
         elif isinstance(action_addr, BackendPkiEnrollmentAddr):

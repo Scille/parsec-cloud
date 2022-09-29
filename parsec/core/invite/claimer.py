@@ -164,7 +164,7 @@ async def claimer_retrieve_info(
     rep = await cmds.invite_info()
     _check_rep(rep, step_name="invitation retrieval")
 
-    if rep.type == InvitationType.USER():
+    if rep.type == InvitationType.USER:
         return UserClaimInitialCtx(
             claimer_email=rep.claimer_email,
             greeter_user_id=rep.greeter_user_id,

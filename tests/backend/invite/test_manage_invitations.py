@@ -65,9 +65,7 @@ async def test_user_new_invitation_and_info(
     await events_subscribe(alice2_ws)
 
     with freeze_time("2000-01-04"):
-        rep = await invite_new(
-            alice_ws, type=InvitationType.USER(), claimer_email="zack@example.com"
-        )
+        rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email="zack@example.com")
 
     assert isinstance(rep, InviteNewRepOk)
     token = rep.token
@@ -102,9 +100,8 @@ async def test_user_new_invitation_and_info(
         token=token,
     ) as invited_ws:
         rep = await invite_info(invited_ws)
-        print(type(rep))
         assert rep == InviteInfoRepOk(
-            InvitationType.USER(), "zack@example.com", alice.user_id, alice.human_handle
+            InvitationType.USER, "zack@example.com", alice.user_id, alice.human_handle
         )
 
 
@@ -126,7 +123,7 @@ async def test_device_new_invitation_and_info(
     await events_subscribe(alice2_ws)
 
     with freeze_time("2000-01-03"):
-        rep = await invite_new(alice_ws, type=InvitationType.DEVICE())
+        rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
     assert isinstance(rep, InviteNewRepOk)
     token = rep.token
 
@@ -155,7 +152,7 @@ async def test_device_new_invitation_and_info(
     ) as invited_ws:
         rep = await invite_info(invited_ws)
         assert rep == InviteInfoRepOk(
-            InvitationType.DEVICE(), None, alice.user_id, alice.human_handle
+            InvitationType.DEVICE, None, alice.user_id, alice.human_handle
         )
 
 
@@ -167,7 +164,7 @@ async def test_invite_with_send_mail(alice, alice_ws, email_letterbox):
 
     # User invitation
     rep = await invite_new(
-        alice_ws, type=InvitationType.USER(), claimer_email="zack@example.com", send_email=True
+        alice_ws, type=InvitationType.USER, claimer_email="zack@example.com", send_email=True
     )
 
     assert isinstance(rep, InviteNewRepOk)
@@ -201,7 +198,7 @@ async def test_invite_with_send_mail(alice, alice_ws, email_letterbox):
     )
 
     # Device invitation
-    rep = await invite_new(alice_ws, type=InvitationType.DEVICE(), send_email=True)
+    rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
     assert isinstance(rep, InviteNewRepOk)
     assert rep.email_sent == InvitationEmailSentStatus.SUCCESS()
     token = rep.token
@@ -244,14 +241,14 @@ async def test_invite_with_mail_error(alice, alice_ws, monkeypatch):
 
     # User invitation
     rep = await invite_new(
-        alice_ws, type=InvitationType.USER(), claimer_email="zack@example.com", send_email=True
+        alice_ws, type=InvitationType.USER, claimer_email="zack@example.com", send_email=True
     )
 
     assert isinstance(rep, InviteNewRepOk)
     assert rep.email_sent == InvitationEmailSentStatus.NOT_AVAILABLE()
 
     # Device invitation
-    rep = await invite_new(alice_ws, type=InvitationType.DEVICE(), send_email=True)
+    rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
     assert isinstance(rep, InviteNewRepOk)
     assert rep.email_sent == InvitationEmailSentStatus.NOT_AVAILABLE()
 
@@ -264,14 +261,14 @@ async def test_invite_with_mail_error(alice, alice_ws, monkeypatch):
 
     # User invitation
     rep = await invite_new(
-        alice_ws, type=InvitationType.USER(), claimer_email="zack@example.com", send_email=True
+        alice_ws, type=InvitationType.USER, claimer_email="zack@example.com", send_email=True
     )
 
     assert isinstance(rep, InviteNewRepOk)
     assert rep.email_sent == InvitationEmailSentStatus.BAD_RECIPIENT()
 
     # Device invitation
-    rep = await invite_new(alice_ws, type=InvitationType.DEVICE(), send_email=True)
+    rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
 
     assert isinstance(rep, InviteNewRepOk)
     assert rep.email_sent == InvitationEmailSentStatus.BAD_RECIPIENT()
@@ -284,7 +281,7 @@ async def test_invite_with_send_mail_and_greeter_without_human_handle(
 ):
     # User invitation
     rep = await invite_new(
-        alice_ws, type=InvitationType.USER(), claimer_email="zack@example.com", send_email=True
+        alice_ws, type=InvitationType.USER, claimer_email="zack@example.com", send_email=True
     )
 
     assert isinstance(rep, InviteNewRepOk)
@@ -305,18 +302,18 @@ async def test_invite_with_send_mail_and_greeter_without_human_handle(
     assert token.hex in body
 
     # Device invitation (not avaible given no human_handle means no email !)
-    rep = await invite_new(alice_ws, type=InvitationType.DEVICE(), send_email=True)
+    rep = await invite_new(alice_ws, type=InvitationType.DEVICE, send_email=True)
     assert isinstance(rep, InviteNewRepNotAvailable)
 
 
 @pytest.mark.trio
 @customize_fixtures(alice_profile=UserProfile.OUTSIDER)
 async def test_invite_new_limited_for_outsider(alice_ws):
-    rep = await invite_new(alice_ws, type=InvitationType.DEVICE())
+    rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
     assert isinstance(rep, InviteNewRepOk)
 
     # Only ADMIN can invite new users
-    rep = await invite_new(alice_ws, type=InvitationType.USER(), claimer_email="zack@example.com")
+    rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email="zack@example.com")
     assert isinstance(rep, InviteNewRepNotAllowed)
 
 
@@ -324,11 +321,11 @@ async def test_invite_new_limited_for_outsider(alice_ws):
 @customize_fixtures(alice_profile=UserProfile.STANDARD)
 async def test_invite_new_limited_for_standard(alice_ws):
     # Outsider can only invite new devices
-    rep = await invite_new(alice_ws, type=InvitationType.DEVICE())
+    rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
     assert isinstance(rep, InviteNewRepOk)
 
     # Only ADMIN can invite new users
-    rep = await invite_new(alice_ws, type=InvitationType.USER(), claimer_email="zack@example.com")
+    rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email="zack@example.com")
     assert isinstance(rep, InviteNewRepNotAllowed)
 
 
@@ -382,9 +379,7 @@ async def test_new_user_invitation_on_already_member(
     if is_revoked:
         await backend_data_binder.bind_revocation(user_id=bob.user_id, certifier=alice)
 
-    rep = await invite_new(
-        alice_ws, type=InvitationType.USER(), claimer_email=bob.human_handle.email
-    )
+    rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email=bob.human_handle.email)
     if not is_revoked:
         assert isinstance(rep, InviteNewRepAlreadyMember)
     else:
@@ -404,11 +399,11 @@ async def test_idempotent_new_user_invitation(alice, backend, alice_ws):
 
     # Calling invite_new should be idempotent
     with freeze_time("2000-01-03"):
-        rep = await invite_new(alice_ws, type=InvitationType.USER(), claimer_email=claimer_email)
+        rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email=claimer_email)
         assert isinstance(rep, InviteNewRepOk)
         assert rep.token == invitation.token
 
-        rep = await invite_new(alice_ws, type=InvitationType.USER(), claimer_email=claimer_email)
+        rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email=claimer_email)
         assert isinstance(rep, InviteNewRepOk)
         assert rep.token == invitation.token
 
@@ -432,11 +427,11 @@ async def test_idempotent_new_device_invitation(alice, backend, alice_ws):
 
     # Calling invite_new should be idempotent
     with freeze_time("2000-01-03"):
-        rep = await invite_new(alice_ws, type=InvitationType.DEVICE())
+        rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
         assert isinstance(rep, InviteNewRepOk)
         assert rep.token == invitation.token
 
-        rep = await invite_new(alice_ws, type=InvitationType.DEVICE())
+        rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
         assert isinstance(rep, InviteNewRepOk)
         assert rep.token == invitation.token
 
@@ -466,7 +461,7 @@ async def test_new_user_invitation_after_invitation_deleted(alice, backend, alic
     # Deleted invitation shoudn't prevent from creating a new one
 
     with freeze_time("2000-01-04"):
-        rep = await invite_new(alice_ws, type=InvitationType.USER(), claimer_email=claimer_email)
+        rep = await invite_new(alice_ws, type=InvitationType.USER, claimer_email=claimer_email)
     assert isinstance(rep, InviteNewRepOk)
     new_token = rep.token
     assert new_token != invitation.token
@@ -495,7 +490,7 @@ async def test_new_device_invitation_after_invitation_deleted(alice, backend, al
     # Deleted invitation shoudn't prevent from creating a new one
 
     with freeze_time("2000-01-04"):
-        rep = await invite_new(alice_ws, type=InvitationType.DEVICE())
+        rep = await invite_new(alice_ws, type=InvitationType.DEVICE)
     assert isinstance(rep, InviteNewRepOk)
     new_token = rep.token
     assert new_token != invitation.token

@@ -22,7 +22,7 @@ use libparsec::protocol::invited_cmds::{
 use crate::{
     api_crypto,
     api_crypto::{HashDigest, PublicKey},
-    binding_utils::py_to_rs_invitation_status,
+    binding_utils::{gen_proto, py_to_rs_invitation_status},
     ids::{HumanHandle, UserID},
     invite,
     invite::InvitationToken,
@@ -42,35 +42,42 @@ pub(crate) struct InvitationType(pub libparsec::types::InvitationType);
 
 #[pymethods]
 impl InvitationType {
-    #[new]
-    fn new(invitation_str: &str) -> PyResult<Self> {
-        match invitation_str {
-            "DEVICE" => Ok(Self(libparsec::types::InvitationType::Device)),
-            "USER" => Ok(Self(libparsec::types::InvitationType::User)),
-            _ => Err(PyNotImplementedError::new_err("")),
-        }
-    }
-
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "DEVICE")]
-    fn device(_cls: &PyType) -> Self {
-        Self(libparsec::types::InvitationType::Device)
+    fn device() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                    InvitationType(libparsec::types::InvitationType::Device).into_py(py)
+                })
+            };
+        };
+        &VALUE
     }
 
-    #[classmethod]
+    #[classattr]
     #[pyo3(name = "USER")]
-    fn user(_cls: &PyType) -> Self {
-        Self(libparsec::types::InvitationType::User)
+    fn user() -> &'static PyObject {
+        lazy_static::lazy_static! {
+            static ref VALUE: PyObject = {
+                Python::with_gil(|py| {
+                    InvitationType(libparsec::types::InvitationType::User).into_py(py)
+                })
+            };
+        };
+        &VALUE
     }
 
-    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
-        match op {
-            CompareOp::Eq => Ok(self.0 == other.0),
-            CompareOp::Ne => Ok(self.0 != other.0),
-            _ => Err(PyNotImplementedError::new_err("")),
+    #[getter]
+    fn value(&self) -> &'static str {
+        match self.0 {
+            libparsec::types::InvitationType::Device => "DEVICE",
+            libparsec::types::InvitationType::User => "USER",
         }
     }
 }
+
+gen_proto!(InvitationType, __richcmp__, eq);
 
 #[pymethods]
 impl InviteNewReq {

@@ -14,11 +14,7 @@ from email.message import Message
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from structlog import get_logger
-from parsec.api.protocol import (
-    # TODO: Remove legacy InvitationType see issue(#3105)
-    # https://github.com/Scille/parsec-cloud/issues/3105
-    InvitationType as PyInvitationType,
-)
+
 from parsec._parsec import (
     InvitationType,
     Invite1ClaimerWaitPeerRep,
@@ -103,7 +99,6 @@ from parsec._parsec import (
     InviteNewRepOk,
     InviteNewReq,
 )
-
 from parsec.crypto import PublicKey, HashDigest
 from parsec.event_bus import EventBus, EventCallback, EventFilterCallback
 from parsec.api.protocol import (
@@ -201,7 +196,7 @@ class ConduitListenCtx:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserInvitation:
-    TYPE = PyInvitationType.USER
+    TYPE = InvitationType.USER
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     claimer_email: str
@@ -215,7 +210,7 @@ class UserInvitation:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceInvitation:
-    TYPE = PyInvitationType.DEVICE
+    TYPE = InvitationType.DEVICE
     greeter_user_id: UserID
     greeter_human_handle: Optional[HumanHandle]
     token: InvitationToken = attr.ib(factory=InvitationToken.new)
@@ -375,28 +370,18 @@ class BaseInviteComponent:
     @catch_protocol_errors
     @api_typed_msg_adapter(InviteNewReq, InviteNewRep)
     async def api_invite_new(self, client_ctx, req):
-        # TODO: Use builtin Invitation type, this function is here to convert
-        # types when needed because BackendInvitationAddr::build() has been
-        # modified to take the builtin version of InvitationType (see issue #3105)
-        # https://github.com/Scille/parsec-cloud/issues/3105
-        def _to_builtin_invitation_type(invit_type: PyInvitationType):
-            if type(invit_type) == PyInvitationType:
-                if invit_type == PyInvitationType.DEVICE:
-                    return InvitationType.DEVICE()
-                elif invit_type == PyInvitationType.USER:
-                    return InvitationType.USER()
-
-            return invit_type
-
-        def _to_http_redirection_url(client_ctx, invitation):
+        def _to_http_redirection_url(
+            client_ctx, invitation: Union[UserInvitation, DeviceInvitation]
+        ) -> str:
+            assert self._config.backend_addr
             return BackendInvitationAddr.build(
                 backend_addr=self._config.backend_addr,
                 organization_id=client_ctx.organization_id,
-                invitation_type=_to_builtin_invitation_type(invitation.TYPE),
+                invitation_type=invitation.TYPE,
                 token=invitation.token,
             ).to_http_redirection_url()
 
-        if req.type == InvitationType.USER():
+        if req.type == InvitationType.USER:
             if client_ctx.profile != UserProfile.ADMIN:
                 return InviteNewRepNotAllowed()
             try:
@@ -408,7 +393,7 @@ class BaseInviteComponent:
             except InvitationAlreadyMemberError:
                 return InviteNewRepAlreadyMember()
 
-            if req.send_email:
+            if req.send_email and self._config.backend_addr:
                 if client_ctx.human_handle:
                     greeter_name = client_ctx.human_handle.label
                     reply_to = f"{client_ctx.human_handle.label} <{client_ctx.human_handle.email}>"
@@ -449,7 +434,7 @@ class BaseInviteComponent:
                 greeter_user_id=client_ctx.user_id,
             )
 
-            if req.send_email:
+            if req.send_email and self._config.backend_addr:
                 message = generate_invite_email(
                     from_addr=self._config.email_config.sender,
                     to_addr=client_ctx.human_handle.email,
@@ -527,14 +512,14 @@ class BaseInviteComponent:
         invitation = client_ctx.invitation
         if isinstance(invitation, UserInvitation):
             return InviteInfoRepOk(
-                InvitationType.USER(),
+                InvitationType.USER,
                 invitation.claimer_email,
                 invitation.greeter_user_id,
                 invitation.greeter_human_handle,
             )
         else:  # DeviceInvitation
             return InviteInfoRepOk(
-                InvitationType.DEVICE(),
+                InvitationType.DEVICE,
                 claimer_email=None,
                 greeter_user_id=invitation.greeter_user_id,
                 greeter_human_handle=invitation.greeter_human_handle,
