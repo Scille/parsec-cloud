@@ -101,6 +101,11 @@ impl Cmd {
         let nested_types = self.quote_nested_types(&types);
         let (req_def, req_impl) = self.req.quote(&types);
         let variants_rep = self.quote_reps(&types);
+        let valid_statuses = self
+            .possible_responses
+            .iter()
+            .map(|rep| rep.status.clone())
+            .collect::<Vec<String>>();
 
         syn::parse_quote! {
             pub mod #module {
@@ -131,7 +136,7 @@ impl Cmd {
                     // TODO: Test `serde(other)`
                     #[serde(skip)]
                     UnknownStatus {
-                        _status: String,
+                        status: String,
                         reason: Option<String>,
                     }
                 }
@@ -148,15 +153,18 @@ impl Cmd {
                     }
 
                     pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
-                        Ok(if let Ok(data) = ::rmp_serde::from_slice::<Self>(buf) {
-                            data
-                        } else {
+                        let res = ::rmp_serde::from_slice::<Self>(buf);
+                        res.or_else(|err| {
                             // Due to how Serde handles variant discriminant, we cannot express unknown status as a default case in the main schema
                             // Instead we have this additional deserialization attempt fallback
-                            let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
-                            Self::UnknownStatus {
-                                _status: data.status,
-                                reason: data.reason,
+                            let unknown_status = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+
+                            match unknown_status.status.as_str() {
+                                #(#valid_statuses)|* => Err(err)
+                                _ => Ok(Self::UnknownStatus {
+                                    status: unknown_status.status,
+                                    reason: unknown_status.reason,
+                                })
                             }
                         })
                     }
