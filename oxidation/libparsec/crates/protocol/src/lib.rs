@@ -3,7 +3,7 @@
 mod error;
 mod handshake;
 
-use serialization_format::parsec_cmds;
+use serialization_format::parsec_protocol;
 
 pub use error::*;
 pub use handshake::*;
@@ -33,5 +33,5 @@ pub(crate) use impl_dump_load;
 // Client side
 // authenticated_cmds::block_create::Req { .. }.dump()
 // authenticated_cmds::block_create::Rep::load(..)
-parsec_cmds!("schema/invited_cmds");
-parsec_cmds!("schema/authenticated_cmds");
+parsec_protocol!("schema/invited_cmds");
+parsec_protocol!("schema/authenticated_cmds");
