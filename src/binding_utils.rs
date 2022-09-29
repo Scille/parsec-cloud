@@ -44,16 +44,6 @@ pub(crate) fn hash_generic<T: Hash>(value_to_hash: T) -> PyResult<u64> {
     Ok(s.finish())
 }
 
-#[deprecated]
-pub(crate) fn hash_generic_legacy(value_to_hash: &str, py: Python) -> PyResult<isize> {
-    let builtins = PyModule::import(py, "builtins")?;
-    let hash = builtins
-        .getattr("hash")?
-        .call1((value_to_hash,))?
-        .extract::<isize>()?;
-    Ok(hash)
-}
-
 pub fn rs_to_py_realm_role(role: &libparsec::types::RealmRole) -> PyResult<PyObject> {
     Python::with_gil(|py| -> PyResult<PyObject> {
         let cls = py.import("parsec.api.protocol")?.getattr("RealmRole")?;
