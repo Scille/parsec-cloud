@@ -285,7 +285,7 @@ mod test {
                             /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
                             #[serde(skip)]
                             UnknownStatus {
-                                _status: String,
+                                invalid_status: String,
                                 reason: Option<String>
                             }
                         }
@@ -303,13 +303,16 @@ mod test {
 
                             pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
                                 ::rmp_serde::from_slice::<Self>(buf)
-                                    .or_else(|_error| {
-                                        let data =::rmp_serde::from_slice::<UnknownStatus>(buf)?;
-                                        Self::UnknownStatus {
-                                            _status: data.status,
+                                .or_else(|_error| {
+                                    let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+
+                                    match data.status.as_str() {
+                                        _ => Ok(Self::UnknownStatus {
+                                            invalid_status: data.status,
                                             reason: data.reason,
-                                        }
-                                    })
+                                        })
+                                    }
+                                })
                             }
                         }
                     }
@@ -340,7 +343,7 @@ mod test {
                             /// > Note it is meaningless to serialize a `UnknownStatus` (you created the object from scratch, you know what it is for baka !)
                             #[serde(skip)]
                             UnknownStatus {
-                                _status: String,
+                                invalid_status: String,
                                 reason: Option<String>
                             }
                         }
@@ -358,13 +361,16 @@ mod test {
 
                             pub fn load(buf: &[u8]) -> Result<Self, ::rmp_serde::decode::Error> {
                                 ::rmp_serde::from_slice::<Self>(buf)
-                                    .or_else(|_error| {
-                                        let data =::rmp_serde::from_slice::<UnknownStatus>(buf)?;
-                                        Self::UnknownStatus {
-                                            _status: data.status,
+                                .or_else(|_error| {
+                                    let data = ::rmp_serde::from_slice::<UnknownStatus>(buf)?;
+
+                                    match data.status.as_str() {
+                                        _ => Ok(Self::UnknownStatus {
+                                            invalid_status: data.status,
                                             reason: data.reason,
-                                        }
-                                    })
+                                        })
+                                    }
+                                })
                             }
                         }
                     }
