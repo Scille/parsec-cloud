@@ -110,7 +110,6 @@ from parsec.api.protocol.realm import (
 )
 from parsec.api.protocol.block import (
     BlockID,
-    BlockIDField,
     block_create_serializer,
     block_read_serializer,
 )
@@ -261,7 +260,6 @@ __all__ = (
     "vlob_maintenance_save_reencryption_batch_serializer",
     # Block
     "BlockID",
-    "BlockIDField",
     "block_create_serializer",
     "block_read_serializer",
     "BlockReadReq",
