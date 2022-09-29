@@ -100,7 +100,6 @@ async def test_user_new_invitation_and_info(
         token=token,
     ) as invited_ws:
         rep = await invite_info(invited_ws)
-        print(type(rep))
         assert rep == InviteInfoRepOk(
             InvitationType.USER, "zack@example.com", alice.user_id, alice.human_handle
         )
