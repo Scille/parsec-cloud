@@ -189,7 +189,8 @@ async def extract_sequestered_data_and_proceed_webhook(
     vlob_id: VlobID,
     timestamp: DateTime,
     sequester_blob: Dict[SequesterServiceID, bytes],
-):
+) -> Dict[SequesterServiceID, bytes]:
+
     # Split storage services and webhook services
     storage_service_ids = [
         service.service_id
@@ -201,6 +202,8 @@ async def extract_sequestered_data_and_proceed_webhook(
         for service in services.values()
         if service.service_type == SequesterServiceType.WEBHOOK
     ]
+
+    # Proceed webhook service before storage (garantee data are not stored if they are rejected)
     for webhook_service_id in webhook_service_ids:
         service = services[webhook_service_id]
         sequester_data = sequester_blob[webhook_service_id]
