@@ -26,4 +26,13 @@ INSERT INTO sequester_service(
     '2021-07-29 10:13:41.699846+00',
     'http://somewhere.lost',
     'WEBHOOK'
-)
+);
+
+INSERT INTO sequester_service_vlob_atom(
+    _id, vlob_atom, service, blob
+) VALUES (
+    12000,
+    502,
+    12001,
+    E'\\x1234567890abcdef'
+);

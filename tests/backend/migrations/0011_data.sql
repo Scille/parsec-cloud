@@ -53,4 +53,4 @@ INSERT INTO sequester_service_vlob_atom(
     502,
     11000,
     E'\\x1234567890abcdef'
-)
+);
