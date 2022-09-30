@@ -66,9 +66,9 @@ class SequesterService:
     service_id: SequesterServiceID
     service_label: str
     service_certificate: bytes
+    service_type: SequesterServiceType
     created_on: DateTime = attr.ib(factory=DateTime.now)
     disabled_on: Optional[DateTime] = None
-    service_type: SequesterServiceType = SequesterServiceType.STORAGE
     webhook_url: Optional[str] = None
 
     def __repr__(self):

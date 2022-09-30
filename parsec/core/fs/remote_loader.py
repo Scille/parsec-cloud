@@ -802,7 +802,9 @@ class RemoteLoader(UserRemoteLoader):
             self._sequester_services_cache = sequester_services
             return await self.upload_manifest(entry_id, manifest)
         except VlobSequesterRejectedError as exc:
-            raise VlobSequesterRejectedError(id=exc.id, manifest=manifest) from exc
+            # Small hack to provide the manifest object that was lacking when the exception was raised
+            exc.manifest = manifest
+            raise exc
         else:
             return manifest
 

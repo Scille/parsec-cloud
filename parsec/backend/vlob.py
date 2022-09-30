@@ -439,7 +439,6 @@ class BaseVlobComponent:
                 sequester_services_certificates=exc.sequester_services_certificates,
             )
 
-        # TODO Change return value
         except VlobSequesterWebhookServiceRejectedError as exc:
             return VlobUpdateRepSequesterRejected(
                 service_id=exc.service_id, service_label=exc.service_label, service_error=exc.error
