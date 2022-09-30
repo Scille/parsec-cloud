@@ -66,6 +66,7 @@ async def handle_ws():
 
     if isinstance(client_ctx, AuthenticatedClientContext):
         with trio.CancelScope() as cancel_scope:
+            client_ctx.cancel_scope = cancel_scope
             with backend.event_bus.connection_context() as client_ctx.event_bus_ctx:
 
                 def _on_revoked(
@@ -78,7 +79,7 @@ async def handle_ws():
                         organization_id == client_ctx.organization_id
                         and user_id == client_ctx.user_id
                     ):
-                        cancel_scope.cancel()
+                        client_ctx.close_connection_asap()
 
                 def _on_expired(
                     client_ctx: AuthenticatedClientContext,
@@ -86,7 +87,7 @@ async def handle_ws():
                     organization_id: OrganizationID,
                 ) -> None:
                     if organization_id == client_ctx.organization_id:
-                        cancel_scope.cancel()
+                        client_ctx.close_connection_asap()
 
                 client_ctx.event_bus_ctx.connect(
                     BackendEvent.USER_REVOKED, partial(_on_revoked, client_ctx)
@@ -106,6 +107,7 @@ async def handle_ws():
         )
         try:
             with trio.CancelScope() as cancel_scope:
+                client_ctx.cancel_scope = cancel_scope
                 with backend.event_bus.connection_context() as event_bus_ctx:
 
                     def _on_invite_status_changed(
@@ -121,7 +123,7 @@ async def handle_ws():
                             and organization_id == client_ctx.organization_id
                             and token == client_ctx.invitation.token
                         ):
-                            cancel_scope.cancel()
+                            client_ctx.close_connection_asap()
 
                     event_bus_ctx.connect(
                         BackendEvent.INVITE_STATUS_CHANGED,

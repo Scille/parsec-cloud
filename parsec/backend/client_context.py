@@ -25,15 +25,22 @@ from parsec.backend.invite import Invitation
 
 logger = get_logger()
 
+AUTHENTICATED_CLIENT_CHANNEL_SIZE = 100
+
 
 class BaseClientContext:
-    __slots__ = ("conn_id", "api_version")
+    __slots__ = ("conn_id", "api_version", "cancel_scope")
     TYPE: ClientType
     logger: BoundLogger
 
     def __init__(self, api_version: ApiVersion):
         self.api_version = api_version
         self.conn_id = uuid4().hex
+        self.cancel_scope: Optional[trio.CancelScope] = None
+
+    def close_connection_asap(self) -> None:
+        if self.cancel_scope is not None:
+            self.cancel_scope.cancel()
 
 
 class AuthenticatedClientContext(BaseClientContext):
@@ -81,7 +88,9 @@ class AuthenticatedClientContext(BaseClientContext):
         self.verify_key = verify_key
 
         self.event_bus_ctx: EventBusConnectionContext
-        self.channels = trio.open_memory_channel[Tuple[Enum, Dict[str, object]]](100)
+        self.channels = trio.open_memory_channel[Tuple[Enum, Dict[str, object]]](
+            AUTHENTICATED_CLIENT_CHANNEL_SIZE
+        )
         self.realms: Set[RealmID] = set()
         self.events_subscribed = False
 
