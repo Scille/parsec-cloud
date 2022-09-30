@@ -217,13 +217,17 @@ async def test_link_file_unmounted(aqtbot, logged_gui_with_files, timestamp, aut
         else:
             timestamp = None
         core = logged_gui.test_get_core()
-        url = f_w.workspace_fs.generate_file_link(f_w.current_directory, timestamp)
 
-        logged_gui.add_instance(url.to_url())
+        def _mounted(ts):
+            assert autoclose_dialog.dialogs == []
+            assert core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id, ts)
 
-        def _folder_ready():
-            assert f_w.isVisible()
-            if timestamp is None:
+        # Workspace should be mounted
+        await aqtbot.wait_until(lambda: _mounted(None))
+
+        # Checking that it has files
+        def _folder_ready(is_timestamped):
+            if not is_timestamped:
                 assert f_w.table_files.rowCount() == 2
                 folder = f_w.table_files.item(1, 1)
                 assert folder
@@ -232,15 +236,14 @@ async def test_link_file_unmounted(aqtbot, logged_gui_with_files, timestamp, aut
                 assert f_w.label_role.text() == _(WorkspaceRole.READER)
                 assert isinstance(f_w.workspace_fs, WorkspaceFSTimestamped)
 
-        await aqtbot.wait_until(_folder_ready)
+        await aqtbot.wait_until(lambda: _folder_ready(False))
 
         assert logged_gui.tab_center.count() == 1
 
-        def _mounted(ts):
-            assert autoclose_dialog.dialogs == []
-            assert core.mountpoint_manager.is_workspace_mounted(f_w.workspace_fs.workspace_id, ts)
+        # Generate a file link
+        url = f_w.workspace_fs.generate_file_link(f_w.current_directory, timestamp)
 
-        await aqtbot.wait_until(lambda: _mounted(None))
+        # Unmount the original workspace
         await core.mountpoint_manager.unmount_workspace(f_w.workspace_fs.workspace_id, None)
 
         def _unmounted(ts):
@@ -248,11 +251,18 @@ async def test_link_file_unmounted(aqtbot, logged_gui_with_files, timestamp, aut
                 f_w.workspace_fs.workspace_id, ts
             )
 
+        # Making sure that it is unmounted
         await aqtbot.wait_until(lambda: _unmounted(None))
 
+        # Add an instance with the file link
         logged_gui.add_instance(url.to_url())
 
+        # Workspace should be mounted
         await aqtbot.wait_until(lambda: _mounted(timestamp))
+
+        # If the link was created with a timestamp, the workspace should be a
+        # TimestampedWorkspace, otherwise it's just a normal workspace
+        await aqtbot.wait_until(lambda: _folder_ready(timestamp is not None))
 
 
 @pytest.mark.gui
