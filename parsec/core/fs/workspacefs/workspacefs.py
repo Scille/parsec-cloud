@@ -705,7 +705,6 @@ class WorkspaceFS:
         """
         # Entry is blacklisted, skip it
         if entry_id in self.black_list:
-            print("BLACKLISTED", entry_id)
             return
         # Make sure the corresponding realm exists
         await self._create_realm_if_needed()
@@ -730,7 +729,6 @@ class WorkspaceFS:
                             entry_id=entry_id,
                             file_path=path,
                         )
-                        print("BLACK LIST", entry_id, path)
                         self.black_list.append(entry_id)
                         return
                     else:
