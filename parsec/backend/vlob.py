@@ -185,6 +185,7 @@ async def extract_sequestered_data_and_proceed_webhook(
     sequester_blob: Dict[SequesterServiceID, bytes],
 ) -> Dict[SequesterServiceID, bytes]:
 
+    logger = get_logger()
     # Split storage services and webhook services
     storage_service_ids = [
         service.service_id
@@ -202,7 +203,6 @@ async def extract_sequestered_data_and_proceed_webhook(
         service = services[webhook_service_id]
         sequester_data = sequester_blob[webhook_service_id]
         if not service.webhook_url:
-            logger = get_logger()
             err = (
                 f"Webhook url is missing for service {service.service_id}, {service.service_label}"
             )
@@ -219,13 +219,16 @@ async def extract_sequestered_data_and_proceed_webhook(
             )
         except urllib.error.HTTPError as exc:
             if exc.code == 400:
+                raw_body = exc.read()
                 try:
-                    body = json.loads(exc.read())
+                    body = json.loads(raw_body)
                     if not isinstance(body, dict) or not isinstance(body.get("error"), str):
                         raise json.JSONDecodeError
                     error = body["error"]
                 except json.JSONDecodeError:
-                    logger.warning("Invalid rejection reason body returned by webhook", body=body)
+                    logger.warning(
+                        "Invalid rejection reason body returned by webhook", body=raw_body
+                    )
                     error = "File rejected (no reason)"
 
                 raise VlobSequesterWebhookServiceRejectedError(
