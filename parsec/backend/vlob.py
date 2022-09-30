@@ -221,18 +221,19 @@ async def extract_sequestered_data_and_proceed_webhook(
             if exc.code == 400:
                 try:
                     body = json.loads(exc.read())
+                    if not isinstance(body, dict) or not isinstance(body.get("error"), str):
+                        raise json.JSONDecodeError
+                    error = body["error"]
+                except json.JSONDecodeError:
+                    logger.warning("Invalid rejection reason body returned by webhook", body=body)
+                    error = "File rejected (no reason)"
 
-                    raise VlobSequesterWebhookServiceRejectedError(
-                        service_id=service.service_id,
-                        service_label=service.service_label,
-                        error=body.get("error", ""),
-                    ) from exc
-                except json.JSONDecodeError as err:
-                    raise VlobSequesterWebhookServiceWebhookHTTPError(
-                        service_id=service.service_id,
-                        service_label=service.service_label,
-                        error=f"Unreadable webhook response: {err}",
-                    )
+                raise VlobSequesterWebhookServiceRejectedError(
+                    service_id=service.service_id,
+                    service_label=service.service_label,
+                    error=error,
+                )
+
             else:
                 raise VlobSequesterWebhookServiceWebhookHTTPError(
                     service_id=service.service_id,
