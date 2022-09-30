@@ -13,7 +13,12 @@ from parsec.sequester_crypto import (
 )
 from parsec.api.data import SequesterAuthorityCertificate, SequesterServiceCertificate
 from parsec.api.protocol import SequesterServiceID
-from parsec.backend.sequester import SequesterService, SequesterServiceType
+from parsec.backend.sequester import (
+    BaseSequesterService,
+    StorageSequesterService,
+    WebhookSequesterService,
+    SequesterServiceType,
+)
 
 
 @dataclass
@@ -52,7 +57,7 @@ class SequesterServiceFullData:
     certif_data: SequesterServiceCertificate
     decryption_key: oscrypto.asymmetric.PrivateKey
     encryption_key: oscrypto.asymmetric.PublicKey
-    backend_service: SequesterService
+    backend_service: BaseSequesterService
 
     @property
     def service_id(self) -> SequesterServiceID:
@@ -63,7 +68,7 @@ def sequester_service_factory(
     label: str,
     authority: SequesterAuthorityFullData,
     timestamp: Optional[DateTime] = None,
-    service_type: Optional[SequesterServiceType] = SequesterServiceType.STORAGE,
+    service_type: SequesterServiceType = SequesterServiceType.STORAGE,
     webhook_url: Optional[str] = None,
 ) -> SequesterServiceFullData:
     timestamp = timestamp or DateTime.now()
@@ -79,16 +84,26 @@ def sequester_service_factory(
         ),
     )
     certif = sequester_authority_sign(signing_key=authority.signing_key, data=certif_data.dump())
+    if service_type == SequesterServiceType.STORAGE:
+        assert webhook_url is None
+        backend_service = StorageSequesterService(
+            service_id=certif_data.service_id,
+            service_label=certif_data.service_label,
+            service_certificate=certif,
+        )
+    else:
+        assert service_type == SequesterServiceType.WEBHOOK
+        assert webhook_url is not None
+        backend_service = WebhookSequesterService(
+            service_id=certif_data.service_id,
+            service_label=certif_data.service_label,
+            service_certificate=certif,
+            webhook_url=webhook_url,
+        )
     return SequesterServiceFullData(
         certif=certif,
         certif_data=certif_data,
         decryption_key=decryption_key,
         encryption_key=encryption_key,
-        backend_service=SequesterService(
-            service_id=certif_data.service_id,
-            service_label=certif_data.service_label,
-            service_certificate=certif,
-            service_type=service_type,
-            webhook_url=webhook_url,
-        ),
+        backend_service=backend_service,
     )

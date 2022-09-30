@@ -10,7 +10,7 @@ from parsec.api.data import SequesterServiceCertificate, DataError
 from parsec.api.protocol import OrganizationID, SequesterServiceID, RealmID, VlobID
 from parsec.backend.sequester import (
     BaseSequesterComponent,
-    SequesterService,
+    BaseSequesterService,
     SequesterServiceAlreadyEnabledError,
     SequesterServiceNotFoundError,
     SequesterOrganizationNotFoundError,
@@ -20,7 +20,7 @@ from parsec.backend.sequester import (
     SequesterCertificateValidationError,
     SequesterCertificateOutOfBallparkError,
     SequesterServiceType,
-    SequesterWrongServiceType,
+    SequesterWrongServiceTypeError,
 )
 
 if TYPE_CHECKING:
@@ -33,7 +33,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self._organization_component: "MemoryOrganizationComponent" = None
         self._vlob_component: "MemoryVlobComponent" = None
         self._services: Dict[
-            OrganizationID, Dict[SequesterServiceID, SequesterService]
+            OrganizationID, Dict[SequesterServiceID, BaseSequesterService]
         ] = defaultdict(dict)
 
     def register_components(
@@ -45,7 +45,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self._organization_component = organization
         self._vlob_component = vlob
 
-    def _enabled_services(self, organization_id: OrganizationID) -> List[SequesterService]:
+    def _enabled_services(self, organization_id: OrganizationID) -> List[BaseSequesterService]:
         return [s for s in self._services[organization_id].values() if s.is_enabled]
 
     def _refresh_services_in_organization_component(self, organization_id: OrganizationID) -> None:
@@ -63,7 +63,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
     async def create_service(
         self,
         organization_id: OrganizationID,
-        service: SequesterService,
+        service: BaseSequesterService,
         now: Optional[DateTime] = None,
     ) -> None:
         now = now or DateTime.now()
@@ -130,7 +130,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
 
     def _get_service(
         self, organization_id: OrganizationID, service_id: SequesterServiceID
-    ) -> SequesterService:
+    ) -> BaseSequesterService:
         try:
             organization = self._organization_component._organizations[organization_id]
         except KeyError as exc:
@@ -144,12 +144,12 @@ class MemorySequesterComponent(BaseSequesterComponent):
 
     async def get_service(
         self, organization_id: OrganizationID, service_id: SequesterServiceID
-    ) -> SequesterService:
+    ) -> BaseSequesterService:
         return self._get_service(organization_id=organization_id, service_id=service_id)
 
     async def get_organization_services(
         self, organization_id: OrganizationID
-    ) -> List[SequesterService]:
+    ) -> List[BaseSequesterService]:
         try:
             organization = self._organization_component._organizations[organization_id]
         except KeyError as exc:
@@ -168,7 +168,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         # Check orga and service exists
         service = self._get_service(organization_id=organization_id, service_id=service_id)
         if service.service_type != SequesterServiceType.STORAGE:
-            raise SequesterWrongServiceType(
+            raise SequesterWrongServiceTypeError(
                 f"Service type {service.service_type} is not compatible with export"
             )
         # Do the actual dump

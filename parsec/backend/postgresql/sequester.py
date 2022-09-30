@@ -12,18 +12,20 @@ from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.utils import Q, q_organization_internal_id, q_realm_internal_id
 from parsec.backend.sequester import (
     BaseSequesterComponent,
+    BaseSequesterService,
+    StorageSequesterService,
+    WebhookSequesterService,
+    SequesterServiceType,
+    SequesterError,
     SequesterCertificateOutOfBallparkError,
     SequesterCertificateValidationError,
     SequesterDisabledError,
-    SequesterError,
     SequesterOrganizationNotFoundError,
-    SequesterService,
     SequesterServiceAlreadyDisabledError,
     SequesterServiceAlreadyEnabledError,
     SequesterServiceAlreadyExists,
     SequesterServiceNotFoundError,
-    SequesterServiceType,
-    SequesterWrongServiceType,
+    SequesterWrongServiceTypeError,
 )
 from parsec.crypto import CryptoError
 from parsec.utils import timestamps_in_the_ballpark
@@ -107,7 +109,7 @@ LIMIT 1
 
 _q_get_sequester_service = Q(
     f"""
-SELECT service_label, service_certificate, created_on, disabled_on, service_type, webhook_url
+SELECT service_id, service_label, service_certificate, created_on, disabled_on, service_type, webhook_url
 FROM sequester_service
 WHERE
     service_id=$service_id
@@ -122,6 +124,17 @@ SELECT service_id, service_label, service_certificate, created_on, disabled_on, 
 FROM sequester_service
 WHERE
     organization={ q_organization_internal_id("$organization_id") }
+ORDER BY _id
+"""
+)
+
+_q_get_organization_services_without_disabled = Q(
+    f"""
+SELECT service_id, service_label, service_certificate, created_on, disabled_on, service_type, webhook_url
+FROM sequester_service
+WHERE
+    organization={ q_organization_internal_id("$organization_id") }
+    AND disabled_on IS NULL
 ORDER BY _id
 """
 )
@@ -163,6 +176,46 @@ async def get_sequester_authority(conn, organization_id: OrganizationID) -> Sequ
     return SequesterAuthority(certificate=row[0], verify_key_der=SequesterVerifyKeyDer(row[1]))
 
 
+async def get_sequester_services(
+    conn, organization_id: OrganizationID, with_disabled: bool
+) -> List[BaseSequesterService]:
+    q = (
+        _q_get_organization_services
+        if with_disabled
+        else _q_get_organization_services_without_disabled
+    )
+    rows = await conn.fetch(*q(organization_id=organization_id.str))
+    return [build_sequester_service_obj(row) for row in rows]
+
+
+def build_sequester_service_obj(row) -> BaseSequesterService:
+    service_id = SequesterServiceID(row["service_id"])
+    service_type = SequesterServiceType(row["service_type"].lower())
+    if service_type == SequesterServiceType.STORAGE:
+        return StorageSequesterService(
+            service_id=service_id,
+            service_label=row["service_label"],
+            service_certificate=row["service_certificate"],
+            created_on=row["created_on"],
+            disabled_on=row["disabled_on"],
+        )
+    else:
+        assert service_type == SequesterServiceType.WEBHOOK
+        webhook_url = row["webhook_url"]
+        if webhook_url is None:
+            raise ValueError(
+                f"Database inconsistency: sequester service `{service_id.str}` is of type WEBHOOK but has an empty `webhook_url` column"
+            )
+        return WebhookSequesterService(
+            service_id=service_id,
+            service_label=row["service_label"],
+            service_certificate=row["service_certificate"],
+            created_on=row["created_on"],
+            disabled_on=row["disabled_on"],
+            webhook_url=webhook_url,
+        )
+
+
 class PGPSequesterComponent(BaseSequesterComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
@@ -170,7 +223,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
     async def create_service(
         self,
         organization_id: OrganizationID,
-        service: SequesterService,
+        service: BaseSequesterService,
         now: Optional[DateTime] = None,
     ) -> None:
         now = now or DateTime.now()
@@ -207,6 +260,11 @@ class PGPSequesterComponent(BaseSequesterComponent):
             )
             if row:
                 raise SequesterServiceAlreadyExists
+            webhook_url: Optional[str]
+            if isinstance(service, WebhookSequesterService):
+                webhook_url = service.webhook_url
+            else:
+                webhook_url = None
             result = await conn.execute(
                 *_q_create_sequester_service(
                     organization_id=organization_id.str,
@@ -215,7 +273,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
                     service_certificate=service.service_certificate,
                     created_on=service.created_on,
                     service_type=service.service_type.value.upper(),
-                    webhook_url=service.webhook_url,
+                    webhook_url=webhook_url,
                 )
             )
             if result != "INSERT 0 1":
@@ -296,7 +354,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
         conn: TrioConnectionProxy,
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
-    ) -> SequesterService:
+    ) -> BaseSequesterService:
         await self._assert_service_enabled(conn, organization_id)
 
         row = await conn.fetchrow(
@@ -306,43 +364,22 @@ class PGPSequesterComponent(BaseSequesterComponent):
         if not row:
             raise SequesterServiceNotFoundError
 
-        return SequesterService(
-            service_id=service_id,
-            service_label=row[0],
-            service_certificate=row[1],
-            created_on=row[2],
-            disabled_on=row[3],
-            service_type=SequesterServiceType(row[4].lower()),
-            webhook_url=row[5],
-        )
+        return build_sequester_service_obj(row)
 
     async def get_service(
         self, organization_id: OrganizationID, service_id: SequesterServiceID
-    ) -> SequesterService:
+    ) -> BaseSequesterService:
         async with self.dbh.pool.acquire() as conn:
             return await self._get_service(conn, organization_id, service_id)
 
     async def get_organization_services(
         self, organization_id: OrganizationID
-    ) -> List[SequesterService]:
+    ) -> List[BaseSequesterService]:
         async with self.dbh.pool.acquire() as conn:
             await self._assert_service_enabled(conn, organization_id)
-            entries = await conn.fetch(
-                *_q_get_organization_services(organization_id=organization_id.str)
+            return await get_sequester_services(
+                conn=conn, organization_id=organization_id, with_disabled=True
             )
-
-            return [
-                SequesterService(
-                    service_id=SequesterServiceID(entry["service_id"]),
-                    service_label=entry["service_label"],
-                    service_certificate=entry["service_certificate"],
-                    created_on=entry["created_on"],
-                    disabled_on=entry["disabled_on"],
-                    service_type=SequesterServiceType(entry["service_type"].lower()),
-                    webhook_url=entry["webhook_url"],
-                )
-                for entry in entries
-            ]
 
     async def dump_realm(
         self, organization_id: OrganizationID, service_id: SequesterServiceID, realm_id: RealmID
@@ -351,7 +388,7 @@ class PGPSequesterComponent(BaseSequesterComponent):
             # Check organization and service exists
             service = await self._get_service(conn, organization_id, service_id)
             if service.service_type != SequesterServiceType.STORAGE:
-                raise SequesterWrongServiceType(
+                raise SequesterWrongServiceTypeError(
                     f"Service type {service.service_type} is not compatible with export"
                 )
 

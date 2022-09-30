@@ -27,7 +27,7 @@ from unittest.mock import ANY, patch
 import attr
 import pytest
 import trustme
-from click.testing import CliRunner
+from click.testing import CliRunner, Result as CliResult
 
 from parsec import __version__ as parsec_version
 from parsec.cli import cli
@@ -1066,46 +1066,45 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
 
         common_args = f"--db {postgresql_url} --db-min-connections 1 --db-max-connections 2 --organization {alice.organization_id.str}"
 
-        async def run_list_services():
+        async def run_list_services() -> CliResult:
             result = await _cli_invoke_in_thread(
                 runner, f"backend sequester list_services {common_args}"
             )
             assert result.exit_code == 0
             return result
 
-        async def create_service(service_key_path, authority_key_path, service_label):
+        async def create_service(
+            service_key_path: Path,
+            authority_key_path: Path,
+            service_label: str,
+            extra_args: str = "",
+            check_result: bool = True,
+        ) -> CliResult:
             result = await _cli_invoke_in_thread(
                 runner,
-                f"backend sequester create_service {common_args} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --service-label {service_label}",
+                f"backend sequester create_service {common_args} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --service-label {service_label} {extra_args}",
             )
-            assert result.exit_code == 0
+            if check_result:
+                assert result.exit_code == 0
             return result
 
-        async def disable_service(service_id: str):
+        async def disable_service(service_id: str) -> CliResult:
             return await _cli_invoke_in_thread(
                 runner,
                 f"backend sequester update_service {common_args} --disable --service {service_id}",
             )
 
-        async def enable_service(service_id: str):
+        async def enable_service(service_id: str) -> CliResult:
             return await _cli_invoke_in_thread(
                 runner,
                 f"backend sequester update_service {common_args} --enable --service {service_id}",
             )
 
-        async def export_service(service_id: str, realm: RealmID, path: str):
+        async def export_service(service_id: str, realm: RealmID, path: str) -> CliResult:
             return await _cli_invoke_in_thread(
                 runner,
                 f"backend sequester export_realm {common_args} --service {service_id} --realm {realm.str} --output {path} -b MOCKED",
             )
-
-        async def create_webhook_service(service_key_path, authority_key_path, service_label):
-            result = await _cli_invoke_in_thread(
-                runner,
-                f"backend sequester create_service {common_args} --service-public-key {service_key_path} --authority-private-key {authority_key_path} --service-label {service_label} --service-type webhook --webhook-url http://nowhere.lost",
-            )
-            assert result.exit_code == 0
-            return result
 
         # Assert no service configured
         result = await run_list_services()
@@ -1161,13 +1160,36 @@ async def test_sequester(tmp_path, backend, coolorg, alice, postgresql_url):
         assert len(files) == 1
         assert files[0].name.endswith(f"parsec-sequester-export-realm-{realm_id.str}.sqlite")
 
-        # Create webhook based service
-        result = await create_webhook_service(
-            service_key_path, authority_key_path, "WebhookService"
+        # Create webhook service
+        result = await create_service(
+            service_key_path,
+            authority_key_path,
+            "WebhookService",
+            extra_args="--service-type webhook --webhook-url http://nowhere.lost",
         )
         services = await backend.sequester.get_organization_services(alice.organization_id)
         assert services[-1].service_type == SequesterServiceType.WEBHOOK
         assert services[-1].webhook_url
+
+        # Create webhook service but forget webook URL
+        result = await create_service(
+            service_key_path,
+            authority_key_path,
+            "BadWebhookService",
+            extra_args="--service-type webhook",
+            check_result=False,
+        )
+        assert result.exit_code == 1
+
+        # Create non-webhook service but provide a webook URL
+        result = await create_service(
+            service_key_path,
+            authority_key_path,
+            "BadStorageService",
+            extra_args="--service-type storage --webhook-url https://nowhere.lost",
+            check_result=False,
+        )
+        assert result.exit_code == 1
 
 
 @pytest.mark.trio

@@ -138,17 +138,12 @@ gen_rep!(
         sequester_services_certificates: ListOfBytes
     ],
     [
-        SequesterRejected,
+        RejectedBySequesterService,
         service_id: SequesterServiceID,
         service_label: String,
-        service_error: String
+        reason: String
     ],
-    [
-        SequesterWebhookFailed,
-        service_id: SequesterServiceID,
-        service_label: String,
-        service_error: String
-    ],
+    [Timeout],
 );
 
 #[pyclass(extends=VlobCreateRep)]
@@ -424,17 +419,12 @@ gen_rep!(
         sequester_services_certificates: ListOfBytes
     ],
     [
-        SequesterRejected,
+        RejectedBySequesterService,
         service_id: SequesterServiceID,
         service_label: String,
-        service_error: String
+        reason: String
     ],
-    [
-        SequesterWebhookFailed,
-        service_id: SequesterServiceID,
-        service_label: String,
-        service_error: String
-    ],
+    [Timeout],
 );
 
 #[pyclass(extends=VlobUpdateRep)]

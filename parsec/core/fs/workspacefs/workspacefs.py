@@ -14,9 +14,10 @@ from typing import (
     Optional,
     Awaitable,
 )
-from parsec._parsec import DateTime
-from parsec.core.core_events import CoreEvent
+import structlog
 
+from parsec._parsec import DateTime, FileManifest
+from parsec.core.core_events import CoreEvent
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
@@ -63,12 +64,13 @@ from parsec.core.fs.exceptions import (
     FSNotADirectoryError,
     FSBackendOfflineError,
     FSError,
-    VlobSequesterRejectedError,
+    FSSequesterServiceRejectedError,
 )
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 from parsec.core.fs.storage import BaseWorkspaceStorage
 
-from parsec._parsec import FileManifest
+
+logger = structlog.get_logger()
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -105,8 +107,6 @@ class WorkspaceFS:
         self.remote_devices_manager = remote_devices_manager
         self.preferred_language = preferred_language
         self.sync_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
-        self.black_list: List[EntryID] = []
-
         self.remote_loader = RemoteLoader(
             self.device,
             self.workspace_id,
@@ -703,9 +703,6 @@ class WorkspaceFS:
         Raises:
             FSError
         """
-        # Entry is blacklisted, skip it
-        if entry_id in self.black_list:
-            return
         # Make sure the corresponding realm exists
         await self._create_realm_if_needed()
 
@@ -715,8 +712,14 @@ class WorkspaceFS:
                 try:
                     manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
 
-                except VlobSequesterRejectedError as exc:
-                    # Only blacklist file manifest
+                except FSSequesterServiceRejectedError as exc:
+                    # When we try to sync an entry, the server can return a `rejected_by_sequester_service`
+                    # status (this is typically in a sequestered organization with a sequester service
+                    # that security analysis / antivirus check on the to-be-encrypted data).
+                    # In this case we just pretend the sync went fine, this way the sync monitor won't end up in a
+                    # busy loop trying to sync the this entry again and again.
+                    # On top of that, if the entry is further modified (or if the workspacefs is restarted) the sync
+                    # monitor will try again to do the sync.
                     if isinstance(exc.manifest, (FileManifest, LocalFileManifest)):
                         path_info = await self.entry_id_to_path(exc.id)
                         if path_info is None:
@@ -724,12 +727,23 @@ class WorkspaceFS:
                         else:
                             path, _ = path_info
                         self.event_bus.send(
-                            CoreEvent.FS_ENTRY_SYNC_REFUSED_BY_SEQUESTER_SERVICE,
-                            error_reason=str(exc),
+                            CoreEvent.FS_ENTRY_SYNC_REJECTED_BY_SEQUESTER_SERVICE,
+                            service_id=exc.service_id,
+                            service_label=exc.service_label,
+                            reason=exc.reason,
+                            workspace_id=self.workspace_id,
                             entry_id=entry_id,
                             file_path=path,
                         )
-                        self.black_list.append(entry_id)
+                        logger.warning(
+                            "Sync rejected by sequester service",
+                            workspace_id=self.workspace_id.str,
+                            entry_id=entry_id.str,
+                            file_path=path,
+                            service_id=exc.service_id.str,
+                            service_label=exc.service_label,
+                            exc_info=exc,
+                        )
                         return
                     else:
                         return  # Should never append

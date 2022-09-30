@@ -6,14 +6,13 @@ from typing import List, Tuple, Dict, Optional
 from parsec.api.protocol import OrganizationID, DeviceID, RealmID, VlobID
 from parsec.api.protocol.sequester import SequesterServiceID
 from parsec.backend.organization import SequesterAuthority
-from parsec.backend.sequester import SequesterDisabledError, SequesterService, SequesterServiceType
+from parsec.backend.sequester import SequesterDisabledError, BaseSequesterService
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobSequesterDisabledError,
     VlobSequesterServiceInconsistencyError,
     extract_sequestered_data_and_proceed_webhook,
 )
-from parsec.backend.postgresql.utils import Q, q_organization_internal_id
 from parsec.backend.postgresql.handler import PGHandler, retry_on_unique_violation
 from parsec.backend.postgresql.vlob_queries import (
     query_update,
@@ -24,17 +23,7 @@ from parsec.backend.postgresql.vlob_queries import (
     query_list_versions,
     query_create,
 )
-from parsec.backend.postgresql.sequester import get_sequester_authority
-
-_q_get_sequester_enabled_services = Q(
-    f"""
-    SELECT service_id, service_label, created_on, service_certificate, service_type, webhook_url
-    FROM sequester_service
-    WHERE organization={ q_organization_internal_id("$organization_id") }
-    AND disabled_on IS NULL
-    ORDER BY _id
-"""
-)
+from parsec.backend.postgresql.sequester import get_sequester_services, get_sequester_authority
 
 
 async def _check_sequestered_organization(
@@ -42,7 +31,7 @@ async def _check_sequestered_organization(
     organization_id: OrganizationID,
     sequester_authority: Optional[SequesterAuthority],
     sequester_blob: Optional[Dict[SequesterServiceID, bytes]],
-) -> Optional[Dict[SequesterServiceID, SequesterService]]:
+) -> Optional[Dict[SequesterServiceID, BaseSequesterService]]:
     if sequester_blob is None and sequester_authority is None:
         # Sequester is disable, fetching sequester services is pointless
         return None
@@ -50,27 +39,23 @@ async def _check_sequestered_organization(
     if sequester_authority is None:
         raise VlobSequesterDisabledError()
 
-    rows = await conn.fetch(*_q_get_sequester_enabled_services(organization_id=organization_id.str))
-    configured_services = {SequesterServiceID(row["service_id"]) for row in rows}
+    configured_services = {
+        s.service_id: s
+        for s in await get_sequester_services(
+            conn=conn, organization_id=organization_id, with_disabled=False
+        )
+    }
     requested_sequester_services = sequester_blob.keys() if sequester_blob is not None else set()
 
-    if configured_services != requested_sequester_services:
+    if configured_services.keys() != requested_sequester_services:
         raise VlobSequesterServiceInconsistencyError(
             sequester_authority_certificate=sequester_authority.certificate,
-            sequester_services_certificates=[row["service_certificate"] for row in rows],
+            sequester_services_certificates=[
+                s.service_certificate for s in configured_services.values()
+            ],
         )
 
-    return {
-        SequesterServiceID(row["service_id"]): SequesterService(
-            service_id=SequesterServiceID(row["service_id"]),
-            service_label=row["service_label"],
-            service_certificate=row["service_certificate"],
-            created_on=row["created_on"],
-            service_type=SequesterServiceType(row["service_type"].lower()),
-            webhook_url=row["webhook_url"],
-        )
-        for row in rows
-    }
+    return configured_services
 
 
 class PGVlobComponent(BaseVlobComponent):

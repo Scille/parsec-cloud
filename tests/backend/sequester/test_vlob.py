@@ -9,12 +9,12 @@ import urllib
 from parsec._parsec import (
     VlobCreateRepOk,
     VlobCreateRepSequesterInconsistency,
-    VlobCreateRepSequesterRejected,
-    VlobCreateRepSequesterWebhookFailed,
+    VlobCreateRepRejectedBySequesterService,
+    VlobCreateRepTimeout,
     VlobUpdateRepOk,
     VlobUpdateRepSequesterInconsistency,
-    VlobUpdateRepSequesterRejected,
-    VlobUpdateRepSequesterWebhookFailed,
+    VlobUpdateRepRejectedBySequesterService,
+    VlobUpdateRepTimeout,
 )
 from parsec.api.protocol import OrganizationID, VlobID, SequesterServiceID
 from parsec.backend.sequester import (
@@ -263,7 +263,7 @@ async def test_webhook_vlob_create_update(
 
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 @pytest.mark.trio
-async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, backend):
+async def test_webhook_errors(caplog, coolorg: OrganizationFullData, alice_ws, realm, backend):
     vlob_id = VlobID.from_hex("00000000000000000000000000000001")
     blob = b"<encrypted with workspace's key>"
     sequester_blob = b"<encrypted sequester blob>"
@@ -277,7 +277,7 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
 
         new_vlob_id = VlobID.from_hex("00000000000000000000000000000002")
 
-        # Test htttURLErro
+        # Test htttURLError
         def raise_urlerror(*args, **kwargs):
             raise urllib.error.URLError(reason="CONNECTION REFUSED")
 
@@ -290,8 +290,11 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert isinstance(rep, VlobCreateRepSequesterWebhookFailed)
-        assert rep.service_error.startswith("Webhook service failed:")
+        assert isinstance(rep, VlobCreateRepTimeout)
+        caplog.assert_occured_once(
+            f"[warning  ] Cannot reach webhook server    [parsec.backend.vlob] service_id={service.service_id.str} service_label=TestWebhookService"
+        )
+        caplog.clear()
 
         rep = await vlob_update(
             alice_ws,
@@ -301,8 +304,11 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert isinstance(rep, VlobUpdateRepSequesterWebhookFailed)
-        assert rep.service_error.startswith("Webhook service failed:")
+        assert isinstance(rep, VlobUpdateRepTimeout)
+        caplog.assert_occured_once(
+            f"[warning  ] Cannot reach webhook server    [parsec.backend.vlob] service_id={service.service_id.str} service_label=TestWebhookService"
+        )
+        caplog.clear()
 
         # Test httperror
         def raise_httperror(*args, **kwargs):
@@ -317,10 +323,11 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert isinstance(rep, VlobCreateRepSequesterWebhookFailed)
-        assert rep.service_label == service.backend_service.service_label
-        assert rep.service_id == service.service_id
-        assert rep.service_error == "405:METHOD NOT ALLOWED"
+        assert isinstance(rep, VlobCreateRepTimeout)
+        caplog.assert_occured_once(
+            f"[warning  ] Invalid HTTP status returned by webhook [parsec.backend.vlob] service_id={service.service_id.str} service_label=TestWebhookService status=405"
+        )
+        caplog.clear()
 
         rep = await vlob_update(
             alice_ws,
@@ -330,16 +337,17 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert isinstance(rep, VlobUpdateRepSequesterWebhookFailed)
-        assert rep.service_label == service.backend_service.service_label
-        assert rep.service_id == service.service_id
-        assert rep.service_error == "405:METHOD NOT ALLOWED"
+        assert isinstance(rep, VlobUpdateRepTimeout)
+        caplog.assert_occured_once(
+            f"[warning  ] Invalid HTTP status returned by webhook [parsec.backend.vlob] service_id={service.service_id.str} service_label=TestWebhookService status=405"
+        )
+        caplog.clear()
 
         # Test error from service
 
         def raise_httperror_400(*args, **kwargs):
             fp = Mock()
-            fp.read.return_value = json.dumps({"error": "some_error_from_service"})
+            fp.read.return_value = json.dumps({"reason": "some_error_from_service"})
             raise urllib.error.HTTPError(url, 400, "", None, fp)
 
         mock.urlopen.side_effect = raise_httperror_400
@@ -351,11 +359,11 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-
-        assert isinstance(rep, VlobCreateRepSequesterRejected)
+        caplog.assert_not_occured("warning")
+        assert isinstance(rep, VlobCreateRepRejectedBySequesterService)
         assert rep.service_label == service.backend_service.service_label
         assert rep.service_id == service.service_id
-        assert rep.service_error == "some_error_from_service"
+        assert rep.reason == "some_error_from_service"
 
         rep = await vlob_update(
             alice_ws,
@@ -365,10 +373,11 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert isinstance(rep, VlobUpdateRepSequesterRejected)
+        caplog.assert_not_occured("warning")
+        assert isinstance(rep, VlobUpdateRepRejectedBySequesterService)
         assert rep.service_label == service.backend_service.service_label
         assert rep.service_id == service.service_id
-        assert rep.service_error == "some_error_from_service"
+        assert rep.reason == "some_error_from_service"
 
         # Test json error
 
@@ -386,11 +395,14 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-
-        assert isinstance(rep, VlobCreateRepSequesterRejected)
+        caplog.assert_occured_once(
+            f"[warning  ] Invalid rejection reason body returned by webhook [parsec.backend.vlob] body=b'not a json' service_id={service.service_id.str} service_label=TestWebhookService"
+        )
+        caplog.clear()
+        assert isinstance(rep, VlobCreateRepRejectedBySequesterService)
         assert rep.service_label == service.backend_service.service_label
         assert rep.service_id == service.service_id
-        assert rep.service_error == "File rejected (no reason)"
+        assert rep.reason == "File rejected (no reason)"
 
         rep = await vlob_update(
             alice_ws,
@@ -400,48 +412,14 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert isinstance(rep, VlobUpdateRepSequesterRejected)
+        caplog.assert_occured_once(
+            f"[warning  ] Invalid rejection reason body returned by webhook [parsec.backend.vlob] body=b'not a json' service_id={service.service_id.str} service_label=TestWebhookService"
+        )
+        caplog.clear()
+        assert isinstance(rep, VlobUpdateRepRejectedBySequesterService)
         assert rep.service_label == service.backend_service.service_label
         assert rep.service_id == service.service_id
-        assert rep.service_error == "File rejected (no reason)"
-
-
-@customize_fixtures(coolorg_is_sequestered_organization=True)
-@pytest.mark.trio
-async def test_missing_webhook_url(coolorg: OrganizationFullData, alice_ws, realm, backend, caplog):
-    vlob_id = VlobID.from_hex("00000000000000000000000000000001")
-    blob = b"<encrypted with workspace's key>"
-    sequester_blob = b"<encrypted sequester blob>"
-
-    service_label = "BrokenService"
-    # Register service without url webhook
-    broken_service = sequester_service_factory(
-        service_label,
-        coolorg.sequester_authority,
-        service_type=SequesterServiceType.WEBHOOK,
-        webhook_url=None,
-    )
-
-    await backend.sequester.create_service(
-        organization_id=coolorg.organization_id, service=broken_service.backend_service
-    )
-
-    with patch("parsec.backend.http_utils.urllib.request"):
-        rep = await vlob_create(
-            alice_ws,
-            realm_id=realm,
-            vlob_id=vlob_id,
-            blob=blob,
-            check_rep=False,
-            sequester_blob={
-                broken_service.service_id: sequester_blob,
-            },
-        )
-        caplog.assert_occured_once(
-            f"[error    ] Webhook url is missing for service {broken_service.service_id}, {service_label}"
-        )
-
-        assert isinstance(rep, VlobCreateRepSequesterWebhookFailed)
+        assert rep.reason == "File rejected (no reason)"
 
 
 @customize_fixtures(coolorg_is_sequestered_organization=True)

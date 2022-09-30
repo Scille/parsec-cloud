@@ -1,12 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from dataclasses import dataclass, field as dataclass_field
-
-from parsec.backend.sequester import SequesterService
-from parsec._parsec import DateTime
-
 from typing import TYPE_CHECKING, List, AbstractSet, Tuple, Dict, Optional
 from collections import defaultdict
+
+from parsec._parsec import DateTime
 from parsec.api.protocol import (
     DeviceID,
     OrganizationID,
@@ -19,6 +17,7 @@ from parsec.api.protocol import (
 from parsec.backend.utils import OperationKind
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import RealmNotFoundError
+from parsec.backend.sequester import BaseSequesterService
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
@@ -182,7 +181,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         expect_sequestered_organization: bool,
         expect_active_sequester_services: AbstractSet[SequesterServiceID] = set(),
-    ) -> Dict[SequesterServiceID, SequesterService]:
+    ) -> Dict[SequesterServiceID, BaseSequesterService]:
         try:
             org = self._organization_component._organizations[organization_id]
         except KeyError:

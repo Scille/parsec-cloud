@@ -20,7 +20,12 @@ from parsec.backend.cli.utils import db_backend_options, blockstore_backend_opti
 from parsec.backend.config import BaseBlockStoreConfig
 from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.user import User
-from parsec.backend.sequester import SequesterService, SequesterServiceType
+from parsec.backend.sequester import (
+    BaseSequesterService,
+    StorageSequesterService,
+    WebhookSequesterService,
+    SequesterServiceType,
+)
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.sequester import PGPSequesterComponent
@@ -57,20 +62,22 @@ async def run_pg_db_handler(config: BackendDbConfig):
 
 
 async def _create_service(
-    config: BackendDbConfig, organization_id: OrganizationID, register_service_req: SequesterService
+    config: BackendDbConfig,
+    organization_id: OrganizationID,
+    register_service_req: BaseSequesterService,
 ) -> None:
     async with run_pg_db_handler(config) as dbh:
         sequester_component = PGPSequesterComponent(dbh)
         await sequester_component.create_service(organization_id, register_service_req)
 
 
-def _display_service(service: SequesterService) -> None:
+def _display_service(service: BaseSequesterService) -> None:
     display_service_id = click.style(service.service_id, fg="yellow")
     display_service_label = click.style(service.service_label, fg="green")
     click.echo(f"Service {display_service_label} (id: {display_service_id})")
     click.echo(f"\tCreated on: {service.created_on}")
     click.echo(f"\tService type: {service.service_type}")
-    if service.service_type == SequesterServiceType.WEBHOOK:
+    if isinstance(service, WebhookSequesterService):
         click.echo(f"\tWebhook endpoint URL {service.webhook_url}")
     if not service.is_enabled:
         click.echo(f"\tDisabled on: {service.disabled_on}")
@@ -147,7 +154,6 @@ def _get_config(db: str, db_min_connections: int, db_max_connections: int) -> Ba
 @click.option(
     "--webhook-url",
     type=str,
-    required=False,
     default=None,
     help="[Service Type webhook only] webhook url used to send encrypted service data",
 )
@@ -161,7 +167,7 @@ def create_service(
     db_max_connections: int,
     db_min_connections: int,
     service_type: str,
-    webhook_url: str,
+    webhook_url: Optional[str],
 ):
     service_type = SERVICE_TYPE_CHOICES[service_type]
     # Check service type
@@ -185,18 +191,28 @@ def create_service(
     )
     certificate = sequester_authority_sign(signing_key=authority_key, data=certif_data.dump())
 
-    # Removing the extra slash if present to avoid a useless redirection
-    if webhook_url and webhook_url.endswith("/"):
-        webhook_url = webhook_url[:-1]
-
-    sequester_service = SequesterService(
-        service_id=service_id,
-        service_label=service_label,
-        service_certificate=certificate,
-        created_on=now,
-        service_type=service_type,
-        webhook_url=webhook_url,
-    )
+    sequester_service: BaseSequesterService
+    if service_type == SequesterServiceType.STORAGE:
+        assert webhook_url is None
+        sequester_service = StorageSequesterService(
+            service_id=service_id,
+            service_label=service_label,
+            service_certificate=certificate,
+            created_on=now,
+        )
+    else:
+        assert service_type == SequesterServiceType.WEBHOOK
+        assert webhook_url
+        # Removing the extra slash if present to avoid a useless redirection
+        if webhook_url and webhook_url.endswith("/"):
+            webhook_url = webhook_url[:-1]
+        sequester_service = WebhookSequesterService(
+            service_id=service_id,
+            service_label=service_label,
+            service_certificate=certificate,
+            created_on=now,
+            webhook_url=webhook_url,
+        )
 
     db_config = _get_config(db, db_min_connections, db_max_connections)
 
