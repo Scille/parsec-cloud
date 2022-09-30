@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING, Type
 
-from parsec.api.protocol import DeviceID, BlockIDField
+from parsec.api.protocol import DeviceID
 from enum import Enum
 from parsec._parsec import (
     BlockAccess,
@@ -33,7 +33,6 @@ __all__ = [
     "UserManifest",
     "WorkspaceManifest",
     "BlockAccess",
-    "BlockIDField",
     "manifest_decrypt_and_load",
     "manifest_decrypt_verify_and_load",
     "manifest_verify_and_load",
