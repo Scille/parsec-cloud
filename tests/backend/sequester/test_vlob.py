@@ -387,10 +387,10 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             check_rep=False,
         )
 
-        assert isinstance(rep, VlobCreateRepSequesterWebhookFailed)
+        assert isinstance(rep, VlobCreateRepSequesterRejected)
         assert rep.service_label == service.backend_service.service_label
         assert rep.service_id == service.service_id
-        assert rep.service_error.startswith("Unreadable webhook response")
+        assert rep.service_error == "File rejected (no reason)"
 
         rep = await vlob_update(
             alice_ws,
@@ -400,10 +400,10 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
             sequester_blob={service.service_id: sequester_blob},
             check_rep=False,
         )
-        assert isinstance(rep, VlobUpdateRepSequesterWebhookFailed)
+        assert isinstance(rep, VlobUpdateRepSequesterRejected)
         assert rep.service_label == service.backend_service.service_label
         assert rep.service_id == service.service_id
-        assert rep.service_error.startswith("Unreadable webhook response")
+        assert rep.service_error == "File rejected (no reason)"
 
 
 @customize_fixtures(coolorg_is_sequestered_organization=True)
