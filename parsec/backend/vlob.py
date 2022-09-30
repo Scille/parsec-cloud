@@ -3,6 +3,7 @@
 import json
 from typing import List, Tuple, Dict, Optional
 
+from structlog import get_logger
 import urllib
 from parsec.backend.http_utils import http_request
 from parsec.backend.sequester import SequesterService, SequesterServiceType
@@ -157,13 +158,6 @@ class VlobSequesterWebhookServiceWebhookHTTPError(VlobError):
         VlobError.__init__(self, *args, **kwargs)
 
 
-class VlobSequesterServiceMissingWebhookError(VlobError):
-    def __init__(self, service_id, service_label, *args, **kwargs):
-        self.service_id = service_id
-        self.service_label = service_label
-        VlobError.__init__(self, *args, **kwargs)
-
-
 class VlobSequesterServiceWebhookUrlError(VlobError):
     def __init__(self, service_id, service_label, *args, **kwargs):
         self.service_id = service_id
@@ -208,8 +202,13 @@ async def extract_sequestered_data_and_proceed_webhook(
         service = services[webhook_service_id]
         sequester_data = sequester_blob[webhook_service_id]
         if not service.webhook_url:
-            raise VlobSequesterServiceMissingWebhookError(
-                service_id=service.service_id, service_label=service.service_label
+            logger = get_logger()
+            err = (
+                f"Webhook url is missing for service {service.service_id}, {service.service_label}"
+            )
+            logger.error(err)
+            raise VlobSequesterWebhookServiceWebhookHTTPError(
+                service_id=service.service_id, service_label=service.service_label, error=err
             )
 
         try:
@@ -317,10 +316,7 @@ class BaseVlobComponent:
             return VlobCreateRepSequesterRejected(
                 service_id=exc.service_id, service_label=exc.service_label, service_error=exc.error
             )
-        except (
-            VlobSequesterServiceMissingWebhookError,
-            VlobSequesterServiceWebhookUrlError,
-        ) as exc:
+        except VlobSequesterServiceWebhookUrlError as exc:
             return VlobCreateRepSequesterWebhookFailed(
                 service_id=exc.service_id,
                 service_label=exc.service_label,
@@ -443,10 +439,7 @@ class BaseVlobComponent:
             return VlobUpdateRepSequesterRejected(
                 service_id=exc.service_id, service_label=exc.service_label, service_error=exc.error
             )
-        except (
-            VlobSequesterServiceMissingWebhookError,
-            VlobSequesterServiceWebhookUrlError,
-        ) as exc:
+        except VlobSequesterServiceWebhookUrlError as exc:
             return VlobUpdateRepSequesterWebhookFailed(
                 service_id=exc.service_id,
                 service_label=exc.service_label,

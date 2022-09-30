@@ -408,14 +408,15 @@ async def test_webhook_errors(coolorg: OrganizationFullData, alice_ws, realm, ba
 
 @customize_fixtures(coolorg_is_sequestered_organization=True)
 @pytest.mark.trio
-async def test_missing_webhook_url(coolorg: OrganizationFullData, alice_ws, realm, backend):
+async def test_missing_webhook_url(coolorg: OrganizationFullData, alice_ws, realm, backend, caplog):
     vlob_id = VlobID.from_hex("00000000000000000000000000000001")
     blob = b"<encrypted with workspace's key>"
     sequester_blob = b"<encrypted sequester blob>"
 
+    service_label = "BrokenService"
     # Register service without url webhook
     broken_service = sequester_service_factory(
-        "BrokenService",
+        service_label,
         coolorg.sequester_authority,
         service_type=SequesterServiceType.WEBHOOK,
         webhook_url=None,
@@ -435,6 +436,9 @@ async def test_missing_webhook_url(coolorg: OrganizationFullData, alice_ws, real
             sequester_blob={
                 broken_service.service_id: sequester_blob,
             },
+        )
+        caplog.assert_occured_once(
+            f"[error    ] Webhook url is missing for service {broken_service.service_id}, {service_label}"
         )
 
         assert isinstance(rep, VlobCreateRepSequesterWebhookFailed)
