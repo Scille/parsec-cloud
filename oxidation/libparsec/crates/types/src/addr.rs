@@ -3,6 +3,7 @@
 use data_encoding::BASE32;
 use serde::de::{self, Deserialize, Deserializer, Visitor};
 use serde::ser::{Serialize, Serializer};
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::str::FromStr;
 use url::Url;
@@ -583,6 +584,7 @@ pub struct BackendOrganizationFileLinkAddr {
     organization_id: OrganizationID,
     workspace_id: EntryID,
     encrypted_path: Vec<u8>,
+    encrypted_timestamp: Option<Vec<u8>>,
 }
 
 impl_common_stuff!(BackendOrganizationFileLinkAddr);
@@ -593,12 +595,14 @@ impl BackendOrganizationFileLinkAddr {
         organization_id: OrganizationID,
         workspace_id: EntryID,
         encrypted_path: Vec<u8>,
+        encrypted_timestamp: Option<Vec<u8>>,
     ) -> Self {
         Self {
             base: backend_addr.base,
             organization_id,
             workspace_id,
             encrypted_path,
+            encrypted_timestamp,
         }
     }
 
@@ -610,33 +614,33 @@ impl BackendOrganizationFileLinkAddr {
             return Err("Expected `action=file_link` param value");
         }
 
-        let mut workspace_id_queries = pairs.filter(|(k, _)| k == "workspace_id");
-        let workspace_id = match workspace_id_queries.next() {
-            None => return Err("Missing mandatory `workspace_id` param"),
-            Some((_, value)) => value
-                .parse::<EntryID>()
-                .or(Err("Invalid `workspace_id` param value"))?,
-        };
-        if workspace_id_queries.next().is_some() {
-            return Err("Multiple values for param `workspace_id`");
+        let mut query_str_map = HashMap::new();
+        for (key, value) in *pairs {
+            if query_str_map.insert(key, value).is_some() {
+                return Err("Duplicated key in query string");
+            }
         }
 
-        let mut path_queries = pairs.filter(|(k, _)| k == "path");
-        let encrypted_path = match path_queries.next() {
-            None => return Err("Missing mandatory `path` param"),
-            Some((_, value)) => {
-                binary_urlsafe_decode(&value).or(Err("Invalid `path` param value"))?
-            }
+        let encrypted_timestamp = if let Some(ts) = query_str_map.get("timestamp") {
+            Some(binary_urlsafe_decode(ts)?)
+        } else {
+            None
         };
-        if path_queries.next().is_some() {
-            return Err("Multiple values for param `path`");
-        }
 
         Ok(Self {
             base,
             organization_id,
-            workspace_id,
-            encrypted_path,
+            workspace_id: query_str_map
+                .get("workspace_id")
+                .map(|v| v.parse::<EntryID>())
+                .ok_or("Missing mandatory `workspace_id` param")?
+                .map_err(|_| "Invalid `workspace_id` param value")?,
+            encrypted_path: query_str_map
+                .get("path")
+                .ok_or("Missing mandatory `path` param")
+                .map(|v| binary_urlsafe_decode(v))
+                .map(|v| v.map_err(|_| "Invalid `path` param value"))??,
+            encrypted_timestamp,
         })
     }
 
@@ -650,7 +654,16 @@ impl BackendOrganizationFileLinkAddr {
             .append_pair("action", "file_link")
             .append_pair("workspace_id", &self.workspace_id.to_string())
             .append_pair("path", &binary_urlsafe_encode(&self.encrypted_path));
+        if let Some(ts) = &self.encrypted_timestamp {
+            url.query_pairs_mut()
+                .append_pair("timestamp", &binary_urlsafe_encode(ts));
+        }
+
         url
+    }
+
+    pub fn encrypted_timestamp(&self) -> &Option<Vec<u8>> {
+        &self.encrypted_timestamp
     }
 
     pub fn organization_id(&self) -> &OrganizationID {

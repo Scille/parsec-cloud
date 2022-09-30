@@ -767,16 +767,24 @@ class WorkspaceFS:
 
         return await rec(self.workspace_id)
 
-    def generate_file_link(self, path: AnyPath) -> BackendOrganizationFileLinkAddr:
+    def generate_file_link(
+        self, path: AnyPath, timestamp: Optional[DateTime] = None
+    ) -> BackendOrganizationFileLinkAddr:
         """
         Raises: Nothing
         """
         workspace_entry = self.get_workspace_entry()
         encrypted_path = workspace_entry.key.encrypt(str(FsPath(path)).encode("utf-8"))
+        if isinstance(self, workspacefs.WorkspaceFSTimestamped):
+            timestamp = self.timestamp
+
         return BackendOrganizationFileLinkAddr.build(
             organization_addr=self.device.organization_addr,
             workspace_id=workspace_entry.id,
             encrypted_path=encrypted_path,
+            encrypted_timestamp=workspace_entry.key.encrypt(timestamp.to_rfc3339().encode("utf-8"))
+            if timestamp is not None
+            else None,
         )
 
     def decrypt_file_link_path(self, addr: BackendOrganizationFileLinkAddr) -> FsPath:
@@ -790,3 +798,19 @@ class WorkspaceFS:
             raise ValueError("Cannot decrypt path")
         # FsPath raises ValueError, decode() raises UnicodeDecodeError which is a subclass of ValueError
         return FsPath(raw_path.decode("utf-8"))
+
+    def decrypt_timestamp(self, addr: BackendOrganizationFileLinkAddr) -> Optional[DateTime]:
+        """
+        Raises: ValueError
+        """
+        workspace_entry = self.get_workspace_entry()
+        try:
+            raw_ts = (
+                workspace_entry.key.decrypt(addr.encrypted_timestamp)
+                if addr.encrypted_timestamp is not None
+                else None
+            )
+        except CryptoError:
+            raise ValueError("Cannot decrypt timestamp")
+        # DateTime.from_rfc3339 raise a `ValueError` if the timestamp is invalid
+        return DateTime.from_rfc3339(raw_ts.decode("utf-8")) if raw_ts is not None else None

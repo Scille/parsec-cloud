@@ -17,7 +17,7 @@ from parsec.api.data.manifest import WorkspaceEntry
 from parsec.core.core_events import CoreEvent
 from parsec.core.logged_core import LoggedCore
 from parsec.core.types import UserInfo, BackendOrganizationFileLinkAddr
-from parsec.core.fs import FsPath
+from parsec.core.fs import FsPath, WorkspaceFSTimestamped
 from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
@@ -423,11 +423,18 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             raise GoToFileLinkBadWorkspaceIDError from exc
         try:
             path = workspace.decrypt_file_link_path(addr)
+            ts = workspace.decrypt_timestamp(addr)
         except ValueError as exc:
             raise GoToFileLinkPathDecryptionError from exc
 
         self.show_mount_widget()
-        self.mount_widget.show_files_widget(workspace, path, selected=True, mount_it=mount)
+        self.mount_widget.show_files_widget(
+            WorkspaceFSTimestamped(workspace, ts) if ts is not None else workspace,
+            path,
+            selected=True,
+            mount_it=mount,
+            timestamp=ts,
+        )
 
     def show_mount_widget(self, user_info: Optional[UserInfo] = None) -> None:
         self.clear_widgets()

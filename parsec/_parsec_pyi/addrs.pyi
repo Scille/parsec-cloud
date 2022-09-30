@@ -1,5 +1,12 @@
 from typing import Any, Optional, Union
-from parsec._parsec import OrganizationID, VerifyKey, EntryID, InvitationToken, InvitationType
+from parsec._parsec import (
+    DateTime,
+    OrganizationID,
+    VerifyKey,
+    EntryID,
+    InvitationToken,
+    InvitationType,
+)
 
 class BackendAddr:
     def __init__(self, hostname: str, port: Optional[int], use_ssl: bool) -> None: ...
@@ -135,6 +142,7 @@ class BackendOrganizationFileLinkAddr:
         hostname: str,
         port: Optional[int],
         use_ssl: bool = True,
+        encrypted_timestamp: Optional[bytes] = None,
     ) -> None: ...
     def __repr__(self) -> str: ...
     def __eq__(self, other: BackendOrganizationBootstrapAddr) -> bool: ...
@@ -158,6 +166,8 @@ class BackendOrganizationFileLinkAddr:
     def workspace_id(self) -> EntryID: ...
     @property
     def encrypted_path(self) -> bytes: ...
+    @property
+    def encrypted_timestamp(self) -> Optional[bytes]: ...
     def get_backend_addr(self) -> BackendAddr: ...
     def to_url(self) -> str: ...
     def to_http_redirection_url(self) -> str: ...
@@ -171,6 +181,7 @@ class BackendOrganizationFileLinkAddr:
         organization_addr: BackendOrganizationAddr,
         workspace_id: EntryID,
         encrypted_path: bytes,
+        encrypted_timestamp: Optional[bytes] = None,
     ) -> BackendOrganizationFileLinkAddr: ...
 
 class BackendInvitationAddr:

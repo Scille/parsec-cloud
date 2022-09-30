@@ -92,6 +92,7 @@ class FileTable(QTableWidget):
     cut_clicked = pyqtSignal()
     copy_clicked = pyqtSignal()
     file_path_clicked = pyqtSignal()
+    file_path_timestamp_clicked = pyqtSignal()
     open_current_dir_clicked = pyqtSignal()
     new_folder_clicked = pyqtSignal()
     sort_clicked = pyqtSignal(Column)
@@ -103,6 +104,7 @@ class FileTable(QTableWidget):
         self.previous_selection = []
         self.setColumnCount(len(Column))
         self.config = None
+        self.is_timestamped_workspace = False
 
         h_header = self.horizontalHeader()
         h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -268,8 +270,18 @@ class FileTable(QTableWidget):
             action.triggered.connect(self.show_history_clicked.emit)
             action = menu.addAction(_("ACTION_FILE_MENU_SHOW_FILE_STATUS"))
             action.triggered.connect(self.show_status_clicked.emit)
-            action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
-            action.triggered.connect(self.file_path_clicked.emit)
+
+            # Show the option to create a timestamped share link to the user is
+            # useless here because it has the same effect as creating a regular file link
+            if not self.is_timestamped_workspace:
+                action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
+                action.triggered.connect(self.file_path_clicked.emit)
+                action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK_TIMESTAMP"))
+                action.triggered.connect(self.file_path_timestamp_clicked.emit)
+            else:
+                action = menu.addAction(_("ACTION_FILE_MENU_GET_FILE_LINK"))
+                action.triggered.connect(self.file_path_clicked.emit)
+
         menu.exec_(global_pos)
 
     def item_double_clicked(self, row, column):

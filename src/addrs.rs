@@ -440,11 +440,12 @@ crate::binding_utils::gen_proto!(BackendOrganizationFileLinkAddr, __hash__);
 #[pymethods]
 impl BackendOrganizationFileLinkAddr {
     #[new]
-    #[args(py_kwargs = "**")]
+    #[args(encrypted_timestamp = "None", py_kwargs = "**")]
     fn new(
         organization_id: OrganizationID,
         workspace_id: EntryID,
         encrypted_path: Vec<u8>,
+        encrypted_timestamp: Option<Vec<u8>>,
         py_kwargs: Option<&PyDict>,
     ) -> PyResult<Self> {
         let addr = match py_kwargs {
@@ -470,8 +471,17 @@ impl BackendOrganizationFileLinkAddr {
                 organization_id.0,
                 workspace_id.0,
                 encrypted_path,
+                encrypted_timestamp,
             ),
         ))
+    }
+
+    #[getter]
+    fn encrypted_timestamp<'py>(&self, python: Python<'py>) -> Option<&'py PyBytes> {
+        self.0
+            .encrypted_timestamp()
+            .as_ref()
+            .map(|v| PyBytes::new(python, v))
     }
 
     #[getter]
@@ -555,11 +565,13 @@ impl BackendOrganizationFileLinkAddr {
     }
 
     #[classmethod]
+    #[args(encrypted_timestamp = "None")]
     fn build(
         _cls: &PyType,
         organization_addr: BackendOrganizationAddr,
         workspace_id: EntryID,
         encrypted_path: Vec<u8>,
+        encrypted_timestamp: Option<Vec<u8>>,
     ) -> PyResult<Self> {
         Ok(Self(
             libparsec::types::BackendOrganizationFileLinkAddr::new(
@@ -567,6 +579,7 @@ impl BackendOrganizationFileLinkAddr {
                 organization_addr.organization_id().unwrap().0,
                 workspace_id.0,
                 encrypted_path,
+                encrypted_timestamp,
             ),
         ))
     }

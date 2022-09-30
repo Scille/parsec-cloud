@@ -646,6 +646,9 @@ msgstr "Voir l'état"
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Lien vers ce fichier"
 
+msgid "ACTION_FILE_MENU_GET_FILE_LINK_TIMESTAMP"
+msgstr "Lien vers ce fichier à cette version"
+
 msgid "TEXT_FILE_TREE_PARENT_FOLDER"
 msgstr "Répertoire parent"
 
