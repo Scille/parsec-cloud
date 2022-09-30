@@ -12,6 +12,7 @@ from parsec._parsec import (
     BlockCreateRepAlreadyExists,
     BlockCreateRepInMaintenance,
     BlockCreateRepNotAllowed,
+    BlockCreateRepTimeout,
     BlockReadRepOk,
     BlockReadRepNotFound,
     BlockReadRepInMaintenance,
@@ -28,6 +29,7 @@ from parsec._parsec import (
     VlobCreateRepNotAllowed,
     VlobCreateRepRequireGreaterTimestamp,
     VlobCreateRepSequesterRejected,
+    VlobCreateRepSequesterWebhookFailed,
     VlobReadRepOk,
     VlobReadRepNotAllowed,
     VlobReadRepBadEncryptionRevision,
@@ -43,12 +45,12 @@ from parsec._parsec import (
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
     VlobUpdateRepSequesterRejected,
+    VlobUpdateRepSequesterWebhookFailed,
     VlobListVersionsRepOk,
     VlobListVersionsRepInMaintenance,
     VlobListVersionsRepNotAllowed,
     VlobListVersionsRepNotFound,
 )
-
 from parsec.crypto import HashDigest, CryptoError, VerifyKey
 from parsec.utils import open_service_nursery
 from parsec.api.protocol import UserID, DeviceID, RealmID, RealmRole, VlobID, SequesterServiceID
@@ -86,6 +88,7 @@ from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFoundBadVersion,
     FSRemoteBlockNotFound,
     FSBackendOfflineError,
+    FSServerUploadError,
     FSWorkspaceInMaintenance,
     FSBadEncryptionRevision,
     FSWorkspaceNoReadAccess,
@@ -564,6 +567,8 @@ class RemoteLoader(UserRemoteLoader):
             raise FSWorkspaceNoWriteAccess("Cannot upload block: no write access")
         elif isinstance(rep, BlockCreateRepInMaintenance):
             raise FSWorkspaceInMaintenance("Cannot upload block while the workspace in maintenance")
+        elif isinstance(rep, BlockCreateRepTimeout):
+            raise FSServerUploadError("Fail to upload blocks to storage")
         elif not isinstance(rep, BlockCreateRepOk):
             raise FSError(f"Cannot upload block: {rep}")
 
@@ -859,6 +864,8 @@ class RemoteLoader(UserRemoteLoader):
             )
         elif isinstance(rep, VlobCreateRepSequesterRejected):
             raise VlobSequesterRejectedError(id=entry_id)
+        elif isinstance(rep, VlobCreateRepSequesterWebhookFailed):
+            raise FSServerUploadError("Server webhook failed")
         elif not isinstance(rep, VlobCreateRepOk):
             raise FSError(f"Cannot create vlob {entry_id.str}: {rep}")
 
@@ -911,6 +918,8 @@ class RemoteLoader(UserRemoteLoader):
             )
         elif isinstance(rep, VlobUpdateRepSequesterRejected):
             raise VlobSequesterRejectedError(entry_id)
+        elif isinstance(rep, VlobUpdateRepSequesterWebhookFailed):
+            raise FSServerUploadError("Server webhook failed")
         elif not isinstance(rep, VlobUpdateRepOk):
             raise FSError(f"Cannot update vlob {entry_id.str}: {rep}")
 

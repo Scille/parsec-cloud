@@ -15,6 +15,7 @@ from parsec._parsec import (
 )
 from parsec.api.protocol import RealmID
 from parsec.core.core_events import CoreEvent
+from parsec.core.fs.exceptions import FSServerUploadError
 from parsec.core.types import EntryID, WorkspaceRole
 from parsec.core.fs import (
     UserFS,
@@ -40,6 +41,7 @@ MIN_WAIT = 1
 MAX_WAIT = 60
 MAINTENANCE_MIN_WAIT = 30
 TICK_CRASH_COOLDOWN = 5
+UPLOAD_ERROR_COOLDOWN = 30
 
 
 async def freeze_sync_monitor_mockpoint():
@@ -410,17 +412,22 @@ async def monitor_sync(user_fs: UserFS, event_bus: EventBus, task_status):
             return await getattr(ctx, meth)()
         except BackendNotAvailable:
             raise
+        except FSServerUploadError as exc:
+            logger.warning(f"Synchronization upload as failed due to a server error: {exc}")
+            delay = UPLOAD_ERROR_COOLDOWN
         except Exception:
             logger.exception("Sync monitor has crashed", workspace_id=ctx.id)
-            # Reset sync context which is now in an undefined state
-            ctxs.discard(ctx.id)
-            ctx = ctxs.get(ctx.id)
-            if ctx:
-                # Add small cooldown just to be sure not end up in a crazy busy error loop
-                ctx.due_time = current_time() + TICK_CRASH_COOLDOWN
-                return ctx.due_time
-            else:
-                return math.inf
+            delay = TICK_CRASH_COOLDOWN
+        # Exception occured
+        # Reset sync context which is now in an undefined state
+        ctxs.discard(ctx.id)
+        ctx = ctxs.get(ctx.id)
+        if ctx:
+            # Add small cooldown just to be sure not end up in a crazy busy error loop
+            ctx.due_time = current_time() + delay
+            return ctx.due_time
+        else:
+            return math.inf
 
     with event_bus.connect_in_context(
         (CoreEvent.FS_ENTRY_UPDATED, _on_entry_updated),

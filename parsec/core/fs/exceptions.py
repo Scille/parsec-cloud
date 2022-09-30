@@ -246,11 +246,15 @@ class FSBackendOfflineError(FSRemoteOperationError):
     NTSTATUS = ntstatus.STATUS_HOST_UNREACHABLE
 
 
-class VlobSequesterRejectedError(Exception):
+class VlobSequesterRejectedError(FSRemoteOperationError):
     def __init__(self, id: EntryID, manifest: Optional[AnyRemoteManifest] = None):
         super().__init__(id)
         self.id = id
         self.manifest = manifest
+
+
+class FSServerUploadError(FSRemoteOperationError):
+    pass
 
 
 class FSRemoteManifestNotFound(FSRemoteOperationError):
