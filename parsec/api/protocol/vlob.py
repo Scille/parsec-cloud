@@ -53,6 +53,7 @@ vlob_read_serializer = ApiCommandSerializer(VlobReadReq, VlobReadRep)
 vlob_update_serializer = ApiCommandSerializer(VlobUpdateReq, VlobUpdateRep)
 vlob_poll_changes_serializer = ApiCommandSerializer(VlobPollChangesReq, VlobPollChangesRep)
 vlob_list_versions_serializer = ApiCommandSerializer(VlobListVersionsReq, VlobListVersionsRep)
+
 # Maintenance stuff
 vlob_maintenance_get_reencryption_batch_serializer = ApiCommandSerializer(
     VlobMaintenanceGetReencryptionBatchReq, VlobMaintenanceGetReencryptionBatchRep

@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 from dataclasses import dataclass, field as dataclass_field
-from parsec._parsec import DateTime
 from typing import TYPE_CHECKING, List, AbstractSet, Tuple, Dict, Optional
 from collections import defaultdict
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import (
     DeviceID,
     OrganizationID,
@@ -17,6 +17,7 @@ from parsec.api.protocol import (
 from parsec.backend.utils import OperationKind
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.realm import RealmNotFoundError
+from parsec.backend.sequester import BaseSequesterService
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
@@ -30,7 +31,9 @@ from parsec.backend.vlob import (
     VlobRequireGreaterTimestampError,
     VlobSequesterDisabledError,
     VlobSequesterServiceInconsistencyError,
+    extract_sequestered_data_and_proceed_webhook,
 )
+
 
 if TYPE_CHECKING:
     from parsec.backend.memory.realm import Realm, MemoryRealmComponent
@@ -178,7 +181,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         expect_sequestered_organization: bool,
         expect_active_sequester_services: AbstractSet[SequesterServiceID] = set(),
-    ):
+    ) -> Dict[SequesterServiceID, BaseSequesterService]:
         try:
             org = self._organization_component._organizations[organization_id]
         except KeyError:
@@ -188,6 +191,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             # Regular organization
             if expect_sequestered_organization:
                 raise VlobSequesterDisabledError()
+            return {}
 
         else:
             # Sequestered organization
@@ -200,6 +204,38 @@ class MemoryVlobComponent(BaseVlobComponent):
                     sequester_authority_certificate=org.sequester_authority.certificate,
                     sequester_services_certificates=[s.service_certificate for s in services],
                 )
+            return {s.service_id: s for s in services}
+
+    async def _extract_sequestered_data_and_proceed_webhook(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        encryption_revision: int,
+        vlob_id: VlobID,
+        timestamp: DateTime,
+        sequester_blob: Optional[Dict[SequesterServiceID, bytes]] = None,
+    ) -> Optional[Dict[SequesterServiceID, bytes]]:
+        if sequester_blob is None:
+            self._check_sequestered_organization(
+                organization_id=organization_id, expect_sequestered_organization=False
+            )
+            sequestered_data = None
+        else:
+            services = self._check_sequestered_organization(
+                organization_id=organization_id,
+                expect_sequestered_organization=True,
+                expect_active_sequester_services=sequester_blob.keys(),
+            )
+            sequestered_data = await extract_sequestered_data_and_proceed_webhook(
+                services,
+                organization_id,
+                author,
+                encryption_revision,
+                vlob_id,
+                timestamp,
+                sequester_blob,
+            )
+        return sequestered_data
 
     def _check_realm_read_access(
         self,
@@ -387,18 +423,18 @@ class MemoryVlobComponent(BaseVlobComponent):
         self._check_realm_write_access(
             organization_id, realm_id, author.user_id, encryption_revision, timestamp
         )
-        if sequester_blob is None:
-            self._check_sequestered_organization(
-                organization_id=organization_id, expect_sequestered_organization=False
-            )
-            sequestered_data = None
-        else:
-            self._check_sequestered_organization(
-                organization_id=organization_id,
-                expect_sequestered_organization=True,
-                expect_active_sequester_services=sequester_blob.keys(),
-            )
-            sequestered_data = [sequester_blob]
+
+        extracted_sequestered_data = await self._extract_sequestered_data_and_proceed_webhook(
+            organization_id=organization_id,
+            author=author,
+            encryption_revision=encryption_revision,
+            vlob_id=vlob_id,
+            timestamp=timestamp,
+            sequester_blob=sequester_blob,
+        )
+        sequestered_data = None
+        if extracted_sequestered_data is not None:
+            sequestered_data = [extracted_sequestered_data]
 
         key = (organization_id, vlob_id)
         if key in self._vlobs:
@@ -459,25 +495,25 @@ class MemoryVlobComponent(BaseVlobComponent):
         self._check_realm_write_access(
             organization_id, vlob.realm_id, author.user_id, encryption_revision, timestamp
         )
-        if sequester_blob is None:
-            self._check_sequestered_organization(
-                organization_id=organization_id, expect_sequestered_organization=False
-            )
-        else:
-            self._check_sequestered_organization(
-                organization_id=organization_id,
-                expect_sequestered_organization=True,
-                expect_active_sequester_services=sequester_blob.keys(),
-            )
+
+        sequestered_data = await self._extract_sequestered_data_and_proceed_webhook(
+            organization_id=organization_id,
+            author=author,
+            encryption_revision=encryption_revision,
+            vlob_id=vlob_id,
+            timestamp=timestamp,
+            sequester_blob=sequester_blob,
+        )
 
         if version - 1 != vlob.current_version:
             raise VlobVersionError()
         if timestamp < vlob.data[vlob.current_version - 1][2]:
             raise VlobRequireGreaterTimestampError(vlob.data[vlob.current_version - 1][2])
+
         vlob.data.append((blob, author, timestamp))
-        if sequester_blob is not None:  # /!\ We want to accept empty dicts !
+        if sequestered_data is not None:  # /!\ We want to accept empty dicts !
             assert vlob.sequestered_data is not None
-            vlob.sequestered_data.append(sequester_blob)
+            vlob.sequestered_data.append(sequestered_data)
 
         await self._update_changes(
             organization_id, author, vlob.realm_id, vlob_id, timestamp, version

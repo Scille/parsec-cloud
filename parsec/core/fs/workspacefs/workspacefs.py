@@ -3,9 +3,21 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import List, Dict, Tuple, AsyncIterator, cast, Pattern, Callable, Optional, Awaitable
-from parsec._parsec import DateTime
+from typing import (
+    List,
+    Dict,
+    Tuple,
+    AsyncIterator,
+    cast,
+    Pattern,
+    Callable,
+    Optional,
+    Awaitable,
+)
+import structlog
 
+from parsec._parsec import DateTime, FileManifest
+from parsec.core.core_events import CoreEvent
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
 from parsec.event_bus import EventBus
@@ -52,9 +64,13 @@ from parsec.core.fs.exceptions import (
     FSNotADirectoryError,
     FSBackendOfflineError,
     FSError,
+    FSSequesterServiceRejectedError,
 )
 from parsec.core.fs.workspacefs.workspacefile import WorkspaceFile
 from parsec.core.fs.storage import BaseWorkspaceStorage
+
+
+logger = structlog.get_logger()
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -91,7 +107,6 @@ class WorkspaceFS:
         self.remote_devices_manager = remote_devices_manager
         self.preferred_language = preferred_language
         self.sync_locks: Dict[EntryID, trio.Lock] = defaultdict(trio.Lock)
-
         self.remote_loader = RemoteLoader(
             self.device,
             self.workspace_id,
@@ -584,6 +599,25 @@ class WorkspaceFS:
         except FSLocalMissError:
             pass
 
+    async def entry_id_to_path(
+        self, needle_entry_id: EntryID
+    ) -> Optional[Tuple[FsPath, Dict[str, object]]]:
+        async def _recursive_search(
+            path: FsPath,
+        ) -> Optional[Tuple[FsPath, Dict[str, object]]]:
+            entry_info = await self.path_info(path=path)
+            if entry_info["id"] == needle_entry_id:
+                return path, entry_info
+            if entry_info["type"] == "folder":
+                children = cast(List[str], entry_info["children"])
+                for child_name in children:
+                    result = await _recursive_search(path=path / child_name)
+                    if result:
+                        return result
+            return None
+
+        return await _recursive_search(path=FsPath("/"))
+
     async def _sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True
     ) -> AnyRemoteManifest:
@@ -675,8 +709,44 @@ class WorkspaceFS:
         # Sync parent first
         try:
             async with self.sync_locks[entry_id]:
-                manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
+                try:
+                    manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
 
+                except FSSequesterServiceRejectedError as exc:
+                    # When we try to sync an entry, the server can return a `rejected_by_sequester_service`
+                    # status (this is typically in a sequestered organization with a sequester service
+                    # that security analysis / antivirus check on the to-be-encrypted data).
+                    # In this case we just pretend the sync went fine, this way the sync monitor won't end up in a
+                    # busy loop trying to sync the this entry again and again.
+                    # On top of that, if the entry is further modified (or if the workspacefs is restarted) the sync
+                    # monitor will try again to do the sync.
+                    if isinstance(exc.manifest, (FileManifest, LocalFileManifest)):
+                        path_info = await self.entry_id_to_path(exc.id)
+                        if path_info is None:
+                            path = FsPath("/")
+                        else:
+                            path, _ = path_info
+                        self.event_bus.send(
+                            CoreEvent.FS_ENTRY_SYNC_REJECTED_BY_SEQUESTER_SERVICE,
+                            service_id=exc.service_id,
+                            service_label=exc.service_label,
+                            reason=exc.reason,
+                            workspace_id=self.workspace_id,
+                            entry_id=entry_id,
+                            file_path=path,
+                        )
+                        logger.warning(
+                            "Sync rejected by sequester service",
+                            workspace_id=self.workspace_id.str,
+                            entry_id=entry_id.str,
+                            file_path=path,
+                            service_id=exc.service_id.str,
+                            service_label=exc.service_label,
+                            exc_info=exc,
+                        )
+                        return
+                    else:
+                        return  # Should never append
         # Nothing to synchronize if the manifest does not exist locally
         except FSNoSynchronizationRequired:
             return

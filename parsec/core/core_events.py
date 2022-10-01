@@ -22,6 +22,8 @@ class CoreEvent(Enum):
     FS_ENTRY_UPDATED = "fs.entry.updated"
     FS_ENTRY_FILE_CONFLICT_RESOLVED = "fs.entry.file_conflict_resolved"
     FS_WORKSPACE_CREATED = "fs.workspace.created"
+    FS_ENTRY_SYNC_REJECTED_BY_SEQUESTER_SERVICE = "fs.entry.sync_refused_by_sequester_service"
+    USERFS_SYNC_REJECTED_BY_SEQUESTER_SERVICE = "userfs.sync_refused_by_sequester_service"
     # Gui
     GUI_CONFIG_CHANGED = "gui.config.changed"
     # Mountpoint

@@ -1,7 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+import json
 from typing import List, Tuple, Dict, Optional
+from structlog import get_logger
+import urllib
 
+from parsec.backend.http_utils import http_request
+from parsec.backend.sequester import (
+    BaseSequesterService,
+    StorageSequesterService,
+    WebhookSequesterService,
+)
 from parsec._parsec import (
     DateTime,
     VlobCreateReq,
@@ -15,6 +24,8 @@ from parsec._parsec import (
     VlobCreateRepBadTimestamp,
     VlobCreateRepNotASequesteredOrganization,
     VlobCreateRepSequesterInconsistency,
+    VlobCreateRepRejectedBySequesterService,
+    VlobCreateRepTimeout,
     VlobReadReq,
     VlobReadRep,
     VlobReadRepOk,
@@ -35,6 +46,8 @@ from parsec._parsec import (
     VlobUpdateRepBadTimestamp,
     VlobUpdateRepNotASequesteredOrganization,
     VlobUpdateRepSequesterInconsistency,
+    VlobUpdateRepRejectedBySequesterService,
+    VlobUpdateRepTimeout,
     VlobPollChangesReq,
     VlobPollChangesRep,
     VlobPollChangesRepOk,
@@ -131,6 +144,19 @@ class VlobSequesterDisabledError(VlobError):
     pass
 
 
+class VlobSequesterWebhookRejectionError(VlobError):
+    def __init__(self, service_id: SequesterServiceID, service_label: str, reason: str):
+        self.service_id = service_id
+        self.service_label = service_label
+        self.reason = reason
+
+
+class VlobSequesterWebhookUnavailableError(VlobError):
+    def __init__(self, service_id: SequesterServiceID, service_label: str):
+        self.service_id = service_id
+        self.service_label = service_label
+
+
 class VlobSequesterServiceInconsistencyError(VlobError):
     def __init__(
         self,
@@ -139,6 +165,89 @@ class VlobSequesterServiceInconsistencyError(VlobError):
     ):
         self.sequester_authority_certificate = sequester_authority_certificate
         self.sequester_services_certificates = sequester_services_certificates
+
+
+async def extract_sequestered_data_and_proceed_webhook(
+    services: Dict[SequesterServiceID, BaseSequesterService],
+    organization_id: OrganizationID,
+    author: DeviceID,
+    encryption_revision: int,
+    vlob_id: VlobID,
+    timestamp: DateTime,
+    sequester_blob: Dict[SequesterServiceID, bytes],
+) -> Dict[SequesterServiceID, bytes]:
+
+    logger = get_logger()
+    # Split storage services and webhook services
+    storage_services = [
+        service for service in services.values() if isinstance(service, StorageSequesterService)
+    ]
+    webhook_services = [
+        service for service in services.values() if isinstance(service, WebhookSequesterService)
+    ]
+
+    # Proceed webhook service before storage (garantee data are not stored if they are rejected)
+    for service in webhook_services:
+        sequester_data = sequester_blob[service.service_id]
+        try:
+            await http_request(
+                url=f"{service.webhook_url}/{organization_id.str}",
+                method="POST",
+                data=sequester_data,
+            )
+        except urllib.error.HTTPError as exc:
+            if exc.code == 400:
+                raw_body = exc.read()
+                try:
+                    body = json.loads(raw_body)
+                    if not isinstance(body, dict) or not isinstance(body.get("reason"), str):
+                        raise ValueError
+                    reason = body["reason"]
+                except (json.JSONDecodeError, ValueError):
+                    logger.warning(
+                        "Invalid rejection reason body returned by webhook",
+                        service_id=service.service_id.str,
+                        service_label=service.service_label,
+                        body=raw_body,
+                    )
+                    reason = "File rejected (no reason)"
+
+                raise VlobSequesterWebhookRejectionError(
+                    service_id=service.service_id,
+                    service_label=service.service_label,
+                    reason=reason,
+                )
+
+            else:
+                logger.warning(
+                    "Invalid HTTP status returned by webhook",
+                    service_id=service.service_id.str,
+                    service_label=service.service_label,
+                    status=exc.code,
+                    exc_info=exc,
+                )
+                raise VlobSequesterWebhookUnavailableError(
+                    service_id=service.service_id,
+                    service_label=service.service_label,
+                ) from exc
+
+        except urllib.error.URLError as exc:
+            logger.warning(
+                "Cannot reach webhook server",
+                service_id=service.service_id.str,
+                service_label=service.service_label,
+                exc_info=exc,
+            )
+            raise VlobSequesterWebhookUnavailableError(
+                service_id=service.service_id, service_label=service.service_label
+            ) from exc
+
+    # Get sequester data for storage
+    sequestered_data = {
+        service.service_id: sequester_blob[service.service_id] for service in storage_services
+    }
+
+    return sequestered_data
 
 
 class BaseVlobComponent:
@@ -199,6 +308,14 @@ class BaseVlobComponent:
                 sequester_authority_certificate=exc.sequester_authority_certificate,
                 sequester_services_certificates=exc.sequester_services_certificates,
             )
+
+        except VlobSequesterWebhookRejectionError as exc:
+            return VlobCreateRepRejectedBySequesterService(
+                service_id=exc.service_id, service_label=exc.service_label, reason=exc.reason
+            )
+
+        except VlobSequesterWebhookUnavailableError:
+            return VlobCreateRepTimeout()
 
         return VlobCreateRepOk()
 
@@ -308,6 +425,14 @@ class BaseVlobComponent:
                 sequester_authority_certificate=exc.sequester_authority_certificate,
                 sequester_services_certificates=exc.sequester_services_certificates,
             )
+
+        except VlobSequesterWebhookRejectionError as exc:
+            return VlobUpdateRepRejectedBySequesterService(
+                service_id=exc.service_id, service_label=exc.service_label, reason=exc.reason
+            )
+
+        except VlobSequesterWebhookUnavailableError:
+            return VlobUpdateRepTimeout()
 
         return VlobUpdateRepOk()
 

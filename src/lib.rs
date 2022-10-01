@@ -363,6 +363,8 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::VlobCreateRepBadTimestamp>()?;
     m.add_class::<protocol::VlobCreateRepNotASequesteredOrganization>()?;
     m.add_class::<protocol::VlobCreateRepSequesterInconsistency>()?;
+    m.add_class::<protocol::VlobCreateRepRejectedBySequesterService>()?;
+    m.add_class::<protocol::VlobCreateRepTimeout>()?;
     m.add_class::<protocol::VlobCreateRepUnknownStatus>()?;
     m.add_class::<protocol::VlobReadReq>()?;
     m.add_class::<protocol::VlobReadRep>()?;
@@ -386,6 +388,8 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::VlobUpdateRepBadTimestamp>()?;
     m.add_class::<protocol::VlobUpdateRepNotASequesteredOrganization>()?;
     m.add_class::<protocol::VlobUpdateRepSequesterInconsistency>()?;
+    m.add_class::<protocol::VlobUpdateRepRejectedBySequesterService>()?;
+    m.add_class::<protocol::VlobUpdateRepTimeout>()?;
     m.add_class::<protocol::VlobUpdateRepUnknownStatus>()?;
     m.add_class::<protocol::VlobPollChangesReq>()?;
     m.add_class::<protocol::VlobPollChangesRep>()?;

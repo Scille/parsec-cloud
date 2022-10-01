@@ -13,14 +13,15 @@ Define all the FSError classes, using the following hierarchy:
 """
 from __future__ import annotations
 
+from typing import Optional, Union, TYPE_CHECKING
 import os
 import errno
 import io
 
+from parsec._parsec import SequesterServiceID
 from parsec.core.types import EntryID, ChunkID
 from parsec.core.fs.utils import ntstatus
-
-from typing import Optional, Union, TYPE_CHECKING
+from parsec.api.data import AnyRemoteManifest
 
 # Avoid cyclic imports:
 # - `FsPath` methods might raise an `FSNameTooLongError` which inherits from `FsOperationError`
@@ -244,6 +245,27 @@ class FSNameTooLongError(FSLocalOperationError):
 class FSBackendOfflineError(FSRemoteOperationError):
     ERRNO = errno.EHOSTUNREACH
     NTSTATUS = ntstatus.STATUS_HOST_UNREACHABLE
+
+
+class FSSequesterServiceRejectedError(FSRemoteOperationError):
+    def __init__(
+        self,
+        id: EntryID,
+        service_id: SequesterServiceID,
+        service_label: str,
+        reason: str,
+        manifest: Optional[AnyRemoteManifest] = None,
+    ):
+        super().__init__(id)
+        self.id = id
+        self.service_id = service_id
+        self.service_label = service_label
+        self.reason = reason
+        self.manifest = manifest
+
+
+class FSServerUploadTemporarilyUnavailableError(FSRemoteOperationError):
+    pass
 
 
 class FSRemoteManifestNotFound(FSRemoteOperationError):

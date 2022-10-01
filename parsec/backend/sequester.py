@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+from enum import Enum
 from typing import Optional, List, Tuple
 import attr
-from parsec._parsec import DateTime
 
+from parsec._parsec import DateTime
 from parsec.api.protocol import OrganizationID, SequesterServiceID, RealmID, VlobID
 
 
@@ -51,8 +52,22 @@ class SequesterServiceAlreadyEnabledError(SequesterError):
     pass
 
 
-@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
-class SequesterService:
+class SequesterWrongServiceTypeError(SequesterError):
+    pass
+
+
+class SequesterServiceType(Enum):
+    STORAGE = "storage"
+    WEBHOOK = "webhook"
+
+
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True, kw_only=True)
+class BaseSequesterService:
+    # Overwritten by child classes
+    @property
+    def service_type(self) -> SequesterServiceType:
+        raise NotImplementedError()
+
     service_id: SequesterServiceID
     service_label: str
     service_certificate: bytes
@@ -70,11 +85,27 @@ class SequesterService:
         return self.disabled_on is None
 
 
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True, kw_only=True)
+class StorageSequesterService(BaseSequesterService):
+    @property
+    def service_type(self) -> SequesterServiceType:
+        return SequesterServiceType.STORAGE
+
+
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True, kw_only=True)
+class WebhookSequesterService(BaseSequesterService):
+    @property
+    def service_type(self) -> SequesterServiceType:
+        return SequesterServiceType.WEBHOOK
+
+    webhook_url: str
+
+
 class BaseSequesterComponent:
     async def create_service(
         self,
         organization_id: OrganizationID,
-        service: SequesterService,
+        service: BaseSequesterService,
         now: Optional[DateTime] = None,
     ) -> None:
         """
@@ -117,7 +148,7 @@ class BaseSequesterComponent:
 
     async def get_service(
         self, organization_id: OrganizationID, service_id: SequesterServiceID
-    ) -> SequesterService:
+    ) -> BaseSequesterService:
         """
         Raises:
             SequesterDisabledError
@@ -128,7 +159,7 @@ class BaseSequesterComponent:
 
     async def get_organization_services(
         self, organization_id: OrganizationID
-    ) -> List[SequesterService]:
+    ) -> List[BaseSequesterService]:
         """
         Raises:
             SequesterDisabledError
@@ -150,5 +181,6 @@ class BaseSequesterComponent:
             SequesterDisabledError
             SequesterOrganizationNotFoundError
             SequesterServiceNotFoundError
+            SequesterWrongServiceTypeError
         """
         raise NotImplementedError

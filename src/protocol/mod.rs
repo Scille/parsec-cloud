@@ -31,6 +31,10 @@ macro_rules! rs_to_py {
     ($v: ident, Reason, $py: ident) => {
         $v.as_ref().map(|x| ::pyo3::types::PyString::new($py, x))
     };
+    ($v: ident, String, $py: ident) => {
+        ::pyo3::types::PyString::new($py, $v)
+    };
+
     ($v: ident, Bytes, $py: ident) => {
         ::pyo3::types::PyBytes::new($py, $v)
     };
@@ -39,6 +43,9 @@ macro_rules! rs_to_py {
     };
     ($v: ident, DateTime, $py: ident) => {
         DateTime(*$v)
+    };
+    ($v: ident, SequesterServiceID, $py: ident) => {
+        SequesterServiceID(*$v)
     };
     ($v: ident, OptionalDateTime, $py: ident) => {
         $v.map(DateTime)
@@ -61,6 +68,9 @@ macro_rules! py_to_rs {
     ($v: ident, f64) => {
         $v
     };
+    ($v: ident, String) => {
+        $v
+    };
     ($v: ident, OptionalFloat) => {
         $v
     };
@@ -75,6 +85,9 @@ macro_rules! py_to_rs {
 macro_rules! rs_to_py_ty {
     (Reason) => {
         Option<&'py ::pyo3::types::PyString>
+    };
+    (String) => {
+        &'py ::pyo3::types::PyString
     };
     (Bytes) => {
         &'py ::pyo3::types::PyBytes

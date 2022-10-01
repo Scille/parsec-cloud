@@ -44,6 +44,8 @@ from parsec._parsec import (
     VlobCreateRepInMaintenance,
     VlobCreateRepRequireGreaterTimestamp,
     VlobCreateRepSequesterInconsistency,
+    VlobCreateRepRejectedBySequesterService,
+    VlobCreateRepTimeout,
     VlobReadRepOk,
     VlobReadRepInMaintenance,
     VlobUpdateRepOk,
@@ -51,6 +53,8 @@ from parsec._parsec import (
     VlobUpdateRepInMaintenance,
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
+    VlobUpdateRepRejectedBySequesterService,
+    VlobUpdateRepTimeout,
     VlobMaintenanceGetReencryptionBatchRepOk,
     VlobMaintenanceGetReencryptionBatchRepBadEncryptionRevision,
     VlobMaintenanceGetReencryptionBatchRepNotAllowed,
@@ -115,6 +119,8 @@ from parsec.core.fs.exceptions import (
     FSSharingNotAllowedError,
     FSWorkspaceInMaintenance,
     FSWorkspaceNotInMaintenance,
+    FSServerUploadTemporarilyUnavailableError,
+    FSSequesterServiceRejectedError,
 )
 
 
@@ -557,10 +563,26 @@ class UserFS:
             FSWorkspaceNotFoundError
         """
         user_manifest = self.get_user_manifest()
-        if user_manifest.need_sync:
-            await self._outbound_sync()
-        else:
-            await self._inbound_sync()
+        try:
+            if user_manifest.need_sync:
+                await self._outbound_sync()
+            else:
+                await self._inbound_sync()
+
+        except FSSequesterServiceRejectedError as exc:
+            # A sequester service doesn't like the manifest we are trying to upload, this is a
+            # rather unlikely event (sequester service rejecting a manifest is to prevent
+            # infected files from being synchronized)
+            # Anyway we just pretend the sync went fine so that the sync monitor will
+            # forget us until the next time a change occurs (and let's hop this time our
+            # user manifest will be considered valid...)
+            self.event_bus.send(
+                CoreEvent.USERFS_SYNC_REJECTED_BY_SEQUESTER_SERVICE,
+                service_id=exc.service_id,
+                service_label=exc.service_label,
+                reason=exc.reason,
+            )
+            return
 
     async def _inbound_sync(self) -> None:
         # Retrieve remote
@@ -776,7 +798,17 @@ class UserFS:
             return await self._upload_manifest(
                 base_um=base_um, timestamp_greater_than=timestamp_greater_than
             )
-
+        elif isinstance(
+            rep, (VlobCreateRepRejectedBySequesterService, VlobUpdateRepRejectedBySequesterService)
+        ):
+            raise FSSequesterServiceRejectedError(
+                id=base_um.id,
+                service_id=rep.service_id,
+                service_label=rep.service_label,
+                reason=rep.reason,
+            )
+        elif isinstance(rep, (VlobCreateRepTimeout, VlobUpdateRepTimeout)):
+            raise FSServerUploadTemporarilyUnavailableError("Temporary failure during vlob upload")
         elif not isinstance(rep, (VlobCreateRepOk, VlobUpdateRepOk)):
             raise FSError(f"Cannot sync user manifest: {rep}")
 
@@ -850,10 +882,9 @@ class UserFS:
 
         # Build the sharing message
         try:
+            recipient_message: Union[SharingGrantedMessageContent, SharingRevokedMessageContent]
             if role is not None:
-                recipient_message: Union[
-                    SharingGrantedMessageContent, SharingRevokedMessageContent
-                ] = SharingGrantedMessageContent(
+                recipient_message = SharingGrantedMessageContent(
                     author=self.device.device_id,
                     timestamp=timestamp,
                     name=workspace_entry.name,

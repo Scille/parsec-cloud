@@ -12,6 +12,7 @@ from parsec._parsec import (
     BlockCreateRepAlreadyExists,
     BlockCreateRepInMaintenance,
     BlockCreateRepNotAllowed,
+    BlockCreateRepTimeout,
     BlockReadRepOk,
     BlockReadRepNotFound,
     BlockReadRepInMaintenance,
@@ -27,6 +28,8 @@ from parsec._parsec import (
     VlobCreateRepInMaintenance,
     VlobCreateRepNotAllowed,
     VlobCreateRepRequireGreaterTimestamp,
+    VlobCreateRepRejectedBySequesterService,
+    VlobCreateRepTimeout,
     VlobReadRepOk,
     VlobReadRepNotAllowed,
     VlobReadRepBadEncryptionRevision,
@@ -41,12 +44,13 @@ from parsec._parsec import (
     VlobUpdateRepNotFound,
     VlobUpdateRepRequireGreaterTimestamp,
     VlobUpdateRepSequesterInconsistency,
+    VlobUpdateRepRejectedBySequesterService,
+    VlobUpdateRepTimeout,
     VlobListVersionsRepOk,
     VlobListVersionsRepInMaintenance,
     VlobListVersionsRepNotAllowed,
     VlobListVersionsRepNotFound,
 )
-
 from parsec.crypto import HashDigest, CryptoError, VerifyKey
 from parsec.utils import open_service_nursery
 from parsec.api.protocol import UserID, DeviceID, RealmID, RealmRole, VlobID, SequesterServiceID
@@ -84,6 +88,7 @@ from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFoundBadVersion,
     FSRemoteBlockNotFound,
     FSBackendOfflineError,
+    FSServerUploadTemporarilyUnavailableError,
     FSWorkspaceInMaintenance,
     FSBadEncryptionRevision,
     FSWorkspaceNoReadAccess,
@@ -92,6 +97,7 @@ from parsec.core.fs.exceptions import (
     FSDeviceNotFoundError,
     FSInvalidTrustchainError,
     FSLocalMissError,
+    FSSequesterServiceRejectedError,
 )
 from parsec.core.fs.storage import BaseWorkspaceStorage
 
@@ -561,6 +567,8 @@ class RemoteLoader(UserRemoteLoader):
             raise FSWorkspaceNoWriteAccess("Cannot upload block: no write access")
         elif isinstance(rep, BlockCreateRepInMaintenance):
             raise FSWorkspaceInMaintenance("Cannot upload block while the workspace in maintenance")
+        elif isinstance(rep, BlockCreateRepTimeout):
+            raise FSServerUploadTemporarilyUnavailableError("Temporary failure during block upload")
         elif not isinstance(rep, BlockCreateRepOk):
             raise FSError(f"Cannot upload block: {rep}")
 
@@ -798,6 +806,10 @@ class RemoteLoader(UserRemoteLoader):
             # Update our cache and retry the request
             self._sequester_services_cache = sequester_services
             return await self.upload_manifest(entry_id, manifest)
+        except FSSequesterServiceRejectedError as exc:
+            # Small hack to provide the manifest object that was lacking when the exception was raised
+            exc.manifest = manifest
+            raise exc
         else:
             return manifest
 
@@ -850,6 +862,15 @@ class RemoteLoader(UserRemoteLoader):
                 sequester_authority_certificate=rep.sequester_authority_certificate,
                 sequester_services_certificates=rep.sequester_services_certificates,
             )
+        elif isinstance(rep, VlobCreateRepRejectedBySequesterService):
+            raise FSSequesterServiceRejectedError(
+                id=entry_id,
+                service_id=rep.service_id,
+                service_label=rep.service_label,
+                reason=rep.reason,
+            )
+        elif isinstance(rep, VlobCreateRepTimeout):
+            raise FSServerUploadTemporarilyUnavailableError("Temporary failure during vlob upload")
         elif not isinstance(rep, VlobCreateRepOk):
             raise FSError(f"Cannot create vlob {entry_id.str}: {rep}")
 
@@ -900,6 +921,15 @@ class RemoteLoader(UserRemoteLoader):
                 sequester_authority_certificate=rep.sequester_authority_certificate,
                 sequester_services_certificates=rep.sequester_services_certificates,
             )
+        elif isinstance(rep, VlobUpdateRepRejectedBySequesterService):
+            raise FSSequesterServiceRejectedError(
+                id=entry_id,
+                service_id=rep.service_id,
+                service_label=rep.service_label,
+                reason=rep.reason,
+            )
+        elif isinstance(rep, VlobUpdateRepTimeout):
+            raise FSServerUploadTemporarilyUnavailableError("Temporary failure during vlob upload")
         elif not isinstance(rep, VlobUpdateRepOk):
             raise FSError(f"Cannot update vlob {entry_id.str}: {rep}")
 

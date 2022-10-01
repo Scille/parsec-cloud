@@ -116,6 +116,27 @@
                     "type": "List<Bytes>"
                 }
             ]
+        },
+        {
+            "status": "rejected_by_sequester_service",
+            "other_fields": [
+                {
+                    "name": "service_id",
+                    "type": "SequesterServiceID"
+                },
+                {
+                    "name": "service_label",
+                    "type": "String"
+                },
+                {
+                    "name": "reason",
+                    "type": "String"
+                }
+            ]
+        },
+        {
+            "status": "timeout",
+            "other_fields": []
         }
     ]
 }

@@ -1,10 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
+from unittest.mock import Mock, ANY
+from urllib.error import URLError, HTTPError
 
 from parsec.api.data import EntryName
 from parsec.api.protocol import RealmID, VlobID
+from parsec.core.core_events import CoreEvent
+from parsec.core.fs.path import FsPath
+from parsec.core.fs.exceptions import FSServerUploadTemporarilyUnavailableError
 from parsec.sequester_crypto import sequester_service_decrypt
+from parsec.backend.sequester import SequesterServiceType
 
 from tests.common import customize_fixtures, sequester_service_factory
 
@@ -60,7 +66,7 @@ async def test_userfs_sequester_sync(
     await alice_user_fs.sync()
 
     # Create a sequester service
-    s1 = await _new_sequester_service("Sequester service 1")
+    s1 = await _new_sequester_service("SequesterService1")
 
     # 2) Bob sync v1 with a sequester service
     await bob_user_fs.sync()
@@ -135,7 +141,7 @@ async def test_workspacefs_sequester_sync(running_backend, backend, alice_user_f
     await w1.sync()
 
     # Create a sequester service
-    s1 = await _new_sequester_service("Sequester service 1")
+    s1 = await _new_sequester_service("SequesterService1")
 
     # 2) Sync w2@v1 with a sequester service
     w2_id = await alice_user_fs.workspace_create(EntryName("w2"))
@@ -165,3 +171,163 @@ async def test_workspacefs_sequester_sync(running_backend, backend, alice_user_f
     # S1 is expected to contain only w1@v2
     await _assert_sequester_dump(service=s2, workspace=w1, expected_items={(w1_id, 2)})
     await _assert_sequester_dump(service=s2, workspace=w2, expected_items={})
+
+
+@pytest.mark.trio
+@customize_fixtures(coolorg_is_sequestered_organization=True)
+async def test_webhook_timeout_and_rejected(
+    monkeypatch, unused_tcp_port, running_backend, alice_user_fs, coolorg
+):
+    webhook_calls = 0
+
+    def _mock_webhook_response(outcome):
+        async def _mocked_http_request(**kwargs):
+            nonlocal webhook_calls
+            webhook_calls += 1
+            if isinstance(outcome, Exception):
+                raise outcome
+            else:
+                return outcome
+
+        monkeypatch.setattr("parsec.backend.vlob.http_request", _mocked_http_request)
+
+    # Create a workspace & make sure evrything is sync so far
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
+    await alice_user_fs.sync()
+    alice_workspace = alice_user_fs.get_workspace(wid)
+
+    # Now add a sequester service that will work... unhelpfully ;-)
+    webhook_url = f"https://localhost:{unused_tcp_port}/webhook"
+    s1 = sequester_service_factory(
+        authority=coolorg.sequester_authority,
+        label="SequesterService1",
+        service_type=SequesterServiceType.WEBHOOK,
+        webhook_url=webhook_url,
+    )
+    await running_backend.backend.sequester.create_service(
+        organization_id=coolorg.organization_id, service=s1.backend_service
+    )
+
+    ################################
+    # 1) First test workspacefs
+    ################################
+
+    # 1.a) Test sequester timeout
+
+    await alice_workspace.write_bytes("/test.txt", b"v1")
+    # Cannot sync the change given webhook is not available
+    _mock_webhook_response(outcome=URLError("[Errno -2] Name or service not known"))
+    with pytest.raises(FSServerUploadTemporarilyUnavailableError):
+        await alice_workspace.sync()
+    # Now webhook is back online
+    _mock_webhook_response(outcome=b"")
+    await alice_workspace.sync()
+
+    # So we called the webhook 4 times:
+    # - first time failed
+    # - second time for the file manifest minimal sync
+    # - third time for the parent folder manifest sync
+    # - fourth time for the actual file manifest sync
+    assert webhook_calls == 4
+    root_info = await alice_workspace.path_info("/")
+    assert root_info["need_sync"] is False
+    assert root_info["base_version"] == 2
+    file_info = await alice_workspace.path_info("/test.txt")
+    assert file_info["need_sync"] is False
+    assert file_info["base_version"] == 2
+
+    # 1.b) Test sequester rejection
+
+    fp = Mock()
+    fp.read.return_value = b'{"reason": "some_error_from_service"}'
+    _mock_webhook_response(outcome=HTTPError(webhook_url, 400, "", None, fp))
+
+    await alice_workspace.write_bytes("/test.txt", b"v2 with virus !")
+    with alice_user_fs.event_bus.listen() as spy:
+        await alice_workspace.sync()
+
+        sync_rejected_events = [
+            e.kwargs
+            for e in spy.events
+            if e.event == CoreEvent.FS_ENTRY_SYNC_REJECTED_BY_SEQUESTER_SERVICE
+        ]
+        assert sync_rejected_events == [
+            {
+                "service_id": s1.service_id,
+                "service_label": "SequesterService1",
+                "reason": "some_error_from_service",
+                "workspace_id": wid,
+                "entry_id": ANY,
+                "file_path": FsPath("/test.txt"),
+            }
+        ]
+
+    # The sync operation went fine, but in fact no sync occured...
+    file_info = await alice_workspace.path_info("/test.txt")
+    assert file_info["need_sync"] is True
+    assert file_info["base_version"] == 2
+
+    # ...so if we modify again the file everything should be synced fine
+    _mock_webhook_response(outcome=b"")
+    await alice_workspace.write_bytes("/test.txt", b"v2")
+    await alice_workspace.sync()
+
+    file_info = await alice_workspace.path_info("/test.txt")
+    assert file_info["need_sync"] is False
+    assert file_info["base_version"] == 3
+
+    ################################
+    # 2) Now test userfs
+    ################################
+
+    webhook_calls = 0
+
+    # 2.a) Test sequester service timeout
+
+    await alice_user_fs.workspace_rename(wid, EntryName("new_name"))
+    # Cannot sync the change given webhook is not available
+    _mock_webhook_response(outcome=URLError("[Errno -2] Name or service not known"))
+    with pytest.raises(FSServerUploadTemporarilyUnavailableError):
+        await alice_user_fs.sync()
+    # Now webhook is back online
+    _mock_webhook_response(outcome=b"")
+    await alice_user_fs.sync()
+
+    # So we called the webhook 4 times:
+    # - first time failed
+    # - second successufly synced the user manifest
+    assert webhook_calls == 2
+
+    # 2.b) Test sequester service rejection
+
+    fp = Mock()
+    fp.read.return_value = b'{"reason": "some_error_from_service"}'
+    _mock_webhook_response(outcome=HTTPError(webhook_url, 400, "", None, fp))
+
+    await alice_user_fs.workspace_rename(wid, EntryName("new_new_name"))
+    with alice_user_fs.event_bus.listen() as spy:
+        await alice_user_fs.sync()
+
+        sync_rejected_events = [
+            e.kwargs
+            for e in spy.events
+            if e.event == CoreEvent.USERFS_SYNC_REJECTED_BY_SEQUESTER_SERVICE
+        ]
+        assert sync_rejected_events == [
+            {
+                "service_id": s1.service_id,
+                "service_label": "SequesterService1",
+                "reason": "some_error_from_service",
+            }
+        ]
+
+    # The sync operation went fine, but in fact no sync occured...
+    um = alice_user_fs.get_user_manifest()
+    assert um.need_sync is True
+
+    # ...so if we modify again the file everything should be synced fine
+    _mock_webhook_response(outcome=b"")
+    await alice_user_fs.workspace_rename(wid, EntryName("new_new_name"))
+    await alice_user_fs.sync()
+    um = alice_user_fs.get_user_manifest()
+    assert um.need_sync is False
