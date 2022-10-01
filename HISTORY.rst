@@ -5,6 +5,42 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.13.0-rc1 (2022-10-01)
+-------------------------------
+
+Features
+~~~~~~~~
+
+* Add the webhook sequester service type that pushes encrypted workspace data to
+  3rd party through HTTP A webhook services is a sequester service with an
+  encryption key. Metadata are also encrypted with the service key and send to
+  the parsec metadata server. A webhook service does not store the sequester
+  metadata to a storage, but it posted the metadata to an http service.  (`#2799
+  <https://github.com/Scille/parsec-cloud/issues/2799>`__)
+* Add a way to filter out unmounted workspaces  (`#3056
+  <https://github.com/Scille/parsec-cloud/issues/3056>`__)
+* Updated the file link not found error message with the name of the file
+  (`#3122 <https://github.com/Scille/parsec-cloud/issues/3122>`__)
+* Added new context menu option to generate file links that point to a specific
+  version of a file.  (`#3123 <https://github.com/Scille/parsec-
+  cloud/issues/3123>`__)
+* Made workspace listing faster  (`#3125 <https://github.com/Scille/parsec-
+  cloud/issues/3125>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Remove cut status if cut is overriden by a copy  (`#3022
+  <https://github.com/Scille/parsec-cloud/issues/3022>`__)
+* Fixed links in About window not opening  (`#3023
+  <https://github.com/Scille/parsec-cloud/issues/3023>`__)
+* Fix an error that desync postgresql timestamptz type  (`#3071
+  <https://github.com/Scille/parsec-cloud/issues/3071>`__)
+* Fix a bug that caused the login time to be larger than expected for large
+  organizations.  (`#3145 <https://github.com/Scille/parsec-
+  cloud/issues/3145>`__)
+
+
 Parsec v2.12.1 (2022-09-13)
 ---------------------------
 
