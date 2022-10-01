@@ -258,6 +258,14 @@ impl InviteListItem {
     }
 
     #[getter]
+    fn created_on(&self) -> DateTime {
+        match &self.0 {
+            invite_list::InviteListItem::User { created_on, .. } => DateTime(*created_on),
+            invite_list::InviteListItem::Device { created_on, .. } => DateTime(*created_on),
+        }
+    }
+
+    #[getter]
     fn claimer_email(&self) -> PyResult<String> {
         match &self.0 {
             invite_list::InviteListItem::User { claimer_email, .. } => Ok(claimer_email.clone()),
