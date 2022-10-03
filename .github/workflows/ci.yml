@@ -54,7 +54,7 @@ jobs:
           python-version: ${{ env.python-version }}
           poetry-version: ${{ env.poetry-version }}
 
-      - uses: actions/setup-node@969bd2663942d722d85b6a8626225850c2f7be4b  # pin v3.4.1
+      - uses: actions/setup-node@969bd2663942d722d85b6a8626225850c2f7be4b  # pin v3.5.0
         with:
           node-version: ${{ env.node-version }}
 
