@@ -18,7 +18,7 @@ libparsec_protocol = { path = "../protocol" }
 libparsec_types = { path = "../types" }
 
 rmp-serde = "1.0.0"
-serde = { version = "1.0.144", features = ["derive"] }
+serde = { version = "1.0.145", features = ["derive"] }
 serde_with = "2.0.0"
 thiserror = "1.0.34"
 
