@@ -71,7 +71,7 @@ jobs:
           echo "::set-output name=version::$VERSION"
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@7c45799919d2dcd7ac59433924d763dd24d97483  # ping v2.9.0
+        uses: pypa/cibuildwheel@7c45799919d2dcd7ac59433924d763dd24d97483  # ping v2.10.2
         with:
           output-dir: dist
         timeout-minutes: 30
