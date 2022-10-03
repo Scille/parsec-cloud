@@ -289,6 +289,7 @@ async def test_common_temporary_files(alice_workspace):
     for path in confined_file_list:
         path = "/" + path
         await alice_workspace.touch(path)
+        print(path)
         await assert_path_info(
             alice_workspace, path, confinement_point=alice_workspace.workspace_id
         )

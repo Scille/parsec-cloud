@@ -23,6 +23,7 @@ from parsec._parsec import (
     InviteNewRepAlreadyMember,
     InviteNewRepOk,
     OrganizationStatsRepOk,
+    Regex,
 )
 from parsec.event_bus import EventBus
 from parsec.api.protocol import (
@@ -71,7 +72,7 @@ FAILSAFE_PATTERN_FILTER = re.compile(
 )  # Matches nothing (https://stackoverflow.com/a/2302992/2846140)
 
 
-def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Pattern]:
+def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Regex]:
     try:
         data = prevent_sync_pattern_path.read_text()
     except OSError as exc:
@@ -90,7 +91,7 @@ def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Patte
         for line in data.splitlines():
             line = line.strip()
             if line and not line.startswith("#"):
-                regex.append(fnmatch.translate(line))
+                regex.append(str(Regex.from_pattern(line)))
         regex = "|".join(regex)
     except ValueError as exc:
         logger.warning(
@@ -98,7 +99,7 @@ def _get_prevent_sync_pattern(prevent_sync_pattern_path: Path) -> Optional[Patte
         )
         return None
     try:
-        return re.compile(regex)
+        return Regex.from_regex_str(regex)
     except re.error as exc:
         logger.warning(
             "Could not compile the file containing the filename patterns to ignore into a regex pattern",

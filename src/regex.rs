@@ -29,4 +29,13 @@ impl Regex {
             )))
         }
     }
+
+    fn __str__(&self) -> String {
+        self.0 .0.to_string()
+    }
+
+    #[getter]
+    fn pattern(&self) -> String {
+        self.0 .0.to_string()
+    }
 }
