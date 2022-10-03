@@ -150,7 +150,7 @@ class ManifestStorage:
                 (pattern.pattern, pattern.pattern),
             )
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> None:
         """Mark the provided pattern as fully applied.
 
         This is meant to be called after one made sure that all the manifests in the
