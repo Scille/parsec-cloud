@@ -1,10 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use std::str::FromStr;
-
-use fancy_regex::{self, RegexBuilder};
-
-pub struct Regex(pub fancy_regex::Regex);
+pub struct Regex(pub regex::Regex);
 
 /// The fnmatch_regex crate does not escape the character '$'. It is a problem
 /// for us. Since we need to match strings like `$RECYCLE.BIN` we need to escape
@@ -19,9 +15,8 @@ impl Regex {
         Ok(Regex(fnmatch_regex::glob_to_regex(&escaped_str)?))
     }
 
-    pub fn from_regex_str(regex_str: &str) -> Result<Self, fancy_regex::Error> {
-        let builder = RegexBuilder::new(regex_str);
-        Ok(Regex(builder.build()?))
+    pub fn from_regex_str(regex_str: &str) -> Result<Self, regex::Error> {
+        Ok(Regex(regex::Regex::new(regex_str)?))
     }
 }
 

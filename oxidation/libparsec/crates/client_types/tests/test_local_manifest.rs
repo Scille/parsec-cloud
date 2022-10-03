@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use fancy_regex::Regex;
+use ::regex::Regex;
 use hex_literal::hex;
 use rstest::rstest;
 use std::collections::{HashMap, HashSet};
