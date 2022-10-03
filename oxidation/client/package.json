@@ -42,7 +42,7 @@
         "@ionic/vue-router": "^6.2.0",
         "core-js": "^3.22.7",
         "ionicons": "^6.0.1",
-        "vue": "^3.2.36",
+        "vue": "^3.2.40",
         "vue-i18n": "^9.2.0-beta.35",
         "vue-router": "^4.1.5"
     },
