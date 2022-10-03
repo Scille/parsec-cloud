@@ -279,7 +279,7 @@ version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9cf849ee05b2ee5fba5e36f97ff8ec2533916700fc0758d40d92136a42f3388"
 dependencies = [
- "digest 0.10.3",
+ "digest 0.10.5",
 ]
 
 [[package]]
@@ -700,9 +700,9 @@ dependencies = [
 
 [[package]]
 name = "digest"
-version = "0.10.3"
+version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2fb860ca6fafa5552fb6d0e816a69c8e49f0908bf524e30a90d97c85892d506"
+checksum = "adfbc57365a37acbd2ebf2b64d7e69bb766e2fea813521ed536f5d0520dcf86c"
 dependencies = [
  "block-buffer 0.10.2",
  "crypto-common",
@@ -1404,7 +1404,7 @@ dependencies = [
  "serde_test",
  "serde_with",
  "serialization_format",
- "sha2 0.10.5",
+ "sha2 0.10.6",
  "tests_fixtures",
  "thiserror",
 ]
@@ -1448,7 +1448,7 @@ version = "0.0.0"
 dependencies = [
  "blake2",
  "crypto_box",
- "digest 0.10.3",
+ "digest 0.10.5",
  "ed25519-dalek",
  "generic-array 0.14.6",
  "getrandom 0.1.16",
@@ -1464,7 +1464,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_test",
- "sha2 0.10.5",
+ "sha2 0.10.6",
  "sodiumoxide",
  "thiserror",
  "x25519-dalek",
@@ -2592,9 +2592,9 @@ dependencies = [
 
 [[package]]
 name = "serde_test"
-version = "1.0.144"
+version = "1.0.145"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c7f3621491f256177206a7c2152c17f322c0d0b30af05359088172437d29e25"
+checksum = "9c17d2112159132660b4c5399e274f676fb75a2f8d70b7468f18f045b71138ed"
 dependencies = [
  "serde",
 ]
@@ -2669,7 +2669,7 @@ checksum = "028f48d513f9678cda28f6e4064755b3fbb2af6acd672f2c209b62323f7aea0f"
 dependencies = [
  "cfg-if",
  "cpufeatures",
- "digest 0.10.3",
+ "digest 0.10.5",
 ]
 
 [[package]]
@@ -2687,13 +2687,13 @@ dependencies = [
 
 [[package]]
 name = "sha2"
-version = "0.10.5"
+version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf9db03534dff993187064c4e0c05a5708d2a9728ace9a8959b77bedf415dac5"
+checksum = "82e6b795fe2e3b1e845bafcb27aa35405c4d47cdfc92af5fc8d3002f76cebdc0"
 dependencies = [
  "cfg-if",
  "cpufeatures",
- "digest 0.10.3",
+ "digest 0.10.5",
  "sha2-asm",
 ]
 
