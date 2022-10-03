@@ -38,6 +38,7 @@ flate2 = "1.0.24"
 rand = "0.8.4"
 thiserror = "1.0.34"
 email-address-parser = "2.0.0-rc2"
+fnmatch-regex = "0.2.0"
 
 [dev-dependencies]
 tests_fixtures = { path = "../tests_fixtures" }
