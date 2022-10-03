@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import re
 import pytest
 
+from parsec._parsec import Regex
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
 from parsec.core.types import EntryID, EntryName, Chunk, LocalFolderManifest, LocalFileManifest
@@ -15,7 +15,7 @@ from parsec.core.fs.workspacefs.sync_transactions import (
 )
 
 
-empty_pattern = re.compile(r"^\b$")
+empty_pattern = Regex.from_regex_str(r"^\b$")
 
 
 @pytest.mark.parametrize(
@@ -192,7 +192,7 @@ def test_merge_folder_manifests_with_concurrent_remote_change(
         .to_remote(author=my_device, timestamp=timestamp)
     )
 
-    prevent_sync_pattern = re.compile(r".*\.tmp\Z")
+    prevent_sync_pattern = Regex.from_regex_str(r".*\.tmp\z")
 
     # Load the manifest in local
     local_manifest = LocalFolderManifest.from_remote(

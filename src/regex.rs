@@ -4,7 +4,7 @@ use pyo3::{exceptions::PyValueError, pyclass, pymethods, types::PyType, PyResult
 use crate::binding_utils::gen_proto;
 
 #[pyclass]
-pub(crate) struct Regex(libparsec::types::regex::Regex);
+pub(crate) struct Regex(pub libparsec::types::regex::Regex);
 
 #[pymethods]
 impl Regex {
