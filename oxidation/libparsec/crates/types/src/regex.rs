@@ -27,3 +27,9 @@ impl Regex {
         Ok(Regex(builder.build()?))
     }
 }
+
+impl PartialEq for Regex {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.to_string() == other.0.to_string()
+    }
+}
