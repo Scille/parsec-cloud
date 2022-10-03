@@ -17,7 +17,7 @@ libparsec_crypto = { path = "../crypto" }
 libparsec_platform_async = { path = "../platform_async" }
 
 lazy_static = "1.4.0"
-serde = { version = "1.0.144", features = ["derive"] }
+serde = { version = "1.0.145", features = ["derive"] }
 serde_with = "2.0.0"
 serde_repr = "0.1.9"
 rmp-serde = "1.0.0"
