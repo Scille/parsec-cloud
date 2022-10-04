@@ -71,6 +71,6 @@ Available for Linux through Snapcraft at https://snapcraft.io/parsec
 
 Python PIP
 ----------
-Parsec is also available directly through PIP for both Linux and Windows with Python > 3.6 with the command:
+Parsec is also available directly through PIP for both Linux and Windows with Python > 3.9 with the command:
 ``pip install parsec-cloud``
 (or, if you need to specify Python 3 pip version, ``pip3 install parsec-cloud``)

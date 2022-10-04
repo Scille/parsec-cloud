@@ -17,10 +17,10 @@ Build steps
 
 ### 1 - Use a compatible Python version
 
-The app building is done with PyInstaller. Most versions of Python from 3.6 onwards will work, though some raises errors upon opening the app. If such an problem occurs, an easy solution is to switch to a working Python version with `pyenv`, such as 3.8.0.
+The app building is done with PyInstaller. Most versions of Python from 3.9 onwards will work, though some raises errors upon opening the app. If such an problem occurs, an easy solution is to switch to a working Python version with `pyenv`, such as 3.9.0.
 Be mindful that using `pyenv`, the python version must be installed with the `--enable-framework` option:
 ```shell
-$ PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install 3.8.0
+$ PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install 3.9.0
 ```
 
 

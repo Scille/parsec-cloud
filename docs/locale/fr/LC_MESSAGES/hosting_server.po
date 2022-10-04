@@ -27,8 +27,8 @@ msgid "Requirements"
 msgstr "Pré-requis"
 
 #: ../../hosting_server.rst:11
-msgid "Python >= 3.6"
-msgstr "Python >= 3.6"
+msgid "Python >= 3.9"
+msgstr "Python >= 3.9"
 
 #: ../../hosting_server.rst:12
 msgid "PostgreSQL >= 10"

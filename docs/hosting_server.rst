@@ -10,7 +10,7 @@ Hosting Server
 Requirements
 ============
 
-- Python >= 3.6
+- Python >= 3.9
 - PostgreSQL >= 10
 
 On top of that, an object storage service should also be provided to store the encrypted data blocks.
