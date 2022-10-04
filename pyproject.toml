@@ -167,6 +167,9 @@ test-command = "parsec --version && parsec core list_devices"
 # For this reason we force $PATH to contain Rust bin dir.
 PATH = "$PATH:$HOME/.cargo/bin"
 
+[tool.maturin]
+features = ["extension-module"]
+
 [build-system]
 # Be careful `build-system` entry works out of poetry,
 # hence those dependencies are not resolved & pinned into `poetry.lock`

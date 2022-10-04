@@ -329,7 +329,7 @@ jobs:
         run: |
           set -ex
           cargo build --workspace
-          cargo test --workspace --no-run --exclude parsec
+          cargo test --workspace --no-run
 
       - name: Test rust codebase
         if: steps.rust-changes.outputs.run == 'true'
@@ -338,7 +338,7 @@ jobs:
           set -ex
           cargo test --package libparsec_crypto --features use-sodiumoxide
           cargo test --package libparsec_crypto --features use-rustcrypto
-          cargo test --workspace --features mock-time --exclude libparsec_crypto --exclude parsec
+          cargo test --workspace --features mock-time --exclude libparsec_crypto
 
   ##############################################################################
   #                            🐜 Wasm tests                                   #

@@ -17,7 +17,7 @@ libparsec = { version = "0.1.0", path = "oxidation/libparsec" }
 
 regex = "1.6.0"
 paste = "1.0.9"
-pyo3 = { version = "0.17.2", features = ["extension-module", "multiple-pymethods"] }
+pyo3 = { version = "0.17.2", features = ["multiple-pymethods"] }
 uuid = { version = "1.1.2", features = ["serde", "v4", "fast-rng"] }
 tokio = { version = "1.21", features = ["rt", "rt-multi-thread"] }
 lazy_static = "1.4.0"
@@ -26,6 +26,7 @@ futures = "0.3.21"
 [features]
 default = ["mock-time"]
 mock-time = ["libparsec/mock-time"]
+extension-module = ["pyo3/extension-module"]
 
 [workspace]
 members = [
