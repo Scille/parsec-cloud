@@ -23,12 +23,13 @@ import_exception!(parsec.api.data, DataError);
 
 use crate::{
     api_crypto::SecretKey,
-    binding_utils::{py_to_rs_regex, py_to_rs_set},
+    binding_utils::py_to_rs_set,
     ids::{ChunkID, DeviceID, EntryID},
     manifest::{
         BlockAccess, EntryName, FileManifest, FolderManifest, UserManifest, WorkspaceEntry,
         WorkspaceManifest,
     },
+    regex::Regex,
     time::DateTime,
 };
 
@@ -631,29 +632,27 @@ impl LocalFolderManifest {
     fn evolve_children_and_mark_updated(
         &self,
         data: HashMap<EntryName, Option<EntryID>>,
-        prevent_sync_pattern: &PyAny,
+        prevent_sync_pattern: &Regex,
         timestamp: DateTime,
     ) -> PyResult<Self> {
         let data = data
             .into_iter()
             .map(|(en, ei)| (en.0, ei.map(|ei| ei.0)))
             .collect();
-        let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
         Ok(Self(self.0.clone().evolve_children_and_mark_updated(
             data,
-            &prevent_sync_pattern,
+            &prevent_sync_pattern.0,
             timestamp.0,
         )))
     }
 
     fn apply_prevent_sync_pattern(
         &self,
-        prevent_sync_pattern: &PyAny,
+        prevent_sync_pattern: &Regex,
         timestamp: DateTime,
     ) -> PyResult<Self> {
-        let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
         Ok(Self(self.0.apply_prevent_sync_pattern(
-            &prevent_sync_pattern,
+            &prevent_sync_pattern.0,
             timestamp.0,
         )))
     }
@@ -710,13 +709,12 @@ impl LocalFolderManifest {
     fn from_remote(
         _cls: &PyType,
         remote: FolderManifest,
-        prevent_sync_pattern: &PyAny,
+        prevent_sync_pattern: &Regex,
     ) -> PyResult<Self> {
-        let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
         Ok(Self(
             libparsec::client_types::LocalFolderManifest::from_remote(
                 remote.0,
-                &prevent_sync_pattern,
+                &prevent_sync_pattern.0,
             ),
         ))
     }
@@ -725,15 +723,14 @@ impl LocalFolderManifest {
     fn from_remote_with_local_context(
         _cls: &PyType,
         remote: FolderManifest,
-        prevent_sync_pattern: &PyAny,
+        prevent_sync_pattern: &Regex,
         local_manifest: &Self,
         timestamp: DateTime,
     ) -> PyResult<Self> {
-        let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
         Ok(Self(
             libparsec::client_types::LocalFolderManifest::from_remote_with_local_context(
                 remote.0,
-                &prevent_sync_pattern,
+                &prevent_sync_pattern.0,
                 &local_manifest.0,
                 timestamp.0,
             ),
@@ -990,29 +987,27 @@ impl LocalWorkspaceManifest {
     fn evolve_children_and_mark_updated(
         &self,
         data: HashMap<EntryName, Option<EntryID>>,
-        prevent_sync_pattern: &PyAny,
+        prevent_sync_pattern: &Regex,
         timestamp: DateTime,
     ) -> PyResult<Self> {
         let data = data
             .into_iter()
             .map(|(en, ei)| (en.0, ei.map(|ei| ei.0)))
             .collect();
-        let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
         Ok(Self(self.0.clone().evolve_children_and_mark_updated(
             data,
-            &prevent_sync_pattern,
+            &prevent_sync_pattern.0,
             timestamp.0,
         )))
     }
 
     fn apply_prevent_sync_pattern(
         &self,
-        prevent_sync_pattern: &PyAny,
+        prevent_sync_pattern: &Regex,
         timestamp: DateTime,
     ) -> PyResult<Self> {
-        let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
         Ok(Self(self.0.apply_prevent_sync_pattern(
-            &prevent_sync_pattern,
+            &prevent_sync_pattern.0,
             timestamp.0,
         )))
     }
@@ -1072,13 +1067,12 @@ impl LocalWorkspaceManifest {
     fn from_remote(
         _cls: &PyType,
         remote: WorkspaceManifest,
-        prevent_sync_pattern: &PyAny,
+        prevent_sync_pattern: &Regex,
     ) -> PyResult<Self> {
-        let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
         Ok(Self(
             libparsec::client_types::LocalWorkspaceManifest::from_remote(
                 remote.0,
-                &prevent_sync_pattern,
+                &prevent_sync_pattern.0,
             ),
         ))
     }
@@ -1087,15 +1081,14 @@ impl LocalWorkspaceManifest {
     fn from_remote_with_local_context(
         _cls: &PyType,
         remote: WorkspaceManifest,
-        prevent_sync_pattern: &PyAny,
+        prevent_sync_pattern: &Regex,
         local_manifest: &Self,
         timestamp: DateTime,
     ) -> PyResult<Self> {
-        let prevent_sync_pattern = py_to_rs_regex(prevent_sync_pattern)?;
         Ok(Self(
             libparsec::client_types::LocalWorkspaceManifest::from_remote_with_local_context(
                 remote.0,
-                &prevent_sync_pattern,
+                &prevent_sync_pattern.0,
                 &local_manifest.0,
                 timestamp.0,
             ),

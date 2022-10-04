@@ -5,7 +5,6 @@
 #![allow(unused_macros)]
 #![allow(unused_imports)]
 
-use fancy_regex::Regex;
 use pyo3::{
     conversion::IntoPy,
     exceptions::{PyNotImplementedError, PyValueError},
@@ -14,6 +13,7 @@ use pyo3::{
     types::{PyFrozenSet, PyTuple},
     FromPyObject, {PyAny, PyObject, PyResult, Python},
 };
+use regex::Regex;
 use std::{
     collections::{hash_map::DefaultHasher, HashSet},
     hash::{Hash, Hasher},

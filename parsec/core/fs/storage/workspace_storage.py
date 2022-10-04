@@ -20,6 +20,7 @@ from parsec._parsec import DateTime
 from structlog import get_logger
 from contextlib import asynccontextmanager
 
+from parsec._parsec import Regex
 from parsec.core.types import (
     EntryID,
     BlockID,
@@ -94,7 +95,7 @@ class BaseWorkspaceStorage:
 
         # Pattern attributes
         # Set by `_load_prevent_sync_pattern` in WorkspaceStorage.run()
-        self._prevent_sync_pattern: Pattern[str]
+        self._prevent_sync_pattern: Regex
         self._prevent_sync_pattern_fully_applied: bool
 
     def _get_next_fd(self) -> FileDescriptor:
@@ -130,7 +131,7 @@ class BaseWorkspaceStorage:
     async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
         raise NotImplementedError
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> None:
         raise NotImplementedError
 
     async def get_local_chunk_ids(self, chunk_id: List[ChunkID]) -> List[ChunkID]:
@@ -222,7 +223,7 @@ class BaseWorkspaceStorage:
 
     # "Prevent sync" pattern interface
 
-    def get_prevent_sync_pattern(self) -> Pattern[str]:
+    def get_prevent_sync_pattern(self) -> Regex:
         return self._prevent_sync_pattern
 
     def get_prevent_sync_pattern_fully_applied(self) -> bool:
@@ -427,7 +428,7 @@ class WorkspaceStorage(BaseWorkspaceStorage):
         await self.manifest_storage.set_prevent_sync_pattern(pattern)
         await self._load_prevent_sync_pattern()
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> None:
         """Mark the provided pattern as fully applied.
 
         This is meant to be called after one made sure that all the manifests in the

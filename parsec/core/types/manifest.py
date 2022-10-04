@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-from typing import TYPE_CHECKING, TypeVar, Type, Pattern
+from typing import TYPE_CHECKING, TypeVar, Type
 
 from parsec.serde import fields
 from parsec.api.protocol import RealmRole, BlockID
@@ -24,6 +24,7 @@ from parsec._parsec import (
     LocalWorkspaceManifest,
     DateTime,
     local_manifest_decrypt_and_load,
+    Regex,
 )
 
 if TYPE_CHECKING:
@@ -73,7 +74,7 @@ LocalUserManifestTypeVar = TypeVar("LocalUserManifestTypeVar", bound="LocalUserM
 
 def manifest_from_remote(
     remote: AnyRemoteManifest,
-    prevent_sync_pattern: Pattern,
+    prevent_sync_pattern: Regex,
 ) -> AnyLocalManifest:
     if isinstance(remote, RemoteFileManifest):
         return LocalFileManifest.from_remote(remote)
@@ -88,7 +89,7 @@ def manifest_from_remote(
 
 def manifest_from_remote_with_local_context(
     remote: AnyRemoteManifest,
-    prevent_sync_pattern: Pattern,
+    prevent_sync_pattern: Regex,
     local_manifest: AnyLocalManifest,
     timestamp: DateTime,
 ) -> AnyLocalManifest:

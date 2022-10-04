@@ -405,6 +405,8 @@ from parsec._parsec_pyi.protocol import (
     ReencryptionBatchEntry,
 )
 
+from parsec._parsec_pyi.regex import Regex
+
 __all__ = [
     # Certif
     "UserCertificate",
@@ -794,4 +796,6 @@ __all__ = [
     "VlobMaintenanceSaveReencryptionBatchRepMaintenanceError",
     "VlobMaintenanceSaveReencryptionBatchRepUnknownStatus",
     "ReencryptionBatchEntry",
+    # Regex
+    "Regex",
 ]

@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use email_address_parser::EmailAddress;
-use fancy_regex::Regex;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 use std::convert::TryFrom;
@@ -62,7 +62,7 @@ macro_rules! new_string_based_id_type {
                         Regex::new($pattern).unwrap_or_else(|_| unreachable!());
                 }
                 // ID must respect regex AND be contained within $bytes_size bytes
-                if PATTERN.is_match(&id).unwrap_or(false) && id.len() <= $bytes_size {
+                if PATTERN.is_match(&id) && id.len() <= $bytes_size {
                     Ok(Self(id))
                 } else {
                     Err(concat!("Invalid ", stringify!($name)))

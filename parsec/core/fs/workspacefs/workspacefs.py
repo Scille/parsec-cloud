@@ -16,7 +16,7 @@ from typing import (
 )
 import structlog
 
-from parsec._parsec import DateTime, FileManifest
+from parsec._parsec import DateTime, FileManifest, Regex
 from parsec.core.core_events import CoreEvent
 from parsec.core.fs.workspacefs.entry_transactions import BlockInfo
 from parsec.crypto import CryptoError
@@ -779,7 +779,7 @@ class WorkspaceFS:
     # Apply "prevent sync" pattern
 
     async def _recursive_apply_prevent_sync_pattern(
-        self, entry_id: EntryID, prevent_sync_pattern: Pattern[str]
+        self, entry_id: EntryID, prevent_sync_pattern: Regex
     ) -> None:
         # Load manifest
         try:
@@ -799,7 +799,7 @@ class WorkspaceFS:
         for name, child_entry_id in manifest.children.items():
             await self._recursive_apply_prevent_sync_pattern(child_entry_id, prevent_sync_pattern)
 
-    async def apply_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
+    async def apply_prevent_sync_pattern(self, pattern: Regex) -> None:
         # Fully apply "prevent sync" pattern
         await self._recursive_apply_prevent_sync_pattern(self.workspace_id, pattern)
         # Acknowledge "prevent sync" pattern

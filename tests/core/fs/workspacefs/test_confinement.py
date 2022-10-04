@@ -3,6 +3,7 @@
 import re
 import pytest
 
+from parsec._parsec import Regex
 from parsec.api.data import EntryName
 from parsec.core.fs import FsPath
 from tests.common import create_shared_workspace
@@ -19,8 +20,11 @@ async def assert_path_info(workspace, path, **kwargs):
 async def test_local_confinement_points(alice_workspace, running_backend):
 
     # Apply a *.tmp pattern
-    pattern = re.compile(r".*\.tmp$")
+    pattern = Regex.from_regex_str(".*\\.tmp$")
     await alice_workspace.set_and_apply_prevent_sync_pattern(pattern)
+    print(
+        alice_workspace.local_storage.get_prevent_sync_pattern().pattern, "second", pattern.pattern
+    )
     assert alice_workspace.local_storage.get_prevent_sync_pattern() == pattern
     assert alice_workspace.local_storage.get_prevent_sync_pattern_fully_applied()
 
@@ -175,7 +179,7 @@ async def test_change_pattern(alice_workspace, running_backend):
     root_id = alice_workspace.workspace_id
 
     # Apply a *.x pattern
-    pattern = re.compile(r".*\.x$")
+    pattern = Regex.from_regex_str(r".*\.x$")
     await alice_workspace.set_and_apply_prevent_sync_pattern(pattern)
     assert alice_workspace.local_storage.get_prevent_sync_pattern() == pattern
     assert alice_workspace.local_storage.get_prevent_sync_pattern_fully_applied()
@@ -205,7 +209,7 @@ async def test_change_pattern(alice_workspace, running_backend):
     await assert_path_info(alice_workspace, "/test2.y", confinement_point=None, need_sync=True)
 
     # Appy Y pattern
-    pattern = re.compile(r".*\.y$")
+    pattern = Regex.from_regex_str(r".*\.y$")
     await alice_workspace.set_and_apply_prevent_sync_pattern(pattern)
     assert alice_workspace.local_storage.get_prevent_sync_pattern() == pattern
     assert alice_workspace.local_storage.get_prevent_sync_pattern_fully_applied()
@@ -229,7 +233,7 @@ async def test_change_pattern(alice_workspace, running_backend):
     await assert_path_info(alice_workspace, "/test2.z", confinement_point=None, need_sync=False)
 
     # Rollback to X pattern
-    pattern = re.compile(r".*\.x$")
+    pattern = Regex.from_regex_str(r".*\.x$")
     await alice_workspace.set_and_apply_prevent_sync_pattern(pattern)
     assert alice_workspace.local_storage.get_prevent_sync_pattern() == pattern
     assert alice_workspace.local_storage.get_prevent_sync_pattern_fully_applied()
@@ -289,6 +293,7 @@ async def test_common_temporary_files(alice_workspace):
     for path in confined_file_list:
         path = "/" + path
         await alice_workspace.touch(path)
+        print(path)
         await assert_path_info(
             alice_workspace, path, confinement_point=alice_workspace.workspace_id
         )

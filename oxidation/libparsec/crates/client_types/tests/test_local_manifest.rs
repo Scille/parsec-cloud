@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
-use fancy_regex::Regex;
 use hex_literal::hex;
+use libparsec_types::regex::Regex;
 use rstest::rstest;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
@@ -1286,7 +1286,7 @@ fn local_folder_manifest_from_remote(
         children,
     };
 
-    let lfm = LocalFolderManifest::from_remote(fm.clone(), &Regex::new(regex).unwrap());
+    let lfm = LocalFolderManifest::from_remote(fm.clone(), &Regex::from_regex_str(regex).unwrap());
 
     assert_eq!(lfm.base, fm);
     assert!(!lfm.need_sync);
@@ -1383,7 +1383,7 @@ fn local_folder_manifest_from_remote_with_local_context(
 
     let lfm = LocalFolderManifest::from_remote_with_local_context(
         fm.clone(),
-        &Regex::new(regex).unwrap(),
+        &Regex::from_regex_str(regex).unwrap(),
         &lfm,
         timestamp,
     );
@@ -1485,7 +1485,7 @@ fn local_folder_manifest_evolve_children_and_mark_updated(
     #[case] need_sync: bool,
     #[case] regex: &str,
 ) {
-    let prevent_sync_pattern = Regex::new(regex).unwrap();
+    let prevent_sync_pattern = Regex::from_regex_str(regex).unwrap();
 
     let fm = FolderManifest {
         author: DeviceID::default(),
@@ -1519,7 +1519,7 @@ fn local_folder_manifest_evolve_children_and_mark_updated(
 // TODO
 #[rstest]
 fn local_folder_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
-    let prevent_sync_pattern = Regex::new("").unwrap();
+    let prevent_sync_pattern = Regex::from_regex_str("").unwrap();
 
     let fm = FolderManifest {
         author: DeviceID::default(),
@@ -1616,7 +1616,8 @@ fn local_workspace_manifest_from_remote(
         children,
     };
 
-    let lwm = LocalWorkspaceManifest::from_remote(wm.clone(), &Regex::new(regex).unwrap());
+    let lwm =
+        LocalWorkspaceManifest::from_remote(wm.clone(), &Regex::from_regex_str(regex).unwrap());
 
     assert_eq!(lwm.base, wm);
     assert!(!lwm.need_sync);
@@ -1715,7 +1716,7 @@ fn local_workspace_manifest_from_remote_with_local_context(
 
     let lwm = LocalWorkspaceManifest::from_remote_with_local_context(
         wm.clone(),
-        &Regex::new(regex).unwrap(),
+        &Regex::from_regex_str(regex).unwrap(),
         &lwm,
         timestamp,
     );
@@ -1818,7 +1819,7 @@ fn local_workspace_manifest_evolve_children_and_mark_updated(
     #[case] need_sync: bool,
     #[case] regex: &str,
 ) {
-    let prevent_sync_pattern = Regex::new(regex).unwrap();
+    let prevent_sync_pattern = Regex::from_regex_str(regex).unwrap();
     let wm = WorkspaceManifest {
         author: DeviceID::default(),
         timestamp,
@@ -1851,7 +1852,7 @@ fn local_workspace_manifest_evolve_children_and_mark_updated(
 // TODO
 #[rstest]
 fn local_workspace_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
-    let prevent_sync_pattern = Regex::new("").unwrap();
+    let prevent_sync_pattern = Regex::from_regex_str("").unwrap();
 
     let wm = WorkspaceManifest {
         author: DeviceID::default(),

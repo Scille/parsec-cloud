@@ -12,6 +12,7 @@ mod id;
 mod invite;
 mod manifest;
 mod message;
+pub mod regex;
 mod time;
 
 pub use addr::*;

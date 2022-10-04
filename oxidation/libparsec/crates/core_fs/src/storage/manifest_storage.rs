@@ -4,8 +4,8 @@ use diesel::{
     sql_query, table, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl,
     RunQueryDsl,
 };
-use fancy_regex::Regex;
 use libparsec_crypto::{CryptoError, SecretKey};
+use regex::Regex;
 use std::collections::hash_map::RandomState;
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;

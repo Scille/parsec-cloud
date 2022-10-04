@@ -11,6 +11,7 @@ mod local_device;
 mod local_manifest;
 mod manifest;
 mod protocol;
+mod regex;
 mod runtime;
 mod time;
 mod trustchain;
@@ -429,10 +430,14 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<protocol::AuthenticatedAnyCmdReq>()?;
     m.add_class::<protocol::InvitedAnyCmdReq>()?;
 
+    // Time
     m.add_function(wrap_pyfunction!(time::mock_time, m)?)?;
     m.add_class::<time::TimeProvider>()?;
     m.add_class::<time::DateTime>()?;
     m.add_class::<time::LocalDateTime>()?;
+
+    // Regex
+    m.add_class::<regex::Regex>()?;
 
     m.add_class::<trustchain::TrustchainContext>()?;
     Ok(())

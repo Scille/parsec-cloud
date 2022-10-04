@@ -1,7 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
-import re
-
 import trio
 from pathlib import Path
 from structlog import get_logger
@@ -17,6 +15,7 @@ from typing import (
 )
 from contextlib import asynccontextmanager
 
+from parsec._parsec import Regex
 from parsec.core.fs.exceptions import FSLocalMissError, FSLocalStorageClosedError
 from parsec.core.types import EntryID, ChunkID, LocalDevice, BlockID
 from parsec.core.fs.storage.local_database import LocalDatabase, Cursor
@@ -131,12 +130,12 @@ class ManifestStorage:
 
     # "Prevent sync" pattern operations
 
-    async def get_prevent_sync_pattern(self) -> Tuple[Pattern[str], bool]:
+    async def get_prevent_sync_pattern(self) -> Tuple[Regex, bool]:
         async with self._open_cursor() as cursor:
             cursor.execute("SELECT pattern, fully_applied FROM prevent_sync_pattern WHERE _id = 0")
             reply = cursor.fetchone()
             pattern, fully_applied = reply
-            return (re.compile(pattern), bool(fully_applied))
+            return (Regex.from_regex_str(pattern), bool(fully_applied))
 
     async def set_prevent_sync_pattern(self, pattern: Pattern[str]) -> None:
         """Set the "prevent sync" pattern for the corresponding workspace
@@ -150,7 +149,7 @@ class ManifestStorage:
                 (pattern.pattern, pattern.pattern),
             )
 
-    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Pattern[str]) -> None:
+    async def mark_prevent_sync_pattern_fully_applied(self, pattern: Regex) -> None:
         """Mark the provided pattern as fully applied.
 
         This is meant to be called after one made sure that all the manifests in the

@@ -1,4 +1,4 @@
-from typing import Any, Dict, FrozenSet, Optional, Set, Tuple, Pattern, Union
+from typing import Any, Dict, FrozenSet, Optional, Set, Tuple, Union
 
 from ..core.fs.workspacefs.file_operations import Chunks
 from .crypto import SecretKey
@@ -13,6 +13,7 @@ from parsec._parsec_pyi.manifest import (
     WorkspaceManifest,
 )
 from parsec._parsec_pyi.time import DateTime
+from parsec._parsec_pyi.regex import Regex
 
 AnyLocalManifest = Union[
     LocalFileManifest,
@@ -139,7 +140,7 @@ class LocalFileManifest:
     def from_remote_with_local_context(
         cls,
         remote: FileManifest,
-        prevent_sync_pattern: Pattern,
+        prevent_sync_pattern: Regex,
         local_manifest: LocalFileManifest,
         timestamp: DateTime,
     ) -> LocalFileManifest: ...
@@ -209,11 +210,11 @@ class LocalFolderManifest:
     def evolve_children_and_mark_updated(
         self,
         data: Dict[EntryName, Optional[EntryID]],
-        prevent_sync_pattern: Pattern,
+        prevent_sync_pattern: Regex,
         timestamp: DateTime,
     ) -> LocalFolderManifest: ...
     def apply_prevent_sync_pattern(
-        self, prevent_sync_pattern: Pattern, timestamp: DateTime
+        self, prevent_sync_pattern: Regex, timestamp: DateTime
     ) -> LocalFolderManifest: ...
     def to_remote(self, author: DeviceID, timestamp: DateTime) -> FolderManifest: ...
     def to_stats(self) -> Dict[str, Any]: ...
@@ -227,13 +228,13 @@ class LocalFolderManifest:
     ) -> LocalFolderManifest: ...
     @classmethod
     def from_remote(
-        cls, remote: FolderManifest, prevent_sync_pattern: Pattern
+        cls, remote: FolderManifest, prevent_sync_pattern: Regex
     ) -> LocalFolderManifest: ...
     @classmethod
     def from_remote_with_local_context(
         cls,
         remote: FolderManifest,
-        prevent_sync_pattern: Pattern,
+        prevent_sync_pattern: Regex,
         local_manifest: LocalFolderManifest,
         timestamp: DateTime,
     ) -> LocalFolderManifest: ...
@@ -298,11 +299,11 @@ class LocalWorkspaceManifest:
     def evolve_children_and_mark_updated(
         self,
         data: Dict[EntryName, Optional[EntryID]],
-        prevent_sync_pattern: Pattern,
+        prevent_sync_pattern: Regex,
         timestamp: DateTime,
     ) -> LocalWorkspaceManifest: ...
     def apply_prevent_sync_pattern(
-        self, prevent_sync_pattern: Pattern, timestamp: DateTime
+        self, prevent_sync_pattern: Regex, timestamp: DateTime
     ) -> LocalWorkspaceManifest: ...
     def to_remote(self, author: DeviceID, timestamp: DateTime) -> WorkspaceManifest: ...
     def to_stats(self) -> Dict[str, Any]: ...
@@ -320,13 +321,13 @@ class LocalWorkspaceManifest:
     ) -> LocalWorkspaceManifest: ...
     @classmethod
     def from_remote(
-        cls, remote: WorkspaceManifest, prevent_sync_pattern: Pattern
+        cls, remote: WorkspaceManifest, prevent_sync_pattern: Regex
     ) -> LocalWorkspaceManifest: ...
     @classmethod
     def from_remote_with_local_context(
         cls,
         remote: WorkspaceManifest,
-        prevent_sync_pattern: Pattern,
+        prevent_sync_pattern: Regex,
         local_manifest: LocalWorkspaceManifest,
         timestamp: DateTime,
     ) -> LocalWorkspaceManifest: ...
@@ -408,7 +409,7 @@ class LocalUserManifest:
     def from_remote_with_local_context(
         cls,
         remote: UserManifest,
-        prevent_sync_pattern: Pattern,
+        prevent_sync_pattern: Regex,
         local_manifest: LocalUserManifest,
         timestamp: DateTime,
     ) -> LocalUserManifest: ...

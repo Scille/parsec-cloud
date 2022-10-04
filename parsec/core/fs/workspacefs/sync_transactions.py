@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 from itertools import count
-from typing import Optional, Dict, AsyncIterator, Union, Pattern, Iterable
+from typing import Optional, Dict, AsyncIterator, Union, Iterable
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, Regex
 
 from parsec.api.protocol import DeviceID
 from parsec.core.core_events import CoreEvent
@@ -195,7 +195,7 @@ def merge_folder_children(
 def merge_manifests(
     local_author: DeviceID,
     timestamp: DateTime,
-    prevent_sync_pattern: Pattern[str],
+    prevent_sync_pattern: Regex,
     local_manifest: AnyLocalManifest,
     remote_manifest: Optional[AnyRemoteManifest] = None,
     force_apply_pattern: Optional[bool] = False,
@@ -322,7 +322,7 @@ class SyncTransactions(EntryTransactions):
     # Atomic transactions
 
     async def apply_prevent_sync_pattern(
-        self, entry_id: EntryID, prevent_sync_pattern: Pattern[str]
+        self, entry_id: EntryID, prevent_sync_pattern: Regex
     ) -> None:
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:

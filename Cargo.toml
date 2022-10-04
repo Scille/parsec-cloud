@@ -15,7 +15,7 @@ crate-type = ["cdylib"]
 [dependencies]
 libparsec = { version = "0.1.0", path = "oxidation/libparsec" }
 
-fancy-regex = "0.10.0"
+regex = "1.6.0"
 paste = "1.0.9"
 pyo3 = { version = "0.17.1", features = ["extension-module", "multiple-pymethods"] }
 uuid = { version = "1.1.2", features = ["serde", "v4", "fast-rng"] }
