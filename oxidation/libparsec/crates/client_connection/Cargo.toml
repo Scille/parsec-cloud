@@ -11,7 +11,7 @@ name = "auth_cmds"
 
 [dependencies]
 # Used to send HTTP request to the server.
-reqwest = "0.11.11"
+reqwest = "0.11.12"
 # Used to perform operation on URL.
 url = "2.3.0"
 # Add primitive type to be used with the proctocol
