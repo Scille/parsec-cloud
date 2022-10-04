@@ -13,7 +13,7 @@ name = "auth_cmds"
 # Used to send HTTP request to the server.
 reqwest = "0.11.12"
 # Used to perform operation on URL.
-url = "2.3.0"
+url = "2.3.1"
 # Add primitive type to be used with the proctocol
 libparsec_types = { path = "../types" }
 # Provide possible command to send to the server

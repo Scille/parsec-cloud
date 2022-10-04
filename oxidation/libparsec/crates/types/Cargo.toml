@@ -29,7 +29,7 @@ chrono = { version = "0.4.22", features = ["serde"] }
 # Hence `fast-rng` feature which enables the use of `rand`.
 uuid = { version = "1.1.2", features = ["serde", "v4", "fast-rng"] }
 data-encoding = "2.3.2"
-url = "2.3.0"
+url = "2.3.1"
 percent-encoding = "2.2.0"
 regex = "1.6.0"
 unicode-normalization = "0.1.22"
