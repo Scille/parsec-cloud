@@ -9,8 +9,7 @@ use pyo3::{
     PyAny, PyResult,
 };
 
-#[allow(deprecated)]
-use crate::runtime::spawn_future_into_trio_coroutine;
+use crate::runtime::FutureIntoCoroutine;
 
 #[pyfunction]
 /// mock_time takes as argument a DateTime (for FrozenTime), an int (for ShiftedTime) or None (for RealTime)
@@ -48,9 +47,9 @@ impl TimeProvider {
     }
 
     // Booyakasha !
-    pub fn sleep<'py>(&self, py: Python<'py>, time: f64) -> PyResult<&'py PyAny> {
+    pub fn sleep(&self, time: f64) -> FutureIntoCoroutine {
         let time_provider = self.0.clone();
-        spawn_future_into_trio_coroutine(py, async move {
+        FutureIntoCoroutine::new(async move {
             time_provider
                 .sleep(libparsec::types::Duration::microseconds(
                     (time * 1e6) as i64,

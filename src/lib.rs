@@ -19,7 +19,7 @@ mod trustchain;
 /// A Python module implemented in Rust.
 #[pymodule]
 #[pyo3(name = "_parsec")]
-fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
+fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<addrs::BackendAddr>()?;
     m.add_class::<addrs::BackendOrganizationAddr>()?;
     m.add_class::<addrs::BackendActionAddr>()?;
@@ -440,5 +440,13 @@ fn entrypoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<regex::Regex>()?;
 
     m.add_class::<trustchain::TrustchainContext>()?;
+
+    // Registering ABC classes
+    m.add_class::<runtime::FutureIntoCoroutine>()?;
+    let future_into_coroutine_cls = m.getattr("FutureIntoCoroutine")?;
+    py.import("typing")?
+        .getattr("Coroutine")?
+        .call_method1("register", (future_into_coroutine_cls,))?;
+
     Ok(())
 }
