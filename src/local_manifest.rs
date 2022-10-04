@@ -641,7 +641,7 @@ impl LocalFolderManifest {
             .collect();
         Ok(Self(self.0.clone().evolve_children_and_mark_updated(
             data,
-            &prevent_sync_pattern.0 .0,
+            &prevent_sync_pattern.0,
             timestamp.0,
         )))
     }
@@ -652,7 +652,7 @@ impl LocalFolderManifest {
         timestamp: DateTime,
     ) -> PyResult<Self> {
         Ok(Self(self.0.apply_prevent_sync_pattern(
-            &prevent_sync_pattern.0 .0,
+            &prevent_sync_pattern.0,
             timestamp.0,
         )))
     }
@@ -714,7 +714,7 @@ impl LocalFolderManifest {
         Ok(Self(
             libparsec::client_types::LocalFolderManifest::from_remote(
                 remote.0,
-                &prevent_sync_pattern.0 .0,
+                &prevent_sync_pattern.0,
             ),
         ))
     }
@@ -730,7 +730,7 @@ impl LocalFolderManifest {
         Ok(Self(
             libparsec::client_types::LocalFolderManifest::from_remote_with_local_context(
                 remote.0,
-                &prevent_sync_pattern.0 .0,
+                &prevent_sync_pattern.0,
                 &local_manifest.0,
                 timestamp.0,
             ),
@@ -996,7 +996,7 @@ impl LocalWorkspaceManifest {
             .collect();
         Ok(Self(self.0.clone().evolve_children_and_mark_updated(
             data,
-            &prevent_sync_pattern.0 .0,
+            &prevent_sync_pattern.0,
             timestamp.0,
         )))
     }
@@ -1007,7 +1007,7 @@ impl LocalWorkspaceManifest {
         timestamp: DateTime,
     ) -> PyResult<Self> {
         Ok(Self(self.0.apply_prevent_sync_pattern(
-            &prevent_sync_pattern.0 .0,
+            &prevent_sync_pattern.0,
             timestamp.0,
         )))
     }
@@ -1072,7 +1072,7 @@ impl LocalWorkspaceManifest {
         Ok(Self(
             libparsec::client_types::LocalWorkspaceManifest::from_remote(
                 remote.0,
-                &prevent_sync_pattern.0 .0,
+                &prevent_sync_pattern.0,
             ),
         ))
     }
@@ -1088,7 +1088,7 @@ impl LocalWorkspaceManifest {
         Ok(Self(
             libparsec::client_types::LocalWorkspaceManifest::from_remote_with_local_context(
                 remote.0,
-                &prevent_sync_pattern.0 .0,
+                &prevent_sync_pattern.0,
                 &local_manifest.0,
                 timestamp.0,
             ),
