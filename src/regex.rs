@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 use pyo3::{exceptions::PyValueError, pyclass, pymethods, types::PyType, PyResult};
 
@@ -33,12 +35,18 @@ impl Regex {
     }
 
     fn __str__(&self) -> String {
-        self.0 .0.to_string()
+        self.to_string()
     }
 
     #[getter]
     fn pattern(&self) -> String {
-        self.0 .0.to_string()
+        self.to_string()
+    }
+}
+
+impl Display for Regex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0.to_string())
     }
 }
 

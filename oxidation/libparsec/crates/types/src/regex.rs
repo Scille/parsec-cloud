@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::fmt::Display;
+
 pub struct Regex(pub regex::Regex);
 
 /// The fnmatch_regex crate does not escape the character '$'. It is a problem
@@ -23,6 +25,12 @@ impl Regex {
 impl PartialEq for Regex {
     fn eq(&self, other: &Self) -> bool {
         self.0.to_string() == other.0.to_string()
+    }
+}
+
+impl Display for Regex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0.to_string())
     }
 }
 
