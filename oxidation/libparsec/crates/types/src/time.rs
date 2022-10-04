@@ -249,23 +249,9 @@ mod time_provider {
 
         pub fn get_speed_factor(&self) -> Option<f64> {
             match (&self.parent, &self.time) {
-                (
-                    None,
-                    MockedTime::FasterTime {
-                        reference: _,
-                        microseconds: _,
-                        speed_factor,
-                    },
-                ) => Some(*speed_factor),
+                (None, MockedTime::FasterTime { speed_factor, .. }) => Some(*speed_factor),
                 (None, _) => None,
-                (
-                    Some(parent),
-                    MockedTime::FasterTime {
-                        reference: _,
-                        microseconds: _,
-                        speed_factor,
-                    },
-                ) => Some(
+                (Some(parent), MockedTime::FasterTime { speed_factor, .. }) => Some(
                     speed_factor
                         * parent
                             .lock()
