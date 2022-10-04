@@ -30,7 +30,7 @@ chrono = { version = "0.4.22", features = ["serde"] }
 uuid = { version = "1.1.2", features = ["serde", "v4", "fast-rng"] }
 data-encoding = "2.3.2"
 url = "2.3.0"
-percent-encoding = "2.1.0"
+percent-encoding = "2.2.0"
 fancy-regex = "0.10.0"
 unicode-normalization = "0.1.21"
 paste = "1.0.9"
