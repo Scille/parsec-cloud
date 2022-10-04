@@ -45,8 +45,8 @@ msgid "Create a Python virtual environment for the project::"
 msgstr "Créer un environnement virtuel Python pour le projet::"
 
 #: ../../development.rst:24
-msgid "Parsec requires Python >= 3.6"
-msgstr "Parsec nécessite Python >= 3.6"
+msgid "Parsec requires Python >= 3.9"
+msgstr "Parsec nécessite Python >= 3.9"
 
 #: ../../development.rst:26
 #, fuzzy

@@ -107,8 +107,8 @@ msgstr ""
 "graphique par exemple."
 
 #: ../../userguide/installation.rst:51
-msgid "Parsec requires Python >= 3.6 to work."
-msgstr "Parsec a besoin de Python >= 3.6 pour fonctionner."
+msgid "Parsec requires Python >= 3.9 to work."
+msgstr "Parsec a besoin de Python >= 3.9 pour fonctionner."
 
 #: ../../userguide/installation.rst:55
 msgid "MacOS"

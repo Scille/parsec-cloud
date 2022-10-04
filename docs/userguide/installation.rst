@@ -50,7 +50,7 @@ Or intall it with all its dependencies, for the GUI.
 
 .. note::
 
-    Parsec requires Python >= 3.6 to work.
+    Parsec requires Python >= 3.9 to work.
 
 
 MacOS
