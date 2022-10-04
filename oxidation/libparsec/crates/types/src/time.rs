@@ -292,7 +292,7 @@ mod time_provider {
                     microseconds: us,
                     speed_factor,
                 } => {
-                    let delta = DateTime::from(chrono::Utc::now()) - reference;
+                    let delta = self.parent_now_or_realtime() - reference;
                     let delta_us = delta
                         .num_microseconds()
                         .expect("No reason to get an overflow");

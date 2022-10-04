@@ -63,7 +63,7 @@ impl TimeProvider {
         Ok(TimeProvider(self.0.new_child()))
     }
 
-    #[args(freeze = "None", shift = "None", realtime = "false")]
+    #[args(freeze = "None", shift = "None", speed = "None", realtime = "false")]
     pub fn mock_time(
         &mut self,
         freeze: Option<DateTime>,
@@ -90,7 +90,7 @@ impl TimeProvider {
             }
             _ => {
                 return Err(PyValueError::new_err(
-                    "Must only provide one of `freeze`, `shift`, `speed_factor` and `realtime`",
+                    "Must only provide one of `freeze`, `shift`, `speed` and `realtime`",
                 ))
             }
         };
