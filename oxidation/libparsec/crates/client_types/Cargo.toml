@@ -19,7 +19,6 @@ serialization_format = { path = "../serialization_format" }
 flate2 = "1.0.24"
 serde = { version = "1.0.145", features = ["derive"] }
 serde_with = "2.0.1"
-serde_repr = "0.1.9"
 rmp-serde = "1.1.1"
 serde_bytes = "0.11.7"
 sha2 = "0.10.6"
