@@ -10,10 +10,10 @@ use crate::{
 };
 
 use pyo3::prelude::*;
-use pyo3::types::{PyTuple, PyType};
+use pyo3::types::PyTuple;
 use pyo3::{
     create_exception,
-    exceptions::{PyAttributeError, PyException, PyValueError},
+    exceptions::{PyAttributeError, PyException},
 };
 
 #[pyclass]
@@ -138,82 +138,6 @@ create_exception!(_parsec, TrustchainErrorException, PyException);
 
 #[pymethods]
 impl TrustchainError {
-    #[classmethod]
-    fn invalid_certificate(_cls: &PyType, path: String, exc: String) -> Self {
-        Self(libparsec::core::TrustchainError::InvalidCertificate { path, exc })
-    }
-
-    #[classmethod]
-    fn invalid_self_signed_user_certificate(_cls: &PyType, user_id: UserID) -> Self {
-        Self(
-            libparsec::core::TrustchainError::InvalidSelfSignedUserCertificate {
-                user_id: user_id.0,
-            },
-        )
-    }
-
-    #[classmethod]
-    fn invalid_self_signed_revocation_certificate(_cls: &PyType, user_id: UserID) -> Self {
-        Self(
-            libparsec::core::TrustchainError::InvalidSelfSignedUserRevocationCertificate {
-                user_id: user_id.0,
-            },
-        )
-    }
-
-    #[classmethod]
-    fn invalid_signature_given(_cls: &PyType, path: String, user_id: UserID) -> Self {
-        Self(libparsec::core::TrustchainError::InvalidSignatureGiven {
-            path,
-            user_id: user_id.0,
-        })
-    }
-
-    #[classmethod]
-    fn invalid_signature_loop_detected(_cls: &PyType, path: String) -> Self {
-        Self(libparsec::core::TrustchainError::InvalidSignatureLoopDetected { path })
-    }
-
-    #[classmethod]
-    fn missing_device_certificate(_cls: &PyType, path: String, device_id: DeviceID) -> Self {
-        Self(libparsec::core::TrustchainError::MissingDeviceCertificate {
-            path,
-            device_id: device_id.0,
-        })
-    }
-
-    #[classmethod]
-    fn missing_user_certificate(_cls: &PyType, path: String, user_id: UserID) -> Self {
-        Self(libparsec::core::TrustchainError::MissingUserCertificate {
-            path,
-            user_id: user_id.0,
-        })
-    }
-
-    #[classmethod]
-    fn signature_posterior_user_revocation(
-        _cls: &PyType,
-        path: String,
-        verified_timestamp: DateTime,
-        user_timestamp: DateTime,
-    ) -> Self {
-        Self(
-            libparsec::core::TrustchainError::SignaturePosteriorUserRevocation {
-                path,
-                verified_timestamp: verified_timestamp.0,
-                user_timestamp: user_timestamp.0,
-            },
-        )
-    }
-
-    #[classmethod]
-    fn unexpected_certificate(_cls: &PyType, expected: UserID, got: UserID) -> Self {
-        Self(libparsec::core::TrustchainError::UnexpectedCertificate {
-            expected: expected.0,
-            got: got.0,
-        })
-    }
-
     #[getter]
     fn path(&self) -> PyResult<String> {
         match &self.0 {
@@ -328,37 +252,3 @@ impl TrustchainError {
 gen_proto!(TrustchainError, __richcmp__, eq);
 gen_proto!(TrustchainError, __str__); // Needed for python's exceptions
 gen_proto!(TrustchainError, __repr__);
-
-impl From<TrustchainError> for PyErr {
-    fn from(err: TrustchainError) -> Self {
-        match err.0 {
-            libparsec::core::TrustchainError::InvalidCertificate { .. } => {
-                PyValueError::new_err("Invalid certificate")
-            }
-            libparsec::core::TrustchainError::InvalidSelfSignedUserCertificate { .. } => {
-                PyValueError::new_err("Invalid self signed user certificate")
-            }
-            libparsec::core::TrustchainError::InvalidSelfSignedUserRevocationCertificate {
-                ..
-            } => PyValueError::new_err("Invalid self signed user revocation certificate"),
-            libparsec::core::TrustchainError::InvalidSignatureGiven { .. } => {
-                PyValueError::new_err("Invalid signature given")
-            }
-            libparsec::core::TrustchainError::InvalidSignatureLoopDetected { .. } => {
-                PyValueError::new_err("Invalid signature loop detected")
-            }
-            libparsec::core::TrustchainError::MissingDeviceCertificate { .. } => {
-                PyValueError::new_err("Missing device certificate")
-            }
-            libparsec::core::TrustchainError::MissingUserCertificate { .. } => {
-                PyValueError::new_err("Missing user certificate")
-            }
-            libparsec::core::TrustchainError::SignaturePosteriorUserRevocation { .. } => {
-                PyValueError::new_err("Signature posterior user revocation")
-            }
-            libparsec::core::TrustchainError::UnexpectedCertificate { .. } => {
-                PyValueError::new_err("Unexpected certificate")
-            }
-        }
-    }
-}
