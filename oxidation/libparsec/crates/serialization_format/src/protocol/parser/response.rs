@@ -13,6 +13,7 @@ pub struct Response {
     pub status: String,
     #[serde(default)]
     pub unit: Option<String>,
+    #[serde(default)]
     pub other_fields: Vec<Field>,
 }
 
