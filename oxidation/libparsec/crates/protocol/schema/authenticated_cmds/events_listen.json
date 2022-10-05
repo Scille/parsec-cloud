@@ -139,7 +139,7 @@
                         ]
                     },
                     {
-                        "name": "Pki_enrollment.updated",
+                        "name": "PkiEnrollmentUpdated",
                         "discriminant_value": "pki_enrollment.updated",
                         "fields": []
                     }
