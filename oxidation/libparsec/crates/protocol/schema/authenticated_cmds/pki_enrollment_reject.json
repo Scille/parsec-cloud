@@ -18,6 +18,33 @@
             {
                 "status": "ok",
                 "other_fields": []
+            },
+            {
+                "status": "not_allowed",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "String"
+                    }
+                ]
+            },
+            {
+                "status": "not_found",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "String"
+                    }
+                ]
+            },
+            {
+                "status": "no_longer_available",
+                "other_fields": [
+                    {
+                        "name": "reason",
+                        "type": "String"
+                    }
+                ]
             }
         ]
     }
