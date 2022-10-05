@@ -77,6 +77,7 @@ pub fn inspect_type(raw_type: &Type, types: &HashMap<String, String>) -> Result<
                 "UserManifest" => "libparsec_types::UserManifest",
                 "Chunk" => "libparsec_client_types::Chunk",
                 "BackendOrganizationAddr" => "libparsec_types::BackendOrganizationAddr",
+                "UUID" => "libparsec_types::uuid::Uuid",
                 ident if types.get(ident).is_some() => {
                     types.get(ident).unwrap_or_else(|| unreachable!())
                 }
@@ -171,4 +172,18 @@ pub fn extract_serde_as(ty: &Type) -> String {
         }
         ty => panic!("{ty:?} encountered"),
     }
+}
+
+#[cfg(test)]
+#[rstest::rstest]
+#[case::byte("u8", "u8")]
+#[case::string("String", "_")]
+#[case::custom("InvitationEmailSentStatus", "_")]
+fn test_extract_serde_as(#[case] raw_type: &str, #[case] expected: &str) {
+    use pretty_assertions::assert_eq;
+
+    let ty = syn::parse_str::<Type>(raw_type).expect("A valid type to be parsed by syn");
+    let res = extract_serde_as(&ty);
+
+    assert_eq!(res.as_str(), expected)
 }
