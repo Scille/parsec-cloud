@@ -15,20 +15,21 @@
                 "other_fields": [
                     {
                         "name": "enrollments",
-                        "type": "List<Nested7>"
+                        "type": "List<PkiEnrollmentListItem>"
                     }
                 ]
             }
         ],
         "nested_types": [
             {
-                "label": "Nested7",
+                "label": "PkiEnrollmentListItem",
                 "fields": [
                     {
                         "name": "enrollment_id",
                         "type": "UUID"
                     },
                     {
+                        // Signature should be checked before loading.
                         "name": "submit_payload",
                         "type": "Bytes"
                     },
