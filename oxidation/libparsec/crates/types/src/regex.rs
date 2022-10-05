@@ -22,15 +22,21 @@ impl Regex {
     }
 }
 
+impl AsRef<str> for Regex {
+    fn as_ref(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
 impl PartialEq for Regex {
     fn eq(&self, other: &Self) -> bool {
-        self.0.to_string() == other.0.to_string()
+        self.as_ref() == other.as_ref()
     }
 }
 
 impl Display for Regex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0.to_string())
+        self.0.fmt(f)
     }
 }
 
