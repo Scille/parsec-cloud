@@ -9,6 +9,7 @@
             "cmd": "pki_enrollment_accept",
             "other_fields": [
                 {
+                    // Signature should be checked before loading.
                     "name": "accept_payload",
                     "type": "Bytes"
                 },
@@ -21,23 +22,24 @@
                     "type": "Bytes"
                 },
                 {
+                    "name": "enrollment_id",
+                    "type": "UUID"
+                },
+                {
                     "name": "device_certificate",
                     "type": "Bytes"
                 },
                 {
-                    "name": "enrollment_id",
-                    "type": "UUID"
+                    "name": "user_certificate",
+                    "type": "Bytes"
                 },
+                // Same certificates than above, but expunged of human_handle/device_label
                 {
                     "name": "redacted_device_certificate",
                     "type": "Bytes"
                 },
                 {
                     "name": "redacted_user_certificate",
-                    "type": "Bytes"
-                },
-                {
-                    "name": "user_certificate",
                     "type": "Bytes"
                 }
             ]
