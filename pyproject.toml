@@ -118,7 +118,7 @@ core = [
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0"
-pytest-cov = "^3.0"
+pytest-cov = "^4.0"
 pytest-xdist = "^2.5"
 pytest-trio = "^0.7"
 pytest-qt = "^4.0"
